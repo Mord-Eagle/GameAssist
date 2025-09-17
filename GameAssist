@@ -122,7 +122,20 @@
         state[STATE_KEY][mod] = Object.assign(getState(mod), data);
     }
     function clearState(mod) {
-        if (state[STATE_KEY]?.[mod]) delete state[STATE_KEY][mod];
+        const root = state[STATE_KEY];
+        if (!root || !root[mod]) return;
+
+        const branch = root[mod];
+        if (!branch || typeof branch !== 'object') {
+            root[mod] = { config: {}, runtime: {} };
+            return;
+        }
+
+        if (typeof branch.config !== 'object' || branch.config === null) {
+            branch.config = {};
+        }
+
+        branch.runtime = {};
     }
 
     function auditState() {
