@@ -122,7 +122,7 @@ Watches `change:graphic:bar1_value`. When an NPC’s HP drops below 1 the `deadM
 
 *(Requires TokenMod API for automated marker/status integration.)*
 
-`!npc-hp-all` rolls HP for every NPC on the player page; `!npc-hp-selected` works on a token-selection. Parses any `NdM±K` formula stored in `npc_hpformula`. Optional future flag `autoRollOnAdd` (present but currently false by default as it is a work in progress).
+`!npc-hp-all` rolls HP for every NPC on the player page; `!npc-hp-selected` works on a token-selection. Parses any `NdM±K` formula stored in `npc_hpformula`. Enable `autoRollOnAdd` (`!ga-config set NPCHPRoller autoRollOnAdd=true`) to have GameAssist automatically roll HP the instant a qualifying NPC token is dropped onto the map.
 
 ---
 
@@ -182,7 +182,7 @@ VI. To verify end-to-end, type `!ga-status` as GM. You’ll receive a whispered 
 |                          | `randomize`      | bool   | `true`            |
 | **NPCManager**           | `autoTrackDeath` | bool   | `true`            |
 |                          | `deadMarker`     | string | `"dead"`          |
-| **NPCHPRoller**          | `autoRollOnAdd`  | bool   | `false` (future)  |
+| **NPCHPRoller**          | `autoRollOnAdd`  | bool   | `false` (opt-in)  |
 
 ---
 

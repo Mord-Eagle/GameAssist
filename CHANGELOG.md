@@ -12,6 +12,10 @@ All notable changes to this project will be documented in this file.
   - Added `GameAssist` line 836: `GameAssist.getLinkedCharacter = getLinkedCharacter;` for public access.
   - Added module usages at `GameAssist` lines 1213, 1261, 1540, 1611, 1783, 1839, and 1886 so NPCManager, ConcentrationTracker, and NPCHPRoller consistently gate work on verified tokens.
   - Removed the per-module inline checks from the prior implementation: `GameAssist` (pre-update) line 1156 `const charId = token.get('represents');`, line 1168 `const character = getObj('character', charId);`, and line 1362 `const charId = token.get('represents');`, which duplicated validation logic.
+- NPCHPRoller can now auto-roll HP when new NPC tokens are created on the map (opt-in via `autoRollOnAdd`).
+  - Added `GameAssist` lines 1801-1869 to reuse a shared NPC context resolver, allowing the module to silently skip non-NPC tokens when listening for `add:graphic` events and annotate auto rolls in the log output.
+  - Added `GameAssist` lines 1948-1956 to register the `add:graphic` listener in the module metadata.
+  - Updated documentation (`README.md` §6.4 and §9) to describe the new opt-in behavior and configuration default.
 
 ### Changed
 - Core handler lifecycle now relies on module guard flags instead of physical `off()` calls.

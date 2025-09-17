@@ -1798,17 +1798,23 @@ GameAssist.register('ConcentrationTracker', function() {
             return rollDice(count, sides) + bonus;
         }
 
-        function rollTokenHP(token) {
+        function resolveNpcContext(token, { logWarnings = true } = {}) {
             if (!token) {
-                GameAssist.log('NPCHPRoller', 'Token not found', 'WARN');
-                return;
+                if (logWarnings) {
+                    GameAssist.log('NPCHPRoller', 'Token not found', 'WARN');
+                }
+                return null;
             }
 
             const linked = GameAssist.getLinkedCharacter(token);
             if (!linked) {
-                GameAssist.log('NPCHPRoller', `${token.get('name') || 'Token'} must be linked to a character on the Objects layer.`, 'WARN');
-                return;
+                if (logWarnings) {
+                    GameAssist.log('NPCHPRoller', `${token.get('name') || 'Token'} must be linked to a character on the Objects layer.`, 'WARN');
+                }
+                return null;
             }
+
+            const displayName = token.get('name') || linked.character.get('name') || 'Token';
 
             const npcAttr = findObjs({
                 _type: 'attribute',
@@ -1817,8 +1823,10 @@ GameAssist.register('ConcentrationTracker', function() {
             })[0];
 
             if (!npcAttr || npcAttr.get('current') !== '1') {
-                GameAssist.log('NPCHPRoller', `${token.get('name') || linked.character.get('name')} is not flagged as an NPC.`, 'WARN');
-                return;
+                if (logWarnings) {
+                    GameAssist.log('NPCHPRoller', `${displayName} is not flagged as an NPC.`, 'WARN');
+                }
+                return null;
             }
 
             const hpFormulaAttr = findObjs({
@@ -1828,24 +1836,37 @@ GameAssist.register('ConcentrationTracker', function() {
             })[0];
 
             if (!hpFormulaAttr) {
-                GameAssist.log('NPCHPRoller', `No HP formula found for ${token.get('name') || linked.character.get('name')}`, 'WARN');
-                return;
+                if (logWarnings) {
+                    GameAssist.log('NPCHPRoller', `No HP formula found for ${displayName}`, 'WARN');
+                }
+                return null;
             }
 
             const formula = hpFormulaAttr.get('current');
             const diceData = parseDiceString(formula);
 
             if (!diceData) {
-                GameAssist.log('NPCHPRoller', `Invalid HP formula: ${formula}`, 'WARN');
-                return;
+                if (logWarnings) {
+                    GameAssist.log('NPCHPRoller', `Invalid HP formula: ${formula}`, 'WARN');
+                }
+                return null;
             }
 
-            const hp = rollHP(diceData);
+            return { linked, formula, diceData, displayName };
+        }
+
+        function rollTokenHP(token, { logWarnings = true, reason = 'manual' } = {}) {
+            const context = resolveNpcContext(token, { logWarnings });
+            if (!context) return false;
+
+            const hp = rollHP(context.diceData);
 
             token.set('bar1_value', hp);
             token.set('bar1_max', hp);
 
-            GameAssist.log('NPCHPRoller', `${token.get('name')} HP set to ${hp} using [${formula}]`);
+            const suffix = reason === 'auto' ? ' (auto-roll on add)' : '';
+            GameAssist.log('NPCHPRoller', `${context.displayName} HP set to ${hp} using [${context.formula}]${suffix}`);
+            return true;
         }
 
         GameAssist.onCommand('!npc-hp-all', async msg => {
@@ -1924,11 +1945,16 @@ GameAssist.register('ConcentrationTracker', function() {
             }
         }, 'NPCHPRoller', { gmOnly: true });
 
+        GameAssist.onEvent('add:graphic', token => {
+            if (!modState.config.autoRollOnAdd) return;
+            rollTokenHP(token, { logWarnings: false, reason: 'auto' });
+        }, 'NPCHPRoller');
+
         GameAssist.log('NPCHPRoller', 'v0.1.1.0 Ready: !npc-hp-all, !npc-hp-selected', 'INFO', { startup: true });
-    }, { 
-        enabled: true, 
-        events: [], 
-        prefixes: ['!npc-hp-all', '!npc-hp-selected'] 
+    }, {
+        enabled: true,
+        events: ['add:graphic'],
+        prefixes: ['!npc-hp-all', '!npc-hp-selected']
     });
     // --- Notes & Comments ---
     // CHOICE: Use Math.random for simplicity; acceptable for non‑critical HP rolls.
