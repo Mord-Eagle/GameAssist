@@ -48,9 +48,9 @@ GameAssist’s micro-kernel wraps the Roll20 event bus and exposes:
 
 * **Task Queue** – serialises async work (`sendChat`, `findObjs`, …) and times out stalled jobs.
 * **Watchdog** – detects a hung task > `DEFAULT_TIMEOUT × 2` and restarts the queue.
-* **State Manager** – namespaced storage (`state.GameAssist.<Module>`) with auto-seed and orphan purge.
+* **State Manager** – namespaced storage (`state.GameAssist.<Module>`) with auto-seed and audits. Modules must persist only under their own branch.
 * **Metrics Board** – live counters (`commands`, `errors`, `avgTaskMs`) surfaced through `!ga-status`.
-* **Hot Reload** – `!ga-enable|disable` detaches listeners, resets state and re-inits without a sandbox restart.
+* **Hot Reload** – guard-based toggles; `!ga-enable|disable` flips module handlers on or off without relying on sandbox `off()`.
 * **Compatibility Audit** – toggle `GameAssist.flags.DEBUG_COMPAT` to see a list of known and unknown scripts.
 
 Design goal: **zero GM downtime**.
@@ -189,16 +189,20 @@ VI. To verify end-to-end, type `!ga-status` as GM. You’ll receive a whispered 
 | **Module Registration** | `GameAssist.register(name, initFn, options)`                              | Register a new module. `name`: unique ID; `initFn`: init callback; `options`: `{ enabled: bool, events: [], prefixes: [], teardown: fn }` |
 | **Command Handling**    | `GameAssist.onCommand(prefix, handler, moduleName, opts)`                 | Listen for API chat commands; `opts`: `{ gmOnly: bool, acl: [playerIDs] }`                                                                |
 | **Event Handling**      | `GameAssist.onEvent(eventName, handler, moduleName)`                      | Listen for Roll20 events (e.g. `chat:message`, `change:graphic:bar1_value`)                                                               |
-| **Listener Cleanup**    | `GameAssist.offCommands(moduleName)` / `GameAssist.offEvents(moduleName)` | Remove all commands or events registered by the given module                                                                              |
+| **Listener Cleanup**    | `GameAssist.offCommands(moduleName)` / `GameAssist.offEvents(moduleName)` | Clear the registries for a module; handlers remain registered but are guarded by enable/disable flags                                     |
 | **Module Control**      | `GameAssist.enableModule(name)` / `GameAssist.disableModule(name)`        | Enable or disable a module at runtime, running its `initFn` or `teardown`                                                                 |
 | **Logging & Errors**    | `GameAssist.log(moduleName, message, level?, opts?)`                      | Whisper a log to GM; `level` defaults to `'INFO'`; `opts`: `{ startup: bool }`                                                            |
 |                         | `GameAssist.handleError(moduleName, error)`                               | Increment error metric and log an `'ERROR'`-level message                                                                                 |
-| **State Management**    | `getState(moduleName)`                                                    | Retrieve (and auto-create) persistent state branch: returns `{ config, runtime }`                                                         |
-|                         | `saveState(moduleName, data)`                                             | Merge and persist additional data into a module’s state branch                                                                            |
-|                         | `clearState(moduleName)`                                                  | Delete a module’s persistent state branch                                                                                                 |
+| **State Management**    | `GameAssist.getState(moduleName)`                                         | Retrieve (and auto-create) persistent state branch: returns `{ config, runtime }`                                                         |
+|                         | `GameAssist.saveState(moduleName, data)`                                  | Merge and persist additional data into a module’s state branch                                                                            |
+|                         | `GameAssist.clearState(moduleName)`                                       | Reset a module’s persistent state branch (config/runtime container remains namespaced)                                                    |
+| **Token Helpers**       | `GameAssist.getLinkedCharacter(token)`                                    | Validate a token is on the Objects layer and linked to a character; returns `{ token, character }` or `null`                              |
 | **Metrics Inspection**  | `GameAssist._metrics`                                                     | Live metrics: counts of commands, messages, errors, state audits, task durations, plus `lastUpdate`                                       |
 
-> **Note:** `DEFAULT_TIMEOUT` and `WATCHDOG_INTERVAL` are internal constants and not part of the public API.
+> **Notes:**
+> * Listener lifecycle is guard-based; disabling a module flips its `initialized`/`active` flags so handlers early-return without sandbox `off()`.
+> * Persist data under `state.GameAssist.<Module>` via the exposed state helpers.
+> * `DEFAULT_TIMEOUT` and `WATCHDOG_INTERVAL` are internal constants and not part of the public API.
 
 ---
 

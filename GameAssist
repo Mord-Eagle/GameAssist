@@ -158,7 +158,21 @@ description, syntax/commands, and configuration pointers near the top of the scr
     const VERSION      = '0.1.1.2';
     const STATE_KEY    = 'GameAssist';
     const MODULES      = {};
+    const _transitioning   = {};
     let   READY        = false;
+
+    MODULES.Core = {
+        internal:    true,
+        initFn:      () => {},
+        teardown:    null,
+        enabled:     true,
+        initialized: true,
+        active:      true,
+        events:      [],
+        prefixes:    [],
+        wired:       true,
+        dependsOn:   []
+    };
 
     // ————— QUEUE + WATCHDOG —————
     // =============================================================================
@@ -289,17 +303,20 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
     function auditState() {
         const root = state[STATE_KEY] || {};
+        const whitelist = new Set(['config', 'flags', 'metrics']);
+
         Object.keys(root).forEach(k => {
-            if (k === 'config') return;
-            if (!MODULES[k]) {
+            if (whitelist.has(k)) return;
+
+            const mod = MODULES[k];
+            if (!mod || mod.internal) {
                 GameAssist.log('Core', `Unexpected state branch: ${k}`, 'WARN');
-                delete root[k];
-            } else {
-                const branch = root[k];
-                if (!branch.config || !branch.runtime) {
-                    GameAssist.log('Core', `Malformed state for ${k}`, 'WARN');
-                    delete root[k];
-                }
+                return;
+            }
+
+            const branch = root[k];
+            if (!branch?.config || !branch?.runtime) {
+                GameAssist.log('Core', `Malformed state for ${k}`, 'WARN');
             }
         });
         GameAssist._metrics.stateAudits++;
@@ -308,6 +325,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
     function seedDefaults() {
         Object.entries(MODULES).forEach(([name, mod]) => {
+            if (mod.internal) return;
             const cfg = getState(name).config;
             if (cfg.enabled === undefined) cfg.enabled = mod.enabled;
         });
@@ -318,10 +336,24 @@ description, syntax/commands, and configuration pointers near the top of the scr
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
-            .replace(/'/g, '&#39;');
+            .replace(/'/g, '&#39;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function getLinkedCharacter(token) {
+        if (!token || typeof token.get !== 'function') return null;
+        if (token.get('layer') !== 'objects') return null;
+
+        const charId = token.get('represents');
+        if (!charId) return null;
+
+        const character = getObj('character', charId);
+        if (!character) return null;
+
+        return { token, character };
     }
     // --- Notes & Comments ---
-    // DANGER: State auditor deletes unknown branches; acceptable as branches are module‑scoped.
+    // NOTE: State auditor warns about unexpected branches; no automatic deletion occurs.
     // [GAMEASSIST_GAMEASSIST:APP:UTILS] END
     // =============================================================================
 
@@ -407,6 +439,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         _listeners: {},
         _commandHandlers: {},
         _eventHandlers: {},
+        _transitioning,
         config: {},
         flags: { DEBUG_COMPAT: false, QUIET_STARTUP: true },
 
@@ -435,7 +468,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
             this.log(mod, err.message || String(err), 'ERROR');
         },
 
-        register(name, initFn, { enabled = true, events = [], prefixes = [], teardown = null } = {}) {
+        register(name, initFn, { enabled = true, events = [], prefixes = [], teardown = null, dependsOn = [] } = {}) {
             if (READY) {
                 this.log('Core', `Cannot register after ready: ${name}`, 'WARN');
                 return;
@@ -444,13 +477,25 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 this.log('Core', `Duplicate module: ${name}`, 'WARN');
                 return;
             }
-            MODULES[name] = { initFn, teardown, enabled, initialized: false, events, prefixes };
+            MODULES[name] = {
+                initFn,
+                teardown,
+                enabled,
+                initialized: false,
+                active: false,
+                events,
+                prefixes,
+                dependsOn,
+                wired: false,
+                internal: false
+            };
             this._plannedEvents.push(...events);
             this._plannedChatPrefixes.push(...prefixes);
         },
 
         onCommand(prefix, fn, mod, { gmOnly = false, acl = [] } = {}) {
             const wrapped = msg => {
+                if (!MODULES[mod]?.initialized || !MODULES[mod]?.active) return;
                 if (msg.type !== 'api' || !msg.content.startsWith(prefix)) return;
                 if (gmOnly && !playerIsGM(msg.playerid)) return;
                 if (acl.length && !acl.includes(msg.playerid)) return;
@@ -464,13 +509,13 @@ description, syntax/commands, and configuration pointers near the top of the scr
         },
 
         offCommands(mod) {
-            (this._commandHandlers[mod] || []).forEach(h => off(h.event, h.fn));
             this._commandHandlers[mod] = [];
         },
 
         onEvent(evt, fn, mod) {
             const wrapped = (...args) => {
-                if (!READY || !MODULES[mod].initialized) return;
+                if (!MODULES[mod]?.initialized || !MODULES[mod]?.active) return;
+                if (!READY) return;
                 this._metrics.messages++;
                 this._metrics.lastUpdate = new Date().toISOString();
                 try { fn(...args); }
@@ -481,51 +526,119 @@ description, syntax/commands, and configuration pointers near the top of the scr
         },
 
         offEvents(mod) {
-            (this._listeners[mod] || []).forEach(h => off(h.event, h.fn));
             this._listeners[mod] = [];
         },
 
         _clearAllListeners() {
-            Object.keys(this._commandHandlers).forEach(m => this.offCommands(m));
-            Object.keys(this._listeners).forEach(m => this.offEvents(m));
+            this._commandHandlers = {};
+            this._listeners = {};
         },
 
         _dedupePlanned() {
+            if (this._deduped) return;
             this._plannedEvents = [...new Set(this._plannedEvents)];
             this._plannedChatPrefixes = [...new Set(this._plannedChatPrefixes)];
+            this._deduped = true;
         },
 
         enableModule(name) {
+            const mod = MODULES[name];
+            if (!mod) {
+                this.log('Core', `No such module: ${name}`, 'WARN');
+                return;
+            }
+            if (mod.internal) {
+                this.log('Core', `${name} is managed by the core and cannot be toggled.`, 'WARN');
+                return;
+            }
+            if (mod.active && mod.initialized) {
+                this.log('Core', `${name} already enabled`, 'INFO');
+                return;
+            }
+            if (_transitioning[name]) {
+                this.log('Core', `${name} is already transitioning`, 'WARN');
+                return;
+            }
+            _transitioning[name] = true;
+
             _enqueue(() => {
                 const m = MODULES[name];
-                if (!m) { this.log('Core', `No such module: ${name}`, 'WARN'); return; }
-                this.offEvents(name);
-                this.offCommands(name);
-                clearState(name);
-                getState(name).config.enabled = true;
+                const finish = () => { delete _transitioning[name]; };
+                if (!m) { finish(); return; }
+
+                const branch = getState(name);
+                branch.config.enabled = true;
+                branch.runtime = branch.runtime || {};
+
+                if (!m.wired) {
+                    try {
+                        m.initFn();
+                        m.wired = true;
+                    } catch (e) {
+                        m.initialized = false;
+                        m.active = false;
+                        branch.config.enabled = false;
+                        finish();
+                        this.handleError(name, e);
+                        return;
+                    }
+                }
+
                 m.initialized = true;
-                try { m.initFn(); this.log(name, 'Enabled'); }
-                catch(e) { this.handleError(name, e); }
+                m.active = true;
+                this._metrics.lastUpdate = new Date().toISOString();
+                this.log(name, 'Enabled');
+                finish();
             });
         },
 
         disableModule(name) {
+            const mod = MODULES[name];
+            if (!mod) {
+                this.log('Core', `No such module: ${name}`, 'WARN');
+                return;
+            }
+            if (mod.internal) {
+                this.log('Core', `${name} is managed by the core and cannot be toggled.`, 'WARN');
+                return;
+            }
+            if (!mod.active && !mod.initialized) {
+                this.log('Core', `${name} already disabled`, 'INFO');
+                return;
+            }
+            if (_transitioning[name]) {
+                this.log('Core', `${name} is already transitioning`, 'WARN');
+                return;
+            }
+            _transitioning[name] = true;
+
             _enqueue(() => {
                 const m = MODULES[name];
-                if (!m) { this.log('Core', `No such module: ${name}`, 'WARN'); return; }
-                if (typeof m.teardown === 'function') {
+                const finish = () => { delete _transitioning[name]; };
+                if (!m) { finish(); return; }
+
+                if (typeof m.teardown === 'function' && m.wired) {
                     try { m.teardown(); }
                     catch(e) { this.log(name, `Teardown failed: ${e.message}`, 'WARN'); }
                 }
-                this.offEvents(name);
-                this.offCommands(name);
-                clearState(name);
-                getState(name).config.enabled = false;
+
+                const branch = getState(name);
+                branch.config.enabled = false;
+                branch.runtime = {};
+
+                m.active = false;
                 m.initialized = false;
+                this._metrics.lastUpdate = new Date().toISOString();
                 this.log(name, 'Disabled');
+                finish();
             });
         }
     };
+
+    GameAssist.getState = getState;
+    GameAssist.saveState = saveState;
+    GameAssist.clearState = clearState;
+    GameAssist.getLinkedCharacter = getLinkedCharacter;
 
     globalThis.GameAssist = GameAssist;
     // --- Notes & Comments ---
@@ -560,30 +673,32 @@ description, syntax/commands, and configuration pointers near the top of the scr
             const [ key, ...rest ] = parts.slice(3).join(' ').split('=');
             const val = rest.join('=');
             const parsed = parseConfigValue(val);
-            if (!MODULES[mod]) {
+            if (!MODULES[mod] || MODULES[mod].internal) {
                 GameAssist.log('Config', `Unknown module: ${mod}`, 'WARN');
                 return;
             }
-            getState(mod).config[key.trim()] = parsed;
+            GameAssist.getState(mod).config[key.trim()] = parsed;
             GameAssist.log('Config', `Set ${mod}.${key.trim()} = ${JSON.stringify(parsed)}`);
         }
         else if (sub === 'get' && parts.length >= 4) {
             const mod = parts[2];
             const key = parts[3];
-            if (!MODULES[mod]) {
+            if (!MODULES[mod] || MODULES[mod].internal) {
                 GameAssist.log('Config', `Unknown module: ${mod}`, 'WARN');
                 return;
             }
-            const val = getState(mod).config[key];
+            const val = GameAssist.getState(mod).config[key];
             GameAssist.log('Config', `${mod}.${key} = ${JSON.stringify(val)}`);
         }
         else if (sub === 'modules') {
-            const moduleList = Object.entries(MODULES).map(([name, mod]) => {
-                const cfg = getState(name).config;
-                const status = cfg.enabled ? '✅' : '❌';
-                const init = mod.initialized ? '🔄' : '⏸️';
-                return `${status}${init} ${name}`;
-            }).join('\n');
+            const moduleList = Object.entries(MODULES)
+                .filter(([, mod]) => !mod.internal)
+                .map(([name, mod]) => {
+                    const cfg = GameAssist.getState(name).config;
+                    const status = cfg.enabled ? '✅' : '❌';
+                    const init = mod.initialized && mod.active ? '🟢' : '⏸️';
+                    return `${status}${init} ${name}`;
+                }).join('\n');
             GameAssist.log('Config', `Modules:\n${moduleList}`);
         }
         else {
@@ -624,7 +739,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
             `Avg Task Duration: ${avgDuration}ms`,
             `Queue Length: ${_queue.length}`,
             `Last Update: ${metrics.lastUpdate || 'Never'}`,
-            `Modules: ${Object.keys(MODULES).length}`,
+            `Modules: ${Object.entries(MODULES).filter(([, m]) => !m.internal).length}`,
             `Active Listeners: ${Object.values(GameAssist._listeners).flat().length}`
         ].join('\n');
 
@@ -645,7 +760,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // -------------------------------------------------------------------------
     GameAssist.register('CritFumble', function() {
         // ─── Module Setup ──────────────────────────────────────────────────────────────
-        const modState = getState('CritFumble');
+        const modState = GameAssist.getState('CritFumble');
         Object.assign(modState.config, {
             enabled:   true,
             debug:     true,
@@ -890,7 +1005,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     //   guarantees: ["Auto toggle dead marker based on HP"], version: "0.1.1.0" }
     // -------------------------------------------------------------------------
     GameAssist.register('NPCManager', function() {
-        const modState = getState('NPCManager');
+        const modState = GameAssist.getState('NPCManager');
 
         Object.assign(modState.config, {
             enabled: true,
@@ -899,22 +1014,24 @@ description, syntax/commands, and configuration pointers near the top of the scr
             ...modState.config
         });
 
-        function isNPC(token) {
-            if (!token || token.get('layer') !== 'objects') return false;
-            const charId = token.get('represents');
-            if (!charId) return false;
+        function getNPCContext(token, link = null) {
+            const linked = link || GameAssist.getLinkedCharacter(token);
+            if (!linked) return null;
 
             const npcAttr = findObjs({
                 _type: 'attribute',
-                _characterid: charId,
+                _characterid: linked.character.id,
                 name: 'npc'
             })[0];
 
-            return npcAttr && npcAttr.get('current') === '1';
+            if (!npcAttr || npcAttr.get('current') !== '1') return null;
+            return linked;
         }
 
         function checkForDeath(token) {
-            if (!modState.config.autoTrackDeath || !isNPC(token)) return;
+            if (!modState.config.autoTrackDeath) return;
+
+            if (!getNPCContext(token)) return;
 
             const hp = parseInt(token.get('bar1_value'), 10) || 0;
             const markers = (token.get('statusmarkers') || '').split(',');
@@ -944,8 +1061,15 @@ description, syntax/commands, and configuration pointers near the top of the scr
             });
 
             const flagged = [];
+            const invalid = [];
             for (let token of tokens) {
-                if (!isNPC(token)) continue;
+                const link = GameAssist.getLinkedCharacter(token);
+                if (!link) {
+                    invalid.push(token.get('name') || '(Unnamed)');
+                    continue;
+                }
+
+                if (!getNPCContext(token, link)) continue;
 
                 const hp = parseInt(token.get('bar1_value'), 10) || 0;
                 const markers = (token.get('statusmarkers') || '').split(',');
@@ -968,6 +1092,14 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 flagged.forEach(({ name, id, hp, markers }) => {
                     GameAssist.log('NPCManager', `- ${name} [${id}] | HP: ${hp} | Markers: ${markers}`);
                 });
+            }
+
+            if (invalid.length) {
+                GameAssist.log(
+                    'NPCManager',
+                    `Skipped ${invalid.length} token(s) with no linked character: ${invalid.join(', ')}`,
+                    'WARN'
+                );
             }
         }, 'NPCManager', { gmOnly: true });
 
@@ -993,7 +1125,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
 // -------------------------------------------------------------------------
 GameAssist.register('ConcentrationTracker', function() {
     // ─── Module Setup ──────────────────────────────────────────────────────────────
-    const modState = getState('ConcentrationTracker');
+    const modState = GameAssist.getState('ConcentrationTracker');
     Object.assign(modState.config, {
         enabled:   true,
         marker:    'Concentrating',
@@ -1159,18 +1291,15 @@ GameAssist.register('ConcentrationTracker', function() {
                 `/w "${player}" ⚠️ Token not found.`
             );
         }
-        const charId = token.get('represents');
-        if (!charId) {
+
+        const linked = GameAssist.getLinkedCharacter(token);
+        if (!linked) {
             return sendChat('ConcentrationTracker',
-                `/w "${player}" ⚠️ Token not linked.`
+                `/w "${player}" ⚠️ Token must be on the Objects layer and linked to a character.`
             );
         }
-        const character = getObj('character', charId);
-        if (!character) {
-            return sendChat('ConcentrationTracker',
-                `/w "${player}" ⚠️ Character not found.`
-            );
-        }
+
+        const { character } = linked;
 
         const bonus = getConBonus(character);
         const dc    = Math.max(10, Math.floor(damage / 2));
@@ -1214,11 +1343,29 @@ GameAssist.register('ConcentrationTracker', function() {
      */
     function handleClear(msg) {
         const player = msg.who.replace(/ \(GM\)$/, '');
+        const skipped = [];
+
         msg.selected?.forEach(sel => {
             const t = getObj('graphic', sel._id);
-            if (t) toggleMarker(t, false);
+            if (!t) {
+                skipped.push('(Missing Token)');
+                return;
+            }
+
+            if (!GameAssist.getLinkedCharacter(t)) {
+                skipped.push(t.get('name') || '(Unnamed)');
+                return;
+            }
+
+            toggleMarker(t, false);
         });
-        sendChat('ConcentrationTracker', `/w "${player}" ✅ Cleared markers.`);
+
+        let response = '✅ Cleared markers.';
+        if (skipped.length) {
+            response += ` Skipped: ${skipped.join(', ')}.`;
+        }
+
+        sendChat('ConcentrationTracker', `/w "${player}" ${response}`);
     }
 
     /**
@@ -1322,7 +1469,7 @@ GameAssist.register('ConcentrationTracker', function() {
     //   guarantees: ["Parse NdM±K and set bar1 to rolled HP"], version: "0.1.1.0" }
     // -------------------------------------------------------------------------
     GameAssist.register('NPCHPRoller', function() {
-        const modState = getState('NPCHPRoller');
+        const modState = GameAssist.getState('NPCHPRoller');
 
     Object.assign(modState.config, {
         enabled: true,
@@ -1359,30 +1506,36 @@ GameAssist.register('ConcentrationTracker', function() {
         }
 
         function rollTokenHP(token) {
-            const charId = token.get('represents');
-            if (!charId) {
-                GameAssist.log('NPCHPRoller', 'Token not linked to character', 'WARN');
+            if (!token) {
+                GameAssist.log('NPCHPRoller', 'Token not found', 'WARN');
+                return;
+            }
+
+            const linked = GameAssist.getLinkedCharacter(token);
+            if (!linked) {
+                GameAssist.log('NPCHPRoller', `${token.get('name') || 'Token'} must be linked to a character on the Objects layer.`, 'WARN');
                 return;
             }
 
             const npcAttr = findObjs({
                 _type: 'attribute',
-                _characterid: charId,
+                _characterid: linked.character.id,
                 name: 'npc'
             })[0];
 
             if (!npcAttr || npcAttr.get('current') !== '1') {
+                GameAssist.log('NPCHPRoller', `${token.get('name') || linked.character.get('name')} is not flagged as an NPC.`, 'WARN');
                 return;
             }
 
             const hpFormulaAttr = findObjs({
                 _type: 'attribute',
-                _characterid: charId,
+                _characterid: linked.character.id,
                 name: 'npc_hpformula'
             })[0];
 
             if (!hpFormulaAttr) {
-                GameAssist.log('NPCHPRoller', `No HP formula found for ${token.get('name')}`, 'WARN');
+                GameAssist.log('NPCHPRoller', `No HP formula found for ${token.get('name') || linked.character.get('name')}`, 'WARN');
                 return;
             }
 
@@ -1411,14 +1564,18 @@ GameAssist.register('ConcentrationTracker', function() {
             });
 
             const npcTokens = [];
+            const skipped = [];
 
             for (const token of tokens) {
-                const characterId = token.get('represents');
-                if (!characterId) continue;
+                const link = GameAssist.getLinkedCharacter(token);
+                if (!link) {
+                    skipped.push(token.get('name') || '(Unnamed)');
+                    continue;
+                }
 
                 const npcAttr = findObjs({
                     _type: 'attribute',
-                    _characterid: characterId,
+                    _characterid: link.character.id,
                     name: 'npc'
                 })[0];
 
@@ -1436,6 +1593,10 @@ GameAssist.register('ConcentrationTracker', function() {
                     GameAssist.log('NPCHPRoller', `Error processing ${token.get('name')}: ${err.message}`, 'ERROR');
                 }
             }
+
+            if (skipped.length) {
+                GameAssist.log('NPCHPRoller', `Skipped ${skipped.length} token(s) without linked characters: ${skipped.join(', ')}`, 'WARN');
+            }
         }, 'NPCHPRoller', { gmOnly: true });
 
         GameAssist.onCommand('!npc-hp-selected', msg => {
@@ -1444,16 +1605,30 @@ GameAssist.register('ConcentrationTracker', function() {
                 return;
             }
 
+            const skipped = [];
+
             msg.selected.forEach(sel => {
                 const token = getObj('graphic', sel._id);
-                if (token) {
-                    try {
-                        rollTokenHP(token);
-                    } catch (err) {
-                        GameAssist.log('NPCHPRoller', `Error processing ${token.get('name')}: ${err.message}`, 'ERROR');
-                    }
+                if (!token) {
+                    skipped.push('(Missing Token)');
+                    return;
+                }
+
+                if (!GameAssist.getLinkedCharacter(token)) {
+                    skipped.push(token.get('name') || '(Unnamed)');
+                    return;
+                }
+
+                try {
+                    rollTokenHP(token);
+                } catch (err) {
+                    GameAssist.log('NPCHPRoller', `Error processing ${token.get('name')}: ${err.message}`, 'ERROR');
                 }
             });
+
+            if (skipped.length) {
+                GameAssist.log('NPCHPRoller', `Skipped ${skipped.length} token(s): ${skipped.join(', ')}`, 'WARN');
+            }
         }, 'NPCHPRoller', { gmOnly: true });
 
         GameAssist.log('NPCHPRoller', 'v0.1.1.0 Ready: !npc-hp-all, !npc-hp-selected', 'INFO', { startup: true });
@@ -1488,15 +1663,36 @@ GameAssist.register('ConcentrationTracker', function() {
         GameAssist._dedupePlanned();
         auditCompatibility();
 
-        GameAssist.log('Core', `GameAssist v${VERSION} ready; modules: ${Object.keys(MODULES).join(', ')}`);
+        const moduleNames = Object.entries(MODULES)
+            .filter(([, mod]) => !mod.internal)
+            .map(([name]) => name);
 
-        Object.entries(MODULES).forEach(([name, m]) => {
-            if (getState(name).config.enabled) {
-                m.initialized = true;
-                try { m.initFn(); }
-                catch(e) { GameAssist.handleError(name, e); }
+        GameAssist.log('Core', `GameAssist v${VERSION} ready; modules: ${moduleNames.join(', ')}`);
+
+        moduleNames.forEach(name => {
+            const mod = MODULES[name];
+            const cfg = getState(name).config;
+
+            if (cfg.enabled) {
+                try {
+                    if (!mod.wired) {
+                        mod.initFn();
+                        mod.wired = true;
+                    }
+                    mod.initialized = true;
+                    mod.active = true;
+                } catch (e) {
+                    mod.initialized = false;
+                    mod.active = false;
+                    GameAssist.handleError(name, e);
+                }
+            } else {
+                mod.initialized = false;
+                mod.active = false;
             }
         });
+
+        GameAssist._metrics.lastUpdate = new Date().toISOString();
     });
     // --- Notes & Comments ---
     // CHOICE: Core ready log is never suppressed; mirrors README guidance.

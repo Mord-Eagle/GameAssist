@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [Unreleased]
+
+### Fixed
+- Guard-based command and event wrappers now short-circuit when a module is disabled or uninitialized, preventing residual handlers from firing after `!ga-disable`.
+
+### Documentation
+- Clarified internal commentary around the state auditor to note that unexpected branches are only warned about.
+
+---
+
 ## [0.1.2] – 2025-09-16
 
 ### Packaging & Repository Compliance (Roll20 API Repo)
