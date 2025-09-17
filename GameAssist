@@ -795,6 +795,16 @@ GameAssist.register('ConcentrationTracker', function() {
         return `${modState.config.marker || 'Concentrating'}`.trim() || 'Concentrating';
     }
 
+    function tokenHasMarker(token, marker) {
+        const want = marker.toLowerCase();
+        if (!want) return false;
+        const raw = token.get('statusmarkers') || '';
+        return raw
+            .split(',')
+            .map(m => m.split('::')[0].toLowerCase())
+            .includes(want);
+    }
+
     // ─── Default Emote Lines ────────────────────────────────────────────────────────
     const DEFAULT_LINES = {
         success: [
@@ -893,17 +903,12 @@ GameAssist.register('ConcentrationTracker', function() {
      */
     function showStatus(player) {
         const marker = getTokenMarker();
-        const markerLower = marker.toLowerCase();
         const page = Campaign().get('playerpageid');
         const tokens = findObjs({
             _type:  'graphic',
             _pageid: page,
             layer:  'objects'
-        }).filter(t =>
-            (t.get('statusmarkers') || '')
-                .toLowerCase()
-                .includes(markerLower)
-        );
+        }).filter(t => tokenHasMarker(t, marker));
         if (!tokens.length) {
             return sendChat('ConcentrationTracker',
                 `/w "${player}" No tokens concentrating.`
@@ -1088,14 +1093,9 @@ GameAssist.register('ConcentrationTracker', function() {
     teardown: () => {
         const state = getState('ConcentrationTracker');
         const marker = `${state?.config?.marker || 'Concentrating'}`.trim() || 'Concentrating';
-        const markerLower = marker.toLowerCase();
         const page = Campaign().get('playerpageid');
         findObjs({ _type: 'graphic', _pageid: page, layer: 'objects' })
-            .filter(t =>
-                (t.get('statusmarkers') || '')
-                    .toLowerCase()
-                    .includes(markerLower)
-            )
+            .filter(t => tokenHasMarker(t, marker))
             .forEach(t =>
                 sendChat('api',
                     `!token-mod --ids ${t.id} --set statusmarkers|-${marker}`
