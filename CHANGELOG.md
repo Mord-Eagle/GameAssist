@@ -54,6 +54,22 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.1.4] – 2025-09-24
+
+### Added
+- New **ConfigUI** module that provides a GM-only chat control panel (buttons for enable/disable and boolean config toggles) exposed via `!ga-config ui` / `!ga-config-ui`.
+- New **DebugTools** module (disabled by default) with `!ga-debug damage|marker|save` commands that dry-run diagnostics unless `--apply` is supplied.
+- Public helper `GameAssist.renderConfigUI(playerId, opts)` to re-render the Config UI programmatically.
+
+### Changed
+- `README.md` updates: TL;DR table, module guides, command matrix, macro recipes, and configuration reference now document ConfigUI, DebugTools, and the new chat UI workflow.
+- `GameAssist` version bumped to 0.1.4 with ConfigUI/DebugTools registrations and queue-guarded hooks.
+
+### Documentation
+- Added detailed ConfigUI and DebugTools sections to the Module Guides plus notes on using `!ga-config ui` and `!ga-debug`.
+
+---
+
 ## [0.1.3] – 2025-09-17
 
 ### Added
