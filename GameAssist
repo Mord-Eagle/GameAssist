@@ -320,10 +320,21 @@
                 this.offEvents(name);
                 this.offCommands(name);
                 clearState(name);
-                getState(name).config.enabled = true;
-                m.initialized = true;
-                try { m.initFn(); this.log(name, 'Enabled'); }
-                catch(e) { this.handleError(name, e); }
+                const branch = getState(name);
+                try {
+                    m.initFn();
+                    m.initialized = true;
+                    branch.config.enabled = true;
+                    this.log(name, 'Enabled');
+                }
+                catch(e) {
+                    m.initialized = false;
+                    this.offEvents(name);
+                    this.offCommands(name);
+                    clearState(name);
+                    branch.config.enabled = false;
+                    this.handleError(name, e);
+                }
             });
         },
 
@@ -1243,10 +1254,20 @@ GameAssist.register('ConcentrationTracker', function() {
         GameAssist.log('Core', `GameAssist v${VERSION} ready; modules: ${Object.keys(MODULES).join(', ')}`);
 
         Object.entries(MODULES).forEach(([name, m]) => {
-            if (getState(name).config.enabled) {
-                m.initialized = true;
-                try { m.initFn(); }
-                catch(e) { GameAssist.handleError(name, e); }
+            const branch = getState(name);
+            if (branch.config.enabled) {
+                try {
+                    m.initFn();
+                    m.initialized = true;
+                }
+                catch(e) {
+                    m.initialized = false;
+                    GameAssist.offEvents(name);
+                    GameAssist.offCommands(name);
+                    clearState(name);
+                    branch.config.enabled = false;
+                    GameAssist.handleError(name, e);
+                }
             }
         });
     });
