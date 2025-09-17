@@ -14,6 +14,22 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.1.3] – 2025-09-17
+
+### Added
+- Compatibility audit scoring with signature-based hints for popular mods (TokenMod, ScriptCards, APILogic), surfaced when `GameAssist.flags.DEBUG_COMPAT` is enabled.
+- Shared helpers `GameAssist.createButton(label, command)` and `GameAssist.rollTable(tableName)` for consistent chat button rendering and rollable table execution.
+- `!ga-conc-status` GM command to whisper the most recent concentration DC/damage and bonus per player using the enriched `lastDamage` state.
+
+### Changed
+- Module enablement now checks declared `dependsOn` requirements (e.g., TokenMod) and refuses to start modules until dependencies are present.
+- ConcentrationTracker persists structured metadata for the last concentration check (damage, DC, mode, token/character IDs) to power the new status report.
+
+### Documentation
+- README updated for the new GM command, developer helpers, compatibility scoring notes, and dependency guardrails.
+
+---
+
 ## [0.1.2] – 2025-09-16
 
 ### Packaging & Repository Compliance (Roll20 API Repo)

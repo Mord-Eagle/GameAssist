@@ -1,6 +1,6 @@
 # GameAssist – Modular API Framework for Roll20
 
-**Version 0.1.2** | © 2025 Mord Eagle · MIT License
+**Version 0.1.3** | © 2025 Mord Eagle · MIT License
 **Lead Dev:** [@Mord-Eagle](https://github.com/Mord-Eagle)
 
 ---
@@ -18,7 +18,7 @@ GameAssist is a **Roll20 API modular Framework**: one script that drops into you
 | Core Lift                | Serialised queue, per-task timeout, watchdog auto-recovery, state auditor, live metrics.                            |
 | 30-Second Install        | ① Paste **GameAssist.js** ② One-Click **TokenMod** ③ Add **seven** roll-tables (list below) ④ `!ga-status` = green. |
 | Flagship Player Commands | `!concentration`, `!cc`, `!critfail`                                                                                |
-| Flagship GM Commands     | `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report`                                                              |
+| Flagship GM Commands     | `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report`, `!ga-conc-status`
 | Admin Controls           | `!ga-config list\|get\|set\|modules`, `!ga-enable`, `!ga-disable`, `!ga-status`                                     |
 | Safety Nets              | FIFO queue + watchdog + auditor → zero silent failures.                                                             |
 | Extensibility            | `GameAssist.register('MyModule', initFn, { events:['chat:message'], prefixes:['!mymod'] });`                        |
@@ -51,7 +51,8 @@ GameAssist’s micro-kernel wraps the Roll20 event bus and exposes:
 * **State Manager** – namespaced storage (`state.GameAssist.<Module>`) with auto-seed and audits. Modules must persist only under their own branch.
 * **Metrics Board** – live counters (`commands`, `errors`, `avgTaskMs`) surfaced through `!ga-status`.
 * **Hot Reload** – guard-based toggles; `!ga-enable|disable` flips module handlers on or off without relying on sandbox `off()`.
-* **Compatibility Audit** – toggle `GameAssist.flags.DEBUG_COMPAT` to see a list of known and unknown scripts.
+* **Compatibility Audit** – toggle `GameAssist.flags.DEBUG_COMPAT` to score overlaps against popular mods (TokenMod, ScriptCards, APILogic) and receive hint tables plus the raw known/unknown list.
+* **Dependency Guardrails** – modules declare dependencies (e.g. TokenMod); GameAssist refuses to enable them until the requirements are present.
 
 Design goal: **zero GM downtime**.
 
@@ -107,6 +108,7 @@ Natural-1 detection on the standard `atk`, `atkdmg`, `npcatk`, `spell` templates
 * `--off` → Remove marker from selected tokens
 * `--status` → Who is concentrating
 * `--config randomize on|off` → Toggle emote randomization
+* `!ga-conc-status` (GM) → Whisper a template of the most recent concentration DC/damage per player
 
 Config keys: `marker`, `randomize`.
 
@@ -140,7 +142,7 @@ IV. Using the Rollable Table tool, create these seven tables by name:
 * Confirm-Crit-Magic
   V. Click **Save Script** again to reload the API. As GM, open your chat whisper window and confirm you see one “ready” message for GameAssist itself and one for each module. It will look roughly like this:
 
-> (From GameAssist): ℹ️ \[10:53:56 PM] \[Core] GameAssist v0.1.2 ready; modules: CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller
+> (From GameAssist): ℹ️ \[10:53:56 PM] \[Core] GameAssist v0.1.3 ready; modules: CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller
 
 VI. To verify end-to-end, type `!ga-status` as GM. You’ll receive a whispered summary of GameAssist’s internal metrics (commands processed, active listeners, queue length, etc.), which confirms the system is up and running.
 
@@ -161,6 +163,8 @@ VI. To verify end-to-end, type `!ga-status` as GM. You’ll receive a whispered 
 |            | `!npc-death-report`                             | —                                                                                                              | Report NPC tokens whose HP/“dead” marker states mismatch |
 |            | `!critfail`                                     | —                                                                                                              | Manual fumble prompt menu for active players             |
 |            | `!critfumble help`                              | —                                                                                                              | Whisper CritFumble help panel                            |
+|            | `!ga-conc-status`                               | —
+                                                     | GM-only snapshot of the last concentration DC/damage per player |
 | **Player** | `!critfumble-<type>`                            | `<type>` ∈ {melee, ranged, thrown, spell, natural}                                                             | Trigger the fumble‐type menu for your character          |
 |            | `!confirm-crit-martial` / `!confirm-crit-magic` | —                                                                                                              | Roll the corresponding confirmation table                |
 |            | `!concentration` / `!cc`                        | `--damage X`, `--mode normal\|adv\|dis`, `--last`, `--off`, `--status`, `--config randomize on\|off`, `--help` | Open UI buttons or perform a concentration save          |
@@ -197,6 +201,8 @@ VI. To verify end-to-end, type `!ga-status` as GM. You’ll receive a whispered 
 |                         | `GameAssist.saveState(moduleName, data)`                                  | Merge and persist additional data into a module’s state branch                                                                            |
 |                         | `GameAssist.clearState(moduleName)`                                       | Reset a module’s persistent state branch (config/runtime container remains namespaced)                                                    |
 | **Token Helpers**       | `GameAssist.getLinkedCharacter(token)`                                    | Validate a token is on the Objects layer and linked to a character; returns `{ token, character }` or `null`                              |
+| **Chat Helpers**        | `GameAssist.createButton(label, command)`                                 | Build a Roll20 chat button string `[Label](!command …)` with the label safely escaped for chat menus                                      |
+|                         | `GameAssist.rollTable(tableName)`                                         | Fire `/roll 1t[TableName]` via `sendChat` using Roll20’s rollable table syntax                                                            |
 | **Metrics Inspection**  | `GameAssist._metrics`                                                     | Live metrics: counts of commands, messages, errors, state audits, task durations, plus `lastUpdate`                                       |
 
 > **Notes:**
@@ -357,7 +363,7 @@ IV. **Verify Core Loading**
 a. Watch your GM Whisper window—look for a banner such as:
 
 ```
-GameAssist v0.1.2 ready; modules: CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller
+GameAssist v0.1.3 ready; modules: CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller
 ```
 
 b. Run `!ga-status` to confirm there are no errors and that all modules report as active.
