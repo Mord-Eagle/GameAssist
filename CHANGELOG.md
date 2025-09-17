@@ -7,6 +7,11 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Persisted session metrics with GM summary/reset command.
+  - Added `GameAssist` lines 288-420 for the metrics store helpers (`createMetricsStore`, `ensureStateRoot`, `recordMetric`) and instrumented wrappers at lines 683-742, 796-844, and 1049-1119 to log commands, events, queue tasks, toggles, errors, and expose `!ga-metrics`.
+  - Updated the task queue finalizer at `GameAssist` lines 197-214 to retain only the latest durations and feed the new metrics ring buffer.
+  - Exported the metrics helpers (`getMetricsStore`, `recordMetric`) on the public API at `GameAssist` lines 927-932.
+  - Documentation: README TL;DR + Command Matrix + Troubleshooting call out `!ga-metrics` (sections §1, §8, §14) and script.json lists the new command + version bump to 0.1.5.
 - Introduced a shared token-to-character resolver so every module validates Roll20 objects before use.
   - Added `GameAssist` lines 343-353: `function getLinkedCharacter(token) { ... return { token, character }; }`.
   - Added `GameAssist` line 836: `GameAssist.getLinkedCharacter = getLinkedCharacter;` for public access.

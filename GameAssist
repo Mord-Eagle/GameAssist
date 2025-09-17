@@ -1,8 +1,8 @@
 /* 
 ========================================
 GameAssist — Roll20 API Script
-Version: 0.1.4
-Last Updated: 2025-09-24 (America/Detroit)
+Version: 0.1.5
+Last Updated: 2025-09-25 (America/Detroit)
 Author: Mord Eagle
 License: MIT (see repository LICENSE)
 Homepage: https://github.com/Roll20/roll20-api-scripts (submission target)
@@ -161,11 +161,13 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // [GAMEASSIST_GAMEASSIST:POLICY] END
     // =============================================================================
 
-    const VERSION      = '0.1.4';
+    const VERSION      = '0.1.5';
     const STATE_KEY    = 'GameAssist';
     const MODULES      = {};
     const _transitioning   = {};
     let   READY        = false;
+    const METRIC_HISTORY_LIMIT  = 50;
+    const METRIC_DURATION_LIMIT = 20;
 
     MODULES.Core = {
         internal:    true,
@@ -220,7 +222,11 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 _busy = false;
                 const duration = Date.now() - _lastStart;
                 GameAssist._metrics.taskDurations.push(duration);
+                if (GameAssist._metrics.taskDurations.length > METRIC_DURATION_LIMIT) {
+                    GameAssist._metrics.taskDurations.shift();
+                }
                 GameAssist._metrics.lastUpdate = new Date().toISOString();
+                recordMetric('task', { duration, noHistory: true });
                 _runNext();
             });
     }
@@ -279,6 +285,49 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "APP:UTILS", title: "Utilities",
     //   guarantees: ["Pure helpers; no external side‑effects"], version: "1.0.0" }
     // -------------------------------------------------------------------------
+    function createMetricsStore() {
+        return {
+            totals: {},
+            history: [],
+            durations: [],
+            sessionStart: new Date().toISOString(),
+            lastUpdate: null
+        };
+    }
+
+    function ensureStateRoot() {
+        state[STATE_KEY] = state[STATE_KEY] || {};
+        const root = state[STATE_KEY];
+
+        if (!root.config || typeof root.config !== 'object') {
+            root.config = {};
+        }
+
+        if (!root.metrics || typeof root.metrics !== 'object') {
+            root.metrics = createMetricsStore();
+        } else {
+            root.metrics.totals = root.metrics.totals || {};
+            root.metrics.history = Array.isArray(root.metrics.history) ? root.metrics.history : [];
+            root.metrics.durations = Array.isArray(root.metrics.durations) ? root.metrics.durations : [];
+            if (!root.metrics.sessionStart) {
+                root.metrics.sessionStart = new Date().toISOString();
+            }
+        }
+
+        state[STATE_KEY] = root;
+        return root;
+    }
+
+    function getMetricsStore() {
+        return ensureStateRoot().metrics;
+    }
+
+    function resetMetricsStore() {
+        const root = ensureStateRoot();
+        root.metrics = createMetricsStore();
+        return root.metrics;
+    }
+
     function _parseArgs(content) {
         const args = {}, pattern = /--(\w+)(?:\s+("[^"]*"|[^\s]+))?/g;
         let m;
@@ -295,20 +344,21 @@ description, syntax/commands, and configuration pointers near the top of the scr
     }
 
     function getState(mod) {
-        state[STATE_KEY] = state[STATE_KEY] || { config: {} };
-        state[STATE_KEY][mod] = state[STATE_KEY][mod] || { config: {}, runtime: {} };
-        return state[STATE_KEY][mod];
+        const root = ensureStateRoot();
+        root[mod] = root[mod] || { config: {}, runtime: {} };
+        return root[mod];
     }
     function saveState(mod, data) {
-        state[STATE_KEY] = state[STATE_KEY] || { config: {} };
-        state[STATE_KEY][mod] = Object.assign(getState(mod), data);
+        const root = ensureStateRoot();
+        root[mod] = Object.assign(getState(mod), data);
     }
     function clearState(mod) {
-        if (state[STATE_KEY]?.[mod]) delete state[STATE_KEY][mod];
+        const root = ensureStateRoot();
+        if (root?.[mod]) delete root[mod];
     }
 
     function auditState() {
-        const root = state[STATE_KEY] || {};
+        const root = ensureStateRoot();
         const whitelist = new Set(['config', 'flags', 'metrics']);
 
         Object.keys(root).forEach(k => {
@@ -327,6 +377,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         });
         GameAssist._metrics.stateAudits++;
         GameAssist._metrics.lastUpdate = new Date().toISOString();
+        recordMetric('audit', { noHistory: true });
     }
 
     function seedDefaults() {
@@ -335,6 +386,38 @@ description, syntax/commands, and configuration pointers near the top of the scr
             const cfg = getState(name).config;
             if (cfg.enabled === undefined) cfg.enabled = mod.enabled;
         });
+    }
+
+    function recordMetric(type, { mod = null, note = '', noHistory = false, duration = null } = {}) {
+        if (!type) return;
+
+        const store = getMetricsStore();
+        const totals = store.totals;
+        totals[type] = (totals[type] || 0) + 1;
+
+        const timestamp = new Date().toISOString();
+        store.lastUpdate = timestamp;
+
+        if (!noHistory) {
+            const entry = { ts: timestamp, type };
+            if (mod) entry.mod = mod;
+            if (note !== undefined && note !== null) {
+                const text = String(note).slice(0, 120);
+                if (text) entry.note = text;
+            }
+            store.history.push(entry);
+            if (store.history.length > METRIC_HISTORY_LIMIT) {
+                store.history.splice(0, store.history.length - METRIC_HISTORY_LIMIT);
+            }
+        }
+
+        if (typeof duration === 'number' && isFinite(duration)) {
+            const durations = store.durations;
+            durations.push(Math.max(0, Math.round(duration)));
+            if (durations.length > METRIC_DURATION_LIMIT) {
+                durations.splice(0, durations.length - METRIC_DURATION_LIMIT);
+            }
+        }
     }
 
     function _sanitize(str = '') {
@@ -600,6 +683,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         handleError(mod, err) {
             this._metrics.errors++;
             this._metrics.lastUpdate = new Date().toISOString();
+            recordMetric('error', { mod, note: err?.message || String(err) });
             this.log(mod, err.message || String(err), 'ERROR');
         },
 
@@ -636,6 +720,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 if (acl.length && !acl.includes(msg.playerid)) return;
                 this._metrics.commands++;
                 this._metrics.lastUpdate = new Date().toISOString();
+                recordMetric('command', { mod, note: prefix, noHistory: true });
                 try { fn(msg); }
                 catch(e) { this.handleError(mod, e); }
             };
@@ -653,6 +738,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 if (!READY) return;
                 this._metrics.messages++;
                 this._metrics.lastUpdate = new Date().toISOString();
+                recordMetric('event', { mod, note: evt, noHistory: true });
                 try { fn(...args); }
                 catch(e) { this.handleError(mod, e); }
             };
@@ -766,6 +852,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 m.active = true;
                 this._metrics.lastUpdate = new Date().toISOString();
                 this.log(name, 'Enabled');
+                recordMetric('toggle', { mod: name, note: 'enabled' });
                 finish();
             });
         },
@@ -808,6 +895,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 m.initialized = false;
                 this._metrics.lastUpdate = new Date().toISOString();
                 this.log(name, 'Disabled');
+                recordMetric('toggle', { mod: name, note: 'disabled' });
                 finish();
             });
         },
@@ -839,6 +927,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
     GameAssist.getState = getState;
     GameAssist.saveState = saveState;
     GameAssist.clearState = clearState;
+    GameAssist.getMetricsStore = getMetricsStore;
+    GameAssist.recordMetric = recordMetric;
     GameAssist.getLinkedCharacter = getLinkedCharacter;
 
     globalThis.GameAssist = GameAssist;
@@ -861,7 +951,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
         if (sub === 'list') {
             const ts   = new Date().toLocaleString();
             const ver  = `v${VERSION}`;
-            const cfg  = JSON.stringify(state[STATE_KEY].config, null, 2)
+            const cfgRoot = ensureStateRoot();
+            const cfg  = JSON.stringify(cfgRoot.config, null, 2)
                           .replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'})[c]);
             const name = 'GameAssist Config';
             let handout = findObjs({ type:'handout', name })[0];
@@ -936,7 +1027,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
     GameAssist.onCommand('!ga-status', msg => {
         const metrics = GameAssist._metrics;
-        const avgDuration = metrics.taskDurations.length > 0 
+        const avgDuration = metrics.taskDurations.length > 0
             ? (metrics.taskDurations.reduce((a,b) => a+b, 0) / metrics.taskDurations.length).toFixed(2)
             : 'N/A';
 
@@ -953,6 +1044,79 @@ description, syntax/commands, and configuration pointers near the top of the scr
         ].join('\n');
 
         GameAssist.log('Status', status);
+    }, 'Core', { gmOnly: true });
+
+    GameAssist.onCommand('!ga-metrics', msg => {
+        const parts = msg.content.trim().split(/\s+/);
+        const sub = (parts[1] || 'summary').toLowerCase();
+
+        if (sub === 'reset') {
+            resetMetricsStore();
+            GameAssist._metrics.commands = 0;
+            GameAssist._metrics.messages = 0;
+            GameAssist._metrics.errors = 0;
+            GameAssist._metrics.stateAudits = 0;
+            GameAssist._metrics.taskDurations = [];
+            GameAssist._metrics.lastUpdate = new Date().toISOString();
+            recordMetric('system', { mod: 'Core', note: 'Metrics reset' });
+            GameAssist.log('Metrics', 'Metrics reset. Session counters cleared.');
+            return;
+        }
+
+        const store = getMetricsStore();
+        const totals = store.totals || {};
+        const durations = store.durations || [];
+        const labels = {
+            command: 'Commands',
+            event: 'Events',
+            task: 'Queue Tasks',
+            toggle: 'Module Toggles',
+            error: 'Errors',
+            audit: 'State Audits',
+            system: 'System Events'
+        };
+
+        const summary = [
+            '**GameAssist Metrics**',
+            `Session Start: ${store.sessionStart || 'unknown'}`,
+            `Last Update: ${store.lastUpdate || 'unknown'}`
+        ];
+
+        Object.entries(labels).forEach(([key, label]) => {
+            summary.push(`${label}: ${totals[key] || 0}`);
+        });
+
+        const extraKeys = Object.keys(totals).filter(key => !labels[key]).sort();
+        extraKeys.forEach(key => {
+            summary.push(`${key}: ${totals[key]}`);
+        });
+
+        if (durations.length) {
+            const totalDur = durations.reduce((acc, val) => acc + val, 0);
+            const avg = (totalDur / durations.length).toFixed(2);
+            const min = Math.min(...durations);
+            const max = Math.max(...durations);
+            summary.push(`Queue Durations (last ${durations.length}): avg ${avg}ms | min ${min}ms | max ${max}ms`);
+        } else {
+            summary.push('Queue Durations: no tasks recorded yet.');
+        }
+
+        const history = (store.history || []).slice(-5).reverse();
+        if (history.length) {
+            summary.push('Recent activity:');
+            history.forEach(entry => {
+                const segments = [];
+                if (entry.ts) segments.push(entry.ts);
+                segments.push(entry.type);
+                if (entry.mod) segments.push(`[${entry.mod}]`);
+                if (entry.note) segments.push(`— ${entry.note}`);
+                summary.push(`• ${segments.join(' ')}`.trim());
+            });
+        } else {
+            summary.push('Recent activity: none logged.');
+        }
+
+        GameAssist.log('Metrics', summary.join('\n'));
     }, 'Core', { gmOnly: true });
     // --- Notes & Comments ---
     // CHOICE: Keep command syntax identical to legacy for drop‑in replacement.
@@ -2353,8 +2517,12 @@ GameAssist.register('ConcentrationTracker', function() {
         if (READY) return;
         READY = true;
 
-        state[STATE_KEY] = state[STATE_KEY] || { config: {} };
-        GameAssist.config = state[STATE_KEY].config;
+        const root = ensureStateRoot();
+        GameAssist.config = root.config;
+        if (!root.metrics.sessionStart) {
+            root.metrics.sessionStart = new Date().toISOString();
+        }
+        recordMetric('system', { mod: 'Core', note: 'Sandbox ready' });
 
         GameAssist._clearAllListeners();
         seedDefaults();

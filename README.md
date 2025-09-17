@@ -1,6 +1,6 @@
 # GameAssist – Modular API Framework for Roll20
 
-**Version 0.1.4** | © 2025 Mord Eagle · MIT License
+**Version 0.1.5** | © 2025 Mord Eagle · MIT License
 **Lead Dev:** [@Mord-Eagle](https://github.com/Mord-Eagle)
 
 ---
@@ -20,7 +20,7 @@ GameAssist is a **Roll20 API modular Framework**: one script that drops into you
 | Flagship Player Commands | `!concentration`, `!cc`, `!critfail`                                                                                |
 | Flagship GM Commands     | `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report`, `!ga-conc-status`, `!ga-config ui`
                  |
-| Admin Controls           | `!ga-config list\|get\|set\|modules\|ui`, `!ga-config-ui`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-debug`                                     |
+| Admin Controls           | `!ga-config list\|get\|set\|modules\|ui`, `!ga-config-ui`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-metrics`, `!ga-debug`                 |
 | Safety Nets              | FIFO queue + watchdog + auditor → zero silent failures.                                                             |
 | Extensibility            | `GameAssist.register('MyModule', initFn, { events:['chat:message'], prefixes:['!mymod'] });`                        |
 | Backup Utility           | `!ga-config list` produces a hand-out containing the full JSON config.                                              |
@@ -52,7 +52,7 @@ GameAssist’s micro-kernel wraps the Roll20 event bus and exposes:
 * **Task Queue** – serialises async work (`sendChat`, `findObjs`, …) and times out stalled jobs.
 * **Watchdog** – detects a hung task > `DEFAULT_TIMEOUT × 2` and restarts the queue.
 * **State Manager** – namespaced storage (`state.GameAssist.<Module>`) with auto-seed and audits. Modules must persist only under their own branch.
-* **Metrics Board** – live counters (`commands`, `errors`, `avgTaskMs`) surfaced through `!ga-status`.
+* **Metrics Board** – live counters (`commands`, `errors`, `avgTaskMs`) surfaced through `!ga-status`; persisted history + ring buffer via `!ga-metrics`.
 * **Hot Reload** – guard-based toggles; `!ga-enable|disable` flips module handlers on or off without relying on sandbox `off()`.
 * **Compatibility Audit** – toggle `GameAssist.flags.DEBUG_COMPAT` to score overlaps against popular mods (TokenMod, ScriptCards, APILogic) and receive hint tables plus the raw known/unknown list.
 * **Dependency Guardrails** – modules declare dependencies (e.g. TokenMod); GameAssist refuses to enable them until the requirements are present.
@@ -165,9 +165,9 @@ IV. Using the Rollable Table tool, create these seven tables by name:
 * Confirm-Crit-Magic
   V. Click **Save Script** again to reload the API. As GM, open your chat whisper window and confirm you see one “ready” message for GameAssist itself and one for each module. It will look roughly like this:
 
-> (From GameAssist): ℹ️ \[10:53:56 PM] \[Core] GameAssist v0.1.4 ready; modules: ConfigUI, CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller, DebugTools
+> (From GameAssist): ℹ️ \[10:53:56 PM] \[Core] GameAssist v0.1.5 ready; modules: ConfigUI, CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller, DebugTools
 
-VI. To verify end-to-end, type `!ga-status` as GM. You’ll receive a whispered summary of GameAssist’s internal metrics (commands processed, active listeners, queue length, etc.), which confirms the system is up and running.
+VI. To verify end-to-end, type `!ga-status` as GM. You’ll receive a whispered summary of GameAssist’s internal metrics (commands processed, active listeners, queue length, etc.), which confirms the system is up and running. Use `!ga-metrics` for the persisted session log (recent toggles, errors, and queue timing ring buffer) or `!ga-metrics reset` to clear it.
 
 ---
 
@@ -182,6 +182,7 @@ VI. To verify end-to-end, type `!ga-status` as GM. You’ll receive a whispered 
 |            | `!ga-enable <Module>` / `!ga-disable <Module>`  | —                                                                                                              | Enable or disable a module                               |
 |            | `!ga-config ui` / `!ga-config-ui`               | `[--page N]`                                      | Open the GM Config UI with module toggles and quick config buttons |
 |            | `!ga-status`                                    | —                                                                                                              | Whisper live metrics (commands, messages, errors, etc.)  |
+|            | `!ga-metrics`                                   | `[reset]`                                        | Summarize persisted session metrics; append `reset` to clear history |
 | **GM**     | `!npc-hp-all`                                   | —                                                                                                              | Roll & set HP for all NPC tokens on the current page     |
 |            | `!npc-hp-selected`                              | —                                                                                                              | Roll & set HP for the currently selected NPC tokens      |
 |            | `!npc-death-report`                             | —                                                                                                              | Report NPC tokens whose HP/“dead” marker states mismatch |
@@ -232,7 +233,8 @@ VI. To verify end-to-end, type `!ga-status` as GM. You’ll receive a whispered 
 | **Chat Helpers**        | `GameAssist.createButton(label, command)`                                 | Build a Roll20 chat button string `[Label](!command …)` with the label safely escaped for chat menus                                      |
 |                         | `GameAssist.renderConfigUI(playerId, opts?)`                   | When ConfigUI is active, whisper the GM panel (`opts`: `{ page, rawArgs }`) |
 |                         | `GameAssist.rollTable(tableName)`                                         | Fire `/roll 1t[TableName]` via `sendChat` using Roll20’s rollable table syntax                                                            |
-| **Metrics Inspection**  | `GameAssist._metrics`                                                     | Live metrics: counts of commands, messages, errors, state audits, task durations, plus `lastUpdate`                                       |
+| **Metrics Inspection**  | `GameAssist._metrics` / `GameAssist.getMetricsStore()`               | Live counters plus the persisted metrics branch `{ totals, history, durations, sessionStart, lastUpdate }` |
+| **Metric Logging**      | `GameAssist.recordMetric(type, opts?)`                                | Append to the metrics store; `opts`: `{ mod, note, noHistory, duration }`                                |
 
 > **Notes:**
 > * Listener lifecycle is guard-based; disabling a module flips its `initialized`/`active` flags so handlers early-return without sandbox `off()`.
@@ -292,7 +294,7 @@ These measurements reflect real-world performance on the specified hardware and 
 ## 14 · Troubleshooting <a id="14-troubleshooting"></a>
 
 * **GameAssist appears unresponsive**
-  Run `!ga-status` and look at **Queue Length** and **Last Update**.
+  Run `!ga-status` and look at **Queue Length** and **Last Update**. Follow up with `!ga-metrics` to review the persisted task history and recent module toggles/errors.
 
   * If **Queue Length** keeps climbing while **Last Update** does not change, a module is stuck.
   * To resolve: either increase `DEFAULT_TIMEOUT` in the code or disable modules one by one (`!ga-disable <Module>`) until you identify the problematic one.
@@ -396,7 +398,7 @@ IV. **Verify Core Loading**
 a. Watch your GM Whisper window—look for a banner such as:
 
 ```
-GameAssist v0.1.4 ready; modules: ConfigUI, CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller, DebugTools
+GameAssist v0.1.5 ready; modules: ConfigUI, CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller, DebugTools
 ```
 
 b. Run `!ga-status` to confirm there are no errors and that all modules report as active.
