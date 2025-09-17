@@ -1,13 +1,13 @@
 # GameAssist – Modular API Framework for Roll20
 
-**Version 0.1.3** | © 2025 Mord Eagle · MIT License
+**Version 0.1.4** | © 2025 Mord Eagle · MIT License
 **Lead Dev:** [@Mord-Eagle](https://github.com/Mord-Eagle)
 
 ---
 
 ## 0 · What is GameAssist (in one paragraph)?
 
-GameAssist is a **Roll20 API modular Framework**: one script that drops into your API sandbox and spins up a guarded event-queue, metrics board and watchdog. Currently it has four bundled modules—CritFumble, Concentration Tracker, NPC Manager and NPC HP Roller—that hook into that queue, giving you automated fumble tables, concentration checks, death-marker hygiene and one-click HP randomization. Hot-reload, per-task time-outs and state audits let you run marathon sessions without reloading the sandbox.
+GameAssist is a **Roll20 API modular Framework**: one script that drops into your API sandbox and spins up a guarded event-queue, metrics board and watchdog. Currently it has six bundled modules—Config UI (GM chat controls), CritFumble, Concentration Tracker, NPC Manager, NPC HP Roller and Debug Tools (GM-only, disabled by default)—that hook into that queue, giving you automated fumble tables, concentration checks, death-marker hygiene, one-click HP randomization and on-demand diagnostics. Hot-reload, per-task time-outs and state audits let you run marathon sessions without reloading the sandbox.
 
 ---
 
@@ -18,11 +18,14 @@ GameAssist is a **Roll20 API modular Framework**: one script that drops into you
 | Core Lift                | Serialised queue, per-task timeout, watchdog auto-recovery, state auditor, live metrics.                            |
 | 30-Second Install        | ① Paste **GameAssist.js** ② One-Click **TokenMod** ③ Add **seven** roll-tables (list below) ④ `!ga-status` = green. |
 | Flagship Player Commands | `!concentration`, `!cc`, `!critfail`                                                                                |
-| Flagship GM Commands     | `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report`, `!ga-conc-status`
-| Admin Controls           | `!ga-config list\|get\|set\|modules`, `!ga-enable`, `!ga-disable`, `!ga-status`                                     |
+| Flagship GM Commands     | `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report`, `!ga-conc-status`, `!ga-config ui`
+                 |
+| Admin Controls           | `!ga-config list\|get\|set\|modules\|ui`, `!ga-config-ui`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-debug`                                     |
 | Safety Nets              | FIFO queue + watchdog + auditor → zero silent failures.                                                             |
 | Extensibility            | `GameAssist.register('MyModule', initFn, { events:['chat:message'], prefixes:['!mymod'] });`                        |
 | Backup Utility           | `!ga-config list` produces a hand-out containing the full JSON config.                                              |
+
+> * `!ga-debug` commands require enabling the DebugTools module first (`!ga-enable DebugTools`) and remain GM-only.
 
 > **Required Roll-Tables:** CF-Melee, CF-Ranged, CF-Thrown, CF-Spell, CF-Natural, Confirm-Crit-Martial, Confirm-Crit-Magic
 
@@ -124,6 +127,26 @@ Watches `change:graphic:bar1_value`. When an NPC’s HP drops below 1 the `deadM
 
 `!npc-hp-all` rolls HP for every NPC on the player page; `!npc-hp-selected` works on a token-selection. Parses any `NdM±K` formula stored in `npc_hpformula`. Enable `autoRollOnAdd` (`!ga-config set NPCHPRoller autoRollOnAdd=true`) to have GameAssist automatically roll HP the instant a qualifying NPC token is dropped onto the map.
 
+### 6.5 Config UI
+
+`!ga-config ui` (or the alias `!ga-config-ui`) whispers a GM-only control panel built entirely from chat buttons. Each module card shows:
+
+* Current enable/disable status with a one-click toggle (`[Disable CritFumble](!ga-disable CritFumble)` style buttons).
+* Boolean config keys rendered as toggles—pressing a button calls `!ga-config set <Module> key=true|false` for you.
+* Optional pagination buttons (`⬅ Prev`, `🔄 Refresh`, `Next ➡`). Change the number of modules per page with `!ga-config set ConfigUI pageSize=<N>`.
+
+Disable the `ConfigUI` module if you prefer to manage everything via CLI only.
+
+### 6.6 Debug Tools *(GM-only)*
+
+The `DebugTools` module is off by default—enable it with `!ga-enable DebugTools` whenever you need controlled sand-box testing. Commands stay dry-run unless `--apply` is present:
+
+* `!ga-debug damage --amount 12 [--token TOKENID|select] [--apply]` → plan or apply HP damage to bar1.
+* `!ga-debug marker --marker statusname [--state on|off|toggle] [--token TOKENID|select] [--apply]` → preview/toggle status markers.
+* `!ga-debug save --dc 15 [--bonus 3] [--mode adv|dis|normal] [--label Text] [--apply]` → rehearse concentration/other saves.
+
+Dry runs whisper “would do X” summaries so you can confirm the effect before committing. `--apply` performs the mutation or rolls a whispered result.
+
 ---
 
 ## 7 · Installation <a id="7-installation"></a>
@@ -142,7 +165,7 @@ IV. Using the Rollable Table tool, create these seven tables by name:
 * Confirm-Crit-Magic
   V. Click **Save Script** again to reload the API. As GM, open your chat whisper window and confirm you see one “ready” message for GameAssist itself and one for each module. It will look roughly like this:
 
-> (From GameAssist): ℹ️ \[10:53:56 PM] \[Core] GameAssist v0.1.3 ready; modules: CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller
+> (From GameAssist): ℹ️ \[10:53:56 PM] \[Core] GameAssist v0.1.4 ready; modules: ConfigUI, CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller, DebugTools
 
 VI. To verify end-to-end, type `!ga-status` as GM. You’ll receive a whispered summary of GameAssist’s internal metrics (commands processed, active listeners, queue length, etc.), which confirms the system is up and running.
 
@@ -157,6 +180,7 @@ VI. To verify end-to-end, type `!ga-status` as GM. You’ll receive a whispered 
 |            | `!ga-config set <Module> <key>=<value>`         | —                                                                                                              | Persistently set one config key                          |
 |            | `!ga-config modules`                            | —                                                                                                              | List all modules with enabled/initialized status icons   |
 |            | `!ga-enable <Module>` / `!ga-disable <Module>`  | —                                                                                                              | Enable or disable a module                               |
+|            | `!ga-config ui` / `!ga-config-ui`               | `[--page N]`                                      | Open the GM Config UI with module toggles and quick config buttons |
 |            | `!ga-status`                                    | —                                                                                                              | Whisper live metrics (commands, messages, errors, etc.)  |
 | **GM**     | `!npc-hp-all`                                   | —                                                                                                              | Roll & set HP for all NPC tokens on the current page     |
 |            | `!npc-hp-selected`                              | —                                                                                                              | Roll & set HP for the currently selected NPC tokens      |
@@ -165,6 +189,7 @@ VI. To verify end-to-end, type `!ga-status` as GM. You’ll receive a whispered 
 |            | `!critfumble help`                              | —                                                                                                              | Whisper CritFumble help panel                            |
 |            | `!ga-conc-status`                               | —
                                                      | GM-only snapshot of the last concentration DC/damage per player |
+| **Debug**  | `!ga-debug <action>`                           | `damage|marker|save` + flags (`--apply` to execute)` | Dry-run debugging commands (enable DebugTools; GM-only) |
 | **Player** | `!critfumble-<type>`                            | `<type>` ∈ {melee, ranged, thrown, spell, natural}                                                             | Trigger the fumble‐type menu for your character          |
 |            | `!confirm-crit-martial` / `!confirm-crit-magic` | —                                                                                                              | Roll the corresponding confirmation table                |
 |            | `!concentration` / `!cc`                        | `--damage X`, `--mode normal\|adv\|dis`, `--last`, `--off`, `--status`, `--config randomize on\|off`, `--help` | Open UI buttons or perform a concentration save          |
@@ -183,6 +208,9 @@ VI. To verify end-to-end, type `!ga-status` as GM. You’ll receive a whispered 
 | **NPCManager**           | `autoTrackDeath` | bool   | `true`            |
 |                          | `deadMarker`     | string | `"dead"`          |
 | **NPCHPRoller**          | `autoRollOnAdd`  | bool   | `false` (opt-in)  |
+| **ConfigUI**             | `pageSize`       | number | `3`               |
+|                          | `showSummaries`  | bool   | `true`            |
+| **DebugTools**           | —                | —      | No persistent config keys; module enables on demand |
 
 ---
 
@@ -202,6 +230,7 @@ VI. To verify end-to-end, type `!ga-status` as GM. You’ll receive a whispered 
 |                         | `GameAssist.clearState(moduleName)`                                       | Reset a module’s persistent state branch (config/runtime container remains namespaced)                                                    |
 | **Token Helpers**       | `GameAssist.getLinkedCharacter(token)`                                    | Validate a token is on the Objects layer and linked to a character; returns `{ token, character }` or `null`                              |
 | **Chat Helpers**        | `GameAssist.createButton(label, command)`                                 | Build a Roll20 chat button string `[Label](!command …)` with the label safely escaped for chat menus                                      |
+|                         | `GameAssist.renderConfigUI(playerId, opts?)`                   | When ConfigUI is active, whisper the GM panel (`opts`: `{ page, rawArgs }`) |
 |                         | `GameAssist.rollTable(tableName)`                                         | Fire `/roll 1t[TableName]` via `sendChat` using Roll20’s rollable table syntax                                                            |
 | **Metrics Inspection**  | `GameAssist._metrics`                                                     | Live metrics: counts of commands, messages, errors, state audits, task durations, plus `lastUpdate`                                       |
 
@@ -231,10 +260,12 @@ Sample **CF-Melee** roll table:
 ### 12.1 GM Panic – disable every module
 
 ```roll20chat
+!ga-disable ConfigUI
 !ga-disable CritFumble
 !ga-disable ConcentrationTracker
 !ga-disable NPCManager
 !ga-disable NPCHPRoller
+!ga-disable DebugTools
 ```
 
 ---
@@ -327,10 +358,12 @@ These measurements reflect real-world performance on the specified hardware and 
 * **Re-enabling after a Panic disable**
 
   ```roll20chat
+  !ga-enable ConfigUI
   !ga-enable CritFumble
   !ga-enable NPCManager
   !ga-enable ConcentrationTracker
   !ga-enable NPCHPRoller
+  !ga-enable DebugTools
   ```
 
 * **Still stuck?**
@@ -363,7 +396,7 @@ IV. **Verify Core Loading**
 a. Watch your GM Whisper window—look for a banner such as:
 
 ```
-GameAssist v0.1.3 ready; modules: CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller
+GameAssist v0.1.4 ready; modules: ConfigUI, CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller, DebugTools
 ```
 
 b. Run `!ga-status` to confirm there are no errors and that all modules report as active.

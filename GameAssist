@@ -1,19 +1,21 @@
 /* 
 ========================================
 GameAssist — Roll20 API Script
-Version: 0.1.3
-Last Updated: 2025-09-17 (America/Detroit)
+Version: 0.1.4
+Last Updated: 2025-09-24 (America/Detroit)
 Author: Mord Eagle
 License: MIT (see repository LICENSE)
 Homepage: https://github.com/Roll20/roll20-api-scripts (submission target)
 
 DESCRIPTION
 GameAssist is a small framework for organizing Roll20 API modules with a safe task queue,
-watchdog, config/state helpers, and consistent logging. This package ships with four modules:
+watchdog, config/state helpers, and consistent logging. This package ships with six modules:
+• ConfigUI — GM-only chat controls for toggling modules and boolean options.
 • CritFumble — Detects natural-1s on selected rolltemplates and offers fumble/confirm menus.
 • ConcentrationTracker — Runs concentration checks (normal/adv/dis), whispers results, toggles marker.
 • NPCManager — Tracks NPC death markers based on bar1 HP.
 • NPCHPRoller — Rolls NPC HP from `npc_hpformula` and writes to bar1 (value/max).
+• DebugTools — Optional GM diagnostics (dry-run by default) for damage, markers, and save rolls.
 
 INSTALL / USAGE (One-Click or Manual)
 • One-Click: install “GameAssist”. (Make sure “TokenMod” is also installed; see Dependencies.)
@@ -24,8 +26,10 @@ CORE COMMANDS (GM):
 • !ga-config modules                       — list modules + status
 • !ga-config set <Module> key=value        — set module config (JSON/number/bool supported)
 • !ga-config get <Module> key              — echo module config value
+• !ga-config ui / !ga-config-ui            — open the GM chat control panel
 • !ga-enable <Module> / !ga-disable <Module>
 • !ga-status                               — show metrics + listeners
+• !ga-debug <action>                       — run DebugTools helpers (`damage`, `marker`, `save`)
 
 MODULE COMMANDS:
 • CritFumble:
@@ -38,6 +42,8 @@ MODULE COMMANDS:
     !cc (alias)
 • NPCManager (GM):         !npc-death-report
 • NPCHPRoller (GM):        !npc-hp-selected    |   !npc-hp-all
+• ConfigUI (GM):           !ga-config ui [--page N] | !ga-config-ui
+• DebugTools (GM-only):    !ga-debug damage|marker|save [flags] (module disabled by default)
 
 DEPENDENCIES
 • TokenMod — required for marker/status changes issued by NPCManager and ConcentrationTracker.
@@ -155,7 +161,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // [GAMEASSIST_GAMEASSIST:POLICY] END
     // =============================================================================
 
-    const VERSION      = '0.1.3';
+    const VERSION      = '0.1.4';
     const STATE_KEY    = 'GameAssist';
     const MODULES      = {};
     const _transitioning   = {};
@@ -885,6 +891,14 @@ description, syntax/commands, and configuration pointers near the top of the scr
             const val = GameAssist.getState(mod).config[key];
             GameAssist.log('Config', `${mod}.${key} = ${JSON.stringify(val)}`);
         }
+        else if (sub === 'ui') {
+            if (typeof GameAssist.renderConfigUI !== 'function') {
+                GameAssist.log('Config', 'Config UI module is disabled or unavailable.', 'WARN');
+                return;
+            }
+            const raw = msg.content.trim().split(/\s+/).slice(2).join(' ');
+            GameAssist.renderConfigUI(msg.playerid, { rawArgs: raw });
+        }
         else if (sub === 'modules') {
             const moduleList = Object.entries(MODULES)
                 .filter(([, mod]) => !mod.internal)
@@ -943,6 +957,165 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // --- Notes & Comments ---
     // CHOICE: Keep command syntax identical to legacy for drop‑in replacement.
     // [GAMEASSIST_GAMEASSIST:INTERFACES:COMMANDS] END
+    // =============================================================================
+
+    // ————— CONFIG UI MODULE v0.1.0 —————
+    // =============================================================================
+    // [GAMEASSIST_GAMEASSIST:MODULES:CONFIGUI] BEGIN
+    // Section Title: Config UI module
+    // -------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "MODULES:CONFIGUI", title: "Config UI", 
+    //   guarantees: ["GM chat menu for module toggles and quick config"], version: "0.1.0" }
+    // -------------------------------------------------------------------------
+    GameAssist.register('ConfigUI', function() {
+        const modState = GameAssist.getState('ConfigUI');
+        Object.assign(modState.config, {
+            enabled: true,
+            pageSize: 3,
+            showSummaries: true,
+            ...modState.config
+        });
+
+        function getPageSize() {
+            const raw = modState.config.pageSize;
+            const parsed = Number(raw);
+            return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 3;
+        }
+
+        function formatValue(value) {
+            if (value === null || value === undefined) return '—';
+            if (typeof value === 'object') {
+                try { return JSON.stringify(value); }
+                catch { return '[object]'; }
+            }
+            return String(value);
+        }
+
+        function formatConfigSummary(cfg) {
+            const entries = Object.entries(cfg || {})
+                .filter(([key]) => key !== 'enabled')
+                .map(([key, val]) => `<span><strong>${_sanitize(key)}</strong>: ${_sanitize(formatValue(val))}</span>`);
+            return entries.length ? entries.join(' • ') : '';
+        }
+
+        function buildConfigButtons(name, cfg) {
+            return Object.entries(cfg || {})
+                .filter(([key, val]) => key !== 'enabled' && typeof val === 'boolean')
+                .map(([key, val]) => {
+                    const label = `${key}: ${val ? 'ON' : 'OFF'}`;
+                    const next  = (!val).toString();
+                    return GameAssist.createButton(label, `!ga-config set ${name} ${key}=${next}`);
+                })
+                .join(' ');
+        }
+
+        function parsePage(rawArgs) {
+            if (!rawArgs) return 0;
+            const parsed = _parseArgs(rawArgs);
+            const pageArg = parsed.args.page;
+            if (typeof pageArg === 'number') return Math.max(0, pageArg);
+            if (typeof pageArg === 'string') {
+                const val = parseInt(pageArg, 10);
+                if (!isNaN(val)) return Math.max(0, val);
+            }
+            if (parsed.cmd && /^\d+$/.test(parsed.cmd)) {
+                return Math.max(0, parseInt(parsed.cmd, 10));
+            }
+            const direct = rawArgs.split(/\s+/).find(part => /^\d+$/.test(part));
+            if (direct) return Math.max(0, parseInt(direct, 10));
+            return 0;
+        }
+
+        function getModuleEntries() {
+            return Object.entries(MODULES)
+                .filter(([, mod]) => !mod.internal)
+                .sort((a, b) => a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }));
+        }
+
+        function buildNav(page, total) {
+            if (total <= 1) return '';
+            const buttons = [];
+            if (page > 0) {
+                buttons.push(GameAssist.createButton('⬅ Prev', `!ga-config ui --page ${page - 1}`));
+            }
+            buttons.push(GameAssist.createButton('🔄 Refresh', `!ga-config ui --page ${page}`));
+            if (page < total - 1) {
+                buttons.push(GameAssist.createButton('Next ➡', `!ga-config ui --page ${page + 1}`));
+            }
+            return buttons.join(' ');
+        }
+
+        function renderModuleBlock(name, mod) {
+            const branch = GameAssist.getState(name);
+            const cfg    = branch.config || {};
+            const enabled = cfg.enabled !== false;
+            const active  = !!(mod.initialized && mod.active);
+            const statusIcon = enabled ? (active ? '🟢' : '⏸️') : '⛔';
+            const statusText = enabled ? (active ? 'Enabled' : 'Disabled (inactive)') : 'Disabled';
+            const toggleCmd  = enabled ? `!ga-disable ${name}` : `!ga-enable ${name}`;
+            const toggleBtn  = GameAssist.createButton(`${enabled ? 'Disable' : 'Enable'} ${name}`, toggleCmd);
+            const configButtons = buildConfigButtons(name, cfg);
+            const summary = modState.config.showSummaries ? formatConfigSummary(cfg) : '';
+
+            const rows = [
+                `${statusIcon} <strong>${_sanitize(name)}</strong> — ${_sanitize(statusText)}`,
+                toggleBtn
+            ];
+            if (configButtons) {
+                rows.push(`Config: ${configButtons}`);
+            }
+            if (summary) {
+                rows.push(summary);
+            }
+            return `<div style="margin-top:4px;">${rows.join('<br>')}</div>`;
+        }
+
+        function renderInternal(playerId, { page: explicitPage, rawArgs = '' } = {}) {
+            const modules = getModuleEntries();
+            if (!modules.length) {
+                sendChat('GameAssist', '/w gm No modules registered.');
+                return;
+            }
+
+            const pageSize = getPageSize();
+            const totalPages = Math.max(1, Math.ceil(modules.length / pageSize));
+            let page = typeof explicitPage === 'number' ? explicitPage : parsePage(rawArgs);
+            if (!Number.isFinite(page) || page < 0) page = 0;
+            if (page > totalPages - 1) page = totalPages - 1;
+
+            const slice = modules.slice(page * pageSize, page * pageSize + pageSize);
+            const blocks = slice.map(([name, mod]) => renderModuleBlock(name, mod)).join('');
+            const nav = buildNav(page, totalPages);
+
+            const header = `<div><strong>🛠️ GameAssist Config UI</strong> <span style="font-size:smaller;">Page ${page + 1}/${totalPages}</span></div>`;
+            const footer = '<div style="margin-top:4px; font-size:smaller;">Use !ga-config set &lt;Module&gt; key=value for advanced settings.</div>';
+            const navLine = nav ? `<div style="margin-top:4px;">${nav}</div>` : '';
+
+            const message = `${header}${blocks}${navLine}${footer}`;
+            sendChat('GameAssist', `/w gm ${message}`);
+        }
+
+        GameAssist.renderConfigUI = function(playerId, options = {}) {
+            if (!MODULES.ConfigUI?.initialized || !MODULES.ConfigUI?.active) {
+                GameAssist.log('ConfigUI', 'Config UI module is disabled.', 'WARN');
+                return;
+            }
+            renderInternal(playerId, options);
+        };
+
+        GameAssist.onCommand('!ga-config-ui', msg => {
+            const rawArgs = msg.content.replace(/^!ga-config-ui\s*/i, '');
+            renderInternal(msg.playerid, { rawArgs });
+        }, 'ConfigUI', { gmOnly: true });
+
+        GameAssist.log('ConfigUI', 'Ready: !ga-config ui (or !ga-config-ui) to open chat controls.', 'INFO', { startup: true });
+    }, {
+        enabled: true,
+        prefixes: ['!ga-config-ui', '!ga-config ui']
+    });
+    // --- Notes & Comments ---
+    // CHOICE: Button helper reused; nav uses the same command path for refresh/paging.
+    // [GAMEASSIST_GAMEASSIST:MODULES:CONFIGUI] END
     // =============================================================================
 
     // ————— CRITFUMBLE MODULE v0.2.4.9 —————
@@ -1950,15 +2123,222 @@ GameAssist.register('ConcentrationTracker', function() {
             rollTokenHP(token, { logWarnings: false, reason: 'auto' });
         }, 'NPCHPRoller');
 
-        GameAssist.log('NPCHPRoller', 'v0.1.1.0 Ready: !npc-hp-all, !npc-hp-selected', 'INFO', { startup: true });
+    GameAssist.log('NPCHPRoller', 'v0.1.1.0 Ready: !npc-hp-all, !npc-hp-selected', 'INFO', { startup: true });
+}, {
+    enabled: true,
+    events: ['add:graphic'],
+    prefixes: ['!npc-hp-all', '!npc-hp-selected']
+});
+// --- Notes & Comments ---
+// CHOICE: Use Math.random for simplicity; acceptable for non‑critical HP rolls.
+// [GAMEASSIST_GAMEASSIST:MODULES:NPCHPROLLER] END
+// =============================================================================
+
+    // ————— DEBUG TOOLS MODULE v0.1.0 —————
+    // =============================================================================
+    // [GAMEASSIST_GAMEASSIST:MODULES:DEBUGTOOLS] BEGIN
+    // Section Title: DebugTools module
+    // -------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "MODULES:DEBUGTOOLS", title: "DebugTools",
+    //   guarantees: ["Dry-run friendly debugging helpers"], version: "0.1.0" }
+    // -------------------------------------------------------------------------
+    GameAssist.register('DebugTools', function() {
+        const modState = GameAssist.getState('DebugTools');
+        Object.assign(modState.config, {
+            enabled: false,
+            ...modState.config
+        });
+        modState.runtime = modState.runtime || {};
+
+        function wantsApply(args) {
+            if (args.apply === undefined) return false;
+            if (args.apply === false) return false;
+            if (typeof args.apply === 'string') {
+                return args.apply.toLowerCase() !== 'false';
+            }
+            return Boolean(args.apply);
+        }
+
+        function getTokenFromArgs(msg, args) {
+            let tokenId = null;
+            if (typeof args.token === 'string') tokenId = args.token;
+            else if (Array.isArray(args.token) && args.token.length) tokenId = args.token[0];
+
+            if (!tokenId && msg.selected?.length) {
+                tokenId = msg.selected[0]._id;
+            }
+
+            if (!tokenId) return null;
+
+            const token = getObj('graphic', tokenId);
+            if (!token) {
+                GameAssist.log('DebugTools', `Token ${tokenId} not found.`, 'WARN');
+                return null;
+            }
+            if (token.get('layer') !== 'objects') {
+                GameAssist.log('DebugTools', 'Token must be on the Objects layer.', 'WARN');
+                return null;
+            }
+            return token;
+        }
+
+        function handleDamage(msg, args) {
+            const token = getTokenFromArgs(msg, args);
+            if (!token) {
+                GameAssist.log('DebugTools', 'Select a token or pass --token <id> for damage tests.', 'WARN');
+                return;
+            }
+
+            const amountRaw = args.amount ?? args.damage ?? args.value;
+            const amount = Number(amountRaw);
+            if (!Number.isFinite(amount) || amount <= 0) {
+                GameAssist.log('DebugTools', 'Provide --amount <number> greater than zero.', 'WARN');
+                return;
+            }
+
+            const current = Number(token.get('bar1_value')) || 0;
+            const next    = Math.max(0, current - amount);
+            const name    = _sanitize(token.get('name') || token.id);
+            const summary = `${name}: HP ${current} → ${next} (-${amount})`;
+
+            if (!wantsApply(args)) {
+                GameAssist.log('DebugTools', `Dry run — would apply ${summary}. Add --apply to commit.`);
+                return;
+            }
+
+            token.set('bar1_value', next);
+            GameAssist.log('DebugTools', `Applied ${summary}.`);
+            modState.runtime.lastAction = { type: 'damage', token: token.id, amount, previous: current };
+        }
+
+        function handleMarker(msg, args) {
+            const token = getTokenFromArgs(msg, args);
+            if (!token) {
+                GameAssist.log('DebugTools', 'Select a token or pass --token <id> for marker tests.', 'WARN');
+                return;
+            }
+
+            const markerRaw = args.marker ?? args.status;
+            const marker = (markerRaw ? String(markerRaw) : 'blue').trim();
+            if (!marker) {
+                GameAssist.log('DebugTools', 'Provide --marker <status name>.', 'WARN');
+                return;
+            }
+
+            const modeRaw = args.state ?? args.mode ?? args.action;
+            const mode = modeRaw ? String(modeRaw).toLowerCase() : 'toggle';
+            const markers = (token.get('statusmarkers') || '').split(',').filter(Boolean);
+            const hasMarker = markers.includes(marker);
+            let finalMarkers = markers.slice();
+            let actionDesc;
+
+            if (mode === 'on' || mode === 'add') {
+                if (!hasMarker) finalMarkers.push(marker);
+                actionDesc = `add ${marker}`;
+            } else if (mode === 'off' || mode === 'remove' || mode === 'clear') {
+                finalMarkers = markers.filter(m => m !== marker);
+                actionDesc = `remove ${marker}`;
+            } else {
+                if (hasMarker) finalMarkers = markers.filter(m => m !== marker);
+                else finalMarkers.push(marker);
+                actionDesc = `${hasMarker ? 'remove' : 'add'} ${marker}`;
+            }
+
+            const name = _sanitize(token.get('name') || token.id);
+            if (!wantsApply(args)) {
+                GameAssist.log('DebugTools', `Dry run — would ${actionDesc} on ${name}. Add --apply to commit.`);
+                return;
+            }
+
+            token.set('statusmarkers', finalMarkers.join(','));
+            GameAssist.log('DebugTools', `Marker action: ${actionDesc} on ${name}.`);
+            modState.runtime.lastAction = { type: 'marker', token: token.id, marker, mode };
+        }
+
+        function handleSave(msg, args) {
+            const dcRaw = args.dc ?? args.target;
+            const dc = Number(dcRaw);
+            if (!Number.isFinite(dc)) {
+                GameAssist.log('DebugTools', 'Provide --dc <number> for save tests.', 'WARN');
+                return;
+            }
+
+            const bonusRaw = args.bonus ?? args.mod ?? 0;
+            const bonus = Number(bonusRaw) || 0;
+            const modeRaw = args.mode ?? args.roll ?? '';
+            const mode = typeof modeRaw === 'string' ? modeRaw.toLowerCase() : '';
+            let expr = `1d20 + ${bonus}`;
+            let descriptor = 'normal';
+            if (mode.startsWith('adv')) {
+                expr = `2d20kh1 + ${bonus}`;
+                descriptor = 'advantage';
+            } else if (mode.startsWith('dis')) {
+                expr = `2d20kl1 + ${bonus}`;
+                descriptor = 'disadvantage';
+            }
+
+            if (!wantsApply(args)) {
+                GameAssist.log('DebugTools', `Dry run — would roll ${expr} vs DC ${dc} (${descriptor}). Add --apply to execute.`);
+                return;
+            }
+
+            const label = args.label ? _sanitize(String(args.label)) : 'Debug Save';
+            sendChat('', `[[${expr}]]`, ops => {
+                const roll = ops?.[0]?.inlinerolls?.[0];
+                if (!roll) {
+                    GameAssist.log('DebugTools', 'Save roll failed.', 'WARN');
+                    return;
+                }
+                const total = roll.results.total;
+                const success = total >= dc;
+                const outcome = success ? '✅ Success' : '❌ Failure';
+                const template = `&{template:default} {{name=${label}}} {{Result=${total} vs DC ${dc}}} {{Outcome=${outcome} (${descriptor})}}`;
+                sendChat('DebugTools', `/w gm ${template}`);
+                GameAssist.log('DebugTools', `Rolled ${total} vs DC ${dc} (${descriptor}). ${success ? 'Success' : 'Failure'}.`);
+            });
+        }
+
+        function showHelp() {
+            GameAssist.log('DebugTools', [
+                'Debug helpers:',
+                '• !ga-debug damage --amount N [--token TOKENID|select] [--apply]',
+                '• !ga-debug marker --marker status [--state on|off|toggle] [--token TOKENID|select] [--apply]',
+                '• !ga-debug save --dc N [--bonus M] [--mode normal|adv|dis] [--label Text] [--apply]'
+            ].join('\n'));
+        }
+
+        const HANDLERS = {
+            damage: handleDamage,
+            marker: handleMarker,
+            save: handleSave
+        };
+
+        GameAssist.onCommand('!ga-debug', msg => {
+            const payload = msg.content.replace(/^!ga-debug\s*/i, '');
+            if (!payload) {
+                showHelp();
+                return;
+            }
+
+            const parsed = _parseArgs(payload);
+            const action = (parsed.cmd || '').toLowerCase();
+            const handler = HANDLERS[action];
+            if (!handler) {
+                GameAssist.log('DebugTools', `Unknown debug action: ${_sanitize(action || '(none)')}`, 'WARN');
+                showHelp();
+                return;
+            }
+            handler(msg, parsed.args || {});
+        }, 'DebugTools', { gmOnly: true });
+
+        GameAssist.log('DebugTools', 'Debug module registered. Enable with !ga-enable DebugTools when needed.', 'INFO', { startup: true });
     }, {
-        enabled: true,
-        events: ['add:graphic'],
-        prefixes: ['!npc-hp-all', '!npc-hp-selected']
+        enabled: false,
+        prefixes: ['!ga-debug']
     });
     // --- Notes & Comments ---
-    // CHOICE: Use Math.random for simplicity; acceptable for non‑critical HP rolls.
-    // [GAMEASSIST_GAMEASSIST:MODULES:NPCHPROLLER] END
+    // CHOICE: Helpers default to dry-run; --apply required for mutations.
+    // [GAMEASSIST_GAMEASSIST:MODULES:DEBUGTOOLS] END
     // =============================================================================
 
     // ————— BOOTSTRAP —————
@@ -2036,7 +2416,7 @@ GameAssist.register('ConcentrationTracker', function() {
 // Parent wrapper: No behavior changes. This mechsuit only adds structure and documentation.
 // Prior notes (selected):
 //   • MIT license retained; copyright © 2025 Mord Eagle.
-//   • Modules: CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller.
+//   • Modules: ConfigUI, CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller, DebugTools.
 //   • Queue/watchdog defaults preserved (30s/15s).
 //   • Logging emits /w gm with icons and timestamp.
 // [GAMEASSIST_GAMEASSIST:APP] END
