@@ -323,16 +323,17 @@
                 const branch = getState(name);
                 try {
                     m.initFn();
+                    // Mark initialized only after initFn completes successfully.
                     m.initialized = true;
                     branch.config.enabled = true;
                     this.log(name, 'Enabled');
                 }
                 catch(e) {
                     m.initialized = false;
+                    branch.config.enabled = false;
                     this.offEvents(name);
                     this.offCommands(name);
                     clearState(name);
-                    branch.config.enabled = false;
                     this.handleError(name, e);
                 }
             });
@@ -1267,14 +1268,15 @@ GameAssist.register('ConcentrationTracker', function() {
             if (branch.config.enabled) {
                 try {
                     m.initFn();
+                    // Mark initialized only after initFn completes successfully.
                     m.initialized = true;
                 }
                 catch(e) {
                     m.initialized = false;
+                    branch.config.enabled = false;
                     GameAssist.offEvents(name);
                     GameAssist.offCommands(name);
                     clearState(name);
-                    branch.config.enabled = false;
                     GameAssist.handleError(name, e);
                 }
             }
