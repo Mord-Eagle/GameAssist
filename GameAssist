@@ -1304,7 +1304,31 @@ description, syntax/commands, and configuration pointers near the top of the scr
         enabled: true,
         events: ['change:graphic:bar1_value'],
         prefixes: ['!npc-death-report'],
-        dependsOn: ['TokenMod']
+        dependsOn: ['TokenMod'],
+        teardown: () => {
+            const branch = GameAssist.getState('NPCManager');
+            const marker = branch?.config?.deadMarker || 'dead';
+            const pageId = Campaign().get('playerpageid');
+
+            if (!pageId) return;
+
+            const targets = findObjs({
+                _type: 'graphic',
+                _pageid: pageId,
+                layer: 'objects'
+            }).filter(token => {
+                const markers = (token.get('statusmarkers') || '').split(',');
+                return markers.includes(marker);
+            });
+
+            if (!targets.length) return;
+
+            targets.forEach(token => {
+                sendChat('api', `!token-mod --ids ${token.id} --set statusmarkers|-${marker}`);
+            });
+
+            GameAssist.log('NPCManager', `Cleared ${targets.length} ${marker} marker(s) during teardown.`);
+        }
     });
     // --- Notes & Comments ---
     // CHOICE: TokenMod used for status marker ops; keep dependency explicit in README.
