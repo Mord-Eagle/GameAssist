@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.1.2] – 2025-09-16
+
+### Packaging & Repository Compliance (Roll20 API Repo)
+- **Standard Header Added:** Inserted the Roll20-required top-of-file comment (name, version, last updated, description, syntax/config pointers) above the MECHSUITS banner in `GameAssist.js`.
+- **One-Click Artifacts:** Added `script.json` (schema-ready) and a repo-focused `README.md`, and defined a folder layout `GameAssist/` suitable for a pull request to `roll20-api-scripts`.
+- **Dependencies & Tables:** Declared **TokenMod** as a dependency and documented the CritFumble rollable tables required (`CF-Melee`, `CF-Ranged`, `CF-Thrown`, `CF-Spell`, `CF-Natural`, `Confirm-Crit-Martial`, `Confirm-Crit-Magic`).
+
+### MECHSUITS v1.5 Structural Wrap (No Runtime Changes)
+- **Framing Only:** Introduced a MECHSUITS YAML banner, canonical tree, and `[CODENAME:AREA] BEGIN/END` section frames with notes to improve maintainability and reviewability.
+- **Behavior Parity:** No functional changes; all commands and modules behave identically to 0.1.1.2.
+
+### Version & Metadata
+- **Version Bump:** Updated version to **0.1.2**.
+- **State/Migration:** No migrations; `state.GameAssist` structure unchanged.
+
+---
+
 ## [0.1.1.2] – 2025-06-10
 
 ### CritFumble Module
@@ -53,4 +70,3 @@ All notable changes to this project will be documented in this file.
 ---
 
 *This changelog will track all future updates, enhancements, and bug fixes.*
-
