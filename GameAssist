@@ -789,7 +789,10 @@ GameAssist.register('ConcentrationTracker', function() {
 
     // ─── Public Command Prefixes ───────────────────────────────────────────────────
     const CMDS = ['!concentration', '!cc'];
-    const TOKEN_MARKER = 'Concentrating';
+
+    function getTokenMarker() {
+        return `${modState.config.marker || 'Concentrating'}`.trim() || 'Concentrating';
+    }
 
     // ─── Default Emote Lines ────────────────────────────────────────────────────────
     const DEFAULT_LINES = {
@@ -846,11 +849,12 @@ GameAssist.register('ConcentrationTracker', function() {
 
     /**
      * toggleMarker(token, on)
-     *   Adds or removes the Concentrating status marker.
+     *   Adds or removes the configured status marker.
      */
     function toggleMarker(token, on) {
+        const marker = getTokenMarker();
         sendChat('api',
-            `!token-mod --ids ${token.id} --set statusmarkers|${on ? '+' : '-'}${TOKEN_MARKER}`
+            `!token-mod --ids ${token.id} --set statusmarkers|${on ? '+' : '-'}${marker}`
         );
     }
 
@@ -884,9 +888,11 @@ GameAssist.register('ConcentrationTracker', function() {
 
     /**
      * showStatus(player)
-     *   Lists all tokens currently marked Concentrating.
+     *   Lists all tokens currently marked with the configured marker.
      */
     function showStatus(player) {
+        const marker = getTokenMarker();
+        const markerLower = marker.toLowerCase();
         const page = Campaign().get('playerpageid');
         const tokens = findObjs({
             _type:  'graphic',
@@ -895,7 +901,7 @@ GameAssist.register('ConcentrationTracker', function() {
         }).filter(t =>
             (t.get('statusmarkers') || '')
                 .toLowerCase()
-                .includes(TOKEN_MARKER.toLowerCase())
+                .includes(markerLower)
         );
         if (!tokens.length) {
             return sendChat('ConcentrationTracker',
@@ -904,7 +910,7 @@ GameAssist.register('ConcentrationTracker', function() {
         }
         let out = `&{template:default} {{name=🧠 Concentration Status}}`;
         tokens.forEach(t => {
-            out += `{{${t.get('name') || 'Unnamed'}=Concentrating}}`;
+            out += `{{${t.get('name') || 'Unnamed'}=${marker}}}`;
         });
         sendChat('ConcentrationTracker', `/w "${player}" ${out}`);
     }
@@ -1079,16 +1085,19 @@ GameAssist.register('ConcentrationTracker', function() {
     enabled:  true,
     prefixes: ['!concentration','!cc'],
     teardown: () => {
+        const state = getState('ConcentrationTracker');
+        const marker = `${state?.config?.marker || 'Concentrating'}`.trim() || 'Concentrating';
+        const markerLower = marker.toLowerCase();
         const page = Campaign().get('playerpageid');
         findObjs({ _type: 'graphic', _pageid: page, layer: 'objects' })
             .filter(t =>
                 (t.get('statusmarkers') || '')
                     .toLowerCase()
-                    .includes('concentrating')
+                    .includes(markerLower)
             )
             .forEach(t =>
                 sendChat('api',
-                    `!token-mod --ids ${t.id} --set statusmarkers|-Concentrating`
+                    `!token-mod --ids ${t.id} --set statusmarkers|-${marker}`
                 )
             );
     }
