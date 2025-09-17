@@ -1,8 +1,8 @@
 /* 
 ========================================
 GameAssist — Roll20 API Script
-Version: 0.1.1.2
-Last Updated: 2025-09-16 (America/Detroit)
+Version: 0.1.3
+Last Updated: 2025-09-17 (America/Detroit)
 Author: Mord Eagle
 License: MIT (see repository LICENSE)
 Homepage: https://github.com/Roll20/roll20-api-scripts (submission target)
@@ -101,11 +101,11 @@ description, syntax/commands, and configuration pointers near the top of the scr
 //     │  ├─ [GAMEASSIST_GAMEASSIST:MODULES:NPCHPROLLER]
 //     │  └─ [GAMEASSIST_GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
-// Guarantee: This is a structural wrap of GameAssist v0.1.2 for Roll20 — it reorganizes the file into MECHSUITS sections with notes and policy while preserving all code and behavior.
+// Guarantee: This is a structural wrap of GameAssist v0.1.3 for Roll20 — it reorganizes the file into MECHSUITS sections with notes and policy while preserving all code and behavior.
 // Secrets: none. Logs whisper to GM. Refusal: this file does not alter module logic, transport semantics, or sheet-specific behavior; those are out of scope here.
 
 // =============================
-// === GameAssist v0.1.2 ===
+// === GameAssist v0.1.3 ===
 // === Author: Mord Eagle ===
 // =============================
 // Released under the MIT License (see https://opensource.org/licenses/MIT)
@@ -155,7 +155,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // [GAMEASSIST_GAMEASSIST:POLICY] END
     // =============================================================================
 
-    const VERSION      = '0.1.1.2';
+    const VERSION      = '0.1.3';
     const STATE_KEY    = 'GameAssist';
     const MODULES      = {};
     const _transitioning   = {};
@@ -377,16 +377,145 @@ description, syntax/commands, and configuration pointers near the top of the scr
             .replace(/[\s_]+/g, '-')
             .replace(/[^\w-]/g, '');
     }
+    const SIGNATURES = (() => {
+        const defs = [
+            {
+                id: 'TokenMod',
+                displayName: 'TokenMod',
+                aliases: ['TokenMod', 'Token Mod'],
+                prefixes: ['!token-mod', '!tokenmod', '!tm'],
+                events: ['chat:message', 'change:graphic:statusmarkers'],
+                hints: [
+                    'TokenMod drives status-marker automation; NPCManager and ConcentrationTracker expect it for marker toggles.',
+                    'If TokenMod is offline, disable marker-dependent modules with !ga-disable to avoid duplicate whispers.'
+                ]
+            },
+            {
+                id: 'ScriptCards',
+                displayName: 'ScriptCards',
+                aliases: ['ScriptCards'],
+                prefixes: ['!scriptcard', '!scriptcards'],
+                events: ['chat:message'],
+                hints: [
+                    'ScriptCards and GameAssist both watch chat:message—keep command prefixes distinct to prevent clashes.'
+                ]
+            },
+            {
+                id: 'APILogic',
+                displayName: 'APILogic',
+                aliases: ['APILogic'],
+                prefixes: ['!apilogic'],
+                events: ['chat:message', 'change:graphic'],
+                hints: [
+                    'APILogic can rewrite chat commands; prefer explicit !ga- prefixes when integrating with it.'
+                ]
+            }
+        ];
+        const map = {};
+        defs.forEach(def => {
+            const key = normalizeScriptName(def.id);
+            const match = new Set(def.aliases.map(normalizeScriptName));
+            match.add(key);
+            map[key] = {
+                displayName: def.displayName,
+                match,
+                prefixes: def.prefixes.map(p => p.toLowerCase()),
+                events: def.events,
+                hints: def.hints
+            };
+        });
+        return map;
+    })();
+    function resolveSignature(normName) {
+        if (SIGNATURES[normName]) return SIGNATURES[normName];
+        return Object.values(SIGNATURES).find(sig => sig.match.has(normName)) || null;
+    }
     function auditCompatibility() {
         if (!GameAssist.flags.DEBUG_COMPAT) return;
-        const known  = KNOWN_SCRIPTS.map(normalizeScriptName);
-        const active = Object.keys(state.api?.scripts || {}).map(normalizeScriptName);
-        const good   = active.filter(n => known.includes(n));
-        const bad    = active.filter(n => !known.includes(n));
-        GameAssist.log('Compat', '✅ Known: '  + (good.join(', ')  || 'none'));
-        GameAssist.log('Compat', '❓ Unknown: ' + (bad.join(', ')   || 'none'));
-        GameAssist.log('Compat', '🔌 Events: '   + GameAssist._plannedEvents.join(', '));
-        GameAssist.log('Compat', '💬 Commands: ' + GameAssist._plannedChatPrefixes.join(', '));
+
+        const plannedEvents   = GameAssist._plannedEvents;
+        const plannedPrefixes = GameAssist._plannedChatPrefixes;
+        const scriptState     = state.api?.scripts;
+
+        if (!scriptState || !Object.keys(scriptState).length) {
+            GameAssist.log('Compat', 'Sandbox did not expose external scripts; compatibility scoring limited.');
+            GameAssist.log('Compat', '🔌 Events: '   + (plannedEvents.join(', ')   || 'none'));
+            GameAssist.log('Compat', '💬 Commands: ' + (plannedPrefixes.join(', ') || 'none'));
+            return;
+        }
+
+        const activeEntries   = Object.keys(scriptState);
+        const activeNormalized = activeEntries.map(normalizeScriptName);
+
+        const knownSet = new Set([
+            ...KNOWN_SCRIPTS.map(normalizeScriptName),
+            ...activeNormalized
+                .map(resolveSignature)
+                .filter(Boolean)
+                .flatMap(sig => Array.from(sig.match))
+        ]);
+
+        const known = [];
+        const unknown = [];
+
+        activeNormalized.forEach((norm, idx) => {
+            const original = activeEntries[idx];
+            if (knownSet.has(norm)) {
+                known.push(original);
+            } else {
+                unknown.push(original);
+            }
+        });
+
+        GameAssist.log('Compat', '✅ Known: '  + (known.join(', ')   || 'none'));
+        GameAssist.log('Compat', '❓ Unknown: ' + (unknown.join(', ') || 'none'));
+        GameAssist.log('Compat', '🔌 Events: '   + (plannedEvents.join(', ')   || 'none'));
+        GameAssist.log('Compat', '💬 Commands: ' + (plannedPrefixes.join(', ') || 'none'));
+
+        const rows = [];
+
+        activeNormalized.forEach((norm, idx) => {
+            const signature = resolveSignature(norm);
+            if (!signature) return;
+
+            const prefixMatches = plannedPrefixes.filter(prefix =>
+                signature.prefixes.includes(prefix.toLowerCase())
+            );
+            const eventMatches = plannedEvents.filter(evt =>
+                signature.events.includes(evt)
+            );
+
+            const score = prefixMatches.length + (eventMatches.length * 2);
+            const notes = [];
+
+            if (signature.hints?.length) notes.push(...signature.hints);
+            if (prefixMatches.length) notes.push('Shared prefixes: ' + prefixMatches.join(', '));
+            if (eventMatches.length) notes.push('Shared events: ' + eventMatches.join(', '));
+
+            rows.push({
+                raw: activeEntries[idx],
+                score,
+                notes
+            });
+        });
+
+        if (!rows.length) {
+            GameAssist.log('Compat', 'No signature overlaps detected.');
+            return;
+        }
+
+        rows.sort((a, b) => b.score - a.score || a.raw.localeCompare(b.raw));
+
+        const table = [
+            '| Script | Score | Notes |',
+            '| ------ | ----: | ----- |',
+            ...rows.map(row => {
+                const noteText = row.notes.length ? row.notes.join(' · ') : 'No overlaps detected.';
+                return `| ${row.raw} | ${row.score} | ${noteText} |`;
+            })
+        ].join('\n');
+
+        GameAssist.log('Compat', `Compatibility hints:\n${table}`);
     }
     // --- Notes & Comments ---
     // CHOICE: DEBUG_COMPAT gate avoids noise; GM toggles as needed.
@@ -541,6 +670,37 @@ description, syntax/commands, and configuration pointers near the top of the scr
             this._deduped = true;
         },
 
+        _getActiveScriptNames() {
+            const scripts = state.api?.scripts;
+            if (!scripts) return null;
+            return Object.keys(scripts).map(normalizeScriptName);
+        },
+
+        _checkDependencies(name) {
+            const mod = MODULES[name];
+            if (!mod) return { missing: [], verified: true };
+
+            const deps = mod.dependsOn || [];
+            if (!deps.length) return { missing: [], verified: true };
+
+            const activeExternal = this._getActiveScriptNames();
+            const missing = [];
+
+            deps.forEach(dep => {
+                const normalized = normalizeScriptName(dep);
+                if (MODULES[dep]) {
+                    if (!MODULES[dep].active) missing.push(dep);
+                    return;
+                }
+                if (activeExternal && !activeExternal.includes(normalized)) {
+                    missing.push(dep);
+                }
+            });
+
+            const verified = activeExternal !== null || deps.every(dep => MODULES[dep]);
+            return { missing, verified };
+        },
+
         enableModule(name) {
             const mod = MODULES[name];
             if (!mod) {
@@ -559,6 +719,18 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 this.log('Core', `${name} is already transitioning`, 'WARN');
                 return;
             }
+
+            const { missing, verified } = this._checkDependencies(name);
+            if (missing.length) {
+                this.log('Core', `${name} requires ${missing.join(', ')}. Enable dependencies first.`, 'WARN');
+                const branch = getState(name);
+                branch.config.enabled = false;
+                return;
+            }
+            if (!verified && (mod.dependsOn || []).length) {
+                this.log('Core', `${name} dependency scan limited (state.api.scripts unavailable); proceeding without verification.`, 'WARN');
+            }
+
             _transitioning[name] = true;
 
             _enqueue(() => {
@@ -632,6 +804,29 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 this.log(name, 'Disabled');
                 finish();
             });
+        },
+
+        createButton(label, command) {
+            const safeLabel = _sanitize(label ?? 'Button')
+                .replace(/\[/g, '&#91;')
+                .replace(/\]/g, '&#93;');
+            const trimmed = (command || '').trim();
+            if (!trimmed) {
+                this.log('Core', 'createButton requires a command string', 'WARN');
+                return '';
+            }
+            const final = trimmed.startsWith('!') ? trimmed : `!${trimmed}`;
+            return `[${safeLabel}](${final})`;
+        },
+
+        rollTable(tableName) {
+            const name = (tableName || '').toString().trim();
+            if (!name) {
+                this.log('Core', 'rollTable requires a table name', 'WARN');
+                return;
+            }
+            const sanitized = name.replace(/[\[\]]/g, '');
+            sendChat('', `/roll 1t[${sanitized}]`);
         }
     };
 
@@ -819,8 +1014,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
         function sendConfirmMenu(who) {
     const confirmButtons = [
-        `[Confirm-Crit-Martial](!Confirm-Crit-Martial)`,
-        `[Confirm-Crit-Magic](!Confirm-Crit-Magic)`
+        GameAssist.createButton('Confirm-Crit-Martial', '!Confirm-Crit-Martial'),
+        GameAssist.createButton('Confirm-Crit-Magic', '!Confirm-Crit-Magic')
     ].join(' ');
 
     // Send to player
@@ -836,11 +1031,11 @@ description, syntax/commands, and configuration pointers near the top of the scr
         function sendFumbleMenu(who) {
             sendConfirmMenu(who);
             const buttons = [
-                `[⚔ Melee](!critfumble-melee)`,
-                `[🏹 Ranged](!critfumble-ranged)`,
-                `[🎯 Thrown](!critfumble-thrown)`,
-                `[🔥 Spell](!critfumble-spell)`,
-                `[👊 Natural/Unarmed](!critfumble-natural)`
+                GameAssist.createButton('⚔ Melee', '!critfumble-melee'),
+                GameAssist.createButton('🏹 Ranged', '!critfumble-ranged'),
+                GameAssist.createButton('🎯 Thrown', '!critfumble-thrown'),
+                GameAssist.createButton('🔥 Spell', '!critfumble-spell'),
+                GameAssist.createButton('👊 Natural/Unarmed', '!critfumble-natural')
             ].join(' ');
             sendTemplateMessage(who, `${emoji('💥')} Critical Miss!`, [
                 { label: "What kind of attack was this?", value: buttons }
@@ -858,7 +1053,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         }
         function executeTableRoll(tableName) {
             setTimeout(()=>{
-                sendChat('', `/roll 1t[${tableName}]`);
+                GameAssist.rollTable(tableName);
                 debugLog(`Roll command executed: /roll 1t[${tableName}]`);
             }, modState.config.rollDelayMs);
         }
@@ -915,8 +1110,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 ]);
                 return;
             }
-            const buttons = players.map(name=>
-                `[${name}](!critfumblemenu-${encodeURIComponent(name)})`
+            const buttons = players.map(name =>
+                GameAssist.createButton(name, `!critfumblemenu-${encodeURIComponent(name)}`)
             ).join(' ');
             sendTemplateMessage('gm',"Manually Trigger Fumble Menu",[
                 { label:"Select Player", value:buttons }
@@ -1105,10 +1300,11 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
         GameAssist.onEvent('change:graphic:bar1_value', handleTokenChange, 'NPCManager');
         GameAssist.log('NPCManager', 'v0.1.1.0 Ready: Auto death tracking + !npc-death-report', 'INFO', { startup: true });
-    }, { 
-        enabled: true, 
-        events: ['change:graphic:bar1_value'], 
-        prefixes: ['!npc-death-report'] 
+    }, {
+        enabled: true,
+        events: ['change:graphic:bar1_value'],
+        prefixes: ['!npc-death-report'],
+        dependsOn: ['TokenMod']
     });
     // --- Notes & Comments ---
     // CHOICE: TokenMod used for status marker ops; keep dependency explicit in README.
@@ -1133,6 +1329,22 @@ GameAssist.register('ConcentrationTracker', function() {
         ...modState.config
     });
     modState.runtime.lastDamage = modState.runtime.lastDamage || {};
+    Object.entries(modState.runtime.lastDamage).forEach(([playerId, payload]) => {
+        if (typeof payload === 'number' || typeof payload === 'string') {
+            const dmg = Number(payload) || 0;
+            modState.runtime.lastDamage[playerId] = {
+                damage: dmg,
+                dc: Math.max(10, Math.floor(dmg / 2)),
+                mode: 'normal'
+            };
+        } else if (payload && typeof payload === 'object') {
+            payload.damage = Number(payload.damage) || 0;
+            if (payload.dc === undefined) {
+                payload.dc = Math.max(10, Math.floor(payload.damage / 2));
+            }
+            if (!payload.mode) payload.mode = 'normal';
+        }
+    });
 
     // ─── Public Command Prefixes ───────────────────────────────────────────────────
     const CMDS = ['!concentration', '!cc'];
@@ -1208,9 +1420,9 @@ GameAssist.register('ConcentrationTracker', function() {
     function postButtons(recipient) {
         const dmg = '?{Damage taken?|0}';
         const buttons = [
-            `[🎯 Maintain Control](!concentration --damage ${dmg} --mode normal)`,
-            `[🧠 Brace for the Distraction](!concentration --damage ${dmg} --mode adv)`,
-            `[😣 Struggling to Focus](!concentration --damage ${dmg} --mode dis)`
+            GameAssist.createButton('🎯 Maintain Control', `!concentration --damage ${dmg} --mode normal`),
+            GameAssist.createButton('🧠 Brace for the Distraction', `!concentration --damage ${dmg} --mode adv`),
+            GameAssist.createButton('😣 Struggling to Focus', `!concentration --damage ${dmg} --mode dis`)
         ].join(' ');
         sendChat('ConcentrationTracker',
             `/w "${recipient}" ${buttons}<br>⚠️ Select your token before clicking.`
@@ -1254,6 +1466,39 @@ GameAssist.register('ConcentrationTracker', function() {
             out += `{{${t.get('name') || 'Unnamed'}=Concentrating}}`;
         });
         sendChat('ConcentrationTracker', `/w "${player}" ${out}`);
+    }
+
+    function buildStatusTemplate() {
+        const entries = Object.entries(modState.runtime.lastDamage || {});
+        if (!entries.length) return null;
+
+        const compiled = entries.map(([playerId, payload]) => {
+            const data = (payload && typeof payload === 'object') ? payload : { damage: Number(payload) || 0 };
+            const playerObj = getObj('player', playerId);
+            const display = data.player || playerObj?.get('displayname') || 'Unknown Player';
+            const playerName = display.replace(/ \(GM\)$/, '');
+            const damage = Number(data.damage) || 0;
+            const dc = data.dc ?? Math.max(10, Math.floor(damage / 2));
+            const bonus = typeof data.bonus === 'number' ? data.bonus : null;
+            const mode = data.mode || 'normal';
+            const token = data.tokenId ? getObj('graphic', data.tokenId) : null;
+            const character = data.characterId ? getObj('character', data.characterId) : null;
+            const tokenName = data.tokenName || token?.get('name') || character?.get('name') || '(Token)';
+            const characterName = data.characterName || character?.get('name') || tokenName;
+            const recorded = data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : '—';
+            const bonusText = bonus !== null ? (bonus >= 0 ? `+${bonus}` : `${bonus}`) : '—';
+
+            return {
+                player: playerName,
+                info: `${characterName} • DMG ${damage} → DC ${dc} • Bonus ${bonusText} • Mode ${mode} • @ ${recorded}`,
+                timestamp: data.timestamp || 0
+            };
+        });
+
+        compiled.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+        const rows = compiled.map(row => `{{${_sanitize(row.player)}=${_sanitize(row.info)}}}`);
+        return `&{template:default} {{name=🧠 Concentration Status}} ${rows.join(' ')}`;
     }
 
     /**
@@ -1311,7 +1556,18 @@ GameAssist.register('ConcentrationTracker', function() {
         if (mode === 'adv') expr = `2d20kh1 + ${bonus}`;
         if (mode === 'dis') expr = `2d20kl1 + ${bonus}`;
 
-        modState.runtime.lastDamage[msg.playerid] = damage;
+        modState.runtime.lastDamage[msg.playerid] = {
+            damage,
+            dc,
+            bonus,
+            mode,
+            tokenId: token.id,
+            tokenName: name,
+            characterId: character.id,
+            characterName: character.get('name'),
+            player,
+            timestamp: Date.now()
+        };
 
         sendChat('', `[[${expr}]]`, ops => {
             const roll = ops[0].inlinerolls?.[0];
@@ -1374,13 +1630,15 @@ GameAssist.register('ConcentrationTracker', function() {
      */
     function handleLast(msg) {
         const player = msg.who.replace(/ \(GM\)$/, '');
-        const dmg    = modState.runtime.lastDamage[msg.playerid];
-        if (!dmg) {
+        const entry  = modState.runtime.lastDamage[msg.playerid];
+        const dmg    = typeof entry === 'object' ? Number(entry.damage) : Number(entry);
+        if (!entry || !dmg) {
             return sendChat('ConcentrationTracker',
                 `/w "${player}" ⚠️ No previous damage.`
             );
         }
-        handleRoll(msg, dmg, 'normal');
+        const mode = typeof entry === 'object' && entry.mode ? entry.mode : 'normal';
+        handleRoll(msg, dmg, mode);
     }
 
     // ─── Core Handler (Case-Insensitive) ──────────────────────────────────────────
@@ -1430,16 +1688,27 @@ GameAssist.register('ConcentrationTracker', function() {
     }
 
     // ─── Wire It Up ────────────────────────────────────────────────────────────────
+    GameAssist.onCommand('!ga-conc-status', () => {
+        const tpl = buildStatusTemplate();
+        if (!tpl) {
+            GameAssist.log('ConcentrationTracker', 'No concentration activity recorded yet.');
+            return;
+        }
+        sendChat('ConcentrationTracker', `/w gm ${tpl}`);
+    }, 'ConcentrationTracker', { gmOnly: true });
+
     GameAssist.onEvent('chat:message', handler, 'ConcentrationTracker');
     GameAssist.log(
         'ConcentrationTracker',
-        `Ready: ${CMDS.join(' & ')}`,
+        `Ready: ${[...CMDS, '!ga-conc-status'].join(' & ')}`,
         'INFO',
         { startup: true }
     );
 }, {
     enabled:  true,
-    prefixes: ['!concentration','!cc'],
+    events: ['chat:message'],
+    prefixes: ['!concentration','!cc','!ga-conc-status'],
+    dependsOn: ['TokenMod'],
     teardown: () => {
         const page = Campaign().get('playerpageid');
         findObjs({ _type: 'graphic', _pageid: page, layer: 'objects' })
@@ -1672,6 +1941,18 @@ GameAssist.register('ConcentrationTracker', function() {
         moduleNames.forEach(name => {
             const mod = MODULES[name];
             const cfg = getState(name).config;
+
+            const depInfo = GameAssist._checkDependencies(name);
+            if (depInfo.missing.length) {
+                GameAssist.log('Core', `${name} skipped (missing dependencies: ${depInfo.missing.join(', ')})`, 'WARN');
+                cfg.enabled = false;
+                mod.initialized = false;
+                mod.active = false;
+                return;
+            }
+            if (!depInfo.verified && (mod.dependsOn || []).length) {
+                GameAssist.log('Core', `${name} dependency scan limited (state.api.scripts unavailable); proceeding without verification.`, 'WARN');
+            }
 
             if (cfg.enabled) {
                 try {
