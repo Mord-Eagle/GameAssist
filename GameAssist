@@ -1,111 +1,5 @@
-/* 
-========================================
-GameAssist — Roll20 API Script
-Version: 0.1.1.2
-Last Updated: 2025-09-16 (America/Detroit)
-Author: Mord Eagle
-License: MIT (see repository LICENSE)
-Homepage: https://github.com/Roll20/roll20-api-scripts (submission target)
-
-DESCRIPTION
-GameAssist is a small framework for organizing Roll20 API modules with a safe task queue,
-watchdog, config/state helpers, and consistent logging. This package ships with four modules:
-• CritFumble — Detects natural-1s on selected rolltemplates and offers fumble/confirm menus.
-• ConcentrationTracker — Runs concentration checks (normal/adv/dis), whispers results, toggles marker.
-• NPCManager — Tracks NPC death markers based on bar1 HP.
-• NPCHPRoller — Rolls NPC HP from `npc_hpformula` and writes to bar1 (value/max).
-
-INSTALL / USAGE (One-Click or Manual)
-• One-Click: install “GameAssist”. (Make sure “TokenMod” is also installed; see Dependencies.)
-• Manual (Pro): paste this entire file into the API Scripts editor and Save.
-
-CORE COMMANDS (GM):
-• !ga-config list                          — write config handout “GameAssist Config”
-• !ga-config modules                       — list modules + status
-• !ga-config set <Module> key=value        — set module config (JSON/number/bool supported)
-• !ga-config get <Module> key              — echo module config value
-• !ga-enable <Module> / !ga-disable <Module>
-• !ga-status                               — show metrics + listeners
-
-MODULE COMMANDS:
-• CritFumble:
-    !critfail                               — GM menu to trigger fumble UI for a player
-    !critfumble help                        — help
-    !critfumble-<melee|ranged|thrown|spell|natural>
-    !confirm-crit-martial   | !confirm-crit-magic
-• ConcentrationTracker (players/GM):
-    !concentration [--damage N] [--mode normal|adv|dis] [--off|--status|--last|--config randomize on|off]
-    !cc (alias)
-• NPCManager (GM):         !npc-death-report
-• NPCHPRoller (GM):        !npc-hp-selected    |   !npc-hp-all
-
-DEPENDENCIES
-• TokenMod — required for marker/status changes issued by NPCManager and ConcentrationTracker.
-
-CONFIGURATION NOTES
-• Global flags (in code): GameAssist.flags.DEBUG_COMPAT, GameAssist.flags.QUIET_STARTUP.
-• Per-module config via !ga-config set; types: boolean, number, JSON object/array, string.
-
-COMPATIBILITY / FOOTPRINT
-• Namespaced under global `GameAssist`. Avoids polluting global scope otherwise.
-• Uses standard events: `on('ready')`, `on('chat:message')`, and graphic change events.
-• Writes only to Roll20 objects documented in script.json: handout notes, token bars/markers.
-
-SUPPORT / HELP
-• Use !ga-status for quick health; !ga-config list creates a “GameAssist Config” handout.
-• For bug reports, include the console whisper output from `GameAssist.log(...)`.
-
-HEADER REQUIREMENTS NOTE
-Per the Roll20 API repo contribution guidelines, this header provides name, version, last updated,
-description, syntax/commands, and configuration pointers near the top of the script. 
-========================================
-*/
-
-// --- MECHSUITS BANNER (YAML) ---
-// mechsuit:
-//   codename: "GAMEASSIST_GAMEASSIST"
-//   purpose: "Roll20 API modular kernel and bundled modules (CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller). This file adds MECHSUITS framing (sections, policy, notes) without changing runtime behavior. Non-goals: sheet-specific integrations or transport changes beyond Roll20 chat API."
-//   order: ["app","policy","imports","utils","core.queue","core.state","compat","core.object","interfaces.commands","interfaces.events","modules","bootstrap"]
-//   env:
-//     required: []
-//     optional: []
-//     secrets: []
-//   data_class: "Internal"
-//   ai_data: "internal_redacted"
-//   observability:
-//     logs: "roll20_whisper_to_gm"
-//     metrics: [{ name: "gameassist.queue.task_duration_ms", unit: "ms" }]
-//     spans: ["[GAMEASSIST_GAMEASSIST:CORE:QUEUE]","[GAMEASSIST_GAMEASSIST:MODULES:CRITFUMBLE]"]
-//   performance: { throughput_ops: 1, latency_p99_ms: 1000 }
-//   concurrency: { model: "Serialized task queue", idempotency: "N/A (event-driven)" }
-//   compatibility: { accepts: ["Roll20 API sandbox (2025-04-09 build or later)"], emits: "Roll20 chat whispers/logs" }
-//   policy: { notes_ref: "[GAMEASSIST_GAMEASSIST:POLICY]" }
-//   error_codes: ["INVALID_ARGUMENT","NOT_FOUND","CONFLICT","UNAUTHORIZED","FORBIDDEN","UNPROCESSABLE","RATE_LIMITED","TIMEOUT","UNAVAILABLE","INTERNAL"]
-//   transport_map:
-//     chat: "Errors are whispered to GM; status/info are whispered as structured text"
-//   canonical_tree: |
-//     [GAMEASSIST_GAMEASSIST]/
-//     ├─ [GAMEASSIST_GAMEASSIST:APP]
-//     │  ├─ [GAMEASSIST_GAMEASSIST:POLICY]
-//     │  ├─ [GAMEASSIST_GAMEASSIST:APP:IMPORTS]
-//     │  ├─ [GAMEASSIST_GAMEASSIST:APP:UTILS]
-//     │  ├─ [GAMEASSIST_GAMEASSIST:CORE:QUEUE]
-//     │  ├─ [GAMEASSIST_GAMEASSIST:CORE:STATE]
-//     │  ├─ [GAMEASSIST_GAMEASSIST:CORE:COMPAT]
-//     │  ├─ [GAMEASSIST_GAMEASSIST:CORE:OBJECT]
-//     │  ├─ [GAMEASSIST_GAMEASSIST:INTERFACES:COMMANDS]
-//     │  ├─ [GAMEASSIST_GAMEASSIST:INTERFACES:EVENTS]
-//     │  ├─ [GAMEASSIST_GAMEASSIST:MODULES:CRITFUMBLE]
-//     │  ├─ [GAMEASSIST_GAMEASSIST:MODULES:NPCMANAGER]
-//     │  ├─ [GAMEASSIST_GAMEASSIST:MODULES:CONCENTRATIONTRACKER]
-//     │  ├─ [GAMEASSIST_GAMEASSIST:MODULES:NPCHPROLLER]
-//     │  └─ [GAMEASSIST_GAMEASSIST:BOOTSTRAP]
-// --- prose banner ---
-// Guarantee: This is a structural wrap of GameAssist v0.1.2 for Roll20 — it reorganizes the file into MECHSUITS sections with notes and policy while preserving all code and behavior.
-// Secrets: none. Logs whisper to GM. Refusal: this file does not alter module logic, transport semantics, or sheet-specific behavior; those are out of scope here.
-
 // =============================
-// === GameAssist v0.1.2 ===
+// === GameAssist v0.1.1.2 ===
 // === Author: Mord Eagle ===
 // =============================
 // Released under the MIT License (see https://opensource.org/licenses/MIT)
@@ -127,33 +21,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// =============================================================================
-// [GAMEASSIST_GAMEASSIST:APP] BEGIN
-// Section Title: GameAssist — Roll20 API micro‑kernel with modules (wrapper)
-// -----------------------------------------------------------------------------
-// mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "APP", title: "Wrapper",
-//   guarantees: ["Framed sections only; original behavior intact"],
-//   depends_on: [], version: "1.0.0" }
-// -----------------------------------------------------------------------------
-
 (() => {
     'use strict';
-
-    // =============================================================================
-    // [GAMEASSIST_GAMEASSIST:POLICY] BEGIN
-    // Section Title: Tunables & flags (non‑behavioral framing)
-    // -------------------------------------------------------------------------
-    // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "POLICY", title: "Tunables",
-    //   guarantees: ["Documented timeouts; do not change values here from legacy"],
-    //   version: "1.0.0" }
-    // -------------------------------------------------------------------------
-    // NOTE: We declare canonical names mirroring legacy constants; values remain identical.
-    //       Changing these would alter behavior; out of scope for this structural wrap.
-    // --- Notes & Comments ---
-    // CHOICE: Keep constants inline with legacy names to avoid breaking changes.
-    // ALT: Refactor to POLICY object and import; REJECTED for now (no behavior change rule).
-    // [GAMEASSIST_GAMEASSIST:POLICY] END
-    // =============================================================================
 
     const VERSION      = '0.1.1.2';
     const STATE_KEY    = 'GameAssist';
@@ -161,13 +30,6 @@ description, syntax/commands, and configuration pointers near the top of the scr
     let   READY        = false;
 
     // ————— QUEUE + WATCHDOG —————
-    // =============================================================================
-    // [GAMEASSIST_GAMEASSIST:CORE:QUEUE] BEGIN
-    // Section Title: Serialized task queue + watchdog
-    // -------------------------------------------------------------------------
-    // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "CORE:QUEUE", title: "Queue",
-    //   guarantees: ["Single in‑flight task; watchdog resets hung jobs"], version: "1.0.0" }
-    // -------------------------------------------------------------------------
     let _busy      = false;
     let _lastStart = 0;
     const _queue            = [];
@@ -212,21 +74,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
             _runNext();
         }
     }, WATCHDOG_INTERVAL);
-    // --- Notes & Comments ---
-    // Decision log:
-    //   CHOICE: FIFO with priority bump via sort; simple and sufficient for sandbox.
-    //   CHOICE: Watchdog at 2× DEFAULT_TIMEOUT; mirrors legacy behavior.
-    // [GAMEASSIST_GAMEASSIST:CORE:QUEUE] END
-    // =============================================================================
 
     // ————— HANDLER TRACKING —————
-    // =============================================================================
-    // [GAMEASSIST_GAMEASSIST:INTERFACES:EVENTS] BEGIN
-    // Section Title: Roll20 on/off wrappers and handler registry
-    // -------------------------------------------------------------------------
-    // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "INTERFACES:EVENTS", title: "Handlers",
-    //   guarantees: ["Track listeners for safe enable/disable"], version: "1.0.0" }
-    // -------------------------------------------------------------------------
     globalThis._handlers = globalThis._handlers || {};
     const originalOn  = typeof globalThis.on  === 'function' ? globalThis.on  : null;
     const originalOff = typeof globalThis.off === 'function' ? globalThis.off : null;
@@ -246,19 +95,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
             return originalOff(event, handler);
         }
     };
-    // --- Notes & Comments ---
-    // CHOICE: Wrap global on/off to keep a registry for teardown; avoids leaks.
-    // [GAMEASSIST_GAMEASSIST:INTERFACES:EVENTS] END
-    // =============================================================================
 
     // ————— UTILITIES —————
-    // =============================================================================
-    // [GAMEASSIST_GAMEASSIST:APP:UTILS] BEGIN
-    // Section Title: Utilities (arg parsing, state helpers, audit, sanitize)
-    // -------------------------------------------------------------------------
-    // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "APP:UTILS", title: "Utilities",
-    //   guarantees: ["Pure helpers; no external side‑effects"], version: "1.0.0" }
-    // -------------------------------------------------------------------------
     function _parseArgs(content) {
         const args = {}, pattern = /--(\w+)(?:\s+("[^"]*"|[^\s]+))?/g;
         let m;
@@ -284,7 +122,20 @@ description, syntax/commands, and configuration pointers near the top of the scr
         state[STATE_KEY][mod] = Object.assign(getState(mod), data);
     }
     function clearState(mod) {
-        if (state[STATE_KEY]?.[mod]) delete state[STATE_KEY][mod];
+        const root = state[STATE_KEY];
+        if (!root || !root[mod]) return;
+
+        const branch = root[mod];
+        if (!branch || typeof branch !== 'object') {
+            root[mod] = { config: {}, runtime: {} };
+            return;
+        }
+
+        if (typeof branch.config !== 'object' || branch.config === null) {
+            branch.config = {};
+        }
+
+        branch.runtime = {};
     }
 
     function auditState() {
@@ -320,19 +171,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
             .replace(/>/g, '&gt;')
             .replace(/'/g, '&#39;');
     }
-    // --- Notes & Comments ---
-    // DANGER: State auditor deletes unknown branches; acceptable as branches are module‑scoped.
-    // [GAMEASSIST_GAMEASSIST:APP:UTILS] END
-    // =============================================================================
 
     // ————— COMPATIBILITY —————
-    // =============================================================================
-    // [GAMEASSIST_GAMEASSIST:CORE:COMPAT] BEGIN
-    // Section Title: Compatibility audit
-    // -------------------------------------------------------------------------
-    // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "CORE:COMPAT", title: "Compat",
-    //   guarantees: ["Optional visibility of known/unknown scripts"], version: "1.0.0" }
-    // -------------------------------------------------------------------------
     const KNOWN_SCRIPTS = [
         'tokenmod.js','universaltvttimporter.js','npc-hp.js','wolfpack.js',
         'critfumble.js','rana-curse.js','statusinfo.js','npc death tracker.js',
@@ -356,19 +196,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
         GameAssist.log('Compat', '🔌 Events: '   + GameAssist._plannedEvents.join(', '));
         GameAssist.log('Compat', '💬 Commands: ' + GameAssist._plannedChatPrefixes.join(', '));
     }
-    // --- Notes & Comments ---
-    // CHOICE: DEBUG_COMPAT gate avoids noise; GM toggles as needed.
-    // [GAMEASSIST_GAMEASSIST:CORE:COMPAT] END
-    // =============================================================================
 
     // ————— CONFIG PARSER —————
-    // =============================================================================
-    // [GAMEASSIST_GAMEASSIST:CORE:STATE] BEGIN
-    // Section Title: Config parser (aux to state management)
-    // -------------------------------------------------------------------------
-    // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "CORE:STATE", title: "Config parser",
-    //   guarantees: ["Parse JSON/boolean/number safely"], version: "1.0.0" }
-    // -------------------------------------------------------------------------
     function parseConfigValue(raw) {
         raw = raw.trim();
         if (raw === 'true')  return true;
@@ -380,19 +209,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
         }
         return raw;
     }
-    // --- Notes & Comments ---
-    // CHOICE: Gracefully log bad JSON rather than throwing; keeps chat usable.
-    // [GAMEASSIST_GAMEASSIST:CORE:STATE] END
-    // =============================================================================
 
     // ————— GameAssist CORE —————
-    // =============================================================================
-    // [GAMEASSIST_GAMEASSIST:CORE:OBJECT] BEGIN
-    // Section Title: GameAssist kernel object
-    // -------------------------------------------------------------------------
-    // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "CORE:OBJECT", title: "Kernel",
-    //   guarantees: ["Logging, error handling, register/enable/disable, listener mgmt"], version: "1.0.0" }
-    // -------------------------------------------------------------------------
     const GameAssist = {
         _metrics: {
             commands: 0,
@@ -502,10 +320,22 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 this.offEvents(name);
                 this.offCommands(name);
                 clearState(name);
-                getState(name).config.enabled = true;
-                m.initialized = true;
-                try { m.initFn(); this.log(name, 'Enabled'); }
-                catch(e) { this.handleError(name, e); }
+                const branch = getState(name);
+                try {
+                    m.initFn();
+                    // Mark initialized only after initFn completes successfully.
+                    m.initialized = true;
+                    branch.config.enabled = true;
+                    this.log(name, 'Enabled');
+                }
+                catch(e) {
+                    m.initialized = false;
+                    branch.config.enabled = false;
+                    this.offEvents(name);
+                    this.offCommands(name);
+                    clearState(name);
+                    this.handleError(name, e);
+                }
             });
         },
 
@@ -528,19 +358,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
     };
 
     globalThis.GameAssist = GameAssist;
-    // --- Notes & Comments ---
-    // CHOICE: Expose globally under same name for console and other scripts.
-    // [GAMEASSIST_GAMEASSIST:CORE:OBJECT] END
-    // =============================================================================
 
     // ————— CONFIG COMMAND —————
-    // =============================================================================
-    // [GAMEASSIST_GAMEASSIST:INTERFACES:COMMANDS] BEGIN
-    // Section Title: Admin/config commands (!ga-*)
-    // -------------------------------------------------------------------------
-    // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "INTERFACES:COMMANDS", title: "Commands",
-    //   guarantees: ["GM-gated admin commands; consistent logging"], version: "1.0.0" }
-    // -------------------------------------------------------------------------
     GameAssist.onCommand('!ga-config', msg => {
         const parts = msg.content.trim().split(/\s+/);
         const sub   = parts[1];
@@ -630,19 +449,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
         GameAssist.log('Status', status);
     }, 'Core', { gmOnly: true });
-    // --- Notes & Comments ---
-    // CHOICE: Keep command syntax identical to legacy for drop‑in replacement.
-    // [GAMEASSIST_GAMEASSIST:INTERFACES:COMMANDS] END
-    // =============================================================================
 
     // ————— CRITFUMBLE MODULE v0.2.4.9 —————
-    // =============================================================================
-    // [GAMEASSIST_GAMEASSIST:MODULES:CRITFUMBLE] BEGIN
-    // Section Title: CritFumble module
-    // -------------------------------------------------------------------------
-    // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "MODULES:CRITFUMBLE", title: "CritFumble",
-    //   guarantees: ["Behavior unchanged; natural‑1 detection bugfix retained"], version: "0.2.4.9" }
-    // -------------------------------------------------------------------------
     GameAssist.register('CritFumble', function() {
         // ─── Module Setup ──────────────────────────────────────────────────────────────
         const modState = getState('CritFumble');
@@ -876,19 +684,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
         events:   ['chat:message'],
         prefixes: ['!critfail','!critfumble']
     });
-    // --- Notes & Comments ---
-    // Bugfix retained: robust natural‑1 detection across templates/inlineroll variants.
-    // [GAMEASSIST_GAMEASSIST:MODULES:CRITFUMBLE] END
-    // =============================================================================
 
     // ————— NPC MANAGER MODULE v0.1.1.0 —————
-    // =============================================================================
-    // [GAMEASSIST_GAMEASSIST:MODULES:NPCMANAGER] BEGIN
-    // Section Title: NPCManager module
-    // -------------------------------------------------------------------------
-    // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "MODULES:NPCMANAGER", title: "NPCManager",
-    //   guarantees: ["Auto toggle dead marker based on HP"], version: "0.1.1.0" }
-    // -------------------------------------------------------------------------
     GameAssist.register('NPCManager', function() {
         const modState = getState('NPCManager');
 
@@ -978,19 +775,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
         events: ['change:graphic:bar1_value'], 
         prefixes: ['!npc-death-report'] 
     });
-    // --- Notes & Comments ---
-    // CHOICE: TokenMod used for status marker ops; keep dependency explicit in README.
-    // [GAMEASSIST_GAMEASSIST:MODULES:NPCMANAGER] END
-    // =============================================================================
 
 // ————— CONCENTRATION TRACKER MODULE v0.1.0.5 —————
-// =============================================================================
-// [GAMEASSIST_GAMEASSIST:MODULES:CONCENTRATIONTRACKER] BEGIN
-// Section Title: ConcentrationTracker module
-// -------------------------------------------------------------------------
-// mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "MODULES:CONCENTRATIONTRACKER", title: "ConcentrationTracker",
-//   guarantees: ["Chat UI for concentration saves; TokenMod marker toggle"], version: "0.1.0.5" }
-// -------------------------------------------------------------------------
 GameAssist.register('ConcentrationTracker', function() {
     // ─── Module Setup ──────────────────────────────────────────────────────────────
     const modState = getState('ConcentrationTracker');
@@ -1004,7 +790,20 @@ GameAssist.register('ConcentrationTracker', function() {
 
     // ─── Public Command Prefixes ───────────────────────────────────────────────────
     const CMDS = ['!concentration', '!cc'];
-    const TOKEN_MARKER = 'Concentrating';
+
+    function getTokenMarker() {
+        return `${modState.config.marker || 'Concentrating'}`.trim() || 'Concentrating';
+    }
+
+    function tokenHasMarker(token, marker) {
+        const want = marker.toLowerCase();
+        if (!want) return false;
+        const raw = token.get('statusmarkers') || '';
+        return raw
+            .split(',')
+            .map(m => m.split('::')[0].toLowerCase())
+            .includes(want);
+    }
 
     // ─── Default Emote Lines ────────────────────────────────────────────────────────
     const DEFAULT_LINES = {
@@ -1061,11 +860,12 @@ GameAssist.register('ConcentrationTracker', function() {
 
     /**
      * toggleMarker(token, on)
-     *   Adds or removes the Concentrating status marker.
+     *   Adds or removes the configured status marker.
      */
     function toggleMarker(token, on) {
+        const marker = getTokenMarker();
         sendChat('api',
-            `!token-mod --ids ${token.id} --set statusmarkers|${on ? '+' : '-'}${TOKEN_MARKER}`
+            `!token-mod --ids ${token.id} --set statusmarkers|${on ? '+' : '-'}${marker}`
         );
     }
 
@@ -1099,19 +899,16 @@ GameAssist.register('ConcentrationTracker', function() {
 
     /**
      * showStatus(player)
-     *   Lists all tokens currently marked Concentrating.
+     *   Lists all tokens currently marked with the configured marker.
      */
     function showStatus(player) {
+        const marker = getTokenMarker();
         const page = Campaign().get('playerpageid');
         const tokens = findObjs({
             _type:  'graphic',
             _pageid: page,
             layer:  'objects'
-        }).filter(t =>
-            (t.get('statusmarkers') || '')
-                .toLowerCase()
-                .includes(TOKEN_MARKER.toLowerCase())
-        );
+        }).filter(t => tokenHasMarker(t, marker));
         if (!tokens.length) {
             return sendChat('ConcentrationTracker',
                 `/w "${player}" No tokens concentrating.`
@@ -1119,7 +916,7 @@ GameAssist.register('ConcentrationTracker', function() {
         }
         let out = `&{template:default} {{name=🧠 Concentration Status}}`;
         tokens.forEach(t => {
-            out += `{{${t.get('name') || 'Unnamed'}=Concentrating}}`;
+            out += `{{${t.get('name') || 'Unnamed'}=${marker}}}`;
         });
         sendChat('ConcentrationTracker', `/w "${player}" ${out}`);
     }
@@ -1294,41 +1091,28 @@ GameAssist.register('ConcentrationTracker', function() {
     enabled:  true,
     prefixes: ['!concentration','!cc'],
     teardown: () => {
+        const state = getState('ConcentrationTracker');
+        const marker = `${state?.config?.marker || 'Concentrating'}`.trim() || 'Concentrating';
         const page = Campaign().get('playerpageid');
         findObjs({ _type: 'graphic', _pageid: page, layer: 'objects' })
-            .filter(t =>
-                (t.get('statusmarkers') || '')
-                    .toLowerCase()
-                    .includes('concentrating')
-            )
+            .filter(t => tokenHasMarker(t, marker))
             .forEach(t =>
                 sendChat('api',
-                    `!token-mod --ids ${t.id} --set statusmarkers|-Concentrating`
+                    `!token-mod --ids ${t.id} --set statusmarkers|-${marker}`
                 )
             );
     }
 });
-// --- Notes & Comments ---
-// CHOICE: Keep lowercase parsing and aliases exactly as legacy; avoids user retraining.
-// [GAMEASSIST_GAMEASSIST:MODULES:CONCENTRATIONTRACKER] END
-// =============================================================================
 
     // ————— NPC HP ROLLER MODULE v0.1.1.0 —————
-    // =============================================================================
-    // [GAMEASSIST_GAMEASSIST:MODULES:NPCHPROLLER] BEGIN
-    // Section Title: NPCHPRoller module
-    // -------------------------------------------------------------------------
-    // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "MODULES:NPCHPROLLER", title: "NPCHPRoller",
-    //   guarantees: ["Parse NdM±K and set bar1 to rolled HP"], version: "0.1.1.0" }
-    // -------------------------------------------------------------------------
     GameAssist.register('NPCHPRoller', function() {
         const modState = getState('NPCHPRoller');
 
-    Object.assign(modState.config, {
-        enabled: true,
-        autoRollOnAdd: false,
-        ...modState.config
-    });
+        Object.assign(modState.config, {
+            enabled: true,
+            autoRollOnAdd: false,
+            ...modState.config
+        });
 
         function parseDiceString(diceStr) {
             // Match “NdM”, “NdM+K”, “NdM + K”, “NdM-K”, case-insensitive on “d”
@@ -1462,19 +1246,8 @@ GameAssist.register('ConcentrationTracker', function() {
         events: [], 
         prefixes: ['!npc-hp-all', '!npc-hp-selected'] 
     });
-    // --- Notes & Comments ---
-    // CHOICE: Use Math.random for simplicity; acceptable for non‑critical HP rolls.
-    // [GAMEASSIST_GAMEASSIST:MODULES:NPCHPROLLER] END
-    // =============================================================================
 
     // ————— BOOTSTRAP —————
-    // =============================================================================
-    // [GAMEASSIST_GAMEASSIST:BOOTSTRAP] BEGIN
-    // Section Title: Sandbox ready bootstrap
-    // -------------------------------------------------------------------------
-    // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "BOOTSTRAP", title: "Bootstrap",
-    //   guarantees: ["Seed defaults, audit state, init enabled modules"], version: "1.0.0" }
-    // -------------------------------------------------------------------------
     on('ready', () => {
         if (READY) return;
         READY = true;
@@ -1491,26 +1264,25 @@ GameAssist.register('ConcentrationTracker', function() {
         GameAssist.log('Core', `GameAssist v${VERSION} ready; modules: ${Object.keys(MODULES).join(', ')}`);
 
         Object.entries(MODULES).forEach(([name, m]) => {
-            if (getState(name).config.enabled) {
-                m.initialized = true;
-                try { m.initFn(); }
-                catch(e) { GameAssist.handleError(name, e); }
+            const branch = getState(name);
+            if (branch.config.enabled) {
+                try {
+                    m.initFn();
+                    // Mark initialized only after initFn completes successfully.
+                    m.initialized = true;
+                }
+                catch(e) {
+                    m.initialized = false;
+                    branch.config.enabled = false;
+                    GameAssist.offEvents(name);
+                    GameAssist.offCommands(name);
+                    clearState(name);
+                    GameAssist.handleError(name, e);
+                }
             }
         });
     });
-    // --- Notes & Comments ---
-    // CHOICE: Core ready log is never suppressed; mirrors README guidance.
-    // [GAMEASSIST_GAMEASSIST:BOOTSTRAP] END
-    // =============================================================================
 
 })();
 
-// --- Notes & Comments ---
-// Parent wrapper: No behavior changes. This mechsuit only adds structure and documentation.
-// Prior notes (selected):
-//   • MIT license retained; copyright © 2025 Mord Eagle.
-//   • Modules: CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller.
-//   • Queue/watchdog defaults preserved (30s/15s).
-//   • Logging emits /w gm with icons and timestamp.
-// [GAMEASSIST_GAMEASSIST:APP] END
-// ============================================================================
+
