@@ -1,7 +1,7 @@
 /* 
 ========================================
 GameAssist — Roll20 API Script
-Version: 0.1.5
+Version: 0.1.3
 Last Updated: 2025-09-25 (America/Detroit)
 Author: Mord Eagle
 License: MIT (see repository LICENSE)
@@ -70,6 +70,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
 // --- MECHSUITS BANNER (YAML) ---
 // mechsuit:
 //   codename: "GAMEASSIST_GAMEASSIST"
+//   project_version: "v0.1.3"
 //   purpose: "Roll20 API modular kernel and bundled modules (CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller). This file adds MECHSUITS framing (sections, policy, notes) without changing runtime behavior. Non-goals: sheet-specific integrations or transport changes beyond Roll20 chat API."
 //   order: ["app","policy","imports","utils","core.queue","core.state","compat","core.object","interfaces.commands","interfaces.events","modules","bootstrap"]
 //   env:
@@ -101,14 +102,16 @@ description, syntax/commands, and configuration pointers near the top of the scr
 //     │  ├─ [GAMEASSIST_GAMEASSIST:CORE:OBJECT]
 //     │  ├─ [GAMEASSIST_GAMEASSIST:INTERFACES:COMMANDS]
 //     │  ├─ [GAMEASSIST_GAMEASSIST:INTERFACES:EVENTS]
+//     │  ├─ [GAMEASSIST_GAMEASSIST:MODULES:CONFIGUI]
 //     │  ├─ [GAMEASSIST_GAMEASSIST:MODULES:CRITFUMBLE]
 //     │  ├─ [GAMEASSIST_GAMEASSIST:MODULES:NPCMANAGER]
 //     │  ├─ [GAMEASSIST_GAMEASSIST:MODULES:CONCENTRATIONTRACKER]
 //     │  ├─ [GAMEASSIST_GAMEASSIST:MODULES:NPCHPROLLER]
+//     │  ├─ [GAMEASSIST_GAMEASSIST:MODULES:DEBUGTOOLS]
 //     │  └─ [GAMEASSIST_GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
-// Guarantee: This is a structural wrap of GameAssist v0.1.3 for Roll20 — it reorganizes the file into MECHSUITS sections with notes and policy while preserving all code and behavior.
-// Secrets: none. Logs whisper to GM. Refusal: this file does not alter module logic, transport semantics, or sheet-specific behavior; those are out of scope here.
+// Guarantee: This is a structural wrap of GameAssist v0.1.3 for Roll20 — it reorganizes the file into MECHSUITS v1.5.1 sections with notes and policy while preserving all code and behavior.
+// Project version: v0.1.3. Secrets: none. Logs whisper to GM. Refusal: this file does not alter module logic, transport semantics, or sheet-specific behavior; those are out of scope here.
 
 // =============================
 // === GameAssist v0.1.3 ===
@@ -139,7 +142,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
 // -----------------------------------------------------------------------------
 // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "APP", title: "Wrapper",
 //   guarantees: ["Framed sections only; original behavior intact"],
-//   depends_on: [], version: "1.0.0" }
+//   depends_on: [], last_updated_version: "v0.1.3" }
 // -----------------------------------------------------------------------------
 
 (() => {
@@ -151,17 +154,18 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "POLICY", title: "Tunables",
     //   guarantees: ["Documented timeouts; do not change values here from legacy"],
-    //   version: "1.0.0" }
+    //   last_updated_version: "v0.1.3" }
     // -------------------------------------------------------------------------
     // NOTE: We declare canonical names mirroring legacy constants; values remain identical.
     //       Changing these would alter behavior; out of scope for this structural wrap.
     // --- Notes & Comments ---
     // CHOICE: Keep constants inline with legacy names to avoid breaking changes.
     // ALT: Refactor to POLICY object and import; REJECTED for now (no behavior change rule).
+    // Maintenance (v0.1.3, no semantic change): Updated MECHSUITS metadata for v1.5.1 compliance.
     // [GAMEASSIST_GAMEASSIST:POLICY] END
     // =============================================================================
 
-    const VERSION      = '0.1.5';
+    const VERSION      = '0.1.3';
     const STATE_KEY    = 'GameAssist';
     const MODULES      = {};
     const _transitioning   = {};
@@ -188,7 +192,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: Serialized task queue + watchdog
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "CORE:QUEUE", title: "Queue",
-    //   guarantees: ["Single in‑flight task; watchdog resets hung jobs"], version: "1.0.0" }
+    //   guarantees: ["Single in‑flight task; watchdog resets hung jobs"], last_updated_version: "v0.1.3" }
     // -------------------------------------------------------------------------
     let _busy      = false;
     let _lastStart = 0;
@@ -242,6 +246,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Decision log:
     //   CHOICE: FIFO with priority bump via sort; simple and sufficient for sandbox.
     //   CHOICE: Watchdog at 2× DEFAULT_TIMEOUT; mirrors legacy behavior.
+    //   Maintenance (v0.1.3, no semantic change): MECHSUITS metadata updated for v1.5.1 compliance.
     // [GAMEASSIST_GAMEASSIST:CORE:QUEUE] END
     // =============================================================================
 
@@ -251,7 +256,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: Roll20 on/off wrappers and handler registry
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "INTERFACES:EVENTS", title: "Handlers",
-    //   guarantees: ["Track listeners for safe enable/disable"], version: "1.0.0" }
+    //   guarantees: ["Track listeners for safe enable/disable"], last_updated_version: "v0.1.3" }
     // -------------------------------------------------------------------------
     globalThis._handlers = globalThis._handlers || {};
     const originalOn  = typeof globalThis.on  === 'function' ? globalThis.on  : null;
@@ -274,6 +279,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     };
     // --- Notes & Comments ---
     // CHOICE: Wrap global on/off to keep a registry for teardown; avoids leaks.
+    // Maintenance (v0.1.3, no semantic change): MECHSUITS metadata refreshed for v1.5.1.
     // [GAMEASSIST_GAMEASSIST:INTERFACES:EVENTS] END
     // =============================================================================
 
@@ -283,7 +289,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: Utilities (arg parsing, state helpers, audit, sanitize)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "APP:UTILS", title: "Utilities",
-    //   guarantees: ["Pure helpers; no external side‑effects"], version: "1.0.0" }
+    //   guarantees: ["Pure helpers; no external side‑effects"], last_updated_version: "v0.1.3" }
     // -------------------------------------------------------------------------
     function createMetricsStore() {
         return {
@@ -443,6 +449,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     }
     // --- Notes & Comments ---
     // NOTE: State auditor warns about unexpected branches; no automatic deletion occurs.
+    // Maintenance (v0.1.3, no semantic change): Section metadata aligned to MECHSUITS v1.5.1.
     // [GAMEASSIST_GAMEASSIST:APP:UTILS] END
     // =============================================================================
 
@@ -452,7 +459,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: Compatibility audit
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "CORE:COMPAT", title: "Compat",
-    //   guarantees: ["Optional visibility of known/unknown scripts"], version: "1.0.0" }
+    //   guarantees: ["Optional visibility of known/unknown scripts"], last_updated_version: "v0.1.3" }
     // -------------------------------------------------------------------------
     const KNOWN_SCRIPTS = [
         'tokenmod.js','universaltvttimporter.js','npc-hp.js','wolfpack.js',
@@ -608,6 +615,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     }
     // --- Notes & Comments ---
     // CHOICE: DEBUG_COMPAT gate avoids noise; GM toggles as needed.
+    // Maintenance (v0.1.3, no semantic change): MECHSUITS compliance metadata refreshed.
     // [GAMEASSIST_GAMEASSIST:CORE:COMPAT] END
     // =============================================================================
 
@@ -617,7 +625,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: Config parser (aux to state management)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "CORE:STATE", title: "Config parser",
-    //   guarantees: ["Parse JSON/boolean/number safely"], version: "1.0.0" }
+    //   guarantees: ["Parse JSON/boolean/number safely"], last_updated_version: "v0.1.3" }
     // -------------------------------------------------------------------------
     function parseConfigValue(raw) {
         raw = raw.trim();
@@ -632,6 +640,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     }
     // --- Notes & Comments ---
     // CHOICE: Gracefully log bad JSON rather than throwing; keeps chat usable.
+    // Maintenance (v0.1.3, no semantic change): Added MECHSUITS v1.5.1 tracking metadata.
     // [GAMEASSIST_GAMEASSIST:CORE:STATE] END
     // =============================================================================
 
@@ -641,7 +650,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: GameAssist kernel object
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "CORE:OBJECT", title: "Kernel",
-    //   guarantees: ["Logging, error handling, register/enable/disable, listener mgmt"], version: "1.0.0" }
+    //   guarantees: ["Logging, error handling, register/enable/disable, listener mgmt"], last_updated_version: "v0.1.3" }
     // -------------------------------------------------------------------------
     const GameAssist = {
         _metrics: {
@@ -934,6 +943,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     globalThis.GameAssist = GameAssist;
     // --- Notes & Comments ---
     // CHOICE: Expose globally under same name for console and other scripts.
+    // Maintenance (v0.1.3, no semantic change): Updated MECHSUITS metadata; behavior untouched.
     // [GAMEASSIST_GAMEASSIST:CORE:OBJECT] END
     // =============================================================================
 
@@ -943,7 +953,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: Admin/config commands (!ga-*)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "INTERFACES:COMMANDS", title: "Commands",
-    //   guarantees: ["GM-gated admin commands; consistent logging"], version: "1.0.0" }
+    //   guarantees: ["GM-gated admin commands; consistent logging"], last_updated_version: "v0.1.3" }
     // -------------------------------------------------------------------------
     GameAssist.onCommand('!ga-config', msg => {
         const parts = msg.content.trim().split(/\s+/);
@@ -1157,6 +1167,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     }, 'Core', { gmOnly: true });
     // --- Notes & Comments ---
     // CHOICE: Keep command syntax identical to legacy for drop‑in replacement.
+    // Maintenance (v0.1.3, no semantic change): Updated MECHSUITS tracking fields only.
     // [GAMEASSIST_GAMEASSIST:INTERFACES:COMMANDS] END
     // =============================================================================
 
@@ -1165,8 +1176,10 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // [GAMEASSIST_GAMEASSIST:MODULES:CONFIGUI] BEGIN
     // Section Title: Config UI module
     // -------------------------------------------------------------------------
-    // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "MODULES:CONFIGUI", title: "Config UI", 
-    //   guarantees: ["GM chat menu for module toggles and quick config"], version: "0.1.0" }
+    // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "MODULES:CONFIGUI", title: "Config UI",
+    //   guarantees: ["GM chat menu for module toggles and quick config"],
+    //   last_updated_version: "v0.1.3",
+    //   independent_versions: { module_version: "0.1.0" } }
     // -------------------------------------------------------------------------
     GameAssist.register('ConfigUI', function() {
         const modState = GameAssist.getState('ConfigUI');
@@ -1316,6 +1329,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // CHOICE: Button helper reused; nav uses the same command path for refresh/paging.
+    // Maintenance (v0.1.3, no semantic change): Updated section metadata for MECHSUITS v1.5.1.
     // [GAMEASSIST_GAMEASSIST:MODULES:CONFIGUI] END
     // =============================================================================
 
@@ -1325,7 +1339,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: CritFumble module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "MODULES:CRITFUMBLE", title: "CritFumble",
-    //   guarantees: ["Behavior unchanged; natural‑1 detection bugfix retained"], version: "0.2.4.9" }
+    //   guarantees: ["Behavior unchanged; natural‑1 detection bugfix retained"],
+    //   last_updated_version: "v0.1.3",
+    //   independent_versions: { module_version: "0.2.4.9" } }
     // -------------------------------------------------------------------------
     GameAssist.register('CritFumble', function() {
         // ─── Module Setup ──────────────────────────────────────────────────────────────
@@ -1576,6 +1592,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // Bugfix retained: robust natural‑1 detection across templates/inlineroll variants.
+    // Maintenance (v0.1.3, no semantic change): MECHSUITS metadata updated only.
     // [GAMEASSIST_GAMEASSIST:MODULES:CRITFUMBLE] END
     // =============================================================================
 
@@ -1585,7 +1602,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: NPCManager module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "MODULES:NPCMANAGER", title: "NPCManager",
-    //   guarantees: ["Auto toggle dead marker based on HP"], version: "0.1.1.0" }
+    //   guarantees: ["Auto toggle dead marker based on HP"],
+    //   last_updated_version: "v0.1.3",
+    //   independent_versions: { module_version: "0.1.1.0" } }
     // -------------------------------------------------------------------------
     GameAssist.register('NPCManager', function() {
         const modState = GameAssist.getState('NPCManager');
@@ -1761,6 +1780,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // CHOICE: TokenMod used for status marker ops; keep dependency explicit in README.
+    // Maintenance (v0.1.3, no semantic change): Metadata updated for MECHSUITS v1.5.1 alignment.
     // [GAMEASSIST_GAMEASSIST:MODULES:NPCMANAGER] END
     // =============================================================================
 
@@ -1770,7 +1790,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
 // Section Title: ConcentrationTracker module
 // -------------------------------------------------------------------------
 // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "MODULES:CONCENTRATIONTRACKER", title: "ConcentrationTracker",
-//   guarantees: ["Chat UI for concentration saves; TokenMod marker toggle"], version: "0.1.0.5" }
+//   guarantees: ["Chat UI for concentration saves; TokenMod marker toggle"],
+//   last_updated_version: "v0.1.3",
+//   independent_versions: { module_version: "0.1.0.5" } }
 // -------------------------------------------------------------------------
 GameAssist.register('ConcentrationTracker', function() {
     // ─── Module Setup ──────────────────────────────────────────────────────────────
@@ -2193,6 +2215,7 @@ GameAssist.register('ConcentrationTracker', function() {
 });
 // --- Notes & Comments ---
 // CHOICE: Keep lowercase parsing and aliases exactly as legacy; avoids user retraining.
+// Maintenance (v0.1.3, no semantic change): Updated MECHSUITS metadata only.
 // [GAMEASSIST_GAMEASSIST:MODULES:CONCENTRATIONTRACKER] END
 // =============================================================================
 
@@ -2202,7 +2225,9 @@ GameAssist.register('ConcentrationTracker', function() {
     // Section Title: NPCHPRoller module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "MODULES:NPCHPROLLER", title: "NPCHPRoller",
-    //   guarantees: ["Parse NdM±K and set bar1 to rolled HP"], version: "0.1.1.0" }
+    //   guarantees: ["Parse NdM±K and set bar1 to rolled HP"],
+    //   last_updated_version: "v0.1.3",
+    //   independent_versions: { module_version: "0.1.1.0" } }
     // -------------------------------------------------------------------------
     GameAssist.register('NPCHPRoller', function() {
         const modState = GameAssist.getState('NPCHPRoller');
@@ -2401,6 +2426,7 @@ GameAssist.register('ConcentrationTracker', function() {
 });
 // --- Notes & Comments ---
 // CHOICE: Use Math.random for simplicity; acceptable for non‑critical HP rolls.
+// Maintenance (v0.1.3, no semantic change): MECHSUITS metadata updated for compliance.
 // [GAMEASSIST_GAMEASSIST:MODULES:NPCHPROLLER] END
 // =============================================================================
 
@@ -2410,7 +2436,9 @@ GameAssist.register('ConcentrationTracker', function() {
     // Section Title: DebugTools module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "MODULES:DEBUGTOOLS", title: "DebugTools",
-    //   guarantees: ["Dry-run friendly debugging helpers"], version: "0.1.0" }
+    //   guarantees: ["Dry-run friendly debugging helpers"],
+    //   last_updated_version: "v0.1.3",
+    //   independent_versions: { module_version: "0.1.0" } }
     // -------------------------------------------------------------------------
     GameAssist.register('DebugTools', function() {
         const modState = GameAssist.getState('DebugTools');
@@ -2608,6 +2636,7 @@ GameAssist.register('ConcentrationTracker', function() {
     });
     // --- Notes & Comments ---
     // CHOICE: Helpers default to dry-run; --apply required for mutations.
+    // Maintenance (v0.1.3, no semantic change): MECHSUITS metadata refreshed to v1.5.1.
     // [GAMEASSIST_GAMEASSIST:MODULES:DEBUGTOOLS] END
     // =============================================================================
 
@@ -2617,7 +2646,7 @@ GameAssist.register('ConcentrationTracker', function() {
     // Section Title: Sandbox ready bootstrap
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST_GAMEASSIST", area: "BOOTSTRAP", title: "Bootstrap",
-    //   guarantees: ["Seed defaults, audit state, init enabled modules"], version: "1.0.0" }
+    //   guarantees: ["Seed defaults, audit state, init enabled modules"], last_updated_version: "v0.1.3" }
     // -------------------------------------------------------------------------
     on('ready', () => {
         if (READY) return;
@@ -2681,6 +2710,7 @@ GameAssist.register('ConcentrationTracker', function() {
     });
     // --- Notes & Comments ---
     // CHOICE: Core ready log is never suppressed; mirrors README guidance.
+    // Maintenance (v0.1.3, no semantic change): MECHSUITS metadata fields refreshed for compliance.
     // [GAMEASSIST_GAMEASSIST:BOOTSTRAP] END
     // =============================================================================
 
@@ -2688,6 +2718,7 @@ GameAssist.register('ConcentrationTracker', function() {
 
 // --- Notes & Comments ---
 // Parent wrapper: No behavior changes. This mechsuit only adds structure and documentation.
+// Maintenance (v0.1.3, no semantic change): Brought banner/tree/sections to MECHSUITS v1.5.1 requirements.
 // Prior notes (selected):
 //   • MIT license retained; copyright © 2025 Mord Eagle.
 //   • Modules: ConfigUI, CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller, DebugTools.
