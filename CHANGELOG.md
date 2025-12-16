@@ -65,7 +65,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [0.1.4] – Unreleased (staged; blocked by 0.1.3 compliance)
+## [Staging] 0.1.4 (blocked by 0.1.3 compliance)
 
 ### Added
 - New **ConfigUI** module that provides a GM-only chat control panel (buttons for enable/disable and boolean config toggles) exposed via `!ga-config ui` / `!ga-config-ui`.
