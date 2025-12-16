@@ -1,6 +1,6 @@
 # GameAssist – Modular API Framework for Roll20
 
-**Version 0.1.5** | © 2025 Mord Eagle · MIT License
+**Version 0.1.3** | © 2025 Mord Eagle · MIT License
 **Lead Dev:** [@Mord-Eagle](https://github.com/Mord-Eagle)
 
 ---
@@ -165,7 +165,7 @@ IV. Using the Rollable Table tool, create these seven tables by name:
 * Confirm-Crit-Magic
   V. Click **Save Script** again to reload the API. As GM, open your chat whisper window and confirm you see one “ready” message for GameAssist itself and one for each module. It will look roughly like this:
 
-> (From GameAssist): ℹ️ \[10:53:56 PM] \[Core] GameAssist v0.1.5 ready; modules: ConfigUI, CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller, DebugTools
+> (From GameAssist): ℹ️ \[10:53:56 PM] \[Core] GameAssist v0.1.3 ready; modules: ConfigUI, CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller, DebugTools
 
 VI. To verify end-to-end, type `!ga-status` as GM. You’ll receive a whispered summary of GameAssist’s internal metrics (commands processed, active listeners, queue length, etc.), which confirms the system is up and running. Use `!ga-metrics` for the persisted session log (recent toggles, errors, and queue timing ring buffer) or `!ga-metrics reset` to clear it.
 
@@ -398,7 +398,7 @@ IV. **Verify Core Loading**
 a. Watch your GM Whisper window—look for a banner such as:
 
 ```
-GameAssist v0.1.5 ready; modules: ConfigUI, CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller, DebugTools
+GameAssist v0.1.3 ready; modules: ConfigUI, CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller, DebugTools
 ```
 
 b. Run `!ga-status` to confirm there are no errors and that all modules report as active.
