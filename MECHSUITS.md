@@ -1,51 +1,62 @@
-# MECHSUITS v1.5.1 — Human-Readable, Assistant-Ready Standard
+**MECHSUITS v1.5.2 — Human-Readable, Assistant-Ready Standard**
 
-[Mord Eagle Coding Hierarchy, Structure, Using Incrementally Tailored Sections]
+**[Mord Eagle Coding Hierarchy, Structure, Using Incrementally Tailored Sections]**
 
-MECHSUITS exists to make code safe to change through clear structure, explicit contracts, and teaching commentary. Version 1.5.1 keeps everything you value in earlier versions and integrates the guidance you specified plus additional hardening: file-scoped trees that mirror only the sections inside the file, deterministic codenames derived from the project name and filename (for new files), codename stability after creation (even on rename), proper nesting (parents physically wrap children), never-missing parents with full headers and footers (even for wrappers), robust commentary norms (including “why A over B and C”), whole-section replacements in responses with clarified replacement granularity, TypeScript-first examples with principled case-by-case adaptation, preservation of existing commentary on update (lifted into footers), three-examples teaching model for variations, a bias toward optimization over rigidity, meaningful-change semantics for `last_updated_version`, optional independent versions that cannot be confused with project revision, explicit canonical-tree update discipline, and lifecycle/deprecation vocabulary.
+MECHSUITS exists to make code safe to change through clear structure, explicit contracts, and teaching commentary. Version 1.5.2 keeps the v1.5.x guarantees and adds hardening against over-literal assistant behavior: identifiers are **literal and owner-authoritative** (never “normalized” or “namespace-safed”), defaults are fallbacks used only when a value is absent, and “recommended” guidance must not be treated as an implicit MUST.
+
+**Meta-note to AI assistants:** Treat this document as a single, unified contract. If you are asked to produce MECHSUITS-compliant output (framed section replacements, tag/canonical_tree edits, compliance judgments, or anything that asserts “MECHSUITS-compliant”), you MUST first verify the full requirement set—use Section 17 as the minimum checklist. Partial compliance is non-compliance. For small, purely informational questions that do not request compliant artifacts or compliance claims, you may consult only the relevant subsection(s), but you MUST not claim full compliance unless you performed the checklist verification.
 
 RFC-2119 terms apply. Tags and structural tokens remain pure ASCII so they’re easy to see, grep, and reason about.
 
 ---
 
-# 1) Purpose, posture, and what v1.5.1 changes
+# 1) Purpose, posture, and what v1.5.2 changes
 
 You and your assistants will keep the core MECHSUITS guarantees: every executable file opens with a banner and short plain-language paragraph; code is organized into framed sections that declare guarantees, dependencies, seams, risks, and observability; processing order is part of the public contract; inputs are validated and normalized at edges; envelopes are uniform; tunables live in POLICY; time, logs, metrics, spans, and security are disciplined and explicit.
 
-Version 1.5.1 clarifies scope and strengthens human adoption and long-term truthfulness:
+Version 1.5.2 clarifies scope and strengthens long-term truthfulness while reducing “assistant overreach” failure modes:
 
-• File-scoped canonical tree: the banner’s `canonical_tree` shows the hierarchy of sections that exist in this file only; it never reaches outside the file.
-• Canonical tree update discipline: `canonical_tree` MUST match the file’s actual section tags; if tags change, the tree MUST change in the same edit. Tree drift is non-compliance.
-• Codename derivation for new files: default codename is derived from `{projectRootFolder}_{fileBaseName}`, with normalization rules below; uppercase is recommended for readability, but optional.
-• Codename stability: once a file declares a codename, it MUST remain stable across renames and moves. Changing a codename is a MEANINGFUL change and MUST be explicitly logged (see Section 12).
-• Proper nesting (no empty parents): if a child section exists, its parents MUST physically wrap it — children appear between the parent’s `BEGIN` and `END` lines; you must never “close” a parent and then declare its children elsewhere.
-• Non-overlap constraint: if two sections overlap in file ranges, one MUST be a strict ancestor of the other (tag path strict-prefix). Any other overlap is invalid.
-• No missing parents: every subsection has a present parent with header, narrative, and “Notes & Comments” footer, even if the parent has no code.
-• Required outro footers: every code-bearing section ends with a concise “Notes & Comments” block immediately before `END`. Wrapper parents (no code) still require a footer.
-• Commentary standard: virtually every function carries docblocks; surprising or forked lines carry inline explainers. Use explicit CHOICE/ALT and DANGER notes.
-• Whole-section replacement (required delivery): when supplying or updating code, return the entire section frame (`BEGIN…END`) so the owner can replace it wholesale; “replace these few lines” instructions are disallowed except under an explicitly declared snippet exception.
-• Replacement granularity: you MAY replace only the specific framed section(s) that change (often leaf sections). You MUST also replace any ancestor whose declared contract/narrative becomes inaccurate due to the change.
-• Overall project revision is prominent: the file banner MUST include `project_version: "vX.Y.Z"` at banner-level prominence (easy to find immediately).
-• Per-section change tracking is required: every `mechsuit_section` block MUST include `last_updated_version: "vX.Y.Z"` so meaningful section freshness is obvious at a glance. Semantics are defined by the Meaningful Change Rule (Section 12).
-• Meaningful vs maintenance updates: section footers MUST record either “Changed (vX.Y.Z): …” or “Maintenance (vX.Y.Z, no semantic change): …” and `last_updated_version` MUST be updated only for MEANINGFUL changes (Section 12).
-• Independent versions allowed (in addition to last_updated_version): sections MAY carry optional independent version signals, but they MUST be explicitly named and cannot be confused with project revision (Section 4 + Section 12).
-• TypeScript-first examples: all templates are in `.ts` with Node ESM (“NodeNext”) posture by default, but the principles govern; adapt for `.js` or non-commentable artifacts via sidecars.
-• Preserve existing comments on update: do not delete prior notes unless deprecated; lift them into the section footer under “Prior notes” and add your new commentary above.
-• Examples come in threes: where variability is legitimate (e.g., mount order attach points), provide three compliant examples to teach the shape of the solution space.
-• Lifecycle / deprecation vocabulary: sections MAY declare lifecycle state (`active`, `deprecated`, `frozen`) with explicit replacement/removal intent to prevent “stale but intentional” from looking like neglect (Section 4).
+• File-scoped canonical tree: the banner’s `canonical_tree` shows the hierarchy of sections that exist in this file only; it never reaches outside the file.  
+• Canonical tree update discipline: `canonical_tree` MUST match the file’s actual section tags; if tags change, the tree MUST change in the same edit. Tree drift is non-compliance.  
+• Identifier literalism (new in v1.5.2): if a value already exists (codename, tag, span name, metric name, error code, field name), it MUST be copied verbatim. Do not change case, add underscores, pluralize, “namespace-safe,” or otherwise invent variants.  
+• Codename derivation for new files: a deterministic derivation algorithm exists as a fallback for files that lack a codename (Section 2). It is not a license to rewrite existing codenames.  
+• Codename stability: once a file declares a codename, it MUST remain stable across renames and moves. Changing a codename is a MEANINGFUL change and MUST be explicitly logged (Section 12).  
+• Proper nesting (no empty parents): if a child section exists, its parents MUST physically wrap it — children appear between the parent’s `BEGIN` and `END` lines; you must never “close” a parent and then declare its children elsewhere.  
+• Non-overlap constraint: if two sections overlap in file ranges, one MUST be a strict ancestor of the other (tag path strict-prefix). Any other overlap is invalid.  
+• No missing parents: every subsection has a present parent with header, narrative, and “Notes & Comments” footer, even if the parent has no code.  
+• Required outro footers: every code-bearing section ends with a concise “Notes & Comments” block immediately before `END`. Wrapper parents (no code) still require a footer.  
+• Whole-section replacement (required delivery): when supplying or updating code, return the entire section frame (`BEGIN…END`) so the owner can replace it wholesale; “replace these few lines” instructions are disallowed except under an explicitly declared snippet exception (Section 12).  
+• Replacement granularity: you MAY replace only the specific framed section(s) whose code or contract changed; do not replace ancestors solely because they physically wrap the child.  
+• Overall project revision is prominent: the file banner MUST include `project_version: "vX.Y.Z"` at banner-level prominence (easy to find immediately).  
+• Per-section change tracking is required: every `mechsuit_section` includes `last_updated_version`, governed by the Meaningful Change Rule (Section 12).  
+• Independent versions allowed: sections MAY include `independent_versions` under explicit keys; do not rename existing keys solely to fit an aesthetic (Section 4 + Section 12).  
+• TypeScript-first examples: templates are in `.ts` with Node ESM; adapt for `.js` or non-commentable artifacts via sidecars.  
+• Preserve existing comments on update: do not delete prior notes; lift them into the section footer under “Prior notes” and add new commentary above.  
+• “Three patterns” is conditional: provide three alternatives only when real, consequential variation exists (and/or the user asked for options). Do not emit three by default as busywork.  
+• Lifecycle / deprecation vocabulary: sections MAY declare lifecycle state to prevent “stale but intentional” from looking like neglect (Section 4).
 
 ---
 
 # 2) Codename derivation, codename stability, and file-scoped canonical tree
 
-**Codename for new files.** If you are generating a new file that lacks an existing codename, derive it from the project name and the file’s basename (without extension). Take the project root folder name as `PROJECT`, take the file’s basename as `BASENAME`, normalize each by replacing any non-alphanumeric run with a single underscore, trimming underscores at the ends, and collapsing repeats. Uppercase is recommended for legibility and grep-ability, but not mandatory. Compose as `{PROJECT}_{BASENAME}`.
+**Identifier literalism (v1.5.2).** The codename is an owner-chosen, file-local identifier that appears in tags, span names, and grep workflows. If a file already declares `mechsuit.codename`, that exact string is authoritative and MUST be copied verbatim everywhere (banner, tags, `mechsuit_section.codename`, spans, docs). Do not “normalize” it, do not add/remove underscores, and do not change case.
 
-Examples:
-`Hawk/server.ts` → `HAWK_SERVER` (or `Hawk_SERVER` if you prefer mixed case) → tags like `[HAWK_SERVER:APP]`.
-`Falcon/main.ts` → `FALCON_MAIN` → tags like `[FALCON_MAIN:INTERFACES:CLI]`.
+**Codename character rules.** For machine-findability and greppability, codenames and tag tokens MUST be pure ASCII and MUST NOT contain whitespace. A single connected word like `GAMEASSIST` is valid. Underscores are allowed but not required.
+
+**Codename derivation (fallback for new files only).** If you are generating a new file that lacks an existing codename AND the owner did not provide one, derive it from the project root folder and the file’s basename (without extension):
+
+1) Take the project root folder name as `PROJECT`, and the file’s basename as `BASENAME`.  
+2) Normalize each by replacing any non-alphanumeric run with a single underscore, trimming underscores at the ends, and collapsing repeats.  
+3) Compose `{PROJECT}_{BASENAME}`. Uppercase is recommended for legibility and grep-ability, but not mandatory.
+
+Examples:  
+`Hawk/server.ts` → `HAWK_SERVER` (or `Hawk_SERVER` if you prefer mixed case) → tags like `[HAWK_SERVER:APP]`.  
+`Falcon/main.ts` → `FALCON_MAIN` → tags like `[FALCON_MAIN:INTERFACES:CLI]`.  
 Folder names beyond the project root are deliberately ignored; the filename carries its own meaning.
 
-**Codename stability (rename-safe).** Once a file declares a codename in its banner, that codename MUST remain stable across file renames and moves. Renaming a file does NOT imply codename change. If a codename must change (rare), it is a MEANINGFUL change and MUST be explicitly recorded in the section footer(s) that rely on it and in the file banner prose (see Section 12 Meaningful Change Rule). Where tags/spans/log fields embed the codename, document search/grep guidance in the “Notes & Comments” of the nearest wrapper section.
+**Uniqueness is not enforced by assistants.** Do not modify a codename to make it “more unique” or “namespace-safe.” If a human wants to change it (rare), that is an explicit, MEANINGFUL decision.
+
+**Codename stability (rename-safe).** Once a file declares a codename in its banner, that codename MUST remain stable across file renames and moves. Renaming a file does NOT imply codename change. If a codename must change (rare), it is a MEANINGFUL change and MUST be explicitly recorded in the relevant section footer(s) and in the file banner prose (see Section 12). Where tags/spans/log fields embed the codename, document search/grep guidance in the “Notes & Comments” of the nearest wrapper section.
 
 **File-scoped tree.** The banner’s `canonical_tree` is file-scoped; it MUST mirror only the sections present in this file’s content. It never introduces paths outside `[CODENAME:*]`. Use it as a quick visual index for readers.
 
@@ -53,16 +64,16 @@ Folder names beyond the project root are deliberately ignored; the filename carr
 
 ---
 
-# 3) File banner (v1.5.1) and prose paragraph
+# 3) File banner (v1.5.2) and prose paragraph
 
-Place the banner at the very top of the file, inside comments, followed immediately by one short paragraph that restates the guarantee, declared order, the overall `project_version`, secrets needed (names only), and at least one explicit refusal. Include `refusals` in the banner as a machine-findable list; the prose paragraph still MUST contain at least one refusal sentence to remain human-readable.
+Place the banner at the very top of the file, inside comments, followed immediately by one short paragraph that restates the guarantee, declared order, the overall `project_version`, secrets needed (names only), and at least one explicit refusal. The codename is a literal identifier: copy it verbatim everywhere; do not normalize it. Include `refusals` in the banner as a machine-findable list; the prose paragraph still MUST contain at least one refusal sentence to remain human-readable.
 
 Use the TypeScript-style comment wrapper below even when the file is not TypeScript; adapt comment syntax as needed.
 
 ```ts
 // --- MECHSUITS BANNER (YAML) ---
 // mechsuit:
-//   codename: "HAWK_SERVER"                   # stable once set; do not change on rename
+//   codename: "HAWK_SERVER"                   # stable once set; copy verbatim; do not normalize; do not change on rename
 //   project_version: "vX.Y.Z"                 # overall project/script revision; must be easy to find immediately
 //   purpose: "One paragraph stating the guarantee and the non-goals."
 //   order: ["validate","normalize","handlers","static","fallback"]   # adapt to the surface
@@ -105,7 +116,11 @@ Use the TypeScript-style comment wrapper below even when the file is not TypeScr
 
 # 4) Framed sections, proper nesting, non-overlap, never-missing parents, lifecycle, and required outro footers
 
-Tags are pure ASCII. Use the exact form `[CODENAME:AREA(:SUB)*] BEGIN` and `[CODENAME:AREA(:SUB)*] END` on their own lines. Put the human title on the line after `BEGIN`, never inside the tag.
+Tags and structural tokens are pure ASCII so they’re easy to see, grep, and reason about. Use the exact form `[CODENAME:AREA(:SUB)*] BEGIN` and `[CODENAME:AREA(:SUB)*] END` on their own lines. Put the human title on the line after `BEGIN`, never inside the tag.
+
+**Token grammar (v1.5.2).** `CODENAME` and each `AREA` segment MUST match `[A-Za-z0-9_]+` (ASCII letters/digits/underscore), and the tag MUST NOT contain whitespace. Case is owner-chosen and MUST be preserved exactly (no case-folding). Underscores are allowed but not required.
+
+**Identifier literalism applies to tags.** If the file already uses `[GAMEASSIST:…]`, keep using it. Do not invent alternates like `[GAME_ASSIST:…]` or `[GAMEASSIST_GAMEASSIST:…]`.
 
 **Proper nesting is mandatory.** If a child section exists, its parents MUST physically wrap it: the child’s `BEGIN…END` MUST appear between the parent’s `BEGIN` and `END`. You MUST never close a parent and then declare its children elsewhere — that produces an “empty parent” and violates the hierarchy contract.
 
@@ -128,7 +143,9 @@ Example (shape only; headers/footers omitted for brevity here, but required in r
 
 **Per-section metadata is required.** Every section MUST include a `mechsuit_section` block whose `codename` equals the file banner codename and whose `area` equals the tag path (without codename). Every `mechsuit_section` block MUST include `last_updated_version: "vX.Y.Z"` and MAY include `independent_versions` (see below).
 
-**Independent versions (optional, explicit, non-confusable).** If a section needs additional version signals (schema, state format, protocol), include them under `independent_versions`. Keys MUST be explicitly named and MUST end with `_version` (or be an explicit compatibility key already defined elsewhere, such as `api_accepts` / `api_emits` in a domain context). Values MUST be either integers (migration counters) or strings that are clearly scoped (e.g., `"schema-v1.2.3"` or `"2025-12-01"`). A bare field named `version` is disallowed in sections because it is too easy to confuse with project revision.
+**Independent versions (optional, explicit, non-confusable).** If a section needs additional version signals (schema, state format, protocol), include them under `independent_versions`. When *introducing new keys*, prefer explicit snake_case names that end with `_version` (or use a pre-defined compatibility key already established in your codebase, such as `api_accepts` / `api_emits`). **Do not rename existing keys** just to satisfy a suffix or case style; treat renames as MEANINGFUL and owner-authoritative.
+
+Values MUST be either integers (migration counters) or strings that are clearly scoped (e.g., "schema-v1.2.3" or "2025-12-01"). A bare field named `version` remains disallowed in sections because it is too easy to confuse with project revision.
 
 **Required outro footers.** Every code-bearing section MUST end, immediately before `END`, with a concise “Notes & Comments” footer. Wrapper parents (no code) MUST still include a “Notes & Comments” footer. For significant choices, include a “Decision Log” list. For updates, lift prior commentary into a “Prior notes” subsection rather than deleting it.
 
@@ -272,6 +289,8 @@ Provide a minimal “order proof” for interface surfaces. Keep proofs small an
 
 **Three compliant attach patterns (examples, choose by context):**
 
+Note (v1.5.2): the “three patterns” teaching model is for situations with real, consequential variation. In assistant responses, do not output three options by default; output one recommended approach unless the user asked for options or the choice materially changes trade-offs.
+
 Pattern A — Classic Express-style:
 
 ```ts
@@ -313,10 +332,10 @@ Record the chosen pattern and its rationale in the relevant footers.
 
 Success is `{ ok: true, data, meta: { traceId } }`. Failure is `{ ok: false, error: "UPPER_SNAKE", data?, meta: { traceId } }`. Keep the code set small and stable for operational sanity: `INVALID_ARGUMENT, NOT_FOUND, CONFLICT, UNAUTHORIZED, FORBIDDEN, UNPROCESSABLE, RATE_LIMITED, TIMEOUT, UNAVAILABLE, INTERNAL`. Map codes to transports exactly as declared in the banner.
 
-HTTP: GET endpoints state stable pagination shape and limits; POST/PUT state idempotency and reflect it in semantics; authN/Z live at the edge; identity passed opaquely to the core.
-GraphQL: application errors return HTTP 200; `errors[]` includes `code` and `meta.traceId`; success data under `data`; mutations state idempotency.
-gRPC: map to canonical statuses as declared; propagate correlation (e.g., `grpc-trace-bin`) consistently.
-Events: verify `schemaVersion`, `idempotencyKey` if present, and `emittedAt` before deserialization; dedupe before domain apply; non-retriables go to dead letter with the same failure envelope; state partitioning and ordering guarantees in narrative and honor them in code.
+HTTP: GET endpoints state stable pagination shape and limits; POST/PUT state idempotency and reflect it in semantics; authN/Z live at the edge; identity passed opaquely to the core.  
+GraphQL: application errors return HTTP 200; `errors[]` includes `code` and `meta.traceId`; success data under `data`; mutations state idempotency.  
+gRPC: map to canonical statuses as declared; propagate correlation (e.g., `grpc-trace-bin`) consistently.  
+Events: verify `schemaVersion`, `idempotencyKey` if present, and `emittedAt` before deserialization; dedupe before domain apply; non-retriables go to dead letter with the same failure envelope; state partitioning and ordering guarantees in narrative and honor them in code.  
 CLI: stdout for data, stderr for diagnostics; exit 0 on success, 2 on usage, 1 on unexpected faults; with a machine flag, print uniform envelopes on stdout.
 
 **Helper location.** Define `ok()` and `err()` once per file (for example in `[CODENAME:APP:UTILS:ENVELOPE]`) and reference them from interface sections. Do not redefine per section unless language constraints require it.
@@ -370,6 +389,8 @@ export const POLICY = {
 Logs are compact structured JSON with RFC-3339 UTC timestamp, level, emitting section tag, message, correlation identifiers, and safe domain identifiers. Metric names include units and use dot.case (`app.http.request.duration_ms`). Keep labels to a small reserved set (env, region, codename, section) to control cardinality. Span names mirror section tags and begin at section boundaries. Declare intended metric and span names in the banner and actually emit them where relevant.
 
 Attach points vary by architecture; choose the best fit and document it.
+
+Note (v1.5.2): the three patterns below are teaching examples. Do not create artificial instrumentation or duplicate patterns just to “show three”; pick the best fit and record the rationale.
 
 Pattern A — Middleware attach in app config:
 
@@ -443,6 +464,7 @@ export interface ExampleRepo {
 ---
 
 # 12) Updating code: whole-section replacement, replacement granularity, Meaningful Change Rule, rare snippet exceptions, preserving commentary, and version semantics
+**Non-invasive compliance (v1.5.2).** MECHSUITS compliance is not a license to rename identifiers, reformat code, or “clean up” unrelated structure. Preserve existing codenames, tags, span/metric names, error codes, and public symbols verbatim unless the user explicitly asked for a rename or correctness/safety requires it. If you believe a rename is required for compliance, stop and surface it as an explicit decision with trade-offs.
 
 **Whole-section replacement is the required delivery method.** When providing code in reviews or generations, return the complete framed section(s) that must change — from `[CODENAME:…] BEGIN` through `[CODENAME:…] END`, including the header, `mechsuit_section` block, narrative, and the required “Notes & Comments” footer — so the owner can replace it wholesale.
 
@@ -712,19 +734,22 @@ Never log secrets. State the data class in the banner (Public, Internal, Confide
 
 Refusals declared in the banner are binding. If you introduce any new sink (log, metric label, span attribute, error payload), you MUST evaluate it against refusals and document the decision.
 
+v1.5.2 guardrail: refusals are owner-authored policy. Do not invent additional refusals or rewrite existing refusals as “stronger” language unless the owner asked for it. Adding/removing/modifying refusals is a MEANINGFUL change and should be treated as an explicit decision.
+
 ---
 
-# 17) What “wearing a Mechsuit” means in v1.5.1
+# 17) What “wearing a Mechsuit” means in v1.5.2
 
 A file is considered compliant when all of the following are true:
 
 * The banner is present and complete, and includes a prominent `project_version: "vX.Y.Z"` alongside the codename.
+* Identifier literalism: existing identifiers (codename, tags, span/metric names, error codes, field names) are copied verbatim; assistants do not normalize, case-fold, or invent variants.
 * The banner includes `refusals: [...]` and the prose paragraph includes at least one explicit refusal sentence.
 * `canonical_tree` describes only this file’s sections (file-scoped) AND matches the file’s actual section tags (no drift).
 * Tags are ASCII, paired, codename-scoped; parents exist for every subsection AND parents physically wrap children (proper nesting — no empty parents).
 * Sections do not overlap unless the overlap is strict ancestor/descendant (no sibling interleaving).
 * Every section begins with `mechsuit_section` whose `codename` equals the banner codename and whose `area` equals the tag path, and it includes `last_updated_version: "vX.Y.Z"`.
-* If present, `independent_versions` keys are explicitly named and cannot be confused with `project_version`.
+* If present, `independent_versions` keys are explicitly named and cannot be confused with `project_version` (new keys prefer the `_version` suffix; existing keys are preserved and not renamed for style).
 * Every code-bearing section ends with a “Notes & Comments” footer immediately before `END`. Wrapper parents still include footers.
 * Footers record either “Changed (vX.Y.Z): …” or “Maintenance (vX.Y.Z, no semantic change): …” consistent with the Meaningful Change Rule.
 * Updates preserve history: prior commentary is lifted into the footer under “Prior notes” rather than deleted.
@@ -740,7 +765,9 @@ A file is considered compliant when all of the following are true:
 
 # 18) Assistant briefing and operating instructions
 
-When you generate or refactor code, produce whole-section replacements (BEGIN to END) rather than fragments. Use the codename derivation rule for new files unless the file already declares a codename. Keep the banner at the top; include the file-scoped `canonical_tree`, ensure `project_version` is prominent in the banner, and keep `canonical_tree` consistent with actual tags.
+**v1.5.2 guardrails (read first).** Preserve existing identifiers verbatim: do not rename codenames, tags, span/metric names, error codes, or exported symbols to satisfy inferred “patterns.” Defaults (codename derivation, helper naming, POLICY centralization, “three patterns”) apply only when a value is absent or the user explicitly asks for a migration.
+
+When you generate or refactor code, produce whole-section replacements (BEGIN to END) rather than fragments. Use the codename derivation rule only for new files that truly lack a codename; if the file already declares a codename, copy it verbatim and do not re-derive or normalize it. Keep the banner at the top; include the file-scoped `canonical_tree`, ensure `project_version` is prominent in the banner, and keep `canonical_tree` consistent with actual tags.
 
 Break code into framed sections with proper nesting: parents must exist, must have headers/narratives/footers, and must physically wrap their children. Ensure non-overlap except strict ancestor/descendant. Validate then normalize at edges; pass canonical shapes to the core. Use centralized envelope helpers rather than re-declaring shapes. Favor optimization over rigidity, but record the rationale in footers whenever you deviate from defaults.
 
@@ -809,6 +836,7 @@ it("SPA fallback does not catch /api/*", async () => {
 ## Appendix C — Sidecar example for non-commentable artifact (with source-of-truth fields)
 
 ````md
+
 # __mechsuit__/package.md
 
 // --- MECHSUITS BANNER (YAML) ---
@@ -851,7 +879,7 @@ it("SPA fallback does not catch /api/*", async () => {
 // ============================================================================
 ````
 
-## Appendix D — Canonical section template (copy/paste; v1.5.1 compliant)
+## Appendix D — Canonical section template (copy/paste; v1.5.2 compliant)
 
 ```ts
 // ============================================================================
@@ -859,7 +887,7 @@ it("SPA fallback does not catch /api/*", async () => {
 // Section Title: <Human title>
 // -----------------------------------------------------------------------------
 // mechsuit_section: {
-//   codename: "CODENAME",
+//   codename: "CODENAME",           // copy banner codename exactly; do not re-derive/normalize for existing files.
 //   area: "AREA(:SUB)*",
 //   title: "<short title>",
 //   guarantees: ["<promise 1>","<promise 2>"],
@@ -905,9 +933,9 @@ Lifecycle guidance:
 
 ---
 
-### Final note for assistants (v1.5.1)
+### Final note for assistants (v1.5.2)
 
-Default to TypeScript examples and Node ESM posture. Follow codename derivation for new files, and preserve codename stability once declared. Keep file trees file-scoped and in sync with actual tags. Ensure parents exist, physically wrap children, and avoid invalid overlaps. End every section with a “Notes & Comments” footer (code-bearing sections required; wrappers still required). Maintain a Decision Log for meaningful choices and use CHOICE/ALT and DANGER notes for forkable or hazardous lines.
+Preserve existing identifiers verbatim; do not normalize codenames/tags or invent variants. Default to TypeScript examples and Node ESM posture. Follow codename derivation for new files, and preserve codename stability once declared. Keep file trees file-scoped and in sync with actual tags. Ensure parents exist, physically wrap children, and avoid invalid overlaps. End every section with a “Notes & Comments” footer (code-bearing sections required; wrappers still required). Maintain a Decision Log for meaningful choices and use CHOICE/ALT and DANGER notes for forkable or hazardous lines.
 
 Apply the Meaningful Change Rule to govern `last_updated_version` and footer lines: “Changed …” for meaningful changes, “Maintenance …” for non-semantic touches. Preserve prior commentary by lifting it into “Prior notes” rather than deleting it. Allow independent versions only under explicit `independent_versions` keys, never as ambiguous per-section `version`. Use sidecars for non-commentable artifacts and generated/vendored code, including source-of-truth and regeneration instructions.
 
@@ -915,4 +943,4 @@ Apply the Meaningful Change Rule to govern `last_updated_version` and footer lin
 
 ## Analysis (why these choices serve your goals)
 
-The v1.5.1 changes concentrate on preventing long-term drift and making “freshness” and “structure truth” mechanically reliable without CI. Proper nesting plus the ancestor-only overlap rule makes the hierarchy real in the file, not just implied by names. Canonical-tree update discipline prevents the tree from becoming a stale ornament. Codename stability prevents renames from silently breaking grep workflows, span names, and operational conventions. The Meaningful Change Rule turns `last_updated_version` into a signal of semantic freshness instead of a “last touched” timestamp, while the Maintenance footer line preserves release traceability. Replacement granularity prevents whole-section replacement from turning into whole-parent blast-radius, while still requiring correctness when ancestor contracts change. Independent versions remain possible for schema/state/protocol realities but are forced into explicit, non-confusable names so they can’t undermine the clarity that project_version + last_updated_version provides. Lifecycle/deprecation vocabulary makes “intentionally stable” sections legible and prevents operators from mistaking frozen/deprecated states for neglect. Finally, the generated/vendored sidecar rule prevents the standard from encouraging edits that will be overwritten and ensures decisions live where humans can actually maintain them.
+The v1.5.2 changes concentrate on preventing long-term drift and making “freshness” and “structure truth” mechanically reliable without CI. Proper nesting plus the ancestor-only overlap rule makes the hierarchy real in the file, not just implied by names. Canonical-tree update discipline prevents the tree from becoming a stale ornament. Codename stability prevents renames from silently breaking grep workflows, span names, and operational conventions. The Meaningful Change Rule turns `last_updated_version` into a signal of semantic freshness instead of a “last touched” timestamp, while the Maintenance footer line preserves release traceability. Replacement granularity prevents whole-section replacement from turning into whole-parent blast-radius, while still requiring correctness when ancestor contracts change. Independent versions remain possible for schema/state/protocol realities but are forced into explicit, non-confusable names so they can’t undermine the clarity that project_version + last_updated_version provides. Lifecycle/deprecation vocabulary makes “intentionally stable” sections legible and prevents operators from mistaking frozen/deprecated states for neglect. Finally, the generated/vendored sidecar rule prevents the standard from encouraging edits that will be overwritten and ensures decisions live where humans can actually maintain them.
