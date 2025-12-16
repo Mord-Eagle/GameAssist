@@ -81,7 +81,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [0.1.3] – Unreleased (MECHSUITS compliance gate)
+## [Staging] 0.1.3 (MECHSUITS compliance gate)
 
 ### Added
 - Compatibility audit scoring with signature-based hints for popular mods (TokenMod, ScriptCards, APILogic), surfaced when `GameAssist.flags.DEBUG_COMPAT` is enabled.
