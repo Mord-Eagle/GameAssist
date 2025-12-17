@@ -1,8 +1,8 @@
 /* 
 ========================================
 GameAssist — Roll20 API Script
-Version: 0.1.3
-Last Updated: 2025-09-25 (America/Detroit)
+Version: 0.1.4
+Last Updated: 2025-11-23 (America/Detroit)
 Author: Mord Eagle
 License: MIT (see repository LICENSE)
 Homepage: https://github.com/Roll20/roll20-api-scripts (submission target)
@@ -53,7 +53,7 @@ CONFIGURATION NOTES
 • Per-module config via !ga-config set; types: boolean, number, JSON object/array, string.
 
 COMPATIBILITY / FOOTPRINT
-• Namespaced under global `GameAssist`. Avoids polluting global scope otherwise.
+• Namespaced under global `GameAssist` only; avoids other global pollution.
 • Uses standard events: `on('ready')`, `on('chat:message')`, and graphic change events.
 • Writes only to Roll20 objects documented in script.json: handout notes, token bars/markers.
 
@@ -70,7 +70,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
 // --- MECHSUITS BANNER (YAML) ---
 // mechsuit:
 //   codename: "GAMEASSIST"
-//   project_version: "v0.1.3"
+//   project_version: "v0.1.4"
 //   purpose: "Roll20 API modular kernel and bundled modules (CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller). This file adds MECHSUITS framing (sections, policy, notes) without changing runtime behavior. Non-goals: sheet-specific integrations or transport changes beyond Roll20 chat API."
 //   order: ["app","policy","core.queue","interfaces.events","app.utils","core.compat","core.state","core.object","interfaces.commands","modules.configui","modules.critfumble","modules.npcmanager","modules.concentrationtracker","modules.npchproller","modules.debugtools","bootstrap"]
 //   env:
@@ -115,11 +115,11 @@ description, syntax/commands, and configuration pointers near the top of the scr
 //     │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 //     └─ [GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
-// Guarantee: This is a structural wrap of GameAssist v0.1.3 for Roll20 — it reorganizes the file into MECHSUITS v1.5.1 sections with notes and policy while preserving all code and behavior.
-// Project version: v0.1.3. Secrets: none. Logs whisper to GM. Refusals: no runtime behavior changes and no emission of player data or secrets outside the Roll20 sandbox.
+// Guarantee: GameAssist v0.1.4 for Roll20 with MECHSUITS framing, queue hardening, safer config/command handling, and module fixes while preserving overall module intent.
+// Project version: v0.1.4. Secrets: none. Logs whisper to GM. Refusals: no emission of player data or secrets outside the Roll20 sandbox.
 
 // =============================
-// === GameAssist v0.1.3 ===
+// === GameAssist v0.1.4 ===
 // === Author: Mord Eagle ===
 // =============================
 // Released under the MIT License (see https://opensource.org/licenses/MIT)
@@ -143,6 +143,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
 (() => {
     'use strict';
+
+    const R20_ON = (typeof on === 'function') ? on : (typeof globalThis?.on === 'function' ? globalThis.on : null);
+    if (!R20_ON) throw new Error('Roll20 "on" is unavailable.');
 
     // =============================================================================
     // [GAMEASSIST:POLICY] BEGIN
@@ -184,7 +187,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: Utilities (arg parsing, state helpers, audit, sanitize)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "APP:UTILS", title: "Utilities",
-    //   guarantees: ["Pure helpers; no external side‑effects"], last_updated_version: "v0.1.3" }
+    //   guarantees: ["Pure helpers; no external side‑effects"], last_updated_version: "v0.1.4" }
     // -------------------------------------------------------------------------
     // Narrative
     // APP:UTILS collects pure helpers for metrics/state initialization, argument
@@ -257,6 +260,32 @@ description, syntax/commands, and configuration pointers near the top of the scr
     function saveState(mod, data) {
         const root = ensureStateRoot();
         root[mod] = Object.assign(getState(mod), data);
+    }
+
+    function commandMatches(content, prefix, { caseInsensitive = false, mode = 'token' } = {}) {
+        const raw = (content || '').trim();
+        const pfx = caseInsensitive ? prefix.toLowerCase() : prefix;
+        const txt = caseInsensitive ? raw.toLowerCase() : raw;
+
+        if (mode === 'prefix') return txt.startsWith(pfx);
+        if (txt === pfx) return true;
+
+        const escaped = pfx.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const boundary = new RegExp(`^${escaped}(\\s|$)`);
+        return boundary.test(txt);
+    }
+
+    function normalizeMarkerId(marker) {
+        return String(marker || '').toLowerCase().split('@')[0].trim();
+    }
+
+    function tokenHasMarker(token, marker) {
+        const want = normalizeMarkerId(marker);
+        const list = String(token.get('statusmarkers') || '')
+            .split(',')
+            .map(normalizeMarkerId)
+            .filter(Boolean);
+        return list.includes(want);
     }
     function clearState(mod) {
         const root = ensureStateRoot();
@@ -398,6 +427,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     }
     // --- Notes & Comments ---
     // NOTE: State auditor warns about unexpected branches; no automatic deletion occurs.
+    // Changed (v0.1.4+fix): Added regex-based command matching and shared marker helpers for teardown visibility.
     // Changed (v0.1.3): Added ensureModRuntimeKey to guarantee child containers regardless of ensure call order.
     // Changed (v0.1.3): Added sanitizeTimestamp to normalize timestamps defensively for cache consumers.
     // Changed (v0.1.3): Added runtime guard helpers (ensureRuntimeObject/ensureRuntimeKey) so modules can self-heal after
@@ -434,7 +464,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // documents scope and anchors the hierarchy for MECHSUITS compliance.
     // -------------------------------------------------------------------------
 
-    const VERSION      = '0.1.3';
+    const VERSION      = '0.1.4';
     const STATE_KEY    = 'GameAssist';
     const MODULES      = {};
     const _transitioning   = {};
@@ -461,7 +491,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: Serialized task queue + watchdog
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:QUEUE", title: "Queue",
-    //   guarantees: ["Single in‑flight task; watchdog resets hung jobs"], last_updated_version: "v0.1.1.2" }
+    //   guarantees: ["Single in‑flight task; watchdog resets hung jobs"], last_updated_version: "v0.1.4" }
     // -------------------------------------------------------------------------
     // Narrative
     // CORE:QUEUE enforces serialized execution of tasks with a watchdog to recover
@@ -470,6 +500,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // -------------------------------------------------------------------------
     let _busy      = false;
     let _lastStart = 0;
+    let _jobId     = 0;
     const _queue            = [];
     const DEFAULT_TIMEOUT   = 30000;
     const WATCHDOG_INTERVAL = 15000;
@@ -482,21 +513,29 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
     function _runNext() {
         if (_busy || !_queue.length) return;
-        const { task, timeout } = _queue.shift();
+
+        const job = _queue.shift();
+        const myId = ++_jobId;
         _busy = true;
         _lastStart = Date.now();
 
+        let timedOut = false;
+
         const timer = setTimeout(() => {
-            GameAssist.log('Core', `Task timed out after ${timeout}ms`, 'WARN');
+            if (myId !== _jobId) return;
+            timedOut = true;
+            GameAssist.log('Core', `Task timed out after ${job.timeout}ms`, 'WARN');
             _busy = false;
             _runNext();
-        }, timeout);
+        }, job.timeout);
 
         Promise.resolve()
-            .then(task)
-            .catch(err => GameAssist.log('Core', `Error in task: ${err.message}`, 'ERROR'))
+            .then(job.task)
+            .catch(err => GameAssist.log('Core', `Error in task: ${err?.message || err}`, 'ERROR'))
             .finally(() => {
                 clearTimeout(timer);
+                if (myId !== _jobId) return;
+                if (timedOut) return;
                 _busy = false;
                 const duration = Date.now() - _lastStart;
                 GameAssist._metrics.taskDurations.push(duration);
@@ -520,8 +559,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Decision log:
     //   CHOICE: FIFO with priority bump via sort; simple and sufficient for sandbox.
     //   CHOICE: Watchdog at 2× DEFAULT_TIMEOUT; mirrors legacy behavior.
-    //   Maintenance (v0.1.3, no semantic change): Added narrative and reconfirmed queue/watchdog
-    //     defaults while correcting version metadata to 0.1.3.
+    //   Changed (v0.1.4): Added job id guard to prevent stale completions advancing the queue after timeout.
+    //   Prior notes: Maintenance (v0.1.3, no semantic change): Added narrative and reconfirmed queue/watchdog defaults while
+    //     correcting version metadata to 0.1.3.
     //   Prior notes: Maintenance (v0.1.1.2, no semantic change): MECHSUITS metadata updated for v1.5.1 compliance.
     // [GAMEASSIST:CORE:QUEUE] END
     // =============================================================================
@@ -712,7 +752,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: Config parser (aux to state management)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:STATE", title: "Config parser",
-    //   guarantees: ["Parse JSON/boolean/number safely"], last_updated_version: "v0.1.1.2" }
+    //   guarantees: ["Parse JSON/boolean/number safely"], last_updated_version: "v0.1.4" }
     // -------------------------------------------------------------------------
     // Narrative
     // CORE:STATE handles normalization of chat-provided configuration strings into
@@ -720,10 +760,10 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // protect chat usability.
     // -------------------------------------------------------------------------
     function parseConfigValue(raw) {
-        raw = raw.trim();
+        raw = String(raw ?? '').trim();
         if (raw === 'true')  return true;
         if (raw === 'false') return false;
-        if (!isNaN(raw))      return Number(raw);
+        if (raw !== '' && /^-?\d+(\.\d+)?$/.test(raw)) return Number(raw);
         if ((raw.startsWith('{') && raw.endsWith('}')) || (raw.startsWith('[') && raw.endsWith(']'))) {
             try { return JSON.parse(raw); }
             catch { GameAssist.log('Config', 'Invalid JSON: ' + _sanitize(raw)); }
@@ -732,8 +772,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
     }
     // --- Notes & Comments ---
     // CHOICE: Gracefully log bad JSON rather than throwing; keeps chat usable.
-    // Maintenance (v0.1.3, no semantic change): Added narrative about normalization while
-    //   keeping parsing behavior identical; version metadata aligned to 0.1.3 banner.
+    // Changed (v0.1.4): Guarded numeric parsing against empty strings to avoid silent 0 writes from blank inputs.
+    // Prior notes: Maintenance (v0.1.3, no semantic change): Added narrative about normalization while keeping parsing
+    //   behavior identical; version metadata aligned to 0.1.3 banner.
     // Prior notes: Maintenance (v0.1.1.2, no semantic change): Added MECHSUITS v1.5.1 tracking metadata.
     // [GAMEASSIST:CORE:STATE] END
     // =============================================================================
@@ -744,7 +785,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: GameAssist kernel object
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:OBJECT", title: "Kernel",
-    //   guarantees: ["Logging, error handling, register/enable/disable, listener mgmt"], last_updated_version: "v0.1.1.2" }
+    //   guarantees: ["Logging, error handling, register/enable/disable, listener mgmt"], last_updated_version: "v0.1.4" }
     // -------------------------------------------------------------------------
     // Narrative
     // CORE:OBJECT exposes the GameAssist singleton with metrics, logging, dependency
@@ -774,17 +815,12 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
             const timestamp = new Date().toLocaleTimeString();
             const levelIcon = { INFO: 'ℹ️', WARN: '⚠️', ERROR: '❌' }[level] || 'ℹ️';
-
-            // escape user-supplied text, then split on newlines
-            const safe = _sanitize(msg).split('\n');
-
-            // prepend /w gm to every continuation line so Roll20 treats
-            // the whole block as one whisper
-            const stitched = safe.map((l, i) => (i ? '/w gm ' + l : l)).join('\n');
+            const safeLines = _sanitize(String(msg ?? '')).split('\n');
+            const body = safeLines.join('<br>');
 
             sendChat(
                 'GameAssist',
-                `/w gm ${levelIcon} [${timestamp}] [${mod}] ${stitched}`
+                `/w gm ${levelIcon} [${timestamp}] [${_sanitize(mod)}] ${body}`
             );
         },
 
@@ -820,10 +856,10 @@ description, syntax/commands, and configuration pointers near the top of the scr
             this._plannedChatPrefixes.push(...prefixes);
         },
 
-        onCommand(prefix, fn, mod, { gmOnly = false, acl = [] } = {}) {
+        onCommand(prefix, fn, mod, { gmOnly = false, acl = [], match = { caseInsensitive: true, mode: 'token' } } = {}) {
             const wrapped = msg => {
                 if (!MODULES[mod]?.initialized || !MODULES[mod]?.active) return;
-                if (msg.type !== 'api' || !msg.content.startsWith(prefix)) return;
+                if (msg.type !== 'api' || !commandMatches(msg.content, prefix, match)) return;
                 if (gmOnly && !playerIsGM(msg.playerid)) return;
                 if (acl.length && !acl.includes(msg.playerid)) return;
                 this._metrics.commands++;
@@ -832,11 +868,12 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 try { fn(msg); }
                 catch(e) { this.handleError(mod, e); }
             };
-            on('chat:message', wrapped);
+            R20_ON('chat:message', wrapped);
             this._commandHandlers[mod] = (this._commandHandlers[mod] || []).concat({ event:'chat:message', fn:wrapped });
         },
 
         offCommands(mod) {
+            // Clears internal bookkeeping only; does not detach from Roll20 bus.
             this._commandHandlers[mod] = [];
         },
 
@@ -850,11 +887,12 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 try { fn(...args); }
                 catch(e) { this.handleError(mod, e); }
             };
-            on(evt, wrapped);
+            R20_ON(evt, wrapped);
             this._listeners[mod] = (this._listeners[mod] || []).concat({ event:evt, fn:wrapped });
         },
 
         offEvents(mod) {
+            // Clears internal bookkeeping only; does not detach from Roll20 bus.
             this._listeners[mod] = [];
         },
 
@@ -990,6 +1028,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 const finish = () => { delete _transitioning[name]; };
                 if (!m) { finish(); return; }
 
+                m.active = false;
+
                 if (typeof m.teardown === 'function' && m.wired) {
                     try { m.teardown(); }
                     catch(e) { this.log(name, `Teardown failed: ${e.message}`, 'WARN'); }
@@ -999,7 +1039,6 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 branch.config.enabled = false;
                 branch.runtime = {};
 
-                m.active = false;
                 m.initialized = false;
                 this._metrics.lastUpdate = new Date().toISOString();
                 this.log(name, 'Disabled');
@@ -1042,8 +1081,10 @@ description, syntax/commands, and configuration pointers near the top of the scr
     globalThis.GameAssist = GameAssist;
     // --- Notes & Comments ---
     // CHOICE: Expose globally under same name for console and other scripts.
-    // Maintenance (v0.1.3, no semantic change): Added kernel narrative to document invariants;
-    //   kept interfaces unchanged while syncing version metadata.
+    // Changed (v0.1.4): Hardened logging whisper formatting, adopted captured R20_ON for handler wiring, and added safer
+    //   command matching/options.
+    // Prior notes: Maintenance (v0.1.3, no semantic change): Added kernel narrative to document invariants; kept interfaces
+    //   unchanged while syncing version metadata.
     // Prior notes: Maintenance (v0.1.1.2, no semantic change): Updated MECHSUITS metadata; behavior untouched.
     // [GAMEASSIST:CORE:OBJECT] END
     // =============================================================================
@@ -1062,7 +1103,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "INTERFACES", title: "Interfaces wrapper",
     //   guarantees: ["Interfaces are grouped; children retain behavior"],
-    //   depends_on: ["[GAMEASSIST:CORE]"], last_updated_version: "v0.1.3" }
+    //   depends_on: ["[GAMEASSIST:CORE]"], last_updated_version: "v0.1.4" }
     // -------------------------------------------------------------------------
     // Narrative
     // INTERFACES groups inbound chat/event surfaces. Children hold the executable
@@ -1071,39 +1112,20 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // -------------------------------------------------------------------------
 
     // [GAMEASSIST:INTERFACES:EVENTS] BEGIN
-    // Section Title: Roll20 on/off wrappers and handler registry
+    // Section Title: Roll20 handler registry (non-invasive)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "INTERFACES:EVENTS", title: "Handlers",
-    //   guarantees: ["Track listeners for safe enable/disable"], last_updated_version: "v0.1.1.2" }
+    //   guarantees: ["Track listeners for safe enable/disable"], last_updated_version: "v0.1.4" }
     // -------------------------------------------------------------------------
     // Narrative
-    // INTERFACES:EVENTS wraps Roll20 on/off with a registry so modules can cleanly
-    // teardown listeners during disable/teardown. This preserves legacy handler
-    // behavior while exposing a predictable list for audits.
+    // INTERFACES:EVENTS tracks handlers registered through GameAssist.onEvent and
+    // GameAssist.onCommand without overriding Roll20 globals. Registries live in
+    // GameAssist._listeners and GameAssist._commandHandlers; Roll20's native `on`
+    // is captured once (R20_ON) and reused to avoid polluting the global scope.
     // -------------------------------------------------------------------------
-    globalThis._handlers = globalThis._handlers || {};
-    const originalOn  = typeof globalThis.on  === 'function' ? globalThis.on  : null;
-    const originalOff = typeof globalThis.off === 'function' ? globalThis.off : null;
-
-    globalThis.on = (event, handler) => {
-        globalThis._handlers[event] = globalThis._handlers[event] || [];
-        globalThis._handlers[event].push(handler);
-        if (typeof originalOn === 'function') {
-            return originalOn(event, handler);
-        }
-    };
-
-    globalThis.off = (event, handler) => {
-        if (!globalThis._handlers[event]) return;
-        globalThis._handlers[event] = globalThis._handlers[event].filter(h => h !== handler);
-        if (typeof originalOff === 'function') {
-            return originalOff(event, handler);
-        }
-    };
     // --- Notes & Comments ---
-    // CHOICE: Wrap global on/off to keep a registry for teardown; avoids leaks.
-    // Maintenance (v0.1.3, no semantic change): Added narrative while preserving handler wrapping;
-    //   version metadata corrected to 0.1.3.
+    // CHOICE: Use captured Roll20 `on` without overriding globals; registries remain internal.
+    // Changed (v0.1.4): Removed global on/off overrides to prevent cross-script collisions; rely on R20_ON and internal tracking.
     // Prior notes: Maintenance (v0.1.1.2, no semantic change): MECHSUITS metadata refreshed for v1.5.1.
     // [GAMEASSIST:INTERFACES:EVENTS] END
 
@@ -1111,7 +1133,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: Admin/config commands (!ga-*)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "INTERFACES:COMMANDS", title: "Commands",
-    //   guarantees: ["GM-gated admin commands; consistent logging"], last_updated_version: "v0.1.1.2" }
+    //   guarantees: ["GM-gated admin commands; consistent logging"], last_updated_version: "v0.1.4" }
     // -------------------------------------------------------------------------
     // Narrative
     // INTERFACES:COMMANDS contains GM/admin chat commands for listing modules, toggling
@@ -1149,12 +1171,26 @@ description, syntax/commands, and configuration pointers near the top of the scr
             const [ key, ...rest ] = parts.slice(3).join(' ').split('=');
             const val = rest.join('=');
             const parsed = parseConfigValue(val);
+            const BAD_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
             if (!MODULES[mod] || MODULES[mod].internal) {
                 GameAssist.log('Config', `Unknown module: ${mod}`, 'WARN');
                 return;
             }
-            GameAssist.getState(mod).config[key.trim()] = parsed;
-            GameAssist.log('Config', `Set ${mod}.${key.trim()} = ${JSON.stringify(parsed)}`);
+            const k = key.trim();
+            if (BAD_KEYS.has(k)) {
+                GameAssist.log('Config', `Refusing unsafe config key: ${k}`, 'WARN');
+                return;
+            }
+            if (k === 'enabled') {
+                if (typeof parsed !== 'boolean') {
+                    GameAssist.log('Config', 'enabled must be true/false', 'WARN');
+                    return;
+                }
+                parsed ? GameAssist.enableModule(mod) : GameAssist.disableModule(mod);
+                return;
+            }
+            GameAssist.getState(mod).config[k] = parsed;
+            GameAssist.log('Config', `Set ${mod}.${k} = ${JSON.stringify(parsed)}`);
         }
         else if (sub === 'get') {
             if (parts.length < 3) {
@@ -1191,25 +1227,26 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 .filter(([, mod]) => !mod.internal)
                 .map(([name, mod]) => {
                     const cfg = GameAssist.getState(name).config;
-                    const status = cfg.enabled ? '✅' : '❌';
-                    const init = mod.initialized && mod.active ? '🟢' : '⏸️';
-                    return `${status}${init} ${name}`;
+                    const configured = cfg.enabled ? '✅' : '❌';
+                    const running = mod.initialized && mod.active ? '🟢' : '⏸️';
+                    return `${name}: config ${configured} | runtime ${running}`;
                 }).join('\n');
             GameAssist.log('Config', `Modules:\n${moduleList}`);
         }
         else if (sub === 'cleanup') {
-            const cfgRoot = ensureStateRoot();
-            const registeredModules = Object.keys(MODULES);
-            const configKeys = Object.keys(cfgRoot.config);
-            const orphaned = configKeys.filter(key => !registeredModules.includes(key));
-            
-            if (orphaned.length === 0) {
-                GameAssist.log('Config', 'No orphaned config entries found.');
-                return;
-            }
-            
-            orphaned.forEach(key => delete cfgRoot.config[key]);
-            GameAssist.log('Config', `Removed ${orphaned.length} orphaned config entries: ${orphaned.join(', ')}`);
+            const root = ensureStateRoot();
+            const whitelist = new Set(['config', 'flags', 'metrics']);
+            const known = new Set(Object.keys(MODULES));
+
+            const removed = [];
+            Object.keys(root).forEach(k => {
+                if (whitelist.has(k)) return;
+                if (!known.has(k)) { delete root[k]; removed.push(k); }
+            });
+
+            GameAssist.log('Config', removed.length
+                ? `Removed orphaned module state branches: ${removed.join(', ')}`
+                : 'No orphaned module state branches found.');
         }
         else {
             GameAssist.log('Config', 'Usage: !ga-config list|set|get|modules|cleanup [args]');
@@ -1535,7 +1572,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CRITFUMBLE", title: "CritFumble",
     //   guarantees: ["Behavior unchanged; natural‑1 detection bugfix retained"],
-    //   last_updated_version: "v0.1.3",
+    //   last_updated_version: "v0.1.4",
     //   independent_versions: { module_version: "0.2.4.9" } }
     // -------------------------------------------------------------------------
     // Narrative
@@ -1548,7 +1585,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         const modState = GameAssist.getState('CritFumble');
         Object.assign(modState.config, {
             enabled:   true,
-            debug:     true,
+            debug:     false,
             useEmojis: true,
             rollDelayMs: 200,
             // Preserve any values previously saved in state
@@ -1633,10 +1670,15 @@ description, syntax/commands, and configuration pointers near the top of the scr
             return who.replace(/ \(GM\)$/, '');
         }
 
+        function whisperPrefix(who) {
+            const cleaned = sanitizeWho(String(who || ''));
+            if (cleaned.toLowerCase() === 'gm') return '/w gm ';
+            return `/w "${cleaned}" `;
+        }
+
         function sendTemplateMessage(who,title,fields) {
-            who = sanitizeWho(who);
             const content = fields.map(f=>`{{${f.label}=${f.value}}}`).join(' ');
-            sendChat('CritFumble', `/w "${who}" &{template:default} {{name=${title}}} ${content}`);
+            sendChat('CritFumble', `${whisperPrefix(who)}&{template:default} {{name=${title}}} ${content}`);
         }
 
         function getFumbleTableName(type) {
@@ -1735,26 +1777,27 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
         function showManualTriggerMenu() {
             const rt = ensureCritFumbleRuntime();
-            const players = Object.values(rt.activePlayers)
-                .map(v => (typeof v === 'string' ? v : v?.name))
-                .filter(Boolean);
-            if (!players.length) {
+            const entries = Object.entries(rt.activePlayers || {});
+            if (!entries.length) {
                 sendTemplateMessage('gm', "⚠️ No Players Detected", [
                     { label:"Note", value:"No players have been active yet this session." }
                 ]);
                 return;
             }
-            const buttons = players.map(name =>
-                GameAssist.createButton(name, `!critfumblemenu-${encodeURIComponent(name)}`)
-            ).join(' ');
+            const buttons = entries.map(([pid, entry]) => {
+                const label = typeof entry === 'string' ? entry : entry?.name || pid;
+                return GameAssist.createButton(label, `!critfumblemenu --pid ${pid}`);
+            }).join(' ');
             sendTemplateMessage('gm',"Manually Trigger Fumble Menu",[
                 { label:"Select Player", value:buttons }
             ]);
         }
 
-        function handleManualTrigger(encodedName) {
-            sendFumbleMenu(decodeURIComponent(encodedName));
-            debugLog(`Manually triggered fumble menu for: ${encodedName}`);
+        function handleManualTrigger(playerId) {
+            const p = getObj('player', playerId);
+            if (!p) return;
+            sendFumbleMenu(p.get('displayname').replace(/ \(GM\)$/, ''));
+            debugLog(`Manually triggered fumble menu for: ${playerId}`);
         }
 
         function showHelpMessage(who) {
@@ -1779,7 +1822,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
             // API‐style commands
             if (msg.type==='api') {
-                const cmd = (msg.content||'').trim().toLowerCase();
+                const rawCmd = (msg.content||'').trim();
+                const cmd = rawCmd.toLowerCase();
 
                 if (cmd==='!critfail') {
                     debugLog('Manual trigger: !critfail');
@@ -1788,8 +1832,12 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 if (cmd==='!critfumble help') {
                     return showHelpMessage(msg.who);
                 }
-                if (cmd.startsWith('!critfumblemenu-')) {
-                    return handleManualTrigger(msg.content.replace('!critfumblemenu-',''));
+                if (cmd.startsWith('!critfumblemenu')) {
+                    const { args } = _parseArgs(rawCmd.replace('!critfumblemenu', '').trim());
+                    if (args.pid) {
+                        return handleManualTrigger(String(args.pid));
+                    }
+                    return;
                 }
                 if (cmd.startsWith('!critfumble-')) {
                     const who        = sanitizeWho(msg.who);
@@ -1835,9 +1883,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // Bugfix retained: robust natural‑1 detection across templates/inlineroll variants.
-    // Changed (v0.1.3): Added runtime self-healing for activePlayers (post-toggle), normalized entries with timestamps, and
-    //   pruned least-recently-seen players deterministically within the 50-player cap; ensured activePlayers is explicitly
-    //   assigned and invalid timestamps sort oldest-first for eviction.
+    // Changed (v0.1.4): Default debug off, corrected GM whisper handling, and made manual trigger buttons target player ids.
+    // Prior notes: Maintenance (v0.1.3, no semantic change): Added runtime self-healing for activePlayers (post-toggle),
+    //   normalized entries with timestamps, and pruned least-recently-seen players within the cap.
     // Prior notes: Maintenance (v0.1.3, no semantic change): Added module narrative; kept crit/fumble logic and inline-roll
     //   bugfix unchanged while correcting version metadata.
     // Prior notes: Maintenance (v0.1.1.2, no semantic change): MECHSUITS metadata updated only.
@@ -2057,7 +2105,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONCENTRATIONTRACKER", title: "ConcentrationTracker",
     //   guarantees: ["Chat UI for concentration saves; TokenMod marker toggle"],
-    //   last_updated_version: "v0.1.3",
+    //   last_updated_version: "v0.1.4",
     //   independent_versions: { module_version: "0.1.0.5" } }
     // -------------------------------------------------------------------------
     // Narrative
@@ -2265,11 +2313,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
             _type:  'graphic',
             _pageid: page,
             layer:  'objects'
-        }).filter(t =>
-            (t.get('statusmarkers') || '')
-                .toLowerCase()
-                .includes(marker.toLowerCase())
-        );
+        }).filter(t => tokenHasMarker(t, marker));
         if (!tokens.length) {
             return sendChat('ConcentrationTracker',
                 `/w "${player}" No tokens concentrating.`
@@ -2540,25 +2584,24 @@ description, syntax/commands, and configuration pointers near the top of the scr
     dependsOn: ['TokenMod'],
     teardown: () => {
         const page = Campaign().get('playerpageid');
+        const marker = (GameAssist.getState('ConcentrationTracker')?.config?.marker) || 'Concentrating';
         findObjs({ _type: 'graphic', _pageid: page, layer: 'objects' })
-            .filter(t =>
-                (t.get('statusmarkers') || '')
-                    .toLowerCase()
-                    .includes('concentrating')
-            )
+            .filter(t => tokenHasMarker(t, marker))
             .forEach(t =>
                 sendChat('api',
-                    `!token-mod --ids ${t.id} --set statusmarkers|-Concentrating`
+                    `!token-mod --ids ${t.id} --set statusmarkers|-${marker}`
                 )
             );
     }
     });
     // --- Notes & Comments ---
     // CHOICE: Keep lowercase parsing and aliases exactly as legacy; avoids user retraining.
-    // Changed (v0.1.3): Sanitized lastDamage timestamps (normalize + writes), enforced deterministic pruning order, scoped
-    //   cache normalization to module runtime, and clarified side-effect normalization during module init.
-    // Changed (v0.1.3): Added runtime self-healing/normalization for lastDamage with complete schema defaults, ensured
-    //   handlers guard after toggles, and capped cache to the 50 most recent entries.
+    // Changed (v0.1.4): Exact marker matching (including teardown) and GM whisper special-casing preserved while honoring
+    //   configured marker ids.
+    // Prior notes: Maintenance (v0.1.3, no semantic change): Sanitized lastDamage timestamps, enforced deterministic pruning,
+    //   and normalized runtime schema during module init.
+    // Prior notes: Maintenance (v0.1.3, no semantic change): Added runtime self-healing/normalization for lastDamage with
+    //   complete schema defaults, ensured handlers guard after toggles, and capped cache to the 50 most recent entries.
     // Prior notes: Maintenance (v0.1.3, no semantic change): Added module narrative and normalized indentation; behavior and
     //   aliases remained untouched.
     // Prior notes: Maintenance (v0.1.1.2, no semantic change): Updated MECHSUITS metadata only.
@@ -3024,7 +3067,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // and initializes enabled modules. It preserves the legacy ready-log and dependency
     // checks while keeping startup behavior unchanged.
     // -------------------------------------------------------------------------
-    on('ready', () => {
+    R20_ON('ready', () => {
         if (READY) return;
         READY = true;
 
