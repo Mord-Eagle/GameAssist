@@ -184,7 +184,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: Utilities (arg parsing, state helpers, audit, sanitize)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "APP:UTILS", title: "Utilities",
-    //   guarantees: ["Pure helpers; no external side‑effects"], last_updated_version: "v0.1.1.2" }
+    //   guarantees: ["Pure helpers; no external side‑effects"], last_updated_version: "v0.1.3" }
     // -------------------------------------------------------------------------
     // Narrative
     // APP:UTILS collects pure helpers for metrics/state initialization, argument
@@ -326,6 +326,33 @@ description, syntax/commands, and configuration pointers near the top of the scr
         }
     }
 
+    function ensureRuntimeObject(modState) {
+        if (!modState || typeof modState !== 'object') {
+            return {};
+        }
+
+        const runtime = modState.runtime;
+
+        if (!runtime || typeof runtime !== 'object' || Array.isArray(runtime)) {
+            modState.runtime = {};
+        }
+
+        return modState.runtime;
+    }
+
+    function ensureRuntimeKey(runtime, key, kind) {
+        if (!runtime || typeof runtime !== 'object') return null;
+
+        const value = runtime[key];
+        if (kind === 'array') {
+            if (!Array.isArray(value)) runtime[key] = [];
+        } else if (kind === 'object') {
+            if (!value || typeof value !== 'object' || Array.isArray(value)) runtime[key] = {};
+        }
+
+        return runtime[key];
+    }
+
     function _sanitize(str = '') {
         return str.toString()
             .replace(/&/g, '&amp;')
@@ -349,8 +376,10 @@ description, syntax/commands, and configuration pointers near the top of the scr
     }
     // --- Notes & Comments ---
     // NOTE: State auditor warns about unexpected branches; no automatic deletion occurs.
-    // Maintenance (v0.1.3, no semantic change): Added narrative for APP utilities and aligned
-    //   version metadata; logic remains unchanged.
+    // Changed (v0.1.3): Added runtime guard helpers (ensureRuntimeObject/ensureRuntimeKey) so modules can self-heal after
+    //   toggles that wipe runtime caches.
+    // Prior notes: Maintenance (v0.1.3, no semantic change): Added narrative for APP utilities and aligned version metadata;
+    //   logic remained unchanged.
     // Prior notes: Maintenance (v0.1.1.2, no semantic change): Section metadata aligned to MECHSUITS v1.5.1.
     // [GAMEASSIST:APP:UTILS] END
     // =============================================================================
@@ -1482,7 +1511,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CRITFUMBLE", title: "CritFumble",
     //   guarantees: ["Behavior unchanged; natural‑1 detection bugfix retained"],
-    //   last_updated_version: "v0.1.1.2",
+    //   last_updated_version: "v0.1.3",
     //   independent_versions: { module_version: "0.2.4.9" } }
     // -------------------------------------------------------------------------
     // Narrative
@@ -1501,7 +1530,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
             // Preserve any values previously saved in state
             ...modState.config
         });
-        modState.runtime.activePlayers = modState.runtime.activePlayers || {};
+
+        const ACTIVE_PLAYER_LIMIT = 50;
 
         // ─── Constants ─────────────────────────────────────────────────────────────────
         /** Which Roll20 rolltemplates we watch for natural-1s */
@@ -1518,6 +1548,12 @@ description, syntax/commands, and configuration pointers near the top of the scr
             'confirm-crit-martial': 'Confirm-Crit-Martial',
             'confirm-crit-magic':   'Confirm-Crit-Magic'
         };
+
+        function ensureCritFumbleRuntime() {
+            const runtime = ensureRuntimeObject(modState);
+            ensureRuntimeKey(runtime, 'activePlayers', 'object');
+            return runtime;
+        }
 
         // ─── Helper Functions ──────────────────────────────────────────────────────────
         /**
@@ -1640,7 +1676,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
 }
 
         function showManualTriggerMenu() {
-            const players = Object.values(modState.runtime.activePlayers);
+            const rt = ensureCritFumbleRuntime();
+            const players = Object.values(rt.activePlayers);
             if (!players.length) {
                 sendTemplateMessage('gm', "⚠️ No Players Detected", [
                     { label:"Note", value:"No players have been active yet this session." }
@@ -1671,14 +1708,22 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
         function handleRoll(msg) {
             if (!msg) return;
-            
+
             // Ignore GameAssist's own log messages and CritFumble's own messages to prevent feedback loops
             if (msg.who === 'GameAssist' || msg.who === 'CritFumble') return;
-            
+
+            const rt = ensureCritFumbleRuntime();
+
             // register active players
-            if (msg.playerid && !modState.runtime.activePlayers[msg.playerid]) {
+            if (msg.playerid && !rt.activePlayers[msg.playerid]) {
                 const p = getObj('player', msg.playerid);
-                if (p) modState.runtime.activePlayers[msg.playerid] = p.get('displayname');
+                if (p) {
+                    rt.activePlayers[msg.playerid] = p.get('displayname');
+                    const ids = Object.keys(rt.activePlayers);
+                    if (ids.length > ACTIVE_PLAYER_LIMIT) {
+                        ids.slice(0, ids.length - ACTIVE_PLAYER_LIMIT).forEach(id => delete rt.activePlayers[id]);
+                    }
+                }
             }
 
             // API‐style commands
@@ -1739,8 +1784,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // Bugfix retained: robust natural‑1 detection across templates/inlineroll variants.
-    // Maintenance (v0.1.3, no semantic change): Added module narrative; kept crit/fumble logic and
-    //   inline-roll bugfix unchanged while correcting version metadata.
+    // Changed (v0.1.3): Added runtime self-healing for activePlayers (post-toggle) and capped cache to 50 tracked players.
+    // Prior notes: Maintenance (v0.1.3, no semantic change): Added module narrative; kept crit/fumble logic and inline-roll
+    //   bugfix unchanged while correcting version metadata.
     // Prior notes: Maintenance (v0.1.1.2, no semantic change): MECHSUITS metadata updated only.
     // [GAMEASSIST:MODULES:CRITFUMBLE] END
     // =============================================================================
@@ -1752,7 +1798,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:NPCMANAGER", title: "NPCManager",
     //   guarantees: ["Auto toggle dead marker based on HP"],
-    //   last_updated_version: "v0.1.1.2",
+    //   last_updated_version: "v0.1.3",
     //   independent_versions: { module_version: "0.1.1.0" } }
     // -------------------------------------------------------------------------
     // Narrative
@@ -1771,10 +1817,13 @@ description, syntax/commands, and configuration pointers near the top of the scr
             hideLayer: 'gmlayer',
             ...modState.config
         });
-        
-        // Initialize death log
-        if (!modState.runtime.deathLog) {
-            modState.runtime.deathLog = [];
+
+        const DEATH_LOG_LIMIT = 100;
+
+        function ensureNPCManagerRuntime() {
+            const runtime = ensureRuntimeObject(modState);
+            ensureRuntimeKey(runtime, 'deathLog', 'array');
+            return runtime.deathLog;
         }
 
         function getNPCContext(token, link = null) {
@@ -1796,6 +1845,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
             if (!getNPCContext(token)) return;
 
+            const deathLog = ensureNPCManagerRuntime();
+
             const hp = parseInt(token.get('bar1_value'), 10) || 0;
             const markers = (token.get('statusmarkers') || '').split(',');
             const isDead = markers.includes(modState.config.deadMarker);
@@ -1812,11 +1863,15 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 }
                 
                 // Log death for report
-                modState.runtime.deathLog.push({
+                deathLog.push({
                     name: name,
                     time: new Date().toLocaleString(),
                     timestamp: Date.now()
                 });
+
+                if (deathLog.length > DEATH_LOG_LIMIT) {
+                    deathLog.splice(0, deathLog.length - DEATH_LOG_LIMIT);
+                }
             } else if (hp >= 1 && isDead) {
                 sendChat('api', `!token-mod --ids ${token.id} --set statusmarkers|-${modState.config.deadMarker}`);
                 GameAssist.log('NPCManager', `${token.get('name')} revived (HP: ${hp})`);
@@ -1830,8 +1885,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
         }
 
         GameAssist.onCommand('!npc-death-report', msg => {
-            const log = modState.runtime.deathLog || [];
-            
+            const log = ensureNPCManagerRuntime();
+
             if (log.length === 0) {
                 GameAssist.log('NPCManager', '✅ No NPC deaths recorded this session.');
                 return;
@@ -1842,10 +1897,12 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 GameAssist.log('NPCManager', `${idx + 1}. ${name} - ${time}`);
             });
         }, 'NPCManager', { gmOnly: true });
-        
+
         GameAssist.onCommand('!npc-death-clear', msg => {
-            const count = (modState.runtime.deathLog || []).length;
-            modState.runtime.deathLog = [];
+            const runtime = ensureRuntimeObject(modState);
+            ensureRuntimeKey(runtime, 'deathLog', 'array');
+            const count = runtime.deathLog.length;
+            runtime.deathLog = [];
             GameAssist.log('NPCManager', `✅ Cleared ${count} death log entries.`);
         }, 'NPCManager', { gmOnly: true });
         
@@ -1934,8 +1991,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // CHOICE: TokenMod used for status marker ops; keep dependency explicit in README.
-    // Maintenance (v0.1.3, no semantic change): Added module narrative; preserved dependency and
-    //   marker logic while syncing version metadata.
+    // Changed (v0.1.3): Hardened runtime by ensuring deathLog on every entry point and capping to 100 entries after toggles.
+    // Prior notes: Maintenance (v0.1.3, no semantic change): Added module narrative; preserved dependency and marker logic
+    //   while syncing version metadata.
     // Prior notes: Maintenance (v0.1.1.2, no semantic change): Metadata updated for MECHSUITS v1.5.1 alignment.
     // [GAMEASSIST:MODULES:NPCMANAGER] END
     // =============================================================================
@@ -1947,7 +2005,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONCENTRATIONTRACKER", title: "ConcentrationTracker",
     //   guarantees: ["Chat UI for concentration saves; TokenMod marker toggle"],
-    //   last_updated_version: "v0.1.1.2",
+    //   last_updated_version: "v0.1.3",
     //   independent_versions: { module_version: "0.1.0.5" } }
     // -------------------------------------------------------------------------
     // Narrative
@@ -1964,25 +2022,67 @@ description, syntax/commands, and configuration pointers near the top of the scr
         randomize: true,
         ...modState.config
     });
-    modState.runtime = modState.runtime || {};
-    modState.runtime.lastDamage = modState.runtime.lastDamage || {};
-    modState.runtime.lastDamage = modState.runtime.lastDamage || {};
-    Object.entries(modState.runtime.lastDamage).forEach(([playerId, payload]) => {
-        if (typeof payload === 'number' || typeof payload === 'string') {
-            const dmg = Number(payload) || 0;
-            modState.runtime.lastDamage[playerId] = {
-                damage: dmg,
-                dc: Math.max(10, Math.floor(dmg / 2)),
-                mode: 'normal'
-            };
-        } else if (payload && typeof payload === 'object') {
-            payload.damage = Number(payload.damage) || 0;
-            if (payload.dc === undefined) {
-                payload.dc = Math.max(10, Math.floor(payload.damage / 2));
+
+    const LAST_DAMAGE_LIMIT = 50;
+
+    function pruneLastDamage(lastDamage) {
+        const entries = Object.entries(lastDamage || {});
+        if (entries.length <= LAST_DAMAGE_LIMIT) return;
+
+        entries
+            .sort(([, a], [, b]) => (a?.timestamp || 0) - (b?.timestamp || 0))
+            .slice(0, entries.length - LAST_DAMAGE_LIMIT)
+            .forEach(([playerId]) => delete lastDamage[playerId]);
+    }
+
+    function normalizeLastDamageCache(runtime) {
+        const lastDamage = ensureRuntimeKey(runtime, 'lastDamage', 'object');
+
+        Object.entries(lastDamage).forEach(([playerId, payload]) => {
+            if (typeof payload === 'number' || typeof payload === 'string') {
+                const dmg = Number(payload) || 0;
+                lastDamage[playerId] = {
+                    damage: dmg,
+                    dc: Math.max(10, Math.floor(dmg / 2)),
+                    mode: 'normal',
+                    timestamp: Date.now()
+                };
+                return;
             }
-            if (!payload.mode) payload.mode = 'normal';
-        }
-    });
+
+            if (payload && typeof payload === 'object') {
+                const damage = Number(payload.damage) || 0;
+                const normalized = {
+                    damage,
+                    dc: payload.dc !== undefined ? (Number(payload.dc) || Math.max(10, Math.floor(damage / 2))) : Math.max(10, Math.floor(damage / 2)),
+                    bonus: Number.isFinite(Number(payload.bonus)) ? Number(payload.bonus) : null,
+                    mode: (payload.mode === 'adv' || payload.mode === 'dis' || payload.mode === 'normal') ? payload.mode : 'normal',
+                    tokenId: payload.tokenId || payload.tokenID || payload.tokenIdLegacy,
+                    tokenName: payload.tokenName || payload.token,
+                    characterId: payload.characterId,
+                    characterName: payload.characterName,
+                    player: payload.player || payload.playerName,
+                    timestamp: Number(payload.timestamp) || Date.now()
+                };
+
+                lastDamage[playerId] = normalized;
+                return;
+            }
+
+            delete lastDamage[playerId];
+        });
+
+        pruneLastDamage(lastDamage);
+        return lastDamage;
+    }
+
+    function ensureConcentrationRuntime() {
+        const runtime = ensureRuntimeObject(modState);
+        const lastDamage = normalizeLastDamageCache(runtime);
+        return { runtime, lastDamage };
+    }
+
+    ensureConcentrationRuntime();
 
     // ─── Public Command Prefixes ───────────────────────────────────────────────────
     const CMDS = ['!concentration', '!cc'];
@@ -2113,11 +2213,14 @@ description, syntax/commands, and configuration pointers near the top of the scr
     }
 
     function buildStatusTemplate() {
-        const entries = Object.entries(modState.runtime.lastDamage || {});
+        const { lastDamage } = ensureConcentrationRuntime();
+        const entries = Object.entries(lastDamage || {});
         if (!entries.length) return null;
 
         const compiled = entries.map(([playerId, payload]) => {
-            const data = (payload && typeof payload === 'object') ? payload : { damage: Number(payload) || 0 };
+            const data = (payload && typeof payload === 'object')
+                ? payload
+                : { damage: Number(payload) || 0, mode: 'normal', timestamp: 0 };
             const playerObj = getObj('player', playerId);
             const display = data.player || playerObj?.get('displayname') || 'Unknown Player';
             const playerName = display.replace(/ \(GM\)$/, '');
@@ -2168,6 +2271,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
      *   Executes the concentration roll workflow.
      */
     function handleRoll(msg, damage, mode) {
+        const { lastDamage } = ensureConcentrationRuntime();
         const player = msg.who.replace(/ \(GM\)$/, '');
         if (!msg.selected?.length) {
             return sendChat('ConcentrationTracker',
@@ -2200,7 +2304,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         if (mode === 'adv') expr = `2d20kh1 + ${bonus}`;
         if (mode === 'dis') expr = `2d20kl1 + ${bonus}`;
 
-        modState.runtime.lastDamage[msg.playerid] = {
+        lastDamage[msg.playerid] = {
             damage,
             dc,
             bonus,
@@ -2212,6 +2316,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
             player,
             timestamp: Date.now()
         };
+
+        pruneLastDamage(lastDamage);
 
         sendChat('', `[[${expr}]]`, ops => {
             const roll = ops[0].inlinerolls?.[0];
@@ -2279,8 +2385,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
      *   Repeats the last concentration check.
      */
     function handleLast(msg) {
+        const { lastDamage } = ensureConcentrationRuntime();
         const player = msg.who.replace(/ \(GM\)$/, '');
-        const entry  = modState.runtime.lastDamage[msg.playerid];
+        const entry  = lastDamage[msg.playerid];
         const dmg    = typeof entry === 'object' ? Number(entry.damage) : Number(entry);
         if (!entry || !dmg) {
             return sendChat('ConcentrationTracker',
@@ -2300,6 +2407,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
         const parts = raw.toLowerCase().split(/\s+--/);
         const cmd   = parts.shift();             // "!concentration" or "!cc"
         if (!CMDS.includes(cmd)) return;
+
+        ensureConcentrationRuntime();
 
         // 2) Identify player (strip " (GM)")
         const player = msg.who.replace(/ \(GM\)$/, '');
@@ -2376,8 +2485,10 @@ description, syntax/commands, and configuration pointers near the top of the scr
 });
     // --- Notes & Comments ---
     // CHOICE: Keep lowercase parsing and aliases exactly as legacy; avoids user retraining.
-    // Maintenance (v0.1.3, no semantic change): Added module narrative and normalized indentation;
-    //   behavior and aliases remain untouched.
+    // Changed (v0.1.3): Added runtime self-healing/normalization for lastDamage, ensured handlers guard after toggles, and
+    //   capped cache to the 50 most recent entries.
+    // Prior notes: Maintenance (v0.1.3, no semantic change): Added module narrative and normalized indentation; behavior and
+    //   aliases remained untouched.
     // Prior notes: Maintenance (v0.1.1.2, no semantic change): Updated MECHSUITS metadata only.
     // [GAMEASSIST:MODULES:CONCENTRATIONTRACKER] END
     // =============================================================================
@@ -2607,7 +2718,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:DEBUGTOOLS", title: "DebugTools",
     //   guarantees: ["Dry-run friendly debugging helpers"],
-    //   last_updated_version: "v0.1.1.2",
+    //   last_updated_version: "v0.1.3",
     //   independent_versions: { module_version: "0.1.0" } }
     // -------------------------------------------------------------------------
     // Narrative
@@ -2621,7 +2732,10 @@ description, syntax/commands, and configuration pointers near the top of the scr
             enabled: false,
             ...modState.config
         });
-        modState.runtime = modState.runtime || {};
+
+        function ensureDebugRuntime() {
+            return ensureRuntimeObject(modState);
+        }
 
         function wantsApply(args) {
             if (args.apply === undefined) return false;
@@ -2681,7 +2795,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
             token.set('bar1_value', next);
             GameAssist.log('DebugTools', `Applied ${summary}.`);
-            modState.runtime.lastAction = { type: 'damage', token: token.id, amount, previous: current };
+            ensureDebugRuntime().lastAction = { type: 'damage', token: token.id, amount, previous: current };
         }
 
         function handleMarker(msg, args) {
@@ -2725,7 +2839,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
             token.set('statusmarkers', finalMarkers.join(','));
             GameAssist.log('DebugTools', `Marker action: ${actionDesc} on ${name}.`);
-            modState.runtime.lastAction = { type: 'marker', token: token.id, marker, mode };
+            ensureDebugRuntime().lastAction = { type: 'marker', token: token.id, marker, mode };
         }
 
         function handleSave(msg, args) {
@@ -2811,7 +2925,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // CHOICE: Helpers default to dry-run; --apply required for mutations.
-    // Maintenance (v0.1.3, no semantic change): Added module narrative; kept dry-run defaults and
+    // Changed (v0.1.3): Ensured runtime self-heals before recording lastAction so toggling the module cannot break debug trails.
+    // Prior notes: Maintenance (v0.1.3, no semantic change): Added module narrative; kept dry-run defaults and
     //   disabled-by-default posture while aligning version metadata.
     // Prior notes: Maintenance (v0.1.1.2, no semantic change): MECHSUITS metadata refreshed to v1.5.1.
     // [GAMEASSIST:MODULES:DEBUGTOOLS] END
