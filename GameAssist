@@ -353,6 +353,39 @@ description, syntax/commands, and configuration pointers near the top of the scr
         return runtime[key];
     }
 
+    function ensureModRuntimeKey(modState, key, kind) {
+        const runtime = ensureRuntimeObject(modState);
+
+        const ensured = ensureRuntimeKey(runtime, key, kind);
+
+        if (kind === 'array') {
+            if (!Array.isArray(ensured)) runtime[key] = [];
+            return runtime[key];
+        }
+        if (kind === 'object') {
+            if (!ensured || typeof ensured !== 'object' || Array.isArray(ensured)) runtime[key] = {};
+            return runtime[key];
+        }
+        return ensured;
+    }
+
+    function sanitizeTimestamp(raw, fallback) {
+        const now = Date.now();
+        const fb = (typeof fallback === 'number' && Number.isFinite(fallback) && fallback > 0)
+            ? fallback
+            : now;
+
+        const ts = Number(raw);
+
+        if (!Number.isFinite(ts)) return fb;
+        if (ts <= 0) return fb;
+
+        const MAX_FUTURE_MS = 1000 * 60 * 60 * 24 * 7;
+        if (ts > now + MAX_FUTURE_MS) return fb;
+
+        return Math.floor(ts);
+    }
+
     function _sanitize(str = '') {
         return str.toString()
             .replace(/&/g, '&amp;')
@@ -376,6 +409,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
     }
     // --- Notes & Comments ---
     // NOTE: State auditor warns about unexpected branches; no automatic deletion occurs.
+    // Changed (v0.1.3): Added ensureModRuntimeKey to guarantee child containers regardless of ensure call order.
+    // Changed (v0.1.3): Added sanitizeTimestamp to normalize timestamps defensively for cache consumers.
     // Changed (v0.1.3): Added runtime guard helpers (ensureRuntimeObject/ensureRuntimeKey) so modules can self-heal after
     //   toggles that wipe runtime caches.
     // Prior notes: Maintenance (v0.1.3, no semantic change): Added narrative for APP utilities and aligned version metadata;
@@ -1551,8 +1586,42 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
         function ensureCritFumbleRuntime() {
             const runtime = ensureRuntimeObject(modState);
-            ensureRuntimeKey(runtime, 'activePlayers', 'object');
+            runtime.activePlayers = ensureModRuntimeKey(modState, 'activePlayers', 'object');
             return runtime;
+        }
+
+        function getActivePlayerTs(entry) {
+            const ts = Number(entry && entry.ts);
+            return (Number.isFinite(ts) && ts > 0) ? ts : 0;
+        }
+
+        function pruneActivePlayers(rt) {
+            const entries = Object.entries(rt.activePlayers);
+            if (entries.length <= ACTIVE_PLAYER_LIMIT) return;
+
+            entries
+                .sort(([, a], [, b]) => getActivePlayerTs(a) - getActivePlayerTs(b))
+                .slice(0, entries.length - ACTIVE_PLAYER_LIMIT)
+                .forEach(([id]) => delete rt.activePlayers[id]);
+        }
+
+        function noteActivePlayer(rt, playerId) {
+            const p = getObj('player', playerId);
+            if (!p) return;
+
+            const now = sanitizeTimestamp(Date.now());
+            const entry = rt.activePlayers[playerId];
+
+            if (typeof entry === 'string') {
+                rt.activePlayers[playerId] = { name: entry, ts: now };
+            } else if (!entry || typeof entry !== 'object') {
+                rt.activePlayers[playerId] = { name: p.get('displayname'), ts: now };
+            } else {
+                entry.name = entry.name || p.get('displayname');
+                entry.ts = now;
+            }
+
+            pruneActivePlayers(rt);
         }
 
         // ─── Helper Functions ──────────────────────────────────────────────────────────
@@ -1677,7 +1746,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
         function showManualTriggerMenu() {
             const rt = ensureCritFumbleRuntime();
-            const players = Object.values(rt.activePlayers);
+            const players = Object.values(rt.activePlayers)
+                .map(v => (typeof v === 'string' ? v : v?.name))
+                .filter(Boolean);
             if (!players.length) {
                 sendTemplateMessage('gm', "⚠️ No Players Detected", [
                     { label:"Note", value:"No players have been active yet this session." }
@@ -1715,16 +1786,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
             const rt = ensureCritFumbleRuntime();
 
             // register active players
-            if (msg.playerid && !rt.activePlayers[msg.playerid]) {
-                const p = getObj('player', msg.playerid);
-                if (p) {
-                    rt.activePlayers[msg.playerid] = p.get('displayname');
-                    const ids = Object.keys(rt.activePlayers);
-                    if (ids.length > ACTIVE_PLAYER_LIMIT) {
-                        ids.slice(0, ids.length - ACTIVE_PLAYER_LIMIT).forEach(id => delete rt.activePlayers[id]);
-                    }
-                }
-            }
+            if (msg.playerid) noteActivePlayer(rt, msg.playerid);
 
             // API‐style commands
             if (msg.type==='api') {
@@ -1784,7 +1846,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // Bugfix retained: robust natural‑1 detection across templates/inlineroll variants.
-    // Changed (v0.1.3): Added runtime self-healing for activePlayers (post-toggle) and capped cache to 50 tracked players.
+    // Changed (v0.1.3): Added runtime self-healing for activePlayers (post-toggle), normalized entries with timestamps, and
+    //   pruned least-recently-seen players deterministically within the 50-player cap; ensured activePlayers is explicitly
+    //   assigned and invalid timestamps sort oldest-first for eviction.
     // Prior notes: Maintenance (v0.1.3, no semantic change): Added module narrative; kept crit/fumble logic and inline-roll
     //   bugfix unchanged while correcting version metadata.
     // Prior notes: Maintenance (v0.1.1.2, no semantic change): MECHSUITS metadata updated only.
@@ -1821,9 +1885,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
         const DEATH_LOG_LIMIT = 100;
 
         function ensureNPCManagerRuntime() {
-            const runtime = ensureRuntimeObject(modState);
-            ensureRuntimeKey(runtime, 'deathLog', 'array');
-            return runtime.deathLog;
+            const deathLog = ensureModRuntimeKey(modState, 'deathLog', 'array');
+            return deathLog;
         }
 
         function getNPCContext(token, link = null) {
@@ -1855,18 +1918,18 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 sendChat('api', `!token-mod --ids ${token.id} --set statusmarkers|+${modState.config.deadMarker}`);
                 const name = token.get('name') || '(Unnamed NPC)';
                 GameAssist.log('NPCManager', `${name} marked as dead (HP: ${hp})`);
-                
+
                 // Auto-hide if enabled
                 if (modState.config.autoHide) {
                     token.set('layer', modState.config.hideLayer);
                     GameAssist.log('NPCManager', `${name} moved to ${modState.config.hideLayer}`);
                 }
-                
+
                 // Log death for report
                 deathLog.push({
                     name: name,
                     time: new Date().toLocaleString(),
-                    timestamp: Date.now()
+                    timestamp: sanitizeTimestamp(Date.now())
                 });
 
                 if (deathLog.length > DEATH_LOG_LIMIT) {
@@ -1899,10 +1962,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
         }, 'NPCManager', { gmOnly: true });
 
         GameAssist.onCommand('!npc-death-clear', msg => {
-            const runtime = ensureRuntimeObject(modState);
-            ensureRuntimeKey(runtime, 'deathLog', 'array');
-            const count = runtime.deathLog.length;
-            runtime.deathLog = [];
+            const deathLog = ensureNPCManagerRuntime();
+            const count = deathLog.length;
+            deathLog.length = 0;
             GameAssist.log('NPCManager', `✅ Cleared ${count} death log entries.`);
         }, 'NPCManager', { gmOnly: true });
         
@@ -1991,7 +2053,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // CHOICE: TokenMod used for status marker ops; keep dependency explicit in README.
-    // Changed (v0.1.3): Hardened runtime by ensuring deathLog on every entry point and capping to 100 entries after toggles.
+    // Changed (v0.1.3): Hardened runtime by ensuring deathLog on every entry point, sanitizing new timestamps, capping to
+    //   100 entries after toggles, and clearing the death log in place for audit commands.
     // Prior notes: Maintenance (v0.1.3, no semantic change): Added module narrative; preserved dependency and marker logic
     //   while syncing version metadata.
     // Prior notes: Maintenance (v0.1.1.2, no semantic change): Metadata updated for MECHSUITS v1.5.1 alignment.
@@ -2025,18 +2088,23 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
     const LAST_DAMAGE_LIMIT = 50;
 
+    function getEntryTimestamp(entry) {
+        const ts = Number(entry && entry.timestamp);
+        return (Number.isFinite(ts) && ts > 0) ? ts : 0;
+    }
+
     function pruneLastDamage(lastDamage) {
         const entries = Object.entries(lastDamage || {});
         if (entries.length <= LAST_DAMAGE_LIMIT) return;
 
         entries
-            .sort(([, a], [, b]) => (a?.timestamp || 0) - (b?.timestamp || 0))
+            .sort(([, a], [, b]) => getEntryTimestamp(a) - getEntryTimestamp(b))
             .slice(0, entries.length - LAST_DAMAGE_LIMIT)
             .forEach(([playerId]) => delete lastDamage[playerId]);
     }
 
-    function normalizeLastDamageCache(runtime) {
-        const lastDamage = ensureRuntimeKey(runtime, 'lastDamage', 'object');
+    function normalizeLastDamageCache() {
+        const lastDamage = ensureModRuntimeKey(modState, 'lastDamage', 'object');
 
         Object.entries(lastDamage).forEach(([playerId, payload]) => {
             if (typeof payload === 'number' || typeof payload === 'string') {
@@ -2044,25 +2112,36 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 lastDamage[playerId] = {
                     damage: dmg,
                     dc: Math.max(10, Math.floor(dmg / 2)),
+                    bonus: null,
                     mode: 'normal',
-                    timestamp: Date.now()
+                    tokenId: null,
+                    tokenName: null,
+                    characterId: null,
+                    characterName: null,
+                    player: (getObj('player', playerId)?.get('displayname') || null),
+                    timestamp: sanitizeTimestamp(Date.now())
                 };
                 return;
             }
 
             if (payload && typeof payload === 'object') {
+                let tokenId = null;
+                if (payload.tokenId) tokenId = payload.tokenId;
+                else if (payload.tokenID) tokenId = payload.tokenID;
+                else if (payload.tokenIdLegacy) tokenId = payload.tokenIdLegacy;
+
                 const damage = Number(payload.damage) || 0;
                 const normalized = {
                     damage,
                     dc: payload.dc !== undefined ? (Number(payload.dc) || Math.max(10, Math.floor(damage / 2))) : Math.max(10, Math.floor(damage / 2)),
                     bonus: Number.isFinite(Number(payload.bonus)) ? Number(payload.bonus) : null,
                     mode: (payload.mode === 'adv' || payload.mode === 'dis' || payload.mode === 'normal') ? payload.mode : 'normal',
-                    tokenId: payload.tokenId || payload.tokenID || payload.tokenIdLegacy,
+                    tokenId: tokenId,
                     tokenName: payload.tokenName || payload.token,
                     characterId: payload.characterId,
                     characterName: payload.characterName,
                     player: payload.player || payload.playerName,
-                    timestamp: Number(payload.timestamp) || Date.now()
+                    timestamp: sanitizeTimestamp(payload.timestamp)
                 };
 
                 lastDamage[playerId] = normalized;
@@ -2078,10 +2157,12 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
     function ensureConcentrationRuntime() {
         const runtime = ensureRuntimeObject(modState);
-        const lastDamage = normalizeLastDamageCache(runtime);
+        const lastDamage = normalizeLastDamageCache();
         return { runtime, lastDamage };
     }
 
+    // One-time normalization/repair of runtime cache at module init.
+    // Return value intentionally ignored: this call is for side effects (mutates runtime).
     ensureConcentrationRuntime();
 
     // ─── Public Command Prefixes ───────────────────────────────────────────────────
@@ -2314,7 +2395,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
             characterId: character.id,
             characterName: character.get('name'),
             player,
-            timestamp: Date.now()
+            timestamp: sanitizeTimestamp(Date.now())
         };
 
         pruneLastDamage(lastDamage);
@@ -2482,11 +2563,13 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 )
             );
     }
-});
+    });
     // --- Notes & Comments ---
     // CHOICE: Keep lowercase parsing and aliases exactly as legacy; avoids user retraining.
-    // Changed (v0.1.3): Added runtime self-healing/normalization for lastDamage, ensured handlers guard after toggles, and
-    //   capped cache to the 50 most recent entries.
+    // Changed (v0.1.3): Sanitized lastDamage timestamps (normalize + writes), enforced deterministic pruning order, scoped
+    //   cache normalization to module runtime, and clarified side-effect normalization during module init.
+    // Changed (v0.1.3): Added runtime self-healing/normalization for lastDamage with complete schema defaults, ensured
+    //   handlers guard after toggles, and capped cache to the 50 most recent entries.
     // Prior notes: Maintenance (v0.1.3, no semantic change): Added module narrative and normalized indentation; behavior and
     //   aliases remained untouched.
     // Prior notes: Maintenance (v0.1.1.2, no semantic change): Updated MECHSUITS metadata only.
