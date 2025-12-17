@@ -355,23 +355,12 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
     function ensureModRuntimeKey(modState, key, kind) {
         const runtime = ensureRuntimeObject(modState);
-
-        const ensured = ensureRuntimeKey(runtime, key, kind);
-
-        if (kind === 'array') {
-            if (!Array.isArray(ensured)) runtime[key] = [];
-            return runtime[key];
-        }
-        if (kind === 'object') {
-            if (!ensured || typeof ensured !== 'object' || Array.isArray(ensured)) runtime[key] = {};
-            return runtime[key];
-        }
-        return ensured;
+        return ensureRuntimeKey(runtime, key, kind);
     }
 
     function sanitizeTimestamp(raw, fallback) {
         const now = Date.now();
-        const fb = (typeof fallback === 'number' && Number.isFinite(fallback) && fallback > 0)
+        const fb = (typeof fallback === 'number' && Number.isFinite(fallback) && fallback >= 0)
             ? fallback
             : now;
 
@@ -2119,7 +2108,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
                     characterId: null,
                     characterName: null,
                     player: (getObj('player', playerId)?.get('displayname') || null),
-                    timestamp: sanitizeTimestamp(Date.now())
+                    timestamp: 0
                 };
                 return;
             }
@@ -2141,7 +2130,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
                     characterId: payload.characterId,
                     characterName: payload.characterName,
                     player: payload.player || payload.playerName,
-                    timestamp: sanitizeTimestamp(payload.timestamp)
+                    timestamp: sanitizeTimestamp(payload.timestamp, 0)
                 };
 
                 lastDamage[playerId] = normalized;
