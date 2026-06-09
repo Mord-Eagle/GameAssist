@@ -2,7 +2,7 @@
 
 Use this checklist after installing or updating GameAssist to confirm the Roll20 Mod/API is working as expected.
 
-The first section is a quick confidence pass for DMs. It prioritizes easy wins and should take about five minutes. The second section contains deeper tests for troubleshooting individual modules.
+The first section is a quick confidence pass for DMs. It prioritizes easy wins without promising a specific completion time. The second section contains deeper tests for troubleshooting individual modules.
 
 > **Current target:** GameAssist v0.1.4.2
 
@@ -41,49 +41,21 @@ For example:
 
 ---
 
-# Part One: Five-Minute DM Smoke Test
+# Part One: DM Quick Confidence Check
 
 ## Before You Begin
 
-Use a test page or disposable tokens whenever possible.
+After installing or updating GameAssist, save the script and wait for Roll20's API sandbox to restart before running the checks below. Use a test page or disposable tokens whenever possible. Install TokenMod if you use NPCManager or ConcentrationTracker.
 
-Recommended preparation:
+The core-ready whisper should report GameAssist v0.1.4.2. You may not see one ready message for every module because module-specific startup messages are normally kept quiet.
 
-- Log in as the GM.
-- Open the Roll20 API Console in another tab.
-- Install and enable GameAssist.
-- Install TokenMod if you use NPCManager or ConcentrationTracker.
-- Have one linked NPC token available if you use NPC automation.
-- Have one linked player-character token available if you use ConcentrationTracker.
+Stop and troubleshoot before continuing if the sandbox repeatedly restarts, the API Console shows a new GameAssist `SyntaxError` or `ReferenceError`, or no GameAssist command responds.
 
-> **Do not test destructive commands on important live-session tokens.**
+> **Do not test commands that alter HP or markers on important live-session tokens.**
 
 ---
 
-## Step 1: Save and Reload
-
-After installing or updating GameAssist:
-
-1. Click **Save Script**.
-2. Wait for the API sandbox to restart.
-3. Check the API Console for red exceptions.
-4. Look for the GameAssist core-ready whisper.
-
-### Expected
-
-- The API Console does not show a new GameAssist syntax or reference error.
-- The core-ready whisper reports GameAssist v0.1.4.2.
-- You may not see one ready message for every module. `QUIET_STARTUP` suppresses module-specific ready messages by default.
-
-### Stop Here If
-
-- The API sandbox immediately crashes or restarts repeatedly.
-- The console shows `SyntaxError`, `ReferenceError`, or a GameAssist startup exception.
-- No GameAssist core-ready message appears and no GameAssist command responds.
-
----
-
-## Step 2: Check Core Health
+## Step 1: Check Core Health
 
 Run:
 
@@ -94,25 +66,34 @@ Run:
 ### Expected
 
 - A GM whisper headed `GameAssist 0.1.4.2 Status`.
-- `Errors: 0` on a clean install.
+- `Errors: 0` during a clean sandbox session with no GameAssist configuration or runtime errors.
 - `Queue Length: 0` when idle.
-- A line stating that queue mode is explicit opt-in and normal event handlers execute directly.
 - Six total bundled modules.
-- Dependency warnings are either absent or clearly explained.
+- Five configured and running modules when using the defaults; DebugTools is disabled by default.
 
-### Acceptable Dependency Results
+`Errors` counts problems recorded during the current sandbox session. Roll20 restarts the sandbox often, so this is not an installation-history counter. A nonzero value means GameAssist recorded a problem during this session and should be investigated before relying on the affected feature.
 
-| Result | Meaning | What To Do |
-| --- | --- | --- |
-| `confirmed` | GameAssist could confirm the dependency. | Continue. |
-| `unverifiable` | Roll20 did not expose enough metadata to confirm it. | Continue, then manually test one TokenMod marker action. |
-| `missing` | GameAssist could confirm the dependency is absent. | Install/enable TokenMod or leave the dependent module disabled. |
+### Reading the Dependency-Warnings Line
 
-> An `unverifiable` TokenMod warning is not automatically a failure. The marker tests below are the final proof.
+A common result is:
+
+```text
+Dependency Warnings: NPCManager: unverifiable (TokenMod) | ConcentrationTracker: unverifiable (TokenMod)
+```
+
+This means Roll20 did not give GameAssist enough information to prove whether TokenMod is installed. It does **not** mean TokenMod is broken or missing. Continue to the feature checks and judge TokenMod by whether marker-changing actions actually work.
+
+Other possible results:
+
+| What You See | Plain-Language Meaning |
+| --- | --- |
+| `Dependency Warnings: none` | GameAssist found no dependency concern to report. |
+| `unverifiable (TokenMod)` | GameAssist cannot confirm TokenMod from Roll20's available information. Test the feature itself. |
+| `missing (TokenMod)` | GameAssist believes TokenMod is absent. Install or enable it before relying on marker automation. |
 
 ---
 
-## Step 3: Check Module Status
+## Step 2: Check Module Status
 
 Run:
 
@@ -120,27 +101,27 @@ Run:
 !ga-config modules
 ```
 
-### Expected
+### Typical Default Result
 
-The response lists:
+```text
+ConfigUI: config ✅ | runtime 🟢 | deps confirmed
+CritFumble: config ✅ | runtime 🟢 | deps confirmed
+NPCManager: config ✅ | runtime 🟢 | deps unverifiable (TokenMod)
+ConcentrationTracker: config ✅ | runtime 🟢 | deps unverifiable (TokenMod)
+NPCHPRoller: config ✅ | runtime 🟢 | deps confirmed
+DebugTools: config ❌ | runtime ⏸️ | deps confirmed
+```
 
-- ConfigUI
-- CritFumble
-- NPCManager
-- ConcentrationTracker
-- NPCHPRoller
-- DebugTools
+### What the Symbols Mean
 
-Typical fresh-install posture:
-
-| Module | Expected Default |
+| Symbol or Phrase | Meaning |
 | --- | --- |
-| ConfigUI | Configured and running |
-| CritFumble | Configured and running |
-| NPCManager | Running when TokenMod is available or unverifiable; skipped if TokenMod is confirmed missing |
-| ConcentrationTracker | Running when TokenMod is available or unverifiable; skipped if TokenMod is confirmed missing |
-| NPCHPRoller | Configured and running |
-| DebugTools | Disabled |
+| `config ✅` | The module is set to be enabled. |
+| `runtime 🟢` | The module is currently running. |
+| `config ❌` and `runtime ⏸️` for DebugTools | Expected default; DebugTools is intentionally off. |
+| `deps confirmed` | No external dependency is needed, or GameAssist could confirm it. |
+| `deps unverifiable (TokenMod)` | The module is running, but Roll20 would not let GameAssist confirm TokenMod. Test the marker feature itself. |
+| `deps missing (TokenMod)` | The module cannot safely provide its TokenMod-powered marker behavior. |
 
 ### If a Module Is Not Running
 
@@ -154,7 +135,7 @@ Then run `!ga-config modules` again and read the warning carefully.
 
 ---
 
-## Step 4: Open the Config UI
+## Step 3: Open the Config UI
 
 Run either:
 
@@ -181,25 +162,7 @@ Open the UI, click **Refresh**, and confirm it redraws once.
 
 ---
 
-## Step 5: Check Metrics
-
-Run:
-
-```roll20chat
-!ga-metrics
-```
-
-### Expected
-
-- A GameAssist Metrics whisper appears.
-- It includes session start, last update, totals, queue duration status, and recent activity.
-- It is acceptable for queue durations to say no tasks have been recorded yet.
-
-> Queue metrics describe explicit queued work and module transitions. They are not a timer for every Roll20 event.
-
----
-
-## Step 6: Check CritFumble Help
+## Step 4: Check CritFumble Help
 
 Run:
 
@@ -211,6 +174,8 @@ Run:
 
 - A CritFumble help panel appears.
 - This test does not require the rollable tables.
+
+The current help panel is dense and not especially easy to read. For v0.1.4.2, receiving the panel is the pass condition. Improving its layout is a v0.1.4.3 presentation task.
 
 ### Optional Table Test
 
@@ -224,7 +189,7 @@ Expected: GameAssist announces and rolls `CF-Melee`.
 
 ---
 
-## Step 7: Check Concentration Status
+## Step 5: Check Concentration Status
 
 If you use ConcentrationTracker, run:
 
@@ -239,11 +204,17 @@ You receive either:
 - a list of concentrating tokens; or
 - `No tokens concentrating.`
 
-If there is no response, check `!ga-config modules`. ConcentrationTracker may be disabled or skipped because TokenMod is confirmed missing.
+### What a Failure Looks Like
+
+- **No response at all:** the command check failed. Confirm ConcentrationTracker shows `config ✅` and `runtime 🟢`. Do not assume `deps unverifiable (TokenMod)` explains the silence.
+- **`No tokens concentrating.` while a current-page token visibly has the configured concentration marker:** marker detection failed and should be investigated.
+- **The command responds correctly, but a prior concentration roll did not add or remove a marker:** test TokenMod directly; that is a marker-changing failure rather than a status-command failure.
+
+`!concentration --status` reads existing markers directly. TokenMod is needed to change markers, but it is not needed merely to produce a status response.
 
 ---
 
-## Step 8: Check NPC Reports
+## Step 6: Check NPC Death Information
 
 If you use NPCManager, run:
 
@@ -252,14 +223,24 @@ If you use NPCManager, run:
 !npc-death-audit
 ```
 
-### Expected
+### Understanding the Two Commands
 
-- Death report says no NPC deaths are recorded or lists recorded deaths.
-- Audit reports correct marker states or clearly lists mismatches/skipped unlinked tokens.
+| Command | What It Does | What It Does Not Do |
+| --- | --- | --- |
+| `!npc-death-report` | Shows the recorded history of NPC death events. | It does not summarize the current page or check whether markers match HP. |
+| `!npc-death-audit` | Looks for contradictions between current bar 1 HP and the configured death marker. | It does not list NPCs that are correctly marked dead. |
+
+A response saying marker states are correct is a successful audit, even when several NPCs are dead, as long as those NPCs have HP below 1 and the configured death marker.
+
+The current audit success message refers only to “Living NPCs,” which is misleading because the audit checks living and dead NPCs. Improving that message is a v0.1.4.3 wording task.
+
+TokenMod is used when NPCManager changes a marker. The audit itself reads existing token HP and markers directly, so an empty audit is not normally caused by TokenMod.
+
+The current death report can become a long list. A summarized report and selectable death-log pools for sessions, scenes, and campaigns are useful future features, but they are not present in v0.1.4.2.
 
 ---
 
-## Step 9: Check Selected NPC HP
+## Step 7: Check Selected NPC HP
 
 Select one disposable, linked NPC token and run:
 
@@ -296,12 +277,11 @@ Mark the tests that apply to your campaign:
 
 - [ ] API sandbox reloads without a GameAssist exception.
 - [ ] `!ga-status` responds and shows v0.1.4.2.
-- [ ] `!ga-config modules` lists all six bundled modules.
+- [ ] `!ga-config modules` lists the expected default module states.
 - [ ] `!ga-config ui` opens the Config UI.
-- [ ] `!ga-metrics` responds.
 - [ ] `!critfumble help` responds.
 - [ ] `!concentration --status` responds, if ConcentrationTracker is used.
-- [ ] `!npc-death-report` and `!npc-death-audit` respond, if NPCManager is used.
+- [ ] `!npc-death-report` and `!npc-death-audit` respond and are interpreted correctly, if NPCManager is used.
 - [ ] `!npc-hp-selected` rolls a disposable linked NPC, if NPCHPRoller is used.
 
 If the applicable boxes pass, GameAssist has passed the quick DM smoke test.
@@ -388,11 +368,13 @@ Run:
 Check:
 
 - [ ] Version is `0.1.4.2`.
-- [ ] Errors are zero or understood.
+- [ ] Errors are zero for a clean sandbox session, or every recorded error is understood.
 - [ ] Queue length returns to zero while idle.
 - [ ] Six modules are counted.
-- [ ] Running/configured/skipped counts make sense.
-- [ ] Dependency warnings match your installed Mods.
+- [ ] Default posture is normally five configured, five running, and zero dependency-skipped.
+- [ ] Any dependency warning is interpreted as `unverifiable` or `missing`, rather than treated as a generic failure.
+
+Remember that Roll20 restarts the API sandbox often. `Errors` describes problems recorded in the current sandbox session, not the lifetime of the campaign or installation.
 
 ### A2. Module Detail
 
@@ -402,11 +384,13 @@ Run:
 !ga-config modules
 ```
 
-Check every module’s:
+Compare the result to the typical default output from Part One.
 
-- configured state;
-- runtime state;
-- dependency status.
+Check every module's:
+
+- `config` symbol: whether the module is intended to be enabled;
+- `runtime` symbol: whether it is actually running now;
+- `deps` text: whether GameAssist confirmed, could not verify, or believes a dependency is missing.
 
 If a module is configured but not running, try:
 
@@ -416,7 +400,9 @@ If a module is configured but not running, try:
 
 The resulting warning usually explains the problem.
 
-### A3. Metrics Baseline
+### A3. Optional Advanced Metrics Baseline
+
+Most DMs do not need this test. Use it when investigating a problem or preparing a bug report.
 
 Run:
 
@@ -438,7 +424,7 @@ Expected:
 - recent activity updates;
 - no unexplained error spike appears.
 
-### A4. Metrics Reset
+### A4. Optional Metrics Reset
 
 Only reset metrics when you no longer need the current diagnostic history:
 
@@ -607,13 +593,15 @@ Run:
 !ga-config modules
 ```
 
-Interpret TokenMod-dependent module results:
+Interpret the exact TokenMod-dependent module lines:
 
-| Result | Test Outcome |
+| What You See | Test Outcome |
 | --- | --- |
-| `confirmed` | Dependency check passed. Continue to marker tests. |
-| `unverifiable` | Manually run marker tests. Passing marker tests confirm the practical integration. |
-| `missing` | Install/enable TokenMod before testing marker automation. |
+| `config ✅ | runtime 🟢 | deps confirmed` | Module is running and GameAssist could confirm TokenMod. Continue to marker tests. |
+| `config ✅ | runtime 🟢 | deps unverifiable (TokenMod)` | Module is running, but GameAssist could not inspect enough Roll20 metadata to confirm TokenMod. Continue to marker tests. |
+| `deps missing (TokenMod)` or a paused runtime | Install/enable TokenMod and recheck before relying on marker automation. |
+
+The dependency line is a diagnostic hint, not the final feature test.
 
 ### D2. Manual TokenMod Sanity Check
 
@@ -642,7 +630,7 @@ Run:
 !critfumble help
 ```
 
-Expected: CritFumble help appears.
+Expected: CritFumble help appears. Its current table-like presentation is dense; this test checks that the command responds, not that the v0.1.4.2 layout is ideal.
 
 ### E2. Manual GM Menu
 
@@ -783,6 +771,13 @@ Expected:
 - `--status` lists tokens with the configured concentration marker or reports none.
 - `!ga-conc-status` summarizes recent recorded concentration activity.
 
+These commands report different things:
+
+- `!concentration --status` scans current-page token markers.
+- `!ga-conc-status` reports recently recorded concentration-check activity.
+
+If `!concentration --status` is completely silent, confirm ConcentrationTracker is running and record the failure for investigation. If it says no tokens are concentrating while a token visibly has the configured marker, marker detection failed. Neither result should be dismissed merely because dependency status says `unverifiable`.
+
 ### F6. Clear Marker
 
 Select the linked test PC token and run:
@@ -848,9 +843,13 @@ Run:
 !npc-death-report
 ```
 
-Expected: The report lists recorded death events or reports that none exist.
+Expected: The report lists every recorded death event or reports that none exist.
+
+This is an event-history command, not a current-page summary. In v0.1.4.2 it may produce a long message when many deaths have been recorded.
 
 ### G4. Death Audit
+
+The audit reports only mismatches. It intentionally does **not** list correctly marked dead NPCs.
 
 Create a deliberate mismatch on the disposable token without changing HP again:
 
@@ -866,6 +865,16 @@ Then run:
 Expected: The mismatched NPC is listed with its HP and marker state.
 
 Restore the token to a correct state afterward.
+
+For the token to be audited, it must:
+
+- be on the current player page;
+- be on the Objects layer;
+- represent a character;
+- have character attribute `npc=1`;
+- use bar 1 for HP.
+
+TokenMod is not needed for the audit to read existing HP and markers. If a deliberate qualifying mismatch is not listed, record it as an NPCManager audit failure.
 
 ### G5. Clear Death Log
 
@@ -1246,6 +1255,13 @@ Inspect:
 !concentration --status
 ```
 
+Separate marker-changing failures from marker-reading failures:
+
+- If GameAssist's roll or HP-change workflow does not add/remove a marker, TokenMod may be involved.
+- If `!concentration --status` or `!npc-death-audit` cannot read a marker that already exists, TokenMod is not normally involved in that read.
+
+For `!npc-death-audit`, remember that correctly marked dead NPCs are intentionally omitted. Create a deliberate HP/marker mismatch on a qualifying disposable NPC before deciding the audit failed.
+
 ---
 
 ## NPC HP Does Not Roll
@@ -1306,6 +1322,8 @@ For TokenMod:
 
 If the manual integration works, the dependency is practically available despite the unverifiable diagnostic.
 
+If a command is completely silent or reads an existing marker incorrectly, continue troubleshooting that specific feature. `unverifiable` explains only why GameAssist could not confirm the dependency; it does not explain away a failed command.
+
 ---
 
 ## Queue Length or Errors Increase
@@ -1357,14 +1375,13 @@ Immediately before a live session, run:
 ```roll20chat
 !ga-status
 !ga-config modules
-!ga-metrics
 ```
 
 Then perform the smallest real test for the modules the session will use:
 
 - CritFumble: `!critfumble help`
 - ConcentrationTracker: `!concentration --status`
-- NPCManager: `!npc-death-audit`
+- NPCManager: `!npc-death-audit` and confirm you understand that it lists mismatches only
 - NPCHPRoller: `!npc-hp-selected` on a disposable NPC
 - ConfigUI: `!ga-config ui`
 
