@@ -104,7 +104,6 @@ description, syntax/commands, and configuration pointers near the top of the scr
 //     │  ├─ [GAMEASSIST:CORE:STATE]
 //     │  └─ [GAMEASSIST:CORE:OBJECT]
 //     ├─ [GAMEASSIST:INTERFACES]
-//     │  ├─ [GAMEASSIST:INTERFACES:EVENTS]
 //     │  └─ [GAMEASSIST:INTERFACES:COMMANDS]
 //     ├─ [GAMEASSIST:MODULES]
 //     │  ├─ [GAMEASSIST:MODULES:CONFIGUI]
@@ -143,6 +142,10 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
 (() => {
     'use strict';
+
+    // Capture Roll20's native 'on' before any modifications
+    const R20_ON = (typeof on === 'function') ? on : (typeof globalThis?.on === 'function' ? globalThis.on : null);
+    if (!R20_ON) throw new Error('Roll20 "on" function is unavailable.');
 
     // =============================================================================
     // [GAMEASSIST:POLICY] BEGIN
@@ -461,7 +464,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: Serialized task queue + watchdog
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:QUEUE", title: "Queue",
-    //   guarantees: ["Single in‑flight task; watchdog resets hung jobs"], last_updated_version: "v0.1.1.2" }
+    //   guarantees: ["Single in‑flight task; job ID guard prevents overlap"], last_updated_version: "v0.1.3" }
     // -------------------------------------------------------------------------
     // Narrative
     // CORE:QUEUE enforces serialized execution of tasks with a watchdog to recover
@@ -470,6 +473,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // -------------------------------------------------------------------------
     let _busy      = false;
     let _lastStart = 0;
+    let _jobId     = 0;
     const _queue            = [];
     const DEFAULT_TIMEOUT   = 30000;
     const WATCHDOG_INTERVAL = 15000;
@@ -482,22 +486,30 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
     function _runNext() {
         if (_busy || !_queue.length) return;
-        const { task, timeout } = _queue.shift();
+        const job = _queue.shift();
+        const myId = ++_jobId;
         _busy = true;
         _lastStart = Date.now();
 
+        let timedOut = false;
+
         const timer = setTimeout(() => {
-            GameAssist.log('Core', `Task timed out after ${timeout}ms`, 'WARN');
+            if (myId !== _jobId) return; // stale
+            timedOut = true;
+            GameAssist.log('Core', `Task timed out after ${job.timeout}ms`, 'WARN');
             _busy = false;
             _runNext();
-        }, timeout);
+        }, job.timeout);
 
         Promise.resolve()
-            .then(task)
-            .catch(err => GameAssist.log('Core', `Error in task: ${err.message}`, 'ERROR'))
+            .then(job.task)
+            .catch(err => GameAssist.log('Core', `Error in task: ${err?.message || err}`, 'ERROR'))
             .finally(() => {
                 clearTimeout(timer);
+                if (myId !== _jobId) return;    // stale completion
+                if (timedOut) return;           // already advanced on timeout
                 _busy = false;
+
                 const duration = Date.now() - _lastStart;
                 GameAssist._metrics.taskDurations.push(duration);
                 if (GameAssist._metrics.taskDurations.length > METRIC_DURATION_LIMIT) {
@@ -505,6 +517,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 }
                 GameAssist._metrics.lastUpdate = new Date().toISOString();
                 recordMetric('task', { duration, noHistory: true });
+
                 _runNext();
             });
     }
@@ -520,9 +533,14 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Decision log:
     //   CHOICE: FIFO with priority bump via sort; simple and sufficient for sandbox.
     //   CHOICE: Watchdog at 2× DEFAULT_TIMEOUT; mirrors legacy behavior.
-    //   Maintenance (v0.1.3, no semantic change): Added narrative and reconfirmed queue/watchdog
-    //     defaults while correcting version metadata to 0.1.3.
-    //   Prior notes: Maintenance (v0.1.1.2, no semantic change): MECHSUITS metadata updated for v1.5.1 compliance.
+    //   CHOICE: Job ID guard prevents timeout/completion overlap — ALT: flag-only; REJECTED: race on flag reads.
+    // Changed (v0.1.3): Added job ID (_jobId) to prevent stale timeout/completion from advancing queue twice.
+    //   Rationale: timeout path sets _busy=false and calls _runNext(), but original task's .finally() could
+    //   still fire later and also set _busy=false + _runNext(), breaking serialization guarantee.
+    //   Trade-offs: Minimal overhead (one counter increment per job); prevents catastrophic overlap.
+    // Prior notes:
+    //   Maintenance (v0.1.3, no semantic change): Added narrative and reconfirmed queue/watchdog defaults.
+    //   Maintenance (v0.1.1.2, no semantic change): MECHSUITS metadata updated for v1.5.1 compliance.
     // [GAMEASSIST:CORE:QUEUE] END
     // =============================================================================
 
@@ -712,7 +730,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: Config parser (aux to state management)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:STATE", title: "Config parser",
-    //   guarantees: ["Parse JSON/boolean/number safely"], last_updated_version: "v0.1.1.2" }
+    //   guarantees: ["Parse JSON/boolean/number safely; empty string never becomes 0"], last_updated_version: "v0.1.3" }
     // -------------------------------------------------------------------------
     // Narrative
     // CORE:STATE handles normalization of chat-provided configuration strings into
@@ -720,21 +738,28 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // protect chat usability.
     // -------------------------------------------------------------------------
     function parseConfigValue(raw) {
-        raw = raw.trim();
+        raw = String(raw ?? '').trim();
         if (raw === 'true')  return true;
         if (raw === 'false') return false;
-        if (!isNaN(raw))      return Number(raw);
+
+        // Only parse numbers when the raw text matches a numeric pattern and isn't empty
+        if (raw !== '' && /^-?\d+(\.\d+)?$/.test(raw)) return Number(raw);
+
         if ((raw.startsWith('{') && raw.endsWith('}')) || (raw.startsWith('[') && raw.endsWith(']'))) {
             try { return JSON.parse(raw); }
-            catch { GameAssist.log('Config', 'Invalid JSON: ' + _sanitize(raw)); }
+            catch { GameAssist.log('Config', 'Invalid JSON: ' + _sanitize(raw), 'WARN'); }
         }
         return raw;
     }
     // --- Notes & Comments ---
     // CHOICE: Gracefully log bad JSON rather than throwing; keeps chat usable.
-    // Maintenance (v0.1.3, no semantic change): Added narrative about normalization while
-    //   keeping parsing behavior identical; version metadata aligned to 0.1.3 banner.
-    // Prior notes: Maintenance (v0.1.1.2, no semantic change): Added MECHSUITS v1.5.1 tracking metadata.
+    // Changed (v0.1.3): Use regex /^-?\d+(\.\d+)?$/ to validate numeric strings before Number() conversion.
+    //   Rationale: !isNaN('') returns true, causing Number('') === 0 footgun that silently mutates config.
+    //   Trade-offs: Slightly stricter (no hex/octal/scientific); prevents accidental zero assignment.
+    // CHOICE: Require non-empty numeric pattern — ALT: allow Number(''); REJECTED: silent mutation risk.
+    // Prior notes:
+    //   Maintenance (v0.1.3, no semantic change): Added narrative about normalization.
+    //   Maintenance (v0.1.1.2, no semantic change): Added MECHSUITS v1.5.1 tracking metadata.
     // [GAMEASSIST:CORE:STATE] END
     // =============================================================================
 
@@ -744,13 +769,32 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: GameAssist kernel object
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:OBJECT", title: "Kernel",
-    //   guarantees: ["Logging, error handling, register/enable/disable, listener mgmt"], last_updated_version: "v0.1.1.2" }
+    //   guarantees: ["Logging, error handling, register/enable/disable, listener mgmt"], last_updated_version: "v0.1.3" }
     // -------------------------------------------------------------------------
     // Narrative
     // CORE:OBJECT exposes the GameAssist singleton with metrics, logging, dependency
-    // checks, registration helpers, and safe enable/disable hooks. It mirrors the
-    // legacy interface while documenting invariants for modules.
+    // checks, registration helpers, and safe enable/disable hooks. Uses captured R20_ON
+    // internally to avoid globalThis override interop issues.
     // -------------------------------------------------------------------------
+    
+    /**
+     * commandMatches(content, prefix, opts)
+     *   Checks if content matches prefix using token-boundary matching by default.
+     *   Prevents collision like "!ga-config-ui" matching "!ga-config".
+     *   mode='token': prefix must be whole first token ("!cmd" or "!cmd <space>...")
+     *   mode='prefix': substring match (use sparingly)
+     */
+    function commandMatches(content, prefix, { caseInsensitive = false, mode = 'token' } = {}) {
+        const raw = (content || '').trim();
+        const pfx = caseInsensitive ? prefix.toLowerCase() : prefix;
+        const txt = caseInsensitive ? raw.toLowerCase() : raw;
+
+        if (mode === 'prefix') return txt.startsWith(pfx); // only when explicitly desired
+        // token mode: "!cmd" OR "!cmd <space>..."
+        if (txt === pfx) return true;
+        return txt.startsWith(pfx + ' ');
+    }
+
     const GameAssist = {
         _metrics: {
             commands: 0,
@@ -775,17 +819,10 @@ description, syntax/commands, and configuration pointers near the top of the scr
             const timestamp = new Date().toLocaleTimeString();
             const levelIcon = { INFO: 'ℹ️', WARN: '⚠️', ERROR: '❌' }[level] || 'ℹ️';
 
-            // escape user-supplied text, then split on newlines
-            const safe = _sanitize(msg).split('\n');
+            const safeLines = _sanitize(String(msg ?? '')).split('\n');
+            const body = safeLines.join('<br>');
 
-            // prepend /w gm to every continuation line so Roll20 treats
-            // the whole block as one whisper
-            const stitched = safe.map((l, i) => (i ? '/w gm ' + l : l)).join('\n');
-
-            sendChat(
-                'GameAssist',
-                `/w gm ${levelIcon} [${timestamp}] [${mod}] ${stitched}`
-            );
+            sendChat('GameAssist', `/w gm ${levelIcon} [${timestamp}] [${_sanitize(mod)}] ${body}`);
         },
 
         handleError(mod, err) {
@@ -820,10 +857,10 @@ description, syntax/commands, and configuration pointers near the top of the scr
             this._plannedChatPrefixes.push(...prefixes);
         },
 
-        onCommand(prefix, fn, mod, { gmOnly = false, acl = [] } = {}) {
+        onCommand(prefix, fn, mod, { gmOnly = false, acl = [], match = { caseInsensitive: true, mode: 'token' } } = {}) {
             const wrapped = msg => {
                 if (!MODULES[mod]?.initialized || !MODULES[mod]?.active) return;
-                if (msg.type !== 'api' || !msg.content.startsWith(prefix)) return;
+                if (msg.type !== 'api' || !commandMatches(msg.content, prefix, match)) return;
                 if (gmOnly && !playerIsGM(msg.playerid)) return;
                 if (acl.length && !acl.includes(msg.playerid)) return;
                 this._metrics.commands++;
@@ -832,7 +869,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 try { fn(msg); }
                 catch(e) { this.handleError(mod, e); }
             };
-            on('chat:message', wrapped);
+            R20_ON('chat:message', wrapped);
             this._commandHandlers[mod] = (this._commandHandlers[mod] || []).concat({ event:'chat:message', fn:wrapped });
         },
 
@@ -850,7 +887,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 try { fn(...args); }
                 catch(e) { this.handleError(mod, e); }
             };
-            on(evt, wrapped);
+            R20_ON(evt, wrapped);
             this._listeners[mod] = (this._listeners[mod] || []).concat({ event:evt, fn:wrapped });
         },
 
@@ -1042,9 +1079,18 @@ description, syntax/commands, and configuration pointers near the top of the scr
     globalThis.GameAssist = GameAssist;
     // --- Notes & Comments ---
     // CHOICE: Expose globally under same name for console and other scripts.
-    // Maintenance (v0.1.3, no semantic change): Added kernel narrative to document invariants;
-    //   kept interfaces unchanged while syncing version metadata.
-    // Prior notes: Maintenance (v0.1.1.2, no semantic change): Updated MECHSUITS metadata; behavior untouched.
+    // Changed (v0.1.3): Use captured R20_ON instead of global on/off to avoid interop issues.
+    //   Rationale: Overriding globalThis.on/off affects all scripts loaded after us; using captured
+    //   reference avoids order-dependent bugs while preserving our internal tracking.
+    // Changed (v0.1.3): Added commandMatches helper with token-boundary mode to prevent collision.
+    //   Rationale: startsWith(prefix) caused "!ga-config-ui" to match both "!ga-config" and "!ga-config-ui".
+    //   Trade-offs: Slightly more strict matching; prevents double-handling and usage noise.
+    // Changed (v0.1.3): log() uses <br> instead of /w gm stitching for multiline safety.
+    //   Rationale: Injecting /w gm mid-message can show as literal text or behave inconsistently.
+    // CHOICE: Token-boundary matching by default — ALT: prefix mode; REJECTED: collision risk.
+    // Prior notes:
+    //   Maintenance (v0.1.3, no semantic change): Added kernel narrative to document invariants.
+    //   Maintenance (v0.1.1.2, no semantic change): Updated MECHSUITS metadata.
     // [GAMEASSIST:CORE:OBJECT] END
     // =============================================================================
 
@@ -1069,43 +1115,6 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // handlers; this wrapper documents scope, ordering, and dependencies while
     // preserving runtime behavior.
     // -------------------------------------------------------------------------
-
-    // [GAMEASSIST:INTERFACES:EVENTS] BEGIN
-    // Section Title: Roll20 on/off wrappers and handler registry
-    // -------------------------------------------------------------------------
-    // mechsuit_section: { codename: "GAMEASSIST", area: "INTERFACES:EVENTS", title: "Handlers",
-    //   guarantees: ["Track listeners for safe enable/disable"], last_updated_version: "v0.1.1.2" }
-    // -------------------------------------------------------------------------
-    // Narrative
-    // INTERFACES:EVENTS wraps Roll20 on/off with a registry so modules can cleanly
-    // teardown listeners during disable/teardown. This preserves legacy handler
-    // behavior while exposing a predictable list for audits.
-    // -------------------------------------------------------------------------
-    globalThis._handlers = globalThis._handlers || {};
-    const originalOn  = typeof globalThis.on  === 'function' ? globalThis.on  : null;
-    const originalOff = typeof globalThis.off === 'function' ? globalThis.off : null;
-
-    globalThis.on = (event, handler) => {
-        globalThis._handlers[event] = globalThis._handlers[event] || [];
-        globalThis._handlers[event].push(handler);
-        if (typeof originalOn === 'function') {
-            return originalOn(event, handler);
-        }
-    };
-
-    globalThis.off = (event, handler) => {
-        if (!globalThis._handlers[event]) return;
-        globalThis._handlers[event] = globalThis._handlers[event].filter(h => h !== handler);
-        if (typeof originalOff === 'function') {
-            return originalOff(event, handler);
-        }
-    };
-    // --- Notes & Comments ---
-    // CHOICE: Wrap global on/off to keep a registry for teardown; avoids leaks.
-    // Maintenance (v0.1.3, no semantic change): Added narrative while preserving handler wrapping;
-    //   version metadata corrected to 0.1.3.
-    // Prior notes: Maintenance (v0.1.1.2, no semantic change): MECHSUITS metadata refreshed for v1.5.1.
-    // [GAMEASSIST:INTERFACES:EVENTS] END
 
     // [GAMEASSIST:INTERFACES:COMMANDS] BEGIN
     // Section Title: Admin/config commands (!ga-*)
@@ -1148,13 +1157,33 @@ description, syntax/commands, and configuration pointers near the top of the scr
             const mod = parts[2];
             const [ key, ...rest ] = parts.slice(3).join(' ').split('=');
             const val = rest.join('=');
+            const k = key.trim();
+
+            // Reject dangerous keys
+            const BAD_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
+            if (BAD_KEYS.has(k)) {
+                GameAssist.log('Config', `Refusing unsafe config key: ${k}`, 'WARN');
+                return;
+            }
+
             const parsed = parseConfigValue(val);
             if (!MODULES[mod] || MODULES[mod].internal) {
                 GameAssist.log('Config', `Unknown module: ${mod}`, 'WARN');
                 return;
             }
-            GameAssist.getState(mod).config[key.trim()] = parsed;
-            GameAssist.log('Config', `Set ${mod}.${key.trim()} = ${JSON.stringify(parsed)}`);
+
+            // Make cfg.enabled authoritative: changing it triggers enable/disable
+            if (k === 'enabled') {
+                if (typeof parsed !== 'boolean') {
+                    GameAssist.log('Config', 'enabled must be true/false', 'WARN');
+                    return;
+                }
+                parsed ? GameAssist.enableModule(mod) : GameAssist.disableModule(mod);
+                return;
+            }
+
+            GameAssist.getState(mod).config[k] = parsed;
+            GameAssist.log('Config', `Set ${mod}.${k} = ${JSON.stringify(parsed)}`);
         }
         else if (sub === 'get') {
             if (parts.length < 3) {
@@ -1198,18 +1227,19 @@ description, syntax/commands, and configuration pointers near the top of the scr
             GameAssist.log('Config', `Modules:\n${moduleList}`);
         }
         else if (sub === 'cleanup') {
-            const cfgRoot = ensureStateRoot();
-            const registeredModules = Object.keys(MODULES);
-            const configKeys = Object.keys(cfgRoot.config);
-            const orphaned = configKeys.filter(key => !registeredModules.includes(key));
-            
-            if (orphaned.length === 0) {
-                GameAssist.log('Config', 'No orphaned config entries found.');
-                return;
-            }
-            
-            orphaned.forEach(key => delete cfgRoot.config[key]);
-            GameAssist.log('Config', `Removed ${orphaned.length} orphaned config entries: ${orphaned.join(', ')}`);
+            const root = ensureStateRoot();
+            const whitelist = new Set(['config', 'flags', 'metrics']);
+            const known = new Set(Object.keys(MODULES));
+
+            const removed = [];
+            Object.keys(root).forEach(k => {
+                if (whitelist.has(k)) return;
+                if (!known.has(k)) { delete root[k]; removed.push(k); }
+            });
+
+            GameAssist.log('Config', removed.length
+                ? `Removed orphaned module state branches: ${removed.join(', ')}`
+                : 'No orphaned module state branches found.');
         }
         else {
             GameAssist.log('Config', 'Usage: !ga-config list|set|get|modules|cleanup [args]');
@@ -1337,10 +1367,14 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Maintenance (v0.1.3, no semantic change): Introduced INTERFACES wrapper to nest
-    //   events/commands under a parent section for MECHSUITS compliance while
-    //   preserving handler behavior and ordering.
-    // Prior notes: N/A (wrapper added for compliance).
+    // Changed (v0.1.3): Removed INTERFACES:EVENTS section that overrode globalThis.on/off.
+    //   Rationale: Overriding globalThis.on/off is highest-risk interop issue — any script loaded after
+    //   GameAssist would call our wrapper, creating order-dependent bugs. Roll20's soft-disable model
+    //   (wrapper returns early) doesn't require true handler detachment.
+    //   Trade-offs: Cannot track other scripts' handlers; acceptable (we only need our own tracking).
+    // CHOICE: Use captured R20_ON internally instead of modifying global — ALT: keep override; REJECTED: interop risk.
+    // Prior notes:
+    //   Maintenance (v0.1.3, no semantic change): Introduced INTERFACES wrapper for MECHSUITS compliance.
     // [GAMEASSIST:INTERFACES] END
     // =============================================================================
 
@@ -1548,7 +1582,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         const modState = GameAssist.getState('CritFumble');
         Object.assign(modState.config, {
             enabled:   true,
-            debug:     true,
+            debug:     false,
             useEmojis: true,
             rollDelayMs: 200,
             // Preserve any values previously saved in state
@@ -1633,10 +1667,15 @@ description, syntax/commands, and configuration pointers near the top of the scr
             return who.replace(/ \(GM\)$/, '');
         }
 
+        function whisperPrefix(who) {
+            const cleaned = sanitizeWho(String(who || ''));
+            if (cleaned.toLowerCase() === 'gm') return '/w gm ';
+            return `/w "${cleaned}" `;
+        }
+
         function sendTemplateMessage(who,title,fields) {
-            who = sanitizeWho(who);
             const content = fields.map(f=>`{{${f.label}=${f.value}}}`).join(' ');
-            sendChat('CritFumble', `/w "${who}" &{template:default} {{name=${title}}} ${content}`);
+            sendChat('CritFumble', `${whisperPrefix(who)}&{template:default} {{name=${title}}} ${content}`);
         }
 
         function getFumbleTableName(type) {
@@ -2056,14 +2095,16 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: ConcentrationTracker module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONCENTRATIONTRACKER", title: "ConcentrationTracker",
-    //   guarantees: ["Chat UI for concentration saves; TokenMod marker toggle"],
+    //   guarantees: ["Chat UI for concentration saves; exact marker matching; runtime-self-healing"],
     //   last_updated_version: "v0.1.3",
     //   independent_versions: { module_version: "0.1.0.5" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:CONCENTRATIONTRACKER manages concentration save rolls, whispering outcomes
-    // and toggling the configured TokenMod marker. It preserves legacy emote lines,
-    // command aliases, and defaults while documenting teardown behavior.
+    // and toggling the configured TokenMod marker. Marker matching uses exact-id normalization
+    // (ignoring @N suffixes) to prevent false positives. Teardown respects configured marker
+    // instead of hardcoding "Concentrating". Runtime-self-healing ensures lastDamage cache
+    // survives toggle operations with normalization of legacy number/string damage values.
     // -------------------------------------------------------------------------
     GameAssist.register('ConcentrationTracker', function() {
     // ─── Module Setup ──────────────────────────────────────────────────────────────
@@ -2072,10 +2113,31 @@ description, syntax/commands, and configuration pointers near the top of the scr
         enabled:   true,
         marker:    'Concentrating',
         randomize: true,
+        lastDamageMaxPlayers: 50,
         ...modState.config
     });
 
-    const LAST_DAMAGE_LIMIT = 50;
+    /**
+     * normalizeMarkerId(marker)
+     *   Normalizes marker ID by removing @N suffix and lowercasing.
+     *   "dead@2" → "dead", "Concentrating" → "concentrating"
+     */
+    function normalizeMarkerId(m) {
+        return String(m || '').toLowerCase().split('@')[0].trim();
+    }
+
+    /**
+     * tokenHasMarker(token, marker)
+     *   Checks if token has the given marker using exact-id matching.
+     */
+    function tokenHasMarker(token, marker) {
+        const want = normalizeMarkerId(marker);
+        const list = String(token.get('statusmarkers') || '')
+            .split(',')
+            .map(normalizeMarkerId)
+            .filter(Boolean);
+        return list.includes(want);
+    }
 
     function getEntryTimestamp(entry) {
         const ts = Number(entry && entry.timestamp);
