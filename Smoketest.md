@@ -1,0 +1,1371 @@
+# GameAssist Smoke Test
+
+Use this checklist after installing or updating GameAssist to confirm the Roll20 Mod/API is working as expected.
+
+The first section is a quick confidence pass for DMs. It prioritizes easy wins and should take about five minutes. The second section contains deeper tests for troubleshooting individual modules.
+
+> **Current target:** GameAssist v0.1.4.2
+
+Roll20 usually calls the person running the game the **GM**. This guide uses GM and DM interchangeably.
+
+Run commands one at a time unless a section explicitly says otherwise. Multi-line command blocks are checklists, not instructions to paste every line simultaneously.
+
+---
+
+## What Counts as a Pass?
+
+GameAssist is ready for normal use when:
+
+- the Roll20 API sandbox reloads without a red exception;
+- the core health commands respond;
+- the modules you intend to use report as running;
+- any required dependency is either confirmed or manually verified;
+- the quick feature tests for the modules you use pass.
+
+You do **not** need every optional module or integration enabled for GameAssist itself to pass.
+
+For example:
+
+- DebugTools is disabled by default. That is expected.
+- NPCManager and ConcentrationTracker require TokenMod for marker changes.
+- NPCHPRoller does not require TokenMod.
+- CritFumble table rolls require the seven named rollable tables, but its help command can be tested before those tables exist.
+
+### Traffic-Light Result
+
+| Result | Meaning |
+| --- | --- |
+| **Green** | Core health responds, no unexplained console error appears, and the modules you use pass their quick checks. |
+| **Yellow** | Core works, but an optional module is disabled, a dependency is unverifiable, or a test fixture is incomplete. Resolve before relying on that feature. |
+| **Red** | Core commands do not respond, the sandbox throws a GameAssist exception, or expected module behavior changes important tokens incorrectly. Stop and troubleshoot before the session. |
+
+---
+
+# Part One: Five-Minute DM Smoke Test
+
+## Before You Begin
+
+Use a test page or disposable tokens whenever possible.
+
+Recommended preparation:
+
+- Log in as the GM.
+- Open the Roll20 API Console in another tab.
+- Install and enable GameAssist.
+- Install TokenMod if you use NPCManager or ConcentrationTracker.
+- Have one linked NPC token available if you use NPC automation.
+- Have one linked player-character token available if you use ConcentrationTracker.
+
+> **Do not test destructive commands on important live-session tokens.**
+
+---
+
+## Step 1: Save and Reload
+
+After installing or updating GameAssist:
+
+1. Click **Save Script**.
+2. Wait for the API sandbox to restart.
+3. Check the API Console for red exceptions.
+4. Look for the GameAssist core-ready whisper.
+
+### Expected
+
+- The API Console does not show a new GameAssist syntax or reference error.
+- The core-ready whisper reports GameAssist v0.1.4.2.
+- You may not see one ready message for every module. `QUIET_STARTUP` suppresses module-specific ready messages by default.
+
+### Stop Here If
+
+- The API sandbox immediately crashes or restarts repeatedly.
+- The console shows `SyntaxError`, `ReferenceError`, or a GameAssist startup exception.
+- No GameAssist core-ready message appears and no GameAssist command responds.
+
+---
+
+## Step 2: Check Core Health
+
+Run:
+
+```roll20chat
+!ga-status
+```
+
+### Expected
+
+- A GM whisper headed `GameAssist 0.1.4.2 Status`.
+- `Errors: 0` on a clean install.
+- `Queue Length: 0` when idle.
+- A line stating that queue mode is explicit opt-in and normal event handlers execute directly.
+- Six total bundled modules.
+- Dependency warnings are either absent or clearly explained.
+
+### Acceptable Dependency Results
+
+| Result | Meaning | What To Do |
+| --- | --- | --- |
+| `confirmed` | GameAssist could confirm the dependency. | Continue. |
+| `unverifiable` | Roll20 did not expose enough metadata to confirm it. | Continue, then manually test one TokenMod marker action. |
+| `missing` | GameAssist could confirm the dependency is absent. | Install/enable TokenMod or leave the dependent module disabled. |
+
+> An `unverifiable` TokenMod warning is not automatically a failure. The marker tests below are the final proof.
+
+---
+
+## Step 3: Check Module Status
+
+Run:
+
+```roll20chat
+!ga-config modules
+```
+
+### Expected
+
+The response lists:
+
+- ConfigUI
+- CritFumble
+- NPCManager
+- ConcentrationTracker
+- NPCHPRoller
+- DebugTools
+
+Typical fresh-install posture:
+
+| Module | Expected Default |
+| --- | --- |
+| ConfigUI | Configured and running |
+| CritFumble | Configured and running |
+| NPCManager | Running when TokenMod is available or unverifiable; skipped if TokenMod is confirmed missing |
+| ConcentrationTracker | Running when TokenMod is available or unverifiable; skipped if TokenMod is confirmed missing |
+| NPCHPRoller | Configured and running |
+| DebugTools | Disabled |
+
+### If a Module Is Not Running
+
+Run:
+
+```roll20chat
+!ga-enable <ModuleName>
+```
+
+Then run `!ga-config modules` again and read the warning carefully.
+
+---
+
+## Step 4: Open the Config UI
+
+Run either:
+
+```roll20chat
+!ga-config ui
+```
+
+or:
+
+```roll20chat
+!ga-config-ui
+```
+
+### Expected
+
+- A GM-only GameAssist Config UI appears in chat.
+- Module cards show their enabled/inactive state.
+- Boolean options appear as buttons.
+- Pagination buttons appear when needed.
+
+### Easy Pass
+
+Open the UI, click **Refresh**, and confirm it redraws once.
+
+---
+
+## Step 5: Check Metrics
+
+Run:
+
+```roll20chat
+!ga-metrics
+```
+
+### Expected
+
+- A GameAssist Metrics whisper appears.
+- It includes session start, last update, totals, queue duration status, and recent activity.
+- It is acceptable for queue durations to say no tasks have been recorded yet.
+
+> Queue metrics describe explicit queued work and module transitions. They are not a timer for every Roll20 event.
+
+---
+
+## Step 6: Check CritFumble Help
+
+Run:
+
+```roll20chat
+!critfumble help
+```
+
+### Expected
+
+- A CritFumble help panel appears.
+- This test does not require the rollable tables.
+
+### Optional Table Test
+
+If the CritFumble tables are installed, run:
+
+```roll20chat
+!critfumble-melee
+```
+
+Expected: GameAssist announces and rolls `CF-Melee`.
+
+---
+
+## Step 7: Check Concentration Status
+
+If you use ConcentrationTracker, run:
+
+```roll20chat
+!concentration --status
+```
+
+### Expected
+
+You receive either:
+
+- a list of concentrating tokens; or
+- `No tokens concentrating.`
+
+If there is no response, check `!ga-config modules`. ConcentrationTracker may be disabled or skipped because TokenMod is confirmed missing.
+
+---
+
+## Step 8: Check NPC Reports
+
+If you use NPCManager, run:
+
+```roll20chat
+!npc-death-report
+!npc-death-audit
+```
+
+### Expected
+
+- Death report says no NPC deaths are recorded or lists recorded deaths.
+- Audit reports correct marker states or clearly lists mismatches/skipped unlinked tokens.
+
+---
+
+## Step 9: Check Selected NPC HP
+
+Select one disposable, linked NPC token and run:
+
+```roll20chat
+!npc-hp-selected
+```
+
+### Expected
+
+- The token’s bar 1 current and maximum values are set to the same rolled HP value.
+- GameAssist reports the NPC name, rolled HP, and formula.
+
+### Required NPC Setup
+
+The represented character must have:
+
+```text
+npc = 1
+npc_hpformula = NdM+K
+```
+
+Example:
+
+```text
+npc = 1
+npc_hpformula = 4d8+8
+```
+
+---
+
+## Quick Pass Summary
+
+Mark the tests that apply to your campaign:
+
+- [ ] API sandbox reloads without a GameAssist exception.
+- [ ] `!ga-status` responds and shows v0.1.4.2.
+- [ ] `!ga-config modules` lists all six bundled modules.
+- [ ] `!ga-config ui` opens the Config UI.
+- [ ] `!ga-metrics` responds.
+- [ ] `!critfumble help` responds.
+- [ ] `!concentration --status` responds, if ConcentrationTracker is used.
+- [ ] `!npc-death-report` and `!npc-death-audit` respond, if NPCManager is used.
+- [ ] `!npc-hp-selected` rolls a disposable linked NPC, if NPCHPRoller is used.
+
+If the applicable boxes pass, GameAssist has passed the quick DM smoke test.
+
+---
+
+# Part Two: In-Depth Troubleshooting Tests
+
+These tests are intended for diagnosing a problem, validating an upgrade, or checking each module before a live session.
+
+Use a disposable Roll20 test game or test page whenever possible.
+
+> When testing `!ga-enable` or `!ga-disable`, run one command at a time and wait for the Enabled/Disabled whisper before continuing. Module lifecycle changes use the internal queue.
+
+---
+
+## Build a Safe Test Page
+
+Create these disposable test objects before running the deeper suite.
+
+### Test PC
+
+Create a character named `GA Test PC` with:
+
+```text
+constitution_save_bonus = 3
+```
+
+Add a token that:
+
+- represents `GA Test PC`;
+- is on the Objects layer;
+- has a visible name;
+- has a positive bar 1 HP value.
+
+### Test NPC
+
+Create a character named `GA Test NPC` with:
+
+```text
+npc = 1
+npc_hpformula = 4d8+8
+```
+
+Add a token that:
+
+- represents `GA Test NPC`;
+- is on the Objects layer;
+- uses bar 1 for HP;
+- has a visible name.
+
+### Unlinked Test Token
+
+Add one unlinked token on the Objects layer. This is useful for confirming that GameAssist skips invalid tokens without damaging them.
+
+### CritFumble Tables
+
+Create these exact rollable-table names if testing CritFumble table execution:
+
+```text
+CF-Melee
+CF-Ranged
+CF-Thrown
+CF-Spell
+CF-Natural
+Confirm-Crit-Martial
+Confirm-Crit-Magic
+```
+
+Each table needs at least one entry for a meaningful test.
+
+---
+
+## A. Core Health and Diagnostics
+
+### A1. Status Baseline
+
+Run:
+
+```roll20chat
+!ga-status
+```
+
+Check:
+
+- [ ] Version is `0.1.4.2`.
+- [ ] Errors are zero or understood.
+- [ ] Queue length returns to zero while idle.
+- [ ] Six modules are counted.
+- [ ] Running/configured/skipped counts make sense.
+- [ ] Dependency warnings match your installed Mods.
+
+### A2. Module Detail
+
+Run:
+
+```roll20chat
+!ga-config modules
+```
+
+Check every module’s:
+
+- configured state;
+- runtime state;
+- dependency status.
+
+If a module is configured but not running, try:
+
+```roll20chat
+!ga-enable <ModuleName>
+```
+
+The resulting warning usually explains the problem.
+
+### A3. Metrics Baseline
+
+Run:
+
+```roll20chat
+!ga-metrics
+```
+
+Then run a few GameAssist commands and check metrics again:
+
+```roll20chat
+!ga-status
+!ga-config modules
+!ga-metrics
+```
+
+Expected:
+
+- command totals increase;
+- recent activity updates;
+- no unexplained error spike appears.
+
+### A4. Metrics Reset
+
+Only reset metrics when you no longer need the current diagnostic history:
+
+```roll20chat
+!ga-metrics reset
+```
+
+Expected:
+
+- GameAssist confirms the reset.
+- Session counters restart.
+
+---
+
+## B. Configuration and Snapshot Tests
+
+### B1. Read a Configuration Value
+
+Run:
+
+```roll20chat
+!ga-config get CritFumble debug
+```
+
+Expected default:
+
+```text
+false
+```
+
+### B2. Safe Configuration Round Trip
+
+Run:
+
+```roll20chat
+!ga-config set CritFumble debug=true
+!ga-config get CritFumble debug
+!ga-config set CritFumble debug=false
+!ga-config get CritFumble debug
+```
+
+Expected:
+
+- Value changes to `true`.
+- Value changes back to `false`.
+
+### B3. Unsafe-Key Refusal
+
+Run:
+
+```roll20chat
+!ga-config set CritFumble __proto__=bad
+```
+
+Expected:
+
+- GameAssist refuses the unsafe key.
+- CritFumble remains operational.
+
+### B4. Configuration Snapshot
+
+Run:
+
+```roll20chat
+!ga-config list
+```
+
+Open the `GameAssist Config` handout.
+
+Check:
+
+- [ ] `format` is `gameassist-config-snapshot`.
+- [ ] `schemaVersion` is `1`.
+- [ ] `scope` is `configuration-only`.
+- [ ] `version` is `0.1.4.2`.
+- [ ] All six module configuration objects are present.
+- [ ] Runtime caches and metrics are not included.
+
+> This handout is a configuration snapshot, not a full-state backup, and v0.1.4.2 cannot import it.
+
+### B5. Config UI Controls
+
+Run:
+
+```roll20chat
+!ga-config ui
+```
+
+Check:
+
+- module cards render;
+- boolean buttons work;
+- page navigation works;
+- Refresh redraws once;
+- `!ga-config-ui` opens the same UI.
+
+---
+
+## C. Module Lifecycle Tests
+
+### C1. Safe Lifecycle Test with ConfigUI
+
+ConfigUI is the safest module for a basic disable/enable test.
+
+Run each line separately and wait for the preceding response:
+
+```roll20chat
+!ga-disable ConfigUI
+!ga-config modules
+!ga-enable ConfigUI
+!ga-config modules
+!ga-config ui
+```
+
+Expected:
+
+- ConfigUI changes to disabled/inactive.
+- Core commands continue working.
+- ConfigUI returns to configured/running after enable.
+- The UI opens after re-enable.
+
+### C2. No Double Trigger
+
+Run each command once:
+
+```roll20chat
+!ga-config ui
+!ga-config-ui
+```
+
+Expected:
+
+- Each command produces one Config UI response.
+- Repeated enable/disable cycles do not produce duplicate responses.
+
+### C3. Marker-Module Lifecycle Warning
+
+Disabling NPCManager or ConcentrationTracker runs teardown and may clear that module’s configured marker from current-page tokens.
+
+Only test this on a disposable page:
+
+```roll20chat
+!ga-disable NPCManager
+!ga-enable NPCManager
+!ga-disable ConcentrationTracker
+!ga-enable ConcentrationTracker
+```
+
+Expected:
+
+- No exception.
+- The module returns to running after enable.
+- Teardown clears only the configured marker, not similarly named unrelated markers.
+
+---
+
+## D. TokenMod Dependency and Marker Tests
+
+NPCManager and ConcentrationTracker depend on TokenMod for automated marker changes.
+
+### D1. Dependency Report
+
+Run:
+
+```roll20chat
+!ga-config modules
+```
+
+Interpret TokenMod-dependent module results:
+
+| Result | Test Outcome |
+| --- | --- |
+| `confirmed` | Dependency check passed. Continue to marker tests. |
+| `unverifiable` | Manually run marker tests. Passing marker tests confirm the practical integration. |
+| `missing` | Install/enable TokenMod before testing marker automation. |
+
+### D2. Manual TokenMod Sanity Check
+
+Before blaming GameAssist, verify TokenMod itself can change a disposable token marker.
+
+Select a disposable token and run:
+
+```roll20chat
+!token-mod --ids @{selected|token_id} --set statusmarkers|+blue
+!token-mod --ids @{selected|token_id} --set statusmarkers|-blue
+```
+
+Expected: the blue marker appears, then clears.
+
+If TokenMod cannot change the marker directly, resolve TokenMod before troubleshooting GameAssist marker modules.
+
+---
+
+## E. CritFumble Tests
+
+### E1. Help Command
+
+Run:
+
+```roll20chat
+!critfumble help
+```
+
+Expected: CritFumble help appears.
+
+### E2. Manual GM Menu
+
+Run:
+
+```roll20chat
+!critfail
+```
+
+Expected:
+
+- A GM-facing player-selection menu appears.
+- The menu includes recently active chat participants, commonly including the GM who ran the command.
+
+### E3. Direct Table Commands
+
+Run:
+
+```roll20chat
+!critfumble-melee
+!critfumble-ranged
+!critfumble-thrown
+!critfumble-spell
+!critfumble-natural
+!confirm-crit-martial
+!confirm-crit-magic
+```
+
+Expected:
+
+- Each command announces and rolls the matching table.
+- Missing or misspelled tables fail at the Roll20 table layer.
+
+### E4. Natural-1 Detection
+
+Roll a real attack that uses a supported roll template and produces a natural 1.
+
+Supported templates include:
+
+```text
+atk
+atkdmg
+npcatk
+npcfullatk
+npcaction
+spell
+simple
+dmg
+default
+```
+
+Expected:
+
+- CritFumble detects the natural 1.
+- The player and GM receive the fumble/confirmation workflow.
+
+### If CritFumble Fails
+
+Check:
+
+- [ ] CritFumble is running in `!ga-config modules`.
+- [ ] Exact rollable-table names exist.
+- [ ] The roll uses a supported template.
+- [ ] The attack contains a d20 inline roll.
+- [ ] `!critfumble help` still responds.
+
+---
+
+## F. ConcentrationTracker Tests
+
+Use the linked `GA Test PC` token and ensure TokenMod is available or manually verified.
+
+### F1. Button Menu
+
+Run:
+
+```roll20chat
+!concentration
+```
+
+Expected:
+
+- Three concentration-mode buttons appear.
+- A reminder says to select a token.
+
+### F2. Normal Check
+
+Select the linked test PC token and run:
+
+```roll20chat
+!concentration --damage 12 --mode normal
+```
+
+Expected:
+
+- DC is 10.
+- The roll uses the character’s `constitution_save_bonus`.
+- Player and GM receive the result.
+- Success applies the configured marker.
+- Failure removes the configured marker.
+
+### F3. Advantage and Disadvantage
+
+Run with the test PC selected:
+
+```roll20chat
+!concentration --damage 20 --mode adv
+!concentration --damage 20 --mode dis
+```
+
+Expected:
+
+- DC is 10.
+- Advantage uses the higher d20.
+- Disadvantage uses the lower d20.
+
+### F4. Repeat Last Check
+
+Keep the test PC selected and run:
+
+```roll20chat
+!concentration --last
+```
+
+Expected: The last recorded damage and mode are reused.
+
+### F5. Status and GM Status
+
+Run:
+
+```roll20chat
+!concentration --status
+!ga-conc-status
+```
+
+Expected:
+
+- `--status` lists tokens with the configured concentration marker or reports none.
+- `!ga-conc-status` summarizes recent recorded concentration activity.
+
+### F6. Clear Marker
+
+Select the linked test PC token and run:
+
+```roll20chat
+!concentration --off
+```
+
+Expected:
+
+- The configured concentration marker is removed.
+- A confirmation whisper appears.
+
+### F7. Invalid Token Test
+
+Select the unlinked test token and run:
+
+```roll20chat
+!concentration --damage 12 --mode normal
+```
+
+Expected: GameAssist explains that the token must be linked to a character on the Objects layer.
+
+---
+
+## G. NPCManager Tests
+
+Use the linked `GA Test NPC` token and ensure TokenMod is available or manually verified.
+
+Keep `NPCManager.autoHide` set to `false` during these tests. If auto-hide is enabled, a newly dead token moves off the Objects layer and must be returned before continuing the revival test.
+
+### G1. Death Marker
+
+Set the test NPC’s bar 1 HP to:
+
+```text
+0
+```
+
+Expected:
+
+- The configured death marker appears.
+- GameAssist records and reports the death.
+
+### G2. Revival
+
+Set the same token’s bar 1 HP to:
+
+```text
+1
+```
+
+Expected:
+
+- The configured death marker clears.
+- GameAssist reports the revival.
+
+### G3. Death Report
+
+Run:
+
+```roll20chat
+!npc-death-report
+```
+
+Expected: The report lists recorded death events or reports that none exist.
+
+### G4. Death Audit
+
+Create a deliberate mismatch on the disposable token without changing HP again:
+
+- set HP below 1, let NPCManager add the marker, then manually remove that marker; or
+- set HP above 0, let NPCManager clear the marker, then manually add that marker.
+
+Then run:
+
+```roll20chat
+!npc-death-audit
+```
+
+Expected: The mismatched NPC is listed with its HP and marker state.
+
+Restore the token to a correct state afterward.
+
+### G5. Clear Death Log
+
+Run:
+
+```roll20chat
+!npc-death-clear
+!npc-death-report
+```
+
+Expected:
+
+- GameAssist reports how many entries were cleared.
+- The next report says no deaths are recorded.
+
+### G6. Auto-Hide Warning
+
+Check before testing death events:
+
+```roll20chat
+!ga-config get NPCManager autoHide
+!ga-config get NPCManager hideLayer
+```
+
+Default:
+
+```text
+autoHide = false
+hideLayer = "gmlayer"
+```
+
+If `autoHide` is true, newly dead NPC tokens move to the configured layer. That behavior is intentional.
+
+---
+
+## H. NPCHPRoller Tests
+
+NPCHPRoller does not require TokenMod.
+
+### H1. Selected Linked NPC
+
+Select `GA Test NPC` and run:
+
+```roll20chat
+!npc-hp-selected
+```
+
+Expected:
+
+- Bar 1 current and maximum become the same rolled value.
+- The result follows `npc_hpformula`.
+
+### H2. Mixed Selection
+
+Select:
+
+- the linked test NPC;
+- the linked test PC;
+- the unlinked test token.
+
+Run:
+
+```roll20chat
+!npc-hp-selected
+```
+
+Expected:
+
+- The NPC receives rolled HP.
+- PC/unlinked tokens are skipped or warned about.
+- Skipped tokens are not modified.
+
+### H3. Current-Page Roll
+
+On the disposable test page, run:
+
+```roll20chat
+!npc-hp-all
+```
+
+Expected:
+
+- Qualifying linked NPC tokens receive rolled HP.
+- Unlinked tokens are listed as skipped.
+- Player-character tokens are not rolled as NPCs.
+
+### H4. Invalid Formula
+
+Temporarily set the test NPC’s `npc_hpformula` to an invalid value, then run:
+
+```roll20chat
+!npc-hp-selected
+```
+
+Expected: GameAssist reports the invalid HP formula and does not apply a bad roll.
+
+Restore the formula afterward.
+
+### H5. Auto-Roll on Add
+
+This feature is opt-in and defaults to false.
+
+Check:
+
+```roll20chat
+!ga-config get NPCHPRoller autoRollOnAdd
+```
+
+To test on a disposable game:
+
+```roll20chat
+!ga-config set NPCHPRoller autoRollOnAdd=true
+```
+
+Add a qualifying linked NPC token.
+
+Expected:
+
+- HP is rolled automatically.
+- The log identifies the action as auto-roll on add.
+- Invalid/non-NPC tokens are skipped quietly.
+
+Restore the default after testing:
+
+```roll20chat
+!ga-config set NPCHPRoller autoRollOnAdd=false
+```
+
+---
+
+## I. DebugTools Tests
+
+DebugTools is disabled by default and should be tested only with disposable tokens.
+
+### I1. Enable and Show Help
+
+Run `!ga-enable DebugTools`, wait for the Enabled whisper, then run `!ga-debug`:
+
+```roll20chat
+!ga-enable DebugTools
+!ga-debug
+```
+
+Expected:
+
+- DebugTools becomes running.
+- Help text appears.
+
+### I2. Damage Dry Run
+
+Select a disposable token with bar 1 HP and run:
+
+```roll20chat
+!ga-debug damage --amount 2
+```
+
+Expected:
+
+- GameAssist describes what it would do.
+- Token HP does not change.
+
+### I3. Damage Apply
+
+With the same token selected, run:
+
+```roll20chat
+!ga-debug damage --amount 2 --apply
+```
+
+Expected:
+
+- Token HP decreases by 2, not below zero.
+- GameAssist confirms the applied action.
+
+### I4. Marker Dry Run and Apply
+
+With a disposable token selected:
+
+```roll20chat
+!ga-debug marker --marker blue --state toggle
+!ga-debug marker --marker blue --state toggle --apply
+```
+
+Expected:
+
+- First command previews the change only.
+- Second command changes the marker.
+
+### I5. Save Dry Run and Apply
+
+Run:
+
+```roll20chat
+!ga-debug save --dc 12 --bonus 3 --mode adv --label "Smoke Test"
+!ga-debug save --dc 12 --bonus 3 --mode adv --label "Smoke Test" --apply
+```
+
+Expected:
+
+- First command previews the roll.
+- Second command performs the roll and whispers the result to the GM.
+
+### I6. Disable DebugTools
+
+Run:
+
+```roll20chat
+!ga-disable DebugTools
+!ga-config modules
+```
+
+Expected: DebugTools returns to disabled/inactive.
+
+> To use the selected token, omit `--token`. Do not use literal `--token select`.
+
+---
+
+## J. Permissions and Command-Routing Tests
+
+### J1. GM-Only Commands
+
+From a non-GM player account, try:
+
+```roll20chat
+!ga-status
+!ga-config modules
+!npc-hp-all
+!npc-death-audit
+```
+
+Expected: GM-only commands do not execute for the player.
+
+### J2. Command Boundaries
+
+Run:
+
+```roll20chat
+!ga-status-extra
+```
+
+Expected: It should not trigger `!ga-status`.
+
+This confirms token-boundary matching prevents neighboring command names from triggering accidentally.
+
+### J3. Duplicate Script Check
+
+If commands respond twice:
+
+1. Open the Roll20 Mod/API Scripts page.
+2. Look for more than one active copy of GameAssist or a standalone copy of an integrated module.
+3. Keep only the intended GameAssist installation.
+4. Save/reload and test again.
+
+Do not run standalone versions of CritFumble, Concentration, NPC Death Tracker, or NPC HP Roller alongside their integrated GameAssist modules.
+
+---
+
+## K. State and Recovery Tests
+
+### K1. Safe State Review
+
+Run:
+
+```roll20chat
+!ga-status
+!ga-metrics
+!ga-config list
+```
+
+Check for:
+
+- state repairs;
+- unknown-branch warnings;
+- unexpected error increases.
+
+### K2. Unknown-Branch Cleanup Warning
+
+Do **not** run this command merely to see whether it works:
+
+```roll20chat
+!ga-config cleanup
+```
+
+It explicitly deletes unknown/orphaned `state.GameAssist` branches.
+
+Use it only after reviewing the branch names and confirming they are unwanted.
+
+### K3. State Self-Healing Test
+
+Only perform this in a disposable Roll20 test game and only if you are comfortable inspecting/editing API state.
+
+1. Back up the existing state.
+2. Corrupt only a known module’s `runtime` container.
+3. Reload the API sandbox.
+4. Run:
+
+   ```roll20chat
+   !ga-metrics
+   !ga-config modules
+   ```
+
+Expected:
+
+- GameAssist reports/records a state repair.
+- Valid module configuration is preserved.
+- The known module receives a usable runtime object.
+
+Never intentionally corrupt a production campaign’s state for a smoke test.
+
+---
+
+# Troubleshooting by Symptom
+
+## Nothing Responds
+
+Check in this order:
+
+1. Did the API sandbox reload?
+2. Is there a red syntax/reference error in the API Console?
+3. Is GameAssist enabled in the Mod/API Scripts page?
+4. Are multiple broken/duplicate GameAssist copies installed?
+5. Does the core-ready whisper appear?
+
+Start with:
+
+```roll20chat
+!ga-status
+```
+
+If that does not respond, solve the core/sandbox problem before testing modules.
+
+---
+
+## Core Works, but One Module Is Silent
+
+Run:
+
+```roll20chat
+!ga-config modules
+!ga-config get <ModuleName>
+```
+
+Then check:
+
+- configured enabled state;
+- runtime active state;
+- dependency result;
+- exact command spelling;
+- whether the test token/character meets module requirements.
+
+Try:
+
+```roll20chat
+!ga-enable <ModuleName>
+```
+
+Read the resulting warning.
+
+---
+
+## Marker Automation Does Not Work
+
+Check:
+
+1. TokenMod is installed and can change a marker directly.
+2. Dependency status is not confirmed missing.
+3. The token is on the Objects layer.
+4. The token represents a valid character.
+5. NPCManager tokens have `npc=1`.
+6. The configured marker name is correct.
+
+Inspect:
+
+```roll20chat
+!ga-config get NPCManager deadMarker
+!ga-config get ConcentrationTracker marker
+!npc-death-audit
+!concentration --status
+```
+
+---
+
+## NPC HP Does Not Roll
+
+Check:
+
+1. Token is selected or on the current player page.
+2. Token is on the Objects layer.
+3. Token represents a character.
+4. Character has `npc=1`.
+5. Character has a valid `npc_hpformula`.
+
+Valid examples:
+
+```text
+4d8
+4d8+8
+4d8 - 2
+```
+
+NPCHPRoller does not require TokenMod.
+
+---
+
+## CritFumble Does Not Roll a Table
+
+Check:
+
+1. `!critfumble help` responds.
+2. The exact required table exists.
+3. The table has at least one entry.
+4. The direct command works.
+5. For automatic detection, the attack uses a supported roll template and contains a d20 natural 1.
+
+---
+
+## Commands Respond Twice
+
+Most likely causes:
+
+- two active GameAssist copies;
+- a standalone module plus its integrated GameAssist module;
+- repeated script installation under different names.
+
+Disable duplicates, save/reload, and retest.
+
+---
+
+## Dependency Shows `unverifiable`
+
+This means Roll20 did not expose enough metadata. It does not necessarily mean the dependency is missing.
+
+For TokenMod:
+
+1. Confirm TokenMod appears in the Mod Library/API Scripts list.
+2. Test a TokenMod marker action directly.
+3. Test one NPCManager or ConcentrationTracker marker workflow.
+
+If the manual integration works, the dependency is practically available despite the unverifiable diagnostic.
+
+---
+
+## Queue Length or Errors Increase
+
+Run:
+
+```roll20chat
+!ga-status
+!ga-metrics
+!ga-config modules
+```
+
+Remember:
+
+- queue length describes explicit queued work and lifecycle transitions;
+- normal handlers execute directly;
+- a timeout can release the queue but cannot cancel underlying Roll20 work.
+
+Record recent activity and API Console errors before resetting metrics.
+
+---
+
+# Evidence Checklist for Bug Reports
+
+When a test fails, record:
+
+- [ ] Exact GameAssist version.
+- [ ] Exact command or action that failed.
+- [ ] Expected result.
+- [ ] Actual result.
+- [ ] `!ga-status` output.
+- [ ] `!ga-config modules` output.
+- [ ] Relevant module config from `!ga-config get <ModuleName>`.
+- [ ] Exact API Console error text.
+- [ ] Whether TokenMod is confirmed, missing, or unverifiable.
+- [ ] Whether the token is linked and on the Objects layer.
+- [ ] Relevant character attributes.
+- [ ] Whether the problem occurs in a disposable test game.
+- [ ] Whether duplicate GameAssist/standalone module scripts are installed.
+
+That evidence usually identifies the failure much faster than a general “it stopped working” report.
+
+---
+
+# Recommended Final Pre-Session Check
+
+Immediately before a live session, run:
+
+```roll20chat
+!ga-status
+!ga-config modules
+!ga-metrics
+```
+
+Then perform the smallest real test for the modules the session will use:
+
+- CritFumble: `!critfumble help`
+- ConcentrationTracker: `!concentration --status`
+- NPCManager: `!npc-death-audit`
+- NPCHPRoller: `!npc-hp-selected` on a disposable NPC
+- ConfigUI: `!ga-config ui`
+
+If those checks pass and the API Console is clean, GameAssist is ready for the session.
