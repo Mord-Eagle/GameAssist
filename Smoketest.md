@@ -63,15 +63,41 @@ Run:
 !ga-status
 ```
 
-### Expected
+### Typical Healthy Default Result
 
-- A GM whisper headed `GameAssist 0.1.4.2 Status`.
-- `Errors: 0` during a clean sandbox session with no GameAssist configuration or runtime errors.
-- `Queue Length: 0` when idle.
-- Six total bundled modules.
-- Five configured and running modules when using the defaults; DebugTools is disabled by default.
+Your numbers and timestamp will vary. A healthy default response commonly has this shape:
 
-`Errors` counts problems recorded during the current sandbox session. Roll20 restarts the sandbox often, so this is not an installation-history counter. A nonzero value means GameAssist recorded a problem during this session and should be investigated before relying on the affected feature.
+```text
+(From GameAssist): ℹ️ [3:12:19 AM] [Status] GameAssist 0.1.4.2 Status
+Commands: 1
+Messages: 10
+Errors: 0
+Avg Task Duration: N/Ams
+Queue Length: 0
+Queue Mode: explicit opt-in; normal event handlers execute directly
+Last Update: 2026-06-10T03:12:19.265Z
+Modules: 6 total | 5 configured | 5 running | 0 dependency-skipped
+Active Listeners: 4
+Dependency Warnings: NPCManager: unverifiable (TokenMod) | ConcentrationTracker: unverifiable (TokenMod)
+```
+
+### How to Read It
+
+| Line | What It Means | Healthy Result |
+| --- | --- | --- |
+| `GameAssist 0.1.4.2 Status` | Confirms the running GameAssist version. | Shows the version you installed. |
+| `Commands` | Commands recorded through GameAssist's core command handler during this sandbox session. Running `!ga-status` counts as one. | Any reasonable number; it increases as commands are used. |
+| `Messages` | Roll20 events handled by running GameAssist modules during this sandbox session. | Any reasonable number; it varies with sandbox activity. |
+| `Errors` | Problems GameAssist recorded during this sandbox session. | Normally `0`. Investigate any nonzero value. |
+| `Avg Task Duration: N/Ams` | No explicit queued task has supplied a measurable duration yet. The `N/Ams` wording is awkward but expected in v0.1.4.2. | `N/Ams` is healthy before queued work is measured; a numeric duration is also valid. |
+| `Queue Length` | Explicit queued jobs currently waiting. | `0` while idle. A temporary nonzero value may occur during module changes. |
+| `Queue Mode` | Reminder that ordinary commands/events run directly and only selected work uses the queue. | Informational; the shown sentence is expected. |
+| `Last Update` | Most recent GameAssist activity time, shown in UTC. | A recent timestamp; it changes whenever activity is recorded. |
+| `Modules` | Total, configured, running, and dependency-skipped module counts. | Defaults normally show `6 total | 5 configured | 5 running | 0 dependency-skipped`. |
+| `Active Listeners` | Internal count of event listeners GameAssist has registered. | Defaults commonly show `4`; treat this as diagnostic information, not a standalone pass/fail test. |
+| `Dependency Warnings` | Dependencies GameAssist could not confirm or believes are missing. | TokenMod may appear as `unverifiable`; interpret it as explained below. |
+
+`Errors` describes the current sandbox session. Roll20 restarts the sandbox often, so it is not an installation-history counter. A nonzero value means GameAssist recorded a problem during this session and should be investigated before relying on the affected feature.
 
 ### Reading the Dependency-Warnings Line
 
@@ -276,7 +302,7 @@ npc_hpformula = 4d8+8
 Mark the tests that apply to your campaign:
 
 - [ ] API sandbox reloads without a GameAssist exception.
-- [ ] `!ga-status` responds and shows v0.1.4.2.
+- [ ] `!ga-status` responds with the healthy output shape above; variable counters do not need to match the example exactly.
 - [ ] `!ga-config modules` lists the expected default module states.
 - [ ] `!ga-config ui` opens the Config UI.
 - [ ] `!critfumble help` responds.
@@ -365,6 +391,8 @@ Run:
 !ga-status
 ```
 
+Compare the result to the annotated healthy output in Part One.
+
 Check:
 
 - [ ] Version is `0.1.4.2`.
@@ -373,6 +401,9 @@ Check:
 - [ ] Six modules are counted.
 - [ ] Default posture is normally five configured, five running, and zero dependency-skipped.
 - [ ] Any dependency warning is interpreted as `unverifiable` or `missing`, rather than treated as a generic failure.
+- [ ] Variable values such as Commands, Messages, Last Update, and Active Listeners are not being compared as exact fixed numbers.
+
+`Avg Task Duration: N/Ams` is currently expected when no queued task duration has been recorded. It is a v0.1.4.2 display quirk, not an error.
 
 Remember that Roll20 restarts the API sandbox often. `Errors` describes problems recorded in the current sandbox session, not the lifetime of the campaign or installation.
 
