@@ -41,8 +41,8 @@ This release does not add MarkerService, embed TokenMod, or change the v0.1.4.x 
 
 | Artifact | Purpose | SHA-256 |
 | --- | --- | --- |
-| `GameAssist-v0.1.4.3` | Versioned release script | `67618B0CA20E1724FF068567BF84BBCA51E7F5FB2FA7669B8F3E5E1E130A943F` |
-| `GameAssist` | Current repository script; identical to v0.1.4.3 | `67618B0CA20E1724FF068567BF84BBCA51E7F5FB2FA7669B8F3E5E1E130A943F` |
+| `GameAssist-v0.1.4.3` | Versioned release script | `5BFE955BAEB9F6D09F498DC1A6C45338FB7B3E050EAB7FA0BEC5718445E1D272` |
+| `GameAssist` | Current repository script; identical to v0.1.4.3 | `5BFE955BAEB9F6D09F498DC1A6C45338FB7B3E050EAB7FA0BEC5718445E1D272` |
 | `GameAssist-v0.1.4.2` | Previous complete script | `038B07B292E09981BD56564D83F5900353BDC1BDA0D39FDD4CB63A1DBE80CAC4` |
 
 ### Root cause
@@ -86,6 +86,7 @@ This release does not add MarkerService, embed TokenMod, or change the v0.1.4.x 
   - `[GAMEASSIST:CORE]`
   - `[GAMEASSIST:MODULES]`
   - `[GAMEASSIST:MODULES:CONCENTRATIONTRACKER]`
+- Recorded maintenance-only commentary updates in `[GAMEASSIST:POLICY]`, `[GAMEASSIST:INTERFACES:COMMANDS]`, and `[GAMEASSIST:MODULES:CRITFUMBLE]` without changing their `last_updated_version`.
 - Preserved literal codename `GAMEASSIST`, all section tags, and prior notes.
 - Verified paired tags, proper nesting, and canonical-tree agreement after the change.
 

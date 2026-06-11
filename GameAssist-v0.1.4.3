@@ -169,7 +169,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Narrative
     // POLICY owns shared timeouts, cache limits, UI defaults, snapshot identifiers,
     // and declared metric names.
-    // Values preserve the uploaded v0.1.4 behavior; callers reference POLICY so future
+    // Values preserve v0.1.4 behavior; callers reference POLICY so future
     // changes have one explicit review and rollback point.
     // -------------------------------------------------------------------------
     const POLICY = Object.freeze({
@@ -207,6 +207,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // Changed (v0.1.4.2): Added stable configuration-snapshot format and schema identifiers.
+    // Maintenance (v0.1.4.3, no semantic change): Removed internal development-provenance wording from the narrative.
     // Decision log:
     //   CHOICE: Version configuration-only exports before import exists; safe import validation remains deferred.
     //   CHOICE: Freeze shallow policy groups to prevent accidental runtime mutation — ALT: mutable config; REJECTED: hidden drift.
@@ -1479,7 +1480,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: Admin/config commands (!ga-*)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "INTERFACES:COMMANDS", title: "Commands",
-    //   guarantees: ["GM-gated admin commands; unsafe config keys refused; versioned config-only export; truthful health reporting"],
+    //   guarantees: ["GM-gated admin commands; unsafe config keys refused; versioned config-only export; configured/running/dependency-skipped health reporting"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:CORE:STATE]","[GAMEASSIST:CORE:OBJECT]"],
     //   last_updated_version: "v0.1.4.2", lifecycle: "active" }
     // -------------------------------------------------------------------------
@@ -1762,6 +1763,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // --- Notes & Comments ---
     // CHOICE: Keep command syntax identical to legacy for drop‑in replacement.
     // Changed (v0.1.4.2): Added versioned configuration-only snapshots plus module/dependency health reporting.
+    // Maintenance (v0.1.4.3, no semantic change): Replaced an editorial guarantee label with the specific health states reported.
     // CHOICE: Report dependency certainty instead of treating unavailable Roll20 script metadata as absence.
     // Decision log:
     //   CHOICE: export flags/global/module config in one snapshot — ALT: module-only export; REJECTED: incomplete recovery data.
@@ -1999,7 +2001,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         const ACTIVE_PLAYER_LIMIT = POLICY.runtime.activePlayerLimit;
 
         // ─── Constants ─────────────────────────────────────────────────────────────────
-        /** Which Roll20 rolltemplates we watch for natural-1s */
+        /** Roll20 rolltemplates monitored for natural-1s */
         const VALID_TEMPLATES = ['atk','atkdmg','npcatk','npcfullatk','npcaction','spell','simple','dmg','default'];
         const FUMBLE_TABLES = {
             melee:   'CF-Melee',
@@ -2287,6 +2289,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // Bugfix retained: robust natural‑1 detection across templates/inlineroll variants.
+    // Maintenance (v0.1.4.3, no semantic change): Reworded an internal comment for collaborator clarity.
     // Maintenance (v0.1.4.1, no semantic change): Routed unchanged defaults through POLICY and timestamps through now().
     // Prior notes:
     //   Changed (v0.1.4): Default debug off, corrected GM whisper handling, and made manual buttons target player ids.
