@@ -3,7 +3,7 @@
 **Version 0.1.4.3** | © 2025 Mord Eagle · MIT License<br>
 **Lead Dev:** [@Mord-Eagle](https://github.com/Mord-Eagle)
 
-> **Release posture:** v0.1.4.3 is a standalone-interoperability stabilization release candidate. It preserves the v0.1.4.2 diagnostic foundation while correcting custom status-marker recognition and improving ConcentrationTracker diagnostics. Live Roll20 smoke confirmation is still required.
+> **Release posture:** v0.1.4.3 preserves the v0.1.4.2 diagnostic foundation while correcting custom status-marker recognition and improving ConcentrationTracker diagnostics. Use `Smoketest.md` to validate an installation before a live session.
 
 ---
 
@@ -63,7 +63,7 @@ GameAssist’s kernel and bundled modules expose:
 * **Dependency Diagnostics** – module dependencies are reported as confirmed, missing, or unverifiable instead of being presented as guaranteed discoveries.
 * **MECHSUITS Structure** – the executable script uses the literal codename `GAMEASSIST`, framed sections, file-scoped canonical tree metadata, and per-section change notes.
 
-**Design goal:** useful, inspectable campaign automation that fails honestly and can be upgraded incrementally.
+**Design goal:** useful, inspectable campaign automation that reports failures clearly and can be upgraded incrementally.
 
 ---
 
@@ -694,7 +694,7 @@ The first run is a dry run. Add `--apply` only after checking the preview.
 | Fresh sandbox | 10 | 355 ms | 350 ms | 18 ms | 330–387 ms |
 | **Combined** | **34** | **298 ms** | **300 ms** | **39 ms** | **253–387 ms** |
 
-### 13.1 How to Benchmark v0.1.4.3 Honestly
+### 13.1 Repeatable Benchmarking for v0.1.4.3
 
 1. Duplicate the campaign or use a test game.
 2. Record token count, active Mods, formulas, and sandbox channel.
@@ -941,7 +941,7 @@ Do not make a live-session release decision from syntax checks alone. The Roll20
 
 ## 16 · Contributing <a id="16-contributing"></a>
 
-Thank you for helping improve GameAssist. Contributions should remain narrow, testable, and honest about Roll20 limitations.
+Thank you for helping improve GameAssist. Contributions should remain narrow, testable, and explicit about Roll20 limitations.
 
 ### 16.1 Reporting Issues
 
@@ -1085,7 +1085,7 @@ This is a separate project and is not implemented in v0.1.4.3.
 * Made `!concentration --status` report unrecognized marker configuration clearly.
 * Sent resolved marker tags to TokenMod for concentration add/remove/teardown requests.
 * Preserved standalone TokenMod as the v0.1.4.x marker-mutation dependency.
-* Kept Issue #20 open for live Roll20 sandbox confirmation.
+* Added focused concentration-marker checks to `Smoketest.md`.
 
 ### v0.1.4.2 – Diagnostic and Migration Readiness
 
@@ -1102,8 +1102,8 @@ This is a separate project and is not implemented in v0.1.4.3.
 
 ### v0.1.4.1 – MECHSUITS and Stability Foundation
 
-* Brought the script forward from the uploaded v0.1.4 baseline.
-* Incorporated selected v0.1.5-era fixes conservatively.
+* Established v0.1.4 as the behavioral baseline for the stability release.
+* Incorporated selected fixes from unreleased v0.1.5 development.
 * Hardened shared utilities, marker handling, timestamps, state/runtime helpers, and lifecycle behavior.
 * Preserved Roll20’s captured native `on` strategy.
 * Structured the executable file around MECHSUITS v1.5.2 requirements.

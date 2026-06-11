@@ -89,7 +89,7 @@ Dependency Warnings: NPCManager: unverifiable (TokenMod) | ConcentrationTracker:
 | `Commands` | Commands recorded through GameAssist's core command handler during this sandbox session. Running `!ga-status` counts as one. | Any reasonable number; it increases as commands are used. |
 | `Messages` | Roll20 events handled by running GameAssist modules during this sandbox session. | Any reasonable number; it varies with sandbox activity. |
 | `Errors` | Problems GameAssist recorded during this sandbox session. | Normally `0`. Investigate any nonzero value. |
-| `Avg Task Duration: N/Ams` | No explicit queued task has supplied a measurable duration yet. The `N/Ams` wording is awkward but expected in v0.1.4.3. | `N/Ams` is healthy before queued work is measured; a numeric duration is also valid. |
+| `Avg Task Duration: N/Ams` | No explicit queued task duration has been recorded yet. | `N/Ams` before queued work is measured; a numeric duration is also valid. |
 | `Queue Length` | Explicit queued jobs currently waiting. | `0` while idle. A temporary nonzero value may occur during module changes. |
 | `Queue Mode` | Reminder that ordinary commands/events run directly and only selected work uses the queue. | Informational; the shown sentence is expected. |
 | `Last Update` | Most recent GameAssist activity time, shown in UTC. | A recent timestamp; it changes whenever activity is recorded. |
@@ -201,7 +201,7 @@ Run:
 - A CritFumble help panel appears.
 - This test does not require the rollable tables.
 
-The current help panel is dense and not especially easy to read. For the current release, receiving the panel is the pass condition. Improving its layout remains a later presentation task.
+Receiving the help panel is the pass condition for this check; its visual layout is not evaluated here.
 
 ### Optional Table Test
 
@@ -260,11 +260,11 @@ If you use NPCManager, run:
 
 A response saying marker states are correct is a successful audit, even when several NPCs are dead, as long as those NPCs have HP below 1 and the configured death marker.
 
-The current audit success message refers only to “Living NPCs,” which is misleading because the audit checks living and dead NPCs. Improving that message remains a later wording task.
+The audit success message currently refers to “Living NPCs,” but the audit checks both living and dead NPCs. Interpret that message as “no HP/marker mismatches found.”
 
 TokenMod is used when NPCManager changes a marker. The audit itself reads existing token HP and markers directly, so an empty audit is not normally caused by TokenMod.
 
-The current death report can become a long list. A summarized report and selectable death-log pools for sessions, scenes, and campaigns are useful future features, but they are not present in v0.1.4.3.
+The death report lists recorded events individually and may be long in an established campaign.
 
 ---
 

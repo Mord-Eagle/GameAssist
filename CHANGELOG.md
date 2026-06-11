@@ -2,7 +2,7 @@
 
 All notable changes to GameAssist are documented in this file.
 
-This changelog is intentionally detailed. It records not only visible features, but also implementation locations, replaced behavior, design rationale, compatibility boundaries, state/migration effects, verification evidence, exclusions, and rollback posture. Line references describe the named release artifact and may move in later revisions; MECHSUITS section names are the more stable long-term locator.
+This changelog records visible features, implementation locations, replaced behavior, design rationale, compatibility boundaries, state and migration effects, verification results, exclusions, and upgrade considerations. Line references describe the named release artifact and may move in later revisions; MECHSUITS section names are the more stable long-term locator.
 
 ---
 
@@ -10,12 +10,12 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 | Revision | Status | Role |
 | --- | --- | --- |
-| **v0.1.4.3** | Release candidate; automated marker/status verification complete, Roll20 smoke confirmation pending | Standalone-interoperability stabilization |
-| **v0.1.4.2** | Preserved rollback baseline; live smoke pass exposed Issue #20 | Diagnostic and migration-readiness release |
-| **v0.1.4.1** | Preserved rollback baseline | Stability-first repair of the uploaded v0.1.4 baseline |
-| **v0.1.4** | Uploaded stable-but-limping baseline | Source used to build v0.1.4.1 |
-| **Attempted v0.1.5** | Failed upgrade; never released | Review source for selected fixes only |
-| **v0.1.3** | Prior development milestone; supplied notes retained below | Core lifecycle, metrics, helper, and module-hardening work |
+| **v0.1.4.3** | Pre-release | Concentration marker recognition and standalone interoperability |
+| **v0.1.4.2** | Current release; known concentration-marker limitation | Diagnostic and migration-readiness release |
+| **v0.1.4.1** | Historical release | Stability-first repair of the v0.1.4 baseline |
+| **v0.1.4** | Historical baseline | Source used to build v0.1.4.1 |
+| **Unreleased v0.1.5 prototype** | Never released | Source of selected later fixes and architecture lessons |
+| **v0.1.3** | Prior development milestone | Core lifecycle, metrics, helper, and module-hardening work |
 | **v0.1.2** | Historical release | Roll20 packaging and initial MECHSUITS structural wrap |
 | **v0.1.1.2** | Historical release | CritFumble natural-1 bugfix |
 | **v0.1.1.1** | Historical release | Quiet startup and logging improvements |
@@ -23,48 +23,9 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ### Release-history notes
 
-- v0.1.4.3 is not treated as fully confirmed until the real Roll20 API sandbox marker/status smoke test passes.
-- v0.1.4.2 remains available as the rollback script during v0.1.4.3 confirmation.
-- The attempted v0.1.5 file was not imported wholesale. Its unsafe or structurally unreliable changes were rejected; only isolated reviewed ideas were ported.
-- Older supplied notes used “Unreleased” and “Staging” labels for v0.1.3–v0.1.5 work. Those records are retained below as historical development evidence rather than silently discarded.
-- Where the supplied historical record did not establish a release date, this changelog does not invent one.
-
----
-
-## [Unreleased]
-
-### Immediate release work
-
-- Complete the real Roll20 smoke-test checklist for v0.1.4.3.
-  - Confirm the API sandbox saves and reloads without a red console exception.
-  - Confirm the core ready whisper reports `0.1.4.3`.
-  - Confirm `!ga-status`, `!ga-config modules`, `!ga-config list`, and `!ga-metrics`.
-  - Confirm TokenMod-dependent modules report either `confirmed` or the expected `unverifiable` warning.
-  - Confirm a real natural-1 attack, concentration workflow, NPC death/revival marker cycle, NPC HP roll, and module disable/re-enable cycle.
-- Keep `GameAssist-v0.1.4.2` unchanged as the rollback baseline until the v0.1.4.3 smoke test is complete.
-- Continue the narrow v0.1.4.x standalone-interoperability roadmap before beginning integrated v0.1.5.x marker architecture.
-
-### Deferred work
-
-- Validated configuration/state snapshot import and restoration.
-  - Import requires schema validation, migration rules, preview/dry-run behavior, unknown-branch handling, and rollback semantics.
-  - v0.1.4.2 intentionally exports configuration only and provides no import command.
-- Native Mord character-sheet support.
-  - This belongs to the bridge character-sheet project, not the v0.1.4.2 core release.
-- Plugin loader or automatic third-party module discovery.
-  - Roll20 does not expose a normal filesystem-style plugin directory.
-  - Any future extension contract must be explicit and validated.
-- Spell-specific concentration detection, spell names, duration tracking, expiration, and reminders.
-- Cooldown, encounter, resource, condition, rest/recovery, and location/AoE modules.
-- Rollable-table import/export.
-- Expanded verbose-mode diagnostics.
-
-### Explicitly not planned as “fixes”
-
-- Do not route every command and event through the queue.
-- Do not claim that a watchdog or timeout can terminate running JavaScript or Roll20 operations.
-- Do not automatically delete unexpected state branches.
-- Do not claim guaranteed external dependency discovery when Roll20 metadata may be unavailable.
+- v0.1.4.3 is based on v0.1.4.2. The repository retains `GameAssist-v0.1.4.2` as the previous complete script.
+- The unreleased v0.1.5 prototype was not shipped. Later releases reimplemented selected fixes after review.
+- Revisions without a recorded shipment date are identified without one.
 
 ---
 
@@ -72,7 +33,7 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ### Release definition
 
-v0.1.4.3 is a **standalone-interoperability stabilization release candidate** focused on Issue #20. It preserves standalone TokenMod as the marker-mutation dependency while making GameAssist accurately recognize the built-in and custom marker identities Roll20 stores on tokens.
+v0.1.4.3 is a **standalone-interoperability stabilization update**. It preserves standalone TokenMod as the marker-mutation dependency while making GameAssist accurately recognize the built-in and custom marker identities Roll20 stores on tokens.
 
 This release does not add MarkerService, embed TokenMod, or change the v0.1.4.x dependency model. Those changes remain assigned to the v0.1.5.x roadmap.
 
@@ -80,11 +41,11 @@ This release does not add MarkerService, embed TokenMod, or change the v0.1.4.x 
 
 | Artifact | Purpose | SHA-256 |
 | --- | --- | --- |
-| `GameAssist-v0.1.4.3` | Release-candidate script | `67618B0CA20E1724FF068567BF84BBCA51E7F5FB2FA7669B8F3E5E1E130A943F` |
-| `GameAssist` | Current repository script; identical to the release candidate | `67618B0CA20E1724FF068567BF84BBCA51E7F5FB2FA7669B8F3E5E1E130A943F` |
-| `GameAssist-v0.1.4.2` | Unchanged rollback baseline | `038B07B292E09981BD56564D83F5900353BDC1BDA0D39FDD4CB63A1DBE80CAC4` |
+| `GameAssist-v0.1.4.3` | Versioned release script | `67618B0CA20E1724FF068567BF84BBCA51E7F5FB2FA7669B8F3E5E1E130A943F` |
+| `GameAssist` | Current repository script; identical to v0.1.4.3 | `67618B0CA20E1724FF068567BF84BBCA51E7F5FB2FA7669B8F3E5E1E130A943F` |
+| `GameAssist-v0.1.4.2` | Previous complete script | `038B07B292E09981BD56564D83F5900353BDC1BDA0D39FDD4CB63A1DBE80CAC4` |
 
-### Confirmed diagnosis
+### Root cause
 
 - `!concentration --status` command routing and whisper delivery are present when ConcentrationTracker is running.
 - The v0.1.4.2 shared marker helper compared the configured display name, commonly `Concentrating`, directly with the stored custom marker tag, such as `Concentrating::7191835`.
@@ -128,22 +89,18 @@ This release does not add MarkerService, embed TokenMod, or change the v0.1.4.x 
 - Preserved literal codename `GAMEASSIST`, all section tags, and prior notes.
 - Verified paired tags, proper nesting, and canonical-tree agreement after the change.
 
-### Automated verification evidence
+### Verification results
 
-- JavaScript syntax parsing completed successfully.
-- Mocked Roll20 sandbox checks passed for:
-  - no concentrating tokens;
-  - one custom-marked token;
-  - counted custom marker values;
-  - built-in marker ids;
-  - exact custom stored tags;
-  - invalid configured marker diagnostics;
-  - resolved TokenMod teardown command generation.
-- Live Roll20 smoke verification remains required with TokenMod installed, absent, and reported as unverifiable.
+| Verification | Result | Coverage |
+| --- | --- | --- |
+| JavaScript syntax validation | Passed | Both current and versioned scripts parse successfully. |
+| MECHSUITS structural audit | Passed | Section pairing, nesting, metadata, footers, and canonical tree agree. |
+| Simulated Roll20 checks | Passed | Empty status, custom and counted markers, built-in markers, exact custom tags, invalid-marker diagnostics, and TokenMod teardown command generation. |
+| Roll20 API sandbox | Not recorded | Installation and module checks are documented in `Smoketest.md`. |
 
-### Rollback posture
+### Upgrade and rollback
 
-- `GameAssist-v0.1.4.2` remains unchanged as the rollback baseline.
+- `GameAssist-v0.1.4.2` remains available as the previous complete script.
 - Rolling back restores the older marker-name comparison behavior and removes the new status diagnostics.
 - No state migration is required; existing ConcentrationTracker configuration remains valid.
 
@@ -153,9 +110,9 @@ This release does not add MarkerService, embed TokenMod, or change the v0.1.4.x 
 
 ### Release definition
 
-v0.1.4.2 is a **diagnostic and migration-readiness release**. It adds conservative state self-healing, an explicit public queue API, three-state dependency diagnostics, versioned configuration-only snapshots, and more truthful health reporting without changing normal bundled-module event execution.
+v0.1.4.2 is a **diagnostic and migration-readiness release**. It adds conservative state self-healing, an explicit public queue API, three-state dependency diagnostics, versioned configuration-only snapshots, and health reporting that distinguishes configured, running, and dependency-skipped modules without changing normal bundled-module event execution.
 
-The release was deliberately kept narrow:
+Release scope:
 
 - normal command and event handlers remain direct;
 - gameplay-module implementations remain byte-for-byte aligned with the v0.1.4.1 module bodies;
@@ -166,15 +123,13 @@ The release was deliberately kept narrow:
 
 | Artifact | Purpose | SHA-256 |
 | --- | --- | --- |
-| `GameAssist-v0.1.4.2.js` | Release-candidate script | `AB5E2EC627E9BD969997B9FEA0563ED6A9690BD958DD433A38C83FF7F8A3CB35` |
-| `GameAssist-v0.1.4.1.js` | Rollback baseline | `E4072A73BECD73EFF4D185F4F30B4A4594DA21DFF85F2C9319F0DA1A55EB08B5` |
-| `README-GameAssist-v0.1.4.2.md` | Long-form user/developer handbook | `180AFC8C12E1BFEEA11A9F1EDBC0FD83C115E1DA47867BD4DC1390DD8184289A` |
-| `GameAssist-v0.1.4.2-release-notes-and-smoke-test.md` | Release-specific Roll20 verification checklist | Included with release outputs |
+| `GameAssist-v0.1.4.2` | Versioned release script retained in the repository | `038B07B292E09981BD56564D83F5900353BDC1BDA0D39FDD4CB63A1DBE80CAC4` |
+| Historical v0.1.4.1 script | Previous complete script; not retained in the repository | `E4072A73BECD73EFF4D185F4F30B4A4594DA21DFF85F2C9319F0DA1A55EB08B5` |
 
 ### Version and MECHSUITS metadata
 
 - Advanced the Roll20 header version, MECHSUITS banner `project_version`, and runtime `VERSION` constant to `0.1.4.2`.
-  - Roll20 header: `GameAssist-v0.1.4.2.js` line 4.
+  - Roll20 header: `GameAssist-v0.1.4.2` line 4.
   - Banner `project_version`: line 83.
   - Runtime `const VERSION = '0.1.4.2'`: line 574.
 - Updated only the MECHSUITS sections that received meaningful behavior or contract changes:
@@ -246,7 +201,7 @@ The release was deliberately kept narrow:
 - Rationale:
   - Future modules gain a supported serialization seam without imposing queue latency or coupling on every Roll20 event.
 
-### Changed – Queue and watchdog truthfulness
+### Changed – Queue and watchdog contract corrections
 
 - Updated `[GAMEASSIST:CORE:QUEUE]` narrative and footer to state the actual operational limit:
   - queue timeouts release the queue;
@@ -343,7 +298,7 @@ The release was deliberately kept narrow:
 - Rationale:
   - “Configured” and “running” are not interchangeable.
   - A module can be configured on but skipped, failed, or waiting on dependencies.
-  - Health output should reveal that distinction without requiring state-console inspection.
+  - Health output exposes that distinction without requiring state-console inspection.
 
 ### Changed – Bootstrap order and startup diagnostics
 
@@ -391,7 +346,7 @@ The release was deliberately kept narrow:
 
 ### Documentation – Full README reconstruction
 
-- Rebuilt `README-GameAssist-v0.1.4.2.md` as a long-form handbook after the first accurate-but-overly-compact rewrite omitted the original layout and teaching material.
+- Expanded `README.md` into a long-form handbook covering setup, architecture, modules, commands, configuration, troubleshooting, and upgrade behavior.
 - Restored:
   - numbered sections and table of contents;
   - TL;DR table;
@@ -459,7 +414,7 @@ The release was deliberately kept narrow:
 - No native Mord character-sheet support.
 - No new public gameplay command set.
 
-### Automated verification evidence
+### Verification results
 
 | Verification | Result | What it established |
 | --- | --- | --- |
@@ -479,12 +434,10 @@ The release was deliberately kept narrow:
 | Exact marker/lifecycle regression | Passed | Marker and module lifecycle behavior remained intact. |
 | Global event-hook audit | Passed | No global `on`/`off` overrides introduced. |
 
-### Roll20 verification still required
+### Roll20 sandbox result
 
-- Paste `GameAssist-v0.1.4.2.js` into a disposable or controlled Roll20 API sandbox.
-- Confirm the API sandbox reloads cleanly.
-- Run the release smoke test in `GameAssist-v0.1.4.2-release-notes-and-smoke-test.md`.
-- Do not retire the v0.1.4.1 rollback baseline until those tests pass.
+- The v0.1.4.2 smoke pass exposed the ConcentrationTracker custom-marker recognition failure corrected in v0.1.4.3.
+- No complete passing sandbox result is recorded for v0.1.4.2.
 
 ---
 
@@ -492,11 +445,11 @@ The release was deliberately kept narrow:
 
 ### Release definition
 
-v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping v0.1.4 baseline. It preserves v0.1.4 command and bootstrap behavior, incorporates only isolated safe ideas from the failed attempted v0.1.5 upgrade, and aligns the single-file structure with MECHSUITS v1.5.2 requirements without performing a wholesale rewrite.
+v0.1.4.1 is a stability-first update based on v0.1.4. It preserves v0.1.4 command and bootstrap behavior, incorporates selected fixes from unreleased v0.1.5 development, and aligns the single-file structure with MECHSUITS v1.5.2 requirements without a wholesale rewrite.
 
 ### Development strategy
 
-- Treated uploaded v0.1.4 as the behavioral baseline.
+- Used v0.1.4 as the behavioral baseline.
 - Preserved the six-module shape:
   - ConfigUI
   - CritFumble
@@ -508,12 +461,12 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
 - Preserved captured Roll20 `R20_ON` behavior.
 - Preserved direct normal handler execution.
 - Applied changes at narrow MECHSUITS section granularity.
-- Kept a separate rollback copy of v0.1.4.
+- Retained v0.1.4 as the previous complete script.
 
 ### Version and MECHSUITS metadata
 
 - Advanced Roll20 header, MECHSUITS `project_version`, and runtime `VERSION` to `0.1.4.1`.
-  - Header: `GameAssist-v0.1.4.1.js` line 4.
+  - Historical v0.1.4.1 header: line 4.
   - Banner: line 74.
   - Runtime version: line 520.
 - Preserved literal codename `GAMEASSIST`.
@@ -570,7 +523,7 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
   - does not match unrelated marker names such as `deadly`.
 - Rationale:
   - Substring-style matching can remove or misreport the wrong marker.
-  - Shared top-level helpers are visible to module teardown functions and avoid the ConcentrationTracker scoping failure identified in the attempted upgrade.
+  - Shared top-level helpers are visible to module teardown functions and avoid the ConcentrationTracker scoping failure identified in the unreleased v0.1.5 prototype.
 
 ### Added – Shared runtime self-healing helpers
 
@@ -630,7 +583,7 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
   - ConcentrationTracker: lines 2476, 2555, and 2743;
   - NPCHPRoller: lines 2818 and 2865.
 - Rationale:
-  - Modules should not independently assume that tokens are linked, on the Objects layer, or backed by a valid character.
+  - Centralized validation prevents modules from independently assuming that tokens are linked, on the Objects layer, or backed by a valid character.
   - Shared validation keeps invalid/unlinked/PC token handling consistent.
 
 ### Changed – NPCManager exact marker behavior
@@ -646,7 +599,7 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
 - Counted marker values such as `dead@2` are recognized.
 - Unrelated values such as `deadly` are preserved.
 - Rationale:
-  - Disable/teardown should clean up the marker GameAssist owns without damaging unrelated status information.
+  - Disable/teardown removes the marker GameAssist owns without damaging unrelated status information.
 
 ### Changed – ConcentrationTracker lifecycle and runtime safety
 
@@ -664,7 +617,7 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
   - `--config randomize on|off`
   - `!ga-conc-status`
 - Rationale:
-  - The attempted upgrade exposed a serious helper-scope risk in teardown.
+  - The unreleased v0.1.5 prototype exposed a serious helper-scope risk in teardown.
   - Shared helpers ensure teardown can access the configured-marker logic safely.
 
 ### Changed – DebugTools exact marker behavior
@@ -692,7 +645,7 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
   - Global event-function overrides introduce script-order-dependent interoperability failures with scripts loaded after GameAssist.
   - Roll20 does not provide a dependable general-purpose `off()` contract for these handlers.
 
-### Intentionally excluded from the attempted v0.1.5 upgrade
+### Excluded changes from unreleased v0.1.5 development
 
 - Duplicate trailing script fragment.
   - Rejected because duplicated bootstrap/module code could double-register handlers or fail parsing/execution.
@@ -705,7 +658,7 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
 - Broader command matching.
   - Rejected because it could make neighboring command names accidentally trigger.
 - Wholesale bootstrap/dependency/interface restructuring.
-  - Rejected because the failed whole-file upgrade did not justify expanding the release’s blast radius.
+  - Rejected because it expanded the release scope without an established compatibility benefit.
 
 ### Verification evidence
 
@@ -722,20 +675,20 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
 | Module disable/enable simulation | Passed |
 | Captured native event-hook strategy | Preserved |
 
-### Rollback posture
+### Upgrade and rollback
 
-- v0.1.4.1 is preserved unchanged as the rollback baseline for v0.1.4.2.
+- v0.1.4.1 remained available as the previous complete script for v0.1.4.2.
 - Rollback requires replacing the script and re-running health/smoke tests.
 - Script rollback does not automatically restore persistent state.
 
 ---
 
-## [0.1.4] – Uploaded Stable-But-Limping Baseline
+## [0.1.4] – Historical Baseline
 
 ### Baseline role
 
-- Served as the source baseline for v0.1.4.1.
-- Was treated as stable enough to preserve but not “known-good.”
+- Served as the behavioral baseline for v0.1.4.1.
+- Preserved the existing command and bootstrap behavior while later revisions addressed known limitations.
 - Included the six-module structure:
   - ConfigUI
   - CritFumble
@@ -776,13 +729,13 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
 - Some commands/configuration existed but were not fully documented.
 - README described queue/watchdog/state/dependency guarantees more strongly than the Roll20 environment could support.
 
-> No authoritative shipment date was recorded in the supplied changelog. This entry records baseline provenance.
+> No shipment date is recorded for this revision.
 
 ---
 
 ## [0.1.3] – Detailed Historical Development Record
 
-This section preserves the supplied granular v0.1.3-era development record, including implementation locations and replaced behavior. The referenced line numbers belong to the historical artifact described by those notes and are retained for audit value.
+This section preserves the granular v0.1.3-era development record, including implementation locations and replaced behavior. Referenced line numbers belong to the historical artifact described by those notes.
 
 ### Added – Persisted session metrics
 
@@ -954,8 +907,8 @@ This section preserves the supplied granular v0.1.3-era development record, incl
 
 - Replaced unconditional deduplication from pre-update lines 493-495.
 - Rationale:
-  - quoted text should not break Roll20 whisper HTML;
-  - planned metadata should not grow repeatedly across reload-like flows.
+  - quote escaping prevents quoted text from breaking Roll20 whisper HTML;
+  - the deduplication guard prevents planned metadata from growing repeatedly across reload-like flows.
 
 ### Changed – Bootstrap dependency and failure handling
 
@@ -993,7 +946,7 @@ This section preserves the supplied granular v0.1.3-era development record, incl
   - `!ga-conc-status`;
   - NPCHPRoller `autoRollOnAdd`.
 
-> No authoritative shipment date was recorded in the supplied development notes.
+> No shipment date is recorded for this revision.
 
 ---
 
@@ -1090,16 +1043,16 @@ This section preserves the supplied granular v0.1.3-era development record, incl
 
 ---
 
-## Historical Staging Labels Preserved
+## Historical Development Labels
 
-The supplied predecessor changelog used these labels before the v0.1.4.1/v0.1.4.2 repair line was created:
+Earlier development records used these labels before the v0.1.4.x release history was consolidated:
 
 - `[Unreleased]` for much of the detailed v0.1.3-era lifecycle, metrics, state, compatibility, and module work.
 - `[Staging] 0.1.4 (blocked by 0.1.3 compliance)` for ConfigUI and DebugTools.
 - `[Staging] 0.1.3 (MECHSUITS compliance gate)` for compatibility hints, helpers, dependency checks, and structured concentration data.
 
-Those labels are no longer the current release-status statement, but their detailed implementation records have been retained in the relevant sections above. The attempted v0.1.5 upgrade remains explicitly unshipped.
+These labels describe historical development stages rather than released versions. Their implementation records remain in the relevant sections above. The v0.1.5 prototype was not released.
 
 ---
 
-*This changelog records implementation history, rationale, limitations, verification, and release posture. Roadmap ideas and failed upgrade attempts are never presented as shipped features.*
+*This changelog records implementation history, rationale, limitations, verification results, and release status. Planned work is tracked separately in `ROADMAP.md`.*
