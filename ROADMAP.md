@@ -1,6 +1,6 @@
 # GameAssist Development Roadmap
 
-This roadmap records the agreed transition from GameAssist's standalone-dependency `v0.1.4.x` line to the integrated token and status architecture planned for `v0.1.5.x`.
+This roadmap records the transition from GameAssist's standalone-dependency `v0.1.4.x` line to the integrated token and status architecture planned for `v0.1.5.x`.
 
 Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation notes, discoveries, and checklists. The umbrella tracker is [Issue #29](https://github.com/Mord-Eagle/GameAssist/issues/29).
 
@@ -36,7 +36,7 @@ Use this document for durable release boundaries, sequencing, and completion gat
 
 | Stage | Status | Tracking Issue | Release Outcome |
 | --- | --- | --- | --- |
-| ConcentrationTracker failure investigation | In progress | [#20](https://github.com/Mord-Eagle/GameAssist/issues/20) | Establish the exact failure path and truthful diagnostics. |
+| ConcentrationTracker failure investigation | Sandbox verification | [#20](https://github.com/Mord-Eagle/GameAssist/issues/20) | Validate custom-marker recognition and actionable diagnostics in Roll20. |
 | Standalone interoperability stabilization | Planned | [#24](https://github.com/Mord-Eagle/GameAssist/issues/24) | Finish the `v0.1.4.x` line with reliable standalone TokenMod and StatusInfo behavior. |
 | MarkerService foundation | Planned | [#25](https://github.com/Mord-Eagle/GameAssist/issues/25) | Release `v0.1.5.0` with one internal marker authority and migrated GameAssist modules. |
 | Integrated StatusInfo | Planned | [#26](https://github.com/Mord-Eagle/GameAssist/issues/26) | Release `v0.1.5.1` with rebuilt and attributed StatusInfo. |
@@ -59,8 +59,8 @@ Every `v0.1.4.x` production installation continues to use:
 
 ### Checklist
 
-- [ ] Determine the exact `!concentration --status` failure path.
-- [ ] Correct custom marker display-name versus stored-tag recognition.
+- [x] Determine the exact `!concentration --status` failure path.
+- [x] Correct custom marker display-name versus stored-tag recognition.
 - [ ] Diagnose built-in `dead` marker mutation failures while TokenMod `players-can-ids` is enabled.
 - [ ] Ensure marker-operation failures do not produce silent success claims.
 - [ ] Verify NPCManager marker add, remove, audit, report, and teardown behavior.
@@ -71,6 +71,12 @@ Every `v0.1.4.x` production installation continues to use:
 ### Completion Gate
 
 The final `v0.1.4.x` release must pass its documented Roll20 smoke test with the supported standalone installation before `v0.1.5.0` becomes the production development focus.
+
+### Phase Status
+
+- v0.1.4.3 resolves configured custom marker display names to the exact tags Roll20 stores on tokens.
+- Static and simulated checks cover custom markers, counted markers, built-in markers, empty status, invalid-marker diagnostics, and ConcentrationTracker teardown commands.
+- Open gate: complete the ConcentrationTracker checks in `Smoketest.md` in a Roll20 API sandbox.
 
 ---
 
@@ -155,7 +161,7 @@ Rebuild TokenMod as `[GAMEASSIST:MODULES:TOKENMOD]`, preserve its supported user
 ### Checklist
 
 - [ ] Record The Aaron attribution, upstream baseline, GameAssist changes, and MIT notice.
-- [ ] Define the initially supported TokenMod compatibility surface honestly.
+- [ ] Define the initially supported TokenMod compatibility surface and its documented limits.
 - [ ] Preserve supported `!token-mod` command behavior.
 - [ ] Preserve or safely migrate `state.TokenMod` where practical.
 - [ ] Route marker operations through MarkerService.
@@ -237,7 +243,7 @@ Every roadmap stage must satisfy the following before being marked complete:
 - [ ] README, changelog, smoke tests, and upgrade instructions are updated.
 - [ ] MECHSUITS tags, nesting, canonical tree, section metadata, and footers are accurate.
 - [ ] Applicable attribution, provenance, and license notices are preserved.
-- [ ] Known limitations are stated honestly.
+- [ ] Known limitations are documented.
 
 ---
 

@@ -1021,3 +1021,149 @@ Those labels are no longer the current release-status statement, but their detai
 ---
 
 *This changelog records implementation history, rationale, limitations, verification, and release posture. Roadmap ideas and failed upgrade attempts are never presented as shipped features.*
+
+---
+
+## Append-Only Maintenance Policy — Adopted 2026-06-10
+
+This section governs changelog entries added after v0.1.4.2.
+
+- Published entries are preserved as historical records and are not silently rewritten.
+- Each new release entry is a curated record of changes since the preceding release entry.
+- Corrections to an older entry are appended as a dated correction record that identifies the superseded claim.
+- Roadmap work belongs in `ROADMAP.md`; installation and troubleshooting procedures belong in `Smoketest.md`.
+- An older entry may receive an appended summary after it is at least three major-version releases behind the current release. The original detailed entry remains preserved.
+- Release status, verification results, and artifact names are stated as repository facts rather than internal work narration or editorial judgments.
+
+### Corrections to v0.1.3.x–v0.1.4.2 records
+
+The following corrections supersede inaccurate or temporary wording in the preserved entries above:
+
+| Preserved wording or reference | Corrected record |
+| --- | --- |
+| `GameAssist-v0.1.4.2.js` | The tracked artifact is `GameAssist-v0.1.4.2`. Its SHA-256 is `038B07B292E09981BD56564D83F5900353BDC1BDA0D39FDD4CB63A1DBE80CAC4`. |
+| `GameAssist-v0.1.4.1.js` | No v0.1.4.1 script is retained in the repository. Its historical checksum cannot be verified from the repository contents. |
+| `README-GameAssist-v0.1.4.2.md` | The tracked handbook is `README.md`. No version-named v0.1.4.2 README is retained. |
+| `GameAssist-v0.1.4.2-release-notes-and-smoke-test.md` | The tracked installation and troubleshooting checklist is `Smoketest.md`. The named release-specific file is not retained. |
+| “Mocked Roll20 sandbox” | These checks were simulated Roll20-environment checks, not executions inside the Roll20 API sandbox. |
+| “Release candidate,” “stable-but-limping,” “attempted upgrade,” and similar labels | These phrases describe development context recorded at the time. They are not current release-status classifications. |
+| “Truthful” or “honest” reporting claims | The durable contract is the specific behavior documented by the corresponding entry, such as configured/running/dependency-skipped counts or three-state dependency reporting. |
+| v0.1.4.2 Roll20 confirmation language | The recorded v0.1.4.2 sandbox pass exposed the custom concentration-marker recognition failure addressed by v0.1.4.3. No complete passing v0.1.4.2 sandbox result is recorded. |
+
+### Current release index
+
+| Revision | Status | Repository role |
+| --- | --- | --- |
+| **v0.1.4.3** | Pre-release | Concentration custom-marker recognition and standalone TokenMod interoperability update |
+| **v0.1.4.2** | Previous complete script | Diagnostic and migration-readiness release with a known concentration custom-marker limitation |
+| **v0.1.4.1** | Historical release; script not retained | Stability-focused repair based on v0.1.4 |
+| **v0.1.4** | Historical baseline | Preserved as `GameAssist v0.1.4` |
+| **Unreleased v0.1.5 prototype** | Not released | Review source for selected fixes and architecture planning |
+
+---
+
+## [0.1.4.3] – 2026-06-10
+
+### Release definition
+
+v0.1.4.3 improves standalone TokenMod interoperability by resolving configured marker names to the exact marker identities Roll20 stores on tokens. The update focuses on ConcentrationTracker status reporting and marker lifecycle requests while preserving the v0.1.4.x external dependency model.
+
+MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
+
+### Release artifacts
+
+| Artifact | Purpose | SHA-256 |
+| --- | --- | --- |
+| `GameAssist-v0.1.4.3` | Versioned v0.1.4.3 script | `5BFE955BAEB9F6D09F498DC1A6C45338FB7B3E050EAB7FA0BEC5718445E1D272` |
+| `GameAssist` | Current repository script; identical to `GameAssist-v0.1.4.3` | `5BFE955BAEB9F6D09F498DC1A6C45338FB7B3E050EAB7FA0BEC5718445E1D272` |
+| `GameAssist-v0.1.4.2` | Previous complete script | `038B07B292E09981BD56564D83F5900353BDC1BDA0D39FDD4CB63A1DBE80CAC4` |
+
+### Root cause addressed
+
+- Roll20 stores a custom marker display name such as `Concentrating` as a token marker tag such as `Concentrating::7191835`.
+- v0.1.4.2 compared the configured display name directly with the stored tag.
+- A token visibly carrying the configured custom marker could therefore be omitted from `!concentration --status`.
+- `deps unverifiable (TokenMod)` was not the cause of the status-read failure. Status reporting reads token markers directly; TokenMod is used when GameAssist requests marker mutation.
+
+### Changed — Shared marker identity resolution
+
+- Added a cached reader for Roll20's campaign custom-marker registry in `[GAMEASSIST:APP:UTILS]`.
+- Added structured marker resolution for:
+  - lowercase built-in marker ids such as `dead`;
+  - custom marker display names such as `Concentrating`;
+  - exact stored custom marker tags such as `Concentrating::7191835`;
+  - counted marker values such as `Concentrating::7191835@3`.
+- Preserved lowercase built-in-marker precedence so a custom marker named `dead` does not replace NPCManager's built-in default.
+- Allowed a colliding custom marker to be selected by its complete stored tag.
+- Updated `tokenHasMarker(...)` to compare exact resolved marker identities.
+- Added fast paths for already-resolved custom tags and literal built-in ids.
+- Returned explicit resolution failures for unrecognized configured markers.
+
+### Changed — ConcentrationTracker status and lifecycle diagnostics
+
+- `!concentration --status` now:
+  - lists current-page tokens carrying the resolved configured marker;
+  - returns `No tokens concentrating.` when no matching tokens are present;
+  - reports when the current player page cannot be determined;
+  - reports an unrecognized configured marker and provides configuration repair syntax;
+  - logs a warning when a display name matches multiple custom markers.
+- Concentration marker add, remove, and teardown requests now send TokenMod the resolved stored marker tag.
+- `!concentration --off` reports that marker removal was requested rather than claiming the asynchronous TokenMod operation completed.
+- Teardown stops and logs a warning when the configured marker cannot be resolved.
+
+### Documentation and changelog maintenance
+
+- Updated `README.md`, `ROADMAP.md`, and `Smoketest.md` for v0.1.4.3 behavior and validation.
+- Added focused concentration-marker checks to `Smoketest.md`.
+- Separated release records, roadmap plans, and installation/troubleshooting procedures.
+- Adopted the append-only changelog policy above.
+- Added appended corrections for inaccurate artifact names and temporary development terminology in preserved v0.1.3.x–v0.1.4.2 records.
+
+### MECHSUITS changes
+
+- Advanced the file header, banner `project_version`, prose guarantee, visual version, and runtime `VERSION` to `0.1.4.3`.
+- Applied the Meaningful Change Rule to:
+  - `[GAMEASSIST:APP]`
+  - `[GAMEASSIST:APP:UTILS]`
+  - `[GAMEASSIST:CORE]`
+  - `[GAMEASSIST:MODULES]`
+  - `[GAMEASSIST:MODULES:CONCENTRATIONTRACKER]`
+- Recorded maintenance-only commentary updates in:
+  - `[GAMEASSIST:POLICY]`
+  - `[GAMEASSIST:INTERFACES:COMMANDS]`
+  - `[GAMEASSIST:MODULES:CRITFUMBLE]`
+- Preserved literal codename `GAMEASSIST`, existing section tags, and prior notes.
+- Confirmed paired tags, proper nesting, and canonical-tree agreement.
+
+### Compatibility and state impact
+
+| Area | v0.1.4.3 behavior |
+| --- | --- |
+| TokenMod | Remains a separately installed dependency responsible for requested marker mutations. |
+| Marker reads | GameAssist reads token markers directly and resolves built-in ids, custom display names, and stored custom tags. |
+| MarkerService | Not included. |
+| Integrated TokenMod | Not included. |
+| Public commands | Existing v0.1.4.2 command language is preserved. |
+| Persistent state | No migration is required; existing ConcentrationTracker configuration remains valid. |
+| Rollback | Replacing the script with `GameAssist-v0.1.4.2` restores the previous marker-name comparison behavior. |
+
+### Verification results
+
+| Verification | Result | Coverage |
+| --- | --- | --- |
+| JavaScript syntax validation | Passed | The current script parses successfully. |
+| Current/versioned script identity | Passed | `GameAssist` and `GameAssist-v0.1.4.3` are byte-identical. |
+| MECHSUITS structural audit | Passed | Section pairing, nesting, metadata, footers, and canonical tree agree. |
+| Simulated Roll20-environment checks | Passed | Empty status, custom and counted markers, built-in markers, exact custom tags, invalid-marker diagnostics, disabled-module diagnostics, and TokenMod teardown command generation. |
+| Roll20 API sandbox | Not recorded | Installation and module validation procedures are documented in `Smoketest.md`. |
+
+### Exclusions
+
+- No MarkerService module.
+- No integrated TokenMod or StatusInfo module.
+- No change to the v0.1.4.x dependency model.
+- No configuration import or full-state restore.
+- No new gameplay modules.
+- No native Mord character-sheet support.
+
+---
