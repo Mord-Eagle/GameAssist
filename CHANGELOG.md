@@ -10,7 +10,8 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 | Revision | Status | Role |
 | --- | --- | --- |
-| **v0.1.4.2** | Release candidate; automated verification complete, Roll20 smoke confirmation pending | Diagnostic and migration-readiness release |
+| **v0.1.4.3** | Release candidate; automated marker/status verification complete, Roll20 smoke confirmation pending | Standalone-interoperability stabilization |
+| **v0.1.4.2** | Preserved rollback baseline; live smoke pass exposed Issue #20 | Diagnostic and migration-readiness release |
 | **v0.1.4.1** | Preserved rollback baseline | Stability-first repair of the uploaded v0.1.4 baseline |
 | **v0.1.4** | Uploaded stable-but-limping baseline | Source used to build v0.1.4.1 |
 | **Attempted v0.1.5** | Failed upgrade; never released | Review source for selected fixes only |
@@ -22,8 +23,8 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ### Release-history notes
 
-- v0.1.4.2 is not treated as fully confirmed until the real Roll20 API sandbox smoke test passes.
-- v0.1.4.1 remains available as the rollback script during v0.1.4.2 confirmation.
+- v0.1.4.3 is not treated as fully confirmed until the real Roll20 API sandbox marker/status smoke test passes.
+- v0.1.4.2 remains available as the rollback script during v0.1.4.3 confirmation.
 - The attempted v0.1.5 file was not imported wholesale. Its unsafe or structurally unreliable changes were rejected; only isolated reviewed ideas were ported.
 - Older supplied notes used “Unreleased” and “Staging” labels for v0.1.3–v0.1.5 work. Those records are retained below as historical development evidence rather than silently discarded.
 - Where the supplied historical record did not establish a release date, this changelog does not invent one.
@@ -34,14 +35,14 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ### Immediate release work
 
-- Complete the real Roll20 smoke-test checklist for v0.1.4.2.
+- Complete the real Roll20 smoke-test checklist for v0.1.4.3.
   - Confirm the API sandbox saves and reloads without a red console exception.
-  - Confirm the core ready whisper reports `0.1.4.2`.
+  - Confirm the core ready whisper reports `0.1.4.3`.
   - Confirm `!ga-status`, `!ga-config modules`, `!ga-config list`, and `!ga-metrics`.
   - Confirm TokenMod-dependent modules report either `confirmed` or the expected `unverifiable` warning.
   - Confirm a real natural-1 attack, concentration workflow, NPC death/revival marker cycle, NPC HP roll, and module disable/re-enable cycle.
-- Keep `GameAssist-v0.1.4.1.js` unchanged as the rollback baseline until the v0.1.4.2 smoke test is complete.
-- Freeze broad GameAssist core development after v0.1.4.2 is confirmed so the compatibility-first bridge character-sheet project can begin on a stable foundation.
+- Keep `GameAssist-v0.1.4.2` unchanged as the rollback baseline until the v0.1.4.3 smoke test is complete.
+- Continue the narrow v0.1.4.x standalone-interoperability roadmap before beginning integrated v0.1.5.x marker architecture.
 
 ### Deferred work
 
@@ -64,6 +65,87 @@ This changelog is intentionally detailed. It records not only visible features, 
 - Do not claim that a watchdog or timeout can terminate running JavaScript or Roll20 operations.
 - Do not automatically delete unexpected state branches.
 - Do not claim guaranteed external dependency discovery when Roll20 metadata may be unavailable.
+
+---
+
+## [0.1.4.3] – 2026-06-10
+
+### Release definition
+
+v0.1.4.3 is a **standalone-interoperability stabilization release candidate** focused on Issue #20. It preserves standalone TokenMod as the marker-mutation dependency while making GameAssist accurately recognize the built-in and custom marker identities Roll20 stores on tokens.
+
+This release does not add MarkerService, embed TokenMod, or change the v0.1.4.x dependency model. Those changes remain assigned to the v0.1.5.x roadmap.
+
+### Release artifacts
+
+| Artifact | Purpose | SHA-256 |
+| --- | --- | --- |
+| `GameAssist-v0.1.4.3` | Release-candidate script | `67618B0CA20E1724FF068567BF84BBCA51E7F5FB2FA7669B8F3E5E1E130A943F` |
+| `GameAssist` | Current repository script; identical to the release candidate | `67618B0CA20E1724FF068567BF84BBCA51E7F5FB2FA7669B8F3E5E1E130A943F` |
+| `GameAssist-v0.1.4.2` | Unchanged rollback baseline | `038B07B292E09981BD56564D83F5900353BDC1BDA0D39FDD4CB63A1DBE80CAC4` |
+
+### Confirmed diagnosis
+
+- `!concentration --status` command routing and whisper delivery are present when ConcentrationTracker is running.
+- The v0.1.4.2 shared marker helper compared the configured display name, commonly `Concentrating`, directly with the stored custom marker tag, such as `Concentrating::7191835`.
+- Because those strings differ, a visibly marked token could be omitted from status results.
+- `deps unverifiable (TokenMod)` was not the cause. Status reads existing token markers directly; TokenMod remains relevant only when a module requests a marker change.
+
+### Changed – Shared marker identity resolution
+
+- Added a cached reader for Roll20's campaign custom-marker registry in `[GAMEASSIST:APP:UTILS]`.
+- Added structured marker resolution for:
+  - literal lowercase built-in ids such as `dead`;
+  - exact custom display names such as `Concentrating` or `Dead`;
+  - exact custom stored tags such as `Concentrating::7191835`;
+  - counted marker values such as `Concentrating::7191835@3`.
+- Preserved lowercase built-in precedence so a custom marker named `dead` cannot silently replace NPCManager's existing built-in default. A custom marker with that exact collision remains selectable by its full stored tag.
+- Changed `tokenHasMarker(...)` to resolve configured marker identity before comparing exact normalized token marker entries.
+- Fast-pathed already-resolved custom tags and literal built-in ids during token comparison to avoid repeated campaign registry reads on large pages.
+- Returned explicit resolution failures instead of treating an unknown configured marker as an ordinary absent marker.
+
+### Changed – ConcentrationTracker status and lifecycle diagnostics
+
+- `!concentration --status` now:
+  - lists current-page tokens carrying the resolved custom or built-in marker;
+  - preserves the exact empty result `No tokens concentrating.`;
+  - reports when the current player page cannot be determined;
+  - reports an unrecognized configured marker and provides the repair syntax;
+  - warns in logs when a display name matches multiple custom markers.
+- Concentration marker add, remove, and teardown requests now send TokenMod the resolved stored marker tag.
+- `!concentration --off` now says it **requested** marker removal instead of claiming the asynchronous TokenMod action already completed.
+- Teardown stops with a warning when the configured marker cannot be resolved instead of issuing an unsafe or misleading removal request.
+
+### MECHSUITS changes
+
+- Advanced the file header, banner `project_version`, prose guarantee, visual version, and runtime `VERSION` to `0.1.4.3`.
+- Applied the Meaningful Change Rule to:
+  - `[GAMEASSIST:APP]`
+  - `[GAMEASSIST:APP:UTILS]`
+  - `[GAMEASSIST:CORE]`
+  - `[GAMEASSIST:MODULES]`
+  - `[GAMEASSIST:MODULES:CONCENTRATIONTRACKER]`
+- Preserved literal codename `GAMEASSIST`, all section tags, and prior notes.
+- Verified paired tags, proper nesting, and canonical-tree agreement after the change.
+
+### Automated verification evidence
+
+- JavaScript syntax parsing completed successfully.
+- Mocked Roll20 sandbox checks passed for:
+  - no concentrating tokens;
+  - one custom-marked token;
+  - counted custom marker values;
+  - built-in marker ids;
+  - exact custom stored tags;
+  - invalid configured marker diagnostics;
+  - resolved TokenMod teardown command generation.
+- Live Roll20 smoke verification remains required with TokenMod installed, absent, and reported as unverifiable.
+
+### Rollback posture
+
+- `GameAssist-v0.1.4.2` remains unchanged as the rollback baseline.
+- Rolling back restores the older marker-name comparison behavior and removes the new status diagnostics.
+- No state migration is required; existing ConcentrationTracker configuration remains valid.
 
 ---
 

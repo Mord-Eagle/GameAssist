@@ -59,8 +59,8 @@ Every `v0.1.4.x` production installation continues to use:
 
 ### Checklist
 
-- [ ] Determine the exact `!concentration --status` failure path.
-- [ ] Correct custom marker display-name versus stored-tag recognition.
+- [x] Determine the exact `!concentration --status` failure path.
+- [x] Correct custom marker display-name versus stored-tag recognition.
 - [ ] Diagnose built-in `dead` marker mutation failures while TokenMod `players-can-ids` is enabled.
 - [ ] Ensure marker-operation failures do not produce silent success claims.
 - [ ] Verify NPCManager marker add, remove, audit, report, and teardown behavior.
@@ -71,6 +71,12 @@ Every `v0.1.4.x` production installation continues to use:
 ### Completion Gate
 
 The final `v0.1.4.x` release must pass its documented Roll20 smoke test with the supported standalone installation before `v0.1.5.0` becomes the production development focus.
+
+### Current Progress
+
+- v0.1.4.3 resolves configured custom marker display names to the exact tags Roll20 stores on tokens.
+- Local mocked-sandbox verification covers custom markers, counted markers, built-in markers, empty status, invalid-marker diagnostics, and ConcentrationTracker teardown commands.
+- Live Roll20 verification remains required before Issue #20 or the ConcentrationTracker verification checklist item is complete.
 
 ---
 

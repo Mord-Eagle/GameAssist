@@ -1,9 +1,9 @@
 # GameAssist – Modular API Framework for Roll20
 
-**Version 0.1.4.2** | © 2025 Mord Eagle · MIT License  
+**Version 0.1.4.3** | © 2025 Mord Eagle · MIT License<br>
 **Lead Dev:** [@Mord-Eagle](https://github.com/Mord-Eagle)
 
-> **Release posture:** v0.1.4.2 is a diagnostic and migration-readiness release. It improves state recovery, dependency reporting, configuration snapshots, health reporting, and the public developer API without changing normal module event execution.
+> **Release posture:** v0.1.4.3 is a standalone-interoperability stabilization release candidate. It preserves the v0.1.4.2 diagnostic foundation while correcting custom status-marker recognition and improving ConcentrationTracker diagnostics. Live Roll20 smoke confirmation is still required.
 
 ---
 
@@ -18,7 +18,7 @@ GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a
 | Category | Highlights |
 | --- | --- |
 | Core Lift | Guarded modules, conservative state repair, explicit queue API, session metrics, dependency diagnostics, and GM health reporting. |
-| 30-Second Install | ① Paste **GameAssist-v0.1.4.2.js** ② Install **TokenMod** for marker modules ③ Add the seven CritFumble roll-tables ④ Save/reload ⑤ Run `!ga-status`. |
+| 30-Second Install | ① Paste **GameAssist-v0.1.4.3** ② Install **TokenMod** for marker modules ③ Add the seven CritFumble roll-tables ④ Save/reload ⑤ Run `!ga-status`. |
 | Flagship Player Commands | `!concentration`, `!cc`, `!critfail`, `!critfumble-<type>`. |
 | Flagship GM Commands | `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report`, `!npc-death-audit`, `!ga-conc-status`, `!ga-config ui`. |
 | Admin Controls | `!ga-config list|get|set|modules|cleanup|ui`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-metrics`, and `!ga-debug`. |
@@ -70,7 +70,7 @@ GameAssist’s kernel and bundled modules expose:
 ## 4 · Quick Start <a id="4-quick-start"></a>
 
 ```text
-📥 1  Copy GameAssist-v0.1.4.2.js → Roll20 Mod/API Scripts → Save
+📥 1  Copy GameAssist-v0.1.4.3 → Roll20 Mod/API Scripts → Save
 🛠 2  Install TokenMod if using NPCManager or ConcentrationTracker markers
 📜 3  Create 7 CritFumble roll-tables (see §11: Roll-Table Cookbook)
 🔄 4  Save/reload the sandbox and wait for the core ready whisper
@@ -141,7 +141,7 @@ Module enable/disable transitions also use the internal queue to prevent overlap
 
 ### 5.2 Why Normal Events Are Not Queued
 
-Roll20 event handlers often perform small, immediate checks. Automatically routing every event through one queue would add latency, increase coupling, and create a single congestion point. In v0.1.4.2, ordinary handlers remain direct; modules opt into serialization only when their own work requires it.
+Roll20 event handlers often perform small, immediate checks. Automatically routing every event through one queue would add latency, increase coupling, and create a single congestion point. In v0.1.4.x, ordinary handlers remain direct; modules opt into serialization only when their own work requires it.
 
 ### 5.3 Fail-Safe Scenarios
 
@@ -194,14 +194,14 @@ Module configuration belongs under `state.GameAssist.<Module>.config`. Runtime c
   "schemaVersion": 1,
   "scope": "configuration-only",
   "generatedAt": "<ISO timestamp>",
-  "version": "0.1.4.2",
+  "version": "0.1.4.3",
   "flags": {},
   "globalConfig": {},
   "modules": {}
 }
 ```
 
-The snapshot excludes runtime caches and metrics. v0.1.4.2 does not import or restore snapshots.
+The snapshot excludes runtime caches and metrics. v0.1.4.3 does not import or restore snapshots.
 
 ---
 
@@ -248,6 +248,8 @@ Config keys: `debug`, `useEmojis`, `rollDelayMs`.
 * `!ga-conc-status` → GM-only snapshot of the most recent concentration DC and damage per player.
 
 The tracker reads `constitution_save_bonus` from a token’s represented character. Runtime `lastDamage` data self-heals and accepts legacy number entries.
+
+In v0.1.4.3, built-in marker ids, custom marker display names, and exact custom tags resolve to the marker identity Roll20 stores on tokens. If the configured marker cannot be recognized, `!concentration --status` gives an actionable warning instead of silently reporting an incorrect empty result.
 
 Config keys: `marker`, `randomize`.
 
@@ -329,7 +331,7 @@ I. **Open the Roll20 Mod/API Editor**
 
 II. **Install GameAssist**
 
-1. Paste the complete contents of `GameAssist-v0.1.4.2.js`.
+1. Paste the complete contents of `GameAssist-v0.1.4.3`.
 2. Keep the script as one complete file; do not paste only individual MECHSUITS sections into Roll20.
 3. Save the script.
 
@@ -675,7 +677,7 @@ The first run is a dry run. Add `--apply` only after checking the preview.
 
 ## 13 · Performance Benchmarks <a id="13-performance-benchmarks"></a>
 
-> **Historical reference only:** The following numbers were recorded for an earlier v0.1.3-era build and have **not** been revalidated for v0.1.4.2. Roll20 sandbox load, campaign size, browser state, network conditions, token formulas, and other Mods can materially change results. Do not treat this table as a current performance guarantee.
+> **Historical reference only:** The following numbers were recorded for an earlier v0.1.3-era build and have **not** been revalidated for v0.1.4.3. Roll20 sandbox load, campaign size, browser state, network conditions, token formulas, and other Mods can materially change results. Do not treat this table as a current performance guarantee.
 
 | Environment Item | Historical Test Environment |
 | --- | --- |
@@ -692,7 +694,7 @@ The first run is a dry run. Add `--apply` only after checking the preview.
 | Fresh sandbox | 10 | 355 ms | 350 ms | 18 ms | 330–387 ms |
 | **Combined** | **34** | **298 ms** | **300 ms** | **39 ms** | **253–387 ms** |
 
-### 13.1 How to Benchmark v0.1.4.2 Honestly
+### 13.1 How to Benchmark v0.1.4.3 Honestly
 
 1. Duplicate the campaign or use a test game.
 2. Record token count, active Mods, formulas, and sandbox channel.
@@ -763,7 +765,7 @@ Unknown branches are not deleted automatically. Review the warning, then explici
 
 ### 14.6 `!ga-config list` Is Not a Full Backup
 
-The `GameAssist Config` handout contains flags, global config, and module config only. It excludes runtime caches, metrics, and unknown state branches. v0.1.4.2 cannot import the snapshot.
+The `GameAssist Config` handout contains flags, global config, and module config only. It excludes runtime caches, metrics, and unknown state branches. v0.1.4.3 cannot import the snapshot.
 
 Use it for configuration review and upgrade comparison—not as a full restore mechanism.
 
@@ -821,6 +823,13 @@ Select the affected token and run:
 
 Confirm TokenMod is installed or manually verified when dependency status is `unverifiable`.
 
+`!concentration --status` reads markers directly and should still respond when TokenMod detection is `unverifiable`. If it reports that the configured marker cannot be recognized, run:
+
+```roll20chat
+!token-mod --help-statusmarkers
+!ga-config set ConcentrationTracker marker=<name-or-tag>
+```
+
 ### 14.10 NPC HP Does Not Roll
 
 Confirm the token:
@@ -869,7 +878,7 @@ That evidence is far more useful than “it stopped working.”
 
 ## 15 · Upgrade Paths <a id="15-upgrade-paths"></a>
 
-### 15.1 Recommended Upgrade: v0.1.4.1 → v0.1.4.2
+### 15.1 Recommended Upgrade: v0.1.4.2 → v0.1.4.3
 
 I. **Freeze the Current Working Script**
 
@@ -881,7 +890,7 @@ I. **Freeze the Current Working Script**
 
 II. **Replace the Script**
 
-1. Replace the Roll20 script contents with the complete `GameAssist-v0.1.4.2.js`.
+1. Replace the Roll20 script contents with the complete `GameAssist-v0.1.4.3`.
 2. Save/reload the API sandbox.
 3. Do not combine partial sections from multiple releases unless you are deliberately performing a MECHSUITS whole-section update and have reviewed the ancestor contracts.
 
@@ -906,7 +915,7 @@ IV. **Verify Configuration**
 !ga-config get DebugTools
 ```
 
-v0.1.4.2 repairs known malformed containers while preserving valid existing config.
+v0.1.4.3 retains the known-container repairs from v0.1.4.2 while preserving valid existing config.
 
 V. **Run the Smoke Test**
 
@@ -914,7 +923,7 @@ Use [§4.1 Minimum Smoke Test](#41-minimum-smoke-test), including real HP, conce
 
 ### 15.2 Rollback
 
-If v0.1.4.2 fails its smoke test:
+If v0.1.4.3 fails its smoke test:
 
 1. Replace it with your complete previous working script.
 2. Save/reload.
@@ -1000,7 +1009,7 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 
 ### 17.1 Current Status
 
-| Item | Status in v0.1.4.2 | Notes |
+| Item | Status in v0.1.4.3 | Notes |
 | --- | --- | --- |
 | Auto HP roll on NPC token add | **Implemented, opt-in** | `NPCHPRoller.autoRollOnAdd`, default `false`. |
 | Session metrics and logging | **Implemented, basic** | `!ga-status` and `!ga-metrics`; not a full profiler. |
@@ -1008,18 +1017,18 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 | State self-healing | **Implemented, conservative** | Repairs known containers; does not auto-delete unknown branches. |
 | Dependency diagnostics | **Implemented, best-effort** | Confirmed/missing/unverifiable; not guaranteed discovery. |
 | Public queue API | **Implemented, opt-in** | Does not route every event through the queue. |
-| Native Mord character-sheet support | **Deferred** | Begin only after v0.1.4.2 passes Roll20 smoke tests and is frozen. |
+| Native Mord character-sheet support | **Deferred** | Begin after the agreed GameAssist architecture foundation is stable; track sequencing in `ROADMAP.md`. |
 
 ### 17.2 Near-Term Candidate: Compatibility-First Bridge Character Sheet
 
-After v0.1.4.2 is confirmed stable in Roll20, the recommended next project is a bridge character sheet that:
+After the GameAssist architecture foundation is confirmed stable in Roll20, the recommended character-sheet project is a bridge sheet that:
 
 * preserves existing GameAssist command behavior,
 * exposes reliable attributes for linked-token modules,
 * defines clear NPC, HP-formula, save-bonus, and roll-template contracts,
 * avoids requiring another broad GameAssist kernel rewrite.
 
-This is a separate project and is not implemented in v0.1.4.2.
+This is a separate project and is not implemented in v0.1.4.3.
 
 ### 17.3 Deferred GameAssist Features
 
@@ -1056,7 +1065,7 @@ This is a separate project and is not implemented in v0.1.4.2.
    * Additional table examples.
    * Campaign-tested compatibility notes.
 
-### 17.4 Explicit Non-Goals for v0.1.4.2
+### 17.4 Explicit Non-Goals for v0.1.4.x
 
 * No implicit queueing of every command or event.
 * No claim that the watchdog can kill running work.
@@ -1068,6 +1077,15 @@ This is a separate project and is not implemented in v0.1.4.2.
 ---
 
 ## 18 · Changelog <a id="18-changelog"></a>
+
+### v0.1.4.3 – Concentration Marker Recognition
+
+* Resolved custom marker display names to the exact tags Roll20 stores on tokens.
+* Preserved literal lowercase built-in marker ids such as `dead`.
+* Made `!concentration --status` report unrecognized marker configuration clearly.
+* Sent resolved marker tags to TokenMod for concentration add/remove/teardown requests.
+* Preserved standalone TokenMod as the v0.1.4.x marker-mutation dependency.
+* Kept Issue #20 open for live Roll20 sandbox confirmation.
 
 ### v0.1.4.2 – Diagnostic and Migration Readiness
 
@@ -1090,7 +1108,7 @@ This is a separate project and is not implemented in v0.1.4.2.
 * Preserved Roll20’s captured native `on` strategy.
 * Structured the executable file around MECHSUITS v1.5.2 requirements.
 
-For the release-specific verification checklist, see `GameAssist-v0.1.4.2-release-notes-and-smoke-test.md`.
+For the current verification checklist, see `Smoketest.md`.
 
 ---
 
