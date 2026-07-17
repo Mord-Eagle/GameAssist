@@ -397,7 +397,7 @@ Before opening or updating a pull request against `Roll20/roll20-api-scripts`, c
 * `script.json` points at the actual script artifact: `"script": "GameAssist"`.
 * `script.json` includes current `version`, `previousversions`, detailed `description`, `authors`, `roll20userid`, `dependencies`, `modifies`, `conflicts`, and command list.
 * The top script header includes name, version, last updated date, description, syntax/commands, dependency notes, and configuration pointers.
-* Included file types are accepted by the Roll20 API repo: script text, Markdown, JSON, and license text.
+* Included file types match Roll20 API repo expectations. Note: the current GameAssist repository uses an extensionless `GameAssist` script artifact because `script.json` points to that file; before an upstream PR, confirm whether Roll20 reviewers want that retained or want a `.js` submission artifact.
 * README and smoke test describe the current version and do not promise unverified sandbox behavior.
 * MIT license is present.
 * After the Roll20 repo PR is accepted, update the Roll20 Community Wiki API Script Index if appropriate.

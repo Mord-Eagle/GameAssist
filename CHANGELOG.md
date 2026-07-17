@@ -1379,7 +1379,7 @@ v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It
 ### Documentation
 
 - Updated `README.md` with the bucket hierarchy, NPCManager module version, handout names, help command, arc commands, scope options, and audit-handout behavior.
-- Added a Roll20 API repository readiness checklist to `README.md` covering folder/script naming, `script.json`, header, file types, smoke-test language, license, and post-merge wiki upkeep.
+- Added a Roll20 API repository readiness checklist to `README.md` covering folder/script naming, `script.json`, header, file types, smoke-test language, license, post-merge wiki upkeep, and the extensionless `GameAssist` versus `.js` submission-artifact check.
 - Updated `Smoketest.md` so the quick and in-depth NPCManager checks verify the help menu, bucket panels, report handouts, audit handouts, scoped clearing, and arc help/session import.
 - Updated `ROADMAP.md` to record Issue #22 as scoped death-history buckets and handouts rather than a summary-only report pass.
 - Updated `script.json` to version `0.1.4.5`, add `0.1.4.4` to `previousversions`, and list the expanded NPCManager command surface including `!npc-death-help`.
