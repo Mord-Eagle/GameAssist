@@ -1102,7 +1102,7 @@ The nested action always retains parent levels above the selected level.
 
 #### G5d. Date-Managed Session
 
-The default Session uses the sandbox's UTC date in `YYYY-MM-DD` form. When that UTC date changes, the next NPCManager command or qualifying NPC HP change must switch to the new date-named Session before recording or reporting activity. Existing dated Session history and its handout remain available.
+The default Session uses the sandbox's UTC date in `YYYY-MM-DD` form. When that UTC date changes, the next NPCManager command or qualifying NPC HP change must switch a date-managed Session to the new date before recording or reporting activity. Existing dated Session history and its handout remain available. An explicitly named Session must remain unchanged across date boundaries; **Reset Session Date** restores automatic rollover.
 
 This boundary is easiest to confirm during a test that crosses midnight UTC. v0.1.4.5 does not yet offer a fake-clock command. A DM-selected timezone is tracked separately in GitHub Issue #35.
 

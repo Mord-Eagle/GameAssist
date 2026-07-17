@@ -1293,6 +1293,7 @@ v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It
 - Changing a bucket name starts or resumes that named bucket. Existing bucket records and handouts are retained instead of being deleted.
 - Every newly recorded NPC death is copied into all four active buckets so Session history can be cleared while Chapter, Section, and Campaign history remain available.
 - Added a lazy date-boundary check before every NPCManager command and tracked NPC HP event. A date-managed Session moves to the current sandbox/UTC `YYYY-MM-DD` name before new activity is processed; prior dated buckets and handouts remain available.
+- Explicitly named Sessions remain active across date changes. `!npc-death-buckets --resetSession` restores the current UTC date and re-enables automatic date-managed rollover.
 - Tracked DM-configurable timezone formatting and date boundaries separately in [Issue #35](https://github.com/Mord-Eagle/GameAssist/issues/35). v0.1.4.5 does not reinterpret historical timestamps.
 
 ### Changed — death recording and revival handling
@@ -1307,6 +1308,7 @@ v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It
   - GameAssist annotates the most recent matching unrevived death entry;
   - the annotation is applied across stored buckets and arc entries where a matching entry exists;
   - GameAssist requests marker removal through TokenMod when the marker is present.
+- Revival annotations are saved even when an invalid marker configuration or failed TokenMod request prevents visual marker removal.
 - Revival annotations preserve history instead of silently deleting the death entry.
 
 ### Changed — death reports and handouts
@@ -1421,14 +1423,14 @@ The v0.1.4.4 artifact remains preserved. The current repository script and the n
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `21F08B3AB9F21DE9C752A160F32D4D6C7C816877B64FEAD2DC4220C863F7737D` |
-| `GameAssist-v0.1.4.5` | `21F08B3AB9F21DE9C752A160F32D4D6C7C816877B64FEAD2DC4220C863F7737D` |
+| `GameAssist` | `0DF894E6BE13B9B2703CDAA2272A281CE1CB4F3B933D9C5FDE413836505E54A8` |
+| `GameAssist-v0.1.4.5` | `0DF894E6BE13B9B2703CDAA2272A281CE1CB4F3B933D9C5FDE413836505E54A8` |
 
 Local Roll20 test copy:
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `outputs/GameAssist-v0.1.4.5-pr34-test.js` | `06C4FD3CB7DCA1A17206E6196DD07AAAE992E5AF480879A24D807749B7B03766` |
+| `outputs/GameAssist-v0.1.4.5-pr34-test.js` | `92A11BE382CE4547D98354EBB6E3E53F85C5967340EB449E1FD3C56ACB25B9E1` |
 
 ### Verification
 
@@ -1439,6 +1441,7 @@ Local Roll20 test copy:
 | `GameAssist` versus `GameAssist-v0.1.4.5` byte identity | Passed |
 | NPCManager review regression checks for migration, same-name tokens, scoped clearing, arc revival eligibility, and zero HP | Passed |
 | NPCManager behavioral harness: Arc deduplication/override/removal/undo, selected-only and nested clearing, Section seeding, and simulated date rollover | Passed (22 assertions) |
+| Copilot follow-up harness: custom Session retention, date-mode reset/rollover, and revival annotation despite marker-resolution failure | Passed (9 assertions) |
 | MECHSUITS section pairing, nesting, metadata, footers, and canonical-tree agreement | Passed (19 sections) |
 | `git diff --cached --check` | Passed |
 | Roll20 API sandbox acceptance checklist | Pending DM smoke test |

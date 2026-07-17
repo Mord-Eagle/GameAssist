@@ -3090,7 +3090,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
                     value: [
                         'Every new NPC death is recorded in all four active levels.',
                         'Session is the smallest unit. Section contains its sessions; Chapter contains its sections; Campaign contains everything.',
-                        'After the sandbox/UTC date changes, the next NPCManager command or tracked HP change starts a new date-named Session.',
+                        'When Session Date mode is active, the next NPCManager command or tracked HP change after a sandbox/UTC date change starts a new date-named Session.',
+                        'A custom Session name remains active across date changes until Reset Session Date is used.',
                         'Changing a bucket name starts or resumes that named history; it does not erase the old one.'
                     ]
                 },
@@ -3242,7 +3243,10 @@ description, syntax/commands, and configuration pointers near the top of the scr
                     names[scope] = next;
                     changed = true;
                 }
-                if (scope === 'session') runtime.state.activeSessionDateKey = currentSessionDateKey();
+                if (scope === 'session') {
+                    runtime.state.activeSessionDateKey = currentSessionDateKey();
+                    runtime.state.sessionDateManaged = false;
+                }
             });
 
             if (args.resetSession) {
@@ -3252,6 +3256,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
                     changed = true;
                 }
                 runtime.state.activeSessionDateKey = next;
+                runtime.state.sessionDateManaged = true;
             }
 
             if (changed) writeActiveBucketHandouts();
@@ -3264,16 +3269,22 @@ description, syntax/commands, and configuration pointers near the top of the scr
             const currentDate = currentSessionDateKey();
             const previousDate = runtime.state.activeSessionDateKey;
             const sessionLooksDateNamed = /^\d{4}-\d{2}-\d{2}$/.test(names.session);
+            if (runtime.state.sessionDateManaged === undefined) {
+                runtime.state.sessionDateManaged = sessionLooksDateNamed;
+            }
+            const sessionDateManaged = Boolean(runtime.state.sessionDateManaged);
 
             if (!previousDate) {
                 runtime.state.activeSessionDateKey = currentDate;
-                if (!sessionLooksDateNamed || names.session === currentDate) return false;
+                if (!sessionDateManaged || names.session === currentDate) return false;
             } else if (previousDate === currentDate) {
                 return false;
             }
 
-            const previousName = names.session;
             runtime.state.activeSessionDateKey = currentDate;
+            if (!sessionDateManaged) return false;
+
+            const previousName = names.session;
             names.session = currentDate;
             const bucket = getActiveBucket('session');
             writeBucketHandout(bucket);
@@ -3726,8 +3737,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
                 recordDeathInBuckets(deathEventIdentity(token, hp));
             } else if (hp >= 1) {
-                if (isDead && !requestDeathMarker(token, false)) return;
                 const annotated = annotateRevivalInBuckets(token, hp);
+                if (isDead) requestDeathMarker(token, false);
                 if (isDead || annotated) {
                     GameAssist.log('NPCManager', `${token.get('name')} revived (HP: ${hp})`);
                 }
@@ -4030,8 +4041,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // --- Notes & Comments ---
     // CHOICE: TokenMod used for status marker ops; keep dependency explicit in README.
     // CHOICE: Arc rosters identify a creature by token before legacy character/name fallbacks — ALT: character-only identity; REJECTED: multiple NPC tokens may share one character sheet.
-    // Changed (v0.1.4.5): NPCManager module_version advanced from 1.0.0 to 1.1.0 with default Arc deduplication, intentional duplicate override, per-entry/selected removal, last-addition undo, selected-only or nested clearing, automatic date-session rollover, a report writer, and the !npc-wr shorthand.
-    // Changed (v0.1.4.5): NPCManager module_version advanced to 1.0.0 because the module state model and user workflow changed from a single death log to scoped bucket and handout management.
+    // Changed (v0.1.4.5): NPCManager module_version advanced from 0.1.1.0 to 1.0.0 for scoped bucket/handout management, then to 1.1.0 for Arc curation, hierarchical clearing, date-managed Sessions, and report writing.
+    // Changed (v0.1.4.5): Explicit Session names now remain active across date changes; Reset Session Date re-enables automatic UTC date rollover.
+    // Changed (v0.1.4.5): Revival history annotations no longer depend on successful TokenMod marker removal.
     // Changed (v0.1.4.5): Added !npc-death-help as the GM-facing start-here menu for bucket naming, reports, audits, and arc handouts.
     // Changed (v0.1.4.5): NPC death history now records into active Campaign/Chapter/Section/Session buckets independently of marker-write success, updates one handout per bucket, annotates revivals on matching entries, moves audit details into a handout, and adds manual arc buckets for selected linked PC/NPC tokens or current-session deaths.
     // Changed (v0.1.4.5): Renamed the arc command to !npc-death-arc and hardened migration, same-name token matching, scoped-clear duplicate prevention, zero-HP capture, and death-only revival annotations in arc handouts.
