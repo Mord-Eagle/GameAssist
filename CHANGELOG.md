@@ -1054,7 +1054,8 @@ The following corrections supersede inaccurate or temporary wording in the prese
 
 | Revision | Status | Repository role |
 | --- | --- | --- |
-| **v0.1.4.3** | Pre-release | Concentration custom-marker recognition and standalone TokenMod interoperability update |
+| **v0.1.4.4** | Pre-release | DM-facing CritFumble help and NPC death-audit readability update |
+| **v0.1.4.3** | Previous complete script | Concentration custom-marker recognition and standalone TokenMod interoperability update |
 | **v0.1.4.2** | Previous complete script | Diagnostic and migration-readiness release with a known concentration custom-marker limitation |
 | **v0.1.4.1** | Historical release; script not retained | Stability-focused repair based on v0.1.4 |
 | **v0.1.4** | Historical baseline | Preserved as `GameAssist v0.1.4` |
@@ -1179,3 +1180,77 @@ MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
 - No native Mord character-sheet support.
 
 ---
+
+## [0.1.4.4] – 2026-07-17
+
+### Release definition
+
+v0.1.4.4 is a small DM-facing readability release. It preserves the v0.1.4.3 marker-recognition and standalone TokenMod interoperability fixes while improving two chat outputs identified in Issue #21.
+
+### Issue addressed
+
+- [#21](https://github.com/Mord-Eagle/GameAssist/issues/21) — Make CritFumble help and NPC death-audit output human-readable.
+
+### Changed — DM-facing command output
+
+- Revised `!critfumble help` from a command list into a quick reference with an `Open Natural 1 Menu` button, common commands, attack types, and exact setup table names.
+- Added `!critfumble menu` as the public CritFumble-family command for opening the guided Natural 1 dialogue.
+- Added bare `!critfumble` as a help alias, so entering the feature command without a subcommand opens the guide instead of silently doing nothing.
+- Preserved `!critfail` as the direct GM player-picker command.
+- Preserved existing CritFumble command syntax:
+  - `!critfail`
+  - `!critfumble`
+  - `!critfumble help`
+  - `!critfumble menu`
+  - `!critfumble-TYPE`
+  - `!confirm-crit-martial`
+  - `!confirm-crit-magic`
+- Changed `!npc-death-audit` from multiple line-by-line log messages into one grouped GM report.
+- Added an audit `Scope` row stating that linked NPC tokens are checked and player characters are not included.
+- Grouped audit mismatches by action: `Add Marker` for dead NPCs missing the configured marker, and `Clear Marker` for living NPCs still carrying it.
+- Preserved useful mismatch details: NPC name, HP, current markers, and token ID.
+- Bounded each audit mismatch detail group while preserving total counts, so crowded pages do not produce one oversized Roll20 chat payload.
+- Kept unrelated unlinked-page-item notes as informational context, so party markers, scenery, labels, and props do not read like errors.
+
+### Documentation
+
+- Updated `Smoketest.md` so DMs no longer need to reinterpret the old audit success message.
+- Updated the CritFumble smoke test to check the quick-reference help panel, the bare `!critfumble` help alias, the `!critfumble menu` guided dialogue, and the unchanged `!critfail` player picker.
+- Updated `README.md` to describe the quick reference, guided menu, direct player picker, and the meaning of a clean NPC death audit.
+- Updated `ROADMAP.md` so #21, #22, and #23 precede the #24 standalone-interoperability umbrella, with #32 explicitly deferred after the existing issue queue.
+
+### Review fixes
+
+- Hardened `!critfumble help` and `!critfumble menu` matching so extra internal whitespace is accepted.
+- Hardened direct fumble rolls so mixed-case commands such as `!CritFumble-melee` resolve the intended fumble type.
+- Added a POLICY-owned `npcAuditDetailLimit` cap for grouped NPC death-audit reports.
+- Corrected `script.json` so `script` points to the repository's actual `GameAssist` artifact instead of nonexistent `GameAssist.js`.
+- Added `!critfumble help` and `!critfumble menu` to the script metadata command list.
+
+### MECHSUITS records
+
+- Updated `[GAMEASSIST:MODULES:CRITFUMBLE]` because the public help output changed.
+- Updated `[GAMEASSIST:MODULES:NPCMANAGER]` because the public audit success output changed.
+- Updated `[GAMEASSIST:POLICY]` because the NPC death-audit detail cap is a runtime behavior knob.
+- Updated `[GAMEASSIST:CORE]` because the runtime `VERSION` constant advanced.
+- Preserved existing section tags, codename `GAMEASSIST`, and command names.
+
+### Release artifacts
+
+The v0.1.4.3 artifact remains preserved. The current repository script and the new v0.1.4.4 versioned artifact share:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `GameAssist` | `DB68D6467D698FEF25D416394FFD07F6F44EF2E2361D9DBA9F198A0DAA41D091` |
+| `GameAssist-v0.1.4.4` | `DB68D6467D698FEF25D416394FFD07F6F44EF2E2361D9DBA9F198A0DAA41D091` |
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| `node --check .\GameAssist` | Passed |
+| `GameAssist-v0.1.4.4` syntax via stdin check | Passed |
+| `GameAssist` versus `GameAssist-v0.1.4.4` byte identity | Passed |
+| `git diff --check` | Passed |
+
+Roll20 API sandbox confirmation is still required for the final release gate.
