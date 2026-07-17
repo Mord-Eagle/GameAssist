@@ -2430,8 +2430,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         const DEFAULT_BUCKET_NAMES = {
             campaign: 'Campaign',
             chapter: 'Chapter',
-            section: 'Section',
-            session: new Date(now()).toISOString().slice(0, 10)
+            section: 'Section'
         };
         const NESTED_BUCKET_SCOPES = {
             campaign: ['campaign', 'chapter', 'section', 'session'],
@@ -4071,6 +4070,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // --- Notes & Comments ---
     // CHOICE: TokenMod used for status marker ops; keep dependency explicit in README.
     // CHOICE: Arc rosters identify a creature by token before legacy character/name fallbacks — ALT: character-only identity; REJECTED: multiple NPC tokens may share one character sheet.
+    // Maintenance (v0.1.4.5, no semantic change): Removed the unused init-time Session default; live Session defaults continue to come from currentSessionDateKey().
     // Changed (v0.1.4.5): NPCManager module_version advanced from 0.1.1.0 to 1.0.0 for scoped bucket/handout management, then to 1.1.0 for Arc curation, hierarchical clearing, date-managed Sessions, and report writing.
     // Changed (v0.1.4.5): Explicit Session names now remain active across date changes; Reset Session Date re-enables automatic UTC date rollover.
     // Changed (v0.1.4.5): Revival history annotations no longer depend on successful TokenMod marker removal.

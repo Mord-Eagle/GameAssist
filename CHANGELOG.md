@@ -1371,6 +1371,7 @@ v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It
 
 ### Changed — review hardening
 
+- Removed the unused init-time Session entry from `DEFAULT_BUCKET_NAMES`. Session defaults continue to call `currentSessionDateKey()` when needed, preserving date rollover while avoiding a misleading frozen-date fallback.
 - Added opt-in `preserveRuntimeOnDisable` module-registration metadata. Existing modules continue clearing disposable runtime caches by default.
 - NPCManager enables runtime retention so disabling marker automation no longer erases saved Campaign, Chapter, Section, Session, or Arc records; configured-marker teardown still runs.
 - Open-death deduplication now requires an exact token ID. Legacy name-only entries remain available in reports but cannot suppress a new death for a different same-named NPC.
@@ -1427,14 +1428,14 @@ The v0.1.4.4 artifact remains preserved. The current repository script and the n
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `7758777483020327F87D5EA90A11A788773B4FAE7B653BD496D3C745DAA81720` |
-| `GameAssist-v0.1.4.5` | `7758777483020327F87D5EA90A11A788773B4FAE7B653BD496D3C745DAA81720` |
+| `GameAssist` | `F6D9AAE9906C4ACF5494861032F8CCB50709B3FCA06454EC4116CD6D03577578` |
+| `GameAssist-v0.1.4.5` | `F6D9AAE9906C4ACF5494861032F8CCB50709B3FCA06454EC4116CD6D03577578` |
 
 Local Roll20 test copy:
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `outputs/GameAssist-v0.1.4.5-pr34-test.js` | `E73A98E5DD49A070349D204B484DFEA3CF3EFDBDE8FC55C6D401A1A495DF5D75` |
+| `outputs/GameAssist-v0.1.4.5-pr34-test.js` | `95487BA6297884561CE3F51667E84B13990246151B924D9F9638742AD11C0950` |
 
 ### Verification
 
