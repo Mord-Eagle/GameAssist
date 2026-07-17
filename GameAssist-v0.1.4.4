@@ -2041,11 +2041,23 @@ description, syntax/commands, and configuration pointers near the top of the scr
             thrown:  'CF-Thrown'
         };
         const FUMBLE_TYPE_ORDER = ['melee', 'ranged', 'thrown', 'spell', 'natural'];
+        const FUMBLE_TYPE_HELP = {
+            melee:   'Melee weapon or close attack.',
+            ranged:  'Bow, crossbow, firearm, or other aimed ranged attack.',
+            thrown:  'Thrown dagger, javelin, rock, or similar thrown weapon.',
+            spell:   'Spell attack roll.',
+            natural: 'Unarmed strike, bite, claw, or other body/natural attack.'
+        };
         // Lookup for confirm tables
         const CONFIRM_TABLES = {
             'confirm-crit-martial': 'Confirm-Crit-Martial',
             'confirm-crit-magic':   'Confirm-Crit-Magic'
         };
+        const REQUIRED_TABLES = [
+            ...FUMBLE_TYPE_ORDER.map(type => FUMBLE_TABLES[type]),
+            'Confirm-Crit-Martial',
+            'Confirm-Crit-Magic'
+        ];
 
         function ensureCritFumbleRuntime() {
             const runtime = ensureRuntimeObject(modState);
@@ -2238,17 +2250,22 @@ description, syntax/commands, and configuration pointers near the top of the scr
         }
 
         function showHelpMessage(who) {
-            const fumbleCommandLines = FUMBLE_TYPE_ORDER
-                .map(type => `!critfumble-${type}`)
+            const typeLines = FUMBLE_TYPE_ORDER
+                .map(type => `${type} - ${FUMBLE_TYPE_HELP[type]}`)
+                .join('<br>');
+            const directCommandLines = FUMBLE_TYPE_ORDER
+                .map(type => `!critfumble-${type} - roll ${FUMBLE_TABLES[type]}`)
                 .join('<br>');
             sendTemplateMessage(who, "📘 CritFumble Help", [
                 { label: "Version",     value: "v0.2.4.9" },
-                { label: "What It Does", value: "Auto-detects natural-1 attacks and offers the attacker a fumble menu. GMs can also trigger the menu manually." },
-                { label: "Manual Trigger", value: "!critfail - GM opens a player-selection menu." },
-                { label: "Help", value: "!critfumble help - Show this help panel." },
-                { label: "Fumble Rolls", value: fumbleCommandLines },
-                { label: "Command Pattern", value: "!critfumble-<type>, where type is: " + FUMBLE_TYPE_ORDER.join(', ') },
-                { label: "Confirm Criticals", value: "!confirm-crit-martial<br>!confirm-crit-magic" }
+                { label: "What This Does", value: "Helps resolve critical misses. When an attack roll is a natural 1, GameAssist can offer the attacker a fumble menu. The GM can also trigger that menu manually." },
+                { label: "Most DMs Use", value: "!critfail - opens a GM player picker. Choose the player who made the critical miss; that player receives the fumble menu." },
+                { label: "Automatic Use", value: "Supported Roll20 attack templates can trigger the same menu automatically when they show a natural 1." },
+                { label: "Player Chooses", value: typeLines },
+                { label: "Direct Roll Commands", value: "Use these when you already know the attack type:<br>" + directCommandLines },
+                { label: "Confirm Critical Miss", value: "!confirm-crit-martial - weapon or martial confirmation<br>!confirm-crit-magic - magical confirmation" },
+                { label: "Required Tables", value: REQUIRED_TABLES.join('<br>') },
+                { label: "If A Roll Fails", value: "Check the rollable table names first. Missing or misspelled tables make the roll fail even when GameAssist is responding correctly." }
             ]);
         }
 
@@ -2326,7 +2343,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // Bugfix retained: robust natural‑1 detection across templates/inlineroll variants.
-    // Changed (v0.1.4.4): CritFumble help now separates manual, help, fumble, and confirmation commands into readable rows for DMs.
+    // Changed (v0.1.4.4): CritFumble help now explains the DM workflow, attack types, required tables, direct commands, and table-name troubleshooting.
     // Maintenance (v0.1.4.3, no semantic change): Reworded an internal comment for collaborator clarity.
     // Maintenance (v0.1.4.1, no semantic change): Routed unchanged defaults through POLICY and timestamps through now().
     // Prior notes:

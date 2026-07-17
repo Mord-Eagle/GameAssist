@@ -1193,11 +1193,11 @@ v0.1.4.4 is a small DM-facing readability release. It preserves the v0.1.4.3 mar
 
 ### Changed — DM-facing command output
 
-- Revised `!critfumble help` so the help panel separates the manual trigger, help command, fumble commands, valid fumble types, and confirmation commands into readable rows instead of one dense command list.
+- Revised `!critfumble help` from a command list into a DM-facing mini-guide covering common use, automatic natural-1 behavior, fumble types, direct roll commands, required rollable tables, and table-name troubleshooting.
 - Preserved the existing CritFumble command syntax:
   - `!critfail`
   - `!critfumble help`
-  - `!critfumble-<type>`
+  - `!critfumble-TYPE`
   - `!confirm-crit-martial`
   - `!confirm-crit-magic`
 - Changed the `!npc-death-audit` clean result from a living-only phrasing to: no HP/death-marker mismatches were found on qualifying current-page NPCs, with correctly marked dead NPCs intentionally omitted.
@@ -1206,8 +1206,8 @@ v0.1.4.4 is a small DM-facing readability release. It preserves the v0.1.4.3 mar
 ### Documentation
 
 - Updated `Smoketest.md` so DMs no longer need to reinterpret the old audit success message.
-- Updated the CritFumble smoke test to expect a readable help panel rather than merely any response.
-- Updated `README.md` to describe the clearer help panel and the meaning of a clean NPC death audit.
+- Updated the CritFumble smoke test to check for a DM-usable mini-guide rather than merely any response.
+- Updated `README.md` to describe the help panel as a quick-use/setup/troubleshooting guide and to document the meaning of a clean NPC death audit.
 - Updated `ROADMAP.md` so #21, #22, and #23 precede the #24 standalone-interoperability umbrella, with #32 explicitly deferred after the existing issue queue.
 
 ### MECHSUITS records
@@ -1223,8 +1223,8 @@ The v0.1.4.3 artifact remains preserved. The current repository script and the n
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `CAF3D1FE7281175F493AE6B4214D859AF2D35CDE3A82B4FB01D50B479F9B3589` |
-| `GameAssist-v0.1.4.4` | `CAF3D1FE7281175F493AE6B4214D859AF2D35CDE3A82B4FB01D50B479F9B3589` |
+| `GameAssist` | `0BB97BA68F87CC61D4ABA05C1AC1AF8EB06B55029CF5C7569E4D6D0D16E6CB82` |
+| `GameAssist-v0.1.4.4` | `0BB97BA68F87CC61D4ABA05C1AC1AF8EB06B55029CF5C7569E4D6D0D16E6CB82` |
 
 ### Verification
 

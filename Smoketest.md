@@ -199,10 +199,14 @@ Run:
 ### Expected
 
 - A CritFumble help panel appears.
-- The help panel separates the manual trigger, help command, fumble commands, valid fumble types, and confirmation commands.
+- The help panel explains the common GM workflow with `!critfail`.
+- The help panel explains automatic natural-1 use in plain language.
+- The help panel describes the fumble types in DM terms: melee, ranged, thrown, spell, and natural.
+- The help panel lists the direct roll commands and the required rollable tables.
+- The help panel includes a troubleshooting hint for missing or misspelled rollable tables.
 - This test does not require the rollable tables.
 
-Receiving a readable help panel is the pass condition for this check.
+Receiving a help panel that a DM can use without already knowing the command system is the pass condition for this check.
 
 ### Optional Table Test
 
@@ -662,7 +666,7 @@ Run:
 !critfumble help
 ```
 
-Expected: CritFumble help appears with separate lines or rows for the manual trigger, help command, fumble commands, valid fumble types, and confirmation commands.
+Expected: CritFumble help appears as a DM-facing mini-guide: common workflow, automatic use, fumble types, direct roll commands, required rollable tables, and a troubleshooting hint.
 
 ### E2. Manual GM Menu
 

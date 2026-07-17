@@ -220,7 +220,7 @@ atk, atkdmg, npcatk, npcfullatk, npcaction, spell, simple, dmg, default
 Commands:
 
 * `!critfail` → Open the manual fumble prompt.
-* `!critfumble help` → Whisper the CritFumble help panel with commands split into readable lines.
+* `!critfumble help` → Whisper a DM-facing mini-guide with quick use, setup tables, attack types, direct commands, and troubleshooting.
 * `!critfumble-melee|ranged|thrown|spell|natural` → Roll the selected fumble table.
 * `!confirm-crit-martial` / `!confirm-crit-magic` → Roll the matching confirmation table.
 
