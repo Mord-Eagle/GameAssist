@@ -4,7 +4,7 @@ Use this checklist after installing or updating GameAssist to confirm the Roll20
 
 The first section is a quick confidence pass for DMs. It prioritizes easy wins without promising a specific completion time. The second section contains deeper tests for troubleshooting individual modules.
 
-> **Current target:** GameAssist v0.1.4.2
+> **Current target:** GameAssist v0.1.4.3
 
 Roll20 usually calls the person running the game the **GM**. This guide uses GM and DM interchangeably.
 
@@ -47,7 +47,7 @@ For example:
 
 After installing or updating GameAssist, save the script and wait for Roll20's API sandbox to restart before running the checks below. Use a test page or disposable tokens whenever possible. Install TokenMod if you use NPCManager or ConcentrationTracker.
 
-The core-ready whisper should report GameAssist v0.1.4.2. You may not see one ready message for every module because module-specific startup messages are normally kept quiet.
+The core-ready whisper should report GameAssist v0.1.4.3. You may not see one ready message for every module because module-specific startup messages are normally kept quiet.
 
 Stop and troubleshoot before continuing if the sandbox repeatedly restarts, the API Console shows a new GameAssist `SyntaxError` or `ReferenceError`, or no GameAssist command responds.
 
@@ -68,7 +68,7 @@ Run:
 Your numbers and timestamp will vary. A healthy default response commonly has this shape:
 
 ```text
-(From GameAssist): ℹ️ [3:12:19 AM] [Status] GameAssist 0.1.4.2 Status
+(From GameAssist): ℹ️ [3:12:19 AM] [Status] GameAssist 0.1.4.3 Status
 Commands: 1
 Messages: 10
 Errors: 0
@@ -85,11 +85,11 @@ Dependency Warnings: NPCManager: unverifiable (TokenMod) | ConcentrationTracker:
 
 | Line | What It Means | Healthy Result |
 | --- | --- | --- |
-| `GameAssist 0.1.4.2 Status` | Confirms the running GameAssist version. | Shows the version you installed. |
+| `GameAssist 0.1.4.3 Status` | Confirms the running GameAssist version. | Shows the version you installed. |
 | `Commands` | Commands recorded through GameAssist's core command handler during this sandbox session. Running `!ga-status` counts as one. | Any reasonable number; it increases as commands are used. |
 | `Messages` | Roll20 events handled by running GameAssist modules during this sandbox session. | Any reasonable number; it varies with sandbox activity. |
 | `Errors` | Problems GameAssist recorded during this sandbox session. | Normally `0`. Investigate any nonzero value. |
-| `Avg Task Duration: N/Ams` | No explicit queued task has supplied a measurable duration yet. The `N/Ams` wording is awkward but expected in v0.1.4.2. | `N/Ams` is healthy before queued work is measured; a numeric duration is also valid. |
+| `Avg Task Duration: N/Ams` | No explicit queued task duration has been recorded yet. | `N/Ams` before queued work is measured; a numeric duration is also valid. |
 | `Queue Length` | Explicit queued jobs currently waiting. | `0` while idle. A temporary nonzero value may occur during module changes. |
 | `Queue Mode` | Reminder that ordinary commands/events run directly and only selected work uses the queue. | Informational; the shown sentence is expected. |
 | `Last Update` | Most recent GameAssist activity time, shown in UTC. | A recent timestamp; it changes whenever activity is recorded. |
@@ -201,7 +201,7 @@ Run:
 - A CritFumble help panel appears.
 - This test does not require the rollable tables.
 
-The current help panel is dense and not especially easy to read. For v0.1.4.2, receiving the panel is the pass condition. Improving its layout is a v0.1.4.3 presentation task.
+Receiving the help panel is the pass condition for this check; its visual layout is not evaluated here.
 
 ### Optional Table Test
 
@@ -228,12 +228,14 @@ If you use ConcentrationTracker, run:
 You receive either:
 
 - a list of concentrating tokens; or
-- `No tokens concentrating.`
+- `No tokens concentrating.`; or
+- an actionable warning that the configured marker could not be recognized.
 
 ### What a Failure Looks Like
 
 - **No response at all:** the command check failed. Confirm ConcentrationTracker shows `config ✅` and `runtime 🟢`. Do not assume `deps unverifiable (TokenMod)` explains the silence.
-- **`No tokens concentrating.` while a current-page token visibly has the configured concentration marker:** marker detection failed and should be investigated.
+- **An unrecognized-marker warning:** run `!token-mod --help-statusmarkers`, then repair the setting with `!ga-config set ConcentrationTracker marker=<name-or-tag>`.
+- **`No tokens concentrating.` while a current-page token visibly has the configured concentration marker:** marker detection failed and should be investigated; v0.1.4.3 resolves custom display names to their stored Roll20 tags.
 - **The command responds correctly, but a prior concentration roll did not add or remove a marker:** test TokenMod directly; that is a marker-changing failure rather than a status-command failure.
 
 `!concentration --status` reads existing markers directly. TokenMod is needed to change markers, but it is not needed merely to produce a status response.
@@ -258,11 +260,11 @@ If you use NPCManager, run:
 
 A response saying marker states are correct is a successful audit, even when several NPCs are dead, as long as those NPCs have HP below 1 and the configured death marker.
 
-The current audit success message refers only to “Living NPCs,” which is misleading because the audit checks living and dead NPCs. Improving that message is a v0.1.4.3 wording task.
+The audit success message currently refers to “Living NPCs,” but the audit checks both living and dead NPCs. Interpret that message as “no HP/marker mismatches found.”
 
 TokenMod is used when NPCManager changes a marker. The audit itself reads existing token HP and markers directly, so an empty audit is not normally caused by TokenMod.
 
-The current death report can become a long list. A summarized report and selectable death-log pools for sessions, scenes, and campaigns are useful future features, but they are not present in v0.1.4.2.
+The death report lists recorded events individually and may be long in an established campaign.
 
 ---
 
@@ -395,7 +397,7 @@ Compare the result to the annotated healthy output in Part One.
 
 Check:
 
-- [ ] Version is `0.1.4.2`.
+- [ ] Version is `0.1.4.3`.
 - [ ] Errors are zero for a clean sandbox session, or every recorded error is understood.
 - [ ] Queue length returns to zero while idle.
 - [ ] Six modules are counted.
@@ -403,7 +405,7 @@ Check:
 - [ ] Any dependency warning is interpreted as `unverifiable` or `missing`, rather than treated as a generic failure.
 - [ ] Variable values such as Commands, Messages, Last Update, and Active Listeners are not being compared as exact fixed numbers.
 
-`Avg Task Duration: N/Ams` is currently expected when no queued task duration has been recorded. It is a v0.1.4.2 display quirk, not an error.
+`Avg Task Duration: N/Ams` is currently expected when no queued task duration has been recorded. It is a v0.1.4.3 display quirk, not an error.
 
 Remember that Roll20 restarts the API sandbox often. `Errors` describes problems recorded in the current sandbox session, not the lifetime of the campaign or installation.
 
@@ -530,11 +532,11 @@ Check:
 - [ ] `format` is `gameassist-config-snapshot`.
 - [ ] `schemaVersion` is `1`.
 - [ ] `scope` is `configuration-only`.
-- [ ] `version` is `0.1.4.2`.
+- [ ] `version` is `0.1.4.3`.
 - [ ] All six module configuration objects are present.
 - [ ] Runtime caches and metrics are not included.
 
-> This handout is a configuration snapshot, not a full-state backup, and v0.1.4.2 cannot import it.
+> This handout is a configuration snapshot, not a full-state backup, and v0.1.4.3 cannot import it.
 
 ### B5. Config UI Controls
 
@@ -661,7 +663,7 @@ Run:
 !critfumble help
 ```
 
-Expected: CritFumble help appears. Its current table-like presentation is dense; this test checks that the command responds, not that the v0.1.4.2 layout is ideal.
+Expected: CritFumble help appears. Its current table-like presentation is dense; this test checks that the command responds, not that the current layout is ideal.
 
 ### E2. Manual GM Menu
 
@@ -799,7 +801,7 @@ Run:
 
 Expected:
 
-- `--status` lists tokens with the configured concentration marker or reports none.
+- `--status` lists tokens with the configured concentration marker, reports none, or gives an actionable warning when the configured marker cannot be recognized.
 - `!ga-conc-status` summarizes recent recorded concentration activity.
 
 These commands report different things:
@@ -807,7 +809,7 @@ These commands report different things:
 - `!concentration --status` scans current-page token markers.
 - `!ga-conc-status` reports recently recorded concentration-check activity.
 
-If `!concentration --status` is completely silent, confirm ConcentrationTracker is running and record the failure for investigation. If it says no tokens are concentrating while a token visibly has the configured marker, marker detection failed. Neither result should be dismissed merely because dependency status says `unverifiable`.
+If `!concentration --status` is completely silent, confirm ConcentrationTracker is running and record the failure for investigation. If it gives an unrecognized-marker warning, follow the command shown in that warning. If it says no tokens are concentrating while a token visibly has the configured marker, marker detection failed. Neither result should be dismissed merely because dependency status says `unverifiable`.
 
 ### F6. Clear Marker
 
@@ -876,7 +878,7 @@ Run:
 
 Expected: The report lists every recorded death event or reports that none exist.
 
-This is an event-history command, not a current-page summary. In v0.1.4.2 it may produce a long message when many deaths have been recorded.
+This is an event-history command, not a current-page summary. In v0.1.4.3 it may produce a long message when many deaths have been recorded.
 
 ### G4. Death Audit
 
@@ -1285,6 +1287,8 @@ Inspect:
 !npc-death-audit
 !concentration --status
 ```
+
+In v0.1.4.3, a configured custom display name such as `Concentrating` should resolve to the exact stored tag automatically. If it cannot, the status command should provide a repair command instead of silently reporting the wrong result.
 
 Separate marker-changing failures from marker-reading failures:
 
