@@ -262,6 +262,7 @@ If you use NPCManager, run:
 
 ```roll20chat
 !npc-death-report
+!npc-death-buckets
 !npc-death-audit
 ```
 
@@ -269,18 +270,21 @@ If you use NPCManager, run:
 
 | Command | What It Does | What It Does Not Do |
 | --- | --- | --- |
-| `!npc-death-report` | Shows a recorded death-history summary, with buttons for recent/detail views. | It does not summarize the current page or check whether markers match HP. |
-| `!npc-death-audit` | Looks for contradictions between current bar 1 HP and the configured death marker. | It does not check player characters or list every NPC that is already correct. |
+| `!npc-death-report` | Shows the active Session death bucket, with buttons for recent/detail views. | It does not summarize the current page or check whether markers match HP. |
+| `!npc-death-buckets` | Shows the active Campaign, Chapter, Section, and Session bucket names and counts. | It does not erase existing bucket handouts when names change. |
+| `!npc-death-audit` | Looks for contradictions between current bar 1 HP and the configured death marker, then updates the audit handout. | It does not check player characters or list every NPC that is already correct in chat. |
 
-Expected: `!npc-death-report` returns one `NPC Death Report` panel. A clean/new session says no NPC deaths are recorded. A session with recorded deaths shows total recorded deaths, the latest death, most frequent names, recent entries, and buttons such as `Recent`, `Run Audit`, and `Clear Log`.
+Expected: `!npc-death-report` returns one `NPC Death Report` panel. A clean/new Session bucket says no NPC deaths are recorded. A bucket with recorded deaths shows the bucket name, total recorded deaths, the latest death, most frequent names, recent entries, action buttons, and the matching handout name.
 
-Expected: a single `NPC Death Audit` report. The `Scope` row should say that linked NPCs are checked and player characters are not included.
+Expected: `!npc-death-buckets` returns one `NPC Death Buckets` panel showing Campaign, Chapter, Section, and Session. The default Session name is the current date unless you already changed it.
 
-A clean audit says no death-marker problems were found for linked NPCs. A mismatch audit groups entries under `Add Marker` or `Clear Marker` and keeps each NPC's name, HP, markers, and token ID together. If many mismatches exist, the report keeps the total count but shows only the first few detailed rows so Roll20 chat stays usable. If the page has party markers, scenery, labels, or props, GameAssist may also mention ignored unlinked page items; that is normal.
+Expected: a single `NPC Death Audit` chat summary. The `Scope` row should say that linked NPCs are checked and player characters are not included. The `Detail Handout` row should point to `GameAssist NPC Death Audit`.
+
+A clean audit says no death-marker problems were found for linked NPCs. A mismatch audit gives counts in chat and writes the detailed token list to the audit handout. If the page has party markers, scenery, labels, or props, GameAssist may also mention ignored unlinked page items; that is normal.
 
 TokenMod is used when NPCManager changes a marker. The audit itself reads existing token HP and markers directly, so an empty audit is not normally caused by TokenMod.
 
-The death report no longer dumps the entire log by default. Use `!npc-death-report --recent` or `!npc-death-report --page 2` when you need details.
+The death report no longer dumps the entire bucket by default. Use `!npc-death-report --recent` or `!npc-death-report --page 2` when you need chat details, or open the bucket handout for the full saved history.
 
 ---
 
@@ -900,17 +904,19 @@ Run:
 !npc-death-report
 ```
 
-Expected in v0.1.4.5: The report opens as a summary dashboard. It should show a total, latest death, most frequent names, recent entries, and action buttons. It should not dump every historical entry by default.
+Expected in v0.1.4.5: The report opens as a summary dashboard for the active Session bucket. It should show a total, latest death, most frequent names, recent entries, and action buttons. It should not dump every bucket entry into chat by default.
+It should also name the active bucket handout, usually `GameAssist Deaths - Session - <date>`.
 
 Optional detail checks:
 
 ```roll20chat
 !npc-death-report --recent
 !npc-death-report --page 1
+!npc-death-report --scope campaign
 !npc-death-report --help
 ```
 
-Expected: recent/detail views remain bounded and readable.
+Expected: recent/detail views remain bounded and readable. Scope changes let the DM inspect Campaign, Chapter, Section, or Session history.
 
 ### G4. Death Audit
 
@@ -927,7 +933,7 @@ Then run:
 !npc-death-audit
 ```
 
-Expected: The mismatched NPC is listed with its HP and marker state.
+Expected: The chat summary reports the mismatch count and names the `GameAssist NPC Death Audit` handout. The handout lists the mismatched NPC with its HP and marker state.
 
 Restore the token to a correct state afterward.
 
@@ -941,21 +947,32 @@ For the token to be audited, it must:
 
 TokenMod is not needed for the audit to read existing HP and markers. If a deliberate qualifying mismatch is not listed, record it as an NPCManager audit failure.
 
-### G5. Clear Death Log
+### G5. Death Buckets and Clear Session Bucket
 
 Run:
 
 ```roll20chat
-!npc-death-clear
-!npc-death-clear --confirm
+!npc-death-buckets
+!npc-death-clear --scope session
+!npc-death-clear --scope session --confirm
 !npc-death-report
 ```
 
 Expected:
 
-- `!npc-death-clear` asks for confirmation before clearing.
-- Run `!npc-death-clear --confirm` to clear the log.
-- The next report says no deaths are recorded.
+- `!npc-death-buckets` shows Campaign, Chapter, Section, and Session bucket names and counts.
+- `!npc-death-clear --scope session` asks for confirmation before clearing the active Session bucket.
+- Run `!npc-death-clear --scope session --confirm` to clear only that bucket.
+- The next Session report says no deaths are recorded, while broader buckets are retained.
+
+Optional arc check:
+
+```roll20chat
+!npc-arc
+!npc-arc --name "Smoke Test Arc" --session
+```
+
+Expected: `!npc-arc` explains the arc command. The session import creates or updates `GameAssist Arc - Smoke Test Arc`; if the Session bucket is empty, GameAssist says no new entries were added.
 
 ### G6. Auto-Hide Warning
 

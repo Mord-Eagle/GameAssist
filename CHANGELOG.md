@@ -10,7 +10,7 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 | Revision | Status | Role |
 | --- | --- | --- |
-| **v0.1.4.5** | Pre-release; automated verification complete, Roll20 smoke confirmation pending | NPC death-log summary and navigation update |
+| **v0.1.4.5** | Pre-release; automated verification complete, Roll20 smoke confirmation pending | NPC death-history buckets, handouts, and arc notes |
 | **v0.1.4.4** | Merged release | DM-facing CritFumble help and NPC death-audit readability update |
 | **v0.1.4.2** | Release candidate; automated verification complete, Roll20 smoke confirmation pending | Diagnostic and migration-readiness release |
 | **v0.1.4.1** | Preserved rollback baseline | Stability-first repair of the uploaded v0.1.4 baseline |
@@ -24,7 +24,7 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ### Release-history notes
 
-- v0.1.4.2 is not treated as fully confirmed until the real Roll20 API sandbox smoke test passes.
+- v0.1.4.2 requires Roll20 API sandbox smoke confirmation before it should be used as a confirmed table build.
 - v0.1.4.1 remains available as the rollback script during v0.1.4.2 confirmation.
 - The attempted v0.1.5 file was not imported wholesale. Its unsafe or structurally unreliable changes were rejected; only isolated reviewed ideas were ported.
 - Older supplied notes used “Unreleased” and “Staging” labels for v0.1.3–v0.1.5 work. Those records are retained below as historical development evidence rather than silently discarded.
@@ -1056,7 +1056,7 @@ The following corrections supersede inaccurate or temporary wording in the prese
 
 | Revision | Status | Repository role |
 | --- | --- | --- |
-| **v0.1.4.5** | Pre-release; automated verification complete, Roll20 smoke confirmation pending | NPC death-log summary and navigation update |
+| **v0.1.4.5** | Pre-release; automated verification complete, Roll20 smoke confirmation pending | NPC death-history buckets, handouts, and arc notes |
 | **v0.1.4.4** | Previous complete script | DM-facing CritFumble help and NPC death-audit readability update |
 | **v0.1.4.3** | Previous complete script | Concentration custom-marker recognition and standalone TokenMod interoperability update |
 | **v0.1.4.2** | Previous complete script | Diagnostic and migration-readiness release with a known concentration custom-marker limitation |
@@ -1264,54 +1264,117 @@ Roll20 API sandbox confirmation is still required for the final release gate.
 
 ### Release definition
 
-v0.1.4.5 is a narrow NPCManager usability release for Issue #22. It keeps the existing single NPC death log and does not introduce named pools yet. The goal is to make the current death-history workflow easy to scan during play before designing the larger scene/session/campaign pool system.
+v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It keeps the `v0.1.4.x` standalone TokenMod architecture, but changes death history from a single chat-oriented log into scoped DM-facing handout buckets: Campaign, Chapter, Section, and Session. It also adds manual Arc handouts for story threads that sit outside that hierarchy.
 
 ### Issue addressed
 
 - [#22](https://github.com/Mord-Eagle/GameAssist/issues/22) — Add summarized and named NPC death-log pools.
 
-### Changed — NPC death-history report
+### Changed — scoped NPC death buckets
 
-- Changed `!npc-death-report` from a line-by-line log dump into a summary-first GM panel.
-- The default report now shows:
-  - total recorded NPC death events;
-  - the latest recorded death;
-  - the most frequent NPC names in the log;
-  - the most recent entries;
-  - buttons for common next steps.
-- Added bounded detail views:
+- Added active death-history bucket names under NPCManager config:
+  - `campaign`
+  - `chapter`
+  - `section`
+  - `session`
+- Default bucket names are intentionally simple:
+  - Campaign: `Campaign`
+  - Chapter: `Chapter`
+  - Section: `Section`
+  - Session: current date in `YYYY-MM-DD` form when no saved session name exists.
+- Added `!npc-death-buckets` as the GM-facing bucket control panel.
+- Added bucket rename support:
+  - `!npc-death-buckets --campaign "Name"`
+  - `!npc-death-buckets --chapter "Name"`
+  - `!npc-death-buckets --section "Name"`
+  - `!npc-death-buckets --session "Name"`
+  - `!npc-death-buckets --resetSession`
+- Changing a bucket name starts or resumes that named bucket. Existing bucket records and handouts are retained instead of being deleted.
+- Every newly recorded NPC death is copied into all four active buckets so Session history can be cleared while Chapter, Section, and Campaign history remain available.
+
+### Changed — death recording and revival handling
+
+- Death recording no longer depends on TokenMod marker-write success.
+- When a linked NPC drops below 1 HP:
+  - GameAssist records the death in the active buckets;
+  - GameAssist requests the configured death marker through TokenMod when the marker is not already present;
+  - `autoHide` behavior is preserved.
+- Duplicate open death entries are avoided while an NPC already has an unrevived record.
+- When a linked NPC rises above 0 HP:
+  - GameAssist annotates the most recent matching unrevived death entry;
+  - the annotation is applied across stored buckets and arc entries where a matching entry exists;
+  - GameAssist requests marker removal through TokenMod when the marker is present.
+- Revival annotations preserve history instead of silently deleting the death entry.
+
+### Changed — death reports and handouts
+
+- `!npc-death-report` now opens the active Session bucket by default.
+- Added bucket scope selection:
+  - `!npc-death-report --scope campaign`
+  - `!npc-death-report --scope chapter`
+  - `!npc-death-report --scope section`
+  - `!npc-death-report --scope session`
+- Preserved bounded detail views:
   - `!npc-death-report --recent`
   - `!npc-death-report --page N`
   - `!npc-death-report --help`
-- Detail pages show newest entries first and use POLICY-owned limits so a long campaign log does not create an oversized Roll20 chat message.
-- Preserved the existing single `deathLog` state shape; no migration is required and no existing death history is deleted.
-- Preserved `!npc-death-audit` as the current-page HP/marker mismatch checker. The death report remains recorded history, not a current-page inventory.
+- Added `!npc-death-report --write` to rebuild active bucket handouts from saved state.
+- Each bucket writes to one handout named by scope and bucket name, for example:
+  - `GameAssist Deaths - Campaign - Campaign`
+  - `GameAssist Deaths - Chapter - Chapter`
+  - `GameAssist Deaths - Section - Section`
+  - `GameAssist Deaths - Session - 2026-07-17`
+- Existing legacy `runtime.deathLog` entries are backfilled into active buckets when the bucket system first reads old state and no bucket entries exist.
+- The legacy `deathLog` array is retained for compatibility and duplicate/open-death detection.
 
-### Changed — safer log clearing
+### Changed — audit output
 
-- Changed `!npc-death-clear` so it now asks for confirmation before deleting recorded death history.
-- Added `!npc-death-clear --confirm` as the explicit destructive action.
-- Empty-log clears now return a small panel explaining that there is nothing to clear instead of pretending a destructive action happened.
+- `!npc-death-audit` remains the current-page HP/marker mismatch checker.
+- Chat output is now a short summary with:
+  - mismatch count;
+  - explicit scope statement;
+  - configured marker;
+  - count of NPCs needing a marker;
+  - count of NPCs needing marker removal;
+  - count of ignored unlinked page items.
+- Detailed audit rows now write to the `GameAssist NPC Death Audit` handout instead of being crammed into chat.
+- The audit continues to check linked NPC tokens only; player characters are intentionally excluded.
 
-### UX rationale
+### Added — manual arc handouts
 
-- The default command now answers the question a DM is most likely asking first: “What has died so far?” without forcing them to read every event.
-- Recent/detail views remain available when the GM wants the actual history.
-- Clear confirmation prevents accidental loss of session/campaign notes while keeping the workflow simple.
-- Named scene/session/campaign pools remain deferred because they need a separate state design, migration plan, and chat menu model.
+- Added `!npc-arc` as the GM-facing arc help/list panel.
+- Added manual selected-token capture:
+  - `!npc-arc --name "Arc Name"`
+  - selected linked PC and NPC tokens are appended to `GameAssist Arc - Arc Name`.
+- Added session import:
+  - `!npc-arc --name "Arc Name" --session`
+  - current Session bucket deaths are appended without duplicating entries already imported into that arc.
+- Added optional note support for selected-token entries:
+  - `!npc-arc --name "Arc Name" --note "Text"`
+- Arc buckets are independent story-note handouts; they do not sit inside Campaign, Chapter, Section, or Session.
+
+### Changed — safer bucket clearing
+
+- `!npc-death-clear` now clears one active bucket at a time.
+- The default clear target is Session.
+- Added scoped confirmation:
+  - `!npc-death-clear --scope session`
+  - `!npc-death-clear --scope session --confirm`
+- Clearing Session also clears the retained legacy `deathLog` mirror.
+- Clearing Session does not clear Campaign, Chapter, or Section buckets.
 
 ### Documentation
 
-- Updated `README.md` with the new summary, recent, page, help, and clear-confirm commands.
-- Updated `Smoketest.md` so the quick and in-depth NPCManager tests expect a summary dashboard instead of a full log dump.
-- Updated `ROADMAP.md` to mark the concise summary path complete and leave named pools for later design.
-- Updated `script.json` to version `0.1.4.5`, add `0.1.4.4` to `previousversions`, and list the new death-report command variants.
+- Updated `README.md` with the bucket hierarchy, handout names, arc commands, scope options, and audit-handout behavior.
+- Updated `Smoketest.md` so the quick and in-depth NPCManager checks verify bucket panels, report handouts, audit handouts, scoped clearing, and arc help/session import.
+- Updated `ROADMAP.md` to record Issue #22 as scoped death-history buckets and handouts rather than a summary-only report pass.
+- Updated `script.json` to version `0.1.4.5`, add `0.1.4.4` to `previousversions`, and list the expanded NPCManager command surface.
 
 ### MECHSUITS records
 
 - Updated `[GAMEASSIST:POLICY]` because the death-report summary/detail caps are runtime behavior knobs.
 - Updated `[GAMEASSIST:CORE]` because the runtime `VERSION` constant advanced.
-- Updated `[GAMEASSIST:MODULES:NPCMANAGER]` because the public death-report and clear-log behavior changed.
+- Updated `[GAMEASSIST:MODULES:NPCMANAGER]` because the public death-report, bucket, audit, arc, revival annotation, and scoped-clear behavior changed.
 - Preserved existing section tags, codename `GAMEASSIST`, and command names.
 
 ### Release artifacts
@@ -1320,14 +1383,14 @@ The v0.1.4.4 artifact remains preserved. The current repository script and the n
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `9432F26022EBDC9B0AFC4C6D9EE1F94DF182882DF6EE9595B0EA57C7B1278DFF` |
-| `GameAssist-v0.1.4.5` | `9432F26022EBDC9B0AFC4C6D9EE1F94DF182882DF6EE9595B0EA57C7B1278DFF` |
+| `GameAssist` | `E8A3E87347C1527CC0C4449A7CD8B36202EF0AEB83CB5A9E5A0C108CF13C3BB9` |
+| `GameAssist-v0.1.4.5` | `E8A3E87347C1527CC0C4449A7CD8B36202EF0AEB83CB5A9E5A0C108CF13C3BB9` |
 
 Local Roll20 test copy:
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `outputs/GameAssist-v0.1.4.5-pr34-test.js` | `4404294A2203CB37FDD740AA9C43D00B704696AE474ACBEFCDD2074670440961` |
+| `outputs/GameAssist-v0.1.4.5-pr34-test.js` | `E8A3E87347C1527CC0C4449A7CD8B36202EF0AEB83CB5A9E5A0C108CF13C3BB9` |
 
 ### Verification
 

@@ -3,7 +3,7 @@
 GameAssist — Roll20 API Script
 Version: 0.1.4.5
 Last Updated: 2026-07-17 (America/New_York)
-Development line: NPC death-log report usability v0.1.4.5 based on the v0.1.4.4 DM-facing readability release.
+Development line: NPC death-history bucket and handout usability v0.1.4.5 based on the v0.1.4.4 DM-facing readability release.
 Author: Mord Eagle
 License: MIT (see repository LICENSE)
 Homepage: https://github.com/Roll20/roll20-api-scripts (submission target)
@@ -15,7 +15,7 @@ execute directly unless a module deliberately calls GameAssist.enqueue(). This p
 • ConfigUI — GM-only chat controls for toggling modules and boolean options.
 • CritFumble — Detects natural-1s on selected rolltemplates and offers fumble/confirm menus.
 • ConcentrationTracker — Runs concentration checks (normal/adv/dis), whispers results, toggles marker.
-• NPCManager — Tracks NPC death markers based on bar1 HP.
+• NPCManager — Tracks NPC death markers, scoped death-history buckets, audit handouts, and arc notes.
 • NPCHPRoller — Rolls NPC HP from `npc_hpformula` and writes to bar1 (value/max).
 • DebugTools — Optional GM diagnostics (dry-run by default) for damage, markers, and save rolls.
 
@@ -44,7 +44,8 @@ MODULE COMMANDS:
 • ConcentrationTracker (players/GM):
     !concentration [--damage N] [--mode normal|adv|dis] [--off|--status|--last|--config randomize on|off]
     !cc (alias)
-• NPCManager (GM):         !npc-death-report [--recent|--page N|--help] | !npc-death-clear [--confirm] | !npc-death-audit
+• NPCManager (GM):         !npc-death-report [--scope campaign|chapter|section|session] [--recent|--page N|--write|--help]
+                            !npc-death-buckets | !npc-death-clear [--scope session] [--confirm] | !npc-death-audit | !npc-arc
 • NPCHPRoller (GM):        !npc-hp-selected    |   !npc-hp-all
 • ConfigUI (GM):           !ga-config ui [--page N] | !ga-config-ui
 • DebugTools (GM-only):    !ga-debug damage|marker|save [flags] (module disabled by default)
@@ -70,12 +71,14 @@ V0.1.4.5 STABILIZATION NOTES
 - Queue timeouts release the queue but cannot cancel JavaScript or Roll20 operations.
 - Dependency status is confirmed, missing, or unverifiable.
 - !ga-config list exports configuration only; runtime caches and metrics are excluded.
-- Hidden/admin commands: !ga-config cleanup, !npc-death-clear [--confirm], !npc-death-audit, !ga-metrics [reset].
+- Hidden/admin commands: !ga-config cleanup, !npc-death-buckets, !npc-death-clear [--scope session] [--confirm], !npc-death-audit, !npc-arc, !ga-metrics [reset].
 - Additional config: NPCManager autoHide/hideLayer; registration dependsOn; onCommand match options.
 - Built-in and custom status-marker names resolve to the exact ids Roll20 stores on tokens.
 - Concentration status reports invalid marker configuration instead of silently returning an incorrect result.
 - CritFumble help and NPC death-audit output use clearer DM-facing wording.
-- NPC death reports open with a concise summary and provide buttons for recent/detail views.
+- NPC deaths record into Campaign, Chapter, Section, and Session buckets, with one handout per bucket.
+- NPC death audits write detailed findings to the GameAssist NPC Death Audit handout.
+- Arc buckets let the GM append selected linked PC/NPC tokens or current-session deaths to story handouts.
 
 HEADER REQUIREMENTS NOTE
 Per the Roll20 API repo contribution guidelines, this header provides name, version, last updated,
@@ -1469,7 +1472,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v0.1.4.5): Advanced runtime VERSION for the NPC death-report summary release; child service order is unchanged.
+    // Changed (v0.1.4.5): Advanced runtime VERSION for the NPC death-history bucket and handout release; child service order is unchanged.
     // Changed (v0.1.4.4): Advanced runtime VERSION for the DM-facing readability release; child service order is unchanged.
     // Prior notes:
     //   Changed (v0.1.4.3): Advanced runtime VERSION for standalone-interoperability stabilization; child service order is unchanged.
@@ -2376,15 +2379,16 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: NPCManager module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:NPCMANAGER", title: "NPCManager",
-    //   guarantees: ["Auto toggle resolved configured dead marker based on HP"],
+    //   guarantees: ["Auto toggle resolved configured dead marker based on HP; record NPC deaths into scoped handout buckets"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:OBJECT]"],
     //   last_updated_version: "v0.1.4.5",
     //   independent_versions: { module_version: "0.1.1.0" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:NPCMANAGER monitors token HP changes to set or clear the configured
-    // death marker using TokenMod. It keeps legacy config defaults while offering
-    // GM-friendly audit and death-history summary/detail commands.
+    // death marker using TokenMod. It records deaths into active Campaign, Chapter,
+    // Section, and Session buckets, writes bucket/audit handouts for detailed review,
+    // and supports manual story arc buckets for selected linked PC/NPC tokens.
     // -------------------------------------------------------------------------
     GameAssist.register('NPCManager', function() {
         const modState = GameAssist.getState('NPCManager');
@@ -2398,14 +2402,52 @@ description, syntax/commands, and configuration pointers near the top of the scr
             ...modState.config
         });
 
+        const DEATH_BUCKET_SCOPES = ['campaign', 'chapter', 'section', 'session'];
+        const DEATH_BUCKET_TITLES = {
+            campaign: 'Campaign',
+            chapter: 'Chapter',
+            section: 'Section',
+            session: 'Session'
+        };
+        const DEFAULT_BUCKET_NAMES = {
+            campaign: 'Campaign',
+            chapter: 'Chapter',
+            section: 'Section',
+            session: new Date(now()).toISOString().slice(0, 10)
+        };
         const DEATH_LOG_LIMIT = POLICY.runtime.deathLogLimit;
         const AUDIT_DETAIL_LIMIT = POLICY.runtime.npcAuditDetailLimit;
         const DEATH_REPORT_SUMMARY_LIMIT = POLICY.runtime.deathReportSummaryLimit;
         const DEATH_REPORT_DETAIL_LIMIT = POLICY.runtime.deathReportDetailLimit;
+        const AUDIT_HANDOUT_NAME = 'GameAssist NPC Death Audit';
+
+        function ensureDeathBucketConfig() {
+            const existing = modState.config.deathBuckets;
+            const current = existing && typeof existing === 'object' && !Array.isArray(existing)
+                ? existing
+                : {};
+
+            modState.config.deathBuckets = DEATH_BUCKET_SCOPES.reduce((next, scope) => {
+                const raw = current[scope];
+                next[scope] = String(raw || DEFAULT_BUCKET_NAMES[scope]).trim() || DEFAULT_BUCKET_NAMES[scope];
+                return next;
+            }, {});
+
+            return modState.config.deathBuckets;
+        }
+
+        ensureDeathBucketConfig();
 
         function ensureNPCManagerRuntime() {
             const deathLog = ensureModRuntimeKey(modState, 'deathLog', 'array');
-            return deathLog;
+            const buckets = ensureModRuntimeKey(modState, 'deathBuckets', 'object');
+            const arcs = ensureModRuntimeKey(modState, 'deathArcs', 'array');
+
+            DEATH_BUCKET_SCOPES.forEach(scope => {
+                if (!Array.isArray(buckets[scope])) buckets[scope] = [];
+            });
+
+            return { deathLog, buckets, arcs };
         }
 
         function getDeathMarkerResolution() {
@@ -2471,17 +2513,317 @@ description, syntax/commands, and configuration pointers near the top of the scr
             return lines;
         }
 
+        function normalizeScope(scope, fallback = 'session') {
+            const value = String(scope || fallback).toLowerCase();
+            return DEATH_BUCKET_SCOPES.includes(value) ? value : fallback;
+        }
+
+        function htmlText(value) {
+            return _sanitize(value ?? '');
+        }
+
+        function handoutSafeName(value, fallback = 'Unnamed') {
+            return String(value || fallback)
+                .replace(/[<>]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .slice(0, 80) || fallback;
+        }
+
+        function queryDefault(value, fallback = 'Bucket') {
+            return String(value || fallback)
+                .replace(/[|"{}]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim() || fallback;
+        }
+
+        function bucketHandoutName(scope, name) {
+            return `GameAssist Deaths - ${DEATH_BUCKET_TITLES[scope]} - ${handoutSafeName(name)}`;
+        }
+
+        function arcHandoutName(name) {
+            return `GameAssist Arc - ${handoutSafeName(name)}`;
+        }
+
+        function getOrCreateHandout(name) {
+            let handout = findObjs({ type: 'handout', name })[0];
+            if (!handout) handout = createObj('handout', { name, archived: false });
+            return handout;
+        }
+
+        function setHandoutNotes(name, notes) {
+            const handout = getOrCreateHandout(name);
+            handout.set('notes', notes);
+            return handout;
+        }
+
+        function findNamedCollectionItem(list, name) {
+            const target = String(name || '').trim();
+            return (Array.isArray(list) ? list : []).find(item => item && item.name === target) || null;
+        }
+
+        function getActiveBucket(scope) {
+            const safeScope = normalizeScope(scope);
+            const runtime = ensureNPCManagerRuntime();
+            const names = ensureDeathBucketConfig();
+            const bucketName = names[safeScope] || DEFAULT_BUCKET_NAMES[safeScope];
+            let bucket = findNamedCollectionItem(runtime.buckets[safeScope], bucketName);
+
+            if (!bucket) {
+                bucket = {
+                    scope: safeScope,
+                    name: bucketName,
+                    createdAt: isoNow(),
+                    entries: []
+                };
+                runtime.buckets[safeScope].push(bucket);
+            }
+
+            if (!Array.isArray(bucket.entries)) bucket.entries = [];
+            return bucket;
+        }
+
+        function getActiveBuckets() {
+            return DEATH_BUCKET_SCOPES.reduce((memo, scope) => {
+                memo[scope] = getActiveBucket(scope);
+                return memo;
+            }, {});
+        }
+
+        function getOrCreateArc(name) {
+            const runtime = ensureNPCManagerRuntime();
+            const arcName = handoutSafeName(name, 'Unnamed Arc');
+            let arc = findNamedCollectionItem(runtime.arcs, arcName);
+
+            if (!arc) {
+                arc = {
+                    name: arcName,
+                    createdAt: isoNow(),
+                    entries: []
+                };
+                runtime.arcs.push(arc);
+            }
+
+            if (!Array.isArray(arc.entries)) arc.entries = [];
+            return arc;
+        }
+
+        function entryStatus(entry) {
+            return entry.revivedAt
+                ? `Revived ${entry.revivedTime || entry.revivedAt}`
+                : 'Dead';
+        }
+
+        function deathEntryKey(entry) {
+            return entry?.sourceEventId || entry?.id || `${entry?.name || ''}|${entry?.timestamp || ''}|${entry?.hp || ''}`;
+        }
+
+        function renderDeathEntries(entries) {
+            if (!entries.length) return '<p>No recorded NPC deaths in this bucket yet.</p>';
+
+            const rows = entries.slice().reverse().map(entry => [
+                '<tr>',
+                `<td>${htmlText(entry.name)}</td>`,
+                `<td>${htmlText(entry.hp ?? 'unknown')}</td>`,
+                `<td>${htmlText(entry.time || entry.timestamp || 'time unknown')}</td>`,
+                `<td>${htmlText(entryStatus(entry))}</td>`,
+                '</tr>'
+            ].join(''));
+
+            return [
+                '<table>',
+                '<thead><tr><th>NPC</th><th>HP</th><th>Recorded</th><th>Status</th></tr></thead>',
+                `<tbody>${rows.join('')}</tbody>`,
+                '</table>'
+            ].join('\n');
+        }
+
+        function renderDeathBucketHandout(bucket) {
+            const title = `${DEATH_BUCKET_TITLES[bucket.scope]}: ${bucket.name}`;
+            return [
+                `<h2>${htmlText(title)}</h2>`,
+                `<p><strong>Updated:</strong> ${htmlText(localNow())}</p>`,
+                `<p><strong>Total entries:</strong> ${bucket.entries.length}</p>`,
+                renderDeathEntries(bucket.entries),
+                '<p><em>Deaths are recorded into Campaign, Chapter, Section, and Session buckets. Revivals are annotated on the matching entry instead of silently deleting history.</em></p>'
+            ].join('\n');
+        }
+
+        function writeBucketHandout(bucket) {
+            setHandoutNotes(bucketHandoutName(bucket.scope, bucket.name), renderDeathBucketHandout(bucket));
+        }
+
+        function writeActiveBucketHandouts() {
+            const buckets = getActiveBuckets();
+            DEATH_BUCKET_SCOPES.forEach(scope => writeBucketHandout(buckets[scope]));
+            return buckets;
+        }
+
+        function renderArcHandout(arc) {
+            const rows = arc.entries.length
+                ? '<ol>' + arc.entries.slice().reverse().map(entry => {
+                    const source = entry.source ? ` | ${htmlText(entry.source)}` : '';
+                    const note = entry.note ? ` | ${htmlText(entry.note)}` : '';
+                    const status = entry.revivedAt ? ` | ${htmlText(entryStatus(entry))}` : '';
+                    return `<li><strong>${htmlText(entry.name)}</strong> | ${htmlText(entry.time || entry.timestamp || 'time unknown')}${source}${status}${note}</li>`;
+                }).join('') + '</ol>'
+                : '<p>No entries recorded in this arc yet.</p>';
+
+            return [
+                `<h2>Arc: ${htmlText(arc.name)}</h2>`,
+                `<p><strong>Updated:</strong> ${htmlText(localNow())}</p>`,
+                `<p><strong>Total entries:</strong> ${arc.entries.length}</p>`,
+                rows,
+                '<p><em>Arc buckets are manually updated from selected linked PC/NPC tokens or from the current session bucket.</em></p>'
+            ].join('\n');
+        }
+
+        function writeArcHandout(arc) {
+            setHandoutNotes(arcHandoutName(arc.name), renderArcHandout(arc));
+        }
+
+        function deathEventIdentity(token, hp) {
+            const linked = GameAssist.getLinkedCharacter(token);
+            const character = linked?.character || null;
+            const name = token.get('name') || character?.get('name') || '(Unnamed NPC)';
+            return {
+                id: `${now()}-${token.id}`,
+                tokenId: token.id,
+                characterId: character?.id || null,
+                name,
+                hp,
+                marker: modState.config.deadMarker || 'dead',
+                time: localNow(),
+                timestamp: isoNow()
+            };
+        }
+
+        function cloneDeathEntry(entry) {
+            return {
+                id: entry.id,
+                sourceEventId: entry.sourceEventId || entry.id || null,
+                tokenId: entry.tokenId || null,
+                characterId: entry.characterId || null,
+                name: entry.name || '(Unnamed NPC)',
+                hp: entry.hp ?? null,
+                marker: entry.marker || modState.config.deadMarker || 'dead',
+                time: entry.time || entry.timestamp || 'time unknown',
+                timestamp: entry.timestamp || null,
+                source: entry.source || null,
+                note: entry.note || null,
+                revivedAt: entry.revivedAt || null,
+                revivedTime: entry.revivedTime || null,
+                revivedHp: entry.revivedHp ?? null
+            };
+        }
+
+        function pruneEntries(entries, limit = DEATH_LOG_LIMIT) {
+            if (entries.length > limit) entries.splice(0, entries.length - limit);
+        }
+
+        function backfillBucketsFromLegacyLog() {
+            const runtime = ensureNPCManagerRuntime();
+            if (runtime.deathBucketsBackfilled || !runtime.deathLog.length) return;
+
+            const anyBucketHasEntries = DEATH_BUCKET_SCOPES.some(scope =>
+                runtime.buckets[scope].some(bucket => Array.isArray(bucket.entries) && bucket.entries.length)
+            );
+            if (anyBucketHasEntries) {
+                runtime.deathBucketsBackfilled = true;
+                return;
+            }
+
+            runtime.deathLog.forEach(entry => {
+                DEATH_BUCKET_SCOPES.forEach(scope => {
+                    const bucket = getActiveBucket(scope);
+                    bucket.entries.push(cloneDeathEntry(entry));
+                    pruneEntries(bucket.entries);
+                    writeBucketHandout(bucket);
+                });
+            });
+            runtime.deathBucketsBackfilled = true;
+        }
+
+        function recordDeathInBuckets(entry) {
+            const runtime = ensureNPCManagerRuntime();
+            runtime.deathLog.push(cloneDeathEntry(entry));
+            pruneEntries(runtime.deathLog);
+
+            DEATH_BUCKET_SCOPES.forEach(scope => {
+                const bucket = getActiveBucket(scope);
+                bucket.entries.push(cloneDeathEntry(entry));
+                pruneEntries(bucket.entries);
+                writeBucketHandout(bucket);
+            });
+        }
+
+        function entryMatchesToken(entry, token, fallbackName) {
+            return Boolean(
+                (entry.tokenId && entry.tokenId === token.id) ||
+                (entry.name && fallbackName && entry.name === fallbackName)
+            );
+        }
+
+        function hasOpenDeathEntry(token) {
+            const runtime = ensureNPCManagerRuntime();
+            const fallbackName = token.get('name') || '(Unnamed NPC)';
+            return runtime.deathLog.some(entry =>
+                entry && !entry.revivedAt && entryMatchesToken(entry, token, fallbackName)
+            );
+        }
+
+        function annotateRevivalInEntries(entries, token, fallbackName, hp) {
+            for (let i = entries.length - 1; i >= 0; i--) {
+                const entry = entries[i];
+                if (entry?.revivedAt) continue;
+                if (!entryMatchesToken(entry, token, fallbackName)) continue;
+
+                entry.revivedAt = isoNow();
+                entry.revivedTime = localNow();
+                entry.revivedHp = hp;
+                return true;
+            }
+            return false;
+        }
+
+        function annotateRevivalInBuckets(token, hp) {
+            const runtime = ensureNPCManagerRuntime();
+            const fallbackName = token.get('name') || '(Unnamed NPC)';
+            let changed = false;
+
+            if (annotateRevivalInEntries(runtime.deathLog, token, fallbackName, hp)) changed = true;
+            DEATH_BUCKET_SCOPES.forEach(scope => {
+                runtime.buckets[scope].forEach(bucket => {
+                    if (annotateRevivalInEntries(bucket.entries, token, fallbackName, hp)) {
+                        changed = true;
+                        writeBucketHandout(bucket);
+                    }
+                });
+            });
+            runtime.arcs.forEach(arc => {
+                if (annotateRevivalInEntries(arc.entries, token, fallbackName, hp)) {
+                    changed = true;
+                    writeArcHandout(arc);
+                }
+            });
+            return changed;
+        }
+
         function normalizeDeathEvent(entry) {
             const item = entry && typeof entry === 'object' ? entry : {};
             return {
                 name: item.name || '(Unnamed NPC)',
-                time: item.time || item.timestamp || 'time unknown'
+                hp: item.hp ?? 'unknown',
+                time: item.time || item.timestamp || 'time unknown',
+                revivedAt: item.revivedAt || null,
+                revivedTime: item.revivedTime || null
             };
         }
 
         function formatDeathEvent(entry, index) {
             const item = normalizeDeathEvent(entry);
-            return `${index}. ${item.name} - ${item.time}`;
+            const status = item.revivedAt ? ` (${entryStatus(item)})` : '';
+            return `${index}. ${item.name} - HP ${item.hp} - ${item.time}${status}`;
         }
 
         function summarizeDeathCounts(log, limit = DEATH_REPORT_SUMMARY_LIMIT) {
@@ -2520,22 +2862,25 @@ description, syntax/commands, and configuration pointers near the top of the scr
             return { currentPage, pageCount, lines };
         }
 
-        function deathReportActions(currentPage = 1, pageCount = 1) {
+        function deathReportActions(scope = 'session', currentPage = 1, pageCount = 1) {
+            const safeScope = normalizeScope(scope);
+            const scoped = `--scope ${safeScope}`;
             const buttons = [
-                GameAssist.createButton('Summary', '!npc-death-report'),
-                GameAssist.createButton('Recent', '!npc-death-report --recent')
+                GameAssist.createButton('Summary', `!npc-death-report ${scoped}`),
+                GameAssist.createButton('Recent', `!npc-death-report ${scoped} --recent`)
             ];
 
             if (currentPage > 1) {
-                buttons.push(GameAssist.createButton('Newer', `!npc-death-report --page ${currentPage - 1}`));
+                buttons.push(GameAssist.createButton('Newer', `!npc-death-report ${scoped} --page ${currentPage - 1}`));
             }
             if (currentPage < pageCount) {
-                buttons.push(GameAssist.createButton('Older', `!npc-death-report --page ${currentPage + 1}`));
+                buttons.push(GameAssist.createButton('Older', `!npc-death-report ${scoped} --page ${currentPage + 1}`));
             }
 
             buttons.push(
+                GameAssist.createButton('Buckets', '!npc-death-buckets'),
                 GameAssist.createButton('Run Audit', '!npc-death-audit'),
-                GameAssist.createButton('Clear Log', '!npc-death-clear')
+                GameAssist.createButton('Clear This Bucket', `!npc-death-clear ${scoped}`)
             );
 
             return buttons.join(' ');
@@ -2545,33 +2890,40 @@ description, syntax/commands, and configuration pointers near the top of the scr
             sendDeathReport([
                 {
                     label: 'What This Shows',
-                    value: 'Recorded NPC death history only. It does not check the current page for marker mismatches.'
+                    value: 'Recorded NPC death history. Every new NPC death is saved into the active Campaign, Chapter, Section, and Session buckets.'
                 },
                 {
                     label: 'Most Useful Commands',
                     value: [
-                        '!npc-death-report = summary dashboard',
-                        '!npc-death-report --recent = newest entries',
-                        '!npc-death-report --page 2 = older entries',
-                        '!npc-death-audit = check current HP and markers'
+                        '!npc-death-report = current session summary',
+                        '!npc-death-report --scope campaign = campaign bucket summary',
+                        '!npc-death-buckets = view or rename active buckets',
+                        '!npc-death-audit = check current-page HP and markers, then update the audit handout',
+                        '!npc-arc = arc bucket help'
                     ]
                 },
                 {
-                    label: 'Clear Log',
-                    value: '!npc-death-clear asks for confirmation before deleting recorded death history.'
+                    label: 'Handouts',
+                    value: 'GameAssist creates one handout per death bucket and updates that handout when the bucket changes.'
                 }
             ]);
         }
 
-        function showDeathReportSummary(log) {
+        function showDeathReportSummary(bucket) {
+            const log = bucket.entries;
+            const scopeTitle = DEATH_BUCKET_TITLES[bucket.scope];
+            const handoutName = bucketHandoutName(bucket.scope, bucket.name);
+
             if (!log.length) {
                 sendDeathReport([
-                    { label: 'Result', value: 'No NPC deaths recorded in this log yet.' },
+                    { label: 'Viewing', value: `${scopeTitle}: ${bucket.name}` },
+                    { label: 'Result', value: 'No NPC deaths recorded in this bucket yet.' },
+                    { label: 'Handout', value: handoutName },
                     {
                         label: 'What To Use Next',
                         value: [
                             GameAssist.createButton('Run Audit', '!npc-death-audit'),
-                            'Use the audit to check current-page HP and death markers.'
+                            GameAssist.createButton('Manage Buckets', '!npc-death-buckets')
                         ]
                     }
                 ]);
@@ -2581,6 +2933,14 @@ description, syntax/commands, and configuration pointers near the top of the scr
             const latest = normalizeDeathEvent(log[log.length - 1]);
             const recent = getDeathReportPage(log, 1, DEATH_REPORT_SUMMARY_LIMIT);
             sendDeathReport([
+                {
+                    label: 'Viewing',
+                    value: `${scopeTitle}: ${bucket.name}`
+                },
+                {
+                    label: 'Handout',
+                    value: handoutName
+                },
                 {
                     label: 'Total Recorded',
                     value: `${log.length} NPC death event${log.length === 1 ? '' : 's'}`
@@ -2599,18 +2959,15 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 },
                 {
                     label: 'Actions',
-                    value: deathReportActions()
-                },
-                {
-                    label: 'Note',
-                    value: 'This is recorded history. Use NPC Death Audit to check current HP and markers.'
+                    value: deathReportActions(bucket.scope)
                 }
             ]);
         }
 
-        function showDeathReportPage(log, page = 1, label = 'Entries') {
+        function showDeathReportPage(bucket, page = 1, label = 'Entries') {
+            const log = bucket.entries;
             if (!log.length) {
-                showDeathReportSummary(log);
+                showDeathReportSummary(bucket);
                 return;
             }
 
@@ -2618,7 +2975,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
             sendDeathReport([
                 {
                     label,
-                    value: `Showing page ${reportPage.currentPage} of ${reportPage.pageCount}. Newest entries appear first.`
+                    value: `${DEATH_BUCKET_TITLES[bucket.scope]}: ${bucket.name}. Showing page ${reportPage.currentPage} of ${reportPage.pageCount}. Newest entries appear first.`
                 },
                 {
                     label: 'Recorded Deaths',
@@ -2626,31 +2983,234 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 },
                 {
                     label: 'Actions',
-                    value: deathReportActions(reportPage.currentPage, reportPage.pageCount)
+                    value: deathReportActions(bucket.scope, reportPage.currentPage, reportPage.pageCount)
                 }
             ]);
         }
 
-        function showDeathClearConfirm(log) {
-            if (!log.length) {
-                sendNPCPanel('NPC Death Log Clear', [
-                    { label: 'Result', value: 'No recorded NPC deaths to clear.' },
-                    { label: 'Actions', value: deathReportActions() }
+        function updateDeathBucketNames(args) {
+            const names = ensureDeathBucketConfig();
+            let changed = false;
+
+            DEATH_BUCKET_SCOPES.forEach(scope => {
+                if (args[scope] === undefined) return;
+                if (args[scope] === true) return;
+                const next = handoutSafeName(args[scope], DEFAULT_BUCKET_NAMES[scope]);
+                if (names[scope] !== next) {
+                    names[scope] = next;
+                    changed = true;
+                }
+            });
+
+            if (args.resetSession) {
+                const next = DEFAULT_BUCKET_NAMES.session;
+                if (names.session !== next) {
+                    names.session = next;
+                    changed = true;
+                }
+            }
+
+            if (changed) writeActiveBucketHandouts();
+            return changed;
+        }
+
+        function showDeathBucketsPanel(message = null) {
+            const names = ensureDeathBucketConfig();
+            const buckets = getActiveBuckets();
+            const lines = DEATH_BUCKET_SCOPES.map(scope =>
+                `${DEATH_BUCKET_TITLES[scope]}: ${names[scope]} (${buckets[scope].entries.length} deaths)`
+            );
+
+            sendNPCPanel('NPC Death Buckets', [
+                {
+                    label: 'Active Buckets',
+                    value: lines
+                },
+                {
+                    label: 'Change Names',
+                    value: [
+                        GameAssist.createButton('Set Campaign', `!npc-death-buckets --campaign "?{Campaign bucket name|${queryDefault(names.campaign)}}"`),
+                        GameAssist.createButton('Set Chapter', `!npc-death-buckets --chapter "?{Chapter bucket name|${queryDefault(names.chapter)}}"`),
+                        GameAssist.createButton('Set Section', `!npc-death-buckets --section "?{Section bucket name|${queryDefault(names.section)}}"`),
+                        GameAssist.createButton('Set Session', `!npc-death-buckets --session "?{Session bucket name|${queryDefault(names.session)}}"`),
+                        GameAssist.createButton('Reset Session Date', '!npc-death-buckets --resetSession')
+                    ]
+                },
+                {
+                    label: 'Reports',
+                    value: DEATH_BUCKET_SCOPES.map(scope =>
+                        GameAssist.createButton(DEATH_BUCKET_TITLES[scope], `!npc-death-report --scope ${scope}`)
+                    )
+                },
+                {
+                    label: 'Tip',
+                    value: message || 'Changing a bucket name starts or resumes that named bucket. Existing bucket handouts are retained.'
+                }
+            ]);
+        }
+
+        function showDeathClearConfirm(scope) {
+            const safeScope = normalizeScope(scope);
+            const bucket = getActiveBucket(safeScope);
+            if (!bucket.entries.length) {
+                sendNPCPanel('NPC Death Bucket Clear', [
+                    { label: 'Result', value: `No recorded NPC deaths to clear from ${DEATH_BUCKET_TITLES[safeScope]}: ${bucket.name}.` },
+                    { label: 'Actions', value: deathReportActions(safeScope) }
                 ]);
                 return;
             }
 
-            sendNPCPanel('NPC Death Log Clear', [
+            sendNPCPanel('NPC Death Bucket Clear', [
                 {
                     label: 'Confirm Clear',
-                    value: `This will delete ${log.length} recorded NPC death event${log.length === 1 ? '' : 's'} from the current log.`
+                    value: `This will clear ${bucket.entries.length} recorded NPC death event${bucket.entries.length === 1 ? '' : 's'} from ${DEATH_BUCKET_TITLES[safeScope]}: ${bucket.name}. Other buckets are not cleared.`
                 },
                 {
                     label: 'Buttons',
                     value: [
-                        GameAssist.createButton('Yes, Clear Log', '!npc-death-clear --confirm'),
-                        GameAssist.createButton('Cancel', '!npc-death-report')
+                        GameAssist.createButton('Yes, Clear This Bucket', `!npc-death-clear --scope ${safeScope} --confirm`),
+                        GameAssist.createButton('Cancel', `!npc-death-report --scope ${safeScope}`)
                     ]
+                }
+            ]);
+        }
+
+        function clearActiveDeathBucket(scope) {
+            const safeScope = normalizeScope(scope);
+            const bucket = getActiveBucket(safeScope);
+            const count = bucket.entries.length;
+            bucket.entries.length = 0;
+            writeBucketHandout(bucket);
+            if (safeScope === 'session') {
+                const runtime = ensureNPCManagerRuntime();
+                runtime.deathLog.length = 0;
+            }
+            return { bucket, count };
+        }
+
+        function renderAuditHandout(needsMarker, needsClear, invalid) {
+            function renderList(title, entries) {
+                if (!entries.length) return `<h3>${htmlText(title)}</h3><p>None.</p>`;
+                return [
+                    `<h3>${htmlText(title)}</h3>`,
+                    '<ul>',
+                    entries.map(entry =>
+                        `<li><strong>${htmlText(entry.name)}</strong> | HP ${htmlText(entry.hp)} | Markers: ${htmlText(entry.markers)} | Token ID: ${htmlText(entry.id)}</li>`
+                    ).join(''),
+                    '</ul>'
+                ].join('\n');
+            }
+
+            return [
+                '<h2>NPC Death Audit</h2>',
+                `<p><strong>Updated:</strong> ${htmlText(localNow())}</p>`,
+                '<p>Checked linked NPC tokens on the current player page. Player characters are intentionally not included.</p>',
+                `<p><strong>Configured death marker:</strong> ${htmlText(modState.config.deadMarker || 'dead')}</p>`,
+                renderList('Needs Death Marker', needsMarker),
+                renderList('Needs Marker Cleared', needsClear),
+                invalid.length
+                    ? `<h3>Ignored Unlinked Items</h3><p>${htmlText(summarizeAuditNames(invalid, 20))}</p><p>Expected for party markers, scenery, labels, or props.</p>`
+                    : '<h3>Ignored Unlinked Items</h3><p>None.</p>'
+            ].join('\n');
+        }
+
+        function selectedArcEntry(token, note = null) {
+            const link = GameAssist.getLinkedCharacter(token);
+            if (!link) return null;
+            const isNPC = Boolean(getNPCContext(token, link));
+            const character = link.character;
+            return {
+                id: `${now()}-${token.id}`,
+                tokenId: token.id,
+                characterId: character.id,
+                name: token.get('name') || character.get('name') || '(Unnamed)',
+                hp: token.get('bar1_value') || null,
+                marker: token.get('statusmarkers') || null,
+                time: localNow(),
+                timestamp: isoNow(),
+                source: isNPC ? 'Selected NPC token' : 'Selected PC token',
+                note: note || null
+            };
+        }
+
+        function appendSelectedTokensToArc(arc, msg, note = null) {
+            const selected = Array.isArray(msg.selected) ? msg.selected : [];
+            const skipped = [];
+            let added = 0;
+
+            selected.forEach(sel => {
+                const token = getObj('graphic', sel._id);
+                if (!token) {
+                    skipped.push('(missing token)');
+                    return;
+                }
+
+                const entry = selectedArcEntry(token, note);
+                if (!entry) {
+                    skipped.push(token.get('name') || '(Unnamed)');
+                    return;
+                }
+
+                arc.entries.push(entry);
+                pruneEntries(arc.entries);
+                added++;
+            });
+
+            return { added, skipped };
+        }
+
+        function appendSessionToArc(arc) {
+            const bucket = getActiveBucket('session');
+            let added = 0;
+
+            bucket.entries.forEach(entry => {
+                const key = deathEntryKey(entry);
+                if (arc.entries.some(existing => deathEntryKey(existing) === key)) return;
+                arc.entries.push({
+                    ...cloneDeathEntry(entry),
+                    source: `Session bucket: ${bucket.name}`,
+                    sourceEventId: key
+                });
+                added++;
+            });
+
+            pruneEntries(arc.entries);
+            return added;
+        }
+
+        function showArcPanel(message = null) {
+            const runtime = ensureNPCManagerRuntime();
+            const arcLines = runtime.arcs.length
+                ? runtime.arcs.map(arc => `${arc.name}: ${Array.isArray(arc.entries) ? arc.entries.length : 0} entries`)
+                : ['No arc buckets created yet.'];
+
+            sendNPCPanel('NPC Arc Buckets', [
+                {
+                    label: 'What This Does',
+                    value: 'Arc buckets are manual handouts for story threads. Add selected linked PC/NPC tokens, or append the current session death bucket.'
+                },
+                {
+                    label: 'Current Arcs',
+                    value: arcLines
+                },
+                {
+                    label: 'Commands',
+                    value: [
+                        '!npc-arc --name "Paladin Atonement" = add selected linked PC/NPC tokens',
+                        '!npc-arc --name "Paladin Atonement" --session = append current session deaths',
+                        '!npc-arc --name "Paladin Atonement" --note "text" = add a short note to selected tokens'
+                    ]
+                },
+                {
+                    label: 'Buttons',
+                    value: [
+                        GameAssist.createButton('Add Selected To Arc', '!npc-arc --name "?{Arc bucket name|Paladin Atonement}"'),
+                        GameAssist.createButton('Append Session To Arc', '!npc-arc --name "?{Arc bucket name|Paladin Atonement}" --session')
+                    ]
+                },
+                {
+                    label: 'Tip',
+                    value: message || 'Select tokens before using the selected-token command.'
                 }
             ]);
         }
@@ -2695,15 +3255,15 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
             if (!getNPCContext(token)) return;
 
-            const deathLog = ensureNPCManagerRuntime();
-
             const hp = parseInt(token.get('bar1_value'), 10) || 0;
             const isDead = tokenHasMarker(token, modState.config.deadMarker);
 
-            if (hp < 1 && !isDead) {
-                if (!requestDeathMarker(token, true)) return;
+            if (hp < 1) {
+                if (!isDead) requestDeathMarker(token, true);
+                if (hasOpenDeathEntry(token)) return;
+
                 const name = token.get('name') || '(Unnamed NPC)';
-                GameAssist.log('NPCManager', `${name} marked as dead (HP: ${hp})`);
+                GameAssist.log('NPCManager', `${name} recorded as dead (HP: ${hp})`);
 
                 // Auto-hide if enabled
                 if (modState.config.autoHide) {
@@ -2711,19 +3271,13 @@ description, syntax/commands, and configuration pointers near the top of the scr
                     GameAssist.log('NPCManager', `${name} moved to ${modState.config.hideLayer}`);
                 }
 
-                // Log death for report
-                deathLog.push({
-                    name: name,
-                    time: localNow(),
-                    timestamp: sanitizeTimestamp(now())
-                });
-
-                if (deathLog.length > DEATH_LOG_LIMIT) {
-                    deathLog.splice(0, deathLog.length - DEATH_LOG_LIMIT);
+                recordDeathInBuckets(deathEventIdentity(token, hp));
+            } else if (hp >= 1) {
+                if (isDead && !requestDeathMarker(token, false)) return;
+                const annotated = annotateRevivalInBuckets(token, hp);
+                if (isDead || annotated) {
+                    GameAssist.log('NPCManager', `${token.get('name')} revived (HP: ${hp})`);
                 }
-            } else if (hp >= 1 && isDead) {
-                if (!requestDeathMarker(token, false)) return;
-                GameAssist.log('NPCManager', `${token.get('name')} revived (HP: ${hp})`);
             }
         }
 
@@ -2734,41 +3288,97 @@ description, syntax/commands, and configuration pointers near the top of the scr
         }
 
         GameAssist.onCommand('!npc-death-report', msg => {
-            const log = ensureNPCManagerRuntime();
-
             const { args } = _parseArgs(msg.content);
+            backfillBucketsFromLegacyLog();
+
             if (args.help) {
                 showDeathReportHelp();
                 return;
             }
 
+            if (args.write) {
+                writeActiveBucketHandouts();
+                sendDeathReport([
+                    { label: 'Result', value: 'Active bucket handouts updated.' },
+                    { label: 'Actions', value: deathReportActions(normalizeScope(args.scope)) }
+                ]);
+                return;
+            }
+
+            const scope = normalizeScope(args.scope);
+            const bucket = getActiveBucket(scope);
+
             if (args.recent) {
-                showDeathReportPage(log, 1, 'Recent Entries');
+                showDeathReportPage(bucket, 1, 'Recent Entries');
                 return;
             }
 
             if (args.page || args.details || args.all) {
-                showDeathReportPage(log, args.page || 1, 'Detail View');
+                showDeathReportPage(bucket, args.page || 1, 'Detail View');
                 return;
             }
 
-            showDeathReportSummary(log);
+            showDeathReportSummary(bucket);
         }, 'NPCManager', { gmOnly: true });
 
         GameAssist.onCommand('!npc-death-clear', msg => {
-            const deathLog = ensureNPCManagerRuntime();
             const { args } = _parseArgs(msg.content);
+            const scope = normalizeScope(args.scope);
+            backfillBucketsFromLegacyLog();
 
             if (!args.confirm) {
-                showDeathClearConfirm(deathLog);
+                showDeathClearConfirm(scope);
                 return;
             }
 
-            const count = deathLog.length;
-            deathLog.length = 0;
-            sendNPCPanel('NPC Death Log Clear', [
-                { label: 'Result', value: `Cleared ${count} recorded NPC death event${count === 1 ? '' : 's'}.` },
-                { label: 'Actions', value: deathReportActions() }
+            const result = clearActiveDeathBucket(scope);
+            sendNPCPanel('NPC Death Bucket Clear', [
+                { label: 'Result', value: `Cleared ${result.count} recorded NPC death event${result.count === 1 ? '' : 's'} from ${DEATH_BUCKET_TITLES[result.bucket.scope]}: ${result.bucket.name}.` },
+                { label: 'Actions', value: deathReportActions(result.bucket.scope) }
+            ]);
+        }, 'NPCManager', { gmOnly: true });
+
+        GameAssist.onCommand('!npc-death-buckets', msg => {
+            const { args } = _parseArgs(msg.content);
+            backfillBucketsFromLegacyLog();
+            const changed = updateDeathBucketNames(args);
+            showDeathBucketsPanel(changed ? 'Bucket names updated and active bucket handouts refreshed.' : null);
+        }, 'NPCManager', { gmOnly: true });
+
+        GameAssist.onCommand('!npc-arc', msg => {
+            const { args } = _parseArgs(msg.content);
+            backfillBucketsFromLegacyLog();
+
+            if (args.help || args.list || !args.name || args.name === true) {
+                showArcPanel(args.name === true ? 'Add an arc name, for example: !npc-arc --name "Paladin Atonement".' : null);
+                return;
+            }
+
+            const arc = getOrCreateArc(args.name);
+            const selectedResult = appendSelectedTokensToArc(arc, msg, args.note || null);
+            const sessionAdded = args.session ? appendSessionToArc(arc) : 0;
+            const added = selectedResult.added + sessionAdded;
+
+            if (!added) {
+                showArcPanel(
+                    args.session
+                        ? `No new entries were added to ${arc.name}; the current session may already be copied or may be empty.`
+                        : 'No linked PC/NPC tokens were selected. Select one or more linked tokens, or add --session.'
+                );
+                return;
+            }
+
+            writeArcHandout(arc);
+            sendNPCPanel('NPC Arc Bucket Updated', [
+                { label: 'Arc', value: arc.name },
+                { label: 'Added', value: `${added} entr${added === 1 ? 'y' : 'ies'}` },
+                { label: 'Handout', value: arcHandoutName(arc.name) },
+                {
+                    label: 'Skipped',
+                    value: selectedResult.skipped.length
+                        ? `${selectedResult.skipped.length} unlinked or missing token${selectedResult.skipped.length === 1 ? '' : 's'}: ${summarizeAuditNames(selectedResult.skipped)}`
+                        : 'None'
+                }
             ]);
         }, 'NPCManager', { gmOnly: true });
 
@@ -2813,6 +3423,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
             }
 
             const mismatchCount = needsMarker.length + needsClear.length;
+            setHandoutNotes(AUDIT_HANDOUT_NAME, renderAuditHandout(needsMarker, needsClear, invalid));
             const fields = [
                 {
                     label: 'Result',
@@ -2825,24 +3436,22 @@ description, syntax/commands, and configuration pointers near the top of the scr
                     value: 'Checked linked NPC tokens on the current player page. Player characters are not included.'
                 },
                 {
+                    label: 'Detail Handout',
+                    value: AUDIT_HANDOUT_NAME
+                },
+                {
                     label: 'Configured Marker',
                     value: modState.config.deadMarker || 'dead'
+                },
+                {
+                    label: 'Counts',
+                    value: [
+                        `Needs marker: ${needsMarker.length}`,
+                        `Needs marker cleared: ${needsClear.length}`,
+                        `Ignored unlinked: ${invalid.length}`
+                    ]
                 }
             ];
-
-            if (needsMarker.length) {
-                fields.push({
-                    label: `Add Marker (${needsMarker.length})`,
-                    value: formatAuditEntries(needsMarker)
-                });
-            }
-
-            if (needsClear.length) {
-                fields.push({
-                    label: `Clear Marker (${needsClear.length})`,
-                    value: formatAuditEntries(needsClear)
-                });
-            }
 
             if (invalid.length) {
                 fields.push({
@@ -2858,11 +3467,11 @@ description, syntax/commands, and configuration pointers near the top of the scr
         }, 'NPCManager', { gmOnly: true });
 
         GameAssist.onEvent('change:graphic:bar1_value', handleTokenChange, 'NPCManager');
-        GameAssist.log('NPCManager', 'v0.1.1.0 Ready: Auto death tracking + !npc-death-report/clear/audit', 'INFO', { startup: true });
+        GameAssist.log('NPCManager', 'v0.1.1.0 Ready: Auto death tracking + bucketed reports/audits/arcs', 'INFO', { startup: true });
     }, {
         enabled: true,
         events: ['change:graphic:bar1_value'],
-        prefixes: ['!npc-death-report', '!npc-death-clear', '!npc-death-audit'],
+        prefixes: ['!npc-death-report', '!npc-death-clear', '!npc-death-audit', '!npc-death-buckets', '!npc-arc'],
         dependsOn: ['TokenMod'],
         teardown: () => {
             const branch = GameAssist.getState('NPCManager');
@@ -2896,7 +3505,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // CHOICE: TokenMod used for status marker ops; keep dependency explicit in README.
-    // Changed (v0.1.4.5): NPC death-report now opens with a summary dashboard, provides bounded recent/detail views, and requires confirmation before clearing the recorded log.
+    // Changed (v0.1.4.5): NPC death history now records into active Campaign/Chapter/Section/Session buckets independently of marker-write success, updates one handout per bucket, annotates revivals on matching entries, moves audit details into a handout, and adds manual arc buckets for selected linked PC/NPC tokens or current-session deaths.
     // Changed (v0.1.4.4): NPC death-audit now sends a grouped GM report, states that PCs are excluded, categorizes marker mismatches by action, and caps detailed rows to keep Roll20 chat output usable.
     // Changed (v0.1.4.3): NPCManager now resolves configured death markers before TokenMod add/remove/teardown requests, matching shared read-side marker identity behavior.
     // Changed (v0.1.4.1): Use exact shared marker matching, POLICY-owned cache limits, and shared time seams.
