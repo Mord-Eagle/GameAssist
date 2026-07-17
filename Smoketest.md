@@ -4,7 +4,7 @@ Use this checklist after installing or updating GameAssist to confirm the Roll20
 
 The first section is a quick confidence pass for DMs. It prioritizes easy wins without promising a specific completion time. The second section contains deeper tests for troubleshooting individual modules.
 
-> **Current target:** GameAssist v0.1.4.5
+> **Current target:** GameAssist v0.1.4.6
 
 Roll20 usually calls the person running the game the **GM**. This guide uses GM and DM interchangeably.
 
@@ -47,7 +47,7 @@ For example:
 
 After installing or updating GameAssist, save the script and wait for Roll20's API sandbox to restart before running the checks below. Use a test page or disposable tokens whenever possible. Install TokenMod if you use NPCManager or ConcentrationTracker.
 
-The core-ready whisper should report GameAssist v0.1.4.5. You may not see one ready message for every module because module-specific startup messages are normally kept quiet.
+The core-ready whisper should report GameAssist v0.1.4.6. You may not see one ready message for every module because module-specific startup messages are normally kept quiet.
 
 Stop and troubleshoot before continuing if the sandbox repeatedly restarts, the API Console shows a new GameAssist `SyntaxError` or `ReferenceError`, or no GameAssist command responds.
 
@@ -65,57 +65,66 @@ Run:
 
 ### Typical Healthy Default Result
 
-Your numbers and timestamp will vary. A healthy default response commonly has this shape:
+The default response is a short system check rather than a list of technical counters:
 
 ```text
-(From GameAssist): ℹ️ [3:12:19 AM] [Status] GameAssist 0.1.4.5 Status
-Commands: 1
-Messages: 10
-Errors: 0
-Avg Task Duration: N/Ams
-Queue Length: 0
-Queue Mode: explicit opt-in; normal event handlers execute directly
-Last Update: 2026-06-10T03:12:19.265Z
-Modules: 6 total | 5 configured | 5 running | 0 dependency-skipped
-Active Listeners: 4
-Dependency Warnings: NPCManager: unverifiable (TokenMod) | ConcentrationTracker: unverifiable (TokenMod)
+GameAssist 0.1.4.6 System Check
+
+Overall
+Ready - enabled modules are running. A marker check is recommended.
+
+Modules
+5 enabled modules running.
+1 module turned off.
+
+Errors This Sandbox Session
+None recorded.
+
+Dependency Check
+Could not confirm: TokenMod for NPCManager and ConcentrationTracker.
+This is not automatically a failure; test one death or concentration marker.
 ```
 
-### How to Read It
+Immediately below the status table, a separate **GameAssist Actions** whisper should provide buttons for **Troubleshooting Details**, **Module List**, and **Open Settings**. The buttons are intentionally outside the default-template table because Roll20 omitted the button-only table row during live sandbox testing.
 
-| Line | What It Means | Healthy Result |
+This common result means GameAssist itself is responding, all enabled modules are running, DebugTools is turned off as expected, and Roll20 did not expose enough information to confirm TokenMod. Continue to the marker tests before deciding whether TokenMod works.
+
+### Other Health Results
+
+| What You See | Meaning | Next Action |
 | --- | --- | --- |
-| `GameAssist 0.1.4.5 Status` | Confirms the running GameAssist version. | Shows the version you installed. |
-| `Commands` | Commands recorded through GameAssist's core command handler during this sandbox session. Running `!ga-status` counts as one. | Any reasonable number; it increases as commands are used. |
-| `Messages` | Roll20 events handled by running GameAssist modules during this sandbox session. | Any reasonable number; it varies with sandbox activity. |
-| `Errors` | Problems GameAssist recorded during this sandbox session. | Normally `0`. Investigate any nonzero value. |
-| `Avg Task Duration: N/Ams` | No explicit queued task duration has been recorded yet. | `N/Ams` before queued work is measured; a numeric duration is also valid. |
-| `Queue Length` | Explicit queued jobs currently waiting. | `0` while idle. A temporary nonzero value may occur during module changes. |
-| `Queue Mode` | Reminder that ordinary commands/events run directly and only selected work uses the queue. | Informational; the shown sentence is expected. |
-| `Last Update` | Most recent GameAssist activity time, shown in UTC. | A recent timestamp; it changes whenever activity is recorded. |
-| `Modules` | Total, configured, running, and dependency-skipped module counts. | Defaults normally show `6 total | 5 configured | 5 running | 0 dependency-skipped`. |
-| `Active Listeners` | Internal count of event listeners GameAssist has registered. | Defaults commonly show `4`; treat this as diagnostic information, not a standalone pass/fail test. |
-| `Dependency Warnings` | Dependencies GameAssist could not confirm or believes are missing. | TokenMod may appear as `unverifiable`; interpret it as explained below. |
+| `Ready - GameAssist is responding and every enabled module is running.` | No enabled-module, recorded-error, or dependency concern was found. | Continue the smoke test. |
+| `Ready - enabled modules are running. A marker check is recommended.` | A dependency could not be confirmed, but this is not automatically a failure. | Test one death or concentration marker. |
+| `Attention needed - review the items below.` | An error was recorded, an enabled module is stopped, or a dependency is reported missing. | Open **Troubleshooting Details** and **Module List**. |
 
-`Errors` describes the current sandbox session. Roll20 restarts the sandbox often, so it is not an installation-history counter. A nonzero value means GameAssist recorded a problem during this session and should be investigated before relying on the affected feature.
+`Errors This Sandbox Session` describes only the current Roll20 sandbox session. Roll20 restarts that sandbox often, so this is not a campaign-lifetime or installation-history counter.
 
-### Reading the Dependency-Warnings Line
+If Roll20 **confirms** that TokenMod is missing during startup, NPCManager and ConcentrationTracker should remain configured but not running. The simple panel should say **Attention needed**, name TokenMod and both affected modules, and the details panel should count two dependency-skipped modules. This is different from deliberately turning those modules off: intentionally disabled modules do not create active dependency warnings.
 
-A common result is:
+In that confirmed-missing state, retrying `!ga-enable NPCManager` should explain that TokenMod is required without changing NPCManager's existing configured setting. The next `!ga-status` response should still show the dependency-skipped problem rather than hiding it as an ordinary disabled module.
 
-```text
-Dependency Warnings: NPCManager: unverifiable (TokenMod) | ConcentrationTracker: unverifiable (TokenMod)
+Running `!ga-disable NPCManager` must still turn off that configured-but-inactive module. The next status should stop warning about NPCManager while continuing to report any other configured module that still lacks TokenMod. The equivalent `!ga-config set ConcentrationTracker enabled=false` path must also work; after both affected modules are intentionally disabled, dependency-skipped should return to zero and the missing-TokenMod attention state should clear.
+
+### Troubleshooting Details
+
+Click **Troubleshooting Details** or run:
+
+```roll20chat
+!ga-status --details
 ```
 
-This means Roll20 did not give GameAssist enough information to prove whether TokenMod is installed. It does **not** mean TokenMod is broken or missing. Continue to the feature checks and judge TokenMod by whether marker-changing actions actually work.
+The expanded panel retains:
 
-Other possible results:
+- registered, enabled, running, and dependency-skipped module counts;
+- commands, chat messages, and errors recorded this sandbox session;
+- explicit queue length and queue mode;
+- average queued-task duration, shown as `N/A` without an `ms` suffix when no duration exists;
+- last recorded activity in sandbox-local display time;
+- GameAssist's internally tracked event-hook count, explicitly labeled as diagnostic rather than pass/fail information.
 
-| What You See | Plain-Language Meaning |
-| --- | --- |
-| `Dependency Warnings: none` | GameAssist found no dependency concern to report. |
-| `unverifiable (TokenMod)` | GameAssist cannot confirm TokenMod from Roll20's available information. Test the feature itself. |
-| `missing (TokenMod)` | GameAssist believes TokenMod is absent. Install or enable it before relying on marker automation. |
+Immediately below the details table, a separate **Troubleshooting Actions** whisper should provide **Refresh Details**, **Simple View**, **Module List**, and **Metrics** buttons.
+
+The counters will vary and should not be compared to fixed expected numbers.
 
 ---
 
@@ -425,15 +434,22 @@ Compare the result to the annotated healthy output in Part One.
 
 Check:
 
-- [ ] Version is `0.1.4.5`.
-- [ ] Errors are zero for a clean sandbox session, or every recorded error is understood.
-- [ ] Queue length returns to zero while idle.
-- [ ] Six modules are counted.
-- [ ] Default posture is normally five configured, five running, and zero dependency-skipped.
-- [ ] Any dependency warning is interpreted as `unverifiable` or `missing`, rather than treated as a generic failure.
-- [ ] Variable values such as Commands, Messages, Last Update, and Active Listeners are not being compared as exact fixed numbers.
+- [ ] Version is `0.1.4.6`.
+- [ ] Overall health says either **Ready** or **Attention needed** and gives a meaningful next action.
+- [ ] The normal default shows five enabled modules running and one module turned off.
+- [ ] Errors are absent for a clean sandbox session, or every recorded error is understood.
+- [ ] An unconfirmed TokenMod check explicitly says that it is not automatically a failure and recommends a marker test.
+- [ ] A separate GameAssist Actions whisper appears immediately below the table.
+- [ ] Its buttons open Troubleshooting Details, Module List, and Settings.
 
-`Avg Task Duration: N/Ams` is currently expected when no queued task duration has been recorded. It is a v0.1.4.5 display quirk, not an error.
+Now click **Troubleshooting Details** or run `!ga-status --details`.
+
+- [ ] Six modules are registered.
+- [ ] Queue length returns to zero while idle.
+- [ ] No-duration state reads `N/A - no queued task duration has been recorded.` without an `ms` suffix.
+- [ ] Commands, messages, last activity, and event-hook counts are clearly labeled as variable troubleshooting information.
+- [ ] The event-hook count explicitly says that it is not a pass/fail test.
+- [ ] A separate Troubleshooting Actions whisper provides Refresh Details, Simple View, Module List, and Metrics.
 
 Remember that Roll20 restarts the API sandbox often. `Errors` describes problems recorded in the current sandbox session, not the lifetime of the campaign or installation.
 
@@ -560,11 +576,11 @@ Check:
 - [ ] `format` is `gameassist-config-snapshot`.
 - [ ] `schemaVersion` is `1`.
 - [ ] `scope` is `configuration-only`.
-- [ ] `version` is `0.1.4.5`.
+- [ ] `version` is `0.1.4.6`.
 - [ ] All six module configuration objects are present.
 - [ ] Runtime caches and metrics are not included.
 
-> This handout is a configuration snapshot, not a full-state backup, and v0.1.4.5 cannot import it.
+> This handout is a configuration snapshot, not a full-state backup, and v0.1.4.6 cannot import it.
 
 ### B5. Config UI Controls
 
@@ -915,7 +931,7 @@ Run:
 !npc-death-report
 ```
 
-Expected in v0.1.4.5: The report opens as a summary dashboard for the active Session bucket. It should show a total, latest death, most frequent names, recent entries, and action buttons. It should not dump every bucket entry into chat by default.
+Expected in v0.1.4.6: The report opens as a summary dashboard for the active Session bucket. It should show a total, latest death, most frequent names, recent entries, and action buttons. It should not dump every bucket entry into chat by default.
 It should also name the active bucket handout, usually `GameAssist Deaths - Session - <date>`.
 
 Optional detail checks:
@@ -1107,7 +1123,7 @@ The nested action always retains parent levels above the selected level.
 
 The default Session uses the sandbox's UTC date in `YYYY-MM-DD` form. When that UTC date changes, the next NPCManager command or qualifying NPC HP change must switch a date-managed Session to the new date before recording or reporting activity. Existing dated Session history and its handout remain available. An explicitly named Session must remain unchanged across date boundaries; **Reset Session Date** restores automatic rollover.
 
-This boundary is easiest to confirm during a test that crosses midnight UTC. v0.1.4.5 does not yet offer a fake-clock command. A DM-selected timezone is tracked separately in GitHub Issue #35.
+This boundary is easiest to confirm during a test that crosses midnight UTC. v0.1.4.6 does not yet offer a fake-clock command. A DM-selected timezone is tracked separately in GitHub Issue #35.
 
 When troubleshooting duplicate or incorrect history, also check these edge cases:
 

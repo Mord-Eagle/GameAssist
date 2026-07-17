@@ -10,7 +10,8 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 | Revision | Status | Role |
 | --- | --- | --- |
-| **v0.1.4.5** | Pre-release; automated verification complete, Roll20 smoke confirmation pending | NPC death-history buckets, handouts, and arc notes |
+| **v0.1.4.6** | Pre-release; automated verification complete, Roll20 smoke confirmation pending | DM-readable system health and troubleshooting status |
+| **v0.1.4.5** | Merged release | NPC death-history buckets, handouts, and arc notes |
 | **v0.1.4.4** | Merged release | DM-facing CritFumble help and NPC death-audit readability update |
 | **v0.1.4.2** | Release candidate; automated verification complete, Roll20 smoke confirmation pending | Diagnostic and migration-readiness release |
 | **v0.1.4.1** | Preserved rollback baseline | Stability-first repair of the uploaded v0.1.4 baseline |
@@ -1455,3 +1456,126 @@ Local Roll20 test copy:
 | Roll20 API sandbox acceptance checklist | Pending DM smoke test |
 
 The Roll20 sandbox checklist remains the release acceptance test for live marker changes, chat rendering, and handout behavior.
+
+---
+
+## [0.1.4.6] – 2026-07-17
+
+### Release definition
+
+v0.1.4.6 is a focused GameAssist status-readability release for Issue #23. It replaces the flat technical `!ga-status` list with a short, action-oriented system check for DMs and retains volatile counters and internal diagnostics in an optional troubleshooting view. It also preserves an enabled module's configured intent when a confirmed missing dependency prevents startup, allowing the status panels to report the skip accurately. It does not change gameplay-module commands, marker behavior, TokenMod communication, StatusInfo interoperability, queue execution, runtime caches, or NPCManager history.
+
+### Issue addressed
+
+- [#23](https://github.com/Mord-Eagle/GameAssist/issues/23) — Make `!ga-status` output easier for DMs to interpret.
+
+### Changed — default system check
+
+- Rebuilt `!ga-status` as a Roll20 default-template panel titled `GameAssist 0.1.4.6 System Check`.
+- The first panel now presents four decisions in reading order:
+  - overall health and whether the DM needs to act;
+  - how many enabled modules are running and how many modules are turned off;
+  - errors recorded during the current Roll20 sandbox session;
+  - dependency evidence with a plain-language next action.
+- Added a separate `GameAssist Actions` whisper immediately below the simple status table with direct buttons for:
+  - Troubleshooting Details;
+  - Module List;
+  - Open Settings.
+- Deliberately disabled modules are reported as turned off rather than failures.
+- Dependency warnings from disabled modules are excluded from the active health decision.
+- Modules skipped during startup for a confirmed missing dependency remain configured, appear as needing attention, and contribute to the dependency-skipped count.
+
+### Added — troubleshooting details
+
+- Added `!ga-status --details`; `!ga-status details` is accepted as an equivalent readable form.
+- The details panel preserves the prior diagnostic surface with clearer labels:
+  - registered, enabled, running, and dependency-skipped module counts;
+  - commands, chat messages, and errors recorded in the current sandbox session;
+  - explicit queue length and the reminder that normal Roll20 events execute directly;
+  - average duration for explicitly queued tasks;
+  - last recorded activity in sandbox-local display time;
+  - GameAssist's internally tracked event-hook count.
+- The event-hook count explicitly states that it is troubleshooting information rather than a health or pass/fail test.
+- Added buttons to refresh details, return to the simple view, open the module list, and view metrics.
+- Moved those detailed-view buttons into a separate `Troubleshooting Actions` whisper immediately below the details table.
+
+### Changed — health interpretation
+
+- `Ready - GameAssist is responding and every enabled module is running.` appears when enabled modules are active, no current-sandbox error is recorded, and enabled-module dependencies are confirmed.
+- `Ready - enabled modules are running. A marker check is recommended.` appears when Roll20 cannot confirm a dependency but enabled modules are otherwise active.
+- `Attention needed - review the items below.` appears when GameAssist has recorded an error, an enabled module is stopped, or an enabled module has a confirmed missing dependency.
+- `unverifiable` remains non-fatal. The panel explains that Roll20 may not expose enough metadata and recommends one real death or concentration marker test.
+- Confirmed missing dependencies identify the dependency and affected enabled modules, then recommend installing/enabling the dependency or turning off the affected module.
+- Startup now checks whether a module was deliberately disabled before diagnosing its dependencies. This prevents optional disabled modules from producing startup dependency warnings.
+- Startup no longer rewrites `config.enabled` to `false` when a confirmed missing dependency skips a configured module. Preserving that setting distinguishes the skipped module from one the DM intentionally disabled.
+- Manual `!ga-enable <Module>` retries with confirmed missing dependencies now refuse activation without changing the module's existing configuration. Configured-and-skipped modules remain visible as needing attention, while deliberately disabled modules remain disabled.
+- `disableModule()` now considers both persistent configuration and runtime state before reporting that a module is already disabled. A configured-but-inactive dependency skip can therefore be turned off through `!ga-disable` or `!ga-config set <Module> enabled=false`, clearing the corresponding status warning.
+
+### Corrected — duration and terminology
+
+- Corrected a live Roll20 rendering failure in which button-only rows inside the default template were omitted. Status navigation now uses ordinary GM whispers while the health information remains in the default-template table.
+- Removed the malformed `Avg Task Duration: N/Ams` output.
+- When no queued duration exists, the details panel now reads `N/A - no queued task duration has been recorded.`
+- Numeric averages use a spaced unit, for example `15.00 ms`.
+- Replaced the ambiguous `Active Listeners` label with `GameAssist Event Hooks` and qualified its limited diagnostic meaning.
+- Replaced the raw `Last Update` value with `Last Recorded Activity` and a human-readable sandbox-time display.
+- Separated health results from session activity counters so changing command/message counts no longer look like fixed installation expectations.
+
+### Compatibility boundaries
+
+- Preserved the six bundled modules and all prior command literals.
+- Kept TokenMod as the standalone marker-mutation dependency for the `v0.1.4.x` line.
+- Did not implement any of Issue #24's remaining TokenMod or StatusInfo interoperability work.
+- Preserved `!ga-config modules` as the detailed per-module configured/runtime/dependency view.
+- Preserved `!ga-metrics` as the longer persisted activity history.
+- Preserved captured `R20_ON` routing and the refusal to replace Roll20 global `on` or `off`.
+
+### Version and MECHSUITS records
+
+- Advanced the script header, MECHSUITS banner `project_version`, prose guarantee, visible license banner, runtime `VERSION`, README, smoke-test target, and `script.json` to `0.1.4.6`.
+- Added `0.1.4.5` to `script.json.previousversions`.
+- Updated `[GAMEASSIST:CORE]` because the runtime version changed.
+- Updated `[GAMEASSIST:CORE:OBJECT]` because failed dependency enable attempts now preserve the module's existing configured intent.
+- Updated `[GAMEASSIST:INTERFACES:COMMANDS]` because `!ga-status` output, health interpretation, dependency scoping, and public `--details` behavior changed.
+- Updated `[GAMEASSIST:BOOTSTRAP]` because startup now preserves configured intent for dependency-skipped modules and checks deliberate disables before dependency diagnostics.
+- Left POLICY, APP utilities, queue, compatibility, state, event interface, and all six gameplay-module sections unchanged.
+- Preserved the literal `GAMEASSIST` codename, all section tags, and the file-scoped canonical tree.
+
+### Documentation
+
+- Updated `README.md` with the simple/details status split, command syntax, health interpretation, troubleshooting workflow, upgrade path, current release posture, and release summary.
+- Updated `Smoketest.md` with DM-readable expected output, button checks, details-panel checks, variable-counter guidance, dependency interpretation, and the corrected unavailable-duration display.
+- Updated `ROADMAP.md` to move Issue #23 to sandbox verification while leaving Issue #24 planned separately.
+- Added a standalone Issue #23 Roll20 test script and concise acceptance checklist outside the repository working tree.
+
+### Release artifacts
+
+The current repository script and versioned artifact share this Git-normalized SHA-256:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `GameAssist` | `859FE5A08516EEBE42D7BB2C05733AE28E5DD49E5954045C4A9D4CA7EC44EAEF` |
+| `GameAssist-v0.1.4.6` | `859FE5A08516EEBE42D7BB2C05733AE28E5DD49E5954045C4A9D4CA7EC44EAEF` |
+
+Local Roll20 test copy:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `outputs/GameAssist-v0.1.4.6-issue23-test.js` | `233C20EB6AC6011E8BF26AE8828738C6C8B85E8BBDCD072759F2369786FFEF01` |
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| JavaScript syntax for repository, versioned, local Roll20, and harness artifacts | Passed |
+| `script.json` parse and version/previous-version metadata | Passed |
+| Default, detailed, action-strip, confirmed, unverifiable, missing, startup-skipped, refused-enable, skipped-disable, deliberately-disabled, recorded-error, numeric-duration, and command-boundary status scenarios | Passed (57 assertions) |
+| `GameAssist`, `GameAssist-v0.1.4.6`, and local Roll20 test copy normalized identity | Passed |
+| Unchanged v0.1.4.5 leaf sections: POLICY, APP utilities, queue, compatibility, state, event interface, and all modules | Passed (12 sections) |
+| Prior command-literal preservation | Passed |
+| MECHSUITS section pairing and proper nesting | Passed (19 sections) |
+| Global Roll20 `on`/`off` non-override contract | Passed |
+| `git diff --check` | Passed |
+| Roll20 chat rendering and button acceptance | Pending DM smoke test |
+
+The Roll20 API sandbox remains the final acceptance environment for default-template rendering and clickable chat buttons.
