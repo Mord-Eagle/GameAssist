@@ -2947,7 +2947,6 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
         function hasOpenDeathEntry(token) {
             const runtime = ensureNPCManagerRuntime();
-            const fallbackName = token.get('name') || '(Unnamed NPC)';
             const collections = [runtime.deathLog];
             DEATH_BUCKET_SCOPES.forEach(scope => {
                 runtime.buckets[scope].forEach(bucket => {
@@ -2955,7 +2954,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 });
             });
             return collections.some(entries => entries.some(entry =>
-                entry && !entry.revivedAt && entryMatchesToken(entry, token, fallbackName)
+                entry?.tokenId === token.id && !entry.revivedAt
             ));
         }
 
@@ -4077,6 +4076,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Changed (v0.1.4.5): Revival history annotations no longer depend on successful TokenMod marker removal.
     // Changed (v0.1.4.5): Restored bounded, grouped token details to the death-audit chat panel while retaining the complete audit handout.
     // Changed (v0.1.4.5): NPCManager opts into runtime retention so disabling marker automation does not erase saved bucket history or Arc records.
+    // Changed (v0.1.4.5): Open-death deduplication requires an exact token id so legacy name-only entries cannot suppress a different same-named NPC.
     // Changed (v0.1.4.5): Added !npc-death-help as the GM-facing start-here menu for bucket naming, reports, audits, and arc handouts.
     // Changed (v0.1.4.5): NPC death history now records into active Campaign/Chapter/Section/Session buckets independently of marker-write success, updates one handout per bucket, annotates revivals on matching entries, moves audit details into a handout, and adds manual arc buckets for selected linked PC/NPC tokens or current-session deaths.
     // Changed (v0.1.4.5): Renamed the arc command to !npc-death-arc and hardened migration, same-name token matching, scoped-clear duplicate prevention, zero-HP capture, and death-only revival annotations in arc handouts.

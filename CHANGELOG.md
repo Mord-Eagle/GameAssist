@@ -1373,6 +1373,7 @@ v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It
 
 - Added opt-in `preserveRuntimeOnDisable` module-registration metadata. Existing modules continue clearing disposable runtime caches by default.
 - NPCManager enables runtime retention so disabling marker automation no longer erases saved Campaign, Chapter, Section, Session, or Arc records; configured-marker teardown still runs.
+- Open-death deduplication now requires an exact token ID. Legacy name-only entries remain available in reports but cannot suppress a new death for a different same-named NPC.
 - Persisted the legacy death-log migration completion flag in NPCManager runtime state so the migration does not repeat on every command.
 - Batched legacy migration handout writes to one update per scope after all retained entries are copied.
 - Matched current death records by token ID before using the name-only fallback reserved for legacy entries without token IDs. This keeps separate same-named NPC tokens from sharing one death or revival record.
@@ -1426,14 +1427,14 @@ The v0.1.4.4 artifact remains preserved. The current repository script and the n
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `EA5D2F4A064292F4C7E3BD4A733EAB5413FA82820F7F222E2C7BDFC1CC731440` |
-| `GameAssist-v0.1.4.5` | `EA5D2F4A064292F4C7E3BD4A733EAB5413FA82820F7F222E2C7BDFC1CC731440` |
+| `GameAssist` | `7758777483020327F87D5EA90A11A788773B4FAE7B653BD496D3C745DAA81720` |
+| `GameAssist-v0.1.4.5` | `7758777483020327F87D5EA90A11A788773B4FAE7B653BD496D3C745DAA81720` |
 
 Local Roll20 test copy:
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `outputs/GameAssist-v0.1.4.5-pr34-test.js` | `18BC8CAA8377818C1F60E054F055F3804F160517D87B13EFFDBE301BEFC4A376` |
+| `outputs/GameAssist-v0.1.4.5-pr34-test.js` | `E73A98E5DD49A070349D204B484DFEA3CF3EFDBDE8FC55C6D401A1A495DF5D75` |
 
 ### Verification
 
@@ -1447,6 +1448,7 @@ Local Roll20 test copy:
 | Copilot follow-up harness: custom Session retention, date-mode reset/rollover, and revival annotation despite marker-resolution failure | Passed (9 assertions) |
 | NPC death-audit chat/handout regression: two named mismatches with HP, markers, and token IDs in chat plus complete handout details | Passed (12 assertions) |
 | Five-revision preservation audit: commands, defaults, state repair, queue, dependencies, marker identity, module UX, HP rolling, and NPCManager lifecycle | Passed after correcting NPCManager disable retention |
+| Legacy name-only deduplication regression: a retained legacy name does not block a new token-ID-bearing death | Passed |
 | MECHSUITS section pairing, nesting, metadata, footers, and canonical-tree agreement | Passed (19 sections) |
 | `git diff --cached --check` | Passed |
 | Roll20 API sandbox acceptance checklist | Pending DM smoke test |
