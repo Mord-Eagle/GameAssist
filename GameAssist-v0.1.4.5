@@ -79,7 +79,7 @@ V0.1.4.5 STABILIZATION NOTES
 - Concentration status reports invalid marker configuration instead of silently returning an incorrect result.
 - CritFumble help and NPC death-audit output use clearer DM-facing wording.
 - NPC deaths record into Campaign, Chapter, Section, and Session buckets, with one handout per bucket.
-- NPC death audits write detailed findings to the GameAssist NPC Death Audit handout.
+- NPC death audits show bounded token-specific findings in chat and write the complete findings to the GameAssist NPC Death Audit handout.
 - Arc buckets let the GM append selected linked PC/NPC tokens or current-session deaths to story handouts.
 
 HEADER REQUIREMENTS NOTE
@@ -3965,7 +3965,24 @@ description, syntax/commands, and configuration pointers near the top of the scr
                     value: mismatchCount
                         ? `⚠️ ${mismatchCount} linked NPC${mismatchCount === 1 ? '' : 's'} need death-marker attention.`
                         : '✅ No death-marker problems found for linked NPCs.'
-                },
+                }
+            ];
+
+            if (needsMarker.length) {
+                fields.push({
+                    label: `Add Death Marker (${needsMarker.length})`,
+                    value: formatAuditEntries(needsMarker)
+                });
+            }
+
+            if (needsClear.length) {
+                fields.push({
+                    label: `Remove Death Marker (${needsClear.length})`,
+                    value: formatAuditEntries(needsClear)
+                });
+            }
+
+            fields.push(
                 {
                     label: 'Scope',
                     value: 'Checked linked NPC tokens on the current player page. Player characters are not included.'
@@ -3986,7 +4003,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
                         `Ignored unlinked: ${invalid.length}`
                     ]
                 }
-            ];
+            );
 
             if (invalid.length) {
                 fields.push({
@@ -4044,6 +4061,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Changed (v0.1.4.5): NPCManager module_version advanced from 0.1.1.0 to 1.0.0 for scoped bucket/handout management, then to 1.1.0 for Arc curation, hierarchical clearing, date-managed Sessions, and report writing.
     // Changed (v0.1.4.5): Explicit Session names now remain active across date changes; Reset Session Date re-enables automatic UTC date rollover.
     // Changed (v0.1.4.5): Revival history annotations no longer depend on successful TokenMod marker removal.
+    // Changed (v0.1.4.5): Restored bounded, grouped token details to the death-audit chat panel while retaining the complete audit handout.
     // Changed (v0.1.4.5): Added !npc-death-help as the GM-facing start-here menu for bucket naming, reports, audits, and arc handouts.
     // Changed (v0.1.4.5): NPC death history now records into active Campaign/Chapter/Section/Session buckets independently of marker-write success, updates one handout per bucket, annotates revivals on matching entries, moves audit details into a handout, and adds manual arc buckets for selected linked PC/NPC tokens or current-session deaths.
     // Changed (v0.1.4.5): Renamed the arc command to !npc-death-arc and hardened migration, same-name token matching, scoped-clear duplicate prevention, zero-HP capture, and death-only revival annotations in arc handouts.

@@ -1347,7 +1347,8 @@ v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It
   - count of NPCs needing a marker;
   - count of NPCs needing marker removal;
   - count of ignored unlinked page items.
-- Detailed audit rows now write to the `GameAssist NPC Death Audit` handout instead of being crammed into chat.
+- Complete audit rows write to the `GameAssist NPC Death Audit` handout.
+- Chat retains bounded, grouped token details under `Add Death Marker` and `Remove Death Marker`, including each affected token's HP, current markers, and token ID.
 - The audit continues to check linked NPC tokens only; player characters are intentionally excluded.
 
 ### Added — manual arc handouts
@@ -1423,14 +1424,14 @@ The v0.1.4.4 artifact remains preserved. The current repository script and the n
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `0DF894E6BE13B9B2703CDAA2272A281CE1CB4F3B933D9C5FDE413836505E54A8` |
-| `GameAssist-v0.1.4.5` | `0DF894E6BE13B9B2703CDAA2272A281CE1CB4F3B933D9C5FDE413836505E54A8` |
+| `GameAssist` | `80153F55DC508FF549F3AF21C695A6B270A2F8F78F90E43D11AF38B8B3F0A314` |
+| `GameAssist-v0.1.4.5` | `80153F55DC508FF549F3AF21C695A6B270A2F8F78F90E43D11AF38B8B3F0A314` |
 
 Local Roll20 test copy:
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `outputs/GameAssist-v0.1.4.5-pr34-test.js` | `92A11BE382CE4547D98354EBB6E3E53F85C5967340EB449E1FD3C56ACB25B9E1` |
+| `outputs/GameAssist-v0.1.4.5-pr34-test.js` | `1CAE1417515DFD1A91F505E54706E00A40D5C22E0C64B15C9B0F0DBCB245AEFA` |
 
 ### Verification
 
@@ -1442,6 +1443,7 @@ Local Roll20 test copy:
 | NPCManager review regression checks for migration, same-name tokens, scoped clearing, arc revival eligibility, and zero HP | Passed |
 | NPCManager behavioral harness: Arc deduplication/override/removal/undo, selected-only and nested clearing, Section seeding, and simulated date rollover | Passed (22 assertions) |
 | Copilot follow-up harness: custom Session retention, date-mode reset/rollover, and revival annotation despite marker-resolution failure | Passed (9 assertions) |
+| NPC death-audit chat/handout regression: two named mismatches with HP, markers, and token IDs in chat plus complete handout details | Passed (12 assertions) |
 | MECHSUITS section pairing, nesting, metadata, footers, and canonical-tree agreement | Passed (19 sections) |
 | `git diff --cached --check` | Passed |
 | Roll20 API sandbox acceptance checklist | Pending DM smoke test |

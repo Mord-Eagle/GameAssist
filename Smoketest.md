@@ -286,7 +286,7 @@ Expected: `!npc-death-buckets` returns one `NPC Death Buckets` panel showing Cam
 
 Expected: `!NPC-WR` returns one `NPC Report Writer` panel. It should show all four active names and counts before offering write or adjustment buttons.
 
-Expected: a single `NPC Death Audit` chat summary. The `Scope` row should say that linked NPCs are checked and player characters are not included. The `Detail Handout` row should point to `GameAssist NPC Death Audit`.
+Expected: a single `NPC Death Audit` panel. When mismatches exist, it names the affected tokens under `Add Death Marker` or `Remove Death Marker`; each entry includes HP, current markers, and token ID. The `Scope` row should say that linked NPCs are checked and player characters are not included. The `Detail Handout` row should point to `GameAssist NPC Death Audit`.
 
 A clean audit says no death-marker problems were found for linked NPCs. A mismatch audit gives counts in chat and writes the detailed token list to the audit handout. If the page has party markers, scenery, labels, or props, GameAssist may also mention ignored unlinked page items; that is normal.
 
@@ -946,7 +946,7 @@ Then run:
 !npc-death-audit
 ```
 
-Expected: The chat summary reports the mismatch count and names the `GameAssist NPC Death Audit` handout. The handout lists the mismatched NPC with its HP and marker state.
+Expected: The chat panel reports the mismatch count and lists the affected token under `Add Death Marker` or `Remove Death Marker`, including HP, markers, and token ID. The `GameAssist NPC Death Audit` handout contains the complete mismatch list.
 
 Restore the token to a correct state afterward.
 

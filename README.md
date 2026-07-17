@@ -298,7 +298,7 @@ The default Session name follows the sandbox's UTC date. Before any NPCManager c
 
 Arc handouts are curated rosters, not another hierarchy level. A linked creature appears once per Arc by default, so adding selected NPCs and later importing the full Session does not repeat those creatures. The Session import can enrich an existing selected entry with its death record. The management menu can remove one entry, remove all selected tokens, or undo the most recent Arc addition. `--allowDuplicates` is an explicit override for deliberate repetition. Selected-token Arc entries remain general story notes; revival annotations apply only after an entry is linked to Session death history.
 
-`!npc-death-audit` is the mismatch checker. The chat output gives the summary and points to the `GameAssist NPC Death Audit` handout, where the detailed token list is written. The audit checks linked NPC tokens on the current player page; player characters are not included. A clean audit means linked NPC tokens have death markers that match their HP. Mismatches are grouped by action: add the configured marker or clear the configured marker. The audit may also note ignored unlinked page items such as party markers, scenery, labels, or props.
+`!npc-death-audit` is the mismatch checker. Chat shows a summary plus bounded, token-specific **Add Death Marker** and **Remove Death Marker** groups. The complete list is written to the `GameAssist NPC Death Audit` handout. The audit checks linked NPC tokens on the current player page; player characters are not included. A clean audit means linked NPC tokens have death markers that match their HP. The audit may also note ignored unlinked page items such as party markers, scenery, labels, or props.
 
 Config keys: `autoTrackDeath`, `deadMarker`, `autoHide`, `hideLayer`.
 
@@ -863,7 +863,7 @@ Confirm the token:
 * uses `bar1_value` for HP,
 * and has a valid configured marker.
 
-`!npc-death-audit` writes the detailed mismatch list to the `GameAssist NPC Death Audit` handout and whispers a short summary in chat. Player characters are intentionally excluded from this audit.
+`!npc-death-audit` whispers a bounded list of the specific tokens needing a marker added or removed, and writes the complete mismatch list to the `GameAssist NPC Death Audit` handout. Player characters are intentionally excluded from this audit.
 
 `!npc-death-report` shows recorded bucket history in summary/detail views; it does not audit the page.
 
