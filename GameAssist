@@ -2041,13 +2041,6 @@ description, syntax/commands, and configuration pointers near the top of the scr
             thrown:  'CF-Thrown'
         };
         const FUMBLE_TYPE_ORDER = ['melee', 'ranged', 'thrown', 'spell', 'natural'];
-        const FUMBLE_TYPE_HELP = {
-            melee:   'Melee weapon or close attack.',
-            ranged:  'Bow, crossbow, firearm, or other aimed ranged attack.',
-            thrown:  'Thrown dagger, javelin, rock, or similar thrown weapon.',
-            spell:   'Spell attack roll.',
-            natural: 'Unarmed strike, bite, claw, or other body/natural attack.'
-        };
         // Lookup for confirm tables
         const CONFIRM_TABLES = {
             'confirm-crit-martial': 'Confirm-Crit-Martial',
@@ -2250,22 +2243,16 @@ description, syntax/commands, and configuration pointers near the top of the scr
         }
 
         function showHelpMessage(who) {
-            const typeLines = FUMBLE_TYPE_ORDER
-                .map(type => `${type} - ${FUMBLE_TYPE_HELP[type]}`)
-                .join('<br>');
             const directCommandLines = FUMBLE_TYPE_ORDER
-                .map(type => `!critfumble-${type} - roll ${FUMBLE_TABLES[type]}`)
+                .map(type => `!critfumble-${type}`)
                 .join('<br>');
-            sendTemplateMessage(who, "📘 CritFumble Help", [
-                { label: "Version",     value: "v0.2.4.9" },
-                { label: "What This Does", value: "Helps resolve critical misses. When an attack roll is a natural 1, GameAssist can offer the attacker a fumble menu. The GM can also trigger that menu manually." },
-                { label: "Most DMs Use", value: "!critfail - opens a GM player picker. Choose the player who made the critical miss; that player receives the fumble menu." },
-                { label: "Automatic Use", value: "Supported Roll20 attack templates can trigger the same menu automatically when they show a natural 1." },
-                { label: "Player Chooses", value: typeLines },
-                { label: "Direct Roll Commands", value: "Use these when you already know the attack type:<br>" + directCommandLines },
-                { label: "Confirm Critical Miss", value: "!confirm-crit-martial - weapon or martial confirmation<br>!confirm-crit-magic - magical confirmation" },
-                { label: "Required Tables", value: REQUIRED_TABLES.join('<br>') },
-                { label: "If A Roll Fails", value: "Check the rollable table names first. Missing or misspelled tables make the roll fail even when GameAssist is responding correctly." }
+            sendTemplateMessage(who, "📘 CritFumble Quick Help", [
+                { label: "At The Table", value: "Natural 1? Use !critfail, pick the player, then let them choose the attack type." },
+                { label: "Auto Mode", value: "Some Roll20 attack rolls open the same menu automatically. Use !critfail if they do not." },
+                { label: "Attack Types", value: FUMBLE_TYPE_ORDER.join(', ') },
+                { label: "Direct Rolls", value: directCommandLines },
+                { label: "Confirm Rolls", value: "!confirm-crit-martial<br>!confirm-crit-magic" },
+                { label: "Setup Check", value: "Needs rollable tables: " + REQUIRED_TABLES.join(', ') }
             ]);
         }
 
@@ -2343,7 +2330,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // Bugfix retained: robust natural‑1 detection across templates/inlineroll variants.
-    // Changed (v0.1.4.4): CritFumble help now explains the DM workflow, attack types, required tables, direct commands, and table-name troubleshooting.
+    // Changed (v0.1.4.4): CritFumble help now uses a compact GM quick-reference with table workflow, attack types, direct commands, setup check, and confirm commands.
     // Maintenance (v0.1.4.3, no semantic change): Reworded an internal comment for collaborator clarity.
     // Maintenance (v0.1.4.1, no semantic change): Routed unchanged defaults through POLICY and timestamps through now().
     // Prior notes:
@@ -2534,7 +2521,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
             }
 
             if (flagged.length === 0) {
-                GameAssist.log('NPCManager', '✅ No HP/death-marker mismatches found on qualifying current-page NPCs. Correctly marked dead NPCs are intentionally omitted.');
+                GameAssist.log('NPCManager', '✅ Death markers look right for linked NPCs on this page.');
             } else {
                 GameAssist.log('NPCManager', `⚠️ ${flagged.length} NPC(s) with mismatched death markers:`);
                 flagged.forEach(({ name, id, hp, markers }) => {
@@ -2543,10 +2530,14 @@ description, syntax/commands, and configuration pointers near the top of the scr
             }
 
             if (invalid.length) {
+                const names = invalid.slice(0, 5).join(', ');
+                const suffix = invalid.length > 5 ? `, +${invalid.length - 5} more` : '';
+                const subject = invalid.length === 1 ? names : `${invalid.length} page items (${names}${suffix})`;
+                const pronoun = invalid.length === 1 ? 'it is' : 'they are';
+                const noun = invalid.length === 1 ? 'a character' : 'characters';
                 GameAssist.log(
                     'NPCManager',
-                    `Skipped ${invalid.length} token(s) with no linked character: ${invalid.join(', ')}`,
-                    'WARN'
+                    `Ignored ${subject} because ${pronoun} not tied to ${noun}. This is usually fine for party markers, scenery, labels, or props.`
                 );
             }
         }, 'NPCManager', { gmOnly: true });
@@ -2590,7 +2581,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // CHOICE: TokenMod used for status marker ops; keep dependency explicit in README.
-    // Changed (v0.1.4.4): NPC death-audit success wording now accurately covers living and dead qualifying NPCs and explains that correct dead tokens are omitted.
+    // Changed (v0.1.4.4): NPC death-audit now uses table-friendly success wording and treats unrelated page items as normal informational context instead of warnings.
     // Changed (v0.1.4.3): NPCManager now resolves configured death markers before TokenMod add/remove/teardown requests, matching shared read-side marker identity behavior.
     // Changed (v0.1.4.1): Use exact shared marker matching, POLICY-owned cache limits, and shared time seams.
     // Prior notes:

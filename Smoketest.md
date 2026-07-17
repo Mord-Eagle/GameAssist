@@ -198,15 +198,12 @@ Run:
 
 ### Expected
 
-- A CritFumble help panel appears.
-- The help panel explains the common GM workflow with `!critfail`.
-- The help panel explains automatic natural-1 use in plain language.
-- The help panel describes the fumble types in DM terms: melee, ranged, thrown, spell, and natural.
-- The help panel lists the direct roll commands and the required rollable tables.
-- The help panel includes a troubleshooting hint for missing or misspelled rollable tables.
+- A `CritFumble Quick Help` panel appears.
+- The panel gives the table workflow: natural 1 → `!critfail` → pick the player → choose the attack type.
+- The panel lists the attack types, direct roll commands, confirm commands, and required rollable tables.
 - This test does not require the rollable tables.
 
-Receiving a help panel that a DM can use without already knowing the command system is the pass condition for this check.
+Receiving a compact help panel that tells the DM what to do next is the pass condition for this check.
 
 ### Optional Table Test
 
@@ -261,9 +258,9 @@ If you use NPCManager, run:
 | Command | What It Does | What It Does Not Do |
 | --- | --- | --- |
 | `!npc-death-report` | Shows the recorded history of NPC death events. | It does not summarize the current page or check whether markers match HP. |
-| `!npc-death-audit` | Looks for contradictions between current bar 1 HP and the configured death marker. | It does not list NPCs that are correctly marked dead. |
+| `!npc-death-audit` | Looks for contradictions between current bar 1 HP and the configured death marker. | It does not list every NPC that is already correct. |
 
-A response saying no HP/death-marker mismatches were found is a successful audit, even when several NPCs are dead, as long as those NPCs have HP below 1 and the configured death marker.
+A response saying `Death markers look right for linked NPCs on this page` is a successful audit. If the page has party markers, scenery, labels, or props, GameAssist may also mention that it ignored page items not tied to characters; that is normal.
 
 TokenMod is used when NPCManager changes a marker. The audit itself reads existing token HP and markers directly, so an empty audit is not normally caused by TokenMod.
 
@@ -666,7 +663,7 @@ Run:
 !critfumble help
 ```
 
-Expected: CritFumble help appears as a DM-facing mini-guide: common workflow, automatic use, fumble types, direct roll commands, required rollable tables, and a troubleshooting hint.
+Expected: CritFumble help appears as a compact DM quick reference: common workflow, automatic use, fumble types, direct roll commands, confirm commands, and required rollable tables.
 
 ### E2. Manual GM Menu
 
