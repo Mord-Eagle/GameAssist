@@ -20,7 +20,7 @@ GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a
 | Core Lift | Guarded modules, conservative state repair, explicit queue API, session metrics, dependency diagnostics, and GM health reporting. |
 | 30-Second Install | ① Paste **GameAssist-v0.1.4.5** ② Install **TokenMod** for marker modules ③ Add the seven CritFumble roll-tables ④ Save/reload ⑤ Run `!ga-status`. |
 | Flagship Player Commands | `!concentration`, `!cc`, `!critfumble-<type>`. |
-| Flagship GM Commands | `!critfumble`, `!critfumble help`, `!critfumble menu`, `!critfail`, `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report`, `!npc-death-buckets`, `!npc-death-audit`, `!npc-arc`, `!ga-conc-status`, `!ga-config ui`. |
+| Flagship GM Commands | `!critfumble`, `!critfumble help`, `!critfumble menu`, `!critfail`, `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-help`, `!npc-death-report`, `!npc-death-buckets`, `!npc-death-audit`, `!npc-arc`, `!ga-conc-status`, `!ga-config ui`. |
 | Admin Controls | `!ga-config list|get|set|modules|cleanup|ui`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-metrics`, and `!ga-debug`. |
 | Queue Model | Normal commands/events run directly. Only `GameAssist.enqueue(...)` work and module transitions use the serialized queue. |
 | Watchdog Limit | A timeout releases the explicit queue; it **cannot** terminate underlying JavaScript, `sendChat()`, or Roll20 operations. |
@@ -91,6 +91,7 @@ Run these commands after every update:
 !ga-metrics
 !critfumble menu
 !concentration --status
+!npc-death-help
 !npc-death-report
 !npc-death-buckets
 !npc-death-audit
@@ -259,6 +260,8 @@ Config keys: `marker`, `randomize`.
 
 > **Dependency:** TokenMod is required for automated death-marker changes. Death-history recording and handout updates still run even if a marker write cannot be confirmed.
 
+> **Module version:** NPCManager `1.0.0` in GameAssist v0.1.4.5. This is a module-major change because NPCManager moved from a single death log to scoped bucket and handout management.
+
 NPCManager watches `change:graphic:bar1_value` for linked NPC characters with `npc=1`.
 
 * HP below 1 → record the NPC death into the active Campaign, Chapter, Section, and Session buckets, then request the configured `deadMarker`.
@@ -273,6 +276,7 @@ Commands:
 * `!npc-death-report --page N` → Page through older recorded death events for the selected bucket.
 * `!npc-death-report --write` → Rebuild the active bucket handouts from saved state.
 * `!npc-death-report --help` → Explain the death-report commands.
+* `!npc-death-help` → Open the NPCManager start-here menu for buckets, reports, audits, and arcs.
 * `!npc-death-buckets` → Show active bucket names, counts, report buttons, and rename buttons.
 * `!npc-death-buckets --campaign "Name" --chapter "Name" --section "Name" --session "Name"` → Set retained active bucket names.
 * `!npc-death-clear --scope session` → Ask for confirmation before clearing the selected active bucket. Defaults to Session.
@@ -385,6 +389,19 @@ VI. **Run the Smoke Test**
 
 Use the checklist in [§4.1 Minimum Smoke Test](#41-minimum-smoke-test) before trusting the release in a live session.
 
+### 7.1 Official Roll20 API Repository Readiness
+
+Before opening or updating a pull request against `Roll20/roll20-api-scripts`, confirm:
+
+* Repository folder name matches the `script.json` script name: `GameAssist`.
+* `script.json` points at the actual script artifact: `"script": "GameAssist"`.
+* `script.json` includes current `version`, `previousversions`, detailed `description`, `authors`, `roll20userid`, `dependencies`, `modifies`, `conflicts`, and command list.
+* The top script header includes name, version, last updated date, description, syntax/commands, dependency notes, and configuration pointers.
+* Included file types are accepted by the Roll20 API repo: script text, Markdown, JSON, and license text.
+* README and smoke test describe the current version and do not promise unverified sandbox behavior.
+* MIT license is present.
+* After the Roll20 repo PR is accepted, update the Roll20 Community Wiki API Script Index if appropriate.
+
 ---
 
 ## 8 · Command Matrix <a id="8-command-matrix"></a>
@@ -406,6 +423,7 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!ga-enable <Module>` / `!ga-disable <Module>` | — | Enable or disable a module. |
 | **GM** | `!npc-hp-all` | — | Roll and set HP for qualifying NPC tokens on the current page. |
 |  | `!npc-hp-selected` | — | Roll and set HP for qualifying selected NPC tokens. |
+|  | `!npc-death-help` | — | Open the NPCManager start-here help menu. |
 |  | `!npc-death-report` | `[--scope campaign\|chapter\|section\|session] [--recent] [--page N] [--write] [--help]` | Show summarized or paged recorded NPC death events for a bucket. |
 |  | `!npc-death-buckets` | `[--campaign "Name"] [--chapter "Name"] [--section "Name"] [--session "Name"] [--resetSession]` | View or rename the active death-history buckets. |
 |  | `!npc-death-clear` | `[--scope session] [--confirm]` | Ask before clearing one active bucket; `--confirm` performs the clear. |

@@ -15,7 +15,7 @@ execute directly unless a module deliberately calls GameAssist.enqueue(). This p
 • ConfigUI — GM-only chat controls for toggling modules and boolean options.
 • CritFumble — Detects natural-1s on selected rolltemplates and offers fumble/confirm menus.
 • ConcentrationTracker — Runs concentration checks (normal/adv/dis), whispers results, toggles marker.
-• NPCManager — Tracks NPC death markers, scoped death-history buckets, audit handouts, and arc notes.
+• NPCManager 1.0.0 — Tracks NPC death markers, scoped death-history buckets, audit handouts, and arc notes.
 • NPCHPRoller — Rolls NPC HP from `npc_hpformula` and writes to bar1 (value/max).
 • DebugTools — Optional GM diagnostics (dry-run by default) for damage, markers, and save rolls.
 
@@ -44,7 +44,8 @@ MODULE COMMANDS:
 • ConcentrationTracker (players/GM):
     !concentration [--damage N] [--mode normal|adv|dis] [--off|--status|--last|--config randomize on|off]
     !cc (alias)
-• NPCManager (GM):         !npc-death-report [--scope campaign|chapter|section|session] [--recent|--page N|--write|--help]
+• NPCManager (GM):         !npc-death-help
+                            !npc-death-report [--scope campaign|chapter|section|session] [--recent|--page N|--write|--help]
                             !npc-death-buckets | !npc-death-clear [--scope session] [--confirm] | !npc-death-audit | !npc-arc
 • NPCHPRoller (GM):        !npc-hp-selected    |   !npc-hp-all
 • ConfigUI (GM):           !ga-config ui [--page N] | !ga-config-ui
@@ -2373,7 +2374,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // [GAMEASSIST:MODULES:CRITFUMBLE] END
     // =============================================================================
 
-    // ————— NPC MANAGER MODULE v0.1.1.0 —————
+    // ————— NPC MANAGER MODULE v1.0.0 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:NPCMANAGER] BEGIN
     // Section Title: NPCManager module
@@ -2382,7 +2383,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     //   guarantees: ["Auto toggle resolved configured dead marker based on HP; record NPC deaths into scoped handout buckets"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:OBJECT]"],
     //   last_updated_version: "v0.1.4.5",
-    //   independent_versions: { module_version: "0.1.1.0" } }
+    //   independent_versions: { module_version: "1.0.0" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:NPCMANAGER monitors token HP changes to set or clear the configured
@@ -2420,6 +2421,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         const DEATH_REPORT_SUMMARY_LIMIT = POLICY.runtime.deathReportSummaryLimit;
         const DEATH_REPORT_DETAIL_LIMIT = POLICY.runtime.deathReportDetailLimit;
         const AUDIT_HANDOUT_NAME = 'GameAssist NPC Death Audit';
+        const NPCMANAGER_MODULE_VERSION = '1.0.0';
 
         function ensureDeathBucketConfig() {
             const existing = modState.config.deathBuckets;
@@ -2905,6 +2907,69 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 {
                     label: 'Handouts',
                     value: 'GameAssist creates one handout per death bucket and updates that handout when the bucket changes.'
+                },
+                {
+                    label: 'Full NPCManager Help',
+                    value: GameAssist.createButton('Open Help Menu', '!npc-death-help')
+                }
+            ]);
+        }
+
+        function showNPCManagerHelp() {
+            const names = ensureDeathBucketConfig();
+            const buckets = getActiveBuckets();
+            const activeLines = DEATH_BUCKET_SCOPES.map(scope =>
+                `${DEATH_BUCKET_TITLES[scope]}: ${names[scope]} (${buckets[scope].entries.length} deaths)`
+            );
+
+            sendNPCPanel('NPCManager Help', [
+                {
+                    label: 'Module Version',
+                    value: `NPCManager ${NPCMANAGER_MODULE_VERSION}`
+                },
+                {
+                    label: 'Start Here',
+                    value: [
+                        '1. Name your active buckets.',
+                        '2. Let linked NPC HP drops record deaths automatically.',
+                        '3. Use reports for history and audit for current-page marker problems.'
+                    ]
+                },
+                {
+                    label: 'Quick Buttons',
+                    value: [
+                        GameAssist.createButton('Name Buckets', '!npc-death-buckets'),
+                        GameAssist.createButton('Session Report', '!npc-death-report --scope session'),
+                        GameAssist.createButton('Run Audit', '!npc-death-audit'),
+                        GameAssist.createButton('Arc Help', '!npc-arc')
+                    ]
+                },
+                {
+                    label: 'Active Buckets',
+                    value: activeLines
+                },
+                {
+                    label: 'Automatic Tracking',
+                    value: 'Linked NPCs only. HP below 1 records a death in all active buckets; HP above 0 annotates the matching entry as revived.'
+                },
+                {
+                    label: 'Common Commands',
+                    value: [
+                        '!npc-death-report --scope campaign',
+                        '!npc-death-report --scope chapter',
+                        '!npc-death-report --scope section',
+                        '!npc-death-report --scope session',
+                        '!npc-death-clear --scope session',
+                        '!npc-arc --name "Arc Name" --session'
+                    ]
+                },
+                {
+                    label: 'Handouts',
+                    value: [
+                        'Death buckets: GameAssist Deaths - <Scope> - <Name>',
+                        `Audit details: ${AUDIT_HANDOUT_NAME}`,
+                        'Story arcs: GameAssist Arc - <Name>'
+                    ]
                 }
             ]);
         }
@@ -3287,6 +3352,11 @@ description, syntax/commands, and configuration pointers near the top of the scr
             }
         }
 
+        GameAssist.onCommand('!npc-death-help', msg => {
+            backfillBucketsFromLegacyLog();
+            showNPCManagerHelp();
+        }, 'NPCManager', { gmOnly: true });
+
         GameAssist.onCommand('!npc-death-report', msg => {
             const { args } = _parseArgs(msg.content);
             backfillBucketsFromLegacyLog();
@@ -3467,11 +3537,11 @@ description, syntax/commands, and configuration pointers near the top of the scr
         }, 'NPCManager', { gmOnly: true });
 
         GameAssist.onEvent('change:graphic:bar1_value', handleTokenChange, 'NPCManager');
-        GameAssist.log('NPCManager', 'v0.1.1.0 Ready: Auto death tracking + bucketed reports/audits/arcs', 'INFO', { startup: true });
+        GameAssist.log('NPCManager', `${NPCMANAGER_MODULE_VERSION} Ready: Auto death tracking + bucketed reports/audits/arcs`, 'INFO', { startup: true });
     }, {
         enabled: true,
         events: ['change:graphic:bar1_value'],
-        prefixes: ['!npc-death-report', '!npc-death-clear', '!npc-death-audit', '!npc-death-buckets', '!npc-arc'],
+        prefixes: ['!npc-death-help', '!npc-death-report', '!npc-death-clear', '!npc-death-audit', '!npc-death-buckets', '!npc-arc'],
         dependsOn: ['TokenMod'],
         teardown: () => {
             const branch = GameAssist.getState('NPCManager');
@@ -3505,6 +3575,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // CHOICE: TokenMod used for status marker ops; keep dependency explicit in README.
+    // Changed (v0.1.4.5): NPCManager module_version advanced to 1.0.0 because the module state model and user workflow changed from a single death log to scoped bucket and handout management.
+    // Changed (v0.1.4.5): Added !npc-death-help as the GM-facing start-here menu for bucket naming, reports, audits, and arc handouts.
     // Changed (v0.1.4.5): NPC death history now records into active Campaign/Chapter/Section/Session buckets independently of marker-write success, updates one handout per bucket, annotates revivals on matching entries, moves audit details into a handout, and adds manual arc buckets for selected linked PC/NPC tokens or current-session deaths.
     // Changed (v0.1.4.4): NPC death-audit now sends a grouped GM report, states that PCs are excluded, categorizes marker mismatches by action, and caps detailed rows to keep Roll20 chat output usable.
     // Changed (v0.1.4.3): NPCManager now resolves configured death markers before TokenMod add/remove/teardown requests, matching shared read-side marker identity behavior.

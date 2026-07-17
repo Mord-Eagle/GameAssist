@@ -1264,7 +1264,7 @@ Roll20 API sandbox confirmation is still required for the final release gate.
 
 ### Release definition
 
-v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It keeps the `v0.1.4.x` standalone TokenMod architecture, but changes death history from a single chat-oriented log into scoped DM-facing handout buckets: Campaign, Chapter, Section, and Session. It also adds manual Arc handouts for story threads that sit outside that hierarchy.
+v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It keeps the `v0.1.4.x` standalone TokenMod architecture, but changes death history from a single chat-oriented log into scoped DM-facing handout buckets: Campaign, Chapter, Section, and Session. It also adds manual Arc handouts for story threads that sit outside that hierarchy. NPCManager itself advances to module version `1.0.0` because its state model and GM workflow changed substantially even though the GameAssist project version remains a patch release.
 
 ### Issue addressed
 
@@ -1272,6 +1272,7 @@ v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It
 
 ### Changed — scoped NPC death buckets
 
+- Advanced `[GAMEASSIST:MODULES:NPCMANAGER]` independent `module_version` from `0.1.1.0` to `1.0.0`.
 - Added active death-history bucket names under NPCManager config:
   - `campaign`
   - `chapter`
@@ -1353,6 +1354,18 @@ v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It
   - `!npc-arc --name "Arc Name" --note "Text"`
 - Arc buckets are independent story-note handouts; they do not sit inside Campaign, Chapter, Section, or Session.
 
+### Added — NPCManager start-here help
+
+- Added `!npc-death-help` as the top-level NPCManager help menu.
+- The help menu shows:
+  - NPCManager module version;
+  - start-here steps for DMs;
+  - quick buttons for bucket naming, reports, audit, and arcs;
+  - active bucket names and counts;
+  - common command examples;
+  - the handout naming pattern.
+- `!npc-death-report --help` now links to the full NPCManager help menu.
+
 ### Changed — safer bucket clearing
 
 - `!npc-death-clear` now clears one active bucket at a time.
@@ -1365,16 +1378,17 @@ v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It
 
 ### Documentation
 
-- Updated `README.md` with the bucket hierarchy, handout names, arc commands, scope options, and audit-handout behavior.
-- Updated `Smoketest.md` so the quick and in-depth NPCManager checks verify bucket panels, report handouts, audit handouts, scoped clearing, and arc help/session import.
+- Updated `README.md` with the bucket hierarchy, NPCManager module version, handout names, help command, arc commands, scope options, and audit-handout behavior.
+- Added a Roll20 API repository readiness checklist to `README.md` covering folder/script naming, `script.json`, header, file types, smoke-test language, license, and post-merge wiki upkeep.
+- Updated `Smoketest.md` so the quick and in-depth NPCManager checks verify the help menu, bucket panels, report handouts, audit handouts, scoped clearing, and arc help/session import.
 - Updated `ROADMAP.md` to record Issue #22 as scoped death-history buckets and handouts rather than a summary-only report pass.
-- Updated `script.json` to version `0.1.4.5`, add `0.1.4.4` to `previousversions`, and list the expanded NPCManager command surface.
+- Updated `script.json` to version `0.1.4.5`, add `0.1.4.4` to `previousversions`, and list the expanded NPCManager command surface including `!npc-death-help`.
 
 ### MECHSUITS records
 
 - Updated `[GAMEASSIST:POLICY]` because the death-report summary/detail caps are runtime behavior knobs.
 - Updated `[GAMEASSIST:CORE]` because the runtime `VERSION` constant advanced.
-- Updated `[GAMEASSIST:MODULES:NPCMANAGER]` because the public death-report, bucket, audit, arc, revival annotation, and scoped-clear behavior changed.
+- Updated `[GAMEASSIST:MODULES:NPCMANAGER]` because the public death-report, help, bucket, audit, arc, revival annotation, and scoped-clear behavior changed.
 - Preserved existing section tags, codename `GAMEASSIST`, and command names.
 
 ### Release artifacts
@@ -1383,14 +1397,14 @@ The v0.1.4.4 artifact remains preserved. The current repository script and the n
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `45A07C6CCEB93AD2F28D2E1823C959FAF6DE28AEA661F76E53D0FFDEB0C46EA4` |
-| `GameAssist-v0.1.4.5` | `45A07C6CCEB93AD2F28D2E1823C959FAF6DE28AEA661F76E53D0FFDEB0C46EA4` |
+| `GameAssist` | `EF7726C8345368A1640F58B065563C0B942CED02D505DDA4906F4A01BF5EACA0` |
+| `GameAssist-v0.1.4.5` | `EF7726C8345368A1640F58B065563C0B942CED02D505DDA4906F4A01BF5EACA0` |
 
 Local Roll20 test copy:
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `outputs/GameAssist-v0.1.4.5-pr34-test.js` | `E8A3E87347C1527CC0C4449A7CD8B36202EF0AEB83CB5A9E5A0C108CF13C3BB9` |
+| `outputs/GameAssist-v0.1.4.5-pr34-test.js` | `9A757068B228738978760E29BF1137436D559B6E447FB8D850668BDF35C4E9B1` |
 
 ### Verification
 

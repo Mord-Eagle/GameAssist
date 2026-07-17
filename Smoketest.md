@@ -261,6 +261,7 @@ You receive either:
 If you use NPCManager, run:
 
 ```roll20chat
+!npc-death-help
 !npc-death-report
 !npc-death-buckets
 !npc-death-audit
@@ -270,9 +271,12 @@ If you use NPCManager, run:
 
 | Command | What It Does | What It Does Not Do |
 | --- | --- | --- |
+| `!npc-death-help` | Shows the NPCManager start-here menu, quick buttons, active buckets, and handout naming pattern. | It does not run an audit or change any saved bucket names. |
 | `!npc-death-report` | Shows the active Session death bucket, with buttons for recent/detail views. | It does not summarize the current page or check whether markers match HP. |
 | `!npc-death-buckets` | Shows the active Campaign, Chapter, Section, and Session bucket names and counts. | It does not erase existing bucket handouts when names change. |
 | `!npc-death-audit` | Looks for contradictions between current bar 1 HP and the configured death marker, then updates the audit handout. | It does not check player characters or list every NPC that is already correct in chat. |
+
+Expected: `!npc-death-help` returns one `NPCManager Help` panel. It should show module version `NPCManager 1.0.0`, start-here steps, quick buttons, active bucket names, common commands, and handout naming notes.
 
 Expected: `!npc-death-report` returns one `NPC Death Report` panel. A clean/new Session bucket says no NPC deaths are recorded. A bucket with recorded deaths shows the bucket name, total recorded deaths, the latest death, most frequent names, recent entries, action buttons, and the matching handout name.
 
@@ -956,6 +960,7 @@ Run:
 !npc-death-clear --scope session
 !npc-death-clear --scope session --confirm
 !npc-death-report
+!npc-death-help
 ```
 
 Expected:
@@ -968,6 +973,7 @@ Expected:
 Optional arc check:
 
 ```roll20chat
+!npc-death-help
 !npc-arc
 !npc-arc --name "Smoke Test Arc" --session
 ```
