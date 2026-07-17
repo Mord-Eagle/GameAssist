@@ -443,8 +443,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
      * resolveMarkerId — Resolve configured marker text to the exact stored marker id.
      * Inputs: built-in id, custom display name, or custom stored tag.
      * Outputs: a result object; callers must inspect ok before using id.
-     * Design: literal lowercase built-in ids retain precedence, while exact custom
-     * display names such as "Dead" can still select a custom marker.
+     * Design: literal lowercase built-in ids retain precedence, exact stored
+     * custom tags do not require the campaign registry, and exact custom display
+     * names such as "Dead" can still select a custom marker.
      */
     function resolveMarkerId(marker) {
         const requested = String(marker || '').split('@')[0].trim();
@@ -471,6 +472,19 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 source: 'built-in',
                 ambiguous: false,
                 candidates: [normalized],
+                reason: null,
+                registryError: null
+            };
+        }
+
+        if (requested.includes('::')) {
+            return {
+                ok: true,
+                requested,
+                id: requested,
+                source: 'custom-tag-direct',
+                ambiguous: false,
+                candidates: [requested],
                 reason: null,
                 registryError: null
             };
@@ -697,11 +711,12 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // --- Notes & Comments ---
     // NOTE: State auditor warns about unexpected branches; no automatic deletion occurs.
     // Changed (v0.1.4.3): Resolve configured built-in/custom marker names to exact stored Roll20 ids and return explicit resolution failures.
+    // Changed (v0.1.4.3): Exact stored custom marker tags resolve before registry access so valid configured tags survive registry read failures.
     // Decision log:
     //   CHOICE: Unknown branches remain warning-only; explicit cleanup is required before deletion.
     //   CHOICE: monotonic() falls back to Date.now() in Roll20 — ALT: assume performance.now; REJECTED: sandbox portability.
     //   CHOICE: Preserve literal lowercase built-in ids before custom display names, then honor exact-case custom names — ALT: always prefer custom names; REJECTED: a custom "dead" could silently replace NPCManager's built-in default.
-    //   CHOICE: Fast-path exact stored ids during token comparison — ALT: resolve every token independently; REJECTED: repeated campaign registry reads on large pages.
+    //   CHOICE: Fast-path exact stored ids during resolution and token comparison — ALT: require registry confirmation; REJECTED: valid stored tags should remain usable when the registry is unavailable.
     // Prior notes:
     //   Changed (v0.1.4.2): Known module state branches now self-heal malformed config/runtime containers while preserving valid configuration.
     //   Changed (v0.1.4.1): Added wall/monotonic clock seams and routed shared limits through POLICY.

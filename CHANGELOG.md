@@ -1074,8 +1074,8 @@ MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
 
 | Artifact | Purpose | SHA-256 |
 | --- | --- | --- |
-| `GameAssist-v0.1.4.3` | Versioned v0.1.4.3 script | `5BFE955BAEB9F6D09F498DC1A6C45338FB7B3E050EAB7FA0BEC5718445E1D272` |
-| `GameAssist` | Current repository script; identical to `GameAssist-v0.1.4.3` | `5BFE955BAEB9F6D09F498DC1A6C45338FB7B3E050EAB7FA0BEC5718445E1D272` |
+| `GameAssist-v0.1.4.3` | Versioned v0.1.4.3 script | `125E3F969F3657E7274E75793D59364C412660762C5504A12842C26580340954` |
+| `GameAssist` | Current repository script; identical to `GameAssist-v0.1.4.3` | `125E3F969F3657E7274E75793D59364C412660762C5504A12842C26580340954` |
 | `GameAssist-v0.1.4.2` | Previous complete script | `038B07B292E09981BD56564D83F5900353BDC1BDA0D39FDD4CB63A1DBE80CAC4` |
 
 ### Root cause addressed
@@ -1097,6 +1097,7 @@ MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
 - Allowed a colliding custom marker to be selected by its complete stored tag.
 - Updated `tokenHasMarker(...)` to compare exact resolved marker identities.
 - Added fast paths for already-resolved custom tags and literal built-in ids.
+- Exact stored custom marker tags now resolve before campaign-registry access, so a valid configured tag such as `Concentrating::7191835` remains usable when Roll20's marker registry is unavailable or malformed.
 - Returned explicit resolution failures for unrecognized configured markers.
 
 ### Changed — ConcentrationTracker status and lifecycle diagnostics
@@ -1154,7 +1155,7 @@ MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
 | JavaScript syntax validation | Passed | The current script parses successfully. |
 | Current/versioned script identity | Passed | `GameAssist` and `GameAssist-v0.1.4.3` are byte-identical. |
 | MECHSUITS structural audit | Passed | Section pairing, nesting, metadata, footers, and canonical tree agree. |
-| Simulated Roll20-environment checks | Passed | Empty status, custom and counted markers, built-in markers, exact custom tags, invalid-marker diagnostics, disabled-module diagnostics, and TokenMod teardown command generation. |
+| Simulated Roll20-environment checks | Passed | Empty status, custom and counted markers, built-in markers, exact custom tags, exact custom tags with registry failures, invalid-marker diagnostics, disabled-module diagnostics, and TokenMod teardown command generation. |
 | Roll20 API sandbox | Not recorded | Installation and module validation procedures are documented in `Smoketest.md`. |
 
 ### Exclusions
