@@ -4,7 +4,7 @@ Use this checklist after installing or updating GameAssist to confirm the Roll20
 
 The first section is a quick confidence pass for DMs. It prioritizes easy wins without promising a specific completion time. The second section contains deeper tests for troubleshooting individual modules.
 
-> **Current target:** GameAssist v0.1.4.4
+> **Current target:** GameAssist v0.1.4.5
 
 Roll20 usually calls the person running the game the **GM**. This guide uses GM and DM interchangeably.
 
@@ -47,7 +47,7 @@ For example:
 
 After installing or updating GameAssist, save the script and wait for Roll20's API sandbox to restart before running the checks below. Use a test page or disposable tokens whenever possible. Install TokenMod if you use NPCManager or ConcentrationTracker.
 
-The core-ready whisper should report GameAssist v0.1.4.4. You may not see one ready message for every module because module-specific startup messages are normally kept quiet.
+The core-ready whisper should report GameAssist v0.1.4.5. You may not see one ready message for every module because module-specific startup messages are normally kept quiet.
 
 Stop and troubleshoot before continuing if the sandbox repeatedly restarts, the API Console shows a new GameAssist `SyntaxError` or `ReferenceError`, or no GameAssist command responds.
 
@@ -68,7 +68,7 @@ Run:
 Your numbers and timestamp will vary. A healthy default response commonly has this shape:
 
 ```text
-(From GameAssist): ℹ️ [3:12:19 AM] [Status] GameAssist 0.1.4.4 Status
+(From GameAssist): ℹ️ [3:12:19 AM] [Status] GameAssist 0.1.4.5 Status
 Commands: 1
 Messages: 10
 Errors: 0
@@ -85,7 +85,7 @@ Dependency Warnings: NPCManager: unverifiable (TokenMod) | ConcentrationTracker:
 
 | Line | What It Means | Healthy Result |
 | --- | --- | --- |
-| `GameAssist 0.1.4.4 Status` | Confirms the running GameAssist version. | Shows the version you installed. |
+| `GameAssist 0.1.4.5 Status` | Confirms the running GameAssist version. | Shows the version you installed. |
 | `Commands` | Commands recorded through GameAssist's core command handler during this sandbox session. Running `!ga-status` counts as one. | Any reasonable number; it increases as commands are used. |
 | `Messages` | Roll20 events handled by running GameAssist modules during this sandbox session. | Any reasonable number; it varies with sandbox activity. |
 | `Errors` | Problems GameAssist recorded during this sandbox session. | Normally `0`. Investigate any nonzero value. |
@@ -261,24 +261,38 @@ You receive either:
 If you use NPCManager, run:
 
 ```roll20chat
+!npc-death-help
 !npc-death-report
+!npc-death-buckets
+!NPC-WR
 !npc-death-audit
 ```
 
-### Understanding the Two Commands
+### Understanding the Menus
 
 | Command | What It Does | What It Does Not Do |
 | --- | --- | --- |
-| `!npc-death-report` | Shows the recorded history of NPC death events. | It does not summarize the current page or check whether markers match HP. |
-| `!npc-death-audit` | Looks for contradictions between current bar 1 HP and the configured death marker. | It does not check player characters or list every NPC that is already correct. |
+| `!npc-death-help` | Opens the central NPCManager guide, also available through `!npc-death-report --help`. | It does not run an audit or change saved history. |
+| `!npc-death-report` | Shows the active Session death bucket, with buttons for recent/detail views. | It does not summarize the current page or check whether markers match HP. |
+| `!npc-death-buckets` | Shows the active Campaign, Chapter, Section, and Session bucket names and counts. | It does not erase existing bucket handouts when names change. |
+| `!NPC-WR` | Opens the report writer so the DM can review names and counts before updating handouts. | Opening the menu does not write or add a death. |
+| `!npc-death-audit` | Looks for contradictions between current bar 1 HP and the configured death marker, then updates the audit handout. | It does not check player characters or list every NPC that is already correct in chat. |
 
-Expected: a single `NPC Death Audit` report. The `Scope` row should say that linked NPCs are checked and player characters are not included.
+Expected: `!npc-death-help` returns one `NPCManager Guide: Death Reports` panel. It should explain the four levels in plain language and provide buttons for reports, writing, clearing, Arcs, and the current-page audit.
 
-A clean audit says no death-marker problems were found for linked NPCs. A mismatch audit groups entries under `Add Marker` or `Clear Marker` and keeps each NPC's name, HP, markers, and token ID together. If many mismatches exist, the report keeps the total count but shows only the first few detailed rows so Roll20 chat stays usable. If the page has party markers, scenery, labels, or props, GameAssist may also mention ignored unlinked page items; that is normal.
+Expected: `!npc-death-report` returns one `NPC Death Report` panel. A clean/new Session bucket says no NPC deaths are recorded. A bucket with recorded deaths shows the bucket name, total recorded deaths, the latest death, most frequent names, recent entries, action buttons, and the matching handout name.
+
+Expected: `!npc-death-buckets` returns one `NPC Death Buckets` panel showing Campaign, Chapter, Section, and Session. The default Session name is the current date unless you already changed it.
+
+Expected: `!NPC-WR` returns one `NPC Report Writer` panel. It should show all four active names and counts before offering write or adjustment buttons.
+
+Expected: a single `NPC Death Audit` panel. When mismatches exist, it names the affected tokens under `Add Death Marker` or `Remove Death Marker`; each entry includes HP, current markers, and token ID. The `Scope` row should say that linked NPCs are checked and player characters are not included. The `Detail Handout` row should point to `GameAssist NPC Death Audit`.
+
+A clean audit says no death-marker problems were found for linked NPCs. A mismatch audit gives counts in chat and writes the detailed token list to the audit handout. If the page has party markers, scenery, labels, or props, GameAssist may also mention ignored unlinked page items; that is normal.
 
 TokenMod is used when NPCManager changes a marker. The audit itself reads existing token HP and markers directly, so an empty audit is not normally caused by TokenMod.
 
-The death report lists recorded events individually and may be long in an established campaign.
+The death report no longer dumps the entire bucket by default. Use `!npc-death-report --recent` or `!npc-death-report --page 2` when you need chat details, or open the bucket handout for the full saved history.
 
 ---
 
@@ -411,7 +425,7 @@ Compare the result to the annotated healthy output in Part One.
 
 Check:
 
-- [ ] Version is `0.1.4.4`.
+- [ ] Version is `0.1.4.5`.
 - [ ] Errors are zero for a clean sandbox session, or every recorded error is understood.
 - [ ] Queue length returns to zero while idle.
 - [ ] Six modules are counted.
@@ -419,7 +433,7 @@ Check:
 - [ ] Any dependency warning is interpreted as `unverifiable` or `missing`, rather than treated as a generic failure.
 - [ ] Variable values such as Commands, Messages, Last Update, and Active Listeners are not being compared as exact fixed numbers.
 
-`Avg Task Duration: N/Ams` is currently expected when no queued task duration has been recorded. It is a v0.1.4.4 display quirk, not an error.
+`Avg Task Duration: N/Ams` is currently expected when no queued task duration has been recorded. It is a v0.1.4.5 display quirk, not an error.
 
 Remember that Roll20 restarts the API sandbox often. `Errors` describes problems recorded in the current sandbox session, not the lifetime of the campaign or installation.
 
@@ -546,11 +560,11 @@ Check:
 - [ ] `format` is `gameassist-config-snapshot`.
 - [ ] `schemaVersion` is `1`.
 - [ ] `scope` is `configuration-only`.
-- [ ] `version` is `0.1.4.4`.
+- [ ] `version` is `0.1.4.5`.
 - [ ] All six module configuration objects are present.
 - [ ] Runtime caches and metrics are not included.
 
-> This handout is a configuration snapshot, not a full-state backup, and v0.1.4.4 cannot import it.
+> This handout is a configuration snapshot, not a full-state backup, and v0.1.4.5 cannot import it.
 
 ### B5. Config UI Controls
 
@@ -625,6 +639,9 @@ Expected:
 - No exception.
 - The module returns to running after enable.
 - Teardown clears only the configured marker, not similarly named unrelated markers.
+- NPCManager's existing Campaign, Chapter, Section, Session, and Arc records remain present after disable and re-enable.
+
+For a concrete retention check, record or add one recognizable NPC before disabling NPCManager. After re-enabling it, open the relevant report or Arc handout and confirm that entry is still present.
 
 ---
 
@@ -898,9 +915,24 @@ Run:
 !npc-death-report
 ```
 
-Expected: The report lists every recorded death event or reports that none exist.
+Expected in v0.1.4.5: The report opens as a summary dashboard for the active Session bucket. It should show a total, latest death, most frequent names, recent entries, and action buttons. It should not dump every bucket entry into chat by default.
+It should also name the active bucket handout, usually `GameAssist Deaths - Session - <date>`.
 
-This is an event-history command, not a current-page summary. In v0.1.4.4 it may produce a long message when many deaths have been recorded.
+Optional detail checks:
+
+```roll20chat
+!npc-death-report --recent
+!npc-death-report --page 1
+!npc-death-report --scope campaign
+!npc-death-report --scope chapter
+!npc-death-report --scope section
+!npc-death-report --scope session
+!npc-death-report --write
+!NPC-WR
+!npc-death-report --help
+```
+
+Expected: recent/detail views remain bounded and readable. Each scope command identifies the requested Campaign, Chapter, Section, or Session bucket and its matching handout. Both `--write` and `!NPC-WR` open the report writer without changing counts or immediately rewriting handouts. `--help` opens the central NPCManager guide.
 
 ### G4. Death Audit
 
@@ -917,7 +949,7 @@ Then run:
 !npc-death-audit
 ```
 
-Expected: The mismatched NPC is listed with its HP and marker state.
+Expected: The chat panel reports the mismatch count and lists the affected token under `Add Death Marker` or `Remove Death Marker`, including HP, markers, and token ID. The `GameAssist NPC Death Audit` handout contains the complete mismatch list.
 
 Restore the token to a correct state afterward.
 
@@ -931,19 +963,157 @@ For the token to be audited, it must:
 
 TokenMod is not needed for the audit to read existing HP and markers. If a deliberate qualifying mismatch is not listed, record it as an NPCManager audit failure.
 
-### G5. Clear Death Log
+### G5. Campaign, Chapter, Section, and Session Buckets
 
-Run:
+Open the four main NPCManager menus:
 
 ```roll20chat
-!npc-death-clear
-!npc-death-report
+!npc-death-help
+!npc-death-buckets
+!npc-death-report --help
+!NPC-WR
+!npc-death-arc
 ```
 
 Expected:
 
-- GameAssist reports how many entries were cleared.
-- The next report says no deaths are recorded.
+- `!npc-death-help` and `!npc-death-report --help` open the same central guide.
+- `!npc-death-buckets` shows Campaign, Chapter, Section, and Session bucket names and counts.
+- `!NPC-WR` opens the report writer with all four active names and counts.
+- `!npc-death-arc` opens the independent story-arc menu.
+
+If these names were used in an earlier pass, add a fresh suffix so retained test history does not affect the expected counts.
+
+```roll20chat
+!npc-death-buckets --campaign "Smoke Campaign"
+!npc-death-buckets --chapter "Smoke Chapter"
+!npc-death-buckets --section "Smoke Section"
+!npc-death-buckets --session "Smoke Session"
+!npc-death-buckets
+```
+
+Expected: the final panel shows all four new names. Changing a name starts or resumes that named bucket; it does not delete the previously named bucket.
+
+Set one qualifying linked NPC from positive HP to `0`, then run:
+
+```roll20chat
+!npc-death-report --scope campaign
+!npc-death-report --scope chapter
+!npc-death-report --scope section
+!npc-death-report --scope session
+!npc-death-write --all
+```
+
+Expected:
+
+- all four reports show the same newly recorded death;
+- each report names the correct scope and disposable bucket name;
+- the four matching `GameAssist Deaths - <Scope> - <Name>` handouts exist;
+- `!npc-death-write --all` refreshes those handouts without adding another death.
+
+#### G5a. Start a New Section from the Current Session
+
+Run:
+
+```roll20chat
+!npc-death-write --newSection "Smoke Section Two"
+!npc-death-report --scope section
+!npc-death-report --scope session
+```
+
+Expected: the active Section becomes `Smoke Section Two`. Its handout contains the current Session death once, the Session remains unchanged, and Campaign/Chapter are not rewritten by this action. Running the same `--newSection` command again must not duplicate that death.
+
+#### G5b. Arc Deduplication and Recovery
+
+With the dead test NPC selected, run:
+
+```roll20chat
+!npc-death-arc
+!npc-death-arc --name "Smoke Test Arc"
+!npc-death-arc --name "Smoke Test Arc" --session
+!npc-death-arc --name "Smoke Test Arc" --manage
+```
+
+Expected: the selected NPC appears once. Importing the whole Session does not create a second copy; it updates the existing Arc entry with death-history details. The management menu shows one entry with a Remove button.
+
+Test the deliberate override, then undo it:
+
+```roll20chat
+!npc-death-arc --name "Smoke Test Arc" --session --allowDuplicates
+!npc-death-arc --name "Smoke Test Arc" --undo
+```
+
+Expected: the first command deliberately adds another entry. Undo removes that last addition and returns the Arc to one entry.
+
+With that NPC still selected, test selected removal:
+
+```roll20chat
+!npc-death-arc --name "Smoke Test Arc" --removeSelected
+```
+
+Expected: the matching Arc entry is removed. Campaign, Chapter, Section, and Session history remains unchanged. To test a single accidental row later, use its `Remove` button in `--manage`; that button affects only the Arc.
+
+#### G5c. Selected-Only and Nested Clearing
+
+First confirm that selected-only clearing preserves every other level:
+
+```roll20chat
+!npc-death-clear --scope session
+!npc-death-clear --scope session --confirm
+!npc-death-report --scope session
+!npc-death-report --scope campaign
+!npc-death-report --scope chapter
+!npc-death-report --scope section
+```
+
+Expected: Session is empty; Campaign, Chapter, and Section still contain the death.
+
+While that NPC remains dead, change its HP from `0` to `-1` and run the same four reports again. Session should remain empty and the broader totals should remain unchanged; no duplicate death should be created.
+
+Now revive the test NPC by setting HP above `0`, then set it back to `0`. This creates a fresh death in all four active levels. Test the nested Section clear:
+
+```roll20chat
+!npc-death-clear --scope section
+!npc-death-clear --scope section --nested --confirm
+!npc-death-report --scope section
+!npc-death-report --scope session
+!npc-death-report --scope chapter
+!npc-death-report --scope campaign
+```
+
+Expected: the confirmation menu offered both `Clear Only Section` and `Clear Section And Below`. The nested command clears Section and Session. Chapter and Campaign retain their history.
+
+To inspect the complete rule without clearing more test data, open each confirmation menu:
+
+```roll20chat
+!npc-death-clear --scope campaign
+!npc-death-clear --scope chapter
+!npc-death-clear --scope section
+!npc-death-clear --scope session
+```
+
+Expected hierarchy:
+
+| Selected Level | `Clear Only` | `Clear And Below` |
+| --- | --- | --- |
+| Campaign | Campaign | Campaign, Chapter, Section, Session |
+| Chapter | Chapter | Chapter, Section, Session |
+| Section | Section | Section, Session |
+| Session | Session | Not shown; Session has no child level |
+
+The nested action always retains parent levels above the selected level.
+
+#### G5d. Date-Managed Session
+
+The default Session uses the sandbox's UTC date in `YYYY-MM-DD` form. When that UTC date changes, the next NPCManager command or qualifying NPC HP change must switch a date-managed Session to the new date before recording or reporting activity. Existing dated Session history and its handout remain available. An explicitly named Session must remain unchanged across date boundaries; **Reset Session Date** restores automatic rollover.
+
+This boundary is easiest to confirm during a test that crosses midnight UTC. v0.1.4.5 does not yet offer a fake-clock command. A DM-selected timezone is tracked separately in GitHub Issue #35.
+
+When troubleshooting duplicate or incorrect history, also check these edge cases:
+
+- Two different NPC tokens with the same displayed name should create separate death records.
+- Clearing only the Session bucket while an NPC remains dead should not add another Campaign, Chapter, or Section death when that token's HP changes from one below-zero value to another.
+- A healthy selected token added with `!npc-death-arc --name "Smoke Test Arc" --note "Story note"` should keep that ordinary note unchanged after another positive-HP edit. Only death entries imported with `--session` receive revival annotations.
 
 ### G6. Auto-Hide Warning
 

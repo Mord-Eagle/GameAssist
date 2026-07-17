@@ -1,9 +1,9 @@
 # GameAssist – Modular API Framework for Roll20
 
-**Version 0.1.4.4** | © 2025 Mord Eagle · MIT License<br>
+**Version 0.1.4.5** | © 2025 Mord Eagle · MIT License<br>
 **Lead Dev:** [@Mord-Eagle](https://github.com/Mord-Eagle)
 
-> **Release posture:** v0.1.4.4 preserves the v0.1.4.3 marker-recognition fixes while improving CritFumble help and NPC death-audit wording for DMs. Use `Smoketest.md` to validate an installation before a live session.
+> **Release posture:** v0.1.4.5 preserves the v0.1.4.4 readability work while adding scoped NPC death-history buckets, handout-backed audit/report output, and manual story arc buckets. Use `Smoketest.md` to validate an installation before a live session.
 
 ---
 
@@ -18,9 +18,9 @@ GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a
 | Category | Highlights |
 | --- | --- |
 | Core Lift | Guarded modules, conservative state repair, explicit queue API, session metrics, dependency diagnostics, and GM health reporting. |
-| 30-Second Install | ① Paste **GameAssist-v0.1.4.4** ② Install **TokenMod** for marker modules ③ Add the seven CritFumble roll-tables ④ Save/reload ⑤ Run `!ga-status`. |
+| 30-Second Install | ① Paste **GameAssist-v0.1.4.5** ② Install **TokenMod** for marker modules ③ Add the seven CritFumble roll-tables ④ Save/reload ⑤ Run `!ga-status`. |
 | Flagship Player Commands | `!concentration`, `!cc`, `!critfumble-<type>`. |
-| Flagship GM Commands | `!critfumble`, `!critfumble help`, `!critfumble menu`, `!critfail`, `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report`, `!npc-death-audit`, `!ga-conc-status`, `!ga-config ui`. |
+| Flagship GM Commands | `!critfumble`, `!critfumble help`, `!critfumble menu`, `!critfail`, `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report --help`, `!npc-death-buckets`, `!NPC-WR`, `!npc-death-audit`, `!npc-death-arc`, `!ga-conc-status`, `!ga-config ui`. |
 | Admin Controls | `!ga-config list|get|set|modules|cleanup|ui`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-metrics`, and `!ga-debug`. |
 | Queue Model | Normal commands/events run directly. Only `GameAssist.enqueue(...)` work and module transitions use the serialized queue. |
 | Watchdog Limit | A timeout releases the explicit queue; it **cannot** terminate underlying JavaScript, `sendChat()`, or Roll20 operations. |
@@ -70,7 +70,7 @@ GameAssist’s kernel and bundled modules expose:
 ## 4 · Quick Start <a id="4-quick-start"></a>
 
 ```text
-📥 1  Copy GameAssist-v0.1.4.4 → Roll20 Mod/API Scripts → Save
+📥 1  Copy GameAssist-v0.1.4.5 → Roll20 Mod/API Scripts → Save
 🛠 2  Install TokenMod if using NPCManager or ConcentrationTracker markers
 📜 3  Create 7 CritFumble roll-tables (see §11: Roll-Table Cookbook)
 🔄 4  Save/reload the sandbox and wait for the core ready whisper
@@ -91,7 +91,9 @@ Run these commands after every update:
 !ga-metrics
 !critfumble menu
 !concentration --status
+!npc-death-help
 !npc-death-report
+!npc-death-buckets
 !npc-death-audit
 !npc-hp-selected
 ```
@@ -194,14 +196,14 @@ Module configuration belongs under `state.GameAssist.<Module>.config`. Runtime c
   "schemaVersion": 1,
   "scope": "configuration-only",
   "generatedAt": "<ISO timestamp>",
-  "version": "0.1.4.4",
+  "version": "0.1.4.5",
   "flags": {},
   "globalConfig": {},
   "modules": {}
 }
 ```
 
-The snapshot excludes runtime caches and metrics. v0.1.4.4 does not import or restore snapshots.
+The snapshot excludes runtime caches and metrics. v0.1.4.5 does not import or restore snapshots.
 
 ---
 
@@ -256,21 +258,49 @@ Config keys: `marker`, `randomize`.
 
 ### 6.3 NPC Manager
 
-> **Dependency:** TokenMod is required for automated death-marker changes.
+> **Dependency:** TokenMod is required for automated death-marker changes. Death-history recording and handout updates still run even if a marker write cannot be confirmed.
+
+> **Module version:** NPCManager `1.1.0` in GameAssist v0.1.4.5. NPCManager `1.0.0` introduced the four-level history model; `1.1.0` adds curated Arc management, hierarchical clearing, date rollover, and the report writer.
 
 NPCManager watches `change:graphic:bar1_value` for linked NPC characters with `npc=1`.
 
-* HP below 1 → apply the configured `deadMarker`.
-* HP above 0 → remove the configured `deadMarker`.
+* HP below 1 → record the NPC death into the active Campaign, Chapter, Section, and Session buckets, then request the configured `deadMarker`.
+* HP above 0 → annotate the matching death entry as revived and request removal of the configured `deadMarker`.
 * `autoHide=true` → move newly dead NPC tokens to `hideLayer`.
 
 Commands:
 
-* `!npc-death-report` → Show recorded NPC death events.
-* `!npc-death-clear` → Clear the recorded death-event log.
-* `!npc-death-audit` → Check the current player page for HP/death-marker mismatches.
+* `!npc-death-report` → Show the active Session bucket summary.
+* `!npc-death-report --scope campaign|chapter|section|session` → View a different active bucket.
+* `!npc-death-report --recent` → Show the newest recorded death events for the selected bucket.
+* `!npc-death-report --page N` → Page through older recorded death events for the selected bucket.
+* `!npc-death-report --write` → Open the report writer without immediately changing a handout.
+* `!npc-death-report --help` or `!npc-death-help` → Open the central NPCManager guide for setup, reports, clearing, audits, and Arcs.
+* `!npc-death-buckets` → Show active bucket names, counts, report buttons, and rename buttons.
+* `!npc-death-buckets --campaign "Name" --chapter "Name" --section "Name" --session "Name"` → Set retained active bucket names.
+* `!npc-death-clear --scope session` → Ask for confirmation before clearing the selected active bucket. Defaults to Session.
+* `!npc-death-clear --scope session --confirm` → Clear only that active bucket.
+* `!npc-death-clear --scope section --nested --confirm` → Clear the active Section and Session while retaining Chapter and Campaign. The same rule applies to other parent levels.
+* `!NPC-WR` or `!npc-death-write` → Open the report writer.
+* `!npc-death-write --all` → Update all four active handouts.
+* `!npc-death-write --scope section` → Update one active handout.
+* `!npc-death-write --newSection "Name"` → Start/resume a Section and seed it with only missing deaths from the current Session.
+* `!npc-death-audit` → Check the current player page for HP/death-marker mismatches and update the `GameAssist NPC Death Audit` handout.
+* `!npc-death-arc` → Show arc bucket help and current arc counts.
+* `!npc-death-arc --name "Arc Name"` → Add selected linked PC/NPC tokens to that arc handout.
+* `!npc-death-arc --name "Arc Name" --session` → Append current Session bucket deaths to that arc handout.
+* `!npc-death-arc --name "Arc Name" --manage` → Open removal, selected-token removal, undo, and Session-import controls.
+* `!npc-death-arc --name "Arc Name" --session --allowDuplicates` → Intentionally add repeated entries; ordinary additions deduplicate by creature.
 
-`!npc-death-report` is a history report; `!npc-death-audit` is the mismatch checker. The audit checks linked NPC tokens on the current player page; player characters are not included. A clean audit means linked NPC tokens have death markers that match their HP. Mismatches are grouped by action: add the configured marker or clear the configured marker. Large mismatch groups show the full count but only the first few detailed rows, so the Roll20 chat report stays readable. The audit may also note ignored unlinked page items such as party markers, scenery, labels, or props.
+`!npc-death-report` is a history report. It opens with totals, the latest death, most frequent names, recent entries, and buttons for common next steps. Every new death is written to all four active buckets. A clear confirmation offers either the selected bucket alone or that level and its descendants; for example, clearing Section and below clears Section and Session while retaining Chapter and Campaign. Each bucket has its own handout named like `GameAssist Deaths - Session - 2026-07-17`. Revivals are annotated on the matching entry instead of silently deleting the death. Current entries are matched by token ID, so separate tokens with the same name remain separate records.
+
+The default Session name follows the sandbox's UTC date. Before any NPCManager command or tracked NPC HP change, GameAssist checks the date and moves a date-managed Session to the new `YYYY-MM-DD` bucket. No death processed after that check is written into yesterday's Session. If the DM explicitly names the Session, that custom name remains active across date changes; **Reset Session Date** restores automatic date-managed rollover. A DM-configurable timezone is tracked separately because v0.1.4.5 does not yet reinterpret stored timestamps or date boundaries.
+
+Arc handouts are curated rosters, not another hierarchy level. A linked creature appears once per Arc by default, so adding selected NPCs and later importing the full Session does not repeat those creatures. The Session import can enrich an existing selected entry with its death record. The management menu can remove one entry, remove all selected tokens, or undo the most recent Arc addition. `--allowDuplicates` is an explicit override for deliberate repetition. Selected-token Arc entries remain general story notes; revival annotations apply only after an entry is linked to Session death history.
+
+`!npc-death-audit` is the mismatch checker. Chat shows a summary plus bounded, token-specific **Add Death Marker** and **Remove Death Marker** groups. The complete list is written to the `GameAssist NPC Death Audit` handout. The audit checks linked NPC tokens on the current player page; player characters are not included. A clean audit means linked NPC tokens have death markers that match their HP. The audit may also note ignored unlinked page items such as party markers, scenery, labels, or props.
+
+Disabling NPCManager stops its automation and requests removal of its configured marker from qualifying current-page tokens. Saved Campaign, Chapter, Section, Session, and Arc records remain available after the module is enabled again. Use the NPCManager clear and Arc-management controls when history should actually be removed.
 
 Config keys: `autoTrackDeath`, `deadMarker`, `autoHide`, `hideLayer`.
 
@@ -332,7 +362,7 @@ I. **Open the Roll20 Mod/API Editor**
 
 II. **Install GameAssist**
 
-1. Paste the complete contents of `GameAssist-v0.1.4.4`.
+1. Paste the complete contents of `GameAssist-v0.1.4.5`.
 2. Keep the script as one complete file; do not paste only individual MECHSUITS sections into Roll20.
 3. Save the script.
 
@@ -371,6 +401,19 @@ VI. **Run the Smoke Test**
 
 Use the checklist in [§4.1 Minimum Smoke Test](#41-minimum-smoke-test) before trusting the release in a live session.
 
+### 7.1 Official Roll20 API Repository Readiness
+
+Before opening or updating a pull request against `Roll20/roll20-api-scripts`, confirm:
+
+* Repository folder name matches the `script.json` script name: `GameAssist`.
+* `script.json` points at the actual script artifact: `"script": "GameAssist"`.
+* `script.json` includes current `version`, `previousversions`, detailed `description`, `authors`, `roll20userid`, `dependencies`, `modifies`, `conflicts`, and command list.
+* The top script header includes name, version, last updated date, description, syntax/commands, dependency notes, and configuration pointers.
+* Included file types match Roll20 API repo expectations. Note: the current GameAssist repository uses an extensionless `GameAssist` script artifact because `script.json` points to that file; before an upstream PR, confirm whether Roll20 reviewers want that retained or want a `.js` submission artifact.
+* README and smoke test describe the current version and do not promise unverified sandbox behavior.
+* MIT license is present.
+* After the Roll20 repo PR is accepted, update the Roll20 Community Wiki API Script Index if appropriate.
+
 ---
 
 ## 8 · Command Matrix <a id="8-command-matrix"></a>
@@ -392,9 +435,13 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!ga-enable <Module>` / `!ga-disable <Module>` | — | Enable or disable a module. |
 | **GM** | `!npc-hp-all` | — | Roll and set HP for qualifying NPC tokens on the current page. |
 |  | `!npc-hp-selected` | — | Roll and set HP for qualifying selected NPC tokens. |
-|  | `!npc-death-report` | — | Show recorded NPC death events. |
-|  | `!npc-death-clear` | — | Clear the recorded death-event log. |
-|  | `!npc-death-audit` | — | Report current HP/death-marker mismatches. |
+|  | `!npc-death-help` | — | Open the same central NPCManager guide as `!npc-death-report --help`. |
+|  | `!npc-death-report` | `[--scope campaign\|chapter\|section\|session] [--recent] [--page N] [--write] [--help]` | Show bucket history; `--help` opens the central guide and `--write` opens the report writer. |
+|  | `!npc-death-buckets` | `[--campaign "Name"] [--chapter "Name"] [--section "Name"] [--session "Name"] [--resetSession]` | View or rename the active death-history buckets. |
+|  | `!npc-death-clear` | `[--scope session] [--nested] [--confirm]` | Clear only the selected bucket, or add `--nested` to clear that level and its descendants. |
+|  | `!NPC-WR` / `!npc-death-write` | `[--all] [--scope <level>] [--newSection "Name"]` | Open the report writer, update selected handouts, or seed a new Section from the current Session. |
+|  | `!npc-death-audit` | — | Summarize current HP/death-marker mismatches and update the audit handout. |
+|  | `!npc-death-arc` | `[--name "Arc"] [--session] [--note "Text"] [--manage] [--allowDuplicates]` | Maintain a deduplicated Arc roster from selected tokens or the current Session; manage removal and undo in chat. |
 |  | `!ga-conc-status` | — | Show recent concentration DC/damage data per player. |
 | **Player / GM** | `!critfumble` / `!critfumble help` | — | Whisper the CritFumble quick reference. |
 |  | `!critfumble menu` | — | Whisper the guided Natural 1 dialogue. |
@@ -487,7 +534,8 @@ GameAssist.register('MyModule', function initMyModule() {
     events: ['chat:message'],
     prefixes: ['!mymod'],
     teardown: null,
-    dependsOn: ['TokenMod']
+    dependsOn: ['TokenMod'],
+    preserveRuntimeOnDisable: false
 });
 ```
 
@@ -498,6 +546,7 @@ Important contracts:
 * Modules still call `GameAssist.onEvent(...)` and/or `GameAssist.onCommand(...)`.
 * A module should persist only inside `state.GameAssist.<Module>`.
 * Dependencies may be reported as unverifiable if Roll20 does not expose script metadata.
+* Runtime is cleared on disable by default. Set `preserveRuntimeOnDisable: true` only when the module deliberately stores durable records there; NPCManager uses this for death-history buckets and Arc records.
 
 ### 10.3 Command Matching
 
@@ -631,6 +680,7 @@ Table names must match exactly. GameAssist supplies the roll; you own the entrie
 ```
 
 Core admin commands remain available because the core is not a toggleable bundled module.
+NPCManager's configured marker may be cleared from current-page tokens, but its saved death-history and Arc records are retained.
 
 ### 12.3 Restore Normal Bundled Modules
 
@@ -654,8 +704,15 @@ Leave DebugTools disabled until needed.
 
 ```roll20chat
 !npc-death-report
+!npc-death-report --scope campaign
+!npc-death-buckets
+!NPC-WR
 !npc-death-audit
-!npc-death-clear
+!npc-death-report --recent
+!npc-death-clear --scope session
+!npc-death-clear --scope session --confirm
+!npc-death-clear --scope section --nested --confirm
+!npc-death-arc
 ```
 
 ### 12.6 NPC HP Setup
@@ -679,7 +736,7 @@ The first run is a dry run. Add `--apply` only after checking the preview.
 
 ## 13 · Performance Benchmarks <a id="13-performance-benchmarks"></a>
 
-> **Historical reference only:** The following numbers were recorded for an earlier v0.1.3-era build and have **not** been revalidated for v0.1.4.4. Roll20 sandbox load, campaign size, browser state, network conditions, token formulas, and other Mods can materially change results. Do not treat this table as a current performance guarantee.
+> **Historical reference only:** The following numbers were recorded for an earlier v0.1.3-era build and have **not** been revalidated for v0.1.4.5. Roll20 sandbox load, campaign size, browser state, network conditions, token formulas, and other Mods can materially change results. Do not treat this table as a current performance guarantee.
 
 | Environment Item | Historical Test Environment |
 | --- | --- |
@@ -696,7 +753,7 @@ The first run is a dry run. Add `--apply` only after checking the preview.
 | Fresh sandbox | 10 | 355 ms | 350 ms | 18 ms | 330–387 ms |
 | **Combined** | **34** | **298 ms** | **300 ms** | **39 ms** | **253–387 ms** |
 
-### 13.1 Repeatable Benchmarking for v0.1.4.4
+### 13.1 Repeatable Benchmarking for v0.1.4.5
 
 1. Duplicate the campaign or use a test game.
 2. Record token count, active Mods, formulas, and sandbox channel.
@@ -767,7 +824,7 @@ Unknown branches are not deleted automatically. Review the warning, then explici
 
 ### 14.6 `!ga-config list` Is Not a Full Backup
 
-The `GameAssist Config` handout contains flags, global config, and module config only. It excludes runtime caches, metrics, and unknown state branches. v0.1.4.4 cannot import the snapshot.
+The `GameAssist Config` handout contains flags, global config, and module config only. It excludes runtime caches, metrics, and unknown state branches. v0.1.4.5 cannot import the snapshot.
 
 Use it for configuration review and upgrade comparison—not as a full restore mechanism.
 
@@ -811,7 +868,9 @@ Confirm the token:
 * uses `bar1_value` for HP,
 * and has a valid configured marker.
 
-`!npc-death-report` shows recorded deaths; it does not audit the page.
+`!npc-death-audit` whispers a bounded list of the specific tokens needing a marker added or removed, and writes the complete mismatch list to the `GameAssist NPC Death Audit` handout. Player characters are intentionally excluded from this audit.
+
+`!npc-death-report` shows recorded bucket history in summary/detail views; it does not audit the page.
 
 ### 14.9 Concentration Marker Does Not Clear
 
@@ -880,7 +939,7 @@ That evidence is far more useful than “it stopped working.”
 
 ## 15 · Upgrade Paths <a id="15-upgrade-paths"></a>
 
-### 15.1 Recommended Upgrade: v0.1.4.3 → v0.1.4.4
+### 15.1 Recommended Upgrade: v0.1.4.4 → v0.1.4.5
 
 I. **Freeze the Current Working Script**
 
@@ -892,7 +951,7 @@ I. **Freeze the Current Working Script**
 
 II. **Replace the Script**
 
-1. Replace the Roll20 script contents with the complete `GameAssist-v0.1.4.4`.
+1. Replace the Roll20 script contents with the complete `GameAssist-v0.1.4.5`.
 2. Save/reload the API sandbox.
 3. Do not combine partial sections from multiple releases unless you are deliberately performing a MECHSUITS whole-section update and have reviewed the ancestor contracts.
 
@@ -917,7 +976,7 @@ IV. **Verify Configuration**
 !ga-config get DebugTools
 ```
 
-v0.1.4.4 retains the known-container repairs from v0.1.4.2 and the marker-recognition fixes from v0.1.4.3 while preserving valid existing config.
+v0.1.4.5 retains the known-container repairs from v0.1.4.2, the marker-recognition fixes from v0.1.4.3, and the DM-facing readability work from v0.1.4.4. NPCManager `1.1.0` adds the four-level death-history handouts, curated Arc controls, date-managed Sessions, hierarchical clearing, and a report writer.
 
 V. **Run the Smoke Test**
 
@@ -925,7 +984,7 @@ Use [§4.1 Minimum Smoke Test](#41-minimum-smoke-test), including real HP, conce
 
 ### 15.2 Rollback
 
-If v0.1.4.4 fails its smoke test:
+If v0.1.4.5 fails its smoke test:
 
 1. Replace it with your complete previous working script.
 2. Save/reload.
@@ -1011,7 +1070,7 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 
 ### 17.1 Current Status
 
-| Item | Status in v0.1.4.4 | Notes |
+| Item | Status in v0.1.4.5 | Notes |
 | --- | --- | --- |
 | Auto HP roll on NPC token add | **Implemented, opt-in** | `NPCHPRoller.autoRollOnAdd`, default `false`. |
 | Session metrics and logging | **Implemented, basic** | `!ga-status` and `!ga-metrics`; not a full profiler. |
@@ -1019,6 +1078,7 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 | State self-healing | **Implemented, conservative** | Repairs known containers; does not auto-delete unknown branches. |
 | Dependency diagnostics | **Implemented, best-effort** | Confirmed/missing/unverifiable; not guaranteed discovery. |
 | Public queue API | **Implemented, opt-in** | Does not route every event through the queue. |
+| NPC death history | **Implemented, sandbox verification** | NPCManager `1.1.0`; four-level handouts, Arc roster management, report writer, and date-managed Sessions. |
 | Native Mord character-sheet support | **Deferred** | Begin after the agreed GameAssist architecture foundation is stable; track sequencing in `ROADMAP.md`. |
 
 ### 17.2 Near-Term Candidate: Compatibility-First Bridge Character Sheet
@@ -1030,7 +1090,7 @@ After the GameAssist architecture foundation is confirmed stable in Roll20, the 
 * defines clear NPC, HP-formula, save-bonus, and roll-template contracts,
 * avoids requiring another broad GameAssist kernel rewrite.
 
-This is a separate project and is not implemented in v0.1.4.4.
+This is a separate project and is not implemented in v0.1.4.5.
 
 ### 17.3 Deferred GameAssist Features
 
@@ -1079,6 +1139,20 @@ This is a separate project and is not implemented in v0.1.4.4.
 ---
 
 ## 18 · Changelog <a id="18-changelog"></a>
+
+### v0.1.4.5 – NPCManager Death History and Report Management
+
+* Added Campaign, Chapter, Section, and Session death-history buckets with one handout per named bucket.
+* Advanced NPCManager to `1.1.0` with default Arc deduplication, deliberate duplicate override, removal controls, and last-addition undo.
+* Added selected-only and nested hierarchical clear choices.
+* Added date-managed Session rollover before NPCManager activity.
+* Added the `!NPC-WR` report writer and “new Section from current Session” workflow.
+* Rebuilt `!npc-death-report --help` as the central NPCManager guide.
+
+### v0.1.4.4 – DM-Facing Help and Audit Readability
+
+* Separated the CritFumble quick reference, guided Natural 1 menu, and player picker.
+* Grouped NPC death-audit results, stated audit scope and PC exclusion, and moved detailed mismatch rows to a handout.
 
 ### v0.1.4.3 – Concentration Marker Recognition
 
