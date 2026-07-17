@@ -1179,3 +1179,54 @@ MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
 - No native Mord character-sheet support.
 
 ---
+
+## [0.1.4.3 follow-up] – 2026-07-17
+
+### Issue addressed
+
+- [#21](https://github.com/Mord-Eagle/GameAssist/issues/21) — Make CritFumble help and NPC death-audit output human-readable.
+
+### Changed — DM-facing command output
+
+- Revised `!critfumble help` so the help panel separates the manual trigger, help command, fumble commands, valid fumble types, and confirmation commands into readable rows instead of one dense command list.
+- Preserved the existing CritFumble command syntax:
+  - `!critfail`
+  - `!critfumble help`
+  - `!critfumble-<type>`
+  - `!confirm-crit-martial`
+  - `!confirm-crit-magic`
+- Changed the `!npc-death-audit` clean result from a living-only phrasing to: no HP/death-marker mismatches were found on qualifying current-page NPCs, with correctly marked dead NPCs intentionally omitted.
+- Preserved existing audit mismatch behavior: actual HP/marker contradictions still list token name, id, HP, and current markers.
+
+### Documentation
+
+- Updated `Smoketest.md` so DMs no longer need to reinterpret the old audit success message.
+- Updated the CritFumble smoke test to expect a readable help panel rather than merely any response.
+- Updated `README.md` to describe the clearer help panel and the meaning of a clean NPC death audit.
+- Updated `ROADMAP.md` so #21, #22, and #23 precede the #24 standalone-interoperability umbrella, with #32 explicitly deferred after the existing issue queue.
+
+### MECHSUITS records
+
+- Updated `[GAMEASSIST:MODULES:CRITFUMBLE]` because the public help output changed.
+- Added a `[GAMEASSIST:MODULES:NPCMANAGER]` footer note for the audit wording change.
+- Preserved existing section tags, codename `GAMEASSIST`, and command names.
+
+### Artifact checksum update
+
+This follow-up changes the current pre-release v0.1.4.3 script contents. The earlier v0.1.4.3 checksum remains part of the preserved historical entry above; the current repository artifacts now share:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `GameAssist` | `00E56C6DAA9099DAE901936005BF5E7B355BAFB303568403B4BAEAE07CDAF9E0` |
+| `GameAssist-v0.1.4.3` | `00E56C6DAA9099DAE901936005BF5E7B355BAFB303568403B4BAEAE07CDAF9E0` |
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| `node --check .\GameAssist` | Passed |
+| `GameAssist-v0.1.4.3` syntax via stdin check | Passed |
+| `GameAssist` versus `GameAssist-v0.1.4.3` byte identity | Passed |
+| `git diff --check` | Passed |
+
+Roll20 API sandbox confirmation is still required for the final release gate.

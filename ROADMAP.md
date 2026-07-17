@@ -36,18 +36,22 @@ Use this document for durable release boundaries, sequencing, and completion gat
 
 | Stage | Status | Tracking Issue | Release Outcome |
 | --- | --- | --- | --- |
-| ConcentrationTracker failure investigation | Sandbox verification | [#20](https://github.com/Mord-Eagle/GameAssist/issues/20) | Validate custom-marker recognition and actionable diagnostics in Roll20. |
+| ConcentrationTracker failure investigation | Complete | [#20](https://github.com/Mord-Eagle/GameAssist/issues/20) | Validate custom-marker recognition and actionable diagnostics in Roll20. |
+| DM-facing help and audit wording | In progress | [#21](https://github.com/Mord-Eagle/GameAssist/issues/21) | Make CritFumble help and NPC death-audit output easier to read without changing command syntax. |
+| NPC death-log reporting improvements | Planned | [#22](https://github.com/Mord-Eagle/GameAssist/issues/22) | Add concise death-log summaries first; defer named pools until the design is ready. |
+| GameAssist status readability | Planned | [#23](https://github.com/Mord-Eagle/GameAssist/issues/23) | Make `!ga-status` easier for DMs to interpret while keeping diagnostics available. |
 | Standalone interoperability stabilization | Planned | [#24](https://github.com/Mord-Eagle/GameAssist/issues/24) | Finish the `v0.1.4.x` line with reliable standalone TokenMod and StatusInfo behavior. |
 | MarkerService foundation | Planned | [#25](https://github.com/Mord-Eagle/GameAssist/issues/25) | Release `v0.1.5.0` with one internal marker authority and migrated GameAssist modules. |
 | Integrated StatusInfo | Planned | [#26](https://github.com/Mord-Eagle/GameAssist/issues/26) | Release `v0.1.5.1` with rebuilt and attributed StatusInfo. |
 | Integrated TokenMod | Planned | [#27](https://github.com/Mord-Eagle/GameAssist/issues/27) | Release `v0.1.5.2` with rebuilt and attributed TokenMod and no standalone production dependency. |
 | Integrated architecture stabilization | Planned | [#28](https://github.com/Mord-Eagle/GameAssist/issues/28) | Harden upgrades, compatibility, diagnostics, and verified TokenMod coverage across later `v0.1.5.x` releases. |
+| Deferred marker-registry lookup verification | Deferred | [#32](https://github.com/Mord-Eagle/GameAssist/issues/32) | Verify `token_markers` versus `_token_markers` after the existing issue queue unless it becomes a live blocker. |
 
 ---
 
 ## Phase 1: Finish the `v0.1.4.x` Standalone Line
 
-**Tracking:** [Issue #20](https://github.com/Mord-Eagle/GameAssist/issues/20) and [Issue #24](https://github.com/Mord-Eagle/GameAssist/issues/24)
+**Tracking:** [Issue #20](https://github.com/Mord-Eagle/GameAssist/issues/20), [Issue #21](https://github.com/Mord-Eagle/GameAssist/issues/21), [Issue #22](https://github.com/Mord-Eagle/GameAssist/issues/22), [Issue #23](https://github.com/Mord-Eagle/GameAssist/issues/23), and [Issue #24](https://github.com/Mord-Eagle/GameAssist/issues/24)
 
 ### Release Contract
 
@@ -61,6 +65,9 @@ Every `v0.1.4.x` production installation continues to use:
 
 - [x] Determine the exact `!concentration --status` failure path.
 - [x] Correct custom marker display-name versus stored-tag recognition.
+- [ ] Make CritFumble help and NPC death-audit success output DM-readable.
+- [ ] Improve NPC death-log reporting with a concise summary path before any named-pool work.
+- [ ] Make `!ga-status` easier for DMs to interpret.
 - [ ] Diagnose built-in `dead` marker mutation failures while TokenMod `players-can-ids` is enabled.
 - [ ] Ensure marker-operation failures do not produce silent success claims.
 - [ ] Verify NPCManager marker add, remove, audit, report, and teardown behavior.
@@ -77,6 +84,7 @@ The final `v0.1.4.x` release must pass its documented Roll20 smoke test with the
 - v0.1.4.3 resolves configured custom marker display names to the exact tags Roll20 stores on tokens.
 - Static and simulated checks cover custom markers, counted markers, built-in markers, empty status, invalid-marker diagnostics, and ConcentrationTracker teardown commands.
 - Open gate: complete the ConcentrationTracker checks in `Smoketest.md` in a Roll20 API sandbox.
+- Deferred follow-up: verify Roll20's campaign marker registry property names in [Issue #32](https://github.com/Mord-Eagle/GameAssist/issues/32) after the current issue queue unless it becomes a live blocker.
 
 ---
 

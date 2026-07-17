@@ -199,9 +199,10 @@ Run:
 ### Expected
 
 - A CritFumble help panel appears.
+- The help panel separates the manual trigger, help command, fumble commands, valid fumble types, and confirmation commands.
 - This test does not require the rollable tables.
 
-Receiving the help panel is the pass condition for this check; its visual layout is not evaluated here.
+Receiving a readable help panel is the pass condition for this check.
 
 ### Optional Table Test
 
@@ -258,9 +259,7 @@ If you use NPCManager, run:
 | `!npc-death-report` | Shows the recorded history of NPC death events. | It does not summarize the current page or check whether markers match HP. |
 | `!npc-death-audit` | Looks for contradictions between current bar 1 HP and the configured death marker. | It does not list NPCs that are correctly marked dead. |
 
-A response saying marker states are correct is a successful audit, even when several NPCs are dead, as long as those NPCs have HP below 1 and the configured death marker.
-
-The audit success message currently refers to “Living NPCs,” but the audit checks both living and dead NPCs. Interpret that message as “no HP/marker mismatches found.”
+A response saying no HP/death-marker mismatches were found is a successful audit, even when several NPCs are dead, as long as those NPCs have HP below 1 and the configured death marker.
 
 TokenMod is used when NPCManager changes a marker. The audit itself reads existing token HP and markers directly, so an empty audit is not normally caused by TokenMod.
 
@@ -663,7 +662,7 @@ Run:
 !critfumble help
 ```
 
-Expected: CritFumble help appears. Its current table-like presentation is dense; this test checks that the command responds, not that the current layout is ideal.
+Expected: CritFumble help appears with separate lines or rows for the manual trigger, help command, fumble commands, valid fumble types, and confirmation commands.
 
 ### E2. Manual GM Menu
 
