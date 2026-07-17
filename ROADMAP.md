@@ -88,6 +88,7 @@ The final `v0.1.4.x` release must pass its documented Roll20 smoke test with the
 - v0.1.4.4 separates CritFumble quick reference, guided Natural 1 menu, and direct player picker flows; NPC death audit now reports scope, PC exclusion, and marker mismatches in one grouped GM report.
 - v0.1.4.5 advances NPCManager to module version 1.1.0. It records NPC deaths into active Campaign/Chapter/Section/Session buckets, updates one handout per named bucket, moves audit details into `GameAssist NPC Death Audit`, rolls date-managed Sessions forward before activity, adds the `!NPC-WR` report writer, supports selected-only or nested clearing, and maintains deduplicated editable Arc rosters.
 - Static and simulated checks cover custom markers, counted markers, built-in markers, empty status, invalid-marker diagnostics, and ConcentrationTracker teardown commands.
+- Cross-revision simulation also verifies that NPCManager disable/enable preserves saved bucket and Arc records while marker teardown remains active.
 - Open gate: complete the ConcentrationTracker checks in `Smoketest.md` in a Roll20 API sandbox.
 - Deferred follow-up: verify Roll20's campaign marker registry property names in [Issue #32](https://github.com/Mord-Eagle/GameAssist/issues/32) after the current issue queue unless it becomes a live blocker.
 - Deferred follow-up: add DM-configurable timezone formatting and Session boundaries in [Issue #35](https://github.com/Mord-Eagle/GameAssist/issues/35); v0.1.4.5 uses the sandbox/UTC date boundary.

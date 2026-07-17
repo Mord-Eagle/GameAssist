@@ -300,6 +300,8 @@ Arc handouts are curated rosters, not another hierarchy level. A linked creature
 
 `!npc-death-audit` is the mismatch checker. Chat shows a summary plus bounded, token-specific **Add Death Marker** and **Remove Death Marker** groups. The complete list is written to the `GameAssist NPC Death Audit` handout. The audit checks linked NPC tokens on the current player page; player characters are not included. A clean audit means linked NPC tokens have death markers that match their HP. The audit may also note ignored unlinked page items such as party markers, scenery, labels, or props.
 
+Disabling NPCManager stops its automation and requests removal of its configured marker from qualifying current-page tokens. Saved Campaign, Chapter, Section, Session, and Arc records remain available after the module is enabled again. Use the NPCManager clear and Arc-management controls when history should actually be removed.
+
 Config keys: `autoTrackDeath`, `deadMarker`, `autoHide`, `hideLayer`.
 
 ### 6.4 NPC HP Roller
@@ -532,7 +534,8 @@ GameAssist.register('MyModule', function initMyModule() {
     events: ['chat:message'],
     prefixes: ['!mymod'],
     teardown: null,
-    dependsOn: ['TokenMod']
+    dependsOn: ['TokenMod'],
+    preserveRuntimeOnDisable: false
 });
 ```
 
@@ -543,6 +546,7 @@ Important contracts:
 * Modules still call `GameAssist.onEvent(...)` and/or `GameAssist.onCommand(...)`.
 * A module should persist only inside `state.GameAssist.<Module>`.
 * Dependencies may be reported as unverifiable if Roll20 does not expose script metadata.
+* Runtime is cleared on disable by default. Set `preserveRuntimeOnDisable: true` only when the module deliberately stores durable records there; NPCManager uses this for death-history buckets and Arc records.
 
 ### 10.3 Command Matching
 
@@ -676,6 +680,7 @@ Table names must match exactly. GameAssist supplies the roll; you own the entrie
 ```
 
 Core admin commands remain available because the core is not a toggleable bundled module.
+NPCManager's configured marker may be cleared from current-page tokens, but its saved death-history and Arc records are retained.
 
 ### 12.3 Restore Normal Bundled Modules
 

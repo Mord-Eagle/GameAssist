@@ -80,6 +80,7 @@ V0.1.4.5 STABILIZATION NOTES
 - CritFumble help and NPC death-audit output use clearer DM-facing wording.
 - NPC deaths record into Campaign, Chapter, Section, and Session buckets, with one handout per bucket.
 - NPC death audits show bounded token-specific findings in chat and write the complete findings to the GameAssist NPC Death Audit handout.
+- Disabling NPCManager clears its configured page markers but preserves saved death-history and Arc records.
 - Arc buckets let the GM append selected linked PC/NPC tokens or current-session deaths to story handouts.
 
 HEADER REQUIREMENTS NOTE
@@ -1111,9 +1112,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: GameAssist kernel object
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:OBJECT", title: "Kernel",
-    //   guarantees: ["Logging, explicit enqueue, dependency diagnostics, register/enable/disable, listener management"],
+    //   guarantees: ["Logging, explicit enqueue, dependency diagnostics, register/enable/disable, listener management", "Module registration may explicitly retain durable runtime state across disable/enable transitions"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:QUEUE]"],
-    //   last_updated_version: "v0.1.4.2", lifecycle: "active" }
+    //   last_updated_version: "v0.1.4.5", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // CORE:OBJECT exposes the GameAssist singleton with metrics, logging, explicit
@@ -1159,7 +1160,14 @@ description, syntax/commands, and configuration pointers near the top of the scr
             this.log(mod, err.message || String(err), 'ERROR');
         },
 
-        register(name, initFn, { enabled = true, events = [], prefixes = [], teardown = null, dependsOn = [] } = {}) {
+        register(name, initFn, {
+            enabled = true,
+            events = [],
+            prefixes = [],
+            teardown = null,
+            dependsOn = [],
+            preserveRuntimeOnDisable = false
+        } = {}) {
             if (READY) {
                 this.log('Core', `Cannot register after ready: ${name}`, 'WARN');
                 return;
@@ -1177,6 +1185,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 events,
                 prefixes,
                 dependsOn,
+                preserveRuntimeOnDisable: preserveRuntimeOnDisable === true,
                 wired: false,
                 internal: false
             };
@@ -1421,7 +1430,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
                 const branch = getState(name);
                 branch.config.enabled = false;
-                branch.runtime = {};
+                if (!m.preserveRuntimeOnDisable) {
+                    branch.runtime = {};
+                }
 
                 m.initialized = false;
                 this._metrics.lastUpdate = isoNow();
@@ -1466,6 +1477,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // --- Notes & Comments ---
     // CHOICE: Expose globally under same name for console and other scripts.
     // CHOICE: Keep normal handlers direct and make serialized work an explicit GameAssist.enqueue call.
+    // CHOICE: Runtime retention is registration-level opt-in; ALT: preserve every module runtime; REJECTED: existing modules use runtime as disposable cache state.
+    // Changed (v0.1.4.5): Added preserveRuntimeOnDisable so modules with durable runtime-owned records can survive ordinary disable/enable transitions without changing the default cache-clearing lifecycle.
     // Changed (v0.1.4.2): Added public opt-in enqueue and confirmed/missing/unverifiable dependency diagnostics without changing direct event execution.
     // Prior notes:
     //   Maintenance (v0.1.4.1, no semantic change): Routed kernel timestamps through the shared wall-clock seam.
@@ -4025,6 +4038,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         events: ['change:graphic:bar1_value'],
         prefixes: ['!npc-death-help', '!npc-death-report', '!npc-death-clear', '!npc-death-audit', '!npc-death-buckets', '!npc-death-write', '!npc-wr', '!npc-death-arc'],
         dependsOn: ['TokenMod'],
+        preserveRuntimeOnDisable: true,
         teardown: () => {
             const branch = GameAssist.getState('NPCManager');
             const marker = branch?.config?.deadMarker || 'dead';
@@ -4062,6 +4076,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Changed (v0.1.4.5): Explicit Session names now remain active across date changes; Reset Session Date re-enables automatic UTC date rollover.
     // Changed (v0.1.4.5): Revival history annotations no longer depend on successful TokenMod marker removal.
     // Changed (v0.1.4.5): Restored bounded, grouped token details to the death-audit chat panel while retaining the complete audit handout.
+    // Changed (v0.1.4.5): NPCManager opts into runtime retention so disabling marker automation does not erase saved bucket history or Arc records.
     // Changed (v0.1.4.5): Added !npc-death-help as the GM-facing start-here menu for bucket naming, reports, audits, and arc handouts.
     // Changed (v0.1.4.5): NPC death history now records into active Campaign/Chapter/Section/Session buckets independently of marker-write success, updates one handout per bucket, annotates revivals on matching entries, moves audit details into a handout, and adds manual arc buckets for selected linked PC/NPC tokens or current-session deaths.
     // Changed (v0.1.4.5): Renamed the arc command to !npc-death-arc and hardened migration, same-name token matching, scoped-clear duplicate prevention, zero-HP capture, and death-only revival annotations in arc handouts.

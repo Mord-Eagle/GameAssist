@@ -639,6 +639,9 @@ Expected:
 - No exception.
 - The module returns to running after enable.
 - Teardown clears only the configured marker, not similarly named unrelated markers.
+- NPCManager's existing Campaign, Chapter, Section, Session, and Arc records remain present after disable and re-enable.
+
+For a concrete retention check, record or add one recognizable NPC before disabling NPCManager. After re-enabling it, open the relevant report or Arc handout and confirm that entry is still present.
 
 ---
 
