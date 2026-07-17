@@ -917,10 +917,14 @@ Optional detail checks:
 !npc-death-report --recent
 !npc-death-report --page 1
 !npc-death-report --scope campaign
+!npc-death-report --scope chapter
+!npc-death-report --scope section
+!npc-death-report --scope session
+!npc-death-report --write
 !npc-death-report --help
 ```
 
-Expected: recent/detail views remain bounded and readable. Scope changes let the DM inspect Campaign, Chapter, Section, or Session history.
+Expected: recent/detail views remain bounded and readable. Each scope command identifies the requested Campaign, Chapter, Section, or Session bucket and its matching handout. `--write` refreshes all four active bucket handouts.
 
 ### G4. Death Audit
 
@@ -951,34 +955,114 @@ For the token to be audited, it must:
 
 TokenMod is not needed for the audit to read existing HP and markers. If a deliberate qualifying mismatch is not listed, record it as an NPCManager audit failure.
 
-### G5. Death Buckets and Clear Session Bucket
+### G5. Campaign, Chapter, Section, and Session Buckets
+
+Open every NPCManager menu used by the bucket workflow:
 
 Run:
 
 ```roll20chat
-!npc-death-buckets
-!npc-death-clear --scope session
-!npc-death-clear --scope session --confirm
-!npc-death-report
 !npc-death-help
+!npc-death-buckets
+!npc-death-report --help
+!npc-death-arc
 ```
 
 Expected:
 
+- `!npc-death-help` opens the NPCManager start-here menu.
 - `!npc-death-buckets` shows Campaign, Chapter, Section, and Session bucket names and counts.
-- `!npc-death-clear --scope session` asks for confirmation before clearing the active Session bucket.
-- Run `!npc-death-clear --scope session --confirm` to clear only that bucket.
-- The next Session report says no deaths are recorded, while broader buckets are retained.
+- `!npc-death-report --help` explains report scopes and links back to NPCManager help.
+- `!npc-death-arc` opens the independent story-arc menu.
 
-Optional arc check:
+Give all four active buckets disposable test names:
+
+If these names were used in an earlier pass, add a fresh suffix so retained test history does not affect the expected counts.
 
 ```roll20chat
-!npc-death-help
+!npc-death-buckets --campaign "Smoke Campaign"
+!npc-death-buckets --chapter "Smoke Chapter"
+!npc-death-buckets --section "Smoke Section"
+!npc-death-buckets --session "Smoke Session"
+!npc-death-buckets
+```
+
+Expected: the final panel shows all four new names. Changing a name starts or resumes that named bucket; it does not delete the previously named bucket.
+
+Set one qualifying linked NPC from positive HP to `0`, then run:
+
+```roll20chat
+!npc-death-report --scope campaign
+!npc-death-report --scope chapter
+!npc-death-report --scope section
+!npc-death-report --scope session
+!npc-death-report --write
+```
+
+Expected:
+
+- all four reports show the same newly recorded death;
+- each report names the correct scope and disposable bucket name;
+- the four matching `GameAssist Deaths - <Scope> - <Name>` handouts exist;
+- `--write` refreshes those handouts without adding another death.
+
+Before clearing the test buckets, check the independent arc import:
+
+```roll20chat
 !npc-death-arc
+!npc-death-arc --name "Smoke Test Arc" --session
 !npc-death-arc --name "Smoke Test Arc" --session
 ```
 
-Expected: `!npc-death-arc` explains the arc command. The session import creates or updates `GameAssist Arc - Smoke Test Arc`; if the Session bucket is empty, GameAssist says no new entries were added.
+Expected: the session import creates or updates `GameAssist Arc - Smoke Test Arc` with the current Session death. A second identical import should report that no new entries were added.
+
+Now test each scoped clear in hierarchy order. First clear only Session:
+
+```roll20chat
+!npc-death-clear --scope session
+!npc-death-clear --scope session --confirm
+!npc-death-report --scope session
+!npc-death-report --scope campaign
+!npc-death-report --scope chapter
+!npc-death-report --scope section
+```
+
+Expected: Session is empty; Campaign, Chapter, and Section still contain the death.
+
+While that NPC remains dead, change its HP from `0` to `-1` and run the same four reports again. Session should remain empty and the broader totals should remain unchanged; no duplicate death should be created.
+
+Clear Section next:
+
+```roll20chat
+!npc-death-clear --scope section
+!npc-death-clear --scope section --confirm
+!npc-death-report --scope section
+!npc-death-report --scope chapter
+!npc-death-report --scope campaign
+```
+
+Expected: Section is empty; Chapter and Campaign retain the death.
+
+Clear Chapter next:
+
+```roll20chat
+!npc-death-clear --scope chapter
+!npc-death-clear --scope chapter --confirm
+!npc-death-report --scope chapter
+!npc-death-report --scope campaign
+```
+
+Expected: Chapter is empty; Campaign retains the death.
+
+Clear Campaign last:
+
+```roll20chat
+!npc-death-clear --scope campaign
+!npc-death-clear --scope campaign --confirm
+!npc-death-report --scope campaign
+```
+
+Expected: Campaign is now empty. Each confirmation cleared only the requested active bucket.
 
 When troubleshooting duplicate or incorrect history, also check these edge cases:
 
