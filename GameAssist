@@ -2320,9 +2320,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: NPCManager module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:NPCMANAGER", title: "NPCManager",
-    //   guarantees: ["Auto toggle dead marker based on HP"],
+    //   guarantees: ["Auto toggle resolved configured dead marker based on HP"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:OBJECT]"],
-    //   last_updated_version: "v0.1.4.1",
+    //   last_updated_version: "v0.1.4.3",
     //   independent_versions: { module_version: "0.1.1.0" } }
     // -------------------------------------------------------------------------
     // Narrative
@@ -2347,6 +2347,40 @@ description, syntax/commands, and configuration pointers near the top of the scr
         function ensureNPCManagerRuntime() {
             const deathLog = ensureModRuntimeKey(modState, 'deathLog', 'array');
             return deathLog;
+        }
+
+        function getDeathMarkerResolution() {
+            return resolveMarkerId(modState.config.deadMarker || 'dead');
+        }
+
+        function deathMarkerWarning(resolution) {
+            const marker = _sanitize(resolution.requested || modState.config.deadMarker || 'dead');
+            const detail = resolution.registryError
+                ? ` Roll20 marker registry problem: ${_sanitize(resolution.registryError)}.`
+                : '';
+            return `Configured NPC death marker "${marker}" could not be recognized.${detail}` +
+                ' Use a built-in marker id such as dead or configure the exact custom marker tag.';
+        }
+
+        function requestDeathMarker(token, on) {
+            const resolution = getDeathMarkerResolution();
+            if (!resolution.ok) {
+                GameAssist.log('NPCManager', deathMarkerWarning(resolution), 'WARN');
+                return false;
+            }
+
+            if (resolution.ambiguous) {
+                GameAssist.log(
+                    'NPCManager',
+                    `Marker "${resolution.requested}" matches multiple custom markers; using ${resolution.id}.`,
+                    'WARN'
+                );
+            }
+
+            sendChat('api',
+                `!token-mod --ids ${token.id} --set statusmarkers|${on ? '+' : '-'}${resolution.id}`
+            );
+            return true;
         }
 
         function getNPCContext(token, link = null) {
@@ -2374,7 +2408,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
             const isDead = tokenHasMarker(token, modState.config.deadMarker);
 
             if (hp < 1 && !isDead) {
-                sendChat('api', `!token-mod --ids ${token.id} --set statusmarkers|+${modState.config.deadMarker}`);
+                if (!requestDeathMarker(token, true)) return;
                 const name = token.get('name') || '(Unnamed NPC)';
                 GameAssist.log('NPCManager', `${name} marked as dead (HP: ${hp})`);
 
@@ -2395,7 +2429,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
                     deathLog.splice(0, deathLog.length - DEATH_LOG_LIMIT);
                 }
             } else if (hp >= 1 && isDead) {
-                sendChat('api', `!token-mod --ids ${token.id} --set statusmarkers|-${modState.config.deadMarker}`);
+                if (!requestDeathMarker(token, false)) return;
                 GameAssist.log('NPCManager', `${token.get('name')} revived (HP: ${hp})`);
             }
         }
@@ -2487,27 +2521,36 @@ description, syntax/commands, and configuration pointers near the top of the scr
         teardown: () => {
             const branch = GameAssist.getState('NPCManager');
             const marker = branch?.config?.deadMarker || 'dead';
+            const resolution = resolveMarkerId(marker);
             const pageId = Campaign().get('playerpageid');
 
             if (!pageId) return;
+            if (!resolution.ok) {
+                const detail = resolution.registryError
+                    ? ` Roll20 marker registry problem: ${_sanitize(resolution.registryError)}.`
+                    : '';
+                GameAssist.log('NPCManager', `Configured NPC death marker "${_sanitize(marker)}" could not be recognized during teardown.${detail}`, 'WARN');
+                return;
+            }
 
             const targets = findObjs({
                 _type: 'graphic',
                 _pageid: pageId,
                 layer: 'objects'
-            }).filter(token => tokenHasMarker(token, marker));
+            }).filter(token => tokenHasMarker(token, resolution.id));
 
             if (!targets.length) return;
 
             targets.forEach(token => {
-                sendChat('api', `!token-mod --ids ${token.id} --set statusmarkers|-${marker}`);
+                sendChat('api', `!token-mod --ids ${token.id} --set statusmarkers|-${resolution.id}`);
             });
 
-            GameAssist.log('NPCManager', `Cleared ${targets.length} ${marker} marker(s) during teardown.`);
+            GameAssist.log('NPCManager', `Cleared ${targets.length} ${resolution.id} marker(s) during teardown.`);
         }
     });
     // --- Notes & Comments ---
     // CHOICE: TokenMod used for status marker ops; keep dependency explicit in README.
+    // Changed (v0.1.4.3): NPCManager now resolves configured death markers before TokenMod add/remove/teardown requests, matching shared read-side marker identity behavior.
     // Changed (v0.1.4.1): Use exact shared marker matching, POLICY-owned cache limits, and shared time seams.
     // Prior notes:
     //   Changed (v0.1.3): Hardened deathLog self-healing, timestamps, cap, and in-place clearing.
@@ -3525,7 +3568,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v0.1.4.3): Updated wrapper contract because ConcentrationTracker now resolves and diagnoses configured marker identity.
+    // Changed (v0.1.4.3): Updated wrapper contract because marker-dependent modules now resolve configured marker identity before read/write operations.
     // Prior notes:
     //   Maintenance (v0.1.3, no semantic change): Added MODULES wrapper to group bundled features under a parent section for MECHSUITS parent/child compliance.
     // [GAMEASSIST:MODULES] END

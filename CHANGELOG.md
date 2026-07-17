@@ -1074,8 +1074,8 @@ MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
 
 | Artifact | Purpose | SHA-256 |
 | --- | --- | --- |
-| `GameAssist-v0.1.4.3` | Versioned v0.1.4.3 script | `125E3F969F3657E7274E75793D59364C412660762C5504A12842C26580340954` |
-| `GameAssist` | Current repository script; identical to `GameAssist-v0.1.4.3` | `125E3F969F3657E7274E75793D59364C412660762C5504A12842C26580340954` |
+| `GameAssist-v0.1.4.3` | Versioned v0.1.4.3 script | `0F9F141F38C5D499A84504D6DE268BDE63032B33B74D6B5CC8BFD04F4A24425A` |
+| `GameAssist` | Current repository script; identical to `GameAssist-v0.1.4.3` | `0F9F141F38C5D499A84504D6DE268BDE63032B33B74D6B5CC8BFD04F4A24425A` |
 | `GameAssist-v0.1.4.2` | Previous complete script | `038B07B292E09981BD56564D83F5900353BDC1BDA0D39FDD4CB63A1DBE80CAC4` |
 
 ### Root cause addressed
@@ -1112,6 +1112,14 @@ MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
 - `!concentration --off` reports that marker removal was requested rather than claiming the asynchronous TokenMod operation completed.
 - Teardown stops and logs a warning when the configured marker cannot be resolved.
 
+### Changed — NPCManager death-marker mutation
+
+- NPCManager now resolves the configured death marker before TokenMod add, remove, and teardown requests.
+- The default built-in `dead` marker still emits `statusmarkers|+dead` and `statusmarkers|-dead`.
+- A configured custom display name now emits the exact stored custom marker tag when Roll20's marker registry can resolve it.
+- A configured exact custom tag, such as `Dead Custom::abc123`, remains usable even when Roll20's marker registry is unavailable or malformed.
+- If the configured death marker cannot be resolved, NPCManager warns instead of sending a misleading TokenMod request or logging a death as completed.
+
 ### Documentation and changelog maintenance
 
 - Updated `README.md`, `ROADMAP.md`, and `Smoketest.md` for v0.1.4.3 behavior and validation.
@@ -1128,6 +1136,7 @@ MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
   - `[GAMEASSIST:APP:UTILS]`
   - `[GAMEASSIST:CORE]`
   - `[GAMEASSIST:MODULES]`
+  - `[GAMEASSIST:MODULES:NPCMANAGER]`
   - `[GAMEASSIST:MODULES:CONCENTRATIONTRACKER]`
 - Recorded maintenance-only commentary updates in:
   - `[GAMEASSIST:POLICY]`
@@ -1141,7 +1150,7 @@ MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
 | Area | v0.1.4.3 behavior |
 | --- | --- |
 | TokenMod | Remains a separately installed dependency responsible for requested marker mutations. |
-| Marker reads | GameAssist reads token markers directly and resolves built-in ids, custom display names, and stored custom tags. |
+| Marker reads/writes | GameAssist reads token markers directly and resolves built-in ids, custom display names, and stored custom tags before marker-dependent read/write decisions. |
 | MarkerService | Not included. |
 | Integrated TokenMod | Not included. |
 | Public commands | Existing v0.1.4.2 command language is preserved. |
@@ -1155,7 +1164,7 @@ MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
 | JavaScript syntax validation | Passed | The current script parses successfully. |
 | Current/versioned script identity | Passed | `GameAssist` and `GameAssist-v0.1.4.3` are byte-identical. |
 | MECHSUITS structural audit | Passed | Section pairing, nesting, metadata, footers, and canonical tree agree. |
-| Simulated Roll20-environment checks | Passed | Empty status, custom and counted markers, built-in markers, exact custom tags, exact custom tags with registry failures, invalid-marker diagnostics, disabled-module diagnostics, and TokenMod teardown command generation. |
+| Simulated Roll20-environment checks | Passed | Empty status, custom and counted markers, built-in markers, exact custom tags, exact custom tags with registry failures, NPC death-marker add command generation, invalid-marker diagnostics, disabled-module diagnostics, and TokenMod teardown command generation. |
 | Roll20 API sandbox | Not recorded | Installation and module validation procedures are documented in `Smoketest.md`. |
 
 ### Exclusions
