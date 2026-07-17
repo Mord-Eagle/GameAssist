@@ -1074,8 +1074,8 @@ MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
 
 | Artifact | Purpose | SHA-256 |
 | --- | --- | --- |
-| `GameAssist-v0.1.4.3` | Versioned v0.1.4.3 script | `0F9F141F38C5D499A84504D6DE268BDE63032B33B74D6B5CC8BFD04F4A24425A` |
-| `GameAssist` | Current repository script; identical to `GameAssist-v0.1.4.3` | `0F9F141F38C5D499A84504D6DE268BDE63032B33B74D6B5CC8BFD04F4A24425A` |
+| `GameAssist-v0.1.4.3` | Versioned v0.1.4.3 script | `4C95BB9408A86BE45E7F5AC4A2726B932A6D408ADF834E90D5B7A1E161C48971` |
+| `GameAssist` | Current repository script; identical to `GameAssist-v0.1.4.3` | `4C95BB9408A86BE45E7F5AC4A2726B932A6D408ADF834E90D5B7A1E161C48971` |
 | `GameAssist-v0.1.4.2` | Previous complete script | `038B07B292E09981BD56564D83F5900353BDC1BDA0D39FDD4CB63A1DBE80CAC4` |
 
 ### Root cause addressed
@@ -1098,6 +1098,7 @@ MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
 - Updated `tokenHasMarker(...)` to compare exact resolved marker identities.
 - Added fast paths for already-resolved custom tags and literal built-in ids.
 - Exact stored custom marker tags now resolve before campaign-registry access, so a valid configured tag such as `Concentrating::7191835` remains usable when Roll20's marker registry is unavailable or malformed.
+- Simple matching quote pairs are stripped before marker resolution, so chat-configured values such as `"red"` and `'red'` resolve as `red`.
 - Returned explicit resolution failures for unrecognized configured markers.
 
 ### Changed — ConcentrationTracker status and lifecycle diagnostics
@@ -1116,6 +1117,7 @@ MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
 
 - NPCManager now resolves the configured death marker before TokenMod add, remove, and teardown requests.
 - The default built-in `dead` marker still emits `statusmarkers|+dead` and `statusmarkers|-dead`.
+- Built-in color markers such as `red` work even when the saved configuration contains simple wrapping quotes.
 - A configured custom display name now emits the exact stored custom marker tag when Roll20's marker registry can resolve it.
 - A configured exact custom tag, such as `Dead Custom::abc123`, remains usable even when Roll20's marker registry is unavailable or malformed.
 - If the configured death marker cannot be resolved, NPCManager warns instead of sending a misleading TokenMod request or logging a death as completed.

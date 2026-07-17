@@ -392,8 +392,20 @@ description, syntax/commands, and configuration pointers near the top of the scr
         error: null
     };
 
+    function unwrapMarkerText(marker) {
+        const text = String(marker || '').split('@')[0].trim();
+        if (text.length >= 2) {
+            const first = text[0];
+            const last = text[text.length - 1];
+            if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
+                return text.slice(1, -1).trim();
+            }
+        }
+        return text;
+    }
+
     function normalizeMarkerId(marker) {
-        return String(marker || '').split('@')[0].trim().toLowerCase();
+        return unwrapMarkerText(marker).toLowerCase();
     }
 
     /**
@@ -448,7 +460,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
      * names such as "Dead" can still select a custom marker.
      */
     function resolveMarkerId(marker) {
-        const requested = String(marker || '').split('@')[0].trim();
+        const requested = unwrapMarkerText(marker);
         const normalized = normalizeMarkerId(requested);
 
         if (!requested) {
@@ -543,7 +555,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     function tokenHasMarker(token, marker) {
         if (!token || typeof token.get !== 'function') return false;
 
-        const requested = String(marker || '').split('@')[0].trim();
+        const requested = unwrapMarkerText(marker);
         const normalized = normalizeMarkerId(requested);
         const isStoredId = requested.includes('::') ||
             (requested === normalized && BUILT_IN_MARKER_IDS.has(normalized));
@@ -712,6 +724,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // NOTE: State auditor warns about unexpected branches; no automatic deletion occurs.
     // Changed (v0.1.4.3): Resolve configured built-in/custom marker names to exact stored Roll20 ids and return explicit resolution failures.
     // Changed (v0.1.4.3): Exact stored custom marker tags resolve before registry access so valid configured tags survive registry read failures.
+    // Changed (v0.1.4.3): Marker resolution strips simple matching quote pairs so chat config like marker="red" resolves as red.
     // Decision log:
     //   CHOICE: Unknown branches remain warning-only; explicit cleanup is required before deletion.
     //   CHOICE: monotonic() falls back to Date.now() in Roll20 — ALT: assume performance.now; REJECTED: sandbox portability.
