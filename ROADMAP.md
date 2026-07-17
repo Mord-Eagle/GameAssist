@@ -37,7 +37,7 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | Stage | Status | Tracking Issue | Release Outcome |
 | --- | --- | --- | --- |
 | ConcentrationTracker failure investigation | Complete | [#20](https://github.com/Mord-Eagle/GameAssist/issues/20) | Validate custom-marker recognition and actionable diagnostics in Roll20. |
-| DM-facing help and audit wording | In progress | [#21](https://github.com/Mord-Eagle/GameAssist/issues/21) | Make CritFumble help and NPC death-audit output easier to read without changing command syntax. |
+| DM-facing help and audit wording | Sandbox verification | [#21](https://github.com/Mord-Eagle/GameAssist/issues/21) | Make CritFumble help/menu output and NPC death-audit reports easier to read while preserving existing commands. |
 | NPC death-log reporting improvements | Planned | [#22](https://github.com/Mord-Eagle/GameAssist/issues/22) | Add concise death-log summaries first; defer named pools until the design is ready. |
 | GameAssist status readability | Planned | [#23](https://github.com/Mord-Eagle/GameAssist/issues/23) | Make `!ga-status` easier for DMs to interpret while keeping diagnostics available. |
 | Standalone interoperability stabilization | Planned | [#24](https://github.com/Mord-Eagle/GameAssist/issues/24) | Finish the `v0.1.4.x` line with reliable standalone TokenMod and StatusInfo behavior. |
@@ -65,7 +65,7 @@ Every `v0.1.4.x` production installation continues to use:
 
 - [x] Determine the exact `!concentration --status` failure path.
 - [x] Correct custom marker display-name versus stored-tag recognition.
-- [ ] Make CritFumble help and NPC death-audit success output DM-readable.
+- [x] Make CritFumble help/menu output and NPC death-audit reports DM-readable.
 - [ ] Improve NPC death-log reporting with a concise summary path before any named-pool work.
 - [ ] Make `!ga-status` easier for DMs to interpret.
 - [ ] Diagnose built-in `dead` marker mutation failures while TokenMod `players-can-ids` is enabled.
@@ -82,6 +82,7 @@ The final `v0.1.4.x` release must pass its documented Roll20 smoke test with the
 ### Phase Status
 
 - v0.1.4.3 resolves configured custom marker display names to the exact tags Roll20 stores on tokens.
+- v0.1.4.4 separates CritFumble quick reference, guided Natural 1 menu, and direct player picker flows; NPC death audit now reports scope, PC exclusion, and marker mismatches in one grouped GM report.
 - Static and simulated checks cover custom markers, counted markers, built-in markers, empty status, invalid-marker diagnostics, and ConcentrationTracker teardown commands.
 - Open gate: complete the ConcentrationTracker checks in `Smoketest.md` in a Roll20 API sandbox.
 - Deferred follow-up: verify Roll20's campaign marker registry property names in [Issue #32](https://github.com/Mord-Eagle/GameAssist/issues/32) after the current issue queue unless it becomes a live blocker.
