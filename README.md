@@ -209,7 +209,7 @@ The snapshot excludes runtime caches and metrics. v0.1.4.4 does not import or re
 
 ### 6.1 CritFumble
 
-CritFumble watches common attack and damage roll templates for a natural 1 and offers a player-targeted fumble menu. Calling `!critfumble menu` opens a GM-facing manual menu; `!critfail` remains as a shortcut.
+CritFumble watches common attack and damage roll templates for a natural 1 and offers a player-targeted fumble menu. Calling `!critfumble menu` opens the guided Natural 1 dialogue; `!critfail` opens the direct GM-facing player picker.
 
 Recognized templates include:
 
@@ -219,8 +219,9 @@ atk, atkdmg, npcatk, npcfullatk, npcaction, spell, simple, dmg, default
 
 Commands:
 
-* `!critfumble` / `!critfumble help` → Whisper a step-by-step GM aid with a start button, plain attack-type examples, direct-roll buttons, confirm-roll buttons, and setup table names.
-* `!critfumble menu` / `!critfail` → Open the manual fumble prompt.
+* `!critfumble` / `!critfumble help` → Whisper a quick reference with setup table names and a button to open the guided menu.
+* `!critfumble menu` → Whisper the guided Natural 1 dialogue with player-picker, direct-roll, and confirm-roll buttons.
+* `!critfail` → Open the direct manual player picker.
 * `!critfumble-melee|ranged|thrown|spell|natural` → Roll the selected fumble table.
 * `!confirm-crit-martial` / `!confirm-crit-magic` → Roll the matching confirmation table.
 
@@ -395,8 +396,9 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!npc-death-clear` | — | Clear the recorded death-event log. |
 |  | `!npc-death-audit` | — | Report current HP/death-marker mismatches. |
 |  | `!ga-conc-status` | — | Show recent concentration DC/damage data per player. |
-| **Player / GM** | `!critfumble` / `!critfumble help` | — | Whisper CritFumble help. |
-|  | `!critfumble menu` / `!critfail` | — | Open the GM-facing manual fumble prompt. Intended for GM use, but not currently GM-gated. |
+| **Player / GM** | `!critfumble` / `!critfumble help` | — | Whisper the CritFumble quick reference. |
+|  | `!critfumble menu` | — | Whisper the guided Natural 1 dialogue. |
+|  | `!critfail` | — | Open the direct GM-facing manual fumble prompt. Intended for GM use, but not currently GM-gated. |
 | **Debug** | `!ga-debug damage` | `--amount N [--token ID] [--apply]` | Preview or apply bar1 damage. |
 |  | `!ga-debug marker` | `--marker NAME [--state on|off|toggle] [--token ID] [--apply]` | Preview or apply a status marker change. |
 |  | `!ga-debug save` | `--dc N [--bonus N] [--mode normal|adv|dis] [--label "Text"] [--apply]` | Preview or roll a save. |

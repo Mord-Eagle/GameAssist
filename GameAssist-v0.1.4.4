@@ -38,7 +38,7 @@ MODULE COMMANDS:
     !critfail                               — GM menu to trigger fumble UI for a player
     !critfumble                             — help
     !critfumble help                        — help
-    !critfumble menu                        — GM menu to trigger fumble UI for a player
+    !critfumble menu                        — guided natural-1 menu
     !critfumble-<melee|ranged|thrown|spell|natural>
     !confirm-crit-martial   | !confirm-crit-magic
 • ConcentrationTracker (players/GM):
@@ -2245,7 +2245,18 @@ description, syntax/commands, and configuration pointers near the top of the scr
         }
 
         function showHelpMessage(who) {
-            const pickerButton = GameAssist.createButton('Open Player Picker', '!critfumble menu');
+            const menuButton = GameAssist.createButton('Open Natural 1 Menu', '!critfumble menu');
+            sendTemplateMessage(who, "CritFumble Quick Reference", [
+                { label: "What It Does", value: "Helps resolve natural 1 attack rolls with a guided Natural 1 menu or direct table rolls." },
+                { label: "Best First Step", value: menuButton },
+                { label: "Common Commands", value: "!critfumble menu = guided Natural 1 menu<br>!critfail = open the player picker directly<br>!critfumble-melee = roll melee<br>!critfumble-ranged = roll ranged<br>!critfumble-thrown = roll thrown<br>!critfumble-spell = roll spell<br>!critfumble-natural = roll natural" },
+                { label: "Attack Types", value: "melee, ranged, thrown, spell, natural" },
+                { label: "Before First Use", value: "Create Roll20 rollable tables with these exact names:<br>" + REQUIRED_TABLES.join('<br>') }
+            ]);
+        }
+
+        function showCritFumbleMenu(who) {
+            const pickerButton = GameAssist.createButton('Open Player Picker', '!critfail');
             const directButtons = FUMBLE_TYPE_ORDER
                 .map(type => GameAssist.createButton(type.charAt(0).toUpperCase() + type.slice(1), `!critfumble-${type}`))
                 .join(' ');
@@ -2256,12 +2267,11 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
             sendTemplateMessage(who, "CritFumble Help: Natural 1 Attacks", [
                 { label: "When To Use", value: "Use this when a player rolls a natural 1 on an attack." },
-                { label: "Normal Steps", value: "1. Click Open Player Picker or type !critfumble menu.<br>2. Choose the player who rolled the natural 1.<br>3. The player chooses the attack type.<br>4. GameAssist rolls the fumble result." },
+                { label: "Normal Steps", value: "1. Click Open Player Picker.<br>2. Choose the player who rolled the natural 1.<br>3. The player chooses the attack type.<br>4. GameAssist rolls the fumble result." },
                 { label: "Start", value: pickerButton },
                 { label: "Attack Types", value: "melee = close weapon<br>ranged = bow, crossbow, or firearm<br>thrown = thrown weapon<br>spell = spell attack<br>natural = bite, claw, or unarmed" },
                 { label: "Roll Directly", value: directButtons },
-                { label: "Confirm Rolls", value: confirmButtons },
-                { label: "Before First Use", value: "Create Roll20 rollable tables with these exact names:<br>" + REQUIRED_TABLES.join('<br>') }
+                { label: "Confirm Rolls", value: confirmButtons }
             ]);
         }
 
@@ -2281,9 +2291,12 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 const rawCmd = (msg.content||'').trim();
                 const cmd = rawCmd.toLowerCase();
 
-                if (cmd==='!critfail' || cmd==='!critfumble menu') {
+                if (cmd==='!critfail') {
                     debugLog(`Manual trigger: ${rawCmd}`);
                     return showManualTriggerMenu();
+                }
+                if (cmd==='!critfumble menu') {
+                    return showCritFumbleMenu(msg.who);
                 }
                 if (cmd==='!critfumble' || cmd==='!critfumble help') {
                     return showHelpMessage(msg.who);
@@ -2331,7 +2344,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         }
 
         GameAssist.onEvent('chat:message', handleRoll, 'CritFumble');
-        GameAssist.log('CritFumble','v0.2.4.9 Ready: Auto fumble detection + !critfumble menu','INFO',{startup:true});
+        GameAssist.log('CritFumble','v0.2.4.9 Ready: Auto fumble detection + !critfumble help/menu','INFO',{startup:true});
     }, {
         enabled: true,
         events:   ['chat:message'],
@@ -2339,7 +2352,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // Bugfix retained: robust natural‑1 detection across templates/inlineroll variants.
-    // Changed (v0.1.4.4): CritFumble help now uses a button-guided, step-by-step GM aid; !critfumble menu opens the same GM player picker as !critfail.
+    // Changed (v0.1.4.4): CritFumble help is a quick reference; !critfumble menu opens the guided natural-1 dialogue; !critfail remains the direct player picker.
     // Maintenance (v0.1.4.3, no semantic change): Reworded an internal comment for collaborator clarity.
     // Maintenance (v0.1.4.1, no semantic change): Routed unchanged defaults through POLICY and timestamps through now().
     // Prior notes:

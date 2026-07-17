@@ -199,17 +199,23 @@ Run:
 
 ### Expected
 
-- A `CritFumble Help: Natural 1 Attacks` panel appears.
-- The panel gives numbered normal-use steps for a natural 1.
-- The panel includes an `Open Player Picker` button.
-- The `Open Player Picker` button uses `!critfumble menu`.
-- The panel gives plain-language attack-type examples.
-- The panel includes direct-roll buttons, confirm-roll buttons, and the required rollable table names.
+- A `CritFumble Quick Reference` panel appears.
+- The panel includes an `Open Natural 1 Menu` button.
+- The panel lists common CritFumble commands.
+- The panel lists the required rollable table names under `Before First Use`.
 - This test does not require the rollable tables.
 
-Receiving a step-by-step help panel that tells the DM what to do next is the pass condition for this check.
+Receiving a quick reference that can lead the DM into the guided menu is the pass condition for this check.
 
-Optional: click **Open Player Picker** or run `!critfumble menu`. Expected: the manual player picker opens, or GameAssist says no players have been active yet this session.
+Run or click:
+
+```roll20chat
+!critfumble menu
+```
+
+Expected: a `CritFumble Help: Natural 1 Attacks` panel appears with numbered steps, an `Open Player Picker` button, plain attack-type examples, direct-roll buttons, and confirm-roll buttons.
+
+Optional: click **Open Player Picker** or run `!critfail`. Expected: the manual player picker opens, or GameAssist says no players have been active yet this session.
 
 ### Optional Table Test
 
@@ -669,7 +675,7 @@ Run:
 !critfumble help
 ```
 
-Expected: CritFumble help appears as a step-by-step DM aid with a start button, plain attack-type examples, direct-roll buttons, confirm-roll buttons, and required rollable tables.
+Expected: CritFumble help appears as a quick reference with a button to open the guided Natural 1 menu and an exact list of required rollable tables.
 
 Run:
 
@@ -677,22 +683,20 @@ Run:
 !critfumble menu
 ```
 
-Expected: the manual player picker opens, or GameAssist says no players have been active yet this session.
+Expected: the guided Natural 1 menu appears with numbered steps, an Open Player Picker button, attack-type examples, direct-roll buttons, and confirm-roll buttons.
 
 ### E2. Manual GM Menu
 
 Run:
 
 ```roll20chat
-!critfumble menu
+!critfail
 ```
 
 Expected:
 
 - A GM-facing player-selection menu appears.
 - The menu includes recently active chat participants, commonly including the GM who ran the command.
-
-Shortcut check: `!critfail` should open the same menu.
 
 ### E3. Direct Table Commands
 

@@ -1193,12 +1193,15 @@ v0.1.4.4 is a small DM-facing readability release. It preserves the v0.1.4.3 mar
 
 ### Changed — DM-facing command output
 
-- Revised `!critfumble help` from a command list into a step-by-step GM aid with an `Open Player Picker` button, plain attack-type examples, direct-roll buttons, confirm-roll buttons, and required rollable tables.
-- Added `!critfumble menu` as the public CritFumble-family command for opening the GM player picker.
+- Revised `!critfumble help` from a command list into a quick reference with an `Open Natural 1 Menu` button, common commands, attack types, and exact setup table names.
+- Added `!critfumble menu` as the public CritFumble-family command for opening the guided Natural 1 dialogue.
 - Added bare `!critfumble` as a help alias, so entering the feature command without a subcommand opens the guide instead of silently doing nothing.
+- Preserved `!critfail` as the direct GM player-picker command.
 - Preserved existing CritFumble command syntax:
   - `!critfail`
+  - `!critfumble`
   - `!critfumble help`
+  - `!critfumble menu`
   - `!critfumble-TYPE`
   - `!confirm-crit-martial`
   - `!confirm-crit-magic`
@@ -1209,8 +1212,8 @@ v0.1.4.4 is a small DM-facing readability release. It preserves the v0.1.4.3 mar
 ### Documentation
 
 - Updated `Smoketest.md` so DMs no longer need to reinterpret the old audit success message.
-- Updated the CritFumble smoke test to check for a step-by-step GM aid, the bare `!critfumble` help alias, and the `!critfumble menu` player-picker command.
-- Updated `README.md` to describe the help panel as a guided GM aid, document `!critfumble menu`, and document the meaning of a clean NPC death audit.
+- Updated the CritFumble smoke test to check the quick-reference help panel, the bare `!critfumble` help alias, the `!critfumble menu` guided dialogue, and the unchanged `!critfail` player picker.
+- Updated `README.md` to describe the quick reference, guided menu, direct player picker, and the meaning of a clean NPC death audit.
 - Updated `ROADMAP.md` so #21, #22, and #23 precede the #24 standalone-interoperability umbrella, with #32 explicitly deferred after the existing issue queue.
 
 ### MECHSUITS records
@@ -1226,8 +1229,8 @@ The v0.1.4.3 artifact remains preserved. The current repository script and the n
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `AFDA17BFCF1DC260DD410ED67ABBBC9E2EB30D00363CF656CB91DEFEBA269233` |
-| `GameAssist-v0.1.4.4` | `AFDA17BFCF1DC260DD410ED67ABBBC9E2EB30D00363CF656CB91DEFEBA269233` |
+| `GameAssist` | `F6FC68E421692B4E5714C35C11D783A23D3C3E537EFCA3ABA0317C1F55A5D996` |
+| `GameAssist-v0.1.4.4` | `F6FC68E421692B4E5714C35C11D783A23D3C3E537EFCA3ABA0317C1F55A5D996` |
 
 ### Verification
 
