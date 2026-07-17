@@ -1209,6 +1209,7 @@ v0.1.4.4 is a small DM-facing readability release. It preserves the v0.1.4.3 mar
 - Added an audit `Scope` row stating that linked NPC tokens are checked and player characters are not included.
 - Grouped audit mismatches by action: `Add Marker` for dead NPCs missing the configured marker, and `Clear Marker` for living NPCs still carrying it.
 - Preserved useful mismatch details: NPC name, HP, current markers, and token ID.
+- Bounded each audit mismatch detail group while preserving total counts, so crowded pages do not produce one oversized Roll20 chat payload.
 - Kept unrelated unlinked-page-item notes as informational context, so party markers, scenery, labels, and props do not read like errors.
 
 ### Documentation
@@ -1222,6 +1223,7 @@ v0.1.4.4 is a small DM-facing readability release. It preserves the v0.1.4.3 mar
 
 - Hardened `!critfumble help` and `!critfumble menu` matching so extra internal whitespace is accepted.
 - Hardened direct fumble rolls so mixed-case commands such as `!CritFumble-melee` resolve the intended fumble type.
+- Added a POLICY-owned `npcAuditDetailLimit` cap for grouped NPC death-audit reports.
 - Corrected `script.json` so `script` points to the repository's actual `GameAssist` artifact instead of nonexistent `GameAssist.js`.
 - Added `!critfumble help` and `!critfumble menu` to the script metadata command list.
 
@@ -1229,6 +1231,7 @@ v0.1.4.4 is a small DM-facing readability release. It preserves the v0.1.4.3 mar
 
 - Updated `[GAMEASSIST:MODULES:CRITFUMBLE]` because the public help output changed.
 - Updated `[GAMEASSIST:MODULES:NPCMANAGER]` because the public audit success output changed.
+- Updated `[GAMEASSIST:POLICY]` because the NPC death-audit detail cap is a runtime behavior knob.
 - Updated `[GAMEASSIST:CORE]` because the runtime `VERSION` constant advanced.
 - Preserved existing section tags, codename `GAMEASSIST`, and command names.
 
@@ -1238,8 +1241,8 @@ The v0.1.4.3 artifact remains preserved. The current repository script and the n
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `979186B51ADEA92EF127C0CC0F3405A6FAEC40E68D20CD80B7428C529BDB30CE` |
-| `GameAssist-v0.1.4.4` | `979186B51ADEA92EF127C0CC0F3405A6FAEC40E68D20CD80B7428C529BDB30CE` |
+| `GameAssist` | `DB68D6467D698FEF25D416394FFD07F6F44EF2E2361D9DBA9F198A0DAA41D091` |
+| `GameAssist-v0.1.4.4` | `DB68D6467D698FEF25D416394FFD07F6F44EF2E2361D9DBA9F198A0DAA41D091` |
 
 ### Verification
 

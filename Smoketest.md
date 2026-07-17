@@ -274,7 +274,7 @@ If you use NPCManager, run:
 
 Expected: a single `NPC Death Audit` report. The `Scope` row should say that linked NPCs are checked and player characters are not included.
 
-A clean audit says no death-marker problems were found for linked NPCs. A mismatch audit groups entries under `Add Marker` or `Clear Marker` and keeps each NPC's name, HP, markers, and token ID together. If the page has party markers, scenery, labels, or props, GameAssist may also mention ignored unlinked page items; that is normal.
+A clean audit says no death-marker problems were found for linked NPCs. A mismatch audit groups entries under `Add Marker` or `Clear Marker` and keeps each NPC's name, HP, markers, and token ID together. If many mismatches exist, the report keeps the total count but shows only the first few detailed rows so Roll20 chat stays usable. If the page has party markers, scenery, labels, or props, GameAssist may also mention ignored unlinked page items; that is normal.
 
 TokenMod is used when NPCManager changes a marker. The audit itself reads existing token HP and markers directly, so an empty audit is not normally caused by TokenMod.
 

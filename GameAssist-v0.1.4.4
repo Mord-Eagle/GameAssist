@@ -167,7 +167,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "POLICY", title: "Tunables",
     //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; legacy defaults remain unchanged"],
-    //   provides: ["POLICY"], last_updated_version: "v0.1.4.2", lifecycle: "active" }
+    //   provides: ["POLICY"], last_updated_version: "v0.1.4.4", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // POLICY owns shared timeouts, cache limits, UI defaults, snapshot identifiers,
@@ -189,6 +189,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         runtime: Object.freeze({
             activePlayerLimit: 50,
             deathLogLimit: 100,
+            npcAuditDetailLimit: 8,
             lastDamageLimit: 50
         }),
         timestamps: Object.freeze({
@@ -209,6 +210,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         })
     });
     // --- Notes & Comments ---
+    // Changed (v0.1.4.4): Added runtime.npcAuditDetailLimit to bound grouped NPC death-audit chat output.
     // Changed (v0.1.4.2): Added stable configuration-snapshot format and schema identifiers.
     // Maintenance (v0.1.4.3, no semantic change): Removed internal development-provenance wording from the narrative.
     // Decision log:
@@ -2392,6 +2394,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         });
 
         const DEATH_LOG_LIMIT = POLICY.runtime.deathLogLimit;
+        const AUDIT_DETAIL_LIMIT = POLICY.runtime.npcAuditDetailLimit;
 
         function ensureNPCManagerRuntime() {
             const deathLog = ensureModRuntimeKey(modState, 'deathLog', 'array');
@@ -2436,9 +2439,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
             return names.length > limit ? `${listed}, +${names.length - limit} more` : listed;
         }
 
-        function formatAuditEntries(entries) {
+        function formatAuditEntries(entries, limit = AUDIT_DETAIL_LIMIT) {
             const lines = [];
-            entries.forEach((entry, index) => {
+            entries.slice(0, limit).forEach((entry, index) => {
                 if (index > 0) lines.push('');
                 lines.push(
                     entry.name,
@@ -2447,6 +2450,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
                     `Token ID: ${entry.id}`
                 );
             });
+            if (entries.length > limit) {
+                lines.push('', `Showing ${limit} of ${entries.length}. Run again after fixing these to see the next set.`);
+            }
             return lines;
         }
 
@@ -2673,7 +2679,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // CHOICE: TokenMod used for status marker ops; keep dependency explicit in README.
-    // Changed (v0.1.4.4): NPC death-audit now sends a grouped GM report, states that PCs are excluded, and categorizes marker mismatches by action.
+    // Changed (v0.1.4.4): NPC death-audit now sends a grouped GM report, states that PCs are excluded, categorizes marker mismatches by action, and caps detailed rows to keep Roll20 chat output usable.
     // Changed (v0.1.4.3): NPCManager now resolves configured death markers before TokenMod add/remove/teardown requests, matching shared read-side marker identity behavior.
     // Changed (v0.1.4.1): Use exact shared marker matching, POLICY-owned cache limits, and shared time seams.
     // Prior notes:
