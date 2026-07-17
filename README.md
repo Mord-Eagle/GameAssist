@@ -220,7 +220,7 @@ atk, atkdmg, npcatk, npcfullatk, npcaction, spell, simple, dmg, default
 Commands:
 
 * `!critfail` → Open the manual fumble prompt.
-* `!critfumble help` → Whisper a compact DM quick reference with table workflow, setup tables, attack types, direct commands, and confirm commands.
+* `!critfumble help` → Whisper a step-by-step GM aid with a start button, plain attack-type examples, direct-roll buttons, confirm-roll buttons, and setup table names.
 * `!critfumble-melee|ranged|thrown|spell|natural` → Roll the selected fumble table.
 * `!confirm-crit-martial` / `!confirm-crit-magic` → Roll the matching confirmation table.
 
@@ -269,7 +269,7 @@ Commands:
 * `!npc-death-clear` → Clear the recorded death-event log.
 * `!npc-death-audit` → Check the current player page for HP/death-marker mismatches.
 
-`!npc-death-report` is a history report; `!npc-death-audit` is the mismatch checker. A clean audit means linked NPC tokens on the player page have death markers that match their HP. It does not print every NPC that is already correct.
+`!npc-death-report` is a history report; `!npc-death-audit` is the mismatch checker. A clean audit means linked NPC tokens on the player page have death markers that match their HP. It does not print every NPC that is already correct, and it may note ignored unlinked page items such as party markers, scenery, labels, or props.
 
 Config keys: `autoTrackDeath`, `deadMarker`, `autoHide`, `hideLayer`.
 

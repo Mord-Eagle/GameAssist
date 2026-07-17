@@ -1193,22 +1193,22 @@ v0.1.4.4 is a small DM-facing readability release. It preserves the v0.1.4.3 mar
 
 ### Changed — DM-facing command output
 
-- Revised `!critfumble help` from a command list into a compact DM quick reference covering the table workflow, automatic natural-1 behavior, fumble types, direct roll commands, confirm commands, and required rollable tables.
+- Revised `!critfumble help` from a command list into a step-by-step GM aid with an `Open Player Picker` button, plain attack-type examples, direct-roll buttons, confirm-roll buttons, and required rollable tables.
 - Preserved the existing CritFumble command syntax:
   - `!critfail`
   - `!critfumble help`
   - `!critfumble-TYPE`
   - `!confirm-crit-martial`
   - `!confirm-crit-magic`
-- Changed the `!npc-death-audit` clean result to the table-friendly message: `Death markers look right for linked NPCs on this page.`
-- Changed unrelated page-item audit notes from warnings into informational context, so party markers, scenery, labels, and props do not read like errors.
+- Changed the `!npc-death-audit` clean result to the more formal message: `NPC death audit complete: no HP/death-marker mismatches found for linked NPCs on this page.`
+- Changed unrelated unlinked-page-item audit notes from warnings into informational context, so party markers, scenery, labels, and props do not read like errors.
 - Preserved existing audit mismatch behavior: actual HP/marker contradictions still list token name, id, HP, and current markers.
 
 ### Documentation
 
 - Updated `Smoketest.md` so DMs no longer need to reinterpret the old audit success message.
-- Updated the CritFumble smoke test to check for a compact DM quick reference rather than merely any response.
-- Updated `README.md` to describe the help panel as a quick reference and to document the meaning of a clean NPC death audit.
+- Updated the CritFumble smoke test to check for a step-by-step GM aid rather than merely any response.
+- Updated `README.md` to describe the help panel as a guided GM aid and to document the meaning of a clean NPC death audit.
 - Updated `ROADMAP.md` so #21, #22, and #23 precede the #24 standalone-interoperability umbrella, with #32 explicitly deferred after the existing issue queue.
 
 ### MECHSUITS records
@@ -1224,8 +1224,8 @@ The v0.1.4.3 artifact remains preserved. The current repository script and the n
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `ED7F328D530100762EFB4EE97670DD0FB4B86BB1AD3FD9302E4F0F94B59CF1EA` |
-| `GameAssist-v0.1.4.4` | `ED7F328D530100762EFB4EE97670DD0FB4B86BB1AD3FD9302E4F0F94B59CF1EA` |
+| `GameAssist` | `251E54F8A7C0AF48DF48BA0B878CCA4D78F3331BA84B8B3F7A9E560E27C8133C` |
+| `GameAssist-v0.1.4.4` | `251E54F8A7C0AF48DF48BA0B878CCA4D78F3331BA84B8B3F7A9E560E27C8133C` |
 
 ### Verification
 

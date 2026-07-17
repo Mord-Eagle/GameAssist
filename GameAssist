@@ -2243,16 +2243,23 @@ description, syntax/commands, and configuration pointers near the top of the scr
         }
 
         function showHelpMessage(who) {
-            const directCommandLines = FUMBLE_TYPE_ORDER
-                .map(type => `!critfumble-${type}`)
-                .join('<br>');
-            sendTemplateMessage(who, "📘 CritFumble Quick Help", [
-                { label: "At The Table", value: "Natural 1? Use !critfail, pick the player, then let them choose the attack type." },
-                { label: "Auto Mode", value: "Some Roll20 attack rolls open the same menu automatically. Use !critfail if they do not." },
-                { label: "Attack Types", value: FUMBLE_TYPE_ORDER.join(', ') },
-                { label: "Direct Rolls", value: directCommandLines },
-                { label: "Confirm Rolls", value: "!confirm-crit-martial<br>!confirm-crit-magic" },
-                { label: "Setup Check", value: "Needs rollable tables: " + REQUIRED_TABLES.join(', ') }
+            const pickerButton = GameAssist.createButton('Open Player Picker', '!critfail');
+            const directButtons = FUMBLE_TYPE_ORDER
+                .map(type => GameAssist.createButton(type.charAt(0).toUpperCase() + type.slice(1), `!critfumble-${type}`))
+                .join(' ');
+            const confirmButtons = [
+                GameAssist.createButton('Martial Confirm', '!confirm-crit-martial'),
+                GameAssist.createButton('Magic Confirm', '!confirm-crit-magic')
+            ].join(' ');
+
+            sendTemplateMessage(who, "CritFumble Help: Natural 1 Attacks", [
+                { label: "When To Use", value: "Use this when a player rolls a natural 1 on an attack." },
+                { label: "Normal Steps", value: "1. Click Open Player Picker.<br>2. Choose the player who rolled the natural 1.<br>3. The player chooses the attack type.<br>4. GameAssist rolls the fumble result." },
+                { label: "Start", value: pickerButton },
+                { label: "Attack Types", value: "melee = close weapon<br>ranged = bow, crossbow, or firearm<br>thrown = thrown weapon<br>spell = spell attack<br>natural = bite, claw, or unarmed" },
+                { label: "Roll Directly", value: directButtons },
+                { label: "Confirm Rolls", value: confirmButtons },
+                { label: "Setup Needed", value: "Rollable tables must be named exactly: " + REQUIRED_TABLES.join(', ') }
             ]);
         }
 
@@ -2330,7 +2337,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // Bugfix retained: robust natural‑1 detection across templates/inlineroll variants.
-    // Changed (v0.1.4.4): CritFumble help now uses a compact GM quick-reference with table workflow, attack types, direct commands, setup check, and confirm commands.
+    // Changed (v0.1.4.4): CritFumble help now uses a button-guided, step-by-step GM aid with plain-language attack types and setup requirements.
     // Maintenance (v0.1.4.3, no semantic change): Reworded an internal comment for collaborator clarity.
     // Maintenance (v0.1.4.1, no semantic change): Routed unchanged defaults through POLICY and timestamps through now().
     // Prior notes:
@@ -2521,7 +2528,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
             }
 
             if (flagged.length === 0) {
-                GameAssist.log('NPCManager', '✅ Death markers look right for linked NPCs on this page.');
+                GameAssist.log('NPCManager', '✅ NPC death audit complete: no HP/death-marker mismatches found for linked NPCs on this page.');
             } else {
                 GameAssist.log('NPCManager', `⚠️ ${flagged.length} NPC(s) with mismatched death markers:`);
                 flagged.forEach(({ name, id, hp, markers }) => {
@@ -2532,12 +2539,12 @@ description, syntax/commands, and configuration pointers near the top of the scr
             if (invalid.length) {
                 const names = invalid.slice(0, 5).join(', ');
                 const suffix = invalid.length > 5 ? `, +${invalid.length - 5} more` : '';
-                const subject = invalid.length === 1 ? names : `${invalid.length} page items (${names}${suffix})`;
+                const subject = invalid.length === 1 ? names : `${invalid.length} unlinked page items (${names}${suffix})`;
                 const pronoun = invalid.length === 1 ? 'it is' : 'they are';
-                const noun = invalid.length === 1 ? 'a character' : 'characters';
+                const target = invalid.length === 1 ? 'a character' : 'characters';
                 GameAssist.log(
                     'NPCManager',
-                    `Ignored ${subject} because ${pronoun} not tied to ${noun}. This is usually fine for party markers, scenery, labels, or props.`
+                    `Note: ignored ${subject} because ${pronoun} not linked to ${target}. This is expected for party markers, scenery, labels, or props.`
                 );
             }
         }, 'NPCManager', { gmOnly: true });
@@ -2581,7 +2588,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // CHOICE: TokenMod used for status marker ops; keep dependency explicit in README.
-    // Changed (v0.1.4.4): NPC death-audit now uses table-friendly success wording and treats unrelated page items as normal informational context instead of warnings.
+    // Changed (v0.1.4.4): NPC death-audit now uses formal clean-result wording and treats unrelated unlinked page items as informational context instead of warnings.
     // Changed (v0.1.4.3): NPCManager now resolves configured death markers before TokenMod add/remove/teardown requests, matching shared read-side marker identity behavior.
     // Changed (v0.1.4.1): Use exact shared marker matching, POLICY-owned cache limits, and shared time seams.
     // Prior notes:

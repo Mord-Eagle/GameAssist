@@ -198,12 +198,14 @@ Run:
 
 ### Expected
 
-- A `CritFumble Quick Help` panel appears.
-- The panel gives the table workflow: natural 1 → `!critfail` → pick the player → choose the attack type.
-- The panel lists the attack types, direct roll commands, confirm commands, and required rollable tables.
+- A `CritFumble Help: Natural 1 Attacks` panel appears.
+- The panel gives numbered normal-use steps for a natural 1.
+- The panel includes an `Open Player Picker` button.
+- The panel gives plain-language attack-type examples.
+- The panel includes direct-roll buttons, confirm-roll buttons, and the required rollable table names.
 - This test does not require the rollable tables.
 
-Receiving a compact help panel that tells the DM what to do next is the pass condition for this check.
+Receiving a step-by-step help panel that tells the DM what to do next is the pass condition for this check.
 
 ### Optional Table Test
 
@@ -260,7 +262,7 @@ If you use NPCManager, run:
 | `!npc-death-report` | Shows the recorded history of NPC death events. | It does not summarize the current page or check whether markers match HP. |
 | `!npc-death-audit` | Looks for contradictions between current bar 1 HP and the configured death marker. | It does not list every NPC that is already correct. |
 
-A response saying `Death markers look right for linked NPCs on this page` is a successful audit. If the page has party markers, scenery, labels, or props, GameAssist may also mention that it ignored page items not tied to characters; that is normal.
+A response saying `NPC death audit complete: no HP/death-marker mismatches found for linked NPCs on this page` is a successful audit. If the page has party markers, scenery, labels, or props, GameAssist may also mention that it ignored unlinked page items; that is normal.
 
 TokenMod is used when NPCManager changes a marker. The audit itself reads existing token HP and markers directly, so an empty audit is not normally caused by TokenMod.
 
@@ -663,7 +665,7 @@ Run:
 !critfumble help
 ```
 
-Expected: CritFumble help appears as a compact DM quick reference: common workflow, automatic use, fumble types, direct roll commands, confirm commands, and required rollable tables.
+Expected: CritFumble help appears as a step-by-step DM aid with a start button, plain attack-type examples, direct-roll buttons, confirm-roll buttons, and required rollable tables.
 
 ### E2. Manual GM Menu
 
