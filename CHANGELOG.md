@@ -1379,12 +1379,12 @@ v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It
 
 ### Release artifacts
 
-The v0.1.4.4 artifact remains preserved. The current repository script and the new v0.1.4.5 versioned artifact share:
+The v0.1.4.4 artifact remains preserved. The current repository script and the new v0.1.4.5 versioned artifact share this repository blob SHA-256:
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `E8A3E87347C1527CC0C4449A7CD8B36202EF0AEB83CB5A9E5A0C108CF13C3BB9` |
-| `GameAssist-v0.1.4.5` | `E8A3E87347C1527CC0C4449A7CD8B36202EF0AEB83CB5A9E5A0C108CF13C3BB9` |
+| `GameAssist` | `45A07C6CCEB93AD2F28D2E1823C959FAF6DE28AEA661F76E53D0FFDEB0C46EA4` |
+| `GameAssist-v0.1.4.5` | `45A07C6CCEB93AD2F28D2E1823C959FAF6DE28AEA661F76E53D0FFDEB0C46EA4` |
 
 Local Roll20 test copy:
 
