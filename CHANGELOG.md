@@ -1205,9 +1205,11 @@ v0.1.4.4 is a small DM-facing readability release. It preserves the v0.1.4.3 mar
   - `!critfumble-TYPE`
   - `!confirm-crit-martial`
   - `!confirm-crit-magic`
-- Changed the `!npc-death-audit` clean result to the more formal message: `NPC death audit complete: no HP/death-marker mismatches found for linked NPCs on this page.`
-- Changed unrelated unlinked-page-item audit notes from warnings into informational context, so party markers, scenery, labels, and props do not read like errors.
-- Preserved existing audit mismatch behavior: actual HP/marker contradictions still list token name, id, HP, and current markers.
+- Changed `!npc-death-audit` from multiple line-by-line log messages into one grouped GM report.
+- Added an audit `Scope` row stating that linked NPC tokens are checked and player characters are not included.
+- Grouped audit mismatches by action: `Add Marker` for dead NPCs missing the configured marker, and `Clear Marker` for living NPCs still carrying it.
+- Preserved useful mismatch details: NPC name, HP, current markers, and token ID.
+- Kept unrelated unlinked-page-item notes as informational context, so party markers, scenery, labels, and props do not read like errors.
 
 ### Documentation
 
@@ -1229,8 +1231,8 @@ The v0.1.4.3 artifact remains preserved. The current repository script and the n
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `F6FC68E421692B4E5714C35C11D783A23D3C3E537EFCA3ABA0317C1F55A5D996` |
-| `GameAssist-v0.1.4.4` | `F6FC68E421692B4E5714C35C11D783A23D3C3E537EFCA3ABA0317C1F55A5D996` |
+| `GameAssist` | `7C08EACEF85A8144814B2586CA3EB9A5BFCC66D763E06BFD8E28AB3E1F2400E2` |
+| `GameAssist-v0.1.4.4` | `7C08EACEF85A8144814B2586CA3EB9A5BFCC66D763E06BFD8E28AB3E1F2400E2` |
 
 ### Verification
 

@@ -270,9 +270,11 @@ If you use NPCManager, run:
 | Command | What It Does | What It Does Not Do |
 | --- | --- | --- |
 | `!npc-death-report` | Shows the recorded history of NPC death events. | It does not summarize the current page or check whether markers match HP. |
-| `!npc-death-audit` | Looks for contradictions between current bar 1 HP and the configured death marker. | It does not list every NPC that is already correct. |
+| `!npc-death-audit` | Looks for contradictions between current bar 1 HP and the configured death marker. | It does not check player characters or list every NPC that is already correct. |
 
-A response saying `NPC death audit complete: no HP/death-marker mismatches found for linked NPCs on this page` is a successful audit. If the page has party markers, scenery, labels, or props, GameAssist may also mention that it ignored unlinked page items; that is normal.
+Expected: a single `NPC Death Audit` report. The `Scope` row should say that linked NPCs are checked and player characters are not included.
+
+A clean audit says no death-marker problems were found for linked NPCs. A mismatch audit groups entries under `Add Marker` or `Clear Marker` and keeps each NPC's name, HP, markers, and token ID together. If the page has party markers, scenery, labels, or props, GameAssist may also mention ignored unlinked page items; that is normal.
 
 TokenMod is used when NPCManager changes a marker. The audit itself reads existing token HP and markers directly, so an empty audit is not normally caused by TokenMod.
 
@@ -1315,7 +1317,7 @@ Separate marker-changing failures from marker-reading failures:
 - If GameAssist's roll or HP-change workflow does not add/remove a marker, TokenMod may be involved.
 - If `!concentration --status` or `!npc-death-audit` cannot read a marker that already exists, TokenMod is not normally involved in that read.
 
-For `!npc-death-audit`, remember that correctly marked dead NPCs are intentionally omitted. Create a deliberate HP/marker mismatch on a qualifying disposable NPC before deciding the audit failed.
+For `!npc-death-audit`, remember that player characters and correctly marked NPCs are intentionally omitted. Create a deliberate HP/marker mismatch on a qualifying disposable NPC before deciding the audit failed.
 
 ---
 
@@ -1436,7 +1438,7 @@ Then perform the smallest real test for the modules the session will use:
 
 - CritFumble: `!critfumble help`
 - ConcentrationTracker: `!concentration --status`
-- NPCManager: `!npc-death-audit` and confirm you understand that it lists mismatches only
+- NPCManager: `!npc-death-audit` and confirm the report states PCs are excluded and lists mismatches by action
 - NPCHPRoller: `!npc-hp-selected` on a disposable NPC
 - ConfigUI: `!ga-config ui`
 

@@ -270,7 +270,7 @@ Commands:
 * `!npc-death-clear` → Clear the recorded death-event log.
 * `!npc-death-audit` → Check the current player page for HP/death-marker mismatches.
 
-`!npc-death-report` is a history report; `!npc-death-audit` is the mismatch checker. A clean audit means linked NPC tokens on the player page have death markers that match their HP. It does not print every NPC that is already correct, and it may note ignored unlinked page items such as party markers, scenery, labels, or props.
+`!npc-death-report` is a history report; `!npc-death-audit` is the mismatch checker. The audit checks linked NPC tokens on the current player page; player characters are not included. A clean audit means linked NPC tokens have death markers that match their HP. Mismatches are grouped by action: add the configured marker or clear the configured marker. The audit may also note ignored unlinked page items such as party markers, scenery, labels, or props.
 
 Config keys: `autoTrackDeath`, `deadMarker`, `autoHide`, `hideLayer`.
 

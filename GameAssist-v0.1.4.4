@@ -2411,6 +2411,45 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 ' Use a built-in marker id such as dead or configure the exact custom marker tag.';
         }
 
+        function auditText(value) {
+            return _sanitize(value ?? '')
+                .replace(/\{/g, '&#123;')
+                .replace(/\}/g, '&#125;');
+        }
+
+        function auditValue(value) {
+            if (Array.isArray(value)) {
+                return value.map(auditText).join('<br>');
+            }
+            return auditText(value);
+        }
+
+        function sendAuditReport(fields) {
+            const content = fields
+                .map(({ label, value }) => `{{${auditValue(label)}=${auditValue(value)}}}`)
+                .join(' ');
+            sendChat('GameAssist', `/w gm &{template:default} {{name=NPC Death Audit}} ${content}`);
+        }
+
+        function summarizeAuditNames(names, limit = 5) {
+            const listed = names.slice(0, limit).join(', ');
+            return names.length > limit ? `${listed}, +${names.length - limit} more` : listed;
+        }
+
+        function formatAuditEntries(entries) {
+            const lines = [];
+            entries.forEach((entry, index) => {
+                if (index > 0) lines.push('');
+                lines.push(
+                    entry.name,
+                    `HP: ${entry.hp}`,
+                    `Markers: ${entry.markers}`,
+                    `Token ID: ${entry.id}`
+                );
+            });
+            return lines;
+        }
+
         function requestDeathMarker(token, on) {
             const resolution = getDeathMarkerResolution();
             if (!resolution.ok) {
@@ -2518,7 +2557,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 layer: 'objects'
             });
 
-            const flagged = [];
+            const needsMarker = [];
+            const needsClear = [];
             const invalid = [];
             for (let token of tokens) {
                 const link = GameAssist.getLinkedCharacter(token);
@@ -2532,8 +2572,15 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 const hp = parseInt(token.get('bar1_value'), 10) || 0;
                 const isDead = tokenHasMarker(token, modState.config.deadMarker);
 
-                if ((hp < 1 && !isDead) || (hp >= 1 && isDead)) {
-                    flagged.push({
+                if (hp < 1 && !isDead) {
+                    needsMarker.push({
+                        name: token.get('name') || '(Unnamed)',
+                        id: token.id,
+                        hp,
+                        markers: token.get('statusmarkers') || '(none)'
+                    });
+                } else if (hp >= 1 && isDead) {
+                    needsClear.push({
                         name: token.get('name') || '(Unnamed)',
                         id: token.id,
                         hp,
@@ -2542,26 +2589,49 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 }
             }
 
-            if (flagged.length === 0) {
-                GameAssist.log('NPCManager', '✅ NPC death audit complete: no HP/death-marker mismatches found for linked NPCs on this page.');
-            } else {
-                GameAssist.log('NPCManager', `⚠️ ${flagged.length} NPC(s) with mismatched death markers:`);
-                flagged.forEach(({ name, id, hp, markers }) => {
-                    GameAssist.log('NPCManager', `- ${name} [${id}] | HP: ${hp} | Markers: ${markers}`);
+            const mismatchCount = needsMarker.length + needsClear.length;
+            const fields = [
+                {
+                    label: 'Result',
+                    value: mismatchCount
+                        ? `⚠️ ${mismatchCount} linked NPC${mismatchCount === 1 ? '' : 's'} need death-marker attention.`
+                        : '✅ No death-marker problems found for linked NPCs.'
+                },
+                {
+                    label: 'Scope',
+                    value: 'Checked linked NPC tokens on the current player page. Player characters are not included.'
+                },
+                {
+                    label: 'Configured Marker',
+                    value: modState.config.deadMarker || 'dead'
+                }
+            ];
+
+            if (needsMarker.length) {
+                fields.push({
+                    label: `Add Marker (${needsMarker.length})`,
+                    value: formatAuditEntries(needsMarker)
+                });
+            }
+
+            if (needsClear.length) {
+                fields.push({
+                    label: `Clear Marker (${needsClear.length})`,
+                    value: formatAuditEntries(needsClear)
                 });
             }
 
             if (invalid.length) {
-                const names = invalid.slice(0, 5).join(', ');
-                const suffix = invalid.length > 5 ? `, +${invalid.length - 5} more` : '';
-                const subject = invalid.length === 1 ? names : `${invalid.length} unlinked page items (${names}${suffix})`;
-                const pronoun = invalid.length === 1 ? 'it is' : 'they are';
-                const target = invalid.length === 1 ? 'a character' : 'characters';
-                GameAssist.log(
-                    'NPCManager',
-                    `Note: ignored ${subject} because ${pronoun} not linked to ${target}. This is expected for party markers, scenery, labels, or props.`
-                );
+                fields.push({
+                    label: `Ignored Unlinked (${invalid.length})`,
+                    value: [
+                        summarizeAuditNames(invalid),
+                        'Expected for party markers, scenery, labels, or props.'
+                    ]
+                });
             }
+
+            sendAuditReport(fields);
         }, 'NPCManager', { gmOnly: true });
 
         GameAssist.onEvent('change:graphic:bar1_value', handleTokenChange, 'NPCManager');
@@ -2603,7 +2673,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // CHOICE: TokenMod used for status marker ops; keep dependency explicit in README.
-    // Changed (v0.1.4.4): NPC death-audit now uses formal clean-result wording and treats unrelated unlinked page items as informational context instead of warnings.
+    // Changed (v0.1.4.4): NPC death-audit now sends a grouped GM report, states that PCs are excluded, and categorizes marker mismatches by action.
     // Changed (v0.1.4.3): NPCManager now resolves configured death markers before TokenMod add/remove/teardown requests, matching shared read-side marker identity behavior.
     // Changed (v0.1.4.1): Use exact shared marker matching, POLICY-owned cache limits, and shared time seams.
     // Prior notes:
