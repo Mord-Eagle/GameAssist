@@ -1194,7 +1194,9 @@ v0.1.4.4 is a small DM-facing readability release. It preserves the v0.1.4.3 mar
 ### Changed — DM-facing command output
 
 - Revised `!critfumble help` from a command list into a step-by-step GM aid with an `Open Player Picker` button, plain attack-type examples, direct-roll buttons, confirm-roll buttons, and required rollable tables.
-- Preserved the existing CritFumble command syntax:
+- Added `!critfumble menu` as the public CritFumble-family command for opening the GM player picker.
+- Added bare `!critfumble` as a help alias, so entering the feature command without a subcommand opens the guide instead of silently doing nothing.
+- Preserved existing CritFumble command syntax:
   - `!critfail`
   - `!critfumble help`
   - `!critfumble-TYPE`
@@ -1207,8 +1209,8 @@ v0.1.4.4 is a small DM-facing readability release. It preserves the v0.1.4.3 mar
 ### Documentation
 
 - Updated `Smoketest.md` so DMs no longer need to reinterpret the old audit success message.
-- Updated the CritFumble smoke test to check for a step-by-step GM aid rather than merely any response.
-- Updated `README.md` to describe the help panel as a guided GM aid and to document the meaning of a clean NPC death audit.
+- Updated the CritFumble smoke test to check for a step-by-step GM aid, the bare `!critfumble` help alias, and the `!critfumble menu` player-picker command.
+- Updated `README.md` to describe the help panel as a guided GM aid, document `!critfumble menu`, and document the meaning of a clean NPC death audit.
 - Updated `ROADMAP.md` so #21, #22, and #23 precede the #24 standalone-interoperability umbrella, with #32 explicitly deferred after the existing issue queue.
 
 ### MECHSUITS records
@@ -1224,8 +1226,8 @@ The v0.1.4.3 artifact remains preserved. The current repository script and the n
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `251E54F8A7C0AF48DF48BA0B878CCA4D78F3331BA84B8B3F7A9E560E27C8133C` |
-| `GameAssist-v0.1.4.4` | `251E54F8A7C0AF48DF48BA0B878CCA4D78F3331BA84B8B3F7A9E560E27C8133C` |
+| `GameAssist` | `AFDA17BFCF1DC260DD410ED67ABBBC9E2EB30D00363CF656CB91DEFEBA269233` |
+| `GameAssist-v0.1.4.4` | `AFDA17BFCF1DC260DD410ED67ABBBC9E2EB30D00363CF656CB91DEFEBA269233` |
 
 ### Verification
 

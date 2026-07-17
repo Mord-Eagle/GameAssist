@@ -36,7 +36,9 @@ CORE COMMANDS (GM):
 MODULE COMMANDS:
 • CritFumble:
     !critfail                               — GM menu to trigger fumble UI for a player
+    !critfumble                             — help
     !critfumble help                        — help
+    !critfumble menu                        — GM menu to trigger fumble UI for a player
     !critfumble-<melee|ranged|thrown|spell|natural>
     !confirm-crit-martial   | !confirm-crit-magic
 • ConcentrationTracker (players/GM):
@@ -2243,7 +2245,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         }
 
         function showHelpMessage(who) {
-            const pickerButton = GameAssist.createButton('Open Player Picker', '!critfail');
+            const pickerButton = GameAssist.createButton('Open Player Picker', '!critfumble menu');
             const directButtons = FUMBLE_TYPE_ORDER
                 .map(type => GameAssist.createButton(type.charAt(0).toUpperCase() + type.slice(1), `!critfumble-${type}`))
                 .join(' ');
@@ -2254,12 +2256,12 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
             sendTemplateMessage(who, "CritFumble Help: Natural 1 Attacks", [
                 { label: "When To Use", value: "Use this when a player rolls a natural 1 on an attack." },
-                { label: "Normal Steps", value: "1. Click Open Player Picker.<br>2. Choose the player who rolled the natural 1.<br>3. The player chooses the attack type.<br>4. GameAssist rolls the fumble result." },
+                { label: "Normal Steps", value: "1. Click Open Player Picker or type !critfumble menu.<br>2. Choose the player who rolled the natural 1.<br>3. The player chooses the attack type.<br>4. GameAssist rolls the fumble result." },
                 { label: "Start", value: pickerButton },
                 { label: "Attack Types", value: "melee = close weapon<br>ranged = bow, crossbow, or firearm<br>thrown = thrown weapon<br>spell = spell attack<br>natural = bite, claw, or unarmed" },
                 { label: "Roll Directly", value: directButtons },
                 { label: "Confirm Rolls", value: confirmButtons },
-                { label: "Setup Needed", value: "Rollable tables must be named exactly: " + REQUIRED_TABLES.join(', ') }
+                { label: "Before First Use", value: "Create Roll20 rollable tables with these exact names:<br>" + REQUIRED_TABLES.join('<br>') }
             ]);
         }
 
@@ -2279,11 +2281,11 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 const rawCmd = (msg.content||'').trim();
                 const cmd = rawCmd.toLowerCase();
 
-                if (cmd==='!critfail') {
-                    debugLog('Manual trigger: !critfail');
+                if (cmd==='!critfail' || cmd==='!critfumble menu') {
+                    debugLog(`Manual trigger: ${rawCmd}`);
                     return showManualTriggerMenu();
                 }
-                if (cmd==='!critfumble help') {
+                if (cmd==='!critfumble' || cmd==='!critfumble help') {
                     return showHelpMessage(msg.who);
                 }
                 if (cmd.startsWith('!critfumblemenu')) {
@@ -2329,7 +2331,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         }
 
         GameAssist.onEvent('chat:message', handleRoll, 'CritFumble');
-        GameAssist.log('CritFumble','v0.2.4.9 Ready: Auto fumble detection + !critfail','INFO',{startup:true});
+        GameAssist.log('CritFumble','v0.2.4.9 Ready: Auto fumble detection + !critfumble menu','INFO',{startup:true});
     }, {
         enabled: true,
         events:   ['chat:message'],
@@ -2337,7 +2339,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // Bugfix retained: robust natural‑1 detection across templates/inlineroll variants.
-    // Changed (v0.1.4.4): CritFumble help now uses a button-guided, step-by-step GM aid with plain-language attack types and setup requirements.
+    // Changed (v0.1.4.4): CritFumble help now uses a button-guided, step-by-step GM aid; !critfumble menu opens the same GM player picker as !critfail.
     // Maintenance (v0.1.4.3, no semantic change): Reworded an internal comment for collaborator clarity.
     // Maintenance (v0.1.4.1, no semantic change): Routed unchanged defaults through POLICY and timestamps through now().
     // Prior notes:

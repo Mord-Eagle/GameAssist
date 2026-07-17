@@ -19,8 +19,8 @@ GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a
 | --- | --- |
 | Core Lift | Guarded modules, conservative state repair, explicit queue API, session metrics, dependency diagnostics, and GM health reporting. |
 | 30-Second Install | ① Paste **GameAssist-v0.1.4.4** ② Install **TokenMod** for marker modules ③ Add the seven CritFumble roll-tables ④ Save/reload ⑤ Run `!ga-status`. |
-| Flagship Player Commands | `!concentration`, `!cc`, `!critfail`, `!critfumble-<type>`. |
-| Flagship GM Commands | `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report`, `!npc-death-audit`, `!ga-conc-status`, `!ga-config ui`. |
+| Flagship Player Commands | `!concentration`, `!cc`, `!critfumble-<type>`. |
+| Flagship GM Commands | `!critfumble`, `!critfumble help`, `!critfumble menu`, `!critfail`, `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report`, `!npc-death-audit`, `!ga-conc-status`, `!ga-config ui`. |
 | Admin Controls | `!ga-config list|get|set|modules|cleanup|ui`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-metrics`, and `!ga-debug`. |
 | Queue Model | Normal commands/events run directly. Only `GameAssist.enqueue(...)` work and module transitions use the serialized queue. |
 | Watchdog Limit | A timeout releases the explicit queue; it **cannot** terminate underlying JavaScript, `sendChat()`, or Roll20 operations. |
@@ -75,7 +75,7 @@ GameAssist’s kernel and bundled modules expose:
 📜 3  Create 7 CritFumble roll-tables (see §11: Roll-Table Cookbook)
 🔄 4  Save/reload the sandbox and wait for the core ready whisper
 🩺 5  Run !ga-status and !ga-config modules
-🎲 6  Test !critfail, !concentration --status, and !npc-hp-selected
+🎲 6  Test !critfumble menu, !concentration --status, and !npc-hp-selected
 ```
 
 `GameAssist.flags.QUIET_STARTUP` defaults to `true`. Expect the core ready whisper, but not one ready message from every module.
@@ -89,7 +89,7 @@ Run these commands after every update:
 !ga-config modules
 !ga-config list
 !ga-metrics
-!critfail
+!critfumble menu
 !concentration --status
 !npc-death-report
 !npc-death-audit
@@ -209,7 +209,7 @@ The snapshot excludes runtime caches and metrics. v0.1.4.4 does not import or re
 
 ### 6.1 CritFumble
 
-CritFumble watches common attack and damage roll templates for a natural 1 and offers a player-targeted fumble menu. Calling `!critfail` opens a GM-facing manual menu.
+CritFumble watches common attack and damage roll templates for a natural 1 and offers a player-targeted fumble menu. Calling `!critfumble menu` opens a GM-facing manual menu; `!critfail` remains as a shortcut.
 
 Recognized templates include:
 
@@ -219,8 +219,8 @@ atk, atkdmg, npcatk, npcfullatk, npcaction, spell, simple, dmg, default
 
 Commands:
 
-* `!critfail` → Open the manual fumble prompt.
-* `!critfumble help` → Whisper a step-by-step GM aid with a start button, plain attack-type examples, direct-roll buttons, confirm-roll buttons, and setup table names.
+* `!critfumble` / `!critfumble help` → Whisper a step-by-step GM aid with a start button, plain attack-type examples, direct-roll buttons, confirm-roll buttons, and setup table names.
+* `!critfumble menu` / `!critfail` → Open the manual fumble prompt.
 * `!critfumble-melee|ranged|thrown|spell|natural` → Roll the selected fumble table.
 * `!confirm-crit-martial` / `!confirm-crit-magic` → Roll the matching confirmation table.
 
@@ -395,8 +395,8 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!npc-death-clear` | — | Clear the recorded death-event log. |
 |  | `!npc-death-audit` | — | Report current HP/death-marker mismatches. |
 |  | `!ga-conc-status` | — | Show recent concentration DC/damage data per player. |
-| **Player / GM** | `!critfail` | — | Open the GM-facing manual fumble prompt. Intended for GM use, but not currently GM-gated. |
-|  | `!critfumble help` | — | Whisper CritFumble help. |
+| **Player / GM** | `!critfumble` / `!critfumble help` | — | Whisper CritFumble help. |
+|  | `!critfumble menu` / `!critfail` | — | Open the GM-facing manual fumble prompt. Intended for GM use, but not currently GM-gated. |
 | **Debug** | `!ga-debug damage` | `--amount N [--token ID] [--apply]` | Preview or apply bar1 damage. |
 |  | `!ga-debug marker` | `--marker NAME [--state on|off|toggle] [--token ID] [--apply]` | Preview or apply a status marker change. |
 |  | `!ga-debug save` | `--dc N [--bonus N] [--mode normal|adv|dis] [--label "Text"] [--apply]` | Preview or roll a save. |
@@ -786,7 +786,7 @@ Confirm-Crit-Magic
 Then run:
 
 ```roll20chat
-!critfail
+!critfumble menu
 !critfumble help
 !critfumble-melee
 !confirm-crit-martial

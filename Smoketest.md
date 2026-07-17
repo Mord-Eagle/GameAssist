@@ -193,6 +193,7 @@ Open the UI, click **Refresh**, and confirm it redraws once.
 Run:
 
 ```roll20chat
+!critfumble
 !critfumble help
 ```
 
@@ -201,11 +202,14 @@ Run:
 - A `CritFumble Help: Natural 1 Attacks` panel appears.
 - The panel gives numbered normal-use steps for a natural 1.
 - The panel includes an `Open Player Picker` button.
+- The `Open Player Picker` button uses `!critfumble menu`.
 - The panel gives plain-language attack-type examples.
 - The panel includes direct-roll buttons, confirm-roll buttons, and the required rollable table names.
 - This test does not require the rollable tables.
 
 Receiving a step-by-step help panel that tells the DM what to do next is the pass condition for this check.
+
+Optional: click **Open Player Picker** or run `!critfumble menu`. Expected: the manual player picker opens, or GameAssist says no players have been active yet this session.
 
 ### Optional Table Test
 
@@ -667,18 +671,28 @@ Run:
 
 Expected: CritFumble help appears as a step-by-step DM aid with a start button, plain attack-type examples, direct-roll buttons, confirm-roll buttons, and required rollable tables.
 
+Run:
+
+```roll20chat
+!critfumble menu
+```
+
+Expected: the manual player picker opens, or GameAssist says no players have been active yet this session.
+
 ### E2. Manual GM Menu
 
 Run:
 
 ```roll20chat
-!critfail
+!critfumble menu
 ```
 
 Expected:
 
 - A GM-facing player-selection menu appears.
 - The menu includes recently active chat participants, commonly including the GM who ran the command.
+
+Shortcut check: `!critfail` should open the same menu.
 
 ### E3. Direct Table Commands
 
