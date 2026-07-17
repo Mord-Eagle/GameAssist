@@ -1,6 +1,6 @@
 {
   "name": "GameAssist",
-  "script": "GameAssist.js",
+  "script": "GameAssist",
   "version": "0.1.4.4",
   "previousversions": [
     "0.1.4.3",
@@ -43,6 +43,8 @@
     "!confirm-crit-martial",
     "!critfail",
     "!critfumble",
+    "!critfumble help",
+    "!critfumble menu",
     "!ga-conc-status",
     "!ga-config", 
     "!ga-config-ui", 

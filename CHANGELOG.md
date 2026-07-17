@@ -1218,6 +1218,13 @@ v0.1.4.4 is a small DM-facing readability release. It preserves the v0.1.4.3 mar
 - Updated `README.md` to describe the quick reference, guided menu, direct player picker, and the meaning of a clean NPC death audit.
 - Updated `ROADMAP.md` so #21, #22, and #23 precede the #24 standalone-interoperability umbrella, with #32 explicitly deferred after the existing issue queue.
 
+### Review fixes
+
+- Hardened `!critfumble help` and `!critfumble menu` matching so extra internal whitespace is accepted.
+- Hardened direct fumble rolls so mixed-case commands such as `!CritFumble-melee` resolve the intended fumble type.
+- Corrected `script.json` so `script` points to the repository's actual `GameAssist` artifact instead of nonexistent `GameAssist.js`.
+- Added `!critfumble help` and `!critfumble menu` to the script metadata command list.
+
 ### MECHSUITS records
 
 - Updated `[GAMEASSIST:MODULES:CRITFUMBLE]` because the public help output changed.
@@ -1231,8 +1238,8 @@ The v0.1.4.3 artifact remains preserved. The current repository script and the n
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `7C08EACEF85A8144814B2586CA3EB9A5BFCC66D763E06BFD8E28AB3E1F2400E2` |
-| `GameAssist-v0.1.4.4` | `7C08EACEF85A8144814B2586CA3EB9A5BFCC66D763E06BFD8E28AB3E1F2400E2` |
+| `GameAssist` | `979186B51ADEA92EF127C0CC0F3405A6FAEC40E68D20CD80B7428C529BDB30CE` |
+| `GameAssist-v0.1.4.4` | `979186B51ADEA92EF127C0CC0F3405A6FAEC40E68D20CD80B7428C529BDB30CE` |
 
 ### Verification
 

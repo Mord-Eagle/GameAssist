@@ -2295,10 +2295,10 @@ description, syntax/commands, and configuration pointers near the top of the scr
                     debugLog(`Manual trigger: ${rawCmd}`);
                     return showManualTriggerMenu();
                 }
-                if (cmd==='!critfumble menu') {
+                if (/^!critfumble\s+menu$/.test(cmd)) {
                     return showCritFumbleMenu(msg.who);
                 }
-                if (cmd==='!critfumble' || cmd==='!critfumble help') {
+                if (/^!critfumble(?:\s+help)?$/.test(cmd)) {
                     return showHelpMessage(msg.who);
                 }
                 if (cmd.startsWith('!critfumblemenu')) {
@@ -2310,7 +2310,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 }
                 if (cmd.startsWith('!critfumble-')) {
                     const who        = sanitizeWho(msg.who);
-                    const fumbleType = msg.content.replace('!critfumble-','').toLowerCase();
+                    const fumbleType = cmd.slice('!critfumble-'.length).split(/\s+/)[0];
                     debugLog(`${who} selected fumble type: ${fumbleType}`);
                     return rollFumbleTable(who, fumbleType);
                 }
@@ -2352,7 +2352,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // Bugfix retained: robust natural‑1 detection across templates/inlineroll variants.
-    // Changed (v0.1.4.4): CritFumble help is a quick reference; !critfumble menu opens the guided natural-1 dialogue; !critfail remains the direct player picker.
+    // Changed (v0.1.4.4): CritFumble help is a quick reference; !critfumble menu opens the guided natural-1 dialogue; !critfail remains the direct player picker; command parsing tolerates extra whitespace and mixed-case direct rolls.
     // Maintenance (v0.1.4.3, no semantic change): Reworded an internal comment for collaborator clarity.
     // Maintenance (v0.1.4.1, no semantic change): Routed unchanged defaults through POLICY and timestamps through now().
     // Prior notes:
