@@ -20,7 +20,7 @@ GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a
 | Core Lift | Guarded modules, conservative state repair, explicit queue API, session metrics, dependency diagnostics, and GM health reporting. |
 | 30-Second Install | ① Paste **GameAssist-v0.1.4.5** ② Install **TokenMod** for marker modules ③ Add the seven CritFumble roll-tables ④ Save/reload ⑤ Run `!ga-status`. |
 | Flagship Player Commands | `!concentration`, `!cc`, `!critfumble-<type>`. |
-| Flagship GM Commands | `!critfumble`, `!critfumble help`, `!critfumble menu`, `!critfail`, `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-help`, `!npc-death-report`, `!npc-death-buckets`, `!npc-death-audit`, `!npc-arc`, `!ga-conc-status`, `!ga-config ui`. |
+| Flagship GM Commands | `!critfumble`, `!critfumble help`, `!critfumble menu`, `!critfail`, `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-help`, `!npc-death-report`, `!npc-death-buckets`, `!npc-death-audit`, `!npc-death-arc`, `!ga-conc-status`, `!ga-config ui`. |
 | Admin Controls | `!ga-config list|get|set|modules|cleanup|ui`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-metrics`, and `!ga-debug`. |
 | Queue Model | Normal commands/events run directly. Only `GameAssist.enqueue(...)` work and module transitions use the serialized queue. |
 | Watchdog Limit | A timeout releases the explicit queue; it **cannot** terminate underlying JavaScript, `sendChat()`, or Roll20 operations. |
@@ -282,11 +282,13 @@ Commands:
 * `!npc-death-clear --scope session` → Ask for confirmation before clearing the selected active bucket. Defaults to Session.
 * `!npc-death-clear --scope session --confirm` → Clear only that active bucket.
 * `!npc-death-audit` → Check the current player page for HP/death-marker mismatches and update the `GameAssist NPC Death Audit` handout.
-* `!npc-arc` → Show arc bucket help and current arc counts.
-* `!npc-arc --name "Arc Name"` → Add selected linked PC/NPC tokens to that arc handout.
-* `!npc-arc --name "Arc Name" --session` → Append current Session bucket deaths to that arc handout.
+* `!npc-death-arc` → Show arc bucket help and current arc counts.
+* `!npc-death-arc --name "Arc Name"` → Add selected linked PC/NPC tokens to that arc handout.
+* `!npc-death-arc --name "Arc Name" --session` → Append current Session bucket deaths to that arc handout.
 
-`!npc-death-report` is a history report. It opens with totals, the latest death, most frequent names, recent entries, and buttons for common next steps. Every new death is written to all four active buckets, so a DM can clear or rename the Session bucket while retaining Chapter, Section, and Campaign history. Each bucket has its own handout named like `GameAssist Deaths - Session - 2026-07-17`. Revivals are annotated on the matching entry instead of silently deleting the death.
+`!npc-death-report` is a history report. It opens with totals, the latest death, most frequent names, recent entries, and buttons for common next steps. Every new death is written to all four active buckets, so a DM can clear or rename the Session bucket while retaining Chapter, Section, and Campaign history. Each bucket has its own handout named like `GameAssist Deaths - Session - 2026-07-17`. Revivals are annotated on the matching entry instead of silently deleting the death. Current entries are matched by token ID, so separate tokens with the same name remain separate records. Clearing only the Session bucket does not make a still-dead NPC duplicate itself in the retained buckets.
+
+Selected-token arc entries are general story notes. They are not marked as revivals when a healthy token's HP changes. Revival annotations apply only to arc entries imported from Session death history.
 
 `!npc-death-audit` is the mismatch checker. The chat output gives the summary and points to the `GameAssist NPC Death Audit` handout, where the detailed token list is written. The audit checks linked NPC tokens on the current player page; player characters are not included. A clean audit means linked NPC tokens have death markers that match their HP. Mismatches are grouped by action: add the configured marker or clear the configured marker. The audit may also note ignored unlinked page items such as party markers, scenery, labels, or props.
 
@@ -428,7 +430,7 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!npc-death-buckets` | `[--campaign "Name"] [--chapter "Name"] [--section "Name"] [--session "Name"] [--resetSession]` | View or rename the active death-history buckets. |
 |  | `!npc-death-clear` | `[--scope session] [--confirm]` | Ask before clearing one active bucket; `--confirm` performs the clear. |
 |  | `!npc-death-audit` | — | Summarize current HP/death-marker mismatches and update the audit handout. |
-|  | `!npc-arc` | `[--name "Arc Name"] [--session] [--note "Text"]` | Add selected linked PC/NPC tokens or current-session deaths to an arc handout. |
+|  | `!npc-death-arc` | `[--name "Arc Name"] [--session] [--note "Text"]` | Add selected linked PC/NPC tokens or current-session deaths to an arc handout. |
 |  | `!ga-conc-status` | — | Show recent concentration DC/damage data per player. |
 | **Player / GM** | `!critfumble` / `!critfumble help` | — | Whisper the CritFumble quick reference. |
 |  | `!critfumble menu` | — | Whisper the guided Natural 1 dialogue. |
@@ -694,7 +696,7 @@ Leave DebugTools disabled until needed.
 !npc-death-report --recent
 !npc-death-clear --scope session
 !npc-death-clear --scope session --confirm
-!npc-arc
+!npc-death-arc
 ```
 
 ### 12.6 NPC HP Setup

@@ -1343,16 +1343,25 @@ v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It
 
 ### Added — manual arc handouts
 
-- Added `!npc-arc` as the GM-facing arc help/list panel.
+- Added `!npc-death-arc` as the GM-facing arc help/list panel, keeping the command within NPCManager's `!npc-death-*` naming family.
 - Added manual selected-token capture:
-  - `!npc-arc --name "Arc Name"`
+  - `!npc-death-arc --name "Arc Name"`
   - selected linked PC and NPC tokens are appended to `GameAssist Arc - Arc Name`.
 - Added session import:
-  - `!npc-arc --name "Arc Name" --session`
+  - `!npc-death-arc --name "Arc Name" --session`
   - current Session bucket deaths are appended without duplicating entries already imported into that arc.
 - Added optional note support for selected-token entries:
-  - `!npc-arc --name "Arc Name" --note "Text"`
+  - `!npc-death-arc --name "Arc Name" --note "Text"`
 - Arc buckets are independent story-note handouts; they do not sit inside Campaign, Chapter, Section, or Session.
+
+### Changed — review hardening
+
+- Persisted the legacy death-log migration completion flag in NPCManager runtime state so the migration does not repeat on every command.
+- Batched legacy migration handout writes to one update per scope after all retained entries are copied.
+- Matched current death records by token ID before using the name-only fallback reserved for legacy entries without token IDs. This keeps separate same-named NPC tokens from sharing one death or revival record.
+- Preserved open-death detection across retained buckets after a scoped Session clear, preventing a still-dead NPC from being recorded again in Campaign, Chapter, or Section after another below-zero HP edit.
+- Preserved an exact selected-token HP value of `0` in arc state instead of treating it as absent.
+- Limited arc revival annotations to entries imported from death history. Ordinary selected-token story notes remain unchanged during later positive-HP edits.
 
 ### Added — NPCManager start-here help
 
@@ -1397,14 +1406,14 @@ The v0.1.4.4 artifact remains preserved. The current repository script and the n
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `EF7726C8345368A1640F58B065563C0B942CED02D505DDA4906F4A01BF5EACA0` |
-| `GameAssist-v0.1.4.5` | `EF7726C8345368A1640F58B065563C0B942CED02D505DDA4906F4A01BF5EACA0` |
+| `GameAssist` | `D8AF410F118F8867C8F2CAEA22041F6743E04B8AAC5C25811F5659A78FBE7A21` |
+| `GameAssist-v0.1.4.5` | `D8AF410F118F8867C8F2CAEA22041F6743E04B8AAC5C25811F5659A78FBE7A21` |
 
 Local Roll20 test copy:
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `outputs/GameAssist-v0.1.4.5-pr34-test.js` | `9A757068B228738978760E29BF1137436D559B6E447FB8D850668BDF35C4E9B1` |
+| `outputs/GameAssist-v0.1.4.5-pr34-test.js` | `802A57949222C9F27D0CF7CF084760244FB25BF892F5AE6AA38C94E4ADC9FA9F` |
 
 ### Verification
 
@@ -1413,6 +1422,7 @@ Local Roll20 test copy:
 | `node --check .\GameAssist` | Passed |
 | `script.json` JSON parse | Passed |
 | `GameAssist` versus `GameAssist-v0.1.4.5` byte identity | Passed |
+| NPCManager review regression checks for migration, same-name tokens, scoped clearing, arc revival eligibility, and zero HP | Passed |
 | `git diff --cached --check` | Passed |
 
 Roll20 API sandbox confirmation is still required for the final release gate.

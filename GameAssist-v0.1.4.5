@@ -46,7 +46,7 @@ MODULE COMMANDS:
     !cc (alias)
 • NPCManager (GM):         !npc-death-help
                             !npc-death-report [--scope campaign|chapter|section|session] [--recent|--page N|--write|--help]
-                            !npc-death-buckets | !npc-death-clear [--scope session] [--confirm] | !npc-death-audit | !npc-arc
+                            !npc-death-buckets | !npc-death-clear [--scope session] [--confirm] | !npc-death-audit | !npc-death-arc
 • NPCHPRoller (GM):        !npc-hp-selected    |   !npc-hp-all
 • ConfigUI (GM):           !ga-config ui [--page N] | !ga-config-ui
 • DebugTools (GM-only):    !ga-debug damage|marker|save [flags] (module disabled by default)
@@ -72,7 +72,7 @@ V0.1.4.5 STABILIZATION NOTES
 - Queue timeouts release the queue but cannot cancel JavaScript or Roll20 operations.
 - Dependency status is confirmed, missing, or unverifiable.
 - !ga-config list exports configuration only; runtime caches and metrics are excluded.
-- Hidden/admin commands: !ga-config cleanup, !npc-death-buckets, !npc-death-clear [--scope session] [--confirm], !npc-death-audit, !npc-arc, !ga-metrics [reset].
+- Hidden/admin commands: !ga-config cleanup, !npc-death-buckets, !npc-death-clear [--scope session] [--confirm], !npc-death-audit, !npc-death-arc, !ga-metrics [reset].
 - Additional config: NPCManager autoHide/hideLayer; registration dependsOn; onCommand match options.
 - Built-in and custom status-marker names resolve to the exact ids Roll20 stores on tokens.
 - Concentration status reports invalid marker configuration instead of silently returning an incorrect result.
@@ -2441,6 +2441,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         ensureDeathBucketConfig();
 
         function ensureNPCManagerRuntime() {
+            const state = ensureRuntimeObject(modState);
             const deathLog = ensureModRuntimeKey(modState, 'deathLog', 'array');
             const buckets = ensureModRuntimeKey(modState, 'deathBuckets', 'object');
             const arcs = ensureModRuntimeKey(modState, 'deathArcs', 'array');
@@ -2449,7 +2450,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 if (!Array.isArray(buckets[scope])) buckets[scope] = [];
             });
 
-            return { deathLog, buckets, arcs };
+            return { state, deathLog, buckets, arcs };
         }
 
         function getDeathMarkerResolution() {
@@ -2725,25 +2726,30 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
         function backfillBucketsFromLegacyLog() {
             const runtime = ensureNPCManagerRuntime();
-            if (runtime.deathBucketsBackfilled || !runtime.deathLog.length) return;
+            if (runtime.state.deathBucketsBackfilled) return;
+            if (!runtime.deathLog.length) {
+                runtime.state.deathBucketsBackfilled = true;
+                return;
+            }
 
             const anyBucketHasEntries = DEATH_BUCKET_SCOPES.some(scope =>
                 runtime.buckets[scope].some(bucket => Array.isArray(bucket.entries) && bucket.entries.length)
             );
             if (anyBucketHasEntries) {
-                runtime.deathBucketsBackfilled = true;
+                runtime.state.deathBucketsBackfilled = true;
                 return;
             }
 
-            runtime.deathLog.forEach(entry => {
-                DEATH_BUCKET_SCOPES.forEach(scope => {
-                    const bucket = getActiveBucket(scope);
+            const activeBuckets = getActiveBuckets();
+            DEATH_BUCKET_SCOPES.forEach(scope => {
+                const bucket = activeBuckets[scope];
+                runtime.deathLog.forEach(entry => {
                     bucket.entries.push(cloneDeathEntry(entry));
-                    pruneEntries(bucket.entries);
-                    writeBucketHandout(bucket);
                 });
+                pruneEntries(bucket.entries);
+                writeBucketHandout(bucket);
             });
-            runtime.deathBucketsBackfilled = true;
+            runtime.state.deathBucketsBackfilled = true;
         }
 
         function recordDeathInBuckets(entry) {
@@ -2760,24 +2766,29 @@ description, syntax/commands, and configuration pointers near the top of the scr
         }
 
         function entryMatchesToken(entry, token, fallbackName) {
-            return Boolean(
-                (entry.tokenId && entry.tokenId === token.id) ||
-                (entry.name && fallbackName && entry.name === fallbackName)
-            );
+            if (entry?.tokenId) return entry.tokenId === token.id;
+            return Boolean(entry?.name && fallbackName && entry.name === fallbackName);
         }
 
         function hasOpenDeathEntry(token) {
             const runtime = ensureNPCManagerRuntime();
             const fallbackName = token.get('name') || '(Unnamed NPC)';
-            return runtime.deathLog.some(entry =>
+            const collections = [runtime.deathLog];
+            DEATH_BUCKET_SCOPES.forEach(scope => {
+                runtime.buckets[scope].forEach(bucket => {
+                    if (Array.isArray(bucket.entries)) collections.push(bucket.entries);
+                });
+            });
+            return collections.some(entries => entries.some(entry =>
                 entry && !entry.revivedAt && entryMatchesToken(entry, token, fallbackName)
-            );
+            ));
         }
 
-        function annotateRevivalInEntries(entries, token, fallbackName, hp) {
+        function annotateRevivalInEntries(entries, token, fallbackName, hp, isEligible = null) {
             for (let i = entries.length - 1; i >= 0; i--) {
                 const entry = entries[i];
                 if (entry?.revivedAt) continue;
+                if (isEligible && !isEligible(entry)) continue;
                 if (!entryMatchesToken(entry, token, fallbackName)) continue;
 
                 entry.revivedAt = isoNow();
@@ -2803,7 +2814,13 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 });
             });
             runtime.arcs.forEach(arc => {
-                if (annotateRevivalInEntries(arc.entries, token, fallbackName, hp)) {
+                if (annotateRevivalInEntries(
+                    arc.entries,
+                    token,
+                    fallbackName,
+                    hp,
+                    entry => Boolean(entry?.sourceEventId)
+                )) {
                     changed = true;
                     writeArcHandout(arc);
                 }
@@ -2901,7 +2918,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
                         '!npc-death-report --scope campaign = campaign bucket summary',
                         '!npc-death-buckets = view or rename active buckets',
                         '!npc-death-audit = check current-page HP and markers, then update the audit handout',
-                        '!npc-arc = arc bucket help'
+                        '!npc-death-arc = arc bucket help'
                     ]
                 },
                 {
@@ -2941,7 +2958,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
                         GameAssist.createButton('Name Buckets', '!npc-death-buckets'),
                         GameAssist.createButton('Session Report', '!npc-death-report --scope session'),
                         GameAssist.createButton('Run Audit', '!npc-death-audit'),
-                        GameAssist.createButton('Arc Help', '!npc-arc')
+                        GameAssist.createButton('Arc Help', '!npc-death-arc')
                     ]
                 },
                 {
@@ -2960,7 +2977,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
                         '!npc-death-report --scope section',
                         '!npc-death-report --scope session',
                         '!npc-death-clear --scope session',
-                        '!npc-arc --name "Arc Name" --session'
+                        '!npc-death-arc --name "Arc Name" --session'
                     ]
                 },
                 {
@@ -3184,12 +3201,13 @@ description, syntax/commands, and configuration pointers near the top of the scr
             if (!link) return null;
             const isNPC = Boolean(getNPCContext(token, link));
             const character = link.character;
+            const rawHP = token.get('bar1_value');
             return {
                 id: `${now()}-${token.id}`,
                 tokenId: token.id,
                 characterId: character.id,
                 name: token.get('name') || character.get('name') || '(Unnamed)',
-                hp: token.get('bar1_value') || null,
+                hp: rawHP === '' || rawHP == null ? null : rawHP,
                 marker: token.get('statusmarkers') || null,
                 time: localNow(),
                 timestamp: isoNow(),
@@ -3261,16 +3279,16 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 {
                     label: 'Commands',
                     value: [
-                        '!npc-arc --name "Paladin Atonement" = add selected linked PC/NPC tokens',
-                        '!npc-arc --name "Paladin Atonement" --session = append current session deaths',
-                        '!npc-arc --name "Paladin Atonement" --note "text" = add a short note to selected tokens'
+                        '!npc-death-arc --name "Paladin Atonement" = add selected linked PC/NPC tokens',
+                        '!npc-death-arc --name "Paladin Atonement" --session = append current session deaths',
+                        '!npc-death-arc --name "Paladin Atonement" --note "text" = add a short note to selected tokens'
                     ]
                 },
                 {
                     label: 'Buttons',
                     value: [
-                        GameAssist.createButton('Add Selected To Arc', '!npc-arc --name "?{Arc bucket name|Paladin Atonement}"'),
-                        GameAssist.createButton('Append Session To Arc', '!npc-arc --name "?{Arc bucket name|Paladin Atonement}" --session')
+                        GameAssist.createButton('Add Selected To Arc', '!npc-death-arc --name "?{Arc bucket name|Paladin Atonement}"'),
+                        GameAssist.createButton('Append Session To Arc', '!npc-death-arc --name "?{Arc bucket name|Paladin Atonement}" --session')
                     ]
                 },
                 {
@@ -3415,12 +3433,12 @@ description, syntax/commands, and configuration pointers near the top of the scr
             showDeathBucketsPanel(changed ? 'Bucket names updated and active bucket handouts refreshed.' : null);
         }, 'NPCManager', { gmOnly: true });
 
-        GameAssist.onCommand('!npc-arc', msg => {
+        GameAssist.onCommand('!npc-death-arc', msg => {
             const { args } = _parseArgs(msg.content);
             backfillBucketsFromLegacyLog();
 
             if (args.help || args.list || !args.name || args.name === true) {
-                showArcPanel(args.name === true ? 'Add an arc name, for example: !npc-arc --name "Paladin Atonement".' : null);
+                showArcPanel(args.name === true ? 'Add an arc name, for example: !npc-death-arc --name "Paladin Atonement".' : null);
                 return;
             }
 
@@ -3541,7 +3559,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     }, {
         enabled: true,
         events: ['change:graphic:bar1_value'],
-        prefixes: ['!npc-death-help', '!npc-death-report', '!npc-death-clear', '!npc-death-audit', '!npc-death-buckets', '!npc-arc'],
+        prefixes: ['!npc-death-help', '!npc-death-report', '!npc-death-clear', '!npc-death-audit', '!npc-death-buckets', '!npc-death-arc'],
         dependsOn: ['TokenMod'],
         teardown: () => {
             const branch = GameAssist.getState('NPCManager');
@@ -3578,6 +3596,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Changed (v0.1.4.5): NPCManager module_version advanced to 1.0.0 because the module state model and user workflow changed from a single death log to scoped bucket and handout management.
     // Changed (v0.1.4.5): Added !npc-death-help as the GM-facing start-here menu for bucket naming, reports, audits, and arc handouts.
     // Changed (v0.1.4.5): NPC death history now records into active Campaign/Chapter/Section/Session buckets independently of marker-write success, updates one handout per bucket, annotates revivals on matching entries, moves audit details into a handout, and adds manual arc buckets for selected linked PC/NPC tokens or current-session deaths.
+    // Changed (v0.1.4.5): Renamed the arc command to !npc-death-arc and hardened migration, same-name token matching, scoped-clear duplicate prevention, zero-HP capture, and death-only revival annotations in arc handouts.
     // Changed (v0.1.4.4): NPC death-audit now sends a grouped GM report, states that PCs are excluded, categorizes marker mismatches by action, and caps detailed rows to keep Roll20 chat output usable.
     // Changed (v0.1.4.3): NPCManager now resolves configured death markers before TokenMod add/remove/teardown requests, matching shared read-side marker identity behavior.
     // Changed (v0.1.4.1): Use exact shared marker matching, POLICY-owned cache limits, and shared time seams.

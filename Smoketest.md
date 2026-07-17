@@ -974,11 +974,17 @@ Optional arc check:
 
 ```roll20chat
 !npc-death-help
-!npc-arc
-!npc-arc --name "Smoke Test Arc" --session
+!npc-death-arc
+!npc-death-arc --name "Smoke Test Arc" --session
 ```
 
-Expected: `!npc-arc` explains the arc command. The session import creates or updates `GameAssist Arc - Smoke Test Arc`; if the Session bucket is empty, GameAssist says no new entries were added.
+Expected: `!npc-death-arc` explains the arc command. The session import creates or updates `GameAssist Arc - Smoke Test Arc`; if the Session bucket is empty, GameAssist says no new entries were added.
+
+When troubleshooting duplicate or incorrect history, also check these edge cases:
+
+- Two different NPC tokens with the same displayed name should create separate death records.
+- Clearing only the Session bucket while an NPC remains dead should not add another Campaign, Chapter, or Section death when that token's HP changes from one below-zero value to another.
+- A healthy selected token added with `!npc-death-arc --name "Smoke Test Arc" --note "Story note"` should keep that ordinary note unchanged after another positive-HP edit. Only death entries imported with `--session` receive revival annotations.
 
 ### G6. Auto-Hide Warning
 
