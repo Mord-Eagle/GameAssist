@@ -264,23 +264,27 @@ If you use NPCManager, run:
 !npc-death-help
 !npc-death-report
 !npc-death-buckets
+!NPC-WR
 !npc-death-audit
 ```
 
-### Understanding the Two Commands
+### Understanding the Menus
 
 | Command | What It Does | What It Does Not Do |
 | --- | --- | --- |
-| `!npc-death-help` | Shows the NPCManager start-here menu, quick buttons, active buckets, and handout naming pattern. | It does not run an audit or change any saved bucket names. |
+| `!npc-death-help` | Opens the central NPCManager guide, also available through `!npc-death-report --help`. | It does not run an audit or change saved history. |
 | `!npc-death-report` | Shows the active Session death bucket, with buttons for recent/detail views. | It does not summarize the current page or check whether markers match HP. |
 | `!npc-death-buckets` | Shows the active Campaign, Chapter, Section, and Session bucket names and counts. | It does not erase existing bucket handouts when names change. |
+| `!NPC-WR` | Opens the report writer so the DM can review names and counts before updating handouts. | Opening the menu does not write or add a death. |
 | `!npc-death-audit` | Looks for contradictions between current bar 1 HP and the configured death marker, then updates the audit handout. | It does not check player characters or list every NPC that is already correct in chat. |
 
-Expected: `!npc-death-help` returns one `NPCManager Help` panel. It should show module version `NPCManager 1.0.0`, start-here steps, quick buttons, active bucket names, common commands, and handout naming notes.
+Expected: `!npc-death-help` returns one `NPCManager Guide: Death Reports` panel. It should explain the four levels in plain language and provide buttons for reports, writing, clearing, Arcs, and the current-page audit.
 
 Expected: `!npc-death-report` returns one `NPC Death Report` panel. A clean/new Session bucket says no NPC deaths are recorded. A bucket with recorded deaths shows the bucket name, total recorded deaths, the latest death, most frequent names, recent entries, action buttons, and the matching handout name.
 
 Expected: `!npc-death-buckets` returns one `NPC Death Buckets` panel showing Campaign, Chapter, Section, and Session. The default Session name is the current date unless you already changed it.
+
+Expected: `!NPC-WR` returns one `NPC Report Writer` panel. It should show all four active names and counts before offering write or adjustment buttons.
 
 Expected: a single `NPC Death Audit` chat summary. The `Scope` row should say that linked NPCs are checked and player characters are not included. The `Detail Handout` row should point to `GameAssist NPC Death Audit`.
 
@@ -921,10 +925,11 @@ Optional detail checks:
 !npc-death-report --scope section
 !npc-death-report --scope session
 !npc-death-report --write
+!NPC-WR
 !npc-death-report --help
 ```
 
-Expected: recent/detail views remain bounded and readable. Each scope command identifies the requested Campaign, Chapter, Section, or Session bucket and its matching handout. `--write` refreshes all four active bucket handouts.
+Expected: recent/detail views remain bounded and readable. Each scope command identifies the requested Campaign, Chapter, Section, or Session bucket and its matching handout. Both `--write` and `!NPC-WR` open the report writer without changing counts or immediately rewriting handouts. `--help` opens the central NPCManager guide.
 
 ### G4. Death Audit
 
@@ -957,25 +962,22 @@ TokenMod is not needed for the audit to read existing HP and markers. If a delib
 
 ### G5. Campaign, Chapter, Section, and Session Buckets
 
-Open every NPCManager menu used by the bucket workflow:
-
-Run:
+Open the four main NPCManager menus:
 
 ```roll20chat
 !npc-death-help
 !npc-death-buckets
 !npc-death-report --help
+!NPC-WR
 !npc-death-arc
 ```
 
 Expected:
 
-- `!npc-death-help` opens the NPCManager start-here menu.
+- `!npc-death-help` and `!npc-death-report --help` open the same central guide.
 - `!npc-death-buckets` shows Campaign, Chapter, Section, and Session bucket names and counts.
-- `!npc-death-report --help` explains report scopes and links back to NPCManager help.
+- `!NPC-WR` opens the report writer with all four active names and counts.
 - `!npc-death-arc` opens the independent story-arc menu.
-
-Give all four active buckets disposable test names:
 
 If these names were used in an earlier pass, add a fresh suffix so retained test history does not affect the expected counts.
 
@@ -996,7 +998,7 @@ Set one qualifying linked NPC from positive HP to `0`, then run:
 !npc-death-report --scope chapter
 !npc-death-report --scope section
 !npc-death-report --scope session
-!npc-death-report --write
+!npc-death-write --all
 ```
 
 Expected:
@@ -1004,19 +1006,53 @@ Expected:
 - all four reports show the same newly recorded death;
 - each report names the correct scope and disposable bucket name;
 - the four matching `GameAssist Deaths - <Scope> - <Name>` handouts exist;
-- `--write` refreshes those handouts without adding another death.
+- `!npc-death-write --all` refreshes those handouts without adding another death.
 
-Before clearing the test buckets, check the independent arc import:
+#### G5a. Start a New Section from the Current Session
+
+Run:
+
+```roll20chat
+!npc-death-write --newSection "Smoke Section Two"
+!npc-death-report --scope section
+!npc-death-report --scope session
+```
+
+Expected: the active Section becomes `Smoke Section Two`. Its handout contains the current Session death once, the Session remains unchanged, and Campaign/Chapter are not rewritten by this action. Running the same `--newSection` command again must not duplicate that death.
+
+#### G5b. Arc Deduplication and Recovery
+
+With the dead test NPC selected, run:
 
 ```roll20chat
 !npc-death-arc
+!npc-death-arc --name "Smoke Test Arc"
 !npc-death-arc --name "Smoke Test Arc" --session
-!npc-death-arc --name "Smoke Test Arc" --session
+!npc-death-arc --name "Smoke Test Arc" --manage
 ```
 
-Expected: the session import creates or updates `GameAssist Arc - Smoke Test Arc` with the current Session death. A second identical import should report that no new entries were added.
+Expected: the selected NPC appears once. Importing the whole Session does not create a second copy; it updates the existing Arc entry with death-history details. The management menu shows one entry with a Remove button.
 
-Now test each scoped clear in hierarchy order. First clear only Session:
+Test the deliberate override, then undo it:
+
+```roll20chat
+!npc-death-arc --name "Smoke Test Arc" --session --allowDuplicates
+!npc-death-arc --name "Smoke Test Arc" --undo
+```
+
+Expected: the first command deliberately adds another entry. Undo removes that last addition and returns the Arc to one entry.
+
+With that NPC still selected, test selected removal:
+
+```roll20chat
+!npc-death-arc --name "Smoke Test Arc" --removeSelected
+```
+
+Expected: the matching Arc entry is removed. Campaign, Chapter, Section, and Session history remains unchanged. To test a single accidental row later, use its `Remove` button in `--manage`; that button affects only the Arc.
+
+#### G5c. Selected-Only and Nested Clearing
+
+First confirm that selected-only clearing preserves every other level:
 
 ```roll20chat
 !npc-death-clear --scope session
@@ -1031,38 +1067,44 @@ Expected: Session is empty; Campaign, Chapter, and Section still contain the dea
 
 While that NPC remains dead, change its HP from `0` to `-1` and run the same four reports again. Session should remain empty and the broader totals should remain unchanged; no duplicate death should be created.
 
-Clear Section next:
+Now revive the test NPC by setting HP above `0`, then set it back to `0`. This creates a fresh death in all four active levels. Test the nested Section clear:
 
 ```roll20chat
 !npc-death-clear --scope section
-!npc-death-clear --scope section --confirm
+!npc-death-clear --scope section --nested --confirm
 !npc-death-report --scope section
+!npc-death-report --scope session
 !npc-death-report --scope chapter
 !npc-death-report --scope campaign
 ```
 
-Expected: Section is empty; Chapter and Campaign retain the death.
+Expected: the confirmation menu offered both `Clear Only Section` and `Clear Section And Below`. The nested command clears Section and Session. Chapter and Campaign retain their history.
 
-Clear Chapter next:
-
-```roll20chat
-!npc-death-clear --scope chapter
-!npc-death-clear --scope chapter --confirm
-!npc-death-report --scope chapter
-!npc-death-report --scope campaign
-```
-
-Expected: Chapter is empty; Campaign retains the death.
-
-Clear Campaign last:
+To inspect the complete rule without clearing more test data, open each confirmation menu:
 
 ```roll20chat
 !npc-death-clear --scope campaign
-!npc-death-clear --scope campaign --confirm
-!npc-death-report --scope campaign
+!npc-death-clear --scope chapter
+!npc-death-clear --scope section
+!npc-death-clear --scope session
 ```
 
-Expected: Campaign is now empty. Each confirmation cleared only the requested active bucket.
+Expected hierarchy:
+
+| Selected Level | `Clear Only` | `Clear And Below` |
+| --- | --- | --- |
+| Campaign | Campaign | Campaign, Chapter, Section, Session |
+| Chapter | Chapter | Chapter, Section, Session |
+| Section | Section | Section, Session |
+| Session | Session | Not shown; Session has no child level |
+
+The nested action always retains parent levels above the selected level.
+
+#### G5d. Date-Managed Session
+
+The default Session uses the sandbox's UTC date in `YYYY-MM-DD` form. When that UTC date changes, the next NPCManager command or qualifying NPC HP change must switch to the new date-named Session before recording or reporting activity. Existing dated Session history and its handout remain available.
+
+This boundary is easiest to confirm during a test that crosses midnight UTC. v0.1.4.5 does not yet offer a fake-clock command. A DM-selected timezone is tracked separately in GitHub Issue #35.
 
 When troubleshooting duplicate or incorrect history, also check these edge cases:
 
