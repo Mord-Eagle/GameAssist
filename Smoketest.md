@@ -4,7 +4,7 @@ Use this checklist after installing or updating GameAssist to confirm the Roll20
 
 The first section is a quick confidence pass for DMs. It prioritizes easy wins without promising a specific completion time. The second section contains deeper tests for troubleshooting individual modules.
 
-> **Current target:** GameAssist v0.1.4.4
+> **Current target:** GameAssist v0.1.4.5
 
 Roll20 usually calls the person running the game the **GM**. This guide uses GM and DM interchangeably.
 
@@ -47,7 +47,7 @@ For example:
 
 After installing or updating GameAssist, save the script and wait for Roll20's API sandbox to restart before running the checks below. Use a test page or disposable tokens whenever possible. Install TokenMod if you use NPCManager or ConcentrationTracker.
 
-The core-ready whisper should report GameAssist v0.1.4.4. You may not see one ready message for every module because module-specific startup messages are normally kept quiet.
+The core-ready whisper should report GameAssist v0.1.4.5. You may not see one ready message for every module because module-specific startup messages are normally kept quiet.
 
 Stop and troubleshoot before continuing if the sandbox repeatedly restarts, the API Console shows a new GameAssist `SyntaxError` or `ReferenceError`, or no GameAssist command responds.
 
@@ -68,7 +68,7 @@ Run:
 Your numbers and timestamp will vary. A healthy default response commonly has this shape:
 
 ```text
-(From GameAssist): ℹ️ [3:12:19 AM] [Status] GameAssist 0.1.4.4 Status
+(From GameAssist): ℹ️ [3:12:19 AM] [Status] GameAssist 0.1.4.5 Status
 Commands: 1
 Messages: 10
 Errors: 0
@@ -85,7 +85,7 @@ Dependency Warnings: NPCManager: unverifiable (TokenMod) | ConcentrationTracker:
 
 | Line | What It Means | Healthy Result |
 | --- | --- | --- |
-| `GameAssist 0.1.4.4 Status` | Confirms the running GameAssist version. | Shows the version you installed. |
+| `GameAssist 0.1.4.5 Status` | Confirms the running GameAssist version. | Shows the version you installed. |
 | `Commands` | Commands recorded through GameAssist's core command handler during this sandbox session. Running `!ga-status` counts as one. | Any reasonable number; it increases as commands are used. |
 | `Messages` | Roll20 events handled by running GameAssist modules during this sandbox session. | Any reasonable number; it varies with sandbox activity. |
 | `Errors` | Problems GameAssist recorded during this sandbox session. | Normally `0`. Investigate any nonzero value. |
@@ -269,8 +269,10 @@ If you use NPCManager, run:
 
 | Command | What It Does | What It Does Not Do |
 | --- | --- | --- |
-| `!npc-death-report` | Shows the recorded history of NPC death events. | It does not summarize the current page or check whether markers match HP. |
+| `!npc-death-report` | Shows a recorded death-history summary, with buttons for recent/detail views. | It does not summarize the current page or check whether markers match HP. |
 | `!npc-death-audit` | Looks for contradictions between current bar 1 HP and the configured death marker. | It does not check player characters or list every NPC that is already correct. |
+
+Expected: `!npc-death-report` returns one `NPC Death Report` panel. A clean/new session says no NPC deaths are recorded. A session with recorded deaths shows total recorded deaths, the latest death, most frequent names, recent entries, and buttons such as `Recent`, `Run Audit`, and `Clear Log`.
 
 Expected: a single `NPC Death Audit` report. The `Scope` row should say that linked NPCs are checked and player characters are not included.
 
@@ -278,7 +280,7 @@ A clean audit says no death-marker problems were found for linked NPCs. A mismat
 
 TokenMod is used when NPCManager changes a marker. The audit itself reads existing token HP and markers directly, so an empty audit is not normally caused by TokenMod.
 
-The death report lists recorded events individually and may be long in an established campaign.
+The death report no longer dumps the entire log by default. Use `!npc-death-report --recent` or `!npc-death-report --page 2` when you need details.
 
 ---
 
@@ -411,7 +413,7 @@ Compare the result to the annotated healthy output in Part One.
 
 Check:
 
-- [ ] Version is `0.1.4.4`.
+- [ ] Version is `0.1.4.5`.
 - [ ] Errors are zero for a clean sandbox session, or every recorded error is understood.
 - [ ] Queue length returns to zero while idle.
 - [ ] Six modules are counted.
@@ -419,7 +421,7 @@ Check:
 - [ ] Any dependency warning is interpreted as `unverifiable` or `missing`, rather than treated as a generic failure.
 - [ ] Variable values such as Commands, Messages, Last Update, and Active Listeners are not being compared as exact fixed numbers.
 
-`Avg Task Duration: N/Ams` is currently expected when no queued task duration has been recorded. It is a v0.1.4.4 display quirk, not an error.
+`Avg Task Duration: N/Ams` is currently expected when no queued task duration has been recorded. It is a v0.1.4.5 display quirk, not an error.
 
 Remember that Roll20 restarts the API sandbox often. `Errors` describes problems recorded in the current sandbox session, not the lifetime of the campaign or installation.
 
@@ -546,11 +548,11 @@ Check:
 - [ ] `format` is `gameassist-config-snapshot`.
 - [ ] `schemaVersion` is `1`.
 - [ ] `scope` is `configuration-only`.
-- [ ] `version` is `0.1.4.4`.
+- [ ] `version` is `0.1.4.5`.
 - [ ] All six module configuration objects are present.
 - [ ] Runtime caches and metrics are not included.
 
-> This handout is a configuration snapshot, not a full-state backup, and v0.1.4.4 cannot import it.
+> This handout is a configuration snapshot, not a full-state backup, and v0.1.4.5 cannot import it.
 
 ### B5. Config UI Controls
 
@@ -898,9 +900,17 @@ Run:
 !npc-death-report
 ```
 
-Expected: The report lists every recorded death event or reports that none exist.
+Expected in v0.1.4.5: The report opens as a summary dashboard. It should show a total, latest death, most frequent names, recent entries, and action buttons. It should not dump every historical entry by default.
 
-This is an event-history command, not a current-page summary. In v0.1.4.4 it may produce a long message when many deaths have been recorded.
+Optional detail checks:
+
+```roll20chat
+!npc-death-report --recent
+!npc-death-report --page 1
+!npc-death-report --help
+```
+
+Expected: recent/detail views remain bounded and readable.
 
 ### G4. Death Audit
 
@@ -937,12 +947,14 @@ Run:
 
 ```roll20chat
 !npc-death-clear
+!npc-death-clear --confirm
 !npc-death-report
 ```
 
 Expected:
 
-- GameAssist reports how many entries were cleared.
+- `!npc-death-clear` asks for confirmation before clearing.
+- Run `!npc-death-clear --confirm` to clear the log.
 - The next report says no deaths are recorded.
 
 ### G6. Auto-Hide Warning

@@ -10,6 +10,8 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 | Revision | Status | Role |
 | --- | --- | --- |
+| **v0.1.4.5** | Pre-release; automated verification complete, Roll20 smoke confirmation pending | NPC death-log summary and navigation update |
+| **v0.1.4.4** | Merged release | DM-facing CritFumble help and NPC death-audit readability update |
 | **v0.1.4.2** | Release candidate; automated verification complete, Roll20 smoke confirmation pending | Diagnostic and migration-readiness release |
 | **v0.1.4.1** | Preserved rollback baseline | Stability-first repair of the uploaded v0.1.4 baseline |
 | **v0.1.4** | Uploaded stable-but-limping baseline | Source used to build v0.1.4.1 |
@@ -1054,7 +1056,8 @@ The following corrections supersede inaccurate or temporary wording in the prese
 
 | Revision | Status | Repository role |
 | --- | --- | --- |
-| **v0.1.4.4** | Pre-release | DM-facing CritFumble help and NPC death-audit readability update |
+| **v0.1.4.5** | Pre-release; automated verification complete, Roll20 smoke confirmation pending | NPC death-log summary and navigation update |
+| **v0.1.4.4** | Previous complete script | DM-facing CritFumble help and NPC death-audit readability update |
 | **v0.1.4.3** | Previous complete script | Concentration custom-marker recognition and standalone TokenMod interoperability update |
 | **v0.1.4.2** | Previous complete script | Diagnostic and migration-readiness release with a known concentration custom-marker limitation |
 | **v0.1.4.1** | Historical release; script not retained | Stability-focused repair based on v0.1.4 |
@@ -1252,5 +1255,87 @@ The v0.1.4.3 artifact remains preserved. The current repository script and the n
 | `GameAssist-v0.1.4.4` syntax via stdin check | Passed |
 | `GameAssist` versus `GameAssist-v0.1.4.4` byte identity | Passed |
 | `git diff --check` | Passed |
+
+Roll20 API sandbox confirmation is still required for the final release gate.
+
+---
+
+## [0.1.4.5] – 2026-07-17
+
+### Release definition
+
+v0.1.4.5 is a narrow NPCManager usability release for Issue #22. It keeps the existing single NPC death log and does not introduce named pools yet. The goal is to make the current death-history workflow easy to scan during play before designing the larger scene/session/campaign pool system.
+
+### Issue addressed
+
+- [#22](https://github.com/Mord-Eagle/GameAssist/issues/22) — Add summarized and named NPC death-log pools.
+
+### Changed — NPC death-history report
+
+- Changed `!npc-death-report` from a line-by-line log dump into a summary-first GM panel.
+- The default report now shows:
+  - total recorded NPC death events;
+  - the latest recorded death;
+  - the most frequent NPC names in the log;
+  - the most recent entries;
+  - buttons for common next steps.
+- Added bounded detail views:
+  - `!npc-death-report --recent`
+  - `!npc-death-report --page N`
+  - `!npc-death-report --help`
+- Detail pages show newest entries first and use POLICY-owned limits so a long campaign log does not create an oversized Roll20 chat message.
+- Preserved the existing single `deathLog` state shape; no migration is required and no existing death history is deleted.
+- Preserved `!npc-death-audit` as the current-page HP/marker mismatch checker. The death report remains recorded history, not a current-page inventory.
+
+### Changed — safer log clearing
+
+- Changed `!npc-death-clear` so it now asks for confirmation before deleting recorded death history.
+- Added `!npc-death-clear --confirm` as the explicit destructive action.
+- Empty-log clears now return a small panel explaining that there is nothing to clear instead of pretending a destructive action happened.
+
+### UX rationale
+
+- The default command now answers the question a DM is most likely asking first: “What has died so far?” without forcing them to read every event.
+- Recent/detail views remain available when the GM wants the actual history.
+- Clear confirmation prevents accidental loss of session/campaign notes while keeping the workflow simple.
+- Named scene/session/campaign pools remain deferred because they need a separate state design, migration plan, and chat menu model.
+
+### Documentation
+
+- Updated `README.md` with the new summary, recent, page, help, and clear-confirm commands.
+- Updated `Smoketest.md` so the quick and in-depth NPCManager tests expect a summary dashboard instead of a full log dump.
+- Updated `ROADMAP.md` to mark the concise summary path complete and leave named pools for later design.
+- Updated `script.json` to version `0.1.4.5`, add `0.1.4.4` to `previousversions`, and list the new death-report command variants.
+
+### MECHSUITS records
+
+- Updated `[GAMEASSIST:POLICY]` because the death-report summary/detail caps are runtime behavior knobs.
+- Updated `[GAMEASSIST:CORE]` because the runtime `VERSION` constant advanced.
+- Updated `[GAMEASSIST:MODULES:NPCMANAGER]` because the public death-report and clear-log behavior changed.
+- Preserved existing section tags, codename `GAMEASSIST`, and command names.
+
+### Release artifacts
+
+The v0.1.4.4 artifact remains preserved. The current repository script and the new v0.1.4.5 versioned artifact share:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `GameAssist` | `9432F26022EBDC9B0AFC4C6D9EE1F94DF182882DF6EE9595B0EA57C7B1278DFF` |
+| `GameAssist-v0.1.4.5` | `9432F26022EBDC9B0AFC4C6D9EE1F94DF182882DF6EE9595B0EA57C7B1278DFF` |
+
+Local Roll20 test copy:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `outputs/GameAssist-v0.1.4.5-pr34-test.js` | `4404294A2203CB37FDD740AA9C43D00B704696AE474ACBEFCDD2074670440961` |
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| `node --check .\GameAssist` | Passed |
+| `script.json` JSON parse | Passed |
+| `GameAssist` versus `GameAssist-v0.1.4.5` byte identity | Passed |
+| `git diff --cached --check` | Passed |
 
 Roll20 API sandbox confirmation is still required for the final release gate.

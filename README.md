@@ -1,9 +1,9 @@
 # GameAssist – Modular API Framework for Roll20
 
-**Version 0.1.4.4** | © 2025 Mord Eagle · MIT License<br>
+**Version 0.1.4.5** | © 2025 Mord Eagle · MIT License<br>
 **Lead Dev:** [@Mord-Eagle](https://github.com/Mord-Eagle)
 
-> **Release posture:** v0.1.4.4 preserves the v0.1.4.3 marker-recognition fixes while improving CritFumble help and NPC death-audit wording for DMs. Use `Smoketest.md` to validate an installation before a live session.
+> **Release posture:** v0.1.4.5 preserves the v0.1.4.4 readability work while making NPC death-history reports easier to scan, navigate, and clear safely. Use `Smoketest.md` to validate an installation before a live session.
 
 ---
 
@@ -18,7 +18,7 @@ GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a
 | Category | Highlights |
 | --- | --- |
 | Core Lift | Guarded modules, conservative state repair, explicit queue API, session metrics, dependency diagnostics, and GM health reporting. |
-| 30-Second Install | ① Paste **GameAssist-v0.1.4.4** ② Install **TokenMod** for marker modules ③ Add the seven CritFumble roll-tables ④ Save/reload ⑤ Run `!ga-status`. |
+| 30-Second Install | ① Paste **GameAssist-v0.1.4.5** ② Install **TokenMod** for marker modules ③ Add the seven CritFumble roll-tables ④ Save/reload ⑤ Run `!ga-status`. |
 | Flagship Player Commands | `!concentration`, `!cc`, `!critfumble-<type>`. |
 | Flagship GM Commands | `!critfumble`, `!critfumble help`, `!critfumble menu`, `!critfail`, `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report`, `!npc-death-audit`, `!ga-conc-status`, `!ga-config ui`. |
 | Admin Controls | `!ga-config list|get|set|modules|cleanup|ui`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-metrics`, and `!ga-debug`. |
@@ -70,7 +70,7 @@ GameAssist’s kernel and bundled modules expose:
 ## 4 · Quick Start <a id="4-quick-start"></a>
 
 ```text
-📥 1  Copy GameAssist-v0.1.4.4 → Roll20 Mod/API Scripts → Save
+📥 1  Copy GameAssist-v0.1.4.5 → Roll20 Mod/API Scripts → Save
 🛠 2  Install TokenMod if using NPCManager or ConcentrationTracker markers
 📜 3  Create 7 CritFumble roll-tables (see §11: Roll-Table Cookbook)
 🔄 4  Save/reload the sandbox and wait for the core ready whisper
@@ -194,14 +194,14 @@ Module configuration belongs under `state.GameAssist.<Module>.config`. Runtime c
   "schemaVersion": 1,
   "scope": "configuration-only",
   "generatedAt": "<ISO timestamp>",
-  "version": "0.1.4.4",
+  "version": "0.1.4.5",
   "flags": {},
   "globalConfig": {},
   "modules": {}
 }
 ```
 
-The snapshot excludes runtime caches and metrics. v0.1.4.4 does not import or restore snapshots.
+The snapshot excludes runtime caches and metrics. v0.1.4.5 does not import or restore snapshots.
 
 ---
 
@@ -266,11 +266,15 @@ NPCManager watches `change:graphic:bar1_value` for linked NPC characters with `n
 
 Commands:
 
-* `!npc-death-report` → Show recorded NPC death events.
-* `!npc-death-clear` → Clear the recorded death-event log.
+* `!npc-death-report` → Show a summary dashboard for recorded NPC death events.
+* `!npc-death-report --recent` → Show the newest recorded death events.
+* `!npc-death-report --page N` → Page through older recorded death events.
+* `!npc-death-report --help` → Explain the death-report commands.
+* `!npc-death-clear` → Ask for confirmation before clearing the recorded death-event log.
+* `!npc-death-clear --confirm` → Clear the recorded death-event log.
 * `!npc-death-audit` → Check the current player page for HP/death-marker mismatches.
 
-`!npc-death-report` is a history report; `!npc-death-audit` is the mismatch checker. The audit checks linked NPC tokens on the current player page; player characters are not included. A clean audit means linked NPC tokens have death markers that match their HP. Mismatches are grouped by action: add the configured marker or clear the configured marker. Large mismatch groups show the full count but only the first few detailed rows, so the Roll20 chat report stays readable. The audit may also note ignored unlinked page items such as party markers, scenery, labels, or props.
+`!npc-death-report` is a history report; it now opens with totals, the latest death, most frequent names, recent entries, and buttons for common next steps. `!npc-death-audit` is the mismatch checker. The audit checks linked NPC tokens on the current player page; player characters are not included. A clean audit means linked NPC tokens have death markers that match their HP. Mismatches are grouped by action: add the configured marker or clear the configured marker. Large mismatch groups show the full count but only the first few detailed rows, so the Roll20 chat report stays readable. The audit may also note ignored unlinked page items such as party markers, scenery, labels, or props.
 
 Config keys: `autoTrackDeath`, `deadMarker`, `autoHide`, `hideLayer`.
 
@@ -332,7 +336,7 @@ I. **Open the Roll20 Mod/API Editor**
 
 II. **Install GameAssist**
 
-1. Paste the complete contents of `GameAssist-v0.1.4.4`.
+1. Paste the complete contents of `GameAssist-v0.1.4.5`.
 2. Keep the script as one complete file; do not paste only individual MECHSUITS sections into Roll20.
 3. Save the script.
 
@@ -392,8 +396,8 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!ga-enable <Module>` / `!ga-disable <Module>` | — | Enable or disable a module. |
 | **GM** | `!npc-hp-all` | — | Roll and set HP for qualifying NPC tokens on the current page. |
 |  | `!npc-hp-selected` | — | Roll and set HP for qualifying selected NPC tokens. |
-|  | `!npc-death-report` | — | Show recorded NPC death events. |
-|  | `!npc-death-clear` | — | Clear the recorded death-event log. |
+|  | `!npc-death-report` | `[--recent] [--page N] [--help]` | Show summarized or paged recorded NPC death events. |
+|  | `!npc-death-clear` | `[--confirm]` | Ask before clearing the recorded death-event log; `--confirm` performs the clear. |
 |  | `!npc-death-audit` | — | Report current HP/death-marker mismatches. |
 |  | `!ga-conc-status` | — | Show recent concentration DC/damage data per player. |
 | **Player / GM** | `!critfumble` / `!critfumble help` | — | Whisper the CritFumble quick reference. |
@@ -655,7 +659,9 @@ Leave DebugTools disabled until needed.
 ```roll20chat
 !npc-death-report
 !npc-death-audit
+!npc-death-report --recent
 !npc-death-clear
+!npc-death-clear --confirm
 ```
 
 ### 12.6 NPC HP Setup
@@ -679,7 +685,7 @@ The first run is a dry run. Add `--apply` only after checking the preview.
 
 ## 13 · Performance Benchmarks <a id="13-performance-benchmarks"></a>
 
-> **Historical reference only:** The following numbers were recorded for an earlier v0.1.3-era build and have **not** been revalidated for v0.1.4.4. Roll20 sandbox load, campaign size, browser state, network conditions, token formulas, and other Mods can materially change results. Do not treat this table as a current performance guarantee.
+> **Historical reference only:** The following numbers were recorded for an earlier v0.1.3-era build and have **not** been revalidated for v0.1.4.5. Roll20 sandbox load, campaign size, browser state, network conditions, token formulas, and other Mods can materially change results. Do not treat this table as a current performance guarantee.
 
 | Environment Item | Historical Test Environment |
 | --- | --- |
@@ -696,7 +702,7 @@ The first run is a dry run. Add `--apply` only after checking the preview.
 | Fresh sandbox | 10 | 355 ms | 350 ms | 18 ms | 330–387 ms |
 | **Combined** | **34** | **298 ms** | **300 ms** | **39 ms** | **253–387 ms** |
 
-### 13.1 Repeatable Benchmarking for v0.1.4.4
+### 13.1 Repeatable Benchmarking for v0.1.4.5
 
 1. Duplicate the campaign or use a test game.
 2. Record token count, active Mods, formulas, and sandbox channel.
@@ -767,7 +773,7 @@ Unknown branches are not deleted automatically. Review the warning, then explici
 
 ### 14.6 `!ga-config list` Is Not a Full Backup
 
-The `GameAssist Config` handout contains flags, global config, and module config only. It excludes runtime caches, metrics, and unknown state branches. v0.1.4.4 cannot import the snapshot.
+The `GameAssist Config` handout contains flags, global config, and module config only. It excludes runtime caches, metrics, and unknown state branches. v0.1.4.5 cannot import the snapshot.
 
 Use it for configuration review and upgrade comparison—not as a full restore mechanism.
 
@@ -811,7 +817,7 @@ Confirm the token:
 * uses `bar1_value` for HP,
 * and has a valid configured marker.
 
-`!npc-death-report` shows recorded deaths; it does not audit the page.
+`!npc-death-report` shows recorded death history in summary/detail views; it does not audit the page.
 
 ### 14.9 Concentration Marker Does Not Clear
 
@@ -880,7 +886,7 @@ That evidence is far more useful than “it stopped working.”
 
 ## 15 · Upgrade Paths <a id="15-upgrade-paths"></a>
 
-### 15.1 Recommended Upgrade: v0.1.4.3 → v0.1.4.4
+### 15.1 Recommended Upgrade: v0.1.4.4 → v0.1.4.5
 
 I. **Freeze the Current Working Script**
 
@@ -892,7 +898,7 @@ I. **Freeze the Current Working Script**
 
 II. **Replace the Script**
 
-1. Replace the Roll20 script contents with the complete `GameAssist-v0.1.4.4`.
+1. Replace the Roll20 script contents with the complete `GameAssist-v0.1.4.5`.
 2. Save/reload the API sandbox.
 3. Do not combine partial sections from multiple releases unless you are deliberately performing a MECHSUITS whole-section update and have reviewed the ancestor contracts.
 
@@ -917,7 +923,7 @@ IV. **Verify Configuration**
 !ga-config get DebugTools
 ```
 
-v0.1.4.4 retains the known-container repairs from v0.1.4.2 and the marker-recognition fixes from v0.1.4.3 while preserving valid existing config.
+v0.1.4.5 retains the known-container repairs from v0.1.4.2, the marker-recognition fixes from v0.1.4.3, and the DM-facing readability work from v0.1.4.4 while preserving valid existing config.
 
 V. **Run the Smoke Test**
 
@@ -925,7 +931,7 @@ Use [§4.1 Minimum Smoke Test](#41-minimum-smoke-test), including real HP, conce
 
 ### 15.2 Rollback
 
-If v0.1.4.4 fails its smoke test:
+If v0.1.4.5 fails its smoke test:
 
 1. Replace it with your complete previous working script.
 2. Save/reload.
@@ -1011,7 +1017,7 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 
 ### 17.1 Current Status
 
-| Item | Status in v0.1.4.4 | Notes |
+| Item | Status in v0.1.4.5 | Notes |
 | --- | --- | --- |
 | Auto HP roll on NPC token add | **Implemented, opt-in** | `NPCHPRoller.autoRollOnAdd`, default `false`. |
 | Session metrics and logging | **Implemented, basic** | `!ga-status` and `!ga-metrics`; not a full profiler. |
@@ -1030,7 +1036,7 @@ After the GameAssist architecture foundation is confirmed stable in Roll20, the 
 * defines clear NPC, HP-formula, save-bonus, and roll-template contracts,
 * avoids requiring another broad GameAssist kernel rewrite.
 
-This is a separate project and is not implemented in v0.1.4.4.
+This is a separate project and is not implemented in v0.1.4.5.
 
 ### 17.3 Deferred GameAssist Features
 
