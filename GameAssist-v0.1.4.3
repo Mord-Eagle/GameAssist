@@ -2004,9 +2004,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: CritFumble module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CRITFUMBLE", title: "CritFumble",
-    //   guarantees: ["Readable help output; natural‑1 detection bugfix retained"],
+    //   guarantees: ["Behavior unchanged; natural‑1 detection bugfix retained"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]"],
-    //   last_updated_version: "v0.1.4.3",
+    //   last_updated_version: "v0.1.4",
     //   independent_versions: { module_version: "0.2.4.9" } }
     // -------------------------------------------------------------------------
     // Narrative
@@ -2038,7 +2038,6 @@ description, syntax/commands, and configuration pointers near the top of the scr
             natural: 'CF-Natural',
             thrown:  'CF-Thrown'
         };
-        const FUMBLE_TYPE_ORDER = ['melee', 'ranged', 'thrown', 'spell', 'natural'];
         // Lookup for confirm tables
         const CONFIRM_TABLES = {
             'confirm-crit-martial': 'Confirm-Crit-Martial',
@@ -2171,7 +2170,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
             if (!table) {
                 sendTemplateMessage(who, "⚠️ Invalid Fumble Type", [
                     { label: "Requested",    value: `"${type}"` },
-                    { label: "Valid Types",  value: FUMBLE_TYPE_ORDER.join(', ') }
+                    { label: "Valid Types",  value: Object.keys(FUMBLE_TABLES).join(', ') }
                 ]);
                 debugLog(`Invalid fumble type "${type}"`);
                 return;
@@ -2236,17 +2235,11 @@ description, syntax/commands, and configuration pointers near the top of the scr
         }
 
         function showHelpMessage(who) {
-            const fumbleCommandLines = FUMBLE_TYPE_ORDER
-                .map(type => `!critfumble-${type}`)
-                .join('<br>');
             sendTemplateMessage(who, "📘 CritFumble Help", [
                 { label: "Version",     value: "v0.2.4.9" },
-                { label: "What It Does", value: "Auto-detects natural-1 attacks and offers the attacker a fumble menu. GMs can also trigger the menu manually." },
-                { label: "Manual Trigger", value: "!critfail - GM opens a player-selection menu." },
-                { label: "Help", value: "!critfumble help - Show this help panel." },
-                { label: "Fumble Rolls", value: fumbleCommandLines },
-                { label: "Command Pattern", value: "!critfumble-<type>, where type is: " + FUMBLE_TYPE_ORDER.join(', ') },
-                { label: "Confirm Criticals", value: "!confirm-crit-martial<br>!confirm-crit-magic" }
+                { label: "Commands",    value: "`!critfail`, `!critfumble help`, `!critfumble-<type>`, `!confirm-crit-martial`, `!confirm-crit-magic`" },
+                { label: "Description", value: "Auto-detects critical misses and prompts attacker with a fumble menu; GM can also manually trigger via `!critfail`." },
+                { label: "Valid Types", value: Object.keys(FUMBLE_TABLES).join(', ') }
             ]);
         }
 
@@ -2324,7 +2317,6 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // Bugfix retained: robust natural‑1 detection across templates/inlineroll variants.
-    // Changed (v0.1.4.3): CritFumble help now separates manual, help, fumble, and confirmation commands into readable rows for DMs.
     // Maintenance (v0.1.4.3, no semantic change): Reworded an internal comment for collaborator clarity.
     // Maintenance (v0.1.4.1, no semantic change): Routed unchanged defaults through POLICY and timestamps through now().
     // Prior notes:
@@ -2515,7 +2507,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
             }
 
             if (flagged.length === 0) {
-                GameAssist.log('NPCManager', '✅ No HP/death-marker mismatches found on qualifying current-page NPCs. Correctly marked dead NPCs are intentionally omitted.');
+                GameAssist.log('NPCManager', '✅ Living NPCs have correct death marker states.');
             } else {
                 GameAssist.log('NPCManager', `⚠️ ${flagged.length} NPC(s) with mismatched death markers:`);
                 flagged.forEach(({ name, id, hp, markers }) => {
@@ -2571,7 +2563,6 @@ description, syntax/commands, and configuration pointers near the top of the scr
     });
     // --- Notes & Comments ---
     // CHOICE: TokenMod used for status marker ops; keep dependency explicit in README.
-    // Changed (v0.1.4.3): NPC death-audit success wording now accurately covers living and dead qualifying NPCs and explains that correct dead tokens are omitted.
     // Changed (v0.1.4.3): NPCManager now resolves configured death markers before TokenMod add/remove/teardown requests, matching shared read-side marker identity behavior.
     // Changed (v0.1.4.1): Use exact shared marker matching, POLICY-owned cache limits, and shared time seams.
     // Prior notes:

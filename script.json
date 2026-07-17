@@ -1,8 +1,9 @@
 {
   "name": "GameAssist",
   "script": "GameAssist.js",
-  "version": "0.1.4.3",
+  "version": "0.1.4.4",
   "previousversions": [
+    "0.1.4.3",
     "0.1.4.2",
     "0.1.4.1",
     "0.1.4",

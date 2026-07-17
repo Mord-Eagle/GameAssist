@@ -1054,7 +1054,8 @@ The following corrections supersede inaccurate or temporary wording in the prese
 
 | Revision | Status | Repository role |
 | --- | --- | --- |
-| **v0.1.4.3** | Pre-release | Concentration custom-marker recognition and standalone TokenMod interoperability update |
+| **v0.1.4.4** | Pre-release | DM-facing CritFumble help and NPC death-audit readability update |
+| **v0.1.4.3** | Previous complete script | Concentration custom-marker recognition and standalone TokenMod interoperability update |
 | **v0.1.4.2** | Previous complete script | Diagnostic and migration-readiness release with a known concentration custom-marker limitation |
 | **v0.1.4.1** | Historical release; script not retained | Stability-focused repair based on v0.1.4 |
 | **v0.1.4** | Historical baseline | Preserved as `GameAssist v0.1.4` |
@@ -1180,7 +1181,11 @@ MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
 
 ---
 
-## [0.1.4.3 follow-up] – 2026-07-17
+## [0.1.4.4] – 2026-07-17
+
+### Release definition
+
+v0.1.4.4 is a small DM-facing readability release. It preserves the v0.1.4.3 marker-recognition and standalone TokenMod interoperability fixes while improving two chat outputs identified in Issue #21.
 
 ### Issue addressed
 
@@ -1208,25 +1213,26 @@ MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
 ### MECHSUITS records
 
 - Updated `[GAMEASSIST:MODULES:CRITFUMBLE]` because the public help output changed.
-- Added a `[GAMEASSIST:MODULES:NPCMANAGER]` footer note for the audit wording change.
+- Updated `[GAMEASSIST:MODULES:NPCMANAGER]` because the public audit success output changed.
+- Updated `[GAMEASSIST:CORE]` because the runtime `VERSION` constant advanced.
 - Preserved existing section tags, codename `GAMEASSIST`, and command names.
 
-### Artifact checksum update
+### Release artifacts
 
-This follow-up changes the current pre-release v0.1.4.3 script contents. The earlier v0.1.4.3 checksum remains part of the preserved historical entry above; the current repository artifacts now share:
+The v0.1.4.3 artifact remains preserved. The current repository script and the new v0.1.4.4 versioned artifact share:
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `00E56C6DAA9099DAE901936005BF5E7B355BAFB303568403B4BAEAE07CDAF9E0` |
-| `GameAssist-v0.1.4.3` | `00E56C6DAA9099DAE901936005BF5E7B355BAFB303568403B4BAEAE07CDAF9E0` |
+| `GameAssist` | `CAF3D1FE7281175F493AE6B4214D859AF2D35CDE3A82B4FB01D50B479F9B3589` |
+| `GameAssist-v0.1.4.4` | `CAF3D1FE7281175F493AE6B4214D859AF2D35CDE3A82B4FB01D50B479F9B3589` |
 
 ### Verification
 
 | Check | Result |
 | --- | --- |
 | `node --check .\GameAssist` | Passed |
-| `GameAssist-v0.1.4.3` syntax via stdin check | Passed |
-| `GameAssist` versus `GameAssist-v0.1.4.3` byte identity | Passed |
+| `GameAssist-v0.1.4.4` syntax via stdin check | Passed |
+| `GameAssist` versus `GameAssist-v0.1.4.4` byte identity | Passed |
 | `git diff --check` | Passed |
 
 Roll20 API sandbox confirmation is still required for the final release gate.
