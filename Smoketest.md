@@ -101,7 +101,7 @@ This result means the integrated MarkerService and all enabled modules started n
 
 NPCManager and ConcentrationTracker should no longer become dependency-skipped merely because standalone TokenMod is absent. If either module is configured but not running, open **Troubleshooting Details** and **Module List** and record the exact module error.
 
-### Troubleshooting Details### Troubleshooting Details
+### Troubleshooting Details
 
 Click **Troubleshooting Details** or run:
 
@@ -735,7 +735,7 @@ Restore the campaign's preferred `deadMarker` after the test.
 
 Standalone StatusInfo is not an acceptance requirement for v0.1.5.0. Its historical TokenMod observer path may not receive direct MarkerService writes. Record any observed behavior, but do not treat missing standalone descriptions as a MarkerService failure. Integrated StatusInfo synchronization is tested under Issue #26 and v0.1.5.1.
 
-## E. CritFumble Tests## E. CritFumble Tests
+## E. CritFumble Tests
 
 ### E1. Help Command
 
@@ -1555,7 +1555,7 @@ Standalone TokenMod permissions are not a repair for GameAssist marker failures 
 
 For `!npc-death-audit`, remember that player characters and correctly marked NPCs are intentionally omitted. Create a deliberate HP/marker mismatch on a qualifying disposable NPC before deciding the audit failed.
 
-## NPC HP Does Not Roll## NPC HP Does Not Roll
+## NPC HP Does Not Roll
 
 Check:
 
@@ -1610,7 +1610,7 @@ In v0.1.5.0, standalone TokenMod and StatusInfo detection is informational for t
 - Standalone `!condition` behavior still belongs to StatusInfo until the integrated v0.1.5.1 module exists.
 - A silent GameAssist command or incorrect marker read must be investigated as that feature's failure, not explained away by missing optional standalone metadata.
 
-## Queue Length or Errors Increase## Queue Length or Errors Increase
+## Queue Length or Errors Increase
 
 Run:
 
