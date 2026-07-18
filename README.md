@@ -83,7 +83,7 @@ Standalone TokenMod is not required for NPCManager, ConcentrationTracker, or Deb
 
 `GameAssist.flags.QUIET_STARTUP` defaults to `true`. Expect the core ready whisper, but not one ready message from every module.
 
-### 4.1 Minimum Smoke Test### 4.1 Minimum Smoke Test
+### 4.1 Minimum Smoke Test
 
 Run these commands after every update:
 
@@ -890,7 +890,7 @@ When a marker action fails, first verify the configured marker and target token 
 
 For an exact custom marker, configure either its display name or stored `Name::id` tag. A valid exact stored tag remains usable even when Roll20's campaign marker registry cannot be parsed.
 
-### 14.4 Startup Messages Are Missing### 14.4 Startup Messages Are Missing
+### 14.4 Startup Messages Are Missing
 
 This is normally expected. `GameAssist.flags.QUIET_STARTUP` defaults to `true`, suppressing module-specific startup whispers. The core ready message remains visible.
 
@@ -1065,7 +1065,7 @@ V. **Run the Smoke Test**
 
 Use [§4.1 Minimum Smoke Test](#41-minimum-smoke-test), including real HP, concentration, marker-preservation, and enable/disable checks. Test standalone TokenMod or StatusInfo separately only when the campaign still uses their independent commands.
 
-### 15.2 Rollback### 15.2 Rollback
+### 15.2 Rollback
 
 If v0.1.5.0 fails its smoke test:
 
@@ -1165,7 +1165,7 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 | NPC death history | **Implemented** | Four-level handouts, Arc management, report writer, date-managed Sessions, and MarkerService-backed death markers. |
 | Native Mord character-sheet support | **Deferred** | Begin after the integrated v0.1.5.x marker/status architecture is stable. |
 
-### 17.2 Near-Term Candidate: Compatibility-First Bridge Character Sheet### 17.2 Near-Term Candidate: Compatibility-First Bridge Character Sheet
+### 17.2 Near-Term Candidate: Compatibility-First Bridge Character Sheet
 
 After the GameAssist architecture foundation is confirmed stable in Roll20, the recommended character-sheet project is a bridge sheet that:
 
