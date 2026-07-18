@@ -41,7 +41,7 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | NPC death-history buckets and handouts | Complete | [#22](https://github.com/Mord-Eagle/GameAssist/issues/22) | NPCManager 1.1.0 provides four-level history, report writing, hierarchical clears, date rollover, and curated Arc controls. |
 | GameAssist status readability | Complete | [#23](https://github.com/Mord-Eagle/GameAssist/issues/23) | The plain-language `!ga-status` system check and optional troubleshooting panel shipped in v0.1.4.6. |
 | Standalone interoperability stabilization | Complete | [#24](https://github.com/Mord-Eagle/GameAssist/issues/24) | v0.1.4.7 uses TokenMod's documented `--api-as` path, verifies marker results, reports optional StatusInfo evidence, and passed the Roll20 sandbox acceptance pass. |
-| MarkerService foundation | In progress | [#25](https://github.com/Mord-Eagle/GameAssist/issues/25) | v0.1.5.0 code, migrations, static regression checks, and documentation are under review; Roll20 sandbox acceptance remains the completion gate. |
+| MarkerService foundation | Sandbox verification | [#25](https://github.com/Mord-Eagle/GameAssist/issues/25) | PR #41 contains the v0.1.5.0 implementation, regressions, and documentation; Roll20 sandbox acceptance remains the completion gate. |
 | Integrated StatusInfo | Planned | [#26](https://github.com/Mord-Eagle/GameAssist/issues/26) | Release `v0.1.5.1` with rebuilt and attributed StatusInfo. |
 | Integrated TokenMod | Planned | [#27](https://github.com/Mord-Eagle/GameAssist/issues/27) | Release `v0.1.5.2` with rebuilt and attributed TokenMod and no standalone production dependency. |
 | Integrated architecture stabilization | Planned | [#28](https://github.com/Mord-Eagle/GameAssist/issues/28) | Harden upgrades, compatibility, diagnostics, and verified TokenMod coverage across later `v0.1.5.x` releases. |
@@ -136,7 +136,7 @@ Operations should return useful results or diagnostics rather than assuming succ
 
 NPCManager and ConcentrationTracker must perform their marker workflows without standalone TokenMod, while MarkerService demonstrates correct custom-marker behavior and preservation of unrelated marker state.
 
-**Current evidence:** syntax and mocked-ready initialization pass; 19 focused MarkerService checks pass for built-in/custom/direct-tag resolution, invalid registry diagnostics, numbered and duplicate markers, unrelated-marker preservation, idempotent add, removal, toggle, and observation delivery. The Roll20 sandbox smoke pass remains required before Issue #25 closes.
+**Current evidence:** syntax and mocked-ready initialization pass; 23 focused MarkerService checks and 22 mocked marker-consumer workflow checks pass for built-in/custom/direct-tag resolution, invalid registry diagnostics, numbered and duplicate markers, unrelated-marker preservation, NPC death/revival history, concentration status/off, DebugTools safeguards, lifecycle teardown/re-enable, and observation delivery. The Roll20 sandbox smoke pass remains required before Issue #25 closes.
 
 ---
 
