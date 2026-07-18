@@ -397,7 +397,7 @@ A campaign may temporarily keep standalone TokenMod when it still uses separate 
 
 Standalone StatusInfo may remain installed for existing campaign use, but v0.1.5.0 does not promise that its TokenMod observer path receives direct MarkerService writes. Integrated and attributed StatusInfo support is tracked for v0.1.5.1.
 
-IV. **Create the Seven CritFumble Tables**IV. **Create the Seven CritFumble Tables**
+IV. **Create the Seven CritFumble Tables**
 
 Create these exact rollable-table names:
 
@@ -673,7 +673,7 @@ Marker removal clears every duplicate instance of the requested marker. Other ma
 
 ### 10.7 MECHSUITS Contribution Contract
 
-The executable file follows MECHSUITS v1.5.2 conventions:The executable file follows MECHSUITS v1.5.2 conventions:
+The executable file follows MECHSUITS v1.5.2 conventions:
 
 * Preserve literal codename and tags: `GAMEASSIST`.
 * Keep the file-scoped `canonical_tree` synchronized with actual tags.
