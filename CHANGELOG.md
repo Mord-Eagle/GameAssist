@@ -1657,6 +1657,12 @@ These versions remain independently authored and licensed upstream. GameAssist d
 
 - Advanced NPCManager's independent module version from `1.1.0` to `1.1.1`.
 - Routed death-marker add, revival-marker removal, and module-teardown removal through the shared verified TokenMod request helper.
+- Corrected the NPCHPRoller auto-roll-on-add initialization race:
+  - Roll20 can expose blank or zero placeholder HP while a newly added token is still being initialized;
+  - NPCManager now opens a two-second, POLICY-owned setup window when NPCHPRoller `autoRollOnAdd=true`;
+  - placeholder HP changes during that window do not add the death marker or create death/revival history;
+  - an unknown or blank previous HP value is not treated as proof that a living NPC crossed below 1 HP;
+  - later known-positive-to-zero and zero-to-positive changes remain ordinary tracked deaths and revivals.
 - Preserved death-history behavior independently of visual marker success:
   - a qualifying death is still recorded in Campaign, Chapter, Section, and Session buckets;
   - revival annotations remain independent of marker removal;
@@ -1707,11 +1713,11 @@ These versions remain independently authored and licensed upstream. GameAssist d
 
 - Advanced the script header, MECHSUITS banner `project_version`, prose guarantee, visible release banner, runtime `VERSION`, README, smoke-test target, and `script.json` to `0.1.4.7`.
 - Added `0.1.4.6` to `script.json.previousversions`.
-- Updated `[GAMEASSIST:POLICY]` for the marker-verification delay.
+- Updated `[GAMEASSIST:POLICY]` for the marker-verification delay and NPC HP initialization grace period.
 - Updated `[GAMEASSIST:APP]` and `[GAMEASSIST:APP:UTILS]` for external evidence, TokenMod authorization, outcome verification, and StatusInfo observer preservation.
 - Updated `[GAMEASSIST:CORE]` and `[GAMEASSIST:CORE:OBJECT]` for the release version and public-contract dependency confirmation.
 - Updated `[GAMEASSIST:INTERFACES:COMMANDS]` for the new troubleshooting evidence.
-- Updated `[GAMEASSIST:MODULES:NPCMANAGER]` and `[GAMEASSIST:MODULES:CONCENTRATIONTRACKER]` for verified marker requests and independent module patch versions.
+- Updated `[GAMEASSIST:MODULES:NPCMANAGER]` for verified marker requests, new-token initialization suppression, and its independent module patch version; updated `[GAMEASSIST:MODULES:CONCENTRATIONTRACKER]` for verified marker requests and its independent module patch version.
 - Updated `[GAMEASSIST:BOOTSTRAP]` for the v0.1.4.7 startup version record without changing lifecycle order.
 - Preserved the literal `GAMEASSIST` codename, existing tag names, nesting, and file-scoped canonical tree.
 
@@ -1730,7 +1736,8 @@ These versions remain independently authored and licensed upstream. GameAssist d
   - an initial `players-can-ids` OFF-state isolation pass followed, when applicable, by a restored campaign-setting compatibility pass;
   - TokenMod direct-command isolation;
   - optional StatusInfo observer checks;
-  - add/remove/teardown and delayed-warning acceptance checks.
+  - add/remove/teardown and delayed-warning acceptance checks;
+  - an NPCHPRoller auto-roll-on-add check that refuses false death/revival history while preserving later gameplay transitions.
 - Updated `ROADMAP.md` to move Issue #24 into live Roll20 acceptance while keeping integrated TokenMod, StatusInfo, and MarkerService work in `v0.1.5.x`.
 
 ### Release artifacts
@@ -1739,14 +1746,14 @@ The repository script and versioned artifact share this Git-normalized SHA-256:
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `904D453054750EED2FF6B6ACCCCA551777D9819D7F095023599E436A84EDFF9F` |
-| `GameAssist-v0.1.4.7` | `904D453054750EED2FF6B6ACCCCA551777D9819D7F095023599E436A84EDFF9F` |
+| `GameAssist` | `ADBC0F18CD3517E50A91CEBAA05D83ABD531F9595130F2EF3B750548C05D4953` |
+| `GameAssist-v0.1.4.7` | `ADBC0F18CD3517E50A91CEBAA05D83ABD531F9595130F2EF3B750548C05D4953` |
 
 Local Roll20 test copy:
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `outputs/GameAssist-v0.1.4.7-issue24-test.js` | `14111F131DE2D52B7DEA1AC3A83F117AC2C715960B6D8FA1BC82CD0879D1C127` |
+| `outputs/GameAssist-v0.1.4.7-issue24-test.js` | `0E3D0CE9C97B6A9EACB587C3486E2ABC774A876D8160499EF4BF3FF604AF903C` |
 
 ### Verification
 
@@ -1754,8 +1761,10 @@ Local Roll20 test copy:
 | --- | --- |
 | JavaScript syntax for repository, versioned, local Roll20, and both harness artifacts | Passed |
 | Existing status/lifecycle regression harness | Passed (57 assertions) |
-| Focused TokenMod/StatusInfo interoperability harness | Passed (24 assertions) |
+| Focused TokenMod/StatusInfo interoperability and NPC initialization harness | Passed (31 assertions) |
 | Built-in `dead` add/remove with `players-can-ids=false` | Passed in simulation |
+| NPCHPRoller auto-roll-on-add placeholder HP suppression | Passed in simulation |
+| Genuine post-initialization NPC death/revival tracking | Passed in simulation |
 | Custom concentration tag add/remove/status | Passed in simulation |
 | NPCManager and ConcentrationTracker teardown marker requests | Passed in simulation |
 | Deliberately failed TokenMod mutation and actionable warning | Passed in simulation |

@@ -87,6 +87,7 @@ V0.1.4.7 STANDALONE INTEROPERABILITY NOTES
 - Marker requests are checked after TokenMod runs; mismatches produce a direct manual test command for the GM.
 - !ga-status --details reports detected TokenMod and optional StatusInfo versions/configuration evidence.
 - Marker mutation remains inside standalone TokenMod so StatusInfo continues receiving TokenMod observer notifications.
+- NPCManager ignores placeholder HP while NPCHPRoller auto-roll-on-add establishes a new token's starting HP.
 
 HEADER REQUIREMENTS NOTE
 Per the Roll20 API repo contribution guidelines, this header provides name, version, last updated,
@@ -178,7 +179,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: Tunables and operational policy
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "POLICY", title: "Tunables",
-    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; marker verification waits are explicit"],
+    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; marker verification and NPC initialization waits are explicit"],
     //   provides: ["POLICY"], last_updated_version: "v0.1.4.7", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
@@ -204,6 +205,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
             npcAuditDetailLimit: 8,
             deathReportSummaryLimit: 5,
             deathReportDetailLimit: 10,
+            npcHpInitializationGraceMs: 2000,
             lastDamageLimit: 50
         }),
         timestamps: Object.freeze({
@@ -227,6 +229,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         })
     });
     // --- Notes & Comments ---
+    // Changed (v0.1.4.7): Added a two-second NPC HP initialization grace period so auto-roll-on-add setup is not recorded as a death/revival; rollback: remove the guard and this policy value.
     // Changed (v0.1.4.7): Added a one-second standalone TokenMod marker-verification delay; rollback: remove standaloneInterop and delayed verification.
     // Changed (v0.1.4.5): Added runtime death-report summary/detail limits for bounded GM-facing history reports.
     // Changed (v0.1.4.4): Added runtime.npcAuditDetailLimit to bound grouped NPC death-audit chat output.
@@ -2709,14 +2712,16 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: NPCManager module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:NPCMANAGER", title: "NPCManager",
-    //   guarantees: ["Auto toggle resolved configured dead marker based on HP; maintain hierarchical death-history handouts and curated arc rosters", "Death-marker requests use verified standalone TokenMod interoperability"],
+    //   guarantees: ["Auto toggle resolved configured dead marker based on known HP transitions; maintain hierarchical death-history handouts and curated arc rosters", "NPCHPRoller auto-roll initialization is not recorded as death/revival history", "Death-marker requests use verified standalone TokenMod interoperability"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:OBJECT]"],
     //   last_updated_version: "v0.1.4.7",
     //   independent_versions: { module_version: "1.1.1" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:NPCMANAGER monitors token HP changes to set or clear the configured
-    // death marker through verified standalone TokenMod requests. It records deaths into active Campaign, Chapter,
+    // death marker through verified standalone TokenMod requests. New-token HP initialization
+    // is ignored while NPCHPRoller auto-roll-on-add establishes the token's starting HP.
+    // It records deaths into active Campaign, Chapter,
     // Section, and Session buckets; writes bucket/audit handouts; rolls date-based
     // sessions forward before new activity; and maintains deduplicated, editable
     // story arc rosters for selected linked PC/NPC tokens or Session imports.
@@ -2757,6 +2762,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         const DEATH_REPORT_DETAIL_LIMIT = POLICY.runtime.deathReportDetailLimit;
         const AUDIT_HANDOUT_NAME = 'GameAssist NPC Death Audit';
         const NPCMANAGER_MODULE_VERSION = '1.1.1';
+        const initializingNpcHp = new Set();
 
         function currentSessionDateKey(raw = now()) {
             return new Date(raw).toISOString().slice(0, 10);
@@ -4034,13 +4040,37 @@ description, syntax/commands, and configuration pointers near the top of the scr
             return linked;
         }
 
+        function parseTrackedHP(raw) {
+            if (raw === '' || raw == null) return null;
+            const hp = parseInt(raw, 10);
+            return Number.isFinite(hp) ? hp : null;
+        }
+
+        /**
+         * handleTokenAdd — Guard the short setup interval in which NPCHPRoller replaces placeholder HP.
+         * Context: Roll20 can expose zero/blank bar values before auto-roll-on-add writes rolled HP.
+         * Invariant: only active auto-roll-on-add receives the grace period; normal gameplay HP changes remain direct.
+         */
+        function handleTokenAdd(token) {
+            const hpRollerConfig = GameAssist.getState('NPCHPRoller')?.config;
+            if (hpRollerConfig?.enabled === false || hpRollerConfig?.autoRollOnAdd !== true) return;
+
+            initializingNpcHp.add(token.id);
+            setTimeout(
+                () => initializingNpcHp.delete(token.id),
+                POLICY.runtime.npcHpInitializationGraceMs
+            );
+        }
+
         function checkForDeath(token) {
             if (!modState.config.autoTrackDeath) return;
 
             if (!getNPCContext(token)) return;
-            prepareNPCManagerActivity();
 
-            const hp = parseInt(token.get('bar1_value'), 10) || 0;
+            const hp = parseTrackedHP(token.get('bar1_value'));
+            if (hp === null) return;
+
+            prepareNPCManagerActivity();
             const isDead = tokenHasMarker(token, modState.config.deadMarker);
 
             if (hp < 1) {
@@ -4067,9 +4097,18 @@ description, syntax/commands, and configuration pointers near the top of the scr
         }
 
         function handleTokenChange(obj, prev) {
-            if (obj.get('bar1_value') !== prev.bar1_value) {
-                checkForDeath(obj);
+            const currentHp = parseTrackedHP(obj.get('bar1_value'));
+            const previousHp = parseTrackedHP(prev?.bar1_value);
+            if (currentHp === null || currentHp === previousHp) return;
+
+            if (initializingNpcHp.has(obj.id)) {
+                if (currentHp >= 1) initializingNpcHp.delete(obj.id);
+                return;
             }
+
+            // CHOICE: unknown/blank -> dead is initialization, not evidence of a living NPC crossing zero.
+            if (previousHp === null && currentHp < 1) return;
+            checkForDeath(obj);
         }
 
         GameAssist.onCommand('!npc-death-help', msg => {
@@ -4339,11 +4378,12 @@ description, syntax/commands, and configuration pointers near the top of the scr
             sendAuditReport(fields);
         }, 'NPCManager', { gmOnly: true });
 
+        GameAssist.onEvent('add:graphic', handleTokenAdd, 'NPCManager');
         GameAssist.onEvent('change:graphic:bar1_value', handleTokenChange, 'NPCManager');
         GameAssist.log('NPCManager', `${NPCMANAGER_MODULE_VERSION} Ready: Auto death tracking + hierarchical reports/writer/audits/arcs`, 'INFO', { startup: true });
     }, {
         enabled: true,
-        events: ['change:graphic:bar1_value'],
+        events: ['add:graphic', 'change:graphic:bar1_value'],
         prefixes: ['!npc-death-help', '!npc-death-report', '!npc-death-clear', '!npc-death-audit', '!npc-death-buckets', '!npc-death-write', '!npc-wr', '!npc-death-arc'],
         dependsOn: ['TokenMod'],
         preserveRuntimeOnDisable: true,
@@ -4382,6 +4422,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // --- Notes & Comments ---
     // CHOICE: TokenMod used for status marker ops; keep dependency explicit in README.
     // CHOICE: Arc rosters identify a creature by token before legacy character/name fallbacks — ALT: character-only identity; REJECTED: multiple NPC tokens may share one character sheet.
+    // Changed (v0.1.4.7): Suppress placeholder HP transitions during NPCHPRoller auto-roll-on-add and require a known starting HP before recording an automatic death; this prevents false death/revival history when an NPC is added to the map.
     // Changed (v0.1.4.7): NPCManager module_version advanced to 1.1.1; marker add/remove/teardown now use TokenMod --api-as with delayed result verification and no longer claim teardown completion before confirmation.
     // Maintenance (v0.1.4.5, no semantic change): Removed the unused init-time Session default; live Session defaults continue to come from currentSessionDateKey().
     // Changed (v0.1.4.5): NPCManager module_version advanced from 0.1.1.0 to 1.0.0 for scoped bucket/handout management, then to 1.1.0 for Arc curation, hierarchical clearing, date-managed Sessions, and report writing.

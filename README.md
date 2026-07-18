@@ -264,13 +264,15 @@ Config keys: `marker`, `randomize`.
 
 > **Dependency:** Standalone TokenMod is required for automated death-marker changes. Death-history recording and handout updates still run even if a marker write cannot be confirmed.
 
-> **Module version:** NPCManager `1.1.1` in GameAssist v0.1.4.7. NPCManager `1.0.0` introduced the four-level history model; `1.1.0` added curated Arc management, hierarchical clearing, date rollover, and the report writer; `1.1.1` hardens standalone TokenMod marker requests and result verification.
+> **Module version:** NPCManager `1.1.1` in GameAssist v0.1.4.7. NPCManager `1.0.0` introduced the four-level history model; `1.1.0` added curated Arc management, hierarchical clearing, date rollover, and the report writer; `1.1.1` hardens standalone TokenMod marker requests, result verification, and new-token HP initialization.
 
 NPCManager watches `change:graphic:bar1_value` for linked NPC characters with `npc=1`.
 
 * HP below 1 → record the NPC death into the active Campaign, Chapter, Section, and Session buckets, then request the configured `deadMarker`.
 * HP above 0 → annotate the matching death entry as revived and request removal of the configured `deadMarker`.
 * `autoHide=true` → move newly dead NPC tokens to `hideLayer`.
+
+When NPCHPRoller `autoRollOnAdd=true`, NPCManager treats the short placeholder-HP interval on a newly added token as setup rather than combat. Blank or unknown starting HP is not accepted as evidence that a living NPC crossed below 1 HP. The automatic roll therefore does not flash the death marker or add a false death/revival pair to history; later known-positive-to-zero changes remain ordinary tracked deaths.
 
 Commands:
 
@@ -1176,6 +1178,7 @@ This is a separate project and is not implemented in v0.1.4.7.
 * Preserved mutation through standalone TokenMod so StatusInfo continues receiving TokenMod observer notifications.
 * Added TokenMod and optional StatusInfo version/configuration evidence to `!ga-status --details`.
 * Advanced NPCManager to `1.1.1` and ConcentrationTracker to `0.1.0.6`.
+* Prevented NPCHPRoller auto-roll-on-add token setup from creating a false NPC death/revival pair while preserving later genuine HP transitions.
 
 ### v0.1.4.6 – DM-Readable System Status
 

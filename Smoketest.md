@@ -1264,6 +1264,13 @@ Add a qualifying linked NPC token.
 Expected:
 
 - HP is rolled automatically.
+- The token is not briefly marked dead while its starting HP is being established.
+- Campaign, Chapter, Section, and Session death counts do not increase merely because the token was added and auto-rolled.
+- No false death/revival pair appears in the current Session report or handout.
+
+After confirming the initialization result, change that token from its rolled positive HP to `0`, then back above `0`.
+
+Expected: the later genuine death and revival are tracked normally. The initialization guard must not suppress gameplay HP changes after setup.
 - The log identifies the action as auto-roll on add.
 - Invalid/non-NPC tokens are skipped quietly.
 
