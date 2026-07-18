@@ -1,10 +1,10 @@
 # GameAssist Development Roadmap
 
-This roadmap records the transition from GameAssist's standalone-dependency `v0.1.4.x` line to the integrated token and status architecture planned for `v0.1.5.x`.
+This roadmap records the transition from GameAssist's standalone-dependency `v0.1.4.x` line to one complete integrated token and condition release: `v0.1.5.0`.
 
 Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation notes, discoveries, and checklists. The umbrella tracker is [Issue #29](https://github.com/Mord-Eagle/GameAssist/issues/29).
 
-> The roadmap is a maintained plan, not a promise of dates. A stage is complete only after its issue acceptance criteria and Roll20 sandbox checks pass.
+> The roadmap is a maintained plan, not a promise of dates. Issues #25 through #29 are development checkpoints within one release train; none is an intermediate public release.
 
 ---
 
@@ -23,10 +23,10 @@ Use this document for durable release boundaries, sequencing, and completion gat
 ## Guiding Decisions
 
 1. **The `v0.1.4.x` line remains standalone-compatible.** TokenMod and StatusInfo stay separately installed Roll20 Mod/API scripts. GameAssist may improve interoperability and diagnostics, but it will not embed or rebuild either dependency in this release line.
-2. **The `v0.1.5.x` line becomes integrated.** Production installations will use rebuilt, attributed GameAssist modules for TokenMod and StatusInfo instead of the standalone scripts.
+2. **`v0.1.5.0` is released only as the complete integration.** Production installations will use rebuilt, attributed GameAssist token and condition services instead of standalone TokenMod and StatusInfo.
 3. **MarkerService becomes shared core infrastructure.** `[GAMEASSIST:CORE:MARKERSERVICE]` will be the single internal authority for resolving, reading, modifying, and observing built-in and custom status markers.
-4. **TokenMod remains the user-facing token command module.** Integrated TokenMod will preserve the supported `!token-mod` command surface while using MarkerService for marker behavior.
-5. **StatusInfo remains the condition-information module.** Integrated StatusInfo will preserve supported `!condition` workflows while using MarkerService for marker behavior.
+4. **The integrated token service receives its own GameAssist identity.** It may preserve supported `!token-mod` compatibility commands while using MarkerService for marker behavior, but it is not branded as TokenMod.
+5. **The integrated condition service receives its own GameAssist identity.** It may preserve supported `!condition` workflows while using MarkerService for marker behavior, but it is not branded as StatusInfo.
 6. **Attribution and license notices are mandatory.** Rebuilt TokenMod and StatusInfo modules must conspicuously preserve their applicable MIT notices, authorship, upstream baseline, and GameAssist modifications.
 7. **Roll20 is the final compatibility test.** Syntax checks and local reasoning are necessary but cannot replace sandbox smoke tests.
 
@@ -41,10 +41,11 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | NPC death-history buckets and handouts | Complete | [#22](https://github.com/Mord-Eagle/GameAssist/issues/22) | NPCManager 1.1.0 provides four-level history, report writing, hierarchical clears, date rollover, and curated Arc controls. |
 | GameAssist status readability | Complete | [#23](https://github.com/Mord-Eagle/GameAssist/issues/23) | The plain-language `!ga-status` system check and optional troubleshooting panel shipped in v0.1.4.6. |
 | Standalone interoperability stabilization | Complete | [#24](https://github.com/Mord-Eagle/GameAssist/issues/24) | v0.1.4.7 uses TokenMod's documented `--api-as` path, verifies marker results, reports optional StatusInfo evidence, and passed the Roll20 sandbox acceptance pass. |
-| MarkerService foundation | Sandbox verification | [#25](https://github.com/Mord-Eagle/GameAssist/issues/25) | PR #41 contains the v0.1.5.0 implementation, regressions, and documentation; Roll20 sandbox acceptance remains the completion gate. |
-| Integrated StatusInfo | Planned | [#26](https://github.com/Mord-Eagle/GameAssist/issues/26) | Release `v0.1.5.1` with rebuilt and attributed StatusInfo. |
-| Integrated TokenMod | Planned | [#27](https://github.com/Mord-Eagle/GameAssist/issues/27) | Release `v0.1.5.2` with rebuilt and attributed TokenMod and no standalone production dependency. |
-| Integrated architecture stabilization | Planned | [#28](https://github.com/Mord-Eagle/GameAssist/issues/28) | Harden upgrades, compatibility, diagnostics, and verified TokenMod coverage across later `v0.1.5.x` releases. |
+| MarkerService checkpoint | Sandbox verification | [#25](https://github.com/Mord-Eagle/GameAssist/issues/25) | PR #41 contains the shared marker core, consumer migrations, lifecycle safeguards, regressions, and documentation. |
+| Integrated condition-service checkpoint | Planned | [#26](https://github.com/Mord-Eagle/GameAssist/issues/26) | Add the independently branded and attributed GameAssist condition service within `v0.1.5.0`. |
+| Integrated token-service checkpoint | Planned | [#27](https://github.com/Mord-Eagle/GameAssist/issues/27) | Add the independently branded and attributed GameAssist token service within `v0.1.5.0`. |
+| Integrated architecture stabilization | Planned | [#28](https://github.com/Mord-Eagle/GameAssist/issues/28) | Harden upgrades, coexistence, migration, diagnostics, and verified command coverage before `v0.1.5.0` is released. |
+| v0.1.5.0 release gate | Planned | [#29](https://github.com/Mord-Eagle/GameAssist/issues/29) | Publish only after every integrated service, attribution requirement, documentation update, and full Roll20 acceptance check is complete. |
 | Deferred marker-registry lookup verification | Deferred | [#32](https://github.com/Mord-Eagle/GameAssist/issues/32) | Verify `token_markers` versus `_token_markers` after the existing issue queue unless it becomes a live blocker. |
 | DM-configurable timezone | Planned after existing queue | [#35](https://github.com/Mord-Eagle/GameAssist/issues/35) | Use a validated DM timezone for human-facing timestamps and date-based Session rollover while preserving absolute stored timestamps. |
 
@@ -97,11 +98,11 @@ The final `v0.1.4.x` release must pass its documented Roll20 smoke test with the
 
 ---
 
-## Phase 2: `v0.1.5.0` MarkerService Foundation
+## Phase 2: MarkerService Checkpoint for `v0.1.5.0`
 
 **Tracking:** [Issue #25](https://github.com/Mord-Eagle/GameAssist/issues/25)
 
-`[GAMEASSIST:CORE:MARKERSERVICE]` becomes non-optional shared infrastructure. It must not behave like a toggleable gameplay module because disabling it would invalidate dependent modules.
+`[GAMEASSIST:CORE:MARKERSERVICE]` becomes shared infrastructure and the single marker authority. It is toggleable so campaigns can keep unrelated GameAssist features while another Mod owns marker behavior. Disabling MarkerService first disables its dependent modules and explains which features are unavailable.
 
 ### Intended Internal Contract
 
@@ -129,18 +130,19 @@ Operations should return useful results or diagnostics rather than assuming succ
 - [x] Observe marker changes through one consistent contract.
 - [x] Migrate NPCManager, ConcentrationTracker, and DebugTools.
 - [x] Remove standalone TokenMod dependency gating from modules that only require marker operations.
+- [x] Make MarkerService toggleable and cascade disablement to NPCManager, ConcentrationTracker, and DebugTools while preserving unrelated modules.
 - [ ] Complete the focused Roll20 sandbox regression pass without standalone TokenMod.
 - [x] Update MECHSUITS tree, sections, documentation, changelog, and smoke-test instructions.
 
 ### Completion Gate
 
-NPCManager and ConcentrationTracker must perform their marker workflows without standalone TokenMod, while MarkerService demonstrates correct custom-marker behavior and preservation of unrelated marker state.
+NPCManager and ConcentrationTracker must perform their marker workflows without standalone TokenMod. MarkerService must demonstrate correct custom-marker behavior and unrelated-marker preservation, and its disable path must turn off dependent modules without making CritFumble, ConfigUI, or NPCHPRoller unavailable.
 
 **Current evidence:** syntax and mocked-ready initialization pass; 23 focused MarkerService checks and 22 mocked marker-consumer workflow checks pass for built-in/custom/direct-tag resolution, invalid registry diagnostics, numbered and duplicate markers, unrelated-marker preservation, NPC death/revival history, concentration status/off, DebugTools safeguards, lifecycle teardown/re-enable, and observation delivery. The Roll20 sandbox smoke pass remains required before Issue #25 closes.
 
 ---
 
-## Phase 3: `v0.1.5.1` Integrated StatusInfo
+## Phase 3: Integrated Condition-Service Checkpoint for `v0.1.5.0`
 
 **Tracking:** [Issue #26](https://github.com/Mord-Eagle/GameAssist/issues/26)
 
@@ -171,7 +173,7 @@ Supported `!condition` workflows and condition descriptions must function throug
 
 ---
 
-## Phase 4: `v0.1.5.2` Integrated TokenMod
+## Phase 4: Integrated Token-Service Checkpoint for `v0.1.5.0`
 
 **Tracking:** [Issue #27](https://github.com/Mord-Eagle/GameAssist/issues/27)
 
@@ -200,15 +202,15 @@ Build an independently branded GameAssist general token service that preserves s
 
 ### Completion Gate
 
-Production `v0.1.5.2` installations must no longer require standalone TokenMod. Supported TokenMod commands and all GameAssist marker consumers must share MarkerService semantics.
+The completed `v0.1.5.0` implementation must no longer require standalone TokenMod. Supported compatibility commands and all GameAssist marker consumers must share MarkerService semantics.
 
 ---
 
-## Phase 5: Later `v0.1.5.x` Stabilization
+## Phase 5: Integrated Architecture Stabilization and `v0.1.5.0` Release Gate
 
 **Tracking:** [Issue #28](https://github.com/Mord-Eagle/GameAssist/issues/28)
 
-Later `v0.1.5.x` releases focus on verification and compatibility rather than immediately expanding the feature set.
+This phase verifies the complete integration before the first public `v0.1.5.0` release. It is not post-release cleanup.
 
 ### Checklist
 
@@ -226,7 +228,7 @@ The integrated architecture is considered stable only when supported workflows h
 
 ---
 
-## Target `v0.1.5.x` Architecture
+## Target `v0.1.5.0` Architecture
 
 ```text
 [GAMEASSIST]/
@@ -260,7 +262,7 @@ This is a target tree only. Per MECHSUITS v1.5.2, the executable banner's `canon
 
 ## Cross-Cutting Release Gates
 
-Every roadmap stage must satisfy the following before being marked complete:
+Every development checkpoint must satisfy the following before being marked complete. The public release requires all checkpoints to be complete together:
 
 - [ ] JavaScript syntax checks pass.
 - [ ] Changed behavior has focused tests or a documented manual proof.

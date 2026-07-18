@@ -1,86 +1,52 @@
 # GameAssist Attribution and Third-Party Notices
 
-This document records the provenance of GameAssist components, the license notices that must travel with adapted code, and the distinction between upstream projects and independently maintained GameAssist services.
+GameAssist is independently developed and maintained by **Mord Eagle**. This document acknowledges projects whose published work informed or contributed to GameAssist and preserves the notices required by their licenses.
 
-GameAssist is independently developed and maintained by Mord Eagle. References to upstream projects identify technical provenance and do not imply sponsorship, endorsement, support, or ongoing participation by the original authors.
+References to TokenMod, StatusInfo, Roll20, Wizards of the Coast, or their contributors do not imply sponsorship, endorsement, support, or affiliation.
 
-## Current v0.1.5.0 Release
+## GameAssist MarkerService
 
-### GameAssist MarkerService
-
-`[GAMEASSIST:CORE:MARKERSERVICE]` is an original GameAssist implementation and the sole GameAssist authority for Roll20 marker identity, reads, writes, toggles, preservation, and observation.
-
-Its compatibility goals and status-marker behavior were informed by TokenMod's established Roll20 behavior, particularly custom marker tags, duplicate entries, numbered overlays, and observer expectations.
+`GameAssist.MarkerService` is an original GameAssist implementation for resolving, reading, changing, and observing Roll20 token status markers. Its compatibility goals were informed by the established marker behavior of **TokenMod**, including custom marker tags, numbered markers, duplicate entries, and preservation of unrelated token markers.
 
 - GameAssist component: `GameAssist.MarkerService`
-- GameAssist service version: `1.0.0`
-- Upstream project acknowledged: TokenMod
-- Upstream author: The Aaron, Arcane Scriptomancer
-- Reference baseline: TokenMod `0.8.88`
-- Upstream source: https://github.com/Roll20/roll20-api-scripts/tree/master/TokenMod
-- License: MIT, as distributed by the Roll20 API Scripts repository
+- Component version: `1.0.0`
+- Project acknowledged: TokenMod
+- Author: The Aaron, Arcane Scriptomancer
+- Reference release: TokenMod `0.8.88`
+- Source: <https://github.com/Roll20/roll20-api-scripts/tree/master/TokenMod>
+- License: MIT
 
-GameAssist v0.1.5.0 does not bundle the standalone TokenMod or StatusInfo command implementations wholesale. Future adapted services must add their exact implementation baselines and adaptation records before release.
+MarkerService is independently maintained as part of GameAssist. It is not TokenMod and is not an official or endorsed TokenMod release.
 
-## Planned GameAssist Services
+## TokenMod
 
-The final GameAssist-branded module names are owner-authoritative and must be selected before their MECHSUITS sections are created.
+**TokenMod** was created by **The Aaron, Arcane Scriptomancer** and distributed through the Roll20 API Scripts repository under the MIT License.
 
-### General Token Service
+GameAssist acknowledges TokenMod as an important design reference for token editing, command compatibility, marker handling, and script-to-script interoperability. Any TokenMod-derived code included in a GameAssist release retains the applicable copyright and permission notice below.
 
-The future GameAssist general token service will be independently branded and maintained. It may preserve selected `!token-mod` behavior as a compatibility surface, but it must not present itself as an official TokenMod release.
+- Project: TokenMod
+- Author: The Aaron, Arcane Scriptomancer
+- Source: <https://github.com/Roll20/roll20-api-scripts/tree/master/TokenMod>
+- License: MIT
 
-Before implementation, record:
+GameAssist is independently maintained and is not an official TokenMod release. The original author is not responsible for GameAssist support, changes, or compatibility decisions.
 
-- the exact TokenMod version and commit used;
-- which files, functions, or command behaviors were adapted;
-- which portions were independently implemented;
-- compatibility intentionally preserved, changed, or omitted;
-- state migration behavior;
-- the complete applicable MIT notice.
+## StatusInfo
 
-Attribution:
+**StatusInfo** was created by **Robin Kuiper** and distributed through the Roll20 API Scripts repository under the MIT License.
 
-- Original project: TokenMod
-- Original author: The Aaron, Arcane Scriptomancer
-- Current candidate baseline: TokenMod `0.8.88`
-- Source: https://github.com/Roll20/roll20-api-scripts/tree/master/TokenMod
+GameAssist acknowledges StatusInfo as a design and compatibility reference for condition descriptions, condition menus, marker-driven status information, and related chat workflows. Any StatusInfo-derived code included in a GameAssist release retains the applicable copyright and permission notice below.
 
-Recommended module notice:
+- Project: StatusInfo
+- Author: Robin Kuiper
+- Source: <https://github.com/Roll20/roll20-api-scripts/tree/master/StatusInfo>
+- License: MIT
 
-> This GameAssist service is independently maintained and substantially redesigned for the GameAssist architecture. It contains portions adapted from the MIT-licensed TokenMod project by The Aaron where identified in the implementation record. It is not an official TokenMod release and is not endorsed or supported by the original author.
-
-### Condition Information Service
-
-The future GameAssist condition-information service will be independently branded and maintained. It may preserve selected `!condition` workflows as a compatibility surface, but it must not present itself as an official StatusInfo release.
-
-Before implementation, record:
-
-- the exact StatusInfo version and commit used;
-- which files, functions, condition records, or workflows were adapted;
-- which portions were independently implemented;
-- compatibility intentionally preserved, changed, or omitted;
-- state migration behavior;
-- the complete applicable MIT notice;
-- the license and source of any bundled game-rule descriptions.
-
-Attribution:
-
-- Original project: StatusInfo
-- Original author: Robin Kuiper
-- Supplied reference baseline: StatusInfo `0.3.11`
-- Current Roll20 repository version at the time of this record: `0.3.12`
-- Source: https://github.com/Roll20/roll20-api-scripts/tree/master/StatusInfo
-
-Issue #26 must select and pin the actual baseline after comparing the supplied `0.3.11` reference with the currently published version.
-
-Recommended module notice:
-
-> This GameAssist service is independently maintained and substantially redesigned for the GameAssist architecture. It contains portions adapted from the MIT-licensed StatusInfo project by Robin Kuiper where identified in the implementation record. It is not an official StatusInfo release and is not endorsed or supported by the original author.
+GameAssist is independently maintained and is not an official StatusInfo release. The original author is not responsible for GameAssist support, changes, or compatibility decisions.
 
 ## Roll20 API Scripts MIT Notice
 
-TokenMod and StatusInfo are distributed through the Roll20 API Scripts repository under its MIT license.
+TokenMod and StatusInfo are distributed through the Roll20 API Scripts repository under its MIT License.
 
 Copyright (c) 2014-2018 Roll20 and/or Individual Authors
 
@@ -102,49 +68,17 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-Repository license: https://github.com/Roll20/roll20-api-scripts/blob/master/LICENSE
+Repository license: <https://github.com/Roll20/roll20-api-scripts/blob/master/LICENSE>
 
-## D&D 5E Rules Text
+## D&D 5E Rules Material
 
-Condition names and mechanics may be implemented independently, but copied descriptive text requires a verified source and license.
+GameAssist does not reproduce non-SRD sourcebook text. D&D 5E (2014) rules descriptions included with GameAssist must either be original summaries or come from material released through the **System Reference Document 5.1** under the **Creative Commons Attribution 4.0 International License**.
 
-For D&D 5E (2014) rules text, GameAssist should use System Reference Document 5.1 material released under Creative Commons Attribution 4.0 International, or use original summaries that do not copy non-SRD book text.
+- Official SRD information and downloads: <https://www.dndbeyond.com/srd/>
+- Creative Commons Attribution 4.0: <https://creativecommons.org/licenses/by/4.0/>
 
-Before shipping SRD-derived descriptions:
+Use of SRD material does not imply endorsement by Wizards of the Coast.
 
-- verify each description against SRD 5.1 rather than an unofficial transcription;
-- include the attribution statement required by the SRD 5.1 Creative Commons preamble;
-- identify GameAssist modifications where required by CC BY 4.0;
-- do not imply Wizards of the Coast endorsement.
+## GameAssist License
 
-Official SRD licensing and downloads: https://www.dndbeyond.com/srd/
-
-## Implementation Record Requirements
-
-Every release that introduces or materially updates adapted code must record:
-
-1. Upstream project, author, source URL, version, and commit.
-2. Applicable license and preserved notice.
-3. Adapted files or functional areas.
-4. Original GameAssist additions and architectural changes.
-5. Compatibility retained, intentionally changed, or omitted.
-6. State migration and rollback behavior.
-7. Verification performed against the upstream baseline.
-8. Any third-party content licenses beyond the software license.
-
-These records belong in the relevant MECHSUITS section footer, this document, and the release changelog.
-
-## Contacting Original Authors
-
-The MIT license does not require advance notice, approval, or a response from the original authors when its conditions are followed.
-
-A brief courtesy message is nevertheless appropriate after the first working integration is public. It should:
-
-- thank the author;
-- identify the original project and exact baseline;
-- link to GameAssist and this attribution record;
-- explain that the adaptation is independently maintained;
-- avoid requesting endorsement, support, or an obligation to review;
-- offer to correct any attribution mistake promptly.
-
-No response should be treated as required permission, approval, or endorsement.
+Original GameAssist code is released under the MIT License. See [`LICENSE`](LICENSE) for the GameAssist copyright and permission notice.

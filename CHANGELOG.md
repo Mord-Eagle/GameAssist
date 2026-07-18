@@ -10,7 +10,8 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 | Revision | Status | Role |
 | --- | --- | --- |
-| **v0.1.4.7** | Release candidate; automated and Roll20 sandbox verification passed, merge pending | Standalone TokenMod and StatusInfo interoperability |
+| **v0.1.5.0** | In development; not released until Issues #25-#29 complete | Integrated marker, token, and condition architecture |
+| **v0.1.4.7** | Stable release; automated and Roll20 sandbox verification passed | Standalone TokenMod and StatusInfo interoperability |
 | **v0.1.4.6** | Merged release | DM-readable system health and troubleshooting status |
 | **v0.1.4.5** | Merged release | NPC death-history buckets, handouts, and arc notes |
 | **v0.1.4.4** | Merged release | DM-facing CritFumble help and NPC death-audit readability update |
@@ -1797,14 +1798,14 @@ The Roll20 API sandbox acceptance pass confirmed real `sendChat` routing, TokenM
 
 ### Release definition
 
-GameAssist v0.1.5.0 is the MarkerService foundation release. It replaces GameAssist's chat-generated standalone TokenMod marker requests with one internal marker authority while preserving existing gameplay commands, module configuration, NPC death history, concentration runtime data, and unrelated token markers.
+GameAssist v0.1.5.0 is the integrated marker, token, and condition architecture release. It remains in development and will not be published until Issues #25 through #29 are complete. The release replaces the standalone TokenMod and StatusInfo installations for supported GameAssist workflows with independently branded and attributed GameAssist services.
 
-This release implements [Issue #25](https://github.com/Mord-Eagle/GameAssist/issues/25). Integrated StatusInfo and TokenMod command modules remain separate work under Issues #26 and #27.
+The current checkpoint implements [Issue #25](https://github.com/Mord-Eagle/GameAssist/issues/25): MarkerService and migration of existing GameAssist marker consumers. Issues #26 and #27 add the condition and general token services; Issue #28 stabilizes the complete architecture; Issue #29 holds the final release gate. These are checkpoints within `v0.1.5.0`, not separate public versions.
 
 ### Added – CORE:MARKERSERVICE
 
 - Added the properly nested `[GAMEASSIST:CORE:MARKERSERVICE]` section.
-- Added `GameAssist.MarkerService` as non-toggleable core infrastructure with independent service version `1.0.0`.
+- Added `GameAssist.MarkerService` as toggleable core infrastructure with independent service version `1.0.0`.
 - Added built-in marker resolution for Roll20's standard marker identifiers.
 - Added custom marker resolution through `Campaign().get('_token_markers')`, including:
   - exact display-name matches;
@@ -1821,6 +1822,18 @@ This release implements [Issue #25](https://github.com/Mord-Eagle/GameAssist/iss
 - Added `resolve`, `read`, `inspect`, `has`, `add`, `remove`, `toggle`, `set`, `observe`, `clearObservers`, `getRegistry`, and `normalizeId`.
 - Added explicit operation results containing success state, stable error code, diagnostic message, changed/verified state, resolved marker identity, and before/after entries.
 - Added one shared `change:graphic:statusmarkers` observation contract for integrated modules and future consumers.
+
+### MarkerService lifecycle and dependency safeguards
+
+- Registered MarkerService as a first-class core service visible through `!ga-config modules` and ConfigUI.
+- Added `!ga-enable MarkerService` and `!ga-disable MarkerService` support through the existing lifecycle commands.
+- Declared NPCManager, ConcentrationTracker, and DebugTools as MarkerService dependents.
+- Disabling MarkerService first disables those dependent modules so their teardown can use marker access for cleanup, then disables the service itself.
+- CritFumble, ConfigUI, and NPCHPRoller remain available while MarkerService is off.
+- Re-enabling a dependent module is refused until MarkerService is enabled.
+- A sandbox reload preserves the DM's disabled MarkerService choice and turns off any inconsistent dependent configuration left enabled in persistent state.
+- MarkerService operations return `UNAVAILABLE` with an actionable enable command while the service is disabled.
+- The disable notice explains that standalone TokenMod by The Aaron and StatusInfo by Robin Kuiper provide separate token-marker and condition tools but do not restore GameAssist death-history or concentration features.
 
 ### Marker mutation behavior
 
@@ -1861,10 +1874,9 @@ This release implements [Issue #25](https://github.com/Mord-Eagle/GameAssist/iss
 ### Dependency and compatibility boundary
 
 - Standalone TokenMod is no longer required for NPCManager, ConcentrationTracker, or DebugTools marker operations.
-- Standalone TokenMod may remain during the staged transition when a campaign still uses its independent `!token-mod` commands.
-- Standalone StatusInfo may remain for its independent workflows, but v0.1.5.0 does not promise synchronization through its historical TokenMod observer path.
-- Integrated and attributed StatusInfo is reserved for v0.1.5.1.
-- Integrated and attributed TokenMod command compatibility is reserved for v0.1.5.2.
+- The final v0.1.5.0 release replaces standalone TokenMod and StatusInfo for supported GameAssist token and condition workflows; it does not retain a legacy marker-dispatch path to those scripts.
+- Campaigns that deliberately disable MarkerService may use unrelated standalone marker tools while continuing to use GameAssist modules that do not depend on MarkerService.
+- The independently branded and attributed condition and token services are required parts of v0.1.5.0 under Issues #26 and #27.
 - Existing scripts that independently modify the same marker, NPC HP/bar 1, or natural-1 workflow remain feature-level conflict risks.
 
 ### State and migration impact
@@ -1896,16 +1908,18 @@ This release implements [Issue #25](https://github.com/Mord-Eagle/GameAssist/iss
 - Added the byte-identical `GameAssist.js` One-Click publication mirror named by `script.json` while retaining `GameAssist` as the canonical development source.
 - Added `previousversions/GameAssist v0.1.4.7` so every manifest `previousversions` entry has a corresponding preserved repository artifact.
 - Updated `script.json` to v0.1.5.0, removed the production TokenMod dependency, retained all 58 commands, and documented named and behavioral overlap risks.
-- Updated `ROADMAP.md` to place Issue #25 in sandbox verification and retain the Roll20 sandbox pass as the completion gate.
-- Added `ATTRIBUTIONS.md`, updated the GameAssist copyright year, and recorded the independent-branding, upstream-provenance, MIT-notice, SRD-text, and author-contact policy for the planned token and condition services.
+- Updated `ROADMAP.md` so Issues #25 through #29 are checkpoints within one unreleased v0.1.5.0 train rather than separate v0.1.5.x releases.
+- Rebuilt `ATTRIBUTIONS.md` as an external-facing third-party notice containing provenance, license text, rules-content licensing, and non-endorsement language only.
+- Removed release gates, upstream comparison work, publication checks, and maintainer guidance from public-facing documents.
+- Restored a warmer, visually guided README quick start and removed internal packaging instructions and editorial troubleshooting language from the public guide.
 
 ### Release artifacts
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `019CA4EE1B9EA35D7B37C51B89B49998A4B8581E3A651D48E05562741C4A5654` |
-| `GameAssist.js` | `019CA4EE1B9EA35D7B37C51B89B49998A4B8581E3A651D48E05562741C4A5654` |
-| `GameAssist-v0.1.5.0` | `019CA4EE1B9EA35D7B37C51B89B49998A4B8581E3A651D48E05562741C4A5654` |
+| `GameAssist` | `F46745BBC889C30A75EBB57AD57CD61929AD8575AB30457013B2B6A8FC03DB0B` |
+| `GameAssist.js` | `F46745BBC889C30A75EBB57AD57CD61929AD8575AB30457013B2B6A8FC03DB0B` |
+| `GameAssist-v0.1.5.0` | `F46745BBC889C30A75EBB57AD57CD61929AD8575AB30457013B2B6A8FC03DB0B` |
 
 The repository source, One-Click publication mirror, and versioned Roll20 test artifact are byte-identical.
 
@@ -1914,7 +1928,8 @@ The repository source, One-Click publication mirror, and versioned Roll20 test a
 | Check | Result |
 | --- | --- |
 | JavaScript parse/compile | Passed |
-| Mocked Roll20 ready initialization | Passed with five default modules running and DebugTools disabled |
+| Mocked Roll20 ready initialization and MarkerService lifecycle | Passed (24/24 lifecycle checks) with MarkerService plus five default modules enabled and DebugTools disabled |
+| Marker mutation refresh after lifecycle changes | Passed (18/18 checks) for built-in/custom resolution, numbered/duplicate handling, toggle/set, and unrelated-marker preservation |
 | Mocked marker-consumer workflow | Passed (22/22) across NPCManager, ConcentrationTracker, DebugTools, teardown, and re-enable |
 | Startup errors | 0 |
 | Chat-generated `!token-mod` commands | 0 |
@@ -1932,9 +1947,9 @@ The repository source, One-Click publication mirror, and versioned Roll20 test a
 | Single GameAssist status-marker write authority | Passed |
 | `script.json` parse, version, command count, and dependency metadata | Passed |
 
-### Roll20 acceptance requirement
+### Roll20 acceptance requirements
 
-The v0.1.5.0 release gate requires a Roll20 Mod sandbox pass with standalone TokenMod absent. The pass must cover NPC death/revival markers, concentration add/status/remove, custom marker display names and exact tags, unrelated numbered-marker preservation, module disable/enable teardown, DebugTools dry-run/apply behavior, sandbox reload, and existing NPC history retention.
+Issue #25 requires a Roll20 Mod sandbox pass with standalone TokenMod absent. The pass must cover NPC death/revival markers, concentration add/status/remove, custom marker display names and exact tags, unrelated numbered-marker preservation, MarkerService cascade disable/re-enable behavior, DebugTools dry-run/apply behavior, sandbox reload, and existing NPC history retention.
 
-Issue #25 remains open until that sandbox evidence is recorded.
+The public v0.1.5.0 release requires the additional condition-service, token-service, migration, compatibility, and full-suite acceptance checks tracked by Issues #26 through #29. Completing Issue #25 alone does not create a public v0.1.5.0 release.
 

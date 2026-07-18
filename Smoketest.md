@@ -2,6 +2,8 @@
 
 Use this guide after installing or updating GameAssist, before an important session, or while troubleshooting a feature.
 
+> `v0.1.5.0` is still in development. The MarkerService tests below verify the Issue #25 checkpoint; they do not replace the condition-service, token-service, stabilization, and final acceptance tests required before release.
+
 The tests are organized by component. Each section explains:
 
 - what the test proves;
@@ -45,7 +47,7 @@ Expected conditions that are not failures:
 
 - DebugTools is disabled by default.
 - Standalone TokenMod is not required for GameAssist marker operations in v0.1.5.0.
-- Standalone StatusInfo synchronization is not an acceptance requirement for v0.1.5.0.
+- The Issue #25 checkpoint does not test the future integrated condition service; the completed v0.1.5.0 release must pass that service's own tests before publication.
 - CritFumble help works without rollable tables, but table rolls require the seven exact table names.
 - Counts and timestamps in diagnostic panels vary by sandbox session.
 
@@ -130,7 +132,7 @@ Run:
 Pass when:
 
 - `!ga-status` identifies GameAssist v0.1.5.0 and gives a clear overall result;
-- five default modules are enabled and running;
+- MarkerService and five default gameplay/administration modules are enabled and running;
 - DebugTools is shown as disabled or paused;
 - no enabled module is dependency-skipped;
 - the actions below `!ga-status` include **Troubleshooting Details**, **Module List**, and **Open Settings**.
@@ -150,7 +152,7 @@ Run:
 
 Check:
 
-- [ ] MarkerService v1.0.0 is active.
+- [ ] MarkerService v1.0.0 is enabled.
 - [ ] Queue length returns to zero while idle.
 - [ ] Queue mode says normal handlers execute directly and queue use is explicit.
 - [ ] A missing duration is shown as `N/A`, not `N/Ams`.
@@ -228,7 +230,7 @@ Run each line only after the previous response. Pass when ConfigUI disables, re-
 
 **Why test it:** NPCManager and ConcentrationTracker now use MarkerService instead of sending marker commands to standalone TokenMod.
 
-**Skip when:** Skip only if no enabled GameAssist feature uses markers. Skip the **without TokenMod** portion when the campaign cannot safely disable TokenMod; run it later in a disposable campaign.
+**Skip when:** Skip only if MarkerService and every dependent GameAssist module are deliberately disabled. The **without TokenMod** portion is required for Issue #25 acceptance; use a disposable campaign when the active campaign cannot safely remove TokenMod yet.
 
 ### Basic Check
 
@@ -288,7 +290,7 @@ Run:
 
 Pass when:
 
-- MarkerService v1.0.0 is active;
+- MarkerService v1.0.0 is enabled;
 - NPCManager and ConcentrationTracker are running;
 - both show confirmed dependencies;
 - neither is skipped because TokenMod is absent.
@@ -383,7 +385,7 @@ Return DebugTools to its default state after recording the tag:
 !ga-disable DebugTools
 ```
 
-#### M5. Teardown and Re-enable
+#### M5. Individual Module Teardown and Re-enable
 
 Apply the configured death and concentration markers to disposable tokens. Then run each command separately:
 
@@ -401,22 +403,62 @@ Pass when:
 - both modules return to running;
 - NPC death history, buckets, and Arcs remain present.
 
-#### M6. Reload and Persistence
+#### M6. MarkerService Opt-Out and Dependency Cascade
 
-Save or restart the Mod sandbox, then run:
+Run each command after the previous response appears:
+
+```roll20chat
+!ga-disable MarkerService
+!ga-config modules
+!ga-enable NPCManager
+```
+
+Pass when:
+
+- NPCManager, ConcentrationTracker, and DebugTools are configured off and not running;
+- MarkerService is configured off and not running;
+- CritFumble, ConfigUI, and NPCHPRoller keep their prior configured/running state;
+- the disable notice names the affected modules and explains that unrelated GameAssist modules remain available;
+- the notice accurately describes standalone TokenMod and StatusInfo as separate alternatives rather than as a hidden GameAssist fallback;
+- the attempt to enable NPCManager is refused with guidance to enable MarkerService first.
+
+Now restore the service and enabled dependents:
+
+```roll20chat
+!ga-enable MarkerService
+!ga-enable NPCManager
+!ga-enable ConcentrationTracker
+!ga-config modules
+```
+
+Pass when MarkerService starts first, both dependents can then start, and DebugTools remains disabled unless the GM explicitly enables it.
+
+#### M7. Reload and Persistence
+
+Disable MarkerService again, save or restart the Mod sandbox, then run:
 
 ```roll20chat
 !ga-status --details
 !ga-config modules
+```
+
+Pass when MarkerService and its dependents remain configured off after reload while CritFumble, ConfigUI, and NPCHPRoller keep their previous settings.
+
+Restore normal marker operation, restart once more, and verify retained campaign data:
+
+```roll20chat
+!ga-enable MarkerService
+!ga-enable NPCManager
+!ga-enable ConcentrationTracker
 !npc-death-report
 !concentration --status
 ```
 
-Pass when MarkerService restarts, both modules run, configuration remains, and existing NPC history is retained.
+Pass when the service and dependents run again, existing NPC history is retained, and configuration remains consistent.
 
-#### M7. Restore Campaign Settings
+#### M8. Restore Campaign Settings
 
-Restore the original `deadMarker`, `autoHide`, and concentration `marker` values recorded during setup. Reinstall or re-enable standalone TokenMod only if the campaign still uses its independent `!token-mod` commands.
+Restore the original `deadMarker`, `autoHide`, and concentration `marker` values recorded during setup. Leave MarkerService and only the GameAssist modules the campaign uses in their intended final enabled state.
 
 ### MarkerService Failure Evidence
 
@@ -426,7 +468,7 @@ If any MarkerService check fails, record:
 - exact token `statusmarkers` value before and after;
 - token name and ID;
 - whether the token is linked and on the Objects layer;
-- whether standalone TokenMod was installed;
+- which other Mods could change token markers during the test;
 - `!ga-status --details` and `!ga-config modules` output;
 - exact GameAssist warning or API Console exception.
 
@@ -988,7 +1030,7 @@ Run:
 
 Check:
 
-- MarkerService is active.
+- MarkerService is enabled.
 - The affected module is running.
 - The token is on the Objects layer and represents the right character.
 - NPCManager tokens have `npc=1`.

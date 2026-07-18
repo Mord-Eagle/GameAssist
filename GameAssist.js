@@ -23,8 +23,8 @@ calls GameAssist.enqueue(). This package ships with six configurable modules:
 INSTALL / USAGE
 - One-Click: install GameAssist.
 - Manual (Pro): paste this entire file into the Mod (API) Scripts editor and save.
-- GameAssist v0.1.5.0 no longer requires standalone TokenMod for NPCManager,
-  ConcentrationTracker, or DebugTools marker operations.
+- MarkerService is enabled by default and can be disabled without turning off
+  GameAssist modules that do not use marker behavior.
 
 CORE COMMANDS (GM)
 - !ga-config list
@@ -54,8 +54,10 @@ V0.1.5.0 MARKER ARCHITECTURE
   unrelated marker entries are preserved through a structured mutation contract.
 - NPCManager, ConcentrationTracker, and DebugTools use GameAssist.MarkerService.
 - Marker-dependent GameAssist modules no longer depend on standalone TokenMod.
-- Integrated StatusInfo and TokenMod modules remain staged for v0.1.5.1 and
-  v0.1.5.2; this release does not claim those command surfaces.
+- Disabling MarkerService also disables NPCManager, ConcentrationTracker, and
+  DebugTools while CritFumble, ConfigUI, and NPCHPRoller remain available.
+- The public v0.1.5.0 release is gated on the independently branded and
+  attributed GameAssist token and condition services plus full stabilization.
 - Queue timeouts release the queue but cannot terminate Roll20 operations.
 - Configuration snapshots contain configuration only, never runtime caches.
 
@@ -76,7 +78,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 // mechsuit:
 //   codename: "GAMEASSIST"
 //   project_version: "v0.1.5.0"
-//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, explicit opt-in queue execution, state self-healing, dependency diagnostics, and one internal marker authority. Non-goals: integrated TokenMod/StatusInfo command surfaces in v0.1.5.0, sheet-specific integrations, implicit event queueing, or transport changes beyond Roll20 chat API."
+//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, explicit opt-in queue execution, state self-healing, dependency diagnostics, and one toggleable marker authority. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, sheet-specific integrations, implicit event queueing, or transport changes beyond Roll20 chat API."
 //   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critfumble","modules.npcmanager","modules.concentrationtracker","modules.npchproller","modules.debugtools","bootstrap"]
 //   env:
 //     required: []
@@ -423,13 +425,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const statusInfo = getStandaloneScriptEvidence('StatusInfo');
         const tokenModVersion = tokenMod.version ? ` v${tokenMod.version}` : '';
         const statusInfoVersion = statusInfo.version ? ` v${statusInfo.version}` : '';
-        const markerLine = `MarkerService v${MarkerService.version}: active; GameAssist marker reads and writes are internal.`;
+        const markerLine = MarkerService.isEnabled()
+            ? `MarkerService v${MarkerService.version}: enabled; GameAssist marker reads and writes are available.`
+            : `MarkerService v${MarkerService.version}: disabled; marker-dependent GameAssist modules are unavailable.`;
         const tokenModLine = tokenMod.confirmed
-            ? `Standalone TokenMod${tokenModVersion}: detected; optional for its own commands, but not required by GameAssist marker modules.`
-            : 'Standalone TokenMod: not detected; GameAssist marker modules do not require it.';
+            ? `Standalone TokenMod${tokenModVersion}: detected as a separate Mod. Avoid enabling overlapping marker automation.`
+            : 'Standalone TokenMod: not detected.';
         const statusInfoLine = statusInfo.confirmed
-            ? `Standalone StatusInfo${statusInfoVersion}: detected; v0.1.5.0 does not promise observer synchronization with the new internal marker service.`
-            : 'Standalone StatusInfo: not detected; integrated StatusInfo is planned for v0.1.5.1.';
+            ? `Standalone StatusInfo${statusInfoVersion}: detected as a separate Mod. Avoid enabling overlapping condition automation.`
+            : 'Standalone StatusInfo: not detected.';
         return [markerLine, tokenModLine, statusInfoLine];
     }
 
@@ -958,7 +962,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Roll20 token marker authority
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:MARKERSERVICE", title: "MarkerService",
-    //   guarantees: ["Single authority for built-in/custom marker resolution, reads, writes, toggles, and observations","Mutations preserve unrelated markers, numbered overlays, and duplicate entries unless the requested marker is removed"],
+    //   guarantees: ["Single authority for built-in/custom marker resolution, reads, writes, toggles, and observations","Mutations preserve unrelated markers, numbered overlays, and duplicate entries unless the requested marker is removed","Disabled service refuses marker work with actionable diagnostics"],
     //   depends_on: ["[GAMEASSIST:APP:UTILS]"], provides: ["GameAssist.MarkerService"],
     //   observability: { spans: ["[GAMEASSIST:CORE:MARKERSERVICE]"] },
     //   last_updated_version: "v0.1.5.0",
@@ -969,7 +973,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // stored custom tags. It owns marker parsing and mutation so modules cannot drift into
     // competing implementations. Mutations return explicit result objects and direct
     // statusmarkers writes trigger one shared observation contract for future modules.
+    // The DM may disable the service; GameAssist then disables marker-dependent modules
+    // while leaving unrelated modules available.
     // -----------------------------------------------------------------------------
+    let setMarkerServiceEnabled;
     const MarkerService = (() => {
         const version = '1.0.0';
         const builtInMarkerIds = new Set([
@@ -988,6 +995,25 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const observers = new Map();
         let observerId = 0;
         let observerWired = false;
+        let enabled = false;
+
+        function disabledFailure(extra = {}) {
+            return failure(
+                'UNAVAILABLE',
+                'MarkerService is disabled. Enable it with !ga-enable MarkerService before using marker-dependent features.',
+                extra
+            );
+        }
+
+        function isEnabled() {
+            return enabled;
+        }
+
+        setMarkerServiceEnabled = value => {
+            enabled = value === true;
+            if (!enabled) observers.clear();
+            return enabled;
+        };
 
         function unwrap(marker) {
             const text = String(marker ?? '').split('@')[0].trim();
@@ -1047,6 +1073,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
          * Design: cache by the raw campaign value to avoid repeated JSON parsing.
          */
         function getRegistry() {
+            if (!enabled) {
+                return {
+                    raw: null,
+                    markers: [],
+                    error: 'MarkerService is disabled. Enable it with !ga-enable MarkerService.'
+                };
+            }
             let raw;
             try {
                 raw = String(Campaign().get('_token_markers') || '[]');
@@ -1097,6 +1130,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
          * Outputs: a structured result; callers inspect ok before using id.
          */
         function resolve(marker) {
+            if (!enabled) {
+                return disabledFailure({
+                    requested: unwrap(marker),
+                    id: null,
+                    source: null,
+                    ambiguous: false,
+                    candidates: [],
+                    reason: 'service-disabled',
+                    registryError: null
+                });
+            }
             const requested = unwrap(marker);
             const normalized = normalizeId(requested);
 
@@ -1210,6 +1254,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function read(token) {
+            if (!enabled) {
+                return disabledFailure({
+                    tokenId: token?.id || null,
+                    raw: '',
+                    entries: []
+                });
+            }
             if (!token || typeof token.get !== 'function' || !token.id) {
                 return failure('INVALID_ARGUMENT', 'A Roll20 graphic token is required.', {
                     tokenId: token?.id || null,
@@ -1423,6 +1474,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (observerWired) return;
             observerWired = true;
             R20_ON('change:graphic:statusmarkers', (token, previous) => {
+                if (!enabled || !observers.size) return;
                 const before = parseList(previous?.statusmarkers || '');
                 const current = read(token);
                 if (!current.ok) return;
@@ -1450,6 +1502,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function observe(callback, options = {}) {
+            if (!enabled) return disabledFailure();
             if (typeof callback !== 'function') {
                 return failure('INVALID_ARGUMENT', 'Marker observer callback must be a function.');
             }
@@ -1474,7 +1527,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const requested = String(owner || '');
             let removed = 0;
             observers.forEach((subscription, id) => {
-                if (subscription.owner !== requested) return;
+                if (requested && subscription.owner !== requested) return;
                 observers.delete(id);
                 removed++;
             });
@@ -1483,6 +1536,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         return Object.freeze({
             version,
+            isEnabled,
             resolve,
             read,
             inspect,
@@ -1498,13 +1552,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         });
     })();
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Introduced MarkerService 1.0.0 as the sole GameAssist marker authority and removed GameAssist marker dependence on chat-generated TokenMod commands.
+    // Changed (v0.1.5.0): Introduced MarkerService 1.0.0 as the sole GameAssist marker authority, added an explicit enabled lifecycle, and removed GameAssist marker dependence on chat-generated TokenMod commands.
     // Decision log:
     //   CHOICE: Mutate statusmarkers directly and publish one observation contract - ALT: send TokenMod chat commands; REJECTED: external authorization, timing, and dependency ambiguity.
     //   CHOICE: Remove every matching duplicate on explicit removal - ALT: remove only the first; REJECTED: callers asking for an absent state should not leave hidden duplicates active.
     //   CHOICE: Preserve duplicates and number overlays on reads and unrelated mutations - ALT: normalize the complete marker list; REJECTED: normalization would rewrite campaign state outside the requested operation.
     //   CHOICE: Preserve literal lowercase built-in ids before custom display names, then honor exact-case custom names - ALT: always prefer custom names; REJECTED: a custom "dead" could silently replace NPCManager's built-in default.
     //   CHOICE: Resolve exact stored custom tags without registry access - ALT: require registry confirmation; REJECTED: valid stored tags must survive registry read failures.
+    //   CHOICE: Refuse every marker operation while disabled - ALT: leave read-only helpers active; REJECTED: a disabled service must have one clear, predictable boundary.
     // [GAMEASSIST:CORE:MARKERSERVICE] END
     // =============================================================================
 
@@ -1570,7 +1625,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             prefixes = [],
             teardown = null,
             dependsOn = [],
-            preserveRuntimeOnDisable = false
+            preserveRuntimeOnDisable = false,
+            service = false
         } = {}) {
             if (READY) {
                 this.log('Core', `Cannot register after ready: ${name}`, 'WARN');
@@ -1590,6 +1646,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 prefixes,
                 dependsOn,
                 preserveRuntimeOnDisable: preserveRuntimeOnDisable === true,
+                service: service === true,
                 wired: false,
                 internal: false
             };
@@ -1825,31 +1882,74 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 this.log('Core', `${name} is already transitioning`, 'WARN');
                 return;
             }
-            _transitioning[name] = true;
+            const dependents = [];
+            const visitedDependencies = new Set([name]);
+            const collectDependents = dependency => {
+                Object.entries(MODULES).forEach(([candidate, candidateMod]) => {
+                    if (candidateMod.internal || visitedDependencies.has(candidate)) return;
+                    if (!(candidateMod.dependsOn || []).includes(dependency)) return;
+                    visitedDependencies.add(candidate);
+                    collectDependents(candidate);
+                    dependents.push(candidate);
+                });
+            };
+            collectDependents(name);
+
+            const transitionNames = [...dependents, name];
+            const busyDependency = transitionNames.find(moduleName => _transitioning[moduleName]);
+            if (busyDependency) {
+                this.log('Core', `${busyDependency} is already transitioning`, 'WARN');
+                return;
+            }
+            transitionNames.forEach(moduleName => { _transitioning[moduleName] = true; });
 
             _enqueue(() => {
-                const m = MODULES[name];
-                const finish = () => { delete _transitioning[name]; };
-                if (!m) { finish(); return; }
+                const disabledDependents = [];
+                transitionNames.forEach(moduleName => {
+                    const m = MODULES[moduleName];
+                    if (!m) {
+                        delete _transitioning[moduleName];
+                        return;
+                    }
 
-                m.active = false;
+                    const branch = getState(moduleName);
+                    const wasConfigured = branch.config.enabled !== false;
+                    const wasRunning = m.active || m.initialized;
+                    m.active = false;
 
-                if (typeof m.teardown === 'function' && m.wired) {
-                    try { m.teardown(); }
-                    catch(e) { this.log(name, `Teardown failed: ${e.message}`, 'WARN'); }
-                }
+                    if (typeof m.teardown === 'function' && m.wired && (wasConfigured || wasRunning)) {
+                        try { m.teardown(); }
+                        catch(e) { this.log(moduleName, `Teardown failed: ${e.message}`, 'WARN'); }
+                    }
 
-                const branch = getState(name);
-                branch.config.enabled = false;
-                if (!m.preserveRuntimeOnDisable) {
-                    branch.runtime = {};
-                }
+                    branch.config.enabled = false;
+                    if (!m.preserveRuntimeOnDisable) branch.runtime = {};
+                    m.initialized = false;
+                    if (m.service) m.wired = false;
 
-                m.initialized = false;
+                    if (wasConfigured || wasRunning) {
+                        this.log(moduleName, 'Disabled');
+                        recordMetric('toggle', { mod: moduleName, note: 'disabled' });
+                        if (moduleName !== name) disabledDependents.push(moduleName);
+                    }
+                    delete _transitioning[moduleName];
+                });
+
                 this._metrics.lastUpdate = isoNow();
-                this.log(name, 'Disabled');
-                recordMetric('toggle', { mod: name, note: 'disabled' });
-                finish();
+                if (disabledDependents.length) {
+                    this.log(
+                        'Core',
+                        `${name} was turned off, so ${disabledDependents.join(', ')} ${disabledDependents.length === 1 ? 'was' : 'were'} also turned off. Other GameAssist modules remain available.`,
+                        'WARN'
+                    );
+                    if (name === 'MarkerService') {
+                        this.log(
+                            'Core',
+                            'Standalone TokenMod by The Aaron and StatusInfo by Robin Kuiper can provide separate token-marker and condition tools, but they do not restore GameAssist death-history or concentration features.',
+                            'INFO'
+                        );
+                    }
+                }
             });
         },
 
@@ -1885,13 +1985,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     GameAssist.getLinkedCharacter = getLinkedCharacter;
 
     globalThis.GameAssist = GameAssist;
+    GameAssist.register('MarkerService', () => {
+        setMarkerServiceEnabled(true);
+    }, {
+        enabled: true,
+        service: true,
+        teardown: () => setMarkerServiceEnabled(false)
+    });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Exposed the non-toggleable GameAssist.MarkerService developer API and removed marker-module dependency gating on standalone TokenMod.
+    // Changed (v0.1.5.0): Exposed GameAssist.MarkerService as a toggleable core service, cascaded service shutdown to dependent modules, and removed marker-module dependency gating on standalone TokenMod.
     // Decision log:
     //   CHOICE: Expose globally under the existing GameAssist name - ALT: add another global; REJECTED: unnecessary global pollution.
     //   CHOICE: Keep normal handlers direct and serialized work explicit through GameAssist.enqueue.
     //   CHOICE: Keep runtime retention as registration-level opt-in - ALT: preserve every runtime cache; REJECTED: changed established lifecycle semantics.
     //   CHOICE: Preserve configured intent when dependency enablement is refused - ALT: force false; REJECTED: concealed dependency-skipped modules.
+    //   CHOICE: Disable dependent modules before their service - ALT: disable the service first; REJECTED: dependent teardown would lose the marker access it needs for cleanup.
     // Prior notes:
     //   v0.1.4.7: Public TokenMod contract/API metadata could confirm that external dependency when Roll20 metadata was unavailable.
     //   v0.1.4.6: Refused dependency enable attempts preserved configured intent and configured-but-inactive modules remained disableable.
@@ -1967,7 +2075,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // config, exporting versioned configuration-only snapshots, and inspecting health.
     // The default status view prioritizes a DM's next action; --details preserves
     // session counters, queue state, timestamps, event-hook counts, dependency evidence,
-    // active MarkerService, and optional standalone TokenMod/StatusInfo evidence.
+    // MarkerService lifecycle state and separately detected marker/condition Mod evidence.
     // -------------------------------------------------------------------------
     function getModuleHealth() {
         return Object.entries(MODULES)
@@ -2377,7 +2485,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.log('Metrics', summary.join('\n'));
     }, 'Core', { gmOnly: true });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Troubleshooting details now identify active MarkerService before transitional standalone TokenMod/StatusInfo evidence.
+    // Changed (v0.1.5.0): Troubleshooting details now identify MarkerService lifecycle state before reporting separately detected marker or condition Mods.
     // Decision log:
     //   CHOICE: Keep command syntax identical to legacy for drop-in replacement.
     //   CHOICE: Keep the default status action-oriented and volatile counters behind --details - ALT: one exhaustive panel; REJECTED: obscured the health signal.
@@ -2426,14 +2534,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Config UI module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONFIGUI", title: "Config UI",
-    //   guarantees: ["GM chat menu for module toggles and quick config"],
+    //   guarantees: ["GM chat menu for module and core-service toggles and quick config"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:INTERFACES:COMMANDS]"],
-    //   last_updated_version: "v0.1.1.2",
+    //   last_updated_version: "v0.1.5.0",
     //   independent_versions: { module_version: "0.1.0" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:CONFIGUI provides GM-facing chat controls to page through modules,
-    // toggle enablement, and write configs without changing legacy defaults. It reuses
+    // toggle enablement, identify core services, and write configs without changing legacy defaults. It reuses
     // shared button helpers for consistency across modules.
     // -------------------------------------------------------------------------
     GameAssist.register('ConfigUI', function() {
@@ -2521,13 +2629,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const active  = !!(mod.initialized && mod.active);
             const statusIcon = enabled ? (active ? '🟢' : '⏸️') : '⛔';
             const statusText = enabled ? (active ? 'Enabled' : 'Disabled (inactive)') : 'Disabled';
+            const typeLabel = mod.service ? ' <span style="font-size:smaller;">(core service)</span>' : '';
             const toggleCmd  = enabled ? `!ga-disable ${name}` : `!ga-enable ${name}`;
             const toggleBtn  = GameAssist.createButton(`${enabled ? 'Disable' : 'Enable'} ${name}`, toggleCmd);
             const configButtons = buildConfigButtons(name, cfg);
             const summary = modState.config.showSummaries ? formatConfigSummary(cfg) : '';
 
             const rows = [
-                `${statusIcon} <strong>${_sanitize(name)}</strong> — ${_sanitize(statusText)}`,
+                `${statusIcon} <strong>${_sanitize(name)}</strong>${typeLabel} — ${_sanitize(statusText)}`,
                 toggleBtn
             ];
             if (configButtons) {
@@ -2583,6 +2692,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         prefixes: ['!ga-config-ui', '!ga-config ui']
     });
     // --- Notes & Comments ---
+    // Changed (v0.1.5.0): Core services now appear with an explicit label and use the same guarded enable/disable controls as modules.
     // CHOICE: Button helper reused; nav uses the same command path for refresh/paging.
     // Maintenance (v0.1.4.1, no semantic change): Routed the unchanged default page size through POLICY.
     // Prior notes:
@@ -4636,6 +4746,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         enabled: true,
         events: ['add:graphic', 'change:graphic:bar1_value'],
         prefixes: ['!npc-death-help', '!npc-death-report', '!npc-death-clear', '!npc-death-audit', '!npc-death-buckets', '!npc-death-write', '!npc-wr', '!npc-death-arc'],
+        dependsOn: ['MarkerService'],
         preserveRuntimeOnDisable: true,
         teardown: () => {
             const branch = GameAssist.getState('NPCManager');
@@ -5226,6 +5337,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     enabled:  true,
     events: ['chat:message'],
     prefixes: ['!concentration','!cc','!ga-conc-status'],
+    dependsOn: ['MarkerService'],
     teardown: () => {
         const page = Campaign().get('playerpageid');
         const marker = (GameAssist.getState('ConcentrationTracker')?.config?.marker) || 'Concentrating';
@@ -5707,7 +5819,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.log('DebugTools', 'Debug module registered. Enable with !ga-enable DebugTools when needed.', 'INFO', { startup: true });
     }, {
         enabled: false,
-        prefixes: ['!ga-debug']
+        prefixes: ['!ga-debug'],
+        dependsOn: ['MarkerService']
     });
     // --- Notes & Comments ---
     // Changed (v0.1.5.0): DebugTools module_version advanced to 0.2.0; marker previews and applied changes now resolve and mutate through CORE:MARKERSERVICE.
@@ -5734,7 +5847,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Sandbox ready bootstrap
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "BOOTSTRAP", title: "Bootstrap",
-    //   guarantees: ["Repair known state, seed defaults, diagnose dependencies, preserve configured intent when dependencies prevent startup, init enabled modules","MarkerService remains active independently of optional module lifecycle"],
+    //   guarantees: ["Repair known state, seed defaults, diagnose dependencies, preserve configured intent when dependencies prevent startup, init enabled modules","MarkerService initializes before its consumers and may be disabled without disabling unrelated modules"],
     //   depends_on: ["[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE]","[GAMEASSIST:MODULES]"],
     //   last_updated_version: "v0.1.5.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
@@ -5780,8 +5893,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
             const depInfo = GameAssist._checkDependencies(name);
             if (depInfo.status === 'missing') {
+                const disabledServices = depInfo.missing.filter(dependency =>
+                    MODULES[dependency]?.service && getState(dependency).config.enabled === false
+                );
+                if (disabledServices.length) {
+                    cfg.enabled = false;
+                    GameAssist.log(
+                        'Core',
+                        `${name} was turned off because ${disabledServices.join(', ')} is disabled. Enable the service first, then re-enable this module when its marker features are wanted.`,
+                        'WARN'
+                    );
+                }
                 GameAssist.log('Core', `${name} skipped (missing dependencies: ${depInfo.missing.join(', ')})`, 'WARN');
-                // DANGER: Do not set cfg.enabled=false here; that would erase configured intent and hide the startup failure from !ga-status.
+                // DANGER: Only an explicitly disabled internal service cascades to cfg.enabled=false; ordinary missing dependencies preserve configured intent for diagnosis.
                 mod.initialized = false;
                 mod.active = false;
                 return;
@@ -5807,11 +5931,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist._metrics.lastUpdate = isoNow();
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Startup now reports the integrated MarkerService release; NPCManager and ConcentrationTracker no longer enter dependency-skipped state when standalone TokenMod is absent.
+    // Changed (v0.1.5.0): Startup initializes the toggleable MarkerService before its consumers, turns consumers off when the DM has disabled that service, and no longer gates marker consumers on standalone TokenMod.
     // Decision log:
     //   CHOICE: Keep the core ready log visible while QUIET_STARTUP suppresses module-ready noise.
     //   CHOICE: Repair known state before seeding defaults so valid configuration survives.
     //   CHOICE: Preserve configured intent for dependency-skipped modules - ALT: force-disable config; REJECTED: hid startup failures and erased DM intent.
+    //   CHOICE: Treat an explicitly disabled GameAssist service differently from an unavailable external dependency because the DM selected that lifecycle outcome.
     // Prior notes:
     //   v0.1.4.7: Startup reported the standalone-interoperability release; lifecycle order was unchanged.
     //   v0.1.4.6: Checked configured intent before dependencies and preserved enabled configuration when a confirmed dependency was missing.
