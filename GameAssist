@@ -1951,16 +1951,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Admin/config commands (!ga-*)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "INTERFACES:COMMANDS", title: "Commands",
-    //   guarantees: ["GM-gated admin commands; unsafe config keys refused; versioned config-only export; plain-language health summary with opt-in troubleshooting and standalone-integration details"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:CORE:STATE]","[GAMEASSIST:CORE:OBJECT]"],
-    //   last_updated_version: "v0.1.4.7", lifecycle: "active" }
+    //   guarantees: ["GM-gated admin commands; unsafe config keys refused; versioned config-only export; plain-language health summary with opt-in marker and standalone-integration details"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:CORE:STATE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
+    //   last_updated_version: "v0.1.5.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // INTERFACES:COMMANDS contains GM/admin chat commands for listing modules, toggling
     // config, exporting versioned configuration-only snapshots, and inspecting health.
     // The default status view prioritizes a DM's next action; --details preserves
     // session counters, queue state, timestamps, event-hook counts, dependency evidence,
-    // and optional standalone TokenMod/StatusInfo evidence.
+    // active MarkerService, and optional standalone TokenMod/StatusInfo evidence.
     // -------------------------------------------------------------------------
     function getModuleHealth() {
         return Object.entries(MODULES)
@@ -2126,7 +2126,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 statusField('Average Queued Task Time', snapshot.avgDuration),
                 statusField('Last Recorded Activity', formatStatusTimestamp(snapshot.metrics.lastUpdate)),
                 statusField('GameAssist Event Hooks', `${snapshot.listenerCount} tracked internally. This is troubleshooting information, not a pass/fail test.`),
-                statusField('Standalone Integrations', snapshot.integrationLines)
+                statusField('Marker and Standalone Integrations', snapshot.integrationLines)
             );
         }
 
@@ -2370,6 +2370,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.log('Metrics', summary.join('\n'));
     }, 'Core', { gmOnly: true });
     // --- Notes & Comments ---
+    // Changed (v0.1.5.0): Troubleshooting details now identify active MarkerService before transitional standalone TokenMod/StatusInfo evidence.
     // CHOICE: Keep command syntax identical to legacy for drop‑in replacement.
     // CHOICE: Keep the default status action-oriented and place volatile counters behind --details — ALT: one exhaustive panel; REJECTED: the health signal became difficult for non-programmer DMs to find.
     // CHOICE: Send status navigation as a separate normal whisper — ALT: button-only default-template row; REJECTED: Roll20 live smoke testing omitted the row and every contained button.
