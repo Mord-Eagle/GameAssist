@@ -942,11 +942,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         return raw;
     }
     // --- Notes & Comments ---
-    // CHOICE: Gracefully log bad JSON rather than throwing; keeps chat usable.
-    // Changed (v0.1.4): Guarded numeric parsing against empty strings to avoid silent 0 writes from blank inputs.
-    // Prior notes: Maintenance (v0.1.3, no semantic change): Added narrative about normalization while keeping parsing
-    //   behavior identical; version metadata aligned to 0.1.3 banner.
-    // Prior notes: Maintenance (v0.1.1.2, no semantic change): Added MECHSUITS v1.5.1 tracking metadata.
+    // Maintenance (v0.1.5.0, no semantic change): Consolidated prior commentary under one history label; parser behavior is unchanged.
+    // Decision log:
+    //   CHOICE: Gracefully log bad JSON rather than throwing; keeps chat usable.
+    // Prior notes:
+    //   v0.1.4: Guarded numeric parsing against empty strings to avoid silent 0 writes from blank inputs.
+    //   v0.1.3: Added normalization narrative while retaining behavior; no semantic change.
+    //   v0.1.1.2: Added MECHSUITS v1.5.1 tracking metadata; no semantic change.
     // [GAMEASSIST:CORE:STATE] END
     // =============================================================================
 
