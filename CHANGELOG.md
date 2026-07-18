@@ -1727,7 +1727,7 @@ These versions remain independently authored and licensed upstream. GameAssist d
 - Updated `Smoketest.md` with:
   - expected contract-aware dependency results;
   - the new `Standalone Integrations` troubleshooting row;
-  - tests performed with `players-can-ids` off;
+  - an initial `players-can-ids` OFF-state isolation pass followed, when applicable, by a restored campaign-setting compatibility pass;
   - TokenMod direct-command isolation;
   - optional StatusInfo observer checks;
   - add/remove/teardown and delayed-warning acceptance checks.

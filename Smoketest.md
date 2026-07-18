@@ -703,7 +703,9 @@ Expected: the blue marker appears, then clears.
 
 If TokenMod cannot change the marker directly, resolve TokenMod before troubleshooting GameAssist marker modules.
 
-GameAssist's own marker requests use TokenMod's documented `--api-as` path. TokenMod's **Players can use --ids** option may remain **OFF** during every GameAssist marker test below.
+GameAssist's own marker requests use TokenMod's documented `--api-as` path. Run the first GameAssist marker pass with TokenMod's **Players can use --ids** option **OFF**. This isolates the new authorization path: a failed OFF-state test must not be disguised by enabling broader player targeting.
+
+If the campaign normally keeps **Players can use --ids** enabled, restore that setting after the OFF-state pass and repeat one NPC death/revival or concentration add/remove cycle. Both settings should produce the same GameAssist marker result. The second pass verifies the campaign's real configuration rather than assuming that a successful isolation test covers every setting combination.
 
 ### D3. Optional StatusInfo Observation
 
@@ -813,7 +815,7 @@ Check:
 
 ## F. ConcentrationTracker Tests
 
-Use the linked `GA Test PC` token and ensure TokenMod is available or manually verified. Leave TokenMod **Players can use --ids** off to exercise GameAssist's `--api-as` path.
+Use the linked `GA Test PC` token and ensure TokenMod is available or manually verified. For the first pass, leave TokenMod **Players can use --ids** off to exercise GameAssist's `--api-as` path.
 
 ### F1. Button Menu
 
@@ -918,7 +920,7 @@ Expected: GameAssist explains that the token must be linked to a character on th
 
 ## G. NPCManager Tests
 
-Use the linked `GA Test NPC` token and ensure TokenMod is available or manually verified. Leave TokenMod **Players can use --ids** off to exercise GameAssist's `--api-as` path.
+Use the linked `GA Test NPC` token and ensure TokenMod is available or manually verified. For the first pass, leave TokenMod **Players can use --ids** off to exercise GameAssist's `--api-as` path.
 
 Keep `NPCManager.autoHide` set to `false` during these tests. If auto-hide is enabled, a newly dead token moves off the Objects layer and must be returned before continuing the revival test.
 
@@ -1531,7 +1533,7 @@ In v0.1.4.7, GameAssist checks marker state after sending the TokenMod request. 
 !token-mod --ids @{selected|token_id} --set statusmarkers|+dead
 ```
 
-GameAssist uses TokenMod `--api-as` internally, so turning on **Players can use --ids** is not the expected repair.
+GameAssist uses TokenMod `--api-as` internally, so turning on **Players can use --ids** is not the expected repair for a failed OFF-state test. After that test passes, restoring the campaign's normal setting and repeating one marker cycle is a separate compatibility check.
 
 Separate marker-changing failures from marker-reading failures:
 
