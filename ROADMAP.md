@@ -39,8 +39,8 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | ConcentrationTracker failure investigation | Complete | [#20](https://github.com/Mord-Eagle/GameAssist/issues/20) | Validate custom-marker recognition and actionable diagnostics in Roll20. |
 | DM-facing help and audit wording | Complete | [#21](https://github.com/Mord-Eagle/GameAssist/issues/21) | Make CritFumble help/menu output and NPC death-audit reports easier to read while preserving existing commands. |
 | NPC death-history buckets and handouts | Complete | [#22](https://github.com/Mord-Eagle/GameAssist/issues/22) | NPCManager 1.1.0 provides four-level history, report writing, hierarchical clears, date rollover, and curated Arc controls. |
-| GameAssist status readability | Sandbox verification | [#23](https://github.com/Mord-Eagle/GameAssist/issues/23) | Verify the plain-language `!ga-status` system check and optional troubleshooting panel in Roll20. |
-| Standalone interoperability stabilization | Planned | [#24](https://github.com/Mord-Eagle/GameAssist/issues/24) | Finish the `v0.1.4.x` line with reliable standalone TokenMod and StatusInfo behavior. |
+| GameAssist status readability | Complete | [#23](https://github.com/Mord-Eagle/GameAssist/issues/23) | The plain-language `!ga-status` system check and optional troubleshooting panel shipped in v0.1.4.6. |
+| Standalone interoperability stabilization | Sandbox verification | [#24](https://github.com/Mord-Eagle/GameAssist/issues/24) | v0.1.4.7 uses TokenMod's documented `--api-as` path, verifies marker results, and reports optional StatusInfo evidence; live Roll20 acceptance remains. |
 | MarkerService foundation | Planned | [#25](https://github.com/Mord-Eagle/GameAssist/issues/25) | Release `v0.1.5.0` with one internal marker authority and migrated GameAssist modules. |
 | Integrated StatusInfo | Planned | [#26](https://github.com/Mord-Eagle/GameAssist/issues/26) | Release `v0.1.5.1` with rebuilt and attributed StatusInfo. |
 | Integrated TokenMod | Planned | [#27](https://github.com/Mord-Eagle/GameAssist/issues/27) | Release `v0.1.5.2` with rebuilt and attributed TokenMod and no standalone production dependency. |
@@ -71,12 +71,12 @@ Every `v0.1.4.x` production installation continues to use:
 - [x] Add Arc deduplication, deliberate duplicate override, removal controls, and last-addition undo.
 - [x] Add selected-only and descendant clearing plus a report writer and date-managed Session rollover.
 - [x] Make `!ga-status` easier for DMs to interpret while retaining detailed diagnostics behind `--details`.
-- [ ] Diagnose built-in `dead` marker mutation failures while TokenMod `players-can-ids` is enabled.
-- [ ] Ensure marker-operation failures do not produce silent success claims.
+- [x] Diagnose built-in `dead` marker mutation failures and remove GameAssist's dependence on TokenMod `players-can-ids` by using `--api-as`.
+- [x] Ensure marker-operation failures produce a delayed actionable warning instead of a silent success claim.
 - [ ] Verify NPCManager marker add, remove, audit, report, and teardown behavior.
 - [ ] Verify ConcentrationTracker marker add, remove, status, and teardown behavior.
 - [ ] Verify standalone StatusInfo continues observing relevant marker changes.
-- [ ] Update README, changelog, and smoke tests with confirmed behavior and limitations.
+- [x] Update README, changelog, and smoke tests with the v0.1.4.7 behavior, supported standalone baselines, and live-test limitations.
 
 ### Completion Gate
 
@@ -88,11 +88,12 @@ The final `v0.1.4.x` release must pass its documented Roll20 smoke test with the
 - v0.1.4.4 separates CritFumble quick reference, guided Natural 1 menu, and direct player picker flows; NPC death audit now reports scope, PC exclusion, and marker mismatches in one grouped GM report.
 - v0.1.4.5 advances NPCManager to module version 1.1.0. It records NPC deaths into active Campaign/Chapter/Section/Session buckets, updates one handout per named bucket, moves audit details into `GameAssist NPC Death Audit`, rolls date-managed Sessions forward before activity, adds the `!NPC-WR` report writer, supports selected-only or nested clearing, and maintains deduplicated editable Arc rosters.
 - v0.1.4.6 makes the default `!ga-status` response action-oriented for DMs and moves volatile counters, queue timing, timestamps, and internal event-hook counts into `!ga-status --details`.
+- v0.1.4.7 uses TokenMod's documented `--api-as` script path, checks requested marker state after dispatch, detects TokenMod through its public contract/version metadata, and reports optional StatusInfo evidence in troubleshooting details.
 - Static and simulated checks cover custom markers, counted markers, built-in markers, empty status, invalid-marker diagnostics, and ConcentrationTracker teardown commands.
 - Cross-revision simulation also verifies that NPCManager disable/enable preserves saved bucket and Arc records while marker teardown remains active.
-- Open gates: confirm the v0.1.4.6 status panels and complete the standalone TokenMod/StatusInfo checks tracked by Issue #24 in a Roll20 API sandbox.
+- Open gate: complete the v0.1.4.7 NPCManager, ConcentrationTracker, TokenMod, and optional StatusInfo smoke checks in a Roll20 API sandbox.
 - Deferred follow-up: verify Roll20's campaign marker registry property names in [Issue #32](https://github.com/Mord-Eagle/GameAssist/issues/32) after the current issue queue unless it becomes a live blocker.
-- Deferred follow-up: add DM-configurable timezone formatting and Session boundaries in [Issue #35](https://github.com/Mord-Eagle/GameAssist/issues/35); v0.1.4.6 uses the sandbox/UTC date boundary.
+- Deferred follow-up: add DM-configurable timezone formatting and Session boundaries in [Issue #35](https://github.com/Mord-Eagle/GameAssist/issues/35); v0.1.4.7 uses the sandbox/UTC date boundary.
 
 ---
 

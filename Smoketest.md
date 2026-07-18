@@ -4,7 +4,7 @@ Use this checklist after installing or updating GameAssist to confirm the Roll20
 
 The first section is a quick confidence pass for DMs. It prioritizes easy wins without promising a specific completion time. The second section contains deeper tests for troubleshooting individual modules.
 
-> **Current target:** GameAssist v0.1.4.6
+> **Current target:** GameAssist v0.1.4.7
 
 Roll20 usually calls the person running the game the **GM**. This guide uses GM and DM interchangeably.
 
@@ -28,6 +28,7 @@ For example:
 
 - DebugTools is disabled by default. That is expected.
 - NPCManager and ConcentrationTracker require TokenMod for marker changes.
+- StatusInfo is optional; install it only if the campaign uses condition descriptions and menus.
 - NPCHPRoller does not require TokenMod.
 - CritFumble table rolls require the seven named rollable tables, but its help command can be tested before those tables exist.
 
@@ -45,9 +46,9 @@ For example:
 
 ## Before You Begin
 
-After installing or updating GameAssist, save the script and wait for Roll20's API sandbox to restart before running the checks below. Use a test page or disposable tokens whenever possible. Install TokenMod if you use NPCManager or ConcentrationTracker.
+After installing or updating GameAssist, save the script and wait for Roll20's API sandbox to restart before running the checks below. Use a test page or disposable tokens whenever possible. Install TokenMod `0.8.88` if you use NPCManager or ConcentrationTracker. StatusInfo `0.3.11` is the optional supported baseline.
 
-The core-ready whisper should report GameAssist v0.1.4.6. You may not see one ready message for every module because module-specific startup messages are normally kept quiet.
+The core-ready whisper should report GameAssist v0.1.4.7. You may not see one ready message for every module because module-specific startup messages are normally kept quiet.
 
 Stop and troubleshoot before continuing if the sandbox repeatedly restarts, the API Console shows a new GameAssist `SyntaxError` or `ReferenceError`, or no GameAssist command responds.
 
@@ -68,10 +69,10 @@ Run:
 The default response is a short system check rather than a list of technical counters:
 
 ```text
-GameAssist 0.1.4.6 System Check
+GameAssist 0.1.4.7 System Check
 
 Overall
-Ready - enabled modules are running. A marker check is recommended.
+Ready - GameAssist is responding and every enabled module is running.
 
 Modules
 5 enabled modules running.
@@ -81,13 +82,12 @@ Errors This Sandbox Session
 None recorded.
 
 Dependency Check
-Could not confirm: TokenMod for NPCManager and ConcentrationTracker.
-This is not automatically a failure; test one death or concentration marker.
+Required dependencies were confirmed for enabled modules.
 ```
 
 Immediately below the status table, a separate **GameAssist Actions** whisper should provide buttons for **Troubleshooting Details**, **Module List**, and **Open Settings**. The buttons are intentionally outside the default-template table because Roll20 omitted the button-only table row during live sandbox testing.
 
-This common result means GameAssist itself is responding, all enabled modules are running, DebugTools is turned off as expected, and Roll20 did not expose enough information to confirm TokenMod. Continue to the marker tests before deciding whether TokenMod works.
+With TokenMod `0.8.88` installed, this common result means GameAssist found TokenMod through its public contract or version metadata. Continue to the marker tests because detection does not prove a specific token can be changed.
 
 ### Other Health Results
 
@@ -121,6 +121,7 @@ The expanded panel retains:
 - average queued-task duration, shown as `N/A` without an `ms` suffix when no duration exists;
 - last recorded activity in sandbox-local display time;
 - GameAssist's internally tracked event-hook count, explicitly labeled as diagnostic rather than pass/fail information.
+- a **Standalone Integrations** row naming detected TokenMod and optional StatusInfo versions/configuration evidence.
 
 Immediately below the details table, a separate **Troubleshooting Actions** whisper should provide **Refresh Details**, **Simple View**, **Module List**, and **Metrics** buttons.
 
@@ -141,8 +142,8 @@ Run:
 ```text
 ConfigUI: config ✅ | runtime 🟢 | deps confirmed
 CritFumble: config ✅ | runtime 🟢 | deps confirmed
-NPCManager: config ✅ | runtime 🟢 | deps unverifiable (TokenMod)
-ConcentrationTracker: config ✅ | runtime 🟢 | deps unverifiable (TokenMod)
+NPCManager: config ✅ | runtime 🟢 | deps confirmed
+ConcentrationTracker: config ✅ | runtime 🟢 | deps confirmed
 NPCHPRoller: config ✅ | runtime 🟢 | deps confirmed
 DebugTools: config ❌ | runtime ⏸️ | deps confirmed
 ```
@@ -154,8 +155,8 @@ DebugTools: config ❌ | runtime ⏸️ | deps confirmed
 | `config ✅` | The module is set to be enabled. |
 | `runtime 🟢` | The module is currently running. |
 | `config ❌` and `runtime ⏸️` for DebugTools | Expected default; DebugTools is intentionally off. |
-| `deps confirmed` | No external dependency is needed, or GameAssist could confirm it. |
-| `deps unverifiable (TokenMod)` | The module is running, but Roll20 would not let GameAssist confirm TokenMod. Test the marker feature itself. |
+| `deps confirmed` | No external dependency is needed, or GameAssist confirmed TokenMod through its public contract, version metadata, or Roll20's script list. |
+| `deps unverifiable (TokenMod)` | The module is running, but neither TokenMod's public evidence nor Roll20's script list was visible. Test the marker feature itself. |
 | `deps missing (TokenMod)` | The module cannot safely provide its TokenMod-powered marker behavior. |
 
 ### If a Module Is Not Running
@@ -259,7 +260,7 @@ You receive either:
 - **No response at all:** the command check failed. Confirm ConcentrationTracker shows `config ✅` and `runtime 🟢`. Do not assume `deps unverifiable (TokenMod)` explains the silence.
 - **An unrecognized-marker warning:** run `!token-mod --help-statusmarkers`, then repair the setting with `!ga-config set ConcentrationTracker marker=<name-or-tag>`.
 - **`No tokens concentrating.` while a current-page token visibly has the configured concentration marker:** marker detection failed and should be investigated; v0.1.4.3 resolves custom display names to their stored Roll20 tags.
-- **The command responds correctly, but a prior concentration roll did not add or remove a marker:** test TokenMod directly; that is a marker-changing failure rather than a status-command failure.
+- **The command responds correctly, but a prior concentration roll did not add or remove a marker:** wait for GameAssist's delayed verification. If it warns that TokenMod did not reach the requested state, select the named token and run the exact direct TokenMod command shown in the warning.
 
 `!concentration --status` reads existing markers directly. TokenMod is needed to change markers, but it is not needed merely to produce a status response.
 
@@ -300,6 +301,8 @@ Expected: a single `NPC Death Audit` panel. When mismatches exist, it names the 
 A clean audit says no death-marker problems were found for linked NPCs. A mismatch audit gives counts in chat and writes the detailed token list to the audit handout. If the page has party markers, scenery, labels, or props, GameAssist may also mention ignored unlinked page items; that is normal.
 
 TokenMod is used when NPCManager changes a marker. The audit itself reads existing token HP and markers directly, so an empty audit is not normally caused by TokenMod.
+
+If an HP change records the death but the marker does not change, wait for the GameAssist warning. It should name the token, say whether TokenMod failed to add or remove the marker, and provide a direct `!token-mod --ids @{selected|token_id}` command. The history record and the visual marker are separate outcomes.
 
 The death report no longer dumps the entire bucket by default. Use `!npc-death-report --recent` or `!npc-death-report --page 2` when you need chat details, or open the bucket handout for the full saved history.
 
@@ -434,7 +437,7 @@ Compare the result to the annotated healthy output in Part One.
 
 Check:
 
-- [ ] Version is `0.1.4.6`.
+- [ ] Version is `0.1.4.7`.
 - [ ] Overall health says either **Ready** or **Attention needed** and gives a meaningful next action.
 - [ ] The normal default shows five enabled modules running and one module turned off.
 - [ ] Errors are absent for a clean sandbox session, or every recorded error is understood.
@@ -576,11 +579,11 @@ Check:
 - [ ] `format` is `gameassist-config-snapshot`.
 - [ ] `schemaVersion` is `1`.
 - [ ] `scope` is `configuration-only`.
-- [ ] `version` is `0.1.4.6`.
+- [ ] `version` is `0.1.4.7`.
 - [ ] All six module configuration objects are present.
 - [ ] Runtime caches and metrics are not included.
 
-> This handout is a configuration snapshot, not a full-state backup, and v0.1.4.6 cannot import it.
+> This handout is a configuration snapshot, not a full-state backup, and v0.1.4.7 cannot import it.
 
 ### B5. Config UI Controls
 
@@ -661,9 +664,9 @@ For a concrete retention check, record or add one recognizable NPC before disabl
 
 ---
 
-## D. TokenMod Dependency and Marker Tests
+## D. Standalone TokenMod and StatusInfo Tests
 
-NPCManager and ConcentrationTracker depend on TokenMod for automated marker changes.
+NPCManager and ConcentrationTracker depend on standalone TokenMod for automated marker changes. StatusInfo is optional and should observe those TokenMod changes when condition descriptions are enabled.
 
 ### D1. Dependency Report
 
@@ -677,11 +680,13 @@ Interpret the exact TokenMod-dependent module lines:
 
 | What You See | Test Outcome |
 | --- | --- |
-| `config ✅ | runtime 🟢 | deps confirmed` | Module is running and GameAssist could confirm TokenMod. Continue to marker tests. |
-| `config ✅ | runtime 🟢 | deps unverifiable (TokenMod)` | Module is running, but GameAssist could not inspect enough Roll20 metadata to confirm TokenMod. Continue to marker tests. |
+| `config ✅ | runtime 🟢 | deps confirmed` | Module is running and GameAssist found TokenMod's public contract/version evidence or Roll20 script entry. Continue to marker tests. |
+| `config ✅ | runtime 🟢 | deps unverifiable (TokenMod)` | Module is running, but GameAssist could not inspect TokenMod's public evidence or enough Roll20 metadata. Continue to marker tests. |
 | `deps missing (TokenMod)` or a paused runtime | Install/enable TokenMod and recheck before relying on marker automation. |
 
 The dependency line is a diagnostic hint, not the final feature test.
+
+Run `!ga-status --details` and inspect **Standalone Integrations**. With the supported baselines installed, it should name TokenMod `v0.8.88` and, when used, StatusInfo `v0.3.11`. StatusInfo should also report whether condition descriptions are enabled.
 
 ### D2. Manual TokenMod Sanity Check
 
@@ -697,6 +702,25 @@ Select a disposable token and run:
 Expected: the blue marker appears, then clears.
 
 If TokenMod cannot change the marker directly, resolve TokenMod before troubleshooting GameAssist marker modules.
+
+GameAssist's own marker requests use TokenMod's documented `--api-as` path. TokenMod's **Players can use --ids** option may remain **OFF** during every GameAssist marker test below.
+
+### D3. Optional StatusInfo Observation
+
+Skip this subsection when StatusInfo is not installed.
+
+1. In StatusInfo, configure or identify a condition whose icon is the marker you will test.
+2. Confirm **Show descriptions on status change** is enabled.
+3. Use one GameAssist workflow to add that marker, such as an NPC death or successful concentration check.
+4. Remove it through the matching GameAssist workflow.
+
+Expected:
+
+- StatusInfo produces the configured add/remove description once for each change.
+- GameAssist does not produce a duplicate condition description of its own.
+- `!ga-status --details` continues to identify StatusInfo as optional rather than a required module dependency.
+
+If the marker changes correctly but StatusInfo says nothing, test the same marker with TokenMod directly. That isolates StatusInfo condition configuration/observation from GameAssist's marker request.
 
 ---
 
@@ -789,7 +813,7 @@ Check:
 
 ## F. ConcentrationTracker Tests
 
-Use the linked `GA Test PC` token and ensure TokenMod is available or manually verified.
+Use the linked `GA Test PC` token and ensure TokenMod is available or manually verified. Leave TokenMod **Players can use --ids** off to exercise GameAssist's `--api-as` path.
 
 ### F1. Button Menu
 
@@ -819,6 +843,7 @@ Expected:
 - Player and GM receive the result.
 - Success applies the configured marker.
 - Failure removes the configured marker.
+- No delayed GameAssist warning says TokenMod failed to reach the requested marker state.
 
 ### F3. Advantage and Disadvantage
 
@@ -893,7 +918,7 @@ Expected: GameAssist explains that the token must be linked to a character on th
 
 ## G. NPCManager Tests
 
-Use the linked `GA Test NPC` token and ensure TokenMod is available or manually verified.
+Use the linked `GA Test NPC` token and ensure TokenMod is available or manually verified. Leave TokenMod **Players can use --ids** off to exercise GameAssist's `--api-as` path.
 
 Keep `NPCManager.autoHide` set to `false` during these tests. If auto-hide is enabled, a newly dead token moves off the Objects layer and must be returned before continuing the revival test.
 
@@ -909,6 +934,7 @@ Expected:
 
 - The configured death marker appears.
 - GameAssist records and reports the death.
+- No delayed warning says TokenMod failed to add the marker.
 
 ### G2. Revival
 
@@ -922,6 +948,7 @@ Expected:
 
 - The configured death marker clears.
 - GameAssist reports the revival.
+- No delayed warning says TokenMod failed to remove the marker.
 
 ### G3. Death Report
 
@@ -931,7 +958,7 @@ Run:
 !npc-death-report
 ```
 
-Expected in v0.1.4.6: The report opens as a summary dashboard for the active Session bucket. It should show a total, latest death, most frequent names, recent entries, and action buttons. It should not dump every bucket entry into chat by default.
+Expected in v0.1.4.7: The report opens as a summary dashboard for the active Session bucket. It should show a total, latest death, most frequent names, recent entries, and action buttons. It should not dump every bucket entry into chat by default.
 It should also name the active bucket handout, usually `GameAssist Deaths - Session - <date>`.
 
 Optional detail checks:
@@ -1123,7 +1150,7 @@ The nested action always retains parent levels above the selected level.
 
 The default Session uses the sandbox's UTC date in `YYYY-MM-DD` form. When that UTC date changes, the next NPCManager command or qualifying NPC HP change must switch a date-managed Session to the new date before recording or reporting activity. Existing dated Session history and its handout remain available. An explicitly named Session must remain unchanged across date boundaries; **Reset Session Date** restores automatic rollover.
 
-This boundary is easiest to confirm during a test that crosses midnight UTC. v0.1.4.6 does not yet offer a fake-clock command. A DM-selected timezone is tracked separately in GitHub Issue #35.
+This boundary is easiest to confirm during a test that crosses midnight UTC. v0.1.4.7 does not yet offer a fake-clock command. A DM-selected timezone is tracked separately in GitHub Issue #35.
 
 When troubleshooting duplicate or incorrect history, also check these edge cases:
 
@@ -1480,7 +1507,7 @@ Read the resulting warning.
 
 Check:
 
-1. TokenMod is installed and can change a marker directly.
+1. TokenMod `0.8.88` is installed and can change a marker directly.
 2. Dependency status is not confirmed missing.
 3. The token is on the Objects layer.
 4. The token represents a valid character.
@@ -1497,6 +1524,14 @@ Inspect:
 ```
 
 In v0.1.4.3, a configured custom display name such as `Concentrating` should resolve to the exact stored tag automatically. If it cannot, the status command should provide a repair command instead of silently reporting the wrong result.
+
+In v0.1.4.7, GameAssist checks marker state after sending the TokenMod request. A mismatch warning should name the token and provide the exact direct command to try. Run that command with the named token selected:
+
+```roll20chat
+!token-mod --ids @{selected|token_id} --set statusmarkers|+dead
+```
+
+GameAssist uses TokenMod `--api-as` internally, so turning on **Players can use --ids** is not the expected repair.
 
 Separate marker-changing failures from marker-reading failures:
 
