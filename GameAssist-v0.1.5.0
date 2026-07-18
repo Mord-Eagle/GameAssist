@@ -90,7 +90,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //   observability:
 //     logs: "roll20_whisper_to_gm"
 //     metrics: [{ name: "gameassist.queue.task_duration_ms", unit: "ms" }]
-//     spans: ["[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:MODULES:CRITFUMBLE]"]
+//     spans: ["[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:MODULES:CRITFUMBLE]"]
 //   performance: { notes: "No current benchmark claim; validate in the target Roll20 campaign sandbox." }
 //   concurrency: { model: "Direct event handlers plus explicit opt-in serialized task queue", idempotency: "N/A (event-driven)" }
 //   compatibility: { accepts: ["Roll20 API sandbox; current campaign smoke test required"], emits: "Roll20 chat whispers/logs" }
@@ -205,19 +205,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     });
     // --- Notes & Comments ---
     // Changed (v0.1.5.0): Removed the obsolete standalone TokenMod verification delay after marker writes moved to synchronous MarkerService mutations; rollback: restore standalone request dispatch and its delay.
-    // Changed (v0.1.4.7): Added a two-second NPC HP initialization grace period so auto-roll-on-add setup is not recorded as a death/revival; rollback: remove the guard and this policy value.
-    // Changed (v0.1.4.7): Added a one-second standalone TokenMod marker-verification delay; rollback: remove standaloneInterop and delayed verification.
-    // Changed (v0.1.4.5): Added runtime death-report summary/detail limits for bounded GM-facing history reports.
-    // Changed (v0.1.4.4): Added runtime.npcAuditDetailLimit to bound grouped NPC death-audit chat output.
-    // Changed (v0.1.4.2): Added stable configuration-snapshot format and schema identifiers.
-    // Maintenance (v0.1.4.3, no semantic change): Removed internal development-provenance wording from the narrative.
     // Decision log:
-    //   CHOICE: Version configuration-only exports before import exists; safe import validation remains deferred.
-    //   CHOICE: Freeze shallow policy groups to prevent accidental runtime mutation — ALT: mutable config; REJECTED: hidden drift.
+    //   CHOICE: Keep NPC initialization and snapshot knobs centralized while removing the unused external marker delay - ALT: retain the dead setting; REJECTED: implied behavior no caller performs.
     // Prior notes:
-    //   Changed (v0.1.4.1): Centralized existing defaults without changing their values; rollback: restore section-local aliases.
-    //   Maintenance (v0.1.3, no semantic change): Added POLICY narrative and corrected top-level version metadata.
-    //   Maintenance (v0.1.1.2, no semantic change): Updated MECHSUITS metadata for v1.5.1 compliance.
+    //   v0.1.4.7: Added a two-second NPC HP initialization grace period so auto-roll-on-add setup is not recorded as a death/revival.
+    //   v0.1.4.7: Added a one-second standalone TokenMod marker-verification delay.
+    //   v0.1.4.5: Added runtime death-report summary/detail limits for bounded GM-facing history reports.
+    //   v0.1.4.4: Added runtime.npcAuditDetailLimit to bound grouped NPC death-audit chat output.
+    //   v0.1.4.3: Removed internal development-provenance wording from the narrative; no semantic change.
+    //   v0.1.4.2: Added stable configuration-snapshot format and schema identifiers.
+    //   v0.1.4.1: Centralized existing defaults without changing their values.
+    //   v0.1.3: Added POLICY narrative and corrected top-level version metadata; no semantic change.
+    //   v0.1.1.2: Updated MECHSUITS metadata for v1.5.1 compliance; no semantic change.
+    //   Existing decisions: version configuration-only exports before import exists; freeze shallow policy groups to prevent hidden runtime drift.
     // [GAMEASSIST:POLICY] END
     // [GAMEASSIST:APP] BEGIN
     // Section Title: App wrapper (utilities and shared helpers)
@@ -585,38 +585,31 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // --- Notes & Comments ---
     // NOTE: State auditor warns about unexpected branches; no automatic deletion occurs.
     // Changed (v0.1.5.0): Moved all marker identity and mutation behavior into CORE:MARKERSERVICE; APP utilities retain only general helpers and standalone-script diagnostics.
-    // Changed (v0.1.4.7): Detect TokenMod/StatusInfo through their public contracts, dispatch marker requests through TokenMod --api-as, and warn when delayed marker verification fails.
-    // Changed (v0.1.4.5): Keep adjacent command flags independent so combinations such as --nested --confirm and --session --allowDuplicates execute as displayed.
-    // Changed (v0.1.4.3): Resolve configured built-in/custom marker names to exact stored Roll20 ids and return explicit resolution failures.
-    // Changed (v0.1.4.3): Exact stored custom marker tags resolve before registry access so valid configured tags survive registry read failures.
-    // Changed (v0.1.4.3): Marker resolution strips simple matching quote pairs so chat config like marker="red" resolves as red.
     // Decision log:
-    //   CHOICE: Unknown branches remain warning-only; explicit cleanup is required before deletion.
-    //   CHOICE: monotonic() falls back to Date.now() in Roll20 — ALT: assume performance.now; REJECTED: sandbox portability.
     //   CHOICE: Keep standalone detection as diagnostics only - ALT: use it for marker dependency gating; REJECTED: MarkerService owns GameAssist marker behavior.
-    // Prior marker notes moved to [GAMEASSIST:CORE:MARKERSERVICE].
+    //   CHOICE: Unknown branches remain warning-only; explicit cleanup is required before deletion.
+    //   CHOICE: monotonic() falls back to Date.now() in Roll20 - ALT: assume performance.now; REJECTED: sandbox portability.
     // Prior notes:
-    //   Changed (v0.1.4.2): Known module state branches now self-heal malformed config/runtime containers while preserving valid configuration.
-    //   Changed (v0.1.4.1): Added wall/monotonic clock seams and routed shared limits through POLICY.
-    //   Changed (v0.1.4): Added regex-based command matching and shared marker helpers for teardown visibility.
-    //   Changed (v0.1.3): Added ensureModRuntimeKey, sanitizeTimestamp, and runtime guards for post-toggle self-healing.
-    //   Maintenance (v0.1.3, no semantic change): Added narrative for APP utilities and aligned version metadata.
-    //   Maintenance (v0.1.1.2, no semantic change): Section metadata aligned to MECHSUITS v1.5.1.
+    //   v0.1.4.7: Detected TokenMod/StatusInfo through public contracts and dispatched verified TokenMod --api-as marker requests.
+    //   v0.1.4.5: Kept adjacent command flags independent so combined switches execute as displayed.
+    //   v0.1.4.3: Resolved configured marker names/tags, fast-pathed exact stored custom tags, and stripped simple matching quote pairs.
+    //   v0.1.4.2: Known module state branches self-heal malformed config/runtime containers while preserving valid configuration.
+    //   v0.1.4.1: Added wall/monotonic clock seams and routed shared limits through POLICY.
+    //   v0.1.4: Added regex command matching and the shared marker helpers now superseded by CORE:MARKERSERVICE.
+    //   v0.1.3: Added ensureModRuntimeKey, sanitizeTimestamp, runtime guards, and section narrative.
+    //   v0.1.1.2: Aligned section metadata to MECHSUITS v1.5.1.
+    //   Marker-resolution decisions retained from v0.1.4.x are recorded in [GAMEASSIST:CORE:MARKERSERVICE].
     // [GAMEASSIST:APP:UTILS] END
     // =============================================================================
 
     // --- Notes & Comments ---
     // Changed (v0.1.5.0): APP now explicitly excludes marker ownership and delegates that contract to CORE:MARKERSERVICE.
     // Prior notes:
-    //   Changed (v0.1.4.7): Updated APP contract to include verified standalone TokenMod requests while preserving StatusInfo observer delivery.
-    // Changed (v0.1.4.3): Updated APP contract to include shared exact marker-identity resolution.
-    // Prior notes (selected):
-    //   Maintenance (v0.1.3, no semantic change): Updated APP wrapper commentary after utility narrative addition; nesting remains explicit over APP:UTILS only.
-    //   • Maintenance (v0.1.1.2, no semantic change): APP wrapper relocated to avoid implied nesting over non-APP sections while still covering APP:UTILS.
-    //   • MIT license retained; copyright © 2025 Mord Eagle.
-    //   • Modules: ConfigUI, CritFumble, NPCManager, ConcentrationTracker, NPCHPRoller, DebugTools.
-    //   • Queue/watchdog defaults preserved (30s/15s).
-    //   • Logging emits /w gm with icons and timestamp.
+    //   v0.1.4.7: APP included verified standalone TokenMod requests while preserving StatusInfo observer delivery.
+    //   v0.1.4.3: APP included shared exact marker-identity resolution.
+    //   v0.1.3: Updated wrapper commentary while preserving explicit nesting over APP:UTILS only; no semantic change.
+    //   v0.1.1.2: Relocated the APP wrapper to avoid implied nesting over non-APP sections; no semantic change.
+    //   Existing guarantees retained: MIT license, six bundled modules, queue/watchdog defaults, and GM-whisper logging.
     // [GAMEASSIST:APP] END
     // =============================================================================
 
@@ -1877,37 +1870,35 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
     globalThis.GameAssist = GameAssist;
     // --- Notes & Comments ---
-    // CHOICE: Expose globally under same name for console and other scripts.
     // Changed (v0.1.5.0): Exposed the non-toggleable GameAssist.MarkerService developer API and removed marker-module dependency gating on standalone TokenMod.
-    // CHOICE: Keep normal handlers direct and make serialized work an explicit GameAssist.enqueue call.
-    // CHOICE: Runtime retention is registration-level opt-in; ALT: preserve every module runtime; REJECTED: existing modules use runtime as disposable cache state.
-    // Changed (v0.1.4.7): Public TokenMod contract/API metadata can confirm the dependency when Roll20's internal script registry is unavailable.
-    // Changed (v0.1.4.6): Refused enable attempts with confirmed missing dependencies preserve configured intent, and configured-but-inactive dependency skips can still be disabled through normal lifecycle commands.
     // Decision log:
-    //   CHOICE: Leave config.enabled unchanged when dependency enablement is refused - ALT: force false; REJECTED: erased enabled intent and concealed dependency-skipped modules from status reporting.
-    //   CHOICE: Treat a module as already disabled only when both config and runtime are disabled - ALT: runtime-only check; REJECTED: trapped dependency-skipped modules in the enabled configuration.
+    //   CHOICE: Expose globally under the existing GameAssist name - ALT: add another global; REJECTED: unnecessary global pollution.
+    //   CHOICE: Keep normal handlers direct and serialized work explicit through GameAssist.enqueue.
+    //   CHOICE: Keep runtime retention as registration-level opt-in - ALT: preserve every runtime cache; REJECTED: changed established lifecycle semantics.
+    //   CHOICE: Preserve configured intent when dependency enablement is refused - ALT: force false; REJECTED: concealed dependency-skipped modules.
     // Prior notes:
-    //   Changed (v0.1.4.5): Added preserveRuntimeOnDisable so modules with durable runtime-owned records can survive ordinary disable/enable transitions without changing the default cache-clearing lifecycle.
-    //   Changed (v0.1.4.2): Added public opt-in enqueue and confirmed/missing/unverifiable dependency diagnostics without changing direct event execution.
-    //   Maintenance (v0.1.4.1, no semantic change): Routed kernel timestamps through the shared wall-clock seam.
-    //   Changed (v0.1.4): Hardened logging whisper formatting, adopted captured R20_ON, and added safer command matching.
-    //   Maintenance (v0.1.3, no semantic change): Added kernel narrative to document invariants.
-    //   Maintenance (v0.1.1.2, no semantic change): Updated MECHSUITS metadata; behavior untouched.
+    //   v0.1.4.7: Public TokenMod contract/API metadata could confirm that external dependency when Roll20 metadata was unavailable.
+    //   v0.1.4.6: Refused dependency enable attempts preserved configured intent and configured-but-inactive modules remained disableable.
+    //   v0.1.4.5: Added preserveRuntimeOnDisable for durable module-owned records.
+    //   v0.1.4.2: Added public opt-in enqueue and three-state dependency diagnostics.
+    //   v0.1.4.1: Routed kernel timestamps through the wall-clock seam; no semantic change.
+    //   v0.1.4: Hardened logging, adopted captured R20_ON, and added safer command matching.
+    //   v0.1.3: Added kernel narrative; behavior unchanged.
+    //   v0.1.1.2: Updated MECHSUITS metadata; behavior unchanged.
     // [GAMEASSIST:CORE:OBJECT] END
     // =============================================================================
 
     // --- Notes & Comments ---
     // Changed (v0.1.5.0): Added CORE:MARKERSERVICE to the declared child order and advanced runtime VERSION for the integrated marker architecture.
     // Prior notes:
-    //   Changed (v0.1.4.7): Advanced runtime VERSION for the standalone TokenMod/StatusInfo interoperability release; child service order was unchanged.
-    // Changed (v0.1.4.6): Advanced runtime VERSION for the DM-readable status and troubleshooting release; child service order is unchanged.
-    // Changed (v0.1.4.5): Advanced runtime VERSION for the NPC death-history bucket and handout release; child service order is unchanged.
-    // Changed (v0.1.4.4): Advanced runtime VERSION for the DM-facing readability release; child service order is unchanged.
-    // Prior notes:
-    //   Changed (v0.1.4.3): Advanced runtime VERSION for standalone-interoperability stabilization; child service order is unchanged.
-    //   Changed (v0.1.4.2): Advanced runtime VERSION for the diagnostic and migration-readiness release; child service order is unchanged.
-    //   Changed (v0.1.4.1): Advanced runtime VERSION and linked inherited limits to POLICY; child service order is unchanged.
-    //   Maintenance (v0.1.3, no semantic change): Added CORE wrapper to enclose kernel children and satisfy parent rules.
+    //   v0.1.4.7: Advanced runtime VERSION for standalone TokenMod/StatusInfo interoperability; child order was unchanged.
+    //   v0.1.4.6: Advanced runtime VERSION for DM-readable status; child order was unchanged.
+    //   v0.1.4.5: Advanced runtime VERSION for NPC death-history buckets and handouts; child order was unchanged.
+    //   v0.1.4.4: Advanced runtime VERSION for DM-facing readability; child order was unchanged.
+    //   v0.1.4.3: Advanced runtime VERSION for standalone-interoperability stabilization.
+    //   v0.1.4.2: Advanced runtime VERSION for diagnostic and migration readiness.
+    //   v0.1.4.1: Advanced runtime VERSION and linked inherited limits to POLICY.
+    //   v0.1.3: Added the CORE wrapper to enclose kernel children and satisfy parent rules.
     // [GAMEASSIST:CORE] END
     // =============================================================================
 
@@ -2371,22 +2362,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }, 'Core', { gmOnly: true });
     // --- Notes & Comments ---
     // Changed (v0.1.5.0): Troubleshooting details now identify active MarkerService before transitional standalone TokenMod/StatusInfo evidence.
-    // CHOICE: Keep command syntax identical to legacy for drop‑in replacement.
-    // CHOICE: Keep the default status action-oriented and place volatile counters behind --details — ALT: one exhaustive panel; REJECTED: the health signal became difficult for non-programmer DMs to find.
-    // CHOICE: Send status navigation as a separate normal whisper — ALT: button-only default-template row; REJECTED: Roll20 live smoke testing omitted the row and every contained button.
-    // Changed (v0.1.4.7): Troubleshooting details now report TokenMod and optional StatusInfo contract/version evidence without making StatusInfo a required dependency.
-    // Changed (v0.1.4.6): Rebuilt !ga-status as a plain-language system check with explicit module/error/dependency guidance and an opt-in troubleshooting view; unavailable queue duration now renders without an ms suffix.
-    // Changed (v0.1.4.6): Moved status navigation into a separate action strip so Troubleshooting Details, Module List, Open Settings, Simple View, and Metrics render in the Roll20 API sandbox.
-    // Changed (v0.1.4.2): Added versioned configuration-only snapshots plus module/dependency health reporting.
-    // Maintenance (v0.1.4.3, no semantic change): Replaced an editorial guarantee label with the specific health states reported.
-    // CHOICE: Report dependency certainty instead of treating unavailable Roll20 script metadata as absence.
     // Decision log:
-    //   CHOICE: export flags/global/module config in one snapshot — ALT: module-only export; REJECTED: incomplete recovery data.
+    //   CHOICE: Keep command syntax identical to legacy for drop-in replacement.
+    //   CHOICE: Keep the default status action-oriented and volatile counters behind --details - ALT: one exhaustive panel; REJECTED: obscured the health signal.
+    //   CHOICE: Send status navigation as a separate normal whisper - ALT: button-only template row; REJECTED: Roll20 omitted that row in live testing.
+    //   CHOICE: Report dependency certainty instead of treating unavailable script metadata as absence.
+    //   CHOICE: Export flags/global/module config in one snapshot - ALT: module-only export; REJECTED: incomplete configuration evidence.
     // Prior notes:
-    //   Changed (v0.1.4.1): Ported the v0.1.5 complete config snapshot while retaining v0.1.4 key safety and enabled routing.
-    //   Changed (v0.1.4): Refused unsafe keys, routed enabled toggles through lifecycle methods, and expanded get/modules output.
-    //   Maintenance (v0.1.3, no semantic change): Added narrative describing GM/admin scope.
-    //   Maintenance (v0.1.1.2, no semantic change): Updated MECHSUITS tracking fields only.
+    //   v0.1.4.7: Troubleshooting details reported TokenMod and optional StatusInfo contract/version evidence.
+    //   v0.1.4.6: Rebuilt !ga-status as a plain-language system check, moved volatile data behind --details, and separated navigation buttons.
+    //   v0.1.4.3: Replaced an editorial guarantee label with specific health states; no semantic change.
+    //   v0.1.4.2: Added versioned configuration-only snapshots and module/dependency health reporting.
+    //   v0.1.4.1: Ported the complete config snapshot while retaining key safety and enabled routing.
+    //   v0.1.4: Refused unsafe keys, routed enabled toggles through lifecycle methods, and expanded get/modules output.
+    //   v0.1.3: Added narrative describing GM/admin scope; no semantic change.
+    //   v0.1.1.2: Updated MECHSUITS tracking fields; no semantic change.
     // [GAMEASSIST:INTERFACES:COMMANDS] END
     // =============================================================================
 
@@ -4672,29 +4662,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // --- Notes & Comments ---
     // Changed (v0.1.5.0): NPCManager module_version advanced to 1.2.0; all marker reads, writes, audits, and teardown use CORE:MARKERSERVICE with no standalone TokenMod dependency.
     // Decision log:
-    //   CHOICE: Keep death-history recording independent from marker mutation success - ALT: record only after marker success; REJECTED: history should describe HP events even when a token marker cannot be changed.
+    //   CHOICE: Keep death-history recording independent from marker mutation success - ALT: record only after marker success; REJECTED: history should describe HP events even when a visual marker cannot change.
+    //   CHOICE: Identify Arc creatures by token before character/name fallbacks - ALT: character-only identity; REJECTED: multiple NPC tokens may share one character sheet.
     // Prior notes:
-    //   v0.1.4.7: TokenMod was used for marker operations and required an explicit dependency.
-    // CHOICE: Arc rosters identify a creature by token before legacy character/name fallbacks — ALT: character-only identity; REJECTED: multiple NPC tokens may share one character sheet.
-    // Changed (v0.1.4.7): Suppress placeholder HP transitions during NPCHPRoller auto-roll-on-add and require a known starting HP before recording an automatic death; this prevents false death/revival history when an NPC is added to the map.
-    // Changed (v0.1.4.7): NPCManager module_version advanced to 1.1.1; marker add/remove/teardown now use TokenMod --api-as with delayed result verification and no longer claim teardown completion before confirmation.
-    // Maintenance (v0.1.4.5, no semantic change): Removed the unused init-time Session default; live Session defaults continue to come from currentSessionDateKey().
-    // Changed (v0.1.4.5): NPCManager module_version advanced from 0.1.1.0 to 1.0.0 for scoped bucket/handout management, then to 1.1.0 for Arc curation, hierarchical clearing, date-managed Sessions, and report writing.
-    // Changed (v0.1.4.5): Explicit Session names now remain active across date changes; Reset Session Date re-enables automatic UTC date rollover.
-    // Changed (v0.1.4.5): Revival history annotations no longer depend on successful TokenMod marker removal.
-    // Changed (v0.1.4.5): Restored bounded, grouped token details to the death-audit chat panel while retaining the complete audit handout.
-    // Changed (v0.1.4.5): NPCManager opts into runtime retention so disabling marker automation does not erase saved bucket history or Arc records.
-    // Changed (v0.1.4.5): Open-death deduplication requires an exact token id so legacy name-only entries cannot suppress a different same-named NPC.
-    // Changed (v0.1.4.5): Added !npc-death-help as the GM-facing start-here menu for bucket naming, reports, audits, and arc handouts.
-    // Changed (v0.1.4.5): NPC death history now records into active Campaign/Chapter/Section/Session buckets independently of marker-write success, updates one handout per bucket, annotates revivals on matching entries, moves audit details into a handout, and adds manual arc buckets for selected linked PC/NPC tokens or current-session deaths.
-    // Changed (v0.1.4.5): Renamed the arc command to !npc-death-arc and hardened migration, same-name token matching, scoped-clear duplicate prevention, zero-HP capture, and death-only revival annotations in arc handouts.
-    // Changed (v0.1.4.4): NPC death-audit now sends a grouped GM report, states that PCs are excluded, categorizes marker mismatches by action, and caps detailed rows to keep Roll20 chat output usable.
-    // Changed (v0.1.4.3): NPCManager now resolves configured death markers before TokenMod add/remove/teardown requests, matching shared read-side marker identity behavior.
-    // Changed (v0.1.4.1): Use exact shared marker matching, POLICY-owned cache limits, and shared time seams.
-    // Prior notes:
-    //   Changed (v0.1.3): Hardened deathLog self-healing, timestamps, cap, and in-place clearing.
-    //   Maintenance (v0.1.3, no semantic change): Added module narrative; preserved dependency and marker logic.
-    //   Maintenance (v0.1.1.2, no semantic change): Metadata updated for MECHSUITS v1.5.1 alignment.
+    //   v0.1.4.7: Suppressed placeholder HP transitions, advanced NPCManager to 1.1.1, and used verified TokenMod --api-as marker requests.
+    //   v0.1.4.5: Advanced NPCManager through 1.0.0 and 1.1.0 for scoped history, handouts, Arc curation, hierarchical clearing, date-managed Sessions, report writing, retention, deduplication, and help.
+    //   v0.1.4.5: Explicit Session names persisted across dates; revival annotations no longer depended on marker removal; bounded audit details were restored.
+    //   v0.1.4.4: Grouped death-audit output, stated PC exclusion, categorized mismatches, and bounded chat detail.
+    //   v0.1.4.3: Resolved configured death markers before add/remove/teardown requests.
+    //   v0.1.4.1: Used exact marker matching, POLICY cache limits, and shared time seams.
+    //   v0.1.3: Hardened deathLog self-healing and added module narrative.
+    //   v0.1.1.2: Updated MECHSUITS metadata.
     // [GAMEASSIST:MODULES:NPCMANAGER] END
     // =============================================================================
 
@@ -5261,17 +5239,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): ConcentrationTracker module_version advanced to 0.2.0; status, toggle, and teardown marker behavior now uses CORE:MARKERSERVICE without standalone TokenMod.
-    // CHOICE: Keep lowercase parsing and aliases exactly as legacy; avoids user retraining.
-    // Changed (v0.1.4.7): ConcentrationTracker module_version advanced to 0.1.0.6; marker add/remove/teardown now use TokenMod --api-as with delayed result verification while preserving TokenMod observer delivery to StatusInfo.
-    // Changed (v0.1.4.3): Resolve configured custom marker names to stored tags for mutation/status/teardown and report unrecognized marker configuration.
+    // Changed (v0.1.5.0): ConcentrationTracker module_version advanced to 0.2.0; status, toggle, and teardown marker behavior uses CORE:MARKERSERVICE without standalone TokenMod.
+    // Decision log:
+    //   CHOICE: Keep lowercase parsing and established aliases - ALT: introduce a new command grammar; REJECTED: unnecessary user retraining.
     // Prior notes:
-    //   Maintenance (v0.1.4.1, no semantic change): Routed lastDamage limits and timestamps through POLICY/shared time seams.
-    //   Changed (v0.1.4): Exact marker matching and GM whisper special-casing honor configured marker ids.
-    //   Maintenance (v0.1.3, no semantic change): Sanitized timestamps, deterministic pruning, and runtime normalization.
-    //   Maintenance (v0.1.3, no semantic change): Added complete lastDamage schema defaults and post-toggle self-healing.
-    //   Maintenance (v0.1.3, no semantic change): Added module narrative; behavior and aliases remained untouched.
-    //   Maintenance (v0.1.1.2, no semantic change): Updated MECHSUITS metadata only.
+    //   v0.1.4.7: Advanced to 0.1.0.6 and used verified TokenMod --api-as marker requests while preserving standalone StatusInfo observation.
+    //   v0.1.4.3: Resolved custom marker names to stored tags and reported unrecognized configuration.
+    //   v0.1.4.1: Routed lastDamage limits and timestamps through POLICY/shared time seams.
+    //   v0.1.4: Added exact configured-marker matching and GM whisper handling.
+    //   v0.1.3: Sanitized timestamps, normalized legacy/runtime lastDamage entries, self-healed post-toggle state, and added module narrative.
+    //   v0.1.1.2: Updated MECHSUITS metadata.
     // [GAMEASSIST:MODULES:CONCENTRATIONTRACKER] END
     // =============================================================================
 
@@ -5718,21 +5695,20 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     });
     // --- Notes & Comments ---
     // Changed (v0.1.5.0): DebugTools module_version advanced to 0.2.0; marker previews and applied changes now resolve and mutate through CORE:MARKERSERVICE.
-    // CHOICE: Helpers default to dry-run; --apply required for mutations.
-    // Changed (v0.1.4.1): Marker diagnostics now use exact shared marker normalization, including counted markers.
+    // Decision log:
+    //   CHOICE: Keep helpers dry-run by default and require --apply for mutation.
     // Prior notes:
-    //   Changed (v0.1.3): Ensured runtime self-heals before recording lastAction.
-    //   Maintenance (v0.1.3, no semantic change): Kept dry-run defaults and disabled-by-default posture.
-    //   Maintenance (v0.1.1.2, no semantic change): MECHSUITS metadata refreshed to v1.5.1.
+    //   v0.1.4.1: Marker diagnostics used exact shared marker normalization, including counted markers.
+    //   v0.1.3: Runtime self-healed before recording lastAction; dry-run and disabled-by-default posture remained.
+    //   v0.1.1.2: Refreshed MECHSUITS metadata.
     // [GAMEASSIST:MODULES:DEBUGTOOLS] END
     // =============================================================================
 
     // --- Notes & Comments ---
     // Changed (v0.1.5.0): Updated the module wrapper contract because all marker consumers now share CORE:MARKERSERVICE.
     // Prior notes:
-    //   Changed (v0.1.4.3): Updated wrapper contract because marker-dependent modules resolve configured marker identity before read/write operations.
-    // Prior notes:
-    //   Maintenance (v0.1.3, no semantic change): Added MODULES wrapper to group bundled features under a parent section for MECHSUITS parent/child compliance.
+    //   v0.1.4.3: Updated the wrapper contract after marker consumers adopted configured marker identity resolution.
+    //   v0.1.3: Added MODULES wrapper for MECHSUITS parent/child compliance; no semantic change.
     // [GAMEASSIST:MODULES] END
     // =============================================================================
 
@@ -5816,17 +5792,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     });
     // --- Notes & Comments ---
     // Changed (v0.1.5.0): Startup now reports the integrated MarkerService release; NPCManager and ConcentrationTracker no longer enter dependency-skipped state when standalone TokenMod is absent.
-    // CHOICE: Core ready log is never suppressed; mirrors README guidance.
-    // CHOICE: Repair existing known branches before seeding defaults so valid configuration survives.
-    // Changed (v0.1.4.7): Startup reports the v0.1.4.7 standalone-interoperability release; lifecycle order and dependency-skip behavior are unchanged.
-    // Changed (v0.1.4.6): Check configured intent before dependency diagnostics and preserve enabled configuration when a confirmed missing dependency skips startup; this keeps deliberate disables quiet while making skipped modules visible to status reporting.
     // Decision log:
-    //   CHOICE: Preserve cfg.enabled for dependency-skipped startup modules - ALT: force-disable config; REJECTED: erased DM intent and caused !ga-status to conceal the missing dependency.
+    //   CHOICE: Keep the core ready log visible while QUIET_STARTUP suppresses module-ready noise.
+    //   CHOICE: Repair known state before seeding defaults so valid configuration survives.
+    //   CHOICE: Preserve configured intent for dependency-skipped modules - ALT: force-disable config; REJECTED: hid startup failures and erased DM intent.
     // Prior notes:
-    //   Changed (v0.1.4.2): Repair known state before default seeding and report confirmed/missing/unverifiable dependencies during startup.
-    //   Maintenance (v0.1.4.1, no semantic change): Routed bootstrap timestamps through the wall-clock seam; order unchanged.
-    //   Maintenance (v0.1.3, no semantic change): Added bootstrap narrative; preserved ready flow and dependency checks.
-    //   Maintenance (v0.1.1.2, no semantic change): MECHSUITS metadata fields refreshed for compliance.
+    //   v0.1.4.7: Startup reported the standalone-interoperability release; lifecycle order was unchanged.
+    //   v0.1.4.6: Checked configured intent before dependencies and preserved enabled configuration when a confirmed dependency was missing.
+    //   v0.1.4.2: Repaired known state before defaults and reported three-state dependencies.
+    //   v0.1.4.1: Routed bootstrap timestamps through the wall-clock seam.
+    //   v0.1.3: Added bootstrap narrative while preserving ready flow and dependency checks.
+    //   v0.1.1.2: Refreshed MECHSUITS metadata.
     // [GAMEASSIST:BOOTSTRAP] END
     // =============================================================================
 
