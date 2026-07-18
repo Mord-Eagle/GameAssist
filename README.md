@@ -415,6 +415,8 @@ Use the checklist in [§4.1 Minimum Smoke Test](#41-minimum-smoke-test) before t
 
 Before opening or updating a pull request against `Roll20/roll20-api-scripts`, confirm:
 
+The paths below describe the package inside the official Roll20 repository. The GameAssist development repository keeps `GameAssist.js` and `GameAssist-v0.1.4.7.js` at its root; the official submission places the same tested executable at `GameAssist/0.1.4.7/GameAssist.js`.
+
 * The official repository folder is `GameAssist`, matching `script.json.name`.
 * `script.json` points at the uniform executable filename: `"script": "GameAssist.js"`.
 * The current release is stored at `GameAssist/0.1.4.7/GameAssist.js`.
