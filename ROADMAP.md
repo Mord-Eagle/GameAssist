@@ -138,7 +138,7 @@ Operations should return useful results or diagnostics rather than assuming succ
 
 NPCManager and ConcentrationTracker must perform their marker workflows without standalone TokenMod. MarkerService must demonstrate correct custom-marker behavior and unrelated-marker preservation, and its disable path must turn off dependent modules without making CritFumble, ConfigUI, or NPCHPRoller unavailable.
 
-**Current evidence:** syntax and mocked-ready initialization pass; 23 focused MarkerService checks and 22 mocked marker-consumer workflow checks pass for built-in/custom/direct-tag resolution, invalid registry diagnostics, numbered and duplicate markers, unrelated-marker preservation, NPC death/revival history, concentration status/off, DebugTools safeguards, lifecycle teardown/re-enable, and observation delivery. The Roll20 sandbox smoke pass remains required before Issue #25 closes.
+**Current evidence:** syntax and mocked-ready initialization pass; 23 focused MarkerService checks, 22 mocked marker-consumer workflow checks, 24 service-lifecycle checks, and an 18-check marker-mutation refresh pass. Coverage includes built-in/custom/direct-tag resolution, invalid registry diagnostics, numbered and duplicate markers, unrelated-marker preservation, NPC death/revival history, concentration status/off, DebugTools safeguards, dependent shutdown, opt-out persistence, lifecycle re-enable, and observation delivery. The Roll20 sandbox smoke pass remains required before Issue #25 closes.
 
 ---
 

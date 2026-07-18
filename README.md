@@ -161,7 +161,7 @@ Only the requested marker state changes
 Roll20 change event is published to MarkerService observers
 ```
 
-MarkerService is core infrastructure rather than a toggleable gameplay module. Disabling a consumer stops that consumer without disabling marker resolution for the rest of GameAssist.
+MarkerService is a toggleable core service rather than a gameplay module. Disabling one consumer leaves MarkerService available to the others. Disabling MarkerService itself first disables every dependent module, then closes the marker API while leaving unrelated GameAssist features available.
 
 ### 5.2 Why Normal Events Are Not Queued
 
@@ -625,7 +625,7 @@ Queue rules:
 
 ### 10.6 MarkerService
 
-`GameAssist.MarkerService` is core infrastructure and cannot be disabled independently.
+`GameAssist.MarkerService` is toggleable core infrastructure. It begins enabled and may be controlled through `!ga-enable MarkerService`, `!ga-disable MarkerService`, or ConfigUI. Marker-dependent modules must be enabled only while the service is running.
 
 ```js
 const markers = GameAssist.MarkerService;
@@ -649,6 +649,7 @@ Public operations:
 
 | Method | Result |
 | --- | --- |
+| `isEnabled()` | Reports whether MarkerService currently accepts marker work. |
 | `resolve(marker)` | Resolves a built-in id, custom display name, exact stored tag, or numbered stored value. |
 | `read(token)` | Returns the complete parsed marker list, including duplicates and number overlays. |
 | `inspect(token, marker)` | Returns resolution, presence, match count, and matching stored entries. |
@@ -658,6 +659,8 @@ Public operations:
 | `clearObservers(owner)` | Removes every observer registered under an owner name. |
 
 Marker removal clears every duplicate instance of the requested marker. Other marker ids, duplicate entries for unrelated markers, and number overlays are preserved. Adding an already-present marker is idempotent unless a number option explicitly updates its first matching entry.
+
+When MarkerService is disabled, marker operations return `UNAVAILABLE` with the command needed to restore the service. NPCManager, ConcentrationTracker, and DebugTools are disabled before the service closes so their teardown can complete safely.
 
 ### 10.7 MECHSUITS Contribution Contract
 
