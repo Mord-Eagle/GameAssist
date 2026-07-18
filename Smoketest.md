@@ -253,12 +253,12 @@ You receive either:
 
 ### What a Failure Looks Like
 
-- **No response at all:** the command check failed. Confirm ConcentrationTracker shows `config ✅` and `runtime 🟢`. Do not assume `deps unverifiable (TokenMod)` explains the silence.
-- **An unrecognized-marker warning:** run `!token-mod --help-statusmarkers`, then repair the setting with `!ga-config set ConcentrationTracker marker=<name-or-tag>`.
+- **No response at all:** the command check failed. Confirm ConcentrationTracker shows `config ✅` and `runtime 🟢`; an optional standalone integration does not explain a silent GameAssist command.
+- **An unrecognized-marker warning:** inspect the campaign marker library, then repair the setting with `!ga-config set ConcentrationTracker marker=<name-or-tag>`.
 - **`No tokens concentrating.` while a current-page token visibly has the configured concentration marker:** marker detection failed and should be investigated; v0.1.4.3 resolves custom display names to their stored Roll20 tags.
-- **The command responds correctly, but a prior concentration roll did not add or remove a marker:** wait for GameAssist's delayed verification. If it warns that TokenMod did not reach the requested state, select the named token and run the exact direct TokenMod command shown in the warning.
+- **The command responds correctly, but a prior concentration roll did not add or remove a marker:** verify the selected token, roll outcome, and configured marker; record any MarkerService warning.
 
-`!concentration --status` reads existing markers directly. TokenMod is needed to change markers, but it is not needed merely to produce a status response.
+`!concentration --status` and concentration marker changes both use MarkerService. Standalone TokenMod is not required.
 
 ---
 
@@ -296,9 +296,9 @@ Expected: a single `NPC Death Audit` panel. When mismatches exist, it names the 
 
 A clean audit says no death-marker problems were found for linked NPCs. A mismatch audit gives counts in chat and writes the detailed token list to the audit handout. If the page has party markers, scenery, labels, or props, GameAssist may also mention ignored unlinked page items; that is normal.
 
-TokenMod is used when NPCManager changes a marker. The audit itself reads existing token HP and markers directly, so an empty audit is not normally caused by TokenMod.
+MarkerService is used when NPCManager changes or reads a marker. An empty audit is not caused by missing standalone TokenMod.
 
-If an HP change records the death but the marker does not change, wait for the GameAssist warning. It should name the token, say whether TokenMod failed to add or remove the marker, and provide a direct `!token-mod --ids @{selected|token_id}` command. The history record and the visual marker are separate outcomes.
+If an HP change records the death but the marker does not change, record the MarkerService warning, configured marker, token linkage, and before/after marker state. The history record and the visual marker remain separate outcomes.
 
 The death report no longer dumps the entire bucket by default. Use `!npc-death-report --recent` or `!npc-death-report --page 2` when you need chat details, or open the bucket handout for the full saved history.
 
@@ -579,7 +579,7 @@ Check:
 - [ ] All six module configuration objects are present.
 - [ ] Runtime caches and metrics are not included.
 
-> This handout is a configuration snapshot, not a full-state backup, and v0.1.4.7 cannot import it.
+> This handout is a configuration snapshot, not a full-state backup, and v0.1.5.0 cannot import it.
 
 ### B5. Config UI Controls
 
@@ -1161,7 +1161,7 @@ The nested action always retains parent levels above the selected level.
 
 The default Session uses the sandbox's UTC date in `YYYY-MM-DD` form. When that UTC date changes, the next NPCManager command or qualifying NPC HP change must switch a date-managed Session to the new date before recording or reporting activity. Existing dated Session history and its handout remain available. An explicitly named Session must remain unchanged across date boundaries; **Reset Session Date** restores automatic rollover.
 
-This boundary is easiest to confirm during a test that crosses midnight UTC. v0.1.4.7 does not yet offer a fake-clock command. A DM-selected timezone is tracked separately in GitHub Issue #35.
+This boundary is easiest to confirm during a test that crosses midnight UTC. v0.1.5.0 does not yet offer a fake-clock command. A DM-selected timezone is tracked separately in GitHub Issue #35.
 
 When troubleshooting duplicate or incorrect history, also check these edge cases:
 
