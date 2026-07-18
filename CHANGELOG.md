@@ -10,7 +10,7 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 | Revision | Status | Role |
 | --- | --- | --- |
-| **v0.1.4.7** | In development; automated verification complete, Roll20 smoke confirmation pending | Standalone TokenMod and StatusInfo interoperability |
+| **v0.1.4.7** | Release candidate; automated and Roll20 sandbox verification passed, merge pending | Standalone TokenMod and StatusInfo interoperability |
 | **v0.1.4.6** | Merged release | DM-readable system health and troubleshooting status |
 | **v0.1.4.5** | Merged release | NPC death-history buckets, handouts, and arc notes |
 | **v0.1.4.4** | Merged release | DM-facing CritFumble help and NPC death-audit readability update |
@@ -1740,6 +1740,17 @@ These versions remain independently authored and licensed upstream. GameAssist d
   - an NPCHPRoller auto-roll-on-add check that refuses false death/revival history while preserving later gameplay transitions.
 - Updated `ROADMAP.md` to move Issue #24 into live Roll20 acceptance while keeping integrated TokenMod, StatusInfo, and MarkerService work in `v0.1.5.x`.
 
+### Roll20 API sandbox acceptance
+
+- Completed the focused v0.1.4.7 acceptance pass with standalone TokenMod `0.8.88` and optional StatusInfo `0.3.11` behavior enabled for the campaign.
+- Confirmed GameAssist health and standalone-integration diagnostics respond with the expected module/dependency posture.
+- Confirmed NPCManager adds and removes the built-in `dead` marker, records genuine death/revival history, and completes audit/report/teardown workflows.
+- Confirmed NPCHPRoller auto-roll-on-add establishes a new NPC's starting HP without flashing the death marker or creating a false death/revival pair.
+- Confirmed a later genuine positive-to-zero change on that auto-rolled NPC is still recorded and a later positive-HP change is still annotated as revival.
+- Confirmed ConcentrationTracker marker add, direct status reading, removal, and teardown behavior.
+- Confirmed StatusInfo continues observing the relevant TokenMod marker changes without duplicate GameAssist condition output.
+- Confirmed the marker workflows remain functional after restoring the campaign's normal TokenMod `players-can-ids` setting.
+
 ### Release artifacts
 
 The repository script and versioned artifact share this Git-normalized SHA-256:
@@ -1776,6 +1787,6 @@ Local Roll20 test copy:
 | Prior command-literal preservation | Passed (135 unique literals) |
 | Global Roll20 `on`/`off` non-override contract | Passed |
 | `git diff --check` | Passed |
-| Roll20 API sandbox acceptance with TokenMod and optional StatusInfo | Pending DM smoke test |
+| Roll20 API sandbox acceptance with TokenMod and optional StatusInfo | Passed |
 
-The Roll20 API sandbox remains the final acceptance environment for real `sendChat` routing, TokenMod timing, token marker persistence, and StatusInfo condition-description behavior.
+The Roll20 API sandbox acceptance pass confirmed real `sendChat` routing, TokenMod timing, token marker persistence, StatusInfo condition-description behavior, and NPCHPRoller/NPCManager initialization ordering for this release candidate.
