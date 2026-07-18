@@ -1249,6 +1249,15 @@ The v0.1.4.3 artifact remains preserved. The current repository script and the n
 | `GameAssist` | `DB68D6467D698FEF25D416394FFD07F6F44EF2E2361D9DBA9F198A0DAA41D091` |
 | `GameAssist-v0.1.4.4` | `DB68D6467D698FEF25D416394FFD07F6F44EF2E2361D9DBA9F198A0DAA41D091` |
 
+### Release artifacts
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `GameAssist` | `76ED4A7972D5F64F08E66A5B91C48D88EC9C2B9884C05D37FB1F3DEC38FA68F6` |
+| `GameAssist-v0.1.5.0` | `76ED4A7972D5F64F08E66A5B91C48D88EC9C2B9884C05D37FB1F3DEC38FA68F6` |
+
+The repository source and versioned Roll20 test artifact are byte-identical.
+
 ### Verification
 
 | Check | Result |
@@ -1897,9 +1906,10 @@ This release implements [Issue #25](https://github.com/Mord-Eagle/GameAssist/iss
 | --- | --- |
 | JavaScript parse/compile | Passed |
 | Mocked Roll20 ready initialization | Passed with five default modules running and DebugTools disabled |
+| Mocked marker-consumer workflow | Passed (22/22) across NPCManager, ConcentrationTracker, DebugTools, teardown, and re-enable |
 | Startup errors | 0 |
 | Chat-generated `!token-mod` commands | 0 |
-| Focused MarkerService regression checks | Passed (19/19) |
+| Focused MarkerService regression checks | Passed (23/23) |
 | Built-in marker resolution | Passed |
 | Custom display-name and direct stored-tag resolution | Passed |
 | Direct stored tag during invalid registry data | Passed |
