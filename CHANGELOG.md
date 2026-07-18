@@ -1893,6 +1893,8 @@ This release implements [Issue #25](https://github.com/Mord-Eagle/GameAssist/iss
 - Reorganized `Smoketest.md` by component so Core, MarkerService, ConfigUI, CritFumble, ConcentrationTracker, NPCManager, NPCHPRoller, and DebugTools each have a purpose, reason, skip rule, basic check, and expanded troubleshooting checks.
 - Added a self-contained Issue #25 MarkerService acceptance sequence covering no-TokenMod startup, numbered built-in and custom markers, unrelated-marker preservation, module teardown, reload, persistence, and restoration.
 - Corrected duplicated installation and MECHSUITS contribution text in the README.
+- Added the byte-identical `GameAssist.js` One-Click publication mirror named by `script.json` while retaining `GameAssist` as the canonical development source.
+- Added `previousversions/GameAssist v0.1.4.7` so every manifest `previousversions` entry has a corresponding preserved repository artifact.
 - Updated `script.json` to v0.1.5.0, removed the production TokenMod dependency, retained all 58 commands, and documented named and behavioral overlap risks.
 - Updated `ROADMAP.md` to place Issue #25 in sandbox verification and retain the Roll20 sandbox pass as the completion gate.
 - Added `ATTRIBUTIONS.md`, updated the GameAssist copyright year, and recorded the independent-branding, upstream-provenance, MIT-notice, SRD-text, and author-contact policy for the planned token and condition services.
@@ -1902,9 +1904,10 @@ This release implements [Issue #25](https://github.com/Mord-Eagle/GameAssist/iss
 | Artifact | SHA-256 |
 | --- | --- |
 | `GameAssist` | `019CA4EE1B9EA35D7B37C51B89B49998A4B8581E3A651D48E05562741C4A5654` |
+| `GameAssist.js` | `019CA4EE1B9EA35D7B37C51B89B49998A4B8581E3A651D48E05562741C4A5654` |
 | `GameAssist-v0.1.5.0` | `019CA4EE1B9EA35D7B37C51B89B49998A4B8581E3A651D48E05562741C4A5654` |
 
-The repository source and versioned Roll20 test artifact are byte-identical.
+The repository source, One-Click publication mirror, and versioned Roll20 test artifact are byte-identical.
 
 ### Verification
 

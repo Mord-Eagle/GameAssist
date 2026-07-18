@@ -433,10 +433,11 @@ Use the checklist in [§4.1 Minimum Smoke Test](#41-minimum-smoke-test) before t
 Before opening or updating a pull request against `Roll20/roll20-api-scripts`, confirm:
 
 * Repository folder name matches the `script.json` script name: `GameAssist`.
-* `script.json` points at the actual script artifact: `"script": "GameAssist"`.
+* `script.json` points at the stable One-Click script artifact: `"script": "GameAssist.js"`.
 * `script.json` includes current `version`, `previousversions`, detailed `description`, `authors`, `roll20userid`, `dependencies`, `modifies`, `conflicts`, and command list.
 * The top script header includes name, version, last updated date, description, syntax/commands, dependency notes, and configuration pointers.
-* Included file types match Roll20 API repo expectations. The One-Click package uses `GameAssist.js`; the project repository may retain the extensionless `GameAssist` development artifact.
+* `GameAssist.js` is byte-identical to the extensionless `GameAssist` development source and the current versioned release artifact.
+* Every identifier in `previousversions` has a corresponding preserved file under `previousversions/`; official Roll20 version folders continue using the uniform `GameAssist.js` filename.
 * README and smoke test describe the current version and do not promise unverified sandbox behavior.
 * MIT license is present.
 * After the Roll20 repo PR is accepted, update the Roll20 Community Wiki API Script Index if appropriate.
