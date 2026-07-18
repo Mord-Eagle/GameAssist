@@ -418,7 +418,7 @@ Before opening or updating a pull request against `Roll20/roll20-api-scripts`, c
 * The official repository folder is `GameAssist`, matching `script.json.name`.
 * `script.json` points at the uniform executable filename: `"script": "GameAssist.js"`.
 * The current release is stored at `GameAssist/0.1.4.7/GameAssist.js`.
-* Because v0.1.4.7 is the first One-Click submission, `previousversions` is empty; project history remains in `CHANGELOG.md` until older releases are deliberately packaged for One-Click rollback.
+* `previousversions` preserves the physically packaged official releases `0.1.1.2`, `0.1.1.1`, and `0.1.1.0`. Intermediate project releases remain in `CHANGELOG.md` but are not advertised as One-Click rollback versions because matching official folders do not exist.
 * `script.json` includes the current version, detailed description, authorship, Roll20 user id, dependencies, object/property access, and named conflicts in Roll20's accepted schema shape.
 * The top script header includes name, version, last updated date, description, syntax/commands, dependency notes, and configuration pointers.
 * The submitted executable uses the required `.js` extension, and the package contains only accepted JavaScript, Markdown, and JSON file types.

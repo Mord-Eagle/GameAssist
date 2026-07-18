@@ -71,7 +71,7 @@
 // Narrative
 // script.json is the source of truth for Roll20 One-Click discovery. The project changelog may retain
 // older private releases, but previousversions lists only releases physically packaged in the official
-// Roll20 folder. The first submission therefore advertises no One-Click rollback versions.
+// Roll20 folder. The v0.1.4.7 update preserves the three existing One-Click rollback versions.
 // -----------------------------------------------------------------------------
 
 ```json
@@ -79,7 +79,11 @@
   "name": "GameAssist",
   "script": "GameAssist.js",
   "version": "0.1.4.7",
-  "previousversions": [],
+  "previousversions": [
+    "0.1.1.2",
+    "0.1.1.1",
+    "0.1.1.0"
+  ],
   "description": "# GameAssist\n\nGameAssist is a modular Roll20 Mod/API automation suite for the D&D 5E (2014) character sheet. It combines critical-fumble tools, concentration checks, NPC death tracking and report handouts, and NPC hit-point rolling in one configurable script.\n\n## Quick Start\n\n1. Install GameAssist and its required TokenMod dependency.\n2. Create the seven CritFumble rollable tables listed below.\n3. Save or restart the Mod sandbox.\n4. Run `!ga-status` to check the installation and `!ga-config ui` to open settings.\n\n## Main Commands\n\n- `!ga-status` -- Show a short system check. Use `!ga-status --details` for troubleshooting.\n- `!ga-config ui` -- Open the GM configuration menu.\n- `!critfumble help` -- Open the CritFumble quick-reference guide.\n- `!critfail` -- Open the GM player picker for a manual critical miss.\n- `!concentration` or `!cc` -- Open concentration-check controls.\n- `!npc-death-report --help` -- Open the NPC death-tracking guide and report controls.\n- `!npc-death-audit` -- Check current-page NPC HP against death markers.\n- `!npc-hp-selected` -- Roll HP for selected linked NPC tokens.\n\n## Requirements\n\n- TokenMod 0.8.88 is the supported standalone baseline for NPCManager and ConcentrationTracker marker changes.\n- StatusInfo 0.3.11 is optional and can provide condition descriptions and menus.\n- CritFumble uses these rollable tables: `CF-Melee`, `CF-Ranged`, `CF-Thrown`, `CF-Spell`, `CF-Natural`, `Confirm-Crit-Martial`, and `Confirm-Crit-Magic`.\n\nGameAssist does not create or populate those campaign-specific rollable tables automatically. Features unrelated to a missing optional setup item remain available.\n\n## Documentation\n\nSee the [GameAssist README](https://github.com/Mord-Eagle/GameAssist#readme) for complete setup, commands, examples, module settings, upgrade guidance, and troubleshooting.",
   "authors": "Mord Eagle",
   "roll20userid": "10646976",
@@ -119,9 +123,9 @@
 ```
 
 // --- Notes & Comments ---
-// Changed (v0.1.4.7): aligned the first One-Click manifest with Roll20's .js filename, modifies-object, and physical-version requirements.
+// Changed (v0.1.4.7): aligned the One-Click update manifest with Roll20's .js filename, modifies-object, and physical-version requirements.
 // Decision log:
-//   CHOICE: advertise no previous One-Click versions in the initial submission - ALT: list private historical releases; REJECTED: matching official version folders do not exist.
+//   CHOICE: preserve the three existing official rollback versions - ALT: list every private project release; REJECTED: matching official version folders do not exist.
 //   CHOICE: keep TokenMod required and StatusInfo optional - ALT: list both as dependencies; REJECTED: GameAssist runs without StatusInfo.
 // [GAMEASSIST:STATIC:SCRIPT_JSON] END
 // ============================================================================
