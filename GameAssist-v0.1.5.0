@@ -1128,6 +1128,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
 
             if (requested.includes('::')) {
+                if (/[,\r\n]/.test(requested)) {
+                    return failure('INVALID_ARGUMENT', 'Exact stored marker tags cannot contain commas or line breaks.', {
+                        requested,
+                        id: null,
+                        source: null,
+                        ambiguous: false,
+                        candidates: [],
+                        reason: 'invalid-tag',
+                        registryError: null
+                    });
+                }
                 return {
                     ok: true,
                     code: null,
@@ -1302,10 +1313,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
 
             const wanted = normalizeId(resolution.id);
-            const matchingIndexes = before.entries
-                .filter(entry => entry.normalizedId === wanted)
-                .map(entry => entry.index);
-            const present = matchingIndexes.length > 0;
+            const matchingPositions = before.entries
+                .map((entry, position) => ({ entry, position }))
+                .filter(item => item.entry.normalizedId === wanted)
+                .map(item => item.position);
+            const present = matchingPositions.length > 0;
             const targetPresent = operation === 'toggle' ? !present : operation === 'add';
             let afterRaw = before.entries.map(entry => entry.raw);
 
@@ -1316,8 +1328,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             } else if (!present) {
                 afterRaw.push(optionNumber === null ? resolution.id : `${resolution.id}@${optionNumber}`);
             } else if (optionNumber !== null) {
-                const firstIndex = matchingIndexes[0];
-                afterRaw[firstIndex] = `${resolution.id}@${optionNumber}`;
+                const firstPosition = matchingPositions[0];
+                afterRaw[firstPosition] = `${resolution.id}@${optionNumber}`;
             }
 
             const nextRaw = afterRaw.join(',');
@@ -1428,8 +1440,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     try {
                         subscription.callback(event);
                     } catch (error) {
-                        if (typeof GameAssist !== 'undefined' && GameAssist?.handleError) {
-                            GameAssist.handleError(subscription.owner, error);
+                        const api = globalThis.GameAssist;
+                        if (api && typeof api.handleError === 'function') {
+                            api.handleError(subscription.owner, error);
                         }
                     }
                 });
@@ -1441,9 +1454,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return failure('INVALID_ARGUMENT', 'Marker observer callback must be a function.');
             }
 
+            const observerOptions = options && typeof options === 'object' ? options : {};
             const owner = typeof options === 'string'
                 ? options
-                : String(options.owner || 'MarkerServiceConsumer');
+                : String(observerOptions.owner || 'MarkerServiceConsumer');
             const id = ++observerId;
             observers.set(id, { owner, callback });
             wireObserver();
