@@ -379,7 +379,6 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
 
     /**
-     * getStandaloneScriptEvidence    /**
      * getStandaloneScriptEvidence — Inspect public contracts without assuming Roll20's script registry exists.
      * Inputs: the literal upstream script name TokenMod or StatusInfo.
      * Outputs: detected contract/version/config evidence; absence is not automatically proof of missing installation.
@@ -434,7 +433,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         return [markerLine, tokenModLine, statusInfoLine];
     }
 
-    function clearState(mod)    function clearState(mod) {
+    function clearState(mod) {
         const root = ensureStateRoot();
         if (root?.[mod]) delete root[mod];
     }
@@ -5635,7 +5634,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             };
         }
 
-        function handleSave(msg, args) {        function handleSave(msg, args) {
+        function handleSave(msg, args) {
             const dcRaw = args.dc ?? args.target;
             const dc = Number(dcRaw);
             if (!Number.isFinite(dc)) {
