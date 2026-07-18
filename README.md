@@ -44,7 +44,7 @@ GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a
 
 > 14. [Troubleshooting](#14-troubleshooting) 15. [Upgrade Paths](#15-upgrade-paths) 16. [Contributing](#16-contributing)
 
-> 17. [Roadmap](#17-roadmap) 18. [Changelog](#18-changelog) 19. [Glossary](#19-glossary)
+> 17. [Roadmap](#17-roadmap) 18. [Changelog](#18-changelog) 19. [Glossary](#19-glossary) 20. [Licensing and Attribution](#20-licensing-and-attribution)
 
 ---
 
@@ -1367,5 +1367,36 @@ For the current verification checklist, see `Smoketest.md`.
 
 * **Watchdog**  
   A periodic observer for the explicit queue. It can release stalled queue state but cannot terminate running JavaScript or Roll20 operations.
+
+
+---
+
+## 20 · Licensing and Attribution <a id="20-licensing-and-attribution"></a>
+
+GameAssist is independently developed and maintained by Mord Eagle under the MIT License in [`LICENSE`](LICENSE).
+
+### Current MarkerService
+
+`GameAssist.MarkerService` is an original GameAssist implementation. Its compatibility goals and marker behavior were informed by TokenMod's established Roll20 behavior. TokenMod was created by **The Aaron, Arcane Scriptomancer**.
+
+GameAssist v0.1.5.0 does not bundle the standalone TokenMod or StatusInfo command implementations wholesale.
+
+### Planned Adapted Services
+
+The future general token service and condition-information service will receive original, owner-selected GameAssist names before their MECHSUITS sections are created.
+
+Where their implementations contain adapted upstream code, GameAssist will retain:
+
+- the original project and author;
+- the exact upstream version and commit;
+- the applicable MIT copyright and permission notice;
+- a record of adapted and independently implemented portions;
+- a statement that the GameAssist service is independently maintained and is not an official upstream release.
+
+The general token service will acknowledge **TokenMod by The Aaron**. The condition-information service will acknowledge **StatusInfo by Robin Kuiper**. Compatibility commands may be retained without retaining the upstream product names as GameAssist module brands.
+
+Condition descriptions sourced from D&D SRD 5.1 will follow its Creative Commons Attribution 4.0 requirements. Non-SRD book text will not be copied into GameAssist.
+
+See [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) for the complete provenance policy, upstream links, MIT notice, SRD guidance, and author-contact policy.
 
 > **Tip:** When behavior in a campaign differs from this README, treat the current script and a Roll20 smoke test as the final source of truth, then correct the documentation.
