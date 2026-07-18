@@ -800,7 +800,7 @@ The first run is a dry run. Add `--apply` only after checking the preview.
 
 ## 13 · Performance Benchmarks <a id="13-performance-benchmarks"></a>
 
-> **Historical reference only:** The following numbers were recorded for an earlier v0.1.3-era build and have **not** been revalidated for v0.1.4.7. Roll20 sandbox load, campaign size, browser state, network conditions, token formulas, and other Mods can materially change results. Do not treat this table as a current performance guarantee.
+> **Historical reference only:** The following numbers were recorded for an earlier v0.1.3-era build and have **not** been revalidated for v0.1.5.0. Roll20 sandbox load, campaign size, browser state, network conditions, token formulas, and other Mods can materially change results. Do not treat this table as a current performance guarantee.
 
 | Environment Item | Historical Test Environment |
 | --- | --- |
