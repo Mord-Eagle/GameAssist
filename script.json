@@ -39,7 +39,10 @@
     "Concentration",
     "DeathTracker",
     "MonsterHitDice",
-    "5th Edition OGL by Roll20 Companion"
+    "5th Edition OGL by Roll20 Companion",
+    "Other scripts that modify NPC HP or use bar1_value",
+    "Other scripts that automatically add or remove the same death or concentration status markers",
+    "Other scripts that automatically process natural 1 attack rolls or open critical-fumble menus"
   ],
   "commands": [
     "!ga-status",
