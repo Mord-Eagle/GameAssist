@@ -38,8 +38,8 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | --- | --- | --- | --- |
 | ConcentrationTracker failure investigation | Complete | [#20](https://github.com/Mord-Eagle/GameAssist/issues/20) | Validate custom-marker recognition and actionable diagnostics in Roll20. |
 | DM-facing help and audit wording | Complete | [#21](https://github.com/Mord-Eagle/GameAssist/issues/21) | Make CritFumble help/menu output and NPC death-audit reports easier to read while preserving existing commands. |
-| NPC death-history buckets and handouts | Sandbox verification | [#22](https://github.com/Mord-Eagle/GameAssist/issues/22) | Verify NPCManager 1.1.0 four-level history, report writer, hierarchical clears, date rollover, and curated Arc controls. |
-| GameAssist status readability | Planned | [#23](https://github.com/Mord-Eagle/GameAssist/issues/23) | Make `!ga-status` easier for DMs to interpret while keeping diagnostics available. |
+| NPC death-history buckets and handouts | Complete | [#22](https://github.com/Mord-Eagle/GameAssist/issues/22) | NPCManager 1.1.0 provides four-level history, report writing, hierarchical clears, date rollover, and curated Arc controls. |
+| GameAssist status readability | Sandbox verification | [#23](https://github.com/Mord-Eagle/GameAssist/issues/23) | Verify the plain-language `!ga-status` system check and optional troubleshooting panel in Roll20. |
 | Standalone interoperability stabilization | Planned | [#24](https://github.com/Mord-Eagle/GameAssist/issues/24) | Finish the `v0.1.4.x` line with reliable standalone TokenMod and StatusInfo behavior. |
 | MarkerService foundation | Planned | [#25](https://github.com/Mord-Eagle/GameAssist/issues/25) | Release `v0.1.5.0` with one internal marker authority and migrated GameAssist modules. |
 | Integrated StatusInfo | Planned | [#26](https://github.com/Mord-Eagle/GameAssist/issues/26) | Release `v0.1.5.1` with rebuilt and attributed StatusInfo. |
@@ -70,7 +70,7 @@ Every `v0.1.4.x` production installation continues to use:
 - [x] Improve NPC death-history reporting with scoped buckets, handout-backed reports, and curated Arc handouts.
 - [x] Add Arc deduplication, deliberate duplicate override, removal controls, and last-addition undo.
 - [x] Add selected-only and descendant clearing plus a report writer and date-managed Session rollover.
-- [ ] Make `!ga-status` easier for DMs to interpret.
+- [x] Make `!ga-status` easier for DMs to interpret while retaining detailed diagnostics behind `--details`.
 - [ ] Diagnose built-in `dead` marker mutation failures while TokenMod `players-can-ids` is enabled.
 - [ ] Ensure marker-operation failures do not produce silent success claims.
 - [ ] Verify NPCManager marker add, remove, audit, report, and teardown behavior.
@@ -87,11 +87,12 @@ The final `v0.1.4.x` release must pass its documented Roll20 smoke test with the
 - v0.1.4.3 resolves configured custom marker display names to the exact tags Roll20 stores on tokens.
 - v0.1.4.4 separates CritFumble quick reference, guided Natural 1 menu, and direct player picker flows; NPC death audit now reports scope, PC exclusion, and marker mismatches in one grouped GM report.
 - v0.1.4.5 advances NPCManager to module version 1.1.0. It records NPC deaths into active Campaign/Chapter/Section/Session buckets, updates one handout per named bucket, moves audit details into `GameAssist NPC Death Audit`, rolls date-managed Sessions forward before activity, adds the `!NPC-WR` report writer, supports selected-only or nested clearing, and maintains deduplicated editable Arc rosters.
+- v0.1.4.6 makes the default `!ga-status` response action-oriented for DMs and moves volatile counters, queue timing, timestamps, and internal event-hook counts into `!ga-status --details`.
 - Static and simulated checks cover custom markers, counted markers, built-in markers, empty status, invalid-marker diagnostics, and ConcentrationTracker teardown commands.
 - Cross-revision simulation also verifies that NPCManager disable/enable preserves saved bucket and Arc records while marker teardown remains active.
-- Open gate: complete the ConcentrationTracker checks in `Smoketest.md` in a Roll20 API sandbox.
+- Open gates: confirm the v0.1.4.6 status panels and complete the standalone TokenMod/StatusInfo checks tracked by Issue #24 in a Roll20 API sandbox.
 - Deferred follow-up: verify Roll20's campaign marker registry property names in [Issue #32](https://github.com/Mord-Eagle/GameAssist/issues/32) after the current issue queue unless it becomes a live blocker.
-- Deferred follow-up: add DM-configurable timezone formatting and Session boundaries in [Issue #35](https://github.com/Mord-Eagle/GameAssist/issues/35); v0.1.4.5 uses the sandbox/UTC date boundary.
+- Deferred follow-up: add DM-configurable timezone formatting and Session boundaries in [Issue #35](https://github.com/Mord-Eagle/GameAssist/issues/35); v0.1.4.6 uses the sandbox/UTC date boundary.
 
 ---
 

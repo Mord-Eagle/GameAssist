@@ -1,8 +1,9 @@
 {
   "name": "GameAssist",
   "script": "GameAssist",
-  "version": "0.1.4.5",
+  "version": "0.1.4.6",
   "previousversions": [
+    "0.1.4.5",
     "0.1.4.4",
     "0.1.4.3",
     "0.1.4.2",
@@ -53,7 +54,8 @@
     "!ga-disable", 
     "!ga-enable", 
     "!ga-metrics", 
-    "!ga-status", 
+    "!ga-status",
+    "!ga-status --details",
     "!npc-death-help",
     "!npc-death-report",
     "!npc-death-report --scope campaign",

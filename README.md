@@ -1,9 +1,9 @@
 # GameAssist – Modular API Framework for Roll20
 
-**Version 0.1.4.5** | © 2025 Mord Eagle · MIT License<br>
+**Version 0.1.4.6** | © 2025 Mord Eagle · MIT License<br>
 **Lead Dev:** [@Mord-Eagle](https://github.com/Mord-Eagle)
 
-> **Release posture:** v0.1.4.5 preserves the v0.1.4.4 readability work while adding scoped NPC death-history buckets, handout-backed audit/report output, and manual story arc buckets. Use `Smoketest.md` to validate an installation before a live session.
+> **Release posture:** v0.1.4.6 preserves the v0.1.4.5 NPCManager release while rebuilding `!ga-status` as a plain-language system check with optional troubleshooting details. Use `Smoketest.md` to validate an installation before a live session.
 
 ---
 
@@ -18,7 +18,7 @@ GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a
 | Category | Highlights |
 | --- | --- |
 | Core Lift | Guarded modules, conservative state repair, explicit queue API, session metrics, dependency diagnostics, and GM health reporting. |
-| 30-Second Install | ① Paste **GameAssist-v0.1.4.5** ② Install **TokenMod** for marker modules ③ Add the seven CritFumble roll-tables ④ Save/reload ⑤ Run `!ga-status`. |
+| 30-Second Install | ① Paste **GameAssist-v0.1.4.6** ② Install **TokenMod** for marker modules ③ Add the seven CritFumble roll-tables ④ Save/reload ⑤ Run `!ga-status`. |
 | Flagship Player Commands | `!concentration`, `!cc`, `!critfumble-<type>`. |
 | Flagship GM Commands | `!critfumble`, `!critfumble help`, `!critfumble menu`, `!critfail`, `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report --help`, `!npc-death-buckets`, `!NPC-WR`, `!npc-death-audit`, `!npc-death-arc`, `!ga-conc-status`, `!ga-config ui`. |
 | Admin Controls | `!ga-config list|get|set|modules|cleanup|ui`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-metrics`, and `!ga-debug`. |
@@ -70,7 +70,7 @@ GameAssist’s kernel and bundled modules expose:
 ## 4 · Quick Start <a id="4-quick-start"></a>
 
 ```text
-📥 1  Copy GameAssist-v0.1.4.5 → Roll20 Mod/API Scripts → Save
+📥 1  Copy GameAssist-v0.1.4.6 → Roll20 Mod/API Scripts → Save
 🛠 2  Install TokenMod if using NPCManager or ConcentrationTracker markers
 📜 3  Create 7 CritFumble roll-tables (see §11: Roll-Table Cookbook)
 🔄 4  Save/reload the sandbox and wait for the core ready whisper
@@ -154,7 +154,7 @@ Roll20 event handlers often perform small, immediate checks. Automatically routi
 | Explicit queue remains busy beyond watchdog threshold | Watchdog releases the busy queue state and records a warning. | The original operation may still finish later. |
 | Known module branch lacks valid `config` or `runtime` containers | Repairs the malformed containers while preserving valid configuration values. | It does not infer arbitrary missing custom values. |
 | Unknown `state.GameAssist` branch is found | Warns and leaves it untouched. | Removal requires `!ga-config cleanup`. |
-| Required external dependency is confirmed missing | Skips startup or refuses enablement for the dependent module. | Discovery depends on metadata Roll20 exposes. |
+| Required external dependency is confirmed missing | Skips startup, preserves the DM's enabled setting, and reports the configured module as needing attention; a later manual enable is refused without changing the setting, while `!ga-disable` can still turn off the inactive module. | Discovery depends on metadata Roll20 exposes. |
 | Dependency cannot be verified | Warns and proceeds without confirmation. | The GM must confirm the dependency manually. |
 
 ### 5.4 Persistent State Shape
@@ -196,14 +196,14 @@ Module configuration belongs under `state.GameAssist.<Module>.config`. Runtime c
   "schemaVersion": 1,
   "scope": "configuration-only",
   "generatedAt": "<ISO timestamp>",
-  "version": "0.1.4.5",
+  "version": "0.1.4.6",
   "flags": {},
   "globalConfig": {},
   "modules": {}
 }
 ```
 
-The snapshot excludes runtime caches and metrics. v0.1.4.5 does not import or restore snapshots.
+The snapshot excludes runtime caches and metrics. v0.1.4.6 does not import or restore snapshots.
 
 ---
 
@@ -294,7 +294,7 @@ Commands:
 
 `!npc-death-report` is a history report. It opens with totals, the latest death, most frequent names, recent entries, and buttons for common next steps. Every new death is written to all four active buckets. A clear confirmation offers either the selected bucket alone or that level and its descendants; for example, clearing Section and below clears Section and Session while retaining Chapter and Campaign. Each bucket has its own handout named like `GameAssist Deaths - Session - 2026-07-17`. Revivals are annotated on the matching entry instead of silently deleting the death. Current entries are matched by token ID, so separate tokens with the same name remain separate records.
 
-The default Session name follows the sandbox's UTC date. Before any NPCManager command or tracked NPC HP change, GameAssist checks the date and moves a date-managed Session to the new `YYYY-MM-DD` bucket. No death processed after that check is written into yesterday's Session. If the DM explicitly names the Session, that custom name remains active across date changes; **Reset Session Date** restores automatic date-managed rollover. A DM-configurable timezone is tracked separately because v0.1.4.5 does not yet reinterpret stored timestamps or date boundaries.
+The default Session name follows the sandbox's UTC date. Before any NPCManager command or tracked NPC HP change, GameAssist checks the date and moves a date-managed Session to the new `YYYY-MM-DD` bucket. No death processed after that check is written into yesterday's Session. If the DM explicitly names the Session, that custom name remains active across date changes; **Reset Session Date** restores automatic date-managed rollover. A DM-configurable timezone is tracked separately because v0.1.4.6 does not yet reinterpret stored timestamps or date boundaries.
 
 Arc handouts are curated rosters, not another hierarchy level. A linked creature appears once per Arc by default, so adding selected NPCs and later importing the full Session does not repeat those creatures. The Session import can enrich an existing selected entry with its death record. The management menu can remove one entry, remove all selected tokens, or undo the most recent Arc addition. `--allowDuplicates` is an explicit override for deliberate repetition. Selected-token Arc entries remain general story notes; revival annotations apply only after an entry is linked to Session death history.
 
@@ -362,7 +362,7 @@ I. **Open the Roll20 Mod/API Editor**
 
 II. **Install GameAssist**
 
-1. Paste the complete contents of `GameAssist-v0.1.4.5`.
+1. Paste the complete contents of `GameAssist-v0.1.4.6`.
 2. Keep the script as one complete file; do not paste only individual MECHSUITS sections into Roll20.
 3. Save the script.
 
@@ -424,7 +424,7 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 
 | Scope | Command | Parameters / Flags | Purpose |
 | --- | --- | --- | --- |
-| **Admin** | `!ga-status` | — | Show queue mode, metrics, module counts, listeners, and dependency warnings. |
+| **Admin** | `!ga-status` | `[--details]` | Show a plain-language system check; `--details` adds session activity, queue, timestamp, and internal event-hook diagnostics. |
 |  | `!ga-metrics` | `[reset]` | Show persisted session totals/history or reset metrics. |
 |  | `!ga-config list` | — | Write a versioned configuration-only snapshot handout. |
 |  | `!ga-config get <Module> [key]` | — | Whisper one config value or the module’s full config. |
@@ -736,7 +736,7 @@ The first run is a dry run. Add `--apply` only after checking the preview.
 
 ## 13 · Performance Benchmarks <a id="13-performance-benchmarks"></a>
 
-> **Historical reference only:** The following numbers were recorded for an earlier v0.1.3-era build and have **not** been revalidated for v0.1.4.5. Roll20 sandbox load, campaign size, browser state, network conditions, token formulas, and other Mods can materially change results. Do not treat this table as a current performance guarantee.
+> **Historical reference only:** The following numbers were recorded for an earlier v0.1.3-era build and have **not** been revalidated for v0.1.4.6. Roll20 sandbox load, campaign size, browser state, network conditions, token formulas, and other Mods can materially change results. Do not treat this table as a current performance guarantee.
 
 | Environment Item | Historical Test Environment |
 | --- | --- |
@@ -753,7 +753,7 @@ The first run is a dry run. Add `--apply` only after checking the preview.
 | Fresh sandbox | 10 | 355 ms | 350 ms | 18 ms | 330–387 ms |
 | **Combined** | **34** | **298 ms** | **300 ms** | **39 ms** | **253–387 ms** |
 
-### 13.1 Repeatable Benchmarking for v0.1.4.5
+### 13.1 Repeatable Benchmarking for v0.1.4.6
 
 1. Duplicate the campaign or use a test game.
 2. Record token count, active Mods, formulas, and sandbox channel.
@@ -775,7 +775,7 @@ Run:
 !ga-metrics
 ```
 
-Check errors, running module count, dependency warnings, and recent activity. Queue length describes only explicit queued work and module transitions. A direct handler problem may not appear as a queued task.
+Start with the default `!ga-status` system check. A separate **GameAssist Actions** whisper immediately below the table provides **Troubleshooting Details**, **Module List**, and **Open Settings** buttons. The detailed view uses a separate **Troubleshooting Actions** strip for **Refresh Details**, **Simple View**, **Module List**, and **Metrics**. The details table keeps session counters, queue information, the last recorded activity, and GameAssist's internal event-hook count separate from the health result.
 
 ### 14.2 A Module Is Configured but Not Running
 
@@ -824,7 +824,7 @@ Unknown branches are not deleted automatically. Review the warning, then explici
 
 ### 14.6 `!ga-config list` Is Not a Full Backup
 
-The `GameAssist Config` handout contains flags, global config, and module config only. It excludes runtime caches, metrics, and unknown state branches. v0.1.4.5 cannot import the snapshot.
+The `GameAssist Config` handout contains flags, global config, and module config only. It excludes runtime caches, metrics, and unknown state branches. v0.1.4.6 cannot import the snapshot.
 
 Use it for configuration review and upgrade comparison—not as a full restore mechanism.
 
@@ -939,7 +939,7 @@ That evidence is far more useful than “it stopped working.”
 
 ## 15 · Upgrade Paths <a id="15-upgrade-paths"></a>
 
-### 15.1 Recommended Upgrade: v0.1.4.4 → v0.1.4.5
+### 15.1 Recommended Upgrade: v0.1.4.5 → v0.1.4.6
 
 I. **Freeze the Current Working Script**
 
@@ -951,7 +951,7 @@ I. **Freeze the Current Working Script**
 
 II. **Replace the Script**
 
-1. Replace the Roll20 script contents with the complete `GameAssist-v0.1.4.5`.
+1. Replace the Roll20 script contents with the complete `GameAssist-v0.1.4.6`.
 2. Save/reload the API sandbox.
 3. Do not combine partial sections from multiple releases unless you are deliberately performing a MECHSUITS whole-section update and have reviewed the ancestor contracts.
 
@@ -965,6 +965,8 @@ III. **Verify Core Health**
 
 Review all dependency warnings. An `unverifiable` dependency is not proof of failure; it is a prompt for manual confirmation.
 
+The default status panel now explains that uncertainty directly. Use `!ga-status --details` when you need session counters, queue state, the last recorded activity, or internal event-hook information.
+
 IV. **Verify Configuration**
 
 ```roll20chat
@@ -976,7 +978,7 @@ IV. **Verify Configuration**
 !ga-config get DebugTools
 ```
 
-v0.1.4.5 retains the known-container repairs from v0.1.4.2, the marker-recognition fixes from v0.1.4.3, and the DM-facing readability work from v0.1.4.4. NPCManager `1.1.0` adds the four-level death-history handouts, curated Arc controls, date-managed Sessions, hierarchical clearing, and a report writer.
+v0.1.4.6 retains the known-container repairs from v0.1.4.2, the marker-recognition fixes from v0.1.4.3, the DM-facing module help from v0.1.4.4, and NPCManager `1.1.0` from v0.1.4.5. Its runtime changes are limited to the `!ga-status` presentation, the accuracy of enabled-module dependency counts, and preserving configured intent when a confirmed missing dependency skips startup or prevents a manual enable.
 
 V. **Run the Smoke Test**
 
@@ -984,7 +986,7 @@ Use [§4.1 Minimum Smoke Test](#41-minimum-smoke-test), including real HP, conce
 
 ### 15.2 Rollback
 
-If v0.1.4.5 fails its smoke test:
+If v0.1.4.6 fails its smoke test:
 
 1. Replace it with your complete previous working script.
 2. Save/reload.
@@ -1070,10 +1072,10 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 
 ### 17.1 Current Status
 
-| Item | Status in v0.1.4.5 | Notes |
+| Item | Status in v0.1.4.6 | Notes |
 | --- | --- | --- |
 | Auto HP roll on NPC token add | **Implemented, opt-in** | `NPCHPRoller.autoRollOnAdd`, default `false`. |
-| Session metrics and logging | **Implemented, basic** | `!ga-status` and `!ga-metrics`; not a full profiler. |
+| Session metrics and logging | **Implemented, basic** | `!ga-status` gives a simple system check; `!ga-status --details` and `!ga-metrics` expose troubleshooting counters. Not a full profiler. |
 | Configuration export | **Implemented, partial** | Versioned configuration-only snapshot; no import/restore. |
 | State self-healing | **Implemented, conservative** | Repairs known containers; does not auto-delete unknown branches. |
 | Dependency diagnostics | **Implemented, best-effort** | Confirmed/missing/unverifiable; not guaranteed discovery. |
@@ -1090,7 +1092,7 @@ After the GameAssist architecture foundation is confirmed stable in Roll20, the 
 * defines clear NPC, HP-formula, save-bonus, and roll-template contracts,
 * avoids requiring another broad GameAssist kernel rewrite.
 
-This is a separate project and is not implemented in v0.1.4.5.
+This is a separate project and is not implemented in v0.1.4.6.
 
 ### 17.3 Deferred GameAssist Features
 
@@ -1139,6 +1141,14 @@ This is a separate project and is not implemented in v0.1.4.5.
 ---
 
 ## 18 · Changelog <a id="18-changelog"></a>
+
+### v0.1.4.6 – DM-Readable System Status
+
+* Rebuilt `!ga-status` around overall health, enabled-module posture, current-sandbox errors, and plain-language dependency guidance.
+* Added `!ga-status --details` for session counters, queue state, average queued-task time, last activity, and the qualified internal event-hook count.
+* Removed the malformed `N/Ams` duration display; unavailable duration now appears as `N/A` with an explanation.
+* Added direct buttons for troubleshooting details, module status, metrics, and settings.
+* Kept `unverifiable` dependencies non-fatal and explained the appropriate manual marker check.
 
 ### v0.1.4.5 – NPCManager Death History and Report Management
 
