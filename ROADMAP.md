@@ -144,16 +144,18 @@ NPCManager and ConcentrationTracker must perform their marker workflows without 
 
 **Tracking:** [Issue #26](https://github.com/Mord-Eagle/GameAssist/issues/26)
 
-Rebuild StatusInfo as `[GAMEASSIST:MODULES:STATUSINFO]`, preserving the useful supported condition-description workflows while removing its independent marker implementation.
+Build an independently branded GameAssist condition-information service that preserves selected StatusInfo workflows while removing its independent marker implementation. The owner-authoritative module name and MECHSUITS tag must be selected before code is created.
 
 ### Ownership Boundary
 
-- StatusInfo owns condition definitions, descriptions, menus, and `!condition` workflows.
+- The GameAssist condition-information service owns condition definitions, descriptions, menus, and supported `!condition` compatibility workflows.
 - MarkerService owns marker identity, state, mutation, and observation.
-- StatusInfo must not independently parse or mutate markers in ways that compete with MarkerService.
+- The condition-information service must not independently parse or mutate markers in ways that compete with MarkerService.
 
 ### Checklist
 
+- [ ] Select the owner-authoritative GameAssist module name and stable MECHSUITS tag.
+- [ ] Compare StatusInfo 0.3.11 with the current published revision and pin the exact adaptation baseline.
 - [ ] Record Robin Kuiper attribution, upstream baseline, GameAssist changes, and MIT notice.
 - [ ] Define the supported command/configuration compatibility surface.
 - [ ] Route commands, events, and lifecycle through GameAssist.
@@ -173,16 +175,18 @@ Supported `!condition` workflows and condition descriptions must function throug
 
 **Tracking:** [Issue #27](https://github.com/Mord-Eagle/GameAssist/issues/27)
 
-Rebuild TokenMod as `[GAMEASSIST:MODULES:TOKENMOD]`, preserve its supported user-facing command behavior, and remove the production requirement for standalone TokenMod.
+Build an independently branded GameAssist general token service that preserves selected TokenMod compatibility behavior and removes the production requirement for standalone TokenMod. The owner-authoritative module name and MECHSUITS tag must be selected before code is created.
 
 ### Ownership Boundary
 
-- TokenMod owns `!token-mod` command parsing and supported general token operations.
+- The GameAssist general token service owns supported `!token-mod` compatibility parsing and general token operations.
 - MarkerService owns marker resolution, mutation, and observation semantics.
 - Internal GameAssist modules call stable internal services directly rather than generating `!token-mod` chat commands.
 
 ### Checklist
 
+- [ ] Select the owner-authoritative GameAssist module name and stable MECHSUITS tag.
+- [ ] Pin the exact TokenMod adaptation baseline and upstream commit.
 - [ ] Record The Aaron attribution, upstream baseline, GameAssist changes, and MIT notice.
 - [ ] Define the initially supported TokenMod compatibility surface and its documented limits.
 - [ ] Preserve supported `!token-mod` command behavior.
@@ -241,8 +245,8 @@ The integrated architecture is considered stable only when supported workflows h
 ├─ [GAMEASSIST:MODULES]
 │  ├─ [GAMEASSIST:MODULES:CONFIGUI]
 │  ├─ [GAMEASSIST:MODULES:CRITFUMBLE]
-│  ├─ [GAMEASSIST:MODULES:TOKENMOD]
-│  ├─ [GAMEASSIST:MODULES:STATUSINFO]
+│  ├─ GameAssist-branded general token service (final tag pending)
+│  ├─ GameAssist-branded condition-information service (final tag pending)
 │  ├─ [GAMEASSIST:MODULES:NPCMANAGER]
 │  ├─ [GAMEASSIST:MODULES:CONCENTRATIONTRACKER]
 │  ├─ [GAMEASSIST:MODULES:NPCHPROLLER]
