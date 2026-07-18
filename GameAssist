@@ -4269,7 +4269,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 );
             }
 
-            const result = GameAssist.MarkerService.set(token, resolution.id, on, { owner: 'NPCManager' });
+            const result = GameAssist.MarkerService.set(token, modState.config.deadMarker || 'dead', on, { owner: 'NPCManager' });
             if (!result.ok) {
                 GameAssist.log('NPCManager', result.message || `Marker change failed (${result.code || 'INTERNAL'}).`, 'WARN');
                 return false;
@@ -4676,7 +4676,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): NPCManager module_version advanced to 1.2.0; all marker reads, writes, audits, and teardown use CORE:MARKERSERVICE with no standalone TokenMod dependency.
+    // Changed (v0.1.5.0): NPCManager module_version advanced to 1.2.0; all marker reads, writes, audits, and teardown use CORE:MARKERSERVICE with no standalone TokenMod dependency. Writes preserve configured numbered overlays such as dead@2.
     // Decision log:
     //   CHOICE: Keep death-history recording independent from marker mutation success - ALT: record only after marker success; REJECTED: history should describe HP events even when a visual marker cannot change.
     //   CHOICE: Identify Arc creatures by token before character/name fallbacks - ALT: character-only identity; REJECTED: multiple NPC tokens may share one character sheet.
@@ -4890,7 +4890,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             );
         }
 
-        const result = GameAssist.MarkerService.set(token, resolution.id, on, { owner: 'ConcentrationTracker' });
+        const result = GameAssist.MarkerService.set(token, getMarker(), on, { owner: 'ConcentrationTracker' });
         if (!result.ok) {
             GameAssist.log('ConcentrationTracker', result.message || `Marker change failed (${result.code || 'INTERNAL'}).`, 'WARN');
             return false;
@@ -5255,7 +5255,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): ConcentrationTracker module_version advanced to 0.2.0; status, toggle, and teardown marker behavior uses CORE:MARKERSERVICE without standalone TokenMod.
+    // Changed (v0.1.5.0): ConcentrationTracker module_version advanced to 0.2.0; status, toggle, and teardown marker behavior uses CORE:MARKERSERVICE without standalone TokenMod. Writes preserve configured numbered overlays such as Concentrating@2.
     // Decision log:
     //   CHOICE: Keep lowercase parsing and established aliases - ALT: introduce a new command grammar; REJECTED: unnecessary user retraining.
     // Prior notes:

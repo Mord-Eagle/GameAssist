@@ -1249,15 +1249,6 @@ The v0.1.4.3 artifact remains preserved. The current repository script and the n
 | `GameAssist` | `DB68D6467D698FEF25D416394FFD07F6F44EF2E2361D9DBA9F198A0DAA41D091` |
 | `GameAssist-v0.1.4.4` | `DB68D6467D698FEF25D416394FFD07F6F44EF2E2361D9DBA9F198A0DAA41D091` |
 
-### Release artifacts
-
-| Artifact | SHA-256 |
-| --- | --- |
-| `GameAssist` | `76ED4A7972D5F64F08E66A5B91C48D88EC9C2B9884C05D37FB1F3DEC38FA68F6` |
-| `GameAssist-v0.1.5.0` | `76ED4A7972D5F64F08E66A5B91C48D88EC9C2B9884C05D37FB1F3DEC38FA68F6` |
-
-The repository source and versioned Roll20 test artifact are byte-identical.
-
 ### Verification
 
 | Check | Result |
@@ -1846,6 +1837,7 @@ This release implements [Issue #25](https://github.com/Mord-Eagle/GameAssist/iss
 - Advanced NPCManager from module version `1.1.1` to `1.2.0`.
 - Routed death-marker resolution, presence checks, add/remove operations, audits, and teardown through MarkerService.
 - Removed NPCManager's standalone TokenMod dependency declaration and dependency-skip path.
+- Preserved configured numbered death-marker overlays such as `dead@2` when requesting marker writes.
 - Kept death-history recording independent from marker-write success so Campaign, Chapter, Section, Session, and Arc records continue describing HP events.
 - Preserved NPCHPRoller initialization protection, known-positive-to-zero death detection, revival annotation, auto-hide behavior, report writing, hierarchical clearing, and Arc management.
 - Teardown now reports markers actually removed rather than a delayed external request count.
@@ -1855,6 +1847,7 @@ This release implements [Issue #25](https://github.com/Mord-Eagle/GameAssist/iss
 - Advanced ConcentrationTracker from module version `0.1.0.6` to `0.2.0`.
 - Routed configured-marker resolution, status scans, roll-result mutation, `--off`, and teardown through MarkerService.
 - Removed ConcentrationTracker's standalone TokenMod dependency declaration and dependency-skip path.
+- Preserved configured numbered concentration-marker overlays such as `Concentrating@2` when requesting marker writes.
 - Replaced TokenMod-specific repair wording with campaign marker-library and exact stored-tag guidance.
 - Preserved `!concentration`, `!cc`, `--damage`, `--mode`, `--last`, `--off`, `--status`, randomization configuration, and `!ga-conc-status`.
 
@@ -1901,6 +1894,15 @@ This release implements [Issue #25](https://github.com/Mord-Eagle/GameAssist/iss
 - Updated `ROADMAP.md` to place Issue #25 in sandbox verification and retain the Roll20 sandbox pass as the completion gate.
 - Added `ATTRIBUTIONS.md`, updated the GameAssist copyright year, and recorded the independent-branding, upstream-provenance, MIT-notice, SRD-text, and author-contact policy for the planned token and condition services.
 
+### Release artifacts
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `GameAssist` | `019CA4EE1B9EA35D7B37C51B89B49998A4B8581E3A651D48E05562741C4A5654` |
+| `GameAssist-v0.1.5.0` | `019CA4EE1B9EA35D7B37C51B89B49998A4B8581E3A651D48E05562741C4A5654` |
+
+The repository source and versioned Roll20 test artifact are byte-identical.
+
 ### Verification
 
 | Check | Result |
@@ -1915,6 +1917,7 @@ This release implements [Issue #25](https://github.com/Mord-Eagle/GameAssist/iss
 | Custom display-name and direct stored-tag resolution | Passed |
 | Direct stored tag during invalid registry data | Passed |
 | Numbered and duplicate marker parsing | Passed |
+| Configured numbered-marker pass-through from NPCManager and ConcentrationTracker | Passed |
 | Requested duplicate removal | Passed |
 | Unrelated numbered-marker preservation | Passed |
 | Idempotent add and toggle behavior | Passed |

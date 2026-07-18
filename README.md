@@ -1,6 +1,6 @@
 # GameAssist – Modular API Framework for Roll20
 
-**Version 0.1.5.0** | © 2025 Mord Eagle · MIT License<br>
+**Version 0.1.5.0** | © 2025-2026 Mord Eagle · MIT License<br>
 **Lead Dev:** [@Mord-Eagle](https://github.com/Mord-Eagle)
 
 > **Release posture:** v0.1.5.0 introduces `GameAssist.MarkerService` as the single internal authority for GameAssist marker reads, writes, toggles, and observations. NPCManager, ConcentrationTracker, and DebugTools no longer require standalone TokenMod. Integrated StatusInfo and TokenMod command modules remain staged for v0.1.5.1 and v0.1.5.2.
