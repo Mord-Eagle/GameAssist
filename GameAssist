@@ -1,106 +1,83 @@
 /*
 ========================================
-GameAssist — Roll20 API Script
-Version: 0.1.4.7
-Last Updated: 2026-07-17 (America/New_York)
-Development line: standalone TokenMod and StatusInfo interoperability v0.1.4.7 based on the v0.1.4.6 system-health release.
+GameAssist - Roll20 API Script
+Version: 0.1.5.0
+Last Updated: 2026-07-18 (America/New_York)
+Development line: integrated marker architecture v0.1.5.0.
 Author: Mord Eagle
 License: MIT (see repository LICENSE)
-Homepage: https://github.com/Roll20/roll20-api-scripts (submission target)
+Homepage: https://github.com/Mord-Eagle/GameAssist
 
 DESCRIPTION
-GameAssist is a small framework for organizing Roll20 API modules with an explicit opt-in
-task queue, watchdog, config/state helpers, and consistent logging. Normal event handlers
-execute directly unless a module deliberately calls GameAssist.enqueue(). This package ships with six modules:
-• ConfigUI — GM-only chat controls for toggling modules and boolean options.
-• CritFumble — Detects natural-1s on selected rolltemplates and offers fumble/confirm menus.
-• ConcentrationTracker — Runs concentration checks (normal/adv/dis), whispers results, toggles marker.
-• NPCManager 1.1.1 — Tracks NPC death markers, hierarchical death-history buckets, report writing, audits, and curated arc rosters.
-• NPCHPRoller — Rolls NPC HP from `npc_hpformula` and writes to bar1 (value/max).
-• DebugTools — Optional GM diagnostics (dry-run by default) for damage, markers, and save rolls.
+GameAssist is a modular D&D 5E (2014) automation suite with an explicit opt-in
+task queue, state/configuration helpers, consistent logging, and a core marker
+service. Normal event handlers execute directly unless a module deliberately
+calls GameAssist.enqueue(). This package ships with six configurable modules:
+- ConfigUI - GM-only chat controls for toggling modules and common options.
+- CritFumble - Detects natural-1 attacks and offers fumble/confirm menus.
+- ConcentrationTracker - Runs concentration checks and manages its configured marker.
+- NPCManager 1.2.0 - Tracks NPC death markers, history, reports, audits, and Arc rosters.
+- NPCHPRoller - Rolls npc_hpformula and writes the result to token bar 1.
+- DebugTools 0.2.0 - Optional dry-run-first GM diagnostics.
 
-INSTALL / USAGE (One-Click or Manual)
-• One-Click: install “GameAssist”. (Make sure “TokenMod” is also installed; see Dependencies.)
-• Manual (Pro): paste this entire file into the API Scripts editor and Save.
+INSTALL / USAGE
+- One-Click: install GameAssist.
+- Manual (Pro): paste this entire file into the Mod (API) Scripts editor and save.
+- GameAssist v0.1.5.0 no longer requires standalone TokenMod for NPCManager,
+  ConcentrationTracker, or DebugTools marker operations.
 
-CORE COMMANDS (GM):
-• !ga-config list                          — write config handout “GameAssist Config”
-• !ga-config modules                       — list modules + status
-• !ga-config set <Module> key=value        — set module config (JSON/number/bool supported)
-• !ga-config get <Module> key              — echo module config value
-• !ga-config ui / !ga-config-ui            — open the GM chat control panel
-• !ga-enable <Module> / !ga-disable <Module>
-• !ga-status [--details]                   — show simple health or troubleshooting details
-• !ga-debug <action>                       — run DebugTools helpers (`damage`, `marker`, `save`)
+CORE COMMANDS (GM)
+- !ga-config list
+- !ga-config modules
+- !ga-config set <Module> key=value
+- !ga-config get <Module> key
+- !ga-config ui / !ga-config-ui
+- !ga-enable <Module> / !ga-disable <Module>
+- !ga-status [--details]
+- !ga-debug <action>
 
-MODULE COMMANDS:
-• CritFumble:
-    !critfail                               — GM menu to trigger fumble UI for a player
-    !critfumble                             — help
-    !critfumble help                        — help
-    !critfumble menu                        — guided natural-1 menu
-    !critfumble-<melee|ranged|thrown|spell|natural>
-    !confirm-crit-martial   | !confirm-crit-magic
-• ConcentrationTracker (players/GM):
-    !concentration [--damage N] [--mode normal|adv|dis] [--off|--status|--last|--config randomize on|off]
-    !cc (alias)
-• NPCManager (GM):         !npc-death-help
-                            !npc-death-report [--scope campaign|chapter|section|session] [--recent|--page N|--write|--help]
-                            !npc-death-buckets | !npc-death-clear [--scope session] [--nested] [--confirm]
-                            !npc-death-write | !npc-wr | !npc-death-audit | !npc-death-arc
-• NPCHPRoller (GM):        !npc-hp-selected    |   !npc-hp-all
-• ConfigUI (GM):           !ga-config ui [--page N] | !ga-config-ui
-• DebugTools (GM-only):    !ga-debug damage|marker|save [flags] (module disabled by default)
+MODULE COMMANDS
+- CritFumble: !critfail, !critfumble help, !critfumble menu,
+  !critfumble-<melee|ranged|thrown|spell|natural>,
+  !confirm-crit-martial, !confirm-crit-magic
+- ConcentrationTracker: !concentration, !cc, !ga-conc-status
+- NPCManager: !npc-death-help, !npc-death-report, !npc-death-buckets,
+  !npc-death-clear, !npc-death-write, !npc-wr, !npc-death-audit,
+  !npc-death-arc
+- NPCHPRoller: !npc-hp-selected, !npc-hp-all
+- DebugTools: !ga-debug damage|marker|save
 
-DEPENDENCIES
-• TokenMod 0.8.88 baseline — required for marker/status changes issued by NPCManager and ConcentrationTracker.
-• StatusInfo 0.3.11 baseline — optional; provides condition descriptions and menus while observing TokenMod changes.
-
-CONFIGURATION NOTES
-• Global flags (in code): GameAssist.flags.DEBUG_COMPAT, GameAssist.flags.QUIET_STARTUP.
-• Per-module config via !ga-config set; types: boolean, number, JSON object/array, string.
+V0.1.5.0 MARKER ARCHITECTURE
+- [GAMEASSIST:CORE:MARKERSERVICE] is the single GameAssist authority for marker
+  resolution, reads, writes, toggles, duplicate handling, and change observation.
+- Built-in ids, custom display names, exact stored tags, numbered markers, and
+  unrelated marker entries are preserved through a structured mutation contract.
+- NPCManager, ConcentrationTracker, and DebugTools use GameAssist.MarkerService.
+- Marker-dependent GameAssist modules no longer depend on standalone TokenMod.
+- Integrated StatusInfo and TokenMod modules remain staged for v0.1.5.1 and
+  v0.1.5.2; this release does not claim those command surfaces.
+- Queue timeouts release the queue but cannot terminate Roll20 operations.
+- Configuration snapshots contain configuration only, never runtime caches.
 
 COMPATIBILITY / FOOTPRINT
-• Namespaced under global `GameAssist` only; avoids other global pollution.
-• Uses standard events: `on('ready')`, `on('chat:message')`, and graphic change events.
-• Writes only to Roll20 objects documented in script.json: handout notes, token bars/markers.
+- Namespaced under global GameAssist only.
+- Does not override Roll20 global on/off handlers.
+- Writes only to Roll20 objects documented in script.json.
+- Standalone scripts that also change the same markers may still compete for
+  ownership even though TokenMod is no longer required by GameAssist.
 
-SUPPORT / HELP
-• Use !ga-status for quick health; !ga-config list creates a “GameAssist Config” handout.
-• For bug reports, include the console whisper output from `GameAssist.log(...)`.
-
-V0.1.4.7 STANDALONE INTEROPERABILITY NOTES
-- Normal commands/events execute directly; GameAssist.enqueue(task, options) is explicitly opt-in.
-- Queue timeouts release the queue but cannot cancel JavaScript or Roll20 operations.
-- Dependency status is confirmed, missing, or unverifiable.
-- !ga-config list exports configuration only; runtime caches and metrics are excluded.
-- Hidden/admin commands: !ga-config cleanup, !npc-death-buckets, !npc-death-clear [--scope session] [--nested] [--confirm], !npc-death-write, !npc-wr, !npc-death-audit, !npc-death-arc, !ga-metrics [reset].
-- Additional config: NPCManager autoHide/hideLayer; registration dependsOn; onCommand match options.
-- Built-in and custom status-marker names resolve to the exact ids Roll20 stores on tokens.
-- Concentration status reports invalid marker configuration instead of silently returning an incorrect result.
-- CritFumble help and NPC death-audit output use clearer DM-facing wording.
-- NPC deaths record into Campaign, Chapter, Section, and Session buckets, with one handout per bucket.
-- NPC death audits show bounded token-specific findings in chat and write the complete findings to the GameAssist NPC Death Audit handout.
-- Disabling NPCManager clears its configured page markers but preserves saved death-history and Arc records.
-- Arc buckets let the GM append selected linked PC/NPC tokens or current-session deaths to story handouts.
-- GameAssist uses TokenMod's documented --api-as path, so internal marker requests do not require players-can-ids.
-- Marker requests are checked after TokenMod runs; mismatches produce a direct manual test command for the GM.
-- !ga-status --details reports detected TokenMod and optional StatusInfo versions/configuration evidence.
-- Marker mutation remains inside standalone TokenMod so StatusInfo continues receiving TokenMod observer notifications.
-- NPCManager ignores placeholder HP while NPCHPRoller auto-roll-on-add establishes a new token's starting HP.
-
-HEADER REQUIREMENTS NOTE
-Per the Roll20 API repo contribution guidelines, this header provides name, version, last updated,
-description, syntax/commands, and configuration pointers near the top of the script.
+SUPPORT
+Use !ga-status for system health and !ga-config list for a configuration snapshot.
+For bug reports, include the relevant GameAssist chat output and sandbox console error.
 ========================================
 */
 
 // --- MECHSUITS BANNER (YAML) ---
 // mechsuit:
 //   codename: "GAMEASSIST"
-//   project_version: "v0.1.4.7"
-//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, explicit opt-in queue execution, state self-healing, contract-aware dependency diagnostics, verified standalone TokenMod marker requests, and preserved StatusInfo observer delivery. Non-goals: embedded TokenMod/StatusInfo, sheet-specific integrations, implicit event queueing, or transport changes beyond Roll20 chat API."
-//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critfumble","modules.npcmanager","modules.concentrationtracker","modules.npchproller","modules.debugtools","bootstrap"]
+//   project_version: "v0.1.5.0"
+//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, explicit opt-in queue execution, state self-healing, dependency diagnostics, and one internal marker authority. Non-goals: integrated TokenMod/StatusInfo command surfaces in v0.1.5.0, sheet-specific integrations, implicit event queueing, or transport changes beyond Roll20 chat API."
+//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critfumble","modules.npcmanager","modules.concentrationtracker","modules.npchproller","modules.debugtools","bootstrap"]
 //   env:
 //     required: []
 //     optional: []
@@ -130,6 +107,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
 //     │  ├─ [GAMEASSIST:CORE:QUEUE]
 //     │  ├─ [GAMEASSIST:CORE:COMPAT]
 //     │  ├─ [GAMEASSIST:CORE:STATE]
+//     │  ├─ [GAMEASSIST:CORE:MARKERSERVICE]
 //     │  └─ [GAMEASSIST:CORE:OBJECT]
 //     ├─ [GAMEASSIST:INTERFACES]
 //     │  ├─ [GAMEASSIST:INTERFACES:EVENTS]
@@ -143,10 +121,10 @@ description, syntax/commands, and configuration pointers near the top of the scr
 //     │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 //     └─ [GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
-// Guarantee: GameAssist v0.1.4.7 runs policy, utilities, guarded core services, interfaces, modules, then bootstrap using the declared order and preserves standalone TokenMod/StatusInfo ownership. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
+// Guarantee: GameAssist v0.1.5.0 runs policy, utilities, guarded core services including MarkerService, interfaces, modules, then bootstrap in the declared order. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
 
 // =============================
-// === GameAssist v0.1.4.7 ===
+// === GameAssist v0.1.5.0 ===
 // === Author: Mord Eagle ===
 // =============================
 // Released under the MIT License (see https://opensource.org/licenses/MIT)
@@ -179,8 +157,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: Tunables and operational policy
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "POLICY", title: "Tunables",
-    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; marker verification and NPC initialization waits are explicit"],
-    //   provides: ["POLICY"], last_updated_version: "v0.1.4.7", lifecycle: "active" }
+    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; NPC initialization waits remain explicit"],
+    //   provides: ["POLICY"], last_updated_version: "v0.1.5.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // POLICY owns shared timeouts, cache limits, UI defaults, snapshot identifiers,
@@ -217,9 +195,6 @@ description, syntax/commands, and configuration pointers near the top of the scr
         critFumble: Object.freeze({
             rollDelayMs: 200
         }),
-        standaloneInterop: Object.freeze({
-            markerVerificationDelayMs: 1000
-        }),
         config: Object.freeze({
             unsafeKeys: Object.freeze(['__proto__', 'prototype', 'constructor'])
         }),
@@ -229,6 +204,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         })
     });
     // --- Notes & Comments ---
+    // Changed (v0.1.5.0): Removed the obsolete standalone TokenMod verification delay after marker writes moved to synchronous MarkerService mutations; rollback: restore standalone request dispatch and its delay.
     // Changed (v0.1.4.7): Added a two-second NPC HP initialization grace period so auto-roll-on-add setup is not recorded as a death/revival; rollback: remove the guard and this policy value.
     // Changed (v0.1.4.7): Added a one-second standalone TokenMod marker-verification delay; rollback: remove standaloneInterop and delayed verification.
     // Changed (v0.1.4.5): Added runtime death-report summary/detail limits for bounded GM-facing history reports.
@@ -247,13 +223,13 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: App wrapper (utilities and shared helpers)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "APP", title: "Wrapper",
-    //   guarantees: ["APP-scoped shared helpers are grouped here", "Standalone marker requests preserve TokenMod observer delivery"],
-    //   depends_on: [], last_updated_version: "v0.1.4.7" }
+    //   guarantees: ["APP-scoped non-marker helpers are grouped here; marker authority belongs to CORE:MARKERSERVICE"],
+    //   depends_on: [], last_updated_version: "v0.1.5.0" }
     // -------------------------------------------------------------------------
     // Narrative
     // The APP tree houses shared helpers used by core services and bundled modules.
     // Utilities below cover argument parsing, state helpers, auditing, sanitization,
-    // exact Roll20 status-marker identity resolution, and standalone script interoperability.
+    // time, token-character linking, and standalone-script evidence.
     // -------------------------------------------------------------------------
 
     // ————— UTILITIES —————
@@ -262,14 +238,14 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: Utilities (arg parsing, state helpers, audit, sanitize)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "APP:UTILS", title: "Utilities",
-    //   guarantees: ["Shared helpers; known module state branches self-heal without deleting valid config","Configured built-in/custom marker names resolve to stored Roll20 marker ids","TokenMod marker requests use documented API impersonation and delayed outcome verification"],
-    //   depends_on: ["[GAMEASSIST:POLICY]"], last_updated_version: "v0.1.4.7", lifecycle: "active" }
+    //   guarantees: ["Shared non-marker helpers; known module state branches self-heal without deleting valid config","Standalone-script evidence remains diagnostic rather than a marker dependency"],
+    //   depends_on: ["[GAMEASSIST:POLICY]"], last_updated_version: "v0.1.5.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // APP:UTILS collects helpers for metrics/state initialization, conservative state
     // repair, argument parsing, sanitization, time access, token-character linking,
-    // exact built-in/custom status-marker identity resolution, external-script evidence,
-    // and verified requests through standalone TokenMod.
+    // and external-script evidence. Marker resolution and mutation now belong only to
+    // CORE:MARKERSERVICE.
     // Roll20 does not guarantee a high-resolution monotonic clock, so monotonic()
     // falls back to Date.now() while keeping duration access behind a named seam.
     // -------------------------------------------------------------------------
@@ -402,206 +378,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
         return boundary.test(txt);
     }
 
-    const BUILT_IN_MARKER_IDS = new Set([
-        'red', 'blue', 'green', 'brown', 'purple', 'pink', 'yellow', 'dead',
-        'skull', 'sleepy', 'half-heart', 'half-haze', 'interdiction', 'snail',
-        'lightning-helix', 'spanner', 'chained-heart', 'chemical-bolt',
-        'death-zone', 'drink-me', 'edge-crack', 'ninja-mask', 'stopwatch',
-        'fishing-net', 'overdrive', 'strong', 'fist', 'padlock', 'three-leaves',
-        'fluffy-wing', 'pummeled', 'tread', 'arrowed', 'aura', 'back-pain',
-        'black-flag', 'bleeding-eye', 'bolt-shield', 'broken-heart', 'cobweb',
-        'broken-shield', 'flying-flag', 'radioactive', 'trophy', 'broken-skull',
-        'frozen-orb', 'rolling-bomb', 'white-tower', 'grab', 'screaming',
-        'grenade', 'sentry-gun', 'all-for-one', 'angel-outfit', 'archery-target'
-    ]);
-
-    let customMarkerRegistryCache = {
-        raw: null,
-        markers: [],
-        error: null
-    };
-
-    function unwrapMarkerText(marker) {
-        const text = String(marker || '').split('@')[0].trim();
-        if (text.length >= 2) {
-            const first = text[0];
-            const last = text[text.length - 1];
-            if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
-                return text.slice(1, -1).trim();
-            }
-        }
-        return text;
-    }
-
-    function normalizeMarkerId(marker) {
-        return unwrapMarkerText(marker).toLowerCase();
-    }
-
     /**
-     * getCustomMarkerRegistry — Read Roll20's custom marker display-name/tag map.
-     * Failure: returns an empty registry plus an actionable error; never throws.
-     * Design: cache by the raw campaign value so audits do not repeatedly parse JSON.
-     */
-    function getCustomMarkerRegistry() {
-        let raw;
-        try {
-            raw = String(Campaign().get('_token_markers') || '[]');
-        } catch (error) {
-            return {
-                raw: null,
-                markers: [],
-                error: `Campaign marker registry unavailable: ${error.message || error}`
-            };
-        }
-
-        if (customMarkerRegistryCache.raw === raw) {
-            return customMarkerRegistryCache;
-        }
-
-        try {
-            const parsed = JSON.parse(raw);
-            const markers = (Array.isArray(parsed) ? parsed : [])
-                .filter(entry => entry && entry.name && entry.tag)
-                .map(entry => ({
-                    name: String(entry.name).trim(),
-                    tag: String(entry.tag).split('@')[0].trim()
-                }))
-                .filter(entry => entry.name && entry.tag);
-
-            customMarkerRegistryCache = { raw, markers, error: null };
-        } catch (error) {
-            customMarkerRegistryCache = {
-                raw,
-                markers: [],
-                error: `Campaign marker registry is invalid JSON: ${error.message || error}`
-            };
-        }
-
-        return customMarkerRegistryCache;
-    }
-
-    /**
-     * resolveMarkerId — Resolve configured marker text to the exact stored marker id.
-     * Inputs: built-in id, custom display name, or custom stored tag.
-     * Outputs: a result object; callers must inspect ok before using id.
-     * Design: literal lowercase built-in ids retain precedence, exact stored
-     * custom tags do not require the campaign registry, and exact custom display
-     * names such as "Dead" can still select a custom marker.
-     */
-    function resolveMarkerId(marker) {
-        const requested = unwrapMarkerText(marker);
-        const normalized = normalizeMarkerId(requested);
-
-        if (!requested) {
-            return {
-                ok: false,
-                requested,
-                id: null,
-                source: null,
-                ambiguous: false,
-                candidates: [],
-                reason: 'empty',
-                registryError: null
-            };
-        }
-
-        if (requested === normalized && BUILT_IN_MARKER_IDS.has(normalized)) {
-            return {
-                ok: true,
-                requested,
-                id: normalized,
-                source: 'built-in',
-                ambiguous: false,
-                candidates: [normalized],
-                reason: null,
-                registryError: null
-            };
-        }
-
-        if (requested.includes('::')) {
-            return {
-                ok: true,
-                requested,
-                id: requested,
-                source: 'custom-tag-direct',
-                ambiguous: false,
-                candidates: [requested],
-                reason: null,
-                registryError: null
-            };
-        }
-
-        const registry = getCustomMarkerRegistry();
-
-        const resolved = (matches, source) => ({
-            ok: true,
-            requested,
-            id: matches[0].tag,
-            source,
-            ambiguous: matches.length > 1,
-            candidates: matches.map(entry => entry.tag),
-            reason: null,
-            registryError: registry.error
-        });
-
-        const directTagMatches = registry.markers
-            .filter(entry => normalizeMarkerId(entry.tag) === normalized);
-        if (directTagMatches.length) return resolved(directTagMatches, 'custom-tag');
-
-        const exactNameMatches = registry.markers
-            .filter(entry => entry.name === requested);
-        if (exactNameMatches.length) return resolved(exactNameMatches, 'custom-name');
-
-        if (BUILT_IN_MARKER_IDS.has(normalized)) {
-            return {
-                ok: true,
-                requested,
-                id: normalized,
-                source: 'built-in',
-                ambiguous: false,
-                candidates: [normalized],
-                reason: null,
-                registryError: registry.error
-            };
-        }
-
-        const foldedNameMatches = registry.markers
-            .filter(entry => entry.name.toLowerCase() === normalized);
-        if (foldedNameMatches.length) return resolved(foldedNameMatches, 'custom-name-folded');
-
-        return {
-            ok: false,
-            requested,
-            id: null,
-            source: null,
-            ambiguous: false,
-            candidates: [],
-            reason: registry.error ? 'registry-error' : 'not-found',
-            registryError: registry.error
-        };
-    }
-
-    function tokenHasMarker(token, marker) {
-        if (!token || typeof token.get !== 'function') return false;
-
-        const requested = unwrapMarkerText(marker);
-        const normalized = normalizeMarkerId(requested);
-        const isStoredId = requested.includes('::') ||
-            (requested === normalized && BUILT_IN_MARKER_IDS.has(normalized));
-        const resolution = isStoredId
-            ? { ok: true, id: requested }
-            : resolveMarkerId(requested);
-
-        if (!resolution.ok) return false;
-        const want = normalizeMarkerId(resolution.id);
-        const list = String(token.get('statusmarkers') || '')
-            .split(',')
-            .map(normalizeMarkerId)
-            .filter(Boolean);
-        return list.includes(want);
-    }
-
-    /**
+     * getStandaloneScriptEvidence    /**
      * getStandaloneScriptEvidence — Inspect public contracts without assuming Roll20's script registry exists.
      * Inputs: the literal upstream script name TokenMod or StatusInfo.
      * Outputs: detected contract/version/config evidence; absence is not automatically proof of missing installation.
@@ -646,102 +424,17 @@ description, syntax/commands, and configuration pointers near the top of the scr
         const statusInfo = getStandaloneScriptEvidence('StatusInfo');
         const tokenModVersion = tokenMod.version ? ` v${tokenMod.version}` : '';
         const statusInfoVersion = statusInfo.version ? ` v${statusInfo.version}` : '';
-        const statusInfoDescriptions = statusInfo.showDescriptions === true
-            ? 'condition descriptions are enabled'
-            : (statusInfo.showDescriptions === false
-                ? 'condition descriptions are disabled'
-                : 'the condition-description setting could not be read');
+        const markerLine = `MarkerService v${MarkerService.version}: active; GameAssist marker reads and writes are internal.`;
         const tokenModLine = tokenMod.confirmed
-            ? `TokenMod${tokenModVersion}: detected; GameAssist can send authorized marker requests and check their results.`
-            : 'TokenMod: not directly confirmed; enabled marker modules still require a live marker test.';
+            ? `Standalone TokenMod${tokenModVersion}: detected; optional for its own commands, but not required by GameAssist marker modules.`
+            : 'Standalone TokenMod: not detected; GameAssist marker modules do not require it.';
         const statusInfoLine = statusInfo.confirmed
-            ? `StatusInfo${statusInfoVersion}: detected; ${statusInfoDescriptions}. Live observation remains the final check.`
-            : 'StatusInfo: not detected. It is optional unless this campaign uses condition descriptions and menus.';
-        return [tokenModLine, statusInfoLine];
+            ? `Standalone StatusInfo${statusInfoVersion}: detected; v0.1.5.0 does not promise observer synchronization with the new internal marker service.`
+            : 'Standalone StatusInfo: not detected; integrated StatusInfo is planned for v0.1.5.1.';
+        return [markerLine, tokenModLine, statusInfoLine];
     }
 
-    function getTokenModApiIdentity() {
-        const gm = (findObjs({ _type: 'player' }) || [])
-            .filter(player => {
-                try { return playerIsGM(player.id); }
-                catch { return false; }
-            })
-            .sort((a, b) => String(a.id).localeCompare(String(b.id)))[0] || null;
-        const evidence = getStandaloneScriptEvidence('TokenMod');
-        return {
-            gmPlayerId: gm?.id || null,
-            playersCanUseIds: evidence.playersCanUseIds,
-            evidence
-        };
-    }
-
-    const pendingTokenModMarkerOps = new Map();
-    let tokenModMarkerOpId = 0;
-
-    /**
-     * requestTokenModMarker — Request one marker mutation through standalone TokenMod and verify the result.
-     * Inputs: Roll20 token, resolved stored marker id, desired boolean state, owning module name.
-     * Outputs: true when a request was accepted for dispatch; false when validation/authentication prevents dispatch.
-     * Failure: delayed mismatch warnings give the GM a direct TokenMod command to try on a selected token.
-     * Design: use TokenMod rather than token.set so StatusInfo keeps receiving TokenMod.ObserveTokenChange notifications.
-     */
-    function requestTokenModMarker(token, marker, on, moduleName) {
-        if (!token || typeof token.get !== 'function' || !token.id) {
-            GameAssist.log(moduleName, 'TokenMod marker request could not identify the target token.', 'WARN');
-            return false;
-        }
-
-        const markerId = unwrapMarkerText(marker);
-        if (!markerId || /[\s|#]/.test(markerId)) {
-            GameAssist.log(moduleName, `TokenMod marker request refused unsafe or invalid marker id "${_sanitize(markerId)}".`, 'WARN');
-            return false;
-        }
-
-        const desired = on === true;
-        if (tokenHasMarker(token, markerId) === desired) return true;
-
-        const auth = getTokenModApiIdentity();
-        if (!auth.gmPlayerId && auth.playersCanUseIds !== true) {
-            GameAssist.log(
-                moduleName,
-                'TokenMod marker request could not find a GM identity for --api-as, and TokenMod does not report players-can-ids as enabled. Open !ga-status --details and test TokenMod directly.',
-                'WARN'
-            );
-            return false;
-        }
-
-        const apiAs = auth.gmPlayerId ? ` --api-as ${auth.gmPlayerId}` : '';
-        const operation = desired ? '+' : '-';
-        const command = `!token-mod${apiAs} --ids ${token.id} --set statusmarkers|${operation}${markerId}`;
-        const key = `${token.id}|${normalizeMarkerId(markerId)}`;
-        const operationId = ++tokenModMarkerOpId;
-        pendingTokenModMarkerOps.set(key, operationId);
-        sendChat('api', command);
-
-        setTimeout(() => {
-            if (pendingTokenModMarkerOps.get(key) !== operationId) return;
-            pendingTokenModMarkerOps.delete(key);
-
-            const current = getObj('graphic', token.id);
-            if (!current) {
-                GameAssist.log(moduleName, `TokenMod marker result could not be verified because token ${token.id} no longer exists.`, 'WARN');
-                return;
-            }
-            if (tokenHasMarker(current, markerId) === desired) return;
-
-            const tokenName = current.get('name') || '(Unnamed Token)';
-            const verb = desired ? 'add' : 'remove';
-            const manual = `!token-mod --ids @{selected|token_id} --set statusmarkers|${operation}${markerId}`;
-            GameAssist.log(
-                moduleName,
-                `TokenMod did not ${verb} marker "${markerId}" on ${tokenName}. Select that token and try ${manual}. Check !ga-status --details for detected standalone versions.`,
-                'WARN'
-            );
-        }, POLICY.standaloneInterop.markerVerificationDelayMs);
-
-        return true;
-    }
-    function clearState(mod) {
+    function clearState(mod)    function clearState(mod) {
         const root = ensureStateRoot();
         if (root?.[mod]) delete root[mod];
     }
@@ -892,6 +585,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     }
     // --- Notes & Comments ---
     // NOTE: State auditor warns about unexpected branches; no automatic deletion occurs.
+    // Changed (v0.1.5.0): Moved all marker identity and mutation behavior into CORE:MARKERSERVICE; APP utilities retain only general helpers and standalone-script diagnostics.
     // Changed (v0.1.4.7): Detect TokenMod/StatusInfo through their public contracts, dispatch marker requests through TokenMod --api-as, and warn when delayed marker verification fails.
     // Changed (v0.1.4.5): Keep adjacent command flags independent so combinations such as --nested --confirm and --session --allowDuplicates execute as displayed.
     // Changed (v0.1.4.3): Resolve configured built-in/custom marker names to exact stored Roll20 ids and return explicit resolution failures.
@@ -900,10 +594,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Decision log:
     //   CHOICE: Unknown branches remain warning-only; explicit cleanup is required before deletion.
     //   CHOICE: monotonic() falls back to Date.now() in Roll20 — ALT: assume performance.now; REJECTED: sandbox portability.
-    //   CHOICE: Preserve literal lowercase built-in ids before custom display names, then honor exact-case custom names — ALT: always prefer custom names; REJECTED: a custom "dead" could silently replace NPCManager's built-in default.
-    //   CHOICE: Fast-path exact stored ids during resolution and token comparison — ALT: require registry confirmation; REJECTED: valid stored tags should remain usable when the registry is unavailable.
-    //   CHOICE: Keep marker mutation inside standalone TokenMod — ALT: token.set from GameAssist; REJECTED: bypassed TokenMod observers used by StatusInfo.
-    //   CHOICE: Prefer TokenMod --api-as with a GM id — ALT: require players-can-ids; REJECTED: script-to-script calls should not depend on a player-facing permission toggle.
+    //   CHOICE: Keep standalone detection as diagnostics only - ALT: use it for marker dependency gating; REJECTED: MarkerService owns GameAssist marker behavior.
+    // Prior marker notes moved to [GAMEASSIST:CORE:MARKERSERVICE].
     // Prior notes:
     //   Changed (v0.1.4.2): Known module state branches now self-heal malformed config/runtime containers while preserving valid configuration.
     //   Changed (v0.1.4.1): Added wall/monotonic clock seams and routed shared limits through POLICY.
@@ -915,7 +607,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v0.1.4.7): Updated APP contract to include verified standalone TokenMod requests while preserving StatusInfo observer delivery.
+    // Changed (v0.1.5.0): APP now explicitly excludes marker ownership and delegates that contract to CORE:MARKERSERVICE.
+    // Prior notes:
+    //   Changed (v0.1.4.7): Updated APP contract to include verified standalone TokenMod requests while preserving StatusInfo observer delivery.
     // Changed (v0.1.4.3): Updated APP contract to include shared exact marker-identity resolution.
     // Prior notes (selected):
     //   Maintenance (v0.1.3, no semantic change): Updated APP wrapper commentary after utility narrative addition; nesting remains explicit over APP:UTILS only.
@@ -932,17 +626,17 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: Core wrapper (constants and kernel services)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE", title: "Core wrapper",
-    //   guarantees: ["Core constants and kernel services are grouped; children own logic"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP]"], last_updated_version: "v0.1.4.7",
+    //   guarantees: ["Core constants and kernel services are grouped; MarkerService is the sole marker authority"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP]"], last_updated_version: "v0.1.5.0",
     //   lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // CORE wraps the foundational constants, queue, compatibility checks, state,
-    // and object utilities. Children carry the executable code; this wrapper
+    // marker service, and object utilities. Children carry the executable code; this wrapper
     // documents scope and anchors the hierarchy for MECHSUITS compliance.
     // -------------------------------------------------------------------------
 
-    const VERSION      = '0.1.4.7';
+    const VERSION      = '0.1.5.0';
     const STATE_KEY    = 'GameAssist';
     const MODULES      = {};
     const _transitioning   = {};
@@ -1264,15 +958,557 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // [GAMEASSIST:CORE:STATE] END
     // =============================================================================
 
+    // ————— MARKER SERVICE —————
+    // =============================================================================
+    // [GAMEASSIST:CORE:MARKERSERVICE] BEGIN
+    // Section Title: Roll20 token marker authority
+    // -------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:MARKERSERVICE", title: "MarkerService",
+    //   guarantees: ["Single authority for built-in/custom marker resolution, reads, writes, toggles, and observations","Mutations preserve unrelated markers, numbered overlays, and duplicate entries unless the requested marker is removed"],
+    //   depends_on: ["[GAMEASSIST:APP:UTILS]"], provides: ["GameAssist.MarkerService"],
+    //   observability: { spans: ["[GAMEASSIST:CORE:MARKERSERVICE]"] },
+    //   last_updated_version: "v0.1.5.0",
+    //   independent_versions: { marker_service_version: "1.0.0" }, lifecycle: "active" }
+    // -------------------------------------------------------------------------
+    // Narrative
+    // MarkerService resolves Roll20 built-in marker ids, custom display names, and exact
+    // stored custom tags. It owns marker parsing and mutation so modules cannot drift into
+    // competing implementations. Mutations return explicit result objects and direct
+    // statusmarkers writes trigger one shared observation contract for future modules.
+    // -----------------------------------------------------------------------------
+    const MarkerService = (() => {
+        const version = '1.0.0';
+        const builtInMarkerIds = new Set([
+            'red', 'blue', 'green', 'brown', 'purple', 'pink', 'yellow', 'dead',
+            'skull', 'sleepy', 'half-heart', 'half-haze', 'interdiction', 'snail',
+            'lightning-helix', 'spanner', 'chained-heart', 'chemical-bolt',
+            'death-zone', 'drink-me', 'edge-crack', 'ninja-mask', 'stopwatch',
+            'fishing-net', 'overdrive', 'strong', 'fist', 'padlock', 'three-leaves',
+            'fluffy-wing', 'pummeled', 'tread', 'arrowed', 'aura', 'back-pain',
+            'black-flag', 'bleeding-eye', 'bolt-shield', 'broken-heart', 'cobweb',
+            'broken-shield', 'flying-flag', 'radioactive', 'trophy', 'broken-skull',
+            'frozen-orb', 'rolling-bomb', 'white-tower', 'grab', 'screaming',
+            'grenade', 'sentry-gun', 'all-for-one', 'angel-outfit', 'archery-target'
+        ]);
+        let registryCache = { raw: null, markers: [], error: null };
+        const observers = new Map();
+        let observerId = 0;
+        let observerWired = false;
+
+        function unwrap(marker) {
+            const text = String(marker ?? '').split('@')[0].trim();
+            if (text.length >= 2) {
+                const first = text[0];
+                const last = text[text.length - 1];
+                if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
+                    return text.slice(1, -1).trim();
+                }
+            }
+            return text;
+        }
+
+        function normalizeId(marker) {
+            return unwrap(marker).toLowerCase();
+        }
+
+        function requestedNumber(marker) {
+            const match = String(marker ?? '').trim().match(/@(\d+)$/);
+            return match ? Number(match[1]) : null;
+        }
+
+        function parseEntry(raw, index) {
+            const stored = String(raw ?? '').trim();
+            const numberMatch = stored.match(/^(.*)@(\d+)$/);
+            const id = (numberMatch ? numberMatch[1] : stored).trim();
+            return {
+                index,
+                raw: stored,
+                id,
+                normalizedId: normalizeId(id),
+                number: numberMatch ? Number(numberMatch[2]) : null
+            };
+        }
+
+        function parseList(raw) {
+            return String(raw || '')
+                .split(',')
+                .map((entry, index) => parseEntry(entry, index))
+                .filter(entry => entry.id);
+        }
+
+        function failure(code, message, extra = {}) {
+            return {
+                ok: false,
+                code,
+                message,
+                changed: false,
+                verified: false,
+                ...extra
+            };
+        }
+
+        /**
+         * getRegistry - Read Roll20's custom marker display-name/tag map.
+         * Failure: returns an empty registry plus an actionable error; never throws.
+         * Design: cache by the raw campaign value to avoid repeated JSON parsing.
+         */
+        function getRegistry() {
+            let raw;
+            try {
+                raw = String(Campaign().get('_token_markers') || '[]');
+            } catch (error) {
+                return {
+                    raw: null,
+                    markers: [],
+                    error: `Campaign marker registry unavailable: ${error.message || error}`
+                };
+            }
+
+            if (registryCache.raw === raw) {
+                return {
+                    raw: registryCache.raw,
+                    markers: registryCache.markers.map(entry => ({ ...entry })),
+                    error: registryCache.error
+                };
+            }
+
+            try {
+                const parsed = JSON.parse(raw);
+                const markers = (Array.isArray(parsed) ? parsed : [])
+                    .filter(entry => entry && entry.name && entry.tag)
+                    .map(entry => ({
+                        name: String(entry.name).trim(),
+                        tag: String(entry.tag).split('@')[0].trim()
+                    }))
+                    .filter(entry => entry.name && entry.tag);
+                registryCache = { raw, markers, error: null };
+            } catch (error) {
+                registryCache = {
+                    raw,
+                    markers: [],
+                    error: `Campaign marker registry is invalid JSON: ${error.message || error}`
+                };
+            }
+
+            return {
+                raw: registryCache.raw,
+                markers: registryCache.markers.map(entry => ({ ...entry })),
+                error: registryCache.error
+            };
+        }
+
+        /**
+         * resolve - Resolve configured marker text to the exact stored marker id.
+         * Inputs: built-in id, custom display name, custom stored tag, or numbered stored value.
+         * Outputs: a structured result; callers inspect ok before using id.
+         */
+        function resolve(marker) {
+            const requested = unwrap(marker);
+            const normalized = normalizeId(requested);
+
+            if (!requested) {
+                return failure('INVALID_ARGUMENT', 'Marker name or stored tag is required.', {
+                    requested,
+                    id: null,
+                    source: null,
+                    ambiguous: false,
+                    candidates: [],
+                    reason: 'empty',
+                    registryError: null
+                });
+            }
+
+            if (requested === normalized && builtInMarkerIds.has(normalized)) {
+                return {
+                    ok: true,
+                    code: null,
+                    message: null,
+                    requested,
+                    id: normalized,
+                    source: 'built-in',
+                    ambiguous: false,
+                    candidates: [normalized],
+                    reason: null,
+                    registryError: null
+                };
+            }
+
+            if (requested.includes('::')) {
+                return {
+                    ok: true,
+                    code: null,
+                    message: null,
+                    requested,
+                    id: requested,
+                    source: 'custom-tag-direct',
+                    ambiguous: false,
+                    candidates: [requested],
+                    reason: null,
+                    registryError: null
+                };
+            }
+
+            const registry = getRegistry();
+            const resolved = (matches, source) => ({
+                ok: true,
+                code: null,
+                message: null,
+                requested,
+                id: matches[0].tag,
+                source,
+                ambiguous: matches.length > 1,
+                candidates: matches.map(entry => entry.tag),
+                reason: null,
+                registryError: registry.error
+            });
+
+            const directTagMatches = registry.markers
+                .filter(entry => normalizeId(entry.tag) === normalized);
+            if (directTagMatches.length) return resolved(directTagMatches, 'custom-tag');
+
+            const exactNameMatches = registry.markers
+                .filter(entry => entry.name === requested);
+            if (exactNameMatches.length) return resolved(exactNameMatches, 'custom-name');
+
+            if (builtInMarkerIds.has(normalized)) {
+                return {
+                    ok: true,
+                    code: null,
+                    message: null,
+                    requested,
+                    id: normalized,
+                    source: 'built-in',
+                    ambiguous: false,
+                    candidates: [normalized],
+                    reason: null,
+                    registryError: registry.error
+                };
+            }
+
+            const foldedNameMatches = registry.markers
+                .filter(entry => entry.name.toLowerCase() === normalized);
+            if (foldedNameMatches.length) return resolved(foldedNameMatches, 'custom-name-folded');
+
+            const code = registry.error ? 'UNAVAILABLE' : 'NOT_FOUND';
+            const message = registry.error
+                ? `Marker "${requested}" could not be resolved because the campaign marker registry is unavailable.`
+                : `Marker "${requested}" was not found among built-in or custom campaign markers.`;
+            return failure(code, message, {
+                requested,
+                id: null,
+                source: null,
+                ambiguous: false,
+                candidates: [],
+                reason: registry.error ? 'registry-error' : 'not-found',
+                registryError: registry.error
+            });
+        }
+
+        function read(token) {
+            if (!token || typeof token.get !== 'function' || !token.id) {
+                return failure('INVALID_ARGUMENT', 'A Roll20 graphic token is required.', {
+                    tokenId: token?.id || null,
+                    raw: '',
+                    entries: []
+                });
+            }
+
+            try {
+                const raw = String(token.get('statusmarkers') || '');
+                return {
+                    ok: true,
+                    code: null,
+                    message: null,
+                    tokenId: token.id,
+                    raw,
+                    entries: parseList(raw)
+                };
+            } catch (error) {
+                return failure('UNAVAILABLE', `Token markers could not be read: ${error.message || error}`, {
+                    tokenId: token.id,
+                    raw: '',
+                    entries: []
+                });
+            }
+        }
+
+        function inspect(token, marker) {
+            const resolution = resolve(marker);
+            if (!resolution.ok) {
+                return { ...resolution, tokenId: token?.id || null, present: false, count: 0, matches: [] };
+            }
+
+            const snapshot = read(token);
+            if (!snapshot.ok) {
+                return { ...snapshot, resolution, present: false, count: 0, matches: [] };
+            }
+
+            const wanted = normalizeId(resolution.id);
+            const matches = snapshot.entries.filter(entry => entry.normalizedId === wanted);
+            return {
+                ok: true,
+                code: null,
+                message: null,
+                tokenId: snapshot.tokenId,
+                resolution,
+                present: matches.length > 0,
+                count: matches.length,
+                matches,
+                entries: snapshot.entries,
+                raw: snapshot.raw
+            };
+        }
+
+        function has(token, marker) {
+            const result = inspect(token, marker);
+            return result.ok && result.present;
+        }
+
+        function normalizeNumber(value) {
+            if (value === null || value === undefined || value === '') return null;
+            const number = Number(value);
+            return Number.isInteger(number) && number >= 0 && number <= 9 ? number : NaN;
+        }
+
+        /**
+         * mutate - Apply one marker operation while preserving unrelated stored entries.
+         * Duplicate requested markers are retained on add/toggle-on and all are removed
+         * on remove/toggle-off. A number option updates only the first matching entry.
+         */
+        function mutate(token, marker, action, options = {}) {
+            const operation = String(action || '').toLowerCase();
+            if (!['add', 'remove', 'toggle'].includes(operation)) {
+                return failure('INVALID_ARGUMENT', `Unsupported marker action "${operation}".`, {
+                    action: operation,
+                    tokenId: token?.id || null
+                });
+            }
+
+            const resolution = resolve(marker);
+            if (!resolution.ok) {
+                return { ...resolution, action: operation, tokenId: token?.id || null };
+            }
+
+            const before = read(token);
+            if (!before.ok) {
+                return { ...before, action: operation, resolution };
+            }
+
+            const optionNumber = Object.prototype.hasOwnProperty.call(options, 'number')
+                ? normalizeNumber(options.number)
+                : normalizeNumber(requestedNumber(marker));
+            if (Number.isNaN(optionNumber)) {
+                return failure('INVALID_ARGUMENT', 'Marker number must be an integer from 0 through 9.', {
+                    action: operation,
+                    tokenId: before.tokenId,
+                    resolution,
+                    before: before.entries,
+                    after: before.entries
+                });
+            }
+
+            const wanted = normalizeId(resolution.id);
+            const matchingIndexes = before.entries
+                .filter(entry => entry.normalizedId === wanted)
+                .map(entry => entry.index);
+            const present = matchingIndexes.length > 0;
+            const targetPresent = operation === 'toggle' ? !present : operation === 'add';
+            let afterRaw = before.entries.map(entry => entry.raw);
+
+            if (!targetPresent) {
+                afterRaw = before.entries
+                    .filter(entry => entry.normalizedId !== wanted)
+                    .map(entry => entry.raw);
+            } else if (!present) {
+                afterRaw.push(optionNumber === null ? resolution.id : `${resolution.id}@${optionNumber}`);
+            } else if (optionNumber !== null) {
+                const firstIndex = matchingIndexes[0];
+                afterRaw[firstIndex] = `${resolution.id}@${optionNumber}`;
+            }
+
+            const nextRaw = afterRaw.join(',');
+            const changed = nextRaw !== before.raw;
+            if (!changed) {
+                return {
+                    ok: true,
+                    code: null,
+                    message: null,
+                    action: operation,
+                    tokenId: before.tokenId,
+                    resolution,
+                    changed: false,
+                    verified: true,
+                    present,
+                    before: before.entries,
+                    after: before.entries
+                };
+            }
+
+            try {
+                token.set('statusmarkers', nextRaw);
+            } catch (error) {
+                return failure('UNAVAILABLE', `Token markers could not be updated: ${error.message || error}`, {
+                    action: operation,
+                    tokenId: before.tokenId,
+                    resolution,
+                    before: before.entries,
+                    after: parseList(nextRaw)
+                });
+            }
+
+            const verification = inspect(token, resolution.id);
+            const verified = verification.ok && verification.present === targetPresent;
+            if (!verified) {
+                return failure('CONFLICT', 'Roll20 did not retain the requested marker state.', {
+                    action: operation,
+                    tokenId: before.tokenId,
+                    resolution,
+                    changed: true,
+                    before: before.entries,
+                    after: verification.entries || parseList(nextRaw),
+                    present: verification.present === true
+                });
+            }
+
+            return {
+                ok: true,
+                code: null,
+                message: null,
+                action: operation,
+                tokenId: before.tokenId,
+                resolution,
+                changed: true,
+                verified: true,
+                present: verification.present,
+                before: before.entries,
+                after: verification.entries
+            };
+        }
+
+        function set(token, marker, on, options = {}) {
+            return mutate(token, marker, on === true ? 'add' : 'remove', options);
+        }
+
+        function add(token, marker, options = {}) {
+            return mutate(token, marker, 'add', options);
+        }
+
+        function remove(token, marker, options = {}) {
+            return mutate(token, marker, 'remove', options);
+        }
+
+        function toggle(token, marker, options = {}) {
+            return mutate(token, marker, 'toggle', options);
+        }
+
+        function difference(left, right) {
+            const remaining = right.map(entry => entry.raw);
+            return left.filter(entry => {
+                const index = remaining.indexOf(entry.raw);
+                if (index >= 0) {
+                    remaining.splice(index, 1);
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        function wireObserver() {
+            if (observerWired) return;
+            observerWired = true;
+            R20_ON('change:graphic:statusmarkers', (token, previous) => {
+                const before = parseList(previous?.statusmarkers || '');
+                const current = read(token);
+                if (!current.ok) return;
+                const event = {
+                    token,
+                    tokenId: token.id,
+                    previous: before,
+                    current: current.entries,
+                    added: difference(current.entries, before),
+                    removed: difference(before, current.entries),
+                    timestamp: isoNow()
+                };
+
+                observers.forEach(subscription => {
+                    try {
+                        subscription.callback(event);
+                    } catch (error) {
+                        if (typeof GameAssist !== 'undefined' && GameAssist?.handleError) {
+                            GameAssist.handleError(subscription.owner, error);
+                        }
+                    }
+                });
+            });
+        }
+
+        function observe(callback, options = {}) {
+            if (typeof callback !== 'function') {
+                return failure('INVALID_ARGUMENT', 'Marker observer callback must be a function.');
+            }
+
+            const owner = typeof options === 'string'
+                ? options
+                : String(options.owner || 'MarkerServiceConsumer');
+            const id = ++observerId;
+            observers.set(id, { owner, callback });
+            wireObserver();
+
+            return {
+                ok: true,
+                id,
+                owner,
+                unsubscribe: () => observers.delete(id)
+            };
+        }
+
+        function clearObservers(owner) {
+            const requested = String(owner || '');
+            let removed = 0;
+            observers.forEach((subscription, id) => {
+                if (subscription.owner !== requested) return;
+                observers.delete(id);
+                removed++;
+            });
+            return removed;
+        }
+
+        return Object.freeze({
+            version,
+            resolve,
+            read,
+            inspect,
+            has,
+            add,
+            remove,
+            toggle,
+            set,
+            observe,
+            clearObservers,
+            getRegistry,
+            normalizeId
+        });
+    })();
+    // --- Notes & Comments ---
+    // Changed (v0.1.5.0): Introduced MarkerService 1.0.0 as the sole GameAssist marker authority and removed GameAssist marker dependence on chat-generated TokenMod commands.
+    // Decision log:
+    //   CHOICE: Mutate statusmarkers directly and publish one observation contract - ALT: send TokenMod chat commands; REJECTED: external authorization, timing, and dependency ambiguity.
+    //   CHOICE: Remove every matching duplicate on explicit removal - ALT: remove only the first; REJECTED: callers asking for an absent state should not leave hidden duplicates active.
+    //   CHOICE: Preserve duplicates and number overlays on reads and unrelated mutations - ALT: normalize the complete marker list; REJECTED: normalization would rewrite campaign state outside the requested operation.
+    //   CHOICE: Preserve literal lowercase built-in ids before custom display names, then honor exact-case custom names - ALT: always prefer custom names; REJECTED: a custom "dead" could silently replace NPCManager's built-in default.
+    //   CHOICE: Resolve exact stored custom tags without registry access - ALT: require registry confirmation; REJECTED: valid stored tags must survive registry read failures.
+    // [GAMEASSIST:CORE:MARKERSERVICE] END
+    // =============================================================================
+
     // ————— GameAssist CORE —————
     // =============================================================================
     // [GAMEASSIST:CORE:OBJECT] BEGIN
     // Section Title: GameAssist kernel object
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:OBJECT", title: "Kernel",
-    //   guarantees: ["Logging, explicit enqueue, dependency diagnostics, register/enable/disable, listener management", "Public standalone contracts can confirm dependencies when Roll20 script metadata is absent", "Module registration may explicitly retain durable runtime state across disable/enable transitions", "Failed dependency enable checks preserve the module's existing configured intent"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:QUEUE]"],
-    //   last_updated_version: "v0.1.4.7", lifecycle: "active" }
+    //   guarantees: ["Logging, explicit enqueue, dependency diagnostics, register/enable/disable, listener management", "MarkerService is exposed through the stable GameAssist object", "Module registration may explicitly retain durable runtime state across disable/enable transitions", "Failed dependency enable checks preserve the module's existing configured intent"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]"],
+    //   last_updated_version: "v0.1.5.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // CORE:OBJECT exposes the GameAssist singleton with metrics, logging, explicit
@@ -1297,6 +1533,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         _transitioning,
         config: {},
         flags: { DEBUG_COMPAT: false, QUIET_STARTUP: true },
+        MarkerService,
 
         log(mod, msg, level = 'INFO', { startup = false } = {}) {
             if (startup && GameAssist.flags.QUIET_STARTUP) return;
@@ -1642,6 +1879,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     globalThis.GameAssist = GameAssist;
     // --- Notes & Comments ---
     // CHOICE: Expose globally under same name for console and other scripts.
+    // Changed (v0.1.5.0): Exposed the non-toggleable GameAssist.MarkerService developer API and removed marker-module dependency gating on standalone TokenMod.
     // CHOICE: Keep normal handlers direct and make serialized work an explicit GameAssist.enqueue call.
     // CHOICE: Runtime retention is registration-level opt-in; ALT: preserve every module runtime; REJECTED: existing modules use runtime as disposable cache state.
     // Changed (v0.1.4.7): Public TokenMod contract/API metadata can confirm the dependency when Roll20's internal script registry is unavailable.
@@ -1660,7 +1898,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v0.1.4.7): Advanced runtime VERSION for the standalone TokenMod/StatusInfo interoperability release; child service order is unchanged.
+    // Changed (v0.1.5.0): Added CORE:MARKERSERVICE to the declared child order and advanced runtime VERSION for the integrated marker architecture.
+    // Prior notes:
+    //   Changed (v0.1.4.7): Advanced runtime VERSION for the standalone TokenMod/StatusInfo interoperability release; child service order was unchanged.
     // Changed (v0.1.4.6): Advanced runtime VERSION for the DM-readable status and troubleshooting release; child service order is unchanged.
     // Changed (v0.1.4.5): Advanced runtime VERSION for the NPC death-history bucket and handout release; child service order is unchanged.
     // Changed (v0.1.4.4): Advanced runtime VERSION for the DM-facing readability release; child service order is unchanged.
@@ -2165,8 +2405,8 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: Modules wrapper (bundled features)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES", title: "Modules wrapper",
-    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed"],
-    //   depends_on: ["[GAMEASSIST:CORE]","[GAMEASSIST:INTERFACES]"], last_updated_version: "v0.1.4.3" }
+    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Marker-consuming modules share CORE:MARKERSERVICE"],
+    //   depends_on: ["[GAMEASSIST:CORE]","[GAMEASSIST:INTERFACES]"], last_updated_version: "v0.1.5.0" }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES encloses all shipped feature modules. Each child retains its own
@@ -2706,20 +2946,20 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // [GAMEASSIST:MODULES:CRITFUMBLE] END
     // =============================================================================
 
-    // ————— NPC MANAGER MODULE v1.1.1 —————
+    // ————— NPC MANAGER MODULE v1.2.0 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:NPCMANAGER] BEGIN
     // Section Title: NPCManager module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:NPCMANAGER", title: "NPCManager",
-    //   guarantees: ["Auto toggle resolved configured dead marker based on known HP transitions; maintain hierarchical death-history handouts and curated arc rosters", "NPCHPRoller auto-roll initialization is not recorded as death/revival history", "Death-marker requests use verified standalone TokenMod interoperability"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:OBJECT]"],
-    //   last_updated_version: "v0.1.4.7",
-    //   independent_versions: { module_version: "1.1.1" } }
+    //   guarantees: ["Auto toggle resolved configured dead marker based on known HP transitions; maintain hierarchical death-history handouts and curated arc rosters", "NPCHPRoller auto-roll initialization is not recorded as death/revival history", "Death-marker reads and writes use CORE:MARKERSERVICE"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
+    //   last_updated_version: "v0.1.5.0",
+    //   independent_versions: { module_version: "1.2.0" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:NPCMANAGER monitors token HP changes to set or clear the configured
-    // death marker through verified standalone TokenMod requests. New-token HP initialization
+    // death marker through CORE:MARKERSERVICE. New-token HP initialization
     // is ignored while NPCHPRoller auto-roll-on-add establishes the token's starting HP.
     // It records deaths into active Campaign, Chapter,
     // Section, and Session buckets; writes bucket/audit handouts; rolls date-based
@@ -2761,7 +3001,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         const DEATH_REPORT_SUMMARY_LIMIT = POLICY.runtime.deathReportSummaryLimit;
         const DEATH_REPORT_DETAIL_LIMIT = POLICY.runtime.deathReportDetailLimit;
         const AUDIT_HANDOUT_NAME = 'GameAssist NPC Death Audit';
-        const NPCMANAGER_MODULE_VERSION = '1.1.1';
+        const NPCMANAGER_MODULE_VERSION = '1.2.0';
         const initializingNpcHp = new Set();
 
         function currentSessionDateKey(raw = now()) {
@@ -2804,7 +3044,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         }
 
         function getDeathMarkerResolution() {
-            return resolveMarkerId(modState.config.deadMarker || 'dead');
+            return GameAssist.MarkerService.resolve(modState.config.deadMarker || 'dead');
         }
 
         function deathMarkerWarning(resolution) {
@@ -4023,7 +4263,12 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 );
             }
 
-            return requestTokenModMarker(token, resolution.id, on, 'NPCManager');
+            const result = GameAssist.MarkerService.set(token, resolution.id, on, { owner: 'NPCManager' });
+            if (!result.ok) {
+                GameAssist.log('NPCManager', result.message || `Marker change failed (${result.code || 'INTERNAL'}).`, 'WARN');
+                return false;
+            }
+            return true;
         }
 
         function getNPCContext(token, link = null) {
@@ -4071,7 +4316,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
             if (hp === null) return;
 
             prepareNPCManagerActivity();
-            const isDead = tokenHasMarker(token, modState.config.deadMarker);
+            const isDead = GameAssist.MarkerService.has(token, modState.config.deadMarker);
 
             if (hp < 1) {
                 if (!isDead) requestDeathMarker(token, true);
@@ -4298,7 +4543,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 if (!getNPCContext(token, link)) continue;
 
                 const hp = parseInt(token.get('bar1_value'), 10) || 0;
-                const isDead = tokenHasMarker(token, modState.config.deadMarker);
+                const isDead = GameAssist.MarkerService.has(token, modState.config.deadMarker);
 
                 if (hp < 1 && !isDead) {
                     needsMarker.push({
@@ -4385,12 +4630,11 @@ description, syntax/commands, and configuration pointers near the top of the scr
         enabled: true,
         events: ['add:graphic', 'change:graphic:bar1_value'],
         prefixes: ['!npc-death-help', '!npc-death-report', '!npc-death-clear', '!npc-death-audit', '!npc-death-buckets', '!npc-death-write', '!npc-wr', '!npc-death-arc'],
-        dependsOn: ['TokenMod'],
         preserveRuntimeOnDisable: true,
         teardown: () => {
             const branch = GameAssist.getState('NPCManager');
             const marker = branch?.config?.deadMarker || 'dead';
-            const resolution = resolveMarkerId(marker);
+            const resolution = GameAssist.MarkerService.resolve(marker);
             const pageId = Campaign().get('playerpageid');
 
             if (!pageId) return;
@@ -4406,21 +4650,31 @@ description, syntax/commands, and configuration pointers near the top of the scr
                 _type: 'graphic',
                 _pageid: pageId,
                 layer: 'objects'
-            }).filter(token => tokenHasMarker(token, resolution.id));
+            }).filter(token => GameAssist.MarkerService.has(token, resolution.id));
 
             if (!targets.length) return;
 
-            const requested = targets.filter(token =>
-                requestTokenModMarker(token, resolution.id, false, 'NPCManager')
-            ).length;
+            let removed = 0;
+            targets.forEach(token => {
+                const result = GameAssist.MarkerService.remove(token, resolution.id, { owner: 'NPCManager' });
+                if (!result.ok) {
+                    GameAssist.log('NPCManager', result.message || `Marker removal failed (${result.code || 'INTERNAL'}).`, 'WARN');
+                } else if (result.changed) {
+                    removed++;
+                }
+            });
 
-            if (requested) {
-                GameAssist.log('NPCManager', `Requested removal of ${resolution.id} from ${requested} token(s) during teardown; results will be verified.`);
+            if (removed) {
+                GameAssist.log('NPCManager', `Removed ${resolution.id} from ${removed} token(s) during teardown.`);
             }
         }
     });
     // --- Notes & Comments ---
-    // CHOICE: TokenMod used for status marker ops; keep dependency explicit in README.
+    // Changed (v0.1.5.0): NPCManager module_version advanced to 1.2.0; all marker reads, writes, audits, and teardown use CORE:MARKERSERVICE with no standalone TokenMod dependency.
+    // Decision log:
+    //   CHOICE: Keep death-history recording independent from marker mutation success - ALT: record only after marker success; REJECTED: history should describe HP events even when a token marker cannot be changed.
+    // Prior notes:
+    //   v0.1.4.7: TokenMod was used for marker operations and required an explicit dependency.
     // CHOICE: Arc rosters identify a creature by token before legacy character/name fallbacks — ALT: character-only identity; REJECTED: multiple NPC tokens may share one character sheet.
     // Changed (v0.1.4.7): Suppress placeholder HP transitions during NPCHPRoller auto-roll-on-add and require a known starting HP before recording an automatic death; this prevents false death/revival history when an NPC is added to the map.
     // Changed (v0.1.4.7): NPCManager module_version advanced to 1.1.1; marker add/remove/teardown now use TokenMod --api-as with delayed result verification and no longer claim teardown completion before confirmation.
@@ -4444,21 +4698,20 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // [GAMEASSIST:MODULES:NPCMANAGER] END
     // =============================================================================
 
-    // ————— CONCENTRATION TRACKER MODULE v0.1.0.6 —————
+    // ————— CONCENTRATION TRACKER MODULE v0.2.0 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:CONCENTRATIONTRACKER] BEGIN
     // Section Title: ConcentrationTracker module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONCENTRATIONTRACKER", title: "ConcentrationTracker",
-    //   guarantees: ["Chat UI for concentration saves; exact configured-marker status reporting; verified standalone TokenMod marker requests"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:OBJECT]"],
-    //   last_updated_version: "v0.1.4.7",
-    //   independent_versions: { module_version: "0.1.0.6" } }
+    //   guarantees: ["Chat UI for concentration saves; exact configured-marker status reporting; marker mutations through CORE:MARKERSERVICE"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
+    //   last_updated_version: "v0.1.5.0",
+    //   independent_versions: { module_version: "0.2.0" } }
     // -------------------------------------------------------------------------
     // Narrative
-    // MODULES:CONCENTRATIONTRACKER manages concentration save rolls, whispering outcomes
-    // and requesting the configured marker through standalone TokenMod with delayed
-    // result verification. Status reads resolve custom marker
+    // MODULES:CONCENTRATIONTRACKER manages concentration save rolls, whispering outcomes,
+    // and applying the configured marker through CORE:MARKERSERVICE. Status reads resolve custom marker
     // display names to their stored Roll20 tags and report invalid configuration.
     // -------------------------------------------------------------------------
     GameAssist.register('ConcentrationTracker', function() {
@@ -4559,7 +4812,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
     }
 
     function getMarkerResolution() {
-        return resolveMarkerId(getMarker());
+        return GameAssist.MarkerService.resolve(getMarker());
     }
 
     function markerResolutionWarning(resolution) {
@@ -4568,7 +4821,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
             ? ` Roll20 marker registry problem: ${_sanitize(resolution.registryError)}.`
             : '';
         return `⚠️ Configured concentration marker "${marker}" could not be recognized.${detail}` +
-            ` Run !token-mod --help-statusmarkers, then use !ga-config set ConcentrationTracker marker=<name-or-tag>.`;
+            ` Check the campaign marker library, then use !ga-config set ConcentrationTracker marker=<name-or-tag>.`;
     }
 
     // ─── Default Emote Lines ────────────────────────────────────────────────────────
@@ -4643,7 +4896,12 @@ description, syntax/commands, and configuration pointers near the top of the scr
             );
         }
 
-        return requestTokenModMarker(token, resolution.id, on, 'ConcentrationTracker');
+        const result = GameAssist.MarkerService.set(token, resolution.id, on, { owner: 'ConcentrationTracker' });
+        if (!result.ok) {
+            GameAssist.log('ConcentrationTracker', result.message || `Marker change failed (${result.code || 'INTERNAL'}).`, 'WARN');
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -4704,7 +4962,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
             _type:  'graphic',
             _pageid: page,
             layer:  'objects'
-        }).filter(t => tokenHasMarker(t, resolution.id));
+        }).filter(t => GameAssist.MarkerService.has(t, resolution.id));
         if (!tokens.length) {
             return sendChat('ConcentrationTracker',
                 `/w "${player}" No tokens concentrating.`
@@ -4974,11 +5232,10 @@ description, syntax/commands, and configuration pointers near the top of the scr
     enabled:  true,
     events: ['chat:message'],
     prefixes: ['!concentration','!cc','!ga-conc-status'],
-    dependsOn: ['TokenMod'],
     teardown: () => {
         const page = Campaign().get('playerpageid');
         const marker = (GameAssist.getState('ConcentrationTracker')?.config?.marker) || 'Concentrating';
-        const resolution = resolveMarkerId(marker);
+        const resolution = GameAssist.MarkerService.resolve(marker);
         if (!resolution.ok) {
             GameAssist.log(
                 'ConcentrationTracker',
@@ -4988,16 +5245,23 @@ description, syntax/commands, and configuration pointers near the top of the scr
             return;
         }
         const targets = findObjs({ _type: 'graphic', _pageid: page, layer: 'objects' })
-            .filter(t => tokenHasMarker(t, resolution.id));
-        const requested = targets.filter(t =>
-            requestTokenModMarker(t, resolution.id, false, 'ConcentrationTracker')
-        ).length;
-        if (requested) {
-            GameAssist.log('ConcentrationTracker', `Requested concentration-marker removal from ${requested} token(s) during teardown; results will be verified.`);
+            .filter(t => GameAssist.MarkerService.has(t, resolution.id));
+        let removed = 0;
+        targets.forEach(token => {
+            const result = GameAssist.MarkerService.remove(token, resolution.id, { owner: 'ConcentrationTracker' });
+            if (!result.ok) {
+                GameAssist.log('ConcentrationTracker', result.message || `Marker removal failed (${result.code || 'INTERNAL'}).`, 'WARN');
+            } else if (result.changed) {
+                removed++;
+            }
+        });
+        if (removed) {
+            GameAssist.log('ConcentrationTracker', `Removed the concentration marker from ${removed} token(s) during teardown.`);
         }
     }
     });
     // --- Notes & Comments ---
+    // Changed (v0.1.5.0): ConcentrationTracker module_version advanced to 0.2.0; status, toggle, and teardown marker behavior now uses CORE:MARKERSERVICE without standalone TokenMod.
     // CHOICE: Keep lowercase parsing and aliases exactly as legacy; avoids user retraining.
     // Changed (v0.1.4.7): ConcentrationTracker module_version advanced to 0.1.0.6; marker add/remove/teardown now use TokenMod --api-as with delayed result verification while preserving TokenMod observer delivery to StatusInfo.
     // Changed (v0.1.4.3): Resolve configured custom marker names to stored tags for mutation/status/teardown and report unrecognized marker configuration.
@@ -5229,16 +5493,16 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // [GAMEASSIST:MODULES:NPCHPROLLER] END
     // =============================================================================
 
-    // ————— DEBUG TOOLS MODULE v0.1.0 —————
+    // ————— DEBUG TOOLS MODULE v0.2.0 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:DEBUGTOOLS] BEGIN
     // Section Title: DebugTools module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:DEBUGTOOLS", title: "DebugTools",
-    //   guarantees: ["Dry-run friendly debugging helpers"],
-    //   depends_on: ["[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:OBJECT]"],
-    //   last_updated_version: "v0.1.4.1",
-    //   independent_versions: { module_version: "0.1.0" } }
+    //   guarantees: ["Dry-run friendly debugging helpers","Applied marker diagnostics use CORE:MARKERSERVICE"],
+    //   depends_on: ["[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
+    //   last_updated_version: "v0.1.5.0",
+    //   independent_versions: { module_version: "0.2.0" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:DEBUGTOOLS offers optional GM-only diagnostics for damage, markers, and
@@ -5333,35 +5597,45 @@ description, syntax/commands, and configuration pointers near the top of the scr
 
             const modeRaw = args.state ?? args.mode ?? args.action;
             const mode = modeRaw ? String(modeRaw).toLowerCase() : 'toggle';
-            const markers = (token.get('statusmarkers') || '').split(',').filter(Boolean);
-            const hasMarker = tokenHasMarker(token, marker);
-            let finalMarkers = markers.slice();
-            let actionDesc;
-
-            if (mode === 'on' || mode === 'add') {
-                if (!hasMarker) finalMarkers.push(marker);
-                actionDesc = `add ${marker}`;
-            } else if (mode === 'off' || mode === 'remove' || mode === 'clear') {
-                finalMarkers = markers.filter(m => normalizeMarkerId(m) !== normalizeMarkerId(marker));
-                actionDesc = `remove ${marker}`;
-            } else {
-                if (hasMarker) finalMarkers = markers.filter(m => normalizeMarkerId(m) !== normalizeMarkerId(marker));
-                else finalMarkers.push(marker);
-                actionDesc = `${hasMarker ? 'remove' : 'add'} ${marker}`;
+            const inspection = GameAssist.MarkerService.inspect(token, marker);
+            if (!inspection.ok) {
+                GameAssist.log('DebugTools', inspection.message || `Marker lookup failed (${inspection.code || 'INTERNAL'}).`, 'WARN');
+                return;
             }
 
+            const action = (mode === 'on' || mode === 'add')
+                ? 'add'
+                : ((mode === 'off' || mode === 'remove' || mode === 'clear') ? 'remove' : 'toggle');
+            const actionDesc = action === 'toggle'
+                ? `${inspection.present ? 'remove' : 'add'} ${inspection.resolution.id}`
+                : `${action} ${inspection.resolution.id}`;
             const name = _sanitize(token.get('name') || token.id);
+
             if (!wantsApply(args)) {
                 GameAssist.log('DebugTools', `Dry run — would ${actionDesc} on ${name}. Add --apply to commit.`);
                 return;
             }
 
-            token.set('statusmarkers', finalMarkers.join(','));
-            GameAssist.log('DebugTools', `Marker action: ${actionDesc} on ${name}.`);
-            ensureDebugRuntime().lastAction = { type: 'marker', token: token.id, marker, mode };
+            const result = action === 'add'
+                ? GameAssist.MarkerService.add(token, marker, { owner: 'DebugTools' })
+                : (action === 'remove'
+                    ? GameAssist.MarkerService.remove(token, marker, { owner: 'DebugTools' })
+                    : GameAssist.MarkerService.toggle(token, marker, { owner: 'DebugTools' }));
+            if (!result.ok) {
+                GameAssist.log('DebugTools', result.message || `Marker action failed (${result.code || 'INTERNAL'}).`, 'WARN');
+                return;
+            }
+
+            GameAssist.log('DebugTools', `Marker action: ${actionDesc} on ${name}${result.changed ? '.' : ' (already in the requested state).'}`);
+            ensureDebugRuntime().lastAction = {
+                type: 'marker',
+                token: token.id,
+                marker: result.resolution.id,
+                mode: action
+            };
         }
 
-        function handleSave(msg, args) {
+        function handleSave(msg, args) {        function handleSave(msg, args) {
             const dcRaw = args.dc ?? args.target;
             const dc = Number(dcRaw);
             if (!Number.isFinite(dc)) {
@@ -5443,6 +5717,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         prefixes: ['!ga-debug']
     });
     // --- Notes & Comments ---
+    // Changed (v0.1.5.0): DebugTools module_version advanced to 0.2.0; marker previews and applied changes now resolve and mutate through CORE:MARKERSERVICE.
     // CHOICE: Helpers default to dry-run; --apply required for mutations.
     // Changed (v0.1.4.1): Marker diagnostics now use exact shared marker normalization, including counted markers.
     // Prior notes:
@@ -5453,7 +5728,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v0.1.4.3): Updated wrapper contract because marker-dependent modules now resolve configured marker identity before read/write operations.
+    // Changed (v0.1.5.0): Updated the module wrapper contract because all marker consumers now share CORE:MARKERSERVICE.
+    // Prior notes:
+    //   Changed (v0.1.4.3): Updated wrapper contract because marker-dependent modules resolve configured marker identity before read/write operations.
     // Prior notes:
     //   Maintenance (v0.1.3, no semantic change): Added MODULES wrapper to group bundled features under a parent section for MECHSUITS parent/child compliance.
     // [GAMEASSIST:MODULES] END
@@ -5465,9 +5742,9 @@ description, syntax/commands, and configuration pointers near the top of the scr
     // Section Title: Sandbox ready bootstrap
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "BOOTSTRAP", title: "Bootstrap",
-    //   guarantees: ["Repair known state, seed defaults, diagnose dependencies, preserve configured intent when dependencies prevent startup, init enabled modules"],
+    //   guarantees: ["Repair known state, seed defaults, diagnose dependencies, preserve configured intent when dependencies prevent startup, init enabled modules","MarkerService remains active independently of optional module lifecycle"],
     //   depends_on: ["[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE]","[GAMEASSIST:MODULES]"],
-    //   last_updated_version: "v0.1.4.7", lifecycle: "active" }
+    //   last_updated_version: "v0.1.5.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // BOOTSTRAP runs at sandbox ready: repairs known state containers, seeds defaults,
@@ -5538,6 +5815,7 @@ description, syntax/commands, and configuration pointers near the top of the scr
         GameAssist._metrics.lastUpdate = isoNow();
     });
     // --- Notes & Comments ---
+    // Changed (v0.1.5.0): Startup now reports the integrated MarkerService release; NPCManager and ConcentrationTracker no longer enter dependency-skipped state when standalone TokenMod is absent.
     // CHOICE: Core ready log is never suppressed; mirrors README guidance.
     // CHOICE: Repair existing known branches before seeding defaults so valid configuration survives.
     // Changed (v0.1.4.7): Startup reports the v0.1.4.7 standalone-interoperability release; lifecycle order and dependency-skip behavior are unchanged.
