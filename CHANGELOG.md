@@ -1899,6 +1899,7 @@ This release implements [Issue #25](https://github.com/Mord-Eagle/GameAssist/iss
 - Rebuilt the smoke-test dependency section around no-TokenMod operation, custom markers, exact stored tags, and unrelated numbered-marker preservation.
 - Updated `script.json` to v0.1.5.0, removed the production TokenMod dependency, retained all 58 commands, and documented named and behavioral overlap risks.
 - Updated `ROADMAP.md` to place Issue #25 in sandbox verification and retain the Roll20 sandbox pass as the completion gate.
+- Added `ATTRIBUTIONS.md`, updated the GameAssist copyright year, and recorded the independent-branding, upstream-provenance, MIT-notice, SRD-text, and author-contact policy for the planned token and condition services.
 
 ### Verification
 
