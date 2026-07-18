@@ -1760,6 +1760,7 @@ These versions remain independently authored and licensed upstream. GameAssist d
 - Removed the private `commands` extension from the submission manifest; the One-Click description and README remain the command references.
 - Preserved the official One-Click rollback versions `0.1.1.2`, `0.1.1.1`, and `0.1.1.0` in `previousversions`. Intermediate project revisions remain preserved in this append-only changelog and the project repository, but are not advertised as One-Click rollback versions because matching official folders do not exist.
 - Prepared the official update layout by replacing `GameAssist/script.json` and `GameAssist/README.md` and adding `GameAssist/0.1.4.7/GameAssist.js` alongside the existing official version folders.
+- Kept `GameAssist.js` and `GameAssist-v0.1.4.7.js` at the project-repository root; the version-directory path belongs to the official Roll20 package and contains the same tested executable.
 - Added a MECHSUITS sidecar for the non-commentable repository `script.json` artifact; the lean official package intentionally follows Roll20's accepted-file and schema conventions.
 
 ### Release artifacts
