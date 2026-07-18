@@ -10,7 +10,8 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 | Revision | Status | Role |
 | --- | --- | --- |
-| **v0.1.4.6** | Pre-release; automated verification complete, Roll20 smoke confirmation pending | DM-readable system health and troubleshooting status |
+| **v0.1.4.7** | Release candidate; automated and Roll20 sandbox verification passed, merge pending | Standalone TokenMod and StatusInfo interoperability |
+| **v0.1.4.6** | Merged release | DM-readable system health and troubleshooting status |
 | **v0.1.4.5** | Merged release | NPC death-history buckets, handouts, and arc notes |
 | **v0.1.4.4** | Merged release | DM-facing CritFumble help and NPC death-audit readability update |
 | **v0.1.4.2** | Release candidate; automated verification complete, Roll20 smoke confirmation pending | Diagnostic and migration-readiness release |
@@ -1579,3 +1580,213 @@ Local Roll20 test copy:
 | Roll20 chat rendering and button acceptance | Pending DM smoke test |
 
 The Roll20 API sandbox remains the final acceptance environment for default-template rendering and clickable chat buttons.
+
+---
+
+## [0.1.4.7] – 2026-07-17
+
+### Release definition
+
+v0.1.4.7 is the focused standalone-interoperability release for Issue #24 and the final planned implementation pass in the `v0.1.4.x` line. It keeps TokenMod and StatusInfo as separately installed Roll20 Mod/API scripts while strengthening the way GameAssist detects, authorizes, verifies, and explains marker operations.
+
+The release does not embed either upstream script, introduce the future MarkerService architecture, or replace TokenMod marker mutation with direct `token.set('statusmarkers', ...)` calls. NPCManager and ConcentrationTracker continue sending marker work through TokenMod so StatusInfo can receive TokenMod's observer notifications.
+
+### Issue addressed
+
+- [#24](https://github.com/Mord-Eagle/GameAssist/issues/24) — Stabilize standalone TokenMod and StatusInfo interoperability across the `v0.1.4.x` release line.
+
+### Supported standalone baselines
+
+| Script | Supplied baseline | Contract used by GameAssist |
+| --- | --- | --- |
+| TokenMod | `0.8.88` | `TokenMod.ObserveTokenChange`, `API_Meta.TokenMod.version`, `--api-as`, `--ids`, and `--set statusmarkers` |
+| StatusInfo | `0.3.11` | Optional `StatusInfo` public object/version plus its existing subscription to `TokenMod.ObserveTokenChange` |
+
+These versions remain independently authored and licensed upstream. GameAssist does not copy or modify their source in this release.
+
+### Diagnosed — script-originated TokenMod authorization
+
+- GameAssist previously generated commands in this form:
+
+  ```text
+  !token-mod --ids <token-id> --set statusmarkers|+dead
+  ```
+
+- A command generated through `sendChat('api', ...)` reaches TokenMod with the API pseudo-player rather than a normal GM player id.
+- TokenMod `0.8.88` discards `--ids` targets for a non-GM caller unless either:
+  - TokenMod's player-facing `players-can-ids` option is enabled; or
+  - the script-originated command uses TokenMod's documented `--api-as <player-id>` option to select a GM identity.
+- GameAssist now discovers a campaign GM player id and uses the documented `--api-as` path. Internal marker automation therefore no longer depends on enabling `players-can-ids` for players.
+- If no GM identity can be found, GameAssist falls back only when TokenMod explicitly reports `playersCanUse_ids=true`; otherwise it refuses the request and gives the GM an actionable warning.
+
+### Added — standalone contract evidence
+
+- Added shared TokenMod evidence collection in `[GAMEASSIST:APP:UTILS]`:
+  - confirms the public `ObserveTokenChange` contract when visible;
+  - reads the upstream version from `API_Meta.TokenMod.version` when available;
+  - reads the TokenMod `playersCanUse_ids` state only as fallback authorization evidence;
+  - does not treat stale persistent TokenMod state by itself as proof that the script is currently installed.
+- Added optional StatusInfo evidence:
+  - confirms the public StatusInfo object and observer contract when visible;
+  - reports `StatusInfo.version`;
+  - reports whether `state.STATUSINFO.config.showDescOnStatusChange` is enabled, disabled, or unavailable.
+- Updated core dependency checks to use confirmed public TokenMod evidence before falling back to Roll20's sometimes-unavailable internal script list.
+- Preserved the three dependency states `confirmed`, `missing`, and `unverifiable`; absence of public evidence remains non-fatal when Roll20 cannot expose a definitive script list.
+
+### Added — marker-result verification
+
+- Added one shared standalone TokenMod request helper for NPCManager and ConcentrationTracker.
+- Each request:
+  - validates the token and resolved stored marker id;
+  - avoids sending work when the token already has the requested state;
+  - sends the exact built-in id or custom stored tag through TokenMod;
+  - uses `--api-as <GM player id>` whenever a GM identity is available;
+  - waits one second, then rereads the token's actual `statusmarkers` value;
+  - remains quiet when TokenMod reached the requested state;
+  - warns the GM when the state did not change as requested.
+- Failure warnings name the token, distinguish add from remove failures, and provide a direct command such as:
+
+  ```text
+  !token-mod --ids @{selected|token_id} --set statusmarkers|+dead
+  ```
+
+- Pending verification is keyed by token and marker. A newer request supersedes an older pending check so a rapid add/remove sequence does not report the stale request as a failure.
+- Verification is delayed with `POLICY.standaloneInterop.markerVerificationDelayMs`; normal Roll20 event execution and the explicit queue model are unchanged.
+
+### Changed — NPCManager 1.1.1
+
+- Advanced NPCManager's independent module version from `1.1.0` to `1.1.1`.
+- Routed death-marker add, revival-marker removal, and module-teardown removal through the shared verified TokenMod request helper.
+- Corrected the NPCHPRoller auto-roll-on-add initialization race:
+  - Roll20 can expose blank or zero placeholder HP while a newly added token is still being initialized;
+  - NPCManager now opens a two-second, POLICY-owned setup window when NPCHPRoller `autoRollOnAdd=true`;
+  - placeholder HP changes during that window do not add the death marker or create death/revival history;
+  - an unknown or blank previous HP value is not treated as proof that a living NPC crossed below 1 HP;
+  - later known-positive-to-zero and zero-to-positive changes remain ordinary tracked deaths and revivals.
+- Preserved death-history behavior independently of visual marker success:
+  - a qualifying death is still recorded in Campaign, Chapter, Section, and Session buckets;
+  - revival annotations remain independent of marker removal;
+  - Arc and handout behavior is unchanged.
+- Teardown no longer reports that markers were already cleared immediately after asynchronous TokenMod commands. It now reports how many removals were requested and states that results will be verified.
+- The default built-in death marker remains the literal `dead` id.
+
+### Changed — ConcentrationTracker 0.1.0.6
+
+- Advanced ConcentrationTracker's independent module version from `0.1.0.5` to `0.1.0.6`.
+- Routed concentration marker add, `--off` removal, failed-save removal, and module-teardown removal through the shared verified TokenMod request helper.
+- Preserved exact custom marker behavior from v0.1.4.3:
+  - configured display names resolve through the campaign registry;
+  - exact stored tags remain usable without registry access;
+  - built-in ids remain literal and exact;
+  - `!concentration --status` continues reading token markers directly rather than depending on TokenMod.
+- Teardown now reports requested removals without claiming completion before marker verification.
+
+### Preserved — StatusInfo observation path
+
+- Token mutation remains inside standalone TokenMod.
+- TokenMod continues calling its registered `ObserveTokenChange` handlers after applying token changes.
+- StatusInfo `0.3.11` already registers a TokenMod observer and routes those notifications through its status-marker change handler.
+- GameAssist does not emit a second condition description or call StatusInfo internals directly.
+- `!ga-status --details` reports StatusInfo evidence, but live condition-description behavior remains a Roll20 smoke-test requirement because campaign condition definitions are user-configurable.
+
+### Changed — troubleshooting status
+
+- Added a `Standalone Integrations` row to `!ga-status --details`.
+- When evidence is available, the row reports:
+  - detected TokenMod version and that authorized marker requests are verified;
+  - detected optional StatusInfo version;
+  - whether StatusInfo condition descriptions are enabled.
+- The default `!ga-status` panel remains short and unchanged in purpose.
+- StatusInfo remains optional and does not affect overall GameAssist health.
+
+### Compatibility boundaries
+
+- Preserved all existing GameAssist command literals.
+- Preserved standalone TokenMod as the required marker dependency for NPCManager and ConcentrationTracker.
+- Preserved standalone StatusInfo as an optional condition-description and menu script.
+- Did not add integrated `[GAMEASSIST:MODULES:TOKENMOD]`, `[GAMEASSIST:MODULES:STATUSINFO]`, or `[GAMEASSIST:CORE:MARKERSERVICE]` sections; those remain assigned to the `v0.1.5.x` roadmap.
+- Did not modify `state.TokenMod` or `state.STATUSINFO` beyond read-only interoperability diagnostics.
+- Did not change GameAssist's persistent state schema or configuration snapshot schema.
+- Did not route marker verification through the serialized queue.
+
+### Version and MECHSUITS records
+
+- Advanced the script header, MECHSUITS banner `project_version`, prose guarantee, visible release banner, runtime `VERSION`, README, smoke-test target, and `script.json` to `0.1.4.7`.
+- Added `0.1.4.6` to `script.json.previousversions`.
+- Updated `[GAMEASSIST:POLICY]` for the marker-verification delay and NPC HP initialization grace period.
+- Updated `[GAMEASSIST:APP]` and `[GAMEASSIST:APP:UTILS]` for external evidence, TokenMod authorization, outcome verification, and StatusInfo observer preservation.
+- Updated `[GAMEASSIST:CORE]` and `[GAMEASSIST:CORE:OBJECT]` for the release version and public-contract dependency confirmation.
+- Updated `[GAMEASSIST:INTERFACES:COMMANDS]` for the new troubleshooting evidence.
+- Updated `[GAMEASSIST:MODULES:NPCMANAGER]` for verified marker requests, new-token initialization suppression, and its independent module patch version; updated `[GAMEASSIST:MODULES:CONCENTRATIONTRACKER]` for verified marker requests and its independent module patch version.
+- Updated `[GAMEASSIST:BOOTSTRAP]` for the v0.1.4.7 startup version record without changing lifecycle order.
+- Preserved the literal `GAMEASSIST` codename, existing tag names, nesting, and file-scoped canonical tree.
+
+### Documentation
+
+- Updated `README.md` with:
+  - TokenMod `0.8.88` and StatusInfo `0.3.11` supported baselines;
+  - standalone installation boundaries;
+  - `players-can-ids` clarification;
+  - direct failure-recovery commands;
+  - module version updates;
+  - v0.1.4.6 to v0.1.4.7 upgrade and rollback guidance.
+- Updated `Smoketest.md` with:
+  - expected contract-aware dependency results;
+  - the new `Standalone Integrations` troubleshooting row;
+  - an initial `players-can-ids` OFF-state isolation pass followed, when applicable, by a restored campaign-setting compatibility pass;
+  - TokenMod direct-command isolation;
+  - optional StatusInfo observer checks;
+  - add/remove/teardown and delayed-warning acceptance checks;
+  - an NPCHPRoller auto-roll-on-add check that refuses false death/revival history while preserving later gameplay transitions.
+- Updated `ROADMAP.md` to move Issue #24 into live Roll20 acceptance while keeping integrated TokenMod, StatusInfo, and MarkerService work in `v0.1.5.x`.
+
+### Roll20 API sandbox acceptance
+
+- Completed the focused v0.1.4.7 acceptance pass with standalone TokenMod `0.8.88` and optional StatusInfo `0.3.11` behavior enabled for the campaign.
+- Confirmed GameAssist health and standalone-integration diagnostics respond with the expected module/dependency posture.
+- Confirmed NPCManager adds and removes the built-in `dead` marker, records genuine death/revival history, and completes audit/report/teardown workflows.
+- Confirmed NPCHPRoller auto-roll-on-add establishes a new NPC's starting HP without flashing the death marker or creating a false death/revival pair.
+- Confirmed a later genuine positive-to-zero change on that auto-rolled NPC is still recorded and a later positive-HP change is still annotated as revival.
+- Confirmed ConcentrationTracker marker add, direct status reading, removal, and teardown behavior.
+- Confirmed StatusInfo continues observing the relevant TokenMod marker changes without duplicate GameAssist condition output.
+- Confirmed the marker workflows remain functional after restoring the campaign's normal TokenMod `players-can-ids` setting.
+
+### Release artifacts
+
+The repository script and versioned artifact share this Git-normalized SHA-256:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `GameAssist` | `ADBC0F18CD3517E50A91CEBAA05D83ABD531F9595130F2EF3B750548C05D4953` |
+| `GameAssist-v0.1.4.7` | `ADBC0F18CD3517E50A91CEBAA05D83ABD531F9595130F2EF3B750548C05D4953` |
+
+Local Roll20 test copy:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `outputs/GameAssist-v0.1.4.7-issue24-test.js` | `0E3D0CE9C97B6A9EACB587C3486E2ABC774A876D8160499EF4BF3FF604AF903C` |
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| JavaScript syntax for repository, versioned, local Roll20, and both harness artifacts | Passed |
+| Existing status/lifecycle regression harness | Passed (57 assertions) |
+| Focused TokenMod/StatusInfo interoperability and NPC initialization harness | Passed (31 assertions) |
+| Built-in `dead` add/remove with `players-can-ids=false` | Passed in simulation |
+| NPCHPRoller auto-roll-on-add placeholder HP suppression | Passed in simulation |
+| Genuine post-initialization NPC death/revival tracking | Passed in simulation |
+| Custom concentration tag add/remove/status | Passed in simulation |
+| NPCManager and ConcentrationTracker teardown marker requests | Passed in simulation |
+| Deliberately failed TokenMod mutation and actionable warning | Passed in simulation |
+| TokenMod observer notification path used by StatusInfo | Passed in simulation |
+| `script.json` parse and version/previous-version metadata | Passed |
+| `GameAssist`, `GameAssist-v0.1.4.7`, and local Roll20 test copy normalized identity | Passed |
+| MECHSUITS section pairing, proper nesting, metadata, footers, and canonical-tree agreement | Passed (19 sections; 19 canonical-tree entries) |
+| Unchanged implementation-section regression | Passed (8 sections) |
+| Prior command-literal preservation | Passed (135 unique literals) |
+| Global Roll20 `on`/`off` non-override contract | Passed |
+| `git diff --check` | Passed |
+| Roll20 API sandbox acceptance with TokenMod and optional StatusInfo | Passed |
+
+The Roll20 API sandbox acceptance pass confirmed real `sendChat` routing, TokenMod timing, token marker persistence, StatusInfo condition-description behavior, and NPCHPRoller/NPCManager initialization ordering for this release candidate.

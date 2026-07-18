@@ -1,9 +1,9 @@
 # GameAssist – Modular API Framework for Roll20
 
-**Version 0.1.4.6** | © 2025 Mord Eagle · MIT License<br>
+**Version 0.1.4.7** | © 2025 Mord Eagle · MIT License<br>
 **Lead Dev:** [@Mord-Eagle](https://github.com/Mord-Eagle)
 
-> **Release posture:** v0.1.4.6 preserves the v0.1.4.5 NPCManager release while rebuilding `!ga-status` as a plain-language system check with optional troubleshooting details. Use `Smoketest.md` to validate an installation before a live session.
+> **Release posture:** v0.1.4.7 completes the planned standalone-interoperability pass for TokenMod and StatusInfo. Marker changes still belong to separately installed TokenMod; GameAssist now uses TokenMod's documented script-to-script authorization path, verifies requested results, and reports detected standalone versions in troubleshooting details.
 
 ---
 
@@ -18,7 +18,7 @@ GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a
 | Category | Highlights |
 | --- | --- |
 | Core Lift | Guarded modules, conservative state repair, explicit queue API, session metrics, dependency diagnostics, and GM health reporting. |
-| 30-Second Install | ① Paste **GameAssist-v0.1.4.6** ② Install **TokenMod** for marker modules ③ Add the seven CritFumble roll-tables ④ Save/reload ⑤ Run `!ga-status`. |
+| Quick Install | ① Paste **GameAssist-v0.1.4.7** ② Install **TokenMod** for marker modules ③ Optionally install **StatusInfo** for condition descriptions ④ Add the seven CritFumble roll-tables ⑤ Save/reload and run `!ga-status`. |
 | Flagship Player Commands | `!concentration`, `!cc`, `!critfumble-<type>`. |
 | Flagship GM Commands | `!critfumble`, `!critfumble help`, `!critfumble menu`, `!critfail`, `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report --help`, `!npc-death-buckets`, `!NPC-WR`, `!npc-death-audit`, `!npc-death-arc`, `!ga-conc-status`, `!ga-config ui`. |
 | Admin Controls | `!ga-config list|get|set|modules|cleanup|ui`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-metrics`, and `!ga-debug`. |
@@ -61,6 +61,7 @@ GameAssist’s kernel and bundled modules expose:
 * **Guarded Module Toggles** – `!ga-enable` and `!ga-disable` control module activity without depending on a Roll20 `off()` API.
 * **Compatibility Audit** – optional, debug-only overlap hints for popular scripts such as TokenMod, ScriptCards, and APILogic.
 * **Dependency Diagnostics** – module dependencies are reported as confirmed, missing, or unverifiable instead of being presented as guaranteed discoveries.
+* **Standalone Interoperability** – TokenMod's public API contract and version metadata can confirm its presence even when Roll20's internal script list is unavailable. Marker requests use TokenMod's documented `--api-as` path and are checked after dispatch.
 * **MECHSUITS Structure** – the executable script uses the literal codename `GAMEASSIST`, framed sections, file-scoped canonical tree metadata, and per-section change notes.
 
 **Design goal:** useful, inspectable campaign automation that reports failures clearly and can be upgraded incrementally.
@@ -70,12 +71,13 @@ GameAssist’s kernel and bundled modules expose:
 ## 4 · Quick Start <a id="4-quick-start"></a>
 
 ```text
-📥 1  Copy GameAssist-v0.1.4.6 → Roll20 Mod/API Scripts → Save
-🛠 2  Install TokenMod if using NPCManager or ConcentrationTracker markers
-📜 3  Create 7 CritFumble roll-tables (see §11: Roll-Table Cookbook)
-🔄 4  Save/reload the sandbox and wait for the core ready whisper
-🩺 5  Run !ga-status and !ga-config modules
-🎲 6  Test !critfumble menu, !concentration --status, and !npc-hp-selected
+📥 1  Copy GameAssist-v0.1.4.7 → Roll20 Mod/API Scripts → Save
+🛠 2  Install TokenMod 0.8.88 (supported baseline) for NPCManager or ConcentrationTracker markers
+ℹ️ 3  Optionally install StatusInfo 0.3.11 for condition descriptions and menus
+📜 4  Create 7 CritFumble roll-tables (see §11: Roll-Table Cookbook)
+🔄 5  Save/reload the sandbox and wait for the core ready whisper
+🩺 6  Run !ga-status and !ga-config modules
+🎲 7  Test !critfumble menu, !concentration --status, and !npc-hp-selected
 ```
 
 `GameAssist.flags.QUIET_STARTUP` defaults to `true`. Expect the core ready whisper, but not one ready message from every module.
@@ -196,14 +198,14 @@ Module configuration belongs under `state.GameAssist.<Module>.config`. Runtime c
   "schemaVersion": 1,
   "scope": "configuration-only",
   "generatedAt": "<ISO timestamp>",
-  "version": "0.1.4.6",
+  "version": "0.1.4.7",
   "flags": {},
   "globalConfig": {},
   "modules": {}
 }
 ```
 
-The snapshot excludes runtime caches and metrics. v0.1.4.6 does not import or restore snapshots.
+The snapshot excludes runtime caches and metrics. v0.1.4.7 does not import or restore snapshots.
 
 ---
 
@@ -237,7 +239,7 @@ Config keys: `debug`, `useEmojis`, `rollDelayMs`.
 
 ### 6.2 Concentration Tracker
 
-> **Dependency:** TokenMod is required for automated marker changes.
+> **Dependency:** Standalone TokenMod is required for automated marker changes. v0.1.4.7 is tested against TokenMod `0.8.88`; StatusInfo `0.3.11` is optional.
 
 `!concentration` or `!cc` opens buttons for normal, advantage, or disadvantage rolls and accepts:
 
@@ -254,19 +256,23 @@ The tracker reads `constitution_save_bonus` from a token’s represented charact
 
 In v0.1.4.3, built-in marker ids, custom marker display names, and exact custom tags resolve to the marker identity Roll20 stores on tokens. If the configured marker cannot be recognized, `!concentration --status` gives an actionable warning instead of silently reporting an incorrect empty result.
 
+In v0.1.4.7, concentration add/remove/teardown requests use TokenMod's documented `--api-as` path and are checked after TokenMod runs. The GameAssist request therefore does not depend on TokenMod's player-facing `players-can-ids` setting. If the marker still does not reach the requested state, the GM receives a direct TokenMod command to try on the selected token. GameAssist continues using TokenMod for the mutation so standalone StatusInfo can observe the same change.
+
 Config keys: `marker`, `randomize`.
 
 ### 6.3 NPC Manager
 
-> **Dependency:** TokenMod is required for automated death-marker changes. Death-history recording and handout updates still run even if a marker write cannot be confirmed.
+> **Dependency:** Standalone TokenMod is required for automated death-marker changes. Death-history recording and handout updates still run even if a marker write cannot be confirmed.
 
-> **Module version:** NPCManager `1.1.0` in GameAssist v0.1.4.5. NPCManager `1.0.0` introduced the four-level history model; `1.1.0` adds curated Arc management, hierarchical clearing, date rollover, and the report writer.
+> **Module version:** NPCManager `1.1.1` in GameAssist v0.1.4.7. NPCManager `1.0.0` introduced the four-level history model; `1.1.0` added curated Arc management, hierarchical clearing, date rollover, and the report writer; `1.1.1` hardens standalone TokenMod marker requests, result verification, and new-token HP initialization.
 
 NPCManager watches `change:graphic:bar1_value` for linked NPC characters with `npc=1`.
 
 * HP below 1 → record the NPC death into the active Campaign, Chapter, Section, and Session buckets, then request the configured `deadMarker`.
 * HP above 0 → annotate the matching death entry as revived and request removal of the configured `deadMarker`.
 * `autoHide=true` → move newly dead NPC tokens to `hideLayer`.
+
+When NPCHPRoller `autoRollOnAdd=true`, NPCManager treats the short placeholder-HP interval on a newly added token as setup rather than combat. Blank or unknown starting HP is not accepted as evidence that a living NPC crossed below 1 HP. The automatic roll therefore does not flash the death marker or add a false death/revival pair to history; later known-positive-to-zero changes remain ordinary tracked deaths.
 
 Commands:
 
@@ -294,7 +300,7 @@ Commands:
 
 `!npc-death-report` is a history report. It opens with totals, the latest death, most frequent names, recent entries, and buttons for common next steps. Every new death is written to all four active buckets. A clear confirmation offers either the selected bucket alone or that level and its descendants; for example, clearing Section and below clears Section and Session while retaining Chapter and Campaign. Each bucket has its own handout named like `GameAssist Deaths - Session - 2026-07-17`. Revivals are annotated on the matching entry instead of silently deleting the death. Current entries are matched by token ID, so separate tokens with the same name remain separate records.
 
-The default Session name follows the sandbox's UTC date. Before any NPCManager command or tracked NPC HP change, GameAssist checks the date and moves a date-managed Session to the new `YYYY-MM-DD` bucket. No death processed after that check is written into yesterday's Session. If the DM explicitly names the Session, that custom name remains active across date changes; **Reset Session Date** restores automatic date-managed rollover. A DM-configurable timezone is tracked separately because v0.1.4.6 does not yet reinterpret stored timestamps or date boundaries.
+The default Session name follows the sandbox's UTC date. Before any NPCManager command or tracked NPC HP change, GameAssist checks the date and moves a date-managed Session to the new `YYYY-MM-DD` bucket. No death processed after that check is written into yesterday's Session. If the DM explicitly names the Session, that custom name remains active across date changes; **Reset Session Date** restores automatic date-managed rollover. A DM-configurable timezone is tracked separately because v0.1.4.7 does not yet reinterpret stored timestamps or date boundaries.
 
 Arc handouts are curated rosters, not another hierarchy level. A linked creature appears once per Arc by default, so adding selected NPCs and later importing the full Session does not repeat those creatures. The Session import can enrich an existing selected entry with its death record. The management menu can remove one entry, remove all selected tokens, or undo the most recent Arc addition. `--allowDuplicates` is an explicit override for deliberate repetition. Selected-token Arc entries remain general story notes; revival annotations apply only after an entry is linked to Session death history.
 
@@ -362,13 +368,17 @@ I. **Open the Roll20 Mod/API Editor**
 
 II. **Install GameAssist**
 
-1. Paste the complete contents of `GameAssist-v0.1.4.6`.
+1. Paste the complete contents of `GameAssist-v0.1.4.7`.
 2. Keep the script as one complete file; do not paste only individual MECHSUITS sections into Roll20.
 3. Save the script.
 
 III. **Install Dependencies**
 
-Install **TokenMod** from the Mod Library if you want NPCManager and ConcentrationTracker to change markers automatically. NPCHPRoller, CritFumble, ConfigUI, and DebugTools do not require TokenMod.
+Install **TokenMod** from the Mod Library if you want NPCManager and ConcentrationTracker to change markers automatically. TokenMod `0.8.88` is the supported v0.1.4.7 baseline. GameAssist uses TokenMod's documented `--api-as` script path, so `players-can-ids` may remain off.
+
+Install **StatusInfo** only if the campaign wants condition descriptions and `!condition` menus. StatusInfo `0.3.11` is the supported optional baseline. It remains a separate script and observes marker changes through TokenMod's public observer contract.
+
+NPCHPRoller, CritFumble, ConfigUI, and DebugTools do not require either standalone script.
 
 IV. **Create the Seven CritFumble Tables**
 
@@ -736,7 +746,7 @@ The first run is a dry run. Add `--apply` only after checking the preview.
 
 ## 13 · Performance Benchmarks <a id="13-performance-benchmarks"></a>
 
-> **Historical reference only:** The following numbers were recorded for an earlier v0.1.3-era build and have **not** been revalidated for v0.1.4.6. Roll20 sandbox load, campaign size, browser state, network conditions, token formulas, and other Mods can materially change results. Do not treat this table as a current performance guarantee.
+> **Historical reference only:** The following numbers were recorded for an earlier v0.1.3-era build and have **not** been revalidated for v0.1.4.7. Roll20 sandbox load, campaign size, browser state, network conditions, token formulas, and other Mods can materially change results. Do not treat this table as a current performance guarantee.
 
 | Environment Item | Historical Test Environment |
 | --- | --- |
@@ -753,7 +763,7 @@ The first run is a dry run. Add `--apply` only after checking the preview.
 | Fresh sandbox | 10 | 355 ms | 350 ms | 18 ms | 330–387 ms |
 | **Combined** | **34** | **298 ms** | **300 ms** | **39 ms** | **253–387 ms** |
 
-### 13.1 Repeatable Benchmarking for v0.1.4.6
+### 13.1 Repeatable Benchmarking for v0.1.4.7
 
 1. Duplicate the campaign or use a test game.
 2. Record token count, active Mods, formulas, and sandbox channel.
@@ -802,9 +812,27 @@ Then try:
 
 NPCManager and ConcentrationTracker require TokenMod for marker changes.
 
-* `missing` means GameAssist found enough metadata to conclude TokenMod is absent.
-* `unverifiable` means Roll20 did not expose enough metadata. Confirm TokenMod manually and test one marker change.
-* GameAssist cannot guarantee external-script discovery in every Roll20 sandbox.
+* `confirmed` means GameAssist found TokenMod through its public observer contract, its `API_Meta` version record, or Roll20's visible script list.
+* `missing` means GameAssist found enough script-list evidence to conclude TokenMod is absent.
+* `unverifiable` means neither the public contract nor Roll20's script metadata was available. It is not proof that TokenMod failed.
+* `!ga-status --details` reports the detected TokenMod version when upstream metadata is available.
+
+GameAssist v0.1.4.7 sends internal marker requests through TokenMod's documented `--api-as <GM player id>` path. TokenMod's `players-can-ids` option controls player-facing `--ids` use and does not need to be enabled for GameAssist.
+
+If GameAssist warns that TokenMod did not add or remove a marker, select the named token and run the exact direct command shown in the warning. For example:
+
+```roll20chat
+!token-mod --ids @{selected|token_id} --set statusmarkers|+dead
+!token-mod --ids @{selected|token_id} --set statusmarkers|-dead
+```
+
+If the direct command also fails, troubleshoot TokenMod or the selected token. If the direct command works, include the GameAssist warning and `!ga-status --details` output in the issue report.
+
+#### Optional StatusInfo Observation
+
+StatusInfo is not required by GameAssist. When StatusInfo `0.3.11` is installed, `!ga-status --details` reports its detected version and whether condition descriptions are enabled. GameAssist deliberately leaves marker mutation inside TokenMod so StatusInfo can receive TokenMod's observer notification.
+
+The final check is live behavior: add a StatusInfo condition whose icon matches the tested marker, perform one GameAssist marker change, and confirm StatusInfo shows the configured description once. Detection alone cannot prove that a campaign-specific condition is correctly configured.
 
 ### 14.4 Startup Messages Are Missing
 
@@ -824,7 +852,7 @@ Unknown branches are not deleted automatically. Review the warning, then explici
 
 ### 14.6 `!ga-config list` Is Not a Full Backup
 
-The `GameAssist Config` handout contains flags, global config, and module config only. It excludes runtime caches, metrics, and unknown state branches. v0.1.4.6 cannot import the snapshot.
+The `GameAssist Config` handout contains flags, global config, and module config only. It excludes runtime caches, metrics, and unknown state branches. v0.1.4.7 cannot import the snapshot.
 
 Use it for configuration review and upgrade comparison—not as a full restore mechanism.
 
@@ -882,7 +910,7 @@ Select the affected token and run:
 !concentration --status
 ```
 
-Confirm TokenMod is installed or manually verified when dependency status is `unverifiable`.
+Confirm TokenMod is installed or manually verified when dependency status is `unverifiable`. Check `!ga-status --details` for TokenMod and StatusInfo evidence.
 
 `!concentration --status` reads markers directly and should still respond when TokenMod detection is `unverifiable`. If it reports that the configured marker cannot be recognized, run:
 
@@ -939,7 +967,7 @@ That evidence is far more useful than “it stopped working.”
 
 ## 15 · Upgrade Paths <a id="15-upgrade-paths"></a>
 
-### 15.1 Recommended Upgrade: v0.1.4.5 → v0.1.4.6
+### 15.1 Recommended Upgrade: v0.1.4.6 → v0.1.4.7
 
 I. **Freeze the Current Working Script**
 
@@ -951,7 +979,7 @@ I. **Freeze the Current Working Script**
 
 II. **Replace the Script**
 
-1. Replace the Roll20 script contents with the complete `GameAssist-v0.1.4.6`.
+1. Replace the Roll20 script contents with the complete `GameAssist-v0.1.4.7`.
 2. Save/reload the API sandbox.
 3. Do not combine partial sections from multiple releases unless you are deliberately performing a MECHSUITS whole-section update and have reviewed the ancestor contracts.
 
@@ -965,7 +993,7 @@ III. **Verify Core Health**
 
 Review all dependency warnings. An `unverifiable` dependency is not proof of failure; it is a prompt for manual confirmation.
 
-The default status panel now explains that uncertainty directly. Use `!ga-status --details` when you need session counters, queue state, the last recorded activity, or internal event-hook information.
+The default status panel explains that uncertainty directly. Use `!ga-status --details` for session counters, queue state, the last recorded activity, internal event-hook information, and detected standalone TokenMod/StatusInfo versions.
 
 IV. **Verify Configuration**
 
@@ -978,7 +1006,7 @@ IV. **Verify Configuration**
 !ga-config get DebugTools
 ```
 
-v0.1.4.6 retains the known-container repairs from v0.1.4.2, the marker-recognition fixes from v0.1.4.3, the DM-facing module help from v0.1.4.4, and NPCManager `1.1.0` from v0.1.4.5. Its runtime changes are limited to the `!ga-status` presentation, the accuracy of enabled-module dependency counts, and preserving configured intent when a confirmed missing dependency skips startup or prevents a manual enable.
+v0.1.4.7 retains the known-container repairs from v0.1.4.2, marker recognition from v0.1.4.3, DM-facing module help from v0.1.4.4, NPCManager history/reporting from v0.1.4.5, and the system-health presentation from v0.1.4.6. Its focused runtime changes are contract-aware TokenMod detection, documented `--api-as` authorization, delayed marker-result verification, optional StatusInfo evidence, NPCManager `1.1.1`, and ConcentrationTracker `0.1.0.6`.
 
 V. **Run the Smoke Test**
 
@@ -986,7 +1014,7 @@ Use [§4.1 Minimum Smoke Test](#41-minimum-smoke-test), including real HP, conce
 
 ### 15.2 Rollback
 
-If v0.1.4.6 fails its smoke test:
+If v0.1.4.7 fails its smoke test:
 
 1. Replace it with your complete previous working script.
 2. Save/reload.
@@ -1072,15 +1100,15 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 
 ### 17.1 Current Status
 
-| Item | Status in v0.1.4.6 | Notes |
+| Item | Status in v0.1.4.7 | Notes |
 | --- | --- | --- |
 | Auto HP roll on NPC token add | **Implemented, opt-in** | `NPCHPRoller.autoRollOnAdd`, default `false`. |
 | Session metrics and logging | **Implemented, basic** | `!ga-status` gives a simple system check; `!ga-status --details` and `!ga-metrics` expose troubleshooting counters. Not a full profiler. |
 | Configuration export | **Implemented, partial** | Versioned configuration-only snapshot; no import/restore. |
 | State self-healing | **Implemented, conservative** | Repairs known containers; does not auto-delete unknown branches. |
-| Dependency diagnostics | **Implemented, best-effort** | Confirmed/missing/unverifiable; not guaranteed discovery. |
+| Dependency diagnostics | **Implemented, best-effort** | TokenMod public-contract/version evidence plus confirmed/missing/unverifiable fallback; live mutation remains the final proof. |
 | Public queue API | **Implemented, opt-in** | Does not route every event through the queue. |
-| NPC death history | **Implemented, sandbox verification** | NPCManager `1.1.0`; four-level handouts, Arc roster management, report writer, and date-managed Sessions. |
+| NPC death history | **Implemented, sandbox verification** | NPCManager `1.1.1`; four-level handouts, Arc roster management, report writer, date-managed Sessions, and verified TokenMod requests. |
 | Native Mord character-sheet support | **Deferred** | Begin after the agreed GameAssist architecture foundation is stable; track sequencing in `ROADMAP.md`. |
 
 ### 17.2 Near-Term Candidate: Compatibility-First Bridge Character Sheet
@@ -1092,7 +1120,7 @@ After the GameAssist architecture foundation is confirmed stable in Roll20, the 
 * defines clear NPC, HP-formula, save-bonus, and roll-template contracts,
 * avoids requiring another broad GameAssist kernel rewrite.
 
-This is a separate project and is not implemented in v0.1.4.6.
+This is a separate project and is not implemented in v0.1.4.7.
 
 ### 17.3 Deferred GameAssist Features
 
@@ -1141,6 +1169,16 @@ This is a separate project and is not implemented in v0.1.4.6.
 ---
 
 ## 18 · Changelog <a id="18-changelog"></a>
+
+### v0.1.4.7 – Standalone TokenMod and StatusInfo Interoperability
+
+* Added contract-aware TokenMod detection using its public observer interface and `API_Meta` version record before falling back to Roll20's script list.
+* Routed NPCManager and ConcentrationTracker marker requests through TokenMod's documented `--api-as` path, removing any GameAssist requirement for `players-can-ids`.
+* Added delayed marker-result verification with an actionable direct TokenMod command when the requested state is not reached.
+* Preserved mutation through standalone TokenMod so StatusInfo continues receiving TokenMod observer notifications.
+* Added TokenMod and optional StatusInfo version/configuration evidence to `!ga-status --details`.
+* Advanced NPCManager to `1.1.1` and ConcentrationTracker to `0.1.0.6`.
+* Prevented NPCHPRoller auto-roll-on-add token setup from creating a false NPC death/revival pair while preserving later genuine HP transitions.
 
 ### v0.1.4.6 – DM-Readable System Status
 
