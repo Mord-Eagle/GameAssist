@@ -348,7 +348,14 @@ Restore the test character's normal Constitution save bonus afterward.
 
 An ordinary campaign that never uses custom token markers may skip this check. The Issue #25 release acceptance pass must create a disposable custom marker and must not skip it.
 
-Choose a disposable custom marker and record its display name and exact stored `Name::id` tag.
+Choose a disposable custom marker with a distinctive display name. Select a disposable token, then use a DebugTools dry run to reveal the exact stored tag without changing the token:
+
+```roll20chat
+!ga-enable DebugTools
+!ga-debug marker --marker "Custom Marker Name" --state on
+```
+
+The preview should say it would add a value in the form `Name::id`. Record that exact value. Do not include `--apply`.
 
 ```roll20chat
 !ga-config set NPCManager deadMarker=<custom display name>
@@ -369,6 +376,12 @@ Optional numbered exact-tag check:
 ```
 
 Pass when the custom marker appears with number 3.
+
+Return DebugTools to its default state after recording the tag:
+
+```roll20chat
+!ga-disable DebugTools
+```
 
 #### M5. Teardown and Re-enable
 
