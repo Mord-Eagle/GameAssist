@@ -18,7 +18,7 @@ GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a
 | Category | Highlights |
 | --- | --- |
 | Core Lift | Guarded modules, conservative state repair, explicit queue API, session metrics, dependency diagnostics, and GM health reporting. |
-| Quick Install | ① Paste **GameAssist-v0.1.4.7** ② Install **TokenMod** for marker modules ③ Optionally install **StatusInfo** for condition descriptions ④ Add the seven CritFumble roll-tables ⑤ Save/reload and run `!ga-status`. |
+| Quick Install | ① Install **GameAssist** from Roll20 One-Click, or paste **GameAssist-v0.1.4.7.js** manually ② Install **TokenMod** for marker modules ③ Optionally install **StatusInfo** for condition descriptions ④ Add the seven CritFumble roll-tables ⑤ Save/reload and run `!ga-status`. |
 | Flagship Player Commands | `!concentration`, `!cc`, `!critfumble-<type>`. |
 | Flagship GM Commands | `!critfumble`, `!critfumble help`, `!critfumble menu`, `!critfail`, `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report --help`, `!npc-death-buckets`, `!NPC-WR`, `!npc-death-audit`, `!npc-death-arc`, `!ga-conc-status`, `!ga-config ui`. |
 | Admin Controls | `!ga-config list|get|set|modules|cleanup|ui`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-metrics`, and `!ga-debug`. |
@@ -71,7 +71,7 @@ GameAssist’s kernel and bundled modules expose:
 ## 4 · Quick Start <a id="4-quick-start"></a>
 
 ```text
-📥 1  Copy GameAssist-v0.1.4.7 → Roll20 Mod/API Scripts → Save
+📥 1  Install GameAssist from One-Click, or copy GameAssist-v0.1.4.7.js into Roll20 Mod/API Scripts
 🛠 2  Install TokenMod 0.8.88 (supported baseline) for NPCManager or ConcentrationTracker markers
 ℹ️ 3  Optionally install StatusInfo 0.3.11 for condition descriptions and menus
 📜 4  Create 7 CritFumble roll-tables (see §11: Roll-Table Cookbook)
@@ -368,7 +368,7 @@ I. **Open the Roll20 Mod/API Editor**
 
 II. **Install GameAssist**
 
-1. Paste the complete contents of `GameAssist-v0.1.4.7`.
+1. Paste the complete contents of `GameAssist-v0.1.4.7.js`.
 2. Keep the script as one complete file; do not paste only individual MECHSUITS sections into Roll20.
 3. Save the script.
 
@@ -415,13 +415,15 @@ Use the checklist in [§4.1 Minimum Smoke Test](#41-minimum-smoke-test) before t
 
 Before opening or updating a pull request against `Roll20/roll20-api-scripts`, confirm:
 
-* Repository folder name matches the `script.json` script name: `GameAssist`.
-* `script.json` points at the actual script artifact: `"script": "GameAssist"`.
-* `script.json` includes current `version`, `previousversions`, detailed `description`, `authors`, `roll20userid`, `dependencies`, `modifies`, `conflicts`, and command list.
+* The official repository folder is `GameAssist`, matching `script.json.name`.
+* `script.json` points at the uniform executable filename: `"script": "GameAssist.js"`.
+* The current release is stored at `GameAssist/0.1.4.7/GameAssist.js`.
+* Because v0.1.4.7 is the first One-Click submission, `previousversions` is empty; project history remains in `CHANGELOG.md` until older releases are deliberately packaged for One-Click rollback.
+* `script.json` includes the current version, detailed description, authorship, Roll20 user id, dependencies, object/property access, and named conflicts in Roll20's accepted schema shape.
 * The top script header includes name, version, last updated date, description, syntax/commands, dependency notes, and configuration pointers.
-* Included file types match Roll20 API repo expectations. Note: the current GameAssist repository uses an extensionless `GameAssist` script artifact because `script.json` points to that file; before an upstream PR, confirm whether Roll20 reviewers want that retained or want a `.js` submission artifact.
+* The submitted executable uses the required `.js` extension, and the package contains only accepted JavaScript, Markdown, and JSON file types.
 * README and smoke test describe the current version and do not promise unverified sandbox behavior.
-* MIT license is present.
+* GameAssist is MIT licensed; the project license and executable notice agree with the Roll20 repository's MIT contribution terms.
 * After the Roll20 repo PR is accepted, update the Roll20 Community Wiki API Script Index if appropriate.
 
 ---
@@ -979,7 +981,7 @@ I. **Freeze the Current Working Script**
 
 II. **Replace the Script**
 
-1. Replace the Roll20 script contents with the complete `GameAssist-v0.1.4.7`.
+1. Replace the Roll20 script contents with the complete `GameAssist-v0.1.4.7.js`.
 2. Save/reload the API sandbox.
 3. Do not combine partial sections from multiple releases unless you are deliberately performing a MECHSUITS whole-section update and have reviewed the ancestor contracts.
 
@@ -1108,7 +1110,7 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 | State self-healing | **Implemented, conservative** | Repairs known containers; does not auto-delete unknown branches. |
 | Dependency diagnostics | **Implemented, best-effort** | TokenMod public-contract/version evidence plus confirmed/missing/unverifiable fallback; live mutation remains the final proof. |
 | Public queue API | **Implemented, opt-in** | Does not route every event through the queue. |
-| NPC death history | **Implemented, sandbox verification** | NPCManager `1.1.1`; four-level handouts, Arc roster management, report writer, date-managed Sessions, and verified TokenMod requests. |
+| NPC death history | **Implemented and sandbox-verified** | NPCManager `1.1.1`; four-level handouts, Arc roster management, report writer, date-managed Sessions, and verified TokenMod requests. |
 | Native Mord character-sheet support | **Deferred** | Begin after the agreed GameAssist architecture foundation is stable; track sequencing in `ROADMAP.md`. |
 
 ### 17.2 Near-Term Candidate: Compatibility-First Bridge Character Sheet

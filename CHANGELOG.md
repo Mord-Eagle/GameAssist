@@ -1751,14 +1751,25 @@ These versions remain independently authored and licensed upstream. GameAssist d
 - Confirmed StatusInfo continues observing the relevant TokenMod marker changes without duplicate GameAssist condition output.
 - Confirmed the marker workflows remain functional after restoring the campaign's normal TokenMod `players-can-ids` setting.
 
+### Official Roll20 release packaging
+
+- Renamed the current repository source and release artifact to `GameAssist.js` and `GameAssist-v0.1.4.7.js`; their executable content is unchanged.
+- Corrected `script.json.script` to the uniform `GameAssist.js` filename required by Roll20's schema.
+- Converted `script.json.modifies` from a descriptive list into Roll20's property-to-access object format.
+- Replaced the generic conflict description with the named standalone `Concentration` and `DeathTracker` scripts.
+- Removed the private `commands` extension from the submission manifest; the One-Click description and README remain the command references.
+- Set `previousversions` to an empty list for GameAssist's first One-Click submission. Earlier project revisions remain preserved in this append-only changelog and the project repository, but are not advertised as One-Click rollback versions until matching official version folders exist.
+- Prepared the official package layout as `GameAssist/script.json`, `GameAssist/README.md`, and `GameAssist/0.1.4.7/GameAssist.js`.
+- Added a MECHSUITS sidecar for the non-commentable repository `script.json` artifact; the lean official package intentionally follows Roll20's accepted-file and schema conventions.
+
 ### Release artifacts
 
 The repository script and versioned artifact share this Git-normalized SHA-256:
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `ADBC0F18CD3517E50A91CEBAA05D83ABD531F9595130F2EF3B750548C05D4953` |
-| `GameAssist-v0.1.4.7` | `ADBC0F18CD3517E50A91CEBAA05D83ABD531F9595130F2EF3B750548C05D4953` |
+| `GameAssist.js` | `ADBC0F18CD3517E50A91CEBAA05D83ABD531F9595130F2EF3B750548C05D4953` |
+| `GameAssist-v0.1.4.7.js` | `ADBC0F18CD3517E50A91CEBAA05D83ABD531F9595130F2EF3B750548C05D4953` |
 
 Local Roll20 test copy:
 
@@ -1780,8 +1791,8 @@ Local Roll20 test copy:
 | NPCManager and ConcentrationTracker teardown marker requests | Passed in simulation |
 | Deliberately failed TokenMod mutation and actionable warning | Passed in simulation |
 | TokenMod observer notification path used by StatusInfo | Passed in simulation |
-| `script.json` parse and version/previous-version metadata | Passed |
-| `GameAssist`, `GameAssist-v0.1.4.7`, and local Roll20 test copy normalized identity | Passed |
+| `script.json` parse, Roll20 schema, and first-submission version metadata | Passed |
+| `GameAssist.js`, `GameAssist-v0.1.4.7.js`, official package executable, and local Roll20 test copy normalized identity | Passed |
 | MECHSUITS section pairing, proper nesting, metadata, footers, and canonical-tree agreement | Passed (19 sections; 19 canonical-tree entries) |
 | Unchanged implementation-section regression | Passed (8 sections) |
 | Prior command-literal preservation | Passed (135 unique literals) |
