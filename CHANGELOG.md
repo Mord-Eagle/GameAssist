@@ -1790,3 +1790,131 @@ Local Roll20 test copy:
 | Roll20 API sandbox acceptance with TokenMod and optional StatusInfo | Passed |
 
 The Roll20 API sandbox acceptance pass confirmed real `sendChat` routing, TokenMod timing, token marker persistence, StatusInfo condition-description behavior, and NPCHPRoller/NPCManager initialization ordering for this release candidate.
+
+---
+
+## [0.1.5.0] – 2026-07-18
+
+### Release definition
+
+GameAssist v0.1.5.0 is the MarkerService foundation release. It replaces GameAssist's chat-generated standalone TokenMod marker requests with one internal marker authority while preserving existing gameplay commands, module configuration, NPC death history, concentration runtime data, and unrelated token markers.
+
+This release implements [Issue #25](https://github.com/Mord-Eagle/GameAssist/issues/25). Integrated StatusInfo and TokenMod command modules remain separate work under Issues #26 and #27.
+
+### Added – CORE:MARKERSERVICE
+
+- Added the properly nested `[GAMEASSIST:CORE:MARKERSERVICE]` section.
+- Added `GameAssist.MarkerService` as non-toggleable core infrastructure with independent service version `1.0.0`.
+- Added built-in marker resolution for Roll20's standard marker identifiers.
+- Added custom marker resolution through `Campaign().get('_token_markers')`, including:
+  - exact display-name matches;
+  - case-folded display-name fallback;
+  - stored custom tags;
+  - direct `Name::id` tags that do not depend on successful registry parsing.
+- Preserved the prior precedence rule in which a literal lowercase built-in id such as `dead` selects the built-in marker before a same-named custom display marker.
+- Added structured marker reads that retain:
+  - the complete stored marker string;
+  - marker order;
+  - duplicate entries;
+  - custom tags;
+  - number overlays.
+- Added `resolve`, `read`, `inspect`, `has`, `add`, `remove`, `toggle`, `set`, `observe`, `clearObservers`, `getRegistry`, and `normalizeId`.
+- Added explicit operation results containing success state, stable error code, diagnostic message, changed/verified state, resolved marker identity, and before/after entries.
+- Added one shared `change:graphic:statusmarkers` observation contract for integrated modules and future consumers.
+
+### Marker mutation behavior
+
+- Marker add is idempotent when the requested marker already exists.
+- Explicit removal clears every duplicate instance of the requested marker so the requested absent state is complete.
+- Unrelated markers, their ordering, and their number overlays are preserved.
+- Supplying a marker number updates only the first matching requested marker and leaves unrelated duplicates untouched.
+- Marker numbers are validated as integers from 0 through 9.
+- Unsupported actions, invalid tokens, unknown markers, unavailable registries, rejected token writes, and failed verification return explicit diagnostics instead of silent success.
+- Direct token writes remain synchronous; ordinary GameAssist event handlers are not routed through the explicit task queue.
+
+### Changed – NPCManager 1.2.0
+
+- Advanced NPCManager from module version `1.1.1` to `1.2.0`.
+- Routed death-marker resolution, presence checks, add/remove operations, audits, and teardown through MarkerService.
+- Removed NPCManager's standalone TokenMod dependency declaration and dependency-skip path.
+- Kept death-history recording independent from marker-write success so Campaign, Chapter, Section, Session, and Arc records continue describing HP events.
+- Preserved NPCHPRoller initialization protection, known-positive-to-zero death detection, revival annotation, auto-hide behavior, report writing, hierarchical clearing, and Arc management.
+- Teardown now reports markers actually removed rather than a delayed external request count.
+
+### Changed – ConcentrationTracker 0.2.0
+
+- Advanced ConcentrationTracker from module version `0.1.0.6` to `0.2.0`.
+- Routed configured-marker resolution, status scans, roll-result mutation, `--off`, and teardown through MarkerService.
+- Removed ConcentrationTracker's standalone TokenMod dependency declaration and dependency-skip path.
+- Replaced TokenMod-specific repair wording with campaign marker-library and exact stored-tag guidance.
+- Preserved `!concentration`, `!cc`, `--damage`, `--mode`, `--last`, `--off`, `--status`, randomization configuration, and `!ga-conc-status`.
+
+### Changed – DebugTools 0.2.0
+
+- Advanced DebugTools from module version `0.1.0` to `0.2.0`.
+- Routed marker inspection, dry-run descriptions, and applied add/remove/toggle actions through MarkerService.
+- Preserved the GM-only, disabled-by-default, and explicit `--apply` safeguards.
+- Improved applied-marker records so `lastAction` stores the resolved marker id and actual operation.
+
+### Dependency and compatibility boundary
+
+- Standalone TokenMod is no longer required for NPCManager, ConcentrationTracker, or DebugTools marker operations.
+- Standalone TokenMod may remain during the staged transition when a campaign still uses its independent `!token-mod` commands.
+- Standalone StatusInfo may remain for its independent workflows, but v0.1.5.0 does not promise synchronization through its historical TokenMod observer path.
+- Integrated and attributed StatusInfo is reserved for v0.1.5.1.
+- Integrated and attributed TokenMod command compatibility is reserved for v0.1.5.2.
+- Existing scripts that independently modify the same marker, NPC HP/bar 1, or natural-1 workflow remain feature-level conflict risks.
+
+### State and migration impact
+
+- No GameAssist persistent-state schema migration is introduced.
+- Existing module configuration and runtime branches remain in place.
+- Existing NPCManager bucket, handout, Arc, and revival records are preserved.
+- Existing ConcentrationTracker `lastDamage` entries retain their established repair and compatibility behavior.
+- MarkerService keeps its registry cache and observer subscriptions in sandbox memory rather than persistent state.
+- Rolling back code does not automatically reverse marker changes or persistent records created while v0.1.5.0 was active.
+
+### MECHSUITS records
+
+- Added `[GAMEASSIST:CORE:MARKERSERVICE]` to the file-scoped canonical tree and declared runtime order.
+- Updated the CORE parent contract to include MarkerService as the single marker authority.
+- Updated APP and APP:UTILS contracts to remove marker ownership.
+- Updated CORE:OBJECT to expose `GameAssist.MarkerService`.
+- Updated MODULES, NPCManager, ConcentrationTracker, DebugTools, POLICY, and BOOTSTRAP metadata and footers under the Meaningful Change Rule.
+- Preserved the literal `GAMEASSIST` codename, existing section identifiers, public commands, and prior section notes.
+
+### Documentation
+
+- Updated the README overview, installation, architecture, module guides, developer API, troubleshooting, upgrade path, roadmap summary, and compact release history.
+- Added a dedicated MarkerService developer API reference with structured result and observation examples.
+- Rebuilt the smoke-test dependency section around no-TokenMod operation, custom markers, exact stored tags, and unrelated numbered-marker preservation.
+- Updated `script.json` to v0.1.5.0, removed the production TokenMod dependency, retained all 58 commands, and documented named and behavioral overlap risks.
+- Updated `ROADMAP.md` to show Issue #25 implementation in progress and retain the Roll20 sandbox pass as the completion gate.
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| JavaScript parse/compile | Passed |
+| Mocked Roll20 ready initialization | Passed with five default modules running and DebugTools disabled |
+| Startup errors | 0 |
+| Chat-generated `!token-mod` commands | 0 |
+| Focused MarkerService regression checks | Passed (19/19) |
+| Built-in marker resolution | Passed |
+| Custom display-name and direct stored-tag resolution | Passed |
+| Direct stored tag during invalid registry data | Passed |
+| Numbered and duplicate marker parsing | Passed |
+| Requested duplicate removal | Passed |
+| Unrelated numbered-marker preservation | Passed |
+| Idempotent add and toggle behavior | Passed |
+| Marker observation delivery | Passed |
+| MECHSUITS parent/child topology | Passed |
+| Single GameAssist status-marker write authority | Passed |
+| `script.json` parse, version, command count, and dependency metadata | Passed |
+
+### Roll20 acceptance requirement
+
+The v0.1.5.0 release gate requires a Roll20 Mod sandbox pass with standalone TokenMod absent. The pass must cover NPC death/revival markers, concentration add/status/remove, custom marker display names and exact tags, unrelated numbered-marker preservation, module disable/enable teardown, DebugTools dry-run/apply behavior, sandbox reload, and existing NPC history retention.
+
+Issue #25 remains open until that sandbox evidence is recorded.
+
