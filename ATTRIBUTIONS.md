@@ -2,7 +2,7 @@
 
 GameAssist is independently developed and maintained by **Mord Eagle**. This document acknowledges projects whose published work informed or contributed to GameAssist and preserves the notices required by their licenses.
 
-References to TokenMod, StatusInfo, Roll20, Wizards of the Coast, or their contributors do not imply sponsorship, endorsement, support, or affiliation.
+References to TokenMod, StatusInfo, Roll20, or their contributors do not imply sponsorship, endorsement, support, or affiliation.
 
 ## GameAssist MarkerService
 
@@ -23,7 +23,7 @@ MarkerService is independently maintained as part of GameAssist. It is not Token
 `GameAssist.ConditionService` is an independently maintained GameAssist module for condition definitions, descriptions, selected-token menus, permission controls, and supported `!condition` compatibility workflows. It uses `GameAssist.MarkerService` for every marker read, write, toggle, and observation.
 
 - GameAssist component: `ConditionService`
-- Component version: `1.0.0`
+- Component version: `1.1.0`
 - Compatibility and design foundation: StatusInfo
 - Original author: Robin Kuiper
 - Supplied reference release: StatusInfo `0.3.11`
@@ -35,7 +35,7 @@ MarkerService is independently maintained as part of GameAssist. It is not Token
 
 The published `0.3.12` package still declares internal script version `0.3.11`. Compared with the published `0.3.11` file, its executable change replaces the `character_sheet` attribute lookup with the character object's `charactersheetname` property. GameAssist does not adapt that sheet-specific synchronization path.
 
-StatusInfo-derived compatibility concepts include the `!condition` command family, established configuration field names, the legacy `state.STATUSINFO` shape, the default condition catalog, and its marker associations. GameAssist independently implements the module lifecycle, chat presentation, permission feedback, validation, non-destructive migration, protected configuration, structured API, original concise descriptions, and MarkerService integration.
+StatusInfo-derived compatibility concepts include the `!condition` command family, established configuration field names, the legacy `state.STATUSINFO` shape, its legacy condition catalog, and marker associations. GameAssist independently implements the module lifecycle, chat presentation, `!con-<condition>` references, permission feedback, validation, non-destructive migration, protected configuration, structured API, 2014/2024 SRD wording profiles, campaign-custom descriptions, and MarkerService integration.
 
 ConditionService is not StatusInfo and is not an official or endorsed StatusInfo release. Robin Kuiper is not responsible for GameAssist support, modifications, or compatibility decisions.
 
@@ -91,14 +91,17 @@ SOFTWARE.
 
 Repository license: <https://github.com/Roll20/roll20-api-scripts/blob/master/LICENSE>
 
-## D&D 5E Rules Material
+## D&D System Reference Documents
 
-GameAssist does not reproduce non-SRD sourcebook text. D&D 5E (2014) rules descriptions included with GameAssist must either be original summaries or come from material released through the **System Reference Document 5.1** under the **Creative Commons Attribution 4.0 International License**.
+ConditionService includes adapted condition wording from SRD 5.1 for its 2014 profile and SRD 5.2.1 for its 2024 profile. GameAssist does not reproduce condition text from non-SRD sourcebooks.
 
-- Official SRD information and downloads: <https://www.dndbeyond.com/srd/>
-- Creative Commons Attribution 4.0: <https://creativecommons.org/licenses/by/4.0/>
+### SRD 5.1 Attribution
 
-Use of SRD material does not imply endorsement by Wizards of the Coast.
+This work includes material taken from the System Reference Document 5.1 ("SRD 5.1") by Wizards of the Coast LLC and available at <https://dnd.wizards.com/resources/systems-reference-document>. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at <https://creativecommons.org/licenses/by/4.0/legalcode>.
+
+### SRD 5.2.1 Attribution
+
+This work includes material from the System Reference Document 5.2.1 ("SRD 5.2.1") by Wizards of the Coast LLC, available at <https://www.dndbeyond.com/srd>. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at <https://creativecommons.org/licenses/by/4.0/legalcode>.
 
 ## GameAssist License
 

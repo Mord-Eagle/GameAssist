@@ -19,7 +19,7 @@ GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a
 | --- | --- |
 | Core Lift | Guarded modules, conservative state repair, explicit queue API, session metrics, dependency diagnostics, GM health reporting, and one toggleable marker service with dependent-module safeguards. |
 | Quick Install | 📥 Install the complete script → 📜 add the CritFumble tables if used → 🔄 reload → 🩺 run the health checks → 🎲 test the enabled features with disposable tokens. |
-| Flagship Player Commands | `!condition <name>`, `!concentration`, `!cc`, `!critfumble-<type>` when the GM permits the relevant player action. |
+| Flagship Player Commands | `!condition <name>`, `!con-<condition>`, `!concentration`, `!cc`, `!critfumble-<type>` when the GM permits the relevant player action. |
 | Flagship GM Commands | `!condition`, `!condition help`, `!critfumble`, `!critfumble help`, `!critfumble menu`, `!critfail`, `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report --help`, `!npc-death-buckets`, `!NPC-WR`, `!npc-death-audit`, `!npc-death-arc`, `!ga-conc-status`, `!ga-config ui`. |
 | Admin Controls | `!ga-config list|get|set|modules|cleanup|ui`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-metrics`, and `!ga-debug`. |
 | Queue Model | Normal commands/events run directly. Only `GameAssist.enqueue(...)` work and module transitions use the serialized queue. |
@@ -62,7 +62,7 @@ GameAssist’s kernel and bundled modules expose:
 * **Compatibility Audit** – optional, debug-only overlap hints for popular scripts such as TokenMod, ScriptCards, and APILogic.
 * **Dependency Diagnostics** – module dependencies are reported as confirmed, missing, or unverifiable instead of being presented as guaranteed discoveries.
 * **MarkerService** – `GameAssist.MarkerService` resolves built-in and custom markers, preserves unrelated and numbered marker state, applies explicit add/remove/toggle operations, and exposes one observation contract. It can be disabled when another Mod needs exclusive control of marker behavior; GameAssist then turns off MarkerService-dependent modules while leaving unrelated modules available.
-* **ConditionService** – supplies plain-language condition reminders, a selected-token menu, add/remove/toggle commands, configurable definitions, guarded player permissions, and marker-change descriptions. Every condition marker operation and observation goes through MarkerService.
+* **ConditionService** – supplies 2014 SRD condition wording by default, optional 2024 SRD wording, campaign-editable descriptions, `!con-<condition>` quick references, a selected-token menu, add/remove/toggle commands, guarded player permissions, and marker-change descriptions. Every condition marker operation and observation goes through MarkerService.
 * **MECHSUITS Structure** – the executable script uses the literal codename `GAMEASSIST`, framed sections, file-scoped canonical tree metadata, and per-section change notes.
 
 **Design goal:** useful, inspectable campaign automation that reports failures clearly and can be upgraded incrementally.
@@ -269,15 +269,16 @@ Config keys: `debug`, `useEmojis`, `rollDelayMs`.
 
 ### 6.2 ConditionService
 
-> **Module version:** ConditionService `1.0.0` is an independently branded GameAssist module. It acknowledges StatusInfo by Robin Kuiper as its compatibility and design foundation, but it is not an official StatusInfo release.
+> **Module version:** ConditionService `1.1.0` is an independently branded GameAssist module. It acknowledges StatusInfo by Robin Kuiper as its compatibility and design foundation, but it is not an official StatusInfo release.
 
-ConditionService gives the table a readable condition reference and a marker-backed selected-token menu. Open `!condition` after selecting tokens to see their tracked conditions and toggle another condition with one click. `!condition help` is the quick-start guide.
+ConditionService gives the table a readable condition reference and a marker-backed selected-token menu. It defaults to the fifteen SRD 5.1 conditions used by the 2014 rules, including Exhaustion rather than Inspiration. The GM can switch the official descriptions to SRD 5.2.1 wording for the 2024 rules or edit any description for campaign-specific wording. Open `!condition` after selecting tokens to see their tracked conditions and toggle another condition with one click. `!condition help` is the quick-start guide.
 
 Common commands:
 
 * `!condition` → Open the selected-token condition menu.
 * `!condition help` → Open the quick-start guide.
 * `!condition <name>` → Show one configured condition description.
+* `!con-<condition>` → Show the same description with a short reference command, such as `!con-prone` or `!con-exhaustion`.
 * `!condition add <condition...>` → Add one or more conditions to selected tokens.
 * `!condition remove <condition...>` → Remove conditions from selected tokens.
 * `!condition toggle <condition...>` → Switch conditions on or off for selected tokens.
@@ -286,15 +287,19 @@ Common commands:
 * `!condition config export` / `!condition config import <JSON>` → Export or apply a validated ConditionService configuration.
 * `!condition reset` → Open a confirmation prompt before restoring defaults.
 
-Player description access and player marker changes are separate settings. Both are off by default. The permanent `!condition` command remains available even when the GM configures an additional compatibility alias.
+Player description access and player marker changes are separate settings. Both are off by default. The permanent `!condition` and `!con-<condition>` commands remain available even when the GM configures an additional compatibility alias.
+
+The **Condition wording** setting offers **2014 SRD** and **2024 SRD** profiles. Switching profiles updates only the fifteen official condition names and descriptions: configured marker choices and additional campaign conditions are retained. Editing any description marks the wording source as **Campaign Custom**. Untouched ConditionService 1.0.0 defaults are upgraded to the complete 2014 list; previously edited or migrated definitions are preserved as custom wording.
 
 Condition definitions store a display name, plain-language description, and a marker. A marker may be a built-in id, a custom display name, an exact stored `Name::id` tag, or a numbered value such as `red@3`. ConditionService uses MarkerService for every read, add, remove, toggle, and marker-change observation, so unrelated markers and number overlays remain intact.
 
 On first startup, valid legacy `state.STATUSINFO` settings and condition definitions are copied into `state.GameAssist.ConditionService.config`. GameAssist keeps the original `state.STATUSINFO` branch for rollback and records what was imported. A separately installed StatusInfo script should then be removed or disabled because both tools respond to `!condition` and condition-marker changes.
 
-Configuration imports are size-bounded, reject unsafe keys, validate every definition, and apply only after the entire payload passes. The protected `conditions` and migration-record maps cannot be replaced through generic `!ga-config set`; use the ConditionService settings menu and validated importer.
+Configuration imports are size-bounded, reject unsafe keys, validate every definition, and apply only after the entire payload passes. The protected `conditions`, `rulesProfile`, and migration-record maps cannot be replaced through generic `!ga-config set`; use the ConditionService settings menu and validated importer.
 
-Config keys: `command`, `userAllowed`, `userToggle`, `sendOnlyToGM`, `showDescOnStatusChange`, `showIconInDescription`, and `conditions`.
+**StatusInfo compatibility boundary:** ConditionService preserves the principal condition-reference, menu, permission, definition, import/export, and marker-change workflows, but it is not a line-for-line replacement. StatusInfo's Shaped Character Sheet attribute synchronization is not included because GameAssist currently targets Roll20's D&D 5E sheets and treats token markers as the condition source of truth. Legacy StatusInfo global helper names and observer callbacks are replaced by `GameAssist.ConditionService` and `GameAssist.MarkerService.observe(...)`. ConditionService chat panels use readable condition-name buttons and the configured marker identifier rather than StatusInfo's marker-sprite images. An optional custom command alias takes effect after the Mod sandbox reloads; permanent `!condition` and `!con-<condition>` routes remain active.
+
+Config keys: `command`, `rulesProfile`, `userAllowed`, `userToggle`, `sendOnlyToGM`, `showDescOnStatusChange`, `showIconInDescription`, and `conditions`.
 
 ### 6.3 Concentration Tracker
 
@@ -508,6 +513,7 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!confirm-crit-martial` / `!confirm-crit-magic` | — | Roll the matching confirmation table. |
 |  | `!condition` / `!condition help` | — | Open the selected-token condition menu or quick-start guide. |
 |  | `!condition <name>` | — | Show one configured condition description when permitted. |
+|  | `!con-<condition>` | — | Show one configured condition description through the short reference prefix. |
 |  | `!condition add|remove|toggle <condition...>` | selected tokens | Change one or more condition markers when permitted. |
 |  | `!concentration` / `!cc` | `--damage N`, `--mode normal|adv|dis`, `--last`, `--off`, `--status`, `--config randomize on|off`, `--help` | Open or perform a concentration workflow. |
 
@@ -521,7 +527,7 @@ prototype
 constructor
 ```
 
-Setting `enabled=true` or `enabled=false` routes through component lifecycle controls rather than directly mutating the stored value. ConditionService's `conditions` and migration record are protected from generic replacement; use `!condition config` and its validated importer.
+Setting `enabled=true` or `enabled=false` routes through component lifecycle controls rather than directly mutating the stored value. ConditionService's `conditions`, `rulesProfile`, and migration record are protected from generic replacement; use `!condition config` and its validated importer.
 
 ---
 
@@ -538,6 +544,7 @@ Setting `enabled=true` or `enabled=false` routes through component lifecycle con
 |  | `rollDelayMs` | number | `200` | Delay between applicable table-roll actions. |
 | **ConditionService** | `enabled` | bool | `true` | Enable condition menus, descriptions, and marker controls. |
 |  | `command` | string | `"condition"` | Optional additional command alias; permanent `!condition` compatibility remains. |
+|  | `rulesProfile` | enum | `"2014"` | Select `2014`, `2024`, or campaign-`custom` condition wording through the ConditionService settings panel. |
 |  | `userAllowed` | bool | `false` | Allow players to request condition descriptions. |
 |  | `userToggle` | bool | `false` | Allow players to change condition markers on selected tokens. |
 |  | `sendOnlyToGM` | bool | `false` | Whisper condition descriptions only to the GM. |
@@ -730,8 +737,9 @@ const result = conditions.apply([token], ['prone', 'poisoned'], 'add');
 
 | Method | Result |
 | --- | --- |
-| `version` | ConditionService component version (`1.0.0`). |
-| `configSchemaVersion` | Validated condition export/import schema version. |
+| `version` | ConditionService component version (`1.1.0`). |
+| `configSchemaVersion` | Validated condition export/import schema version (`2`). |
+| `rulesProfile()` | Returns the active `2014`, `2024`, or `custom` wording source. |
 | `getCondition(name)` | Returns a copy of one definition or `null`. |
 | `getConditions()` | Returns a deep copy of every configured definition. |
 | `apply(tokens, names, action)` | Applies `add`, `remove`, or `toggle` through MarkerService and returns changed/unchanged/failed counts. |
@@ -944,7 +952,7 @@ The details panel should report MarkerService as enabled. ConditionService shoul
 
 If another Mod must own marker behavior, use `!ga-disable MarkerService`. GameAssist disables ConditionService, NPCManager, ConcentrationTracker, and DebugTools first, then turns off MarkerService. The chat notice identifies the affected features; unrelated GameAssist modules remain available. Re-enable MarkerService before re-enabling any dependent module.
 
-### 14.4 ConditionService Does Not Respond or Shows the Wrong Marker
+### 14.4 ConditionService Does Not Respond, Shows the Wrong Wording, or Uses the Wrong Marker
 
 Run:
 
@@ -952,9 +960,10 @@ Run:
 !ga-config modules
 !condition help
 !condition config
+!con-prone
 ```
 
-Confirm MarkerService and ConditionService are running, and remove standalone StatusInfo if both tools are responding. Open **Manage Conditions** to check the condition's marker. Built-in ids, custom display names, exact `Name::id` tags, and numbered markers such as `red@3` are supported. Use the validated ConditionService importer for definition maps; generic `!ga-config set ConditionService conditions=...` is intentionally refused.
+Confirm MarkerService and ConditionService are running, and remove standalone StatusInfo if both tools are responding. The Settings panel identifies the active **2014 SRD**, **2024 SRD**, or **Campaign Custom** wording source. Use the profile buttons to restore an official set, or open **Manage Conditions** to edit one description or check its marker. Built-in ids, custom display names, exact `Name::id` tags, and numbered markers such as `red@3` are supported. Use the validated ConditionService importer for definition maps; generic `!ga-config set ConditionService conditions=...` is intentionally refused.
 
 When a marker action fails, first verify the configured marker and target token rather than changing TokenMod permissions:
 
@@ -1237,7 +1246,7 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 | --- | --- | --- |
 | MarkerService | **Implemented; sandbox acceptance pending** | One toggleable service owns GameAssist marker resolution, mutation, preservation, and observation. Disabling it turns off dependent modules without disabling unrelated features. |
 | Bundled marker consumers | **Migrated** | NPCManager 1.2.0, ConcentrationTracker 0.2.0, and DebugTools 0.2.0 no longer require standalone TokenMod. |
-| ConditionService 1.0.0 | **Implemented; sandbox acceptance pending** | Independently branded and attributed GameAssist condition service with `!condition` compatibility, validated legacy migration/import, and MarkerService synchronization. |
+| ConditionService 1.1.0 | **Implemented; sandbox acceptance pending** | Independently branded and attributed GameAssist condition service with `!condition` and `!con-<condition>` references, selectable 2014/2024 SRD wording, campaign edits, validated legacy migration/import, and MarkerService synchronization. |
 | Integrated token service | **Required before release** | Independently branded and attributed GameAssist service based on the TokenMod foundation; compatibility is verified command family by command family. |
 | Integrated architecture stabilization | **Required before release** | Upgrade, coexistence, migration, command, marker, and Roll20 sandbox checks tracked through Issues #28 and #29. |
 | Configuration export | **Implemented, partial** | Versioned configuration-only snapshot; no import/restore. |
@@ -1312,7 +1321,7 @@ This is a separate project and is not implemented in v0.1.5.0.
 * Migrated NPCManager, ConcentrationTracker, and DebugTools away from chat-generated TokenMod requests.
 * Removed standalone TokenMod dependency gating from bundled marker consumers.
 * Added service dependency safeguards: disabling MarkerService first disables its dependent modules and leaves unrelated GameAssist modules available.
-* Added `[GAMEASSIST:MODULES:CONDITIONSERVICE]` and `GameAssist.ConditionService` 1.0.0 with guided `!condition` menus, descriptions, add/remove/toggle actions, configurable definitions, and guarded player permissions.
+* Added `[GAMEASSIST:MODULES:CONDITIONSERVICE]` and advanced `GameAssist.ConditionService` to 1.1.0 with guided `!condition` menus, `!con-<condition>` quick references, 2014/2024 SRD wording profiles, campaign-custom descriptions, add/remove/toggle actions, configurable definitions, and guarded player permissions.
 * Added validated, non-destructive migration from `state.STATUSINFO`, bounded ConditionService import/export, protected configuration maps, standalone StatusInfo warnings, and numbered/custom marker support through MarkerService.
 * Advanced NPCManager to `1.2.0`, ConcentrationTracker to `0.2.0`, and DebugTools to `0.2.0`.
 * Preserved existing module commands, configuration keys, death history, concentration runtime data, and unrelated token markers.
@@ -1457,7 +1466,7 @@ For the current verification checklist, see `Smoketest.md`.
 
 ## 20 · Licensing and Attribution <a id="20-licensing-and-attribution"></a>
 
-GameAssist is independently developed and maintained by Mord Eagle under the MIT License in [`LICENSE`](LICENSE).
+Original GameAssist code is independently developed and maintained by Mord Eagle under the MIT License in [`LICENSE`](LICENSE). Adapted upstream work and SRD-derived condition wording retain the separate notices in [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) and the executable source.
 
 ### MarkerService
 
@@ -1475,9 +1484,9 @@ Where their implementations contain adapted upstream code, GameAssist will retai
 - a record of adapted and independently implemented portions;
 - a statement that the GameAssist service is independently maintained and is not an official upstream release.
 
-The general token service will acknowledge **TokenMod by The Aaron**. **ConditionService** acknowledges **StatusInfo by Robin Kuiper** as its compatibility and design foundation. It preserves selected `!condition` workflows and legacy configuration concepts while using original GameAssist lifecycle, validation, menus, migration, summaries, and MarkerService integration. It is not an official StatusInfo release.
+The general token service will acknowledge **TokenMod by The Aaron**. **ConditionService** acknowledges **StatusInfo by Robin Kuiper** as its compatibility and design foundation. It preserves selected `!condition` workflows and legacy configuration concepts while using original GameAssist lifecycle, validation, menus, migration, wording profiles, and MarkerService integration. It is not an official StatusInfo release.
 
-ConditionService ships original concise GameAssist summaries rather than reproducing upstream or non-SRD sourcebook text. Any future SRD-derived text will follow D&D SRD 5.1 Creative Commons Attribution 4.0 requirements.
+ConditionService includes condition wording derived from SRD 5.1 for the 2014 profile and SRD 5.2.1 for the 2024 profile under the Creative Commons Attribution 4.0 International License. It does not reproduce non-SRD sourcebook text.
 
 See [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) for public acknowledgments, upstream links, license notices, and SRD guidance.
 

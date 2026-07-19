@@ -5,7 +5,7 @@ Version: 0.1.5.0
 Last Updated: 2026-07-18 (America/New_York)
 Development line: integrated marker architecture v0.1.5.0.
 Author: Mord Eagle
-License: MIT (see repository LICENSE)
+License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
 
 DESCRIPTION
@@ -15,7 +15,7 @@ service. Normal event handlers execute directly unless a module deliberately
 calls GameAssist.enqueue(). This package ships with seven configurable modules:
 - ConfigUI - GM-only chat controls for toggling modules and common options.
 - CritFumble - Detects natural-1 attacks and offers fumble/confirm menus.
-- ConditionService 1.0.0 - Describes and manages token conditions through MarkerService.
+- ConditionService 1.1.0 - Provides 2014/2024/custom condition wording and marker controls.
 - ConcentrationTracker - Runs concentration checks and manages its configured marker.
 - NPCManager 1.2.0 - Tracks NPC death markers, history, reports, audits, and Arc rosters.
 - NPCHPRoller - Rolls npc_hpformula and writes the result to token bar 1.
@@ -41,7 +41,7 @@ MODULE COMMANDS
 - CritFumble: !critfail, !critfumble help, !critfumble menu,
   !critfumble-<melee|ranged|thrown|spell|natural>,
   !confirm-crit-martial, !confirm-crit-magic
-- ConditionService: !condition, !condition help, !condition config,
+- ConditionService: !condition, !con-<condition>, !condition help, !condition config,
   !condition add|remove|toggle <condition...>
 - ConcentrationTracker: !concentration, !cc, !ga-conc-status
 - NPCManager: !npc-death-help, !npc-death-report, !npc-death-buckets,
@@ -3119,22 +3119,23 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: GameAssist condition descriptions and controls
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONDITIONSERVICE", title: "ConditionService",
-    //   guarantees: ["Independently branded condition descriptions and !condition compatibility workflows","All condition marker reads, writes, and observations use CORE:MARKERSERVICE","Legacy state.STATUSINFO may be copied through a validated migration and is never silently deleted"],
+    //   guarantees: ["2014 SRD condition wording is the default, with selectable 2024 SRD and campaign-custom wording","!condition and !con-[condition] provide compatible condition-reference workflows","All condition marker reads, writes, and observations use CORE:MARKERSERVICE","Legacy state.STATUSINFO may be copied through a validated migration and is never silently deleted"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.ConditionService"],
     //   last_updated_version: "v0.1.5.0",
-    //   independent_versions: { module_version: "1.0.0", condition_config_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.1.0", condition_config_schema_version: 2 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // ConditionService is GameAssist's condition-information module. It preserves the
-    // familiar !condition menu, descriptions, add/remove/toggle actions, configurable
-    // definitions, and safe import/export while using MarkerService as the only marker
-    // authority. It is independently maintained and is not an upstream StatusInfo release.
+    // familiar !condition menu, quick !con-[condition] references, selectable SRD wording,
+    // add/remove/toggle actions, configurable definitions, and safe import/export while
+    // using MarkerService as the only marker authority. It is independently maintained
+    // and is not an upstream StatusInfo release.
     // -------------------------------------------------------------------------
     GameAssist.register('ConditionService', function() {
         const MODULE_NAME = 'ConditionService';
-        const MODULE_VERSION = '1.0.0';
-        const CONFIG_SCHEMA_VERSION = 1;
+        const MODULE_VERSION = '1.1.0';
+        const CONFIG_SCHEMA_VERSION = 2;
         const PRIMARY_COMMAND = 'condition';
         const modState = GameAssist.getState(MODULE_NAME);
         const originalConfigKeys = new Set(Object.keys(modState.config || {}));
@@ -3146,8 +3147,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         );
         const recentDescriptions = new Map();
 
-        // These concise summaries are original GameAssist wording for 2014-era rules.
-        const DEFAULT_CONDITIONS = Object.freeze({
+        // Retained only to recognize untouched ConditionService 1.0.0 defaults during upgrade.
+        const LEGACY_GAMEASSIST_DEFAULTS = Object.freeze({
             blinded: Object.freeze({ name: 'Blinded', marker: 'bleeding-eye', description: 'Cannot see. Sight-dependent checks fail. Attacks against the creature have advantage, and its attacks have disadvantage.' }),
             charmed: Object.freeze({ name: 'Charmed', marker: 'broken-heart', description: 'Cannot attack or deliberately harm the charmer. The charmer has advantage on social checks involving the creature.' }),
             deafened: Object.freeze({ name: 'Deafened', marker: 'edge-crack', description: 'Cannot hear and fails checks that depend on hearing.' }),
@@ -3165,10 +3166,79 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             unconscious: Object.freeze({ name: 'Unconscious', marker: 'sleepy', description: 'Is incapacitated, unaware, and prone. It drops held items, fails Strength and Dexterity saves, and nearby hits can become critical hits.' })
         });
 
-        function cloneDefaultConditions() {
+        const CONDITION_MARKERS = Object.freeze({
+            blinded: 'bleeding-eye',
+            charmed: 'broken-heart',
+            deafened: 'edge-crack',
+            exhaustion: 'half-haze',
+            frightened: 'screaming',
+            grappled: 'grab',
+            incapacitated: 'interdiction',
+            invisible: 'ninja-mask',
+            paralyzed: 'pummeled',
+            petrified: 'frozen-orb',
+            poisoned: 'chemical-bolt',
+            prone: 'back-pain',
+            restrained: 'fishing-net',
+            stunned: 'fist',
+            unconscious: 'sleepy'
+        });
+
+        const RULES_PROFILES = Object.freeze({
+            '2014': Object.freeze({
+                label: '2014 SRD',
+                conditions: Object.freeze({
+                    blinded: Object.freeze({ name: 'Blinded', description: "A blinded creature can't see and automatically fails any ability check that requires sight.\nAttack rolls against the creature have advantage, and the creature's attack rolls have disadvantage." }),
+                    charmed: Object.freeze({ name: 'Charmed', description: "A charmed creature can't attack the charmer or target the charmer with harmful abilities or magical effects.\nThe charmer has advantage on any ability check to interact socially with the creature." }),
+                    deafened: Object.freeze({ name: 'Deafened', description: "A deafened creature can't hear and automatically fails any ability check that requires hearing." }),
+                    exhaustion: Object.freeze({ name: 'Exhaustion', description: 'Exhaustion has six cumulative levels. Level 1 gives disadvantage on ability checks; level 2 halves speed; level 3 gives disadvantage on attack rolls and saving throws; level 4 halves hit point maximum; level 5 reduces speed to 0; level 6 causes death. A long rest with food and drink removes one level.' }),
+                    frightened: Object.freeze({ name: 'Frightened', description: "A frightened creature has disadvantage on ability checks and attack rolls while the source of its fear is within line of sight.\nThe creature can't willingly move closer to the source of its fear." }),
+                    grappled: Object.freeze({ name: 'Grappled', description: "A grappled creature's speed becomes 0 and can't benefit from bonuses to speed.\nThe condition ends if the grappler is incapacitated or an effect moves the grappled creature outside the grappler's reach." }),
+                    incapacitated: Object.freeze({ name: 'Incapacitated', description: "An incapacitated creature can't take actions or reactions." }),
+                    invisible: Object.freeze({ name: 'Invisible', description: "An invisible creature is impossible to see without magic or a special sense. For hiding, the creature is heavily obscured, though its location can be detected by noise or tracks.\nAttack rolls against the creature have disadvantage, and the creature's attack rolls have advantage." }),
+                    paralyzed: Object.freeze({ name: 'Paralyzed', description: 'A paralyzed creature is incapacitated and cannot move or speak. It automatically fails Strength and Dexterity saving throws.\nAttack rolls against it have advantage, and a hit from an attacker within 5 feet is a critical hit.' }),
+                    petrified: Object.freeze({ name: 'Petrified', description: 'A petrified creature and its nonmagical gear are transformed into solid inanimate material. Its weight increases tenfold and it stops aging.\nThe creature is incapacitated, cannot move or speak, and is unaware. Attacks against it have advantage; it automatically fails Strength and Dexterity saves; it has resistance to all damage and immunity to poison and disease, although existing poison or disease is suspended.' }),
+                    poisoned: Object.freeze({ name: 'Poisoned', description: 'A poisoned creature has disadvantage on attack rolls and ability checks.' }),
+                    prone: Object.freeze({ name: 'Prone', description: 'A prone creature can crawl or use half its speed to stand.\nThe creature has disadvantage on attack rolls. Attacks against it have advantage from within 5 feet and disadvantage from farther away.' }),
+                    restrained: Object.freeze({ name: 'Restrained', description: "A restrained creature's speed becomes 0 and can't benefit from bonuses to speed.\nAttack rolls against it have advantage; its attack rolls have disadvantage; and it has disadvantage on Dexterity saving throws." }),
+                    stunned: Object.freeze({ name: 'Stunned', description: 'A stunned creature is incapacitated, cannot move, and can speak only falteringly. It automatically fails Strength and Dexterity saving throws.\nAttack rolls against the creature have advantage.' }),
+                    unconscious: Object.freeze({ name: 'Unconscious', description: 'An unconscious creature is incapacitated, cannot move or speak, and is unaware. It drops held items and falls prone.\nIt automatically fails Strength and Dexterity saves. Attacks against it have advantage, and a hit from an attacker within 5 feet is a critical hit.' })
+                })
+            }),
+            '2024': Object.freeze({
+                label: '2024 SRD',
+                conditions: Object.freeze({
+                    blinded: Object.freeze({ name: 'Blinded', description: "A blinded creature can't see and automatically fails any ability check that requires sight.\nAttack rolls against the creature have advantage, and the creature's attack rolls have disadvantage." }),
+                    charmed: Object.freeze({ name: 'Charmed', description: "A charmed creature can't attack the charmer or target the charmer with damaging abilities or magical effects.\nThe charmer has advantage on any ability check to interact socially with the creature." }),
+                    deafened: Object.freeze({ name: 'Deafened', description: "A deafened creature can't hear and automatically fails any ability check that requires hearing." }),
+                    exhaustion: Object.freeze({ name: 'Exhaustion', description: 'Exhaustion is cumulative from level 1 through level 6. D20 Tests are reduced by twice the exhaustion level, and speed is reduced by 5 feet for each level. A creature dies at level 6. Finishing a long rest removes one level.' }),
+                    frightened: Object.freeze({ name: 'Frightened', description: "A frightened creature has disadvantage on ability checks and attack rolls while the source of its fear is within line of sight.\nThe creature can't willingly move closer to the source of its fear." }),
+                    grappled: Object.freeze({ name: 'Grappled', description: "A grappled creature's speed is 0 and can't increase. It has disadvantage on attacks against targets other than the grappler.\nThe grappler can drag or carry it, but each foot of movement costs 1 extra foot unless the grappled creature is Tiny or at least two sizes smaller." }),
+                    incapacitated: Object.freeze({ name: 'Incapacitated', description: "An incapacitated creature can't take an action, Bonus Action, or Reaction; can't maintain Concentration; and can't speak. If incapacitated when rolling Initiative, it has disadvantage on that roll." }),
+                    invisible: Object.freeze({ name: 'Invisible', description: "An invisible creature has advantage on Initiative rolls. It isn't affected by effects that require their target to be seen unless the effect's creator can somehow see it.\nAttack rolls against the creature have disadvantage, and the creature's attack rolls have advantage. A creature that can see it ignores this attack-roll benefit." }),
+                    paralyzed: Object.freeze({ name: 'Paralyzed', description: 'A paralyzed creature is incapacitated and has speed 0. It automatically fails Strength and Dexterity saving throws.\nAttack rolls against it have advantage, and a hit from an attacker within 5 feet is a critical hit.' }),
+                    petrified: Object.freeze({ name: 'Petrified', description: 'A petrified creature and its nonmagical gear are transformed into solid inanimate material. Its weight increases tenfold and it stops aging.\nThe creature is incapacitated, has speed 0, automatically fails Strength and Dexterity saves, and has resistance to all damage and immunity to the Poisoned condition. Attacks against it have advantage.' }),
+                    poisoned: Object.freeze({ name: 'Poisoned', description: 'A poisoned creature has disadvantage on attack rolls and ability checks.' }),
+                    prone: Object.freeze({ name: 'Prone', description: 'A prone creature can crawl or spend movement equal to half its speed, rounded down, to stand. It cannot stand while its speed is 0.\nIts attacks have disadvantage. Attacks against it have advantage from within 5 feet and disadvantage from farther away.' }),
+                    restrained: Object.freeze({ name: 'Restrained', description: "A restrained creature's speed is 0 and can't increase.\nAttack rolls against it have advantage; its attack rolls have disadvantage; and it has disadvantage on Dexterity saving throws." }),
+                    stunned: Object.freeze({ name: 'Stunned', description: 'A stunned creature is incapacitated and automatically fails Strength and Dexterity saving throws.\nAttack rolls against the creature have advantage.' }),
+                    unconscious: Object.freeze({ name: 'Unconscious', description: 'An unconscious creature is incapacitated, prone, and unaware of its surroundings. It drops held items and has speed 0. When the condition ends, it remains prone.\nIt automatically fails Strength and Dexterity saves. Attacks against it have advantage, and a hit from an attacker within 5 feet is a critical hit.' })
+                })
+            })
+        });
+
+        function cloneProfileConditions(profile = '2014') {
+            const source = RULES_PROFILES[profile] || RULES_PROFILES['2014'];
             return Object.fromEntries(
-                Object.entries(DEFAULT_CONDITIONS).map(([key, value]) => [key, { ...value }])
+                Object.entries(source.conditions).map(([key, value]) => [
+                    key,
+                    { ...value, marker: CONDITION_MARKERS[key] }
+                ])
             );
+        }
+
+        function cloneDefaultConditions() {
+            return cloneProfileConditions('2014');
         }
 
         function isPlainObject(value) {
@@ -3258,11 +3328,65 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             };
         }
 
+        function isLegacyGameAssistDefaultMap(conditions) {
+            const expectedKeys = Object.keys(LEGACY_GAMEASSIST_DEFAULTS);
+            const actualKeys = Object.keys(conditions || {});
+            return actualKeys.length === expectedKeys.length && expectedKeys.every(key => {
+                const actual = conditions[key];
+                const expected = LEGACY_GAMEASSIST_DEFAULTS[key];
+                return actual &&
+                    actual.name === expected.name &&
+                    actual.marker === expected.marker &&
+                    actual.description === expected.description;
+            });
+        }
+
+        function rulesProfileLabel(profile = modState.config.rulesProfile) {
+            if (RULES_PROFILES[profile]) return RULES_PROFILES[profile].label;
+            return 'Campaign Custom';
+        }
+
+        function profileCapacityError(profile, conditions) {
+            const source = RULES_PROFILES[profile];
+            if (!source) return 'Unknown rules wording profile.';
+            const missing = Object.keys(source.conditions).filter(key => !conditions[key]).length;
+            const projected = Object.keys(conditions).length + missing;
+            return projected > POLICY.conditions.maxDefinitions
+                ? `The ${rulesProfileLabel(profile)} profile needs ${missing} missing official condition slot(s), which would exceed the ${POLICY.conditions.maxDefinitions}-condition limit.`
+                : '';
+        }
+
+        /**
+         * applyRulesProfile - Replaces only the official SRD names and descriptions.
+         * Existing marker choices and campaign-added condition definitions are retained.
+         */
+        function applyRulesProfile(profile) {
+            const source = RULES_PROFILES[profile];
+            if (!source) return { ok: false, message: 'Unknown rules wording profile.' };
+            const conditions = modState.config.conditions;
+            const capacityError = profileCapacityError(profile, conditions);
+            if (capacityError) return { ok: false, message: capacityError };
+            Object.entries(source.conditions).forEach(([key, definition]) => {
+                const existing = conditions[key];
+                conditions[key] = {
+                    name: definition.name,
+                    marker: existing?.marker || CONDITION_MARKERS[key],
+                    description: definition.description
+                };
+            });
+            modState.config.rulesProfile = profile;
+            return { ok: true };
+        }
+
         function repairConfig() {
             const persisted = isPlainObject(modState.config) ? modState.config : {};
+            const persistedProfile = ['2014', '2024', 'custom'].includes(persisted.rulesProfile)
+                ? persisted.rulesProfile
+                : '';
             Object.assign(modState.config, {
                 enabled: true,
                 command: PRIMARY_COMMAND,
+                rulesProfile: '2014',
                 userAllowed: false,
                 userToggle: false,
                 sendOnlyToGM: false,
@@ -3274,11 +3398,27 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const normalized = normalizeConditionMap(modState.config.conditions || {});
             if (normalized.ok) {
                 modState.config.conditions = normalized.conditions;
+                if (persistedProfile === '2014' || persistedProfile === '2024') {
+                    const result = applyRulesProfile(persistedProfile);
+                    if (!result.ok) {
+                        modState.config.rulesProfile = 'custom';
+                        GameAssist.log(MODULE_NAME, `${result.message} Existing definitions were retained as Campaign Custom.`, 'WARN');
+                    }
+                } else if (persistedProfile === 'custom') {
+                    modState.config.rulesProfile = 'custom';
+                } else if (isLegacyGameAssistDefaultMap(normalized.conditions)) {
+                    modState.config.conditions = cloneDefaultConditions();
+                    modState.config.rulesProfile = '2014';
+                    GameAssist.log(MODULE_NAME, 'Upgraded untouched ConditionService 1.0.0 definitions to the complete 2014 SRD profile.', 'INFO');
+                } else {
+                    modState.config.rulesProfile = 'custom';
+                }
                 if (normalized.errors.length) {
                     GameAssist.log(MODULE_NAME, `Ignored ${normalized.errors.length} malformed saved condition definition(s).`, 'WARN');
                 }
             } else {
                 modState.config.conditions = cloneDefaultConditions();
+                modState.config.rulesProfile = '2014';
                 if (persisted.conditions !== undefined) {
                     GameAssist.log(MODULE_NAME, 'Saved condition definitions were malformed; restored GameAssist defaults.', 'WARN');
                 }
@@ -3330,6 +3470,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     };
                     importedConditions = Object.keys(normalized.conditions).length;
                 }
+                if (importedConditions > 0) modState.config.rulesProfile = 'custom';
             }
 
             modState.config.legacyStatusInfoMigration = {
@@ -3475,11 +3616,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 `<div style="margin-top:7px;">${GameAssist.createButton('Open Condition Menu', '!condition')}</div>`,
                 '<div style="margin-top:7px;"><strong>Useful commands</strong><br>',
                 '<code>!condition prone</code> - show one description<br>',
+                '<code>!con-prone</code> - quick shortcut for the same description<br>',
                 '<code>!condition add prone</code> - add to selected tokens<br>',
                 '<code>!condition remove prone</code> - remove from selected tokens<br>',
                 '<code>!condition toggle prone</code> - switch the marker on or off<br>',
                 '<code>!condition config</code> - GM settings and condition definitions</div>',
-                '<div style="margin-top:7px;font-size:0.9em;">Multiple conditions may be supplied in one command. Player access is controlled by the GM settings.</div>'
+                `<div style="margin-top:7px;"><strong>Rules wording</strong><br>${_sanitize(rulesProfileLabel())}. The GM can switch between 2014 and 2024 SRD wording or edit any description.</div>`,
+                '<div style="margin-top:7px;font-size:0.9em;">Multiple conditions may be supplied in one marker command. Player access is controlled by the GM settings.</div>'
             ].join('');
             sendPanel('ConditionService Help', body, { msg });
         }
@@ -3498,9 +3641,20 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const customCommand = modState.config.command === PRIMARY_COMMAND
                 ? '!condition'
                 : `!${_sanitize(modState.config.command)} (plus permanent !condition compatibility)`;
+            const profile = modState.config.rulesProfile;
+            const profileButtons = [
+                profile === '2014'
+                    ? '<strong>2014 SRD active</strong>'
+                    : GameAssist.createButton('Use 2014 SRD', '!condition config rulesProfile|2014|?{Replace the 15 official condition descriptions with 2014 SRD wording?|No,no|Yes,yes}'),
+                profile === '2024'
+                    ? '<strong>2024 SRD active</strong>'
+                    : GameAssist.createButton('Use 2024 SRD', '!condition config rulesProfile|2024|?{Replace the 15 official condition descriptions with 2024 SRD wording?|No,no|Yes,yes}')
+            ].join(' ');
             const body = [
                 notice ? `<div style="margin-bottom:7px;color:#7a3d00;">${_sanitize(notice)}</div>` : '',
                 `<div><strong>Command</strong>: ${customCommand} ${GameAssist.createButton('Change', `!condition config command|?{Custom command without !|${queryText(modState.config.command)}}`)}</div>`,
+                `<div style="margin-top:7px;"><strong>Condition wording</strong>: ${_sanitize(rulesProfileLabel())}<br>${profileButtons}</div>`,
+                '<div style="margin-top:4px;font-size:0.9em;">Switching profiles updates only the 15 official names and descriptions. Marker choices and added campaign conditions are retained. Editing a description changes the source label to Campaign Custom.</div>',
                 `<div style="margin-top:7px;">${boolRows}</div>`,
                 '<div style="margin-top:8px;">',
                 GameAssist.createButton(`Manage ${Object.keys(getConditions()).length} Conditions`, '!condition config-conditions'),
@@ -3512,7 +3666,24 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel('ConditionService Settings', body, { msg, gmOnly: true });
         }
 
+        function duplicateMarkerAssignments() {
+            const grouped = {};
+            Object.entries(getConditions()).forEach(([key, condition]) => {
+                const resolution = GameAssist.MarkerService.resolve(condition.marker);
+                const markerId = resolution.ok
+                    ? GameAssist.MarkerService.normalizeId(resolution.id)
+                    : String(condition.marker || '').trim().toLowerCase();
+                if (!markerId) return;
+                grouped[markerId] = (grouped[markerId] || []).concat(condition.name || key);
+            });
+            return Object.values(grouped).filter(names => names.length > 1);
+        }
+
         function sendDefinitionsMenu(msg, notice = '') {
+            const duplicateMarkers = duplicateMarkerAssignments();
+            const duplicateNotice = duplicateMarkers.length
+                ? `<div style="margin-bottom:7px;color:#7a3d00;"><strong>Shared marker warning:</strong> ${duplicateMarkers.map(names => _sanitize(names.join(' and '))).join('; ')} use the same marker. Adding that marker may show more than one description.</div>`
+                : '';
             const rows = Object.entries(getConditions())
                 .sort((a, b) => a[1].name.localeCompare(b[1].name))
                 .map(([key, condition]) =>
@@ -3520,6 +3691,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ).join('');
             const body = [
                 notice ? `<div style="margin-bottom:7px;color:#7a3d00;">${_sanitize(notice)}</div>` : '',
+                duplicateNotice,
                 rows || '<div>No condition definitions are configured.</div>',
                 '<div style="margin-top:8px;">',
                 GameAssist.createButton('Add Condition', '!condition config-conditions add ?{Condition name}'),
@@ -3592,6 +3764,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 componentVersion: MODULE_VERSION,
                 config: {
                     command: modState.config.command,
+                    rulesProfile: modState.config.rulesProfile,
                     userAllowed: modState.config.userAllowed,
                     userToggle: modState.config.userToggle,
                     sendOnlyToGM: modState.config.sendOnlyToGM,
@@ -3631,6 +3804,20 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 sendConfigMenu(msg, 'Import was refused because a permission/display setting is not true or false.');
                 return;
             }
+            const rulesProfile = sourceConfig.rulesProfile === undefined
+                ? 'custom'
+                : String(sourceConfig.rulesProfile).toLowerCase();
+            if (!['2014', '2024', 'custom'].includes(rulesProfile)) {
+                sendConfigMenu(msg, 'Import was refused because the condition wording source is invalid.');
+                return;
+            }
+            const capacityError = rulesProfile === 'custom'
+                ? ''
+                : profileCapacityError(rulesProfile, normalized.conditions);
+            if (capacityError) {
+                sendConfigMenu(msg, `Import was refused: ${capacityError}`);
+                return;
+            }
             const command = sourceConfig.command === undefined
                 ? modState.config.command
                 : String(sourceConfig.command).trim().replace(/^!/, '');
@@ -3644,7 +3831,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             });
             modState.config.command = command;
             modState.config.conditions = normalized.conditions;
-            sendConfigMenu(msg, `Imported ${Object.keys(normalized.conditions).length} validated condition definitions. Reload the sandbox if the custom command changed.`);
+            modState.config.rulesProfile = rulesProfile;
+            if (rulesProfile === '2014' || rulesProfile === '2024') applyRulesProfile(rulesProfile);
+            sendConfigMenu(msg, `Imported ${Object.keys(normalized.conditions).length} validated condition definitions using ${rulesProfileLabel()} wording. Reload the sandbox if the custom command changed.`);
         }
 
         function handleConfig(msg, body) {
@@ -3674,7 +3863,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return;
             }
             const key = rest.slice(0, delimiter).trim();
-            const rawValue = rest.slice(delimiter + 1).trim();
+            const values = rest.slice(delimiter + 1).split('|').map(value => value.trim());
+            const rawValue = values.shift() || '';
+            const confirmation = String(values.shift() || '').toLowerCase();
             const boolKeys = ['userAllowed', 'userToggle', 'sendOnlyToGM', 'showDescOnStatusChange', 'showIconInDescription'];
             if (boolKeys.includes(key)) {
                 if (!/^(true|false)$/i.test(rawValue)) {
@@ -3693,6 +3884,24 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 }
                 modState.config.command = command;
                 sendConfigMenu(msg, 'Custom command saved. Reload the Mod sandbox to activate it; !condition remains available.');
+                return;
+            }
+            if (key === 'rulesProfile') {
+                const profile = rawValue.toLowerCase();
+                if (!RULES_PROFILES[profile]) {
+                    sendConfigMenu(msg, 'Choose either the 2014 SRD or 2024 SRD wording profile.');
+                    return;
+                }
+                if (confirmation !== 'yes') {
+                    sendConfigMenu(msg, 'Rules wording was not changed.');
+                    return;
+                }
+                const result = applyRulesProfile(profile);
+                if (!result.ok) {
+                    sendConfigMenu(msg, result.message);
+                    return;
+                }
+                sendConfigMenu(msg, `${rulesProfileLabel()} wording is now active. Custom marker choices and added campaign conditions were retained.`);
                 return;
             }
             sendConfigMenu(msg, `Unknown setting: ${key}.`);
@@ -3773,6 +3982,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 getConditions()[key].marker = value.slice(0, POLICY.conditions.maxMarkerLength);
             } else if (field === 'description') {
                 getConditions()[key].description = plainDescription(value);
+                modState.config.rulesProfile = 'custom';
             } else {
                 sendDefinitionMenu(msg, key, `Unknown definition field: ${field}.`);
                 return;
@@ -3816,7 +4026,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         ? { source: 'state.STATUSINFO', resetAt: isoNow(), importedSettings: [], importedConditions: 0 }
                         : undefined
                 );
-                modState.config = { enabled, conditions: cloneDefaultConditions() };
+                modState.config = { enabled, rulesProfile: '2014', conditions: cloneDefaultConditions() };
                 if (legacyStatusInfoMigration) {
                     modState.config.legacyStatusInfoMigration = legacyStatusInfoMigration;
                 }
@@ -3854,6 +4064,23 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             showCondition(condition, { force: true });
         }
 
+        function handleConditionShortcut(msg) {
+            if (!playerIsGM(msg.playerid) && !modState.config.userAllowed) {
+                sendPanel('ConditionService', 'Only the GM can show condition descriptions in this campaign.', { msg });
+                return;
+            }
+            const requested = String(msg.content || '')
+                .trim()
+                .replace(/^!con-/i, '')
+                .split(/\s+/)[0];
+            const condition = getCondition(requested);
+            if (!condition) {
+                sendPanel('ConditionService', `No condition named ${_sanitize(requested || '(blank)')} is configured. Use <code>!condition help</code> for guidance.`, { msg });
+                return;
+            }
+            showCondition(condition, { force: true });
+        }
+
         function conditionsForMarkerEntry(entry) {
             return Object.entries(getConditions())
                 .map(([key, condition]) => {
@@ -3876,6 +4103,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         GameAssist.onCommand('!condition', handleInput, MODULE_NAME);
+        GameAssist.onCommand('!con-', handleConditionShortcut, MODULE_NAME, {
+            match: { caseInsensitive: true, mode: 'prefix' }
+        });
         const customCommand = String(modState.config.command || PRIMARY_COMMAND).toLowerCase();
         if (customCommand !== PRIMARY_COMMAND) {
             GameAssist.onCommand(`!${customCommand}`, handleInput, MODULE_NAME);
@@ -3884,6 +4114,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.ConditionService = Object.freeze({
             version: MODULE_VERSION,
             configSchemaVersion: CONFIG_SCHEMA_VERSION,
+            rulesProfile: () => modState.config.rulesProfile,
             getConditions: () => JSON.parse(JSON.stringify(getConditions())),
             getCondition: name => {
                 const condition = getCondition(name);
@@ -3909,22 +4140,28 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 'WARN'
             );
         }
-        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: !condition opens the condition menu.`, 'INFO', { startup: true });
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: !condition opens the menu; !con-[condition] shows a quick rules reference.`, 'INFO', { startup: true });
     }, {
         enabled: true,
         events: ['change:graphic:statusmarkers'],
-        prefixes: ['!condition'],
+        prefixes: ['!condition', '!con-'],
         dependsOn: ['MarkerService'],
-        protectedConfigKeys: ['conditions', 'legacyStatusInfoMigration']
+        protectedConfigKeys: ['conditions', 'rulesProfile', 'legacyStatusInfoMigration']
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Added independently branded ConditionService 1.0.0 with validated StatusInfo-state migration, condition menus/descriptions, guarded player permissions, definition management, protected configuration maps, validated import/export, and MarkerService-owned marker behavior.
+    // Changed (v0.1.5.0): Advanced ConditionService to 1.1.0 with !con-[condition] references, complete 2014/2024 SRD wording profiles, campaign-custom wording, non-destructive profile switching, duplicate-marker warnings, schema-v2 import/export, and automatic repair of untouched 1.0.0 defaults.
     // Decision log:
     //   CHOICE: Name the GameAssist module ConditionService - ALT: retain StatusInfo branding; REJECTED: this is an independently maintained adaptation with a different lifecycle and marker architecture.
     //   CHOICE: Keep permanent !condition compatibility plus one optional custom alias - ALT: replace the command; REJECTED: upgrades should not strand familiar workflows.
     //   CHOICE: Copy valid legacy state.STATUSINFO data without deleting the source branch - ALT: move/delete it; REJECTED: rollback and standalone recovery require non-destructive migration.
-    //   CHOICE: Use original concise condition summaries - ALT: reproduce upstream rules text; REJECTED: independent wording is clearer and avoids unnecessary third-party text reuse.
+    //   CHOICE: Default to the 2014 SRD and offer 2024 SRD plus campaign-custom wording - ALT: one blended summary set; REJECTED: rules-edition differences must remain explicit to the GM.
+    //   CHOICE: Preserve markers and added conditions when switching wording profiles - ALT: replace the complete map; REJECTED: profile selection must not erase campaign configuration.
+    //   CHOICE: Reserve !con- as a read-only description prefix - ALT: add individual static handlers; REJECTED: dynamic definitions require one bounded prefix route.
     //   CHOICE: Omit upstream character-sheet attribute synchronization in this checkpoint - ALT: mutate sheet-specific attributes; REJECTED: GameAssist's condition contract is token-marker synchronization through MarkerService.
+    // SRD 5.1 attribution:
+    //   This work includes material taken from the System Reference Document 5.1 ("SRD 5.1") by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode.
+    // SRD 5.2.1 attribution:
+    //   This work includes material from the System Reference Document 5.2.1 ("SRD 5.2.1") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.
     // Prior notes:
     //   StatusInfo 0.3.11 by Robin Kuiper provided the supplied compatibility baseline; the Roll20 0.3.12 package changes only its character-sheet identification line and still declares internal version 0.3.11.
     // [GAMEASSIST:MODULES:CONDITIONSERVICE] END

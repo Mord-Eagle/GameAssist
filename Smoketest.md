@@ -591,6 +591,7 @@ Remove or disable standalone StatusInfo, select one disposable token, and give t
 !ga-config modules
 !condition help
 !condition
+!con-prone
 !condition add prone
 !condition prone
 !condition remove prone
@@ -600,12 +601,27 @@ Pass when:
 
 - ConditionService is configured on, running, and reports `deps confirmed`;
 - help gives a quick start and an **Open Condition Menu** button;
+- `!con-prone` shows the configured Prone wording without changing any marker;
 - the menu names the selected token and shows its tracked conditions;
 - adding Prone applies only `back-pain` and shows the configured description;
 - removing Prone clears only `back-pain`;
 - the unrelated `blue@2` marker remains unchanged throughout.
 
 ### Expanded ConditionService Checks
+
+#### Rules Wording Profiles
+
+Open `!condition config`. The fresh-install wording source should be **2014 SRD**. Confirm that **Manage Conditions** includes **Exhaustion** and does not list Inspiration as a condition. Then choose **Use 2024 SRD**, confirm the prompt, and run:
+
+```roll20chat
+!con-grappled
+!con-incapacitated
+!con-exhaustion
+```
+
+Pass when the descriptions use the active 2024 mechanics: Grappled includes attacks against other targets and dragging costs, Incapacitated breaks Concentration and prevents a Bonus Action, and Exhaustion reduces D20 Tests and speed by level. Existing marker choices and campaign-added conditions must remain unchanged.
+
+Return to **Manage Conditions**, edit one description, and run its `!con-<condition>` shortcut. Pass when the edited wording appears and Settings identifies the source as **Campaign Custom**. Restore the intended 2014 or 2024 profile after the test if the edit was disposable.
 
 #### Permissions
 
@@ -616,6 +632,8 @@ Open `!condition config`. Test **Players may view descriptions** and **Players m
 Create a disposable custom Roll20 marker named `Warded`. In **Manage Conditions**, add a Warded definition and configure either its display name, exact stored `Warded::id` tag, or a numbered value such as `Warded::id@3`. Add and remove it from the selected token.
 
 Pass when the exact custom marker changes, its number is retained, and unrelated markers remain unchanged.
+
+Assign the same disposable marker to two definitions and return to **Manage Conditions**. Pass when the menu warns which conditions share the marker. Restore separate marker assignments before continuing.
 
 #### Marker-Change Description
 
@@ -632,7 +650,7 @@ Run:
 !ga-config set ConditionService conditions={}
 ```
 
-Pass when the export contains `gameassist-condition-config`, and the generic setter refuses to replace the protected condition map. Import only the unchanged exported JSON or a disposable, reviewed copy. Pass when the entire payload is validated before any setting changes.
+Pass when the export contains `gameassist-condition-config`, schema version `2`, and the active `rulesProfile`, and the generic setter refuses to replace the protected condition map. Import only the unchanged exported JSON or a disposable, reviewed copy. Pass when the entire payload is validated before any setting changes.
 
 #### Legacy StatusInfo Migration
 
