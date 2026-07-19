@@ -2,7 +2,7 @@
 
 Use this guide after installing or updating GameAssist, before an important session, or while troubleshooting a feature.
 
-> `v0.1.5.0` is still in development. MarkerService, ConditionService, and TokenService have focused checkpoint tests below; real Roll20 sandbox verification, stabilization work, and final release acceptance tests remain required.
+> `v0.1.5.0` is still in development. MarkerService, ConditionAssist, and TokenAssist have focused checkpoint tests below; real Roll20 sandbox verification, stabilization work, and final release acceptance tests remain required.
 
 The tests are organized by component. Each section explains:
 
@@ -26,8 +26,8 @@ Run commands one at a time. A multi-line command block is a checklist, not a sin
 | MarkerService | GameAssist can change and read markers without standalone TokenMod while preserving unrelated markers. | NPC death and concentration markers depend on it. | Only when no enabled module or future service uses token markers. |
 | ConfigUI | The GM settings interface opens and responds once. | It is the easiest way for most DMs to manage modules. | The campaign is intentionally managed only through commands. |
 | CritFumble | Help and the Natural 1 workflow respond. | Table automation can fail separately from the rest of GameAssist. | CritFumble is disabled and will not be used. |
-| ConditionService | Condition help, selected-token controls, descriptions, and MarkerService synchronization work. | Condition workflows combine permissions, configuration, markers, and chat output. | ConditionService is deliberately disabled and will not be used. |
-| TokenService | Selected-token controls, values, movement, reports, and MarkerService-backed status commands work. | It replaces the supported general token-control workflows previously supplied by standalone TokenMod. | TokenService is deliberately disabled and no `!token-mod` compatibility commands will be used. |
+| ConditionAssist | Condition help, selected-token controls, descriptions, and MarkerService synchronization work. | Condition workflows combine permissions, configuration, markers, and chat output. | ConditionAssist is deliberately disabled and will not be used. |
+| TokenAssist | Selected-token controls, values, movement, reports, and MarkerService-backed status commands work. | It replaces the supported general token-control workflows previously supplied by standalone TokenMod. | TokenAssist is deliberately disabled and none of its branded commands or temporary legacy alias will be used. |
 | ConcentrationTracker | Status, saving throws, and marker removal work on linked PC tokens. | It combines character data, rolls, chat, and MarkerService. | ConcentrationTracker is disabled and will not be used. |
 | NPCManager | Death, revival, audit, history, buckets, and Arc menus work. | It combines HP events, markers, saved records, and handouts. | NPCManager is disabled and will not be used. |
 | NPCHPRoller | Qualifying NPC HP formulas roll without changing PCs or unlinked tokens. | Incorrect eligibility can damage token HP or create false history. | NPCHPRoller is disabled and NPC HP is set another way. |
@@ -41,15 +41,15 @@ GameAssist is ready for normal use when:
 
 - the Roll20 Mod sandbox reloads without a new GameAssist exception;
 - the Core System basic test passes;
-- MarkerService passes if ConditionService, TokenService, NPCManager, ConcentrationTracker, or marker diagnostics will be used;
+- MarkerService passes if ConditionAssist, TokenAssist, NPCManager, ConcentrationTracker, or marker diagnostics will be used;
 - every enabled module that matters to the coming session passes its basic test;
 - any skipped test is skipped for a stated reason, not because its result was unclear.
 
 Expected conditions that are not failures:
 
 - DebugTools is disabled by default.
-- Standalone TokenMod is not required for GameAssist marker operations or supported TokenService commands in v0.1.5.0. Remove it while testing TokenService so both scripts cannot respond to `!token-mod`.
-- ConditionService is independently branded GameAssist functionality; standalone StatusInfo should be absent while its overlapping workflows are tested.
+- Standalone TokenMod is not required for GameAssist marker operations or supported TokenAssist commands in v0.1.5.0. Remove it while testing TokenAssist so both scripts cannot respond to `!token-mod`.
+- ConditionAssist is independently branded GameAssist functionality; standalone StatusInfo should be absent while its overlapping workflows are tested.
 - CritFumble help works without rollable tables, but table rolls require the seven exact table names.
 - Counts and timestamps in diagnostic panels vary by sandbox session.
 
@@ -230,7 +230,7 @@ Run each line only after the previous response. Pass when ConfigUI disables, re-
 
 **What this proves:** GameAssist can resolve, add, remove, inspect, and preserve token markers through its own MarkerService.
 
-**Why test it:** ConditionService, TokenService, NPCManager, ConcentrationTracker, and marker diagnostics share MarkerService instead of maintaining competing marker implementations.
+**Why test it:** ConditionAssist, TokenAssist, NPCManager, ConcentrationTracker, and marker diagnostics share MarkerService instead of maintaining competing marker implementations.
 
 **Skip when:** Skip only if MarkerService and every dependent GameAssist module are deliberately disabled. The **without TokenMod** portion is required for Issue #25 acceptance; use a disposable campaign when the active campaign cannot safely remove TokenMod yet.
 
@@ -293,7 +293,7 @@ Run:
 Pass when:
 
 - MarkerService v1.0.1 is enabled;
-- ConditionService, TokenService, NPCManager, and ConcentrationTracker are running;
+- ConditionAssist, TokenAssist, NPCManager, and ConcentrationTracker are running;
 - all four show confirmed MarkerService dependencies;
 - none is skipped because TokenMod or StatusInfo is absent.
 
@@ -412,1074 +412,14 @@ Run each command after the previous response appears:
 ```roll20chat
 !ga-disable MarkerService
 !ga-config modules
-!ga-enable TokenService
+!ga-enable TokenAssist
 ```
 
 Pass when:
 
 - the command controls MarkerService rather than reporting `No such module` or `No such service`;
-- ConditionService, TokenService, NPCManager, ConcentrationTracker, and DebugTools are configured off and not running;
+- ConditionAssist, TokenAssist, NPCManager, ConcentrationTracker, and DebugTools are configured off and not running;
 - MarkerService is configured off and not running;
 - CritFumble, ConfigUI, and NPCHPRoller keep their prior configured/running state;
 - the disable notice names the affected modules and explains that unrelated GameAssist modules remain available;
-- the notice accurately describes standalone TokenMod and StatusInfo as separate alternatives rather than as a hidden GameAssist fallback;
-- the attempt to enable TokenService is refused with guidance to enable MarkerService first.
-
-Now restore the service and enabled dependents:
-
-```roll20chat
-!ga-enable MarkerService
-!ga-enable ConditionService
-!ga-enable TokenService
-!ga-enable NPCManager
-!ga-enable ConcentrationTracker
-!ga-config modules
-```
-
-Pass when MarkerService starts first, all four ordinary dependents can then start, and DebugTools remains disabled unless the GM explicitly enables it.
-
-#### M7. Reload and Persistence
-
-Disable MarkerService again, save or restart the Mod sandbox, then run:
-
-```roll20chat
-!ga-status --details
-!ga-config modules
-```
-
-Pass when MarkerService and its dependents remain configured off after reload while CritFumble, ConfigUI, and NPCHPRoller keep their previous settings.
-
-Restore normal marker operation, restart once more, and verify retained campaign data:
-
-```roll20chat
-!ga-enable MarkerService
-!ga-enable ConditionService
-!ga-enable TokenService
-!ga-enable NPCManager
-!ga-enable ConcentrationTracker
-!npc-death-report
-!concentration --status
-```
-
-Pass when the service and dependents run again, ConditionService definitions, TokenService settings, and existing NPC history are retained, and configuration remains consistent.
-
-#### M8. Restore Campaign Settings
-
-Restore the original `deadMarker`, `autoHide`, concentration `marker`, intended ConditionService permissions, and intended TokenService `players-can-ids` setting. Leave MarkerService and only the GameAssist modules the campaign uses in their intended final enabled state.
-
-### MarkerService Failure Evidence
-
-If any MarkerService check fails, record:
-
-- configured marker value;
-- exact token `statusmarkers` value before and after;
-- token name and ID;
-- whether the token is linked and on the Objects layer;
-- which other Mods could change token markers during the test;
-- `!ga-status --details` and `!ga-config modules` output;
-- exact GameAssist warning or API Console exception.
-
----
-
-## 3. ConfigUI
-
-**What this proves:** The GM configuration interface opens, renders module controls, and routes button commands once.
-
-**Why test it:** Most DMs will manage GameAssist through this interface rather than raw configuration commands.
-
-**Skip when:** The campaign intentionally uses command-only configuration.
-
-### Basic Check
-
-Run either command:
-
-```roll20chat
-!ga-config ui
-!ga-config-ui
-```
-
-Pass when one Config UI panel appears for each command, module cards show their current states, and **Refresh** redraws the panel once.
-
-### Expanded ConfigUI Checks
-
-- [ ] Boolean settings appear as understandable buttons.
-- [ ] Module enable/disable buttons change the intended module.
-- [ ] Pagination works when more settings exist than fit on one page.
-- [ ] `!ga-config ui` and `!ga-config-ui` do not double-trigger.
-- [ ] A non-GM cannot use GM-only configuration actions.
-
----
-
-## 4. CritFumble
-
-**What this proves:** CritFumble help, guided menus, direct table commands, and Natural 1 detection respond.
-
-**Why test it:** Help can work even when rollable tables or attack-template detection are misconfigured.
-
-**Skip when:** CritFumble is disabled and will not be used.
-
-### Basic Check
-
-Run:
-
-```roll20chat
-!critfumble help
-!critfumble menu
-!critfail
-```
-
-Pass when:
-
-- help opens the quick reference and shows **Open Natural 1 Menu**;
-- the menu shows numbered steps, attack types, direct rolls, and confirmation actions;
-- `!critfail` opens the GM player picker or explains that no active players are available.
-
-This basic check does not require rollable tables.
-
-### Expanded CritFumble Checks
-
-#### Direct Table Rolls
-
-Run only after creating all seven tables:
-
-```roll20chat
-!critfumble-melee
-!critfumble-ranged
-!critfumble-thrown
-!critfumble-spell
-!critfumble-natural
-!confirm-crit-martial
-!confirm-crit-magic
-```
-
-Pass when each command rolls the matching table.
-
-#### Natural 1 Detection
-
-Roll a real attack using a supported Roll20 template and a natural 1 on its d20.
-
-Supported templates include:
-
-```text
-atk
-atkdmg
-npcatk
-npcfullatk
-npcaction
-spell
-simple
-dmg
-default
-```
-
-Pass when the attacker receives the fumble workflow and the GM receives the expected notification.
-
-If the automatic test fails but direct commands work, record the roll template and inline-roll structure.
-
----
-
-## 5. ConditionService
-
-**What this proves:** ConditionService opens readable guidance, manages selected-token conditions, and stays synchronized with MarkerService without standalone StatusInfo.
-
-**Why test it:** A condition can fail because of permissions, a malformed definition, an unrecognized custom marker, duplicate StatusInfo installation, or a disabled MarkerService.
-
-**Skip when:** ConditionService is deliberately disabled and no condition descriptions or controls will be used. Do not skip this section for Issue #26 acceptance.
-
-### Basic Check
-
-Remove or disable standalone StatusInfo, select one disposable token, and give that token one unrelated numbered marker such as `blue@2`. Then run:
-
-```roll20chat
-!ga-config modules
-!condition help
-!condition
-!CoNd-PrOnE
-!condition add prone
-!condition prone
-!condition remove prone
-```
-
-Pass when:
-
-- ConditionService is configured on, running, and reports `deps confirmed`;
-- help gives a quick start and an **Open Condition Menu** button;
-- mixed-case `!CoNd-PrOnE` shows the configured Prone wording without changing any marker;
-- the menu names the selected token and shows its tracked conditions;
-- adding Prone applies only `back-pain` and shows the configured description;
-- removing Prone clears only `back-pain`;
-- the unrelated `blue@2` marker remains unchanged throughout.
-
-### Expanded ConditionService Checks
-
-#### Rules Wording Profiles
-
-Open `!condition config`. The fresh-install wording source should be **2014 SRD**. Confirm that **Manage Conditions** includes **Exhaustion** and does not list Inspiration as a condition. Then choose **Use 2024 SRD**, confirm the prompt, and run:
-
-```roll20chat
-!cond-grappled
-!cond-incapacitated
-!cond-exhaustion
-```
-
-Pass when the descriptions use the active 2024 mechanics: Grappled includes attacks against other targets and dragging costs, Incapacitated breaks Concentration and prevents a Bonus Action, and Exhaustion reduces D20 Tests and speed by level. Existing marker choices and campaign-added conditions must remain unchanged.
-
-Return to **Manage Conditions**, add or edit a disposable campaign condition such as **Moon-Touched**, and run `!COND-MOON-TOUCHED`. Pass when the custom wording appears despite mixed capitalization and Settings identifies an edited official wording set as **Campaign Custom**. Restore the intended 2014 or 2024 profile after the test if the edit was disposable.
-
-#### Marker Artwork
-
-With **Show marker artwork with descriptions** enabled, run `!cond-prone`. Pass when the Prone panel includes Roll20's `back-pain` marker artwork rather than only its identifier.
-
-Create a disposable custom Roll20 marker with an image, assign it to a custom condition, and run that condition's `!cond-<condition>` shortcut. Pass when the registered campaign-marker image appears. Then temporarily use an exact custom tag that Roll20 cannot match back to readable registry artwork. Pass when the condition wording still appears with a readable marker-name fallback rather than failing.
-
-#### Selected-Character Announcements
-
-Select two disposable tokens linked to characters, with at least one character assigned to a non-GM player. Put the condition marker you plan to test on one token and leave it off the other, then run:
-
-```roll20chat
-!condition announce
-!c-a
-!cond-!
-```
-
-Pass when each command, including mixed capitalization such as `!C-A` or `!CoNd-!`, opens the same alphabetical condition-button list for the captured characters. Choose a condition and verify the delivery menu offers:
-
-- **Toggle & Announce**;
-- **Toggle & Whisper**;
-- **Toggle & Post Wording**;
-- **Toggle & Whisper Wording**.
-
-Choosing the condition should not change either token yet. Click **Toggle & Announce** and pass when:
-
-- the token that lacked the condition now displays its configured marker;
-- the token that already had the condition no longer displays that marker;
-- unrelated markers and marker numbers remain unchanged;
-- the public message uses one neutral statement per character in the form **Mira is Prone** or **Orin is no longer Prone**;
-- the message includes **Read Exact Wording** but does not also produce a duplicate condition-description panel.
-
-Run the same final action again and pass when both marker states reverse cleanly. Clicking **Read Exact Wording** from a player account must whisper the exact configured wording to that player even when unrestricted player descriptions are disabled. The button should eventually expire rather than granting permanent access.
-
-The player-whisper choices should toggle the same captured markers once and go only to non-GM controllers of the linked characters. Characters without a player controller should still receive the marker change when at least one selected character has a valid recipient, while the GM is told which characters received no player whisper. If none of the selected characters has a non-GM controller, the whisper choice should refuse before changing any marker. Change the current token selection after opening the first menu and confirm later buttons still use the originally captured characters.
-
-If a saved or migrated campaign definition is named exactly **Concentration**, reload the sandbox and reopen the condition menu. Pass when its display name is **Concentrating** while its marker, description, and compatible `concentration` key remain unchanged.
-
-#### Permissions
-
-Open `!condition config`. Test **Players may view descriptions** and **Players may change token conditions** separately from a non-GM account. Pass when each permission affects only its named behavior and denied actions receive a clear explanation.
-
-#### Custom and Numbered Marker
-
-Create a disposable custom Roll20 marker named `Warded`. In **Manage Conditions**, add a Warded definition and configure either its display name, exact stored `Warded::id` tag, or a numbered value such as `Warded::id@3`. Add and remove it from the selected token.
-
-Pass when the exact custom marker changes, its number is retained, and unrelated markers remain unchanged.
-
-Assign the same disposable marker to two definitions and return to **Manage Conditions**. Pass when the menu warns which conditions share the marker. Restore separate marker assignments before continuing.
-
-#### Marker-Change Description
-
-With **Show descriptions when markers are added** enabled, add a configured condition marker directly from Roll20's token marker menu.
-
-Pass when one matching ConditionService description appears. Removing the marker should not re-add it.
-
-#### Validated Export and Import
-
-Run:
-
-```roll20chat
-!condition config export
-!ga-config set ConditionService conditions={}
-```
-
-Pass when the export contains `gameassist-condition-config`, schema version `2`, and the active `rulesProfile`, and the generic setter refuses to replace the protected condition map. Import only the unchanged exported JSON or a disposable, reviewed copy. Pass when the entire payload is validated before any setting changes.
-
-#### Legacy StatusInfo Migration
-
-Run this only when upgrading a campaign that previously used StatusInfo. Before removing standalone StatusInfo, record one customized condition and permission setting. Install the development GameAssist version, remove StatusInfo, reload, and open `!condition config` plus **Manage Conditions**.
-
-Pass when valid settings and definitions were copied, the migration is reported once, and rollback remains possible because GameAssist did not delete the legacy `state.STATUSINFO` branch.
-
-#### MarkerService Restart
-
-Run:
-
-```roll20chat
-!ga-disable MarkerService
-!ga-config modules
-!ga-enable markerservice
-!ga-enable conditionservice
-```
-
-Pass when MarkerService shutdown also turns off ConditionService, the unrelated modules remain available, both components re-enable case-insensitively, and a later direct marker addition still produces its condition description.
-
-#### Duplicate Installation Warning
-
-Temporarily load standalone StatusInfo only in a disposable test campaign and restart the sandbox. Pass when GameAssist warns that both tools respond to `!condition` and marker changes. Remove standalone StatusInfo before continuing.
-
----
-
-## 6. TokenService
-
-**What this proves:** TokenService can safely control selected tokens, preserve supported `!token-mod` campaign macros, and route every status-marker change through MarkerService.
-
-**Why test it:** General token controls touch many Roll20 properties. A useful acceptance pass must prove that targeting, authorization, relative values, linked bars, movement, reports, and markers change only the intended token data.
-
-**Skip when:** TokenService is deliberately disabled and the campaign uses none of its commands. Do not skip this section for Issue #27 acceptance.
-
-### Basic Check
-
-Remove standalone TokenMod and restart the Mod sandbox. Select only the disposable unlinked token, note its current name and bar 3 value, and add an unrelated numbered blue marker such as `blue@7`. Then run one command at a time:
-
-```roll20chat
-!ga-config modules
-!token-service help
-!token-service about
-!token-mod --flip showname
-!token-mod --set "name|GA TokenService Test" bar3_value|10
-!token-mod --set bar3_value|+2
-!token-mod --set statusmarkers|red:3
-!token-mod --set statusmarkers|-red
-```
-
-Pass when:
-
-- TokenService is configured on, running, and reports a confirmed MarkerService dependency;
-- the quick guide and attribution/limits panel both open;
-- the token-name visibility setting flips once;
-- the token is renamed and bar 3 ends at `12`;
-- red appears with number 3 and is then removed;
-- the unrelated `blue@7` marker remains unchanged;
-- no other selected or unselected token changes.
-
-Restore the token's original name, bar 3 value, and name-visibility setting after the check.
-
-### Full Issue #27 Acceptance Test
-
-Use a disposable page and keep standalone TokenMod absent except during the dedicated collision check. Record the initial TokenService setting:
-
-```roll20chat
-!ga-config get TokenService playersCanUseIds
-```
-
-#### T1. Help, Case, and Configuration
-
-Run:
-
-```roll20chat
-!ToKeN-SeRvIcE HeLp
-!token-mod --help
-!token-mod --help-statusmarkers
-!token-service config
-```
-
-Pass when both command families open the same readable guide, marker help explains add/remove/toggle/replace behavior, and the settings button clearly reports whether player `--ids` targeting is on or off.
-
-#### T2. Selected-Token Properties and Reports
-
-Select one disposable token. Record its current name, bar 3 value, aura 1 color, and name-visibility setting. Then run:
-
-```roll20chat
-!token-mod --on showname --set "name|GA Test Guardian" bar3_value|20 aura1_color|336699
-!token-mod --set bar3_value|-5 --report gm|"{name}: bar 3 changed from {bar3_value:before} to {bar3_value}"
-!token-mod --off showname
-```
-
-Pass when the selected token alone is renamed, its bar 3 value changes from 20 to 15, the color is stored as a valid hex color, the GM receives an understandable before/after report, and name visibility ends off. Restore the original values afterward.
-
-#### T3. Movement and Order
-
-Place two disposable tokens where movement is easy to see. Select one and run:
-
-```roll20chat
-!token-mod --move 1g
-!token-mod --move =90|1u
-!token-mod --order tofront
-!token-mod --order toback
-```
-
-Pass when only the selected token moves, its prior locations are retained in Roll20's movement trail, and both front/back order commands visibly affect stacking. Return the token to its starting position.
-
-#### T4. Built-In, Numbered, and Custom Markers
-
-Put `blue@7` on the selected token, then run:
-
-```roll20chat
-!token-mod --set statusmarkers|red:3
-!token-mod --set statusmarkers|!red
-!token-mod --set statusmarkers|red
-```
-
-Pass when red is added with 3, toggled off, and added again while `blue@7` remains unchanged.
-
-Create a disposable custom marker, then test its display name and exact stored `Name::id` tag:
-
-```roll20chat
-!token-mod --set "statusmarkers|Custom Marker Name"
-!token-mod --set "statusmarkers|-Custom Marker Name"
-!token-mod --set statusmarkers|Name::id:4
-!token-mod --set statusmarkers|-Name::id
-```
-
-Pass when only the intended custom marker changes and its numbered form displays 4. The literal `Name::id` above must be replaced with the actual stored tag.
-
-Finally, run an invalid replacement while `blue@7` is still present:
-
-```roll20chat
-!token-mod --set "statusmarkers|=Marker That Does Not Exist"
-```
-
-Pass when TokenService gives an actionable warning and does **not** clear `blue@7`. Remove the disposable red marker when finished.
-
-#### T5. Player Authorization
-
-Assign a disposable token to a non-GM player. With player `--ids` disabled, have that player select the token and run:
-
-```roll20chat
-!token-mod --flip showname
-```
-
-Pass when the selected-token command works because the player can control that token. Record its token ID, clear the selection, and run:
-
-```roll20chat
-!token-mod --ids TOKEN_ID --flip showname
-```
-
-Pass when TokenService refuses explicit-ID targeting without changing the token. The GM can temporarily enable the setting from `!token-service config`; after enabling it, repeat the explicit-ID command and pass when the controlled token changes once. Restore the original setting and visibility value.
-
-#### T6. Linked Bar Update
-
-Use a disposable linked token and a disposable character attribute. Link token bar 3 to that attribute through Roll20's token settings, record the attribute's current and maximum values, then run:
-
-```roll20chat
-!token-mod --set bar3_value|17 bar3_max|25
-```
-
-Pass when the linked character attribute becomes current `17`, maximum `25`, and the sheet-backed token bar follows it. Restore the original values after the check.
-
-#### T7. Page Filters and Character IDs
-
-Put copies of one disposable character on two pages. From the GM account, run a command using the character ID rather than a token ID, first with `--current-page` and then without it:
-
-```roll20chat
-!token-mod --ignore-selected --ids CHARACTER_ID --current-page --flip showname
-!token-mod --ignore-selected --ids CHARACTER_ID --flip showname
-```
-
-Pass when the first command changes only the copy on the GM's current page and the second reaches all tokens representing that character. Restore both tokens afterward.
-
-#### T8. Legacy Setting Migration
-
-Run this only in an upgrade test campaign that previously used TokenMod. Before installing the development build, record standalone TokenMod's **Players can use --ids** setting. Remove TokenMod, install GameAssist, restart, and run:
-
-```roll20chat
-!ga-config get TokenService playersCanUseIds
-```
-
-Pass when the valid legacy boolean is copied once, the old `state.TokenMod` branch remains available for rollback, and later TokenService setting changes are not overwritten on reload.
-
-#### T9. MarkerService Lifecycle
-
-Run each command after the prior response appears:
-
-```roll20chat
-!ga-disable MarkerService
-!ga-config modules
-!ga-enable tokenservice
-!ga-enable markerservice
-!ga-enable tokenservice
-!token-service help
-```
-
-Pass when disabling MarkerService also disables TokenService, the premature TokenService enable is refused, case-insensitive re-enabling works after MarkerService returns, and help opens once. Unrelated modules should retain their prior settings.
-
-#### T10. Standalone Collision Protection
-
-Use a disposable campaign for this check. Temporarily install standalone TokenMod beside GameAssist and restart. Run:
-
-```roll20chat
-!ga-status --details
-!token-service about
-!token-mod --flip showname
-```
-
-Pass when GameAssist warns that standalone TokenMod was detected, branded TokenService information remains available, and TokenService leaves `!token-mod` compatibility commands to the standalone script so GameAssist does not apply the same command a second time. Remove standalone TokenMod and restart before continuing.
-
-#### T11. Explicit Compatibility Limit
-
-Select a disposable token whose name visibility is off, then run:
-
-```roll20chat
-!token-mod --set imgsrc|ignored --on showname
-```
-
-Pass when TokenService refuses the unsupported image-side property, explains that this feature is outside TokenService 1.0.0, and leaves name visibility unchanged. TokenService 1.0.0 also does not claim default-token writes, computed attributes, advanced color arithmetic, duplicate-index marker editing, or conditional marker counts.
-
-#### T12. Restore Campaign Settings
-
-Restore changed token properties, linked attributes, marker choices, module enablement, and the original `players-can-ids` setting. Leave standalone TokenMod removed when TokenService will own `!token-mod` commands.
-
-### TokenService Failure Evidence
-
-If any TokenService check fails, record:
-
-- the exact command and whether it came from a GM, player, macro, or another Mod;
-- selected token names/IDs and any explicit token or character IDs;
-- the property values and `statusmarkers` string before and after;
-- whether standalone TokenMod was installed or detected;
-- the TokenService and MarkerService rows from `!ga-config modules`;
-- `!ga-status --details` output and the exact API Console exception or warning.
-
----
-
-## 7. ConcentrationTracker
-
-**What this proves:** ConcentrationTracker reads linked character data, builds the correct save, remembers the last check, and uses MarkerService.
-
-**Why test it:** A failure may come from token linkage, character attributes, roll mode, marker configuration, or command routing.
-
-**Skip when:** ConcentrationTracker is disabled and will not be used.
-
-### Basic Check
-
-Run:
-
-```roll20chat
-!concentration
-!concentration --status
-```
-
-Pass when the button menu appears and status returns either a token list or `No tokens concentrating.`
-
-A completely silent status command is a failure. An actionable invalid-marker warning is a configuration problem, not a pass.
-
-### Expanded ConcentrationTracker Checks
-
-With the linked test PC selected:
-
-```roll20chat
-!concentration --damage 12 --mode normal
-!concentration --damage 20 --mode adv
-!concentration --damage 20 --mode dis
-!concentration --last
-!ga-conc-status
-```
-
-Check:
-
-- [ ] Damage 12 uses DC 10.
-- [ ] Normal mode uses one d20.
-- [ ] Advantage uses the higher d20.
-- [ ] Disadvantage uses the lower d20.
-- [ ] The character's `constitution_save_bonus` is included.
-- [ ] `--last` repeats the prior damage and mode.
-- [ ] `!ga-conc-status` summarizes recent recorded concentration activity.
-
-Clear the marker:
-
-```roll20chat
-!concentration --off
-!concentration --status
-```
-
-Pass when the configured marker is removed from selected linked tokens and status updates.
-
-Select an unlinked token and repeat a check. Pass when GameAssist explains that a linked character is required and does not change the token.
-
----
-
-## 8. NPCManager
-
-**What this proves:** NPCManager tracks genuine HP transitions, changes death markers, audits current-page mismatches, and maintains report buckets and Arc records.
-
-**Why test it:** NPCManager combines event timing, token eligibility, MarkerService, persistent state, and handout writing.
-
-**Skip when:** NPCManager is disabled and will not be used.
-
-### Basic Check
-
-On the linked test NPC, start with positive HP:
-
-1. Set bar 1 HP to `0`.
-2. Confirm the death marker appears.
-3. Set HP above `0`.
-4. Confirm the marker clears.
-5. Run:
-
-   ```roll20chat
-   !npc-death-report
-   !npc-death-audit
-   ```
-
-Pass when one death is recorded, revival is annotated, and the audit reports no remaining mismatch.
-
-### NPCManager Menu Guide
-
-| Command | Expected purpose |
-| --- | --- |
-| `!npc-death-help` | Central NPCManager guide. |
-| `!npc-death-report` | Read a bounded report for the active or requested bucket. |
-| `!npc-death-buckets` | Review or rename Campaign, Chapter, Section, and Session buckets. |
-| `!NPC-WR` or `!npc-death-write` | Review report targets before writing handouts. |
-| `!npc-death-audit` | Compare linked NPC HP with the configured death marker. |
-| `!npc-death-arc` | Manage independent story-specific Arc records. |
-
-### Expanded NPCManager Checks
-
-#### Death Audit
-
-Create a deliberate mismatch:
-
-- leave HP below 1 and manually remove the death marker; or
-- leave HP above 0 and manually add the death marker.
-
-Run:
-
-```roll20chat
-!npc-death-audit
-```
-
-Pass when:
-
-- chat shows the mismatch count and required action;
-- the affected token appears under **Add Death Marker** or **Remove Death Marker**;
-- HP, markers, and token ID are readable;
-- the full list appears in the `GameAssist NPC Death Audit` handout;
-- the scope explains that linked NPCs are checked and PCs are excluded.
-
-Correctly marked NPCs are intentionally omitted. Unlinked scenery, labels, party markers, and props may be mentioned as ignored.
-
-#### Reports and Handouts
-
-Run:
-
-```roll20chat
-!npc-death-report --recent
-!npc-death-report --page 2
-!npc-death-report --scope campaign
-!npc-death-report --scope chapter
-!npc-death-report --scope section
-!npc-death-report --scope session
-!NPC-WR
-```
-
-Pass when chat summaries remain bounded, scopes are clearly named, and the writer menu does not change counts merely by opening.
-
-#### Campaign, Chapter, Section, and Session
-
-Use fresh disposable names:
-
-```roll20chat
-!npc-death-buckets --campaign "Smoke Campaign"
-!npc-death-buckets --chapter "Smoke Chapter"
-!npc-death-buckets --section "Smoke Section"
-!npc-death-buckets --session "Smoke Session"
-!npc-death-buckets
-```
-
-Record one new death, then check all four scopes:
-
-```roll20chat
-!npc-death-report --scope campaign
-!npc-death-report --scope chapter
-!npc-death-report --scope section
-!npc-death-report --scope session
-!npc-death-write --all
-```
-
-Pass when the death appears once in every active scope and the four matching handouts are created or updated.
-
-Changing an active bucket name starts or resumes that named bucket. It does not delete the previous handout.
-
-#### Start a New Section from the Current Session
-
-Run:
-
-```roll20chat
-!npc-death-write --newSection "Smoke Section Two"
-!npc-death-report --scope section
-!npc-death-report --scope session
-```
-
-Pass when the current Session is appended once to the new Section, Session remains unchanged, and repeating the command does not duplicate entries.
-
-#### Arc Deduplication and Recovery
-
-With the test NPC selected:
-
-```roll20chat
-!npc-death-arc --name "Smoke Test Arc"
-!npc-death-arc --name "Smoke Test Arc" --session
-!npc-death-arc --name "Smoke Test Arc" --manage
-```
-
-Pass when the selected NPC appears once and appending the Session updates rather than duplicates it.
-
-Test the explicit duplicate override and undo:
-
-```roll20chat
-!npc-death-arc --name "Smoke Test Arc" --session --allowDuplicates
-!npc-death-arc --name "Smoke Test Arc" --undo
-```
-
-Pass when the first command deliberately duplicates the entry and undo removes only the last addition.
-
-With the token selected:
-
-```roll20chat
-!npc-death-arc --name "Smoke Test Arc" --removeSelected
-```
-
-Pass when only the Arc entry is removed; Campaign, Chapter, Section, and Session history remains.
-
-#### Clear Only and Clear Nested
-
-First open a confirmation without deleting:
-
-```roll20chat
-!npc-death-clear --scope section
-```
-
-The menu should offer **Clear Only Section** and **Clear Section And Below**.
-
-| Selected scope | Clear only | Clear nested |
-| --- | --- | --- |
-| Campaign | Campaign | Campaign, Chapter, Section, Session |
-| Chapter | Chapter | Chapter, Section, Session |
-| Section | Section | Section, Session |
-| Session | Session | No child scopes |
-
-Use `--confirm` only on disposable test history:
-
-```roll20chat
-!npc-death-clear --scope section --nested --confirm
-```
-
-Pass when Section and Session clear while Campaign and Chapter remain.
-
-#### Date-Managed Session
-
-The default Session follows the sandbox's UTC date. On the next NPCManager command or qualifying HP change after that date changes, a date-managed Session should move to the new date. A manually named Session should not roll over until **Reset Session Date** is used.
-
-Skip this test unless the test naturally crosses midnight UTC; v0.1.5.0 has no fake-clock command.
-
-#### Auto-Hide
-
-Check:
-
-```roll20chat
-!ga-config get NPCManager autoHide
-!ga-config get NPCManager hideLayer
-```
-
-Default behavior is `autoHide=false`. If enabled, dead NPCs intentionally move to the configured layer. Test only with disposable tokens.
-
----
-
-## 9. NPCHPRoller
-
-**What this proves:** NPCHPRoller recognizes qualifying NPCs, rolls `npc_hpformula`, and protects initialization from false death history.
-
-**Why test it:** A broad HP operation must not modify PCs, unlinked tokens, or NPCManager history incorrectly.
-
-**Skip when:** NPCHPRoller is disabled and all NPC HP is managed manually or by another script.
-
-### Basic Check
-
-Select the linked test NPC and run:
-
-```roll20chat
-!npc-hp-selected
-```
-
-Pass when bar 1 current and maximum become the same rolled value and the result identifies the NPC and formula.
-
-### Expanded NPCHPRoller Checks
-
-#### Mixed Selection
-
-Select the linked NPC, linked PC, and unlinked token:
-
-```roll20chat
-!npc-hp-selected
-```
-
-Pass when only the qualifying NPC receives rolled HP.
-
-#### Current Page
-
-On the disposable page:
-
-```roll20chat
-!npc-hp-all
-```
-
-Pass when qualifying NPCs roll, PCs remain unchanged, and unlinked tokens are skipped.
-
-#### Invalid Formula
-
-Temporarily replace `npc_hpformula` with invalid text and run `!npc-hp-selected`.
-
-Pass when GameAssist reports the invalid formula without applying bad HP. Restore the formula afterward.
-
-#### Auto-Roll on Add
-
-This feature defaults to off. Test only in a disposable campaign:
-
-```roll20chat
-!ga-config set NPCHPRoller autoRollOnAdd=true
-```
-
-Add a qualifying linked NPC token.
-
-Pass when:
-
-- HP is rolled automatically;
-- no temporary death marker appears;
-- no false death/revival pair enters any NPCManager bucket;
-- a later genuine positive-to-zero transition is tracked normally.
-
-Restore the default:
-
-```roll20chat
-!ga-config set NPCHPRoller autoRollOnAdd=false
-```
-
----
-
-## 10. DebugTools
-
-**What this proves:** DebugTools remains opt-in, previews mutations by default, and requires `--apply`.
-
-**Why test it:** Diagnostics should not alter campaign state accidentally.
-
-**Skip when:** Normally skip unless validating a release or troubleshooting MarkerService, HP, or save behavior.
-
-### Basic Check
-
-Run each command separately:
-
-```roll20chat
-!ga-enable DebugTools
-!ga-debug
-```
-
-Pass when DebugTools becomes active and its help appears.
-
-### Expanded DebugTools Checks
-
-With a disposable token selected:
-
-```roll20chat
-!ga-debug damage --amount 2
-!ga-debug marker --marker blue --state toggle
-!ga-debug save --dc 12 --bonus 3 --mode adv --label "Smoke Test"
-```
-
-Pass when all three commands preview actions without changing HP, markers, or rolling.
-
-Apply each test:
-
-```roll20chat
-!ga-debug damage --amount 2 --apply
-!ga-debug marker --marker blue --state toggle --apply
-!ga-debug save --dc 12 --bonus 3 --mode adv --label "Smoke Test" --apply
-```
-
-Pass when:
-
-- damage changes HP by exactly 2 without going below zero;
-- the marker action changes only the requested marker through MarkerService;
-- the save rolls and whispers its result.
-
-Return DebugTools to its default state:
-
-```roll20chat
-!ga-disable DebugTools
-!ga-config modules
-```
-
----
-
-# Cross-Component Checks
-
-## Permissions
-
-**Purpose:** Confirm GM-only administration cannot be run by ordinary players.
-
-**Skip when:** Skip only if no player account is available; record it as untested.
-
-From a non-GM account, try:
-
-```roll20chat
-!ga-status
-!ga-config modules
-!condition config
-!condition add prone
-!token-service config
-!token-mod --ids TOKEN_ID --flip showname
-!npc-hp-all
-!npc-death-audit
-```
-
-Pass when GM-only actions do not execute for the player. TokenService should refuse explicit-ID targeting while `players-can-ids` is off, but selected-token commands remain available for tokens the player controls.
-
-## Duplicate Installation
-
-**Purpose:** Confirm one chat command produces one response.
-
-**Skip when:** Never skip when commands respond twice.
-
-If a command produces duplicate output:
-
-1. Check the Mod/API page for multiple GameAssist copies.
-2. Check for older standalone scripts that implement the same feature.
-3. Keep only the intended implementation.
-4. Restart the sandbox and repeat the command.
-
-Scripts that independently respond to `!condition` or `!token-mod`, describe the same marker changes, modify the same NPC HP/bar 1, control the same token properties or death/concentration/condition markers, or process the same Natural 1 workflow may conflict even when their names differ. TokenService deliberately suspends its `!token-mod` compatibility handler when standalone TokenMod is detected, but the standalone copy should still be removed for normal v0.1.5.0 use.
-
-## State Recovery
-
-**Purpose:** Confirm known state containers self-heal while unknown branches are preserved for review.
-
-**Skip when:** Skip intentional state corruption outside a disposable test campaign.
-
-Safe review:
-
-```roll20chat
-!ga-status
-!ga-metrics
-!ga-config list
-```
-
-Do not run `!ga-config cleanup` merely to test it. Cleanup deletes unknown or orphaned `state.GameAssist` branches after explicit confirmation.
-
----
-
-# Troubleshooting by Symptom
-
-## Nothing Responds
-
-1. Wait for the Mod sandbox restart.
-2. Check the API Console for a GameAssist syntax or reference error.
-3. Confirm GameAssist is enabled.
-4. Remove duplicate or broken copies.
-5. Retry `!ga-status`.
-
-Solve the core problem before testing modules.
-
-## One Module Is Silent
-
-Run:
-
-```roll20chat
-!ga-config modules
-!ga-config get <ModuleOrServiceName>
-!ga-enable <ModuleOrServiceName>
-```
-
-Check the configured state, running state, exact command spelling, and test-token eligibility. Read the enable response before changing more settings.
-
-## Marker Automation Fails
-
-Run:
-
-```roll20chat
-!ga-status --details
-!ga-config get NPCManager deadMarker
-!ga-config get ConcentrationTracker marker
-!token-mod --help-statusmarkers
-!npc-death-audit
-!concentration --status
-```
-
-Check:
-
-- MarkerService is enabled.
-- The affected module is running.
-- The token is on the Objects layer and represents the right character.
-- NPCManager tokens have `npc=1`.
-- The configured built-in marker, custom display name, or exact stored tag exists.
-- The HP or concentration outcome actually requested the expected marker state.
-
-Standalone TokenMod permissions are not a repair for GameAssist marker failures in v0.1.5.0.
-
-Stop testing and report the before/after marker values if an unrelated marker or number changes.
-
-## NPC HP Does Not Roll
-
-Confirm:
-
-- token is selected or on the current player page;
-- token is on the Objects layer;
-- token represents a character;
-- character has `npc=1`;
-- character has a valid `npc_hpformula`, such as `4d8+8`.
-
-## CritFumble Does Not Roll
-
-Confirm:
-
-- `!critfumble help` responds;
-- the exact required table exists and has an item;
-- the direct table command works;
-- automatic detection uses a supported template with a d20 natural 1.
-
-## Queue or Error Counts Increase
-
-Run:
-
-```roll20chat
-!ga-status --details
-!ga-metrics
-!ga-config modules
-```
-
-Queue length describes explicit queued work and module lifecycle transitions. A timeout can release the queue but cannot terminate underlying Roll20 or JavaScript work.
-
-Record evidence before resetting metrics.
-
----
-
-# Bug Report Evidence
-
-When a test fails, record:
-
-- [ ] GameAssist version.
-- [ ] Component and numbered test.
-- [ ] Exact command or token action.
-- [ ] Expected result.
-- [ ] Actual result.
-- [ ] `!ga-status --details` output.
-- [ ] `!ga-config modules` output.
-- [ ] Relevant `!ga-config get <ModuleOrServiceName>` output.
-- [ ] Exact API Console error.
-- [ ] Token name, ID, layer, and linkage.
-- [ ] Relevant character attributes.
-- [ ] Marker values before and after, when applicable.
-- [ ] Whether standalone TokenMod or standalone StatusInfo was installed or detected.
-- [ ] Whether duplicate or overlapping scripts were active.
-
----
-
-# Pre-Session Check
-
-Immediately before a session:
-
-```roll20chat
-!ga-status
-!ga-config modules
-```
-
-Then run only the basic checks for features the session will use:
-
-- MarkerService: one disposable death/revival marker cycle.
-- ConfigUI: open settings.
-- CritFumble: `!critfumble help`.
-- ConditionService: select a disposable token and open `!condition`.
-- TokenService: select a disposable token, open `!token-service help`, and flip one harmless visibility setting twice.
-- ConcentrationTracker: `!concentration --status`.
-- NPCManager: `!npc-death-report`.
-- NPCHPRoller: roll one disposable selected NPC.
-- DebugTools: skip unless deliberately needed.
-
-Do not discover a marker, HP, or table problem for the first time during combat.
+- the notice accuïÏz¶‰ËkºwµçyÑ…”ÕÍ•ÌÑ¡”±½İ•ÈÈÀ¸4(´ltQ¡”¡…É…Ñ•ÈÌ½¹ÍÑ¥ÑÕÑ¥½¹}Í…Ù•}‰½¹ÕÍ€¥Ì¥¹±Õ‘•¸4(´lt€´µ±…ÍÑ€É•Á•…ÑÌÑ¡”ÁÉ¥½È‘…µ…”…¹µ½‘”¸4(´lt€…„µ½¹ŒµÍÑ…ÑÕÍ€ÍÕµµ…É¥é•ÌÉ••¹ĞÉ•½É‘•½¹•¹ÑÉ…Ñ¥½¸…Ñ¥Ù¥Ñä¸4(4)±•…ÈÑ¡”µ…É­•Èè4(4)É½±°ÈÁ¡…Ğ4(…½¹•¹ÑÉ…Ñ¥½¸€´µ½™˜4(…½¹•¹ÑÉ…Ñ¥½¸€´µÍÑ…ÑÕÌ4)€4(4)A…ÍÌİ¡•¸Ñ¡”½¹™¥ÕÉ•µ…É­•È¥ÌÉ•µ½Ù•™É½´Í•±•Ñ•±¥¹­•Ñ½­•¹Ì…¹ÍÑ…ÑÕÌÕÁ‘…Ñ•Ì¸4(4)M•±•Ğ…¸Õ¹±¥¹­•Ñ½­•¸…¹É•Á•…Ğ„¡•¬¸A…ÍÌİ¡•¸…µ•ÍÍ¥ÍĞ•áÁ±…¥¹ÌÑ¡…Ğ„±¥¹­•¡…É…Ñ•È¥ÌÉ•ÅÕ¥É•…¹‘½•Ì¹½Ğ¡…¹”Ñ¡”Ñ½­•¸¸4(4(´´´4(4(ŒŒ€à¸9A5…¹…•È4(4(¨©]¡…ĞÑ¡¥ÌÁÉ½Ù•Ìè¨¨9A5…¹…•ÈÑÉ…­Ì•¹Õ¥¹”!@ÑÉ…¹Í¥Ñ¥½¹Ì°¡…¹•Ì‘•…Ñ µ…É­•ÉÌ°…Õ‘¥ÑÌÕÉÉ•¹ĞµÁ…”µ¥Íµ…Ñ¡•Ì°…¹µ…¥¹Ñ…¥¹ÌÉ•Á½ÉĞ‰Õ­•ÑÌ…¹ÉŒÉ•½É‘Ì¸4(4(¨©]¡äÑ•ÍĞ¥Ğè¨¨9A5…¹…•È½µ‰¥¹•Ì•Ù•¹ĞÑ¥µ¥¹œ°Ñ½­•¸•±¥¥‰¥±¥Ñä°5…É­•ÉM•ÉÙ¥”°Á•ÉÍ¥ÍÑ•¹ĞÍÑ…Ñ”°…¹¡…¹‘½ÕĞİÉ¥Ñ¥¹œ¸4(4(¨©M­¥Àİ¡•¸è¨¨9A5…¹…•È¥Ì‘¥Í…‰±•…¹İ¥±°¹½Ğ‰”ÕÍ•¸4(4(ŒŒŒ	…Í¥Œ¡•¬4(4)=¸Ñ¡”±¥¹­•Ñ•ÍĞ9A°ÍÑ…ÉĞİ¥Ñ Á½Í¥Ñ¥Ù”!@è4(4(Ä¸M•Ğ‰…È€Ä!@Ñ¼€Á€¸4(È¸½¹™¥É´Ñ¡”‘•…Ñ µ…É­•È…ÁÁ•…ÉÌ¸4(Ì¸M•Ğ!@…‰½Ù”€Á€¸4(Ğ¸½¹™¥É´Ñ¡”µ…É­•È±•…ÉÌ¸4(Ô¸IÕ¸è4(4(€€É½±°ÈÁ¡…Ğ4(€€€…¹ÁŒµ‘•…Ñ µÉ•Á½ÉĞ4(€€€…¹ÁŒµ‘•…Ñ µ…Õ‘¥Ğ4(€€€4(4)A…ÍÌİ¡•¸½¹”‘•…Ñ ¥ÌÉ•½É‘•°É•Ù¥Ù…°¥Ì…¹¹½Ñ…Ñ•°…¹Ñ¡”…Õ‘¥ĞÉ•Á½ÉÑÌ¹¼É•µ…¥¹¥¹œµ¥Íµ…Ñ ¸4(4(ŒŒŒ9A5…¹…•È5•¹ÔÕ¥‘”4(4)ğ½µµ…¹ğáÁ•Ñ•ÁÕÉÁ½Í”ğ4)ğ€´´´ğ€´´´ğ4)ğ€…¹ÁŒµ‘•…Ñ µ¡•±Á€ğ•¹ÑÉ…°9A5…¹…•ÈÕ¥‘”¸ğ4)ğ€…¹ÁŒµ‘•…Ñ µÉ•Á½ÉÑ€ğI•…„‰½Õ¹‘•É•Á½ÉĞ™½ÈÑ¡”…Ñ¥Ù”½ÈÉ•ÅÕ•ÍÑ•‰Õ­•Ğ¸ğ4)ğ€…¹ÁŒµ‘•…Ñ µ‰Õ­•ÑÍ€ğI•Ù¥•Ü½ÈÉ•¹…µ”…µÁ…¥¸°¡…ÁÑ•È°M•Ñ¥½¸°…¹M•ÍÍ¥½¸‰Õ­•ÑÌ¸ğ4)ğ€…9Aµ]I€½È€…¹ÁŒµ‘•…Ñ µİÉ¥Ñ•€ğI•Ù¥•ÜÉ•Á½ÉĞÑ…É•ÑÌ‰•™½É”İÉ¥Ñ¥¹œ¡…¹‘½ÕÑÌ¸ğ4)ğ€…¹ÁŒµ‘•…Ñ µ…Õ‘¥Ñ€ğ½µÁ…É”±¥¹­•9A!@İ¥Ñ Ñ¡”½¹™¥ÕÉ•‘•…Ñ µ…É­•È¸ğ4)ğ€…¹ÁŒµ‘•…Ñ µ…É€ğ5…¹…”¥¹‘•Á•¹‘•¹ĞÍÑ½ÉäµÍÁ•¥™¥ŒÉŒÉ•½É‘Ì¸ğ4(4(ŒŒŒáÁ…¹‘•9A5…¹…•È¡•­Ì4(4(ŒŒŒŒ•…Ñ Õ‘¥Ğ4(4)É•…Ñ”„‘•±¥‰•É…Ñ”µ¥Íµ…Ñ è4(4(´±•…Ù”!@‰•±½Ü€Ä…¹µ…¹Õ…±±äÉ•µ½Ù”Ñ¡”‘•…Ñ µ…É­•Èì½È4(´±•…Ù”!@…‰½Ù”€À…¹µ…¹Õ…±±ä…‘Ñ¡”‘•…Ñ µ…É­•È¸4(4)IÕ¸è4(4)É½±°ÈÁ¡…Ğ4(…¹ÁŒµ‘•…Ñ µ…Õ‘¥Ğ4)€4(4)A…ÍÌİ¡•¸è4(4(´¡…ĞÍ¡½İÌÑ¡”µ¥Íµ…Ñ ½Õ¹Ğ…¹É•ÅÕ¥É•…Ñ¥½¸ì4(´Ñ¡”…™™•Ñ•Ñ½­•¸…ÁÁ•…ÉÌÕ¹‘•È€¨©‘•…Ñ 5…É­•È¨¨½È€¨©I•µ½Ù”•…Ñ 5…É­•È¨¨ì4(´!@°µ…É­•ÉÌ°…¹Ñ½­•¸%…É”É•…‘…‰±”ì4(´Ñ¡”™Õ±°±¥ÍĞ…ÁÁ•…ÉÌ¥¸Ñ¡”…µ•ÍÍ¥ÍĞ9A•…Ñ Õ‘¥Ñ€¡…¹‘½ÕĞì4(´Ñ¡”Í½Á”•áÁ±…¥¹ÌÑ¡…Ğ±¥¹­•9AÌ…É”¡•­•…¹AÌ…É”•á±Õ‘•¸4(4)½ÉÉ•Ñ±äµ…É­•9AÌ…É”¥¹Ñ•¹Ñ¥½¹…±±ä½µ¥ÑÑ•¸U¹±¥¹­•Í•¹•Éä°±…‰•±Ì°Á…ÉÑäµ…É­•ÉÌ°…¹ÁÉ½ÁÌµ…ä‰”µ•¹Ñ¥½¹•…Ì¥¹½É•¸4(4(ŒŒŒŒI•Á½ÉÑÌ…¹!…¹‘½ÕÑÌ4(4)IÕ¸è4(4)É½±°ÈÁ¡…Ğ4(…¹ÁŒµ‘•…Ñ µÉ•Á½ÉĞ€´µÉ••¹Ğ4(…¹ÁŒµ‘•…Ñ µÉ•Á½ÉĞ€´µÁ…”€È4(…¹ÁŒµ‘•…Ñ µÉ•Á½ÉĞ€´µÍ½Á”…µÁ…¥¸4(…¹ÁŒµ‘•…Ñ µÉ•Á½ÉĞ€´µÍ½Á”¡…ÁÑ•È4(…¹ÁŒµ‘•…Ñ µÉ•Á½ÉĞ€´µÍ½Á”Í•Ñ¥½¸4(…¹ÁŒµ‘•…Ñ µÉ•Á½ÉĞ€´µÍ½Á”Í•ÍÍ¥½¸4(…9Aµ]H4)€4(4)A…ÍÌİ¡•¸¡…ĞÍÕµµ…É¥•ÌÉ•µ…¥¸‰½Õ¹‘•°Í½Á•Ì…É”±•…É±ä¹…µ•°…¹Ñ¡”İÉ¥Ñ•Èµ•¹Ô‘½•Ì¹½Ğ¡…¹”½Õ¹ÑÌµ•É•±ä‰ä½Á•¹¥¹œ¸4(4(ŒŒŒŒ…µÁ…¥¸°¡…ÁÑ•È°M•Ñ¥½¸°…¹M•ÍÍ¥½¸4(4)UÍ”™É•Í ‘¥ÍÁ½Í…‰±”¹…µ•Ìè4(4)É½±°ÈÁ¡…Ğ4(…¹ÁŒµ‘•…Ñ µ‰Õ­•ÑÌ€´µ…µÁ…¥¸€‰Mµ½­”…µÁ…¥¸ˆ4(…¹ÁŒµ‘•…Ñ µ‰Õ­•ÑÌ€´µ¡…ÁÑ•È€‰Mµ½­”¡…ÁÑ•Èˆ4(…¹ÁŒµ‘•…Ñ µ‰Õ­•ÑÌ€´µÍ•Ñ¥½¸€‰Mµ½­”M•Ñ¥½¸ˆ4(…¹ÁŒµ‘•…Ñ µ‰Õ­•ÑÌ€´µÍ•ÍÍ¥½¸€‰Mµ½­”M•ÍÍ¥½¸ˆ4(…¹ÁŒµ‘•…Ñ µ‰Õ­•ÑÌ4)€4(4)I•½É½¹”¹•Ü‘•…Ñ °Ñ¡•¸¡•¬…±°™½ÕÈÍ½Á•Ìè4(4)É½±°ÈÁ¡…Ğ4(…¹ÁŒµ‘•…Ñ µÉ•Á½ÉĞ€´µÍ½Á”…µÁ…¥¸4(…¹ÁŒµ‘•…Ñ µÉ•Á½ÉĞ€´µÍ½Á”¡…ÁÑ•È4(…¹ÁŒµ‘•…Ñ µÉ•Á½ÉĞ€´µÍ½Á”Í•Ñ¥½¸4(…¹ÁŒµ‘•…Ñ µÉ•Á½ÉĞ€´µÍ½Á”Í•ÍÍ¥½¸4(…¹ÁŒµ‘•…Ñ µİÉ¥Ñ”€´µ…±°4)€4(4)A…ÍÌİ¡•¸Ñ¡”‘•…Ñ …ÁÁ•…ÉÌ½¹”¥¸•Ù•Éä…Ñ¥Ù”Í½Á”…¹Ñ¡”™½ÕÈµ…Ñ¡¥¹œ¡…¹‘½ÕÑÌ…É”É•…Ñ•½ÈÕÁ‘…Ñ•¸4(4)¡…¹¥¹œ…¸…Ñ¥Ù”‰Õ­•Ğ¹…µ”ÍÑ…ÉÑÌ½ÈÉ•ÍÕµ•ÌÑ¡…Ğ¹…µ•‰Õ­•Ğ¸%Ğ‘½•Ì¹½Ğ‘•±•Ñ”Ñ¡”ÁÉ•Ù¥½ÕÌ¡…¹‘½ÕĞ¸4(4(ŒŒŒŒMÑ…ÉĞ„9•ÜM•Ñ¥½¸™É½´Ñ¡”ÕÉÉ•¹ĞM•ÍÍ¥½¸4(4)IÕ¸è4(4)É½±°ÈÁ¡…Ğ4(…¹ÁŒµ‘•…Ñ µİÉ¥Ñ”€´µ¹•İM•Ñ¥½¸€‰Mµ½­”M•Ñ¥½¸Qİ¼ˆ4(…¹ÁŒµ‘•…Ñ µÉ•Á½ÉĞ€´µÍ½Á”Í•Ñ¥½¸4(…¹ÁŒµ‘•…Ñ µÉ•Á½ÉĞ€´µÍ½Á”Í•ÍÍ¥½¸4)€4(4)A…ÍÌİ¡•¸Ñ¡”ÕÉÉ•¹ĞM•ÍÍ¥½¸¥Ì…ÁÁ•¹‘•½¹”Ñ¼Ñ¡”¹•ÜM•Ñ¥½¸°M•ÍÍ¥½¸É•µ…¥¹ÌÕ¹¡…¹•°…¹É•Á•…Ñ¥¹œÑ¡”½µµ…¹‘½•Ì¹½Ğ‘ÕÁ±¥…Ñ”•¹ÑÉ¥•Ì¸4(4(ŒŒŒŒÉŒ•‘ÕÁ±¥…Ñ¥½¸…¹I•½Ù•Éä4(4)]¥Ñ Ñ¡”Ñ•ÍĞ9AÍ•±•Ñ•è4(4)É½±°ÈÁ¡…Ğ4(…¹ÁŒµ‘•…Ñ µ…ÉŒ€´µ¹…µ”€‰Mµ½­”Q•ÍĞÉŒˆ4(…¹ÁŒµ‘•…Ñ µ…ÉŒ€´µ¹…µ”€‰Mµ½­”Q•ÍĞÉŒˆ€´µÍ•ÍÍ¥½¸4(…¹ÁŒµ‘•…Ñ µ…ÉŒ€´µ¹…µ”€‰Mµ½­”Q•ÍĞÉŒˆ€´µµ…¹…”4)€4(4)A…ÍÌİ¡•¸Ñ¡”Í•±•Ñ•9A…ÁÁ•…ÉÌ½¹”…¹…ÁÁ•¹‘¥¹œÑ¡”M•ÍÍ¥½¸ÕÁ‘…Ñ•ÌÉ…Ñ¡•ÈÑ¡…¸‘ÕÁ±¥…Ñ•Ì¥Ğ¸4(4)Q•ÍĞÑ¡”•áÁ±¥¥Ğ‘ÕÁ±¥…Ñ”½Ù•ÉÉ¥‘”…¹Õ¹‘¼è4(4)É½±°ÈÁ¡…Ğ4(…¹ÁŒµ‘•…Ñ µ…ÉŒ€´µ¹…µ”€‰Mµ½­”Q•ÍĞÉŒˆ€´µÍ•ÍÍ¥½¸€´µ…±±½İÕÁ±¥…Ñ•Ì4(…¹ÁŒµ‘•…Ñ µ…ÉŒ€´µ¹…µ”€‰Mµ½­”Q•ÍĞÉŒˆ€´µÕ¹‘¼4)€4(4)A…ÍÌİ¡•¸Ñ¡”™¥ÉÍĞ½µµ…¹‘•±¥‰•É…Ñ•±ä‘ÕÁ±¥…Ñ•ÌÑ¡”•¹ÑÉä…¹Õ¹‘¼É•µ½Ù•Ì½¹±äÑ¡”±…ÍĞ…‘‘¥Ñ¥½¸¸4(4)]¥Ñ Ñ¡”Ñ½­•¸Í•±•Ñ•è4(4)É½±°ÈÁ¡…Ğ4(…¹ÁŒµ‘•…Ñ µ…ÉŒ€´µ¹…µ”€‰Mµ½­”Q•ÍĞÉŒˆ€´µÉ•µ½Ù•M•±•Ñ•4)€4(4)A…ÍÌİ¡•¸½¹±äÑ¡”ÉŒ•¹ÑÉä¥ÌÉ•µ½Ù•ì…µÁ…¥¸°¡…ÁÑ•È°M•Ñ¥½¸°…¹M•ÍÍ¥½¸¡¥ÍÑ½ÉäÉ•µ…¥¹Ì¸4(4(ŒŒŒŒ±•…È=¹±ä…¹±•…È9•ÍÑ•4(4)¥ÉÍĞ½Á•¸„½¹™¥Éµ…Ñ¥½¸İ¥Ñ¡½ÕĞ‘•±•Ñ¥¹œè4(4)É½±°ÈÁ¡…Ğ4(…¹ÁŒµ‘•…Ñ µ±•…È€´µÍ½Á”Í•Ñ¥½¸4)€4(4)Q¡”µ•¹ÔÍ¡½Õ±½™™•È€¨©±•…È=¹±äM•Ñ¥½¸¨¨…¹€¨©±•…ÈM•Ñ¥½¸¹	•±½Ü¨¨¸4(4)ğM•±•Ñ•Í½Á”ğ±•…È½¹±äğ±•…È¹•ÍÑ•ğ4)ğ€´´´ğ€´´´ğ€´´´ğ4)ğ…µÁ…¥¸ğ…µÁ…¥¸ğ…µÁ…¥¸°¡…ÁÑ•È°M•Ñ¥½¸°M•ÍÍ¥½¸ğ4)ğ¡…ÁÑ•Èğ¡…ÁÑ•Èğ¡…ÁÑ•È°M•Ñ¥½¸°M•ÍÍ¥½¸ğ4)ğM•Ñ¥½¸ğM•Ñ¥½¸ğM•Ñ¥½¸°M•ÍÍ¥½¸ğ4)ğM•ÍÍ¥½¸ğM•ÍÍ¥½¸ğ9¼¡¥±Í½Á•Ìğ4(4)UÍ”€´µ½¹™¥Éµ€½¹±ä½¸‘¥ÍÁ½Í…‰±”Ñ•ÍĞ¡¥ÍÑ½Éäè4(4)É½±°ÈÁ¡…Ğ4(…¹ÁŒµ‘•…Ñ µ±•…È€´µÍ½Á”Í•Ñ¥½¸€´µ¹•ÍÑ•€´µ½¹™¥É´4)€4(4)A…ÍÌİ¡•¸M•Ñ¥½¸…¹M•ÍÍ¥½¸±•…Èİ¡¥±”…µÁ…¥¸…¹¡…ÁÑ•ÈÉ•µ…¥¸¸4(4(ŒŒŒŒ…Ñ”µ5…¹…•M•ÍÍ¥½¸4(4)Q¡”‘•™…Õ±ĞM•ÍÍ¥½¸™½±±½İÌÑ¡”Í…¹‘‰½àÌUQ‘…Ñ”¸=¸Ñ¡”¹•áĞ9A5…¹…•È½µµ…¹½ÈÅÕ…±¥™å¥¹œ!@¡…¹”…™Ñ•ÈÑ¡…Ğ‘…Ñ”¡…¹•Ì°„‘…Ñ”µµ…¹…•M•ÍÍ¥½¸Í¡½Õ±µ½Ù”Ñ¼Ñ¡”¹•Ü‘…Ñ”¸µ…¹Õ…±±ä¹…µ•M•ÍÍ¥½¸Í¡½Õ±¹½ĞÉ½±°½Ù•ÈÕ¹Ñ¥°€¨©I•Í•ĞM•ÍÍ¥½¸…Ñ”¨¨¥ÌÕÍ•¸4(4)M­¥ÀÑ¡¥ÌÑ•ÍĞÕ¹±•ÍÌÑ¡”Ñ•ÍĞ¹…ÑÕÉ…±±äÉ½ÍÍ•Ìµ¥‘¹¥¡ĞUQìØÀ¸Ä¸Ô¸À¡…Ì¹¼™…­”µ±½¬½µµ…¹¸4(4(ŒŒŒŒÕÑ¼µ!¥‘”4(4)¡•¬è4(4)É½±°ÈÁ¡…Ğ4(…„µ½¹™¥œ•Ğ9A5…¹…•È…ÕÑ½!¥‘”4(…„µ½¹™¥œ•Ğ9A5…¹…•È¡¥‘•1…å•È4)€4(4)•™…Õ±Ğ‰•¡…Ù¥½È¥Ì…ÕÑ½!¥‘”õ™…±Í•€¸%˜•¹…‰±•°‘•…9AÌ¥¹Ñ•¹Ñ¥½¹…±±äµ½Ù”Ñ¼Ñ¡”½¹™¥ÕÉ•±…å•È¸Q•ÍĞ½¹±äİ¥Ñ ‘¥ÍÁ½Í…‰±”Ñ½­•¹Ì¸4(4(´´´4(4(ŒŒ€ä¸9A!AI½±±•È4(4(¨©]¡…ĞÑ¡¥ÌÁÉ½Ù•Ìè¨¨9A!AI½±±•ÈÉ•½¹¥é•ÌÅÕ…±¥™å¥¹œ9AÌ°É½±±Ì¹Á}¡Á™½ÉµÕ±…€°…¹ÁÉ½Ñ•ÑÌ¥¹¥Ñ¥…±¥é…Ñ¥½¸™É½´™…±Í”‘•…Ñ ¡¥ÍÑ½Éä¸4(4(¨©]¡äÑ•ÍĞ¥Ğè¨¨‰É½…!@½Á•É…Ñ¥½¸µÕÍĞ¹½Ğµ½‘¥™äAÌ°Õ¹±¥¹­•Ñ½­•¹Ì°½È9A5…¹…•È¡¥ÍÑ½Éä¥¹½ÉÉ•Ñ±ä¸4(4(¨©M­¥Àİ¡•¸è¨¨9A!AI½±±•È¥Ì‘¥Í…‰±•…¹…±°9A!@¥Ìµ…¹…•µ…¹Õ…±±ä½È‰ä…¹½Ñ¡•ÈÍÉ¥ÁĞ¸4(4(ŒŒŒ	…Í¥Œ¡•¬4(4)M•±•ĞÑ¡”±¥¹­•Ñ•ÍĞ9A…¹ÉÕ¸è4(4)É½±°ÈÁ¡…Ğ4(…¹ÁŒµ¡ÀµÍ•±•Ñ•4)€4(4)A…ÍÌİ¡•¸‰…È€ÄÕÉÉ•¹Ğ…¹µ…á¥µÕ´‰•½µ”Ñ¡”Í…µ”É½±±•Ù…±Õ”…¹Ñ¡”É•ÍÕ±Ğ¥‘•¹Ñ¥™¥•ÌÑ¡”9A…¹™½ÉµÕ±„¸4(4(ŒŒŒáÁ…¹‘•9A!AI½±±•È¡•­Ì4(4(ŒŒŒŒ5¥á•M•±•Ñ¥½¸4(4)M•±•ĞÑ¡”±¥¹­•9A°±¥¹­•A°…¹Õ¹±¥¹­•Ñ½­•¸è4(4)É½±°ÈÁ¡…Ğ4(…¹ÁŒµ¡ÀµÍ•±•Ñ•4)€4(4)A…ÍÌİ¡•¸½¹±äÑ¡”ÅÕ…±¥™å¥¹œ9AÉ••¥Ù•ÌÉ½±±•!@¸4(4(ŒŒŒŒÕÉÉ•¹ĞA…”4(4)=¸Ñ¡”‘¥ÍÁ½Í…‰±”Á…”è4(4)É½±°ÈÁ¡…Ğ4(…¹ÁŒµ¡Àµ…±°4)€4(4)A…ÍÌİ¡•¸ÅÕ…±¥™å¥¹œ9AÌÉ½±°°AÌÉ•µ…¥¸Õ¹¡…¹•°…¹Õ¹±¥¹­•Ñ½­•¹Ì…É”Í­¥ÁÁ•¸4(4(ŒŒŒŒ%¹Ù…±¥½ÉµÕ±„4(4)Q•µÁ½É…É¥±äÉ•Á±…”¹Á}¡Á™½ÉµÕ±…€İ¥Ñ ¥¹Ù…±¥Ñ•áĞ…¹ÉÕ¸€…¹ÁŒµ¡ÀµÍ•±•Ñ•‘€¸4(4)A…ÍÌİ¡•¸…µ•ÍÍ¥ÍĞÉ•Á½ÉÑÌÑ¡”¥¹Ù…±¥™½ÉµÕ±„İ¥Ñ¡½ÕĞ…ÁÁ±å¥¹œ‰…!@¸I•ÍÑ½É”Ñ¡”™½ÉµÕ±„…™Ñ•Éİ…É¸4(4(ŒŒŒŒÕÑ¼µI½±°½¸‘4(4)Q¡¥Ì™•…ÑÕÉ”‘•™…Õ±ÑÌÑ¼½™˜¸Q•ÍĞ½¹±ä¥¸„‘¥ÍÁ½Í…‰±”…µÁ…¥¸è4(4)É½±°ÈÁ¡…Ğ4(…„µ½¹™¥œÍ•Ğ9A!AI½±±•È…ÕÑ½I½±±=¹‘õÑÉÕ”4)€4(4)‘„ÅÕ…±¥™å¥¹œ±¥¹­•9AÑ½­•¸¸4(4)A…ÍÌİ¡•¸è4(4(´!@¥ÌÉ½±±•…ÕÑ½µ…Ñ¥…±±äì4(´¹¼Ñ•µÁ½É…Éä‘•…Ñ µ…É­•È…ÁÁ•…ÉÌì4(´¹¼™…±Í”‘•…Ñ ½É•Ù¥Ù…°Á…¥È•¹Ñ•ÉÌ…¹ä9A5…¹…•È‰Õ­•Ğì4(´„±…Ñ•È•¹Õ¥¹”Á½Í¥Ñ¥Ù”µÑ¼µé•É¼ÑÉ…¹Í¥Ñ¥½¸¥ÌÑÉ…­•¹½Éµ…±±ä¸4(4)I•ÍÑ½É”Ñ¡”‘•™…Õ±Ğè4(4)É½±°ÈÁ¡…Ğ4(…„µ½¹™¥œÍ•Ğ9A!AI½±±•È…ÕÑ½I½±±=¹‘õ™…±Í”4)€4(4(´´´4(4(ŒŒ€ÄÀ¸•‰ÕQ½½±Ì4(4(¨©]¡…ĞÑ¡¥ÌÁÉ½Ù•Ìè¨¨•‰ÕQ½½±ÌÉ•µ…¥¹Ì½ÁĞµ¥¸°ÁÉ•Ù¥•İÌµÕÑ…Ñ¥½¹Ì‰ä‘•™…Õ±Ğ°…¹É•ÅÕ¥É•Ì€´µ…ÁÁ±å€¸4(4(¨©]¡äÑ•ÍĞ¥Ğè¨¨¥…¹½ÍÑ¥ÌÍ¡½Õ±¹½Ğ…±Ñ•È…µÁ…¥¸ÍÑ…Ñ”…¥‘•¹Ñ…±±ä¸4(4(¨©M­¥Àİ¡•¸è¨¨9½Éµ…±±äÍ­¥ÀÕ¹±•ÍÌÙ…±¥‘…Ñ¥¹œ„É•±•…Í”½ÈÑÉ½Õ‰±•Í¡½½Ñ¥¹œ5…É­•ÉM•ÉÙ¥”°!@°½ÈÍ…Ù”‰•¡…Ù¥½È¸4(4(ŒŒŒ	…Í¥Œ¡•¬4(4)IÕ¸•… ½µµ…¹Í•Á…É…Ñ•±äè4(4)É½±°ÈÁ¡…Ğ4(…„µ•¹…‰±”•‰ÕQ½½±Ì4(…„µ‘•‰Õœ4)€4(4)A…ÍÌİ¡•¸•‰ÕQ½½±Ì‰•½µ•Ì…Ñ¥Ù”…¹¥ÑÌ¡•±À…ÁÁ•…ÉÌ¸4(4(ŒŒŒáÁ…¹‘••‰ÕQ½½±Ì¡•­Ì4(4)]¥Ñ „‘¥ÍÁ½Í…‰±”Ñ½­•¸Í•±•Ñ•è4(4)É½±°ÈÁ¡…Ğ4(…„µ‘•‰Õœ‘…µ…”€´µ…µ½Õ¹Ğ€È4(…„µ‘•‰Õœµ…É­•È€´µµ…É­•È‰±Õ”€´µÍÑ…Ñ”Ñ½±”4(…„µ‘•‰ÕœÍ…Ù”€´µ‘Œ€ÄÈ€´µ‰½¹ÕÌ€Ì€´µµ½‘”…‘Ø€´µ±…‰•°€‰Mµ½­”Q•ÍĞˆ4)€4(4)A…ÍÌİ¡•¸…±°Ñ¡É•”½µµ…¹‘ÌÁÉ•Ù¥•Ü…Ñ¥½¹Ìİ¥Ñ¡½ÕĞ¡…¹¥¹œ!@°µ…É­•ÉÌ°½ÈÉ½±±¥¹œ¸4(4)ÁÁ±ä•… Ñ•ÍĞè4(4)É½±°ÈÁ¡…Ğ4(…„µ‘•‰Õœ‘…µ…”€´µ…µ½Õ¹Ğ€È€´µ…ÁÁ±ä4(…„µ‘•‰Õœµ…É­•È€´µµ…É­•È‰±Õ”€´µÍÑ…Ñ”Ñ½±”€´µ…ÁÁ±ä4(…„µ‘•‰ÕœÍ…Ù”€´µ‘Œ€ÄÈ€´µ‰½¹ÕÌ€Ì€´µµ½‘”…‘Ø€´µ±…‰•°€‰Mµ½­”Q•ÍĞˆ€´µ…ÁÁ±ä4)€4(4)A…ÍÌİ¡•¸è4(4(´‘…µ…”¡…¹•Ì!@‰ä•á…Ñ±ä€Èİ¥Ñ¡½ÕĞ½¥¹œ‰•±½Üé•É¼ì4(´Ñ¡”µ…É­•È…Ñ¥½¸¡…¹•Ì½¹±äÑ¡”É•ÅÕ•ÍÑ•µ…É­•ÈÑ¡É½Õ 5…É­•ÉM•ÉÙ¥”ì4(´Ñ¡”Í…Ù”É½±±Ì…¹İ¡¥ÍÁ•ÉÌ¥ÑÌÉ•ÍÕ±Ğ¸4(4)I•ÑÕÉ¸•‰ÕQ½½±ÌÑ¼¥ÑÌ‘•™…Õ±ĞÍÑ…Ñ”è4(4)É½±°ÈÁ¡…Ğ4(…„µ‘¥Í…‰±”•‰ÕQ½½±Ì4(…„µ½¹™¥œµ½‘Õ±•Ì4)€4(4(´´´4(4(ŒÉ½ÍÌµ½µÁ½¹•¹Ğ¡•­Ì4(4(ŒŒA•Éµ¥ÍÍ¥½¹Ì4(4(¨©AÕÉÁ½Í”è¨¨½¹™¥É´4µ½¹±ä…‘µ¥¹¥ÍÑÉ…Ñ¥½¸…¹¹½Ğ‰”ÉÕ¸‰ä½É‘¥¹…ÉäÁ±…å•ÉÌ¸4(4(¨©M­¥Àİ¡•¸è¨¨M­¥À½¹±ä¥˜¹¼Á±…å•È…½Õ¹Ğ¥Ì…Ù…¥±…‰±”ìÉ•½É¥Ğ…ÌÕ¹Ñ•ÍÑ•¸4(4)É½´„¹½¸µ4…½Õ¹Ğ°ÑÉäè4(4)É½±°ÈÁ¡…Ğ4(…„µÍÑ…ÑÕÌ4(…„µ½¹™¥œµ½‘Õ±•Ì4(…½¹‘¥Ñ¥½¸½¹™¥œ4(…½¹‘¥Ñ¥½¸…‘ÁÉ½¹”4(…Ñ½­•¸µ…ÍÍ¥ÍĞ½¹™¥œ4(…Ñ½­•¸µ…ÍÍ¥ÍĞ€´µ¥‘ÌQ=-9}%€´µ™±¥ÀÍ¡½İ¹…µ”4(…¹ÁŒµ¡Àµ…±°4(…¹ÁŒµ‘•…Ñ µ…Õ‘¥Ğ4)€4(4)A…ÍÌİ¡•¸4µ½¹±ä…Ñ¥½¹Ì‘¼¹½Ğ•á•ÕÑ”™½ÈÑ¡”Á±…å•È¸Q½­•¹ÍÍ¥ÍĞÍ¡½Õ±É•™ÕÍ”•áÁ±¥¥Ğµ%Ñ…É•Ñ¥¹œİ¡¥±”Á±…å•ÉÌµ…¸µ¥‘Í€¥Ì½™˜°‰ÕĞÍ•±•Ñ•µÑ½­•¸½µµ…¹‘ÌÉ•µ…¥¸…Ù…¥±…‰±”™½ÈÑ½­•¹ÌÑ¡”Á±…å•È½¹ÑÉ½±Ì¸4(4(ŒŒÕÁ±¥…Ñ”%¹ÍÑ…±±…Ñ¥½¸4(4(¨©AÕÉÁ½Í”è¨¨½¹™¥É´½¹”¡…Ğ½µµ…¹ÁÉ½‘Õ•Ì½¹”É•ÍÁ½¹Í”¸4(4(¨©M­¥Àİ¡•¸è¨¨9•Ù•ÈÍ­¥Àİ¡•¸½µµ…¹‘ÌÉ•ÍÁ½¹Ñİ¥”¸4(4)%˜„½µµ…¹ÁÉ½‘Õ•Ì‘ÕÁ±¥…Ñ”½ÕÑÁÕĞè4(4(Ä¸¡•¬Ñ¡”5½½A$Á…”™½ÈµÕ±Ñ¥Á±”…µ•ÍÍ¥ÍĞ½Á¥•Ì¸4(È¸¡•¬™½È½±‘•ÈÍÑ…¹‘…±½¹”ÍÉ¥ÁÑÌÑ¡…Ğ¥µÁ±•µ•¹ĞÑ¡”Í…µ”™•…ÑÕÉ”¸4(Ì¸-••À½¹±äÑ¡”¥¹Ñ•¹‘•¥µÁ±•µ•¹Ñ…Ñ¥½¸¸4(Ğ¸I•ÍÑ…ÉĞÑ¡”Í…¹‘‰½à…¹É•Á•…ĞÑ¡”½µµ…¹¸4(4)MÉ¥ÁÑÌÑ¡…Ğ¥¹‘•Á•¹‘•¹Ñ±äÉ•ÍÁ½¹Ñ¼€…½¹‘¥Ñ¥½¹€½È€…Ñ½­•¸µµ½‘€°‘•ÍÉ¥‰”Ñ¡”Í…µ”µ…É­•È¡…¹•Ì°µ½‘¥™äÑ¡”Í…µ”9A!@½‰…È€Ä°½¹ÑÉ½°Ñ¡”Í…µ”Ñ½­•¸ÁÉ½Á•ÉÑ¥•Ì½È‘•…Ñ ½½¹•¹ÑÉ…Ñ¥½¸½½¹‘¥Ñ¥½¸µ…É­•ÉÌ°½ÈÁÉ½•ÍÌÑ¡”Í…µ”9…ÑÕÉ…°€Äİ½É­™±½Üµ…ä½¹™±¥Ğ•Ù•¸İ¡•¸Ñ¡•¥È¹…µ•Ì‘¥™™•È¸Q½­•¹ÍÍ¥ÍĞ‘•±¥‰•É…Ñ•±äÍÕÍÁ•¹‘Ì½¹±ä¥ÑÌ‘•ÁÉ•…Ñ•€…Ñ½­•¸µµ½‘€…±¥…Ìİ¡•¸ÍÑ…¹‘…±½¹”Q½­•¹5½¥Ì‘•Ñ•Ñ•°‰ÕĞÑ¡”ÍÑ…¹‘…±½¹”½ÁäÍ¡½Õ±ÍÑ¥±°‰”É•µ½Ù•™½È¹½Éµ…°ØÀ¸Ä¸Ô¸ÀÕÍ”¸4(4(ŒŒMÑ…Ñ”I•½Ù•Éä4(4(¨©AÕÉÁ½Í”è¨¨½¹™¥É´­¹½İ¸ÍÑ…Ñ”½¹Ñ…¥¹•ÉÌÍ•±˜µ¡•…°İ¡¥±”Õ¹­¹½İ¸‰É…¹¡•Ì…É”ÁÉ•Í•ÉÙ•™½ÈÉ•Ù¥•Ü¸4(4(¨©M­¥Àİ¡•¸è¨¨M­¥À¥¹Ñ•¹Ñ¥½¹…°ÍÑ…Ñ”½ÉÉÕÁÑ¥½¸½ÕÑÍ¥‘”„‘¥ÍÁ½Í…‰±”Ñ•ÍĞ…µÁ…¥¸¸4(4)M…™”É•Ù¥•Üè4(4)É½±°ÈÁ¡…Ğ4(…„µÍÑ…ÑÕÌ4(…„µµ•ÑÉ¥Ì4(…„µ½¹™¥œ±¥ÍĞ4)€4(4)¼¹½ĞÉÕ¸€…„µ½¹™¥œ±•…¹ÕÁ€µ•É•±äÑ¼Ñ•ÍĞ¥Ğ¸±•…¹ÕÀ‘•±•Ñ•ÌÕ¹­¹½İ¸½È½ÉÁ¡…¹•ÍÑ…Ñ”¹…µ•ÍÍ¥ÍÑ€‰É…¹¡•Ì…™Ñ•È•áÁ±¥¥Ğ½¹™¥Éµ…Ñ¥½¸¸4(4(´´´4(4(ŒQÉ½Õ‰±•Í¡½½Ñ¥¹œ‰äMåµÁÑ½´4(4(ŒŒ9½Ñ¡¥¹œI•ÍÁ½¹‘Ì4(4(Ä¸]…¥Ğ™½ÈÑ¡”5½Í…¹‘‰½àÉ•ÍÑ…ÉĞ¸4(È¸¡•¬Ñ¡”A$½¹Í½±”™½È„…µ•ÍÍ¥ÍĞÍå¹Ñ…à½ÈÉ•™•É•¹”•ÉÉ½È¸4(Ì¸½¹™¥É´…µ•ÍÍ¥ÍĞ¥Ì•¹…‰±•¸4(Ğ¸I•µ½Ù”‘ÕÁ±¥…Ñ”½È‰É½­•¸½Á¥•Ì¸4(Ô¸I•ÑÉä€…„µÍÑ…ÑÕÍ€¸4(4)M½±Ù”Ñ¡”½É”ÁÉ½‰±•´‰•™½É”Ñ•ÍÑ¥¹œµ½‘Õ±•Ì¸4(4(ŒŒ=¹”5½‘Õ±”%ÌM¥±•¹Ğ4(4)IÕ¸è4(4)É½±°ÈÁ¡…Ğ4(…„µ½¹™¥œµ½‘Õ±•Ì4(…„µ½¹™¥œ•Ğ€ñ5½‘Õ±•=ÉM•ÉÙ¥•9…µ”ø4(…„µ•¹…‰±”€ñ5½‘Õ±•=ÉM•ÉÙ¥•9…µ”ø4)€4(4)¡•¬Ñ¡”½¹™¥ÕÉ•ÍÑ…Ñ”°ÉÕ¹¹¥¹œÍÑ…Ñ”°•á…Ğ½µµ…¹ÍÁ•±±¥¹œ°…¹Ñ•ÍĞµÑ½­•¸•±¥¥‰¥±¥Ñä¸I•…Ñ¡”•¹…‰±”É•ÍÁ½¹Í”‰•™½É”¡…¹¥¹œµ½É”Í•ÑÑ¥¹Ì¸4(4(ŒŒ5…É­•ÈÕÑ½µ…Ñ¥½¸…¥±Ì4(4)IÕ¸è4(4)É½±°ÈÁ¡…Ğ4(…„µÍÑ…ÑÕÌ€´µ‘•Ñ…¥±Ì4(…„µ½¹™¥œ•Ğ9A5…¹…•È‘•…‘5…É­•È4(…„µ½¹™¥œ•Ğ½¹•¹ÑÉ…Ñ¥½¹QÉ…­•Èµ…É­•È4(…Ñ½­•¸µ…ÍÍ¥ÍĞ€´µ¡•±ÀµÍÑ…ÑÕÍµ…É­•ÉÌ4(…¹ÁŒµ‘•…Ñ µ…Õ‘¥Ğ4(…½¹•¹ÑÉ…Ñ¥½¸€´µÍÑ…ÑÕÌ4)€4(4)¡•¬è4(4(´5…É­•ÉM•ÉÙ¥”¥Ì•¹…‰±•¸4(´Q¡”…™™•Ñ•µ½‘Õ±”¥ÌÉÕ¹¹¥¹œ¸4(´Q¡”Ñ½­•¸¥Ì½¸Ñ¡”=‰©•ÑÌ±…å•È…¹É•ÁÉ•Í•¹ÑÌÑ¡”É¥¡Ğ¡…É…Ñ•È¸4(´9A5…¹…•ÈÑ½­•¹Ì¡…Ù”¹ÁŒôÅ€¸4(´Q¡”½¹™¥ÕÉ•‰Õ¥±Ğµ¥¸µ…É­•È°ÕÍÑ½´‘¥ÍÁ±…ä¹…µ”°½È•á…ĞÍÑ½É•Ñ…œ•á¥ÍÑÌ¸4(´Q¡”!@½È½¹•¹ÑÉ…Ñ¥½¸½ÕÑ½µ”…ÑÕ…±±äÉ•ÅÕ•ÍÑ•Ñ¡”•áÁ•Ñ•µ…É­•ÈÍÑ…Ñ”¸4(4)MÑ…¹‘…±½¹”Q½­•¹5½Á•Éµ¥ÍÍ¥½¹Ì…É”¹½Ğ„É•Á…¥È™½È…µ•ÍÍ¥ÍĞµ…É­•È™…¥±ÕÉ•Ì¥¸ØÀ¸Ä¸Ô¸À¸4(4)MÑ½ÀÑ•ÍÑ¥¹œ…¹É•Á½ÉĞÑ¡”‰•™½É”½…™Ñ•Èµ…É­•ÈÙ…±Õ•Ì¥˜…¸Õ¹É•±…Ñ•µ…É­•È½È¹Õµ‰•È¡…¹•Ì¸4(4(ŒŒ9A!@½•Ì9½ĞI½±°4(4)½¹™¥É´è4(4(´Ñ½­•¸¥ÌÍ•±•Ñ•½È½¸Ñ¡”ÕÉÉ•¹ĞÁ±…å•ÈÁ…”ì4(´Ñ½­•¸¥Ì½¸Ñ¡”=‰©•ÑÌ±…å•Èì4(´Ñ½­•¸É•ÁÉ•Í•¹ÑÌ„¡…É…Ñ•Èì4(´¡…É…Ñ•È¡…Ì¹ÁŒôÅ€ì4(´¡…É…Ñ•È¡…Ì„Ù…±¥¹Á}¡Á™½ÉµÕ±…€°ÍÕ …Ì€Ñà¬á€¸4(4(ŒŒÉ¥ÑÕµ‰±”½•Ì9½ĞI½±°4(4)½¹™¥É´è4(4(´€…É¥Ñ™Õµ‰±”¡•±Á€É•ÍÁ½¹‘Ìì4(´Ñ¡”•á…ĞÉ•ÅÕ¥É•Ñ…‰±”•á¥ÍÑÌ…¹¡…Ì…¸¥Ñ•´ì4(´Ñ¡”‘¥É•ĞÑ…‰±”½µµ…¹İ½É­Ìì4(´…ÕÑ½µ…Ñ¥Œ‘•Ñ•Ñ¥½¸ÕÍ•Ì„ÍÕÁÁ½ÉÑ•Ñ•µÁ±…Ñ”İ¥Ñ „ÈÀ¹…ÑÕÉ…°€Ä¸4(4(ŒŒEÕ•Õ”½ÈÉÉ½È½Õ¹ÑÌ%¹É•…Í”4(4)IÕ¸è4(4)É½±°ÈÁ¡…Ğ4(…„µÍÑ…ÑÕÌ€´µ‘•Ñ…¥±Ì4(…„µµ•ÑÉ¥Ì4(…„µ½¹™¥œµ½‘Õ±•Ì4)€4(4)EÕ•Õ”±•¹Ñ ‘•ÍÉ¥‰•Ì•áÁ±¥¥ĞÅÕ•Õ•İ½É¬…¹µ½‘Õ±”±¥™•å±”ÑÉ…¹Í¥Ñ¥½¹Ì¸Ñ¥µ•½ÕĞ…¸É•±•…Í”Ñ¡”ÅÕ•Õ”‰ÕĞ…¹¹½ĞÑ•Éµ¥¹…Ñ”Õ¹‘•É±å¥¹œI½±°ÈÀ½È)…Ù…MÉ¥ÁĞİ½É¬¸4(4)I•½É•Ù¥‘•¹”‰•™½É”É•Í•ÑÑ¥¹œµ•ÑÉ¥Ì¸4(4(´´´4(4(Œ	ÕœI•Á½ÉĞÙ¥‘•¹”4(4)]¡•¸„Ñ•ÍĞ™…¥±Ì°É•½Éè4(4(´lt…µ•ÍÍ¥ÍĞÙ•ÉÍ¥½¸¸4(´lt½µÁ½¹•¹Ğ…¹¹Õµ‰•É•Ñ•ÍĞ¸4(´ltá…Ğ½µµ…¹½ÈÑ½­•¸…Ñ¥½¸¸4(´ltáÁ•Ñ•É•ÍÕ±Ğ¸4(´ltÑÕ…°É•ÍÕ±Ğ¸4(´lt€…„µÍÑ…ÑÕÌ€´µ‘•Ñ…¥±Í€½ÕÑÁÕĞ¸4(´lt€…„µ½¹™¥œµ½‘Õ±•Í€½ÕÑÁÕĞ¸4(´ltI•±•Ù…¹Ğ€…„µ½¹™¥œ•Ğ€ñ5½‘Õ±•=ÉM•ÉÙ¥•9…µ”ù€½ÕÑÁÕĞ¸4(´ltá…ĞA$½¹Í½±”•ÉÉ½È¸4(´ltQ½­•¸¹…µ”°%°±…å•È°…¹±¥¹­…”¸4(´ltI•±•Ù…¹Ğ¡…É…Ñ•È…ÑÑÉ¥‰ÕÑ•Ì¸4(´lt5…É­•ÈÙ…±Õ•Ì‰•™½É”…¹…™Ñ•È°İ¡•¸…ÁÁ±¥…‰±”¸4(´lt]¡•Ñ¡•ÈÍÑ…¹‘…±½¹”Q½­•¹5½½ÈÍÑ…¹‘…±½¹”MÑ…ÑÕÍ%¹™¼İ…Ì¥¹ÍÑ…±±•½È‘•Ñ•Ñ•¸4(´lt]¡•Ñ¡•È‘ÕÁ±¥…Ñ”½È½Ù•É±…ÁÁ¥¹œÍÉ¥ÁÑÌİ•É”…Ñ¥Ù”¸4(4(´´´4(4(ŒAÉ”µM•ÍÍ¥½¸¡•¬4(4)%µµ•‘¥…Ñ•±ä‰•™½É”„Í•ÍÍ¥½¸è4(4)É½±°ÈÁ¡…Ğ4(…„µÍÑ…ÑÕÌ4(…„µ½¹™¥œµ½‘Õ±•Ì4)€4(4)Q¡•¸ÉÕ¸½¹±äÑ¡”‰…Í¥Œ¡•­Ì™½È™•…ÑÕÉ•ÌÑ¡”Í•ÍÍ¥½¸İ¥±°ÕÍ”è4(4(´5…É­•ÉM•ÉÙ¥”è½¹”‘¥ÍÁ½Í…‰±”‘•…Ñ ½É•Ù¥Ù…°µ…É­•Èå±”¸4(´½¹™¥U$è½Á•¸Í•ÑÑ¥¹Ì¸4(´É¥ÑÕµ‰±”è€…É¥Ñ™Õµ‰±”¡•±Á€¸4(´½¹‘¥Ñ¥½¹ÍÍ¥ÍĞèÍ•±•Ğ„‘¥ÍÁ½Í…‰±”Ñ½­•¸…¹½Á•¸€…½¹‘¥Ñ¥½¹€¸4(´Q½­•¹ÍÍ¥ÍĞèÍ•±•Ğ„‘¥ÍÁ½Í…‰±”Ñ½­•¸°½Á•¸€…Ñ½­•¸µ…ÍÍ¥ÍĞ¡•±Á€°…¹™±¥À½¹”¡…Éµ±•ÍÌÙ¥Í¥‰¥±¥ÑäÍ•ÑÑ¥¹œÑİ¥”¸4(´½¹•¹ÑÉ…Ñ¥½¹QÉ…­•Èè€…½¹•¹ÑÉ…Ñ¥½¸€´µÍÑ…ÑÕÍ€¸4(´9A5…¹…•Èè€…¹ÁŒµ‘•…Ñ µÉ•Á½ÉÑ€¸4(´9A!AI½±±•ÈèÉ½±°½¹”‘¥ÍÁ½Í…‰±”Í•±•Ñ•9A¸4(´•‰ÕQ½½±ÌèÍ­¥ÀÕ¹±•ÍÌ‘•±¥‰•É…Ñ•±ä¹••‘•¸4(4)¼¹½Ğ‘¥Í½Ù•È„µ…É­•È°!@°½ÈÑ…‰±”ÁÉ½‰±•´™½ÈÑ¡”™¥ÉÍĞÑ¥µ”‘ÕÉ¥¹œ½µ‰…Ğ¸4(
