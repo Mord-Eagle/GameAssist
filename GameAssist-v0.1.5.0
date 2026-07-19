@@ -12,10 +12,11 @@ DESCRIPTION
 GameAssist is a modular D&D 5E (2014) automation suite with an explicit opt-in
 task queue, state/configuration helpers, consistent logging, and a core marker
 service. Normal event handlers execute directly unless a module deliberately
-calls GameAssist.enqueue(). This package ships with seven configurable modules:
+calls GameAssist.enqueue(). This package ships with eight configurable modules:
 - ConfigUI - GM-only chat controls for toggling modules and common options.
 - CritFumble - Detects natural-1 attacks and offers fumble/confirm menus.
 - ConditionService 1.0.1 - Provides condition wording, artwork, announcements, and marker controls.
+- TokenService 1.0.0 - Provides general token controls and supported !token-mod compatibility.
 - ConcentrationTracker - Runs concentration checks and manages its configured marker.
 - NPCManager 1.2.0 - Tracks NPC death markers, history, reports, audits, and Arc rosters.
 - NPCHPRoller - Rolls npc_hpformula and writes the result to token bar 1.
@@ -43,6 +44,8 @@ MODULE COMMANDS
   !confirm-crit-martial, !confirm-crit-magic
 - ConditionService: !condition, !cond-<condition>, !condition announce, !c-a, !cond-!, !condition help, !condition config,
   !condition add|remove|toggle <condition...>
+- TokenService: !token-service, !token-service help|about|config,
+  !token-mod --help, --on|--off|--flip, --set, --move, --order, --report, --ids
 - ConcentrationTracker: !concentration, !cc, !ga-conc-status
 - NPCManager: !npc-death-help, !npc-death-report, !npc-death-buckets,
   !npc-death-clear, !npc-death-write, !npc-wr, !npc-death-audit,
@@ -58,7 +61,8 @@ V0.1.5.0 MARKER ARCHITECTURE
 - NPCManager, ConcentrationTracker, and DebugTools use GameAssist.MarkerService.
 - Marker-dependent GameAssist modules no longer depend on standalone TokenMod.
 - ConditionService uses MarkerService for condition reads, writes, and change observation.
-- Disabling MarkerService also disables ConditionService, NPCManager,
+- TokenService uses MarkerService for every status-marker command.
+- Disabling MarkerService also disables ConditionService, TokenService, NPCManager,
   ConcentrationTracker, and DebugTools while CritFumble, ConfigUI, and
   NPCHPRoller remain available.
 - The public v0.1.5.0 release remains gated on the independently branded and
@@ -83,8 +87,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 // mechsuit:
 //   codename: "GAMEASSIST"
 //   project_version: "v0.1.5.0"
-//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, explicit opt-in queue execution, state self-healing, dependency diagnostics, one toggleable marker authority, and an integrated condition service. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, or transport changes beyond Roll20 chat API."
-//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critfumble","modules.conditionservice","modules.npcmanager","modules.concentrationtracker","modules.npchproller","modules.debugtools","bootstrap"]
+//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, explicit opt-in queue execution, state self-healing, dependency diagnostics, one toggleable marker authority, an integrated condition service, and an independently branded general token service. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, or transport changes beyond Roll20 chat API."
+//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critfumble","modules.conditionservice","modules.tokenservice","modules.npcmanager","modules.concentrationtracker","modules.npchproller","modules.debugtools","bootstrap"]
 //   env:
 //     required: []
 //     optional: []
@@ -123,13 +127,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     │  ├─ [GAMEASSIST:MODULES:CONFIGUI]
 //     │  ├─ [GAMEASSIST:MODULES:CRITFUMBLE]
 //     │  ├─ [GAMEASSIST:MODULES:CONDITIONSERVICE]
+//     │  ├─ [GAMEASSIST:MODULES:TOKENSERVICE]
 //     │  ├─ [GAMEASSIST:MODULES:NPCMANAGER]
 //     │  ├─ [GAMEASSIST:MODULES:CONCENTRATIONTRACKER]
 //     │  ├─ [GAMEASSIST:MODULES:NPCHPROLLER]
 //     │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 //     └─ [GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
-// Guarantee: GameAssist v0.1.5.0 runs policy, utilities, guarded core services including MarkerService, interfaces, modules, then bootstrap in the declared order. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
+// Guarantee: GameAssist v0.1.5.0 runs policy, utilities, guarded core services including MarkerService, interfaces, independently lifecycle-managed condition/token/gameplay modules, then bootstrap in the declared order. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
 
 // =============================
 // === GameAssist v0.1.5.0 ===
@@ -447,8 +452,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ? `MarkerService v${MarkerService.version}: enabled; GameAssist marker reads and writes are available.`
             : `MarkerService v${MarkerService.version}: disabled; marker-dependent GameAssist modules are unavailable.`;
         const tokenModLine = tokenMod.confirmed
-            ? `Standalone TokenMod${tokenModVersion}: detected as a separate Mod. Avoid enabling overlapping marker automation.`
-            : 'Standalone TokenMod: not detected.';
+            ? `Standalone TokenMod${tokenModVersion}: detected. TokenService suspends !token-mod compatibility handling so one command cannot be applied twice; remove the standalone script and restart to use TokenService.`
+            : 'Standalone TokenMod: not detected; TokenService owns its supported !token-mod compatibility commands when enabled.';
         const statusInfoLine = statusInfo.confirmed
             ? `Standalone StatusInfo${statusInfoVersion}: detected as a separate Mod. Avoid enabling overlapping condition automation.`
             : 'Standalone StatusInfo: not detected.';
@@ -606,7 +611,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
     // --- Notes & Comments ---
     // NOTE: State auditor warns about unexpected branches; no automatic deletion occurs.
-    // Changed (v0.1.5.0): Moved all marker identity and mutation behavior into CORE:MARKERSERVICE; APP utilities retain only general helpers and standalone-script diagnostics.
+    // Changed (v0.1.5.0): Moved all marker identity and mutation behavior into CORE:MARKERSERVICE; APP utilities retain general helpers and public-contract evidence used for standalone collision diagnostics and TokenService command suspension.
     // Decision log:
     //   CHOICE: Keep standalone detection as diagnostics only - ALT: use it for marker dependency gating; REJECTED: MarkerService owns GameAssist marker behavior.
     //   CHOICE: Unknown branches remain warning-only; explicit cleanup is required before deletion.
@@ -772,7 +777,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Compatibility audit
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:COMPAT", title: "Compat",
-    //   guarantees: ["Optional visibility of known/unknown scripts"], last_updated_version: "v0.1.1.2" }
+    //   guarantees: ["Optional visibility of known/unknown scripts","TokenMod overlap guidance matches TokenService and MarkerService ownership"], last_updated_version: "v0.1.5.0" }
     // -------------------------------------------------------------------------
     // Narrative
     // CORE:COMPAT inspects other loaded scripts against known signatures to highlight
@@ -800,8 +805,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 prefixes: ['!token-mod', '!tokenmod', '!tm'],
                 events: ['chat:message', 'change:graphic:statusmarkers'],
                 hints: [
-                    'TokenMod drives status-marker automation; NPCManager and ConcentrationTracker expect it for marker toggles.',
-                    'If TokenMod is offline, disable marker-dependent modules with !ga-disable to avoid duplicate whispers.'
+                    'Standalone TokenMod and TokenService both use !token-mod; remove the standalone script for normal v0.1.5.0 use.',
+                    'TokenService suspends its compatibility handler when the standalone public contract is detected, but independently automated marker changes can still compete with MarkerService consumers.'
                 ]
             },
             {
@@ -932,10 +937,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.log('Compat', `Compatibility hints:\n${table}`);
     }
     // --- Notes & Comments ---
+    // Changed (v0.1.5.0): Replaced obsolete TokenMod dependency guidance with the current TokenService command-overlap and MarkerService ownership warning.
     // CHOICE: DEBUG_COMPAT gate avoids noise; GM toggles as needed.
-    // Maintenance (v0.1.3, no semantic change): Added narrative clarifying gating and kept
-    //   compatibility heuristics unchanged; version metadata corrected.
-    // Prior notes: Maintenance (v0.1.1.2, no semantic change): MECHSUITS compliance metadata refreshed.
+    // Prior notes:
+    //   Maintenance (v0.1.3, no semantic change): Added narrative clarifying gating and kept compatibility heuristics unchanged; version metadata corrected.
+    //   Maintenance (v0.1.1.2, no semantic change): MECHSUITS compliance metadata refreshed.
     // [GAMEASSIST:CORE:COMPAT] END
     // =============================================================================
 
@@ -2659,7 +2665,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Modules wrapper (bundled features)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES", title: "Modules wrapper",
-    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Condition and marker-consuming modules share CORE:MARKERSERVICE"],
+    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Condition, token, and gameplay marker consumers share CORE:MARKERSERVICE","TokenService owns the documented GameAssist token-command surface without assuming the TokenMod brand"],
     //   depends_on: ["[GAMEASSIST:CORE]","[GAMEASSIST:INTERFACES]"], last_updated_version: "v0.1.5.0" }
     // -------------------------------------------------------------------------
     // Narrative
@@ -4659,6 +4665,1035 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   Earlier unreleased 1.0.1 checkpoints kept announcements communication-only; live sandbox testing showed the delivery action was expected to toggle the selected token markers.
     //   StatusInfo 0.3.11 by Robin Kuiper provided the supplied compatibility baseline; the Roll20 0.3.12 package changes only its character-sheet identification line and still declares internal version 0.3.11.
     // [GAMEASSIST:MODULES:CONDITIONSERVICE] END
+    // =============================================================================
+
+    // ————— TOKEN SERVICE MODULE v1.0.0 —————
+    // =============================================================================
+    // [GAMEASSIST:MODULES:TOKENSERVICE] BEGIN
+    // Section Title: GameAssist general token controls and TokenMod compatibility
+    // -------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:TOKENSERVICE", title: "TokenService",
+    //   guarantees: ["Independently branded GameAssist token controls with a documented selected !token-mod compatibility surface","Selected tokens are available to their users while explicit --ids targeting remains GM-only unless the DM opts in","Every status-marker command uses CORE:MARKERSERVICE","Valid legacy state.TokenMod playersCanUse_ids configuration is copied once without deleting the source state","A detected standalone TokenMod suspends compatibility-command handling and produces an actionable warning rather than double-applying token changes"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
+    //   provides: ["GameAssist.TokenService"],
+    //   last_updated_version: "v0.1.5.0",
+    //   independent_versions: { module_version: "1.0.0", token_config_schema_version: 1, tokenmod_reference_version: "0.8.88" }, lifecycle: "active" }
+    // -------------------------------------------------------------------------
+    // Narrative
+    // TokenService is GameAssist's independently maintained general token-control module.
+    // It preserves a verified, intentionally bounded !token-mod command surface while
+    // using GameAssist lifecycle, validation, diagnostics, and MarkerService semantics.
+    // It is not TokenMod, is not endorsed by its author, and does not claim compatibility
+    // for unimplemented image-side, default-token, computed-attribute, or advanced color
+    // arithmetic features. See ATTRIBUTIONS.md for the pinned source and MIT notice.
+    // -------------------------------------------------------------------------
+    const TokenService = (() => {
+        const MODULE_NAME = 'TokenService';
+        const MODULE_VERSION = '1.0.0';
+        const CONFIG_SCHEMA_VERSION = 1;
+        const TOKENMOD_REFERENCE = Object.freeze({
+            version: '0.8.88',
+            repository: 'Roll20/roll20-api-scripts',
+            commit: '9d634d3149985dcf10333920b3f4c41f215f39fc',
+            path: 'TokenMod/0.8.88/TokenMod.js',
+            blob: 'fc6c9cb45ec2f2ee254a24f849e089507a0e610a'
+        });
+        const observers = new Map();
+        let observerId = 0;
+
+        const BOOLEAN_FIELDS = new Set([
+            'showname', 'show_tooltip', 'gm_only_tooltip',
+            'showplayers_name', 'showplayers_bar1', 'showplayers_bar2',
+            'showplayers_bar3', 'showplayers_bar4', 'showplayers_aura1',
+            'showplayers_aura2', 'playersedit_name', 'playersedit_bar1',
+            'playersedit_bar2', 'playersedit_bar3', 'playersedit_bar4',
+            'playersedit_aura1', 'playersedit_aura2', 'light_otherplayers',
+            'light_hassight', 'isdrawing', 'disableSnapping', 'disableTokenMenu',
+            'flipv', 'fliph', 'aura1_square', 'aura2_square', 'lockMovement',
+            'fadeOnOverlap', 'renderAsScenery', 'has_bright_light_vision',
+            'has_night_vision', 'emits_bright_light', 'emits_low_light',
+            'has_limit_field_of_vision', 'has_limit_field_of_night_vision',
+            'has_directional_bright_light', 'has_directional_dim_light'
+        ]);
+        const PIXEL_FIELDS = new Set(['left', 'top', 'width', 'height']);
+        const DISTANCE_FIELDS = new Set([
+            'light_radius', 'light_dimradius', 'adv_fow_view_distance',
+            'aura1_radius', 'aura2_radius', 'night_vision_distance',
+            'bright_light_distance', 'low_light_distance'
+        ]);
+        const NUMBER_FIELDS = new Set([
+            ...PIXEL_FIELDS, ...DISTANCE_FIELDS, 'rotation', 'light_angle',
+            'light_losangle', 'light_multiplier', 'light_sensitivity_multiplier',
+            'limit_field_of_vision_center', 'limit_field_of_night_vision_center',
+            'directional_bright_light_center', 'directional_dim_light_center',
+            'limit_field_of_vision_total', 'limit_field_of_night_vision_total',
+            'directional_bright_light_total', 'directional_dim_light_total'
+        ]);
+        const PERCENTAGE_FIELDS = new Set(['fadeOpacity', 'baseOpacity', 'dim_light_opacity']);
+        const TEXT_FIELDS = new Set([
+            'name', 'tooltip', 'bar1_value', 'bar2_value', 'bar3_value', 'bar4_value',
+            'bar1_max', 'bar2_max', 'bar3_max', 'bar4_max', 'represents',
+            'bar1_link', 'bar2_link', 'bar3_link', 'bar4_link', 'controlledby'
+        ]);
+        const COLOR_FIELDS = new Set([
+            'aura1_color', 'aura2_color', 'tint_color', 'night_vision_tint', 'lightColor'
+        ]);
+        const OPTION_FIELDS = Object.freeze({
+            layer: new Set(['objects', 'gmlayer', 'map', 'walls']),
+            aura1_options: new Set(['', 'circle', 'square']),
+            aura2_options: new Set(['', 'circle', 'square']),
+            night_vision_effect: new Set(['', 'none', 'nocturnal']),
+            bar_location: new Set(['', 'above', 'below', 'overlap_top', 'overlap_bottom']),
+            compact_bar: new Set(['', 'compact']),
+            bar1_num_permission: new Set(['', 'hidden', 'none', 'editor', 'everyone']),
+            bar2_num_permission: new Set(['', 'hidden', 'none', 'editor', 'everyone']),
+            bar3_num_permission: new Set(['', 'hidden', 'none', 'editor', 'everyone']),
+            bar4_num_permission: new Set(['', 'hidden', 'none', 'editor', 'everyone'])
+        });
+        const FIELD_ALIASES = Object.freeze({
+            bar1_current: 'bar1_value',
+            bar2_current: 'bar2_value',
+            bar3_current: 'bar3_value',
+            bar4_current: 'bar4_value',
+            aura1_option: 'aura1_options',
+            aura2_option: 'aura2_options',
+            aura1_shape: 'aura1_options',
+            aura2_shape: 'aura2_options',
+            bright_vision: 'has_bright_light_vision',
+            night_vision: 'has_night_vision',
+            emits_bright: 'emits_bright_light',
+            emits_low: 'emits_low_light',
+            night_distance: 'night_vision_distance',
+            bright_distance: 'bright_light_distance',
+            low_distance: 'low_light_distance',
+            low_light_opacity: 'dim_light_opacity',
+            has_directional_low_light: 'has_directional_dim_light',
+            directional_low_light_total: 'directional_dim_light_total',
+            directional_low_light_center: 'directional_dim_light_center',
+            currentside: 'currentSide',
+            lightcolor: 'lightColor',
+            light_color: 'lightColor',
+            lockmovement: 'lockMovement',
+            lock_movement: 'lockMovement',
+            disablesnapping: 'disableSnapping',
+            disable_snapping: 'disableSnapping',
+            disabletokenmenu: 'disableTokenMenu',
+            disable_token_menu: 'disableTokenMenu',
+            fadeonoverlap: 'fadeOnOverlap',
+            renderasscenery: 'renderAsScenery',
+            fadeopacity: 'fadeOpacity',
+            baseopacity: 'baseOpacity'
+        });
+        const FIELD_CASE = (() => {
+            const names = [
+                ...BOOLEAN_FIELDS, ...NUMBER_FIELDS, ...PERCENTAGE_FIELDS,
+                ...TEXT_FIELDS, ...COLOR_FIELDS, ...Object.keys(OPTION_FIELDS),
+                'currentSide', 'statusmarkers'
+            ];
+            return Object.freeze(names.reduce((map, name) => {
+                map[name.toLowerCase()] = name;
+                return map;
+            }, {}));
+        })();
+        const SNAPSHOT_FIELDS = Object.freeze([
+            ...new Set([
+                ...Object.values(FIELD_CASE), 'lastmove', 'pageid', '_pageid',
+                'statusmarkers'
+            ])
+        ]);
+
+        function getModuleState() {
+            const modState = GameAssist.getState(MODULE_NAME);
+            const config = modState.config;
+            const runtime = modState.runtime;
+
+            if (config.configSchemaVersion !== CONFIG_SCHEMA_VERSION) {
+                config.configSchemaVersion = CONFIG_SCHEMA_VERSION;
+            }
+
+            if (!runtime.tokenModMigration || typeof runtime.tokenModMigration !== 'object') {
+                const legacy = (typeof state !== 'undefined' && state.TokenMod && typeof state.TokenMod === 'object')
+                    ? state.TokenMod
+                    : null;
+                const copied = [];
+                if (config.playersCanUseIds === undefined && typeof legacy?.playersCanUse_ids === 'boolean') {
+                    config.playersCanUseIds = legacy.playersCanUse_ids;
+                    copied.push('playersCanUse_ids');
+                }
+                runtime.tokenModMigration = {
+                    checkedAt: isoNow(),
+                    sourceFound: Boolean(legacy),
+                    sourceSchemaVersion: legacy?.version ?? null,
+                    copied,
+                    sourcePreserved: true
+                };
+            }
+
+            if (typeof config.playersCanUseIds !== 'boolean') config.playersCanUseIds = false;
+            if (typeof config.warnOnStandalone !== 'boolean') config.warnOnStandalone = true;
+            return modState;
+        }
+
+        function isEnabled() {
+            return Boolean(
+                MODULES[MODULE_NAME]?.active &&
+                MODULES[MODULE_NAME]?.initialized &&
+                GameAssist.MarkerService.isEnabled()
+            );
+        }
+
+        function getDisplayName(playerId, fallback = 'gm') {
+            if (!playerId || playerId === 'API') return fallback;
+            const player = getObj('player', playerId);
+            return String(player?.get('_displayname') || player?.get('displayname') || fallback)
+                .replace(/\s+\(GM\)$/i, '')
+                .replace(/"/g, '');
+        }
+
+        function whisper(msg, body) {
+            const fallback = String(msg?.who || 'gm').replace(/\s+\(GM\)$/i, '').replace(/"/g, '');
+            const who = getDisplayName(msg?.playerid, fallback);
+            sendChat('GameAssist TokenService', `/w "${who}" ${body}`);
+        }
+
+        function truthy(value) {
+            return ['1', 'on', 'yes', 'true', 'sure', 'yup'].includes(String(value ?? '').toLowerCase());
+        }
+
+        function falsey(value) {
+            return ['0', 'off', 'no', 'false', 'none'].includes(String(value ?? '').toLowerCase());
+        }
+
+        function canonicalField(raw) {
+            const lower = String(raw || '').trim().toLowerCase();
+            const alias = FIELD_ALIASES[lower] || lower;
+            return FIELD_CASE[String(alias).toLowerCase()] || null;
+        }
+
+        function tokenize(text) {
+            const tokens = [];
+            let current = '';
+            let quote = null;
+            for (let i = 0; i < text.length; i++) {
+                const ch = text[i];
+                if (quote) {
+                    if (ch === quote) quote = null;
+                    else current += ch;
+                    continue;
+                }
+                if (ch === '"' || ch === "'") {
+                    quote = ch;
+                    continue;
+                }
+                if (/\s/.test(ch)) {
+                    if (current) tokens.push(current);
+                    current = '';
+                    continue;
+                }
+                current += ch;
+            }
+            if (current) tokens.push(current);
+            return tokens;
+        }
+
+        function splitFlagGroups(text) {
+            const groups = [];
+            let current = '';
+            let quote = null;
+            let inFlag = false;
+
+            for (let i = 0; i < text.length; i++) {
+                const ch = text[i];
+                if (quote) {
+                    current += ch;
+                    if (ch === quote) quote = null;
+                    continue;
+                }
+                if (ch === '"' || ch === "'") {
+                    quote = ch;
+                    current += ch;
+                    continue;
+                }
+                const atBoundary = i === 0 || /\s/.test(text[i - 1]);
+                if (ch === '-' && text[i + 1] === '-' && atBoundary) {
+                    if (inFlag && current.trim()) groups.push(current.trim());
+                    current = '';
+                    inFlag = true;
+                    i++;
+                    continue;
+                }
+                if (inFlag) current += ch;
+            }
+            if (inFlag && current.trim()) groups.push(current.trim());
+            return groups;
+        }
+
+        function expandInlineRolls(msg) {
+            const rolls = Array.isArray(msg?.inlinerolls) ? msg.inlinerolls : [];
+            return String(msg?.content || '').replace(/\$\[\[(\d+)\]\]/g, (match, index) => {
+                const total = rolls[Number(index)]?.results?.total;
+                return Number.isFinite(Number(total)) ? String(total) : '0';
+            });
+        }
+
+        function parseRequest(msg) {
+            const content = expandInlineRolls(msg)
+                .replace(/<br\s*\/?>/gi, ' ')
+                .replace(/\{\{|\}\}/g, ' ');
+            const body = content.replace(/^!token-mod\b/i, '').trim();
+            const request = {
+                help: !body,
+                helpMarkers: false,
+                configRequested: false,
+                config: [],
+                apiAs: null,
+                ids: [],
+                ignoreSelected: false,
+                currentPage: false,
+                activePages: false,
+                on: [],
+                off: [],
+                flip: [],
+                set: [],
+                order: [],
+                move: [],
+                reports: [],
+                unknown: []
+            };
+
+            splitFlagGroups(body).forEach(group => {
+                const words = tokenize(group);
+                const flag = String(words.shift() || '').toLowerCase();
+                switch (flag) {
+                    case 'help': request.help = true; break;
+                    case 'help-statusmarkers': request.helpMarkers = true; break;
+                    case 'config': request.configRequested = true; request.config.push(...words); break;
+                    case 'api-as': request.apiAs = words[0] || null; break;
+                    case 'ids': request.ids.push(...words); break;
+                    case 'ignore-selected': request.ignoreSelected = true; break;
+                    case 'current-page': request.currentPage = true; break;
+                    case 'active-pages': request.activePages = true; break;
+                    case 'on': request.on.push(...words); break;
+                    case 'off': request.off.push(...words); break;
+                    case 'flip': request.flip.push(...words); break;
+                    case 'set': request.set.push(...words); break;
+                    case 'order': request.order.push(...words); break;
+                    case 'move': request.move.push(...words); break;
+                    case 'report': request.reports.push(...words); break;
+                    case 'debug': break;
+                    default: if (flag) request.unknown.push(flag);
+                }
+            });
+            return request;
+        }
+
+        function parseFieldSpec(raw) {
+            const match = String(raw || '').match(/^([^|#]+)[|#](.*)$/);
+            if (!match) return { ok: false, message: `Expected property|value, received "${String(raw || '')}".` };
+            return { ok: true, field: match[1], value: match[2] };
+        }
+
+        function compileSetSpec(raw) {
+            const parsed = parseFieldSpec(raw);
+            if (!parsed.ok) return parsed;
+            const requested = String(parsed.field).toLowerCase();
+
+            if (/^bar[1-4]$/.test(requested)) {
+                return {
+                    ok: true,
+                    operations: [
+                        { field: `${requested}_value`, value: parsed.value },
+                        { field: `${requested}_max`, value: parsed.value }
+                    ]
+                };
+            }
+            if (requested === 'scale') {
+                return {
+                    ok: true,
+                    operations: [
+                        { field: 'width', value: parsed.value },
+                        { field: 'height', value: parsed.value }
+                    ]
+                };
+            }
+
+            const field = canonicalField(requested);
+            if (!field) {
+                const unsupported = ['imgsrc', 'sides', 'defaulttoken'].includes(requested)
+                    ? ' This advanced TokenMod feature is not in TokenService 1.0.0.'
+                    : '';
+                return { ok: false, message: `Unsupported token property "${parsed.field}".${unsupported}` };
+            }
+            return { ok: true, operations: [{ field, value: parsed.value }] };
+        }
+
+        function getPage(token) {
+            return getObj('page', token.get('pageid') || token.get('_pageid'));
+        }
+
+        function convertUnits(number, unit, page, mode) {
+            const value = Number(number);
+            const normalizedUnit = String(unit || '').toLowerCase();
+            if (!normalizedUnit) return value;
+            const scale = Number(page?.get('scale_number')) || 1;
+            const snap = Number(page?.get('snapping_increment')) || 1;
+            if (mode === 'distance') {
+                if (normalizedUnit === 'u') return value * scale * (1 / snap);
+                if (normalizedUnit === 'g') return value * scale;
+                return value;
+            }
+            if (normalizedUnit === 'u') return value * 70;
+            if (normalizedUnit === 'g') return value * snap * 70;
+            return (value / scale) * 70;
+        }
+
+        function numericValue(token, updates, field, raw) {
+            const text = String(raw ?? '').trim();
+            if (!text && DISTANCE_FIELDS.has(field)) return { ok: true, value: '' };
+            const match = text.match(/^([=+\-*/])?([+\-]?(?:\d+(?:\.\d+)?|\.\d+))(u|g|s|ft|m|km|mi|in|cm|un|hex|sq)?$/i);
+            if (!match) return { ok: false, message: `${field} requires a number or supported unit value.` };
+
+            const operation = match[1] || '=';
+            const page = getPage(token);
+            const mode = PIXEL_FIELDS.has(field) ? 'pixel' : (DISTANCE_FIELDS.has(field) ? 'distance' : 'plain');
+            let next = mode === 'plain'
+                ? Number(match[2])
+                : convertUnits(match[2], match[3], page, mode);
+            const current = Number(Object.prototype.hasOwnProperty.call(updates, field) ? updates[field] : token.get(field));
+
+            if (operation !== '=') {
+                if (!Number.isFinite(current)) return { ok: false, message: `${field} is not currently numeric.` };
+                if (operation === '+') next = current + next;
+                if (operation === '-') next = current - next;
+                if (operation === '*') next = current * next;
+                if (operation === '/') next = current / (next || 1);
+            }
+
+            if (field === 'rotation') next = ((next % 360) + 360) % 360;
+            if (PIXEL_FIELDS.has(field) && ['width', 'height'].includes(field)) next = Math.max(1, next);
+            return { ok: true, value: next };
+        }
+
+        function propertyValue(token, updates, operation) {
+            const { field } = operation;
+            const raw = String(operation.value ?? '');
+
+            if (BOOLEAN_FIELDS.has(field)) {
+                if (truthy(raw)) return { ok: true, value: true };
+                if (falsey(raw) || raw === '') return { ok: true, value: false };
+                return { ok: false, message: `${field} expects on/off, yes/no, or true/false.` };
+            }
+            if (NUMBER_FIELDS.has(field)) return numericValue(token, updates, field, raw);
+            if (PERCENTAGE_FIELDS.has(field)) {
+                const match = raw.replace(/%$/, '').match(/^([=+\-*/])?([+\-]?(?:\d+(?:\.\d+)?|\.\d+))$/);
+                if (!match) return { ok: false, message: `${field} requires a percentage value.` };
+                const operationName = match[1] || '=';
+                let amount = Number(match[2]);
+                if (Math.abs(amount) > 1) amount /= 100;
+                let value = amount;
+                if (operationName !== '=') {
+                    const current = Number(Object.prototype.hasOwnProperty.call(updates, field) ? updates[field] : token.get(field));
+                    if (!Number.isFinite(current)) return { ok: false, message: `${field} is not currently numeric.` };
+                    if (operationName === '+') value = current + amount;
+                    if (operationName === '-') value = current - amount;
+                    if (operationName === '*') value = current * amount;
+                    if (operationName === '/') value = current / (amount || 1);
+                }
+                return { ok: true, value: Math.max(0, Math.min(1, value)) };
+            }
+            if (COLOR_FIELDS.has(field)) {
+                if (!/^(?:transparent|#?[0-9a-f]{3,8}|rgba?\([^\r\n]+\)|hsva?\([^\r\n]+\))$/i.test(raw)) {
+                    return { ok: false, message: `${field} requires transparent, a hex color, rgb/rgba, or hsv/hsva.` };
+                }
+                return {
+                    ok: true,
+                    value: /^(?:#|transparent|rgba?\(|hsva?\()/i.test(raw) ? raw : `#${raw}`
+                };
+            }
+            if (OPTION_FIELDS[field]) {
+                const value = raw.toLowerCase();
+                if (!OPTION_FIELDS[field].has(value)) {
+                    return { ok: false, message: `${field} does not support "${raw}".` };
+                }
+                if (field === 'night_vision_effect') {
+                    return { ok: true, value: value === 'nocturnal' ? 'Nocturnal' : 'None' };
+                }
+                return { ok: true, value: value || null };
+            }
+            if (field === 'currentSide') {
+                const side = Number(raw);
+                if (!Number.isInteger(side) || side < 1) {
+                    return { ok: false, message: 'currentSide uses a 1-based positive side number.' };
+                }
+                return { ok: true, value: side - 1 };
+            }
+            if (TEXT_FIELDS.has(field)) {
+                if (/^bar[1-4]_(?:value|max)$/.test(field) && /^[+\-*/=]/.test(raw)) {
+                    const result = numericValue(token, updates, field, raw);
+                    if (result.ok) return result;
+                }
+                return { ok: true, value: raw };
+            }
+            return { ok: false, message: `Unsupported token property "${field}".` };
+        }
+
+        function parseMove(raw) {
+            const parts = String(raw || '').split(/[|#]/);
+            let angleText = '0';
+            let distanceText = parts[0];
+            if (parts.length > 1) {
+                angleText = parts.shift();
+                distanceText = parts.shift();
+            }
+            const angle = String(angleText).match(/^(=)?([+\-]?(?:\d+(?:\.\d+)?|\.\d+))(!)?$/);
+            const distance = String(distanceText || '').match(/^([+\-]?(?:\d+(?:\.\d+)?|\.\d+))(u|g|s|ft|m|km|mi|in|cm|un|hex|sq)?$/i);
+            if (!angle || !distance) return { ok: false, message: `Unsupported move expression "${raw}".` };
+            return {
+                ok: true,
+                relativeAngle: angle[1] !== '=',
+                angle: Number(angle[2]),
+                updateFacing: angle[3] === '!',
+                distance: Number(distance[1]),
+                unit: distance[2] || ''
+            };
+        }
+
+        function compileRequest(request) {
+            const errors = [];
+            const operations = [];
+            const booleans = { on: [], off: [], flip: [] };
+            const moves = [];
+            const reports = [];
+
+            ['on', 'off', 'flip'].forEach(mode => {
+                request[mode].forEach(raw => {
+                    const field = canonicalField(raw);
+                    if (!field || !BOOLEAN_FIELDS.has(field)) errors.push(`--${mode} does not support "${raw}".`);
+                    else booleans[mode].push(field);
+                });
+            });
+            request.set.forEach(raw => {
+                const compiled = compileSetSpec(raw);
+                if (!compiled.ok) errors.push(compiled.message);
+                else operations.push(...compiled.operations);
+            });
+            request.move.forEach(raw => {
+                const move = parseMove(raw);
+                if (!move.ok) errors.push(move.message);
+                else moves.push(move);
+            });
+            request.order.forEach(raw => {
+                if (!['tofront', 'toback', 'front', 'back'].includes(String(raw).toLowerCase())) {
+                    errors.push(`--order supports tofront or toback, not "${raw}".`);
+                }
+            });
+            request.reports.forEach(raw => {
+                const parsed = parseFieldSpec(raw);
+                if (!parsed.ok || !parsed.value) errors.push(`--report expects recipients|message, received "${raw}".`);
+                else reports.push({ recipients: parsed.field.toLowerCase().split(/[:;]/), message: parsed.value });
+            });
+            request.unknown.forEach(flag => errors.push(`Unknown option --${flag}.`));
+            booleans.on = [...new Set(booleans.on)];
+            booleans.off = [...new Set(booleans.off)].filter(field => !booleans.on.includes(field));
+            booleans.flip = [...new Set(booleans.flip)]
+                .filter(field => !booleans.on.includes(field) && !booleans.off.includes(field));
+            return { ok: !errors.length, errors, operations, booleans, moves, reports };
+        }
+
+        function selectedIds(msg) {
+            return (Array.isArray(msg?.selected) ? msg.selected : [])
+                .map(entry => entry?._id || entry?.id)
+                .filter(Boolean);
+        }
+
+        function pageForPlayer(playerId) {
+            const campaign = Campaign();
+            const ribbon = campaign.get('playerpageid');
+            const specific = campaign.get('playerspecificpages') || {};
+            if (playerId && playerId !== 'API' && playerIsGM(playerId)) {
+                return getObj('player', playerId)?.get('_lastpage') || ribbon;
+            }
+            return specific[playerId] || ribbon;
+        }
+
+        function activePages() {
+            const campaign = Campaign();
+            const pages = [campaign.get('playerpageid')];
+            const specific = campaign.get('playerspecificpages') || {};
+            pages.push(...Object.values(specific));
+            (findObjs({ type: 'player' }) || []).forEach(player => {
+                if (playerIsGM(player.id) && player.get('_online')) pages.push(player.get('_lastpage'));
+            });
+            return [...new Set(pages.filter(Boolean))];
+        }
+
+        function resolveTargets(msg, request, effectivePlayerId) {
+            const config = getModuleState().config;
+            const gm = effectivePlayerId === 'API' || playerIsGM(effectivePlayerId);
+            let ids = request.ignoreSelected ? [] : selectedIds(msg);
+            if (request.ids.length) {
+                if (gm || config.playersCanUseIds) ids.push(...request.ids);
+                else whisper(msg, 'Only the GM may use <code>--ids</code> unless the DM enables that TokenService setting. Selected tokens are still available.');
+            }
+
+            const pageFilter = request.currentPage
+                ? new Set([pageForPlayer(effectivePlayerId)])
+                : (request.activePages ? new Set(activePages()) : null);
+            const tokens = [];
+            [...new Set(ids)].forEach(id => {
+                const token = getObj('graphic', id);
+                if (token) tokens.push(token);
+                else {
+                    const character = getObj('character', id);
+                    if (character) tokens.push(...(findObjs({ type: 'graphic', represents: character.id }) || []));
+                }
+            });
+            return [...new Map(tokens
+                .filter(token => !pageFilter || pageFilter.has(token.get('pageid') || token.get('_pageid')))
+                .map(token => [token.id, token])).values()];
+        }
+
+        function snapshotToken(token) {
+            return SNAPSHOT_FIELDS.reduce((snapshot, field) => {
+                try { snapshot[field] = token.get(field); }
+                catch (error) { snapshot[field] = undefined; }
+                return snapshot;
+            }, { _id: token.id, id: token.id });
+        }
+
+        function clearAllMarkers(token) {
+            const read = GameAssist.MarkerService.read(token);
+            if (!read.ok) return [read];
+            const ids = [...new Set(read.entries.map(entry => entry.id))];
+            return ids.map(id => GameAssist.MarkerService.remove(token, id, { owner: MODULE_NAME }));
+        }
+
+        function decodeMarker(raw) {
+            let text = String(raw || '').trim().replace(/;;/g, '::');
+            let action = 'add';
+            if (/^[+\-!=?]/.test(text)) {
+                const prefix = text[0];
+                text = text.slice(1);
+                action = { '+': 'add', '-': 'remove', '!': 'toggle', '=': 'replace', '?': 'conditional' }[prefix];
+            }
+            if (/\[[^\]]*\]/.test(text)) {
+                return { ok: false, message: `Duplicate-index marker syntax is not supported in TokenService 1.0.0: ${raw}` };
+            }
+            if (action === 'conditional') {
+                return { ok: false, message: `Conditional marker syntax is not supported in TokenService 1.0.0: ${raw}` };
+            }
+
+            let marker = text;
+            let number = null;
+            const countMatch = text.includes('::')
+                ? text.match(/^(.*::[^;:]+)(?:[;:]([0-9]))$/)
+                : text.match(/^(.*?)(?:[;:]([0-9]))$/);
+            if (countMatch) {
+                marker = countMatch[1];
+                number = Number(countMatch[2]);
+            }
+            return { ok: true, action, marker, number };
+        }
+
+        function applyMarkerSpec(token, value) {
+            const results = [];
+            const specs = String(value).split('|');
+            specs.forEach(raw => {
+                const decoded = decodeMarker(raw);
+                if (!decoded.ok) {
+                    results.push({ ok: false, changed: false, message: decoded.message });
+                    return;
+                }
+                if (decoded.action === 'replace' && decoded.marker) {
+                    const resolution = GameAssist.MarkerService.resolve(decoded.marker);
+                    if (!resolution.ok) {
+                        results.push(resolution);
+                        return;
+                    }
+                    decoded.marker = resolution.id;
+                }
+                if (decoded.action === 'replace') results.push(...clearAllMarkers(token));
+                if (!decoded.marker) return;
+                const options = { owner: MODULE_NAME };
+                if (decoded.number !== null) options.number = decoded.number;
+                if (decoded.action === 'remove') results.push(GameAssist.MarkerService.remove(token, decoded.marker, options));
+                else if (decoded.action === 'toggle') results.push(GameAssist.MarkerService.toggle(token, decoded.marker, options));
+                else results.push(GameAssist.MarkerService.add(token, decoded.marker, options));
+            });
+            return results;
+        }
+
+        function applyLinkedBars(token, updates) {
+            for (let number = 1; number <= 4; number++) {
+                const valueKey = `bar${number}_value`;
+                const maxKey = `bar${number}_max`;
+                if (!Object.prototype.hasOwnProperty.call(updates, valueKey) &&
+                    !Object.prototype.hasOwnProperty.call(updates, maxKey)) continue;
+                const linkKey = `bar${number}_link`;
+                const link = Object.prototype.hasOwnProperty.call(updates, linkKey)
+                    ? updates[linkKey]
+                    : token.get(linkKey);
+                const attribute = link ? getObj('attribute', link) : null;
+                if (!attribute) continue;
+                const change = {};
+                if (Object.prototype.hasOwnProperty.call(updates, valueKey)) {
+                    change.current = updates[valueKey];
+                    delete updates[valueKey];
+                }
+                if (Object.prototype.hasOwnProperty.call(updates, maxKey)) {
+                    change.max = updates[maxKey];
+                    delete updates[maxKey];
+                }
+                if (typeof attribute.setWithWorker === 'function') attribute.setWithWorker(change);
+                else attribute.set(change);
+            }
+        }
+
+        function applyMove(token, updates, move) {
+            const currentRotation = Number(Object.prototype.hasOwnProperty.call(updates, 'rotation')
+                ? updates.rotation
+                : token.get('rotation')) || 0;
+            const angle = ((move.relativeAngle ? currentRotation : 0) + move.angle + 360) % 360;
+            const radians = (angle - 90) * (Math.PI / 180);
+            const distance = convertUnits(move.distance, move.unit, getPage(token), 'pixel');
+            const left = Number(Object.prototype.hasOwnProperty.call(updates, 'left') ? updates.left : token.get('left')) || 0;
+            const top = Number(Object.prototype.hasOwnProperty.call(updates, 'top') ? updates.top : token.get('top')) || 0;
+            const priorLastMove = Object.prototype.hasOwnProperty.call(updates, 'lastmove') ? updates.lastmove : token.get('lastmove');
+            updates.lastmove = priorLastMove ? `${priorLastMove},${left},${top}` : `${left},${top}`;
+            updates.left = left + distance * Math.cos(radians);
+            updates.top = top + distance * Math.sin(radians);
+            if (move.updateFacing) updates.rotation = angle;
+        }
+
+        function notifyObservers(token, previous, context) {
+            observers.forEach(subscription => {
+                try { subscription.callback(token, previous, context); }
+                catch (error) { GameAssist.handleError(subscription.owner, error); }
+            });
+        }
+
+        function controllerNames(token) {
+            const ids = new Set(String(token.get('controlledby') || '').split(',').filter(Boolean));
+            const character = getObj('character', token.get('represents'));
+            String(character?.get('controlledby') || '').split(',').filter(Boolean).forEach(id => ids.add(id));
+            return [...ids].map(id => id === 'all' ? 'all' : getDisplayName(id, id));
+        }
+
+        function reportValue(token, previous, expression) {
+            const [rawField, modifier] = String(expression || '').split(/[:;]/);
+            const field = canonicalField(rawField) || rawField;
+            const before = previous[field];
+            const after = token.get(field);
+            if (modifier === 'before') return before;
+            if (modifier === 'change') return `${before} -> ${after}`;
+            if (modifier === 'abschange') return Math.abs((Number(after) || 0) - (Number(before) || 0));
+            return field === 'currentSide' ? (Number(after) || 0) + 1 : after;
+        }
+
+        function sendReports(msg, token, previous, reports) {
+            reports.forEach(report => {
+                const body = _sanitize(report.message.replace(/\{(.+?)\}/g, (match, expression) =>
+                    String(reportValue(token, previous, expression) ?? '')
+                ));
+                const recipients = new Set();
+                report.recipients.forEach(recipient => {
+                    if (recipient === 'all') recipients.add('all');
+                    else if (recipient === 'gm') recipients.add('gm');
+                    else if (recipient === 'player') {
+                        const fallback = String(msg.who || 'gm').replace(/\s+\(GM\)$/i, '').replace(/"/g, '');
+                        recipients.add(getDisplayName(msg.playerid, fallback));
+                    }
+                    else if (['token', 'character', 'control'].includes(recipient)) {
+                        controllerNames(token).forEach(name => recipients.add(name));
+                    }
+                });
+                if (!recipients.size) recipients.add('gm');
+                if (recipients.has('all')) sendChat('GameAssist TokenService', body);
+                else recipients.forEach(recipient => sendChat('GameAssist TokenService', `/w "${String(recipient).replace(/"/g, '')}" ${body}`));
+            });
+        }
+
+        function applyToToken(msg, token, compiled, request) {
+            const previous = snapshotToken(token);
+            const updates = {};
+            const markerOperations = [];
+            const failures = [];
+            let changed = false;
+
+            compiled.booleans.on.forEach(field => { updates[field] = true; });
+            compiled.booleans.off.forEach(field => { updates[field] = false; });
+            compiled.booleans.flip.forEach(field => {
+                updates[field] = !Boolean(Object.prototype.hasOwnProperty.call(updates, field) ? updates[field] : token.get(field));
+            });
+            compiled.operations.forEach(operation => {
+                if (operation.field === 'statusmarkers') {
+                    markerOperations.push(operation.value);
+                    return;
+                }
+                const result = propertyValue(token, updates, operation);
+                if (!result.ok) failures.push(result.message);
+                else updates[operation.field] = result.value;
+            });
+            compiled.moves.forEach(move => applyMove(token, updates, move));
+
+            if (failures.length) return { ok: false, changed: false, failures };
+            request.order.forEach(raw => {
+                const value = String(raw).toLowerCase();
+                if (['tofront', 'front'].includes(value)) toFront(token);
+                else if (['toback', 'back'].includes(value)) toBack(token);
+                changed = true;
+            });
+            if (Object.prototype.hasOwnProperty.call(updates, 'represents')) {
+                ['bar1_link', 'bar2_link', 'bar3_link', 'bar4_link'].forEach(key => {
+                    if (!Object.prototype.hasOwnProperty.call(updates, key)) updates[key] = '';
+                });
+            }
+            if (Object.prototype.hasOwnProperty.call(updates, 'controlledby')) {
+                const character = getObj('character', updates.represents || token.get('represents'));
+                if (character) {
+                    character.set('controlledby', updates.controlledby);
+                    delete updates.controlledby;
+                    changed = true;
+                }
+            }
+            applyLinkedBars(token, updates);
+
+            if (Object.keys(updates).length) {
+                token.set(updates);
+                changed = true;
+            }
+            markerOperations.forEach(value => {
+                applyMarkerSpec(token, value).forEach(result => {
+                    if (!result.ok) failures.push(result.message || result.code || 'Marker operation failed.');
+                    if (result.changed) changed = true;
+                });
+            });
+            sendReports(msg, token, previous, compiled.reports);
+            if (changed) notifyObservers(token, previous, { command: msg.content, source: MODULE_NAME });
+            return { ok: !failures.length, changed, failures };
+        }
+
+        function showMarkerHelp(msg) {
+            whisper(msg, [
+                '<b>TokenService Marker Commands</b><br>',
+                '<code>--set statusmarkers|red</code> adds a marker.<br>',
+                '<code>|-red</code> removes, <code>|!red</code> toggles, and <code>|=dead</code> replaces all markers.<br>',
+                'Use <code>red:3</code> for a number, a custom display name, or an exact <code>Name::id</code> tag.<br>',
+                'Duplicate-index and conditional-count expressions remain unsupported in TokenService 1.0.0.'
+            ].join(''));
+        }
+
+        function showHelp(msg) {
+            const config = getModuleState().config;
+            const configButton = GameAssist.createButton(
+                `Players --ids: ${config.playersCanUseIds ? 'On' : 'Off'}`,
+                `!token-mod --config players-can-ids|${config.playersCanUseIds ? 'off' : 'on'}`
+            );
+            const markerButton = GameAssist.createButton('Marker Help', '!token-mod --help-statusmarkers');
+            whisper(msg, [
+                '<div style="border:1px solid #444;background:#fff;padding:8px;border-radius:5px">',
+                '<b style="font-size:1.15em">TokenService Quick Guide</b><br>',
+                'Select one or more tokens, then use a command below. Players may affect tokens they can select; explicit <code>--ids</code> targeting follows the DM setting.<br><br>',
+                '<b>Visibility:</b> <code>!token-mod --on showname</code> / <code>--off showname</code> / <code>--flip showname</code><br>',
+                '<b>Values:</b> <code>!token-mod --set name|Guardian bar1_value|25</code><br>',
+                '<b>Relative values:</b> <code>--set bar1_value|-5 left|+70</code>; use <code>=-5</code> to assign a negative value.<br>',
+                '<b>Move:</b> <code>!token-mod --move 3g</code> or <code>--move =90|2u</code><br>',
+                '<b>Layer/order:</b> <code>--set layer|gmlayer</code> or <code>--order tofront</code><br>',
+                '<b>Target:</b> <code>--ids TOKEN_ID</code>, <code>--current-page</code>, <code>--active-pages</code>, <code>--ignore-selected</code><br>',
+                '<b>Report:</b> <code>--report gm|"{name}: {bar1_value:before} to {bar1_value}"</code><br><br>',
+                `${markerButton} ${configButton} ${GameAssist.createButton('About and Limits', '!token-service about')}`,
+                '</div>'
+            ].join(''));
+        }
+
+        function showAbout(msg) {
+            whisper(msg, [
+                '<b>About GameAssist TokenService</b><br>',
+                `TokenService v${MODULE_VERSION} is an independently maintained GameAssist module.<br>`,
+                `Its compatibility baseline is TokenMod ${TOKENMOD_REFERENCE.version}, created by The Aaron, Arcane Scriptomancer.<br>`,
+                'GameAssist preserves the applicable MIT notice and pinned provenance in ATTRIBUTIONS.md. TokenService is not an official TokenMod release and is not endorsed or supported by The Aaron.<br><br>',
+                '<b>Current limits:</b> image-side stack editing, default-token writes, computed attributes, advanced color arithmetic, duplicate-index markers, and conditional marker counts are not yet supported.'
+            ].join(''));
+        }
+
+        function handleConfig(msg, entries) {
+            if (msg.playerid !== 'API' && !playerIsGM(msg.playerid)) {
+                whisper(msg, 'Only the GM can change TokenService settings.');
+                return;
+            }
+            const config = getModuleState().config;
+            if (!entries.length) {
+                showHelp(msg);
+                return;
+            }
+            entries.forEach(entry => {
+                const parsed = String(entry).split(/[|#]/);
+                const key = String(parsed.shift() || '').toLowerCase();
+                const value = parsed.join('|');
+                if (key !== 'players-can-ids') {
+                    whisper(msg, `TokenService has no setting named <code>${_sanitize(key)}</code>.`);
+                    return;
+                }
+                config.playersCanUseIds = value
+                    ? truthy(value)
+                    : !config.playersCanUseIds;
+                GameAssist.recordMetric('config', { mod: MODULE_NAME, note: `playersCanUseIds=${config.playersCanUseIds}` });
+            });
+            showHelp(msg);
+        }
+
+        function standaloneConflict() {
+            return getStandaloneScriptEvidence('TokenMod');
+        }
+
+        function handleCompatibility(msg) {
+            const evidence = standaloneConflict();
+            if (evidence.confirmed) {
+                const runtime = getModuleState().runtime;
+                if (!runtime.commandConflictWarned) {
+                    runtime.commandConflictWarned = isoNow();
+                    GameAssist.log(
+                        MODULE_NAME,
+                        `Standalone TokenMod${evidence.version ? ` v${evidence.version}` : ''} is active. TokenService did not process !token-mod so the command cannot be applied twice. Remove standalone TokenMod and restart the sandbox to use TokenService compatibility commands.`,
+                        'WARN'
+                    );
+                }
+                return;
+            }
+
+            const request = parseRequest(msg);
+            if (request.helpMarkers) return showMarkerHelp(msg);
+            if (request.help) return showHelp(msg);
+            if (request.configRequested) return handleConfig(msg, request.config);
+
+            let effectivePlayerId = msg.playerid;
+            if (request.apiAs) {
+                if (msg.playerid === 'API' && getObj('player', request.apiAs)) effectivePlayerId = request.apiAs;
+                else if (msg.playerid !== 'API') whisper(msg, '<code>--api-as</code> is available only to commands sent by another Mod script.');
+            }
+
+            const compiled = compileRequest(request);
+            if (!compiled.ok) {
+                whisper(msg, `<b>TokenService could not run that command.</b><br>${compiled.errors.map(_sanitize).join('<br>')}`);
+                return;
+            }
+            const targets = resolveTargets(msg, request, effectivePlayerId);
+            if (!targets.length) {
+                whisper(msg, 'No eligible token was found. Select a token, or use an authorized <code>--ids</code> target.');
+                return;
+            }
+
+            const failures = [];
+            let changed = 0;
+            targets.forEach(token => {
+                const result = applyToToken(msg, token, compiled, request);
+                if (result.changed) changed++;
+                if (!result.ok) {
+                    const tokenName = token.get('name') || token.id;
+                    result.failures.forEach(failure => failures.push(`${tokenName}: ${failure}`));
+                }
+            });
+            GameAssist.recordMetric('token_command', { mod: MODULE_NAME, note: `${changed}/${targets.length} changed` });
+            if (failures.length) {
+                whisper(msg, `<b>Some token changes need attention.</b><br>${failures.map(_sanitize).join('<br>')}`);
+            }
+        }
+
+        function handleBranded(msg) {
+            const words = tokenize(String(msg.content || '').replace(/^!token-service\b/i, '').trim());
+            const command = String(words[0] || 'help').toLowerCase();
+            if (['help', 'menu'].includes(command)) return showHelp(msg);
+            if (command === 'about') return showAbout(msg);
+            if (command === 'config') return handleConfig(msg, words.slice(1));
+            whisper(msg, `Unknown TokenService command <code>${_sanitize(command)}</code>. Use ${GameAssist.createButton('TokenService Help', '!token-service help')}.`);
+        }
+
+        function observeTokenChange(callback, options = {}) {
+            if (typeof callback !== 'function') {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'TokenService observer requires a callback.' };
+            }
+            const owner = String(typeof options === 'string' ? options : (options.owner || 'TokenServiceConsumer'));
+            const id = ++observerId;
+            observers.set(id, { owner, callback });
+            return { ok: true, id, owner, unsubscribe: () => observers.delete(id) };
+        }
+
+        function clearObservers(owner) {
+            const requested = String(owner || '');
+            let removed = 0;
+            observers.forEach((subscription, id) => {
+                if (requested && subscription.owner !== requested) return;
+                observers.delete(id);
+                removed++;
+            });
+            return removed;
+        }
+
+        function initialize() {
+            const modState = getModuleState();
+            const evidence = standaloneConflict();
+            modState.runtime.standaloneDetected = evidence.confirmed;
+            modState.runtime.standaloneVersion = evidence.version || null;
+            if (evidence.confirmed && modState.config.warnOnStandalone) {
+                GameAssist.log(
+                    MODULE_NAME,
+                    `Standalone TokenMod${evidence.version ? ` v${evidence.version}` : ''} is also installed. TokenService will leave !token-mod commands to that script until it is removed and the sandbox restarts.`,
+                    'WARN'
+                );
+            }
+            GameAssist.onCommand('!token-service', handleBranded, MODULE_NAME, {
+                match: { caseInsensitive: true, mode: 'token' }
+            });
+            GameAssist.onCommand('!token-mod', handleCompatibility, MODULE_NAME, {
+                match: { caseInsensitive: true, mode: 'token' }
+            });
+            GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} ready; use !token-service help`, 'INFO', { startup: true });
+        }
+
+        function shutdown() {
+            const modState = GameAssist.getState(MODULE_NAME);
+            modState.runtime.lastDisabledAt = isoNow();
+        }
+
+        return Object.freeze({
+            version: MODULE_VERSION,
+            configSchemaVersion: CONFIG_SCHEMA_VERSION,
+            reference: TOKENMOD_REFERENCE,
+            isEnabled,
+            initialize,
+            shutdown,
+            observeTokenChange,
+            ObserveTokenChange: observeTokenChange,
+            clearObservers
+        });
+    })();
+
+    GameAssist.TokenService = TokenService;
+    GameAssist.register('TokenService', TokenService.initialize, {
+        enabled: true,
+        events: ['chat:message'],
+        prefixes: ['!token-service', '!token-mod'],
+        teardown: TokenService.shutdown,
+        dependsOn: ['MarkerService'],
+        preserveRuntimeOnDisable: true,
+        protectedConfigKeys: ['configSchemaVersion']
+    });
+    // --- Notes & Comments ---
+    // Changed (v0.1.5.0): Added TokenService 1.0.0 as the independently branded GameAssist token-control module, with selected !token-mod compatibility, non-destructive players-can-ids migration, MarkerService-backed marker commands, lifecycle integration, observer replacement, pinned TokenMod 0.8.88 provenance, and dual-install protection.
+    // TokenMod provenance:
+    //   Original project: TokenMod by The Aaron, Arcane Scriptomancer.
+    //   Pinned reference: Roll20/roll20-api-scripts commit 9d634d3149985dcf10333920b3f4c41f215f39fc, TokenMod/0.8.88/TokenMod.js blob fc6c9cb45ec2f2ee254a24f849e089507a0e610a.
+    //   License and public notice: MIT; see LICENSE and ATTRIBUTIONS.md. No upstream endorsement is implied.
+    // Decision log:
+    //   CHOICE: Name the module TokenService and tag it TOKENSERVICE - ALT: retain TokenMod branding; REJECTED: GameAssist owns this implementation, lifecycle, limits, and support.
+    //   CHOICE: Preserve !token-mod as a compatibility command - ALT: require immediate macro rewrites; REJECTED: supported upgrades should not strand established campaign macros.
+    //   CHOICE: Implement a bounded, documented command surface - ALT: paste the complete upstream implementation; REJECTED: unverified wholesale integration would duplicate marker authority and import unrelated state/lifecycle assumptions.
+    //   CHOICE: Suspend compatibility handling when standalone TokenMod is detected - ALT: let both handlers run; REJECTED: one command could mutate the same token twice.
+    //   CHOICE: Copy only practical legacy configuration and preserve state.TokenMod - ALT: rename or delete upstream state; REJECTED: rollback and migration diagnosis require the source state.
+    //   CHOICE: Expose GameAssist.TokenService.observeTokenChange - ALT: create a global TokenMod compatibility object; REJECTED: the global would blur branding, provenance, and standalone-conflict detection.
+    //   CHOICE: Route all status-marker syntax through MarkerService - ALT: write statusmarkers independently; REJECTED: GameAssist must have one marker authority.
+    // Prior notes: N/A (new section in v0.1.5.0).
+    // [GAMEASSIST:MODULES:TOKENSERVICE] END
     // =============================================================================
 
     // ————— NPC MANAGER MODULE v1.2.0 —————
@@ -7433,7 +8468,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Updated the module wrapper contract because all marker consumers now share CORE:MARKERSERVICE.
+    // Changed (v0.1.5.0): Updated the module wrapper contract because all marker consumers share CORE:MARKERSERVICE and the independently branded TokenService now owns supported general token commands.
     // Prior notes:
     //   v0.1.4.3: Updated the wrapper contract after marker consumers adopted configured marker identity resolution.
     //   v0.1.3: Added MODULES wrapper for MECHSUITS parent/child compliance; no semantic change.

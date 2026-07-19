@@ -2,7 +2,7 @@
 
 Use this guide after installing or updating GameAssist, before an important session, or while troubleshooting a feature.
 
-> `v0.1.5.0` is still in development. MarkerService and ConditionService have focused checkpoint tests below; the integrated token service, stabilization work, and final release acceptance tests remain required.
+> `v0.1.5.0` is still in development. MarkerService, ConditionService, and TokenService have focused checkpoint tests below; real Roll20 sandbox verification, stabilization work, and final release acceptance tests remain required.
 
 The tests are organized by component. Each section explains:
 
@@ -27,6 +27,7 @@ Run commands one at a time. A multi-line command block is a checklist, not a sin
 | ConfigUI | The GM settings interface opens and responds once. | It is the easiest way for most DMs to manage modules. | The campaign is intentionally managed only through commands. |
 | CritFumble | Help and the Natural 1 workflow respond. | Table automation can fail separately from the rest of GameAssist. | CritFumble is disabled and will not be used. |
 | ConditionService | Condition help, selected-token controls, descriptions, and MarkerService synchronization work. | Condition workflows combine permissions, configuration, markers, and chat output. | ConditionService is deliberately disabled and will not be used. |
+| TokenService | Selected-token controls, values, movement, reports, and MarkerService-backed status commands work. | It replaces the supported general token-control workflows previously supplied by standalone TokenMod. | TokenService is deliberately disabled and no `!token-mod` compatibility commands will be used. |
 | ConcentrationTracker | Status, saving throws, and marker removal work on linked PC tokens. | It combines character data, rolls, chat, and MarkerService. | ConcentrationTracker is disabled and will not be used. |
 | NPCManager | Death, revival, audit, history, buckets, and Arc menus work. | It combines HP events, markers, saved records, and handouts. | NPCManager is disabled and will not be used. |
 | NPCHPRoller | Qualifying NPC HP formulas roll without changing PCs or unlinked tokens. | Incorrect eligibility can damage token HP or create false history. | NPCHPRoller is disabled and NPC HP is set another way. |
@@ -40,14 +41,14 @@ GameAssist is ready for normal use when:
 
 - the Roll20 Mod sandbox reloads without a new GameAssist exception;
 - the Core System basic test passes;
-- MarkerService passes if ConditionService, NPCManager, ConcentrationTracker, or marker diagnostics will be used;
+- MarkerService passes if ConditionService, TokenService, NPCManager, ConcentrationTracker, or marker diagnostics will be used;
 - every enabled module that matters to the coming session passes its basic test;
 - any skipped test is skipped for a stated reason, not because its result was unclear.
 
 Expected conditions that are not failures:
 
 - DebugTools is disabled by default.
-- Standalone TokenMod is not required for GameAssist marker operations in v0.1.5.0.
+- Standalone TokenMod is not required for GameAssist marker operations or supported TokenService commands in v0.1.5.0. Remove it while testing TokenService so both scripts cannot respond to `!token-mod`.
 - ConditionService is independently branded GameAssist functionality; standalone StatusInfo should be absent while its overlapping workflows are tested.
 - CritFumble help works without rollable tables, but table rolls require the seven exact table names.
 - Counts and timestamps in diagnostic panels vary by sandbox session.
@@ -133,7 +134,7 @@ Run:
 Pass when:
 
 - `!ga-status` identifies GameAssist v0.1.5.0 and gives a clear overall result;
-- MarkerService and five default gameplay/administration modules are enabled and running;
+- MarkerService and seven default gameplay/administration modules are enabled and running;
 - DebugTools is shown as disabled or paused;
 - no enabled module is dependency-skipped;
 - the actions below `!ga-status` include **Troubleshooting Details**, **Modules & Services**, and **Open Settings**.
@@ -184,7 +185,7 @@ Open the `GameAssist Config` handout and check:
 - [ ] `schemaVersion` is `1`.
 - [ ] `scope` is `configuration-only`.
 - [ ] `version` is `0.1.5.0`.
-- [ ] All six module configuration objects are present.
+- [ ] The MarkerService service configuration and all eight module configuration objects are present.
 - [ ] Runtime caches, metrics, death history, and Arc data are absent.
 
 This is a configuration snapshot, not a complete state backup, and it cannot be imported in v0.1.5.0.
@@ -229,7 +230,7 @@ Run each line only after the previous response. Pass when ConfigUI disables, re-
 
 **What this proves:** GameAssist can resolve, add, remove, inspect, and preserve token markers through its own MarkerService.
 
-**Why test it:** ConditionService, NPCManager, ConcentrationTracker, and marker diagnostics share MarkerService instead of maintaining competing marker implementations.
+**Why test it:** ConditionService, TokenService, NPCManager, ConcentrationTracker, and marker diagnostics share MarkerService instead of maintaining competing marker implementations.
 
 **Skip when:** Skip only if MarkerService and every dependent GameAssist module are deliberately disabled. The **without TokenMod** portion is required for Issue #25 acceptance; use a disposable campaign when the active campaign cannot safely remove TokenMod yet.
 
@@ -292,8 +293,8 @@ Run:
 Pass when:
 
 - MarkerService v1.0.1 is enabled;
-- ConditionService, NPCManager, and ConcentrationTracker are running;
-- all three show confirmed MarkerService dependencies;
+- ConditionService, TokenService, NPCManager, and ConcentrationTracker are running;
+- all four show confirmed MarkerService dependencies;
 - none is skipped because TokenMod or StatusInfo is absent.
 
 #### M2. Numbered Death Marker
@@ -411,30 +412,31 @@ Run each command after the previous response appears:
 ```roll20chat
 !ga-disable MarkerService
 !ga-config modules
-!ga-enable NPCManager
+!ga-enable TokenService
 ```
 
 Pass when:
 
 - the command controls MarkerService rather than reporting `No such module` or `No such service`;
-- ConditionService, NPCManager, ConcentrationTracker, and DebugTools are configured off and not running;
+- ConditionService, TokenService, NPCManager, ConcentrationTracker, and DebugTools are configured off and not running;
 - MarkerService is configured off and not running;
 - CritFumble, ConfigUI, and NPCHPRoller keep their prior configured/running state;
 - the disable notice names the affected modules and explains that unrelated GameAssist modules remain available;
 - the notice accurately describes standalone TokenMod and StatusInfo as separate alternatives rather than as a hidden GameAssist fallback;
-- the attempt to enable NPCManager is refused with guidance to enable MarkerService first.
+- the attempt to enable TokenService is refused with guidance to enable MarkerService first.
 
 Now restore the service and enabled dependents:
 
 ```roll20chat
 !ga-enable MarkerService
 !ga-enable ConditionService
+!ga-enable TokenService
 !ga-enable NPCManager
 !ga-enable ConcentrationTracker
 !ga-config modules
 ```
 
-Pass when MarkerService starts first, all three ordinary dependents can then start, and DebugTools remains disabled unless the GM explicitly enables it.
+Pass when MarkerService starts first, all four ordinary dependents can then start, and DebugTools remains disabled unless the GM explicitly enables it.
 
 #### M7. Reload and Persistence
 
@@ -452,17 +454,18 @@ Restore normal marker operation, restart once more, and verify retained campaign
 ```roll20chat
 !ga-enable MarkerService
 !ga-enable ConditionService
+!ga-enable TokenService
 !ga-enable NPCManager
 !ga-enable ConcentrationTracker
 !npc-death-report
 !concentration --status
 ```
 
-Pass when the service and dependents run again, ConditionService definitions and existing NPC history are retained, and configuration remains consistent.
+Pass when the service and dependents run again, ConditionService definitions, TokenService settings, and existing NPC history are retained, and configuration remains consistent.
 
 #### M8. Restore Campaign Settings
 
-Restore the original `deadMarker`, `autoHide`, concentration `marker`, and intended ConditionService permission settings. Leave MarkerService and only the GameAssist modules the campaign uses in their intended final enabled state.
+Restore the original `deadMarker`, `autoHide`, concentration `marker`, intended ConditionService permissions, and intended TokenService `players-can-ids` setting. Leave MarkerService and only the GameAssist modules the campaign uses in their intended final enabled state.
 
 ### MarkerService Failure Evidence
 
@@ -714,7 +717,220 @@ Temporarily load standalone StatusInfo only in a disposable test campaign and re
 
 ---
 
-## 6. ConcentrationTracker
+## 6. TokenService
+
+**What this proves:** TokenService can safely control selected tokens, preserve supported `!token-mod` campaign macros, and route every status-marker change through MarkerService.
+
+**Why test it:** General token controls touch many Roll20 properties. A useful acceptance pass must prove that targeting, authorization, relative values, linked bars, movement, reports, and markers change only the intended token data.
+
+**Skip when:** TokenService is deliberately disabled and the campaign uses none of its commands. Do not skip this section for Issue #27 acceptance.
+
+### Basic Check
+
+Remove standalone TokenMod and restart the Mod sandbox. Select only the disposable unlinked token, note its current name and bar 3 value, and add an unrelated numbered blue marker such as `blue@7`. Then run one command at a time:
+
+```roll20chat
+!ga-config modules
+!token-service help
+!token-service about
+!token-mod --flip showname
+!token-mod --set "name|GA TokenService Test" bar3_value|10
+!token-mod --set bar3_value|+2
+!token-mod --set statusmarkers|red:3
+!token-mod --set statusmarkers|-red
+```
+
+Pass when:
+
+- TokenService is configured on, running, and reports a confirmed MarkerService dependency;
+- the quick guide and attribution/limits panel both open;
+- the token-name visibility setting flips once;
+- the token is renamed and bar 3 ends at `12`;
+- red appears with number 3 and is then removed;
+- the unrelated `blue@7` marker remains unchanged;
+- no other selected or unselected token changes.
+
+Restore the token's original name, bar 3 value, and name-visibility setting after the check.
+
+### Full Issue #27 Acceptance Test
+
+Use a disposable page and keep standalone TokenMod absent except during the dedicated collision check. Record the initial TokenService setting:
+
+```roll20chat
+!ga-config get TokenService playersCanUseIds
+```
+
+#### T1. Help, Case, and Configuration
+
+Run:
+
+```roll20chat
+!ToKeN-SeRvIcE HeLp
+!token-mod --help
+!token-mod --help-statusmarkers
+!token-service config
+```
+
+Pass when both command families open the same readable guide, marker help explains add/remove/toggle/replace behavior, and the settings button clearly reports whether player `--ids` targeting is on or off.
+
+#### T2. Selected-Token Properties and Reports
+
+Select one disposable token. Record its current name, bar 3 value, aura 1 color, and name-visibility setting. Then run:
+
+```roll20chat
+!token-mod --on showname --set "name|GA Test Guardian" bar3_value|20 aura1_color|336699
+!token-mod --set bar3_value|-5 --report gm|"{name}: bar 3 changed from {bar3_value:before} to {bar3_value}"
+!token-mod --off showname
+```
+
+Pass when the selected token alone is renamed, its bar 3 value changes from 20 to 15, the color is stored as a valid hex color, the GM receives an understandable before/after report, and name visibility ends off. Restore the original values afterward.
+
+#### T3. Movement and Order
+
+Place two disposable tokens where movement is easy to see. Select one and run:
+
+```roll20chat
+!token-mod --move 1g
+!token-mod --move =90|1u
+!token-mod --order tofront
+!token-mod --order toback
+```
+
+Pass when only the selected token moves, its prior locations are retained in Roll20's movement trail, and both front/back order commands visibly affect stacking. Return the token to its starting position.
+
+#### T4. Built-In, Numbered, and Custom Markers
+
+Put `blue@7` on the selected token, then run:
+
+```roll20chat
+!token-mod --set statusmarkers|red:3
+!token-mod --set statusmarkers|!red
+!token-mod --set statusmarkers|red
+```
+
+Pass when red is added with 3, toggled off, and added again while `blue@7` remains unchanged.
+
+Create a disposable custom marker, then test its display name and exact stored `Name::id` tag:
+
+```roll20chat
+!token-mod --set "statusmarkers|Custom Marker Name"
+!token-mod --set "statusmarkers|-Custom Marker Name"
+!token-mod --set statusmarkers|Name::id:4
+!token-mod --set statusmarkers|-Name::id
+```
+
+Pass when only the intended custom marker changes and its numbered form displays 4. The literal `Name::id` above must be replaced with the actual stored tag.
+
+Finally, run an invalid replacement while `blue@7` is still present:
+
+```roll20chat
+!token-mod --set "statusmarkers|=Marker That Does Not Exist"
+```
+
+Pass when TokenService gives an actionable warning and does **not** clear `blue@7`. Remove the disposable red marker when finished.
+
+#### T5. Player Authorization
+
+Assign a disposable token to a non-GM player. With player `--ids` disabled, have that player select the token and run:
+
+```roll20chat
+!token-mod --flip showname
+```
+
+Pass when the selected-token command works because the player can control that token. Record its token ID, clear the selection, and run:
+
+```roll20chat
+!token-mod --ids TOKEN_ID --flip showname
+```
+
+Pass when TokenService refuses explicit-ID targeting without changing the token. The GM can temporarily enable the setting from `!token-service config`; after enabling it, repeat the explicit-ID command and pass when the controlled token changes once. Restore the original setting and visibility value.
+
+#### T6. Linked Bar Update
+
+Use a disposable linked token and a disposable character attribute. Link token bar 3 to that attribute through Roll20's token settings, record the attribute's current and maximum values, then run:
+
+```roll20chat
+!token-mod --set bar3_value|17 bar3_max|25
+```
+
+Pass when the linked character attribute becomes current `17`, maximum `25`, and the sheet-backed token bar follows it. Restore the original values after the check.
+
+#### T7. Page Filters and Character IDs
+
+Put copies of one disposable character on two pages. From the GM account, run a command using the character ID rather than a token ID, first with `--current-page` and then without it:
+
+```roll20chat
+!token-mod --ignore-selected --ids CHARACTER_ID --current-page --flip showname
+!token-mod --ignore-selected --ids CHARACTER_ID --flip showname
+```
+
+Pass when the first command changes only the copy on the GM's current page and the second reaches all tokens representing that character. Restore both tokens afterward.
+
+#### T8. Legacy Setting Migration
+
+Run this only in an upgrade test campaign that previously used TokenMod. Before installing the development build, record standalone TokenMod's **Players can use --ids** setting. Remove TokenMod, install GameAssist, restart, and run:
+
+```roll20chat
+!ga-config get TokenService playersCanUseIds
+```
+
+Pass when the valid legacy boolean is copied once, the old `state.TokenMod` branch remains available for rollback, and later TokenService setting changes are not overwritten on reload.
+
+#### T9. MarkerService Lifecycle
+
+Run each command after the prior response appears:
+
+```roll20chat
+!ga-disable MarkerService
+!ga-config modules
+!ga-enable tokenservice
+!ga-enable markerservice
+!ga-enable tokenservice
+!token-service help
+```
+
+Pass when disabling MarkerService also disables TokenService, the premature TokenService enable is refused, case-insensitive re-enabling works after MarkerService returns, and help opens once. Unrelated modules should retain their prior settings.
+
+#### T10. Standalone Collision Protection
+
+Use a disposable campaign for this check. Temporarily install standalone TokenMod beside GameAssist and restart. Run:
+
+```roll20chat
+!ga-status --details
+!token-service about
+!token-mod --flip showname
+```
+
+Pass when GameAssist warns that standalone TokenMod was detected, branded TokenService information remains available, and TokenService leaves `!token-mod` compatibility commands to the standalone script so GameAssist does not apply the same command a second time. Remove standalone TokenMod and restart before continuing.
+
+#### T11. Explicit Compatibility Limit
+
+Select a disposable token whose name visibility is off, then run:
+
+```roll20chat
+!token-mod --set imgsrc|ignored --on showname
+```
+
+Pass when TokenService refuses the unsupported image-side property, explains that this feature is outside TokenService 1.0.0, and leaves name visibility unchanged. TokenService 1.0.0 also does not claim default-token writes, computed attributes, advanced color arithmetic, duplicate-index marker editing, or conditional marker counts.
+
+#### T12. Restore Campaign Settings
+
+Restore changed token properties, linked attributes, marker choices, module enablement, and the original `players-can-ids` setting. Leave standalone TokenMod removed when TokenService will own `!token-mod` commands.
+
+### TokenService Failure Evidence
+
+If any TokenService check fails, record:
+
+- the exact command and whether it came from a GM, player, macro, or another Mod;
+- selected token names/IDs and any explicit token or character IDs;
+- the property values and `statusmarkers` string before and after;
+- whether standalone TokenMod was installed or detected;
+- the TokenService and MarkerService rows from `!ga-config modules`;
+- `!ga-status --details` output and the exact API Console exception or warning.
+
+---
+
+## 7. ConcentrationTracker
 
 **What this proves:** ConcentrationTracker reads linked character data, builds the correct save, remembers the last check, and uses MarkerService.
 
@@ -770,7 +986,7 @@ Select an unlinked token and repeat a check. Pass when GameAssist explains that 
 
 ---
 
-## 7. NPCManager
+## 8. NPCManager
 
 **What this proves:** NPCManager tracks genuine HP transitions, changes death markers, audits current-page mismatches, and maintains report buckets and Arc records.
 
@@ -958,7 +1174,7 @@ Default behavior is `autoHide=false`. If enabled, dead NPCs intentionally move t
 
 ---
 
-## 8. NPCHPRoller
+## 9. NPCHPRoller
 
 **What this proves:** NPCHPRoller recognizes qualifying NPCs, rolls `npc_hpformula`, and protects initialization from false death history.
 
@@ -1029,7 +1245,7 @@ Restore the default:
 
 ---
 
-## 9. DebugTools
+## 10. DebugTools
 
 **What this proves:** DebugTools remains opt-in, previews mutations by default, and requires `--apply`.
 
@@ -1098,11 +1314,13 @@ From a non-GM account, try:
 !ga-config modules
 !condition config
 !condition add prone
+!token-service config
+!token-mod --ids TOKEN_ID --flip showname
 !npc-hp-all
 !npc-death-audit
 ```
 
-Pass when GM-only actions do not execute for the player.
+Pass when GM-only actions do not execute for the player. TokenService should refuse explicit-ID targeting while `players-can-ids` is off, but selected-token commands remain available for tokens the player controls.
 
 ## Duplicate Installation
 
@@ -1117,7 +1335,7 @@ If a command produces duplicate output:
 3. Keep only the intended implementation.
 4. Restart the sandbox and repeat the command.
 
-Scripts that independently respond to `!condition`, describe the same marker changes, modify the same NPC HP/bar 1, control the same death/concentration/condition markers, or process the same Natural 1 workflow may conflict even when their names differ.
+Scripts that independently respond to `!condition` or `!token-mod`, describe the same marker changes, modify the same NPC HP/bar 1, control the same token properties or death/concentration/condition markers, or process the same Natural 1 workflow may conflict even when their names differ. TokenService deliberately suspends its `!token-mod` compatibility handler when standalone TokenMod is detected, but the standalone copy should still be removed for normal v0.1.5.0 use.
 
 ## State Recovery
 
@@ -1169,6 +1387,7 @@ Run:
 !ga-status --details
 !ga-config get NPCManager deadMarker
 !ga-config get ConcentrationTracker marker
+!token-mod --help-statusmarkers
 !npc-death-audit
 !concentration --status
 ```
@@ -1237,7 +1456,7 @@ When a test fails, record:
 - [ ] Token name, ID, layer, and linkage.
 - [ ] Relevant character attributes.
 - [ ] Marker values before and after, when applicable.
-- [ ] Whether TokenMod or StatusInfo was installed.
+- [ ] Whether standalone TokenMod or standalone StatusInfo was installed or detected.
 - [ ] Whether duplicate or overlapping scripts were active.
 
 ---
@@ -1257,6 +1476,7 @@ Then run only the basic checks for features the session will use:
 - ConfigUI: open settings.
 - CritFumble: `!critfumble help`.
 - ConditionService: select a disposable token and open `!condition`.
+- TokenService: select a disposable token, open `!token-service help`, and flip one harmless visibility setting twice.
 - ConcentrationTracker: `!concentration --status`.
 - NPCManager: `!npc-death-report`.
 - NPCHPRoller: roll one disposable selected NPC.

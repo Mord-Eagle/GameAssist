@@ -13,7 +13,9 @@ References to TokenMod, StatusInfo, Roll20, or their contributors do not imply s
 - Project acknowledged: TokenMod
 - Author: The Aaron, Arcane Scriptomancer
 - Reference release: TokenMod `0.8.88`
-- Source: <https://github.com/Roll20/roll20-api-scripts/tree/master/TokenMod>
+- Pinned Roll20 repository snapshot: `9d634d3149985dcf10333920b3f4c41f215f39fc`
+- TokenMod `0.8.88` file blob: `fc6c9cb45ec2f2ee254a24f849e089507a0e610a`
+- Source: <https://github.com/Roll20/roll20-api-scripts/blob/9d634d3149985dcf10333920b3f4c41f215f39fc/TokenMod/0.8.88/TokenMod.js>
 - License: MIT
 
 MarkerService is independently maintained as part of GameAssist. It is not TokenMod and is not an official or endorsed TokenMod release.
@@ -39,6 +41,29 @@ StatusInfo-derived compatibility concepts include the `!condition` command famil
 
 ConditionService is not StatusInfo and is not an official or endorsed StatusInfo release. Robin Kuiper is not responsible for GameAssist support, modifications, or compatibility decisions.
 
+## GameAssist TokenService
+
+`GameAssist.TokenService` is an independently branded and maintained GameAssist module for general Roll20 token controls. It provides its own `!token-service` help and configuration surface and preserves a documented subset of familiar `!token-mod` commands so supported campaign macros can migrate without immediate rewrites. All status-marker operations are delegated to `GameAssist.MarkerService`.
+
+- GameAssist component: `TokenService`
+- Component version: `1.0.0`
+- Compatibility and design foundation: TokenMod
+- Original author: The Aaron, Arcane Scriptomancer
+- Reference release: TokenMod `0.8.88`
+- Pinned Roll20 repository snapshot: `9d634d3149985dcf10333920b3f4c41f215f39fc`
+- TokenMod `0.8.88` path: `TokenMod/0.8.88/TokenMod.js`
+- TokenMod `0.8.88` file blob: `fc6c9cb45ec2f2ee254a24f849e089507a0e610a`
+- Source: <https://github.com/Roll20/roll20-api-scripts/blob/9d634d3149985dcf10333920b3f4c41f215f39fc/TokenMod/0.8.88/TokenMod.js>
+- License: MIT
+
+TokenMod compatibility concepts used by TokenService include selected-token and explicit-ID targeting; the `--on`, `--off`, `--flip`, `--set`, `--move`, `--order`, `--report`, page-filter, help, and `players-can-ids` command families; common token property names and aliases; relative numeric operations; movement units; report placeholders; and token-change observer behavior.
+
+GameAssist independently implements the module identity, lifecycle, validation, help presentation, state migration, collision handling, diagnostics, MarkerService integration, command parser, authorization boundary, public `GameAssist.TokenService` API, and maintained compatibility limits. The initial implementation does not include TokenMod's image-side stack editing, default-token writes, computed-attribute handling, advanced color arithmetic, duplicate-index marker editing, or conditional marker counts. Those commands are not claimed as compatible.
+
+TokenService does not expose a global object named `TokenMod`. Its observer replacement is `GameAssist.TokenService.observeTokenChange()`. When standalone TokenMod is detected, TokenService leaves `!token-mod` commands to the standalone script and warns the GM, preventing one command from being applied twice.
+
+TokenService is not TokenMod and is not an official or endorsed TokenMod release. The Aaron is not responsible for GameAssist support, modifications, security, or compatibility decisions.
+
 ## TokenMod
 
 **TokenMod** was created by **The Aaron, Arcane Scriptomancer** and distributed through the Roll20 API Scripts repository under the MIT License.
@@ -47,7 +72,8 @@ GameAssist acknowledges TokenMod as an important design reference for token edit
 
 - Project: TokenMod
 - Author: The Aaron, Arcane Scriptomancer
-- Source: <https://github.com/Roll20/roll20-api-scripts/tree/master/TokenMod>
+- Reference release: `0.8.88`
+- Pinned source: <https://github.com/Roll20/roll20-api-scripts/blob/9d634d3149985dcf10333920b3f4c41f215f39fc/TokenMod/0.8.88/TokenMod.js>
 - License: MIT
 
 GameAssist is independently maintained and is not an official TokenMod release. The original author is not responsible for GameAssist support, changes, or compatibility decisions.
