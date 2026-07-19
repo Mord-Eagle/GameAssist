@@ -12,9 +12,10 @@ DESCRIPTION
 GameAssist is a modular D&D 5E (2014) automation suite with an explicit opt-in
 task queue, state/configuration helpers, consistent logging, and a core marker
 service. Normal event handlers execute directly unless a module deliberately
-calls GameAssist.enqueue(). This package ships with six configurable modules:
+calls GameAssist.enqueue(). This package ships with seven configurable modules:
 - ConfigUI - GM-only chat controls for toggling modules and common options.
 - CritFumble - Detects natural-1 attacks and offers fumble/confirm menus.
+- ConditionService 1.0.0 - Describes and manages token conditions through MarkerService.
 - ConcentrationTracker - Runs concentration checks and manages its configured marker.
 - NPCManager 1.2.0 - Tracks NPC death markers, history, reports, audits, and Arc rosters.
 - NPCHPRoller - Rolls npc_hpformula and writes the result to token bar 1.
@@ -29,10 +30,10 @@ INSTALL / USAGE
 CORE COMMANDS (GM)
 - !ga-config list
 - !ga-config modules
-- !ga-config set <Module> key=value
-- !ga-config get <Module> key
+- !ga-config set <ModuleOrService> key=value
+- !ga-config get <ModuleOrService> key
 - !ga-config ui / !ga-config-ui
-- !ga-enable <Module> / !ga-disable <Module>
+- !ga-enable <ModuleOrService> / !ga-disable <ModuleOrService>
 - !ga-status [--details]
 - !ga-debug <action>
 
@@ -40,6 +41,8 @@ MODULE COMMANDS
 - CritFumble: !critfail, !critfumble help, !critfumble menu,
   !critfumble-<melee|ranged|thrown|spell|natural>,
   !confirm-crit-martial, !confirm-crit-magic
+- ConditionService: !condition, !condition help, !condition config,
+  !condition add|remove|toggle <condition...>
 - ConcentrationTracker: !concentration, !cc, !ga-conc-status
 - NPCManager: !npc-death-help, !npc-death-report, !npc-death-buckets,
   !npc-death-clear, !npc-death-write, !npc-wr, !npc-death-audit,
@@ -54,10 +57,12 @@ V0.1.5.0 MARKER ARCHITECTURE
   unrelated marker entries are preserved through a structured mutation contract.
 - NPCManager, ConcentrationTracker, and DebugTools use GameAssist.MarkerService.
 - Marker-dependent GameAssist modules no longer depend on standalone TokenMod.
-- Disabling MarkerService also disables NPCManager, ConcentrationTracker, and
-  DebugTools while CritFumble, ConfigUI, and NPCHPRoller remain available.
-- The public v0.1.5.0 release is gated on the independently branded and
-  attributed GameAssist token and condition services plus full stabilization.
+- ConditionService uses MarkerService for condition reads, writes, and change observation.
+- Disabling MarkerService also disables ConditionService, NPCManager,
+  ConcentrationTracker, and DebugTools while CritFumble, ConfigUI, and
+  NPCHPRoller remain available.
+- The public v0.1.5.0 release remains gated on the independently branded and
+  attributed GameAssist token service plus full stabilization.
 - Queue timeouts release the queue but cannot terminate Roll20 operations.
 - Configuration snapshots contain configuration only, never runtime caches.
 
@@ -78,8 +83,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 // mechsuit:
 //   codename: "GAMEASSIST"
 //   project_version: "v0.1.5.0"
-//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, explicit opt-in queue execution, state self-healing, dependency diagnostics, and one toggleable marker authority. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, sheet-specific integrations, implicit event queueing, or transport changes beyond Roll20 chat API."
-//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critfumble","modules.npcmanager","modules.concentrationtracker","modules.npchproller","modules.debugtools","bootstrap"]
+//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, explicit opt-in queue execution, state self-healing, dependency diagnostics, one toggleable marker authority, and an integrated condition service. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, or transport changes beyond Roll20 chat API."
+//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critfumble","modules.conditionservice","modules.npcmanager","modules.concentrationtracker","modules.npchproller","modules.debugtools","bootstrap"]
 //   env:
 //     required: []
 //     optional: []
@@ -117,6 +122,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     ├─ [GAMEASSIST:MODULES]
 //     │  ├─ [GAMEASSIST:MODULES:CONFIGUI]
 //     │  ├─ [GAMEASSIST:MODULES:CRITFUMBLE]
+//     │  ├─ [GAMEASSIST:MODULES:CONDITIONSERVICE]
 //     │  ├─ [GAMEASSIST:MODULES:NPCMANAGER]
 //     │  ├─ [GAMEASSIST:MODULES:CONCENTRATIONTRACKER]
 //     │  ├─ [GAMEASSIST:MODULES:NPCHPROLLER]
@@ -159,7 +165,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Tunables and operational policy
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "POLICY", title: "Tunables",
-    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; NPC initialization waits remain explicit"],
+    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; NPC initialization and condition-service limits remain explicit"],
     //   provides: ["POLICY"], last_updated_version: "v0.1.5.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
@@ -197,6 +203,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         critFumble: Object.freeze({
             rollDelayMs: 200
         }),
+        conditions: Object.freeze({
+            maxDefinitions: 100,
+            maxNameLength: 80,
+            maxDescriptionLength: 4000,
+            maxMarkerLength: 200,
+            maxImportLength: 100000,
+            recentDescriptionMs: 1000
+        }),
         config: Object.freeze({
             unsafeKeys: Object.freeze(['__proto__', 'prototype', 'constructor'])
         }),
@@ -206,7 +220,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Removed the obsolete standalone TokenMod verification delay after marker writes moved to synchronous MarkerService mutations; rollback: restore standalone request dispatch and its delay.
+    // Changed (v0.1.5.0): Removed the obsolete standalone TokenMod verification delay and added bounded condition-definition/import limits for ConditionService; rollback: restore standalone request dispatch or revise the condition limits here.
     // Decision log:
     //   CHOICE: Keep NPC initialization and snapshot knobs centralized while removing the unused external marker delay - ALT: retain the dead setting; REJECTED: implied behavior no caller performs.
     // Prior notes:
@@ -613,7 +627,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   v0.1.4.3: APP included shared exact marker-identity resolution.
     //   v0.1.3: Updated wrapper commentary while preserving explicit nesting over APP:UTILS only; no semantic change.
     //   v0.1.1.2: Relocated the APP wrapper to avoid implied nesting over non-APP sections; no semantic change.
-    //   Existing guarantees retained: MIT license, six bundled modules, queue/watchdog defaults, and GM-whisper logging.
+    //   Existing guarantees retained: MIT license, bundled feature modules, queue/watchdog defaults, and GM-whisper logging.
     // [GAMEASSIST:APP] END
     // =============================================================================
 
@@ -1011,7 +1025,6 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         setMarkerServiceEnabled = value => {
             enabled = value === true;
-            if (!enabled) observers.clear();
             return enabled;
         };
 
@@ -1552,7 +1565,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         });
     })();
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Introduced MarkerService 1.0.0 as the sole GameAssist marker authority, added an explicit enabled lifecycle, and removed GameAssist marker dependence on chat-generated TokenMod commands.
+    // Changed (v0.1.5.0): Introduced MarkerService 1.0.0 as the sole GameAssist marker authority, added an explicit enabled lifecycle, retained observer registrations across intentional off/on cycles, and removed GameAssist marker dependence on chat-generated TokenMod commands.
     // Decision log:
     //   CHOICE: Mutate statusmarkers directly and publish one observation contract - ALT: send TokenMod chat commands; REJECTED: external authorization, timing, and dependency ambiguity.
     //   CHOICE: Remove every matching duplicate on explicit removal - ALT: remove only the first; REJECTED: callers asking for an absent state should not leave hidden duplicates active.
@@ -1560,6 +1573,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Preserve literal lowercase built-in ids before custom display names, then honor exact-case custom names - ALT: always prefer custom names; REJECTED: a custom "dead" could silently replace NPCManager's built-in default.
     //   CHOICE: Resolve exact stored custom tags without registry access - ALT: require registry confirmation; REJECTED: valid stored tags must survive registry read failures.
     //   CHOICE: Refuse every marker operation while disabled - ALT: leave read-only helpers active; REJECTED: a disabled service must have one clear, predictable boundary.
+    //   CHOICE: Pause observers while disabled but retain their registrations - ALT: clear observers; REJECTED: dependent modules are wired once and would not resubscribe after a service restart.
     // [GAMEASSIST:CORE:MARKERSERVICE] END
     // =============================================================================
 
@@ -1569,7 +1583,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: GameAssist kernel object
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:OBJECT", title: "Kernel",
-    //   guarantees: ["Logging, explicit enqueue, dependency diagnostics, register/enable/disable, listener management", "MarkerService is exposed through the stable GameAssist object", "Module registration may explicitly retain durable runtime state across disable/enable transitions", "Failed dependency enable checks preserve the module's existing configured intent"],
+    //   guarantees: ["Logging, explicit enqueue, dependency diagnostics, register/enable/disable, listener management", "MarkerService is exposed through the stable GameAssist object", "Module registration may explicitly retain durable runtime state and protect validated configuration maps", "Failed dependency enable checks preserve the module's existing configured intent"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]"],
     //   last_updated_version: "v0.1.5.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
@@ -1626,7 +1640,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             teardown = null,
             dependsOn = [],
             preserveRuntimeOnDisable = false,
-            service = false
+            service = false,
+            protectedConfigKeys = []
         } = {}) {
             if (READY) {
                 this.log('Core', `Cannot register after ready: ${name}`, 'WARN');
@@ -1647,6 +1662,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 dependsOn,
                 preserveRuntimeOnDisable: preserveRuntimeOnDisable === true,
                 service: service === true,
+                protectedConfigKeys: Array.isArray(protectedConfigKeys)
+                    ? protectedConfigKeys.map(key => String(key))
+                    : [],
                 wired: false,
                 internal: false
             };
@@ -1776,6 +1794,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             };
         },
 
+        resolveComponentName(requestedName) {
+            const requested = String(requestedName || '').trim();
+            if (!requested) return null;
+            if (MODULES[requested]) return requested;
+            const normalized = requested.toLowerCase();
+            return Object.keys(MODULES).find(name => name.toLowerCase() === normalized) || null;
+        },
+
         /**
          * enqueue — Explicitly submit work to the serialized queue.
          * Async work must return a Promise that settles when the queued portion is done.
@@ -1799,10 +1825,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return true;
         },
 
-        enableModule(name) {
+        enableModule(requestedName) {
+            const name = this.resolveComponentName(requestedName);
             const mod = MODULES[name];
             if (!mod) {
-                this.log('Core', `No such module: ${name}`, 'WARN');
+                this.log('Core', `No such GameAssist module or service: ${String(requestedName || '').trim() || '(blank)'}`, 'WARN');
                 return;
             }
             if (mod.internal) {
@@ -1862,10 +1889,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             });
         },
 
-        disableModule(name) {
+        disableModule(requestedName) {
+            const name = this.resolveComponentName(requestedName);
             const mod = MODULES[name];
             if (!mod) {
-                this.log('Core', `No such module: ${name}`, 'WARN');
+                this.log('Core', `No such GameAssist module or service: ${String(requestedName || '').trim() || '(blank)'}`, 'WARN');
                 return;
             }
             if (mod.internal) {
@@ -1993,7 +2021,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => setMarkerServiceEnabled(false)
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Exposed GameAssist.MarkerService as a toggleable core service, cascaded service shutdown to dependent modules, and removed marker-module dependency gating on standalone TokenMod.
+    // Changed (v0.1.5.0): Exposed GameAssist.MarkerService as a toggleable core service, added case-insensitive module/service lifecycle resolution and protected config-key registration, cascaded service shutdown to dependent modules, and removed marker-module dependency gating on standalone TokenMod.
     // Decision log:
     //   CHOICE: Expose globally under the existing GameAssist name - ALT: add another global; REJECTED: unnecessary global pollution.
     //   CHOICE: Keep normal handlers direct and serialized work explicit through GameAssist.enqueue.
@@ -2066,7 +2094,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Admin/config commands (!ga-*)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "INTERFACES:COMMANDS", title: "Commands",
-    //   guarantees: ["GM-gated admin commands; unsafe config keys refused; versioned config-only export; plain-language health summary with opt-in marker and standalone-integration details"],
+    //   guarantees: ["GM-gated admin commands; unsafe and component-protected config keys refused; versioned config-only export; plain-language health summary with opt-in marker and standalone-integration details"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:CORE:STATE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   last_updated_version: "v0.1.5.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
@@ -2159,6 +2187,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     function buildStatusSnapshot() {
         const metrics = GameAssist._metrics;
         const modules = getModuleHealth();
+        const featureModules = modules.filter(row => !row.mod.service);
+        const coreServices = modules.filter(row => row.mod.service);
         const enabled = modules.filter(row => row.configured);
         const running = enabled.filter(row => row.running);
         const stopped = enabled.filter(row => !row.running);
@@ -2180,11 +2210,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             overall = 'Ready - GameAssist is responding and every enabled module is running.';
         }
 
-        const moduleLines = [
-            stopped.length
-                ? `${running.length} of ${enabled.length} enabled modules are running; ${stopped.length} need attention.`
-                : `${running.length} enabled module${running.length === 1 ? '' : 's'} running.`,
-            `${disabled.length} module${disabled.length === 1 ? '' : 's'} turned off.`
+        const enabledFeatureModules = featureModules.filter(row => row.configured);
+        const runningFeatureModules = enabledFeatureModules.filter(row => row.running);
+        const disabledFeatureModules = featureModules.filter(row => !row.configured);
+        const enabledCoreServices = coreServices.filter(row => row.configured);
+        const runningCoreServices = enabledCoreServices.filter(row => row.running);
+        const disabledCoreServices = coreServices.filter(row => !row.configured);
+        const componentLines = [
+            `${runningFeatureModules.length} of ${enabledFeatureModules.length} enabled feature module${enabledFeatureModules.length === 1 ? '' : 's'} running.`,
+            `${runningCoreServices.length} of ${enabledCoreServices.length} enabled core service${enabledCoreServices.length === 1 ? '' : 's'} running.`,
+            `${disabledFeatureModules.length} feature module${disabledFeatureModules.length === 1 ? '' : 's'} and ${disabledCoreServices.length} core service${disabledCoreServices.length === 1 ? '' : 's'} turned off.`
         ];
 
         const dependencyLines = [];
@@ -2205,6 +2240,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         return {
             metrics,
             modules,
+            featureModules,
+            coreServices,
             enabled,
             running,
             stopped,
@@ -2214,7 +2251,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             skipped,
             errors,
             overall,
-            moduleLines,
+            componentLines,
             dependencyLines,
             integrationLines: getStandaloneIntegrationLines(),
             avgDuration,
@@ -2226,7 +2263,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const fields = [
             `&{template:default} {{name=GameAssist ${VERSION} System Check}}`,
             statusField('Overall', snapshot.overall),
-            statusField('Modules', snapshot.moduleLines),
+            statusField('Components', snapshot.componentLines),
             statusField('Errors This Sandbox Session', snapshot.errors
                 ? `${snapshot.errors} error${snapshot.errors === 1 ? '' : 's'} recorded. Open Troubleshooting Details.`
                 : 'None recorded.'),
@@ -2235,7 +2272,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         if (detailed) {
             fields.push(
-                statusField('Module Counts', `${snapshot.modules.length} registered | ${snapshot.enabled.length} enabled | ${snapshot.running.length} running | ${snapshot.skipped.length} dependency-skipped`),
+                statusField('Component Counts', `${snapshot.featureModules.length} feature modules + ${snapshot.coreServices.length} core services | ${snapshot.enabled.length} enabled | ${snapshot.running.length} running | ${snapshot.skipped.length} dependency-skipped`),
                 statusField('Session Activity', `${snapshot.metrics.commands} commands handled | ${snapshot.metrics.messages} chat messages observed | ${snapshot.errors} errors recorded`),
                 statusField('Queue', `${_queue.length} waiting. Normal Roll20 events run directly; the queue is used only when a feature requests it.`),
                 statusField('Average Queued Task Time', snapshot.avgDuration),
@@ -2249,12 +2286,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ? [
                 GameAssist.createButton('Refresh Details', '!ga-status --details'),
                 GameAssist.createButton('Simple View', '!ga-status'),
-                GameAssist.createButton('Module List', '!ga-config modules'),
+                GameAssist.createButton('Modules & Services', '!ga-config modules'),
                 GameAssist.createButton('Metrics', '!ga-metrics')
             ]
             : [
                 GameAssist.createButton('Troubleshooting Details', '!ga-status --details'),
-                GameAssist.createButton('Module List', '!ga-config modules'),
+                GameAssist.createButton('Modules & Services', '!ga-config modules'),
                 GameAssist.createButton('Open Settings', '!ga-config ui')
             ];
         const actionTitle = detailed ? 'Troubleshooting Actions' : 'GameAssist Actions';
@@ -2299,18 +2336,23 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendChat('GameAssist', `/w gm Configuration-only snapshot written to "${name}"`);
         }
         else if (sub === 'set' && parts.length >= 4) {
-            const mod = parts[2];
+            const requestedMod = parts[2];
+            const mod = GameAssist.resolveComponentName(requestedMod);
             const [ key, ...rest ] = parts.slice(3).join(' ').split('=');
             const val = rest.join('=');
             const parsed = parseConfigValue(val);
             const BAD_KEYS = new Set(POLICY.config.unsafeKeys);
             if (!MODULES[mod] || MODULES[mod].internal) {
-                GameAssist.log('Config', `Unknown module: ${mod}`, 'WARN');
+                GameAssist.log('Config', `Unknown GameAssist module or service: ${requestedMod}`, 'WARN');
                 return;
             }
             const k = key.trim();
             if (BAD_KEYS.has(k)) {
                 GameAssist.log('Config', `Refusing unsafe config key: ${k}`, 'WARN');
+                return;
+            }
+            if ((MODULES[mod].protectedConfigKeys || []).includes(k)) {
+                GameAssist.log('Config', `${mod}.${k} must be changed through that component's validated settings menu.`, 'WARN');
                 return;
             }
             if (k === 'enabled') {
@@ -2326,12 +2368,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
         else if (sub === 'get') {
             if (parts.length < 3) {
-                GameAssist.log('Config', 'Usage: !ga-config get <module> [key]', 'WARN');
+                GameAssist.log('Config', 'Usage: !ga-config get <module-or-service> [key]', 'WARN');
                 return;
             }
-            const mod = parts[2];
+            const requestedMod = parts[2];
+            const mod = GameAssist.resolveComponentName(requestedMod);
             if (!MODULES[mod] || MODULES[mod].internal) {
-                GameAssist.log('Config', `Unknown module: ${mod}`, 'WARN');
+                GameAssist.log('Config', `Unknown GameAssist module or service: ${requestedMod}`, 'WARN');
                 return;
             }
             const modState = GameAssist.getState(mod);
@@ -2364,7 +2407,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     const running = mod.initialized && mod.active ? '🟢' : '⏸️';
                     return `${name}: config ${configured} | runtime ${running} | deps ${formatDependencyStatus(depInfo)}`;
                 }).join('\n');
-            GameAssist.log('Config', `Modules:\n${moduleList}`);
+            GameAssist.log('Config', `Modules and Core Services:\n${moduleList}`);
         }
         else if (sub === 'cleanup') {
             const root = ensureStateRoot();
@@ -2390,7 +2433,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     GameAssist.onCommand('!ga-enable', msg => {
         const mod = msg.content.split(/\s+/)[1];
         if (!mod) {
-            GameAssist.log('Core', 'Usage: !ga-enable <module>', 'WARN');
+            GameAssist.log('Core', 'Usage: !ga-enable <module-or-service>', 'WARN');
             return;
         }
         GameAssist.enableModule(mod);
@@ -2399,7 +2442,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     GameAssist.onCommand('!ga-disable', msg => {
         const mod = msg.content.split(/\s+/)[1];
         if (!mod) {
-            GameAssist.log('Core', 'Usage: !ga-disable <module>', 'WARN');
+            GameAssist.log('Core', 'Usage: !ga-disable <module-or-service>', 'WARN');
             return;
         }
         GameAssist.disableModule(mod);
@@ -2485,7 +2528,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.log('Metrics', summary.join('\n'));
     }, 'Core', { gmOnly: true });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Troubleshooting details now identify MarkerService lifecycle state before reporting separately detected marker or condition Mods.
+    // Changed (v0.1.5.0): Status and configuration output distinguish feature modules from core services, troubleshooting details identify MarkerService lifecycle state, component names resolve case-insensitively, and validated configuration maps cannot be replaced through the generic setter.
     // Decision log:
     //   CHOICE: Keep command syntax identical to legacy for drop-in replacement.
     //   CHOICE: Keep the default status action-oriented and volatile counters behind --details - ALT: one exhaustive panel; REJECTED: obscured the health signal.
@@ -2519,7 +2562,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Modules wrapper (bundled features)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES", title: "Modules wrapper",
-    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Marker-consuming modules share CORE:MARKERSERVICE"],
+    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Condition and marker-consuming modules share CORE:MARKERSERVICE"],
     //   depends_on: ["[GAMEASSIST:CORE]","[GAMEASSIST:INTERFACES]"], last_updated_version: "v0.1.5.0" }
     // -------------------------------------------------------------------------
     // Narrative
@@ -2571,7 +2614,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function formatConfigSummary(cfg) {
             const entries = Object.entries(cfg || {})
                 .filter(([key]) => key !== 'enabled')
-                .map(([key, val]) => `<span><strong>${_sanitize(key)}</strong>: ${_sanitize(formatValue(val))}</span>`);
+                .map(([key, val]) => {
+                    let display = formatValue(val);
+                    if (key === 'conditions' && val && typeof val === 'object' && !Array.isArray(val)) {
+                        display = `${Object.keys(val).length} definitions`;
+                    } else if (key === 'legacyStatusInfoMigration' && val && typeof val === 'object') {
+                        display = 'completed';
+                    }
+                    return `<span><strong>${_sanitize(key)}</strong>: ${_sanitize(display)}</span>`;
+                });
             return entries.length ? entries.join(' • ') : '';
         }
 
@@ -2692,7 +2743,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         prefixes: ['!ga-config-ui', '!ga-config ui']
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Core services now appear with an explicit label and use the same guarded enable/disable controls as modules.
+    // Changed (v0.1.5.0): Core services appear with an explicit label, use the same guarded enable/disable controls as modules, and summarize large condition/migration maps without dumping them into the settings panel.
     // CHOICE: Button helper reused; nav uses the same command path for refresh/paging.
     // Maintenance (v0.1.4.1, no semantic change): Routed the unchanged default page size through POLICY.
     // Prior notes:
@@ -3060,6 +3111,823 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   Maintenance (v0.1.3, no semantic change): Added module narrative; retained natural-1 detection behavior.
     //   Maintenance (v0.1.1.2, no semantic change): MECHSUITS metadata updated only.
     // [GAMEASSIST:MODULES:CRITFUMBLE] END
+    // =============================================================================
+
+    // ————— CONDITION SERVICE MODULE v1.0.0 —————
+    // =============================================================================
+    // [GAMEASSIST:MODULES:CONDITIONSERVICE] BEGIN
+    // Section Title: GameAssist condition descriptions and controls
+    // -------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONDITIONSERVICE", title: "ConditionService",
+    //   guarantees: ["Independently branded condition descriptions and !condition compatibility workflows","All condition marker reads, writes, and observations use CORE:MARKERSERVICE","Legacy state.STATUSINFO may be copied through a validated migration and is never silently deleted"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
+    //   provides: ["GameAssist.ConditionService"],
+    //   last_updated_version: "v0.1.5.0",
+    //   independent_versions: { module_version: "1.0.0", condition_config_schema_version: 1 }, lifecycle: "active" }
+    // -------------------------------------------------------------------------
+    // Narrative
+    // ConditionService is GameAssist's condition-information module. It preserves the
+    // familiar !condition menu, descriptions, add/remove/toggle actions, configurable
+    // definitions, and safe import/export while using MarkerService as the only marker
+    // authority. It is independently maintained and is not an upstream StatusInfo release.
+    // -------------------------------------------------------------------------
+    GameAssist.register('ConditionService', function() {
+        const MODULE_NAME = 'ConditionService';
+        const MODULE_VERSION = '1.0.0';
+        const CONFIG_SCHEMA_VERSION = 1;
+        const PRIMARY_COMMAND = 'condition';
+        const modState = GameAssist.getState(MODULE_NAME);
+        const originalConfigKeys = new Set(Object.keys(modState.config || {}));
+        const hadConditionConfig = Boolean(
+            modState.config?.conditions &&
+            typeof modState.config.conditions === 'object' &&
+            !Array.isArray(modState.config.conditions) &&
+            Object.keys(modState.config.conditions).length
+        );
+        const recentDescriptions = new Map();
+
+        // These concise summaries are original GameAssist wording for 2014-era rules.
+        const DEFAULT_CONDITIONS = Object.freeze({
+            blinded: Object.freeze({ name: 'Blinded', marker: 'bleeding-eye', description: 'Cannot see. Sight-dependent checks fail. Attacks against the creature have advantage, and its attacks have disadvantage.' }),
+            charmed: Object.freeze({ name: 'Charmed', marker: 'broken-heart', description: 'Cannot attack or deliberately harm the charmer. The charmer has advantage on social checks involving the creature.' }),
+            deafened: Object.freeze({ name: 'Deafened', marker: 'edge-crack', description: 'Cannot hear and fails checks that depend on hearing.' }),
+            frightened: Object.freeze({ name: 'Frightened', marker: 'screaming', description: 'Has disadvantage on attacks and ability checks while the source of fear is visible, and cannot willingly move closer to it.' }),
+            grappled: Object.freeze({ name: 'Grappled', marker: 'grab', description: 'Speed becomes 0. The condition ends if the grappler is incapacitated or the creature is moved beyond the grappler\'s reach.' }),
+            incapacitated: Object.freeze({ name: 'Incapacitated', marker: 'interdiction', description: 'Cannot take actions or reactions.' }),
+            inspiration: Object.freeze({ name: 'Inspiration', marker: 'black-flag', description: 'May be spent to gain advantage on an attack roll, saving throw, or ability check, according to the campaign\'s inspiration rules.' }),
+            invisible: Object.freeze({ name: 'Invisible', marker: 'ninja-mask', description: 'Cannot be seen without magic or a special sense. Its attacks have advantage, and attacks against it have disadvantage.' }),
+            paralyzed: Object.freeze({ name: 'Paralyzed', marker: 'pummeled', description: 'Is incapacitated and cannot move or speak. It fails Strength and Dexterity saves; nearby hits can become critical hits.' }),
+            petrified: Object.freeze({ name: 'Petrified', marker: 'frozen-orb', description: 'Is transformed into solid material, incapacitated, unaware, resistant to damage, and protected from new poison or disease.' }),
+            poisoned: Object.freeze({ name: 'Poisoned', marker: 'chemical-bolt', description: 'Has disadvantage on attack rolls and ability checks.' }),
+            prone: Object.freeze({ name: 'Prone', marker: 'back-pain', description: 'Must crawl or stand to move normally. Its attacks have disadvantage; nearby attackers have advantage and distant attackers have disadvantage.' }),
+            restrained: Object.freeze({ name: 'Restrained', marker: 'fishing-net', description: 'Speed becomes 0. Attacks against the creature have advantage; its attacks and Dexterity saves have disadvantage.' }),
+            stunned: Object.freeze({ name: 'Stunned', marker: 'fist', description: 'Is incapacitated, cannot move, and can barely speak. It fails Strength and Dexterity saves, and attacks against it have advantage.' }),
+            unconscious: Object.freeze({ name: 'Unconscious', marker: 'sleepy', description: 'Is incapacitated, unaware, and prone. It drops held items, fails Strength and Dexterity saves, and nearby hits can become critical hits.' })
+        });
+
+        function cloneDefaultConditions() {
+            return Object.fromEntries(
+                Object.entries(DEFAULT_CONDITIONS).map(([key, value]) => [key, { ...value }])
+            );
+        }
+
+        function isPlainObject(value) {
+            return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+        }
+
+        function hasUnsafeKey(value) {
+            if (!isPlainObject(value) && !Array.isArray(value)) return false;
+            if (Object.keys(value).some(key => POLICY.config.unsafeKeys.includes(key))) return true;
+            return Object.values(value).some(hasUnsafeKey);
+        }
+
+        function conditionKey(value) {
+            const normalized = String(value || '')
+                .trim()
+                .toLowerCase()
+                .replace(/\s+/g, '-')
+                .replace(/[^a-z0-9_-]/g, '')
+                .slice(0, POLICY.conditions.maxNameLength);
+            return normalized === 'invisibility' ? 'invisible' : normalized;
+        }
+
+        function plainDescription(value) {
+            return String(value || '')
+                .replace(/<\s*br\s*\/?\s*>/gi, '\n')
+                .replace(/<\s*\/p\s*>/gi, '\n')
+                .replace(/<[^>]*>/g, ' ')
+                .replace(/&nbsp;/gi, ' ')
+                .replace(/&amp;/gi, '&')
+                .replace(/&quot;/gi, '"')
+                .replace(/&#39;|&apos;/gi, "'")
+                .replace(/\s*\n\s*/g, '\n')
+                .replace(/[ \t]+/g, ' ')
+                .trim()
+                .slice(0, POLICY.conditions.maxDescriptionLength);
+        }
+
+        function normalizeDefinition(rawKey, rawDefinition) {
+            const source = isPlainObject(rawDefinition) ? rawDefinition : {};
+            const key = conditionKey(rawKey || source.name);
+            const name = String(source.name || rawKey || '')
+                .trim()
+                .slice(0, POLICY.conditions.maxNameLength);
+            const marker = String(source.marker || source.icon || '')
+                .trim()
+                .slice(0, POLICY.conditions.maxMarkerLength);
+            const description = plainDescription(source.description);
+
+            if (!key || POLICY.config.unsafeKeys.includes(key)) {
+                return { ok: false, error: `Unsafe or empty condition key: ${String(rawKey || '(blank)')}` };
+            }
+            if (!name) return { ok: false, error: `Condition ${key} has no display name.` };
+            if (!marker) return { ok: false, error: `Condition ${name} has no marker.` };
+
+            return { ok: true, key, definition: { name, marker, description } };
+        }
+
+        function normalizeConditionMap(rawConditions, { strict = false } = {}) {
+            if (!isPlainObject(rawConditions) || hasUnsafeKey(rawConditions)) {
+                return { ok: false, conditions: {}, errors: ['Conditions must be a safe object.'] };
+            }
+
+            const entries = Object.entries(rawConditions);
+            if (entries.length > POLICY.conditions.maxDefinitions) {
+                return {
+                    ok: false,
+                    conditions: {},
+                    errors: [`Condition limit is ${POLICY.conditions.maxDefinitions}.`]
+                };
+            }
+
+            const conditions = {};
+            const errors = [];
+            entries.forEach(([key, value]) => {
+                const result = normalizeDefinition(key, value);
+                if (!result.ok) {
+                    errors.push(result.error);
+                    return;
+                }
+                conditions[result.key] = result.definition;
+            });
+
+            return {
+                ok: strict ? errors.length === 0 : Object.keys(conditions).length > 0,
+                conditions,
+                errors
+            };
+        }
+
+        function repairConfig() {
+            const persisted = isPlainObject(modState.config) ? modState.config : {};
+            Object.assign(modState.config, {
+                enabled: true,
+                command: PRIMARY_COMMAND,
+                userAllowed: false,
+                userToggle: false,
+                sendOnlyToGM: false,
+                showDescOnStatusChange: true,
+                showIconInDescription: true,
+                ...persisted
+            });
+
+            const normalized = normalizeConditionMap(modState.config.conditions || {});
+            if (normalized.ok) {
+                modState.config.conditions = normalized.conditions;
+                if (normalized.errors.length) {
+                    GameAssist.log(MODULE_NAME, `Ignored ${normalized.errors.length} malformed saved condition definition(s).`, 'WARN');
+                }
+            } else {
+                modState.config.conditions = cloneDefaultConditions();
+                if (persisted.conditions !== undefined) {
+                    GameAssist.log(MODULE_NAME, 'Saved condition definitions were malformed; restored GameAssist defaults.', 'WARN');
+                }
+            }
+
+            const command = String(modState.config.command || PRIMARY_COMMAND).trim().replace(/^!/, '');
+            modState.config.command = /^[A-Za-z][A-Za-z0-9_-]{0,39}$/.test(command)
+                ? command
+                : PRIMARY_COMMAND;
+            ['userAllowed', 'userToggle', 'sendOnlyToGM', 'showDescOnStatusChange', 'showIconInDescription']
+                .forEach(key => { modState.config[key] = modState.config[key] === true; });
+        }
+
+        function migrateLegacyStatusInfo() {
+            if (modState.config.legacyStatusInfoMigration) return;
+            const legacy = state?.STATUSINFO;
+            if (!isPlainObject(legacy)) return;
+
+            const legacyConfig = isPlainObject(legacy.config) ? legacy.config : {};
+            const boolKeys = ['userAllowed', 'userToggle', 'sendOnlyToGM', 'showDescOnStatusChange', 'showIconInDescription'];
+            const importedSettings = [];
+            boolKeys.forEach(key => {
+                if (!originalConfigKeys.has(key) && typeof legacyConfig[key] === 'boolean') {
+                    modState.config[key] = legacyConfig[key];
+                    importedSettings.push(key);
+                }
+            });
+            if (!originalConfigKeys.has('command') && typeof legacyConfig.command === 'string') {
+                const command = legacyConfig.command.trim().replace(/^!/, '');
+                if (/^[A-Za-z][A-Za-z0-9_-]{0,39}$/.test(command)) {
+                    modState.config.command = command;
+                    importedSettings.push('command');
+                }
+            }
+
+            const normalized = normalizeConditionMap(legacy.conditions || {});
+            let importedConditions = 0;
+            if (normalized.ok) {
+                if (hadConditionConfig) {
+                    Object.entries(normalized.conditions).forEach(([key, value]) => {
+                        if (modState.config.conditions[key]) return;
+                        modState.config.conditions[key] = value;
+                        importedConditions++;
+                    });
+                } else {
+                    modState.config.conditions = {
+                        ...cloneDefaultConditions(),
+                        ...normalized.conditions
+                    };
+                    importedConditions = Object.keys(normalized.conditions).length;
+                }
+            }
+
+            modState.config.legacyStatusInfoMigration = {
+                source: 'state.STATUSINFO',
+                referenceVersion: '0.3.11/0.3.12',
+                importedAt: isoNow(),
+                importedSettings,
+                importedConditions
+            };
+            GameAssist.log(
+                MODULE_NAME,
+                `Copied ${importedConditions} condition definition(s) and ${importedSettings.length} setting(s) from legacy state.STATUSINFO. The legacy branch was retained.`,
+                'INFO'
+            );
+        }
+
+        repairConfig();
+        migrateLegacyStatusInfo();
+        repairConfig();
+
+        function isRunning() {
+            return Boolean(MODULES[MODULE_NAME]?.initialized && MODULES[MODULE_NAME]?.active);
+        }
+
+        function safeWho(msg) {
+            return String(msg?.who || 'gm')
+                .replace(/\s+\(GM\)\s*$/i, '')
+                .replace(/["\\]/g, '')
+                .trim() || 'gm';
+        }
+
+        function requesterWhisper(msg) {
+            return playerIsGM(msg?.playerid) ? '/w gm ' : `/w "${safeWho(msg)}" `;
+        }
+
+        function sendPanel(title, body, { msg = null, publicMessage = false, gmOnly = false } = {}) {
+            const destination = publicMessage
+                ? ''
+                : (gmOnly || !msg ? '/w gm ' : requesterWhisper(msg));
+            const panel = [
+                '<div style="border:1px solid #555;background:#fff;padding:8px;border-radius:5px;">',
+                `<div style="font-size:1.15em;font-weight:bold;margin-bottom:6px;">${_sanitize(title)}</div>`,
+                body,
+                '</div>'
+            ].join('');
+            sendChat(MODULE_NAME, destination + panel, null, { noarchive: true });
+        }
+
+        function queryText(value) {
+            return String(value || '').replace(/[|},]/g, ' ').replace(/[\r\n]+/g, ' ').trim();
+        }
+
+        function getConditions() {
+            return modState.config.conditions;
+        }
+
+        function getCondition(name) {
+            const requested = String(name || '').trim().toLowerCase();
+            const key = conditionKey(requested);
+            if (getConditions()[key]) return { key, ...getConditions()[key] };
+            const match = Object.entries(getConditions()).find(([, condition]) =>
+                String(condition.name || '').toLowerCase() === requested
+            );
+            return match ? { key: match[0], ...match[1] } : null;
+        }
+
+        function selectedTokens(msg) {
+            return (msg?.selected || [])
+                .map(selection => getObj('graphic', selection._id))
+                .filter(token => token && token.get('_subtype') === 'token');
+        }
+
+        function showCondition(condition, { force = false } = {}) {
+            if (!condition?.description) return false;
+            const key = condition.key || conditionKey(condition.name);
+            const last = recentDescriptions.get(key) || 0;
+            const current = monotonic();
+            if (!force && recentDescriptions.has(key) && current - last < POLICY.conditions.recentDescriptionMs) return false;
+            recentDescriptions.set(key, current);
+            setTimeout(() => {
+                if (recentDescriptions.get(key) === current) recentDescriptions.delete(key);
+            }, POLICY.conditions.recentDescriptionMs);
+
+            const marker = modState.config.showIconInDescription
+                ? `<div style="font-size:0.85em;color:#555;margin-bottom:4px;">Marker: ${_sanitize(condition.marker)}</div>`
+                : '';
+            const text = _sanitize(condition.description).replace(/\n/g, '<br>');
+            sendPanel(condition.name, marker + text, {
+                publicMessage: modState.config.sendOnlyToGM !== true,
+                gmOnly: modState.config.sendOnlyToGM === true
+            });
+            return true;
+        }
+
+        function conditionButtons(action = 'toggle') {
+            const buttons = Object.entries(getConditions()).map(([key, condition]) =>
+                GameAssist.createButton(condition.name, `!condition ${action} ${key}`)
+            );
+            const rows = [];
+            for (let index = 0; index < buttons.length; index += 3) {
+                rows.push(buttons.slice(index, index + 3).join(' '));
+            }
+            return rows.join('<br>');
+        }
+
+        function activeConditionNames(token) {
+            return Object.entries(getConditions())
+                .filter(([, condition]) => {
+                    const result = GameAssist.MarkerService.has(token, condition.marker);
+                    return result.ok && result.present;
+                })
+                .map(([, condition]) => condition.name);
+        }
+
+        function sendConditionMenu(msg) {
+            if (!playerIsGM(msg.playerid) && !modState.config.userToggle) {
+                sendPanel('ConditionService', 'Only the GM can change token conditions in this campaign.', { msg });
+                return;
+            }
+            const tokens = selectedTokens(msg);
+            const selection = tokens.length
+                ? tokens.map(token => {
+                    const names = activeConditionNames(token);
+                    return `<strong>${_sanitize(token.get('name') || '(Unnamed token)')}</strong>: ${_sanitize(names.join(', ') || 'No tracked conditions')}`;
+                }).join('<br>')
+                : 'Select one or more tokens before using a condition button.';
+            const body = [
+                `<div style="margin-bottom:7px;">${selection}</div>`,
+                '<div style="font-weight:bold;margin-bottom:4px;">Toggle on selected tokens</div>',
+                conditionButtons('toggle'),
+                '<div style="margin-top:8px;">',
+                GameAssist.createButton('Help', '!condition help'),
+                playerIsGM(msg.playerid) ? ` ${GameAssist.createButton('Settings', '!condition config')}` : '',
+                '</div>'
+            ].join('');
+            sendPanel('ConditionService Menu', body, { msg });
+        }
+
+        function sendHelp(msg) {
+            const body = [
+                '<div><strong>What it does</strong><br>Shows plain-language condition reminders and manages status markers on selected tokens.</div>',
+                '<div style="margin-top:7px;"><strong>Quick start</strong><br>1. Select one or more tokens.<br>2. Open the condition menu.<br>3. Click a condition to add or remove it.</div>',
+                `<div style="margin-top:7px;">${GameAssist.createButton('Open Condition Menu', '!condition')}</div>`,
+                '<div style="margin-top:7px;"><strong>Useful commands</strong><br>',
+                '<code>!condition prone</code> - show one description<br>',
+                '<code>!condition add prone</code> - add to selected tokens<br>',
+                '<code>!condition remove prone</code> - remove from selected tokens<br>',
+                '<code>!condition toggle prone</code> - switch the marker on or off<br>',
+                '<code>!condition config</code> - GM settings and condition definitions</div>',
+                '<div style="margin-top:7px;font-size:0.9em;">Multiple conditions may be supplied in one command. Player access is controlled by the GM settings.</div>'
+            ].join('');
+            sendPanel('ConditionService Help', body, { msg });
+        }
+
+        function sendConfigMenu(msg, notice = '') {
+            const boolRows = [
+                ['Players may view descriptions', 'userAllowed'],
+                ['Players may change token conditions', 'userToggle'],
+                ['Send descriptions only to the GM', 'sendOnlyToGM'],
+                ['Show descriptions when markers are added', 'showDescOnStatusChange'],
+                ['Show marker names with descriptions', 'showIconInDescription']
+            ].map(([label, key]) => {
+                const value = modState.config[key] === true;
+                return `${_sanitize(label)}: ${GameAssist.createButton(value ? 'ON' : 'OFF', `!condition config ${key}|${!value}`)}`;
+            }).join('<br>');
+            const customCommand = modState.config.command === PRIMARY_COMMAND
+                ? '!condition'
+                : `!${_sanitize(modState.config.command)} (plus permanent !condition compatibility)`;
+            const body = [
+                notice ? `<div style="margin-bottom:7px;color:#7a3d00;">${_sanitize(notice)}</div>` : '',
+                `<div><strong>Command</strong>: ${customCommand} ${GameAssist.createButton('Change', `!condition config command|?{Custom command without !|${queryText(modState.config.command)}}`)}</div>`,
+                `<div style="margin-top:7px;">${boolRows}</div>`,
+                '<div style="margin-top:8px;">',
+                GameAssist.createButton(`Manage ${Object.keys(getConditions()).length} Conditions`, '!condition config-conditions'),
+                ' ', GameAssist.createButton('Export', '!condition config export'),
+                ' ', GameAssist.createButton('Import Help', '!condition config import'),
+                '</div>',
+                '<div style="margin-top:7px;font-size:0.9em;">Changing the custom command takes effect after the Mod sandbox reloads. <code>!condition</code> always remains available.</div>'
+            ].join('');
+            sendPanel('ConditionService Settings', body, { msg, gmOnly: true });
+        }
+
+        function sendDefinitionsMenu(msg, notice = '') {
+            const rows = Object.entries(getConditions())
+                .sort((a, b) => a[1].name.localeCompare(b[1].name))
+                .map(([key, condition]) =>
+                    `<div style="margin-top:3px;"><strong>${_sanitize(condition.name)}</strong> - ${_sanitize(condition.marker)} ${GameAssist.createButton('Edit', `!condition config-conditions ${key}`)}</div>`
+                ).join('');
+            const body = [
+                notice ? `<div style="margin-bottom:7px;color:#7a3d00;">${_sanitize(notice)}</div>` : '',
+                rows || '<div>No condition definitions are configured.</div>',
+                '<div style="margin-top:8px;">',
+                GameAssist.createButton('Add Condition', '!condition config-conditions add ?{Condition name}'),
+                ' ', GameAssist.createButton('Back to Settings', '!condition config'),
+                '</div>'
+            ].join('');
+            sendPanel('Condition Definitions', body, { msg, gmOnly: true });
+        }
+
+        function sendDefinitionMenu(msg, key, notice = '') {
+            const condition = getConditions()[key];
+            if (!condition) {
+                sendDefinitionsMenu(msg, `Condition ${key} was not found.`);
+                return;
+            }
+            const body = [
+                notice ? `<div style="margin-bottom:7px;color:#7a3d00;">${_sanitize(notice)}</div>` : '',
+                `<div><strong>Name</strong>: ${_sanitize(condition.name)} ${GameAssist.createButton('Change', `!condition config-conditions ${key} name|?{Display name|${queryText(condition.name)}}`)}</div>`,
+                `<div style="margin-top:5px;"><strong>Marker</strong>: ${_sanitize(condition.marker)} ${GameAssist.createButton('Change', `!condition config-conditions ${key} marker|?{Built-in id, custom display name, or exact tag|${queryText(condition.marker)}}`)}</div>`,
+                `<div style="margin-top:5px;"><strong>Description</strong>: ${_sanitize(condition.description || '(blank)')}<br>${GameAssist.createButton('Edit Description', `!condition config-conditions ${key} description|?{Description|${queryText(condition.description)}}`)}</div>`,
+                '<div style="margin-top:8px;">',
+                GameAssist.createButton('Back', '!condition config-conditions'),
+                ' ', GameAssist.createButton('Remove', `!condition config-conditions remove ${key} ?{Remove ${queryText(condition.name)}?|No,no|Yes,yes}`),
+                '</div>'
+            ].join('');
+            sendPanel(`${condition.name} Settings`, body, { msg, gmOnly: true });
+        }
+
+        function mutateConditions(tokens, requestedConditions, action) {
+            const results = { changed: 0, unchanged: 0, failed: 0, missing: [] };
+            requestedConditions.forEach(requested => {
+                const condition = getCondition(requested);
+                if (!condition) {
+                    results.missing.push(requested);
+                    return;
+                }
+                tokens.forEach(token => {
+                    const result = action === 'add'
+                        ? GameAssist.MarkerService.add(token, condition.marker)
+                        : (action === 'remove'
+                            ? GameAssist.MarkerService.remove(token, condition.marker)
+                            : GameAssist.MarkerService.toggle(token, condition.marker));
+                    if (!result.ok) {
+                        results.failed++;
+                        GameAssist.log(MODULE_NAME, `${condition.name} could not be ${action === 'remove' ? 'removed from' : 'updated on'} ${token.get('name') || token.id}: ${result.message}`, 'WARN');
+                        return;
+                    }
+                    if (result.changed) results.changed++;
+                    else results.unchanged++;
+                    if (result.present) showCondition(condition);
+                });
+            });
+            return results;
+        }
+
+        function sendMutationResult(msg, action, results) {
+            const lines = [
+                `${results.changed} token marker change${results.changed === 1 ? '' : 's'} completed.`,
+                results.unchanged ? `${results.unchanged} already matched the requested state.` : '',
+                results.failed ? `${results.failed} could not be changed; the GM received details.` : '',
+                results.missing.length ? `Unknown condition${results.missing.length === 1 ? '' : 's'}: ${_sanitize(results.missing.join(', '))}.` : ''
+            ].filter(Boolean).join('<br>');
+            sendPanel(`Condition ${action} complete`, lines, { msg });
+        }
+
+        function exportConfiguration(msg) {
+            const payload = {
+                format: 'gameassist-condition-config',
+                schemaVersion: CONFIG_SCHEMA_VERSION,
+                componentVersion: MODULE_VERSION,
+                config: {
+                    command: modState.config.command,
+                    userAllowed: modState.config.userAllowed,
+                    userToggle: modState.config.userToggle,
+                    sendOnlyToGM: modState.config.sendOnlyToGM,
+                    showDescOnStatusChange: modState.config.showDescOnStatusChange,
+                    showIconInDescription: modState.config.showIconInDescription
+                },
+                conditions: getConditions()
+            };
+            sendPanel('ConditionService Export', `<pre style="white-space:pre-wrap;">${_sanitize(JSON.stringify(payload))}</pre>`, { msg, gmOnly: true });
+        }
+
+        function importConfiguration(msg, rawJson) {
+            if (rawJson.length > POLICY.conditions.maxImportLength) {
+                sendConfigMenu(msg, `Import exceeds ${POLICY.conditions.maxImportLength} characters.`);
+                return;
+            }
+            let payload;
+            try { payload = JSON.parse(rawJson); }
+            catch {
+                sendConfigMenu(msg, 'Import was refused because it is not valid JSON.');
+                return;
+            }
+            if (!isPlainObject(payload) || hasUnsafeKey(payload)) {
+                sendConfigMenu(msg, 'Import was refused because it contains an unsafe or invalid object.');
+                return;
+            }
+            const sourceConditions = payload.conditions || payload.config?.conditions;
+            const normalized = normalizeConditionMap(sourceConditions, { strict: true });
+            if (!normalized.ok) {
+                sendConfigMenu(msg, `Import was refused: ${normalized.errors.slice(0, 3).join(' ')}`);
+                return;
+            }
+
+            const sourceConfig = isPlainObject(payload.config) ? payload.config : {};
+            const boolKeys = ['userAllowed', 'userToggle', 'sendOnlyToGM', 'showDescOnStatusChange', 'showIconInDescription'];
+            if (boolKeys.some(key => sourceConfig[key] !== undefined && typeof sourceConfig[key] !== 'boolean')) {
+                sendConfigMenu(msg, 'Import was refused because a permission/display setting is not true or false.');
+                return;
+            }
+            const command = sourceConfig.command === undefined
+                ? modState.config.command
+                : String(sourceConfig.command).trim().replace(/^!/, '');
+            if (!/^[A-Za-z][A-Za-z0-9_-]{0,39}$/.test(command)) {
+                sendConfigMenu(msg, 'Import was refused because the custom command name is invalid.');
+                return;
+            }
+
+            boolKeys.forEach(key => {
+                if (typeof sourceConfig[key] === 'boolean') modState.config[key] = sourceConfig[key];
+            });
+            modState.config.command = command;
+            modState.config.conditions = normalized.conditions;
+            sendConfigMenu(msg, `Imported ${Object.keys(normalized.conditions).length} validated condition definitions. Reload the sandbox if the custom command changed.`);
+        }
+
+        function handleConfig(msg, body) {
+            if (!playerIsGM(msg.playerid)) {
+                sendPanel('ConditionService', 'Only the GM can change ConditionService settings.', { msg });
+                return;
+            }
+            const rest = body.replace(/^config\s*/i, '');
+            if (!rest) {
+                sendConfigMenu(msg);
+                return;
+            }
+            if (/^export(?:\s|$)/i.test(rest)) {
+                exportConfiguration(msg);
+                return;
+            }
+            if (/^import(?:\s|$)/i.test(rest)) {
+                const rawJson = rest.replace(/^import\s*/i, '');
+                if (!rawJson) sendConfigMenu(msg, 'Paste the exported JSON after !condition config import.');
+                else importConfiguration(msg, rawJson);
+                return;
+            }
+
+            const delimiter = rest.indexOf('|');
+            if (delimiter < 1) {
+                sendConfigMenu(msg, 'Choose a setting button or use key|value.');
+                return;
+            }
+            const key = rest.slice(0, delimiter).trim();
+            const rawValue = rest.slice(delimiter + 1).trim();
+            const boolKeys = ['userAllowed', 'userToggle', 'sendOnlyToGM', 'showDescOnStatusChange', 'showIconInDescription'];
+            if (boolKeys.includes(key)) {
+                if (!/^(true|false)$/i.test(rawValue)) {
+                    sendConfigMenu(msg, `${key} must be true or false.`);
+                    return;
+                }
+                modState.config[key] = rawValue.toLowerCase() === 'true';
+                sendConfigMenu(msg, `${key} is now ${modState.config[key] ? 'ON' : 'OFF'}.`);
+                return;
+            }
+            if (key === 'command') {
+                const command = rawValue.replace(/^!/, '');
+                if (!/^[A-Za-z][A-Za-z0-9_-]{0,39}$/.test(command)) {
+                    sendConfigMenu(msg, 'Command names must begin with a letter and contain only letters, numbers, underscores, or hyphens.');
+                    return;
+                }
+                modState.config.command = command;
+                sendConfigMenu(msg, 'Custom command saved. Reload the Mod sandbox to activate it; !condition remains available.');
+                return;
+            }
+            sendConfigMenu(msg, `Unknown setting: ${key}.`);
+        }
+
+        function handleDefinitionConfig(msg, body) {
+            if (!playerIsGM(msg.playerid)) {
+                sendPanel('ConditionService', 'Only the GM can change condition definitions.', { msg });
+                return;
+            }
+            const rest = body.replace(/^config-conditions\s*/i, '');
+            if (!rest) {
+                sendDefinitionsMenu(msg);
+                return;
+            }
+            const parts = rest.split(/\s+/);
+            const action = parts.shift().toLowerCase();
+            if (action === 'add') {
+                const displayName = parts.join(' ').trim();
+                const key = conditionKey(displayName);
+                if (!key) {
+                    sendDefinitionsMenu(msg, 'Enter a condition name.');
+                    return;
+                }
+                if (getConditions()[key]) {
+                    sendDefinitionMenu(msg, key, 'That condition already exists.');
+                    return;
+                }
+                if (Object.keys(getConditions()).length >= POLICY.conditions.maxDefinitions) {
+                    sendDefinitionsMenu(msg, `Condition limit is ${POLICY.conditions.maxDefinitions}.`);
+                    return;
+                }
+                getConditions()[key] = { name: displayName.slice(0, POLICY.conditions.maxNameLength), marker: 'red', description: '' };
+                sendDefinitionMenu(msg, key, 'Condition added. Choose its marker and description.');
+                return;
+            }
+            if (action === 'remove') {
+                const key = conditionKey(parts.shift());
+                const confirmed = String(parts.shift() || '').toLowerCase() === 'yes';
+                if (!confirmed) {
+                    sendDefinitionMenu(msg, key, 'Removal cancelled.');
+                    return;
+                }
+                const name = getConditions()[key]?.name || key;
+                delete getConditions()[key];
+                sendDefinitionsMenu(msg, `${name} was removed.`);
+                return;
+            }
+
+            const key = conditionKey(action);
+            if (!getConditions()[key]) {
+                sendDefinitionsMenu(msg, `Condition ${action} was not found.`);
+                return;
+            }
+            const remainder = rest.slice(action.length).trim();
+            if (!remainder) {
+                sendDefinitionMenu(msg, key);
+                return;
+            }
+            const delimiter = remainder.indexOf('|');
+            if (delimiter < 1) {
+                sendDefinitionMenu(msg, key, 'Choose one of the edit buttons.');
+                return;
+            }
+            const field = remainder.slice(0, delimiter).trim().toLowerCase();
+            const value = remainder.slice(delimiter + 1).trim();
+            if (field === 'name') {
+                if (!value) {
+                    sendDefinitionMenu(msg, key, 'Display name cannot be blank.');
+                    return;
+                }
+                getConditions()[key].name = value.slice(0, POLICY.conditions.maxNameLength);
+            } else if (field === 'marker' || field === 'icon') {
+                if (!value) {
+                    sendDefinitionMenu(msg, key, 'Marker cannot be blank.');
+                    return;
+                }
+                getConditions()[key].marker = value.slice(0, POLICY.conditions.maxMarkerLength);
+            } else if (field === 'description') {
+                getConditions()[key].description = plainDescription(value);
+            } else {
+                sendDefinitionMenu(msg, key, `Unknown definition field: ${field}.`);
+                return;
+            }
+            sendDefinitionMenu(msg, key, 'Condition updated.');
+        }
+
+        function handleInput(msg) {
+            const content = String(msg.content || '').trim();
+            const body = content.replace(/^!\S+\s*/i, '').trim();
+            const first = body.split(/\s+/)[0]?.toLowerCase() || '';
+
+            if (!body) {
+                sendConditionMenu(msg);
+                return;
+            }
+            if (first === 'help') {
+                sendHelp(msg);
+                return;
+            }
+            if (first === 'config') {
+                handleConfig(msg, body);
+                return;
+            }
+            if (first === 'config-conditions') {
+                handleDefinitionConfig(msg, body);
+                return;
+            }
+            if (first === 'reset') {
+                if (!playerIsGM(msg.playerid)) {
+                    sendPanel('ConditionService', 'Only the GM can reset ConditionService.', { msg });
+                    return;
+                }
+                if (!/\bconfirm\b/i.test(body)) {
+                    sendPanel('Reset ConditionService', `This restores the default definitions and settings. ${GameAssist.createButton('Confirm Reset', '!condition reset confirm')}`, { msg, gmOnly: true });
+                    return;
+                }
+                const enabled = modState.config.enabled !== false;
+                const legacyStatusInfoMigration = modState.config.legacyStatusInfoMigration || (
+                    isPlainObject(state?.STATUSINFO)
+                        ? { source: 'state.STATUSINFO', resetAt: isoNow(), importedSettings: [], importedConditions: 0 }
+                        : undefined
+                );
+                modState.config = { enabled, conditions: cloneDefaultConditions() };
+                if (legacyStatusInfoMigration) {
+                    modState.config.legacyStatusInfoMigration = legacyStatusInfoMigration;
+                }
+                repairConfig();
+                sendConfigMenu(msg, 'ConditionService defaults were restored.');
+                return;
+            }
+            if (['add', 'remove', 'toggle'].includes(first)) {
+                if (!playerIsGM(msg.playerid) && !modState.config.userToggle) {
+                    sendPanel('ConditionService', 'Only the GM can change token conditions in this campaign.', { msg });
+                    return;
+                }
+                const tokens = selectedTokens(msg);
+                if (!tokens.length) {
+                    sendPanel('ConditionService', 'Select one or more token objects, then try the command again.', { msg });
+                    return;
+                }
+                const requested = body.split(/\s+/).slice(1).filter(Boolean);
+                if (!requested.length) {
+                    sendPanel('ConditionService', `Add one or more condition names, such as <code>!condition ${first} prone</code>.`, { msg });
+                    return;
+                }
+                sendMutationResult(msg, first, mutateConditions(tokens, requested, first));
+                return;
+            }
+            if (!playerIsGM(msg.playerid) && !modState.config.userAllowed) {
+                sendPanel('ConditionService', 'Only the GM can show condition descriptions in this campaign.', { msg });
+                return;
+            }
+            const condition = getCondition(body);
+            if (!condition) {
+                sendPanel('ConditionService', `No condition named ${_sanitize(body)} is configured. Use <code>!condition help</code> for guidance.`, { msg });
+                return;
+            }
+            showCondition(condition, { force: true });
+        }
+
+        function conditionsForMarkerEntry(entry) {
+            return Object.entries(getConditions())
+                .map(([key, condition]) => {
+                    const resolution = GameAssist.MarkerService.resolve(condition.marker);
+                    return resolution.ok && GameAssist.MarkerService.normalizeId(resolution.id) === entry.normalizedId
+                        ? { key, ...condition }
+                        : null;
+                })
+                .filter(Boolean);
+        }
+
+        const observation = GameAssist.MarkerService.observe(event => {
+            if (!isRunning() || !modState.config.showDescOnStatusChange) return;
+            event.added.forEach(entry => {
+                conditionsForMarkerEntry(entry).forEach(condition => showCondition(condition));
+            });
+        }, { owner: MODULE_NAME });
+        if (!observation.ok) {
+            throw new Error(observation.message || 'ConditionService could not observe MarkerService.');
+        }
+
+        GameAssist.onCommand('!condition', handleInput, MODULE_NAME);
+        const customCommand = String(modState.config.command || PRIMARY_COMMAND).toLowerCase();
+        if (customCommand !== PRIMARY_COMMAND) {
+            GameAssist.onCommand(`!${customCommand}`, handleInput, MODULE_NAME);
+        }
+
+        GameAssist.ConditionService = Object.freeze({
+            version: MODULE_VERSION,
+            configSchemaVersion: CONFIG_SCHEMA_VERSION,
+            getConditions: () => JSON.parse(JSON.stringify(getConditions())),
+            getCondition: name => {
+                const condition = getCondition(name);
+                return condition ? { ...condition } : null;
+            },
+            apply: (tokens, names, action = 'add') => {
+                if (!isRunning()) return { ok: false, code: 'UNAVAILABLE', message: 'ConditionService is disabled.' };
+                if (!['add', 'remove', 'toggle'].includes(action)) {
+                    return { ok: false, code: 'INVALID_ARGUMENT', message: `Unsupported condition action: ${action}` };
+                }
+                const tokenList = Array.isArray(tokens) ? tokens.filter(Boolean) : [tokens].filter(Boolean);
+                const nameList = Array.isArray(names) ? names : [names];
+                const results = mutateConditions(tokenList, nameList, action);
+                return { ok: results.failed === 0 && results.missing.length === 0, ...results };
+            }
+        });
+
+        const standalone = getStandaloneScriptEvidence('StatusInfo');
+        if (standalone.confirmed) {
+            GameAssist.log(
+                MODULE_NAME,
+                'Standalone StatusInfo was detected. Remove or disable it before using ConditionService because both respond to !condition and condition-marker changes.',
+                'WARN'
+            );
+        }
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: !condition opens the condition menu.`, 'INFO', { startup: true });
+    }, {
+        enabled: true,
+        events: ['change:graphic:statusmarkers'],
+        prefixes: ['!condition'],
+        dependsOn: ['MarkerService'],
+        protectedConfigKeys: ['conditions', 'legacyStatusInfoMigration']
+    });
+    // --- Notes & Comments ---
+    // Changed (v0.1.5.0): Added independently branded ConditionService 1.0.0 with validated StatusInfo-state migration, condition menus/descriptions, guarded player permissions, definition management, protected configuration maps, validated import/export, and MarkerService-owned marker behavior.
+    // Decision log:
+    //   CHOICE: Name the GameAssist module ConditionService - ALT: retain StatusInfo branding; REJECTED: this is an independently maintained adaptation with a different lifecycle and marker architecture.
+    //   CHOICE: Keep permanent !condition compatibility plus one optional custom alias - ALT: replace the command; REJECTED: upgrades should not strand familiar workflows.
+    //   CHOICE: Copy valid legacy state.STATUSINFO data without deleting the source branch - ALT: move/delete it; REJECTED: rollback and standalone recovery require non-destructive migration.
+    //   CHOICE: Use original concise condition summaries - ALT: reproduce upstream rules text; REJECTED: independent wording is clearer and avoids unnecessary third-party text reuse.
+    //   CHOICE: Omit upstream character-sheet attribute synchronization in this checkpoint - ALT: mutate sheet-specific attributes; REJECTED: GameAssist's condition contract is token-marker synchronization through MarkerService.
+    // Prior notes:
+    //   StatusInfo 0.3.11 by Robin Kuiper provided the supplied compatibility baseline; the Roll20 0.3.12 package changes only its character-sheet identification line and still declares internal version 0.3.11.
+    // [GAMEASSIST:MODULES:CONDITIONSERVICE] END
     // =============================================================================
 
     // ————— NPC MANAGER MODULE v1.2.0 —————

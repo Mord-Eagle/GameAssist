@@ -42,7 +42,7 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | GameAssist status readability | Complete | [#23](https://github.com/Mord-Eagle/GameAssist/issues/23) | The plain-language `!ga-status` system check and optional troubleshooting panel shipped in v0.1.4.6. |
 | Standalone interoperability stabilization | Complete | [#24](https://github.com/Mord-Eagle/GameAssist/issues/24) | v0.1.4.7 uses TokenMod's documented `--api-as` path, verifies marker results, reports optional StatusInfo evidence, and passed the Roll20 sandbox acceptance pass. |
 | MarkerService checkpoint | Sandbox verification | [#25](https://github.com/Mord-Eagle/GameAssist/issues/25) | PR #41 contains the shared marker core, consumer migrations, lifecycle safeguards, regressions, and documentation. |
-| Integrated condition-service checkpoint | Planned | [#26](https://github.com/Mord-Eagle/GameAssist/issues/26) | Add the independently branded and attributed GameAssist condition service within `v0.1.5.0`. |
+| ConditionService checkpoint | Sandbox verification | [#26](https://github.com/Mord-Eagle/GameAssist/issues/26) | ConditionService 1.0.0 implements supported `!condition` workflows, validated legacy migration/import, MarkerService synchronization, and attribution. |
 | Integrated token-service checkpoint | Planned | [#27](https://github.com/Mord-Eagle/GameAssist/issues/27) | Add the independently branded and attributed GameAssist token service within `v0.1.5.0`. |
 | Integrated architecture stabilization | Planned | [#28](https://github.com/Mord-Eagle/GameAssist/issues/28) | Harden upgrades, coexistence, migration, diagnostics, and verified command coverage before `v0.1.5.0` is released. |
 | v0.1.5.0 release gate | Planned | [#29](https://github.com/Mord-Eagle/GameAssist/issues/29) | Publish only after every integrated service, attribution requirement, documentation update, and full Roll20 acceptance check is complete. |
@@ -146,7 +146,7 @@ NPCManager and ConcentrationTracker must perform their marker workflows without 
 
 **Tracking:** [Issue #26](https://github.com/Mord-Eagle/GameAssist/issues/26)
 
-Build an independently branded GameAssist condition-information service that preserves selected StatusInfo workflows while removing its independent marker implementation. The owner-authoritative module name and MECHSUITS tag must be selected before code is created.
+Build the independently branded `ConditionService` module, preserving selected StatusInfo workflows while removing its independent marker implementation. Its stable MECHSUITS tag is `[GAMEASSIST:MODULES:CONDITIONSERVICE]`.
 
 ### Ownership Boundary
 
@@ -156,20 +156,22 @@ Build an independently branded GameAssist condition-information service that pre
 
 ### Checklist
 
-- [ ] Select the owner-authoritative GameAssist module name and stable MECHSUITS tag.
-- [ ] Compare StatusInfo 0.3.11 with the current published revision and pin the exact adaptation baseline.
-- [ ] Record Robin Kuiper attribution, upstream baseline, GameAssist changes, and MIT notice.
-- [ ] Define the supported command/configuration compatibility surface.
-- [ ] Route commands, events, and lifecycle through GameAssist.
-- [ ] Route marker behavior through MarkerService.
-- [ ] Preserve or safely migrate existing `state.STATUSINFO` where practical.
-- [ ] Validate any supported configuration import before applying it.
-- [ ] Detect and warn about accidental standalone StatusInfo installation.
-- [ ] Update documentation, attribution, changelog, upgrade notes, and smoke tests.
+- [x] Select `ConditionService` and `[GAMEASSIST:MODULES:CONDITIONSERVICE]` as the stable GameAssist identifiers.
+- [x] Compare StatusInfo 0.3.11 with the published 0.3.12 package and pin the repository snapshot/file blob.
+- [x] Record Robin Kuiper attribution, upstream baseline, GameAssist changes, and the MIT notice.
+- [x] Define the supported command/configuration compatibility surface.
+- [x] Route commands, observations, and lifecycle through GameAssist.
+- [x] Route marker behavior through MarkerService.
+- [x] Copy valid `state.STATUSINFO` settings and definitions without deleting the legacy branch.
+- [x] Validate complete configuration imports before applying them and protect the definition map from generic replacement.
+- [x] Detect and warn about accidental standalone StatusInfo installation.
+- [x] Update documentation, attribution, changelog, upgrade notes, and component smoke tests.
 
 ### Completion Gate
 
 Supported `!condition` workflows and condition descriptions must function through GameAssist and remain synchronized with MarkerService-managed markers without requiring standalone StatusInfo.
+
+**Current evidence:** JavaScript syntax passes, the mocked Roll20 legacy-migration suite passes 28/28 checks, and the clean-install suite passes 13/13 checks. Coverage includes default definitions without legacy state, component-aware status output, legacy migration retention, custom and numbered markers, selected-token menus, condition descriptions, add/remove/toggle, external marker observation, unsafe and protected-config refusal, validated import, MarkerService cascade disable, case-insensitive service restoration, and observer recovery. Real Roll20 sandbox acceptance remains required before Issue #26 closes.
 
 ---
 
@@ -248,7 +250,7 @@ The integrated architecture is considered stable only when supported workflows h
 │  ├─ [GAMEASSIST:MODULES:CONFIGUI]
 │  ├─ [GAMEASSIST:MODULES:CRITFUMBLE]
 │  ├─ GameAssist-branded general token service (final tag pending)
-│  ├─ GameAssist-branded condition-information service (final tag pending)
+│  ├─ [GAMEASSIST:MODULES:CONDITIONSERVICE]
 │  ├─ [GAMEASSIST:MODULES:NPCMANAGER]
 │  ├─ [GAMEASSIST:MODULES:CONCENTRATIONTRACKER]
 │  ├─ [GAMEASSIST:MODULES:NPCHPROLLER]

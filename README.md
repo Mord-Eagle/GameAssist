@@ -3,13 +3,13 @@
 **Version 0.1.5.0 development line** | © 2025-2026 Mord Eagle · MIT License<br>
 **Lead Dev:** [@Mord-Eagle](https://github.com/Mord-Eagle)
 
-> **Release posture:** `v0.1.4.7` remains the stable campaign release while `v0.1.5.0` is completed. The final `v0.1.5.0` release will include MarkerService plus independently branded, attributed GameAssist token and condition services. It will not be published until Issues #25 through #29 and the complete Roll20 sandbox acceptance pass are finished.
+> **Release posture:** `v0.1.4.7` remains the stable campaign release while `v0.1.5.0` is completed. MarkerService and the independently branded ConditionService are implemented development checkpoints; the integrated token service, stabilization work, and complete Roll20 sandbox acceptance pass remain before publication.
 
 ---
 
 ## 0 · What is GameAssist (in one paragraph)?
 
-GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a small shared kernel, a shared marker service, and six bundled gameplay and administration modules—ConfigUI, CritFumble, ConcentrationTracker, NPCManager, NPCHPRoller, and DebugTools. It provides guided menus, guarded lifecycle controls, direct command and event routing, an explicit queue for work that truly requires serialization, persistent metrics, conservative state self-healing, and best-effort compatibility diagnostics. The goal is campaign automation that remains approachable at the table and understandable when something needs attention.
+GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a small shared kernel, a shared marker service, and seven bundled gameplay and administration modules—ConfigUI, CritFumble, ConditionService, ConcentrationTracker, NPCManager, NPCHPRoller, and DebugTools. It provides guided menus, guarded lifecycle controls, direct command and event routing, an explicit queue for work that truly requires serialization, persistent metrics, conservative state self-healing, and best-effort compatibility diagnostics. The goal is campaign automation that remains approachable at the table and understandable when something needs attention.
 
 ---
 
@@ -19,8 +19,8 @@ GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a
 | --- | --- |
 | Core Lift | Guarded modules, conservative state repair, explicit queue API, session metrics, dependency diagnostics, GM health reporting, and one toggleable marker service with dependent-module safeguards. |
 | Quick Install | 📥 Install the complete script → 📜 add the CritFumble tables if used → 🔄 reload → 🩺 run the health checks → 🎲 test the enabled features with disposable tokens. |
-| Flagship Player Commands | `!concentration`, `!cc`, `!critfumble-<type>`. |
-| Flagship GM Commands | `!critfumble`, `!critfumble help`, `!critfumble menu`, `!critfail`, `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report --help`, `!npc-death-buckets`, `!NPC-WR`, `!npc-death-audit`, `!npc-death-arc`, `!ga-conc-status`, `!ga-config ui`. |
+| Flagship Player Commands | `!condition <name>`, `!concentration`, `!cc`, `!critfumble-<type>` when the GM permits the relevant player action. |
+| Flagship GM Commands | `!condition`, `!condition help`, `!critfumble`, `!critfumble help`, `!critfumble menu`, `!critfail`, `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report --help`, `!npc-death-buckets`, `!NPC-WR`, `!npc-death-audit`, `!npc-death-arc`, `!ga-conc-status`, `!ga-config ui`. |
 | Admin Controls | `!ga-config list|get|set|modules|cleanup|ui`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-metrics`, and `!ga-debug`. |
 | Queue Model | Normal commands/events run directly. Only `GameAssist.enqueue(...)` work and module transitions use the serialized queue. |
 | Watchdog Limit | A timeout releases the explicit queue; it **cannot** terminate underlying JavaScript, `sendChat()`, or Roll20 operations. |
@@ -58,10 +58,11 @@ GameAssist’s kernel and bundled modules expose:
 * **State Manager** – stores namespaced module data under `state.GameAssist.<Module>` and repairs missing or malformed known `config` and `runtime` containers.
 * **State Auditor** – warns about unknown branches without deleting them automatically. The GM chooses whether to remove them with `!ga-config cleanup`.
 * **Metrics Board** – records command, event, queue, error, toggle, and audit activity. View current health with `!ga-status` and persisted session details with `!ga-metrics`.
-* **Guarded Module Toggles** – `!ga-enable` and `!ga-disable` control module activity without depending on a Roll20 `off()` API.
+* **Guarded Component Toggles** – `!ga-enable` and `!ga-disable` control feature modules and core services without depending on a Roll20 `off()` API.
 * **Compatibility Audit** – optional, debug-only overlap hints for popular scripts such as TokenMod, ScriptCards, and APILogic.
 * **Dependency Diagnostics** – module dependencies are reported as confirmed, missing, or unverifiable instead of being presented as guaranteed discoveries.
 * **MarkerService** – `GameAssist.MarkerService` resolves built-in and custom markers, preserves unrelated and numbered marker state, applies explicit add/remove/toggle operations, and exposes one observation contract. It can be disabled when another Mod needs exclusive control of marker behavior; GameAssist then turns off MarkerService-dependent modules while leaving unrelated modules available.
+* **ConditionService** – supplies plain-language condition reminders, a selected-token menu, add/remove/toggle commands, configurable definitions, guarded player permissions, and marker-change descriptions. Every condition marker operation and observation goes through MarkerService.
 * **MECHSUITS Structure** – the executable script uses the literal codename `GAMEASSIST`, framed sections, file-scoped canonical tree metadata, and per-section change notes.
 
 **Design goal:** useful, inspectable campaign automation that reports failures clearly and can be upgraded incrementally.
@@ -73,16 +74,16 @@ GameAssist’s kernel and bundled modules expose:
 | Step | What to do |
 | --- | --- |
 | 📥 **1 · Install** | Add GameAssist through Roll20 One-Click, or paste the complete `GameAssist.js` file into **Mod (API) Scripts**, then save. |
-| 🧩 **2 · Choose Features** | Open `!ga-config ui` and keep only the tools that fit the campaign. MarkerService begins enabled because NPCManager, ConcentrationTracker, and marker diagnostics use it. |
+| 🧩 **2 · Choose Features** | Open `!ga-config ui` and keep only the tools that fit the campaign. MarkerService begins enabled because ConditionService, NPCManager, ConcentrationTracker, and marker diagnostics use it. |
 | 📜 **3 · Prepare CritFumble** | If CritFumble will be used, create the seven tables listed in [§11 · Roll-Table Cookbook](#11-roll-table-cookbook). Skip this step when CritFumble is disabled. |
 | 🔄 **4 · Reload** | Save or restart the Mod sandbox and wait for the GameAssist core ready whisper. Module-by-module startup whispers are normally quiet. |
 | 🩺 **5 · Check Health** | Run `!ga-status` and `!ga-config modules`. Confirm the features you enabled are running. |
-| 🎲 **6 · Try the Table Tools** | Test `!critfumble menu`, `!concentration --status`, and `!npc-hp-selected` for the modules you use. |
+| 🎲 **6 · Try the Table Tools** | Test `!condition help`, `!critfumble menu`, `!concentration --status`, and `!npc-hp-selected` for the modules you use. |
 | 🛡️ **7 · Verify Real Changes** | With disposable tokens, test one NPC death/revival and one concentration marker before the first live session. |
 
 The final `v0.1.5.0` release replaces the standalone TokenMod and StatusInfo installations for the supported GameAssist token and condition workflows. It does not keep a hidden legacy path that sends GameAssist marker work back to those standalone scripts.
 
-If MarkerService is deliberately disabled, NPCManager, ConcentrationTracker, and DebugTools are also disabled. CritFumble, ConfigUI, and NPCHPRoller remain available. Standalone **TokenMod by The Aaron** and **StatusInfo by Robin Kuiper** can then provide their own token-marker and condition tools, but they do not restore GameAssist death-history or concentration features.
+If MarkerService is deliberately disabled, ConditionService, NPCManager, ConcentrationTracker, and DebugTools are also disabled. CritFumble, ConfigUI, and NPCHPRoller remain available. Standalone **TokenMod by The Aaron** and **StatusInfo by Robin Kuiper** can then provide their own token-marker and condition tools, but they do not restore GameAssist death-history, concentration, or ConditionService features.
 
 `GameAssist.flags.QUIET_STARTUP` defaults to `true`. Expect the core ready whisper, but not one ready message from every module.
 
@@ -95,6 +96,8 @@ Run these commands after every update:
 !ga-config modules
 !ga-config list
 !ga-metrics
+!condition help
+!condition
 !critfumble menu
 !concentration --status
 !npc-death-help
@@ -104,12 +107,13 @@ Run these commands after every update:
 !npc-hp-selected
 ```
 
-Then perform four real actions:
+Then perform five real actions:
 
 1. Drop a linked NPC below 1 HP and verify the death marker appears.
 2. Raise that NPC above 0 HP and verify the marker clears.
 3. Run a real concentration check.
-4. Disable and re-enable one module.
+4. Select a disposable token, add and remove one condition, and confirm unrelated markers remain unchanged.
+5. Disable and re-enable one module or service.
 
 ---
 
@@ -186,10 +190,16 @@ state.GameAssist
 ├─ config
 ├─ flags
 ├─ metrics
+├─ MarkerService
+│  ├─ config
+│  └─ runtime
 ├─ ConfigUI
 │  ├─ config
 │  └─ runtime
 ├─ CritFumble
+│  ├─ config
+│  └─ runtime
+├─ ConditionService
 │  ├─ config
 │  └─ runtime
 ├─ NPCManager
@@ -257,7 +267,36 @@ Internal player-targeted button syntax:
 
 Config keys: `debug`, `useEmojis`, `rollDelayMs`.
 
-### 6.2 Concentration Tracker
+### 6.2 ConditionService
+
+> **Module version:** ConditionService `1.0.0` is an independently branded GameAssist module. It acknowledges StatusInfo by Robin Kuiper as its compatibility and design foundation, but it is not an official StatusInfo release.
+
+ConditionService gives the table a readable condition reference and a marker-backed selected-token menu. Open `!condition` after selecting tokens to see their tracked conditions and toggle another condition with one click. `!condition help` is the quick-start guide.
+
+Common commands:
+
+* `!condition` → Open the selected-token condition menu.
+* `!condition help` → Open the quick-start guide.
+* `!condition <name>` → Show one configured condition description.
+* `!condition add <condition...>` → Add one or more conditions to selected tokens.
+* `!condition remove <condition...>` → Remove conditions from selected tokens.
+* `!condition toggle <condition...>` → Switch conditions on or off for selected tokens.
+* `!condition config` → Open GM settings.
+* `!condition config-conditions` → Add, edit, or remove condition definitions.
+* `!condition config export` / `!condition config import <JSON>` → Export or apply a validated ConditionService configuration.
+* `!condition reset` → Open a confirmation prompt before restoring defaults.
+
+Player description access and player marker changes are separate settings. Both are off by default. The permanent `!condition` command remains available even when the GM configures an additional compatibility alias.
+
+Condition definitions store a display name, plain-language description, and a marker. A marker may be a built-in id, a custom display name, an exact stored `Name::id` tag, or a numbered value such as `red@3`. ConditionService uses MarkerService for every read, add, remove, toggle, and marker-change observation, so unrelated markers and number overlays remain intact.
+
+On first startup, valid legacy `state.STATUSINFO` settings and condition definitions are copied into `state.GameAssist.ConditionService.config`. GameAssist keeps the original `state.STATUSINFO` branch for rollback and records what was imported. A separately installed StatusInfo script should then be removed or disabled because both tools respond to `!condition` and condition-marker changes.
+
+Configuration imports are size-bounded, reject unsafe keys, validate every definition, and apply only after the entire payload passes. The protected `conditions` and migration-record maps cannot be replaced through generic `!ga-config set`; use the ConditionService settings menu and validated importer.
+
+Config keys: `command`, `userAllowed`, `userToggle`, `sendOnlyToGM`, `showDescOnStatusChange`, `showIconInDescription`, and `conditions`.
+
+### 6.3 Concentration Tracker
 
 > **Marker service:** ConcentrationTracker uses the integrated `GameAssist.MarkerService`; standalone TokenMod is not required.
 
@@ -276,11 +315,11 @@ The tracker reads `constitution_save_bonus` from a token’s represented charact
 
 In v0.1.4.3, built-in marker ids, custom marker display names, and exact custom tags resolve to the marker identity Roll20 stores on tokens. If the configured marker cannot be recognized, `!concentration --status` gives an actionable warning instead of silently reporting an incorrect empty result.
 
-In v0.1.5.0, concentration status, add, remove, and teardown operations use MarkerService. Each mutation returns an explicit result, exact stored custom tags remain usable when the campaign registry cannot be read, and unrelated or numbered markers are preserved. The integrated GameAssist condition service observes MarkerService directly; synchronization with a separately installed StatusInfo script is not part of the release contract.
+In v0.1.5.0, concentration status, add, remove, and teardown operations use MarkerService. Each mutation returns an explicit result, exact stored custom tags remain usable when the campaign registry cannot be read, and unrelated or numbered markers are preserved. ConditionService observes MarkerService directly and can describe a configured concentration marker when a matching condition definition exists.
 
 Config keys: `marker`, `randomize`.
 
-### 6.3 NPC Manager
+### 6.4 NPC Manager
 
 > **Marker service:** NPCManager uses the integrated `GameAssist.MarkerService`; death history remains independent from marker-write success.
 
@@ -330,7 +369,7 @@ Disabling NPCManager stops its automation and requests removal of its configured
 
 Config keys: `autoTrackDeath`, `deadMarker`, `autoHide`, `hideLayer`.
 
-### 6.4 NPC HP Roller
+### 6.5 NPC HP Roller
 
 > **Dependency:** NPCHPRoller does **not** require TokenMod.
 
@@ -344,7 +383,7 @@ Invalid, unlinked, and PC tokens are skipped.
 
 Config key: `autoRollOnAdd`.
 
-### 6.5 Config UI
+### 6.6 Config UI
 
 `!ga-config ui` or `!ga-config-ui` whispers a GM-only chat control panel. Each module card can show:
 
@@ -357,7 +396,7 @@ Config keys: `pageSize`, `showSummaries`.
 
 Disable ConfigUI if you prefer command-only administration.
 
-### 6.6 Debug Tools *(GM-only)*
+### 6.7 Debug Tools *(GM-only)*
 
 DebugTools is disabled by default and remains dry-run unless `--apply` is present:
 
@@ -394,7 +433,7 @@ II. **Install GameAssist**
 
 III. **Remove Overlapping Standalone Marker Tools**
 
-The completed `v0.1.5.0` release replaces standalone TokenMod and StatusInfo for the token and condition workflows supported by GameAssist. Remove those standalone scripts before enabling the corresponding integrated GameAssist services so two tools do not respond to the same commands or marker changes.
+The completed `v0.1.5.0` release replaces standalone TokenMod and StatusInfo for the token and condition workflows supported by GameAssist. ConditionService is already present in this development checkpoint. Remove standalone StatusInfo before enabling it so two tools do not respond to `!condition` or the same marker changes. The integrated token-service replacement remains part of Issue #27.
 
 MarkerService itself may be disabled when the campaign deliberately chooses a different marker system. GameAssist will also turn off its dependent modules and explain which features are unavailable; CritFumble, ConfigUI, and NPCHPRoller continue to work.
 
@@ -442,12 +481,12 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 | **Admin** | `!ga-status` | `[--details]` | Show a plain-language system check; `--details` adds session activity, queue, timestamp, and internal event-hook diagnostics. |
 |  | `!ga-metrics` | `[reset]` | Show persisted session totals/history or reset metrics. |
 |  | `!ga-config list` | — | Write a versioned configuration-only snapshot handout. |
-|  | `!ga-config get <Module> [key]` | — | Whisper one config value or the module’s full config. |
-|  | `!ga-config set <Module> <key>=<value>` | — | Persist a module config value; unsafe keys are refused. |
-|  | `!ga-config modules` | — | Show per-module configured/runtime/dependency status. |
+|  | `!ga-config get <ModuleOrService> [key]` | — | Whisper one config value or the component’s full config. |
+|  | `!ga-config set <ModuleOrService> <key>=<value>` | — | Persist an ordinary component config value; unsafe and component-protected keys are refused. |
+|  | `!ga-config modules` | — | Show feature-module and core-service configured/runtime/dependency status. |
 |  | `!ga-config cleanup` | — | Explicitly remove unknown/orphaned state branches. |
 |  | `!ga-config ui` / `!ga-config-ui` | `[--page N]` | Open the GM Config UI. |
-|  | `!ga-enable <Module>` / `!ga-disable <Module>` | — | Enable or disable a module. |
+|  | `!ga-enable <ModuleOrService>` / `!ga-disable <ModuleOrService>` | — | Enable or disable a module or core service; names are case-insensitive. |
 | **GM** | `!npc-hp-all` | — | Roll and set HP for qualifying NPC tokens on the current page. |
 |  | `!npc-hp-selected` | — | Roll and set HP for qualifying selected NPC tokens. |
 |  | `!npc-death-help` | — | Open the same central NPCManager guide as `!npc-death-report --help`. |
@@ -458,6 +497,7 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!npc-death-audit` | — | Summarize current HP/death-marker mismatches and update the audit handout. |
 |  | `!npc-death-arc` | `[--name "Arc"] [--session] [--note "Text"] [--manage] [--allowDuplicates]` | Maintain a deduplicated Arc roster from selected tokens or the current Session; manage removal and undo in chat. |
 |  | `!ga-conc-status` | — | Show recent concentration DC/damage data per player. |
+|  | `!condition config` | — | Open ConditionService settings and condition-definition controls. |
 | **Player / GM** | `!critfumble` / `!critfumble help` | — | Whisper the CritFumble quick reference. |
 |  | `!critfumble menu` | — | Whisper the guided Natural 1 dialogue. |
 |  | `!critfail` | — | Open the direct GM-facing manual fumble prompt. Intended for GM use, but not currently GM-gated. |
@@ -466,6 +506,9 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!ga-debug save` | `--dc N [--bonus N] [--mode normal|adv|dis] [--label "Text"] [--apply]` | Preview or roll a save. |
 | **Player / GM** | `!critfumble-<type>` | `melee|ranged|thrown|spell|natural` | Roll the selected fumble table. |
 |  | `!confirm-crit-martial` / `!confirm-crit-magic` | — | Roll the matching confirmation table. |
+|  | `!condition` / `!condition help` | — | Open the selected-token condition menu or quick-start guide. |
+|  | `!condition <name>` | — | Show one configured condition description when permitted. |
+|  | `!condition add|remove|toggle <condition...>` | selected tokens | Change one or more condition markers when permitted. |
 |  | `!concentration` / `!cc` | `--damage N`, `--mode normal|adv|dis`, `--last`, `--off`, `--status`, `--config randomize on|off`, `--help` | Open or perform a concentration workflow. |
 
 ### 8.1 Configuration Safety
@@ -478,7 +521,7 @@ prototype
 constructor
 ```
 
-Setting `enabled=true` or `enabled=false` routes through module lifecycle controls rather than directly mutating the stored value.
+Setting `enabled=true` or `enabled=false` routes through component lifecycle controls rather than directly mutating the stored value. ConditionService's `conditions` and migration record are protected from generic replacement; use `!condition config` and its validated importer.
 
 ---
 
@@ -493,6 +536,14 @@ Setting `enabled=true` or `enabled=false` routes through module lifecycle contro
 |  | `debug` | bool | `false` | Enable CritFumble-specific debug messages. |
 |  | `useEmojis` | bool | `true` | Use emoji styling in CritFumble output. |
 |  | `rollDelayMs` | number | `200` | Delay between applicable table-roll actions. |
+| **ConditionService** | `enabled` | bool | `true` | Enable condition menus, descriptions, and marker controls. |
+|  | `command` | string | `"condition"` | Optional additional command alias; permanent `!condition` compatibility remains. |
+|  | `userAllowed` | bool | `false` | Allow players to request condition descriptions. |
+|  | `userToggle` | bool | `false` | Allow players to change condition markers on selected tokens. |
+|  | `sendOnlyToGM` | bool | `false` | Whisper condition descriptions only to the GM. |
+|  | `showDescOnStatusChange` | bool | `true` | Show a condition description when its marker is added. |
+|  | `showIconInDescription` | bool | `true` | Show the configured marker name beside descriptions. |
+|  | `conditions` | object | 15 definitions | Validated condition name, marker, and description map; manage through `!condition config`. |
 | **ConcentrationTracker** | `enabled` | bool | `true` | Enable concentration commands and tracking. |
 |  | `marker` | string | `"Concentrating"` | Marker name used for status checks and removal. |
 |  | `randomize` | bool | `true` | Randomize concentration emote flavor. |
@@ -533,6 +584,7 @@ Examples:
 | **State Management** | `GameAssist.getState(name)` / `saveState(name, data)` / `clearState(name)` | Read, merge, or reset a module-owned state branch. |
 | **Token Helper** | `GameAssist.getLinkedCharacter(token)` | Return `{ token, character }` for a valid linked object-layer token, otherwise `null`. |
 | **Marker Service** | `GameAssist.MarkerService` | Resolve, inspect, add, remove, toggle, set, and observe Roll20 token markers through one structured contract. |
+| **Condition Service** | `GameAssist.ConditionService` | Read validated condition definitions or apply add/remove/toggle actions through MarkerService. |
 | **Chat Helpers** | `GameAssist.createButton(label, command)` / `GameAssist.rollTable(tableName)` | Create safe chat buttons or roll a sanitized table name. |
 | **Config UI** | `GameAssist.renderConfigUI(playerId, options)` | Open the ConfigUI when that module is active. |
 | **Metrics** | `GameAssist.getMetricsStore()` / `GameAssist.recordMetric(type, opts)` | Inspect or record metrics. |
@@ -551,7 +603,8 @@ GameAssist.register('MyModule', function initMyModule() {
     prefixes: ['!mymod'],
     teardown: null,
     dependsOn: [],
-    preserveRuntimeOnDisable: false
+    preserveRuntimeOnDisable: false,
+    protectedConfigKeys: []
 });
 ```
 
@@ -563,6 +616,7 @@ Important contracts:
 * A module should persist only inside `state.GameAssist.<Module>`.
 * Dependencies may be reported as unverifiable if Roll20 does not expose script metadata.
 * Runtime is cleared on disable by default. Set `preserveRuntimeOnDisable: true` only when the module deliberately stores durable records there; NPCManager uses this for death-history buckets and Arc records.
+* Use `protectedConfigKeys` when a complex configuration map must be changed only through a component-owned validator.
 
 ### 10.3 Command Matching
 
@@ -660,9 +714,31 @@ Public operations:
 
 Marker removal clears every duplicate instance of the requested marker. Other marker ids, duplicate entries for unrelated markers, and number overlays are preserved. Adding an already-present marker is idempotent unless a number option explicitly updates its first matching entry.
 
-When MarkerService is disabled, marker operations return `UNAVAILABLE` with the command needed to restore the service. NPCManager, ConcentrationTracker, and DebugTools are disabled before the service closes so their teardown can complete safely.
+When MarkerService is disabled, marker operations return `UNAVAILABLE` with the command needed to restore the service. ConditionService, NPCManager, ConcentrationTracker, and DebugTools are disabled before the service closes so their teardown can complete safely. Observer registrations pause while the service is off and resume when it is enabled again.
 
-### 10.7 MECHSUITS Contribution Contract
+### 10.7 ConditionService
+
+`GameAssist.ConditionService` is available while the module is running:
+
+```js
+const conditions = GameAssist.ConditionService;
+
+const prone = conditions.getCondition('prone');
+const allDefinitions = conditions.getConditions();
+const result = conditions.apply([token], ['prone', 'poisoned'], 'add');
+```
+
+| Method | Result |
+| --- | --- |
+| `version` | ConditionService component version (`1.0.0`). |
+| `configSchemaVersion` | Validated condition export/import schema version. |
+| `getCondition(name)` | Returns a copy of one definition or `null`. |
+| `getConditions()` | Returns a deep copy of every configured definition. |
+| `apply(tokens, names, action)` | Applies `add`, `remove`, or `toggle` through MarkerService and returns changed/unchanged/failed counts. |
+
+The public API refuses mutation while ConditionService is disabled. Callers must inspect `ok`; a disabled module returns `UNAVAILABLE`, and an unsupported action returns `INVALID_ARGUMENT`.
+
+### 10.8 MECHSUITS Contribution Contract
 
 The executable file follows MECHSUITS v1.5.2 conventions:
 
@@ -830,7 +906,7 @@ Run:
 !ga-metrics
 ```
 
-Start with the default `!ga-status` system check. A separate **GameAssist Actions** whisper immediately below the table provides **Troubleshooting Details**, **Module List**, and **Open Settings** buttons. The detailed view uses a separate **Troubleshooting Actions** strip for **Refresh Details**, **Simple View**, **Module List**, and **Metrics**. The details table keeps session counters, queue information, the last recorded activity, and GameAssist's internal event-hook count separate from the health result.
+Start with the default `!ga-status` system check. A separate **GameAssist Actions** whisper immediately below the table provides **Troubleshooting Details**, **Modules & Services**, and **Open Settings** buttons. The detailed view uses a separate **Troubleshooting Actions** strip for **Refresh Details**, **Simple View**, **Modules & Services**, and **Metrics**. The details table keeps session counters, queue information, the last recorded activity, and GameAssist's internal event-hook count separate from the health result.
 
 ### 14.2 A Module Is Configured but Not Running
 
@@ -850,12 +926,12 @@ The output distinguishes:
 Then try:
 
 ```roll20chat
-!ga-enable <Module>
+!ga-enable <ModuleOrService>
 ```
 
 ### 14.3 MarkerService and Other Marker Mods
 
-NPCManager, ConcentrationTracker, and DebugTools use `GameAssist.MarkerService`; they should report `deps confirmed` without standalone TokenMod.
+ConditionService, NPCManager, ConcentrationTracker, and DebugTools use `GameAssist.MarkerService`; they should report `deps confirmed` without standalone TokenMod.
 
 Run:
 
@@ -864,9 +940,21 @@ Run:
 !ga-config modules
 ```
 
-The details panel should report MarkerService as enabled. The final `v0.1.5.0` release includes GameAssist's integrated token and condition services, so standalone TokenMod or StatusInfo should not be installed beside their overlapping GameAssist features.
+The details panel should report MarkerService as enabled. ConditionService should appear enabled and running after standalone StatusInfo is removed. The final `v0.1.5.0` release also includes the integrated token service, so standalone TokenMod will be removed before that release's overlapping token-command features are enabled.
 
-If another Mod must own marker behavior, use `!ga-disable MarkerService`. GameAssist disables NPCManager, ConcentrationTracker, and DebugTools first, then turns off MarkerService. The chat notice identifies the affected features; unrelated GameAssist modules remain available. Re-enable MarkerService before re-enabling any dependent module.
+If another Mod must own marker behavior, use `!ga-disable MarkerService`. GameAssist disables ConditionService, NPCManager, ConcentrationTracker, and DebugTools first, then turns off MarkerService. The chat notice identifies the affected features; unrelated GameAssist modules remain available. Re-enable MarkerService before re-enabling any dependent module.
+
+### 14.4 ConditionService Does Not Respond or Shows the Wrong Marker
+
+Run:
+
+```roll20chat
+!ga-config modules
+!condition help
+!condition config
+```
+
+Confirm MarkerService and ConditionService are running, and remove standalone StatusInfo if both tools are responding. Open **Manage Conditions** to check the condition's marker. Built-in ids, custom display names, exact `Name::id` tags, and numbered markers such as `red@3` are supported. Use the validated ConditionService importer for definition maps; generic `!ga-config set ConditionService conditions=...` is intentionally refused.
 
 When a marker action fails, first verify the configured marker and target token rather than changing TokenMod permissions:
 
@@ -879,13 +967,13 @@ When a marker action fails, first verify the configured marker and target token 
 
 For an exact custom marker, configure either its display name or stored `Name::id` tag. A valid exact stored tag remains usable even when Roll20's campaign marker registry cannot be parsed.
 
-### 14.4 Startup Messages Are Missing
+### 14.5 Startup Messages Are Missing
 
 This is normally expected. `GameAssist.flags.QUIET_STARTUP` defaults to `true`, suppressing module-specific startup whispers. The core ready message remains visible.
 
 Use `!ga-status` and `!ga-config modules` instead of relying on one whisper per module.
 
-### 14.5 State Repair or Unknown-Branch Warnings
+### 14.6 State Repair or Unknown-Branch Warnings
 
 Known module branches with malformed/missing `config` or `runtime` containers are repaired conservatively at startup. Valid existing config is preserved.
 
@@ -895,13 +983,13 @@ Unknown branches are not deleted automatically. Review the warning, then explici
 !ga-config cleanup
 ```
 
-### 14.6 `!ga-config list` Is Not a Full Backup
+### 14.7 `!ga-config list` Is Not a Full Backup
 
 The `GameAssist Config` handout contains flags, global config, and module config only. It excludes runtime caches, metrics, and unknown state branches. v0.1.5.0 cannot import the snapshot.
 
 Use it for configuration review and upgrade comparison—not as a full restore mechanism.
 
-### 14.7 CritFumble Menu or Table Roll Fails
+### 14.8 CritFumble Menu or Table Roll Fails
 
 Confirm all seven table names exist exactly:
 
@@ -924,7 +1012,7 @@ Then run:
 !confirm-crit-martial
 ```
 
-### 14.8 NPC Death Marker Does Not Match HP
+### 14.9 NPC Death Marker Does Not Match HP
 
 Run:
 
@@ -945,7 +1033,7 @@ Confirm the token:
 
 `!npc-death-report` shows recorded bucket history in summary/detail views; it does not audit the page.
 
-### 14.9 Concentration Marker Does Not Clear
+### 14.10 Concentration Marker Does Not Clear
 
 Select the affected token and run:
 
@@ -963,7 +1051,7 @@ Select the affected token and run:
 
 For a custom marker, the exact stored `Name::id` tag is the most deterministic configuration.
 
-### 14.10 NPC HP Does Not Roll
+### 14.11 NPC HP Does Not Roll
 
 Confirm the token:
 
@@ -974,7 +1062,7 @@ Confirm the token:
 
 NPCHPRoller does not require TokenMod.
 
-### 14.11 Debug Command Does Nothing
+### 14.12 Debug Command Does Nothing
 
 Enable DebugTools first:
 
@@ -984,7 +1072,7 @@ Enable DebugTools first:
 
 DebugTools performs a dry run unless `--apply` is supplied. To use selected tokens, omit `--token`; do not write `--token select`.
 
-### 14.12 Compatibility Hints
+### 14.13 Compatibility Hints
 
 Compatibility scanning is debug-only:
 
@@ -994,7 +1082,7 @@ GameAssist.flags.DEBUG_COMPAT = true;
 
 Reload, inspect the output, then return it to `false` to avoid noise. Do not run standalone versions of CritFumble, Concentration, NPC Death Tracker, or NPC HP Roller alongside their integrated GameAssist modules.
 
-### 14.13 Still Stuck?
+### 14.14 Still Stuck?
 
 Capture:
 
@@ -1017,7 +1105,7 @@ I. **Freeze the Current Working Script**
 
 1. Keep a copy of the complete v0.1.4.7 script.
 2. Run `!ga-config list` for a configuration-only comparison snapshot.
-3. Record any TokenMod or StatusInfo commands, saved configuration, or macros the campaign currently uses so their GameAssist equivalents can be verified after the upgrade.
+3. Record any TokenMod or StatusInfo commands, saved configuration, or macros the campaign currently uses so their GameAssist equivalents can be verified after the upgrade. Existing valid `state.STATUSINFO` settings are copied non-destructively on first ConditionService startup.
 
 > The snapshot is not a full-state backup and cannot be imported automatically.
 
@@ -1036,19 +1124,22 @@ III. **Verify Core Health**
 !ga-metrics
 ```
 
-MarkerService should report enabled. NPCManager and ConcentrationTracker should run with `deps confirmed` without standalone TokenMod or StatusInfo.
+MarkerService should report enabled. ConditionService, NPCManager, and ConcentrationTracker should run with `deps confirmed`. Standalone StatusInfo should be absent; the integrated TokenMod replacement is verified later in this release train under Issue #27.
 
 IV. **Verify Configuration and Marker State**
 
 ```roll20chat
 !ga-config get NPCManager
 !ga-config get ConcentrationTracker
+!ga-config get ConditionService userAllowed
 !ga-config get DebugTools
+!condition help
+!condition
 !npc-death-audit
 !concentration --status
 ```
 
-Existing configured built-in names, custom display names, and exact stored tags remain supported. MarkerService changes no persistent state schema in v0.1.5.0.
+Existing configured built-in names, custom display names, and exact stored tags remain supported. ConditionService copies valid legacy `state.STATUSINFO` settings and definitions into its own validated configuration while retaining the legacy branch for rollback.
 
 V. **Run the Smoke Test**
 
@@ -1146,7 +1237,7 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 | --- | --- | --- |
 | MarkerService | **Implemented; sandbox acceptance pending** | One toggleable service owns GameAssist marker resolution, mutation, preservation, and observation. Disabling it turns off dependent modules without disabling unrelated features. |
 | Bundled marker consumers | **Migrated** | NPCManager 1.2.0, ConcentrationTracker 0.2.0, and DebugTools 0.2.0 no longer require standalone TokenMod. |
-| Integrated condition service | **Required before release** | Independently branded and attributed GameAssist service based on the StatusInfo foundation. |
+| ConditionService 1.0.0 | **Implemented; sandbox acceptance pending** | Independently branded and attributed GameAssist condition service with `!condition` compatibility, validated legacy migration/import, and MarkerService synchronization. |
 | Integrated token service | **Required before release** | Independently branded and attributed GameAssist service based on the TokenMod foundation; compatibility is verified command family by command family. |
 | Integrated architecture stabilization | **Required before release** | Upgrade, coexistence, migration, command, marker, and Roll20 sandbox checks tracked through Issues #28 and #29. |
 | Configuration export | **Implemented, partial** | Versioned configuration-only snapshot; no import/restore. |
@@ -1221,9 +1312,11 @@ This is a separate project and is not implemented in v0.1.5.0.
 * Migrated NPCManager, ConcentrationTracker, and DebugTools away from chat-generated TokenMod requests.
 * Removed standalone TokenMod dependency gating from bundled marker consumers.
 * Added service dependency safeguards: disabling MarkerService first disables its dependent modules and leaves unrelated GameAssist modules available.
+* Added `[GAMEASSIST:MODULES:CONDITIONSERVICE]` and `GameAssist.ConditionService` 1.0.0 with guided `!condition` menus, descriptions, add/remove/toggle actions, configurable definitions, and guarded player permissions.
+* Added validated, non-destructive migration from `state.STATUSINFO`, bounded ConditionService import/export, protected configuration maps, standalone StatusInfo warnings, and numbered/custom marker support through MarkerService.
 * Advanced NPCManager to `1.2.0`, ConcentrationTracker to `0.2.0`, and DebugTools to `0.2.0`.
 * Preserved existing module commands, configuration keys, death history, concentration runtime data, and unrelated token markers.
-* The release remains open until the independently branded condition and token services, stabilization work, attribution, migration guidance, and final sandbox acceptance are complete.
+* The release remains open until the independently branded token service, stabilization work, and final sandbox acceptance are complete.
 
 ### v0.1.4.7 – Standalone TokenMod and StatusInfo Interoperability
 
@@ -1382,9 +1475,9 @@ Where their implementations contain adapted upstream code, GameAssist will retai
 - a record of adapted and independently implemented portions;
 - a statement that the GameAssist service is independently maintained and is not an official upstream release.
 
-The general token service will acknowledge **TokenMod by The Aaron**. The condition-information service will acknowledge **StatusInfo by Robin Kuiper**. Compatibility commands may be retained without retaining the upstream product names as GameAssist module brands.
+The general token service will acknowledge **TokenMod by The Aaron**. **ConditionService** acknowledges **StatusInfo by Robin Kuiper** as its compatibility and design foundation. It preserves selected `!condition` workflows and legacy configuration concepts while using original GameAssist lifecycle, validation, menus, migration, summaries, and MarkerService integration. It is not an official StatusInfo release.
 
-Condition descriptions sourced from D&D SRD 5.1 will follow its Creative Commons Attribution 4.0 requirements. Non-SRD book text will not be copied into GameAssist.
+ConditionService ships original concise GameAssist summaries rather than reproducing upstream or non-SRD sourcebook text. Any future SRD-derived text will follow D&D SRD 5.1 Creative Commons Attribution 4.0 requirements.
 
 See [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) for public acknowledgments, upstream links, license notices, and SRD guidance.
 

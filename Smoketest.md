@@ -2,7 +2,7 @@
 
 Use this guide after installing or updating GameAssist, before an important session, or while troubleshooting a feature.
 
-> `v0.1.5.0` is still in development. The MarkerService tests below verify the Issue #25 checkpoint; they do not replace the condition-service, token-service, stabilization, and final acceptance tests required before release.
+> `v0.1.5.0` is still in development. MarkerService and ConditionService have focused checkpoint tests below; the integrated token service, stabilization work, and final release acceptance tests remain required.
 
 The tests are organized by component. Each section explains:
 
@@ -26,6 +26,7 @@ Run commands one at a time. A multi-line command block is a checklist, not a sin
 | MarkerService | GameAssist can change and read markers without standalone TokenMod while preserving unrelated markers. | NPC death and concentration markers depend on it. | Only when no enabled module or future service uses token markers. |
 | ConfigUI | The GM settings interface opens and responds once. | It is the easiest way for most DMs to manage modules. | The campaign is intentionally managed only through commands. |
 | CritFumble | Help and the Natural 1 workflow respond. | Table automation can fail separately from the rest of GameAssist. | CritFumble is disabled and will not be used. |
+| ConditionService | Condition help, selected-token controls, descriptions, and MarkerService synchronization work. | Condition workflows combine permissions, configuration, markers, and chat output. | ConditionService is deliberately disabled and will not be used. |
 | ConcentrationTracker | Status, saving throws, and marker removal work on linked PC tokens. | It combines character data, rolls, chat, and MarkerService. | ConcentrationTracker is disabled and will not be used. |
 | NPCManager | Death, revival, audit, history, buckets, and Arc menus work. | It combines HP events, markers, saved records, and handouts. | NPCManager is disabled and will not be used. |
 | NPCHPRoller | Qualifying NPC HP formulas roll without changing PCs or unlinked tokens. | Incorrect eligibility can damage token HP or create false history. | NPCHPRoller is disabled and NPC HP is set another way. |
@@ -39,7 +40,7 @@ GameAssist is ready for normal use when:
 
 - the Roll20 Mod sandbox reloads without a new GameAssist exception;
 - the Core System basic test passes;
-- MarkerService passes if NPCManager or ConcentrationTracker will be used;
+- MarkerService passes if ConditionService, NPCManager, ConcentrationTracker, or marker diagnostics will be used;
 - every enabled module that matters to the coming session passes its basic test;
 - any skipped test is skipped for a stated reason, not because its result was unclear.
 
@@ -47,7 +48,7 @@ Expected conditions that are not failures:
 
 - DebugTools is disabled by default.
 - Standalone TokenMod is not required for GameAssist marker operations in v0.1.5.0.
-- The Issue #25 checkpoint does not test the future integrated condition service; the completed v0.1.5.0 release must pass that service's own tests before publication.
+- ConditionService is independently branded GameAssist functionality; standalone StatusInfo should be absent while its overlapping workflows are tested.
 - CritFumble help works without rollable tables, but table rolls require the seven exact table names.
 - Counts and timestamps in diagnostic panels vary by sandbox session.
 
@@ -135,7 +136,7 @@ Pass when:
 - MarkerService and five default gameplay/administration modules are enabled and running;
 - DebugTools is shown as disabled or paused;
 - no enabled module is dependency-skipped;
-- the actions below `!ga-status` include **Troubleshooting Details**, **Module List**, and **Open Settings**.
+- the actions below `!ga-status` include **Troubleshooting Details**, **Modules & Services**, and **Open Settings**.
 
 The exact message, command, listener, and timestamp values are not fixed pass conditions.
 
@@ -157,7 +158,7 @@ Check:
 - [ ] Queue mode says normal handlers execute directly and queue use is explicit.
 - [ ] A missing duration is shown as `N/A`, not `N/Ams`.
 - [ ] Errors refer to the current sandbox session, not campaign lifetime.
-- [ ] Details provide **Simple View**, **Module List**, and **Metrics** actions.
+- [ ] Details provide **Simple View**, **Modules & Services**, and **Metrics** actions.
 
 #### Command Boundary
 
@@ -228,7 +229,7 @@ Run each line only after the previous response. Pass when ConfigUI disables, re-
 
 **What this proves:** GameAssist can resolve, add, remove, inspect, and preserve token markers through its own MarkerService.
 
-**Why test it:** NPCManager and ConcentrationTracker now use MarkerService instead of sending marker commands to standalone TokenMod.
+**Why test it:** ConditionService, NPCManager, ConcentrationTracker, and marker diagnostics share MarkerService instead of maintaining competing marker implementations.
 
 **Skip when:** Skip only if MarkerService and every dependent GameAssist module are deliberately disabled. The **without TokenMod** portion is required for Issue #25 acceptance; use a disposable campaign when the active campaign cannot safely remove TokenMod yet.
 
@@ -269,7 +270,7 @@ Use a disposable campaign or page. Record the current marker settings:
 !ga-config get ConcentrationTracker marker
 ```
 
-For the independence check, remove or disable standalone TokenMod and restart the Mod sandbox. Leave it installed only if the campaign cannot safely test without its independent commands; that means the independence portion remains unconfirmed.
+For the independence check, remove or disable standalone TokenMod and standalone StatusInfo, then restart the Mod sandbox. Leave either installed only if the campaign cannot safely test without its independent commands; that means the overlapping independence portion remains unconfirmed.
 
 Use a fresh linked NPC with known positive HP so older death history cannot be mistaken for the new result. If auto-hide is enabled, temporarily turn it off:
 
@@ -291,9 +292,9 @@ Run:
 Pass when:
 
 - MarkerService v1.0.0 is enabled;
-- NPCManager and ConcentrationTracker are running;
-- both show confirmed dependencies;
-- neither is skipped because TokenMod is absent.
+- ConditionService, NPCManager, and ConcentrationTracker are running;
+- all three show confirmed MarkerService dependencies;
+- none is skipped because TokenMod or StatusInfo is absent.
 
 #### M2. Numbered Death Marker
 
@@ -415,7 +416,8 @@ Run each command after the previous response appears:
 
 Pass when:
 
-- NPCManager, ConcentrationTracker, and DebugTools are configured off and not running;
+- the command controls MarkerService rather than reporting `No such module` or `No such service`;
+- ConditionService, NPCManager, ConcentrationTracker, and DebugTools are configured off and not running;
 - MarkerService is configured off and not running;
 - CritFumble, ConfigUI, and NPCHPRoller keep their prior configured/running state;
 - the disable notice names the affected modules and explains that unrelated GameAssist modules remain available;
@@ -426,12 +428,13 @@ Now restore the service and enabled dependents:
 
 ```roll20chat
 !ga-enable MarkerService
+!ga-enable ConditionService
 !ga-enable NPCManager
 !ga-enable ConcentrationTracker
 !ga-config modules
 ```
 
-Pass when MarkerService starts first, both dependents can then start, and DebugTools remains disabled unless the GM explicitly enables it.
+Pass when MarkerService starts first, all three ordinary dependents can then start, and DebugTools remains disabled unless the GM explicitly enables it.
 
 #### M7. Reload and Persistence
 
@@ -448,17 +451,18 @@ Restore normal marker operation, restart once more, and verify retained campaign
 
 ```roll20chat
 !ga-enable MarkerService
+!ga-enable ConditionService
 !ga-enable NPCManager
 !ga-enable ConcentrationTracker
 !npc-death-report
 !concentration --status
 ```
 
-Pass when the service and dependents run again, existing NPC history is retained, and configuration remains consistent.
+Pass when the service and dependents run again, ConditionService definitions and existing NPC history are retained, and configuration remains consistent.
 
 #### M8. Restore Campaign Settings
 
-Restore the original `deadMarker`, `autoHide`, and concentration `marker` values recorded during setup. Leave MarkerService and only the GameAssist modules the campaign uses in their intended final enabled state.
+Restore the original `deadMarker`, `autoHide`, concentration `marker`, and intended ConditionService permission settings. Leave MarkerService and only the GameAssist modules the campaign uses in their intended final enabled state.
 
 ### MarkerService Failure Evidence
 
@@ -571,7 +575,91 @@ If the automatic test fails but direct commands work, record the roll template a
 
 ---
 
-## 5. ConcentrationTracker
+## 5. ConditionService
+
+**What this proves:** ConditionService opens readable guidance, manages selected-token conditions, and stays synchronized with MarkerService without standalone StatusInfo.
+
+**Why test it:** A condition can fail because of permissions, a malformed definition, an unrecognized custom marker, duplicate StatusInfo installation, or a disabled MarkerService.
+
+**Skip when:** ConditionService is deliberately disabled and no condition descriptions or controls will be used. Do not skip this section for Issue #26 acceptance.
+
+### Basic Check
+
+Remove or disable standalone StatusInfo, select one disposable token, and give that token one unrelated numbered marker such as `blue@2`. Then run:
+
+```roll20chat
+!ga-config modules
+!condition help
+!condition
+!condition add prone
+!condition prone
+!condition remove prone
+```
+
+Pass when:
+
+- ConditionService is configured on, running, and reports `deps confirmed`;
+- help gives a quick start and an **Open Condition Menu** button;
+- the menu names the selected token and shows its tracked conditions;
+- adding Prone applies only `back-pain` and shows the configured description;
+- removing Prone clears only `back-pain`;
+- the unrelated `blue@2` marker remains unchanged throughout.
+
+### Expanded ConditionService Checks
+
+#### Permissions
+
+Open `!condition config`. Test **Players may view descriptions** and **Players may change token conditions** separately from a non-GM account. Pass when each permission affects only its named behavior and denied actions receive a clear explanation.
+
+#### Custom and Numbered Marker
+
+Create a disposable custom Roll20 marker named `Warded`. In **Manage Conditions**, add a Warded definition and configure either its display name, exact stored `Warded::id` tag, or a numbered value such as `Warded::id@3`. Add and remove it from the selected token.
+
+Pass when the exact custom marker changes, its number is retained, and unrelated markers remain unchanged.
+
+#### Marker-Change Description
+
+With **Show descriptions when markers are added** enabled, add a configured condition marker directly from Roll20's token marker menu.
+
+Pass when one matching ConditionService description appears. Removing the marker should not re-add it.
+
+#### Validated Export and Import
+
+Run:
+
+```roll20chat
+!condition config export
+!ga-config set ConditionService conditions={}
+```
+
+Pass when the export contains `gameassist-condition-config`, and the generic setter refuses to replace the protected condition map. Import only the unchanged exported JSON or a disposable, reviewed copy. Pass when the entire payload is validated before any setting changes.
+
+#### Legacy StatusInfo Migration
+
+Run this only when upgrading a campaign that previously used StatusInfo. Before removing standalone StatusInfo, record one customized condition and permission setting. Install the development GameAssist version, remove StatusInfo, reload, and open `!condition config` plus **Manage Conditions**.
+
+Pass when valid settings and definitions were copied, the migration is reported once, and rollback remains possible because GameAssist did not delete the legacy `state.STATUSINFO` branch.
+
+#### MarkerService Restart
+
+Run:
+
+```roll20chat
+!ga-disable MarkerService
+!ga-config modules
+!ga-enable markerservice
+!ga-enable conditionservice
+```
+
+Pass when MarkerService shutdown also turns off ConditionService, the unrelated modules remain available, both components re-enable case-insensitively, and a later direct marker addition still produces its condition description.
+
+#### Duplicate Installation Warning
+
+Temporarily load standalone StatusInfo only in a disposable test campaign and restart the sandbox. Pass when GameAssist warns that both tools respond to `!condition` and marker changes. Remove standalone StatusInfo before continuing.
+
+---
+
+## 6. ConcentrationTracker
 
 **What this proves:** ConcentrationTracker reads linked character data, builds the correct save, remembers the last check, and uses MarkerService.
 
@@ -627,7 +715,7 @@ Select an unlinked token and repeat a check. Pass when GameAssist explains that 
 
 ---
 
-## 6. NPCManager
+## 7. NPCManager
 
 **What this proves:** NPCManager tracks genuine HP transitions, changes death markers, audits current-page mismatches, and maintains report buckets and Arc records.
 
@@ -815,7 +903,7 @@ Default behavior is `autoHide=false`. If enabled, dead NPCs intentionally move t
 
 ---
 
-## 7. NPCHPRoller
+## 8. NPCHPRoller
 
 **What this proves:** NPCHPRoller recognizes qualifying NPCs, rolls `npc_hpformula`, and protects initialization from false death history.
 
@@ -886,7 +974,7 @@ Restore the default:
 
 ---
 
-## 8. DebugTools
+## 9. DebugTools
 
 **What this proves:** DebugTools remains opt-in, previews mutations by default, and requires `--apply`.
 
@@ -953,6 +1041,8 @@ From a non-GM account, try:
 ```roll20chat
 !ga-status
 !ga-config modules
+!condition config
+!condition add prone
 !npc-hp-all
 !npc-death-audit
 ```
@@ -972,7 +1062,7 @@ If a command produces duplicate output:
 3. Keep only the intended implementation.
 4. Restart the sandbox and repeat the command.
 
-Scripts that independently modify the same NPC HP/bar 1, death marker, concentration marker, or Natural 1 workflow may conflict even when their names differ.
+Scripts that independently respond to `!condition`, describe the same marker changes, modify the same NPC HP/bar 1, control the same death/concentration/condition markers, or process the same Natural 1 workflow may conflict even when their names differ.
 
 ## State Recovery
 
@@ -1010,8 +1100,8 @@ Run:
 
 ```roll20chat
 !ga-config modules
-!ga-config get <ModuleName>
-!ga-enable <ModuleName>
+!ga-config get <ModuleOrServiceName>
+!ga-enable <ModuleOrServiceName>
 ```
 
 Check the configured state, running state, exact command spelling, and test-token eligibility. Read the enable response before changing more settings.
@@ -1087,7 +1177,7 @@ When a test fails, record:
 - [ ] Actual result.
 - [ ] `!ga-status --details` output.
 - [ ] `!ga-config modules` output.
-- [ ] Relevant `!ga-config get <ModuleName>` output.
+- [ ] Relevant `!ga-config get <ModuleOrServiceName>` output.
 - [ ] Exact API Console error.
 - [ ] Token name, ID, layer, and linkage.
 - [ ] Relevant character attributes.
@@ -1111,6 +1201,7 @@ Then run only the basic checks for features the session will use:
 - MarkerService: one disposable death/revival marker cycle.
 - ConfigUI: open settings.
 - CritFumble: `!critfumble help`.
+- ConditionService: select a disposable token and open `!condition`.
 - ConcentrationTracker: `!concentration --status`.
 - NPCManager: `!npc-death-report`.
 - NPCHPRoller: roll one disposable selected NPC.

@@ -1800,7 +1800,7 @@ The Roll20 API sandbox acceptance pass confirmed real `sendChat` routing, TokenM
 
 GameAssist v0.1.5.0 is the integrated marker, token, and condition architecture release. It remains in development and will not be published until Issues #25 through #29 are complete. The release replaces the standalone TokenMod and StatusInfo installations for supported GameAssist workflows with independently branded and attributed GameAssist services.
 
-The current checkpoint implements [Issue #25](https://github.com/Mord-Eagle/GameAssist/issues/25): MarkerService and migration of existing GameAssist marker consumers. Issues #26 and #27 add the condition and general token services; Issue #28 stabilizes the complete architecture; Issue #29 holds the final release gate. These are checkpoints within `v0.1.5.0`, not separate public versions.
+The current checkpoints implement [Issue #25](https://github.com/Mord-Eagle/GameAssist/issues/25), MarkerService and migration of existing marker consumers, and [Issue #26](https://github.com/Mord-Eagle/GameAssist/issues/26), ConditionService and supported `!condition` workflows. Issue #27 adds the general token service; Issue #28 stabilizes the complete architecture; Issue #29 holds the final release gate. These are checkpoints within `v0.1.5.0`, not separate public versions.
 
 ### Added – CORE:MARKERSERVICE
 
@@ -1827,13 +1827,46 @@ The current checkpoint implements [Issue #25](https://github.com/Mord-Eagle/Game
 
 - Registered MarkerService as a first-class core service visible through `!ga-config modules` and ConfigUI.
 - Added `!ga-enable MarkerService` and `!ga-disable MarkerService` support through the existing lifecycle commands.
-- Declared NPCManager, ConcentrationTracker, and DebugTools as MarkerService dependents.
+- Declared ConditionService, NPCManager, ConcentrationTracker, and DebugTools as MarkerService dependents.
 - Disabling MarkerService first disables those dependent modules so their teardown can use marker access for cleanup, then disables the service itself.
 - CritFumble, ConfigUI, and NPCHPRoller remain available while MarkerService is off.
 - Re-enabling a dependent module is refused until MarkerService is enabled.
 - A sandbox reload preserves the DM's disabled MarkerService choice and turns off any inconsistent dependent configuration left enabled in persistent state.
 - MarkerService operations return `UNAVAILABLE` with an actionable enable command while the service is disabled.
 - The disable notice explains that standalone TokenMod by The Aaron and StatusInfo by Robin Kuiper provide separate token-marker and condition tools but do not restore GameAssist death-history or concentration features.
+- Lifecycle component names resolve case-insensitively, and unknown names are reported as missing GameAssist modules or services rather than treating every lifecycle target as a module.
+- Marker observer registrations pause while MarkerService is disabled and resume after re-enable, preserving once-wired dependent observers.
+
+### Added – ConditionService 1.0.0
+
+- Added the properly nested `[GAMEASSIST:MODULES:CONDITIONSERVICE]` section and exposed `GameAssist.ConditionService` version `1.0.0`.
+- Selected the independent GameAssist name `ConditionService`; the module is not branded or presented as an official StatusInfo release.
+- Preserved supported `!condition` compatibility workflows:
+  - selected-token condition menu;
+  - quick-start help;
+  - direct condition descriptions;
+  - add, remove, and toggle actions for one or more conditions;
+  - GM settings and condition-definition management;
+  - guarded reset, export, and validated import.
+- Added separate GM controls for player description access and player token-condition changes.
+- Added 15 concise, original GameAssist condition summaries with established StatusInfo marker associations as the compatibility foundation.
+- Supported built-in ids, custom display names, exact stored custom tags, and numbered markers in condition definitions.
+- Routed every condition marker read, add, remove, toggle, and marker-change observation through MarkerService.
+- Added marker-change descriptions while suppressing repeated descriptions produced by one short burst of equivalent changes.
+- Added `GameAssist.ConditionService.getCondition`, `getConditions`, and `apply` for validated programmatic use.
+- Protected the condition-definition and migration-record maps from generic `!ga-config set` replacement.
+
+### ConditionService migration and compatibility
+
+- Added a non-destructive first-start migration from valid `state.STATUSINFO` configuration and condition definitions.
+- Preserved the legacy `state.STATUSINFO` branch for rollback rather than deleting or moving it.
+- Recorded migration source, timestamp, copied setting names, and copied definition count under ConditionService configuration.
+- Normalized upstream `icon` fields into ConditionService `marker` fields and retained numbered/custom values.
+- Added whole-payload import validation, unsafe-key refusal, definition-count and content-length limits, and apply-only-after-complete-validation behavior.
+- Added an explicit startup warning when standalone StatusInfo is detected because both tools respond to `!condition` and condition-marker changes.
+- Compared the supplied StatusInfo `0.3.11` baseline with the published `0.3.12` package. The package still declares internal version `0.3.11`; its only executable difference is the character-sheet identification lookup, which ConditionService does not adapt.
+- Pinned the published comparison to Roll20 repository snapshot `9d634d3149985dcf10333920b3f4c41f215f39fc` and file blob `d3054aa8660f1eda47c424c4984e1850760e5c1a`.
+- Preserved Robin Kuiper attribution, the Roll20 API Scripts MIT notice, upstream links, adapted concepts, independent GameAssist work, and non-endorsement language in `ATTRIBUTIONS.md`.
 
 ### Marker mutation behavior
 
@@ -1876,25 +1909,26 @@ The current checkpoint implements [Issue #25](https://github.com/Mord-Eagle/Game
 - Standalone TokenMod is no longer required for NPCManager, ConcentrationTracker, or DebugTools marker operations.
 - The final v0.1.5.0 release replaces standalone TokenMod and StatusInfo for supported GameAssist token and condition workflows; it does not retain a legacy marker-dispatch path to those scripts.
 - Campaigns that deliberately disable MarkerService may use unrelated standalone marker tools while continuing to use GameAssist modules that do not depend on MarkerService.
-- The independently branded and attributed condition and token services are required parts of v0.1.5.0 under Issues #26 and #27.
+- ConditionService is implemented under Issue #26; the independently branded and attributed token service remains required under Issue #27.
 - Existing scripts that independently modify the same marker, NPC HP/bar 1, or natural-1 workflow remain feature-level conflict risks.
 
 ### State and migration impact
 
-- No GameAssist persistent-state schema migration is introduced.
+- Added the `state.GameAssist.ConditionService` branch for validated ConditionService configuration and ordinary runtime state.
+- Valid legacy `state.STATUSINFO` data may be copied into ConditionService once; the legacy branch remains intact.
 - Existing module configuration and runtime branches remain in place.
 - Existing NPCManager bucket, handout, Arc, and revival records are preserved.
 - Existing ConcentrationTracker `lastDamage` entries retain their established repair and compatibility behavior.
-- MarkerService keeps its registry cache and observer subscriptions in sandbox memory rather than persistent state.
+- MarkerService keeps its registry cache and observer subscriptions in sandbox memory rather than persistent state; subscriptions survive intentional MarkerService off/on cycles within the same sandbox.
 - Rolling back code does not automatically reverse marker changes or persistent records created while v0.1.5.0 was active.
 
 ### MECHSUITS records
 
-- Added `[GAMEASSIST:CORE:MARKERSERVICE]` to the file-scoped canonical tree and declared runtime order.
+- Added `[GAMEASSIST:CORE:MARKERSERVICE]` and `[GAMEASSIST:MODULES:CONDITIONSERVICE]` to the file-scoped canonical tree and declared runtime order.
 - Updated the CORE parent contract to include MarkerService as the single marker authority.
 - Updated APP and APP:UTILS contracts to remove marker ownership.
 - Updated CORE:OBJECT to expose `GameAssist.MarkerService`.
-- Updated MODULES, NPCManager, ConcentrationTracker, DebugTools, POLICY, and BOOTSTRAP metadata and footers under the Meaningful Change Rule.
+- Updated MODULES, ConditionService, NPCManager, ConcentrationTracker, DebugTools, ConfigUI, POLICY, CORE:OBJECT, INTERFACES:COMMANDS, and BOOTSTRAP metadata and footers under the Meaningful Change Rule.
 - Preserved the literal `GAMEASSIST` codename, existing section identifiers, public commands, and prior section notes.
 
 ### Documentation
@@ -1902,12 +1936,12 @@ The current checkpoint implements [Issue #25](https://github.com/Mord-Eagle/Game
 - Updated the README overview, installation, architecture, module guides, developer API, troubleshooting, upgrade path, roadmap summary, and compact release history.
 - Added a dedicated MarkerService developer API reference with structured result and observation examples.
 - Rebuilt the smoke-test dependency section around no-TokenMod operation, custom markers, exact stored tags, and unrelated numbered-marker preservation.
-- Reorganized `Smoketest.md` by component so Core, MarkerService, ConfigUI, CritFumble, ConcentrationTracker, NPCManager, NPCHPRoller, and DebugTools each have a purpose, reason, skip rule, basic check, and expanded troubleshooting checks.
+- Reorganized `Smoketest.md` by component so Core, MarkerService, ConfigUI, CritFumble, ConditionService, ConcentrationTracker, NPCManager, NPCHPRoller, and DebugTools each have a purpose, reason, skip rule, basic check, and expanded troubleshooting checks.
 - Added a self-contained Issue #25 MarkerService acceptance sequence covering no-TokenMod startup, numbered built-in and custom markers, unrelated-marker preservation, module teardown, reload, persistence, and restoration.
 - Corrected duplicated installation and MECHSUITS contribution text in the README.
 - Added the byte-identical `GameAssist.js` One-Click publication mirror named by `script.json` while retaining `GameAssist` as the canonical development source.
 - Added `previousversions/GameAssist v0.1.4.7` so every manifest `previousversions` entry has a corresponding preserved repository artifact.
-- Updated `script.json` to v0.1.5.0, removed the production TokenMod dependency, retained all 58 commands, and documented named and behavioral overlap risks.
+- Updated `script.json` to document the ConditionService module and command family while retaining the release's empty production dependency list and named/behavioral overlap warnings.
 - Updated `ROADMAP.md` so Issues #25 through #29 are checkpoints within one unreleased v0.1.5.0 train rather than separate v0.1.5.x releases.
 - Rebuilt `ATTRIBUTIONS.md` as an external-facing third-party notice containing provenance, license text, rules-content licensing, and non-endorsement language only.
 - Removed release gates, upstream comparison work, publication checks, and maintainer guidance from public-facing documents.
@@ -1917,9 +1951,9 @@ The current checkpoint implements [Issue #25](https://github.com/Mord-Eagle/Game
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `F46745BBC889C30A75EBB57AD57CD61929AD8575AB30457013B2B6A8FC03DB0B` |
-| `GameAssist.js` | `F46745BBC889C30A75EBB57AD57CD61929AD8575AB30457013B2B6A8FC03DB0B` |
-| `GameAssist-v0.1.5.0` | `F46745BBC889C30A75EBB57AD57CD61929AD8575AB30457013B2B6A8FC03DB0B` |
+| `GameAssist` | `7EF48F9A8A6AFE58A88F8CC8BFABB12B9B3BB68E996A9E8B6FCD778C1A421788` |
+| `GameAssist.js` | `7EF48F9A8A6AFE58A88F8CC8BFABB12B9B3BB68E996A9E8B6FCD778C1A421788` |
+| `GameAssist-v0.1.5.0` | `7EF48F9A8A6AFE58A88F8CC8BFABB12B9B3BB68E996A9E8B6FCD778C1A421788` |
 
 The repository source, One-Click publication mirror, and versioned Roll20 test artifact are byte-identical.
 
@@ -1929,6 +1963,8 @@ The repository source, One-Click publication mirror, and versioned Roll20 test a
 | --- | --- |
 | JavaScript parse/compile | Passed |
 | Mocked Roll20 ready initialization and MarkerService lifecycle | Passed (24/24 lifecycle checks) with MarkerService plus five default modules enabled and DebugTools disabled |
+| Mocked ConditionService clean installation | Passed (13/13 checks), including default definitions, component-aware status output, no legacy-state creation, no false dual-install warning, menus, marker preservation, and lifecycle cascade |
+| Mocked ConditionService legacy migration and MarkerService lifecycle | Passed (28/28 checks), including non-destructive migration, menus, descriptions, add/remove/toggle, protected config, imports, cascade disable, re-enable, and observer recovery |
 | Marker mutation refresh after lifecycle changes | Passed (18/18 checks) for built-in/custom resolution, numbered/duplicate handling, toggle/set, and unrelated-marker preservation |
 | Mocked marker-consumer workflow | Passed (22/22) across NPCManager, ConcentrationTracker, DebugTools, teardown, and re-enable |
 | Startup errors | 0 |
@@ -1951,5 +1987,7 @@ The repository source, One-Click publication mirror, and versioned Roll20 test a
 
 Issue #25 requires a Roll20 Mod sandbox pass with standalone TokenMod absent. The pass must cover NPC death/revival markers, concentration add/status/remove, custom marker display names and exact tags, unrelated numbered-marker preservation, MarkerService cascade disable/re-enable behavior, DebugTools dry-run/apply behavior, sandbox reload, and existing NPC history retention.
 
-The public v0.1.5.0 release requires the additional condition-service, token-service, migration, compatibility, and full-suite acceptance checks tracked by Issues #26 through #29. Completing Issue #25 alone does not create a public v0.1.5.0 release.
+Issue #26 requires a Roll20 Mod sandbox pass with standalone StatusInfo absent. The pass must cover ConditionService help/menu output, permissions, descriptions, add/remove/toggle, built-in and numbered custom markers, direct marker-change observation, validated import/export, legacy-state migration when available, MarkerService cascade disable/re-enable, and duplicate-install warnings.
+
+The public v0.1.5.0 release still requires ConditionService sandbox acceptance, the token service, migration/compatibility stabilization, and the full-suite acceptance checks tracked by Issues #26 through #29. Completing either checkpoint alone does not create a public v0.1.5.0 release.
 
