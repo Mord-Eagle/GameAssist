@@ -153,7 +153,7 @@ Run:
 
 Check:
 
-- [ ] MarkerService v1.0.0 is enabled.
+- [ ] MarkerService v1.0.1 is enabled.
 - [ ] Queue length returns to zero while idle.
 - [ ] Queue mode says normal handlers execute directly and queue use is explicit.
 - [ ] A missing duration is shown as `N/A`, not `N/Ams`.
@@ -258,7 +258,7 @@ Pass when:
 
 ### Full Issue #25 Acceptance Test
 
-This is the release gate for [Issue #25](https://github.com/Mord-Eagle/GameAssist/issues/25) and MarkerService v1.0.0.
+This is the release gate for [Issue #25](https://github.com/Mord-Eagle/GameAssist/issues/25) and MarkerService v1.0.1.
 
 #### Setup
 
@@ -291,7 +291,7 @@ Run:
 
 Pass when:
 
-- MarkerService v1.0.0 is enabled;
+- MarkerService v1.0.1 is enabled;
 - ConditionService, NPCManager, and ConcentrationTracker are running;
 - all three show confirmed MarkerService dependencies;
 - none is skipped because TokenMod or StatusInfo is absent.
@@ -591,7 +591,7 @@ Remove or disable standalone StatusInfo, select one disposable token, and give t
 !ga-config modules
 !condition help
 !condition
-!con-prone
+!CoNd-PrOnE
 !condition add prone
 !condition prone
 !condition remove prone
@@ -601,7 +601,7 @@ Pass when:
 
 - ConditionService is configured on, running, and reports `deps confirmed`;
 - help gives a quick start and an **Open Condition Menu** button;
-- `!con-prone` shows the configured Prone wording without changing any marker;
+- mixed-case `!CoNd-PrOnE` shows the configured Prone wording without changing any marker;
 - the menu names the selected token and shows its tracked conditions;
 - adding Prone applies only `back-pain` and shows the configured description;
 - removing Prone clears only `back-pain`;
@@ -614,14 +614,39 @@ Pass when:
 Open `!condition config`. The fresh-install wording source should be **2014 SRD**. Confirm that **Manage Conditions** includes **Exhaustion** and does not list Inspiration as a condition. Then choose **Use 2024 SRD**, confirm the prompt, and run:
 
 ```roll20chat
-!con-grappled
-!con-incapacitated
-!con-exhaustion
+!cond-grappled
+!cond-incapacitated
+!cond-exhaustion
 ```
 
 Pass when the descriptions use the active 2024 mechanics: Grappled includes attacks against other targets and dragging costs, Incapacitated breaks Concentration and prevents a Bonus Action, and Exhaustion reduces D20 Tests and speed by level. Existing marker choices and campaign-added conditions must remain unchanged.
 
-Return to **Manage Conditions**, edit one description, and run its `!con-<condition>` shortcut. Pass when the edited wording appears and Settings identifies the source as **Campaign Custom**. Restore the intended 2014 or 2024 profile after the test if the edit was disposable.
+Return to **Manage Conditions**, add or edit a disposable campaign condition such as **Moon-Touched**, and run `!COND-MOON-TOUCHED`. Pass when the custom wording appears despite mixed capitalization and Settings identifies an edited official wording set as **Campaign Custom**. Restore the intended 2014 or 2024 profile after the test if the edit was disposable.
+
+#### Marker Artwork
+
+With **Show marker artwork with descriptions** enabled, run `!cond-prone`. Pass when the Prone panel includes Roll20's `back-pain` marker artwork rather than only its identifier.
+
+Create a disposable custom Roll20 marker with an image, assign it to a custom condition, and run that condition's `!cond-<condition>` shortcut. Pass when the registered campaign-marker image appears. Then temporarily use an exact custom tag that Roll20 cannot match back to readable registry artwork. Pass when the condition wording still appears with a readable marker-name fallback rather than failing.
+
+#### Selected-Character Announcements
+
+Select one or more disposable tokens linked to characters, with at least one character assigned to a non-GM player, and run:
+
+```roll20chat
+!condition announce
+```
+
+Pass when the GM receives an alphabetical condition-button list for the captured characters. Choose a condition and verify the delivery menu offers:
+
+- **Announce Publicly**;
+- **Whisper Players**;
+- **Post Publicly** under exact rules wording;
+- **Whisper Players** under exact rules wording.
+
+The creative public declaration should name the selected character or characters, show the condition, and include **Read Exact Wording**. Clicking that button from a player account must whisper the exact configured wording to that player even when unrestricted player descriptions are disabled. The button should eventually expire rather than granting permanent access.
+
+The player-whisper choices should go only to non-GM controllers of the captured linked characters. Characters without a player controller should be reported to the GM instead of exposing the message to unrelated players. Change the current token selection after opening the first menu and confirm later buttons still use the originally captured characters. None of these communication choices should add or remove a marker.
 
 #### Permissions
 

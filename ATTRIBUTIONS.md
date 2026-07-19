@@ -6,10 +6,10 @@ References to TokenMod, StatusInfo, Roll20, or their contributors do not imply s
 
 ## GameAssist MarkerService
 
-`GameAssist.MarkerService` is an original GameAssist implementation for resolving, reading, changing, and observing Roll20 token status markers. Its compatibility goals were informed by the established marker behavior of **TokenMod**, including custom marker tags, numbered markers, duplicate entries, and preservation of unrelated token markers.
+`GameAssist.MarkerService` is an original GameAssist implementation for resolving, displaying, reading, changing, and observing Roll20 token status markers. Its compatibility goals were informed by the established marker behavior of **TokenMod**, including built-in artwork indexing, registered custom-marker image URLs, custom marker tags, numbered markers, duplicate entries, and preservation of unrelated token markers.
 
 - GameAssist component: `GameAssist.MarkerService`
-- Component version: `1.0.0`
+- Component version: `1.0.1`
 - Project acknowledged: TokenMod
 - Author: The Aaron, Arcane Scriptomancer
 - Reference release: TokenMod `0.8.88`
@@ -20,10 +20,10 @@ MarkerService is independently maintained as part of GameAssist. It is not Token
 
 ## GameAssist ConditionService
 
-`GameAssist.ConditionService` is an independently maintained GameAssist module for condition definitions, descriptions, selected-token menus, permission controls, and supported `!condition` compatibility workflows. It uses `GameAssist.MarkerService` for every marker read, write, toggle, and observation.
+`GameAssist.ConditionService` is an independently maintained GameAssist module for condition definitions, descriptions, marker artwork, selected-token menus, player-targeted announcements, permission controls, and supported `!condition` compatibility workflows. It uses `GameAssist.MarkerService` for every marker read, write, toggle, artwork lookup, and observation.
 
 - GameAssist component: `ConditionService`
-- Component version: `1.1.0`
+- Component version: `1.0.1`
 - Compatibility and design foundation: StatusInfo
 - Original author: Robin Kuiper
 - Supplied reference release: StatusInfo `0.3.11`
@@ -35,7 +35,7 @@ MarkerService is independently maintained as part of GameAssist. It is not Token
 
 The published `0.3.12` package still declares internal script version `0.3.11`. Compared with the published `0.3.11` file, its executable change replaces the `character_sheet` attribute lookup with the character object's `charactersheetname` property. GameAssist does not adapt that sheet-specific synchronization path.
 
-StatusInfo-derived compatibility concepts include the `!condition` command family, established configuration field names, the legacy `state.STATUSINFO` shape, its legacy condition catalog, and marker associations. GameAssist independently implements the module lifecycle, chat presentation, `!con-<condition>` references, permission feedback, validation, non-destructive migration, protected configuration, structured API, 2014/2024 SRD wording profiles, campaign-custom descriptions, and MarkerService integration.
+StatusInfo-derived compatibility concepts include the `!condition` command family, established configuration field names, the legacy `state.STATUSINFO` shape, its legacy condition catalog, marker associations, and displaying Roll20 marker artwork alongside condition text. GameAssist independently implements the module lifecycle, chat presentation, case-insensitive `!cond-<condition>` references, selected-character announcements, bounded private-reference buttons, permission feedback, validation, non-destructive migration, protected configuration, structured API, 2014/2024 SRD wording profiles, campaign-custom descriptions, and MarkerService integration.
 
 ConditionService is not StatusInfo and is not an official or endorsed StatusInfo release. Robin Kuiper is not responsible for GameAssist support, modifications, or compatibility decisions.
 

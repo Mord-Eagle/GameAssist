@@ -1823,6 +1823,14 @@ The current checkpoints implement [Issue #25](https://github.com/Mord-Eagle/Game
 - Added explicit operation results containing success state, stable error code, diagnostic message, changed/verified state, resolved marker identity, and before/after entries.
 - Added one shared `change:graphic:statusmarkers` observation contract for integrated modules and future consumers.
 
+### Advanced – MarkerService 1.0.1
+
+- Added `artwork(marker)` as a presentation-neutral metadata API.
+- Added Roll20 built-in color, `dead`, and status-sheet artwork metadata.
+- Retained campaign custom-marker image URLs from Roll20's `_token_markers` registry so consuming modules can display registered custom artwork.
+- Kept artwork lookup non-fatal: marker behavior continues when artwork is unavailable, and chat consumers can fall back to a readable marker name.
+- Kept MarkerService free of module-specific chat HTML; ConditionService remains responsible for rendering its own panels.
+
 ### MarkerService lifecycle and dependency safeguards
 
 - Registered MarkerService as a first-class core service visible through `!ga-config modules` and ConfigUI.
@@ -1868,9 +1876,9 @@ The current checkpoints implement [Issue #25](https://github.com/Mord-Eagle/Game
 - Pinned the published comparison to Roll20 repository snapshot `9d634d3149985dcf10333920b3f4c41f215f39fc` and file blob `d3054aa8660f1eda47c424c4984e1850760e5c1a`.
 - Preserved Robin Kuiper attribution, the Roll20 API Scripts MIT notice, upstream links, adapted concepts, independent GameAssist work, and non-endorsement language in `ATTRIBUTIONS.md`.
 
-### Advanced – ConditionService 1.1.0
+### Advanced – ConditionService 1.0.1
 
-- Added the dynamic, read-only `!con-<condition>` command family. Commands such as `!con-prone`, `!con-exhaustion`, and `!con-unconscious` show the active configured wording without selecting a token or changing marker state.
+- Added the dynamic, read-only, case-insensitive `!cond-<condition>` command family. Commands such as `!cond-prone`, `!COND-EXHAUSTION`, and a DM-created condition key show the active configured wording without selecting a token or changing marker state.
 - Preserved the existing description permission boundary: players may use the short references only when **Players may view descriptions** is enabled; GMs retain access while the module is running.
 - Replaced the initial ConditionService default catalog with the complete fifteen-condition SRD catalog:
   - added Exhaustion;
@@ -1891,7 +1899,17 @@ The current checkpoints implement [Issue #25](https://github.com/Mord-Eagle/Game
 - Advanced ConditionService configuration schema from version 1 to version 2 and included `rulesProfile` in validated exports and imports.
 - Protected `rulesProfile` from generic `!ga-config set` replacement so profile changes use the guarded ConditionService settings workflow.
 - Added a definition-menu warning when multiple configured conditions resolve to the same marker. The warning identifies the affected conditions because one marker addition can legitimately produce more than one matching description.
-- Updated the public API to report component version `1.1.0`, schema version `2`, and expose the active profile through `rulesProfile()`.
+- Added built-in marker artwork and registered campaign custom-marker images to condition panels. Conditions continue to display readable marker names when exact custom-tag artwork cannot be recovered from Roll20's registry.
+- Added a GM-only `!condition announce` workflow:
+  - captures up to twelve selected linked character tokens before later menu clicks;
+  - lists every configured official or campaign-created condition;
+  - offers creative public declarations and targeted whispers to non-GM character controllers;
+  - offers exact condition wording in public chat or controller whispers;
+  - varies declaration language by default, with a GM setting to make it deterministic;
+  - refuses to mutate markers as a side effect of communication.
+- Added expiring, bounded **Read Exact Wording** buttons. A player who clicks a GM-issued button receives the exact condition text privately without receiving permanent access to unrestricted condition commands.
+- Added clear diagnostics for unlinked selections, duplicate character selections, oversized selections, and characters without non-GM controllers.
+- Updated the public API to report component version `1.0.1`, schema version `2`, and expose the active profile through `rulesProfile()`.
 - Added the required SRD 5.1 and SRD 5.2.1 Creative Commons Attribution 4.0 notices to `ATTRIBUTIONS.md` and documented that non-SRD sourcebook condition text is not included.
 
 ### Marker mutation behavior
@@ -1977,9 +1995,9 @@ The current checkpoints implement [Issue #25](https://github.com/Mord-Eagle/Game
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `4DC27A4A57AE3ABF648FE4FE11B6DF013B73667D8F5C349C8F80F4D83A3A5A2A` |
-| `GameAssist.js` | `4DC27A4A57AE3ABF648FE4FE11B6DF013B73667D8F5C349C8F80F4D83A3A5A2A` |
-| `GameAssist-v0.1.5.0` | `4DC27A4A57AE3ABF648FE4FE11B6DF013B73667D8F5C349C8F80F4D83A3A5A2A` |
+| `GameAssist` | `9551DE72A7DF3E1A6124B56D1328FC39CAA4CA726E31248838601115DDC73319` |
+| `GameAssist.js` | `9551DE72A7DF3E1A6124B56D1328FC39CAA4CA726E31248838601115DDC73319` |
+| `GameAssist-v0.1.5.0` | `9551DE72A7DF3E1A6124B56D1328FC39CAA4CA726E31248838601115DDC73319` |
 
 The repository source, One-Click publication mirror, and versioned Roll20 test artifact are byte-identical.
 
@@ -1989,8 +2007,8 @@ The repository source, One-Click publication mirror, and versioned Roll20 test a
 | --- | --- |
 | JavaScript parse/compile | Passed |
 | Mocked Roll20 ready initialization and MarkerService lifecycle | Passed (24/24 lifecycle checks) with MarkerService plus five default modules enabled and DebugTools disabled |
-| Mocked ConditionService clean installation | Passed (26/26 checks), including the complete 2014 catalog, `!con-<condition>`, 2024/custom profile changes, custom-definition and marker preservation, duplicate-marker warning, schema-v2 export, capacity refusal, marker preservation, and lifecycle cascade |
-| Mocked ConditionService legacy migration and MarkerService lifecycle | Passed (30/30 checks), including non-destructive migration, custom-profile identification, `!con-<condition>`, menus, descriptions, add/remove/toggle, protected config, imports, cascade disable, re-enable, and observer recovery |
+| Mocked ConditionService clean installation | Passed (40/40 checks), including the complete 2014 catalog, case-insensitive official/custom `!cond-<condition>`, built-in/custom artwork and readable fallback, 2024/custom profiles, captured-character announcement menus, public/controller-whisper delivery, bounded private references without general permission leakage, communication-only behavior, duplicate-marker warning, schema-v2 export, capacity refusal, marker preservation, and lifecycle cascade |
+| Mocked ConditionService legacy migration and MarkerService lifecycle | Passed (31/31 checks), including non-destructive migration, custom-profile identification, case-insensitive `!cond-<condition>`, menus, descriptions, add/remove/toggle, protected config, imports, cascade disable, re-enable, MarkerService 1.0.1 API reporting, and observer recovery |
 | Marker mutation refresh after lifecycle changes | Passed (18/18 checks) for built-in/custom resolution, numbered/duplicate handling, toggle/set, and unrelated-marker preservation |
 | Mocked marker-consumer workflow | Passed (22/22) across NPCManager, ConcentrationTracker, DebugTools, teardown, and re-enable |
 | Startup errors | 0 |
@@ -2013,7 +2031,7 @@ The repository source, One-Click publication mirror, and versioned Roll20 test a
 
 Issue #25 requires a Roll20 Mod sandbox pass with standalone TokenMod absent. The pass must cover NPC death/revival markers, concentration add/status/remove, custom marker display names and exact tags, unrelated numbered-marker preservation, MarkerService cascade disable/re-enable behavior, DebugTools dry-run/apply behavior, sandbox reload, and existing NPC history retention.
 
-Issue #26 requires a Roll20 Mod sandbox pass with standalone StatusInfo absent. The pass must cover ConditionService help/menu output, `!con-<condition>` references, 2014/2024/custom wording changes, preservation of custom definitions and marker choices, permissions, descriptions, add/remove/toggle, duplicate-marker warnings, built-in and numbered custom markers, direct marker-change observation, schema-v2 import/export, legacy-state migration when available, MarkerService cascade disable/re-enable, and duplicate-install warnings.
+Issue #26 requires a Roll20 Mod sandbox pass with standalone StatusInfo absent. The pass must cover ConditionService help/menu output, case-insensitive official/custom `!cond-<condition>` references, 2014/2024/custom wording changes, built-in and registered custom artwork, selected-character announcement destinations, controller targeting, private-reference buttons, preservation of custom definitions and marker choices, permissions, descriptions, add/remove/toggle, duplicate-marker warnings, built-in and numbered custom markers, direct marker-change observation, schema-v2 import/export, legacy-state migration when available, MarkerService cascade disable/re-enable, and duplicate-install warnings.
 
 The public v0.1.5.0 release still requires ConditionService sandbox acceptance, the token service, migration/compatibility stabilization, and the full-suite acceptance checks tracked by Issues #26 through #29. Completing either checkpoint alone does not create a public v0.1.5.0 release.
 

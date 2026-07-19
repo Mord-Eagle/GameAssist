@@ -42,7 +42,7 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | GameAssist status readability | Complete | [#23](https://github.com/Mord-Eagle/GameAssist/issues/23) | The plain-language `!ga-status` system check and optional troubleshooting panel shipped in v0.1.4.6. |
 | Standalone interoperability stabilization | Complete | [#24](https://github.com/Mord-Eagle/GameAssist/issues/24) | v0.1.4.7 uses TokenMod's documented `--api-as` path, verifies marker results, reports optional StatusInfo evidence, and passed the Roll20 sandbox acceptance pass. |
 | MarkerService checkpoint | Sandbox verification | [#25](https://github.com/Mord-Eagle/GameAssist/issues/25) | PR #41 contains the shared marker core, consumer migrations, lifecycle safeguards, regressions, and documentation. |
-| ConditionService checkpoint | Sandbox verification | [#26](https://github.com/Mord-Eagle/GameAssist/issues/26) | ConditionService 1.1.0 implements supported `!condition` workflows, `!con-<condition>` references, 2014/2024/custom wording, validated legacy migration/import, MarkerService synchronization, and attribution. |
+| ConditionService checkpoint | Sandbox verification | [#26](https://github.com/Mord-Eagle/GameAssist/issues/26) | ConditionService 1.0.1 implements supported `!condition` workflows, case-insensitive `!cond-<condition>` references, 2014/2024/custom wording, marker artwork, selected-character announcements, validated legacy migration/import, MarkerService synchronization, and attribution. |
 | Integrated token-service checkpoint | Planned | [#27](https://github.com/Mord-Eagle/GameAssist/issues/27) | Add the independently branded and attributed GameAssist token service within `v0.1.5.0`. |
 | Integrated architecture stabilization | Planned | [#28](https://github.com/Mord-Eagle/GameAssist/issues/28) | Harden upgrades, coexistence, migration, diagnostics, and verified command coverage before `v0.1.5.0` is released. |
 | v0.1.5.0 release gate | Planned | [#29](https://github.com/Mord-Eagle/GameAssist/issues/29) | Publish only after every integrated service, attribution requirement, documentation update, and full Roll20 acceptance check is complete. |
@@ -150,8 +150,8 @@ Build the independently branded `ConditionService` module, preserving selected S
 
 ### Ownership Boundary
 
-- The GameAssist condition-information service owns condition definitions, 2014/2024/campaign wording, menus, `!con-<condition>` references, and supported `!condition` compatibility workflows.
-- MarkerService owns marker identity, state, mutation, and observation.
+- The GameAssist condition-information service owns condition definitions, 2014/2024/campaign wording, menus, `!cond-<condition>` references, announcements, and supported `!condition` compatibility workflows.
+- MarkerService owns marker identity, artwork metadata, state, mutation, and observation.
 - The condition-information service must not independently parse or mutate markers in ways that compete with MarkerService.
 
 ### Checklist
@@ -166,14 +166,17 @@ Build the independently branded `ConditionService` module, preserving selected S
 - [x] Validate complete configuration imports before applying them and protect the definition map from generic replacement.
 - [x] Detect and warn about accidental standalone StatusInfo installation.
 - [x] Default clean campaigns to the complete SRD 5.1 condition catalog and offer SRD 5.2.1 or campaign-custom wording without deleting added definitions or marker choices.
-- [x] Add dynamic read-only `!con-<condition>` references and duplicate-marker assignment warnings.
+- [x] Add dynamic, case-insensitive, read-only `!cond-<condition>` references for official and campaign-created definitions.
+- [x] Add built-in and registered custom marker artwork with readable fallback behavior.
+- [x] Add a GM-only selected-character communication menu with public/player-whisper delivery, varied narration, exact-wording choices, and bounded private-reference buttons.
+- [x] Add duplicate-marker assignment warnings.
 - [x] Update documentation, attribution, changelog, upgrade notes, and component smoke tests.
 
 ### Completion Gate
 
-Supported `!condition` workflows, `!con-<condition>` references, and selectable condition wording must function through GameAssist and remain synchronized with MarkerService-managed markers without requiring standalone StatusInfo.
+Supported `!condition` workflows, `!cond-<condition>` references, selectable condition wording, artwork, and selected-character communication must function through GameAssist and remain synchronized with MarkerService-managed markers without requiring standalone StatusInfo.
 
-**Current evidence:** JavaScript syntax passes, the mocked Roll20 legacy-migration suite passes 30/30 checks, and the clean-install suite passes 26/26 checks. Coverage includes the complete 2014 catalog, 2024 and campaign-custom profile changes, `!con-<condition>` references, preservation of added conditions and marker choices, duplicate-marker warnings, schema-v2 export, profile capacity refusal, legacy migration retention, custom and numbered markers, selected-token menus, add/remove/toggle, external marker observation, unsafe and protected-config refusal, validated import, MarkerService cascade disable, case-insensitive service restoration, and observer recovery. Real Roll20 sandbox acceptance remains required before Issue #26 closes.
+**Current evidence:** JavaScript syntax passes, the mocked Roll20 legacy-migration suite passes 31/31 checks, and the clean-install suite passes 40/40 checks. Coverage includes the complete 2014 catalog, 2024 and campaign-custom profile changes, case-insensitive official/custom `!cond-<condition>` references, built-in/custom artwork and readable fallback, selected-character menus, captured selection, public and controller-whisper delivery, bounded private-reference buttons without permission leakage, communication-only behavior, preservation of added conditions and marker choices, duplicate-marker warnings, schema-v2 export, profile capacity refusal, legacy migration retention, custom and numbered markers, add/remove/toggle, external marker observation, unsafe and protected-config refusal, validated import, MarkerService cascade disable, case-insensitive service restoration, and observer recovery. Real Roll20 sandbox acceptance remains required before Issue #26 closes.
 
 ---
 
