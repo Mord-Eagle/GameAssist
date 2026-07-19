@@ -10,7 +10,8 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 | Revision | Status | Role |
 | --- | --- | --- |
-| **v0.1.5.0** | In development; not released until Issues #25-#29 complete | Integrated marker, token, and condition architecture |
+| **v0.1.5.1** | In development; automated verification complete, Roll20 timezone smoke confirmation pending | DM-configurable table time and NPC Session-date alignment |
+| **v0.1.5.0** | Accepted release candidate; Issues #25-#29 and #32 complete | Integrated marker, token, and condition architecture |
 | **v0.1.4.7** | Stable release; automated and Roll20 sandbox verification passed | Standalone TokenMod and StatusInfo interoperability |
 | **v0.1.4.6** | Merged release | DM-readable system health and troubleshooting status |
 | **v0.1.4.5** | Merged release | NPC death-history buckets, handouts, and arc notes |
@@ -2185,4 +2186,127 @@ The complete Roll20 clean-install and upgrade smoke tracks passed, including the
 Deferred TokenAssist expansion is tracked outside the v0.1.5.0 gate: Issue #42 covers advanced marker expressions, #43 covers attribute/controller/report resolution, #44 covers visual and multi-sided controls, and #45 covers token-image/default-token asset updates. TokenMod help-handout rebuilding and a global `TokenMod` compatibility object are not planned.
 
 Issues #25 through #29 are complete. Publication remains the repository release/merge action rather than an additional implementation checkpoint.
+
+---
+
+## [0.1.5.1] – 2026-07-19
+
+### Release definition
+
+GameAssist v0.1.5.1 is a focused table-time release. It adds one GM-selected IANA timezone for human-facing GameAssist dates, clocks, and date-managed NPC Sessions while preserving the absolute ISO instants already stored with events. It does not change marker ownership, TokenAssist commands, ConditionAssist definitions, queue behavior, or the accepted v0.1.5.0 integration architecture.
+
+The release implements [Issue #35](https://github.com/Mord-Eagle/GameAssist/issues/35). NPCManager advances from `1.2.1` to `1.3.0`; ConfigUI advances from `0.1.0` to `0.2.0`. Other feature-module versions remain unchanged.
+
+### Added – Campaign timezone controls
+
+- Added the GM-only `!ga-timezone` command family:
+  - `!ga-timezone` and `!ga-timezone help` open the table-time menu;
+  - `!ga-timezone set <IANA timezone>` validates and saves a named region;
+  - `!ga-timezone clear`, `default`, or `sandbox` restores the Roll20 sandbox clock.
+- Added `!ga-config timezone` as a discoverable entry point to the same menu.
+- Added common buttons for US Eastern, US Central, US Mountain, US Pacific, UTC, London, Paris, and Sydney, plus a custom IANA-name prompt.
+- Added clear current-setting, current-time, and current-Session-date output.
+- Added timezone access to both `!ga-status` views and every ConfigUI page.
+- Invalid names are refused before state changes. A malformed saved value produces an actionable warning and falls back to sandbox time without deleting the saved evidence.
+
+### Added – Shared time contract
+
+- Added validated timezone helpers in `[GAMEASSIST:APP:UTILS]` for:
+  - IANA-name validation and canonicalization;
+  - active setting and fallback diagnostics;
+  - date/time parts in a selected region;
+  - numeric UTC-offset calculation;
+  - full human-facing timestamps;
+  - compact log times;
+  - local `YYYY-MM-DD` date keys;
+  - dynamic rendering of stored absolute timestamps.
+- Exposed the supported helper surface as `GameAssist.Time` with version `1.0.0`:
+  - `validateTimeZone(...)`;
+  - `getInfo()`;
+  - `formatDateTime(...)`;
+  - `formatTime(...)`;
+  - `dateKey(...)`.
+- Named regions use the runtime's IANA rules and therefore follow daylight-saving changes. Fixed numeric offsets were rejected because they become inaccurate when a region changes between standard and daylight time.
+- Forced 24-hour offset calculations to use the `h23` hour cycle so midnight cannot be represented as hour `24` and produce a false one-day offset.
+
+### Changed – Human-facing timestamps
+
+- Routed GameAssist log clocks through the selected timezone.
+- Routed simple and detailed status timestamps through the selected timezone.
+- Routed configuration snapshot handout headers through the selected timezone while preserving the snapshot's absolute `generatedAt` ISO value.
+- Routed condition-status and NPC audit handout update times through the selected timezone.
+- Routed concentration activity display times through the selected timezone.
+- Routed NPC death, revival, bucket, report, and Arc display times through the selected timezone.
+- Historical NPC entries with a valid stored ISO timestamp are formatted dynamically. Changing timezone updates their presentation without changing the event's identity or instant.
+- Legacy entries that contain only a preformatted display string retain that string because no reliable absolute instant exists to reinterpret.
+
+### Changed – NPCManager 1.3.0
+
+- Date-managed Session names now follow the configured GameAssist timezone rather than an assumed sandbox/UTC date.
+- Setting or clearing the timezone asks a running NPCManager instance to refresh the active date-managed Session immediately.
+- NPCManager continues checking the date before report, bucket, Arc, audit, repair, and tracked HP activity so the first event after local midnight enters the new Session.
+- A deliberately named Session remains stable across timezone and date changes. **Reset Session Date** restores automatic date management.
+- Campaign, Chapter, Section, Session, Arc, death, and revival records are preserved during timezone changes.
+- Added `GameAssist.NPCManager.refreshSessionDate(...)` as the narrow internal/public integration hook used by the timezone command.
+
+### State and migration impact
+
+- Added `state.GameAssist.config.timezone`.
+- Clean installations and upgraded campaigns default this value to `null`, meaning **Sandbox default**.
+- The state self-healer seeds the missing key without replacing any existing root or module configuration.
+- Valid saved IANA names survive sandbox reloads.
+- Invalid saved names remain visible for diagnosis while runtime formatting safely falls back to sandbox time.
+- Existing ISO timestamps, module runtime records, marker state, NPC history, and configuration snapshots are not migrated or rewritten.
+- Rolling back to v0.1.5.0 leaves the extra root timezone key inert.
+
+### MECHSUITS records
+
+- Advanced banner `project_version` and runtime `VERSION` to `v0.1.5.1`.
+- Updated the meaningful-change metadata and footers for `[GAMEASSIST:POLICY]`, `[GAMEASSIST:APP]`, `[GAMEASSIST:APP:UTILS]`, `[GAMEASSIST:CORE]`, `[GAMEASSIST:CORE:OBJECT]`, `[GAMEASSIST:INTERFACES:COMMANDS]`, `[GAMEASSIST:MODULES:CONFIGUI]`, and `[GAMEASSIST:MODULES:NPCMANAGER]`.
+- Preserved the literal `GAMEASSIST` codename and the existing file-scoped section tree; no tag was added, removed, or renamed.
+- Added the internal MECHSUITS-framed Issue #35 harness with explicit refusal to contact or substitute for Roll20.
+
+### Documentation and metadata
+
+- Added a readable table-time explanation, Quick Start step, command reference, NPC Session behavior, status description, and release-history summary to `README.md`.
+- Added a focused v0.1.5.1 smoke test to `Smoketest.md`, including persistence, invalid input, Kiritimati/Honolulu date crossover, custom Session retention, and safe restoration of the intended timezone.
+- Updated `ROADMAP.md` with the Issue #35 implementation and focused Roll20 completion gate.
+- Updated `script.json` to advertise v0.1.5.1, expose the timezone commands, describe table-time behavior, include v0.1.5.0 in `previousversions`, and declare both the documented `campaign.token_markers` read and compatibility `_token_markers` read.
+- Preserved the accepted `GameAssist-v0.1.5.0` artifact and added a separate v0.1.5.1 artifact.
+
+### Release artifacts
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `GameAssist` | `06627AE1519A4A02D97C1D5237D66F12B5025C080CABFFA21740EDCF0F7674D7` |
+| `GameAssist.js` | `06627AE1519A4A02D97C1D5237D66F12B5025C080CABFFA21740EDCF0F7674D7` |
+| `GameAssist-v0.1.5.1` | `06627AE1519A4A02D97C1D5237D66F12B5025C080CABFFA21740EDCF0F7674D7` |
+| `previousversions/GameAssist v0.1.5.0` | `DEDDDBD189ADBDD8ACA75E664100B71BDB51050E7D3A5CE8EC4CA62C559B5C72` |
+
+The development source, One-Click publication mirror, and v0.1.5.1 Roll20 test artifact are byte-identical. The preserved v0.1.5.0 previous-version artifact matches the accepted v0.1.5.0 hash.
+
+### Automated verification
+
+| Check | Result |
+| --- | --- |
+| JavaScript parse/compile | Passed |
+| Clean-install sandbox-clock fallback | Passed |
+| IANA validation and persisted command setting | Passed |
+| Winter Eastern offset (`-0500`) | Passed |
+| Summer Eastern offset (`-0400`) | Passed |
+| UTC-midnight to prior local-date crossover | Passed |
+| Immediate date-managed Session alignment | Passed |
+| Next-activity local-midnight rollover | Passed |
+| Deliberately named Session retention | Passed |
+| Invalid input refusal without configuration loss | Passed |
+| Unsupported saved-value fallback and status diagnostic | Passed |
+| Sandbox reload persistence | Passed |
+| Historical report reformatting after timezone change | Passed |
+| Absolute ISO timestamp preservation | Passed |
+| Focused Issue #35 harness | Passed (22/22) |
+| v0.1.5.0 upgrade/lifecycle regression | Passed (46/46) |
+
+### Roll20 acceptance
+
+The focused Roll20 v0.1.5.1 timezone smoke test remains open. Its required checks are: current named-zone time/date, status visibility, sandbox-restart persistence, invalid-name refusal, date-managed Session crossover between `Pacific/Kiritimati` and `Pacific/Honolulu`, custom Session retention, and unchanged history.
 
