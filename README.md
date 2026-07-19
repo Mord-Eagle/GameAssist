@@ -3,7 +3,7 @@
 **Version 0.1.5.0 development line** | © 2025-2026 Mord Eagle · MIT License<br>
 **Lead Dev:** [@Mord-Eagle](https://github.com/Mord-Eagle)
 
-> **Release posture:** `v0.1.4.7` remains the stable campaign release while `v0.1.5.0` is completed. MarkerService, ConditionAssist, and TokenAssist are implemented development checkpoints; integrated-architecture stabilization and the complete Roll20 sandbox acceptance pass remain before publication.
+> **Release posture:** `v0.1.4.7` remains the stable campaign release while `v0.1.5.0` is completed. MarkerService, ConditionAssist, and TokenAssist have completed their focused checkpoints; integrated upgrade, lifecycle, and complete Roll20 sandbox acceptance remain before publication.
 
 ---
 
