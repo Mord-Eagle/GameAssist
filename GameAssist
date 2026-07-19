@@ -41,7 +41,7 @@ MODULE COMMANDS
 - CritFumble: !critfail, !critfumble help, !critfumble menu,
   !critfumble-<melee|ranged|thrown|spell|natural>,
   !confirm-crit-martial, !confirm-crit-magic
-- ConditionService: !condition, !cond-<condition>, !condition announce, !condition help, !condition config,
+- ConditionService: !condition, !cond-<condition>, !condition announce, !c-a, !cond-!, !condition help, !condition config,
   !condition add|remove|toggle <condition...>
 - ConcentrationTracker: !concentration, !cc, !ga-conc-status
 - NPCManager: !npc-death-help, !npc-death-report, !npc-death-buckets,
@@ -3216,7 +3216,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: GameAssist condition descriptions and controls
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONDITIONSERVICE", title: "ConditionService",
-    //   guarantees: ["2014 SRD condition wording is the default, with selectable 2024 SRD and campaign-custom wording","!condition and case-insensitive !cond-[condition] provide condition-reference workflows for official and campaign conditions","Built-in and registered custom marker artwork may accompany readable condition text","GM announcements toggle and verify selected token markers before reporting neutral applied/removed results through explicit public/private delivery","All condition marker reads, writes, and observations use CORE:MARKERSERVICE","Legacy state.STATUSINFO may be copied through a validated migration and is never silently deleted"],
+    //   guarantees: ["2014 SRD condition wording is the default, with selectable 2024 SRD and campaign-custom wording","!condition and case-insensitive !cond-[condition] provide condition-reference workflows for official and campaign conditions","Built-in and registered custom marker artwork may accompany readable condition text","GM announcements toggle and verify selected token markers before reporting character-first is/is-no-longer results through explicit public/private delivery","All condition marker reads, writes, and observations use CORE:MARKERSERVICE","Legacy state.STATUSINFO may be copied through a validated migration and is never silently deleted"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.ConditionService"],
     //   last_updated_version: "v0.1.5.0",
@@ -3380,9 +3380,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function normalizeDefinition(rawKey, rawDefinition) {
             const source = isPlainObject(rawDefinition) ? rawDefinition : {};
             const key = conditionKey(rawKey || source.name);
-            const name = String(source.name || rawKey || '')
+            const rawName = String(source.name || rawKey || '')
                 .trim()
                 .slice(0, POLICY.conditions.maxNameLength);
+            const name = rawName.toLowerCase() === 'concentration' ? 'Concentrating' : rawName;
             const marker = String(source.marker || source.icon || '')
                 .trim()
                 .slice(0, POLICY.conditions.maxMarkerLength);
@@ -3910,13 +3911,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function announcementStateLines(condition, targets, results) {
-            const targetIds = new Set(targets.map(target => target.token.id));
-            const applied = results.applied.filter(target => targetIds.has(target.token.id)).map(target => target.name);
-            const removed = results.removed.filter(target => targetIds.has(target.token.id)).map(target => target.name);
-            return [
-                applied.length ? `<div><strong>${_sanitize(condition.name)}</strong> is applied to <strong>${_sanitize(formatNameList(applied))}</strong>.</div>` : '',
-                removed.length ? `<div><strong>${_sanitize(condition.name)}</strong> is removed from <strong>${_sanitize(formatNameList(removed))}</strong>.</div>` : ''
-            ].filter(Boolean).join('');
+            return targets.map(target => {
+                const state = results.states.get(target.token.id);
+                if (!state) return '';
+                const transition = state === 'applied' ? 'is' : 'is no longer';
+                return `<div><strong>${_sanitize(target.name)}</strong> ${transition} <strong>${_sanitize(condition.name)}</strong>.</div>`;
+            }).filter(Boolean).join('');
         }
 
         function announcementBody(condition, targets, results, { exactWording = false, grantId = '' } = {}) {
@@ -4090,10 +4090,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<code>!condition add prone</code> - add to selected tokens<br>',
                 '<code>!condition remove prone</code> - remove from selected tokens<br>',
                 '<code>!condition toggle prone</code> - switch the marker on or off<br>',
-                '<code>!condition announce</code> - toggle and communicate a condition for selected linked characters<br>',
+                '<code>!condition announce</code>, <code>!c-a</code>, or <code>!cond-!</code> - toggle and communicate a condition for selected linked characters<br>',
                 '<code>!condition config</code> - GM settings and condition definitions</div>',
                 `<div style="margin-top:7px;"><strong>Rules wording</strong><br>${_sanitize(rulesProfileLabel())}. The GM can switch between 2014 and 2024 SRD wording or edit any description.</div>`,
-                '<div style="margin-top:7px;"><strong>Announcements</strong><br>Select linked character tokens first. A final public or whisper button toggles the condition marker once, verifies the result, and reports who had the condition applied or removed. Exact wording is optional.</div>',
+                '<div style="margin-top:7px;"><strong>Announcements</strong><br>Select linked character tokens first. A final public or whisper button toggles the condition marker once, verifies the result, and reports that each character is or is no longer affected by that condition. Exact wording is optional.</div>',
                 '<div style="margin-top:7px;font-size:0.9em;">Condition names and shortcuts are not case-sensitive. Campaign-created conditions work with the same menus and <code>!cond-&lt;condition&gt;</code> shortcut.</div>'
             ].join('');
             sendPanel('ConditionService Help', body, { msg });
@@ -4545,14 +4545,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function handleConditionShortcut(msg) {
-            if (!playerIsGM(msg.playerid) && !modState.config.userAllowed) {
-                sendPanel('ConditionService', 'Only the GM can show condition descriptions in this campaign.', { msg });
-                return;
-            }
             const requested = String(msg.content || '')
                 .trim()
                 .replace(/^!cond-/i, '')
                 .split(/\s+/)[0];
+            if (requested === '!') {
+                handleAnnouncement(msg, 'announce');
+                return;
+            }
+            if (!playerIsGM(msg.playerid) && !modState.config.userAllowed) {
+                sendPanel('ConditionService', 'Only the GM can show condition descriptions in this campaign.', { msg });
+                return;
+            }
             const condition = getCondition(requested);
             if (!condition) {
                 sendPanel('ConditionService', `No condition named ${_sanitize(requested || '(blank)')} is configured. Use <code>!condition help</code> for guidance.`, { msg });
@@ -4586,6 +4590,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.onCommand('!condition', handleInput, MODULE_NAME);
         GameAssist.onCommand('!cond-', handleConditionShortcut, MODULE_NAME, {
             match: { caseInsensitive: true, mode: 'prefix' }
+        });
+        GameAssist.onCommand('!c-a', msg => handleAnnouncement(msg, 'announce'), MODULE_NAME, {
+            match: { caseInsensitive: true, mode: 'exact' }
         });
         const customCommand = String(modState.config.command || PRIMARY_COMMAND).toLowerCase();
         if (customCommand !== PRIMARY_COMMAND) {
@@ -4625,12 +4632,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }, {
         enabled: true,
         events: ['change:graphic:statusmarkers'],
-        prefixes: ['!condition', '!cond-'],
+        prefixes: ['!condition', '!cond-', '!c-a'],
         dependsOn: ['MarkerService'],
         protectedConfigKeys: ['conditions', 'rulesProfile', 'legacyStatusInfoMigration']
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Advanced unreleased ConditionService to 1.0.1 with case-insensitive !cond-[condition] references for official/custom definitions, complete 2014/2024/campaign wording, built-in/custom marker artwork, selected-character announcements that toggle and verify marker state, neutral applied/removed reporting, explicit public/player-whisper delivery, bounded private-reference buttons, duplicate-marker warnings, schema-v2 import/export, and automatic repair of untouched 1.0.0 defaults.
+    // Changed (v0.1.5.0): Advanced unreleased ConditionService to 1.0.1 with case-insensitive !cond-[condition] references for official/custom definitions, !c-a and !cond-! announcement aliases, complete 2014/2024/campaign wording, built-in/custom marker artwork, selected-character announcements that toggle and verify marker state, character-first is/is-no-longer reporting, Concentrating display-name repair, explicit public/player-whisper delivery, bounded private-reference buttons, duplicate-marker warnings, schema-v2 import/export, and automatic repair of untouched 1.0.0 defaults.
     // Decision log:
     //   CHOICE: Name the GameAssist module ConditionService - ALT: retain StatusInfo branding; REJECTED: this is an independently maintained adaptation with a different lifecycle and marker architecture.
     //   CHOICE: Keep permanent !condition compatibility plus one optional custom alias - ALT: replace the command; REJECTED: upgrades should not strand familiar workflows.
@@ -4641,7 +4648,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Capture linked token ids before the GM chooses delivery - ALT: rely on the later button click selection; REJECTED: Roll20 selection can change while a guided menu remains open.
     //   CHOICE: Use expiring private-reference grants for announcement buttons - ALT: globally allow every player description command; REJECTED: one GM announcement should not silently broaden campaign permissions.
     //   CHOICE: Toggle markers only when the GM chooses a final delivery button - ALT: mutate while browsing menus; REJECTED: opening or revisiting a menu must not change token state.
-    //   CHOICE: Report verified applied/removed results in neutral language - ALT: condition-agnostic creative narration; REJECTED: universal prose became awkward or inaccurate across varied conditions.
+    //   CHOICE: Report each verified result as "character is condition" or "character is no longer condition" - ALT: grouped or creative narration; REJECTED: character-first statements are clearer across varied conditions and mixed selections.
     //   CHOICE: Suppress ordinary marker-add descriptions only during announcement-owned writes - ALT: allow both panels; REJECTED: one GM action should not produce duplicate condition messages.
     //   CHOICE: Omit upstream character-sheet attribute synchronization in this checkpoint - ALT: mutate sheet-specific attributes; REJECTED: GameAssist's condition contract is token-marker synchronization through MarkerService.
     // SRD 5.1 attribution:

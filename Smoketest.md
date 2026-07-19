@@ -635,9 +635,11 @@ Select two disposable tokens linked to characters, with at least one character a
 
 ```roll20chat
 !condition announce
+!c-a
+!cond-!
 ```
 
-Pass when the GM receives an alphabetical condition-button list for the captured characters. Choose a condition and verify the delivery menu offers:
+Pass when each command, including mixed capitalization such as `!C-A` or `!CoNd-!`, opens the same alphabetical condition-button list for the captured characters. Choose a condition and verify the delivery menu offers:
 
 - **Toggle & Announce**;
 - **Toggle & Whisper**;
@@ -649,12 +651,14 @@ Choosing the condition should not change either token yet. Click **Toggle & Anno
 - the token that lacked the condition now displays its configured marker;
 - the token that already had the condition no longer displays that marker;
 - unrelated markers and marker numbers remain unchanged;
-- the public message uses neutral, readable statements naming who had the condition **applied to** them and who had it **removed from** them;
+- the public message uses one neutral statement per character in the form **Mira is Prone** or **Orin is no longer Prone**;
 - the message includes **Read Exact Wording** but does not also produce a duplicate condition-description panel.
 
 Run the same final action again and pass when both marker states reverse cleanly. Clicking **Read Exact Wording** from a player account must whisper the exact configured wording to that player even when unrestricted player descriptions are disabled. The button should eventually expire rather than granting permanent access.
 
 The player-whisper choices should toggle the same captured markers once and go only to non-GM controllers of the linked characters. Characters without a player controller should still receive the marker change when at least one selected character has a valid recipient, while the GM is told which characters received no player whisper. If none of the selected characters has a non-GM controller, the whisper choice should refuse before changing any marker. Change the current token selection after opening the first menu and confirm later buttons still use the originally captured characters.
+
+If a saved or migrated campaign definition is named exactly **Concentration**, reload the sandbox and reopen the condition menu. Pass when its display name is **Concentrating** while its marker, description, and compatible `concentration` key remain unchanged.
 
 #### Permissions
 
