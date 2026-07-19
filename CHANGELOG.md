@@ -1920,6 +1920,7 @@ The completed checkpoints implement [Issue #25](https://github.com/Mord-Eagle/Ga
 - Removed the unreleased `randomizeAnnouncements` setting and condition-agnostic creative narration after sandbox testing showed that universal flavor text became awkward or inaccurate across varied conditions.
 - Suppressed ordinary marker-add descriptions during announcement-owned writes so one final action produces one deliberate result panel instead of a second automatic condition-description panel. Direct Roll20 marker changes continue to show descriptions when that setting is enabled.
 - Added expiring, bounded **Read Exact Wording** buttons. A player who clicks a GM-issued button receives the exact condition text privately without receiving permanent access to unrestricted condition commands.
+- Corrected controller-targeted delivery to use Roll20's documented Player `_displayname` field, retaining `displayname` as a compatibility fallback. This prevents **Toggle & Whisper** and **Toggle & Whisper Wording** from falling back to the GM when a controlling player's legacy display-name field is absent.
 - Added clear diagnostics for unlinked selections, duplicate character selections, oversized selections, and characters without non-GM controllers.
 - Updated the public API to report component version `1.0.1`, schema version `2`, and expose the active profile through `rulesProfile()`.
 - Added the required SRD 5.1 and SRD 5.2.1 Creative Commons Attribution 4.0 notices to `ATTRIBUTIONS.md` and documented that non-SRD sourcebook condition text is not included.
