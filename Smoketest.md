@@ -486,6 +486,8 @@ Perform one death/revival cycle. Then repeat with:
 
 Pass when both configurations target the intended custom marker and no similarly named marker changes.
 
+This also confirms that GameAssist can read the campaign's custom-marker library. If the exact stored tag works but the display name does not, record that distinction when reporting the problem; it identifies a marker-library lookup issue rather than a general marker failure.
+
 Optional numbered exact-tag check:
 
 ```roll20chat

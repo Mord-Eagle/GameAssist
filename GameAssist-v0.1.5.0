@@ -1039,7 +1039,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Roll20 token marker authority
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:MARKERSERVICE", title: "MarkerService",
-    //   guarantees: ["Single authority for built-in/custom marker resolution, artwork metadata, reads, writes, toggles, and observations","Mutations preserve unrelated markers, numbered overlays, and duplicate entries unless the requested marker is removed","Disabled service refuses marker work with actionable diagnostics"],
+    //   guarantees: ["Single authority for built-in/custom marker resolution, artwork metadata, reads, writes, toggles, and observations","Custom marker lookup prefers Roll20's documented token_markers property and retains _token_markers as a compatibility fallback","Mutations preserve unrelated markers, numbered overlays, and duplicate entries unless the requested marker is removed","Disabled service refuses marker work with actionable diagnostics"],
     //   depends_on: ["[GAMEASSIST:APP:UTILS]"], provides: ["GameAssist.MarkerService"],
     //   observability: { spans: ["[GAMEASSIST:CORE:MARKERSERVICE]"] },
     //   last_updated_version: "v0.1.5.0",
@@ -1047,9 +1047,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     // Narrative
     // MarkerService resolves Roll20 built-in marker ids, custom display names, and exact
-    // stored custom tags. It owns marker parsing and mutation so modules cannot drift into
-    // competing implementations. Mutations return explicit result objects and direct
-    // statusmarkers writes trigger one shared observation contract for future modules.
+    // stored custom tags. Registry reads prefer Roll20's documented token_markers property
+    // and retain _token_markers as a compatibility fallback for observed sandbox behavior.
+    // It owns marker parsing and mutation so modules cannot drift into competing
+    // implementations. Mutations return explicit result objects and direct statusmarkers
+    // writes trigger one shared observation contract for future modules.
     // The DM may disable the service; GameAssist then disables marker-dependent modules
     // while leaving unrelated modules available.
     // -----------------------------------------------------------------------------
@@ -1090,7 +1092,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             'grab', 'screaming', 'grenade', 'sentry-gun', 'all-for-one',
             'angel-outfit', 'archery-target'
         ]);
-        let registryCache = { raw: null, markers: [], error: null };
+        let registryCache = { key: null, raw: null, source: null, markers: [], error: null };
         const observers = new Map();
         let observerId = 0;
         let observerWired = false;
@@ -1174,32 +1176,64 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!enabled) {
                 return {
                     raw: null,
+                    source: null,
                     markers: [],
                     error: 'MarkerService is disabled. Enable it with !ga-enable MarkerService.'
                 };
             }
-            let raw;
-            try {
-                raw = String(Campaign().get('_token_markers') || '[]');
-            } catch (error) {
-                return {
-                    raw: null,
-                    markers: [],
-                    error: `Campaign marker registry unavailable: ${error.message || error}`
-                };
-            }
 
-            if (registryCache.raw === raw) {
+            const attempts = ['token_markers', '_token_markers'].map(property => {
+                try {
+                    const value = Campaign().get(property);
+                    return {
+                        property,
+                        raw: value === undefined || value === null || value === ''
+                            ? null
+                            : String(value),
+                        error: null
+                    };
+                } catch (error) {
+                    return {
+                        property,
+                        raw: null,
+                        error: `${property} unavailable: ${error.message || error}`
+                    };
+                }
+            });
+            const cacheKey = JSON.stringify(attempts);
+
+            if (registryCache.key === cacheKey) {
                 return {
                     raw: registryCache.raw,
+                    source: registryCache.source,
                     markers: registryCache.markers.map(entry => ({ ...entry })),
                     error: registryCache.error
                 };
             }
 
-            try {
-                const parsed = JSON.parse(raw);
-                const markers = (Array.isArray(parsed) ? parsed : [])
+            const diagnostics = [];
+            let selected = null;
+            for (const attempt of attempts) {
+                if (attempt.error) {
+                    diagnostics.push(attempt.error);
+                    continue;
+                }
+                if (attempt.raw === null) continue;
+                try {
+                    const parsed = JSON.parse(attempt.raw);
+                    if (!Array.isArray(parsed)) {
+                        diagnostics.push(`${attempt.property} did not contain a JSON array.`);
+                        continue;
+                    }
+                    selected = { property: attempt.property, raw: attempt.raw, parsed };
+                    break;
+                } catch (error) {
+                    diagnostics.push(`${attempt.property} is invalid JSON: ${error.message || error}`);
+                }
+            }
+
+            if (selected) {
+                const markers = selected.parsed
                     .filter(entry => entry && entry.name && entry.tag)
                     .map(entry => ({
                         name: String(entry.name).trim(),
@@ -1207,17 +1241,34 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         url: typeof entry.url === 'string' ? entry.url.trim() : ''
                     }))
                     .filter(entry => entry.name && entry.tag);
-                registryCache = { raw, markers, error: null };
-            } catch (error) {
                 registryCache = {
-                    raw,
+                    key: cacheKey,
+                    raw: selected.raw,
+                    source: selected.property,
+                    markers,
+                    error: null
+                };
+            } else if (attempts.every(attempt => attempt.raw === null && !attempt.error)) {
+                registryCache = {
+                    key: cacheKey,
+                    raw: '[]',
+                    source: 'token_markers',
                     markers: [],
-                    error: `Campaign marker registry is invalid JSON: ${error.message || error}`
+                    error: null
+                };
+            } else {
+                registryCache = {
+                    key: cacheKey,
+                    raw: attempts.find(attempt => attempt.raw !== null)?.raw || null,
+                    source: null,
+                    markers: [],
+                    error: `Campaign marker registry is unavailable: ${diagnostics.join(' ')}`
                 };
             }
 
             return {
                 raw: registryCache.raw,
+                source: registryCache.source,
                 markers: registryCache.markers.map(entry => ({ ...entry })),
                 error: registryCache.error
             };
@@ -1720,12 +1771,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         });
     })();
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Advanced MarkerService to 1.0.1 with built-in and custom marker artwork metadata while retaining it as the sole GameAssist marker authority, preserving explicit lifecycle controls and removing GameAssist marker dependence on chat-generated TokenMod commands.
+    // Changed (v0.1.5.0): Advanced MarkerService to 1.0.1 with built-in and custom marker artwork metadata, documented token_markers registry lookup with _token_markers compatibility fallback, explicit lifecycle controls, and no GameAssist marker dependence on chat-generated TokenMod commands.
     // Decision log:
     //   CHOICE: Mutate statusmarkers directly and publish one observation contract - ALT: send TokenMod chat commands; REJECTED: external authorization, timing, and dependency ambiguity.
     //   CHOICE: Remove every matching duplicate on explicit removal - ALT: remove only the first; REJECTED: callers asking for an absent state should not leave hidden duplicates active.
     //   CHOICE: Preserve duplicates and number overlays on reads and unrelated mutations - ALT: normalize the complete marker list; REJECTED: normalization would rewrite campaign state outside the requested operation.
     //   CHOICE: Preserve literal lowercase built-in ids before custom display names, then honor exact-case custom names - ALT: always prefer custom names; REJECTED: a custom "dead" could silently replace NPCManager's built-in default.
+    //   CHOICE: Prefer token_markers and fall back to _token_markers only when the documented value is absent or unusable - ALT: retain the underscored property alone; REJECTED: current Roll20 documentation defines token_markers while existing sandbox evidence supports the compatibility alias.
     //   CHOICE: Resolve exact stored custom tags without registry access - ALT: require registry confirmation; REJECTED: valid stored tags must survive registry read failures.
     //   CHOICE: Return marker artwork as metadata - ALT: emit chat HTML from MarkerService; REJECTED: presentation belongs to consuming modules.
     //   CHOICE: Refuse every marker operation while disabled - ALT: leave read-only helpers active; REJECTED: a disabled service must have one clear, predictable boundary.

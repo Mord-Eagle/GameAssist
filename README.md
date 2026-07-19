@@ -813,8 +813,11 @@ Public operations:
 | `add/remove/toggle/set` | Returns `ok`, `changed`, `verified`, before/after entries, and an error code/message when unsuccessful. |
 | `observe(callback, options)` | Subscribes to the shared marker-change stream and returns an unsubscribe handle. |
 | `clearObservers(owner)` | Removes every observer registered under an owner name. |
+| `getRegistry()` | Returns the readable campaign custom-marker registry and the Roll20 property that supplied it. |
 
 Marker removal clears every duplicate instance of the requested marker. Other marker ids, duplicate entries for unrelated markers, and number overlays are preserved. Adding an already-present marker is idempotent unless a number option explicitly updates its first matching entry.
+
+Custom marker lookup reads Roll20's documented `token_markers` campaign property first and uses `_token_markers` only as a compatibility fallback when the documented value is absent or unusable. Built-in marker ids and exact stored `Name::id` tags do not require either registry property to resolve.
 
 When MarkerService is disabled, marker operations return `UNAVAILABLE` with the command needed to restore the service. ConditionAssist, TokenAssist, NPCManager, ConcentrationTracker, and DebugTools are disabled before the service closes so their teardown can complete safely. Observer registrations pause while the service is off and resume when it is enabled again.
 

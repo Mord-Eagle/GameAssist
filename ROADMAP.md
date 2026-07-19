@@ -44,10 +44,10 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | MarkerService checkpoint | Complete | [#25](https://github.com/Mord-Eagle/GameAssist/issues/25) | The shared marker core, consumer migrations, lifecycle safeguards, focused regressions, and Roll20 checkpoint are complete. |
 | ConditionAssist checkpoint | Complete | [#26](https://github.com/Mord-Eagle/GameAssist/issues/26) | ConditionAssist 1.0.1 provides accurate selected-token recognition, current-page condition/marker status, wording profiles, artwork, announcements, migration, and MarkerService synchronization accepted for integrated stabilization. |
 | TokenAssist checkpoint | Complete | [#27](https://github.com/Mord-Eagle/GameAssist/issues/27) | TokenAssist 1.0.1 provides the supported full/short commands, temporary older syntax, MarkerService-backed status operations, corrected auras and movement, migration, observers, and collision protection accepted for integrated stabilization. |
-| Integrated architecture stabilization | In progress | [#28](https://github.com/Mord-Eagle/GameAssist/issues/28) | Upgrade, conservative state repair, condition status, read-only death auditing, confirmed marker repair, opt-out persistence, dependency cascade, and reload checks are active before the complete Roll20 release pass. |
-| v0.1.5.0 release gate | Planned | [#29](https://github.com/Mord-Eagle/GameAssist/issues/29) | Publish only after every integrated service, attribution requirement, documentation update, and full Roll20 acceptance check is complete. |
-| Deferred marker-registry lookup verification | Deferred | [#32](https://github.com/Mord-Eagle/GameAssist/issues/32) | Verify `token_markers` versus `_token_markers` after the existing issue queue unless it becomes a live blocker. |
-| DM-configurable timezone | Planned after existing queue | [#35](https://github.com/Mord-Eagle/GameAssist/issues/35) | Use a validated DM timezone for human-facing timestamps and date-based Session rollover while preserving absolute stored timestamps. |
+| Integrated architecture stabilization | Complete | [#28](https://github.com/Mord-Eagle/GameAssist/issues/28) | The complete clean-install, upgrade, lifecycle, condition-status, death-repair, and module smoke tracks passed in Roll20. |
+| v0.1.5.0 release gate | Complete | [#29](https://github.com/Mord-Eagle/GameAssist/issues/29) | Attribution, documentation, metadata, artifact identity, automated checks, review, and full Roll20 acceptance are complete. |
+| Marker-registry lookup verification | Complete | [#32](https://github.com/Mord-Eagle/GameAssist/issues/32) | MarkerService prefers documented `token_markers`, falls back to `_token_markers`, and keeps built-ins and exact stored tags independent of registry parsing. |
+| DM-configurable timezone | In progress | [#35](https://github.com/Mord-Eagle/GameAssist/issues/35) | Add one validated DM timezone for human-facing timestamps and date-based Session rollover while preserving absolute stored timestamps. |
 
 ---
 
@@ -93,7 +93,7 @@ The final `v0.1.4.x` release must pass its documented Roll20 smoke test with the
 - Static and simulated checks cover custom markers, counted markers, built-in markers, empty status, invalid-marker diagnostics, and ConcentrationTracker teardown commands.
 - Cross-revision simulation also verifies that NPCManager disable/enable preserves saved bucket and Arc records while marker teardown remains active.
 - Completion gate passed: v0.1.4.7 NPCManager, ConcentrationTracker, TokenMod, optional StatusInfo, and NPCHPRoller initialization checks completed successfully in the Roll20 API sandbox.
-- Deferred follow-up: verify Roll20's campaign marker registry property names in [Issue #32](https://github.com/Mord-Eagle/GameAssist/issues/32) after the current issue queue unless it becomes a live blocker.
+- Follow-up complete: [Issue #32](https://github.com/Mord-Eagle/GameAssist/issues/32) now prefers Roll20's documented `token_markers` property and retains `_token_markers` as a compatibility fallback.
 - Deferred follow-up: add DM-configurable timezone formatting and Session boundaries in [Issue #35](https://github.com/Mord-Eagle/GameAssist/issues/35); v0.1.4.7 uses the sandbox/UTC date boundary.
 
 ---
@@ -177,7 +177,7 @@ Build `ConditionAssist`, preserving selected StatusInfo workflows while routing 
 
 Supported `!condition` workflows, `!cond-<condition>` references, selectable condition wording, artwork, and selected-character marker announcements must function through GameAssist and remain synchronized with MarkerService-managed markers without requiring standalone StatusInfo.
 
-**Current evidence:** JavaScript syntax passes, the mocked Roll20 legacy-migration suite passes 34/34 checks, and the clean-install suite passes 54/54 checks. Coverage includes accurate selected-token multi-condition recognition, GM-only current-page condition/other-marker status with a complete handout, the complete 2014 catalog, 2024 and campaign-custom profile changes, case-insensitive official/custom `!cond-<condition>` references, `!c-a` and `!cond-!` announcement aliases, legacy Concentration-to-Concentrating display repair, built-in/custom artwork and readable fallback, captured selected-character menus, verified mixed-state marker toggling, character-first is/is-no-longer public and controller-whisper reporting, partial and absent controller handling, duplicate-description suppression, bounded private-reference buttons without permission leakage, preservation of added conditions and marker choices, duplicate-marker warnings, schema-v2 export, profile capacity refusal, legacy migration retention, custom and numbered markers, add/remove/toggle, external marker observation, unsafe and protected-config refusal, validated import, MarkerService cascade disable, case-insensitive service restoration, and observer recovery. The focused Roll20 checkpoint passed; combined regression now belongs to Issue #28.
+**Current evidence:** JavaScript syntax passes, the mocked Roll20 legacy-migration suite passes 35/35 checks, and the clean-install suite passes 58/58 checks. Coverage includes accurate selected-token multi-condition recognition, GM-only current-page condition/other-marker status with a complete handout, documented and compatibility marker-registry lookup, built-in/exact-tag independence from invalid registry data, actionable registry diagnostics, the complete 2014 catalog, 2024 and campaign-custom profile changes, case-insensitive official/custom `!cond-<condition>` references, `!c-a` and `!cond-!` announcement aliases, legacy Concentration-to-Concentrating display repair, built-in/custom artwork and readable fallback, captured selected-character menus, verified mixed-state marker toggling, character-first is/is-no-longer public and controller-whisper reporting, partial and absent controller handling, duplicate-description suppression, bounded private-reference buttons without permission leakage, preservation of added conditions and marker choices, duplicate-marker warnings, schema-v2 export, profile capacity refusal, legacy migration retention, custom and numbered markers, add/remove/toggle, external marker observation, unsafe and protected-config refusal, validated import, MarkerService cascade disable, case-insensitive service restoration, and observer recovery. The focused and complete Roll20 checkpoints passed.
 
 ---
 
@@ -222,7 +222,7 @@ The completed `v0.1.5.0` implementation must no longer require standalone TokenM
 
 ## Phase 5: Integrated Architecture Stabilization and `v0.1.5.0` Release Gate
 
-**Tracking:** [Issue #28](https://github.com/Mord-Eagle/GameAssist/issues/28)
+**Tracking:** [Issue #28](https://github.com/Mord-Eagle/GameAssist/issues/28) and [Issue #29](https://github.com/Mord-Eagle/GameAssist/issues/29)
 
 This phase verifies the complete integration before the first public `v0.1.5.0` release. It is not post-release cleanup.
 
@@ -237,11 +237,13 @@ This phase verifies the complete integration before the first public `v0.1.5.0` 
 - [x] Keep NPC death audits read-only and add separately confirmed marker repair that preserves HP and history.
 - [x] Document known compatibility gaps without overstating support.
 - [x] Define a sustainable process for reviewing upstream changes.
-- [ ] Complete the clean-install and v0.1.4.7-to-v0.1.5.0 live Roll20 release smoke tracks.
+- [x] Complete the clean-install and v0.1.4.7-to-v0.1.5.0 live Roll20 release smoke tracks.
 
 ### Completion Gate
 
 The integrated architecture is considered stable only when supported workflows have no known silent marker failures, upgrade guidance is tested, and compatibility claims match verified behavior.
+
+**Completed:** the automated suites, full Roll20 smoke pass, attribution audit, documentation audit, artifact-identity check, manifest validation, and review-thread audit all passed. The v0.1.5.0 release candidate is accepted for publication.
 
 ---
 
