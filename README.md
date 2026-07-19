@@ -502,7 +502,7 @@ III. **Remove Overlapping Standalone Marker Tools**
 
 GameAssist v0.1.5.0 replaces standalone TokenMod and StatusInfo for the token and condition workflows supported by TokenAssist and ConditionAssist. Remove both standalone scripts before enabling the overlapping GameAssist modules. TokenAssist and standalone TokenMod both recognize `!token-mod`; ConditionAssist and standalone StatusInfo both recognize `!condition` and marker changes.
 
-If standalone TokenMod is accidentally left installed, TokenAssist suspends only its deprecated `!token-mod` alias and warns the GM instead of applying that command twice. Branded TokenAssist commands remain available, but this safeguard is diagnostic rather than a supported permanent dual-install arrangement.
+If standalone TokenMod is accidentally left installed, TokenAssist suspends only its deprecated `!token-mod` alias and warns the GM instead of applying that command twice. The `!token-assist`, `!ta`, and `!ta-*` commands remain available, but this safeguard is diagnostic rather than a supported permanent dual-install arrangement.
 
 MarkerService itself may be disabled when the campaign deliberately chooses a different marker system. GameAssist will also turn off its dependent modules and explain which features are unavailable; CritFumble, ConfigUI, and NPCHPRoller continue to work.
 
@@ -1086,7 +1086,7 @@ Run:
 !token-assist help
 ```
 
-TokenAssist and MarkerService must both be running. If troubleshooting details report standalone TokenMod, remove that script and restart the sandbox. While the collision exists, TokenAssist leaves only the deprecated `!token-mod` alias to the standalone handler; branded commands remain available.
+TokenAssist and MarkerService must both be running. If troubleshooting details report standalone TokenMod, remove that script and restart the sandbox. While the collision exists, TokenAssist leaves only the deprecated `!token-mod` alias to the standalone handler; the `!token-assist`, `!ta`, and `!ta-*` commands remain available.
 
 Select a disposable token and try:
 

@@ -207,7 +207,7 @@ Build **TokenAssist** with the supported token-control workflows needed by GameA
 - [x] Route all status-marker operations through MarkerService.
 - [x] Route listeners and lifecycle through GameAssist and declare MarkerService as a lifecycle dependency.
 - [x] Provide `GameAssist.TokenAssist.observeTokenChange(...)` as the documented observer replacement without creating a misleading global `TokenMod` object.
-- [x] Detect standalone TokenMod, warn the GM, suspend only the deprecated alias so one command cannot be applied twice, and retain branded TokenAssist commands.
+- [x] Detect standalone TokenMod, warn the GM, suspend only the deprecated alias so one command cannot be applied twice, and retain the `!token-assist`, `!ta`, and `!ta-*` commands.
 - [x] Remove standalone TokenMod from v0.1.5.0 installation instructions.
 - [ ] Test command families incrementally in Roll20.
 

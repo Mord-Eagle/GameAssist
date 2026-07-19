@@ -30,7 +30,7 @@ References to TokenMod, StatusInfo, Roll20, or their contributors do not imply s
 - Published comparison release: StatusInfo package `0.3.12`
 - Pinned Roll20 repository snapshot: `9d634d3149985dcf10333920b3f4c41f215f39fc`
 - StatusInfo `0.3.12` file blob: `d3054aa8660f1eda47c424c4984e1850760e5c1a`
-- Source: <https://github.com/Roll20/roll20-api-scripts/tree/master/StatusInfo>
+- Source: <https://github.com/Roll20/roll20-api-scripts/tree/9d634d3149985dcf10333920b3f4c41f215f39fc/StatusInfo>
 - License: MIT
 
 The published `0.3.12` package still declares internal script version `0.3.11`. Compared with the published `0.3.11` file, its executable change replaces the `character_sheet` attribute lookup with the character object's `charactersheetname` property. GameAssist does not adapt that sheet-specific synchronization path.
@@ -56,7 +56,7 @@ TokenMod compatibility concepts used by TokenAssist include selected-token and e
 
 TokenAssist adds GameAssist lifecycle management, validation, help presentation, state migration, collision handling, diagnostics, MarkerService integration, command parsing, authorization boundaries, the public `GameAssist.TokenAssist` API, and explicit compatibility limits. The initial implementation does not include TokenMod's image-side stack editing, default-token writes, computed or name-resolved attributes, advanced controller-list editing, advanced color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, exact report-recipient distinctions, duplicate-index marker editing, conditional marker counts, or help-handout rebuilding.
 
-TokenAssist does not expose a global object named `TokenMod`. Its observer replacement is `GameAssist.TokenAssist.observeTokenChange()`. When standalone TokenMod is detected, TokenAssist leaves only the deprecated `!token-mod` alias to the standalone script and warns the GM, preventing one command from being applied twice; branded TokenAssist commands remain available.
+TokenAssist does not expose a global object named `TokenMod`. Its observer replacement is `GameAssist.TokenAssist.observeTokenChange()`. When standalone TokenMod is detected, TokenAssist leaves only the deprecated `!token-mod` alias to the standalone script and warns the GM, preventing one command from being applied twice; TokenAssist commands remain available.
 
 ## TokenMod
 
@@ -78,7 +78,7 @@ GameAssist acknowledges StatusInfo as a design and compatibility reference for c
 
 - Project: StatusInfo
 - Author: Robin Kuiper
-- Source: <https://github.com/Roll20/roll20-api-scripts/tree/master/StatusInfo>
+- Pinned source: <https://github.com/Roll20/roll20-api-scripts/tree/9d634d3149985dcf10333920b3f4c41f215f39fc/StatusInfo>
 - License: MIT
 
 ## Roll20 API Scripts MIT Notice

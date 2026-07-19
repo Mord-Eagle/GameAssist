@@ -1610,7 +1610,7 @@ These versions remain independently authored and licensed upstream. GameAssist d
 - GameAssist previously generated commands in this form:
 
   ```text
-  !token-assist --ids <token-id> --set statusmarkers|+dead
+  !token-mod --ids <token-id> --set statusmarkers|+dead
   ```
 
 - A command generated through `sendChat('api', ...)` reaches TokenMod with the API pseudo-player rather than a normal GM player id.
@@ -1648,7 +1648,7 @@ These versions remain independently authored and licensed upstream. GameAssist d
 - Failure warnings name the token, distinguish add from remove failures, and provide a direct command such as:
 
   ```text
-  !token-assist --ids @{selected|token_id} --set statusmarkers|+dead
+  !token-mod --ids @{selected|token_id} --set statusmarkers|+dead
   ```
 
 - Pending verification is keyed by token and marker. A newer request supersedes an older pending check so a rapid add/remove sequence does not report the stale request as a failure.
@@ -1932,7 +1932,7 @@ The current checkpoints implement [Issue #25](https://github.com/Mord-Eagle/Game
   - `!token-assist about` summarizes TokenAssist capabilities, TokenMod credit, and current limits;
   - `!token-assist config` opens TokenAssist configuration.
 - Added `!ta` as a short full-parser alias and `!ta-on`, `!ta-off`, `!ta-flip`, `!ta-set`, `!ta-move`, `!ta-order`, `!ta-report`, `!ta-ids`, `!ta-config`, and help aliases for fast table use.
-- Added case-insensitive command routing for branded commands and the deprecated alias with exact token/prefix boundaries, avoiding partial matches against longer unrelated commands.
+- Added case-insensitive command routing for the TokenAssist commands and deprecated alias with exact token/prefix boundaries, avoiding partial matches against longer unrelated commands.
 - Preserved normal direct execution for token commands; TokenAssist does not route ordinary token mutations through GameAssist's explicit queue.
 
 ### TokenMod credit and provenance
@@ -2145,7 +2145,7 @@ The repository source, One-Click publication mirror, and versioned Roll20 test a
 | Mocked ConditionAssist clean installation | Passed (49/49 checks), including the complete 2014 catalog, case-insensitive official/custom `!cond-<condition>`, both announcement aliases, built-in/custom artwork and readable fallback, 2024/custom profiles, captured-character announcement menus, verified mixed-state marker toggling, character-first public/controller-whisper reporting, partial and absent controller handling, duplicate-description suppression, bounded private references without general permission leakage, duplicate-marker warning, schema-v2 export, capacity refusal, marker preservation, and lifecycle cascade |
 | Mocked ConditionAssist legacy migration and MarkerService lifecycle | Passed (32/32 checks), including non-destructive migration, Concentrating display repair, custom-profile identification, case-insensitive `!cond-<condition>`, menus, descriptions, add/remove/toggle, protected config, imports, cascade disable, re-enable, MarkerService 1.0.1 API reporting, and observer recovery |
 | Mocked TokenAssist branded-command workflow | Passed (45/45 checks), including pinned provenance, pre-release identity migration, legacy configuration migration/source retention, full/short/case-insensitive help, deprecation warning, visible aura storage, hex/RGB/HSV color normalization, stale movement-origin replacement, booleans, quoted text, relative values, MarkerService-backed built-in/custom/numbered marker operations, safe marker replacement, order, reports, linked bars, player id authorization, selected-token use, page filtering, unsupported-feature refusal, observers, and MarkerService cascade disable/re-enable |
-| Mocked standalone TokenMod collision workflow | Passed (12/12 checks), including detection, suspended legacy-alias mutation, actionable warning, and continued branded TokenAssist command/help access |
+| Mocked standalone TokenMod collision workflow | Passed (12/12 checks), including detection, suspended legacy-alias mutation, actionable warning, and continued TokenAssist command/help access |
 | Marker mutation refresh after lifecycle changes | Passed (18/18 checks) for built-in/custom resolution, numbered/duplicate handling, toggle/set, and unrelated-marker preservation |
 | Mocked marker-consumer workflow | Passed (22/22) across NPCManager, ConcentrationTracker, DebugTools, teardown, and re-enable |
 | Startup errors | 0 |
