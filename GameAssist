@@ -4331,7 +4331,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     sendPanel(
                         exactWording ? condition.name : 'Condition Updated',
                         announcementBody(condition, successfulPlayerTargets, results, { exactWording, grantId }),
-                        { whisperTo: player.get('displayname') }
+                        { whisperTo: player.get('_displayname') || player.get('displayname') }
                     );
                     sent++;
                 });
@@ -5139,7 +5139,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['conditions', 'rulesProfile', 'legacyStatusInfoMigration']
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Advanced unreleased ConditionAssist to 1.0.1 with accurate selected-token condition recognition, a bounded GM current-page condition/marker status view plus complete status handout, case-insensitive !cond-[condition] references for official/custom definitions, !c-a and !cond-! announcement aliases, complete 2014/2024/campaign wording, built-in/custom marker artwork, selected-character announcements that toggle and verify marker state, character-first is/is-no-longer reporting, Concentrating display-name repair, explicit public/player-whisper delivery, bounded private-reference buttons, duplicate-marker warnings, schema-v2 import/export, and automatic repair of untouched 1.0.0 defaults.
+    // Changed (v0.1.5.0): Advanced unreleased ConditionAssist to 1.0.1 with accurate selected-token condition recognition, a bounded GM current-page condition/marker status view plus complete status handout, case-insensitive !cond-[condition] references for official/custom definitions, !c-a and !cond-! announcement aliases, complete 2014/2024/campaign wording, built-in/custom marker artwork, selected-character announcements that toggle and verify marker state, character-first is/is-no-longer reporting, Concentrating display-name repair, documented Roll20 player-name lookup for private delivery, bounded private-reference buttons, duplicate-marker warnings, schema-v2 import/export, and automatic repair of untouched 1.0.0 defaults.
     // Decision log:
     //   CHOICE: Name the GameAssist module ConditionAssist - ALT: retain StatusInfo branding; REJECTED: this is an independently maintained adaptation with a different lifecycle and marker architecture.
     //   CHOICE: Keep permanent !condition compatibility plus one optional custom alias - ALT: replace the command; REJECTED: upgrades should not strand familiar workflows.
