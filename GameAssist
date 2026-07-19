@@ -210,6 +210,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             maxMarkerLength: 200,
             maxImportLength: 100000,
             recentDescriptionMs: 1000,
+            announcementMutationSuppressionMs: 5000,
             announcementGrantMs: 1000 * 60 * 10,
             announcementGrantLimit: 50,
             maxAnnouncementTokens: 12
@@ -223,7 +224,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Removed the obsolete standalone TokenMod verification delay and added bounded condition-definition, import, announcement-selection, and private-reference limits for ConditionService; rollback: restore standalone request dispatch or revise the condition limits here.
+    // Changed (v0.1.5.0): Removed the obsolete standalone TokenMod verification delay and added bounded condition-definition, import, announcement-selection, private-reference, and announcement-observer suppression limits for ConditionService; rollback: restore standalone request dispatch or revise the condition limits here.
     // Decision log:
     //   CHOICE: Keep NPC initialization and snapshot knobs centralized while removing the unused external marker delay - ALT: retain the dead setting; REJECTED: implied behavior no caller performs.
     // Prior notes:
@@ -3215,7 +3216,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: GameAssist condition descriptions and controls
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONDITIONSERVICE", title: "ConditionService",
-    //   guarantees: ["2014 SRD condition wording is the default, with selectable 2024 SRD and campaign-custom wording","!condition and case-insensitive !cond-[condition] provide condition-reference workflows for official and campaign conditions","Built-in and registered custom marker artwork may accompany readable condition text","GM announcements use selected linked characters, explicit public/private delivery, and bounded private-reference grants","All condition marker reads, writes, and observations use CORE:MARKERSERVICE","Legacy state.STATUSINFO may be copied through a validated migration and is never silently deleted"],
+    //   guarantees: ["2014 SRD condition wording is the default, with selectable 2024 SRD and campaign-custom wording","!condition and case-insensitive !cond-[condition] provide condition-reference workflows for official and campaign conditions","Built-in and registered custom marker artwork may accompany readable condition text","GM announcements toggle and verify selected token markers before reporting neutral applied/removed results through explicit public/private delivery","All condition marker reads, writes, and observations use CORE:MARKERSERVICE","Legacy state.STATUSINFO may be copied through a validated migration and is never silently deleted"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.ConditionService"],
     //   last_updated_version: "v0.1.5.0",
@@ -3243,6 +3244,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             Object.keys(modState.config.conditions).length
         );
         const recentDescriptions = new Map();
+        const suppressedMarkerDescriptions = new Map();
         const announcementGrants = new Map();
         let announcementGrantId = 0;
 
@@ -3491,9 +3493,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 sendOnlyToGM: false,
                 showDescOnStatusChange: true,
                 showIconInDescription: true,
-                randomizeAnnouncements: true,
                 ...persisted
             });
+            // This unreleased option belonged to the superseded creative-announcement design.
+            delete modState.config.randomizeAnnouncements;
 
             const normalized = normalizeConditionMap(modState.config.conditions || {});
             if (normalized.ok) {
@@ -3528,7 +3531,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             modState.config.command = /^[A-Za-z][A-Za-z0-9_-]{0,39}$/.test(command)
                 ? command
                 : PRIMARY_COMMAND;
-            ['userAllowed', 'userToggle', 'sendOnlyToGM', 'showDescOnStatusChange', 'showIconInDescription', 'randomizeAnnouncements']
+            ['userAllowed', 'userToggle', 'sendOnlyToGM', 'showDescOnStatusChange', 'showIconInDescription']
                 .forEach(key => { modState.config[key] = modState.config[key] === true; });
         }
 
@@ -3538,7 +3541,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!isPlainObject(legacy)) return;
 
             const legacyConfig = isPlainObject(legacy.config) ? legacy.config : {};
-            const boolKeys = ['userAllowed', 'userToggle', 'sendOnlyToGM', 'showDescOnStatusChange', 'showIconInDescription', 'randomizeAnnouncements'];
+            const boolKeys = ['userAllowed', 'userToggle', 'sendOnlyToGM', 'showDescOnStatusChange', 'showIconInDescription'];
             const importedSettings = [];
             boolKeys.forEach(key => {
                 if (!originalConfigKeys.has(key) && typeof legacyConfig[key] === 'boolean') {
@@ -3772,9 +3775,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const body = [
                 `<div><strong>Selected:</strong> ${_sanitize(formatNameList(names))}</div>`,
                 ignored ? `<div style="margin-top:4px;color:#7a3d00;">Ignored ${ignored} unlinked or duplicate selection${ignored === 1 ? '' : 's'}.</div>` : '',
-                '<div style="margin-top:7px;"><strong>Choose the condition to communicate</strong></div>',
+                '<div style="margin-top:7px;"><strong>Choose the condition to toggle and communicate</strong></div>',
                 announcementConditionButtons(targets),
-                '<div style="margin-top:7px;font-size:0.9em;">This menu communicates a condition; it does not add or remove token markers.</div>'
+                '<div style="margin-top:7px;font-size:0.9em;">The marker changes only after you choose a final public or whisper button.</div>'
             ].join('');
             sendPanel('Condition Announcement', body, { msg, gmOnly: true });
         }
@@ -3784,16 +3787,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const names = _sanitize(formatNameList(targets.map(target => target.name)));
             const body = [
                 `<div><strong>${_sanitize(condition.name)}</strong> for ${names}</div>`,
-                '<div style="margin-top:8px;"><strong>Creative declaration</strong><br>',
-                GameAssist.createButton('Announce Publicly', `!condition announce send public ${condition.key} --ids ${ids}`),
-                ' ', GameAssist.createButton('Whisper Players', `!condition announce send whisper ${condition.key} --ids ${ids}`),
+                '<div style="margin-top:8px;"><strong>Condition update</strong><br>',
+                GameAssist.createButton('Toggle & Announce', `!condition announce send public ${condition.key} --ids ${ids}`),
+                ' ', GameAssist.createButton('Toggle & Whisper', `!condition announce send whisper ${condition.key} --ids ${ids}`),
                 '</div>',
                 '<div style="margin-top:8px;"><strong>Exact rules wording</strong><br>',
-                GameAssist.createButton('Post Publicly', `!condition announce rules public ${condition.key} --ids ${ids}`),
-                ' ', GameAssist.createButton('Whisper Players', `!condition announce rules whisper ${condition.key} --ids ${ids}`),
+                GameAssist.createButton('Toggle & Post Wording', `!condition announce rules public ${condition.key} --ids ${ids}`),
+                ' ', GameAssist.createButton('Toggle & Whisper Wording', `!condition announce rules whisper ${condition.key} --ids ${ids}`),
                 '</div>',
                 `<div style="margin-top:8px;">${GameAssist.createButton('Choose Another Condition', `!condition announce --ids ${ids}`)}</div>`,
-                '<div style="margin-top:7px;font-size:0.9em;">Public and whispered declarations include a private Read Exact Wording button. Player whispers go to the selected characters\' non-GM controllers.</div>'
+                '<div style="margin-top:7px;font-size:0.9em;">Every delivery button toggles the marker once on each selected token. The message reports which characters had the condition applied or removed.</div>'
             ].join('');
             sendPanel('Choose Announcement Delivery', body, { msg, gmOnly: true });
         }
@@ -3852,90 +3855,136 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return id;
         }
 
-        function announcementNarrative(condition, names) {
-            const subject = _sanitize(formatNameList(names));
-            const conditionName = `<strong>${_sanitize(condition.name)}</strong>`;
-            const singular = names.length === 1;
-            const lines = singular ? [
-                `${conditionName} settles over ${subject}; the scene changes around them.`,
-                `A sudden change overtakes ${subject}: ${conditionName} now applies.`,
-                `${subject} is now affected by ${conditionName}; its effects demand attention.`,
-                `The moment turns as ${subject} comes under ${conditionName}.`,
-                `${subject} bears the unmistakable signs of ${conditionName}.`
-            ] : [
-                `${conditionName} settles over ${subject}; the scene changes around them.`,
-                `A sudden change overtakes ${subject}: ${conditionName} now applies.`,
-                `${subject} are now affected by ${conditionName}; its effects demand attention.`,
-                `The moment turns as ${subject} come under ${conditionName}.`,
-                `${subject} bear the unmistakable signs of ${conditionName}.`
-            ];
-            return modState.config.randomizeAnnouncements
-                ? lines[Math.floor(Math.random() * lines.length)]
-                : lines[0];
+        function markerDescriptionSuppressionKey(tokenId, normalizedMarkerId) {
+            return `${tokenId}:${normalizedMarkerId}`;
         }
 
-        function announcementBody(condition, names, grantId) {
+        function suppressAnnouncementMarkerDescription(tokenId, normalizedMarkerId) {
+            const key = markerDescriptionSuppressionKey(tokenId, normalizedMarkerId);
+            const record = { expiresAt: now() + POLICY.conditions.announcementMutationSuppressionMs };
+            suppressedMarkerDescriptions.set(key, record);
+            setTimeout(() => {
+                if (suppressedMarkerDescriptions.get(key) === record) suppressedMarkerDescriptions.delete(key);
+            }, POLICY.conditions.announcementMutationSuppressionMs);
+            return key;
+        }
+
+        function consumeAnnouncementMarkerSuppression(tokenId, normalizedMarkerId) {
+            const key = markerDescriptionSuppressionKey(tokenId, normalizedMarkerId);
+            const record = suppressedMarkerDescriptions.get(key);
+            if (!record) return false;
+            suppressedMarkerDescriptions.delete(key);
+            return record.expiresAt >= now();
+        }
+
+        /**
+         * toggleAnnouncementTargets - Toggle each selected marker and retain the
+         * verified per-token result so chat never reports an assumed state.
+         */
+        function toggleAnnouncementTargets(condition, targets) {
+            const results = { applied: [], removed: [], failed: [], states: new Map() };
+            targets.forEach(target => {
+                const before = GameAssist.MarkerService.inspect(target.token, condition.marker);
+                if (!before.ok) {
+                    results.failed.push({ target, message: before.message || 'The current marker state could not be read.' });
+                    return;
+                }
+
+                const normalizedMarkerId = GameAssist.MarkerService.normalizeId(before.resolution.id);
+                const suppressionKey = before.present
+                    ? ''
+                    : suppressAnnouncementMarkerDescription(target.token.id, normalizedMarkerId);
+                const change = GameAssist.MarkerService.toggle(target.token, condition.marker, { owner: MODULE_NAME });
+                if (!change.ok || change.verified !== true) {
+                    if (suppressionKey) suppressedMarkerDescriptions.delete(suppressionKey);
+                    results.failed.push({ target, message: change.message || 'Roll20 did not retain the requested marker state.' });
+                    GameAssist.log(MODULE_NAME, `${condition.name} could not be toggled on ${target.name}: ${change.message || change.code || 'verification failed'}`, 'WARN');
+                    return;
+                }
+
+                const state = change.present ? 'applied' : 'removed';
+                results.states.set(target.token.id, state);
+                results[state].push(target);
+            });
+            return results;
+        }
+
+        function announcementStateLines(condition, targets, results) {
+            const targetIds = new Set(targets.map(target => target.token.id));
+            const applied = results.applied.filter(target => targetIds.has(target.token.id)).map(target => target.name);
+            const removed = results.removed.filter(target => targetIds.has(target.token.id)).map(target => target.name);
+            return [
+                applied.length ? `<div><strong>${_sanitize(condition.name)}</strong> is applied to <strong>${_sanitize(formatNameList(applied))}</strong>.</div>` : '',
+                removed.length ? `<div><strong>${_sanitize(condition.name)}</strong> is removed from <strong>${_sanitize(formatNameList(removed))}</strong>.</div>` : ''
+            ].filter(Boolean).join('');
+        }
+
+        function announcementBody(condition, targets, results, { exactWording = false, grantId = '' } = {}) {
+            const details = exactWording
+                ? `<div style="margin-top:8px;"><strong>Condition wording</strong><br>${_sanitize(condition.description || 'No description is configured.').replace(/\n/g, '<br>')}</div>`
+                : `<div style="margin-top:8px;">${GameAssist.createButton('Read Exact Wording', `!condition details ${grantId}`)}</div>`;
             return [
                 renderMarkerArtwork(condition),
-                `<div>${announcementNarrative(condition, names)}</div>`,
-                `<div style="margin-top:8px;">${GameAssist.createButton('Read Exact Wording', `!condition details ${grantId}`)}</div>`
+                announcementStateLines(condition, targets, results),
+                details
             ].join('');
         }
 
-        function sendCreativeAnnouncement(msg, condition, targets, mode) {
-            const grantId = createAnnouncementGrant(condition);
-            if (mode === 'public') {
-                sendPanel('Condition Announced', announcementBody(condition, targets.map(target => target.name), grantId), { publicMessage: true });
-                return;
-            }
-
-            const delivery = controllerRecipients(targets);
-            if (!delivery.recipients.length) {
-                sendPanel('Condition Announcement', 'No selected character has a non-GM player controller. Use the public announcement instead, or assign a controller on the character sheet.', { msg, gmOnly: true });
-                return;
-            }
-            delivery.recipients.forEach(({ player, targets: playerTargets }) => {
-                sendPanel(
-                    'Condition Announced',
-                    announcementBody(condition, playerTargets.map(target => target.name), grantId),
-                    { whisperTo: player.get('displayname') }
-                );
-            });
-            const skipped = delivery.unassigned.length
-                ? ` ${delivery.unassigned.length} selected character${delivery.unassigned.length === 1 ? ' has' : 's have'} no non-GM controller and ${delivery.unassigned.length === 1 ? 'was' : 'were'} not whispered.`
-                : '';
-            sendPanel('Condition Announcement Sent', `Whispered ${_sanitize(condition.name)} to ${delivery.recipients.length} player${delivery.recipients.length === 1 ? '' : 's'}.${_sanitize(skipped)}`, { msg, gmOnly: true });
+        function sendAnnouncementFailures(msg, condition, results) {
+            if (!results.failed.length) return;
+            const details = results.failed.map(({ target, message }) =>
+                `<div style="margin-top:4px;"><strong>${_sanitize(target.name)}</strong>: ${_sanitize(message)}</div>`
+            ).join('');
+            sendPanel(
+                'Condition Marker Warning',
+                `<div>${results.failed.length} ${_sanitize(condition.name)} marker change${results.failed.length === 1 ? '' : 's'} could not be verified. No success message was sent for ${results.failed.length === 1 ? 'that token' : 'those tokens'}.</div>${details}`,
+                { msg, gmOnly: true }
+            );
         }
 
-        function exactRulesBody(condition, names) {
-            return [
-                renderMarkerArtwork(condition),
-                `<div style="margin-bottom:6px;"><strong>Applies to:</strong> ${_sanitize(formatNameList(names))}</div>`,
-                _sanitize(condition.description || 'No description is configured.').replace(/\n/g, '<br>')
-            ].join('');
-        }
+        function sendConditionAnnouncement(msg, condition, targets, mode, exactWording) {
+            const delivery = mode === 'whisper' ? controllerRecipients(targets) : null;
+            if (delivery && !delivery.recipients.length) {
+                sendPanel('Condition Announcement', 'No selected character has a non-GM player controller. Use a public option instead, or assign a controller on the character sheet. No markers were changed.', { msg, gmOnly: true });
+                return;
+            }
 
-        function sendExactRules(msg, condition, targets, mode) {
+            const results = toggleAnnouncementTargets(condition, targets);
+            const successfulTargets = targets.filter(target => results.states.has(target.token.id));
+            if (!successfulTargets.length) {
+                sendAnnouncementFailures(msg, condition, results);
+                return;
+            }
+
+            const grantId = exactWording ? '' : createAnnouncementGrant(condition);
             if (mode === 'public') {
-                sendPanel(condition.name, exactRulesBody(condition, targets.map(target => target.name)), { publicMessage: true });
-                return;
-            }
-            const delivery = controllerRecipients(targets);
-            if (!delivery.recipients.length) {
-                sendPanel('Condition Wording', 'No selected character has a non-GM player controller. Post the wording publicly, or assign a controller on the character sheet.', { msg, gmOnly: true });
-                return;
-            }
-            delivery.recipients.forEach(({ player, targets: playerTargets }) => {
                 sendPanel(
-                    condition.name,
-                    exactRulesBody(condition, playerTargets.map(target => target.name)),
-                    { whisperTo: player.get('displayname') }
+                    exactWording ? condition.name : 'Condition Updated',
+                    announcementBody(condition, successfulTargets, results, { exactWording, grantId }),
+                    { publicMessage: true }
                 );
-            });
-            const skipped = delivery.unassigned.length
-                ? ` ${delivery.unassigned.length} selected character${delivery.unassigned.length === 1 ? ' has' : 's have'} no non-GM controller and ${delivery.unassigned.length === 1 ? 'was' : 'were'} not whispered.`
-                : '';
-            sendPanel('Condition Wording Sent', `Whispered the exact ${_sanitize(condition.name)} wording to ${delivery.recipients.length} player${delivery.recipients.length === 1 ? '' : 's'}.${_sanitize(skipped)}`, { msg, gmOnly: true });
+            } else {
+                let sent = 0;
+                delivery.recipients.forEach(({ player, targets: playerTargets }) => {
+                    const successfulPlayerTargets = playerTargets.filter(target => results.states.has(target.token.id));
+                    if (!successfulPlayerTargets.length) return;
+                    sendPanel(
+                        exactWording ? condition.name : 'Condition Updated',
+                        announcementBody(condition, successfulPlayerTargets, results, { exactWording, grantId }),
+                        { whisperTo: player.get('displayname') }
+                    );
+                    sent++;
+                });
+                const skipped = delivery.unassigned.length
+                    ? `<div style="margin-top:6px;">No player whisper was sent for ${_sanitize(formatNameList(delivery.unassigned))} because ${delivery.unassigned.length === 1 ? 'that character has' : 'those characters have'} no non-GM controller.</div>`
+                    : '';
+                sendPanel(
+                    'Condition Update Sent',
+                    `${announcementStateLines(condition, successfulTargets, results)}<div style="margin-top:6px;">Sent to ${sent} player${sent === 1 ? '' : 's'}.</div>${skipped}`,
+                    { msg, gmOnly: true }
+                );
+            }
+            sendAnnouncementFailures(msg, condition, results);
         }
 
         function handleAnnouncementDetails(msg, body) {
@@ -3990,8 +4039,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     sendPanel('Condition Announcement', 'The announcement choice was invalid or expired. Open the announcement menu again.', { msg, gmOnly: true });
                     return;
                 }
-                if (action === 'send') sendCreativeAnnouncement(msg, condition, targetResult.targets, mode);
-                else sendExactRules(msg, condition, targetResult.targets, mode);
+                sendConditionAnnouncement(msg, condition, targetResult.targets, mode, action === 'rules');
                 return;
             }
             sendAnnouncementConditionMenu(msg, targetResult.targets, targetResult.ignored);
@@ -4042,10 +4090,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<code>!condition add prone</code> - add to selected tokens<br>',
                 '<code>!condition remove prone</code> - remove from selected tokens<br>',
                 '<code>!condition toggle prone</code> - switch the marker on or off<br>',
-                '<code>!condition announce</code> - communicate a condition for selected linked characters<br>',
+                '<code>!condition announce</code> - toggle and communicate a condition for selected linked characters<br>',
                 '<code>!condition config</code> - GM settings and condition definitions</div>',
                 `<div style="margin-top:7px;"><strong>Rules wording</strong><br>${_sanitize(rulesProfileLabel())}. The GM can switch between 2014 and 2024 SRD wording or edit any description.</div>`,
-                '<div style="margin-top:7px;"><strong>Announcements</strong><br>Select linked character tokens first. The guided menu can make a varied public declaration, whisper each character\'s player controllers, or deliver the exact rules wording.</div>',
+                '<div style="margin-top:7px;"><strong>Announcements</strong><br>Select linked character tokens first. A final public or whisper button toggles the condition marker once, verifies the result, and reports who had the condition applied or removed. Exact wording is optional.</div>',
                 '<div style="margin-top:7px;font-size:0.9em;">Condition names and shortcuts are not case-sensitive. Campaign-created conditions work with the same menus and <code>!cond-&lt;condition&gt;</code> shortcut.</div>'
             ].join('');
             sendPanel('ConditionService Help', body, { msg });
@@ -4057,8 +4105,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ['Players may change token conditions', 'userToggle'],
                 ['Send descriptions only to the GM', 'sendOnlyToGM'],
                 ['Show descriptions when markers are added', 'showDescOnStatusChange'],
-                ['Show marker artwork with descriptions', 'showIconInDescription'],
-                ['Vary condition announcement wording', 'randomizeAnnouncements']
+                ['Show marker artwork with descriptions', 'showIconInDescription']
             ].map(([label, key]) => {
                 const value = modState.config[key] === true;
                 return `${_sanitize(label)}: ${GameAssist.createButton(value ? 'ON' : 'OFF', `!condition config ${key}|${!value}`)}`;
@@ -4194,8 +4241,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     userToggle: modState.config.userToggle,
                     sendOnlyToGM: modState.config.sendOnlyToGM,
                     showDescOnStatusChange: modState.config.showDescOnStatusChange,
-                    showIconInDescription: modState.config.showIconInDescription,
-                    randomizeAnnouncements: modState.config.randomizeAnnouncements
+                    showIconInDescription: modState.config.showIconInDescription
                 },
                 conditions: getConditions()
             };
@@ -4225,7 +4271,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
 
             const sourceConfig = isPlainObject(payload.config) ? payload.config : {};
-            const boolKeys = ['userAllowed', 'userToggle', 'sendOnlyToGM', 'showDescOnStatusChange', 'showIconInDescription', 'randomizeAnnouncements'];
+            const boolKeys = ['userAllowed', 'userToggle', 'sendOnlyToGM', 'showDescOnStatusChange', 'showIconInDescription'];
             if (boolKeys.some(key => sourceConfig[key] !== undefined && typeof sourceConfig[key] !== 'boolean')) {
                 sendConfigMenu(msg, 'Import was refused because a permission/display setting is not true or false.');
                 return;
@@ -4292,7 +4338,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const values = rest.slice(delimiter + 1).split('|').map(value => value.trim());
             const rawValue = values.shift() || '';
             const confirmation = String(values.shift() || '').toLowerCase();
-            const boolKeys = ['userAllowed', 'userToggle', 'sendOnlyToGM', 'showDescOnStatusChange', 'showIconInDescription', 'randomizeAnnouncements'];
+            const boolKeys = ['userAllowed', 'userToggle', 'sendOnlyToGM', 'showDescOnStatusChange', 'showIconInDescription'];
             if (boolKeys.includes(key)) {
                 if (!/^(true|false)$/i.test(rawValue)) {
                     sendConfigMenu(msg, `${key} must be true or false.`);
@@ -4529,6 +4575,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const observation = GameAssist.MarkerService.observe(event => {
             if (!isRunning() || !modState.config.showDescOnStatusChange) return;
             event.added.forEach(entry => {
+                if (consumeAnnouncementMarkerSuppression(event.tokenId, entry.normalizedId)) return;
                 conditionsForMarkerEntry(entry).forEach(condition => showCondition(condition));
             });
         }, { owner: MODULE_NAME });
@@ -4583,7 +4630,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['conditions', 'rulesProfile', 'legacyStatusInfoMigration']
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Advanced unreleased ConditionService to 1.0.1 with case-insensitive !cond-[condition] references for official/custom definitions, complete 2014/2024/campaign wording, built-in/custom marker artwork, selected-character announcements, explicit public/player-whisper delivery, bounded private-reference buttons, duplicate-marker warnings, schema-v2 import/export, and automatic repair of untouched 1.0.0 defaults.
+    // Changed (v0.1.5.0): Advanced unreleased ConditionService to 1.0.1 with case-insensitive !cond-[condition] references for official/custom definitions, complete 2014/2024/campaign wording, built-in/custom marker artwork, selected-character announcements that toggle and verify marker state, neutral applied/removed reporting, explicit public/player-whisper delivery, bounded private-reference buttons, duplicate-marker warnings, schema-v2 import/export, and automatic repair of untouched 1.0.0 defaults.
     // Decision log:
     //   CHOICE: Name the GameAssist module ConditionService - ALT: retain StatusInfo branding; REJECTED: this is an independently maintained adaptation with a different lifecycle and marker architecture.
     //   CHOICE: Keep permanent !condition compatibility plus one optional custom alias - ALT: replace the command; REJECTED: upgrades should not strand familiar workflows.
@@ -4593,13 +4640,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Reserve !cond- as a case-insensitive read-only description prefix - ALT: add individual static handlers; REJECTED: dynamic campaign definitions require one bounded prefix route.
     //   CHOICE: Capture linked token ids before the GM chooses delivery - ALT: rely on the later button click selection; REJECTED: Roll20 selection can change while a guided menu remains open.
     //   CHOICE: Use expiring private-reference grants for announcement buttons - ALT: globally allow every player description command; REJECTED: one GM announcement should not silently broaden campaign permissions.
-    //   CHOICE: Keep announcements communication-only - ALT: also mutate selected markers; REJECTED: narration must not introduce an unconfirmed token-state change.
+    //   CHOICE: Toggle markers only when the GM chooses a final delivery button - ALT: mutate while browsing menus; REJECTED: opening or revisiting a menu must not change token state.
+    //   CHOICE: Report verified applied/removed results in neutral language - ALT: condition-agnostic creative narration; REJECTED: universal prose became awkward or inaccurate across varied conditions.
+    //   CHOICE: Suppress ordinary marker-add descriptions only during announcement-owned writes - ALT: allow both panels; REJECTED: one GM action should not produce duplicate condition messages.
     //   CHOICE: Omit upstream character-sheet attribute synchronization in this checkpoint - ALT: mutate sheet-specific attributes; REJECTED: GameAssist's condition contract is token-marker synchronization through MarkerService.
     // SRD 5.1 attribution:
     //   This work includes material taken from the System Reference Document 5.1 ("SRD 5.1") by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode.
     // SRD 5.2.1 attribution:
     //   This work includes material from the System Reference Document 5.2.1 ("SRD 5.2.1") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.
     // Prior notes:
+    //   Earlier unreleased 1.0.1 checkpoints kept announcements communication-only; live sandbox testing showed the delivery action was expected to toggle the selected token markers.
     //   StatusInfo 0.3.11 by Robin Kuiper provided the supplied compatibility baseline; the Roll20 0.3.12 package changes only its character-sheet identification line and still declares internal version 0.3.11.
     // [GAMEASSIST:MODULES:CONDITIONSERVICE] END
     // =============================================================================

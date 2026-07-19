@@ -168,15 +168,15 @@ Build the independently branded `ConditionService` module, preserving selected S
 - [x] Default clean campaigns to the complete SRD 5.1 condition catalog and offer SRD 5.2.1 or campaign-custom wording without deleting added definitions or marker choices.
 - [x] Add dynamic, case-insensitive, read-only `!cond-<condition>` references for official and campaign-created definitions.
 - [x] Add built-in and registered custom marker artwork with readable fallback behavior.
-- [x] Add a GM-only selected-character communication menu with public/player-whisper delivery, varied narration, exact-wording choices, and bounded private-reference buttons.
+- [x] Add a GM-only selected-character announcement menu with verified marker toggling, neutral applied/removed reporting, public/player-whisper delivery, exact-wording choices, and bounded private-reference buttons.
 - [x] Add duplicate-marker assignment warnings.
 - [x] Update documentation, attribution, changelog, upgrade notes, and component smoke tests.
 
 ### Completion Gate
 
-Supported `!condition` workflows, `!cond-<condition>` references, selectable condition wording, artwork, and selected-character communication must function through GameAssist and remain synchronized with MarkerService-managed markers without requiring standalone StatusInfo.
+Supported `!condition` workflows, `!cond-<condition>` references, selectable condition wording, artwork, and selected-character marker announcements must function through GameAssist and remain synchronized with MarkerService-managed markers without requiring standalone StatusInfo.
 
-**Current evidence:** JavaScript syntax passes, the mocked Roll20 legacy-migration suite passes 31/31 checks, and the clean-install suite passes 40/40 checks. Coverage includes the complete 2014 catalog, 2024 and campaign-custom profile changes, case-insensitive official/custom `!cond-<condition>` references, built-in/custom artwork and readable fallback, selected-character menus, captured selection, public and controller-whisper delivery, bounded private-reference buttons without permission leakage, communication-only behavior, preservation of added conditions and marker choices, duplicate-marker warnings, schema-v2 export, profile capacity refusal, legacy migration retention, custom and numbered markers, add/remove/toggle, external marker observation, unsafe and protected-config refusal, validated import, MarkerService cascade disable, case-insensitive service restoration, and observer recovery. Real Roll20 sandbox acceptance remains required before Issue #26 closes.
+**Current evidence:** JavaScript syntax passes, the mocked Roll20 legacy-migration suite passes 31/31 checks, and the clean-install suite passes 48/48 checks. Coverage includes the complete 2014 catalog, 2024 and campaign-custom profile changes, case-insensitive official/custom `!cond-<condition>` references, built-in/custom artwork and readable fallback, captured selected-character menus, verified mixed-state marker toggling, neutral applied/removed public and controller-whisper reporting, partial and absent controller handling, duplicate-description suppression, bounded private-reference buttons without permission leakage, preservation of added conditions and marker choices, duplicate-marker warnings, schema-v2 export, profile capacity refusal, legacy migration retention, custom and numbered markers, add/remove/toggle, external marker observation, unsafe and protected-config refusal, validated import, MarkerService cascade disable, case-insensitive service restoration, and observer recovery. Real Roll20 sandbox acceptance remains required before Issue #26 closes.
 
 ---
 

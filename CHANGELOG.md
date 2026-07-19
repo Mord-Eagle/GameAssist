@@ -1903,10 +1903,15 @@ The current checkpoints implement [Issue #25](https://github.com/Mord-Eagle/Game
 - Added a GM-only `!condition announce` workflow:
   - captures up to twelve selected linked character tokens before later menu clicks;
   - lists every configured official or campaign-created condition;
-  - offers creative public declarations and targeted whispers to non-GM character controllers;
+  - waits until the GM chooses a final delivery button before changing token state;
+  - toggles the configured marker exactly once on every captured token and verifies the stored result through MarkerService;
+  - reports neutral **applied to** and **removed from** statements, including separate groups when a mixed selection starts in different states;
+  - offers public updates and targeted whispers to non-GM character controllers;
   - offers exact condition wording in public chat or controller whispers;
-  - varies declaration language by default, with a GM setting to make it deterministic;
-  - refuses to mutate markers as a side effect of communication.
+  - refuses a player-whisper action before changing markers when none of the selected characters has a non-GM controller;
+  - omits failed token changes from success announcements and gives the GM the verification failure details.
+- Removed the unreleased `randomizeAnnouncements` setting and condition-agnostic creative narration after sandbox testing showed that universal flavor text became awkward or inaccurate across varied conditions.
+- Suppressed ordinary marker-add descriptions during announcement-owned writes so one final action produces one deliberate result panel instead of a second automatic condition-description panel. Direct Roll20 marker changes continue to show descriptions when that setting is enabled.
 - Added expiring, bounded **Read Exact Wording** buttons. A player who clicks a GM-issued button receives the exact condition text privately without receiving permanent access to unrestricted condition commands.
 - Added clear diagnostics for unlinked selections, duplicate character selections, oversized selections, and characters without non-GM controllers.
 - Updated the public API to report component version `1.0.1`, schema version `2`, and expose the active profile through `rulesProfile()`.
@@ -1995,9 +2000,9 @@ The current checkpoints implement [Issue #25](https://github.com/Mord-Eagle/Game
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `9551DE72A7DF3E1A6124B56D1328FC39CAA4CA726E31248838601115DDC73319` |
-| `GameAssist.js` | `9551DE72A7DF3E1A6124B56D1328FC39CAA4CA726E31248838601115DDC73319` |
-| `GameAssist-v0.1.5.0` | `9551DE72A7DF3E1A6124B56D1328FC39CAA4CA726E31248838601115DDC73319` |
+| `GameAssist` | `6C0FE368F4BC1ADE7C0C9423EADBD0C0B05894F588A0796D23C76E936812CD09` |
+| `GameAssist.js` | `6C0FE368F4BC1ADE7C0C9423EADBD0C0B05894F588A0796D23C76E936812CD09` |
+| `GameAssist-v0.1.5.0` | `6C0FE368F4BC1ADE7C0C9423EADBD0C0B05894F588A0796D23C76E936812CD09` |
 
 The repository source, One-Click publication mirror, and versioned Roll20 test artifact are byte-identical.
 
@@ -2007,7 +2012,7 @@ The repository source, One-Click publication mirror, and versioned Roll20 test a
 | --- | --- |
 | JavaScript parse/compile | Passed |
 | Mocked Roll20 ready initialization and MarkerService lifecycle | Passed (24/24 lifecycle checks) with MarkerService plus five default modules enabled and DebugTools disabled |
-| Mocked ConditionService clean installation | Passed (40/40 checks), including the complete 2014 catalog, case-insensitive official/custom `!cond-<condition>`, built-in/custom artwork and readable fallback, 2024/custom profiles, captured-character announcement menus, public/controller-whisper delivery, bounded private references without general permission leakage, communication-only behavior, duplicate-marker warning, schema-v2 export, capacity refusal, marker preservation, and lifecycle cascade |
+| Mocked ConditionService clean installation | Passed (48/48 checks), including the complete 2014 catalog, case-insensitive official/custom `!cond-<condition>`, built-in/custom artwork and readable fallback, 2024/custom profiles, captured-character announcement menus, verified mixed-state marker toggling, neutral public/controller-whisper reporting, partial and absent controller handling, duplicate-description suppression, bounded private references without general permission leakage, duplicate-marker warning, schema-v2 export, capacity refusal, marker preservation, and lifecycle cascade |
 | Mocked ConditionService legacy migration and MarkerService lifecycle | Passed (31/31 checks), including non-destructive migration, custom-profile identification, case-insensitive `!cond-<condition>`, menus, descriptions, add/remove/toggle, protected config, imports, cascade disable, re-enable, MarkerService 1.0.1 API reporting, and observer recovery |
 | Marker mutation refresh after lifecycle changes | Passed (18/18 checks) for built-in/custom resolution, numbered/duplicate handling, toggle/set, and unrelated-marker preservation |
 | Mocked marker-consumer workflow | Passed (22/22) across NPCManager, ConcentrationTracker, DebugTools, teardown, and re-enable |
@@ -2031,7 +2036,7 @@ The repository source, One-Click publication mirror, and versioned Roll20 test a
 
 Issue #25 requires a Roll20 Mod sandbox pass with standalone TokenMod absent. The pass must cover NPC death/revival markers, concentration add/status/remove, custom marker display names and exact tags, unrelated numbered-marker preservation, MarkerService cascade disable/re-enable behavior, DebugTools dry-run/apply behavior, sandbox reload, and existing NPC history retention.
 
-Issue #26 requires a Roll20 Mod sandbox pass with standalone StatusInfo absent. The pass must cover ConditionService help/menu output, case-insensitive official/custom `!cond-<condition>` references, 2014/2024/custom wording changes, built-in and registered custom artwork, selected-character announcement destinations, controller targeting, private-reference buttons, preservation of custom definitions and marker choices, permissions, descriptions, add/remove/toggle, duplicate-marker warnings, built-in and numbered custom markers, direct marker-change observation, schema-v2 import/export, legacy-state migration when available, MarkerService cascade disable/re-enable, and duplicate-install warnings.
+Issue #26 requires a Roll20 Mod sandbox pass with standalone StatusInfo absent. The pass must cover ConditionService help/menu output, case-insensitive official/custom `!cond-<condition>` references, 2014/2024/custom wording changes, built-in and registered custom artwork, selected-character announcement marker toggling, neutral applied/removed reporting, public and controller-targeted destinations, duplicate-description suppression, private-reference buttons, preservation of custom definitions and marker choices, permissions, descriptions, add/remove/toggle, duplicate-marker warnings, built-in and numbered custom markers, direct marker-change observation, schema-v2 import/export, legacy-state migration when available, MarkerService cascade disable/re-enable, and duplicate-install warnings.
 
 The public v0.1.5.0 release still requires ConditionService sandbox acceptance, the token service, migration/compatibility stabilization, and the full-suite acceptance checks tracked by Issues #26 through #29. Completing either checkpoint alone does not create a public v0.1.5.0 release.
 

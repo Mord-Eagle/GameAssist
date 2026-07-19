@@ -631,7 +631,7 @@ Create a disposable custom Roll20 marker with an image, assign it to a custom co
 
 #### Selected-Character Announcements
 
-Select one or more disposable tokens linked to characters, with at least one character assigned to a non-GM player, and run:
+Select two disposable tokens linked to characters, with at least one character assigned to a non-GM player. Put the condition marker you plan to test on one token and leave it off the other, then run:
 
 ```roll20chat
 !condition announce
@@ -639,14 +639,22 @@ Select one or more disposable tokens linked to characters, with at least one cha
 
 Pass when the GM receives an alphabetical condition-button list for the captured characters. Choose a condition and verify the delivery menu offers:
 
-- **Announce Publicly**;
-- **Whisper Players**;
-- **Post Publicly** under exact rules wording;
-- **Whisper Players** under exact rules wording.
+- **Toggle & Announce**;
+- **Toggle & Whisper**;
+- **Toggle & Post Wording**;
+- **Toggle & Whisper Wording**.
 
-The creative public declaration should name the selected character or characters, show the condition, and include **Read Exact Wording**. Clicking that button from a player account must whisper the exact configured wording to that player even when unrestricted player descriptions are disabled. The button should eventually expire rather than granting permanent access.
+Choosing the condition should not change either token yet. Click **Toggle & Announce** and pass when:
 
-The player-whisper choices should go only to non-GM controllers of the captured linked characters. Characters without a player controller should be reported to the GM instead of exposing the message to unrelated players. Change the current token selection after opening the first menu and confirm later buttons still use the originally captured characters. None of these communication choices should add or remove a marker.
+- the token that lacked the condition now displays its configured marker;
+- the token that already had the condition no longer displays that marker;
+- unrelated markers and marker numbers remain unchanged;
+- the public message uses neutral, readable statements naming who had the condition **applied to** them and who had it **removed from** them;
+- the message includes **Read Exact Wording** but does not also produce a duplicate condition-description panel.
+
+Run the same final action again and pass when both marker states reverse cleanly. Clicking **Read Exact Wording** from a player account must whisper the exact configured wording to that player even when unrestricted player descriptions are disabled. The button should eventually expire rather than granting permanent access.
+
+The player-whisper choices should toggle the same captured markers once and go only to non-GM controllers of the linked characters. Characters without a player controller should still receive the marker change when at least one selected character has a valid recipient, while the GM is told which characters received no player whisper. If none of the selected characters has a non-GM controller, the whisper choice should refuse before changing any marker. Change the current token selection after opening the first menu and confirm later buttons still use the originally captured characters.
 
 #### Permissions
 
