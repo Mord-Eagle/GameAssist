@@ -1,8 +1,8 @@
-# GameAssist v0.1.5.0 Test Guide
+# GameAssist v0.1.5.0 Release Smoke Test and Troubleshooting Guide
 
 Use this guide after installing or updating GameAssist, before an important session, or while troubleshooting a feature.
 
-> `v0.1.5.0` is still in development. MarkerService, ConditionAssist, and TokenAssist have focused checkpoint tests below; real Roll20 sandbox verification, stabilization work, and final release acceptance tests remain required.
+> This guide tests the current GameAssist v0.1.5.0 release candidate. GameAssist v0.1.4.7 is used only in the separate upgrade track to create realistic saved data before v0.1.5.0 is installed.
 
 The tests are organized by component. Each section explains:
 
@@ -15,6 +15,119 @@ The tests are organized by component. Each section explains:
 Run commands one at a time. A multi-line command block is a checklist, not a single block to paste into Roll20 chat.
 
 > Use a disposable page and test tokens for anything that changes HP, markers, handouts, saved history, or module state.
+
+---
+
+## Full v0.1.5.0 Release Acceptance Test
+
+This is the release test for v0.1.5.0. It has two distinct tracks:
+
+| Track | Script being tested | Purpose |
+| --- | --- | --- |
+| **A. Clean installation** | **v0.1.5.0** | Proves the integrated release works without standalone TokenMod or StatusInfo. |
+| **B. Upgrade** | **v0.1.5.0** | Proves configuration and history created by v0.1.4.7 survive replacement with v0.1.5.0. |
+
+Do not run the v0.1.4.7 Issue #24 smoke test as the v0.1.5.0 release test. In Track B, v0.1.4.7 is only the starting point used to create old campaign state; every acceptance check after the replacement is performed with v0.1.5.0.
+
+### Release Candidate Files
+
+Use the current repository copies of:
+
+- `GameAssist-v0.1.5.0` or the identical `GameAssist.js` One-Click artifact;
+- this `Smoketest.md` guide.
+
+After saving the script, wait for the Mod sandbox to restart. Do not continue unless the startup message and `!ga-status` both identify **GameAssist v0.1.5.0**.
+
+### Track A: Clean v0.1.5.0 Installation
+
+Use a new disposable campaign, or a disposable campaign in which GameAssist state may be cleared safely.
+
+1. Install only GameAssist v0.1.5.0 for the workflows covered here. Remove or disable standalone TokenMod and StatusInfo.
+2. Prepare the disposable PC, NPC, unlinked token, and optional CritFumble tables described under [Before Testing](#before-testing).
+3. Run every **Basic Check** in Components 1 through 10, except a deliberately disabled feature may be recorded as **Skipped by choice**.
+4. Run the complete MarkerService, ConditionAssist, and TokenAssist acceptance sections. These three components are new to the v0.1.5.0 release line and may not be skipped for release approval.
+5. Run the cross-component permission, duplicate-installation, and state-recovery checks.
+6. Restart the sandbox once more and repeat `!ga-status`, `!ga-config modules`, one marker change, and one harmless TokenAssist command.
+
+Record the release result here:
+
+| Clean-install requirement | Result |
+| --- | --- |
+| Core System and ConfigUI | [ ] Pass [ ] Fail |
+| MarkerService full acceptance | [ ] Pass [ ] Fail |
+| CritFumble basic workflow | [ ] Pass [ ] Fail [ ] Skipped by choice |
+| ConditionAssist full acceptance | [ ] Pass [ ] Fail |
+| TokenAssist full acceptance | [ ] Pass [ ] Fail |
+| ConcentrationTracker basic workflow | [ ] Pass [ ] Fail [ ] Skipped by choice |
+| NPCManager basic workflow | [ ] Pass [ ] Fail [ ] Skipped by choice |
+| NPCHPRoller basic workflow | [ ] Pass [ ] Fail [ ] Skipped by choice |
+| DebugTools dry-run safeguard | [ ] Pass [ ] Fail |
+| Cross-component checks | [ ] Pass [ ] Fail |
+| Restart persistence check | [ ] Pass [ ] Fail |
+
+### Track B: Upgrade v0.1.4.7 to v0.1.5.0
+
+Use a separate disposable campaign so the upgrade begins with authentic v0.1.4.7 state.
+
+#### Create the legacy state
+
+1. Install GameAssist v0.1.4.7 with its supported standalone TokenMod installation. StatusInfo may also be present.
+2. Enable the ordinary modules the campaign will use.
+3. Change at least one non-default GameAssist setting.
+4. Create one NPC death and revival record.
+5. Give the active Campaign, Chapter, Section, and Session buckets recognizable test names.
+6. Record the output of:
+
+   ```roll20chat
+   !ga-config modules
+   !ga-config list
+   !npc-death-buckets
+   !npc-death-report --scope session
+   ```
+
+#### Install and test v0.1.5.0
+
+1. Replace the complete v0.1.4.7 script with the current v0.1.5.0 artifact.
+2. Remove standalone TokenMod and StatusInfo so the integrated services can be tested without overlapping commands or marker ownership.
+3. Restart the sandbox and run:
+
+   ```roll20chat
+   !ga-status
+   !ga-status --details
+   !ga-config modules
+   !npc-death-buckets
+   !npc-death-report --scope session
+   ```
+
+4. Confirm the non-default setting, bucket names, and NPC history remain available.
+5. Confirm MarkerService is enabled and ConditionAssist, TokenAssist, NPCManager, and ConcentrationTracker report confirmed MarkerService dependencies.
+6. Run the MarkerService, ConditionAssist, TokenAssist, ConcentrationTracker, NPCManager, and NPCHPRoller basic checks below using v0.1.5.0.
+7. Restart the sandbox and confirm the migrated configuration and history remain available.
+
+Record the upgrade result here:
+
+| Upgrade requirement | Result |
+| --- | --- |
+| v0.1.5.0 starts without a new GameAssist exception | [ ] Pass [ ] Fail |
+| Valid v0.1.4.7 configuration is retained | [ ] Pass [ ] Fail |
+| NPC history and bucket names are retained | [ ] Pass [ ] Fail |
+| MarkerService and enabled dependents are running | [ ] Pass [ ] Fail |
+| Standalone TokenMod and StatusInfo are no longer required | [ ] Pass [ ] Fail |
+| New ConditionAssist and TokenAssist workflows pass | [ ] Pass [ ] Fail |
+| Existing gameplay module basic checks pass | [ ] Pass [ ] Fail |
+| Migrated state survives another sandbox restart | [ ] Pass [ ] Fail |
+
+### Release Decision
+
+The v0.1.5.0 release candidate passes Issue #28 only when:
+
+- Track A passes in a clean installation;
+- Track B passes after replacing v0.1.4.7 with v0.1.5.0;
+- MarkerService, ConditionAssist, and TokenAssist have no skipped acceptance checks;
+- no unrelated marker, token property, character attribute, NPC history, or configuration is changed;
+- any optional skipped gameplay module is recorded with a clear reason.
+
+A failure should be recorded using [Bug Report Evidence](#bug-report-evidence) before the sandbox or affected token is reset.
 
 ---
 
