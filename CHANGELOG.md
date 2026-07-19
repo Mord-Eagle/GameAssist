@@ -1878,6 +1878,10 @@ The current checkpoints implement [Issue #25](https://github.com/Mord-Eagle/Game
 
 ### Advanced – ConditionAssist 1.0.1
 
+- Corrected selected-token active-condition reporting. `MarkerService.has()` returns a boolean; the menu had incorrectly treated that boolean as a structured inspection object, causing real markers to display as `No tracked conditions` even though add/remove/toggle behavior worked.
+- Added GM-only `!condition status` and `!condition --status` commands plus a **Condition Status** menu button.
+- The current-page status roster lists linked characters and NPCs that have at least one marker, reports configured ConditionAssist definitions under **Conditions**, and keeps death, concentration, counters, or other active markers under **Other markers** rather than mislabeling them as conditions.
+- Unmarked tokens are omitted, marked unlinked scenery/labels/props are counted separately, and the chat roster is bounded by POLICY so a crowded page cannot produce an unbounded panel. The complete roster is written to the `GameAssist Condition Status` handout.
 - Added the dynamic, read-only, case-insensitive `!cond-<condition>` command family. Commands such as `!cond-prone`, `!COND-EXHAUSTION`, and a DM-created condition key show the active configured wording without selecting a token or changing marker state.
 - Preserved the existing description permission boundary: players may use the short references only when **Players may view descriptions** is enabled; GMs retain access while the module is running.
 - Replaced the initial ConditionAssist default catalog with the complete fifteen-condition SRD catalog:
@@ -2054,15 +2058,20 @@ The current checkpoints implement [Issue #25](https://github.com/Mord-Eagle/Game
 - Unsupported actions, invalid tokens, unknown markers, unavailable registries, rejected token writes, and failed verification return explicit diagnostics instead of silent success.
 - Direct token writes remain synchronous; ordinary GameAssist event handlers are not routed through the explicit task queue.
 
-### Changed – NPCManager 1.2.0
+### Changed – NPCManager 1.2.1
 
-- Advanced NPCManager from module version `1.1.1` to `1.2.0`.
+- Advanced NPCManager from module version `1.1.1` through `1.2.0` to `1.2.1`.
 - Routed death-marker resolution, presence checks, add/remove operations, audits, and teardown through MarkerService.
 - Removed NPCManager's standalone TokenMod dependency declaration and dependency-skip path.
 - Preserved configured numbered death-marker overlays such as `dead@2` when requesting marker writes.
 - Kept death-history recording independent from marker-write success so Campaign, Chapter, Section, Session, and Arc records continue describing HP events.
 - Preserved NPCHPRoller initialization protection, known-positive-to-zero death detection, revival annotation, auto-hide behavior, report writing, hierarchical clearing, and Arc management.
 - Teardown now reports markers actually removed rather than a delayed external request count.
+- Kept `!npc-death-audit` strictly read-only and added a **Review Marker Repairs** action only when recognizable marker mismatches exist.
+- Added the separate GM-only `!npc-death-repair` preview and `!npc-death-repair --confirm` mutation path. The preview explains that current bar 1 HP controls the proposed marker result and changes nothing.
+- Confirmation performs a fresh page scan before acting, verifies every MarkerService add/remove result, preserves unrelated markers, and reports remaining failures.
+- Repair changes neither HP nor NPC death history, Campaign/Chapter/Section/Session buckets, or Arc records. This preserves the DM's ability to treat a mismatch as HP housekeeping instead of automatically accepting marker state as authoritative.
+- Blank or non-numeric HP is reported separately and excluded from automatic marker repair rather than being coerced to zero.
 
 ### Changed – ConcentrationTracker 0.2.0
 
@@ -2142,8 +2151,8 @@ The repository source, One-Click publication mirror, and versioned Roll20 test a
 | --- | --- |
 | JavaScript parse/compile | Passed |
 | Mocked Roll20 ready initialization and MarkerService lifecycle | Passed (24/24 focused checks); ConditionAssist and TokenAssist lifecycle coverage is reported separately below |
-| Mocked ConditionAssist clean installation | Passed (49/49 checks), including the complete 2014 catalog, case-insensitive official/custom `!cond-<condition>`, both announcement aliases, built-in/custom artwork and readable fallback, 2024/custom profiles, captured-character announcement menus, verified mixed-state marker toggling, character-first public/controller-whisper reporting, partial and absent controller handling, duplicate-description suppression, bounded private references without general permission leakage, duplicate-marker warning, schema-v2 export, capacity refusal, marker preservation, and lifecycle cascade |
-| Mocked ConditionAssist legacy migration and MarkerService lifecycle | Passed (32/32 checks), including non-destructive migration, Concentrating display repair, custom-profile identification, case-insensitive `!cond-<condition>`, menus, descriptions, add/remove/toggle, protected config, imports, cascade disable, re-enable, MarkerService 1.0.1 API reporting, and observer recovery |
+| Mocked ConditionAssist clean installation | Passed (54/54 checks), including the complete 2014 catalog, selected-token multi-condition recognition, GM-only current-page condition/other-marker status and complete handout, case-insensitive official/custom `!cond-<condition>`, both announcement aliases, built-in/custom artwork and readable fallback, 2024/custom profiles, captured-character announcement menus, verified mixed-state marker toggling, character-first public/controller-whisper reporting, partial and absent controller handling, duplicate-description suppression, bounded private references without general permission leakage, duplicate-marker warning, schema-v2 export, capacity refusal, marker preservation, and lifecycle cascade |
+| Mocked ConditionAssist legacy migration and MarkerService lifecycle | Passed (34/34 checks), including non-destructive migration, active-condition menu/status recognition, Concentrating display repair, custom-profile identification, case-insensitive `!cond-<condition>`, descriptions, add/remove/toggle, protected config, imports, cascade disable, re-enable, MarkerService 1.0.1 API reporting, and observer recovery |
 | Mocked TokenAssist branded-command workflow | Passed (45/45 checks), including pinned provenance, pre-release identity migration, legacy configuration migration/source retention, full/short/case-insensitive help, deprecation warning, visible aura storage, hex/RGB/HSV color normalization, stale movement-origin replacement, booleans, quoted text, relative values, MarkerService-backed built-in/custom/numbered marker operations, safe marker replacement, order, reports, linked bars, player id authorization, selected-token use, page filtering, unsupported-feature refusal, observers, and MarkerService cascade disable/re-enable |
 | Mocked standalone TokenMod collision workflow | Passed (12/12 checks), including detection, suspended legacy-alias mutation, actionable warning, and continued TokenAssist command/help access |
 | Marker mutation refresh after lifecycle changes | Passed (18/18 checks) for built-in/custom resolution, numbered/duplicate handling, toggle/set, and unrelated-marker preservation |
@@ -2166,9 +2175,9 @@ The repository source, One-Click publication mirror, and versioned Roll20 test a
 
 ### Roll20 acceptance requirements
 
-Issues #25, #26, and #27 completed their focused MarkerService, ConditionAssist, and TokenAssist checkpoints on 2026-07-19. Their automated suites pass at 49/49, 32/32, 45/45, and 12/12, and the reported Roll20 iterations cover the marker, announcement, aura, movement, and command corrections made during those checkpoints.
+Issues #25, #26, and #27 completed their focused MarkerService, ConditionAssist, and TokenAssist checkpoints on 2026-07-19. Their automated suites pass at 54/54, 34/34, 45/45, and 12/12, and the reported Roll20 iterations cover the marker, status, announcement, aura, movement, and command corrections made during those checkpoints.
 
-Issue #28 now owns the combined release regression. Its local 36/36 harness executes the preserved v0.1.4.7 artifact, carries the resulting state into v0.1.5.0, and verifies configuration retention, non-destructive TokenMod/StatusInfo migration, conservative malformed-state repair, unknown-state preservation, MarkerService opt-out, dependent shutdown, ordered restoration, and reload persistence. The remaining gate is the complete Roll20 upgrade and clean-install smoke pass before Issue #29 performs the publication audit.
+Issue #28 now owns the combined release regression. Its local 46/46 harness executes the preserved v0.1.4.7 artifact, carries the resulting state into v0.1.5.0, and verifies configuration retention, non-destructive TokenMod/StatusInfo migration, conservative malformed-state repair, unknown-state preservation, read-only NPC death auditing, confirmation-gated marker repair in both directions, HP/history preservation, MarkerService opt-out, dependent shutdown, ordered restoration, and reload persistence. The remaining gate is the complete Roll20 upgrade and clean-install smoke pass before Issue #29 performs the publication audit.
 
 Deferred TokenAssist expansion is tracked outside the v0.1.5.0 gate: Issue #42 covers advanced marker expressions, #43 covers attribute/controller/report resolution, #44 covers visual and multi-sided controls, and #45 covers token-image/default-token asset updates. TokenMod help-handout rebuilding and a global `TokenMod` compatibility object are not planned.
 

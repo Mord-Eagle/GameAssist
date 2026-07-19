@@ -20,7 +20,7 @@ GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a
 | Core Lift | Guarded modules, conservative state repair, explicit queue API, session metrics, dependency diagnostics, GM health reporting, and one toggleable marker service with dependent-module safeguards. |
 | Quick Install | 📥 Install the complete script → 📜 add the CritFumble tables if used → 🔄 reload → 🩺 run the health checks → 🎲 test the enabled features with disposable tokens. |
 | Flagship Player Commands | `!condition <name>`, `!cond-<condition>`, `!concentration`, `!cc`, `!critfumble-<type>` when the GM permits the relevant player action. |
-| Flagship GM Commands | `!token-assist help`, `!token-assist --help`, `!condition`, `!condition announce`, `!c-a`, `!cond-!`, `!condition help`, `!critfumble`, `!critfumble help`, `!critfumble menu`, `!critfail`, `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report --help`, `!npc-death-buckets`, `!NPC-WR`, `!npc-death-audit`, `!npc-death-arc`, `!ga-conc-status`, `!ga-config ui`. |
+| Flagship GM Commands | `!token-assist help`, `!token-assist --help`, `!condition`, `!condition status`, `!condition announce`, `!c-a`, `!cond-!`, `!condition help`, `!critfumble`, `!critfumble help`, `!critfumble menu`, `!critfail`, `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report --help`, `!npc-death-buckets`, `!NPC-WR`, `!npc-death-audit`, `!npc-death-repair`, `!npc-death-arc`, `!ga-conc-status`, `!ga-config ui`. |
 | Admin Controls | `!ga-config list|get|set|modules|cleanup|ui`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-metrics`, and `!ga-debug`. |
 | Queue Model | Normal commands/events run directly. Only `GameAssist.enqueue(...)` work and module transitions use the serialized queue. |
 | Watchdog Limit | A timeout releases the explicit queue; it **cannot** terminate underlying JavaScript, `sendChat()`, or Roll20 operations. |
@@ -62,7 +62,7 @@ GameAssist’s kernel and bundled modules expose:
 * **Compatibility Audit** – optional, debug-only overlap hints for popular scripts such as TokenMod, ScriptCards, and APILogic.
 * **Dependency Diagnostics** – module dependencies are reported as confirmed, missing, or unverifiable instead of being presented as guaranteed discoveries.
 * **MarkerService** – `GameAssist.MarkerService` resolves built-in and custom markers, supplies artwork metadata when Roll20 exposes it, preserves unrelated and numbered marker state, applies explicit add/remove/toggle operations, and exposes one observation contract. It can be disabled when another Mod needs exclusive control of marker behavior; GameAssist then turns off MarkerService-dependent modules while leaving unrelated modules available.
-* **ConditionAssist** – supplies 2014 SRD condition wording by default, optional 2024 SRD wording, campaign-editable descriptions, case-insensitive `!cond-<condition>` quick references, marker artwork, a selected-token menu, verified marker-toggling announcements in public chat or player whispers, add/remove/toggle commands, guarded player permissions, and marker-change descriptions. Every condition marker operation and observation goes through MarkerService.
+* **ConditionAssist** – supplies 2014 SRD condition wording by default, optional 2024 SRD wording, campaign-editable descriptions, case-insensitive `!cond-<condition>` quick references, marker artwork, an accurate selected-token menu, a GM current-page condition/marker status roster, verified marker-toggling announcements in public chat or player whispers, add/remove/toggle commands, guarded player permissions, and marker-change descriptions. Every condition marker operation and observation goes through MarkerService.
 * **TokenAssist** – provides general token controls through `!token-assist` and `!ta`/`!ta-*`, explicit-ID permissions, token-change observers, and MarkerService-backed status operations. Older supported `!token-mod` macros continue temporarily during v0.1.x and are not processed by GameAssist when standalone TokenMod is detected.
 * **MECHSUITS Structure** – the executable script uses the literal codename `GAMEASSIST`, framed sections, file-scoped canonical tree metadata, and per-section change notes.
 
@@ -100,12 +100,14 @@ Run these commands after every update:
 !token-assist help
 !condition help
 !condition
+!condition status
 !critfumble menu
 !concentration --status
 !npc-death-help
 !npc-death-report
 !npc-death-buckets
 !npc-death-audit
+!npc-death-repair
 !npc-hp-selected
 ```
 
@@ -274,11 +276,12 @@ Config keys: `debug`, `useEmojis`, `rollDelayMs`.
 
 > **Module version:** `1.0.1`
 
-ConditionAssist gives the table a readable condition reference and a marker-backed selected-token menu. It defaults to the fifteen SRD 5.1 conditions used by the 2014 rules, including Exhaustion rather than Inspiration. The GM can switch the official descriptions to SRD 5.2.1 wording for the 2024 rules or edit any description for campaign-specific wording. Open `!condition` after selecting tokens to see their tracked conditions and toggle another condition with one click. Select linked character tokens and use `!condition announce`, `!c-a`, or `!cond-!` to toggle a condition marker and report the verified result publicly or to their player controllers. `!condition help` is the quick-start guide.
+ConditionAssist gives the table a readable condition reference and a marker-backed selected-token menu. It defaults to the fifteen SRD 5.1 conditions used by the 2014 rules, including Exhaustion rather than Inspiration. The GM can switch the official descriptions to SRD 5.2.1 wording for the 2024 rules or edit any description for campaign-specific wording. Open `!condition` after selecting tokens to see their active configured conditions and toggle another condition with one click. Use `!condition status` to review every linked character or NPC on the current player page that has a configured condition or another active marker. Select linked character tokens and use `!condition announce`, `!c-a`, or `!cond-!` to toggle a condition marker and report the verified result publicly or to their player controllers. `!condition help` is the quick-start guide.
 
 Common commands:
 
 * `!condition` → Open the selected-token condition menu.
+* `!condition status` or `!condition --status` → Show a GM-only current-page summary of configured conditions and other active markers, and update the complete `GameAssist Condition Status` handout.
 * `!condition help` → Open the quick-start guide.
 * `!condition <name>` → Show one configured condition description.
 * `!cond-<condition>` → Show the same description with a case-insensitive short reference command, such as `!cond-prone`, `!COND-EXHAUSTION`, or a DM-created condition key.
@@ -296,6 +299,8 @@ Player description access and player marker changes are separate settings. Both 
 The **Condition wording** setting offers **2014 SRD** and **2024 SRD** profiles. Switching profiles updates only the fifteen official condition names and descriptions: configured marker choices and additional campaign conditions are retained. Editing any description marks the wording source as **Campaign Custom**. Untouched ConditionAssist 1.0.0 defaults are upgraded to the complete 2014 list; previously edited or migrated definitions are preserved as custom wording.
 
 Condition definitions store a display name, plain-language description, and a marker. A marker may be a built-in id, a custom display name, an exact stored `Name::id` tag, or a numbered value such as `red@3`. ConditionAssist uses MarkerService for every read, add, remove, toggle, and marker-change observation, so unrelated markers and number overlays remain intact. Built-in markers render from Roll20's status artwork. Registered custom markers use their campaign-library image URL when Roll20 exposes it; an exact tag without readable registry artwork falls back to the marker name.
+
+The GM-only status workflow keeps chat readable while preserving the complete result. It lists configured conditions separately from other active markers, omits unmarked tokens, counts marked unlinked items separately, and updates the `GameAssist Condition Status` handout with every marked linked character or NPC on the current player page.
 
 The announcement workflow is GM-only. Select up to twelve linked character tokens, open `!condition announce` or either shorthand, choose a configured official or custom condition, then choose a final public or player-whisper button. That final button toggles the marker once on every captured token, verifies the stored result, and gives each character a direct statement such as **Mira is Prone** or **Orin is no longer Prone**. Saved definitions named exactly **Concentration** are displayed as **Concentrating** while their stored key, marker, and description remain intact. Summary messages include an expiring **Read Exact Wording** button; exact-wording choices include the configured description immediately. If a marker change cannot be verified, that token is omitted from the success message and the GM receives the failure details.
 
@@ -390,7 +395,7 @@ Config keys: `marker`, `randomize`.
 
 > **Marker service:** NPCManager uses the integrated `GameAssist.MarkerService`; death history remains independent from marker-write success.
 
-> **Module version:** NPCManager `1.2.0` in GameAssist v0.1.5.0. NPCManager `1.0.0` introduced the four-level history model; `1.1.0` added curated Arc management, hierarchical clearing, date rollover, and the report writer; `1.1.1` hardened standalone interoperability and new-token HP initialization; `1.2.0` migrates all marker behavior to MarkerService.
+> **Module version:** NPCManager `1.2.1` in GameAssist v0.1.5.0. NPCManager `1.0.0` introduced the four-level history model; `1.1.0` added curated Arc management, hierarchical clearing, date rollover, and the report writer; `1.1.1` hardened standalone interoperability and new-token HP initialization; `1.2.0` migrated marker behavior to MarkerService; `1.2.1` adds confirmation-gated marker repair without changing HP or history.
 
 NPCManager watches `change:graphic:bar1_value` for linked NPC characters with `npc=1`.
 
@@ -418,6 +423,8 @@ Commands:
 * `!npc-death-write --scope section` → Update one active handout.
 * `!npc-death-write --newSection "Name"` → Start/resume a Section and seed it with only missing deaths from the current Session.
 * `!npc-death-audit` → Check the current player page for HP/death-marker mismatches and update the `GameAssist NPC Death Audit` handout.
+* `!npc-death-repair` → Re-scan the current page and preview marker corrections based on current bar 1 HP.
+* `!npc-death-repair --confirm` → Apply the previewed rule after a fresh scan, changing only the configured death marker.
 * `!npc-death-arc` → Show arc bucket help and current arc counts.
 * `!npc-death-arc --name "Arc Name"` → Add selected linked PC/NPC tokens to that arc handout.
 * `!npc-death-arc --name "Arc Name" --session` → Append current Session bucket deaths to that arc handout.
@@ -430,7 +437,9 @@ The default Session name follows the sandbox's UTC date. Before any NPCManager c
 
 Arc handouts are curated rosters, not another hierarchy level. A linked creature appears once per Arc by default, so adding selected NPCs and later importing the full Session does not repeat those creatures. The Session import can enrich an existing selected entry with its death record. The management menu can remove one entry, remove all selected tokens, or undo the most recent Arc addition. `--allowDuplicates` is an explicit override for deliberate repetition. Selected-token Arc entries remain general story notes; revival annotations apply only after an entry is linked to Session death history.
 
-`!npc-death-audit` is the mismatch checker. Chat shows a summary plus bounded, token-specific **Add Death Marker** and **Remove Death Marker** groups. The complete list is written to the `GameAssist NPC Death Audit` handout. The audit checks linked NPC tokens on the current player page; player characters are not included. A clean audit means linked NPC tokens have death markers that match their HP. The audit may also note ignored unlinked page items such as party markers, scenery, labels, or props.
+`!npc-death-audit` is the read-only mismatch checker. Chat shows a summary plus bounded, token-specific **Add Death Marker** and **Remove Death Marker** groups. The complete list is written to the `GameAssist NPC Death Audit` handout. The audit checks linked NPC tokens on the current player page; player characters are not included. A clean audit means linked NPC tokens have death markers that match their HP. The audit may also note ignored unlinked page items such as party markers, scenery, labels, or props. Blank or non-numeric HP is reported separately and is never treated as zero by repair.
+
+When mismatches exist, **Review Marker Repairs** opens the separate `!npc-death-repair` preview. It explains exactly how many markers would be added or removed and requires confirmation. Confirmation re-scans current HP before acting, verifies each MarkerService change, and preserves HP, death history, report buckets, Arc records, and unrelated markers. This separation matters when the mismatch reveals housekeeping the DM would rather fix manually, such as a revived token whose marker was removed before its HP was restored.
 
 Disabling NPCManager stops its automation and requests removal of its configured marker from qualifying current-page tokens. Saved Campaign, Chapter, Section, Session, and Arc records remain available after the module is enabled again. Use the NPCManager clear and Arc-management controls when history should actually be removed.
 
@@ -574,6 +583,7 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!npc-death-clear` | `[--scope session] [--nested] [--confirm]` | Clear only the selected bucket, or add `--nested` to clear that level and its descendants. |
 |  | `!NPC-WR` / `!npc-death-write` | `[--all] [--scope <level>] [--newSection "Name"]` | Open the report writer, update selected handouts, or seed a new Section from the current Session. |
 |  | `!npc-death-audit` | — | Summarize current HP/death-marker mismatches and update the audit handout. |
+|  | `!npc-death-repair` | `[--confirm]` | Preview marker corrections from current HP; `--confirm` re-scans and changes only the configured death marker. |
 |  | `!npc-death-arc` | `[--name "Arc"] [--session] [--note "Text"] [--manage] [--allowDuplicates]` | Maintain a deduplicated Arc roster from selected tokens or the current Session; manage removal and undo in chat. |
 |  | `!ga-conc-status` | — | Show recent concentration DC/damage data per player. |
 |  | `!condition config` | — | Open ConditionAssist settings and condition-definition controls. |
@@ -590,6 +600,7 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!cond-<condition>` | — | Show any official or DM-created condition through the case-insensitive short reference prefix. |
 |  | `!condition add|remove|toggle <condition...>` | selected tokens | Change one or more condition markers when permitted. |
 | **GM** | `!condition announce` / `!c-a` / `!cond-!` | selected linked character tokens | Choose a condition, then toggle and verify its marker while announcing the result or exact wording publicly or to player controllers. |
+|  | `!condition status` / `!condition --status` | current player page | List linked characters and NPCs with configured conditions or other active markers. |
 |  | `!concentration` / `!cc` | `--damage N`, `--mode normal|adv|dis`, `--last`, `--off`, `--status`, `--config randomize on|off`, `--help` | Open or perform a concentration workflow. |
 
 ### 8.1 Configuration Safety
@@ -1107,9 +1118,10 @@ Run:
 !condition help
 !condition config
 !cond-prone
+!condition status
 ```
 
-Confirm MarkerService and ConditionAssist are running, and remove standalone StatusInfo if both tools are responding. The Settings panel identifies the active **2014 SRD**, **2024 SRD**, or **Campaign Custom** wording source. Use the profile buttons to restore an official set, or open **Manage Conditions** to edit one description or check its marker. Built-in ids, custom display names, exact `Name::id` tags, and numbered markers such as `red@3` are supported. Use the validated ConditionAssist importer for definition maps; generic `!ga-config set ConditionAssist conditions=...` is intentionally refused.
+Confirm MarkerService and ConditionAssist are running, and remove standalone StatusInfo if both tools are responding. The Settings panel identifies the active **2014 SRD**, **2024 SRD**, or **Campaign Custom** wording source. Use the profile buttons to restore an official set, or open **Manage Conditions** to edit one description or check its marker. Built-in ids, custom display names, exact `Name::id` tags, and numbered markers such as `red@3` are supported. `!condition status` separates markers that match configured conditions from other active markers so the GM can tell whether the marker exists but lacks a ConditionAssist definition. Use the validated ConditionAssist importer for definition maps; generic `!ga-config set ConditionAssist conditions=...` is intentionally refused.
 
 When a marker action fails, first verify the configured marker and target token rather than changing TokenMod permissions:
 
@@ -1174,6 +1186,7 @@ Run:
 ```roll20chat
 !ga-config get NPCManager deadMarker
 !npc-death-audit
+!npc-death-repair
 ```
 
 Confirm the token:
@@ -1185,6 +1198,8 @@ Confirm the token:
 * and has a valid configured marker.
 
 `!npc-death-audit` whispers a bounded list of the specific tokens needing a marker added or removed, and writes the complete mismatch list to the `GameAssist NPC Death Audit` handout. Player characters are intentionally excluded from this audit.
+
+The audit does not change markers. Use its **Review Marker Repairs** button or run `!npc-death-repair` to preview corrections. Read the proposed changes before confirming: repair follows current bar 1 HP, so a token whose HP is wrong should be corrected manually first. `!npc-death-repair --confirm` re-scans the page, changes only the configured death marker, and leaves HP and history untouched.
 
 `!npc-death-report` shows recorded bucket history in summary/detail views; it does not audit the page.
 
@@ -1395,8 +1410,8 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 | Item | Status in v0.1.5.0 | Notes |
 | --- | --- | --- |
 | MarkerService | **Implemented; sandbox acceptance pending** | One toggleable service owns GameAssist marker resolution, mutation, preservation, and observation. Disabling it turns off dependent modules without disabling unrelated features. |
-| Bundled marker consumers | **Migrated** | NPCManager 1.2.0, ConcentrationTracker 0.2.0, and DebugTools 0.2.0 no longer require standalone TokenMod. |
-| ConditionAssist 1.0.1 | **Implemented; sandbox acceptance pending** | Condition references with `!condition` and case-insensitive `!cond-<condition>` commands, selectable 2014/2024 SRD wording, campaign edits, marker artwork, verified marker-toggling announcements, validated legacy import, and MarkerService synchronization. |
+| Bundled marker consumers | **Migrated** | NPCManager 1.2.1, ConcentrationTracker 0.2.0, and DebugTools 0.2.0 no longer require standalone TokenMod. |
+| ConditionAssist 1.0.1 | **Implemented; sandbox acceptance pending** | Condition references with `!condition` and case-insensitive `!cond-<condition>` commands, accurate selected-token recognition, current-page condition/marker status, selectable 2014/2024 SRD wording, campaign edits, marker artwork, verified marker-toggling announcements, validated legacy import, and MarkerService synchronization. |
 | TokenAssist 1.0.1 | **Implemented; sandbox acceptance pending** | General token controls with `!token-assist` and `!ta`/`!ta-*` commands, temporary support for older `!token-mod` macros, MarkerService-backed markers, token-change observation, clear compatibility limits, and duplicate-install protection. |
 | Integrated architecture stabilization | **Required before release** | Upgrade, coexistence, migration, command, marker, and Roll20 sandbox checks tracked through Issues #28 and #29. |
 | Configuration export | **Implemented, partial** | Versioned configuration-only snapshot; no import/restore. |
@@ -1471,14 +1486,14 @@ This is a separate project and is not implemented in v0.1.5.0.
 * Migrated NPCManager, ConcentrationTracker, and DebugTools away from chat-generated TokenMod requests.
 * Removed standalone TokenMod dependency gating from bundled marker consumers.
 * Added service dependency safeguards: disabling MarkerService first disables its dependent modules and leaves unrelated GameAssist modules available.
-* Added `[GAMEASSIST:MODULES:CONDITIONASSIST]` and advanced the unreleased `GameAssist.ConditionAssist` to 1.0.1 with guided `!condition` menus, case-insensitive `!cond-<condition>` quick references, 2014/2024 SRD wording profiles, campaign-custom descriptions, built-in/custom marker artwork, verified marker-toggling public/player-whisper announcements, add/remove/toggle actions, configurable definitions, and guarded player permissions.
+* Added `[GAMEASSIST:MODULES:CONDITIONASSIST]` and advanced the unreleased `GameAssist.ConditionAssist` to 1.0.1 with guided `!condition` menus, accurate active-condition recognition, a GM current-page condition/marker status roster, case-insensitive `!cond-<condition>` quick references, 2014/2024 SRD wording profiles, campaign-custom descriptions, built-in/custom marker artwork, verified marker-toggling public/player-whisper announcements, add/remove/toggle actions, configurable definitions, and guarded player permissions.
 * Added validated, non-destructive migration from `state.STATUSINFO`, bounded ConditionAssist import/export, protected configuration maps, standalone StatusInfo warnings, and numbered/custom marker support through MarkerService.
 * Added `[GAMEASSIST:MODULES:TOKENASSIST]` and exposed `GameAssist.TokenAssist` 1.0.1 with `!token-assist` and `!ta`/`!ta-*` commands, common token/bar/aura/vision/light/movement/report operations, explicit-ID authorization, legacy configuration import, and token-change observation.
 * Pinned TokenAssist's TokenMod reference to release `0.8.88`, Roll20 repository commit `9d634d3149985dcf10333920b3f4c41f215f39fc`, and blob `fc6c9cb45ec2f2ee254a24f849e089507a0e610a`; preserved the applicable MIT notice and no-endorsement boundary.
 * Routed every TokenAssist status-marker command through MarkerService; kept older `!token-mod` syntax temporarily during v0.1.x, left that syntax to standalone TokenMod when detected, and kept TokenAssist commands available.
 * Fixed aura acceptance examples to set a visible radius, color, and circle shape; normalized aura option aliases and prevented movement trails from reconnecting to stale pre-command origins.
 * Preserved compatible settings from earlier v0.1.5.0 development builds while leaving malformed or unrelated unknown state available for the warning-only auditor.
-* Advanced NPCManager to `1.2.0`, ConcentrationTracker to `0.2.0`, and DebugTools to `0.2.0`.
+* Advanced NPCManager to `1.2.1`, adding a separate preview/confirm marker-repair command while keeping audits read-only; ConcentrationTracker and DebugTools remain at `0.2.0`.
 * Preserved existing module commands, configuration keys, death history, concentration runtime data, and unrelated token markers.
 * The release remains open until integrated-architecture stabilization and final sandbox acceptance are complete under Issues #28 and #29.
 

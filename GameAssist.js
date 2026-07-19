@@ -18,7 +18,7 @@ calls GameAssist.enqueue(). This package ships with eight configurable modules:
 - ConditionAssist 1.0.1 - Provides condition wording, artwork, announcements, and marker controls.
 - TokenAssist 1.0.1 - Provides general token controls through !token-assist and !ta commands.
 - ConcentrationTracker - Runs concentration checks and manages its configured marker.
-- NPCManager 1.2.0 - Tracks NPC death markers, history, reports, audits, and Arc rosters.
+- NPCManager 1.2.1 - Tracks NPC death markers, history, reports, audits, repair previews, and Arc rosters.
 - NPCHPRoller - Rolls npc_hpformula and writes the result to token bar 1.
 - DebugTools 0.2.0 - Optional dry-run-first GM diagnostics.
 
@@ -42,13 +42,13 @@ MODULE COMMANDS
 - CritFumble: !critfail, !critfumble help, !critfumble menu,
   !critfumble-<melee|ranged|thrown|spell|natural>,
   !confirm-crit-martial, !confirm-crit-magic
-- ConditionAssist: !condition, !cond-<condition>, !condition announce, !c-a, !cond-!, !condition help, !condition config,
+- ConditionAssist: !condition, !condition status, !cond-<condition>, !condition announce, !c-a, !cond-!, !condition help, !condition config,
   !condition add|remove|toggle <condition...>
 - TokenAssist: !token-assist, !ta, !ta-<action>, !token-assist help|about|config;
   older supported !token-mod macros continue temporarily and must be updated before v0.2.0.
 - ConcentrationTracker: !concentration, !cc, !ga-conc-status
 - NPCManager: !npc-death-help, !npc-death-report, !npc-death-buckets,
-  !npc-death-clear, !npc-death-write, !npc-wr, !npc-death-audit,
+  !npc-death-clear, !npc-death-write, !npc-wr, !npc-death-audit, !npc-death-repair,
   !npc-death-arc
 - NPCHPRoller: !npc-hp-selected, !npc-hp-all
 - DebugTools: !ga-debug damage|marker|save
@@ -65,8 +65,8 @@ V0.1.5.0 MARKER ARCHITECTURE
 - Disabling MarkerService also disables ConditionAssist, TokenAssist, NPCManager,
   ConcentrationTracker, and DebugTools while CritFumble, ConfigUI, and
   NPCHPRoller remain available.
-- The public v0.1.5.0 release remains gated on TokenAssist sandbox acceptance
-  and full integrated-architecture stabilization.
+- The public v0.1.5.0 release remains gated on the complete clean-install and
+  upgrade smoke tracks plus the final publication audit.
 - Queue timeouts release the queue but cannot terminate Roll20 operations.
 - Configuration snapshots contain configuration only, never runtime caches.
 
@@ -218,7 +218,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             announcementMutationSuppressionMs: 5000,
             announcementGrantMs: 1000 * 60 * 10,
             announcementGrantLimit: 50,
-            maxAnnouncementTokens: 12
+            maxAnnouncementTokens: 12,
+            statusChatLimit: 20
         }),
         config: Object.freeze({
             unsafeKeys: Object.freeze(['__proto__', 'prototype', 'constructor'])
@@ -229,7 +230,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Removed the obsolete standalone TokenMod verification delay and added bounded condition-definition, import, announcement-selection, private-reference, and announcement-observer suppression limits for ConditionAssist; rollback: restore standalone request dispatch or revise the condition limits here.
+    // Changed (v0.1.5.0): Removed the obsolete standalone TokenMod verification delay and added bounded condition-definition, import, announcement-selection, private-reference, announcement-observer suppression, and current-page status limits for ConditionAssist; rollback: restore standalone request dispatch or revise the condition limits here.
     // Decision log:
     //   CHOICE: Keep NPC initialization and snapshot knobs centralized while removing the unused external marker delay - ALT: retain the dead setting; REJECTED: implied behavior no caller performs.
     // Prior notes:
@@ -3274,7 +3275,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: GameAssist condition descriptions and controls
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONDITIONASSIST", title: "ConditionAssist",
-    //   guarantees: ["2014 SRD condition wording is the default, with selectable 2024 SRD and campaign-custom wording","!condition and case-insensitive !cond-[condition] provide condition-reference workflows for official and campaign conditions","Built-in and registered custom marker artwork may accompany readable condition text","GM announcements toggle and verify selected token markers before reporting character-first is/is-no-longer results through explicit public/private delivery","All condition marker reads, writes, and observations use CORE:MARKERSERVICE","Legacy state.STATUSINFO may be copied through a validated migration and is never silently deleted"],
+    //   guarantees: ["2014 SRD condition wording is the default, with selectable 2024 SRD and campaign-custom wording","!condition and case-insensitive !cond-[condition] provide condition-reference workflows for official and campaign conditions","Selected-token menus and current-page status report configured conditions from actual marker state and distinguish other active markers","Built-in and registered custom marker artwork may accompany readable condition text","GM announcements toggle and verify selected token markers before reporting character-first is/is-no-longer results through explicit public/private delivery","All condition marker reads, writes, and observations use CORE:MARKERSERVICE","Legacy state.STATUSINFO may be copied through a validated migration and is never silently deleted"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.ConditionAssist"],
     //   last_updated_version: "v0.1.5.0",
@@ -3293,6 +3294,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const MODULE_VERSION = '1.0.1';
         const CONFIG_SCHEMA_VERSION = 2;
         const PRIMARY_COMMAND = 'condition';
+        const STATUS_HANDOUT_NAME = 'GameAssist Condition Status';
         const modState = GameAssist.getState(MODULE_NAME);
         const originalConfigKeys = new Set(Object.keys(modState.config || {}));
         const hadConditionConfig = Boolean(
@@ -4103,13 +4105,149 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendAnnouncementConditionMenu(msg, targetResult.targets, targetResult.ignored);
         }
 
+        function markerEntryLabel(entry, registryMarkers = []) {
+            const custom = registryMarkers.find(marker =>
+                GameAssist.MarkerService.normalizeId(marker.tag) === entry.normalizedId
+            );
+            const base = custom?.name || String(entry.id || '')
+                .replace(/::.*$/, '')
+                .replace(/[-_]+/g, ' ')
+                .replace(/\b\w/g, letter => letter.toUpperCase()) || '(Unknown marker)';
+            return entry.number === null ? base : `${base} (${entry.number})`;
+        }
+
+        /**
+         * inspectTokenConditions - Read one token once, then map each stored marker
+         * to configured conditions while retaining readable untracked markers.
+         */
+        function inspectTokenConditions(token) {
+            const snapshot = GameAssist.MarkerService.read(token);
+            if (!snapshot.ok) {
+                return { ok: false, message: snapshot.message || 'Token markers could not be read.', tracked: [], other: [] };
+            }
+
+            const tracked = new Map();
+            const matchedEntryIndexes = new Set();
+            snapshot.entries.forEach(entry => {
+                const matches = conditionsForMarkerEntry(entry);
+                if (!matches.length) return;
+                matchedEntryIndexes.add(entry.index);
+                matches.forEach(condition => tracked.set(condition.key, condition.name));
+            });
+
+            const registry = GameAssist.MarkerService.getRegistry();
+            const registryMarkers = Array.isArray(registry.markers) ? registry.markers : [];
+            const other = snapshot.entries
+                .filter(entry => !matchedEntryIndexes.has(entry.index))
+                .map(entry => markerEntryLabel(entry, registryMarkers));
+
+            return {
+                ok: true,
+                tracked: Array.from(tracked.values()).sort((a, b) => a.localeCompare(b)),
+                other,
+                entries: snapshot.entries
+            };
+        }
+
         function activeConditionNames(token) {
-            return Object.entries(getConditions())
-                .filter(([, condition]) => {
-                    const result = GameAssist.MarkerService.has(token, condition.marker);
-                    return result.ok && result.present;
-                })
-                .map(([, condition]) => condition.name);
+            const result = inspectTokenConditions(token);
+            return result.ok ? result.tracked : [];
+        }
+
+        function writeConditionStatusHandout(rows, unlinkedWithMarkers, readFailures) {
+            let handout = findObjs({ _type: 'handout', name: STATUS_HANDOUT_NAME })[0];
+            if (!handout) handout = createObj('handout', { name: STATUS_HANDOUT_NAME, archived: false });
+            if (!handout) return false;
+
+            const renderedRows = rows.length
+                ? rows.map(row => [
+                    `<h3>${_sanitize(row.name)} (${row.type})</h3>`,
+                    `<p><strong>Conditions:</strong> ${_sanitize(row.tracked.join(', ') || 'None configured for these markers')}<br>`,
+                    row.other.length ? `<strong>Other markers:</strong> ${_sanitize(row.other.join(', '))}` : '<strong>Other markers:</strong> None',
+                    '</p>'
+                ].join('')).join('\n')
+                : '<p>No linked characters or NPCs on the current player page have active markers.</p>';
+            const notes = [
+                '<h2>Current Conditions and Markers</h2>',
+                `<p><strong>Updated:</strong> ${_sanitize(localNow())}</p>`,
+                '<p>Scope: linked character and NPC tokens on the current player page. Unmarked tokens are omitted. Other markers are not treated as configured conditions.</p>',
+                renderedRows,
+                `<p><strong>Marked unlinked tokens ignored:</strong> ${unlinkedWithMarkers}<br>`,
+                `<strong>Marker read failures:</strong> ${readFailures}</p>`
+            ].join('\n');
+            handout.set('notes', notes);
+            return true;
+        }
+
+        function sendConditionStatus(msg) {
+            if (!playerIsGM(msg.playerid)) {
+                sendPanel('Condition Status', 'Only the GM can review conditions and markers across the current player page.', { msg });
+                return;
+            }
+
+            const pageId = Campaign().get('playerpageid');
+            const tokens = findObjs({
+                _type: 'graphic',
+                _pageid: pageId,
+                layer: 'objects'
+            });
+            const rows = [];
+            let unlinkedWithMarkers = 0;
+            let readFailures = 0;
+
+            tokens.forEach(token => {
+                const status = inspectTokenConditions(token);
+                if (!status.ok) {
+                    readFailures++;
+                    return;
+                }
+                if (!status.entries.length) return;
+
+                const linked = GameAssist.getLinkedCharacter(token);
+                if (!linked) {
+                    unlinkedWithMarkers++;
+                    return;
+                }
+
+                const isNPC = String(getAttrByName(linked.character.id, 'npc') || '') === '1';
+                rows.push({
+                    name: token.get('name') || linked.character.get('name') || '(Unnamed token)',
+                    type: isNPC ? 'NPC' : 'Character',
+                    tracked: status.tracked,
+                    other: status.other
+                });
+            });
+
+            rows.sort((left, right) => left.name.localeCompare(right.name));
+            const wroteHandout = writeConditionStatusHandout(rows, unlinkedWithMarkers, readFailures);
+            const visibleRows = rows.slice(0, POLICY.conditions.statusChatLimit);
+            const body = [
+                rows.length
+                    ? visibleRows.map(row => [
+                        '<div style="margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #ddd;">',
+                        `<strong>${_sanitize(row.name)}</strong> <span style="color:#666;">(${row.type})</span><br>`,
+                        `<strong>Conditions:</strong> ${_sanitize(row.tracked.join(', ') || 'None configured for these markers')}<br>`,
+                        row.other.length ? `<strong>Other markers:</strong> ${_sanitize(row.other.join(', '))}` : '',
+                        '</div>'
+                    ].join('')).join('')
+                    : '<div>No linked characters or NPCs on the current player page have active markers.</div>',
+                rows.length > visibleRows.length
+                    ? `<div><strong>More results:</strong> ${rows.length - visibleRows.length} additional marked token${rows.length - visibleRows.length === 1 ? '' : 's'} are not shown in this chat summary.</div>`
+                    : '',
+                unlinkedWithMarkers
+                    ? `<div style="margin-top:6px;color:#666;">Ignored ${unlinkedWithMarkers} marked unlinked token${unlinkedWithMarkers === 1 ? '' : 's'} such as scenery, labels, or props.</div>`
+                    : '',
+                readFailures
+                    ? `<div style="margin-top:6px;color:#7a3d00;">Could not read markers from ${readFailures} token${readFailures === 1 ? '' : 's'}.</div>`
+                    : '',
+                `<div style="margin-top:6px;"><strong>Complete roster:</strong> ${wroteHandout ? STATUS_HANDOUT_NAME : 'The handout could not be updated.'}</div>`,
+                '<div style="margin-top:8px;">',
+                GameAssist.createButton('Refresh Status', '!condition status'),
+                ' ', GameAssist.createButton('Condition Menu', '!condition'),
+                '</div>',
+                '<div style="margin-top:7px;font-size:0.9em;">Scope: linked character and NPC tokens on the current player page. Unmarked tokens are omitted. Other markers are shown separately and are not treated as configured conditions.</div>'
+            ].join('');
+            sendPanel('Current Conditions and Markers', body, { msg, gmOnly: true });
         }
 
         function sendConditionMenu(msg) {
@@ -4130,6 +4268,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 conditionButtons('toggle'),
                 '<div style="margin-top:8px;">',
                 playerIsGM(msg.playerid) ? `${GameAssist.createButton('Announce a Condition', '!condition announce')} ` : '',
+                playerIsGM(msg.playerid) ? `${GameAssist.createButton('Condition Status', '!condition status')} ` : '',
                 GameAssist.createButton('Help', '!condition help'),
                 playerIsGM(msg.playerid) ? ` ${GameAssist.createButton('Settings', '!condition config')}` : '',
                 '</div>'
@@ -4148,6 +4287,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<code>!condition add prone</code> - add to selected tokens<br>',
                 '<code>!condition remove prone</code> - remove from selected tokens<br>',
                 '<code>!condition toggle prone</code> - switch the marker on or off<br>',
+                '<code>!condition status</code> - list current-page characters and NPCs with configured conditions or other markers<br>',
                 '<code>!condition announce</code>, <code>!c-a</code>, or <code>!cond-!</code> - toggle and communicate a condition for selected linked characters<br>',
                 '<code>!condition config</code> - GM settings and condition definitions</div>',
                 `<div style="margin-top:7px;"><strong>Rules wording</strong><br>${_sanitize(rulesProfileLabel())}. The GM can switch between 2014 and 2024 SRD wording or edit any description.</div>`,
@@ -4533,6 +4673,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 sendHelp(msg);
                 return;
             }
+            if (first === 'status' || first === '--status') {
+                sendConditionStatus(msg);
+                return;
+            }
             if (first === 'details') {
                 handleAnnouncementDetails(msg, body);
                 return;
@@ -4686,7 +4830,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 'WARN'
             );
         }
-        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: !condition opens the menu; !cond-[condition] shows a quick rules reference.`, 'INFO', { startup: true });
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: !condition opens the menu; !condition status reviews the current page; !cond-[condition] shows a quick rules reference.`, 'INFO', { startup: true });
     }, {
         enabled: true,
         events: ['change:graphic:statusmarkers'],
@@ -4695,7 +4839,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['conditions', 'rulesProfile', 'legacyStatusInfoMigration']
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Advanced unreleased ConditionAssist to 1.0.1 with case-insensitive !cond-[condition] references for official/custom definitions, !c-a and !cond-! announcement aliases, complete 2014/2024/campaign wording, built-in/custom marker artwork, selected-character announcements that toggle and verify marker state, character-first is/is-no-longer reporting, Concentrating display-name repair, explicit public/player-whisper delivery, bounded private-reference buttons, duplicate-marker warnings, schema-v2 import/export, and automatic repair of untouched 1.0.0 defaults.
+    // Changed (v0.1.5.0): Advanced unreleased ConditionAssist to 1.0.1 with accurate selected-token condition recognition, a bounded GM current-page condition/marker status view plus complete status handout, case-insensitive !cond-[condition] references for official/custom definitions, !c-a and !cond-! announcement aliases, complete 2014/2024/campaign wording, built-in/custom marker artwork, selected-character announcements that toggle and verify marker state, character-first is/is-no-longer reporting, Concentrating display-name repair, explicit public/player-whisper delivery, bounded private-reference buttons, duplicate-marker warnings, schema-v2 import/export, and automatic repair of untouched 1.0.0 defaults.
     // Decision log:
     //   CHOICE: Name the GameAssist module ConditionAssist - ALT: retain StatusInfo branding; REJECTED: this is an independently maintained adaptation with a different lifecycle and marker architecture.
     //   CHOICE: Keep permanent !condition compatibility plus one optional custom alias - ALT: replace the command; REJECTED: upgrades should not strand familiar workflows.
@@ -4708,6 +4852,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Toggle markers only when the GM chooses a final delivery button - ALT: mutate while browsing menus; REJECTED: opening or revisiting a menu must not change token state.
     //   CHOICE: Report each verified result as "character is condition" or "character is no longer condition" - ALT: grouped or creative narration; REJECTED: character-first statements are clearer across varied conditions and mixed selections.
     //   CHOICE: Suppress ordinary marker-add descriptions only during announcement-owned writes - ALT: allow both panels; REJECTED: one GM action should not produce duplicate condition messages.
+    //   CHOICE: Show configured conditions and other markers separately in the GM status roster - ALT: label every marker as a condition; REJECTED: death, concentration, counters, and campaign markers may not represent ConditionAssist definitions.
     //   CHOICE: Omit upstream character-sheet attribute synchronization in this checkpoint - ALT: mutate sheet-specific attributes; REJECTED: GameAssist's condition contract is token-marker synchronization through MarkerService.
     // SRD 5.1 attribution:
     //   This work includes material taken from the System Reference Document 5.1 ("SRD 5.1") by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode.
@@ -5857,16 +6002,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:TOKENASSIST] END
     // =============================================================================
 
-    // ————— NPC MANAGER MODULE v1.2.0 —————
+    // ————— NPC MANAGER MODULE v1.2.1 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:NPCMANAGER] BEGIN
     // Section Title: NPCManager module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:NPCMANAGER", title: "NPCManager",
-    //   guarantees: ["Auto toggle resolved configured dead marker based on known HP transitions; maintain hierarchical death-history handouts and curated arc rosters", "NPCHPRoller auto-roll initialization is not recorded as death/revival history", "Death-marker reads and writes use CORE:MARKERSERVICE"],
+    //   guarantees: ["Auto toggle resolved configured dead marker based on known HP transitions; maintain hierarchical death-history handouts and curated arc rosters", "Audits are read-only; separately confirmed repair commands re-scan current HP and change only the configured death marker", "NPCHPRoller auto-roll initialization is not recorded as death/revival history", "Death-marker reads and writes use CORE:MARKERSERVICE"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   last_updated_version: "v0.1.5.0",
-    //   independent_versions: { module_version: "1.2.0" } }
+    //   independent_versions: { module_version: "1.2.1" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:NPCMANAGER monitors token HP changes to set or clear the configured
@@ -5912,7 +6057,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const DEATH_REPORT_SUMMARY_LIMIT = POLICY.runtime.deathReportSummaryLimit;
         const DEATH_REPORT_DETAIL_LIMIT = POLICY.runtime.deathReportDetailLimit;
         const AUDIT_HANDOUT_NAME = 'GameAssist NPC Death Audit';
-        const NPCMANAGER_MODULE_VERSION = '1.2.0';
+        const NPCMANAGER_MODULE_VERSION = '1.2.1';
         const initializingNpcHp = new Set();
 
         function currentSessionDateKey(raw = now()) {
@@ -6015,6 +6160,60 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 lines.push('', `Showing ${limit} of ${entries.length}. Run again after fixing these to see the next set.`);
             }
             return lines;
+        }
+
+        /**
+         * collectDeathAudit - Build the shared read-only view used by audit and repair.
+         * Blank or invalid HP is reported but never treated as zero for automatic repair.
+         */
+        function collectDeathAudit() {
+            const pageId = Campaign().get('playerpageid');
+            const tokens = findObjs({
+                _pageid: pageId,
+                _type: 'graphic',
+                layer: 'objects'
+            });
+            const resolution = getDeathMarkerResolution();
+            const needsMarker = [];
+            const needsClear = [];
+            const unlinked = [];
+            const invalidHp = [];
+
+            for (const token of tokens) {
+                const link = GameAssist.getLinkedCharacter(token);
+                if (!link) {
+                    unlinked.push(token.get('name') || '(Unnamed)');
+                    continue;
+                }
+                if (!getNPCContext(token, link)) continue;
+
+                const hp = parseTrackedHP(token.get('bar1_value'));
+                if (hp === null) {
+                    invalidHp.push(token.get('name') || '(Unnamed NPC)');
+                    continue;
+                }
+
+                const isDead = resolution.ok && GameAssist.MarkerService.has(token, resolution.id);
+                const entry = {
+                    token,
+                    name: token.get('name') || '(Unnamed)',
+                    id: token.id,
+                    hp,
+                    markers: token.get('statusmarkers') || '(none)'
+                };
+                if (hp < 1 && !isDead) needsMarker.push(entry);
+                else if (hp >= 1 && isDead) needsClear.push(entry);
+            }
+
+            return {
+                pageId,
+                resolution,
+                needsMarker,
+                needsClear,
+                unlinked,
+                invalidHp,
+                mismatchCount: needsMarker.length + needsClear.length
+            };
         }
 
         function normalizeScope(scope, fallback = 'session') {
@@ -6612,8 +6811,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 {
                     label: 'Current Page Audit',
                     value: [
-                        'Audit compares linked NPC HP with the configured death marker. Player characters are excluded.',
-                        GameAssist.createButton('Run Audit', '!npc-death-audit')
+                        'Audit compares linked NPC HP with the configured death marker. Player characters are excluded, and opening the audit never changes a token.',
+                        GameAssist.createButton('Run Audit', '!npc-death-audit'),
+                        GameAssist.createButton('Review Marker Repairs', '!npc-death-repair')
                     ]
                 },
                 {
@@ -6621,6 +6821,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     value: [
                         '!npc-death-report --scope campaign|chapter|section|session',
                         '!npc-wr = report writer',
+                        '!npc-death-repair = preview marker corrections from current HP',
                         '!npc-death-clear --scope chapter --nested --confirm',
                         '!npc-death-arc --name "Arc Name" --manage'
                     ]
@@ -6982,7 +7183,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             };
         }
 
-        function renderAuditHandout(needsMarker, needsClear, invalid) {
+        function renderAuditHandout(needsMarker, needsClear, unlinked, invalidHp) {
             function renderList(title, entries) {
                 if (!entries.length) return `<h3>${htmlText(title)}</h3><p>None.</p>`;
                 return [
@@ -7002,9 +7203,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 `<p><strong>Configured death marker:</strong> ${htmlText(modState.config.deadMarker || 'dead')}</p>`,
                 renderList('Needs Death Marker', needsMarker),
                 renderList('Needs Marker Cleared', needsClear),
-                invalid.length
-                    ? `<h3>Ignored Unlinked Items</h3><p>${htmlText(summarizeAuditNames(invalid, 20))}</p><p>Expected for party markers, scenery, labels, or props.</p>`
-                    : '<h3>Ignored Unlinked Items</h3><p>None.</p>'
+                unlinked.length
+                    ? `<h3>Ignored Unlinked Items</h3><p>${htmlText(summarizeAuditNames(unlinked, 20))}</p><p>Expected for party markers, scenery, labels, or props.</p>`
+                    : '<h3>Ignored Unlinked Items</h3><p>None.</p>',
+                invalidHp.length
+                    ? `<h3>Ignored Invalid HP</h3><p>${htmlText(summarizeAuditNames(invalidHp, 20))}</p><p>Blank or non-numeric HP is never treated as zero by marker repair.</p>`
+                    : '<h3>Ignored Invalid HP</h3><p>None.</p>',
+                '<p><strong>Safety:</strong> The audit is read-only. The separate repair command re-scans current HP, requires confirmation, and changes only the configured death marker.</p>'
             ].join('\n');
         }
 
@@ -7432,69 +7637,37 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }, 'NPCManager', { gmOnly: true });
 
-        GameAssist.onCommand('!npc-death-audit', msg => {
+        function showDeathAudit() {
             prepareNPCManagerActivity();
-            const pageId = Campaign().get('playerpageid');
-            const tokens = findObjs({
-                _pageid: pageId,
-                _type: 'graphic',
-                layer: 'objects'
-            });
-
-            const needsMarker = [];
-            const needsClear = [];
-            const invalid = [];
-            for (let token of tokens) {
-                const link = GameAssist.getLinkedCharacter(token);
-                if (!link) {
-                    invalid.push(token.get('name') || '(Unnamed)');
-                    continue;
-                }
-
-                if (!getNPCContext(token, link)) continue;
-
-                const hp = parseInt(token.get('bar1_value'), 10) || 0;
-                const isDead = GameAssist.MarkerService.has(token, modState.config.deadMarker);
-
-                if (hp < 1 && !isDead) {
-                    needsMarker.push({
-                        name: token.get('name') || '(Unnamed)',
-                        id: token.id,
-                        hp,
-                        markers: token.get('statusmarkers') || '(none)'
-                    });
-                } else if (hp >= 1 && isDead) {
-                    needsClear.push({
-                        name: token.get('name') || '(Unnamed)',
-                        id: token.id,
-                        hp,
-                        markers: token.get('statusmarkers') || '(none)'
-                    });
-                }
-            }
-
-            const mismatchCount = needsMarker.length + needsClear.length;
-            setHandoutNotes(AUDIT_HANDOUT_NAME, renderAuditHandout(needsMarker, needsClear, invalid));
+            const audit = collectDeathAudit();
+            setHandoutNotes(AUDIT_HANDOUT_NAME, renderAuditHandout(
+                audit.needsMarker,
+                audit.needsClear,
+                audit.unlinked,
+                audit.invalidHp
+            ));
             const fields = [
                 {
                     label: 'Result',
-                    value: mismatchCount
-                        ? `⚠️ ${mismatchCount} linked NPC${mismatchCount === 1 ? '' : 's'} need death-marker attention.`
-                        : '✅ No death-marker problems found for linked NPCs.'
+                    value: !audit.resolution.ok
+                        ? deathMarkerWarning(audit.resolution)
+                        : (audit.mismatchCount
+                            ? `⚠️ ${audit.mismatchCount} linked NPC${audit.mismatchCount === 1 ? '' : 's'} need death-marker attention.`
+                            : '✅ No death-marker problems found for linked NPCs.')
                 }
             ];
 
-            if (needsMarker.length) {
+            if (audit.needsMarker.length) {
                 fields.push({
-                    label: `Add Death Marker (${needsMarker.length})`,
-                    value: formatAuditEntries(needsMarker)
+                    label: `Add Death Marker (${audit.needsMarker.length})`,
+                    value: formatAuditEntries(audit.needsMarker)
                 });
             }
 
-            if (needsClear.length) {
+            if (audit.needsClear.length) {
                 fields.push({
-                    label: `Remove Death Marker (${needsClear.length})`,
-                    value: formatAuditEntries(needsClear)
+                    label: `Remove Death Marker (${audit.needsClear.length})`,
+                    value: formatAuditEntries(audit.needsClear)
                 });
             }
 
@@ -7514,33 +7687,172 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 {
                     label: 'Counts',
                     value: [
-                        `Needs marker: ${needsMarker.length}`,
-                        `Needs marker cleared: ${needsClear.length}`,
-                        `Ignored unlinked: ${invalid.length}`
+                        `Needs marker: ${audit.needsMarker.length}`,
+                        `Needs marker cleared: ${audit.needsClear.length}`,
+                        `Ignored unlinked: ${audit.unlinked.length}`,
+                        `Ignored invalid HP: ${audit.invalidHp.length}`
                     ]
                 }
             );
 
-            if (invalid.length) {
+            if (audit.unlinked.length) {
                 fields.push({
-                    label: `Ignored Unlinked (${invalid.length})`,
+                    label: `Ignored Unlinked (${audit.unlinked.length})`,
                     value: [
-                        summarizeAuditNames(invalid),
+                        summarizeAuditNames(audit.unlinked),
                         'Expected for party markers, scenery, labels, or props.'
                     ]
                 });
             }
 
+            if (audit.invalidHp.length) {
+                fields.push({
+                    label: `Ignored Invalid HP (${audit.invalidHp.length})`,
+                    value: [
+                        summarizeAuditNames(audit.invalidHp),
+                        'Blank or non-numeric HP is not treated as zero.'
+                    ]
+                });
+            }
+
+            fields.push({
+                label: 'Actions',
+                value: [
+                    GameAssist.createButton('Refresh Audit', '!npc-death-audit'),
+                    ...(audit.resolution.ok && audit.mismatchCount
+                        ? [GameAssist.createButton('Review Marker Repairs', '!npc-death-repair')]
+                        : [])
+                ]
+            });
+
             sendAuditReport(fields);
+        }
+
+        function showDeathRepair(confirmed = false) {
+            prepareNPCManagerActivity();
+            const audit = collectDeathAudit();
+
+            if (!audit.resolution.ok) {
+                sendNPCPanel('NPC Death Marker Repair', [
+                    { label: 'Result', value: deathMarkerWarning(audit.resolution) },
+                    { label: 'Changed', value: 'Nothing. Repair cannot run until the configured marker is recognized.' },
+                    { label: 'Actions', value: GameAssist.createButton('Back to Audit', '!npc-death-audit') }
+                ]);
+                return;
+            }
+
+            if (!audit.mismatchCount) {
+                sendNPCPanel('NPC Death Marker Repair', [
+                    { label: 'Result', value: 'No marker repairs are currently needed.' },
+                    { label: 'Changed', value: 'Nothing.' },
+                    { label: 'Actions', value: GameAssist.createButton('Run Audit', '!npc-death-audit') }
+                ]);
+                return;
+            }
+
+            if (!confirmed) {
+                sendNPCPanel('Review NPC Death Marker Repairs', [
+                    {
+                        label: 'Proposed Changes',
+                        value: [
+                            `Add ${modState.config.deadMarker || 'dead'} to ${audit.needsMarker.length} NPC${audit.needsMarker.length === 1 ? '' : 's'} with HP below 1.`,
+                            `Remove ${modState.config.deadMarker || 'dead'} from ${audit.needsClear.length} NPC${audit.needsClear.length === 1 ? '' : 's'} with positive HP.`
+                        ]
+                    },
+                    {
+                        label: 'Important',
+                        value: [
+                            'This follows the HP currently shown on bar 1.',
+                            'It changes only the configured death marker. It does not change HP, death history, bucket records, or Arc records.',
+                            'If HP is wrong, cancel and correct HP before repairing markers.'
+                        ]
+                    },
+                    {
+                        label: 'Actions',
+                        value: [
+                            GameAssist.createButton('Confirm Marker Repairs', '!npc-death-repair --confirm'),
+                            GameAssist.createButton('Cancel', '!npc-death-audit')
+                        ]
+                    }
+                ]);
+                return;
+            }
+
+            let added = 0;
+            let removed = 0;
+            const failed = [];
+            const apply = (entries, action) => {
+                entries.forEach(entry => {
+                    const token = getObj('graphic', entry.id);
+                    if (!token) {
+                        failed.push(`${entry.name}: token no longer exists`);
+                        return;
+                    }
+                    const result = GameAssist.MarkerService[action](
+                        token,
+                        modState.config.deadMarker || 'dead',
+                        { owner: 'NPCManager' }
+                    );
+                    if (!result.ok || result.verified !== true) {
+                        failed.push(`${entry.name}: ${result.message || result.code || 'marker change was not verified'}`);
+                        return;
+                    }
+                    if (result.changed) {
+                        if (action === 'add') added++;
+                        else removed++;
+                    }
+                });
+            };
+
+            apply(audit.needsMarker, 'add');
+            apply(audit.needsClear, 'remove');
+
+            const after = collectDeathAudit();
+            setHandoutNotes(AUDIT_HANDOUT_NAME, renderAuditHandout(
+                after.needsMarker,
+                after.needsClear,
+                after.unlinked,
+                after.invalidHp
+            ));
+            sendNPCPanel('NPC Death Marker Repair Complete', [
+                {
+                    label: 'Changed',
+                    value: [
+                        `Markers added: ${added}`,
+                        `Markers removed: ${removed}`,
+                        `Changes not completed: ${failed.length}`
+                    ]
+                },
+                {
+                    label: 'Remaining Mismatches',
+                    value: after.mismatchCount
+                        ? `${after.mismatchCount} linked NPC${after.mismatchCount === 1 ? '' : 's'} still need attention.`
+                        : 'None.'
+                },
+                ...(failed.length ? [{ label: 'Needs Manual Attention', value: summarizeAuditNames(failed, AUDIT_DETAIL_LIMIT) }] : []),
+                {
+                    label: 'Preserved',
+                    value: 'HP, death history, bucket records, Arc records, and unrelated markers were not changed.'
+                },
+                { label: 'Actions', value: GameAssist.createButton('Run Audit', '!npc-death-audit') }
+            ]);
+        }
+
+        GameAssist.onCommand('!npc-death-audit', () => {
+            showDeathAudit();
+        }, 'NPCManager', { gmOnly: true });
+
+        GameAssist.onCommand('!npc-death-repair', msg => {
+            showDeathRepair(/(?:^|\s)--confirm(?:\s|$)/i.test(String(msg.content || '')));
         }, 'NPCManager', { gmOnly: true });
 
         GameAssist.onEvent('add:graphic', handleTokenAdd, 'NPCManager');
         GameAssist.onEvent('change:graphic:bar1_value', handleTokenChange, 'NPCManager');
-        GameAssist.log('NPCManager', `${NPCMANAGER_MODULE_VERSION} Ready: Auto death tracking + hierarchical reports/writer/audits/arcs`, 'INFO', { startup: true });
+        GameAssist.log('NPCManager', `${NPCMANAGER_MODULE_VERSION} Ready: Auto death tracking + hierarchical reports/writer/audits/confirmed marker repair/arcs`, 'INFO', { startup: true });
     }, {
         enabled: true,
         events: ['add:graphic', 'change:graphic:bar1_value'],
-        prefixes: ['!npc-death-help', '!npc-death-report', '!npc-death-clear', '!npc-death-audit', '!npc-death-buckets', '!npc-death-write', '!npc-wr', '!npc-death-arc'],
+        prefixes: ['!npc-death-help', '!npc-death-report', '!npc-death-clear', '!npc-death-audit', '!npc-death-repair', '!npc-death-buckets', '!npc-death-write', '!npc-wr', '!npc-death-arc'],
         dependsOn: ['MarkerService'],
         preserveRuntimeOnDisable: true,
         teardown: () => {
@@ -7582,10 +7894,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): NPCManager module_version advanced to 1.2.0; all marker reads, writes, audits, and teardown use CORE:MARKERSERVICE with no standalone TokenMod dependency. Writes preserve configured numbered overlays such as dead@2.
+    // Changed (v0.1.5.0): NPCManager module_version advanced to 1.2.1; audits remain read-only while !npc-death-repair previews, confirms, re-scans, and verifies death-marker corrections without changing HP or history. All marker reads, writes, audits, repair actions, and teardown use CORE:MARKERSERVICE with no standalone TokenMod dependency. Writes preserve configured numbered overlays such as dead@2.
     // Decision log:
     //   CHOICE: Keep death-history recording independent from marker mutation success - ALT: record only after marker success; REJECTED: history should describe HP events even when a visual marker cannot change.
     //   CHOICE: Identify Arc creatures by token before character/name fallbacks - ALT: character-only identity; REJECTED: multiple NPC tokens may share one character sheet.
+    //   CHOICE: Require a separate preview and confirmation before repairing audit mismatches - ALT: repair from the audit command; REJECTED: a marker/HP mismatch may reveal HP housekeeping the DM wants to correct manually.
+    //   CHOICE: Ignore blank or invalid HP during audit repair - ALT: coerce it to zero; REJECTED: automatic repair must not mark an incompletely configured NPC as dead.
     // Prior notes:
     //   v0.1.4.7: Suppressed placeholder HP transitions, advanced NPCManager to 1.1.1, and used verified TokenMod --api-as marker requests.
     //   v0.1.4.5: Advanced NPCManager through 1.0.0 and 1.1.0 for scoped history, handouts, Arc curation, hierarchical clearing, date-managed Sessions, report writing, retention, deduplication, and help.

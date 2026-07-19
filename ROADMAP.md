@@ -42,9 +42,9 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | GameAssist status readability | Complete | [#23](https://github.com/Mord-Eagle/GameAssist/issues/23) | The plain-language `!ga-status` system check and optional troubleshooting panel shipped in v0.1.4.6. |
 | Standalone interoperability stabilization | Complete | [#24](https://github.com/Mord-Eagle/GameAssist/issues/24) | v0.1.4.7 uses TokenMod's documented `--api-as` path, verifies marker results, reports optional StatusInfo evidence, and passed the Roll20 sandbox acceptance pass. |
 | MarkerService checkpoint | Complete | [#25](https://github.com/Mord-Eagle/GameAssist/issues/25) | The shared marker core, consumer migrations, lifecycle safeguards, focused regressions, and Roll20 checkpoint are complete. |
-| ConditionAssist checkpoint | Complete | [#26](https://github.com/Mord-Eagle/GameAssist/issues/26) | ConditionAssist 1.0.1 provides the supported condition workflows, wording profiles, artwork, announcements, migration, and MarkerService synchronization accepted for integrated stabilization. |
+| ConditionAssist checkpoint | Complete | [#26](https://github.com/Mord-Eagle/GameAssist/issues/26) | ConditionAssist 1.0.1 provides accurate selected-token recognition, current-page condition/marker status, wording profiles, artwork, announcements, migration, and MarkerService synchronization accepted for integrated stabilization. |
 | TokenAssist checkpoint | Complete | [#27](https://github.com/Mord-Eagle/GameAssist/issues/27) | TokenAssist 1.0.1 provides the supported full/short commands, temporary older syntax, MarkerService-backed status operations, corrected auras and movement, migration, observers, and collision protection accepted for integrated stabilization. |
-| Integrated architecture stabilization | In progress | [#28](https://github.com/Mord-Eagle/GameAssist/issues/28) | Upgrade, conservative state repair, opt-out persistence, dependency cascade, and reload checks are active before the complete Roll20 release pass. |
+| Integrated architecture stabilization | In progress | [#28](https://github.com/Mord-Eagle/GameAssist/issues/28) | Upgrade, conservative state repair, condition status, read-only death auditing, confirmed marker repair, opt-out persistence, dependency cascade, and reload checks are active before the complete Roll20 release pass. |
 | v0.1.5.0 release gate | Planned | [#29](https://github.com/Mord-Eagle/GameAssist/issues/29) | Publish only after every integrated service, attribution requirement, documentation update, and full Roll20 acceptance check is complete. |
 | Deferred marker-registry lookup verification | Deferred | [#32](https://github.com/Mord-Eagle/GameAssist/issues/32) | Verify `token_markers` versus `_token_markers` after the existing issue queue unless it becomes a live blocker. |
 | DM-configurable timezone | Planned after existing queue | [#35](https://github.com/Mord-Eagle/GameAssist/issues/35) | Use a validated DM timezone for human-facing timestamps and date-based Session rollover while preserving absolute stored timestamps. |
@@ -150,7 +150,7 @@ Build `ConditionAssist`, preserving selected StatusInfo workflows while routing 
 
 ### Ownership Boundary
 
-- The GameAssist condition-information service owns condition definitions, 2014/2024/campaign wording, menus, `!cond-<condition>` references, announcements, and supported `!condition` compatibility workflows.
+- The GameAssist condition-information service owns condition definitions, 2014/2024/campaign wording, selected-token and current-page status menus, `!cond-<condition>` references, announcements, and supported `!condition` compatibility workflows.
 - MarkerService owns marker identity, artwork metadata, state, mutation, and observation.
 - The condition-information service must not independently parse or mutate markers in ways that compete with MarkerService.
 
@@ -170,13 +170,14 @@ Build `ConditionAssist`, preserving selected StatusInfo workflows while routing 
 - [x] Add built-in and registered custom marker artwork with readable fallback behavior.
 - [x] Add a GM-only selected-character announcement menu with verified marker toggling, character-first is/is-no-longer reporting, `!c-a` and `!cond-!` aliases, public/player-whisper delivery, exact-wording choices, and bounded private-reference buttons.
 - [x] Add duplicate-marker assignment warnings.
+- [x] Correct selected-token active-condition recognition and add a GM-only current-page condition/other-marker status roster.
 - [x] Update documentation, attribution, changelog, upgrade notes, and component smoke tests.
 
 ### Completion Gate
 
 Supported `!condition` workflows, `!cond-<condition>` references, selectable condition wording, artwork, and selected-character marker announcements must function through GameAssist and remain synchronized with MarkerService-managed markers without requiring standalone StatusInfo.
 
-**Current evidence:** JavaScript syntax passes, the mocked Roll20 legacy-migration suite passes 32/32 checks, and the clean-install suite passes 49/49 checks. Coverage includes the complete 2014 catalog, 2024 and campaign-custom profile changes, case-insensitive official/custom `!cond-<condition>` references, `!c-a` and `!cond-!` announcement aliases, legacy Concentration-to-Concentrating display repair, built-in/custom artwork and readable fallback, captured selected-character menus, verified mixed-state marker toggling, character-first is/is-no-longer public and controller-whisper reporting, partial and absent controller handling, duplicate-description suppression, bounded private-reference buttons without permission leakage, preservation of added conditions and marker choices, duplicate-marker warnings, schema-v2 export, profile capacity refusal, legacy migration retention, custom and numbered markers, add/remove/toggle, external marker observation, unsafe and protected-config refusal, validated import, MarkerService cascade disable, case-insensitive service restoration, and observer recovery. The focused Roll20 checkpoint passed; combined regression now belongs to Issue #28.
+**Current evidence:** JavaScript syntax passes, the mocked Roll20 legacy-migration suite passes 34/34 checks, and the clean-install suite passes 54/54 checks. Coverage includes accurate selected-token multi-condition recognition, GM-only current-page condition/other-marker status with a complete handout, the complete 2014 catalog, 2024 and campaign-custom profile changes, case-insensitive official/custom `!cond-<condition>` references, `!c-a` and `!cond-!` announcement aliases, legacy Concentration-to-Concentrating display repair, built-in/custom artwork and readable fallback, captured selected-character menus, verified mixed-state marker toggling, character-first is/is-no-longer public and controller-whisper reporting, partial and absent controller handling, duplicate-description suppression, bounded private-reference buttons without permission leakage, preservation of added conditions and marker choices, duplicate-marker warnings, schema-v2 export, profile capacity refusal, legacy migration retention, custom and numbered markers, add/remove/toggle, external marker observation, unsafe and protected-config refusal, validated import, MarkerService cascade disable, case-insensitive service restoration, and observer recovery. The focused Roll20 checkpoint passed; combined regression now belongs to Issue #28.
 
 ---
 
@@ -227,13 +228,16 @@ This phase verifies the complete integration before the first public `v0.1.5.0` 
 
 ### Checklist
 
-- [ ] Validate upgrades from the final supported `v0.1.4.x` release.
-- [ ] Validate GameAssist, legacy TokenMod, and legacy StatusInfo state migration behavior.
-- [ ] Expand verified TokenAssist compatibility-command coverage incrementally.
-- [ ] Verify module disable/re-enable and sandbox reload behavior.
-- [ ] Verify accidental standalone-script warnings.
-- [ ] Document known compatibility gaps without overstating support.
-- [ ] Define a sustainable process for reviewing upstream changes.
+- [x] Validate an executable upgrade fixture from the final supported `v0.1.4.x` release.
+- [x] Validate GameAssist, legacy TokenMod, and legacy StatusInfo state migration behavior.
+- [x] Expand verified TokenAssist compatibility-command coverage for the v0.1.5.0 boundary.
+- [x] Verify module/service disable, re-enable, dependency cascade, and sandbox reload behavior in isolated harnesses.
+- [x] Verify accidental standalone-script warnings.
+- [x] Correct active-condition reporting and add current-page condition/other-marker status.
+- [x] Keep NPC death audits read-only and add separately confirmed marker repair that preserves HP and history.
+- [x] Document known compatibility gaps without overstating support.
+- [x] Define a sustainable process for reviewing upstream changes.
+- [ ] Complete the clean-install and v0.1.4.7-to-v0.1.5.0 live Roll20 release smoke tracks.
 
 ### Completion Gate
 

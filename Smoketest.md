@@ -708,9 +708,11 @@ Remove or disable standalone StatusInfo, select one disposable token, and give t
 !condition help
 !condition
 !CoNd-PrOnE
-!condition add prone
+!condition add prone poisoned stunned
+!condition
+!condition status
 !condition prone
-!condition remove prone
+!condition remove prone poisoned stunned
 ```
 
 Pass when:
@@ -718,12 +720,24 @@ Pass when:
 - ConditionAssist is configured on, running, and reports `deps confirmed`;
 - help gives a quick start and an **Open Condition Menu** button;
 - mixed-case `!CoNd-PrOnE` shows the configured Prone wording without changing any marker;
-- the menu names the selected token and shows its tracked conditions;
-- adding Prone applies only `back-pain` and shows the configured description;
-- removing Prone clears only `back-pain`;
+- before the add, the menu names the selected token and accurately reports that no configured condition marker is active;
+- after the add, reopening the menu lists Prone, Poisoned, and Stunned rather than `No tracked conditions`;
+- `!condition status` lists that token on the current player page, puts Prone, Poisoned, and Stunned under configured conditions, and lists the numbered blue marker separately as **Blue (2)**;
+- removing the three conditions clears only their configured markers;
 - the unrelated `blue@2` marker remains unchanged throughout.
 
 ### Expanded ConditionAssist Checks
+
+#### Current-Page Condition Status
+
+Place configured condition markers on one linked PC and one linked NPC, plus an unrelated or non-condition marker such as `dead`, `stopwatch`, or a numbered color. Run:
+
+```roll20chat
+!condition status
+!condition --status
+```
+
+Pass when both forms open the same GM-only roster, each marked linked token appears once, configured condition names are shown under **Conditions**, and every other active marker is shown separately under **Other markers**. The complete result must also appear in the updated `GameAssist Condition Status` handout when the chat summary is bounded. Unmarked tokens should be omitted. Marked unlinked scenery or labels may be counted as ignored but should not be presented as characters. A non-GM account must not receive the page-wide roster.
 
 #### Rules Wording Profiles
 
@@ -1135,6 +1149,7 @@ Pass when one death is recorded, revival is annotated, and the audit reports no 
 | `!npc-death-buckets` | Review or rename Campaign, Chapter, Section, and Session buckets. |
 | `!NPC-WR` or `!npc-death-write` | Review report targets before writing handouts. |
 | `!npc-death-audit` | Compare linked NPC HP with the configured death marker. |
+| `!npc-death-repair` | Preview and confirm marker-only corrections from current HP. |
 | `!npc-death-arc` | Manage independent story-specific Arc records. |
 
 ### Expanded NPCManager Checks
@@ -1161,6 +1176,22 @@ Pass when:
 - the scope explains that linked NPCs are checked and PCs are excluded.
 
 Correctly marked NPCs are intentionally omitted. Unlinked scenery, labels, party markers, and props may be mentioned as ignored.
+
+The audit itself must remain read-only. Confirm that the deliberate mismatch still exists after opening `!npc-death-audit`.
+
+#### Death Marker Repair
+
+With the deliberate mismatch still present, click **Review Marker Repairs** or run:
+
+```roll20chat
+!npc-death-repair
+```
+
+Pass when the preview states how many markers would be added and removed, explains that current bar 1 HP is the authority, and offers **Confirm Marker Repairs**. Opening the preview must not change HP, markers, history, buckets, or Arcs.
+
+On disposable tokens only, confirm the repair. Pass when GameAssist re-scans the page, changes only the configured death marker, preserves unrelated markers, reports any failed verification, and leaves HP and death-history counts unchanged. Run `!npc-death-audit` again and confirm the repaired mismatch is gone.
+
+Repeat once with positive HP plus a stale death marker so both add and remove behavior are proven. Give a linked NPC blank or non-numeric HP and confirm it is reported as ignored rather than treated as dead.
 
 #### Reports and Handouts
 
@@ -1503,7 +1534,9 @@ Run:
 !ga-config get NPCManager deadMarker
 !ga-config get ConcentrationTracker marker
 !token-assist --help-statusmarkers
+!condition status
 !npc-death-audit
+!npc-death-repair
 !concentration --status
 ```
 
@@ -1590,10 +1623,10 @@ Then run only the basic checks for features the session will use:
 - MarkerService: one disposable death/revival marker cycle.
 - ConfigUI: open settings.
 - CritFumble: `!critfumble help`.
-- ConditionAssist: select a disposable token and open `!condition`.
+- ConditionAssist: select a disposable token, open `!condition`, and run `!condition status`.
 - TokenAssist: select a disposable token, open `!token-assist help`, and flip one harmless visibility setting twice.
 - ConcentrationTracker: `!concentration --status`.
-- NPCManager: `!npc-death-report`.
+- NPCManager: `!npc-death-report`; use `!npc-death-audit` when checking markers and open repair only if a mismatch is intentional.
 - NPCHPRoller: roll one disposable selected NPC.
 - DebugTools: skip unless deliberately needed.
 
