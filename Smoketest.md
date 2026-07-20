@@ -1185,25 +1185,37 @@ Pass when:
 
 #### I1. Mixed 2014 and 2024 Setup
 
-Put these disposable tokens on one page and add their turns to Roll20's tracker:
+Put these disposable tokens on one page, open Roll20's Turn Tracker on that page, and **leave Turn Order empty**:
 
 1. one player-controlled D&D 5E by Roll20 **2014** character;
 2. one living **2014** NPC;
 3. one player-controlled D&D **2024** character;
 4. one living **2024** Compendium NPC;
 5. one NPC at 0 HP with the configured death marker;
-6. one unlinked object token;
-7. one custom tracker item named `Round Test`.
+6. one unlinked object token.
 
-The 2024 characters may require Roll20's supported Experimental Mod API server. Record the initial order and initiative values before continuing.
+The 2024 characters may require Roll20's supported Experimental Mod API server. Do not pre-populate the tracker or add the later `Round Test` custom row yet; the first checks prove InitiativeAssist can find a player's token before initiative exists.
 
-#### I2. Player Invitation and Permissions
+#### I2. Empty Tracker and Page Audit
+
+Run:
+
+```roll20chat
+!Init-Status
+!Init-Audit
+```
+
+Pass when chat clearly says the tracker is empty while reporting linked characters available on the tracker page. Open `GameAssist Initiative Audit`; it should contain an empty Turn Tracker section and a separate list of the linked page characters it found. Neither command should add or change a turn.
+
+#### I3. Player Invitation, Privacy, and Pre-Tracker Roll
 
 As the GM, run `!Init-Go`. As a player, click **Roll Initiative**.
 
-Pass when the player can choose only linked tokens they control on the active initiative page and the chosen character receives a numeric tracker result. The player must not be able to roll an uncontrolled NPC or a token from another page.
+Pass when the player can choose only linked tokens they control on the active initiative page and the chosen character is added to Turn Order with a numeric result. The token did not need an existing tracker row. Private choices and setup warnings should be visible to the clicking player, not another ordinary player; the public invitation and completed result remain visible to the table. The player must not be able to roll an uncontrolled NPC or a token from another page.
 
-#### I3. Roll Options
+If the roll is refused, read the message literally: InitiativeAssist should distinguish a wrong tracker page, no object-layer tokens, no character linkage, and no player control instead of giving one generic failure.
+
+#### I4. Roll Options
 
 Click **Roll Options** and test:
 
@@ -1215,9 +1227,9 @@ Click **Roll Options** and test:
 
 Pass when each workflow asks only for necessary choices, updates the selected character, and reports a clear result. A custom die must accept whole-number sides from 2 through 100 and refuse invalid input. Haste is not presented as a built-in initiative bonus.
 
-#### I4. Reroll Everyone Without Touching Other Rows
+#### I5. Populate the Mixed Tracker and Reroll Everyone
 
-Run:
+Add the remaining 2014 PC/NPC and 2024 PC/NPC turns using InitiativeAssist or their normal sheet rolls. Add the dead NPC, unlinked object token, and a custom row named `Round Test` without changing the disposable setup described above. Record the complete order and values, then run:
 
 ```roll20chat
 !Init-RR
@@ -1225,7 +1237,7 @@ Run:
 
 Pass when every PC and living NPC rerolls, while the dead NPC, object token, and `Round Test` row keep the same values and exact positions. The command must not add every token from the page; it rerolls eligible characters already in the tracker.
 
-#### I5. Duplicate, Mismatch, and Attention Rows
+#### I6. Duplicate, Mismatch, and Attention Rows
 
 1. Add the same living NPC token to the tracker a second time with a different value.
 2. Give another NPC positive HP but leave its death marker on, creating an HP/marker mismatch.
@@ -1233,7 +1245,7 @@ Pass when every PC and living NPC rerolls, while the dead NPC, object token, and
 
 Pass when both occurrences of the duplicate token receive one shared roll, the mismatched NPC is left unchanged, and the GM receives a bounded attention summary. Remove the test mismatch afterward.
 
-#### I6. Selective Rerolls and Groups
+#### I7. Selective Rerolls and Groups
 
 Run:
 
@@ -1246,7 +1258,7 @@ Use the menu to reroll PCs only, living NPCs only, selected tracker tokens, and 
 
 Pass when each action changes only the requested eligible rows, the saved group can be renamed and rerolled on its original page, it stays out of other-page menus, and it can be removed without deleting tracker entries.
 
-#### I7. Status and Read-Only Audit
+#### I8. Status and Read-Only Audit
 
 Run:
 
@@ -1255,9 +1267,9 @@ Run:
 !Init-Audit
 ```
 
-Pass when status distinguishes PCs, NPCs, dead NPCs, objects, custom rows, stale/off-page items, and attention items. Open `GameAssist Initiative Audit`; it should contain the complete row list and should not change the tracker.
+Pass when status distinguishes PCs, NPCs, dead NPCs, objects, custom rows, stale/off-page items, and attention items. Open `GameAssist Initiative Audit`; it should contain the complete tracker row list plus the linked-character roster for the tracker page, and it should not change the tracker.
 
-#### I8. Observer Mode
+#### I9. Observer Mode
 
 Run:
 
@@ -1270,13 +1282,13 @@ Run:
 
 Pass when Observer mode still permits status/audit reading but refuses rerolls with a plain-language explanation. Returning to Manager mode restores guarded writes.
 
-#### I9. Unavailable 2024 Data
+#### I10. Unavailable 2024 Data
 
 If a separate disposable campaign can switch away from the supported 2024 Mod environment, run `!Init-Status` and `!Init-RR` there.
 
 Pass when unreadable 2024 characters are named as needing attention and their tracker rows remain unchanged. A missing value must never silently become zero. Skip this destructive environment-switch check when it would disrupt the campaign; record it as **not reproduced** rather than forcing the failure.
 
-#### I10. Coexistence Check
+#### I11. Coexistence Check
 
 When another Mod can roll initiative, add custom tracker rows, count rounds, or advance turns, choose one owner before testing. Put InitiativeAssist in Observer mode while the other tool owns writes. If InitiativeAssist Manager mode will be used beside a custom-row utility, run `!Init-RR` once and confirm that utility's rows stay exact.
 

@@ -6755,15 +6755,26 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return String(modState.config.mode || '').toLowerCase() === 'manager';
         }
 
-        function playerName(playerId) {
-            const player = getObj('player', playerId);
-            const name = player?.get('_displayname') || player?.get('displayname') || 'gm';
-            return String(name).replace(/["\\]/g, '').trim() || 'gm';
+        function safeWho(msg) {
+            const player = getObj('player', msg?.playerid);
+            const playerName = String(player?.get('_displayname') || player?.get('displayname') || '')
+                .replace(/\s+\(GM\)\s*$/i, '')
+                .replace(/["\\]/g, '')
+                .trim();
+            if (playerName) {
+                const characterCollision = findObjs({ _type: 'character', name: playerName }).length > 0;
+                // CHOICE: Exact player names are least ambiguous; Roll20's documented player-id helper uses the first word when a character has the same full name.
+                return characterCollision ? playerName.split(/\s+/)[0] : playerName;
+            }
+            return String(msg?.who || 'gm')
+                .replace(/\s+\(GM\)\s*$/i, '')
+                .replace(/["\\]/g, '')
+                .trim() || 'gm';
         }
 
         function destinationFor(msg, gmOnly = false) {
             if (gmOnly || playerIsGM(msg?.playerid)) return '/w gm ';
-            return `/w "${playerName(msg?.playerid)}" `;
+            return `/w "${safeWho(msg)}" `;
         }
 
         function sendPanel(title, fields, { msg = null, publicMessage = false, gmOnly = false, speaker = MODULE_NAME } = {}) {
@@ -6882,37 +6893,80 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return { ok: false, type: null };
         }
 
+        function characterSheetHint(character) {
+            const objectHint = String(character.get('charactersheetname') || '').trim();
+            if (objectHint) return objectHint.toLowerCase();
+            return String(getAttrByName(character.id, 'charactersheetname') || '').trim().toLowerCase();
+        }
+
+        function readLegacyActor(character) {
+            return {
+                type: parseNpcFlag(getAttrByName(character.id, 'npc')),
+                modifier: numeric(getAttrByName(character.id, 'initiative_bonus')),
+                tieBreaker: 0
+            };
+        }
+
+        async function readBeaconActor(character) {
+            const typeResult = await resolve2024Type(character);
+            const initiative = await readBeacon(character.id, 'initiative_bonus', { computedFirst: true });
+            const tie = await readBeacon(character.id, 'init_tiebreaker', { computedFirst: true });
+            return {
+                type: typeResult.type,
+                modifier: initiative.ok ? numeric(initiative.value) : null,
+                tieBreaker: tie.ok && numeric(tie.value) !== null ? numeric(tie.value) : 0,
+                unavailable: initiative.unavailable,
+                errors: initiative.errors || []
+            };
+        }
+
         async function resolveActor(character, token) {
-            const sheet = String(character.get('charactersheetname') || '').toLowerCase();
+            const sheet = characterSheetHint(character);
             const attention = [];
             let type = null;
             let modifier = null;
             let tieBreaker = 0;
+            let adapter = null;
 
-            if (sheet === 'ogl5e') {
-                type = parseNpcFlag(getAttrByName(character.id, 'npc'));
-                modifier = numeric(getAttrByName(character.id, 'initiative_bonus'));
-                if (modifier === null) attention.push('2014 initiative_bonus is missing or not numeric.');
-            } else if (sheet === 'dnd2024byroll20') {
-                const typeResult = await resolve2024Type(character);
-                type = typeResult.type;
-                const initiative = await readBeacon(character.id, 'initiative_bonus', { computedFirst: true });
-                modifier = initiative.ok ? numeric(initiative.value) : null;
+            if (sheet === 'dnd2024byroll20') {
+                const beacon = await readBeaconActor(character);
+                type = beacon.type;
+                modifier = beacon.modifier;
+                tieBreaker = beacon.tieBreaker;
+                adapter = '2024-beacon';
                 if (modifier === null) {
-                    attention.push(initiative.unavailable
+                    attention.push(beacon.unavailable
                         ? '2024 Beacon initiative access is unavailable; use Roll20\'s supported Experimental Mod API server.'
                         : '2024 initiative_bonus could not be read as a number.');
                 }
-                const tie = await readBeacon(character.id, 'init_tiebreaker', { computedFirst: true });
-                if (tie.ok && numeric(tie.value) !== null) tieBreaker = numeric(tie.value);
             } else {
-                attention.push(`Unsupported character sheet${sheet ? ` (${sheet})` : ''}.`);
+                const legacy = readLegacyActor(character);
+                const legacyLooksComplete = legacy.modifier !== null && (legacy.type || hasPlayerController(token, character));
+                if (sheet === 'ogl5e' || legacyLooksComplete) {
+                    type = legacy.type;
+                    modifier = legacy.modifier;
+                    tieBreaker = legacy.tieBreaker;
+                    adapter = sheet === 'ogl5e' ? '2014-ogl' : '2014-compatible';
+                    if (modifier === null) attention.push('2014 initiative_bonus is missing or not numeric.');
+                } else {
+                    const beacon = await readBeaconActor(character);
+                    if (beacon.modifier !== null || beacon.type) {
+                        type = beacon.type;
+                        modifier = beacon.modifier;
+                        tieBreaker = beacon.tieBreaker;
+                        adapter = '2024-beacon-compatible';
+                        if (modifier === null) attention.push('2024 initiative_bonus could not be read as a number.');
+                    } else {
+                        attention.push(`D&D 5E initiative data could not be recognized${sheet ? ` for sheet ${sheet}` : ''}.`);
+                    }
+                }
             }
 
             if (!type && hasPlayerController(token, character)) type = 'pc';
             if (!type) attention.push('PC or NPC type could not be established safely.');
             return {
                 sheet,
+                adapter,
                 type,
                 modifier,
                 tieBreaker,
@@ -6998,6 +7052,47 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return { snapshot, rows };
         }
 
+        async function classifyPageRoster(snapshot) {
+            const trackerIds = new Set(snapshot.entries.map(entry => String(entry?.id || '')).filter(id => id && id !== '-1'));
+            const actorCache = new Map();
+            const rows = await Promise.all(pageTokens(snapshot.pageId).map(async token => {
+                const characterId = String(token.get('represents') || '');
+                const character = characterId ? getObj('character', characterId) : null;
+                const base = {
+                    id: token.id,
+                    token,
+                    label: String(token.get('name') || character?.get('name') || '(Unnamed token)'),
+                    character,
+                    linked: Boolean(character),
+                    inTracker: trackerIds.has(token.id),
+                    actorType: character ? 'character-attention' : 'object',
+                    modifier: null,
+                    health: null,
+                    attention: [],
+                    eligible: false
+                };
+                if (!character) return base;
+                if (!actorCache.has(character.id)) actorCache.set(character.id, resolveActor(character, token));
+                const actor = await actorCache.get(character.id);
+                const health = deathState(token, actor.type);
+                base.actorType = actor.type || 'character-attention';
+                base.modifier = actor.initiativeModifier;
+                base.health = health;
+                base.sheet = actor.sheet;
+                base.adapter = actor.adapter;
+                base.attention.push(...actor.attention);
+                if (actor.type === 'npc' && !health.known) {
+                    base.attention.push('Living or dead state could not be established from HP or the configured marker.');
+                }
+                if (health.mismatch) base.attention.push('HP and the configured death marker disagree.');
+                base.eligible = actor.initiativeModifier !== null && (
+                    actor.type === 'pc' || (actor.type === 'npc' && health.known && !health.dead && !health.mismatch)
+                );
+                return base;
+            }));
+            return { snapshot, rows };
+        }
+
         function rosterCounts(roster) {
             const counts = { pc: 0, npc: 0, object: 0, custom: 0, missing: 0, attention: 0, dead: 0, eligible: 0 };
             roster.rows.forEach(row => {
@@ -7009,6 +7104,20 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (row.health?.dead) counts.dead++;
                 if (row.eligible) counts.eligible++;
                 if (row.attention.length || ['missing', 'unknown', 'character-attention'].includes(row.actorType)) counts.attention++;
+            });
+            return counts;
+        }
+
+        function pageRosterCounts(roster) {
+            const counts = { tokens: roster.rows.length, linked: 0, pc: 0, npc: 0, objects: 0, ready: 0, attention: 0, inTracker: 0 };
+            roster.rows.forEach(row => {
+                if (row.linked) counts.linked++;
+                else counts.objects++;
+                if (row.actorType === 'pc') counts.pc++;
+                if (row.actorType === 'npc') counts.npc++;
+                if (row.eligible) counts.ready++;
+                if (row.inTracker) counts.inTracker++;
+                if (row.linked && (!row.eligible || row.attention.length)) counts.attention++;
             });
             return counts;
         }
@@ -7039,8 +7148,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             const roster = await classifyRoster(snapshot);
             const counts = rosterCounts(roster);
+            const pageRoster = await classifyPageRoster(snapshot);
+            const pageCounts = pageRosterCounts(pageRoster);
             sendPanel('InitiativeAssist', [
-                { label: 'Tracker', value: `${snapshot.entries.length} rows on page ${_sanitize(snapshot.pageId)}` },
+                { label: 'Tracker', value: `${snapshot.entries.length ? `${snapshot.entries.length} rows` : 'Empty'} on ${_sanitize(pageName(snapshot.pageId))}` },
+                { label: 'Page Characters', value: `${pageCounts.linked} linked | ${pageCounts.ready} ready to roll | ${Math.max(0, pageCounts.linked - pageCounts.inTracker)} not yet in tracker` },
                 { label: 'Characters', value: `${counts.pc} PCs | ${counts.npc} NPCs | ${counts.dead} dead NPCs` },
                 { label: 'Other Rows', value: `${counts.object} objects | ${counts.custom} custom | ${counts.missing} stale` },
                 { label: 'Ready', value: `${counts.eligible} eligible | ${counts.attention} need attention` },
@@ -7066,11 +7178,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!snapshot) return;
             const roster = await classifyRoster(snapshot);
             const counts = rosterCounts(roster);
+            const pageRoster = await classifyPageRoster(snapshot);
+            const pageCounts = pageRosterCounts(pageRoster);
             const attentionNames = roster.rows.filter(row => row.attention.length || row.kind === 'missing')
                 .slice(0, POLICY.initiative.statusChatLimit)
                 .map(row => _sanitize(row.label));
             sendPanel('Initiative Status', [
                 { label: 'Rows', value: `${snapshot.entries.length} total | ${counts.eligible} ready` },
+                { label: 'Tracker Page', value: `${_sanitize(pageName(snapshot.pageId))} | ${pageCounts.linked} linked characters | ${Math.max(0, pageCounts.linked - pageCounts.inTracker)} not yet in tracker` },
                 { label: 'Characters', value: `${counts.pc} PCs | ${counts.npc} NPCs | ${counts.dead} dead NPCs` },
                 { label: 'Preserved', value: `${counts.custom} custom | ${counts.object} objects | ${counts.missing} stale` },
                 { label: 'Attention', value: attentionNames.length ? attentionNames.join(', ') : 'None' },
@@ -7091,10 +7206,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return row.attention.join(' ') || 'Needs attention';
         }
 
+        function pageAuditStatus(row) {
+            if (!row.linked) return 'Not linked - not an initiative character';
+            if (row.health?.mismatch) return 'Needs HP/death-marker review';
+            if (row.health?.dead) return 'Dead NPC - not eligible';
+            if (row.eligible) return row.inTracker ? 'Ready - already in tracker' : 'Ready - not yet in tracker';
+            return row.attention.join(' ') || 'Needs attention';
+        }
+
         async function writeAudit(msg) {
             const snapshot = trackerSnapshot(msg);
             if (!snapshot) return;
             const roster = await classifyRoster(snapshot);
+            const pageRoster = await classifyPageRoster(snapshot);
             let handout = findObjs({ _type: 'handout', name: POLICY.initiative.auditHandoutName })[0];
             if (!handout) handout = createObj('handout', { name: POLICY.initiative.auditHandoutName });
             const rows = roster.rows.map((row, index) => [
@@ -7105,18 +7229,34 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 `<td>${_sanitize(auditStatus(row))}</td>`,
                 `<td>${_sanitize(row.attention.join(' ') || '')}</td>`,
                 '</tr>'
-            ].join('')).join('');
+            ].join('')).join('') || '<tr><td colspan="5">The Turn Tracker is empty.</td></tr>';
+            const pageRows = pageRoster.rows.filter(row => row.linked).map(row => [
+                '<tr>',
+                `<td>${_sanitize(row.label)}</td>`,
+                `<td>${_sanitize(row.actorType === 'pc' ? 'PC' : (row.actorType === 'npc' ? 'NPC' : 'Needs review'))}</td>`,
+                `<td>${_sanitize(row.modifier === null ? 'Unavailable' : String(row.modifier))}</td>`,
+                `<td>${_sanitize(pageAuditStatus(row))}</td>`,
+                '</tr>'
+            ].join('')).join('') || '<tr><td colspan="4">No linked character tokens were found on this page.</td></tr>';
             const notes = [
                 '<h1>GameAssist Initiative Audit</h1>',
-                `<p>Updated ${_sanitize(localNow())}. This report reads the native Roll20 Turn Tracker and changes nothing.</p>`,
+                `<p>Updated ${_sanitize(localNow())}. This report reads ${_sanitize(pageName(snapshot.pageId))} and the native Roll20 Turn Tracker. It changes nothing.</p>`,
+                '<h2>Turn Tracker</h2>',
                 '<table><thead><tr><th>#</th><th>Entry</th><th>Initiative</th><th>Classification</th><th>Attention</th></tr></thead>',
-                `<tbody>${rows}</tbody></table>`
+                `<tbody>${rows}</tbody></table>`,
+                '<h2>Linked Characters on the Tracker Page</h2>',
+                '<table><thead><tr><th>Character</th><th>Type</th><th>Modifier</th><th>Status</th></tr></thead>',
+                `<tbody>${pageRows}</tbody></table>`
             ].join('');
             handout.set('notes', notes);
             const counts = rosterCounts(roster);
+            const pageCounts = pageRosterCounts(pageRoster);
+            const summary = roster.rows.length
+                ? `${roster.rows.length} tracker rows | ${counts.eligible} ready | ${counts.attention} need attention | ${Math.max(0, pageCounts.linked - pageCounts.inTracker)} page characters not yet in tracker`
+                : `Tracker is empty | ${pageCounts.ready} page character${pageCounts.ready === 1 ? '' : 's'} ready | ${pageCounts.attention} need attention`;
             sendPanel('Initiative Audit Complete', [
                 { label: 'Handout', value: _sanitize(POLICY.initiative.auditHandoutName) },
-                { label: 'Summary', value: `${roster.rows.length} rows reviewed | ${counts.eligible} ready | ${counts.attention} need attention` },
+                { label: 'Summary', value: summary },
                 { label: 'Changes', value: 'None. The audit is read-only.' },
                 { label: 'Actions', value: `${GameAssist.createButton('Open Menu', '!Init-Menu')} ${GameAssist.createButton('Refresh Audit', '!Init-Audit')}` }
             ], { msg, gmOnly: true });
@@ -7126,8 +7266,63 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return Array.from(new Set((msg.selected || []).map(selection => String(selection._id || '')).filter(Boolean)));
         }
 
+        function tokenPageId(token) {
+            return String(token?.get('pageid') || token?.get('_pageid') || '');
+        }
+
+        function isInitiativeToken(token, pageId) {
+            if (!token || tokenPageId(token) !== String(pageId || '')) return false;
+            const subtype = String(token.get('subtype') || token.get('_subtype') || '').toLowerCase();
+            return (!subtype || subtype === 'token') && String(token.get('layer') || '').toLowerCase() === 'objects';
+        }
+
         function pageTokens(pageId) {
-            return findObjs({ _type: 'graphic', _subtype: 'token', _pageid: pageId, layer: 'objects' });
+            let graphics = findObjs({ _type: 'graphic', _pageid: pageId });
+            // DANGER: Some Roll20 engines do not return every token for compound findObjs filters.
+            if (!graphics.length) graphics = findObjs({ _type: 'graphic' });
+            return graphics.filter(token => isInitiativeToken(token, pageId));
+        }
+
+        function playerPageId(playerId) {
+            const campaign = Campaign();
+            let overrides = campaign.get('playerspecificpages');
+            if (typeof overrides === 'string' && overrides) {
+                try { overrides = JSON.parse(overrides); } catch (_error) { overrides = null; }
+            }
+            if (overrides && typeof overrides === 'object' && overrides[playerId]) return String(overrides[playerId]);
+            return String(campaign.get('playerpageid') || '');
+        }
+
+        function pageName(pageId) {
+            const page = getObj('page', pageId);
+            return String(page?.get('name') || 'the Turn Tracker page');
+        }
+
+        function candidateFailureMessage(msg, snapshot) {
+            const selected = selectedTokenIds(msg);
+            if (selected.length) {
+                return 'The selected token is not an object-layer token linked to a character controlled by you on this Turn Tracker page.';
+            }
+            const actualPlayerPage = playerPageId(msg.playerid);
+            if (!playerIsGM(msg.playerid) && actualPlayerPage && actualPlayerPage !== snapshot.pageId) {
+                return `The Turn Tracker is open on ${pageName(snapshot.pageId)}, but you are viewing a different page. Ask the GM to open the tracker on the encounter page.`;
+            }
+            const tokens = pageTokens(snapshot.pageId);
+            if (!tokens.length) {
+                return `No object-layer tokens were found on ${pageName(snapshot.pageId)}. Tokens do not need to be in the Turn Tracker yet.`;
+            }
+            const linked = tokens.filter(token => getObj('character', String(token.get('represents') || '')));
+            if (!linked.length) {
+                return `Tokens were found on ${pageName(snapshot.pageId)}, but none are linked to character sheets.`;
+            }
+            const controlled = linked.filter(token => {
+                const character = getObj('character', String(token.get('represents') || ''));
+                return playerControls(msg.playerid, token, character);
+            });
+            if (!controlled.length) {
+                return `Linked character tokens were found on ${pageName(snapshot.pageId)}, but none are controlled by you. Ask the GM to check the character's Controlled By setting.`;
+            }
+            return 'No eligible controlled character token could be selected. Select your token and try again.';
         }
 
         function controlledCandidates(msg, snapshot) {
@@ -7136,9 +7331,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 .filter(Boolean);
             const source = selected.length ? selected : pageTokens(snapshot.pageId);
             return source.filter(token => {
-                const pageId = String(token.get('pageid') || token.get('_pageid') || '');
                 const character = getObj('character', String(token.get('represents') || ''));
-                return pageId === snapshot.pageId && token.get('layer') === 'objects' && character && playerControls(msg.playerid, token, character);
+                return isInitiativeToken(token, snapshot.pageId) && character && playerControls(msg.playerid, token, character);
             });
         }
 
@@ -7152,8 +7346,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (args.token) {
                 const token = getObj('graphic', String(args.token));
                 const character = token && getObj('character', String(token.get('represents') || ''));
-                const pageId = token && String(token.get('pageid') || token.get('_pageid') || '');
-                if (!token || !character || pageId !== snapshot.pageId || token.get('layer') !== 'objects' || !playerControls(msg.playerid, token, character)) {
+                if (!token || !character || !isInitiativeToken(token, snapshot.pageId) || !playerControls(msg.playerid, token, character)) {
                     warn(msg, 'That token is no longer available for this player on the active initiative page.');
                     return null;
                 }
@@ -7161,7 +7354,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             const candidates = controlledCandidates(msg, snapshot);
             if (!candidates.length) {
-                warn(msg, 'No controlled, linked character token is available on the active initiative page.');
+                warn(msg, candidateFailureMessage(msg, snapshot));
                 return null;
             }
             if (candidates.length === 1) {
@@ -7675,7 +7868,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => GameAssist.TurnTrackerService.clearObservers('InitiativeAssist')
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.6.0): Added mixed D&D 2014/2024 initiative adapters, the case-insensitive !Init- command family, secure public player invitations, bounded roll options, read-only audits, page-scoped renameable encounter groups, and preservation-first rerolls through TurnTrackerService.
+    // Changed (v0.1.6.0): Added mixed D&D 2014/2024 initiative adapters with unlabeled-sheet probing, the case-insensitive !Init- command family, private clicker-targeted responses, pre-tracker controlled-token discovery, page-aware read-only audits, bounded roll options, page-scoped renameable encounter groups, and preservation-first rerolls through TurnTrackerService.
     // Decision log:
     //   CHOICE: Start disabled but default to Manager mode once deliberately enabled - ALT: require a second ownership toggle; REJECTED: unnecessary setup friction after explicit module enablement.
     //   CHOICE: Roll once per unique token and update duplicate occurrences consistently - ALT: roll every duplicate separately; REJECTED: duplicate turns still represent one character unless a later feature explicitly says otherwise.
