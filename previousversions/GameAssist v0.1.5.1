@@ -1,0 +1,783 @@
+/*
+========================================
+GameAssist - Roll20 API Script
+Version: 0.1.5.1
+Last Updated: 2026-07-19 (America/New_York)
+Development line: configurable campaign timezone v0.1.5.1.
+Author: Mord Eagle
+License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
+Homepage: https://github.com/Mord-Eagle/GameAssist
+
+DESCRIPTION
+GameAssist is a modular D&D 5E (2014) automation suite with an explicit opt-in
+task queue, state/configuration helpers, consistent logging, and a core marker
+service. Normal event handlers execute directly unless a module deliberately
+calls GameAssist.enqueue(). This package ships with eight configurable modules:
+- ConfigUI - GM-only chat controls for toggling modules and common options.
+- CritFumble - Detects natural-1 attacks and offers fumble/confirm menus.
+- ConditionAssist 1.0.1 - Provides condition wording, artwork, announcements, and marker controls.
+- TokenAssist 1.0.1 - Provides general token controls through !token-assist and !ta commands.
+- ConcentrationTracker - Runs concentration checks and manages its configured marker.
+- NPCManager 1.3.0 - Tracks NPC death markers, history, reports, audits, repair previews, and Arc rosters.
+- NPCHPRoller - Rolls npc_hpformula and writes the result to token bar 1.
+- DebugTools 0.2.0 - Optional dry-run-first GM diagnostics.
+
+INSTALL / USAGE
+- One-Click: install GameAssist.
+- Manual (Pro): paste this entire file into the Mod (API) Scripts editor and save.
+- MarkerService is enabled by default and can be disabled without turning off
+  GameAssist modules that do not use marker behavior.
+
+CORE COMMANDS (GM)
+- !ga-config list
+- !ga-config modules
+- !ga-config set <ModuleOrService> key=value
+- !ga-config get <ModuleOrService> key
+- !ga-config ui / !ga-config-ui
+- !ga-enable <ModuleOrService> / !ga-disable <ModuleOrService>
+- !ga-status [--details]
+- !ga-timezone [set <IANA timezone>|clear]
+- !ga-debug <action>
+
+MODULE COMMANDS
+- CritFumble: !critfail, !critfumble help, !critfumble menu,
+  !critfumble-<melee|ranged|thrown|spell|natural>,
+  !confirm-crit-martial, !confirm-crit-magic
+- ConditionAssist: !condition, !condition status, !cond-<condition>, !condition announce, !c-a, !cond-!, !condition help, !condition config,
+  !condition add|remove|toggle <condition...>
+- TokenAssist: !token-assist, !ta, !ta-<action>, !token-assist help|about|config;
+  older supported !token-mod macros continue temporarily and must be updated before v0.2.0.
+- ConcentrationTracker: !concentration, !cc, !ga-conc-status
+- NPCManager: !npc-death-help, !npc-death-report, !npc-death-buckets,
+  !npc-death-clear, !npc-death-write, !npc-wr, !npc-death-audit, !npc-death-repair,
+  !npc-death-arc
+- NPCHPRoller: !npc-hp-selected, !npc-hp-all
+- DebugTools: !ga-debug damage|marker|save
+
+V0.1.5.1 FOUNDATION
+- [GAMEASSIST:CORE:MARKERSERVICE] is the single GameAssist authority for marker
+  resolution, reads, writes, toggles, duplicate handling, and change observation.
+- Built-in ids, custom display names, exact stored tags, numbered markers, and
+  unrelated marker entries are preserved through a structured mutation contract.
+- NPCManager, ConcentrationTracker, and DebugTools use GameAssist.MarkerService.
+- Marker-dependent GameAssist modules no longer depend on standalone TokenMod.
+- ConditionAssist uses MarkerService for condition reads, writes, and change observation.
+- TokenAssist uses MarkerService for every status-marker command.
+- Disabling MarkerService also disables ConditionAssist, TokenAssist, NPCManager,
+  ConcentrationTracker, and DebugTools while CritFumble, ConfigUI, and
+  NPCHPRoller remain available.
+- Human-facing times and automatic Session date rollover use the DM's validated
+  IANA timezone when configured; stored event timestamps remain absolute.
+- Queue timeouts release the queue but cannot terminate Roll20 operations.
+- Configuration snapshots contain configuration only, never runtime caches.
+
+COMPATIBILITY / FOOTPRINT
+- Namespaced under global GameAssist only.
+- Does not override Roll20 global on/off handlers.
+- Writes only to Roll20 objects documented in script.json.
+- Standalone scripts that also change the same markers may still compete for
+  ownership even though TokenMod is no longer required by GameAssist.
+
+SUPPORT
+Use !ga-status for system health and !ga-config list for a configuration snapshot.
+For bug reports, include the relevant GameAssist chat output and sandbox console error.
+========================================
+*/
+
+// --- MECHSUITS BANNER (YAML) ---
+// mechsuit:
+//   codename: "GAMEASSIST"
+//   project_version: "v0.1.5.1"
+//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, explicit opt-in queue execution, state self-healing, dependency diagnostics, one toggleable marker authority, integrated condition guidance, general token controls, and a validated campaign timezone for human-facing dates. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, or transport changes beyond Roll20 chat API."
+//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critfumble","modules.conditionassist","modules.tokenassist","modules.npcmanager","modules.concentrationtracker","modules.npchproller","modules.debugtools","bootstrap"]
+//   env:
+//     required: []
+//     optional: []
+//     secrets: []
+//   data_class: "Internal"
+//   ai_data: "internal_redacted"
+//   refusals:
+//     - "Do not emit secrets or player data outside the Roll20 sandbox."
+//     - "Do not override Roll20 global on/off handlers."
+//   observability:
+//     logs: "roll20_whisper_to_gm"
+//     metrics: [{ name: "gameassist.queue.task_duration_ms", unit: "ms" }]
+//     spans: ["[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:MODULES:CRITFUMBLE]"]
+//   performance: { notes: "No current benchmark claim; validate in the target Roll20 campaign sandbox." }
+//   concurrency: { model: "Direct event handlers plus explicit opt-in serialized task queue", idempotency: "N/A (event-driven)" }
+//   compatibility: { accepts: ["Roll20 API sandbox; current campaign smoke test required"], emits: "Roll20 chat whispers/logs" }
+//   policy: { notes_ref: "[GAMEASSIST:POLICY]" }
+//   error_codes: ["INVALID_ARGUMENT","NOT_FOUND","CONFLICT","UNAUTHORIZED","FORBIDDEN","UNPROCESSABLE","RATE_LIMITED","TIMEOUT","UNAVAILABLE","INTERNAL"]
+//   transport_map:
+//     chat: "Errors are whispered to GM; status/info are whispered as structured text"
+//   canonical_tree: |
+//     [GAMEASSIST]/
+//     ├─ [GAMEASSIST:POLICY]
+//     ├─ [GAMEASSIST:APP]
+//     │  └─ [GAMEASSIST:APP:UTILS]
+//     ├─ [GAMEASSIST:CORE]
+//     │  ├─ [GAMEASSIST:CORE:QUEUE]
+//     │  ├─ [GAMEASSIST:CORE:COMPAT]
+//     │  ├─ [GAMEASSIST:CORE:STATE]
+//     │  ├─ [GAMEASSIST:CORE:MARKERSERVICE]
+//     │  └─ [GAMEASSIST:CORE:OBJECT]
+//     ├─ [GAMEASSIST:INTERFACES]
+//     │  ├─ [GAMEASSIST:INTERFACES:EVENTS]
+//     │  └─ [GAMEASSIST:INTERFACES:COMMANDS]
+//     ├─ [GAMEASSIST:MODULES]
+//     │  ├─ [GAMEASSIST:MODULES:CONFIGUI]
+//     │  ├─ [GAMEASSIST:MODULES:CRITFUMBLE]
+//     │  ├─ [GAMEASSIST:MODULES:CONDITIONASSIST]
+//     │  ├─ [GAMEASSIST:MODULES:TOKENASSIST]
+//     │  ├─ [GAMEASSIST:MODULES:NPCMANAGER]
+//     │  ├─ [GAMEASSIST:MODULES:CONCENTRATIONTRACKER]
+//     │  ├─ [GAMEASSIST:MODULES:NPCHPROLLER]
+//     │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
+//     └─ [GAMEASSIST:BOOTSTRAP]
+// --- prose banner ---
+// Guarantee: GameAssist v0.1.5.1 runs policy, utilities, guarded core services including MarkerService, interfaces, independently lifecycle-managed condition/token/gameplay modules, then bootstrap in the declared order. Human-facing times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
+
+// =============================
+// === GameAssist v0.1.5.1 ===
+// === Author: Mord Eagle ===
+// =============================
+// Released under the MIT License (see https://opensource.org/licenses/MIT)
+//
+// Copyright (c) 2025 Mord Eagle
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+(() => {
+    'use strict';
+
+    const R20_ON = (typeof on === 'function') ? on : (typeof globalThis?.on === 'function' ? globalThis.on : null);
+    if (!R20_ON) throw new Error('Roll20 "on" is unavailable.');
+
+    // =============================================================================
+    // [GAMEASSIST:POLICY] BEGIN
+    // Section Title: Tunables and operational policy
+    // -------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST", area: "POLICY", title: "Tunables",
+    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; NPC initialization, timezone input, and condition-service limits remain explicit"],
+    //   provides: ["POLICY"], last_updated_version: "v0.1.5.1", lifecycle: "active" }
+    // -------------------------------------------------------------------------
+    // Narrative
+    // POLICY owns shared timeouts, cache limits, UI defaults, snapshot identifiers,
+    // and declared metric names.
+    // Values preserve v0.1.4 behavior; callers reference POLICY so future
+    // changes have one explicit review and rollback point.
+    // -------------------------------------------------------------------------
+    const POLICY = Object.freeze({
+        queue: Object.freeze({
+            defaultTimeoutMs: 30000,
+            watchdogIntervalMs: 15000,
+            watchdogMultiplier: 2
+        }),
+        metrics: Object.freeze({
+            historyLimit: 50,
+            durationLimit: 20,
+            queueDurationName: 'gameassist.queue.task_duration_ms'
+        }),
+        runtime: Object.freeze({
+            activePlayerLimit: 50,
+            deathLogLimit: 100,
+            npcAuditDetailLimit: 8,
+            deathReportSummaryLimit: 5,
+            deathReportDetailLimit: 10,
+            npcHpInitializationGraceMs: 2000,
+            lastDamageLimit: 50
+        }),
+        timestamps: Object.freeze({
+            maxFutureMs: 1000 * 60 * 60 * 24 * 7,
+            maxTimeZoneLength: 100,
+            formatterCacheLimit: 32,
+            locale: 'en-US',
+            commonTimeZones: Object.freeze([
+                Object.freeze({ label: 'US Eastern', value: 'America/New_York' }),
+                Object.freeze({ label: 'US Central', value: 'America/Chicago' }),
+                Object.freeze({ label: 'US Mountain', value: 'America/Denver' }),
+                Object.freeze({ label: 'US Pacific', value: 'America/Los_Angeles' }),
+                Object.freeze({ label: 'UTC', value: 'UTC' }),
+                Object.freeze({ label: 'London', value: 'Europe/London' }),
+                Object.freeze({ label: 'Paris', value: 'Europe/Paris' }),
+                Object.freeze({ label: 'Sydney', value: 'Australia/Sydney' })
+            ])
+        }),
+        configUi: Object.freeze({
+            pageSize: 3
+        }),
+        critFumble: Object.freeze({
+            rollDelayMs: 200
+        }),
+        conditions: Object.freeze({
+            maxDefinitions: 100,
+            maxNameLength: 80,
+            maxDescriptionLength: 4000,
+            maxMarkerLength: 200,
+            maxImportLength: 100000,
+            recentDescriptionMs: 1000,
+            announcementMutationSuppressionMs: 5000,
+            announcementGrantMs: 1000 * 60 * 10,
+            announcementGrantLimit: 50,
+            maxAnnouncementTokens: 12,
+            statusChatLimit: 20
+        }),
+        config: Object.freeze({
+            unsafeKeys: Object.freeze(['__proto__', 'prototype', 'constructor'])
+        }),
+        snapshots: Object.freeze({
+            configFormat: 'gameassist-config-snapshot',
+            configSchemaVersion: 1
+        })
+    });
+    // --- Notes & Comments ---
+    // Changed (v0.1.5.1): Added bounded IANA timezone input, a bounded formatter cache, a stable display locale, and common GM menu choices; rollback: remove timestamps timezone fields and restore sandbox-only formatting.
+    // Decision log:
+    //   CHOICE: Offer common IANA zones plus validated custom input - ALT: fixed numeric offsets; REJECTED: fixed offsets do not follow daylight-saving changes.
+    //   CHOICE: Keep NPC initialization and snapshot knobs centralized while removing the unused external marker delay - ALT: retain the dead setting; REJECTED: implied behavior no caller performs.
+    // Prior notes:
+    //   v0.1.5.0: Removed the obsolete standalone TokenMod verification delay and added bounded condition-definition, import, announcement-selection, private-reference, announcement-observer suppression, and current-page status limits for ConditionAssist.
+    //   v0.1.4.7: Added a two-second NPC HP initialization grace period so auto-roll-on-add setup is not recorded as a death/revival.
+    //   v0.1.4.7: Added a one-second standalone TokenMod marker-verification delay.
+    //   v0.1.4.5: Added runtime death-report summary/detail limits for bounded GM-facing history reports.
+    //   v0.1.4.4: Added runtime.npcAuditDetailLimit to bound grouped NPC death-audit chat output.
+    //   v0.1.4.3: Removed internal development-provenance wording from the narrative; no semantic change.
+    //   v0.1.4.2: Added stable configuration-snapshot format and schema identifiers.
+    //   v0.1.4.1: Centralized existing defaults without changing their values.
+    //   v0.1.3: Added POLICY narrative and corrected top-level version metadata; no semantic change.
+    //   v0.1.1.2: Updated MECHSUITS metadata for v1.5.1 compliance; no semantic change.
+    //   Existing decisions: version configuration-only exports before import exists; freeze shallow policy groups to prevent hidden runtime drift.
+    // [GAMEASSIST:POLICY] END
+    // [GAMEASSIST:APP] BEGIN
+    // Section Title: App wrapper (utilities and shared helpers)
+    // -------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST", area: "APP", title: "Wrapper",
+    //   guarantees: ["APP-scoped non-marker helpers are grouped here; marker authority belongs to CORE:MARKERSERVICE"],
+    //   depends_on: [], last_updated_version: "v0.1.5.1" }
+    // -------------------------------------------------------------------------
+    // Narrative
+    // The APP tree houses shared helpers used by core services and bundled modules.
+    // Utilities below cover argument parsing, state helpers, auditing, sanitization,
+    // time, token-character linking, and standalone-script evidence.
+    // -------------------------------------------------------------------------
+
+    // ————— UTILITIES —————
+    // =============================================================================
+    // [GAMEASSIST:APP:UTILS] BEGIN
+    // Section Title: Utilities (arg parsing, state helpers, audit, sanitize)
+    // -------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST", area: "APP:UTILS", title: "Utilities",
+    //   guarantees: ["Shared non-marker helpers; known module state branches self-heal without deleting valid config","Absolute timestamps remain unchanged while human displays and date keys use one validated DM timezone","Standalone-script evidence remains diagnostic rather than a marker dependency"],
+    //   depends_on: ["[GAMEASSIST:POLICY]"], last_updated_version: "v0.1.5.1", lifecycle: "active" }
+    // -------------------------------------------------------------------------
+    // Narrative
+    // APP:UTILS collects helpers for metrics/state initialization, conservative state
+    // repair, argument parsing, sanitization, time access, token-character linking,
+    // and external-script evidence. Marker resolution and mutation now belong only to
+    // CORE:MARKERSERVICE.
+    // Roll20 does not guarantee a high-resolution monotonic clock, so monotonic()
+    // falls back to Date.now() while keeping duration access behind a named seam.
+    // -------------------------------------------------------------------------
+    function now() {
+        return Date.now();
+    }
+
+    function monotonic() {
+        if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+            return performance.now();
+        }
+        return Date.now();
+    }
+
+    function isoNow() {
+        return new Date(now()).toISOString();
+    }
+
+    const dateTimeFormatterCache = new Map();
+
+    /**
+     * getDateTimeFormatter - Reuse expensive Intl formatters without allowing
+     * arbitrary custom timezone input to grow sandbox memory indefinitely.
+     */
+    function getDateTimeFormatter(key, options) {
+        if (dateTimeFormatterCache.has(key)) {
+            const formatter = dateTimeFormatterCache.get(key);
+            dateTimeFormatterCache.delete(key);
+            dateTimeFormatterCache.set(key, formatter);
+            return formatter;
+        }
+
+        const formatter = new Intl.DateTimeFormat(POLICY.timestamps.locale, options);
+        dateTimeFormatterCache.set(key, formatter);
+        while (dateTimeFormatterCache.size > POLICY.timestamps.formatterCacheLimit) {
+            dateTimeFormatterCache.delete(dateTimeFormatterCache.keys().next().value);
+        }
+        return formatter;
+    }
+
+    function validateTimeZone(raw) {
+        if (raw === null || raw === undefined || String(raw).trim() === '') {
+            return { ok: true, value: null, requested: null, message: null };
+        }
+        if (typeof raw !== 'string') {
+            return { ok: false, value: null, requested: raw, message: 'Timezone must be an IANA name such as America/New_York.' };
+        }
+
+        const requested = raw.trim();
+        if (requested.length > POLICY.timestamps.maxTimeZoneLength || !/^[A-Za-z0-9_+\-/]+$/.test(requested)) {
+            return { ok: false, value: null, requested, message: 'Timezone must be a valid IANA name such as America/New_York.' };
+        }
+        if (typeof Intl !== 'object' || typeof Intl.DateTimeFormat !== 'function') {
+            return { ok: false, value: null, requested, message: 'This Roll20 sandbox cannot format named timezones; GameAssist will continue using sandbox time.' };
+        }
+
+        try {
+            const formatter = getDateTimeFormatter(
+                `validation|${POLICY.timestamps.locale}|${requested}`,
+                { timeZone: requested }
+            );
+            if (typeof formatter.formatToParts !== 'function') {
+                return { ok: false, value: null, requested, message: 'This Roll20 sandbox cannot format named timezones; GameAssist will continue using sandbox time.' };
+            }
+            formatter.format(new Date(0));
+            return {
+                ok: true,
+                value: formatter.resolvedOptions().timeZone || reques…106638 tokens truncated….id,
+                    name: 'npc'
+                })[0];
+
+                if (npcAttr && npcAttr.get('current') === '1') {
+                    npcTokens.push(token);
+                }
+            }
+
+            GameAssist.log('NPCHPRoller', `Rolling HP for ${npcTokens.length} NPCs on current map...`);
+
+            for (const token of npcTokens) {
+                try {
+                    rollTokenHP(token);
+                } catch (err) {
+                    GameAssist.log('NPCHPRoller', `Error processing ${token.get('name')}: ${err.message}`, 'ERROR');
+                }
+            }
+
+            if (skipped.length) {
+                GameAssist.log('NPCHPRoller', `Skipped ${skipped.length} token(s) without linked characters: ${skipped.join(', ')}`, 'WARN');
+            }
+        }, 'NPCHPRoller', { gmOnly: true });
+
+        GameAssist.onCommand('!npc-hp-selected', msg => {
+            if (!msg.selected || msg.selected.length === 0) {
+                GameAssist.log('NPCHPRoller', 'No tokens selected', 'WARN');
+                return;
+            }
+
+            const skipped = [];
+
+            msg.selected.forEach(sel => {
+                const token = getObj('graphic', sel._id);
+                if (!token) {
+                    skipped.push('(Missing Token)');
+                    return;
+                }
+
+                if (!GameAssist.getLinkedCharacter(token)) {
+                    skipped.push(token.get('name') || '(Unnamed)');
+                    return;
+                }
+
+                try {
+                    rollTokenHP(token);
+                } catch (err) {
+                    GameAssist.log('NPCHPRoller', `Error processing ${token.get('name')}: ${err.message}`, 'ERROR');
+                }
+            });
+
+            if (skipped.length) {
+                GameAssist.log('NPCHPRoller', `Skipped ${skipped.length} token(s): ${skipped.join(', ')}`, 'WARN');
+            }
+        }, 'NPCHPRoller', { gmOnly: true });
+
+        GameAssist.onEvent('add:graphic', token => {
+            if (!modState.config.autoRollOnAdd) return;
+            rollTokenHP(token, { logWarnings: false, reason: 'auto' });
+        }, 'NPCHPRoller');
+
+    GameAssist.log('NPCHPRoller', 'v0.1.1.0 Ready: !npc-hp-all, !npc-hp-selected', 'INFO', { startup: true });
+}, {
+    enabled: true,
+    events: ['add:graphic'],
+    prefixes: ['!npc-hp-all', '!npc-hp-selected']
+});
+    // --- Notes & Comments ---
+    // CHOICE: Use Math.random for simplicity; acceptable for non‑critical HP rolls.
+    // Maintenance (v0.1.3, no semantic change): Added module narrative and aligned version
+    //   metadata; HP rolling behavior unchanged.
+    // Prior notes: Maintenance (v0.1.1.2, no semantic change): MECHSUITS metadata updated for compliance.
+    // [GAMEASSIST:MODULES:NPCHPROLLER] END
+    // =============================================================================
+
+    // ————— DEBUG TOOLS MODULE v0.2.0 —————
+    // =============================================================================
+    // [GAMEASSIST:MODULES:DEBUGTOOLS] BEGIN
+    // Section Title: DebugTools module
+    // -------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:DEBUGTOOLS", title: "DebugTools",
+    //   guarantees: ["Dry-run friendly debugging helpers","Applied marker diagnostics use CORE:MARKERSERVICE"],
+    //   depends_on: ["[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
+    //   last_updated_version: "v0.1.5.0",
+    //   independent_versions: { module_version: "0.2.0" } }
+    // -------------------------------------------------------------------------
+    // Narrative
+    // MODULES:DEBUGTOOLS offers optional GM-only diagnostics for damage, markers, and
+    // saves. It remains disabled by default, defaulting to dry-run behavior until
+    // explicitly applied.
+    // -------------------------------------------------------------------------
+    GameAssist.register('DebugTools', function() {
+        const modState = GameAssist.getState('DebugTools');
+        Object.assign(modState.config, {
+            enabled: false,
+            ...modState.config
+        });
+
+        function ensureDebugRuntime() {
+            return ensureRuntimeObject(modState);
+        }
+
+        function wantsApply(args) {
+            if (args.apply === undefined) return false;
+            if (args.apply === false) return false;
+            if (typeof args.apply === 'string') {
+                return args.apply.toLowerCase() !== 'false';
+            }
+            return Boolean(args.apply);
+        }
+
+        function getTokenFromArgs(msg, args) {
+            let tokenId = null;
+            if (typeof args.token === 'string') tokenId = args.token;
+            else if (Array.isArray(args.token) && args.token.length) tokenId = args.token[0];
+
+            if (!tokenId && msg.selected?.length) {
+                tokenId = msg.selected[0]._id;
+            }
+
+            if (!tokenId) return null;
+
+            const token = getObj('graphic', tokenId);
+            if (!token) {
+                GameAssist.log('DebugTools', `Token ${tokenId} not found.`, 'WARN');
+                return null;
+            }
+            if (token.get('layer') !== 'objects') {
+                GameAssist.log('DebugTools', 'Token must be on the Objects layer.', 'WARN');
+                return null;
+            }
+            return token;
+        }
+
+        function handleDamage(msg, args) {
+            const token = getTokenFromArgs(msg, args);
+            if (!token) {
+                GameAssist.log('DebugTools', 'Select a token or pass --token <id> for damage tests.', 'WARN');
+                return;
+            }
+
+            const amountRaw = args.amount ?? args.damage ?? args.value;
+            const amount = Number(amountRaw);
+            if (!Number.isFinite(amount) || amount <= 0) {
+                GameAssist.log('DebugTools', 'Provide --amount <number> greater than zero.', 'WARN');
+                return;
+            }
+
+            const current = Number(token.get('bar1_value')) || 0;
+            const next    = Math.max(0, current - amount);
+            const name    = _sanitize(token.get('name') || token.id);
+            const summary = `${name}: HP ${current} → ${next} (-${amount})`;
+
+            if (!wantsApply(args)) {
+                GameAssist.log('DebugTools', `Dry run — would apply ${summary}. Add --apply to commit.`);
+                return;
+            }
+
+            token.set('bar1_value', next);
+            GameAssist.log('DebugTools', `Applied ${summary}.`);
+            ensureDebugRuntime().lastAction = { type: 'damage', token: token.id, amount, previous: current };
+        }
+
+        function handleMarker(msg, args) {
+            const token = getTokenFromArgs(msg, args);
+            if (!token) {
+                GameAssist.log('DebugTools', 'Select a token or pass --token <id> for marker tests.', 'WARN');
+                return;
+            }
+
+            const markerRaw = args.marker ?? args.status;
+            const marker = (markerRaw ? String(markerRaw) : 'blue').trim();
+            if (!marker) {
+                GameAssist.log('DebugTools', 'Provide --marker <status name>.', 'WARN');
+                return;
+            }
+
+            const modeRaw = args.state ?? args.mode ?? args.action;
+            const mode = modeRaw ? String(modeRaw).toLowerCase() : 'toggle';
+            const inspection = GameAssist.MarkerService.inspect(token, marker);
+            if (!inspection.ok) {
+                GameAssist.log('DebugTools', inspection.message || `Marker lookup failed (${inspection.code || 'INTERNAL'}).`, 'WARN');
+                return;
+            }
+
+            const action = (mode === 'on' || mode === 'add')
+                ? 'add'
+                : ((mode === 'off' || mode === 'remove' || mode === 'clear') ? 'remove' : 'toggle');
+            const actionDesc = action === 'toggle'
+                ? `${inspection.present ? 'remove' : 'add'} ${inspection.resolution.id}`
+                : `${action} ${inspection.resolution.id}`;
+            const name = _sanitize(token.get('name') || token.id);
+
+            if (!wantsApply(args)) {
+                GameAssist.log('DebugTools', `Dry run — would ${actionDesc} on ${name}. Add --apply to commit.`);
+                return;
+            }
+
+            const result = action === 'add'
+                ? GameAssist.MarkerService.add(token, marker, { owner: 'DebugTools' })
+                : (action === 'remove'
+                    ? GameAssist.MarkerService.remove(token, marker, { owner: 'DebugTools' })
+                    : GameAssist.MarkerService.toggle(token, marker, { owner: 'DebugTools' }));
+            if (!result.ok) {
+                GameAssist.log('DebugTools', result.message || `Marker action failed (${result.code || 'INTERNAL'}).`, 'WARN');
+                return;
+            }
+
+            GameAssist.log('DebugTools', `Marker action: ${actionDesc} on ${name}${result.changed ? '.' : ' (already in the requested state).'}`);
+            ensureDebugRuntime().lastAction = {
+                type: 'marker',
+                token: token.id,
+                marker: result.resolution.id,
+                mode: action
+            };
+        }
+
+        function handleSave(msg, args) {
+            const dcRaw = args.dc ?? args.target;
+            const dc = Number(dcRaw);
+            if (!Number.isFinite(dc)) {
+                GameAssist.log('DebugTools', 'Provide --dc <number> for save tests.', 'WARN');
+                return;
+            }
+
+            const bonusRaw = args.bonus ?? args.mod ?? 0;
+            const bonus = Number(bonusRaw) || 0;
+            const modeRaw = args.mode ?? args.roll ?? '';
+            const mode = typeof modeRaw === 'string' ? modeRaw.toLowerCase() : '';
+            let expr = `1d20 + ${bonus}`;
+            let descriptor = 'normal';
+            if (mode.startsWith('adv')) {
+                expr = `2d20kh1 + ${bonus}`;
+                descriptor = 'advantage';
+            } else if (mode.startsWith('dis')) {
+                expr = `2d20kl1 + ${bonus}`;
+                descriptor = 'disadvantage';
+            }
+
+            if (!wantsApply(args)) {
+                GameAssist.log('DebugTools', `Dry run — would roll ${expr} vs DC ${dc} (${descriptor}). Add --apply to execute.`);
+                return;
+            }
+
+            const label = args.label ? _sanitize(String(args.label)) : 'Debug Save';
+            sendChat('', `[[${expr}]]`, ops => {
+                const roll = ops?.[0]?.inlinerolls?.[0];
+                if (!roll) {
+                    GameAssist.log('DebugTools', 'Save roll failed.', 'WARN');
+                    return;
+                }
+                const total = roll.results.total;
+                const success = total >= dc;
+                const outcome = success ? '✅ Success' : '❌ Failure';
+                const template = `&{template:default} {{name=${label}}} {{Result=${total} vs DC ${dc}}} {{Outcome=${outcome} (${descriptor})}}`;
+                sendChat('DebugTools', `/w gm ${template}`);
+                GameAssist.log('DebugTools', `Rolled ${total} vs DC ${dc} (${descriptor}). ${success ? 'Success' : 'Failure'}.`);
+            });
+        }
+
+        function showHelp() {
+            GameAssist.log('DebugTools', [
+                'Debug helpers:',
+                '• !ga-debug damage --amount N [--token TOKENID|select] [--apply]',
+                '• !ga-debug marker --marker status [--state on|off|toggle] [--token TOKENID|select] [--apply]',
+                '• !ga-debug save --dc N [--bonus M] [--mode normal|adv|dis] [--label Text] [--apply]'
+            ].join('\n'));
+        }
+
+        const HANDLERS = {
+            damage: handleDamage,
+            marker: handleMarker,
+            save: handleSave
+        };
+
+        GameAssist.onCommand('!ga-debug', msg => {
+            const payload = msg.content.replace(/^!ga-debug\s*/i, '');
+            if (!payload) {
+                showHelp();
+                return;
+            }
+
+            const parsed = _parseArgs(payload);
+            const action = (parsed.cmd || '').toLowerCase();
+            const handler = HANDLERS[action];
+            if (!handler) {
+                GameAssist.log('DebugTools', `Unknown debug action: ${_sanitize(action || '(none)')}`, 'WARN');
+                showHelp();
+                return;
+            }
+            handler(msg, parsed.args || {});
+        }, 'DebugTools', { gmOnly: true });
+
+        GameAssist.log('DebugTools', 'Debug module registered. Enable with !ga-enable DebugTools when needed.', 'INFO', { startup: true });
+    }, {
+        enabled: false,
+        prefixes: ['!ga-debug'],
+        dependsOn: ['MarkerService']
+    });
+    // --- Notes & Comments ---
+    // Changed (v0.1.5.0): DebugTools module_version advanced to 0.2.0; marker previews and applied changes now resolve and mutate through CORE:MARKERSERVICE.
+    // Decision log:
+    //   CHOICE: Keep helpers dry-run by default and require --apply for mutation.
+    // Prior notes:
+    //   v0.1.4.1: Marker diagnostics used exact shared marker normalization, including counted markers.
+    //   v0.1.3: Runtime self-healed before recording lastAction; dry-run and disabled-by-default posture remained.
+    //   v0.1.1.2: Refreshed MECHSUITS metadata.
+    // [GAMEASSIST:MODULES:DEBUGTOOLS] END
+    // =============================================================================
+
+    // --- Notes & Comments ---
+    // Changed (v0.1.5.0): Updated the module wrapper contract because all marker consumers share CORE:MARKERSERVICE and TokenAssist now owns supported general token commands.
+    // Prior notes:
+    //   v0.1.4.3: Updated the wrapper contract after marker consumers adopted configured marker identity resolution.
+    //   v0.1.3: Added MODULES wrapper for MECHSUITS parent/child compliance; no semantic change.
+    // [GAMEASSIST:MODULES] END
+    // =============================================================================
+
+    // ————— BOOTSTRAP —————
+    // =============================================================================
+    // [GAMEASSIST:BOOTSTRAP] BEGIN
+    // Section Title: Sandbox ready bootstrap
+    // -------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST", area: "BOOTSTRAP", title: "Bootstrap",
+    //   guarantees: ["Repair known state, seed defaults, diagnose dependencies, preserve configured intent when dependencies prevent startup, init enabled modules","MarkerService initializes before its consumers and may be disabled without disabling unrelated modules"],
+    //   depends_on: ["[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE]","[GAMEASSIST:MODULES]"],
+    //   last_updated_version: "v0.1.5.0", lifecycle: "active" }
+    // -------------------------------------------------------------------------
+    // Narrative
+    // BOOTSTRAP runs at sandbox ready: repairs known state containers, seeds defaults,
+    // audits compatibility, diagnoses dependencies, and initializes enabled modules.
+    // Deliberately disabled modules remain quiet. Missing dependencies skip configured
+    // modules without rewriting the DM's enabled setting; unverifiable dependencies warn and proceed.
+    // -------------------------------------------------------------------------
+    R20_ON('ready', () => {
+        if (READY) return;
+        READY = true;
+
+        const root = ensureStateRoot();
+        GameAssist.config = root.config;
+        if (!root.metrics.sessionStart) {
+            root.metrics.sessionStart = isoNow();
+        }
+        recordMetric('system', { mod: 'Core', note: 'Sandbox ready' });
+
+        GameAssist._clearAllListeners();
+        migrateKnownComponentState(root);
+        auditState();
+        seedDefaults();
+        GameAssist._dedupePlanned();
+        auditCompatibility();
+
+        const moduleNames = Object.entries(MODULES)
+            .filter(([, mod]) => !mod.internal)
+            .map(([name]) => name);
+
+        GameAssist.log('Core', `GameAssist v${VERSION} ready; modules: ${moduleNames.join(', ')}`);
+
+        moduleNames.forEach(name => {
+            const mod = MODULES[name];
+            const cfg = getState(name).config;
+
+            // CHOICE: Honor the DM's disabled setting before dependency checks so optional modules stay quiet.
+            if (!cfg.enabled) {
+                mod.initialized = false;
+                mod.active = false;
+                return;
+            }
+
+            const depInfo = GameAssist._checkDependencies(name);
+            if (depInfo.status === 'missing') {
+                const disabledServices = depInfo.missing.filter(dependency =>
+                    MODULES[dependency]?.service && getState(dependency).config.enabled === false
+                );
+                if (disabledServices.length) {
+                    cfg.enabled = false;
+                    GameAssist.log(
+                        'Core',
+                        `${name} was turned off because ${disabledServices.join(', ')} is disabled. Enable the service first, then re-enable this module when its marker features are wanted.`,
+                        'WARN'
+                    );
+                }
+                GameAssist.log('Core', `${name} skipped (missing dependencies: ${depInfo.missing.join(', ')})`, 'WARN');
+                // DANGER: Only an explicitly disabled internal service cascades to cfg.enabled=false; ordinary missing dependencies preserve configured intent for diagnosis.
+                mod.initialized = false;
+                mod.active = false;
+                return;
+            }
+            if (depInfo.status === 'unverifiable') {
+                GameAssist.log('Core', `${name} dependencies unverifiable (${depInfo.unverifiable.join(', ')}); proceeding without confirmation.`, 'WARN');
+            }
+
+            try {
+                if (!mod.wired) {
+                    mod.initFn();
+                    mod.wired = true;
+                }
+                mod.initialized = true;
+                mod.active = true;
+            } catch (e) {
+                mod.initialized = false;
+                mod.active = false;
+                GameAssist.handleError(name, e);
+            }
+        });
+
+        GameAssist._metrics.lastUpdate = isoNow();
+    });
+    // --- Notes & Comments ---
+    // Changed (v0.1.5.0): Startup migrates known unreleased component names before auditing state, initializes the toggleable MarkerService before its consumers, turns consumers off when the DM has disabled that service, and no longer gates marker consumers on standalone TokenMod.
+    // Decision log:
+    //   CHOICE: Keep the core ready log visible while QUIET_STARTUP suppresses module-ready noise.
+    //   CHOICE: Repair known state before seeding defaults so valid configuration survives.
+    //   CHOICE: Preserve configured intent for dependency-skipped modules - ALT: force-disable config; REJECTED: hid startup failures and erased DM intent.
+    //   CHOICE: Treat an explicitly disabled GameAssist service differently from an unavailable external dependency because the DM selected that lifecycle outcome.
+    // Prior notes:
+    //   v0.1.4.7: Startup reported the standalone-interoperability release; lifecycle order was unchanged.
+    //   v0.1.4.6: Checked configured intent before dependencies and preserved enabled configuration when a confirmed dependency was missing.
+    //   v0.1.4.2: Repaired known state before defaults and reported three-state dependencies.
+    //   v0.1.4.1: Routed bootstrap timestamps through the wall-clock seam.
+    //   v0.1.3: Added bootstrap narrative while preserving ready flow and dependency checks.
+    //   v0.1.1.2: Refreshed MECHSUITS metadata.
+    // [GAMEASSIST:BOOTSTRAP] END
+    // =============================================================================
+
+})();
