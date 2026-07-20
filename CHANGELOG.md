@@ -386,7 +386,1816 @@ The release was deliberately kept narrow:
 
 ### Automated verification evidence
 
-| Verificati…29444 tokens truncated…ase. It adds one GM-selected IANA timezone for human-facing GameAssist dates, clocks, and date-managed NPC Sessions while preserving the absolute ISO instants already stored with events. It does not change marker ownership, TokenAssist commands, ConditionAssist definitions, queue behavior, or the accepted v0.1.5.0 integration architecture.
+| Verification | Result | What it established |
+| --- | --- | --- |
+| JavaScript syntax validation | Passed | Release artifact parses successfully. |
+| MECHSUITS structural audit | Passed | No missing parents, invalid overlaps, canonical-tree drift, metadata gaps, or missing footers were detected. |
+| Existing command simulation | Passed | Core and bundled command surfaces remained callable without simulation exceptions. |
+| Confirmed dependency simulation | Passed | Confirmed dependencies report and initialize correctly. |
+| Missing dependency simulation | Passed | Missing dependencies skip/refuse the dependent module. |
+| Unverifiable dependency simulation | Passed | Unverifiable dependencies warn and proceed. |
+| Known-state repair simulation | Passed | Malformed known `config`/`runtime` containers repair. |
+| Valid-config preservation | Passed | Existing valid values survive repair. |
+| Unknown-state preservation | Passed | Unknown branches remain untouched at startup. |
+| Configuration snapshot generation | Passed | Format, schema version, scope, module configs, and exclusions are correct. |
+| Health/status reporting | Passed | Configured/running/skipped counts and warnings appear. |
+| Explicit queue serialization | Passed | Explicitly enqueued tasks serialize. |
+| Queue-timeout release | Passed | Later task proceeds while underlying timed-out work may finish later. |
+| Exact marker/lifecycle regression | Passed | Marker and module lifecycle behavior remained intact. |
+| Global event-hook audit | Passed | No global `on`/`off` overrides introduced. |
+
+### Roll20 verification still required
+
+- Paste `GameAssist-v0.1.4.2.js` into a disposable or controlled Roll20 API sandbox.
+- Confirm the API sandbox reloads cleanly.
+- Run the release smoke test in `GameAssist-v0.1.4.2-release-notes-and-smoke-test.md`.
+- Do not retire the v0.1.4.1 rollback baseline until those tests pass.
+
+---
+
+## [0.1.4.1] – 2026-06-08
+
+### Release definition
+
+v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping v0.1.4 baseline. It preserves v0.1.4 command and bootstrap behavior, incorporates only isolated safe ideas from the failed attempted v0.1.5 upgrade, and aligns the single-file structure with MECHSUITS v1.5.2 requirements without performing a wholesale rewrite.
+
+### Development strategy
+
+- Treated uploaded v0.1.4 as the behavioral baseline.
+- Preserved the six-module shape:
+  - ConfigUI
+  - CritFumble
+  - NPCManager
+  - ConcentrationTracker
+  - NPCHPRoller
+  - DebugTools
+- Avoided broad bootstrap and interface/event lifecycle restructuring.
+- Preserved captured Roll20 `R20_ON` behavior.
+- Preserved direct normal handler execution.
+- Applied changes at narrow MECHSUITS section granularity.
+- Kept a separate rollback copy of v0.1.4.
+
+### Version and MECHSUITS metadata
+
+- Advanced Roll20 header, MECHSUITS `project_version`, and runtime `VERSION` to `0.1.4.1`.
+  - Header: `GameAssist-v0.1.4.1.js` line 4.
+  - Banner: line 74.
+  - Runtime version: line 520.
+- Preserved literal codename `GAMEASSIST`.
+- Audited:
+  - banner order and prose;
+  - file-scoped canonical tree;
+  - section tags and physical nesting;
+  - `mechsuit_section.codename`;
+  - section `area`;
+  - `last_updated_version`;
+  - Changed/Maintenance footer discipline;
+  - prior-note preservation;
+  - required Notes & Comments footers.
+- Did not claim that comment-only inherited sections were meaningfully changed.
+
+### Added – Centralized POLICY ownership
+
+- Added/expanded `[GAMEASSIST:POLICY]` beginning at line 163.
+- Centralized existing values without changing defaults:
+  - queue default timeout;
+  - watchdog interval and multiplier;
+  - metrics history/duration limits;
+  - runtime cache limits;
+  - timestamp sanity window;
+  - ConfigUI page size;
+  - CritFumble roll delay;
+  - unsafe configuration keys.
+- Used shallow frozen policy groups to reduce accidental runtime mutation.
+- Rationale:
+  - Shared knobs previously lived in multiple sections.
+  - Central policy ownership makes later changes reviewable and rollbackable.
+  - Existing values were preserved to avoid changing runtime behavior during the stability release.
+
+### Added – Time seams and timestamp hardening
+
+- Added shared wall-clock helper `now()` at line 227.
+- Added monotonic duration helper `monotonic()` at line 231.
+- Routed human-facing local-time formatting through `localTime(...)` at line 246.
+- Added `sanitizeTimestamp(raw, fallback)` at line 443.
+- Routed queue duration measurement through `monotonic()`.
+- Routed stored timestamps through the shared wall-clock seam and timestamp sanitizer.
+- Rationale:
+  - Wall-clock time is appropriate for human and persistent timestamps.
+  - Monotonic time is appropriate for durations and timeout measurement.
+  - Sanitization prevents malformed/future timestamps from corrupting ordered runtime caches.
+
+### Added – Shared marker helpers
+
+- Added `normalizeMarkerId(marker)` at line 331.
+- Added `tokenHasMarker(token, marker)` at line 335.
+- Exact-marker behavior:
+  - recognizes a configured marker;
+  - recognizes counted Roll20 marker values such as `dead@2`;
+  - does not match unrelated marker names such as `deadly`.
+- Rationale:
+  - Substring-style matching can remove or misreport the wrong marker.
+  - Shared top-level helpers are visible to module teardown functions and avoid the ConcentrationTracker scoping failure identified in the attempted upgrade.
+
+### Added – Shared runtime self-healing helpers
+
+- Added `ensureRuntimeObject(modState)` at line 411.
+- Added `ensureRuntimeKey(runtime, key, kind)` at line 425.
+- Added `ensureModRuntimeKey(modState, key, kind)` at line 438.
+- Used shared helpers to keep module runtime caches usable after malformed state or older persisted shapes.
+- Rationale:
+  - Runtime caches are operational and can be safely repaired to known container types.
+  - Shared helpers reduce duplicated and inconsistent repair code.
+
+### Changed – Queue timing and stale-completion protection
+
+- Preserved `_enqueue(...)` in `[GAMEASSIST:CORE:QUEUE]`, beginning at line 564.
+- Preserved job-id guards at lines 581 and 593:
+
+  ```js
+  if (myId !== _jobId) return;
+  ```
+
+- Preserved the timed-out completion guard:
+
+  ```js
+  if (timedOut) return;
+  ```
+
+- Routed queue timing through POLICY and `monotonic()`.
+- Emitted the declared metric name through `recordMetric(POLICY.metrics.queueDurationName, ...)` at line 603.
+- Rationale:
+  - A timed-out job may still finish later.
+  - Without the job-id and timed-out guards, late completion could advance the queue twice or corrupt busy-state accounting.
+
+### Changed – Configuration safety and snapshot completeness
+
+- Updated `!ga-config list` beginning at line 1211 to include:
+  - runtime version;
+  - global flags;
+  - root/global configuration;
+  - every bundled module configuration.
+- Clarified scope:
+  - “complete” means complete configuration snapshot;
+  - it does not mean full state, runtime cache, or metrics backup.
+- Preserved unsafe-key refusal:
+  - `BAD_KEYS` sourced from POLICY at line 1242;
+  - refusal check at line 1248.
+- Preserved `enabled=true|false` routing through module lifecycle methods rather than directly changing state.
+- Rationale:
+  - Older snapshot behavior omitted module configs.
+  - Config export needed to be useful before versioned import could be considered.
+  - Prototype-related keys remain unsafe and are explicitly rejected.
+
+### Changed – Shared linked-character validation
+
+- Preserved/exported `GameAssist.getLinkedCharacter` at line 1139.
+- Updated modules to use shared linked-token validation at lines including:
+  - NPCManager: lines 2008 and 2096;
+  - ConcentrationTracker: lines 2476, 2555, and 2743;
+  - NPCHPRoller: lines 2818 and 2865.
+- Rationale:
+  - Modules should not independently assume that tokens are linked, on the Objects layer, or backed by a valid character.
+  - Shared validation keeps invalid/unlinked/PC token handling consistent.
+
+### Changed – NPCManager exact marker behavior
+
+- Updated NPCManager to use exact shared marker matching.
+- Preserved:
+  - `deadMarker: 'dead'`;
+  - TokenMod calls;
+  - death log behavior;
+  - death audit/report commands;
+  - configured-marker teardown.
+- Teardown begins near line 2142 and clears only the configured marker from eligible current-page tokens.
+- Counted marker values such as `dead@2` are recognized.
+- Unrelated values such as `deadly` are preserved.
+- Rationale:
+  - Disable/teardown should clean up the marker GameAssist owns without damaging unrelated status information.
+
+### Changed – ConcentrationTracker lifecycle and runtime safety
+
+- Preserved configured-marker teardown beginning near line 2659.
+- Preserved shared marker matching and runtime self-healing.
+- Preserved structured `lastDamage` metadata while remaining compatible with legacy numeric values.
+- Preserved existing command language:
+  - `!concentration`
+  - `!cc`
+  - `--damage`
+  - `--mode`
+  - `--off`
+  - `--status`
+  - `--last`
+  - `--config randomize on|off`
+  - `!ga-conc-status`
+- Rationale:
+  - The attempted upgrade exposed a serious helper-scope risk in teardown.
+  - Shared helpers ensure teardown can access the configured-marker logic safely.
+
+### Changed – DebugTools exact marker behavior
+
+- Updated DebugTools marker diagnostics to use shared exact marker normalization.
+- Marker diagnostics now understand counted markers.
+- Preserved:
+  - disabled-by-default posture;
+  - dry-run-by-default posture;
+  - `--apply` requirement for mutations.
+- Section change note appears near line 3116.
+
+### Changed – Captured Roll20 event hooks
+
+- Preserved captured native Roll20 handler:
+
+  ```js
+  const R20_ON = ...
+  ```
+
+  at line 147.
+- Preserved use of `R20_ON` for command/event wrappers and `ready`.
+- Did not override global `on` or `off`.
+- Rationale:
+  - Global event-function overrides introduce script-order-dependent interoperability failures with scripts loaded after GameAssist.
+  - Roll20 does not provide a dependable general-purpose `off()` contract for these handlers.
+
+### Intentionally excluded from the attempted v0.1.5 upgrade
+
+- Duplicate trailing script fragment.
+  - Rejected because duplicated bootstrap/module code could double-register handlers or fail parsing/execution.
+- Changed or normalized codename.
+  - Rejected because MECHSUITS v1.5.2 requires literal owner-authoritative identifier preservation.
+- Global `on`/`off` overrides.
+  - Rejected because they create order-dependent cross-script behavior.
+- Weakened queue stale-completion guard.
+  - Rejected because late completion after timeout could advance the queue twice.
+- Broader command matching.
+  - Rejected because it could make neighboring command names accidentally trigger.
+- Wholesale bootstrap/dependency/interface restructuring.
+  - Rejected because the failed whole-file upgrade did not justify expanding the release’s blast radius.
+
+### Verification evidence
+
+| Verification | Result |
+| --- | --- |
+| JavaScript syntax validation | Passed |
+| MECHSUITS structural audit | Passed; no missing parents, invalid overlaps, canonical-tree drift, metadata issues, or missing footers detected |
+| Simulated Roll20 startup | Passed with enabled modules wired |
+| Core command simulation | Passed without exceptions |
+| Unsafe `__proto__` config write | Refused |
+| NPC death-marker add/remove simulation | Passed |
+| Exact counted marker handling | Passed |
+| Unrelated marker preservation | Passed |
+| Module disable/enable simulation | Passed |
+| Captured native event-hook strategy | Preserved |
+
+### Rollback posture
+
+- v0.1.4.1 is preserved unchanged as the rollback baseline for v0.1.4.2.
+- Rollback requires replacing the script and re-running health/smoke tests.
+- Script rollback does not automatically restore persistent state.
+
+---
+
+## [0.1.4] – Uploaded Stable-But-Limping Baseline
+
+### Baseline role
+
+- Served as the source baseline for v0.1.4.1.
+- Was treated as stable enough to preserve but not “known-good.”
+- Included the six-module structure:
+  - ConfigUI
+  - CritFumble
+  - ConcentrationTracker
+  - NPCManager
+  - NPCHPRoller
+  - DebugTools
+- Retained TokenMod-based status changes for NPCManager and ConcentrationTracker.
+- Preserved captured `R20_ON` behavior and avoided global `on`/`off` overrides.
+
+### Added
+
+- New **ConfigUI** module providing a GM-only chat control panel:
+  - module enable/disable buttons;
+  - boolean config toggles;
+  - pagination;
+  - `!ga-config ui`;
+  - `!ga-config-ui`.
+- New **DebugTools** module:
+  - disabled by default;
+  - GM-only;
+  - dry-run by default;
+  - `!ga-debug damage|marker|save`;
+  - mutations require `--apply`.
+- Public `GameAssist.renderConfigUI(playerId, options)` helper.
+
+### Changed
+
+- Updated README TL;DR, module guides, command matrix, macro recipes, and configuration reference for ConfigUI and DebugTools.
+- Advanced runtime version to 0.1.4.
+- Retained queue-guarded module lifecycle hooks.
+
+### Known baseline limitations carried into the repair line
+
+- State repair and dependency diagnostics needed clearer, safer semantics.
+- Config snapshot behavior and documentation needed correction.
+- Marker matching required exact shared helpers.
+- Some commands/configuration existed but were not fully documented.
+- README described queue/watchdog/state/dependency guarantees more strongly than the Roll20 environment could support.
+
+> No authoritative shipment date was recorded in the supplied changelog. This entry records baseline provenance.
+
+---
+
+## [0.1.3] – Detailed Historical Development Record
+
+This section preserves the supplied granular v0.1.3-era development record, including implementation locations and replaced behavior. The referenced line numbers belong to the historical artifact described by those notes and are retained for audit value.
+
+### Added – Persisted session metrics
+
+- Added persisted session metrics with GM summary/reset command.
+  - Added `GameAssist` lines 288-420 for the metrics store helpers:
+    - `createMetricsStore`
+    - `ensureStateRoot`
+    - `recordMetric`
+  - Instrumented wrappers at lines 683-742, 796-844, and 1049-1119 to log:
+    - commands;
+    - events;
+    - queue tasks;
+    - module toggles;
+    - errors.
+  - Exposed `!ga-metrics`.
+  - Updated the task queue finalizer at lines 197-214 to retain only the latest durations and feed the metrics ring buffer.
+  - Exported `getMetricsStore` and `recordMetric` on the public API at lines 927-932.
+- Documentation:
+  - README TL;DR, Command Matrix, and Troubleshooting sections documented `!ga-metrics`.
+  - `script.json` listed the new command and staged version bump.
+
+### Added – Shared token-to-character resolver
+
+- Introduced a shared resolver so modules validate Roll20 objects before use.
+  - Added `GameAssist` lines 343-353:
+
+    ```js
+    function getLinkedCharacter(token) { ... return { token, character }; }
+    ```
+
+  - Added public export at line 836:
+
+    ```js
+    GameAssist.getLinkedCharacter = getLinkedCharacter;
+    ```
+
+  - Added module usage at historical lines 1213, 1261, 1540, 1611, 1783, 1839, and 1886 so NPCManager, ConcentrationTracker, and NPCHPRoller consistently gate work on verified tokens.
+  - Removed duplicated per-module inline checks from the prior implementation:
+    - pre-update line 1156: `const charId = token.get('represents');`
+    - pre-update line 1168: `const character = getObj('character', charId);`
+    - pre-update line 1362: `const charId = token.get('represents');`
+
+### Added – NPCHPRoller auto-roll on token add
+
+- Added opt-in automatic HP rolling for newly created NPC tokens through `autoRollOnAdd`.
+  - Added historical lines 1801-1869 to reuse a shared NPC context resolver.
+  - New-token handling silently skips non-NPC or invalid tokens.
+  - Automatic rolls are annotated in logs.
+  - Added `add:graphic` listener metadata at historical lines 1948-1956.
+  - Updated README module/config documentation.
+- Default remained `false` to avoid event noise and unintended token mutation.
+
+### Changed – Guard-based module handler lifecycle
+
+- Core handler lifecycle moved from physical `off()` calls to module guard flags.
+  - Added historical lines 609-620 to store:
+    - `initialized`
+    - `active`
+    - `dependsOn`
+    - `wired`
+    - `internal`
+  - Added handler guards at historical lines 627 and 646-647:
+
+    ```js
+    if (!MODULES[mod]?.initialized || !MODULES[mod]?.active) return;
+    ```
+
+  - Preserved the READY gate for normal event handling.
+  - Removed prior minimal registration:
+
+    ```js
+    MODULES[name] = { initFn, teardown, enabled, initialized: false, events, prefixes };
+    ```
+
+  - Removed attempted physical unbinding:
+
+    ```js
+    (this._commandHandlers[mod] || []).forEach(h => off(h.event, h.fn));
+    (this._listeners[mod] || []).forEach(h => off(h.event, h.fn));
+    ```
+
+  - `offCommands` and `offEvents` became logical registry clearing rather than claims of Roll20 listener detachment.
+
+### Changed – Serialized module enable/disable with dependency guards
+
+- Added `_transitioning` checks and queued lifecycle execution across historical lines 718-807.
+- Added rollback on initialization failure at historical lines 745-755.
+- Added dependency verification helper at historical lines 673-701.
+- Added dependency checks inside `enableModule` and bootstrap at historical lines 723-731 and 1945-1955.
+- Removed the old eager teardown/clear path:
+  - pre-update line 502: `this.offEvents(name);`
+  - pre-update line 503: `this.offCommands(name);`
+  - pre-update line 504: `clearState(name);`
+  - pre-update line 505: `getState(name).config.enabled = true;`
+  - removed the analogous disable block at pre-update lines 520-524.
+
+### Changed – State audits became non-destructive
+
+- Added whitelist behavior across historical lines 305-321 so unexpected keys warn without destructive deletion.
+- Removed pre-update lines 294-301 that executed:
+
+  ```js
+  delete root[k];
+  ```
+
+  for unknown or malformed branches.
+- This established the safety rule later expanded in v0.1.4.2:
+  - known shapes may be repaired;
+  - unknown branches are preserved unless explicitly cleaned.
+
+### Changed – State helpers exposed through public API
+
+- Added historical lines 833-835:
+  - `GameAssist.getState`
+  - `GameAssist.saveState`
+  - `GameAssist.clearState`
+- Updated module initializers at historical lines 958, 1203, 1324, and 1741 to call `GameAssist.getState(...)`.
+- Removed direct internal accessor usage from the previous revision:
+  - pre-update line 648: `const modState = getState('CritFumble');`
+  - pre-update line 893: `const modState = getState('NPCManager');`
+  - pre-update line 996: `const modState = getState('ConcentrationTracker');`
+  - pre-update line 1325: `const modState = getState('NPCHPRoller');`
+
+### Changed – Compatibility audit scoring
+
+- Added signature catalog and scoring routine across historical lines 377-518.
+- Added summary rows and hints for known/unknown scripts.
+- Replaced earlier summary-only logging at pre-update lines 354-357, which reported only known/unknown lists and planned hooks.
+- Compatibility output remained gated by `GameAssist.flags.DEBUG_COMPAT`.
+
+### Changed – ConcentrationTracker structured runtime data
+
+- Added structured storage at historical lines 1559-1569.
+- Added skipped-token reporting in `handleClear` at historical lines 1600-1624.
+- Added `!ga-conc-status` wiring at historical lines 1691-1698.
+- Removed previous single-number storage:
+
+  ```js
+  modState.runtime.lastDamage[msg.playerid] = damage;
+  ```
+
+- Removed silent marker clearing:
+
+  ```js
+  if (t) toggleMarker(t, false);
+  ```
+
+- Structured metadata included damage, DC, mode, token/character IDs, bonus, player, and timestamp.
+
+### Changed – NPCManager configured-marker teardown
+
+- Added teardown across historical lines 1308-1331.
+- Teardown removes the configured marker through TokenMod and reports the number cleared.
+- Replaced behavior where disabling NPCManager could leave stale GameAssist-owned death markers on tokens.
+
+### Changed – Chat sanitization and planning utilities
+
+- Added quote escaping at historical line 340:
+
+  ```js
+  .replace(/"/g, '&quot;');
+  ```
+
+- Added `_dedupePlanned` guard at historical line 667:
+
+  ```js
+  if (this._deduped) return;
+  ```
+
+- Replaced unconditional deduplication from pre-update lines 493-495.
+- Rationale:
+  - quoted text should not break Roll20 whisper HTML;
+  - planned metadata should not grow repeatedly across reload-like flows.
+
+### Changed – Bootstrap dependency and failure handling
+
+- Added dependency checks and active-flag management at historical lines 1945-1973.
+- Set `initialized` and `active` based on actual startup success.
+- Removed unconditional initialization loop from pre-update lines 1491-1499:
+
+  ```js
+  Object.entries(MODULES).forEach(...)
+  ```
+
+- Failed or dependency-blocked modules remain inert instead of appearing active.
+
+### Added – Staged v0.1.3 helper and dependency work
+
+- Added compatibility audit scoring with signature-based hints for:
+  - TokenMod
+  - ScriptCards
+  - APILogic
+- Added shared helpers:
+  - `GameAssist.createButton(label, command)`
+  - `GameAssist.rollTable(tableName)`
+- Added GM command `!ga-conc-status`.
+- Added declared `dependsOn` checks for module enablement.
+- Added structured ConcentrationTracker metadata used by the status report.
+
+### Documentation
+
+- Clarified state-auditor commentary so unexpected branches are documented as warning-only.
+- Updated README for:
+  - metrics;
+  - developer helpers;
+  - compatibility scoring;
+  - dependency guardrails;
+  - `!ga-conc-status`;
+  - NPCHPRoller `autoRollOnAdd`.
+
+> No authoritative shipment date was recorded in the supplied development notes.
+
+---
+
+## [0.1.2] – 2025-09-16
+
+### Packaging & Repository Compliance (Roll20 API Repo)
+
+- **Standard Header Added:** Inserted the Roll20-required top-of-file comment containing:
+  - name;
+  - version;
+  - last-updated date;
+  - description;
+  - syntax/configuration pointers.
+- **One-Click Artifacts:** Added:
+  - `script.json`;
+  - repository-focused `README.md`;
+  - `GameAssist/` folder layout suitable for a `roll20-api-scripts` pull request.
+- **Dependencies & Tables:** Declared TokenMod usage and documented the exact CritFumble rollable-table names:
+  - `CF-Melee`
+  - `CF-Ranged`
+  - `CF-Thrown`
+  - `CF-Spell`
+  - `CF-Natural`
+  - `Confirm-Crit-Martial`
+  - `Confirm-Crit-Magic`
+
+### MECHSUITS v1.5 Structural Wrap (No Runtime Changes)
+
+- **Framing Only:** Introduced:
+  - MECHSUITS YAML banner;
+  - canonical tree;
+  - `[CODENAME:AREA] BEGIN/END` section frames;
+  - section notes for maintainability and reviewability.
+- **Behavior Parity:** No functional changes; commands and modules remained behaviorally aligned with v0.1.1.2.
+
+### Version & Metadata
+
+- **Version Bump:** Updated version to `0.1.2`.
+- **State/Migration:** No migration; `state.GameAssist` structure remained unchanged.
+
+---
+
+## [0.1.1.2] – 2025-06-10
+
+### CritFumble Module
+
+- **Natural 1 Detection Bugfix:**  
+  Refactored `hasNaturalOne` to robustly detect natural 1s on d20 attack rolls across template complexity and non-standard inline-roll shapes. This removed `"Cannot read properties of undefined (reading 'r')"` failures and ensured valid attack rolls could be checked without assuming every result contains `.r`.
+
+- **GM Visibility Improvement:**  
+  Whispered the **Confirm Critical Miss** confirmation menu to both the GM and the player, rather than only the player, so GM oversight remains consistent.
+
+---
+
+## [0.1.1.1] – 2025-05-30
+
+### Core Framework
+
+- **Quiet Startup Option:**  
+  Added `flags.QUIET_STARTUP`, default `true`. Per-module “Ready” chat lines may be suppressed while the core summary remains visible.
+
+- **Logging Improvements:**  
+  - Re-implemented `GameAssist.log` for clearer output and log hygiene.
+  - Escaped user text.
+  - Split multiline output into properly formatted GM whisper content.
+  - Preserved message order and formatting.
+  - Added `{ startup: true }` metadata so modules can mark suppressible ready messages.
+
+- **Core-Ready Announcement:**  
+  The core ready message remains unsuppressed even when quiet startup is enabled.
+
+- **Status Command Update:**  
+  - `!ga-status` uses real newline characters.
+  - Output remains grouped into one GM whisper.
+
+- **Module Announcements:**  
+  - CritFumble, NPCManager, ConcentrationTracker, and NPCHPRoller marked their ready messages with `{ startup: true }`.
+  - NPCHPRoller adopted the shared startup-output pattern.
+
+- **Summary:**  
+  No intended gameplay changes. Work focused on GM chat quality, reduced startup noise, and clearer diagnostics.
+
+---
+
+## [0.1.1.0] – 2025-05-29
+
+- Initial public release of GameAssist.
+- Bundled the core loader with four modules:
+  - CritFumble
+  - NPCManager
+  - ConcentrationTracker
+  - NPCHPRoller
+- Established the foundation for later modular expansion and customization.
+
+---
+
+## Historical Staging Labels Preserved
+
+The supplied predecessor changelog used these labels before the v0.1.4.1/v0.1.4.2 repair line was created:
+
+- `[Unreleased]` for much of the detailed v0.1.3-era lifecycle, metrics, state, compatibility, and module work.
+- `[Staging] 0.1.4 (blocked by 0.1.3 compliance)` for ConfigUI and DebugTools.
+- `[Staging] 0.1.3 (MECHSUITS compliance gate)` for compatibility hints, helpers, dependency checks, and structured concentration data.
+
+Those labels are no longer the current release-status statement, but their detailed implementation records have been retained in the relevant sections above. The attempted v0.1.5 upgrade remains explicitly unshipped.
+
+---
+
+*This changelog records implementation history, rationale, limitations, verification, and release posture. Roadmap ideas and failed upgrade attempts are never presented as shipped features.*
+
+---
+
+## Append-Only Maintenance Policy — Adopted 2026-06-10
+
+This section governs changelog entries added after v0.1.4.2.
+
+- Published entries are preserved as historical records and are not silently rewritten.
+- Each new release entry is a curated record of changes since the preceding release entry.
+- Corrections to an older entry are appended as a dated correction record that identifies the superseded claim.
+- Roadmap work belongs in `ROADMAP.md`; installation and troubleshooting procedures belong in `Smoketest.md`.
+- An older entry may receive an appended summary after it is at least three major-version releases behind the current release. The original detailed entry remains preserved.
+- Release status, verification results, and artifact names are stated as repository facts rather than internal work narration or editorial judgments.
+
+### Corrections to v0.1.3.x–v0.1.4.2 records
+
+The following corrections supersede inaccurate or temporary wording in the preserved entries above:
+
+| Preserved wording or reference | Corrected record |
+| --- | --- |
+| `GameAssist-v0.1.4.2.js` | The tracked artifact is `GameAssist-v0.1.4.2`. Its SHA-256 is `038B07B292E09981BD56564D83F5900353BDC1BDA0D39FDD4CB63A1DBE80CAC4`. |
+| `GameAssist-v0.1.4.1.js` | No v0.1.4.1 script is retained in the repository. Its historical checksum cannot be verified from the repository contents. |
+| `README-GameAssist-v0.1.4.2.md` | The tracked handbook is `README.md`. No version-named v0.1.4.2 README is retained. |
+| `GameAssist-v0.1.4.2-release-notes-and-smoke-test.md` | The tracked installation and troubleshooting checklist is `Smoketest.md`. The named release-specific file is not retained. |
+| “Mocked Roll20 sandbox” | These checks were simulated Roll20-environment checks, not executions inside the Roll20 API sandbox. |
+| “Release candidate,” “stable-but-limping,” “attempted upgrade,” and similar labels | These phrases describe development context recorded at the time. They are not current release-status classifications. |
+| “Truthful” or “honest” reporting claims | The durable contract is the specific behavior documented by the corresponding entry, such as configured/running/dependency-skipped counts or three-state dependency reporting. |
+| v0.1.4.2 Roll20 confirmation language | The recorded v0.1.4.2 sandbox pass exposed the custom concentration-marker recognition failure addressed by v0.1.4.3. No complete passing v0.1.4.2 sandbox result is recorded. |
+
+### Current release index
+
+| Revision | Status | Repository role |
+| --- | --- | --- |
+| **v0.1.4.5** | Pre-release; automated verification complete, Roll20 smoke confirmation pending | NPC death-history buckets, handouts, and arc notes |
+| **v0.1.4.4** | Previous complete script | DM-facing CritFumble help and NPC death-audit readability update |
+| **v0.1.4.3** | Previous complete script | Concentration custom-marker recognition and standalone TokenMod interoperability update |
+| **v0.1.4.2** | Previous complete script | Diagnostic and migration-readiness release with a known concentration custom-marker limitation |
+| **v0.1.4.1** | Historical release; script not retained | Stability-focused repair based on v0.1.4 |
+| **v0.1.4** | Historical baseline | Preserved as `GameAssist v0.1.4` |
+| **Unreleased v0.1.5 prototype** | Not released | Review source for selected fixes and architecture planning |
+
+---
+
+## [0.1.4.3] – 2026-06-10
+
+### Release definition
+
+v0.1.4.3 improves standalone TokenMod interoperability by resolving configured marker names to the exact marker identities Roll20 stores on tokens. The update focuses on ConcentrationTracker status reporting and marker lifecycle requests while preserving the v0.1.4.x external dependency model.
+
+MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
+
+### Release artifacts
+
+| Artifact | Purpose | SHA-256 |
+| --- | --- | --- |
+| `GameAssist-v0.1.4.3` | Versioned v0.1.4.3 script | `4C95BB9408A86BE45E7F5AC4A2726B932A6D408ADF834E90D5B7A1E161C48971` |
+| `GameAssist` | Current repository script; identical to `GameAssist-v0.1.4.3` | `4C95BB9408A86BE45E7F5AC4A2726B932A6D408ADF834E90D5B7A1E161C48971` |
+| `GameAssist-v0.1.4.2` | Previous complete script | `038B07B292E09981BD56564D83F5900353BDC1BDA0D39FDD4CB63A1DBE80CAC4` |
+
+### Root cause addressed
+
+- Roll20 stores a custom marker display name such as `Concentrating` as a token marker tag such as `Concentrating::7191835`.
+- v0.1.4.2 compared the configured display name directly with the stored tag.
+- A token visibly carrying the configured custom marker could therefore be omitted from `!concentration --status`.
+- `deps unverifiable (TokenMod)` was not the cause of the status-read failure. Status reporting reads token markers directly; TokenMod is used when GameAssist requests marker mutation.
+
+### Changed — Shared marker identity resolution
+
+- Added a cached reader for Roll20's campaign custom-marker registry in `[GAMEASSIST:APP:UTILS]`.
+- Added structured marker resolution for:
+  - lowercase built-in marker ids such as `dead`;
+  - custom marker display names such as `Concentrating`;
+  - exact stored custom marker tags such as `Concentrating::7191835`;
+  - counted marker values such as `Concentrating::7191835@3`.
+- Preserved lowercase built-in-marker precedence so a custom marker named `dead` does not replace NPCManager's built-in default.
+- Allowed a colliding custom marker to be selected by its complete stored tag.
+- Updated `tokenHasMarker(...)` to compare exact resolved marker identities.
+- Added fast paths for already-resolved custom tags and literal built-in ids.
+- Exact stored custom marker tags now resolve before campaign-registry access, so a valid configured tag such as `Concentrating::7191835` remains usable when Roll20's marker registry is unavailable or malformed.
+- Simple matching quote pairs are stripped before marker resolution, so chat-configured values such as `"red"` and `'red'` resolve as `red`.
+- Returned explicit resolution failures for unrecognized configured markers.
+
+### Changed — ConcentrationTracker status and lifecycle diagnostics
+
+- `!concentration --status` now:
+  - lists current-page tokens carrying the resolved configured marker;
+  - returns `No tokens concentrating.` when no matching tokens are present;
+  - reports when the current player page cannot be determined;
+  - reports an unrecognized configured marker and provides configuration repair syntax;
+  - logs a warning when a display name matches multiple custom markers.
+- Concentration marker add, remove, and teardown requests now send TokenMod the resolved stored marker tag.
+- `!concentration --off` reports that marker removal was requested rather than claiming the asynchronous TokenMod operation completed.
+- Teardown stops and logs a warning when the configured marker cannot be resolved.
+
+### Changed — NPCManager death-marker mutation
+
+- NPCManager now resolves the configured death marker before TokenMod add, remove, and teardown requests.
+- The default built-in `dead` marker still emits `statusmarkers|+dead` and `statusmarkers|-dead`.
+- Built-in color markers such as `red` work even when the saved configuration contains simple wrapping quotes.
+- A configured custom display name now emits the exact stored custom marker tag when Roll20's marker registry can resolve it.
+- A configured exact custom tag, such as `Dead Custom::abc123`, remains usable even when Roll20's marker registry is unavailable or malformed.
+- If the configured death marker cannot be resolved, NPCManager warns instead of sending a misleading TokenMod request or logging a death as completed.
+
+### Documentation and changelog maintenance
+
+- Updated `README.md`, `ROADMAP.md`, and `Smoketest.md` for v0.1.4.3 behavior and validation.
+- Added focused concentration-marker checks to `Smoketest.md`.
+- Separated release records, roadmap plans, and installation/troubleshooting procedures.
+- Adopted the append-only changelog policy above.
+- Added appended corrections for inaccurate artifact names and temporary development terminology in preserved v0.1.3.x–v0.1.4.2 records.
+
+### MECHSUITS changes
+
+- Advanced the file header, banner `project_version`, prose guarantee, visual version, and runtime `VERSION` to `0.1.4.3`.
+- Applied the Meaningful Change Rule to:
+  - `[GAMEASSIST:APP]`
+  - `[GAMEASSIST:APP:UTILS]`
+  - `[GAMEASSIST:CORE]`
+  - `[GAMEASSIST:MODULES]`
+  - `[GAMEASSIST:MODULES:NPCMANAGER]`
+  - `[GAMEASSIST:MODULES:CONCENTRATIONTRACKER]`
+- Recorded maintenance-only commentary updates in:
+  - `[GAMEASSIST:POLICY]`
+  - `[GAMEASSIST:INTERFACES:COMMANDS]`
+  - `[GAMEASSIST:MODULES:CRITFUMBLE]`
+- Preserved literal codename `GAMEASSIST`, existing section tags, and prior notes.
+- Confirmed paired tags, proper nesting, and canonical-tree agreement.
+
+### Compatibility and state impact
+
+| Area | v0.1.4.3 behavior |
+| --- | --- |
+| TokenMod | Remains a separately installed dependency responsible for requested marker mutations. |
+| Marker reads/writes | GameAssist reads token markers directly and resolves built-in ids, custom display names, and stored custom tags before marker-dependent read/write decisions. |
+| MarkerService | Not included. |
+| Integrated TokenMod | Not included. |
+| Public commands | Existing v0.1.4.2 command language is preserved. |
+| Persistent state | No migration is required; existing ConcentrationTracker configuration remains valid. |
+| Rollback | Replacing the script with `GameAssist-v0.1.4.2` restores the previous marker-name comparison behavior. |
+
+### Verification results
+
+| Verification | Result | Coverage |
+| --- | --- | --- |
+| JavaScript syntax validation | Passed | The current script parses successfully. |
+| Current/versioned script identity | Passed | `GameAssist` and `GameAssist-v0.1.4.3` are byte-identical. |
+| MECHSUITS structural audit | Passed | Section pairing, nesting, metadata, footers, and canonical tree agree. |
+| Simulated Roll20-environment checks | Passed | Empty status, custom and counted markers, built-in markers, exact custom tags, exact custom tags with registry failures, NPC death-marker add command generation, invalid-marker diagnostics, disabled-module diagnostics, and TokenMod teardown command generation. |
+| Roll20 API sandbox | Not recorded | Installation and module validation procedures are documented in `Smoketest.md`. |
+
+### Exclusions
+
+- No MarkerService module.
+- No integrated TokenMod or StatusInfo module.
+- No change to the v0.1.4.x dependency model.
+- No configuration import or full-state restore.
+- No new gameplay modules.
+- No native Mord character-sheet support.
+
+---
+
+## [0.1.4.4] – 2026-07-17
+
+### Release definition
+
+v0.1.4.4 is a small DM-facing readability release. It preserves the v0.1.4.3 marker-recognition and standalone TokenMod interoperability fixes while improving two chat outputs identified in Issue #21.
+
+### Issue addressed
+
+- [#21](https://github.com/Mord-Eagle/GameAssist/issues/21) — Make CritFumble help and NPC death-audit output human-readable.
+
+### Changed — DM-facing command output
+
+- Revised `!critfumble help` from a command list into a quick reference with an `Open Natural 1 Menu` button, common commands, attack types, and exact setup table names.
+- Added `!critfumble menu` as the public CritFumble-family command for opening the guided Natural 1 dialogue.
+- Added bare `!critfumble` as a help alias, so entering the feature command without a subcommand opens the guide instead of silently doing nothing.
+- Preserved `!critfail` as the direct GM player-picker command.
+- Preserved existing CritFumble command syntax:
+  - `!critfail`
+  - `!critfumble`
+  - `!critfumble help`
+  - `!critfumble menu`
+  - `!critfumble-TYPE`
+  - `!confirm-crit-martial`
+  - `!confirm-crit-magic`
+- Changed `!npc-death-audit` from multiple line-by-line log messages into one grouped GM report.
+- Added an audit `Scope` row stating that linked NPC tokens are checked and player characters are not included.
+- Grouped audit mismatches by action: `Add Marker` for dead NPCs missing the configured marker, and `Clear Marker` for living NPCs still carrying it.
+- Preserved useful mismatch details: NPC name, HP, current markers, and token ID.
+- Bounded each audit mismatch detail group while preserving total counts, so crowded pages do not produce one oversized Roll20 chat payload.
+- Kept unrelated unlinked-page-item notes as informational context, so party markers, scenery, labels, and props do not read like errors.
+
+### Documentation
+
+- Updated `Smoketest.md` so DMs no longer need to reinterpret the old audit success message.
+- Updated the CritFumble smoke test to check the quick-reference help panel, the bare `!critfumble` help alias, the `!critfumble menu` guided dialogue, and the unchanged `!critfail` player picker.
+- Updated `README.md` to describe the quick reference, guided menu, direct player picker, and the meaning of a clean NPC death audit.
+- Updated `ROADMAP.md` so #21, #22, and #23 precede the #24 standalone-interoperability umbrella, with #32 explicitly deferred after the existing issue queue.
+
+### Review fixes
+
+- Hardened `!critfumble help` and `!critfumble menu` matching so extra internal whitespace is accepted.
+- Hardened direct fumble rolls so mixed-case commands such as `!CritFumble-melee` resolve the intended fumble type.
+- Added a POLICY-owned `npcAuditDetailLimit` cap for grouped NPC death-audit reports.
+- Corrected `script.json` so `script` points to the repository's actual `GameAssist` artifact instead of nonexistent `GameAssist.js`.
+- Added `!critfumble help` and `!critfumble menu` to the script metadata command list.
+
+### MECHSUITS records
+
+- Updated `[GAMEASSIST:MODULES:CRITFUMBLE]` because the public help output changed.
+- Updated `[GAMEASSIST:MODULES:NPCMANAGER]` because the public audit success output changed.
+- Updated `[GAMEASSIST:POLICY]` because the NPC death-audit detail cap is a runtime behavior knob.
+- Updated `[GAMEASSIST:CORE]` because the runtime `VERSION` constant advanced.
+- Preserved existing section tags, codename `GAMEASSIST`, and command names.
+
+### Release artifacts
+
+The v0.1.4.3 artifact remains preserved. The current repository script and the new v0.1.4.4 versioned artifact share:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `GameAssist` | `DB68D6467D698FEF25D416394FFD07F6F44EF2E2361D9DBA9F198A0DAA41D091` |
+| `GameAssist-v0.1.4.4` | `DB68D6467D698FEF25D416394FFD07F6F44EF2E2361D9DBA9F198A0DAA41D091` |
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| `node --check .\GameAssist` | Passed |
+| `GameAssist-v0.1.4.4` syntax via stdin check | Passed |
+| `GameAssist` versus `GameAssist-v0.1.4.4` byte identity | Passed |
+| `git diff --check` | Passed |
+
+Roll20 API sandbox confirmation is still required for the final release gate.
+
+---
+
+## [0.1.4.5] – 2026-07-17
+
+### Release definition
+
+v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It keeps the `v0.1.4.x` standalone TokenMod architecture, but changes death history from a single chat-oriented log into hierarchical DM-facing handout buckets: Campaign, Chapter, Section, and Session. It also adds a report writer and curated Arc rosters that sit outside that hierarchy. NPCManager advances to module version `1.1.0` because its state model, report workflow, clear behavior, date handling, and Arc-management surface changed substantially even though the GameAssist project version remains a patch release.
+
+### Issue addressed
+
+- [#22](https://github.com/Mord-Eagle/GameAssist/issues/22) — Add summarized and named NPC death-log pools.
+
+### Changed — scoped NPC death buckets
+
+- Advanced `[GAMEASSIST:MODULES:NPCMANAGER]` independent `module_version` from `0.1.1.0` to `1.0.0` for the bucket-state redesign, then to `1.1.0` for report writing, hierarchical clearing, date rollover, and curated Arc management.
+- Added active death-history bucket names under NPCManager config:
+  - `campaign`
+  - `chapter`
+  - `section`
+  - `session`
+- Default bucket names are intentionally simple:
+  - Campaign: `Campaign`
+  - Chapter: `Chapter`
+  - Section: `Section`
+  - Session: current date in `YYYY-MM-DD` form when no saved session name exists.
+- Added `!npc-death-buckets` as the GM-facing bucket control panel.
+- Added bucket rename support:
+  - `!npc-death-buckets --campaign "Name"`
+  - `!npc-death-buckets --chapter "Name"`
+  - `!npc-death-buckets --section "Name"`
+  - `!npc-death-buckets --session "Name"`
+  - `!npc-death-buckets --resetSession`
+- Changing a bucket name starts or resumes that named bucket. Existing bucket records and handouts are retained instead of being deleted.
+- Every newly recorded NPC death is copied into all four active buckets so Session history can be cleared while Chapter, Section, and Campaign history remain available.
+- Added a lazy date-boundary check before every NPCManager command and tracked NPC HP event. A date-managed Session moves to the current sandbox/UTC `YYYY-MM-DD` name before new activity is processed; prior dated buckets and handouts remain available.
+- Explicitly named Sessions remain active across date changes. `!npc-death-buckets --resetSession` restores the current UTC date and re-enables automatic date-managed rollover.
+- Tracked DM-configurable timezone formatting and date boundaries separately in [Issue #35](https://github.com/Mord-Eagle/GameAssist/issues/35). v0.1.4.5 does not reinterpret historical timestamps.
+
+### Changed — death recording and revival handling
+
+- Death recording no longer depends on TokenMod marker-write success.
+- When a linked NPC drops below 1 HP:
+  - GameAssist records the death in the active buckets;
+  - GameAssist requests the configured death marker through TokenMod when the marker is not already present;
+  - `autoHide` behavior is preserved.
+- Duplicate open death entries are avoided while an NPC already has an unrevived record.
+- When a linked NPC rises above 0 HP:
+  - GameAssist annotates the most recent matching unrevived death entry;
+  - the annotation is applied across stored buckets and arc entries where a matching entry exists;
+  - GameAssist requests marker removal through TokenMod when the marker is present.
+- Revival annotations are saved even when an invalid marker configuration or failed TokenMod request prevents visual marker removal.
+- Revival annotations preserve history instead of silently deleting the death entry.
+
+### Changed — death reports and handouts
+
+- `!npc-death-report` now opens the active Session bucket by default.
+- Added bucket scope selection:
+  - `!npc-death-report --scope campaign`
+  - `!npc-death-report --scope chapter`
+  - `!npc-death-report --scope section`
+  - `!npc-death-report --scope session`
+- Preserved bounded detail views:
+  - `!npc-death-report --recent`
+  - `!npc-death-report --page N`
+  - `!npc-death-report --help`
+- Changed `!npc-death-report --write` to open the report writer before any handout is changed.
+- Added `!npc-death-write` and the case-insensitive shorthand `!NPC-WR`.
+- Added report-writer actions:
+  - `!npc-death-write --all` updates all four active bucket handouts;
+  - `!npc-death-write --scope campaign|chapter|section|session` updates one active handout;
+  - `!npc-death-write --newSection "Name"` starts or resumes a Section, copies only missing current-Session deaths into it, and updates the Section and Session handouts without rewriting Campaign or Chapter.
+- Each bucket writes to one handout named by scope and bucket name, for example:
+  - `GameAssist Deaths - Campaign - Campaign`
+  - `GameAssist Deaths - Chapter - Chapter`
+  - `GameAssist Deaths - Section - Section`
+  - `GameAssist Deaths - Session - 2026-07-17`
+- Existing legacy `runtime.deathLog` entries are backfilled into active buckets when the bucket system first reads old state and no bucket entries exist.
+- The legacy `deathLog` array is retained for compatibility and duplicate/open-death detection.
+
+### Changed — audit output
+
+- `!npc-death-audit` remains the current-page HP/marker mismatch checker.
+- Chat output is now a short summary with:
+  - mismatch count;
+  - explicit scope statement;
+  - configured marker;
+  - count of NPCs needing a marker;
+  - count of NPCs needing marker removal;
+  - count of ignored unlinked page items.
+- Complete audit rows write to the `GameAssist NPC Death Audit` handout.
+- Chat retains bounded, grouped token details under `Add Death Marker` and `Remove Death Marker`, including each affected token's HP, current markers, and token ID.
+- The audit continues to check linked NPC tokens only; player characters are intentionally excluded.
+
+### Added — manual arc handouts
+
+- Added `!npc-death-arc` as the GM-facing arc help/list panel, keeping the command within NPCManager's `!npc-death-*` naming family.
+- Added manual selected-token capture:
+  - `!npc-death-arc --name "Arc Name"`
+  - selected linked PC and NPC tokens are appended to `GameAssist Arc - Arc Name`.
+- Added session import:
+  - `!npc-death-arc --name "Arc Name" --session`
+  - current Session bucket deaths are appended without duplicating entries already imported into that arc.
+- Added optional note support for selected-token entries:
+  - `!npc-death-arc --name "Arc Name" --note "Text"`
+- Arc buckets are independent story-note handouts; they do not sit inside Campaign, Chapter, Section, or Session.
+- Arc entries now deduplicate by linked creature by default. A selected token that later appears in a full Session import remains one entry and may be enriched with the matching death record.
+- Added `--allowDuplicates` as an explicit override when repeated Arc entries are intentional.
+- Added `!npc-death-arc --name "Arc Name" --manage` with paged entry controls.
+- Added one-entry Remove buttons, `--removeSelected` for selected-token cleanup, and `--undo` for the most recent Arc addition or merge.
+- Arc corrections change only the Arc roster and handout; they do not alter Campaign, Chapter, Section, or Session history.
+
+### Changed — review hardening
+
+- Removed the unused init-time Session entry from `DEFAULT_BUCKET_NAMES`. Session defaults continue to call `currentSessionDateKey()` when needed, preserving date rollover while avoiding a misleading frozen-date fallback.
+- Added opt-in `preserveRuntimeOnDisable` module-registration metadata. Existing modules continue clearing disposable runtime caches by default.
+- NPCManager enables runtime retention so disabling marker automation no longer erases saved Campaign, Chapter, Section, Session, or Arc records; configured-marker teardown still runs.
+- Open-death deduplication now requires an exact token ID. Legacy name-only entries remain available in reports but cannot suppress a new death for a different same-named NPC.
+- Persisted the legacy death-log migration completion flag in NPCManager runtime state so the migration does not repeat on every command.
+- Batched legacy migration handout writes to one update per scope after all retained entries are copied.
+- Matched current death records by token ID before using the name-only fallback reserved for legacy entries without token IDs. This keeps separate same-named NPC tokens from sharing one death or revival record.
+- Preserved open-death detection across retained buckets after a scoped Session clear, preventing a still-dead NPC from being recorded again in Campaign, Chapter, or Section after another below-zero HP edit.
+- Preserved an exact selected-token HP value of `0` in arc state instead of treating it as absent.
+- Limited arc revival annotations to entries imported from death history. Ordinary selected-token story notes remain unchanged during later positive-HP edits.
+
+### Added — NPCManager start-here help
+
+- Added `!npc-death-help` as the top-level NPCManager help menu.
+- The help menu shows:
+  - start-here steps for DMs;
+  - a plain-language explanation of Campaign, Chapter, Section, and Session;
+  - active bucket names and counts;
+  - direct buttons for reading, writing, clearing, audit, and Arc workflows;
+  - compact expert command examples.
+- Rebuilt `!npc-death-report --help` as the central NPCManager guide and made `!npc-death-help` open the same guide.
+- The guide explains the four-level hierarchy, active names and counts, report writing, selected-only versus nested clearing, Arc management, and audit scope with direct action buttons.
+
+### Changed — safer bucket clearing
+
+- The default clear target remains Session.
+- Every clear confirmation offers the selected bucket alone.
+- Campaign, Chapter, and Section confirmations also offer `--nested`, which clears the selected level and every descendant:
+  - Campaign and below: Campaign, Chapter, Section, Session;
+  - Chapter and below: Chapter, Section, Session;
+  - Section and below: Section, Session.
+- Parent levels above the selected level are retained.
+- Clearing any set that includes Session also clears the retained legacy `deathLog` mirror.
+- Adjacent boolean switches now parse independently, so displayed combinations such as `--nested --confirm` and `--session --allowDuplicates` execute as written.
+
+### Documentation
+
+- Updated `README.md` with NPCManager `1.1.0`, bucket hierarchy, handout names, central help guide, report writer, nested clear choices, date rollover, Arc deduplication, and recovery controls.
+- Added a Roll20 API repository readiness checklist to `README.md` covering folder/script naming, `script.json`, header, file types, smoke-test language, license, post-merge wiki upkeep, and the extensionless `GameAssist` versus `.js` submission-artifact check.
+- Updated `Smoketest.md` so the in-depth NPCManager checks exercise Campaign, Chapter, Section, and Session naming, the report writer, “new Section from Session,” selected-only and nested clearing, Arc deduplication/override/removal/undo, date-boundary expectations, audit output, and handout refreshes.
+- Updated `ROADMAP.md` to record Issue #22 as scoped death-history buckets and handouts rather than a summary-only report pass.
+- Updated `script.json` to version `0.1.4.5`, add `0.1.4.4` to `previousversions`, identify NPCManager `1.1.0`, and list the report-writer, nested-clear, and Arc-management command surface.
+
+### MECHSUITS records
+
+- Updated `[GAMEASSIST:POLICY]` because the death-report summary/detail caps are runtime behavior knobs.
+- Updated `[GAMEASSIST:APP:UTILS]` because adjacent boolean flags no longer consume one another as values.
+- Updated `[GAMEASSIST:CORE]` because the runtime `VERSION` constant advanced.
+- Updated `[GAMEASSIST:MODULES:NPCMANAGER]` because the public death-report, writer, help, bucket, audit, Arc, revival, rollover, and hierarchical-clear behavior changed.
+- Preserved existing section tags, codename `GAMEASSIST`, and command names.
+
+### Release artifacts
+
+The v0.1.4.4 artifact remains preserved. The current repository script and the new v0.1.4.5 versioned artifact share this repository blob SHA-256:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `GameAssist` | `F6D9AAE9906C4ACF5494861032F8CCB50709B3FCA06454EC4116CD6D03577578` |
+| `GameAssist-v0.1.4.5` | `F6D9AAE9906C4ACF5494861032F8CCB50709B3FCA06454EC4116CD6D03577578` |
+
+Local Roll20 test copy:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `outputs/GameAssist-v0.1.4.5-pr34-test.js` | `95487BA6297884561CE3F51667E84B13990246151B924D9F9638742AD11C0950` |
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| `node --check .\GameAssist` | Passed |
+| `script.json` JSON parse | Passed |
+| `GameAssist` versus `GameAssist-v0.1.4.5` byte identity | Passed |
+| NPCManager review regression checks for migration, same-name tokens, scoped clearing, arc revival eligibility, and zero HP | Passed |
+| NPCManager behavioral harness: Arc deduplication/override/removal/undo, selected-only and nested clearing, Section seeding, and simulated date rollover | Passed (22 assertions) |
+| Copilot follow-up harness: custom Session retention, date-mode reset/rollover, and revival annotation despite marker-resolution failure | Passed (9 assertions) |
+| NPC death-audit chat/handout regression: two named mismatches with HP, markers, and token IDs in chat plus complete handout details | Passed (12 assertions) |
+| Five-revision preservation audit: commands, defaults, state repair, queue, dependencies, marker identity, module UX, HP rolling, and NPCManager lifecycle | Passed after correcting NPCManager disable retention |
+| Legacy name-only deduplication regression: a retained legacy name does not block a new token-ID-bearing death | Passed |
+| MECHSUITS section pairing, nesting, metadata, footers, and canonical-tree agreement | Passed (19 sections) |
+| `git diff --cached --check` | Passed |
+| Roll20 API sandbox acceptance checklist | Pending DM smoke test |
+
+The Roll20 sandbox checklist remains the release acceptance test for live marker changes, chat rendering, and handout behavior.
+
+---
+
+## [0.1.4.6] – 2026-07-17
+
+### Release definition
+
+v0.1.4.6 is a focused GameAssist status-readability release for Issue #23. It replaces the flat technical `!ga-status` list with a short, action-oriented system check for DMs and retains volatile counters and internal diagnostics in an optional troubleshooting view. It also preserves an enabled module's configured intent when a confirmed missing dependency prevents startup, allowing the status panels to report the skip accurately. It does not change gameplay-module commands, marker behavior, TokenMod communication, StatusInfo interoperability, queue execution, runtime caches, or NPCManager history.
+
+### Issue addressed
+
+- [#23](https://github.com/Mord-Eagle/GameAssist/issues/23) — Make `!ga-status` output easier for DMs to interpret.
+
+### Changed — default system check
+
+- Rebuilt `!ga-status` as a Roll20 default-template panel titled `GameAssist 0.1.4.6 System Check`.
+- The first panel now presents four decisions in reading order:
+  - overall health and whether the DM needs to act;
+  - how many enabled modules are running and how many modules are turned off;
+  - errors recorded during the current Roll20 sandbox session;
+  - dependency evidence with a plain-language next action.
+- Added a separate `GameAssist Actions` whisper immediately below the simple status table with direct buttons for:
+  - Troubleshooting Details;
+  - Module List;
+  - Open Settings.
+- Deliberately disabled modules are reported as turned off rather than failures.
+- Dependency warnings from disabled modules are excluded from the active health decision.
+- Modules skipped during startup for a confirmed missing dependency remain configured, appear as needing attention, and contribute to the dependency-skipped count.
+
+### Added — troubleshooting details
+
+- Added `!ga-status --details`; `!ga-status details` is accepted as an equivalent readable form.
+- The details panel preserves the prior diagnostic surface with clearer labels:
+  - registered, enabled, running, and dependency-skipped module counts;
+  - commands, chat messages, and errors recorded in the current sandbox session;
+  - explicit queue length and the reminder that normal Roll20 events execute directly;
+  - average duration for explicitly queued tasks;
+  - last recorded activity in sandbox-local display time;
+  - GameAssist's internally tracked event-hook count.
+- The event-hook count explicitly states that it is troubleshooting information rather than a health or pass/fail test.
+- Added buttons to refresh details, return to the simple view, open the module list, and view metrics.
+- Moved those detailed-view buttons into a separate `Troubleshooting Actions` whisper immediately below the details table.
+
+### Changed — health interpretation
+
+- `Ready - GameAssist is responding and every enabled module is running.` appears when enabled modules are active, no current-sandbox error is recorded, and enabled-module dependencies are confirmed.
+- `Ready - enabled modules are running. A marker check is recommended.` appears when Roll20 cannot confirm a dependency but enabled modules are otherwise active.
+- `Attention needed - review the items below.` appears when GameAssist has recorded an error, an enabled module is stopped, or an enabled module has a confirmed missing dependency.
+- `unverifiable` remains non-fatal. The panel explains that Roll20 may not expose enough metadata and recommends one real death or concentration marker test.
+- Confirmed missing dependencies identify the dependency and affected enabled modules, then recommend installing/enabling the dependency or turning off the affected module.
+- Startup now checks whether a module was deliberately disabled before diagnosing its dependencies. This prevents optional disabled modules from producing startup dependency warnings.
+- Startup no longer rewrites `config.enabled` to `false` when a confirmed missing dependency skips a configured module. Preserving that setting distinguishes the skipped module from one the DM intentionally disabled.
+- Manual `!ga-enable <Module>` retries with confirmed missing dependencies now refuse activation without changing the module's existing configuration. Configured-and-skipped modules remain visible as needing attention, while deliberately disabled modules remain disabled.
+- `disableModule()` now considers both persistent configuration and runtime state before reporting that a module is already disabled. A configured-but-inactive dependency skip can therefore be turned off through `!ga-disable` or `!ga-config set <Module> enabled=false`, clearing the corresponding status warning.
+
+### Corrected — duration and terminology
+
+- Corrected a live Roll20 rendering failure in which button-only rows inside the default template were omitted. Status navigation now uses ordinary GM whispers while the health information remains in the default-template table.
+- Removed the malformed `Avg Task Duration: N/Ams` output.
+- When no queued duration exists, the details panel now reads `N/A - no queued task duration has been recorded.`
+- Numeric averages use a spaced unit, for example `15.00 ms`.
+- Replaced the ambiguous `Active Listeners` label with `GameAssist Event Hooks` and qualified its limited diagnostic meaning.
+- Replaced the raw `Last Update` value with `Last Recorded Activity` and a human-readable sandbox-time display.
+- Separated health results from session activity counters so changing command/message counts no longer look like fixed installation expectations.
+
+### Compatibility boundaries
+
+- Preserved the six bundled modules and all prior command literals.
+- Kept TokenMod as the standalone marker-mutation dependency for the `v0.1.4.x` line.
+- Did not implement any of Issue #24's remaining TokenMod or StatusInfo interoperability work.
+- Preserved `!ga-config modules` as the detailed per-module configured/runtime/dependency view.
+- Preserved `!ga-metrics` as the longer persisted activity history.
+- Preserved captured `R20_ON` routing and the refusal to replace Roll20 global `on` or `off`.
+
+### Version and MECHSUITS records
+
+- Advanced the script header, MECHSUITS banner `project_version`, prose guarantee, visible license banner, runtime `VERSION`, README, smoke-test target, and `script.json` to `0.1.4.6`.
+- Added `0.1.4.5` to `script.json.previousversions`.
+- Updated `[GAMEASSIST:CORE]` because the runtime version changed.
+- Updated `[GAMEASSIST:CORE:OBJECT]` because failed dependency enable attempts now preserve the module's existing configured intent.
+- Updated `[GAMEASSIST:INTERFACES:COMMANDS]` because `!ga-status` output, health interpretation, dependency scoping, and public `--details` behavior changed.
+- Updated `[GAMEASSIST:BOOTSTRAP]` because startup now preserves configured intent for dependency-skipped modules and checks deliberate disables before dependency diagnostics.
+- Left POLICY, APP utilities, queue, compatibility, state, event interface, and all six gameplay-module sections unchanged.
+- Preserved the literal `GAMEASSIST` codename, all section tags, and the file-scoped canonical tree.
+
+### Documentation
+
+- Updated `README.md` with the simple/details status split, command syntax, health interpretation, troubleshooting workflow, upgrade path, current release posture, and release summary.
+- Updated `Smoketest.md` with DM-readable expected output, button checks, details-panel checks, variable-counter guidance, dependency interpretation, and the corrected unavailable-duration display.
+- Updated `ROADMAP.md` to move Issue #23 to sandbox verification while leaving Issue #24 planned separately.
+- Added a standalone Issue #23 Roll20 test script and concise acceptance checklist outside the repository working tree.
+
+### Release artifacts
+
+The current repository script and versioned artifact share this Git-normalized SHA-256:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `GameAssist` | `859FE5A08516EEBE42D7BB2C05733AE28E5DD49E5954045C4A9D4CA7EC44EAEF` |
+| `GameAssist-v0.1.4.6` | `859FE5A08516EEBE42D7BB2C05733AE28E5DD49E5954045C4A9D4CA7EC44EAEF` |
+
+Local Roll20 test copy:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `outputs/GameAssist-v0.1.4.6-issue23-test.js` | `233C20EB6AC6011E8BF26AE8828738C6C8B85E8BBDCD072759F2369786FFEF01` |
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| JavaScript syntax for repository, versioned, local Roll20, and harness artifacts | Passed |
+| `script.json` parse and version/previous-version metadata | Passed |
+| Default, detailed, action-strip, confirmed, unverifiable, missing, startup-skipped, refused-enable, skipped-disable, deliberately-disabled, recorded-error, numeric-duration, and command-boundary status scenarios | Passed (57 assertions) |
+| `GameAssist`, `GameAssist-v0.1.4.6`, and local Roll20 test copy normalized identity | Passed |
+| Unchanged v0.1.4.5 leaf sections: POLICY, APP utilities, queue, compatibility, state, event interface, and all modules | Passed (12 sections) |
+| Prior command-literal preservation | Passed |
+| MECHSUITS section pairing and proper nesting | Passed (19 sections) |
+| Global Roll20 `on`/`off` non-override contract | Passed |
+| `git diff --check` | Passed |
+| Roll20 chat rendering and button acceptance | Pending DM smoke test |
+
+The Roll20 API sandbox remains the final acceptance environment for default-template rendering and clickable chat buttons.
+
+---
+
+## [0.1.4.7] – 2026-07-17
+
+### Release definition
+
+v0.1.4.7 is the focused standalone-interoperability release for Issue #24 and the final planned implementation pass in the `v0.1.4.x` line. It keeps TokenMod and StatusInfo as separately installed Roll20 Mod/API scripts while strengthening the way GameAssist detects, authorizes, verifies, and explains marker operations.
+
+The release does not embed either upstream script, introduce the future MarkerService architecture, or replace TokenMod marker mutation with direct `token.set('statusmarkers', ...)` calls. NPCManager and ConcentrationTracker continue sending marker work through TokenMod so StatusInfo can receive TokenMod's observer notifications.
+
+### Issue addressed
+
+- [#24](https://github.com/Mord-Eagle/GameAssist/issues/24) — Stabilize standalone TokenMod and StatusInfo interoperability across the `v0.1.4.x` release line.
+
+### Supported standalone baselines
+
+| Script | Supplied baseline | Contract used by GameAssist |
+| --- | --- | --- |
+| TokenMod | `0.8.88` | `TokenMod.ObserveTokenChange`, `API_Meta.TokenMod.version`, `--api-as`, `--ids`, and `--set statusmarkers` |
+| StatusInfo | `0.3.11` | Optional `StatusInfo` public object/version plus its existing subscription to `TokenMod.ObserveTokenChange` |
+
+These versions remain independently authored and licensed upstream. GameAssist does not copy or modify their source in this release.
+
+### Diagnosed — script-originated TokenMod authorization
+
+- GameAssist previously generated commands in this form:
+
+  ```text
+  !token-mod --ids <token-id> --set statusmarkers|+dead
+  ```
+
+- A command generated through `sendChat('api', ...)` reaches TokenMod with the API pseudo-player rather than a normal GM player id.
+- TokenMod `0.8.88` discards `--ids` targets for a non-GM caller unless either:
+  - TokenMod's player-facing `players-can-ids` option is enabled; or
+  - the script-originated command uses TokenMod's documented `--api-as <player-id>` option to select a GM identity.
+- GameAssist now discovers a campaign GM player id and uses the documented `--api-as` path. Internal marker automation therefore no longer depends on enabling `players-can-ids` for players.
+- If no GM identity can be found, GameAssist falls back only when TokenMod explicitly reports `playersCanUse_ids=true`; otherwise it refuses the request and gives the GM an actionable warning.
+
+### Added — standalone contract evidence
+
+- Added shared TokenMod evidence collection in `[GAMEASSIST:APP:UTILS]`:
+  - confirms the public `ObserveTokenChange` contract when visible;
+  - reads the upstream version from `API_Meta.TokenMod.version` when available;
+  - reads the TokenMod `playersCanUse_ids` state only as fallback authorization evidence;
+  - does not treat stale persistent TokenMod state by itself as proof that the script is currently installed.
+- Added optional StatusInfo evidence:
+  - confirms the public StatusInfo object and observer contract when visible;
+  - reports `StatusInfo.version`;
+  - reports whether `state.STATUSINFO.config.showDescOnStatusChange` is enabled, disabled, or unavailable.
+- Updated core dependency checks to use confirmed public TokenMod evidence before falling back to Roll20's sometimes-unavailable internal script list.
+- Preserved the three dependency states `confirmed`, `missing`, and `unverifiable`; absence of public evidence remains non-fatal when Roll20 cannot expose a definitive script list.
+
+### Added — marker-result verification
+
+- Added one shared standalone TokenMod request helper for NPCManager and ConcentrationTracker.
+- Each request:
+  - validates the token and resolved stored marker id;
+  - avoids sending work when the token already has the requested state;
+  - sends the exact built-in id or custom stored tag through TokenMod;
+  - uses `--api-as <GM player id>` whenever a GM identity is available;
+  - waits one second, then rereads the token's actual `statusmarkers` value;
+  - remains quiet when TokenMod reached the requested state;
+  - warns the GM when the state did not change as requested.
+- Failure warnings name the token, distinguish add from remove failures, and provide a direct command such as:
+
+  ```text
+  !token-mod --ids @{selected|token_id} --set statusmarkers|+dead
+  ```
+
+- Pending verification is keyed by token and marker. A newer request supersedes an older pending check so a rapid add/remove sequence does not report the stale request as a failure.
+- Verification is delayed with `POLICY.standaloneInterop.markerVerificationDelayMs`; normal Roll20 event execution and the explicit queue model are unchanged.
+
+### Changed — NPCManager 1.1.1
+
+- Advanced NPCManager's independent module version from `1.1.0` to `1.1.1`.
+- Routed death-marker add, revival-marker removal, and module-teardown removal through the shared verified TokenMod request helper.
+- Corrected the NPCHPRoller auto-roll-on-add initialization race:
+  - Roll20 can expose blank or zero placeholder HP while a newly added token is still being initialized;
+  - NPCManager now opens a two-second, POLICY-owned setup window when NPCHPRoller `autoRollOnAdd=true`;
+  - placeholder HP changes during that window do not add the death marker or create death/revival history;
+  - an unknown or blank previous HP value is not treated as proof that a living NPC crossed below 1 HP;
+  - later known-positive-to-zero and zero-to-positive changes remain ordinary tracked deaths and revivals.
+- Preserved death-history behavior independently of visual marker success:
+  - a qualifying death is still recorded in Campaign, Chapter, Section, and Session buckets;
+  - revival annotations remain independent of marker removal;
+  - Arc and handout behavior is unchanged.
+- Teardown no longer reports that markers were already cleared immediately after asynchronous TokenMod commands. It now reports how many removals were requested and states that results will be verified.
+- The default built-in death marker remains the literal `dead` id.
+
+### Changed — ConcentrationTracker 0.1.0.6
+
+- Advanced ConcentrationTracker's independent module version from `0.1.0.5` to `0.1.0.6`.
+- Routed concentration marker add, `--off` removal, failed-save removal, and module-teardown removal through the shared verified TokenMod request helper.
+- Preserved exact custom marker behavior from v0.1.4.3:
+  - configured display names resolve through the campaign registry;
+  - exact stored tags remain usable without registry access;
+  - built-in ids remain literal and exact;
+  - `!concentration --status` continues reading token markers directly rather than depending on TokenMod.
+- Teardown now reports requested removals without claiming completion before marker verification.
+
+### Preserved — StatusInfo observation path
+
+- Token mutation remains inside standalone TokenMod.
+- TokenMod continues calling its registered `ObserveTokenChange` handlers after applying token changes.
+- StatusInfo `0.3.11` already registers a TokenMod observer and routes those notifications through its status-marker change handler.
+- GameAssist does not emit a second condition description or call StatusInfo internals directly.
+- `!ga-status --details` reports StatusInfo evidence, but live condition-description behavior remains a Roll20 smoke-test requirement because campaign condition definitions are user-configurable.
+
+### Changed — troubleshooting status
+
+- Added a `Standalone Integrations` row to `!ga-status --details`.
+- When evidence is available, the row reports:
+  - detected TokenMod version and that authorized marker requests are verified;
+  - detected optional StatusInfo version;
+  - whether StatusInfo condition descriptions are enabled.
+- The default `!ga-status` panel remains short and unchanged in purpose.
+- StatusInfo remains optional and does not affect overall GameAssist health.
+
+### Compatibility boundaries
+
+- Preserved all existing GameAssist command literals.
+- Preserved standalone TokenMod as the required marker dependency for NPCManager and ConcentrationTracker.
+- Preserved standalone StatusInfo as an optional condition-description and menu script.
+- Did not add integrated `[GAMEASSIST:MODULES:TOKENMOD]`, `[GAMEASSIST:MODULES:STATUSINFO]`, or `[GAMEASSIST:CORE:MARKERSERVICE]` sections; those remain assigned to the `v0.1.5.x` roadmap.
+- Did not modify `state.TokenMod` or `state.STATUSINFO` beyond read-only interoperability diagnostics.
+- Did not change GameAssist's persistent state schema or configuration snapshot schema.
+- Did not route marker verification through the serialized queue.
+
+### Version and MECHSUITS records
+
+- Advanced the script header, MECHSUITS banner `project_version`, prose guarantee, visible release banner, runtime `VERSION`, README, smoke-test target, and `script.json` to `0.1.4.7`.
+- Added `0.1.4.6` to `script.json.previousversions`.
+- Updated `[GAMEASSIST:POLICY]` for the marker-verification delay and NPC HP initialization grace period.
+- Updated `[GAMEASSIST:APP]` and `[GAMEASSIST:APP:UTILS]` for external evidence, TokenMod authorization, outcome verification, and StatusInfo observer preservation.
+- Updated `[GAMEASSIST:CORE]` and `[GAMEASSIST:CORE:OBJECT]` for the release version and public-contract dependency confirmation.
+- Updated `[GAMEASSIST:INTERFACES:COMMANDS]` for the new troubleshooting evidence.
+- Updated `[GAMEASSIST:MODULES:NPCMANAGER]` for verified marker requests, new-token initialization suppression, and its independent module patch version; updated `[GAMEASSIST:MODULES:CONCENTRATIONTRACKER]` for verified marker requests and its independent module patch version.
+- Updated `[GAMEASSIST:BOOTSTRAP]` for the v0.1.4.7 startup version record without changing lifecycle order.
+- Preserved the literal `GAMEASSIST` codename, existing tag names, nesting, and file-scoped canonical tree.
+
+### Documentation
+
+- Updated `README.md` with:
+  - TokenMod `0.8.88` and StatusInfo `0.3.11` supported baselines;
+  - standalone installation boundaries;
+  - `players-can-ids` clarification;
+  - direct failure-recovery commands;
+  - module version updates;
+  - v0.1.4.6 to v0.1.4.7 upgrade and rollback guidance.
+- Updated `Smoketest.md` with:
+  - expected contract-aware dependency results;
+  - the new `Standalone Integrations` troubleshooting row;
+  - an initial `players-can-ids` OFF-state isolation pass followed, when applicable, by a restored campaign-setting compatibility pass;
+  - TokenMod direct-command isolation;
+  - optional StatusInfo observer checks;
+  - add/remove/teardown and delayed-warning acceptance checks;
+  - an NPCHPRoller auto-roll-on-add check that refuses false death/revival history while preserving later gameplay transitions.
+- Updated `ROADMAP.md` to move Issue #24 into live Roll20 acceptance while keeping integrated TokenMod, StatusInfo, and MarkerService work in `v0.1.5.x`.
+
+### Roll20 API sandbox acceptance
+
+- Completed the focused v0.1.4.7 acceptance pass with standalone TokenMod `0.8.88` and optional StatusInfo `0.3.11` behavior enabled for the campaign.
+- Confirmed GameAssist health and standalone-integration diagnostics respond with the expected module/dependency posture.
+- Confirmed NPCManager adds and removes the built-in `dead` marker, records genuine death/revival history, and completes audit/report/teardown workflows.
+- Confirmed NPCHPRoller auto-roll-on-add establishes a new NPC's starting HP without flashing the death marker or creating a false death/revival pair.
+- Confirmed a later genuine positive-to-zero change on that auto-rolled NPC is still recorded and a later positive-HP change is still annotated as revival.
+- Confirmed ConcentrationTracker marker add, direct status reading, removal, and teardown behavior.
+- Confirmed StatusInfo continues observing the relevant TokenMod marker changes without duplicate GameAssist condition output.
+- Confirmed the marker workflows remain functional after restoring the campaign's normal TokenMod `players-can-ids` setting.
+
+### Release artifacts
+
+The repository script and versioned artifact share this Git-normalized SHA-256:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `GameAssist` | `ADBC0F18CD3517E50A91CEBAA05D83ABD531F9595130F2EF3B750548C05D4953` |
+| `GameAssist-v0.1.4.7` | `ADBC0F18CD3517E50A91CEBAA05D83ABD531F9595130F2EF3B750548C05D4953` |
+
+Local Roll20 test copy:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `outputs/GameAssist-v0.1.4.7-issue24-test.js` | `0E3D0CE9C97B6A9EACB587C3486E2ABC774A876D8160499EF4BF3FF604AF903C` |
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| JavaScript syntax for repository, versioned, local Roll20, and both harness artifacts | Passed |
+| Existing status/lifecycle regression harness | Passed (57 assertions) |
+| Focused TokenMod/StatusInfo interoperability and NPC initialization harness | Passed (31 assertions) |
+| Built-in `dead` add/remove with `players-can-ids=false` | Passed in simulation |
+| NPCHPRoller auto-roll-on-add placeholder HP suppression | Passed in simulation |
+| Genuine post-initialization NPC death/revival tracking | Passed in simulation |
+| Custom concentration tag add/remove/status | Passed in simulation |
+| NPCManager and ConcentrationTracker teardown marker requests | Passed in simulation |
+| Deliberately failed TokenMod mutation and actionable warning | Passed in simulation |
+| TokenMod observer notification path used by StatusInfo | Passed in simulation |
+| `script.json` parse and version/previous-version metadata | Passed |
+| `GameAssist`, `GameAssist-v0.1.4.7`, and local Roll20 test copy normalized identity | Passed |
+| MECHSUITS section pairing, proper nesting, metadata, footers, and canonical-tree agreement | Passed (19 sections; 19 canonical-tree entries) |
+| Unchanged implementation-section regression | Passed (8 sections) |
+| Prior command-literal preservation | Passed (135 unique literals) |
+| Global Roll20 `on`/`off` non-override contract | Passed |
+| `git diff --check` | Passed |
+| Roll20 API sandbox acceptance with TokenMod and optional StatusInfo | Passed |
+
+The Roll20 API sandbox acceptance pass confirmed real `sendChat` routing, TokenMod timing, token marker persistence, StatusInfo condition-description behavior, and NPCHPRoller/NPCManager initialization ordering for this release candidate.
+
+---
+
+## [0.1.5.0] – 2026-07-18
+
+### Release definition
+
+GameAssist v0.1.5.0 is the integrated marker, token, and condition architecture release. Its automated, upgrade, lifecycle, documentation, artifact, review, and Roll20 acceptance gates are complete. MarkerService, TokenAssist, and ConditionAssist replace standalone TokenMod and StatusInfo for supported GameAssist workflows.
+
+The completed checkpoints implement [Issue #25](https://github.com/Mord-Eagle/GameAssist/issues/25), MarkerService and migration of existing marker consumers; [Issue #26](https://github.com/Mord-Eagle/GameAssist/issues/26), ConditionAssist and supported `!condition` workflows; [Issue #27](https://github.com/Mord-Eagle/GameAssist/issues/27), TokenAssist and its initial branded token-control surface; [Issue #28](https://github.com/Mord-Eagle/GameAssist/issues/28), integrated stabilization; and [Issue #29](https://github.com/Mord-Eagle/GameAssist/issues/29), the final release audit. These were checkpoints within `v0.1.5.0`, not separate public versions.
+
+### Added – CORE:MARKERSERVICE
+
+- Added the properly nested `[GAMEASSIST:CORE:MARKERSERVICE]` section.
+- Added `GameAssist.MarkerService` as toggleable core infrastructure with independent service version `1.0.0`.
+- Added built-in marker resolution for Roll20's standard marker identifiers.
+- Added custom marker resolution through Roll20's documented `Campaign().get('token_markers')`, with `Campaign().get('_token_markers')` retained as a compatibility fallback, including:
+  - exact display-name matches;
+  - case-folded display-name fallback;
+  - stored custom tags;
+  - direct `Name::id` tags that do not depend on successful registry parsing.
+- Preserved the prior precedence rule in which a literal lowercase built-in id such as `dead` selects the built-in marker before a same-named custom display marker.
+- Added structured marker reads that retain:
+  - the complete stored marker string;
+  - marker order;
+  - duplicate entries;
+  - custom tags;
+  - number overlays.
+- Added `resolve`, `read`, `inspect`, `has`, `add`, `remove`, `toggle`, `set`, `observe`, `clearObservers`, `getRegistry`, and `normalizeId`.
+- Added explicit operation results containing success state, stable error code, diagnostic message, changed/verified state, resolved marker identity, and before/after entries.
+- Added one shared `change:graphic:statusmarkers` observation contract for integrated modules and future consumers.
+
+### Advanced – MarkerService 1.0.1
+
+- Added `artwork(marker)` as a presentation-neutral metadata API.
+- Added Roll20 built-in color, `dead`, and status-sheet artwork metadata.
+- Retained campaign custom-marker image URLs from Roll20's documented `token_markers` registry or `_token_markers` compatibility fallback so consuming modules can display registered custom artwork.
+- Kept artwork lookup non-fatal: marker behavior continues when artwork is unavailable, and chat consumers can fall back to a readable marker name.
+- Kept MarkerService free of module-specific chat HTML; ConditionAssist remains responsible for rendering its own panels.
+
+### MarkerService lifecycle and dependency safeguards
+
+- Registered MarkerService as a first-class core service visible through `!ga-config modules` and ConfigUI.
+- Added `!ga-enable MarkerService` and `!ga-disable MarkerService` support through the existing lifecycle commands.
+- Declared ConditionAssist, TokenAssist, NPCManager, ConcentrationTracker, and DebugTools as MarkerService dependents.
+- Disabling MarkerService first disables those dependent modules so their teardown can use marker access for cleanup, then disables the service itself.
+- CritFumble, ConfigUI, and NPCHPRoller remain available while MarkerService is off.
+- Re-enabling a dependent module is refused until MarkerService is enabled.
+- A sandbox reload preserves the DM's disabled MarkerService choice and turns off any inconsistent dependent configuration left enabled in persistent state.
+- MarkerService operations return `UNAVAILABLE` with an actionable enable command while the service is disabled.
+- The disable notice explains that standalone TokenMod by The Aaron and StatusInfo by Robin Kuiper provide separate token-marker and condition tools but do not restore GameAssist death-history or concentration features.
+- Lifecycle component names resolve case-insensitively, and unknown names are reported as missing GameAssist modules or services rather than treating every lifecycle target as a module.
+- Marker observer registrations pause while MarkerService is disabled and resume after re-enable, preserving once-wired dependent observers.
+
+### Added – ConditionAssist 1.0.0
+
+- Added the properly nested `[GAMEASSIST:MODULES:CONDITIONASSIST]` section and exposed `GameAssist.ConditionAssist` version `1.0.0`.
+- Added the ConditionAssist module name, public API, state branch, and MECHSUITS section.
+- Preserved supported `!condition` compatibility workflows:
+  - selected-token condition menu;
+  - quick-start help;
+  - direct condition descriptions;
+  - add, remove, and toggle actions for one or more conditions;
+  - GM settings and condition-definition management;
+  - guarded reset, export, and validated import.
+- Added separate GM controls for player description access and player token-condition changes.
+- Added 15 concise, original GameAssist condition summaries with established StatusInfo marker associations as the compatibility foundation.
+- Supported built-in ids, custom display names, exact stored custom tags, and numbered markers in condition definitions.
+- Routed every condition marker read, add, remove, toggle, and marker-change observation through MarkerService.
+- Added marker-change descriptions while suppressing repeated descriptions produced by one short burst of equivalent changes.
+- Added `GameAssist.ConditionAssist.getCondition`, `getConditions`, and `apply` for validated programmatic use.
+- Protected the condition-definition and migration-record maps from generic `!ga-config set` replacement.
+
+### ConditionAssist migration and compatibility
+
+- Added a non-destructive first-start migration from valid `state.STATUSINFO` configuration and condition definitions.
+- Preserved the legacy `state.STATUSINFO` branch for rollback rather than deleting or moving it.
+- Recorded migration source, timestamp, copied setting names, and copied definition count under ConditionAssist configuration.
+- Normalized upstream `icon` fields into ConditionAssist `marker` fields and retained numbered/custom values.
+- Added whole-payload import validation, unsafe-key refusal, definition-count and content-length limits, and apply-only-after-complete-validation behavior.
+- Added an explicit startup warning when standalone StatusInfo is detected because both tools respond to `!condition` and condition-marker changes.
+- Compared the supplied StatusInfo `0.3.11` baseline with the published `0.3.12` package. The package still declares internal version `0.3.11`; its only executable difference is the character-sheet identification lookup, which ConditionAssist does not adapt.
+- Pinned the published comparison to Roll20 repository snapshot `9d634d3149985dcf10333920b3f4c41f215f39fc` and file blob `d3054aa8660f1eda47c424c4984e1850760e5c1a`.
+- Preserved Robin Kuiper attribution, the Roll20 API Scripts MIT notice, upstream links, adapted concepts, and GameAssist implementation details in `ATTRIBUTIONS.md`.
+
+### Advanced – ConditionAssist 1.0.1
+
+- Corrected selected-token active-condition reporting. `MarkerService.has()` returns a boolean; the menu had incorrectly treated that boolean as a structured inspection object, causing real markers to display as `No tracked conditions` even though add/remove/toggle behavior worked.
+- Added GM-only `!condition status` and `!condition --status` commands plus a **Condition Status** menu button.
+- The current-page status roster lists linked characters and NPCs that have at least one marker, reports configured ConditionAssist definitions under **Conditions**, and keeps death, concentration, counters, or other active markers under **Other markers** rather than mislabeling them as conditions.
+- Unmarked tokens are omitted, marked unlinked scenery/labels/props are counted separately, and the chat roster is bounded by POLICY so a crowded page cannot produce an unbounded panel. The complete roster is written to the `GameAssist Condition Status` handout.
+- Added the dynamic, read-only, case-insensitive `!cond-<condition>` command family. Commands such as `!cond-prone`, `!COND-EXHAUSTION`, and a DM-created condition key show the active configured wording without selecting a token or changing marker state.
+- Preserved the existing description permission boundary: players may use the short references only when **Players may view descriptions** is enabled; GMs retain access while the module is running.
+- Replaced the initial ConditionAssist default catalog with the complete fifteen-condition SRD catalog:
+  - added Exhaustion;
+  - removed Inspiration from clean defaults because Inspiration is not an SRD condition;
+  - retained the established built-in marker choices for the other conditions;
+  - assigned `half-haze` as the default Exhaustion marker.
+- Added selectable rules-wording profiles:
+  - **2014 SRD** is the clean-install and reset default;
+  - **2024 SRD** applies SRD 5.2.1 condition mechanics and wording;
+  - **Campaign Custom** identifies a definition set after the GM manually edits a description or imports definitions without an explicit SRD profile.
+- Made wording profile changes non-destructive. Switching between 2014 and 2024 updates only the fifteen official condition names and descriptions while preserving:
+  - existing marker assignments, including custom tags and numbered markers;
+  - additional campaign-defined conditions;
+  - unrelated ConditionAssist permissions and command configuration.
+- Added a confirmation prompt before an SRD profile replaces the official descriptions.
+- Added automatic upgrade recognition for untouched ConditionAssist 1.0.0 defaults. Only an exact match is replaced with the complete 2014 catalog; any edited or migrated map is retained and labeled Campaign Custom.
+- Editing a condition description now changes `rulesProfile` to `custom`, making the Settings panel accurately identify the source of the active wording.
+- Advanced ConditionAssist configuration schema from version 1 to version 2 and included `rulesProfile` in validated exports and imports.
+- Protected `rulesProfile` from generic `!ga-config set` replacement so profile changes use the guarded ConditionAssist settings workflow.
+- Added a definition-menu warning when multiple configured conditions resolve to the same marker. The warning identifies the affected conditions because one marker addition can legitimately produce more than one matching description.
+- Added built-in marker artwork and registered campaign custom-marker images to condition panels. Conditions continue to display readable marker names when exact custom-tag artwork cannot be recovered from Roll20's registry.
+- Added a GM-only `!condition announce` workflow:
+  - captures up to twelve selected linked character tokens before later menu clicks;
+  - lists every configured official or campaign-created condition;
+  - waits until the GM chooses a final delivery button before changing token state;
+  - toggles the configured marker exactly once on every captured token and verifies the stored result through MarkerService;
+  - reports one neutral character-first statement for every verified token, including mixed selections;
+  - offers public updates and targeted whispers to non-GM character controllers;
+  - offers exact condition wording in public chat or controller whispers;
+  - refuses a player-whisper action before changing markers when none of the selected characters has a non-GM controller;
+  - omits failed token changes from success announcements and gives the GM the verification failure details.
+- Added the case-insensitive `!c-a` and `!cond-!` aliases for the same GM announcement workflow. The symbolic alias is handled deliberately inside the existing `!cond-<condition>` route so it cannot become an accidental condition lookup.
+- Changed announcement result wording to one character-first statement per verified token: **Character is Condition** when applied and **Character is no longer Condition** when removed.
+- Added a narrow saved-definition repair that displays an exact **Concentration** condition name as **Concentrating** while preserving its existing key, marker, description, and legacy state source.
+- Removed the unreleased `randomizeAnnouncements` setting and condition-agnostic creative narration after sandbox testing showed that universal flavor text became awkward or inaccurate across varied conditions.
+- Suppressed ordinary marker-add descriptions during announcement-owned writes so one final action produces one deliberate result panel instead of a second automatic condition-description panel. Direct Roll20 marker changes continue to show descriptions when that setting is enabled.
+- Added expiring, bounded **Read Exact Wording** buttons. A player who clicks a GM-issued button receives the exact condition text privately without receiving permanent access to unrestricted condition commands.
+- Corrected controller-targeted delivery to use Roll20's documented Player `_displayname` field, retaining `displayname` as a compatibility fallback. This prevents **Toggle & Whisper** and **Toggle & Whisper Wording** from falling back to the GM when a controlling player's legacy display-name field is absent.
+- Added clear diagnostics for unlinked selections, duplicate character selections, oversized selections, and characters without non-GM controllers.
+- Updated the public API to report component version `1.0.1`, schema version `2`, and expose the active profile through `rulesProfile()`.
+- Added the required SRD 5.1 and SRD 5.2.1 Creative Commons Attribution 4.0 notices to `ATTRIBUTIONS.md` and documented that non-SRD sourcebook condition text is not included.
+
+### Added – TokenAssist 1.0.1
+
+- Added the properly nested `[GAMEASSIST:MODULES:TOKENASSIST]` section and exposed `GameAssist.TokenAssist` version `1.0.1`.
+- Added TokenAssist, `GameAssist.TokenAssist`, and the MECHSUITS tag `[GAMEASSIST:MODULES:TOKENASSIST]`.
+- Preserved compatible settings from earlier v0.1.5.0 development builds before startup auditing while leaving malformed or unrelated unknown state available to the warning-only auditor.
+- Established `!token-assist`, `!ta`, and `!ta-*` as the primary command families.
+- Kept older supported `!token-mod` macros available temporarily through v0.1.x with a warning and a v0.2.0 removal deadline.
+- Added the `!token-assist` command family:
+  - `!token-assist help` opens a concise selected-token guide with common examples and configuration buttons;
+  - `!token-assist about` summarizes TokenAssist capabilities, TokenMod credit, and current limits;
+  - `!token-assist config` opens TokenAssist configuration.
+- Added `!ta` as a short full-parser alias and `!ta-on`, `!ta-off`, `!ta-flip`, `!ta-set`, `!ta-move`, `!ta-order`, `!ta-report`, `!ta-ids`, `!ta-config`, and help aliases for fast table use.
+- Added case-insensitive command routing for the TokenAssist commands and deprecated alias with exact token/prefix boundaries, avoiding partial matches against longer unrelated commands.
+- Preserved normal direct execution for token commands; TokenAssist does not route ordinary token mutations through GameAssist's explicit queue.
+
+### TokenMod credit and provenance
+
+- Selected TokenMod `0.8.88` by The Aaron, Arcane Scriptomancer, as the compatibility and design baseline.
+- Pinned the consulted source to:
+  - repository: `Roll20/roll20-api-scripts`;
+  - commit: `9d634d3149985dcf10333920b3f4c41f215f39fc`;
+  - path: `TokenMod/0.8.88/TokenMod.js`;
+  - blob: `fc6c9cb45ec2f2ee254a24f849e089507a0e610a`.
+- Added the pinned provenance to the in-file MECHSUITS footer, public `GameAssist.TokenAssist.reference` metadata, README, roadmap, and `ATTRIBUTIONS.md`.
+- Preserved the applicable Roll20 API Scripts MIT copyright and permission notice.
+- Recorded the TokenMod compatibility concepts used by TokenAssist separately from GameAssist lifecycle, parser, validation, diagnostics, state migration, collision handling, MarkerService integration, help presentation, and public API behavior.
+
+### Supported TokenAssist command surface
+
+- Added selected-token targeting for tokens available through Roll20's normal selection controls.
+- Added explicit `--ids` targeting for token ids and represented-character ids.
+- Preserved the TokenMod authorization distinction:
+  - GMs may use explicit ids;
+  - players may use selected tokens;
+  - players may use explicit ids only when `playersCanUseIds` is enabled;
+  - refusing player ids does not remove valid selected-token targets.
+- Added `--api-as <player-id>` for commands whose Roll20 sender is `API`, allowing script-to-script callers to apply the effective player's explicit-id authorization boundary.
+- Added `--ignore-selected`, `--current-page`, and `--active-pages` target filters.
+- Added inline-roll total substitution for `$[[n]]` values before command parsing.
+- Added quoted values for token names, tooltips, reports, and other values containing spaces.
+- Added `--on`, `--off`, and `--flip` for supported boolean token fields, including visibility, edit permissions, auras, drawing state, token-menu controls, flips, movement locks, overlap/scenery controls, and legacy/current lighting booleans.
+- Preserved TokenMod's same-command boolean precedence: `--on` wins over `--off`, and either explicit state wins over `--flip`.
+- Added `--set property|value` and `property#value` parsing for common token fields.
+- Added common TokenMod aliases such as `bar1_current`, `bright_vision`, `night_distance`, `light_color`, `lock_movement`, `disable_snapping`, and `fadeopacity`.
+- Added `bar1` through `bar4` meta-properties that set both the matching value and maximum.
+- Added `scale` as a width-and-height meta-property.
+- Added direct support for names, tooltips, bars, auras, colors, layers, position, dimensions, rotation, vision, light, token/character links, controller ids, and common Roll20 display options.
+- Normalized aura shape aliases to Roll20's stored `circle` or `square` values, including blank-to-circle behavior.
+- Added TokenMod-compatible `!number` toggling for blank-capable distance values such as `aura1_radius|!20`.
+- Corrected the acceptance example to set aura radius, color, and shape together so the test produces a visible aura instead of changing only an invisible aura's color.
+- Added relative numeric operations using `+`, `-`, `*`, and `/`, with leading `=` for exact assignment where a signed value would otherwise be relative.
+- Added pixel, grid (`g`), unit (`u`), and common page-unit conversion using the target token's page scale and snapping increment.
+- Added `--move <distance>` and `--move <angle|distance>`:
+  - an omitted angle follows the token's facing;
+  - an unprefixed angle is relative to current facing;
+  - a leading `=` uses an absolute angle;
+  - a trailing `!` updates token facing;
+  - `lastmove` records only positions created by the current command and does not inherit an older Roll20 trail.
+- Corrected single-command movement so Roll20's movement display no longer draws back to a stale original starting point when `lastmove` already contains an earlier path.
+- Added `--order tofront|toback`, including the familiar `front` and `back` spellings.
+- Added `--report recipients|message` with `gm`, `player`, `all`, `token`, `character`, and `control` recipient groups.
+- Added report substitution for `{property}`, `{property:before}`, `{property:change}`, and `{property:abschange}`.
+- Added linked-bar writes through `setWithWorker` when Roll20 exposes the linked attribute, preserving character-sheet worker behavior.
+- Preserved represented-character controller updates when `controlledby` is changed on a linked token.
+
+### MarkerService-backed status commands
+
+- Routed every TokenAssist `statusmarkers` read and mutation through `GameAssist.MarkerService`; TokenAssist does not contain a competing marker parser or direct marker writer.
+- Added familiar status operations:
+  - an unprefixed marker or `+marker` adds it idempotently;
+  - `-marker` removes every matching stored instance;
+  - `!marker` toggles it;
+  - `=marker` resolves the replacement, clears the prior list, then adds the replacement;
+  - `=` clears the complete marker list.
+- Added numbered built-in marker syntax such as `red:3`.
+- Added registered custom display names and exact `Name::id` tags.
+- Added query/button-friendly custom syntax such as `Name;;id;3` for an exact numbered custom marker.
+- Preserved unrelated markers, marker order, and number overlays during ordinary add/remove/toggle operations.
+- Added replacement preflight so an unrecognized `=marker` cannot erase the existing marker list before the requested replacement resolves.
+- Returned token-specific marker failure details instead of reporting a partial operation as complete.
+
+### State migration, lifecycle, and collision safeguards
+
+- Added `state.GameAssist.TokenAssist` with protected configuration schema version `1`.
+- Added guarded migration for compatible state from earlier v0.1.5.0 development builds; valid destination values win, missing source values are retained, and malformed state remains visible to the auditor.
+- Added a one-time, non-destructive migration of valid `state.TokenMod.playersCanUse_ids` into `TokenAssist.config.playersCanUseIds`.
+- Recorded whether legacy state was found, its schema version, copied keys, migration timestamp, and source-preservation status.
+- Left the complete `state.TokenMod` branch unchanged for rollback and migration diagnosis.
+- Added `warnOnStandalone`, defaulting to `true`.
+- Declared `dependsOn: ['MarkerService']`; disabling MarkerService now also disables TokenAssist before the marker authority closes.
+- Preserved TokenAssist migration/runtime records across deliberate module disable/re-enable cycles.
+- Added standalone TokenMod detection through its public observer contract or `API_Meta.TokenMod` version evidence.
+- When standalone TokenMod is detected:
+  - TokenAssist records the detected version when available;
+  - startup warns the GM about the overlapping command surface;
+  - TokenAssist leaves the deprecated `!token-mod` alias to the standalone script;
+  - repeated collision commands do not produce repeated warning noise;
+  - branded `!token-assist`, `!ta`, and `!ta-*` commands remain available.
+- Updated `!ga-status --details` standalone diagnostics to explain whether the deprecated alias is available through TokenAssist or has been left to standalone TokenMod.
+
+### Token-change observer replacement
+
+- Added `GameAssist.TokenAssist.observeTokenChange(callback, options)` with owner metadata and an unsubscribe handle.
+- Added `GameAssist.TokenAssist.ObserveTokenChange` as a compatibility spelling on the GameAssist-owned API object.
+- Added `clearObservers(owner)` for owner-scoped or complete observer cleanup.
+- TokenAssist observers receive the changed token, a prior-property snapshot, and command/source context after a successful TokenAssist mutation.
+- Did not create a global object named `TokenMod`; integrations requiring every status-marker change use `GameAssist.MarkerService.observe(...)` instead.
+
+### Explicit TokenAssist 1.0.1 limits
+
+- TokenAssist does not claim complete TokenMod compatibility.
+- Image-side stack editing through `imgsrc` or `sides` is not implemented.
+- Default-token writes are not implemented.
+- Computed and name-resolved attribute handling is not implemented; direct linked attribute ids remain supported.
+- Advanced controller-list name resolution and incremental add/remove operations are not implemented; direct controller-id assignment remains supported.
+- Advanced relative color arithmetic is not implemented; direct transparent, hex, rgb/rgba, and hsv/hsva values are supported.
+- Dimming night-vision effect parameters are not implemented; direct None and Nocturnal values are supported.
+- Relative/random multi-sided-token selection is not implemented; direct absolute `currentSide` selection remains supported.
+- TokenMod's distinct `token`, `character`, and combined `control` report-recipient behavior is not reproduced exactly; TokenAssist currently resolves controller delivery through its combined controller set.
+- Duplicate-index marker operations such as `marker[]` or `marker[2]` are not implemented.
+- Conditional marker-count operations are not implemented.
+- TokenMod's generated help handout and `--rebuild-help` workflow are not implemented; TokenAssist uses chat help panels.
+- Unsupported properties and marker forms return clear diagnostics before unrelated order or linked-object side effects occur.
+
+### Marker mutation behavior
+
+- Marker add is idempotent when the requested marker already exists.
+- Explicit removal clears every duplicate instance of the requested marker so the requested absent state is complete.
+- Unrelated markers, their ordering, and their number overlays are preserved.
+- Supplying a marker number updates only the first matching requested marker and leaves unrelated duplicates untouched.
+- Marker numbers are validated as integers from 0 through 9.
+- Unsupported actions, invalid tokens, unknown markers, unavailable registries, rejected token writes, and failed verification return explicit diagnostics instead of silent success.
+- Direct token writes remain synchronous; ordinary GameAssist event handlers are not routed through the explicit task queue.
+
+### Changed – NPCManager 1.2.1
+
+- Advanced NPCManager from module version `1.1.1` through `1.2.0` to `1.2.1`.
+- Routed death-marker resolution, presence checks, add/remove operations, audits, and teardown through MarkerService.
+- Removed NPCManager's standalone TokenMod dependency declaration and dependency-skip path.
+- Preserved configured numbered death-marker overlays such as `dead@2` when requesting marker writes.
+- Kept death-history recording independent from marker-write success so Campaign, Chapter, Section, Session, and Arc records continue describing HP events.
+- Preserved NPCHPRoller initialization protection, known-positive-to-zero death detection, revival annotation, auto-hide behavior, report writing, hierarchical clearing, and Arc management.
+- Teardown now reports markers actually removed rather than a delayed external request count.
+- Kept `!npc-death-audit` strictly read-only and added a **Review Marker Repairs** action only when recognizable marker mismatches exist.
+- Added the separate GM-only `!npc-death-repair` preview and `!npc-death-repair --confirm` mutation path. The preview explains that current bar 1 HP controls the proposed marker result and changes nothing.
+- Confirmation performs a fresh page scan before acting, verifies every MarkerService add/remove result, preserves unrelated markers, and reports remaining failures.
+- Repair changes neither HP nor NPC death history, Campaign/Chapter/Section/Session buckets, or Arc records. This preserves the DM's ability to treat a mismatch as HP housekeeping instead of automatically accepting marker state as authoritative.
+- Blank or non-numeric HP is reported separately and excluded from automatic marker repair rather than being coerced to zero.
+
+### Changed – ConcentrationTracker 0.2.0
+
+- Advanced ConcentrationTracker from module version `0.1.0.6` to `0.2.0`.
+- Routed configured-marker resolution, status scans, roll-result mutation, `--off`, and teardown through MarkerService.
+- Removed ConcentrationTracker's standalone TokenMod dependency declaration and dependency-skip path.
+- Preserved configured numbered concentration-marker overlays such as `Concentrating@2` when requesting marker writes.
+- Replaced TokenMod-specific repair wording with campaign marker-library and exact stored-tag guidance.
+- Preserved `!concentration`, `!cc`, `--damage`, `--mode`, `--last`, `--off`, `--status`, randomization configuration, and `!ga-conc-status`.
+
+### Changed – DebugTools 0.2.0
+
+- Advanced DebugTools from module version `0.1.0` to `0.2.0`.
+- Routed marker inspection, dry-run descriptions, and applied add/remove/toggle actions through MarkerService.
+- Preserved the GM-only, disabled-by-default, and explicit `--apply` safeguards.
+- Improved applied-marker records so `lastAction` stores the resolved marker id and actual operation.
+
+### Dependency and compatibility boundary
+
+- Standalone TokenMod is no longer required for TokenAssist, NPCManager, ConcentrationTracker, or DebugTools operations supported by GameAssist.
+- The final v0.1.5.0 release replaces standalone TokenMod and StatusInfo for supported GameAssist token and condition workflows; it does not retain a legacy marker-dispatch path to those scripts.
+- Campaigns that deliberately disable MarkerService may use unrelated standalone marker tools while continuing to use GameAssist modules that do not depend on MarkerService.
+- ConditionAssist under Issue #26 and TokenAssist 1.0.1 under Issue #27 completed their focused and full-suite Roll20 sandbox acceptance.
+- Existing scripts that independently modify the same marker, NPC HP/bar 1, or natural-1 workflow remain feature-level conflict risks.
+
+### State and migration impact
+
+- Added the `state.GameAssist.ConditionAssist` branch for validated ConditionAssist configuration and ordinary runtime state.
+- Valid legacy `state.STATUSINFO` data may be copied into ConditionAssist once; the legacy branch remains intact.
+- Added the `state.GameAssist.TokenAssist` branch for TokenAssist configuration and migration evidence.
+- Valid legacy `state.TokenMod.playersCanUse_ids` may be copied into TokenAssist once; the complete legacy branch remains intact.
+- Existing module configuration and runtime branches remain in place.
+- Existing NPCManager bucket, handout, Arc, and revival records are preserved.
+- Existing ConcentrationTracker `lastDamage` entries retain their established repair and compatibility behavior.
+- MarkerService keeps its registry cache and observer subscriptions in sandbox memory rather than persistent state; subscriptions survive intentional MarkerService off/on cycles within the same sandbox.
+- Rolling back code does not automatically reverse marker changes or persistent records created while v0.1.5.0 was active.
+
+### MECHSUITS records
+
+- Added `[GAMEASSIST:CORE:MARKERSERVICE]`, `[GAMEASSIST:MODULES:CONDITIONASSIST]`, and `[GAMEASSIST:MODULES:TOKENASSIST]` to the file-scoped canonical tree and declared runtime order.
+- Updated the CORE parent contract to include MarkerService as the single marker authority.
+- Updated APP and APP:UTILS contracts to remove marker ownership.
+- Updated CORE:OBJECT to expose `GameAssist.MarkerService`.
+- Updated MODULES, ConditionAssist, TokenAssist, NPCManager, ConcentrationTracker, DebugTools, ConfigUI, POLICY, APP:UTILS, CORE:COMPAT, CORE:OBJECT, INTERFACES:COMMANDS, and BOOTSTRAP metadata and footers under the Meaningful Change Rule.
+- Replaced CORE:COMPAT's obsolete TokenMod dependency advice with the current `!token-mod` command-overlap and MarkerService ownership guidance.
+- Preserved the literal `GAMEASSIST` codename, existing section identifiers, public commands, and prior section notes.
+
+### Documentation
+
+- Updated the README overview, installation, architecture, module guides, developer API, troubleshooting, upgrade path, roadmap summary, and compact release history.
+- Added a dedicated MarkerService developer API reference with structured result and observation examples.
+- Rebuilt the smoke-test dependency section around no-TokenMod operation, custom markers, exact stored tags, and unrelated numbered-marker preservation.
+- Reorganized `Smoketest.md` by component so Core, MarkerService, ConfigUI, CritFumble, ConditionAssist, TokenAssist, ConcentrationTracker, NPCManager, NPCHPRoller, and DebugTools each have a purpose, reason, skip rule, basic check, and expanded troubleshooting checks.
+- Added a self-contained Issue #25 MarkerService acceptance sequence covering no-TokenMod startup, numbered built-in and custom markers, unrelated-marker preservation, module teardown, reload, persistence, and restoration.
+- Corrected duplicated installation and MECHSUITS contribution text in the README.
+- Added the byte-identical `GameAssist.js` One-Click publication mirror named by `script.json` while retaining `GameAssist` as the canonical development source.
+- Added `previousversions/GameAssist v0.1.4.7` so every manifest `previousversions` entry has a corresponding preserved repository artifact.
+- Updated `script.json` to document ConditionAssist, TokenAssist, their command families, the release's empty production dependency list, expanded token-property write surface, and named/behavioral overlap warnings.
+- Updated `ROADMAP.md` so Issues #25 through #29 are checkpoints within one unreleased v0.1.5.0 train rather than separate v0.1.5.x releases.
+- Updated `ATTRIBUTIONS.md` with source provenance, license text, contributor credits, and rules-content licensing.
+- Removed release gates, upstream comparison work, publication checks, and maintainer guidance from public-facing documents.
+- Restored a warmer, visually guided README quick start and removed internal packaging instructions and editorial troubleshooting language from the public guide.
+
+### Release artifacts
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `GameAssist` | `DEDDDBD189ADBDD8ACA75E664100B71BDB51050E7D3A5CE8EC4CA62C559B5C72` |
+| `GameAssist.js` | `DEDDDBD189ADBDD8ACA75E664100B71BDB51050E7D3A5CE8EC4CA62C559B5C72` |
+| `GameAssist-v0.1.5.0` | `DEDDDBD189ADBDD8ACA75E664100B71BDB51050E7D3A5CE8EC4CA62C559B5C72` |
+
+The repository source, One-Click publication mirror, and versioned Roll20 test artifact are byte-identical.
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| JavaScript parse/compile | Passed |
+| Mocked Roll20 ready initialization and MarkerService lifecycle | Passed (24/24 focused checks); ConditionAssist and TokenAssist lifecycle coverage is reported separately below |
+| Mocked ConditionAssist clean installation | Passed (58/58 checks), including documented registry preference, invalid-registry built-in/exact-tag independence and diagnostics, the complete 2014 catalog, selected-token multi-condition recognition, GM-only current-page condition/other-marker status and complete handout, case-insensitive official/custom `!cond-<condition>`, both announcement aliases, built-in/custom artwork and readable fallback, 2024/custom profiles, captured-character announcement menus, verified mixed-state marker toggling, character-first public/controller-whisper reporting, partial and absent controller handling, duplicate-description suppression, bounded private references without general permission leakage, duplicate-marker warning, schema-v2 export, capacity refusal, marker preservation, and lifecycle cascade |
+| Mocked ConditionAssist legacy migration and MarkerService lifecycle | Passed (35/35 checks), including `_token_markers` compatibility fallback, non-destructive migration, active-condition menu/status recognition, Concentrating display repair, custom-profile identification, case-insensitive `!cond-<condition>`, descriptions, add/remove/toggle, protected config, imports, cascade disable, re-enable, MarkerService 1.0.1 API reporting, and observer recovery |
+| Mocked TokenAssist branded-command workflow | Passed (45/45 checks), including pinned provenance, pre-release identity migration, legacy configuration migration/source retention, full/short/case-insensitive help, deprecation warning, visible aura storage, hex/RGB/HSV color normalization, stale movement-origin replacement, booleans, quoted text, relative values, MarkerService-backed built-in/custom/numbered marker operations, safe marker replacement, order, reports, linked bars, player id authorization, selected-token use, page filtering, unsupported-feature refusal, observers, and MarkerService cascade disable/re-enable |
+| Mocked standalone TokenMod collision workflow | Passed (12/12 checks), including detection, suspended legacy-alias mutation, actionable warning, and continued TokenAssist command/help access |
+| Marker mutation refresh after lifecycle changes | Passed (18/18 checks) for built-in/custom resolution, numbered/duplicate handling, toggle/set, and unrelated-marker preservation |
+| Mocked marker-consumer workflow | Passed (22/22) across NPCManager, ConcentrationTracker, DebugTools, teardown, and re-enable |
+| Startup errors | 0 |
+| Chat-generated `!token-mod` commands | 0 |
+| Focused MarkerService regression checks | Passed (23/23) |
+| Built-in marker resolution | Passed |
+| Documented `token_markers` lookup and `_token_markers` compatibility fallback | Passed |
+| Custom display-name and direct stored-tag resolution | Passed |
+| Direct stored tag during invalid registry data | Passed |
+| Numbered and duplicate marker parsing | Passed |
+| Configured numbered-marker pass-through from NPCManager and ConcentrationTracker | Passed |
+| Requested duplicate removal | Passed |
+| Unrelated numbered-marker preservation | Passed |
+| Idempotent add and toggle behavior | Passed |
+| Marker observation delivery | Passed |
+| MECHSUITS parent/child topology | Passed |
+| Single GameAssist status-marker write authority | Passed |
+| `script.json` parse, version, command count, and dependency metadata | Passed |
+
+### Roll20 acceptance
+
+Issues #25, #26, and #27 completed their focused MarkerService, ConditionAssist, and TokenAssist checkpoints on 2026-07-19. Their automated suites cover the marker, status, announcement, aura, movement, and command corrections made during those checkpoints. Issue #32 additionally verified the documented `token_markers` registry path, `_token_markers` fallback, exact-tag independence, built-in independence, and invalid-registry diagnostics.
+
+Issue #28's upgrade/lifecycle harness executes the preserved v0.1.4.7 artifact, carries the resulting state into v0.1.5.0, and verifies configuration retention, non-destructive TokenMod/StatusInfo migration, conservative malformed-state repair, unknown-state preservation, read-only NPC death auditing, confirmation-gated marker repair in both directions, HP/history preservation, MarkerService opt-out, dependent shutdown, ordered restoration, and reload persistence.
+
+The complete Roll20 clean-install and upgrade smoke tracks passed, including the final selected-token condition display, current-page condition status handout, read-only NPC death audit, and separately confirmed marker repair checks. Issue #29's documentation, attribution, metadata, artifact, and review audit also passed. The v0.1.5.0 release candidate is accepted for publication.
+
+Deferred TokenAssist expansion is tracked outside the v0.1.5.0 gate: Issue #42 covers advanced marker expressions, #43 covers attribute/controller/report resolution, #44 covers visual and multi-sided controls, and #45 covers token-image/default-token asset updates. TokenMod help-handout rebuilding and a global `TokenMod` compatibility object are not planned.
+
+Issues #25 through #29 are complete. Publication remains the repository release/merge action rather than an additional implementation checkpoint.
+
+---
+
+## [0.1.5.1] – 2026-07-19
+
+### Release definition
+
+GameAssist v0.1.5.1 is a focused table-time release. It adds one GM-selected IANA timezone for human-facing GameAssist dates, clocks, and date-managed NPC Sessions while preserving the absolute ISO instants already stored with events. It does not change marker ownership, TokenAssist commands, ConditionAssist definitions, queue behavior, or the accepted v0.1.5.0 integration architecture.
 
 The release implements [Issue #35](https://github.com/Mord-Eagle/GameAssist/issues/35). NPCManager advances from `1.2.1` to `1.3.0`; ConfigUI advances from `0.1.0` to `0.2.0`. Other feature-module versions remain unchanged.
 
