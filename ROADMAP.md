@@ -1,6 +1,6 @@
 # GameAssist Development Roadmap
 
-This roadmap records the transition from GameAssist's standalone-dependency `v0.1.4.x` line to one complete integrated token and condition release: `v0.1.5.0`.
+This roadmap records the transition from GameAssist's standalone-dependency `v0.1.4.x` line to the integrated `v0.1.5.0` marker, token, and condition architecture, followed by focused `v0.1.5.x` improvements.
 
 Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation notes, discoveries, and checklists. The umbrella tracker is [Issue #29](https://github.com/Mord-Eagle/GameAssist/issues/29).
 
@@ -47,7 +47,7 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | Integrated architecture stabilization | Complete | [#28](https://github.com/Mord-Eagle/GameAssist/issues/28) | The complete clean-install, upgrade, lifecycle, condition-status, death-repair, and module smoke tracks passed in Roll20. |
 | v0.1.5.0 release gate | Complete | [#29](https://github.com/Mord-Eagle/GameAssist/issues/29) | Attribution, documentation, metadata, artifact identity, automated checks, review, and full Roll20 acceptance are complete. |
 | Marker-registry lookup verification | Complete | [#32](https://github.com/Mord-Eagle/GameAssist/issues/32) | MarkerService prefers documented `token_markers`, falls back to `_token_markers`, and keeps built-ins and exact stored tags independent of registry parsing. |
-| DM-configurable timezone | In progress | [#35](https://github.com/Mord-Eagle/GameAssist/issues/35) | Add one validated DM timezone for human-facing timestamps and date-based Session rollover while preserving absolute stored timestamps. |
+| DM-configurable timezone | Complete | [#35](https://github.com/Mord-Eagle/GameAssist/issues/35) | v0.1.5.1 adds one validated DM timezone for human-facing timestamps and date-based Session rollover while preserving absolute stored timestamps. The focused Roll20 timezone workflow passed; the complete live module suite was not rerun. |
 
 ---
 
@@ -94,7 +94,7 @@ The final `v0.1.4.x` release must pass its documented Roll20 smoke test with the
 - Cross-revision simulation also verifies that NPCManager disable/enable preserves saved bucket and Arc records while marker teardown remains active.
 - Completion gate passed: v0.1.4.7 NPCManager, ConcentrationTracker, TokenMod, optional StatusInfo, and NPCHPRoller initialization checks completed successfully in the Roll20 API sandbox.
 - Follow-up complete: [Issue #32](https://github.com/Mord-Eagle/GameAssist/issues/32) now prefers Roll20's documented `token_markers` property and retains `_token_markers` as a compatibility fallback.
-- Deferred follow-up: add DM-configurable timezone formatting and Session boundaries in [Issue #35](https://github.com/Mord-Eagle/GameAssist/issues/35); v0.1.4.7 uses the sandbox/UTC date boundary.
+- v0.1.4.7 retains its historical sandbox/UTC date boundary; configurable table time is implemented separately in v0.1.5.1 under [Issue #35](https://github.com/Mord-Eagle/GameAssist/issues/35).
 
 ---
 
@@ -244,6 +244,33 @@ This phase verifies the complete integration before the first public `v0.1.5.0` 
 The integrated architecture is considered stable only when supported workflows have no known silent marker failures, upgrade guidance is tested, and compatibility claims match verified behavior.
 
 **Completed:** the automated suites, full Roll20 smoke pass, attribution audit, documentation audit, artifact-identity check, manifest validation, and review-thread audit all passed. The v0.1.5.0 release candidate is accepted for publication.
+
+---
+
+## Phase 6: DM-Configurable Table Time in `v0.1.5.1`
+
+**Tracking:** [Issue #35](https://github.com/Mord-Eagle/GameAssist/issues/35)
+
+This focused release gives the DM one campaign timezone for readable GameAssist dates and times. It changes presentation and date-managed Session boundaries while retaining absolute stored event instants.
+
+### Checklist
+
+- [x] Add a validated, persisted IANA timezone setting with a safe sandbox-clock fallback.
+- [x] Add a GM-friendly timezone menu with common region buttons, custom input, and clear/reset behavior.
+- [x] Show the active timezone, current GameAssist time, and Session date in status and ConfigUI.
+- [x] Apply the timezone to logs, status, handout update times, concentration records, NPC history, bucket reports, Arc reports, and configuration output.
+- [x] Make date-managed NPC Sessions use the selected timezone and refresh immediately when a timezone change crosses a date boundary.
+- [x] Preserve deliberately named Sessions across clock/date changes.
+- [x] Preserve absolute ISO event timestamps and dynamically reformat historical entries for the active timezone.
+- [x] Add deterministic winter/summer DST, UTC-midnight crossover, invalid-input, malformed-saved-value fallback, reload-persistence, history-preservation, and Session-rollover checks.
+- [x] Update README, changelog, smoke tests, manifest, MECHSUITS metadata, and versioned artifacts.
+- [x] Complete the focused Roll20 v0.1.5.1 timezone smoke test.
+
+### Completion Gate
+
+Issue #35 is complete when Roll20 accepts a real named timezone, shows the correct current table time and date, retains the setting after a sandbox restart, refuses an invalid name without losing the valid setting, and moves a date-managed NPC Session across the Kiritimati/Honolulu date boundary without changing history.
+
+**Result:** Passed on 2026-07-19 through the focused timezone smoke test. The complete live v0.1.5.1 module suite was not rerun.
 
 ---
 

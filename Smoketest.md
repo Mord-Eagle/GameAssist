@@ -1,8 +1,8 @@
-# GameAssist v0.1.5.0 Release Smoke Test and Troubleshooting Guide
+# GameAssist v0.1.5.1 Smoke Test and Troubleshooting Guide
 
 Use this guide after installing or updating GameAssist, before an important session, or while troubleshooting a feature.
 
-> This guide tests the current GameAssist v0.1.5.0 release candidate. GameAssist v0.1.4.7 is used only in the separate upgrade track to create realistic saved data before v0.1.5.0 is installed.
+> This guide tests GameAssist v0.1.5.1. Its full clean-install and upgrade tracks retain the complete integration coverage established for v0.1.5.0.
 
 The tests are organized by component. Each section explains:
 
@@ -18,34 +18,79 @@ Run commands one at a time. A multi-line command block is a checklist, not a sin
 
 ---
 
-## Full v0.1.5.0 Release Acceptance Test
+## Focused v0.1.5.1 Timezone Smoke Test
 
-This is the release test for v0.1.5.0. It has two distinct tracks:
+**What this proves:** GameAssist accepts one table timezone, shows it clearly, preserves it across a sandbox restart, and uses it for a date-managed NPC Session.
+
+**Why test it:** Timezone support affects logs, status panels, handouts, history displays, and the date boundary that creates a new Session.
+
+**Skip when:** Do not skip after first installing v0.1.5.1 or changing the campaign timezone. The cross-date test may be skipped when NPCManager is disabled and will not be used.
+
+### Quick Check
+
+1. Run `!ga-status` and confirm the title identifies **GameAssist 0.1.5.1**.
+2. Run `!ga-timezone`.
+3. Choose the city/region that governs the campaign clock, or use **Choose Another Timezone** and enter an IANA name such as `America/New_York`.
+4. Confirm **Current GameAssist time** and **Current Session date** match that location.
+5. Run `!ga-status` again and confirm its **Timezone** field shows the saved choice.
+6. Restart the Roll20 Mod sandbox, reopen `!ga-timezone`, and confirm the same choice remains active.
+
+Pass when the setting, displayed time, Session date, status field, and restart result all agree. A timezone name that Roll20 cannot format must be refused without replacing the saved choice.
+
+### Date-Managed Session Check
+
+Skip this part when NPCManager is disabled or the active Session has a deliberate campaign name that should not be replaced.
+
+1. Run `!npc-death-buckets` and click **Reset Session Date** so the Session is date-managed.
+2. Run `!ga-timezone set Pacific/Kiritimati`, then `!npc-death-buckets`; record the Session's `YYYY-MM-DD` name.
+3. Run `!ga-timezone set Pacific/Honolulu`, then `!npc-death-buckets` again.
+4. Confirm the date-managed Session moves to the Honolulu calendar date. These zones are one full calendar day apart, so this tests rollover without waiting for midnight.
+5. Restore the campaign's intended timezone with `!ga-timezone`.
+
+Changing timezone must not erase Campaign, Chapter, Section, Session, Arc, death, or revival history. A manually named Session should remain unchanged across timezone and date changes until **Reset Session Date** is used.
+
+### Troubleshooting Checks
+
+| Check | Expected result |
+| --- | --- |
+| `!ga-timezone set Not/A_Real_Zone` | A clear refusal; the prior setting remains active. |
+| `!ga-timezone clear` | GameAssist returns to **Sandbox default** without deleting history. |
+| `!ga-config timezone` | Opens the same timezone menu. |
+| `!ga-config list` | The `globalConfig.timezone` field contains the saved IANA name or `null` for sandbox default. |
+| Existing NPC report after a timezone change | The same recorded event appears at the newly formatted local time; its underlying event remains the same. |
+
+The maintainer test suite separately checks fixed winter and summer instants, a UTC-midnight crossover, ISO timestamp preservation, invalid saved-state fallback, and reload persistence. Those deterministic checks cover daylight-saving boundaries that may not occur during a live smoke pass.
+
+---
+
+## Full v0.1.5.1 Release Acceptance Test
+
+This is the release test for v0.1.5.1. It has two distinct tracks:
 
 | Track | Script being tested | Purpose |
 | --- | --- | --- |
-| **A. Clean installation** | **v0.1.5.0** | Proves the integrated release works without standalone TokenMod or StatusInfo. |
-| **B. Upgrade** | **v0.1.5.0** | Proves configuration and history created by v0.1.4.7 survive replacement with v0.1.5.0. |
+| **A. Clean installation** | **v0.1.5.1** | Proves the integrated release works without standalone TokenMod or StatusInfo. |
+| **B. Upgrade** | **v0.1.5.1** | Proves configuration and history created by v0.1.4.7 survive replacement with v0.1.5.1. |
 
-Do not run the v0.1.4.7 Issue #24 smoke test as the v0.1.5.0 release test. In Track B, v0.1.4.7 is only the starting point used to create old campaign state; every acceptance check after the replacement is performed with v0.1.5.0.
+Do not run the v0.1.4.7 Issue #24 smoke test as the v0.1.5.1 release test. In Track B, v0.1.4.7 is only the starting point used to create old campaign state; every acceptance check after the replacement is performed with v0.1.5.1.
 
 ### Release Candidate Files
 
 Use the current repository copies of:
 
-- `GameAssist-v0.1.5.0` or the identical `GameAssist.js` One-Click artifact;
+- `GameAssist-v0.1.5.1` or the identical `GameAssist.js` One-Click artifact;
 - this `Smoketest.md` guide.
 
-After saving the script, wait for the Mod sandbox to restart. Do not continue unless the startup message and `!ga-status` both identify **GameAssist v0.1.5.0**.
+After saving the script, wait for the Mod sandbox to restart. Do not continue unless the startup message and `!ga-status` both identify **GameAssist v0.1.5.1**.
 
-### Track A: Clean v0.1.5.0 Installation
+### Track A: Clean v0.1.5.1 Installation
 
 Use a new disposable campaign, or a disposable campaign in which GameAssist state may be cleared safely.
 
-1. Install only GameAssist v0.1.5.0 for the workflows covered here. Remove or disable standalone TokenMod and StatusInfo.
+1. Install only GameAssist v0.1.5.1 for the workflows covered here. Remove or disable standalone TokenMod and StatusInfo.
 2. Prepare the disposable PC, NPC, unlinked token, and optional CritFumble tables described under [Before Testing](#before-testing).
 3. Run every **Basic Check** in Components 1 through 10, except a deliberately disabled feature may be recorded as **Skipped by choice**.
-4. Run the complete MarkerService, ConditionAssist, and TokenAssist acceptance sections. These three components are new to the v0.1.5.0 release line and may not be skipped for release approval.
+4. Run the complete MarkerService, ConditionAssist, and TokenAssist acceptance sections. These three components were introduced by the v0.1.5.0 architecture and may not be skipped for release approval.
 5. Run the cross-component permission, duplicate-installation, and state-recovery checks.
 6. Restart the sandbox once more and repeat `!ga-status`, `!ga-config modules`, one marker change, and one harmless TokenAssist command.
 
@@ -65,7 +110,7 @@ Record the release result here:
 | Cross-component checks | [ ] Pass [ ] Fail |
 | Restart persistence check | [ ] Pass [ ] Fail |
 
-### Track B: Upgrade v0.1.4.7 to v0.1.5.0
+### Track B: Upgrade v0.1.4.7 to v0.1.5.1
 
 Use a separate disposable campaign so the upgrade begins with authentic v0.1.4.7 state.
 
@@ -85,9 +130,9 @@ Use a separate disposable campaign so the upgrade begins with authentic v0.1.4.7
    !npc-death-report --scope session
    ```
 
-#### Install and test v0.1.5.0
+#### Install and test v0.1.5.1
 
-1. Replace the complete v0.1.4.7 script with the current v0.1.5.0 artifact.
+1. Replace the complete v0.1.4.7 script with the current v0.1.5.1 artifact.
 2. Remove standalone TokenMod and StatusInfo so the integrated services can be tested without overlapping commands or marker ownership.
 3. Restart the sandbox and run:
 
@@ -101,14 +146,14 @@ Use a separate disposable campaign so the upgrade begins with authentic v0.1.4.7
 
 4. Confirm the non-default setting, bucket names, and NPC history remain available.
 5. Confirm MarkerService is enabled and ConditionAssist, TokenAssist, NPCManager, and ConcentrationTracker report confirmed MarkerService dependencies.
-6. Run the MarkerService, ConditionAssist, TokenAssist, ConcentrationTracker, NPCManager, and NPCHPRoller basic checks below using v0.1.5.0.
+6. Run the MarkerService, ConditionAssist, TokenAssist, ConcentrationTracker, NPCManager, and NPCHPRoller basic checks below using v0.1.5.1.
 7. Restart the sandbox and confirm the migrated configuration and history remain available.
 
 Record the upgrade result here:
 
 | Upgrade requirement | Result |
 | --- | --- |
-| v0.1.5.0 starts without a new GameAssist exception | [ ] Pass [ ] Fail |
+| v0.1.5.1 starts without a new GameAssist exception | [ ] Pass [ ] Fail |
 | Valid v0.1.4.7 configuration is retained | [ ] Pass [ ] Fail |
 | NPC history and bucket names are retained | [ ] Pass [ ] Fail |
 | MarkerService and enabled dependents are running | [ ] Pass [ ] Fail |
@@ -119,10 +164,10 @@ Record the upgrade result here:
 
 ### Release Decision
 
-The v0.1.5.0 release candidate passes Issue #28 only when:
+The v0.1.5.1 release regression passes only when:
 
 - Track A passes in a clean installation;
-- Track B passes after replacing v0.1.4.7 with v0.1.5.0;
+- Track B passes after replacing v0.1.4.7 with v0.1.5.1;
 - MarkerService, ConditionAssist, and TokenAssist have no skipped acceptance checks;
 - no unrelated marker, token property, character attribute, NPC history, or configuration is changed;
 - any optional skipped gameplay module is recorded with a clear reason.
@@ -136,6 +181,7 @@ A failure should be recorded using [Bug Report Evidence](#bug-report-evidence) b
 | Component | What the basic test proves | Why test it | Skip when |
 | --- | --- | --- | --- |
 | Core System | GameAssist loaded, responds, and started enabled modules. | Every other feature depends on the core. | Never after an install or update. |
+| Table Timezone | The saved table clock, readable timestamps, and date-managed Session agree. | A wrong date boundary can put NPC history in the wrong Session. | Only the cross-date portion may be skipped when NPCManager is disabled. |
 | MarkerService | GameAssist can change and read markers without standalone TokenMod while preserving unrelated markers. | NPC death and concentration markers depend on it. | Only when no enabled module or future service uses token markers. |
 | ConfigUI | The GM settings interface opens and responds once. | It is the easiest way for most DMs to manage modules. | The campaign is intentionally managed only through commands. |
 | CritFumble | Help and the Natural 1 workflow respond. | Table automation can fail separately from the rest of GameAssist. | CritFumble is disabled and will not be used. |
@@ -161,7 +207,7 @@ GameAssist is ready for normal use when:
 Expected conditions that are not failures:
 
 - DebugTools is disabled by default.
-- Standalone TokenMod is not required for GameAssist marker operations or supported TokenAssist commands in v0.1.5.0. Remove it while testing TokenAssist so both scripts cannot respond to `!token-mod`.
+- Standalone TokenMod is not required for GameAssist marker operations or supported TokenAssist commands in v0.1.5.1. Remove it while testing TokenAssist so both scripts cannot respond to `!token-mod`.
 - ConditionAssist provides GameAssist's condition menus and marker descriptions; remove standalone StatusInfo while testing the overlapping workflows.
 - CritFumble help works without rollable tables, but table rolls require the seven exact table names.
 - Counts and timestamps in diagnostic panels vary by sandbox session.
@@ -178,7 +224,7 @@ Expected conditions that are not failures:
 
 ## Before Testing
 
-After saving GameAssist, wait for the Roll20 Mod sandbox to restart. The core-ready whisper should identify GameAssist v0.1.5.0.
+After saving GameAssist, wait for the Roll20 Mod sandbox to restart. The core-ready whisper should identify GameAssist v0.1.5.1.
 
 For expanded tests, prepare:
 
@@ -246,7 +292,7 @@ Run:
 
 Pass when:
 
-- `!ga-status` identifies GameAssist v0.1.5.0 and gives a clear overall result;
+- `!ga-status` identifies GameAssist v0.1.5.1 and gives a clear overall result;
 - MarkerService and seven default gameplay/administration modules are enabled and running;
 - DebugTools is shown as disabled or paused;
 - no enabled module is dependency-skipped;
@@ -297,11 +343,11 @@ Open the `GameAssist Config` handout and check:
 - [ ] `format` is `gameassist-config-snapshot`.
 - [ ] `schemaVersion` is `1`.
 - [ ] `scope` is `configuration-only`.
-- [ ] `version` is `0.1.5.0`.
+- [ ] `version` is `0.1.5.1`.
 - [ ] The MarkerService service configuration and all eight module configuration objects are present.
 - [ ] Runtime caches, metrics, death history, and Arc data are absent.
 
-This is a configuration snapshot, not a complete state backup, and it cannot be imported in v0.1.5.0.
+This is a configuration snapshot, not a complete state backup, and it cannot be imported in v0.1.5.1.
 
 #### Safe Configuration Round Trip
 
@@ -1305,9 +1351,9 @@ Pass when Section and Session clear while Campaign and Chapter remain.
 
 #### Date-Managed Session
 
-The default Session follows the sandbox's UTC date. On the next NPCManager command or qualifying HP change after that date changes, a date-managed Session should move to the new date. A manually named Session should not roll over until **Reset Session Date** is used.
+The default Session follows the active GameAssist table date. The `!ga-timezone` setting selects that clock; when none is selected, the Roll20 sandbox clock is used. A timezone change refreshes an active date-managed Session immediately, and the next NPCManager command or qualifying HP change after local midnight moves it to the new date. A manually named Session does not roll over until **Reset Session Date** is used.
 
-Skip this test unless the test naturally crosses midnight UTC; v0.1.5.0 has no fake-clock command.
+Use the focused v0.1.5.1 timezone check above to test both sides of a date boundary without waiting for midnight.
 
 #### Auto-Hide
 
@@ -1483,7 +1529,7 @@ If a command produces duplicate output:
 3. Keep only the intended implementation.
 4. Restart the sandbox and repeat the command.
 
-Scripts that independently respond to `!condition` or `!token-mod`, describe the same marker changes, modify the same NPC HP/bar 1, control the same token properties or death/concentration/condition markers, or process the same Natural 1 workflow may conflict even when their names differ. TokenAssist deliberately suspends only its deprecated `!token-mod` alias when standalone TokenMod is detected, but the standalone copy should still be removed for normal v0.1.5.0 use.
+Scripts that independently respond to `!condition` or `!token-mod`, describe the same marker changes, modify the same NPC HP/bar 1, control the same token properties or death/concentration/condition markers, or process the same Natural 1 workflow may conflict even when their names differ. TokenAssist deliberately suspends only its deprecated `!token-mod` alias when standalone TokenMod is detected, but the standalone copy should still be removed for normal v0.1.5.1 use.
 
 ## State Recovery
 
@@ -1551,7 +1597,7 @@ Check:
 - The configured built-in marker, custom display name, or exact stored tag exists.
 - The HP or concentration outcome actually requested the expected marker state.
 
-Standalone TokenMod permissions are not a repair for GameAssist marker failures in v0.1.5.0.
+Standalone TokenMod permissions are not a repair for GameAssist marker failures in v0.1.5.1.
 
 Stop testing and report the before/after marker values if an unrelated marker or number changes.
 

@@ -1,9 +1,9 @@
 /*
 ========================================
 GameAssist - Roll20 API Script
-Version: 0.1.5.0
+Version: 0.1.5.1
 Last Updated: 2026-07-19 (America/New_York)
-Development line: integrated marker architecture v0.1.5.0.
+Development line: configurable campaign timezone v0.1.5.1.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -18,7 +18,7 @@ calls GameAssist.enqueue(). This package ships with eight configurable modules:
 - ConditionAssist 1.0.1 - Provides condition wording, artwork, announcements, and marker controls.
 - TokenAssist 1.0.1 - Provides general token controls through !token-assist and !ta commands.
 - ConcentrationTracker - Runs concentration checks and manages its configured marker.
-- NPCManager 1.2.1 - Tracks NPC death markers, history, reports, audits, repair previews, and Arc rosters.
+- NPCManager 1.3.0 - Tracks NPC death markers, history, reports, audits, repair previews, and Arc rosters.
 - NPCHPRoller - Rolls npc_hpformula and writes the result to token bar 1.
 - DebugTools 0.2.0 - Optional dry-run-first GM diagnostics.
 
@@ -36,6 +36,7 @@ CORE COMMANDS (GM)
 - !ga-config ui / !ga-config-ui
 - !ga-enable <ModuleOrService> / !ga-disable <ModuleOrService>
 - !ga-status [--details]
+- !ga-timezone [set <IANA timezone>|clear]
 - !ga-debug <action>
 
 MODULE COMMANDS
@@ -53,7 +54,7 @@ MODULE COMMANDS
 - NPCHPRoller: !npc-hp-selected, !npc-hp-all
 - DebugTools: !ga-debug damage|marker|save
 
-V0.1.5.0 MARKER ARCHITECTURE
+V0.1.5.1 FOUNDATION
 - [GAMEASSIST:CORE:MARKERSERVICE] is the single GameAssist authority for marker
   resolution, reads, writes, toggles, duplicate handling, and change observation.
 - Built-in ids, custom display names, exact stored tags, numbered markers, and
@@ -65,8 +66,8 @@ V0.1.5.0 MARKER ARCHITECTURE
 - Disabling MarkerService also disables ConditionAssist, TokenAssist, NPCManager,
   ConcentrationTracker, and DebugTools while CritFumble, ConfigUI, and
   NPCHPRoller remain available.
-- The public v0.1.5.0 release remains gated on the complete clean-install and
-  upgrade smoke tracks plus the final publication audit.
+- Human-facing times and automatic Session date rollover use the DM's validated
+  IANA timezone when configured; stored event timestamps remain absolute.
 - Queue timeouts release the queue but cannot terminate Roll20 operations.
 - Configuration snapshots contain configuration only, never runtime caches.
 
@@ -86,8 +87,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 // --- MECHSUITS BANNER (YAML) ---
 // mechsuit:
 //   codename: "GAMEASSIST"
-//   project_version: "v0.1.5.0"
-//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, explicit opt-in queue execution, state self-healing, dependency diagnostics, one toggleable marker authority, integrated condition guidance, and general token controls. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, or transport changes beyond Roll20 chat API."
+//   project_version: "v0.1.5.1"
+//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, explicit opt-in queue execution, state self-healing, dependency diagnostics, one toggleable marker authority, integrated condition guidance, general token controls, and a validated campaign timezone for human-facing dates. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, or transport changes beyond Roll20 chat API."
 //   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critfumble","modules.conditionassist","modules.tokenassist","modules.npcmanager","modules.concentrationtracker","modules.npchproller","modules.debugtools","bootstrap"]
 //   env:
 //     required: []
@@ -134,10 +135,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 //     └─ [GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
-// Guarantee: GameAssist v0.1.5.0 runs policy, utilities, guarded core services including MarkerService, interfaces, independently lifecycle-managed condition/token/gameplay modules, then bootstrap in the declared order. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
+// Guarantee: GameAssist v0.1.5.1 runs policy, utilities, guarded core services including MarkerService, interfaces, independently lifecycle-managed condition/token/gameplay modules, then bootstrap in the declared order. Human-facing times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
 
 // =============================
-// === GameAssist v0.1.5.0 ===
+// === GameAssist v0.1.5.1 ===
 // === Author: Mord Eagle ===
 // =============================
 // Released under the MIT License (see https://opensource.org/licenses/MIT)
@@ -170,8 +171,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Tunables and operational policy
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "POLICY", title: "Tunables",
-    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; NPC initialization and condition-service limits remain explicit"],
-    //   provides: ["POLICY"], last_updated_version: "v0.1.5.0", lifecycle: "active" }
+    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; NPC initialization, timezone input, and condition-service limits remain explicit"],
+    //   provides: ["POLICY"], last_updated_version: "v0.1.5.1", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // POLICY owns shared timeouts, cache limits, UI defaults, snapshot identifiers,
@@ -200,7 +201,20 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             lastDamageLimit: 50
         }),
         timestamps: Object.freeze({
-            maxFutureMs: 1000 * 60 * 60 * 24 * 7
+            maxFutureMs: 1000 * 60 * 60 * 24 * 7,
+            maxTimeZoneLength: 100,
+            formatterCacheLimit: 32,
+            locale: 'en-US',
+            commonTimeZones: Object.freeze([
+                Object.freeze({ label: 'US Eastern', value: 'America/New_York' }),
+                Object.freeze({ label: 'US Central', value: 'America/Chicago' }),
+                Object.freeze({ label: 'US Mountain', value: 'America/Denver' }),
+                Object.freeze({ label: 'US Pacific', value: 'America/Los_Angeles' }),
+                Object.freeze({ label: 'UTC', value: 'UTC' }),
+                Object.freeze({ label: 'London', value: 'Europe/London' }),
+                Object.freeze({ label: 'Paris', value: 'Europe/Paris' }),
+                Object.freeze({ label: 'Sydney', value: 'Australia/Sydney' })
+            ])
         }),
         configUi: Object.freeze({
             pageSize: 3
@@ -230,10 +244,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Removed the obsolete standalone TokenMod verification delay and added bounded condition-definition, import, announcement-selection, private-reference, announcement-observer suppression, and current-page status limits for ConditionAssist; rollback: restore standalone request dispatch or revise the condition limits here.
+    // Changed (v0.1.5.1): Added bounded IANA timezone input, a bounded formatter cache, a stable display locale, and common GM menu choices; rollback: remove timestamps timezone fields and restore sandbox-only formatting.
     // Decision log:
+    //   CHOICE: Offer common IANA zones plus validated custom input - ALT: fixed numeric offsets; REJECTED: fixed offsets do not follow daylight-saving changes.
     //   CHOICE: Keep NPC initialization and snapshot knobs centralized while removing the unused external marker delay - ALT: retain the dead setting; REJECTED: implied behavior no caller performs.
     // Prior notes:
+    //   v0.1.5.0: Removed the obsolete standalone TokenMod verification delay and added bounded condition-definition, import, announcement-selection, private-reference, announcement-observer suppression, and current-page status limits for ConditionAssist.
     //   v0.1.4.7: Added a two-second NPC HP initialization grace period so auto-roll-on-add setup is not recorded as a death/revival.
     //   v0.1.4.7: Added a one-second standalone TokenMod marker-verification delay.
     //   v0.1.4.5: Added runtime death-report summary/detail limits for bounded GM-facing history reports.
@@ -250,7 +266,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "APP", title: "Wrapper",
     //   guarantees: ["APP-scoped non-marker helpers are grouped here; marker authority belongs to CORE:MARKERSERVICE"],
-    //   depends_on: [], last_updated_version: "v0.1.5.0" }
+    //   depends_on: [], last_updated_version: "v0.1.5.1" }
     // -------------------------------------------------------------------------
     // Narrative
     // The APP tree houses shared helpers used by core services and bundled modules.
@@ -264,8 +280,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Utilities (arg parsing, state helpers, audit, sanitize)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "APP:UTILS", title: "Utilities",
-    //   guarantees: ["Shared non-marker helpers; known module state branches self-heal without deleting valid config","Standalone-script evidence remains diagnostic rather than a marker dependency"],
-    //   depends_on: ["[GAMEASSIST:POLICY]"], last_updated_version: "v0.1.5.0", lifecycle: "active" }
+    //   guarantees: ["Shared non-marker helpers; known module state branches self-heal without deleting valid config","Absolute timestamps remain unchanged while human displays and date keys use one validated DM timezone","Standalone-script evidence remains diagnostic rather than a marker dependency"],
+    //   depends_on: ["[GAMEASSIST:POLICY]"], last_updated_version: "v0.1.5.1", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // APP:UTILS collects helpers for metrics/state initialization, conservative state
@@ -290,12 +306,178 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         return new Date(now()).toISOString();
     }
 
-    function localNow() {
-        return new Date(now()).toLocaleString();
+    const dateTimeFormatterCache = new Map();
+
+    /**
+     * getDateTimeFormatter - Reuse expensive Intl formatters without allowing
+     * arbitrary custom timezone input to grow sandbox memory indefinitely.
+     */
+    function getDateTimeFormatter(key, options) {
+        if (dateTimeFormatterCache.has(key)) {
+            const formatter = dateTimeFormatterCache.get(key);
+            dateTimeFormatterCache.delete(key);
+            dateTimeFormatterCache.set(key, formatter);
+            return formatter;
+        }
+
+        const formatter = new Intl.DateTimeFormat(POLICY.timestamps.locale, options);
+        dateTimeFormatterCache.set(key, formatter);
+        while (dateTimeFormatterCache.size > POLICY.timestamps.formatterCacheLimit) {
+            dateTimeFormatterCache.delete(dateTimeFormatterCache.keys().next().value);
+        }
+        return formatter;
+    }
+
+    function validateTimeZone(raw) {
+        if (raw === null || raw === undefined || String(raw).trim() === '') {
+            return { ok: true, value: null, requested: null, message: null };
+        }
+        if (typeof raw !== 'string') {
+            return { ok: false, value: null, requested: raw, message: 'Timezone must be an IANA name such as America/New_York.' };
+        }
+
+        const requested = raw.trim();
+        if (requested.length > POLICY.timestamps.maxTimeZoneLength || !/^[A-Za-z0-9_+\-/]+$/.test(requested)) {
+            return { ok: false, value: null, requested, message: 'Timezone must be a valid IANA name such as America/New_York.' };
+        }
+        if (typeof Intl !== 'object' || typeof Intl.DateTimeFormat !== 'function') {
+            return { ok: false, value: null, requested, message: 'This Roll20 sandbox cannot format named timezones; GameAssist will continue using sandbox time.' };
+        }
+
+        try {
+            const formatter = getDateTimeFormatter(
+                `validation|${POLICY.timestamps.locale}|${requested}`,
+                { timeZone: requested }
+            );
+            if (typeof formatter.formatToParts !== 'function') {
+                return { ok: false, value: null, requested, message: 'This Roll20 sandbox cannot format named timezones; GameAssist will continue using sandbox time.' };
+            }
+            formatter.format(new Date(0));
+            return {
+                ok: true,
+                value: formatter.resolvedOptions().timeZone || requested,
+                requested,
+                message: null
+            };
+        } catch (error) {
+            return { ok: false, value: null, requested, message: `Timezone "${requested}" is not recognized by this Roll20 sandbox.` };
+        }
+    }
+
+    function getTimeZoneInfo() {
+        const root = (typeof state === 'object' && state) ? state[STATE_KEY] : null;
+        const configured = root?.config?.timezone ?? null;
+        const validation = validateTimeZone(configured);
+        if (validation.ok && validation.value) {
+            return {
+                configured: validation.value,
+                active: validation.value,
+                label: validation.value,
+                fallback: false,
+                warning: null
+            };
+        }
+        return {
+            configured,
+            active: null,
+            label: 'Sandbox default',
+            fallback: true,
+            warning: validation.ok ? null : validation.message
+        };
+    }
+
+    function dateParts(raw, timeZone = null, hour12 = true) {
+        const date = raw instanceof Date ? raw : new Date(raw);
+        if (!Number.isFinite(date.getTime())) return null;
+        if (timeZone && typeof Intl === 'object' && typeof Intl.DateTimeFormat === 'function') {
+            const options = {
+                timeZone,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            if (hour12) options.hour12 = true;
+            else options.hourCycle = 'h23';
+            const formatter = getDateTimeFormatter(
+                `parts|${POLICY.timestamps.locale}|${timeZone}|${hour12 ? 'h12' : 'h23'}`,
+                options
+            );
+            const parts = {};
+            formatter.formatToParts(date).forEach(part => {
+                if (part.type !== 'literal') parts[part.type] = part.value;
+            });
+            if (!hour12 && parts.hour === '24') parts.hour = '00';
+            parts.date = date;
+            return parts;
+        }
+
+        const hours = date.getHours();
+        return {
+            year: String(date.getFullYear()),
+            month: String(date.getMonth() + 1).padStart(2, '0'),
+            day: String(date.getDate()).padStart(2, '0'),
+            hour: hour12 ? String((hours % 12) || 12).padStart(2, '0') : String(hours).padStart(2, '0'),
+            minute: String(date.getMinutes()).padStart(2, '0'),
+            second: String(date.getSeconds()).padStart(2, '0'),
+            dayPeriod: hour12 ? (hours >= 12 ? 'PM' : 'AM') : '',
+            date
+        };
+    }
+
+    function timeZoneOffset(raw, timeZone = null) {
+        const date = raw instanceof Date ? raw : new Date(raw);
+        if (!Number.isFinite(date.getTime())) return '+0000';
+        let minutes;
+        if (timeZone) {
+            const parts = dateParts(date, timeZone, false);
+            if (!parts) return '+0000';
+            const utcLike = Date.UTC(
+                Number(parts.year),
+                Number(parts.month) - 1,
+                Number(parts.day),
+                Number(parts.hour),
+                Number(parts.minute),
+                Number(parts.second)
+            );
+            const roundedEpoch = Math.floor(date.getTime() / 1000) * 1000;
+            minutes = Math.round((utcLike - roundedEpoch) / 60000);
+        } else {
+            minutes = -date.getTimezoneOffset();
+        }
+        const sign = minutes < 0 ? '-' : '+';
+        const absolute = Math.abs(minutes);
+        return `${sign}${String(Math.floor(absolute / 60)).padStart(2, '0')}${String(absolute % 60).padStart(2, '0')}`;
+    }
+
+    function localNow(raw = now()) {
+        const info = getTimeZoneInfo();
+        const parts = dateParts(raw, info.active, true);
+        if (!parts) return 'Invalid time';
+        return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second} ${parts.dayPeriod} ${timeZoneOffset(parts.date, info.active)}`.trim();
     }
 
     function localTime(raw = now()) {
-        return new Date(raw).toLocaleTimeString();
+        const info = getTimeZoneInfo();
+        const parts = dateParts(raw, info.active, true);
+        if (!parts) return 'Invalid time';
+        return `${parts.hour}:${parts.minute}:${parts.second} ${parts.dayPeriod}`.trim();
+    }
+
+    function localDateKey(raw = now()) {
+        const info = getTimeZoneInfo();
+        const parts = dateParts(raw, info.active, false);
+        return parts ? `${parts.year}-${parts.month}-${parts.day}` : new Date(raw).toISOString().slice(0, 10);
+    }
+
+    function displayStoredTime(timestamp, fallback = 'time unknown') {
+        if (timestamp !== null && timestamp !== undefined && timestamp !== '') {
+            const parsed = new Date(timestamp);
+            if (Number.isFinite(parsed.getTime())) return localNow(parsed);
+        }
+        return fallback || 'time unknown';
     }
 
     function createMetricsStore() {
@@ -316,6 +498,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         if (!root.config || typeof root.config !== 'object') {
             root.config = {};
+        }
+        if (!Object.prototype.hasOwnProperty.call(root.config, 'timezone')) {
+            root.config.timezone = null;
         }
 
         if (!root.metrics || typeof root.metrics !== 'object') {
@@ -664,12 +849,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
     // --- Notes & Comments ---
     // NOTE: State auditor warns about unexpected branches; no automatic deletion occurs.
-    // Changed (v0.1.5.0): Moved all marker identity and mutation behavior into CORE:MARKERSERVICE; added exact known-state migration from the unreleased ConditionService/TokenService names to ConditionAssist/TokenAssist; APP utilities retain general helpers and public-contract evidence used for standalone collision diagnostics.
+    // Changed (v0.1.5.1): Added validated IANA timezone resolution, bounded formatter reuse, DST-aware human formatting, date-key generation, and legacy-display fallback while preserving stored absolute timestamps.
     // Decision log:
     //   CHOICE: Keep standalone detection as diagnostics only - ALT: use it for marker dependency gating; REJECTED: MarkerService owns GameAssist marker behavior.
     //   CHOICE: Unknown branches remain warning-only; explicit cleanup is required before deletion.
     //   CHOICE: monotonic() falls back to Date.now() in Roll20 - ALT: assume performance.now; REJECTED: sandbox portability.
+    //   CHOICE: Validate formatToParts and normalize an h24 midnight result - ALT: accept partial Intl support; REJECTED: a saved setting must not produce an invalid clock or one-day offset.
+    //   CHOICE: Reuse formatters through a bounded LRU cache - ALT: construct on every log/UI render; REJECTED: repeated Intl setup adds avoidable Roll20 sandbox overhead.
     // Prior notes:
+    //   v0.1.5.0: Moved all marker identity and mutation behavior into CORE:MARKERSERVICE; added exact known-state migration from the unreleased ConditionService/TokenService names to ConditionAssist/TokenAssist; APP utilities retain general helpers and public-contract evidence used for standalone collision diagnostics.
     //   v0.1.4.7: Detected TokenMod/StatusInfo through public contracts and dispatched verified TokenMod --api-as marker requests.
     //   v0.1.4.5: Kept adjacent command flags independent so combined switches execute as displayed.
     //   v0.1.4.3: Resolved configured marker names/tags, fast-pathed exact stored custom tags, and stripped simple matching quote pairs.
@@ -683,8 +871,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): APP now explicitly excludes marker ownership and delegates that contract to CORE:MARKERSERVICE.
+    // Changed (v0.1.5.1): APP now owns the shared validated timezone and human-facing date/time helpers while continuing to delegate marker ownership to CORE:MARKERSERVICE.
     // Prior notes:
+    //   v0.1.5.0: APP explicitly excluded marker ownership and delegated that contract to CORE:MARKERSERVICE.
     //   v0.1.4.7: APP included verified standalone TokenMod requests while preserving StatusInfo observer delivery.
     //   v0.1.4.3: APP included shared exact marker-identity resolution.
     //   v0.1.3: Updated wrapper commentary while preserving explicit nesting over APP:UTILS only; no semantic change.
@@ -699,7 +888,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE", title: "Core wrapper",
     //   guarantees: ["Core constants and kernel services are grouped; MarkerService is the sole marker authority"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP]"], last_updated_version: "v0.1.5.0",
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP]"], last_updated_version: "v0.1.5.1",
     //   lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
@@ -708,7 +897,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // documents scope and anchors the hierarchy for MECHSUITS compliance.
     // -------------------------------------------------------------------------
 
-    const VERSION      = '0.1.5.0';
+    const VERSION      = '0.1.5.1';
     const STATE_KEY    = 'GameAssist';
     const MODULES      = {};
     const _transitioning   = {};
@@ -1791,9 +1980,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: GameAssist kernel object
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:OBJECT", title: "Kernel",
-    //   guarantees: ["Logging, explicit enqueue, dependency diagnostics, register/enable/disable, listener management", "MarkerService is exposed through the stable GameAssist object", "Module registration may explicitly retain durable runtime state and protect validated configuration maps", "Failed dependency enable checks preserve the module's existing configured intent"],
+    //   guarantees: ["Logging, explicit enqueue, dependency diagnostics, register/enable/disable, listener management", "MarkerService and the validated time seam are exposed through the stable GameAssist object", "Module registration may explicitly retain durable runtime state and protect validated configuration maps", "Failed dependency enable checks preserve the module's existing configured intent"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]"],
-    //   last_updated_version: "v0.1.5.0", lifecycle: "active" }
+    //   last_updated_version: "v0.1.5.1", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // CORE:OBJECT exposes the GameAssist singleton with metrics, logging, explicit
@@ -1819,6 +2008,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         config: {},
         flags: { DEBUG_COMPAT: false, QUIET_STARTUP: true },
         MarkerService,
+        Time: Object.freeze({
+            version: '1.0.0',
+            validateTimeZone,
+            getInfo: getTimeZoneInfo,
+            formatDateTime: localNow,
+            formatTime: localTime,
+            dateKey: localDateKey
+        }),
 
         log(mod, msg, level = 'INFO', { startup = false } = {}) {
             if (startup && GameAssist.flags.QUIET_STARTUP) return;
@@ -2229,7 +2426,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => setMarkerServiceEnabled(false)
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Exposed GameAssist.MarkerService as a toggleable core service, added case-insensitive module/service lifecycle resolution and protected config-key registration, cascaded service shutdown to dependent modules, and removed marker-module dependency gating on standalone TokenMod.
+    // Changed (v0.1.5.1): Exposed GameAssist.Time as the shared validated timezone, display-formatting, and date-key seam used by interfaces and NPCManager.
     // Decision log:
     //   CHOICE: Expose globally under the existing GameAssist name - ALT: add another global; REJECTED: unnecessary global pollution.
     //   CHOICE: Keep normal handlers direct and serialized work explicit through GameAssist.enqueue.
@@ -2237,6 +2434,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Preserve configured intent when dependency enablement is refused - ALT: force false; REJECTED: concealed dependency-skipped modules.
     //   CHOICE: Disable dependent modules before their service - ALT: disable the service first; REJECTED: dependent teardown would lose the marker access it needs for cleanup.
     // Prior notes:
+    //   v0.1.5.0: Exposed GameAssist.MarkerService as a toggleable core service, added case-insensitive module/service lifecycle resolution and protected config-key registration, cascaded service shutdown to dependent modules, and removed marker-module dependency gating on standalone TokenMod.
     //   v0.1.4.7: Public TokenMod contract/API metadata could confirm that external dependency when Roll20 metadata was unavailable.
     //   v0.1.4.6: Refused dependency enable attempts preserved configured intent and configured-but-inactive modules remained disableable.
     //   v0.1.4.5: Added preserveRuntimeOnDisable for durable module-owned records.
@@ -2249,8 +2447,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Added CORE:MARKERSERVICE to the declared child order and advanced runtime VERSION for the integrated marker architecture.
+    // Changed (v0.1.5.1): Advanced runtime VERSION for the configurable campaign-timezone release; the established core child order is unchanged.
     // Prior notes:
+    //   v0.1.5.0: Added CORE:MARKERSERVICE to the declared child order and advanced runtime VERSION for the integrated marker architecture.
     //   v0.1.4.7: Advanced runtime VERSION for standalone TokenMod/StatusInfo interoperability; child order was unchanged.
     //   v0.1.4.6: Advanced runtime VERSION for DM-readable status; child order was unchanged.
     //   v0.1.4.5: Advanced runtime VERSION for NPC death-history buckets and handouts; child order was unchanged.
@@ -2302,9 +2501,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Admin/config commands (!ga-*)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "INTERFACES:COMMANDS", title: "Commands",
-    //   guarantees: ["GM-gated admin commands; unsafe and component-protected config keys refused; versioned config-only export; plain-language health summary with opt-in marker and standalone-integration details"],
+    //   guarantees: ["GM-gated admin commands; unsafe and component-protected config keys refused; versioned config-only export; validated timezone menu; plain-language health summary with opt-in marker and standalone-integration details"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:CORE:STATE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
-    //   last_updated_version: "v0.1.5.0", lifecycle: "active" }
+    //   last_updated_version: "v0.1.5.1", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // INTERFACES:COMMANDS contains GM/admin chat commands for listing modules, toggling
@@ -2380,8 +2579,34 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         if (!raw) return 'No activity recorded yet.';
         const parsed = new Date(raw);
         return Number.isFinite(parsed.getTime())
-            ? `${parsed.toLocaleString()} (sandbox time)`
+            ? localNow(parsed)
             : 'Time unavailable.';
+    }
+
+    function sendTimeZoneMenu(notice = '') {
+        const info = getTimeZoneInfo();
+        const presetButtons = POLICY.timestamps.commonTimeZones
+            .map(option => GameAssist.createButton(option.label, `!ga-timezone set ${option.value}`))
+            .join(' ');
+        const customButton = GameAssist.createButton('Choose Another Timezone', '!ga-timezone set ?{IANA timezone name|America/New_York}');
+        const clearButton = GameAssist.createButton('Use Sandbox Default', '!ga-timezone clear');
+        const warning = info.warning
+            ? `<div style="margin-top:6px;color:#7a3d00;"><strong>Saved setting needs attention:</strong> ${_sanitize(info.warning)}</div>`
+            : '';
+        const message = [
+            '<div><strong>GameAssist Timezone</strong></div>',
+            notice ? `<div style="margin-top:6px;"><strong>${_sanitize(notice)}</strong></div>` : '',
+            `<div style="margin-top:6px;"><strong>Current setting:</strong> ${_sanitize(info.label)}</div>`,
+            `<div><strong>Current GameAssist time:</strong> ${_sanitize(localNow())}</div>`,
+            `<div><strong>Current Session date:</strong> ${_sanitize(localDateKey())}</div>`,
+            warning,
+            '<div style="margin-top:8px;"><strong>Common choices</strong><br>',
+            presetButtons,
+            '</div>',
+            `<div style="margin-top:8px;">${customButton} ${clearButton}</div>`,
+            '<div style="margin-top:7px;font-size:0.9em;">Choose the city/region that governs your table clock. Named timezones follow daylight-saving changes automatically. Existing event timestamps remain unchanged.</div>'
+        ].join('');
+        sendChat('GameAssist', `/w gm ${message}`);
     }
 
     /**
@@ -2468,10 +2693,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
 
     function sendStatusPanel(snapshot, detailed = false) {
+        const timezone = getTimeZoneInfo();
         const fields = [
             `&{template:default} {{name=GameAssist ${VERSION} System Check}}`,
             statusField('Overall', snapshot.overall),
             statusField('Components', snapshot.componentLines),
+            statusField('Timezone', timezone.warning
+                ? `${timezone.label}. ${timezone.warning}`
+                : `${timezone.label} | ${localNow()} | Session date ${localDateKey()}`),
             statusField('Errors This Sandbox Session', snapshot.errors
                 ? `${snapshot.errors} error${snapshot.errors === 1 ? '' : 's'} recorded. Open Troubleshooting Details.`
                 : 'None recorded.'),
@@ -2495,12 +2724,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 GameAssist.createButton('Refresh Details', '!ga-status --details'),
                 GameAssist.createButton('Simple View', '!ga-status'),
                 GameAssist.createButton('Modules & Services', '!ga-config modules'),
-                GameAssist.createButton('Metrics', '!ga-metrics')
+                GameAssist.createButton('Metrics', '!ga-metrics'),
+                GameAssist.createButton('Timezone', '!ga-timezone')
             ]
             : [
                 GameAssist.createButton('Troubleshooting Details', '!ga-status --details'),
                 GameAssist.createButton('Modules & Services', '!ga-config modules'),
-                GameAssist.createButton('Open Settings', '!ga-config ui')
+                GameAssist.createButton('Open Settings', '!ga-config ui'),
+                GameAssist.createButton('Timezone', '!ga-timezone')
             ];
         const actionTitle = detailed ? 'Troubleshooting Actions' : 'GameAssist Actions';
         const actionRow = `<div><strong>${actionTitle}</strong><br>${buttons.join(' ')}</div>`;
@@ -2605,6 +2836,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const raw = msg.content.trim().split(/\s+/).slice(2).join(' ');
             GameAssist.renderConfigUI(msg.playerid, { rawArgs: raw });
         }
+        else if (sub === 'timezone') {
+            sendTimeZoneMenu();
+        }
         else if (sub === 'modules') {
             const moduleList = Object.entries(MODULES)
                 .filter(([, mod]) => !mod.internal)
@@ -2633,8 +2867,41 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 : 'No orphaned module state branches found.');
         }
         else {
-            GameAssist.log('Config', 'Usage: !ga-config list|set|get|modules|cleanup [args]');
+            GameAssist.log('Config', 'Usage: !ga-config list|set|get|modules|cleanup|timezone [args]');
         }
+    }, 'Core', { gmOnly: true });
+
+    GameAssist.onCommand('!ga-timezone', msg => {
+        const raw = String(msg.content || '').replace(/^!ga-timezone\s*/i, '').trim();
+        if (!raw || /^help$/i.test(raw)) {
+            sendTimeZoneMenu();
+            return;
+        }
+        if (/^(?:clear|default|sandbox)$/i.test(raw)) {
+            ensureStateRoot().config.timezone = null;
+            const rolled = MODULES.NPCManager?.active
+                && typeof GameAssist.NPCManager?.refreshSessionDate === 'function'
+                && GameAssist.NPCManager.refreshSessionDate({ announce: false });
+            sendTimeZoneMenu(`GameAssist will use the Roll20 sandbox clock until another timezone is selected.${rolled ? ' The active date-managed Session was updated.' : ''}`);
+            return;
+        }
+
+        const match = raw.match(/^set\s+(.+)$/i);
+        if (!match) {
+            GameAssist.log('Time', 'Use !ga-timezone, !ga-timezone set <IANA timezone>, or !ga-timezone clear.', 'WARN');
+            return;
+        }
+        const requested = match[1].trim().replace(/^(?:"([\s\S]*)"|'([\s\S]*)')$/, '$1$2');
+        const validation = validateTimeZone(requested);
+        if (!validation.ok || !validation.value) {
+            GameAssist.log('Time', validation.message || 'Choose a named timezone such as America/New_York.', 'WARN');
+            return;
+        }
+        ensureStateRoot().config.timezone = validation.value;
+        const rolled = MODULES.NPCManager?.active
+            && typeof GameAssist.NPCManager?.refreshSessionDate === 'function'
+            && GameAssist.NPCManager.refreshSessionDate({ announce: false });
+        sendTimeZoneMenu(`Timezone set to ${validation.value}.${rolled ? ' The active date-managed Session was updated.' : ''}`);
     }, 'Core', { gmOnly: true });
 
     // ————— CONTROL COMMANDS —————
@@ -2736,7 +3003,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.log('Metrics', summary.join('\n'));
     }, 'Core', { gmOnly: true });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Status and configuration output distinguish feature modules from core services, troubleshooting details identify MarkerService lifecycle state, component names resolve case-insensitively, and validated configuration maps cannot be replaced through the generic setter.
+    // Changed (v0.1.5.1): Added GM-only timezone configuration, status visibility, common/custom selection buttons, validation diagnostics, sandbox-default restoration, and immediate NPC Session-date refresh when that module is running.
     // Decision log:
     //   CHOICE: Keep command syntax identical to legacy for drop-in replacement.
     //   CHOICE: Keep the default status action-oriented and volatile counters behind --details - ALT: one exhaustive panel; REJECTED: obscured the health signal.
@@ -2744,6 +3011,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Report dependency certainty instead of treating unavailable script metadata as absence.
     //   CHOICE: Export flags/global/module config in one snapshot - ALT: module-only export; REJECTED: incomplete configuration evidence.
     // Prior notes:
+    //   v0.1.5.0: Status and configuration output distinguish feature modules from core services, troubleshooting details identify MarkerService lifecycle state, component names resolve case-insensitively, and validated configuration maps cannot be replaced through the generic setter.
     //   v0.1.4.7: Troubleshooting details reported TokenMod and optional StatusInfo contract/version evidence.
     //   v0.1.4.6: Rebuilt !ga-status as a plain-language system check, moved volatile data behind --details, and separated navigation buttons.
     //   v0.1.4.3: Replaced an editorial guarantee label with specific health states; no semantic change.
@@ -2779,16 +3047,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // sequencing while child sections own their observable behavior.
     // -------------------------------------------------------------------------
 
-    // ————— CONFIG UI MODULE v0.1.0 —————
+    // ————— CONFIG UI MODULE v0.2.0 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:CONFIGUI] BEGIN
     // Section Title: Config UI module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONFIGUI", title: "Config UI",
-    //   guarantees: ["GM chat menu for module and core-service toggles and quick config"],
+    //   guarantees: ["GM chat menu for module and core-service toggles, timezone access, and quick config"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:INTERFACES:COMMANDS]"],
-    //   last_updated_version: "v0.1.5.0",
-    //   independent_versions: { module_version: "0.1.0" } }
+    //   last_updated_version: "v0.1.5.1",
+    //   independent_versions: { module_version: "0.2.0" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:CONFIGUI provides GM-facing chat controls to page through modules,
@@ -2924,11 +3192,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const blocks = slice.map(([name, mod]) => renderModuleBlock(name, mod)).join('');
             const nav = buildNav(page, totalPages);
 
+            const timezone = getTimeZoneInfo();
             const header = `<div><strong>🛠️ GameAssist Config UI</strong> <span style="font-size:smaller;">Page ${page + 1}/${totalPages}</span></div>`;
+            const timezoneRow = [
+                '<div style="margin-top:5px;padding-bottom:5px;border-bottom:1px solid #ddd;">',
+                `<strong>Table timezone:</strong> ${_sanitize(timezone.label)}<br>`,
+                `${GameAssist.createButton('Manage Timezone', '!ga-timezone')} `,
+                `<span style="font-size:smaller;">Session date ${_sanitize(localDateKey())}</span>`,
+                '</div>'
+            ].join('');
             const footer = '<div style="margin-top:4px; font-size:smaller;">Use !ga-config set &lt;Module&gt; key=value for advanced settings.</div>';
             const navLine = nav ? `<div style="margin-top:4px;">${nav}</div>` : '';
 
-            const message = `${header}${blocks}${navLine}${footer}`;
+            const message = `${header}${timezoneRow}${blocks}${navLine}${footer}`;
             sendChat('GameAssist', `/w gm ${message}`);
         }
 
@@ -2951,10 +3227,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         prefixes: ['!ga-config-ui', '!ga-config ui']
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Core services appear with an explicit label, use the same guarded enable/disable controls as modules, and summarize large condition/migration maps without dumping them into the settings panel.
-    // CHOICE: Button helper reused; nav uses the same command path for refresh/paging.
-    // Maintenance (v0.1.4.1, no semantic change): Routed the unchanged default page size through POLICY.
+    // Changed (v0.1.5.1): ConfigUI module_version advanced to 0.2.0 and now exposes the active table timezone, current Session date, and direct timezone settings access on every page.
+    // Decision log:
+    //   CHOICE: Button helper reused; nav uses the same command path for refresh/paging.
     // Prior notes:
+    //   v0.1.5.0: Core services appeared with an explicit label, used the same guarded enable/disable controls as modules, and summarized large condition/migration maps without dumping them into the settings panel.
+    //   Maintenance (v0.1.4.1, no semantic change): Routed the unchanged default page size through POLICY.
     //   Maintenance (v0.1.3, no semantic change): Added module narrative; preserved UI behavior and pagination defaults.
     //   Maintenance (v0.1.1.2, no semantic change): Updated section metadata for MECHSUITS v1.5.1.
     // [GAMEASSIST:MODULES:CONFIGUI] END
@@ -6054,16 +6332,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:TOKENASSIST] END
     // =============================================================================
 
-    // ————— NPC MANAGER MODULE v1.2.1 —————
+    // ————— NPC MANAGER MODULE v1.3.0 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:NPCMANAGER] BEGIN
     // Section Title: NPCManager module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:NPCMANAGER", title: "NPCManager",
-    //   guarantees: ["Auto toggle resolved configured dead marker based on known HP transitions; maintain hierarchical death-history handouts and curated arc rosters", "Audits are read-only; separately confirmed repair commands re-scan current HP and change only the configured death marker", "NPCHPRoller auto-roll initialization is not recorded as death/revival history", "Death-marker reads and writes use CORE:MARKERSERVICE"],
+    //   guarantees: ["Auto toggle resolved configured dead marker based on known HP transitions; maintain hierarchical death-history handouts and curated arc rosters", "Date-based Session rollover and timestamp rendering use the validated GameAssist timezone while stored instants remain absolute", "Audits are read-only; separately confirmed repair commands re-scan current HP and change only the configured death marker", "NPCHPRoller auto-roll initialization is not recorded as death/revival history", "Death-marker reads and writes use CORE:MARKERSERVICE"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
-    //   last_updated_version: "v0.1.5.0",
-    //   independent_versions: { module_version: "1.2.1" } }
+    //   last_updated_version: "v0.1.5.1",
+    //   independent_versions: { module_version: "1.3.0" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:NPCMANAGER monitors token HP changes to set or clear the configured
@@ -6109,11 +6387,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const DEATH_REPORT_SUMMARY_LIMIT = POLICY.runtime.deathReportSummaryLimit;
         const DEATH_REPORT_DETAIL_LIMIT = POLICY.runtime.deathReportDetailLimit;
         const AUDIT_HANDOUT_NAME = 'GameAssist NPC Death Audit';
-        const NPCMANAGER_MODULE_VERSION = '1.2.1';
+        const NPCMANAGER_MODULE_VERSION = '1.3.0';
         const initializingNpcHp = new Set();
 
         function currentSessionDateKey(raw = now()) {
-            return new Date(raw).toISOString().slice(0, 10);
+            return localDateKey(raw);
         }
 
         function defaultBucketName(scope) {
@@ -6508,7 +6786,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function entryStatus(entry) {
             return entry.revivedAt
-                ? `Revived ${entry.revivedTime || entry.revivedAt}`
+                ? `Revived ${displayStoredTime(entry.revivedAt, entry.revivedTime || entry.revivedAt)}`
                 : 'Dead';
         }
 
@@ -6523,7 +6801,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<tr>',
                 `<td>${htmlText(entry.name)}</td>`,
                 `<td>${htmlText(entry.hp ?? 'unknown')}</td>`,
-                `<td>${htmlText(entry.time || entry.timestamp || 'time unknown')}</td>`,
+                `<td>${htmlText(displayStoredTime(entry.timestamp, entry.time || entry.timestamp || 'time unknown'))}</td>`,
                 `<td>${htmlText(entryStatus(entry))}</td>`,
                 '</tr>'
             ].join(''));
@@ -6563,7 +6841,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     const source = entry.source ? ` | ${htmlText(entry.source)}` : '';
                     const note = entry.note ? ` | ${htmlText(entry.note)}` : '';
                     const status = entry.revivedAt ? ` | ${htmlText(entryStatus(entry))}` : '';
-                    return `<li><strong>${htmlText(entry.name)}</strong> | ${htmlText(entry.time || entry.timestamp || 'time unknown')}${source}${status}${note}</li>`;
+                    return `<li><strong>${htmlText(entry.name)}</strong> | ${htmlText(displayStoredTime(entry.timestamp, entry.time || entry.timestamp || 'time unknown'))}${source}${status}${note}</li>`;
                 }).join('') + '</ol>'
                 : '<p>No entries recorded in this arc yet.</p>';
 
@@ -6727,7 +7005,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return {
                 name: item.name || '(Unnamed NPC)',
                 hp: item.hp ?? 'unknown',
-                time: item.time || item.timestamp || 'time unknown',
+                time: displayStoredTime(item.timestamp, item.time || item.timestamp || 'time unknown'),
+                timestamp: item.timestamp || null,
                 revivedAt: item.revivedAt || null,
                 revivedTime: item.revivedTime || null
             };
@@ -7037,6 +7316,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             backfillBucketsFromLegacyLog();
             return ensureSessionDateRollover();
         }
+
+        GameAssist.NPCManager = Object.freeze({
+            version: '1.3.0',
+            refreshSessionDate(options = {}) {
+                return ensureSessionDateRollover(options.announce !== false);
+            }
+        });
 
         function showDeathBucketsPanel(message = null) {
             const names = ensureDeathBucketConfig();
@@ -7946,13 +8232,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): NPCManager module_version advanced to 1.2.1; audits remain read-only while !npc-death-repair previews, confirms, re-scans, and verifies death-marker corrections without changing HP or history. All marker reads, writes, audits, repair actions, and teardown use CORE:MARKERSERVICE with no standalone TokenMod dependency. Writes preserve configured numbered overlays such as dead@2.
+    // Changed (v0.1.5.1): NPCManager module_version advanced to 1.3.0; date-based Session rollover and dynamically rendered death, revival, bucket, and Arc timestamps now follow the validated GameAssist timezone while stored ISO instants remain unchanged. A bounded public refresh hook lets a validated timezone change update an active date-managed Session immediately.
     // Decision log:
     //   CHOICE: Keep death-history recording independent from marker mutation success - ALT: record only after marker success; REJECTED: history should describe HP events even when a visual marker cannot change.
     //   CHOICE: Identify Arc creatures by token before character/name fallbacks - ALT: character-only identity; REJECTED: multiple NPC tokens may share one character sheet.
     //   CHOICE: Require a separate preview and confirmation before repairing audit mismatches - ALT: repair from the audit command; REJECTED: a marker/HP mismatch may reveal HP housekeeping the DM wants to correct manually.
     //   CHOICE: Ignore blank or invalid HP during audit repair - ALT: coerce it to zero; REJECTED: automatic repair must not mark an incompletely configured NPC as dead.
     // Prior notes:
+    //   v0.1.5.0: Audits remain read-only while !npc-death-repair previews, confirms, re-scans, and verifies death-marker corrections without changing HP or history. All marker reads, writes, audits, repair actions, and teardown use CORE:MARKERSERVICE with no standalone TokenMod dependency. Writes preserve configured numbered overlays such as dead@2.
     //   v0.1.4.7: Suppressed placeholder HP transitions, advanced NPCManager to 1.1.1, and used verified TokenMod --api-as marker requests.
     //   v0.1.4.5: Advanced NPCManager through 1.0.0 and 1.1.0 for scoped history, handouts, Arc curation, hierarchical clearing, date-managed Sessions, report writing, retention, deduplication, and help.
     //   v0.1.4.5: Explicit Session names persisted across dates; revival annotations no longer depended on marker removal; bounded audit details were restored.

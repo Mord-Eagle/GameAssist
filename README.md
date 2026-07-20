@@ -1,9 +1,9 @@
 # GameAssist – Modular API Framework for Roll20
 
-**Version 0.1.5.0 development line** | © 2025-2026 Mord Eagle · MIT License<br>
+**Version 0.1.5.1 development line** | © 2025-2026 Mord Eagle · MIT License<br>
 **Lead Dev:** [@Mord-Eagle](https://github.com/Mord-Eagle)
 
-> **Release posture:** `v0.1.4.7` remains the stable campaign release while `v0.1.5.0` is completed. MarkerService, ConditionAssist, and TokenAssist have completed their focused checkpoints; integrated upgrade, lifecycle, and complete Roll20 sandbox acceptance remain before publication.
+GameAssist v0.1.5.0 completed its integrated MarkerService, ConditionAssist, TokenAssist, upgrade, and Roll20 acceptance work. The v0.1.5.1 development line adds one DM-selected table timezone for readable dates, timestamps, and NPC Session rollover.
 
 ---
 
@@ -21,7 +21,8 @@ GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a
 | Quick Install | 📥 Install the complete script → 📜 add the CritFumble tables if used → 🔄 reload → 🩺 run the health checks → 🎲 test the enabled features with disposable tokens. |
 | Flagship Player Commands | `!condition <name>`, `!cond-<condition>`, `!concentration`, `!cc`, `!critfumble-<type>` when the GM permits the relevant player action. |
 | Flagship GM Commands | `!token-assist help`, `!token-assist --help`, `!condition`, `!condition status`, `!condition announce`, `!c-a`, `!cond-!`, `!condition help`, `!critfumble`, `!critfumble help`, `!critfumble menu`, `!critfail`, `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report --help`, `!npc-death-buckets`, `!NPC-WR`, `!npc-death-audit`, `!npc-death-repair`, `!npc-death-arc`, `!ga-conc-status`, `!ga-config ui`. |
-| Admin Controls | `!ga-config list|get|set|modules|cleanup|ui`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-metrics`, and `!ga-debug`. |
+| Admin Controls | `!ga-config list|get|set|modules|cleanup|ui|timezone`, `!ga-timezone`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-metrics`, and `!ga-debug`. |
+| Table Time | `!ga-timezone` chooses a named IANA timezone, follows daylight-saving changes, and controls readable times plus date-managed NPC Sessions without rewriting stored event instants. |
 | Queue Model | Normal commands/events run directly. Only `GameAssist.enqueue(...)` work and module transitions use the serialized queue. |
 | Watchdog Limit | A timeout releases the explicit queue; it **cannot** terminate underlying JavaScript, `sendChat()`, or Roll20 operations. |
 | State Safety | Repairs malformed known module containers while preserving valid config; unexpected branches warn until the GM explicitly runs cleanup. |
@@ -61,6 +62,7 @@ GameAssist’s kernel and bundled modules expose:
 * **Guarded Component Toggles** – `!ga-enable` and `!ga-disable` control feature modules and core services without depending on a Roll20 `off()` API.
 * **Compatibility Audit** – optional, debug-only overlap hints for popular scripts such as TokenMod, ScriptCards, and APILogic.
 * **Dependency Diagnostics** – module dependencies are reported as confirmed, missing, or unverifiable instead of being presented as guaranteed discoveries.
+* **Table Timezone** – the GM can choose a validated city/region timezone for status panels, logs, handouts, history, and date-managed NPC Sessions. Named timezones follow daylight-saving changes; saved event instants remain absolute.
 * **MarkerService** – `GameAssist.MarkerService` resolves built-in and custom markers, supplies artwork metadata when Roll20 exposes it, preserves unrelated and numbered marker state, applies explicit add/remove/toggle operations, and exposes one observation contract. It can be disabled when another Mod needs exclusive control of marker behavior; GameAssist then turns off MarkerService-dependent modules while leaving unrelated modules available.
 * **ConditionAssist** – supplies 2014 SRD condition wording by default, optional 2024 SRD wording, campaign-editable descriptions, case-insensitive `!cond-<condition>` quick references, marker artwork, an accurate selected-token menu, a GM current-page condition/marker status roster, verified marker-toggling announcements in public chat or player whispers, add/remove/toggle commands, guarded player permissions, and marker-change descriptions. Every condition marker operation and observation goes through MarkerService.
 * **TokenAssist** – provides general token controls through `!token-assist` and `!ta`/`!ta-*`, explicit-ID permissions, token-change observers, and MarkerService-backed status operations. Older supported `!token-mod` macros continue temporarily during v0.1.x and are not processed by GameAssist when standalone TokenMod is detected.
@@ -79,10 +81,11 @@ GameAssist’s kernel and bundled modules expose:
 | 📜 **3 · Prepare CritFumble** | If CritFumble will be used, create the seven tables listed in [§11 · Roll-Table Cookbook](#11-roll-table-cookbook). Skip this step when CritFumble is disabled. |
 | 🔄 **4 · Reload** | Save or restart the Mod sandbox and wait for the GameAssist core ready whisper. Module-by-module startup whispers are normally quiet. |
 | 🩺 **5 · Check Health** | Run `!ga-status` and `!ga-config modules`. Confirm the features you enabled are running. |
-| 🎲 **6 · Try the Table Tools** | Test `!token-assist help`, `!condition help`, `!critfumble menu`, `!concentration --status`, and `!npc-hp-selected` for the modules you use. |
-| 🛡️ **7 · Verify Real Changes** | With disposable tokens, test one NPC death/revival and one concentration marker before the first live session. |
+| 🕰️ **6 · Set Table Time** | Open `!ga-timezone`, choose the city/region that governs the campaign clock, and confirm the displayed time and Session date. The sandbox default remains available. |
+| 🎲 **7 · Try the Table Tools** | Test `!token-assist help`, `!condition help`, `!critfumble menu`, `!concentration --status`, and `!npc-hp-selected` for the modules you use. |
+| 🛡️ **8 · Verify Real Changes** | With disposable tokens, test one NPC death/revival and one concentration marker before the first live session. |
 
-This `v0.1.5.0` development line replaces standalone TokenMod and StatusInfo for the token and condition workflows supported by GameAssist. It does not keep a hidden legacy path that sends GameAssist work back to those standalone scripts. Remove both standalone scripts before testing overlapping TokenAssist or ConditionAssist commands.
+The `v0.1.5.x` line replaces standalone TokenMod and StatusInfo for the token and condition workflows supported by GameAssist. It does not keep a hidden legacy path that sends GameAssist work back to those standalone scripts. Remove both standalone scripts before testing overlapping TokenAssist or ConditionAssist commands.
 
 If MarkerService is deliberately disabled, ConditionAssist, TokenAssist, NPCManager, ConcentrationTracker, and DebugTools are also disabled. CritFumble, ConfigUI, and NPCHPRoller remain available. Standalone **TokenMod by The Aaron** and **StatusInfo by Robin Kuiper** can then provide their own token-marker and condition tools, but they do not restore GameAssist death-history, concentration, TokenAssist, or ConditionAssist features.
 
@@ -95,6 +98,7 @@ Run these commands after every update:
 ```roll20chat
 !ga-status
 !ga-config modules
+!ga-timezone
 !ga-config list
 !ga-metrics
 !token-assist help
@@ -233,14 +237,22 @@ Module configuration belongs under `state.GameAssist.<Module>.config`. Runtime c
   "schemaVersion": 1,
   "scope": "configuration-only",
   "generatedAt": "<ISO timestamp>",
-  "version": "0.1.5.0",
+  "version": "0.1.5.1",
   "flags": {},
   "globalConfig": {},
   "modules": {}
 }
 ```
 
-The snapshot excludes runtime caches and metrics. v0.1.5.0 does not import or restore snapshots.
+The snapshot excludes runtime caches and metrics. v0.1.5.1 does not import or restore snapshots.
+
+### 5.6 Table Timezone
+
+Run `!ga-timezone` or `!ga-config timezone` to open the GM-only timezone menu. Choose a common region or enter a standard IANA name such as `America/New_York`, `Europe/London`, or `Australia/Sydney`. GameAssist validates the name before saving it and refuses an unsupported value without replacing the current setting.
+
+The selected timezone controls human-facing GameAssist dates and times, including status panels, logs, configuration handouts, condition and NPC handouts, death/revival history displays, and the date used by automatically named NPC Sessions. Named regions follow daylight-saving changes automatically. `!ga-timezone clear` restores the Roll20 sandbox clock.
+
+GameAssist stores event instants as absolute ISO timestamps. Changing the table timezone changes how those instants are displayed; it does not move or rewrite the underlying events. A date-managed NPC Session updates immediately when the timezone setting crosses a date boundary and continues checking before NPCManager activity. A deliberately named Session remains unchanged until the DM uses **Reset Session Date**.
 
 ---
 
@@ -364,7 +376,7 @@ That boundary keeps the first integrated release testable. Image stacks and defa
 
 On first startup, TokenAssist copies a valid legacy `state.TokenMod.playersCanUse_ids` value into its own configuration. It records the migration and leaves `state.TokenMod` untouched for rollback. It does not expose a global `TokenMod` object; integrations should use `GameAssist.TokenAssist.observeTokenChange(...)` or MarkerService's marker observer.
 
-Existing supported `!token-mod` macros may continue temporarily during the v0.1.x development line, but should be updated to `!token-assist`, `!ta`, or `!ta-*` before v0.2.0. When standalone TokenMod is detected, GameAssist leaves `!token-mod` to that script while TokenAssist commands remain available. Remove standalone TokenMod for normal v0.1.5.0 use because both tools can change the same token properties and markers.
+Existing supported `!token-mod` macros may continue temporarily during the v0.1.x development line, but should be updated to `!token-assist`, `!ta`, or `!ta-*` before v0.2.0. When standalone TokenMod is detected, GameAssist leaves `!token-mod` to that script while TokenAssist commands remain available. Remove standalone TokenMod for normal v0.1.5.1 use because both tools can change the same token properties and markers.
 
 Config keys: `playersCanUseIds`, `warnOnStandalone`, and the protected `configSchemaVersion`.
 
@@ -395,7 +407,7 @@ Config keys: `marker`, `randomize`.
 
 > **Marker service:** NPCManager uses the integrated `GameAssist.MarkerService`; death history remains independent from marker-write success.
 
-> **Module version:** NPCManager `1.2.1` in GameAssist v0.1.5.0. NPCManager `1.0.0` introduced the four-level history model; `1.1.0` added curated Arc management, hierarchical clearing, date rollover, and the report writer; `1.1.1` hardened standalone interoperability and new-token HP initialization; `1.2.0` migrated marker behavior to MarkerService; `1.2.1` adds confirmation-gated marker repair without changing HP or history.
+> **Module version:** NPCManager `1.3.0` in GameAssist v0.1.5.1. NPCManager `1.0.0` introduced the four-level history model; `1.1.0` added curated Arc management, hierarchical clearing, date rollover, and the report writer; `1.1.1` hardened standalone interoperability and new-token HP initialization; `1.2.0` migrated marker behavior to MarkerService; `1.2.1` added confirmation-gated marker repair; `1.3.0` applies the DM-selected timezone to Session dates and history displays without changing stored event instants.
 
 NPCManager watches `change:graphic:bar1_value` for linked NPC characters with `npc=1`.
 
@@ -433,7 +445,7 @@ Commands:
 
 `!npc-death-report` is a history report. It opens with totals, the latest death, most frequent names, recent entries, and buttons for common next steps. Every new death is written to all four active buckets. A clear confirmation offers either the selected bucket alone or that level and its descendants; for example, clearing Section and below clears Section and Session while retaining Chapter and Campaign. Each bucket has its own handout named like `GameAssist Deaths - Session - 2026-07-17`. Revivals are annotated on the matching entry instead of silently deleting the death. Current entries are matched by token ID, so separate tokens with the same name remain separate records.
 
-The default Session name follows the sandbox's UTC date. Before any NPCManager command or tracked NPC HP change, GameAssist checks the date and moves a date-managed Session to the new `YYYY-MM-DD` bucket. No death processed after that check is written into yesterday's Session. If the DM explicitly names the Session, that custom name remains active across date changes; **Reset Session Date** restores automatic date-managed rollover. A DM-configurable timezone is tracked separately because v0.1.5.0 does not yet reinterpret stored timestamps or date boundaries.
+The default Session name follows the active GameAssist table date. Choose the table timezone with `!ga-timezone`; when none is selected, GameAssist uses the Roll20 sandbox clock. Before any NPCManager command or tracked NPC HP change, GameAssist checks the date and moves a date-managed Session to the new `YYYY-MM-DD` bucket. Changing the timezone also refreshes the Session immediately when the named date changes. No death processed after that check is written into yesterday's Session. If the DM explicitly names the Session, that custom name remains active across date changes; **Reset Session Date** restores automatic date-managed rollover.
 
 Arc handouts are curated rosters, not another hierarchy level. A linked creature appears once per Arc by default, so adding selected NPCs and later importing the full Session does not repeat those creatures. The Session import can enrich an existing selected entry with its death record. The management menu can remove one entry, remove all selected tokens, or undo the most recent Arc addition. `--allowDuplicates` is an explicit override for deliberate repetition. Selected-token Arc entries remain general story notes; revival annotations apply only after an entry is linked to Session death history.
 
@@ -503,13 +515,13 @@ I. **Open the Roll20 Mod/API Editor**
 
 II. **Install GameAssist**
 
-1. Paste the complete contents of `GameAssist` v0.1.5.0.
+1. Paste the complete contents of `GameAssist` v0.1.5.1.
 2. Keep the script as one complete file; do not paste only individual MECHSUITS sections into Roll20.
 3. Save the script.
 
 III. **Remove Overlapping Standalone Marker Tools**
 
-GameAssist v0.1.5.0 replaces standalone TokenMod and StatusInfo for the token and condition workflows supported by TokenAssist and ConditionAssist. Remove both standalone scripts before enabling the overlapping GameAssist modules. TokenAssist and standalone TokenMod both recognize `!token-mod`; ConditionAssist and standalone StatusInfo both recognize `!condition` and marker changes.
+GameAssist v0.1.5.1 replaces standalone TokenMod and StatusInfo for the token and condition workflows supported by TokenAssist and ConditionAssist. Remove both standalone scripts before enabling the overlapping GameAssist modules. TokenAssist and standalone TokenMod both recognize `!token-mod`; ConditionAssist and standalone StatusInfo both recognize `!condition` and marker changes.
 
 If standalone TokenMod is accidentally left installed, TokenAssist suspends only its deprecated `!token-mod` alias and warns the GM instead of applying that command twice. The `!token-assist`, `!ta`, and `!ta-*` commands remain available, but this safeguard is diagnostic rather than a supported permanent dual-install arrangement.
 
@@ -538,6 +550,7 @@ V. **Reload and Inspect**
 ```roll20chat
 !ga-status
 !ga-config modules
+!ga-timezone
 ```
 
 Because `QUIET_STARTUP` defaults to `true`, individual module-ready whispers are normally suppressed.
@@ -557,6 +570,7 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 | Scope | Command | Parameters / Flags | Purpose |
 | --- | --- | --- | --- |
 | **Admin** | `!ga-status` | `[--details]` | Show a plain-language system check; `--details` adds session activity, queue, timestamp, and internal event-hook diagnostics. |
+|  | `!ga-timezone` / `!ga-config timezone` | `set <IANA timezone>`, `clear` | Open table-time settings, save a validated named timezone, or restore sandbox-default time. |
 |  | `!ga-metrics` | `[reset]` | Show persisted session totals/history or reset metrics. |
 |  | `!ga-config list` | — | Write a versioned configuration-only snapshot handout. |
 |  | `!ga-config get <ModuleOrService> [key]` | — | Whisper one config value or the component’s full config. |
@@ -1013,7 +1027,7 @@ Select disposable tokens first. The first command opens the guide; the remaining
 
 ## 13 · Performance Benchmarks <a id="13-performance-benchmarks"></a>
 
-> **Historical reference only:** The following numbers were recorded for an earlier v0.1.3-era build and have **not** been revalidated for v0.1.5.0. Roll20 sandbox load, campaign size, browser state, network conditions, token formulas, and other Mods can materially change results. Do not treat this table as a current performance guarantee.
+> **Historical reference only:** The following numbers were recorded for an earlier v0.1.3-era build and have **not** been revalidated for v0.1.5.x. Roll20 sandbox load, campaign size, browser state, network conditions, token formulas, and other Mods can materially change results. Do not treat this table as a current performance guarantee.
 
 | Environment Item | Historical Test Environment |
 | --- | --- |
@@ -1030,7 +1044,7 @@ Select disposable tokens first. The first command opens the guide; the remaining
 | Fresh sandbox | 10 | 355 ms | 350 ms | 18 ms | 330–387 ms |
 | **Combined** | **34** | **298 ms** | **300 ms** | **39 ms** | **253–387 ms** |
 
-### 13.1 Repeatable Benchmarking for v0.1.5.0
+### 13.1 Repeatable Benchmarking for v0.1.5.x
 
 1. Duplicate the campaign or use a test game.
 2. Record token count, active Mods, formulas, and sandbox channel.
@@ -1155,7 +1169,7 @@ Unknown branches are not deleted automatically. Review the warning, then explici
 
 ### 14.8 `!ga-config list` Is Not a Full Backup
 
-The `GameAssist Config` handout contains flags, global config, and module config only. It excludes runtime caches, metrics, and unknown state branches. v0.1.5.0 cannot import the snapshot.
+The `GameAssist Config` handout contains flags, global config, and module config only. It excludes runtime caches, metrics, and unknown state branches. v0.1.5.1 cannot import the snapshot.
 
 Use it for configuration review and upgrade comparison—not as a full restore mechanism.
 
@@ -1272,7 +1286,7 @@ These details help maintainers reproduce the campaign conditions and focus the i
 
 ## 15 · Upgrade Paths <a id="15-upgrade-paths"></a>
 
-### 15.1 Recommended Upgrade: v0.1.4.7 → v0.1.5.0
+### 15.1 Recommended Upgrade: v0.1.4.7 → v0.1.5.1
 
 I. **Freeze the Current Working Script**
 
@@ -1284,7 +1298,7 @@ I. **Freeze the Current Working Script**
 
 II. **Replace the Script**
 
-1. Replace the Roll20 script contents with the complete GameAssist v0.1.5.0 file.
+1. Replace the Roll20 script contents with the complete GameAssist v0.1.5.1 file.
 2. Remove standalone TokenMod and StatusInfo from the campaign's Mod list.
 3. Save/reload the Mod sandbox.
 4. Do not combine partial sections from multiple releases.
@@ -1296,9 +1310,10 @@ III. **Verify Core Health**
 !ga-status --details
 !ga-config modules
 !ga-metrics
+!ga-timezone
 ```
 
-MarkerService should report enabled. ConditionAssist, TokenAssist, NPCManager, and ConcentrationTracker should run with `deps confirmed`. Troubleshooting details should report that standalone TokenMod and StatusInfo were not detected.
+MarkerService should report enabled. ConditionAssist, TokenAssist, NPCManager, and ConcentrationTracker should run with `deps confirmed`. Troubleshooting details should report that standalone TokenMod and StatusInfo were not detected. Choose the campaign's table timezone and confirm it appears in `!ga-status` after a sandbox restart.
 
 IV. **Verify Configuration and Marker State**
 
@@ -1324,7 +1339,7 @@ Use [§4.1 Minimum Smoke Test](#41-minimum-smoke-test), including TokenAssist pr
 
 ### 15.2 Rollback
 
-If v0.1.5.0 fails its smoke test:
+If v0.1.5.1 fails its smoke test:
 
 1. Replace it with your complete previous working script.
 2. Save/reload.
@@ -1410,13 +1425,14 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 
 ### 17.1 Current Status
 
-| Item | Status in v0.1.5.0 | Notes |
+| Item | Status in v0.1.5.1 | Notes |
 | --- | --- | --- |
-| MarkerService | **Implemented; sandbox acceptance pending** | One toggleable service owns GameAssist marker resolution, mutation, preservation, and observation. Disabling it turns off dependent modules without disabling unrelated features. |
-| Bundled marker consumers | **Migrated** | NPCManager 1.2.1, ConcentrationTracker 0.2.0, and DebugTools 0.2.0 no longer require standalone TokenMod. |
-| ConditionAssist 1.0.1 | **Implemented; sandbox acceptance pending** | Condition references with `!condition` and case-insensitive `!cond-<condition>` commands, accurate selected-token recognition, current-page condition/marker status, selectable 2014/2024 SRD wording, campaign edits, marker artwork, verified marker-toggling announcements, validated legacy import, and MarkerService synchronization. |
-| TokenAssist 1.0.1 | **Implemented; sandbox acceptance pending** | General token controls with `!token-assist` and `!ta`/`!ta-*` commands, temporary support for older `!token-mod` macros, MarkerService-backed markers, token-change observation, clear compatibility limits, and duplicate-install protection. |
-| Integrated architecture stabilization | **Required before release** | Upgrade, coexistence, migration, command, marker, and Roll20 sandbox checks tracked through Issues #28 and #29. |
+| MarkerService | **Implemented and accepted** | One toggleable service owns GameAssist marker resolution, mutation, preservation, and observation. Disabling it turns off dependent modules without disabling unrelated features. |
+| Bundled marker consumers | **Migrated** | NPCManager 1.3.0, ConcentrationTracker 0.2.0, and DebugTools 0.2.0 no longer require standalone TokenMod. |
+| ConditionAssist 1.0.1 | **Implemented and accepted** | Condition references with `!condition` and case-insensitive `!cond-<condition>` commands, accurate selected-token recognition, current-page condition/marker status, selectable 2014/2024 SRD wording, campaign edits, marker artwork, verified marker-toggling announcements, validated legacy import, and MarkerService synchronization. |
+| TokenAssist 1.0.1 | **Implemented and accepted** | General token controls with `!token-assist` and `!ta`/`!ta-*` commands, temporary support for older `!token-mod` macros, MarkerService-backed markers, token-change observation, clear compatibility limits, and duplicate-install protection. |
+| Integrated architecture stabilization | **Complete** | Upgrade, migration, lifecycle, command, marker, documentation, and Roll20 sandbox checks passed under Issues #28 and #29. |
+| DM-configurable timezone | **Implemented; focused acceptance passed** | One validated table timezone controls readable timestamps and date-managed NPC Sessions while stored event instants remain absolute. The complete live module suite was not rerun for v0.1.5.1. |
 | Configuration export | **Implemented, partial** | Versioned configuration-only snapshot; no import/restore. |
 | State self-healing | **Implemented, conservative** | Repairs known containers; does not auto-delete unknown branches. |
 | Public queue API | **Implemented, opt-in** | Does not route every event through the queue. |
@@ -1425,7 +1441,7 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 
 ### 17.2 Near-Term Candidate: Compatibility-First Bridge Character Sheet
 
-After the complete `v0.1.5.0` integrated architecture is confirmed stable in Roll20, the recommended character-sheet project is a bridge sheet that:
+With the `v0.1.5.0` integrated architecture accepted in Roll20, the recommended character-sheet project is a bridge sheet that:
 
 * preserves existing GameAssist command behavior,
 * exposes reliable attributes for linked-token modules,
@@ -1469,7 +1485,7 @@ This is a separate project and is not implemented in v0.1.5.0.
    * Additional table examples.
    * Campaign-tested compatibility notes.
 
-### 17.4 Explicit Non-Goals for v0.1.5.0
+### 17.4 Explicit Non-Goals for v0.1.5.x
 
 * No implicit queueing of every command or event.
 * No claim that the watchdog can kill running work.
@@ -1482,7 +1498,16 @@ This is a separate project and is not implemented in v0.1.5.0.
 
 ## 18 · Changelog <a id="18-changelog"></a>
 
-### v0.1.5.0 – Integrated Token and Condition Architecture *(in development)*
+### v0.1.5.1 – DM-Configurable Table Time *(in development)*
+
+* Added the GM-only `!ga-timezone` menu and `!ga-config timezone` entry point with common region buttons, validated custom IANA names, and a sandbox-default option.
+* Added timezone visibility to `!ga-status` and ConfigUI.
+* Applied the selected timezone to human-facing logs, status panels, configuration output, handout update times, concentration records, NPC death/revival history, bucket reports, Arc reports, and date-managed Session names.
+* Advanced NPCManager to `1.3.0` and ConfigUI to `0.2.0`.
+* Preserved absolute ISO event timestamps; changing the timezone changes presentation and future date boundaries without rewriting recorded instants.
+* Added DST, midnight-boundary, reload-persistence, invalid-input, historical-rendering, and custom-Session retention tests.
+
+### v0.1.5.0 – Integrated Token and Condition Architecture
 
 * Added `[GAMEASSIST:CORE:MARKERSERVICE]` and exposed `GameAssist.MarkerService` as a toggleable core service.
 * Centralized built-in/custom marker resolution, exact stored-tag fallback, structured reads, add/remove/toggle/set operations, numbered markers, duplicate handling, and observations.
@@ -1498,7 +1523,7 @@ This is a separate project and is not implemented in v0.1.5.0.
 * Preserved compatible settings from earlier v0.1.5.0 development builds while leaving malformed or unrelated unknown state available for the warning-only auditor.
 * Advanced NPCManager to `1.2.1`, adding a separate preview/confirm marker-repair command while keeping audits read-only; ConcentrationTracker and DebugTools remain at `0.2.0`.
 * Preserved existing module commands, configuration keys, death history, concentration runtime data, and unrelated token markers.
-* The release remains open until integrated-architecture stabilization and final sandbox acceptance are complete under Issues #28 and #29.
+* Completed integrated-architecture stabilization, upgrade verification, documentation review, artifact verification, and final Roll20 sandbox acceptance under Issues #28 and #29.
 
 ### v0.1.4.7 – Standalone TokenMod and StatusInfo Interoperability
 
