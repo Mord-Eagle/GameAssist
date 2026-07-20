@@ -1432,7 +1432,7 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 | ConditionAssist 1.0.1 | **Implemented and accepted** | Condition references with `!condition` and case-insensitive `!cond-<condition>` commands, accurate selected-token recognition, current-page condition/marker status, selectable 2014/2024 SRD wording, campaign edits, marker artwork, verified marker-toggling announcements, validated legacy import, and MarkerService synchronization. |
 | TokenAssist 1.0.1 | **Implemented and accepted** | General token controls with `!token-assist` and `!ta`/`!ta-*` commands, temporary support for older `!token-mod` macros, MarkerService-backed markers, token-change observation, clear compatibility limits, and duplicate-install protection. |
 | Integrated architecture stabilization | **Complete** | Upgrade, migration, lifecycle, command, marker, documentation, and Roll20 sandbox checks passed under Issues #28 and #29. |
-| DM-configurable timezone | **Implemented; v0.1.5.1 smoke confirmation pending** | One validated table timezone controls readable timestamps and date-managed NPC Sessions while stored event instants remain absolute. |
+| DM-configurable timezone | **Implemented; focused acceptance passed** | One validated table timezone controls readable timestamps and date-managed NPC Sessions while stored event instants remain absolute. The complete live module suite was not rerun for v0.1.5.1. |
 | Configuration export | **Implemented, partial** | Versioned configuration-only snapshot; no import/restore. |
 | State self-healing | **Implemented, conservative** | Repairs known containers; does not auto-delete unknown branches. |
 | Public queue API | **Implemented, opt-in** | Does not route every event through the queue. |

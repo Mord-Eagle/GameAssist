@@ -203,6 +203,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         timestamps: Object.freeze({
             maxFutureMs: 1000 * 60 * 60 * 24 * 7,
             maxTimeZoneLength: 100,
+            formatterCacheLimit: 32,
             locale: 'en-US',
             commonTimeZones: Object.freeze([
                 Object.freeze({ label: 'US Eastern', value: 'America/New_York' }),
@@ -243,7 +244,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.1): Added bounded IANA timezone input, a stable display locale, and common GM menu choices; rollback: remove timestamps timezone fields and restore sandbox-only formatting.
+    // Changed (v0.1.5.1): Added bounded IANA timezone input, a bounded formatter cache, a stable display locale, and common GM menu choices; rollback: remove timestamps timezone fields and restore sandbox-only formatting.
     // Decision log:
     //   CHOICE: Offer common IANA zones plus validated custom input - ALT: fixed numeric offsets; REJECTED: fixed offsets do not follow daylight-saving changes.
     //   CHOICE: Keep NPC initialization and snapshot knobs centralized while removing the unused external marker delay - ALT: retain the dead setting; REJECTED: implied behavior no caller performs.
@@ -305,6 +306,28 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         return new Date(now()).toISOString();
     }
 
+    const dateTimeFormatterCache = new Map();
+
+    /**
+     * getDateTimeFormatter - Reuse expensive Intl formatters without allowing
+     * arbitrary custom timezone input to grow sandbox memory indefinitely.
+     */
+    function getDateTimeFormatter(key, options) {
+        if (dateTimeFormatterCache.has(key)) {
+            const formatter = dateTimeFormatterCache.get(key);
+            dateTimeFormatterCache.delete(key);
+            dateTimeFormatterCache.set(key, formatter);
+            return formatter;
+        }
+
+        const formatter = new Intl.DateTimeFormat(POLICY.timestamps.locale, options);
+        dateTimeFormatterCache.set(key, formatter);
+        while (dateTimeFormatterCache.size > POLICY.timestamps.formatterCacheLimit) {
+            dateTimeFormatterCache.delete(dateTimeFormatterCache.keys().next().value);
+        }
+        return formatter;
+    }
+
     function validateTimeZone(raw) {
         if (raw === null || raw === undefined || String(raw).trim() === '') {
             return { ok: true, value: null, requested: null, message: null };
@@ -322,7 +345,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         try {
-            const formatter = new Intl.DateTimeFormat(POLICY.timestamps.locale, { timeZone: requested });
+            const formatter = getDateTimeFormatter(
+                `validation|${POLICY.timestamps.locale}|${requested}`,
+                { timeZone: requested }
+            );
             if (typeof formatter.formatToParts !== 'function') {
                 return { ok: false, value: null, requested, message: 'This Roll20 sandbox cannot format named timezones; GameAssist will continue using sandbox time.' };
             }
@@ -375,7 +401,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             };
             if (hour12) options.hour12 = true;
             else options.hourCycle = 'h23';
-            const formatter = new Intl.DateTimeFormat(POLICY.timestamps.locale, options);
+            const formatter = getDateTimeFormatter(
+                `parts|${POLICY.timestamps.locale}|${timeZone}|${hour12 ? 'h12' : 'h23'}`,
+                options
+            );
             const parts = {};
             formatter.formatToParts(date).forEach(part => {
                 if (part.type !== 'literal') parts[part.type] = part.value;
@@ -820,12 +849,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
     // --- Notes & Comments ---
     // NOTE: State auditor warns about unexpected branches; no automatic deletion occurs.
-    // Changed (v0.1.5.1): Added validated IANA timezone resolution, DST-aware human formatting, date-key generation, and legacy-display fallback while preserving stored absolute timestamps.
+    // Changed (v0.1.5.1): Added validated IANA timezone resolution, bounded formatter reuse, DST-aware human formatting, date-key generation, and legacy-display fallback while preserving stored absolute timestamps.
     // Decision log:
     //   CHOICE: Keep standalone detection as diagnostics only - ALT: use it for marker dependency gating; REJECTED: MarkerService owns GameAssist marker behavior.
     //   CHOICE: Unknown branches remain warning-only; explicit cleanup is required before deletion.
     //   CHOICE: monotonic() falls back to Date.now() in Roll20 - ALT: assume performance.now; REJECTED: sandbox portability.
     //   CHOICE: Validate formatToParts and normalize an h24 midnight result - ALT: accept partial Intl support; REJECTED: a saved setting must not produce an invalid clock or one-day offset.
+    //   CHOICE: Reuse formatters through a bounded LRU cache - ALT: construct on every log/UI render; REJECTED: repeated Intl setup adds avoidable Roll20 sandbox overhead.
     // Prior notes:
     //   v0.1.5.0: Moved all marker identity and mutation behavior into CORE:MARKERSERVICE; added exact known-state migration from the unreleased ConditionService/TokenService names to ConditionAssist/TokenAssist; APP utilities retain general helpers and public-contract evidence used for standalone collision diagnostics.
     //   v0.1.4.7: Detected TokenMod/StatusInfo through public contracts and dispatched verified TokenMod --api-as marker requests.

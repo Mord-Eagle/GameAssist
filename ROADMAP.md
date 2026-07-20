@@ -47,7 +47,7 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | Integrated architecture stabilization | Complete | [#28](https://github.com/Mord-Eagle/GameAssist/issues/28) | The complete clean-install, upgrade, lifecycle, condition-status, death-repair, and module smoke tracks passed in Roll20. |
 | v0.1.5.0 release gate | Complete | [#29](https://github.com/Mord-Eagle/GameAssist/issues/29) | Attribution, documentation, metadata, artifact identity, automated checks, review, and full Roll20 acceptance are complete. |
 | Marker-registry lookup verification | Complete | [#32](https://github.com/Mord-Eagle/GameAssist/issues/32) | MarkerService prefers documented `token_markers`, falls back to `_token_markers`, and keeps built-ins and exact stored tags independent of registry parsing. |
-| DM-configurable timezone | Sandbox verification | [#35](https://github.com/Mord-Eagle/GameAssist/issues/35) | v0.1.5.1 adds one validated DM timezone for human-facing timestamps and date-based Session rollover while preserving absolute stored timestamps. Automated boundary and persistence checks pass; focused Roll20 confirmation remains. |
+| DM-configurable timezone | Complete | [#35](https://github.com/Mord-Eagle/GameAssist/issues/35) | v0.1.5.1 adds one validated DM timezone for human-facing timestamps and date-based Session rollover while preserving absolute stored timestamps. The focused Roll20 timezone workflow passed; the complete live module suite was not rerun. |
 
 ---
 
@@ -264,11 +264,13 @@ This focused release gives the DM one campaign timezone for readable GameAssist 
 - [x] Preserve absolute ISO event timestamps and dynamically reformat historical entries for the active timezone.
 - [x] Add deterministic winter/summer DST, UTC-midnight crossover, invalid-input, malformed-saved-value fallback, reload-persistence, history-preservation, and Session-rollover checks.
 - [x] Update README, changelog, smoke tests, manifest, MECHSUITS metadata, and versioned artifacts.
-- [ ] Complete the focused Roll20 v0.1.5.1 timezone smoke test.
+- [x] Complete the focused Roll20 v0.1.5.1 timezone smoke test.
 
 ### Completion Gate
 
 Issue #35 is complete when Roll20 accepts a real named timezone, shows the correct current table time and date, retains the setting after a sandbox restart, refuses an invalid name without losing the valid setting, and moves a date-managed NPC Session across the Kiritimati/Honolulu date boundary without changing history.
+
+**Result:** Passed on 2026-07-19 through the focused timezone smoke test. The complete live v0.1.5.1 module suite was not rerun.
 
 ---
 

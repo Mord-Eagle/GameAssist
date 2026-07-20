@@ -10,7 +10,7 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 | Revision | Status | Role |
 | --- | --- | --- |
-| **v0.1.5.1** | In development; automated verification complete, Roll20 timezone smoke confirmation pending | DM-configurable table time and NPC Session-date alignment |
+| **v0.1.5.1** | Focused Roll20 timezone acceptance passed; complete manual module smoke not rerun | DM-configurable table time and NPC Session-date alignment |
 | **v0.1.5.0** | Accepted release candidate; Issues #25-#29 and #32 complete | Integrated marker, token, and condition architecture |
 | **v0.1.4.7** | Stable release; automated and Roll20 sandbox verification passed | Standalone TokenMod and StatusInfo interoperability |
 | **v0.1.4.6** | Merged release | DM-readable system health and troubleshooting status |
@@ -2229,6 +2229,7 @@ The release implements [Issue #35](https://github.com/Mord-Eagle/GameAssist/issu
   - `dateKey(...)`.
 - Named regions use the runtime's IANA rules and therefore follow daylight-saving changes. Fixed numeric offsets were rejected because they become inaccurate when a region changes between standard and daylight time.
 - Forced 24-hour offset calculations to use the `h23` hour cycle so midnight cannot be represented as hour `24` and produce a false one-day offset.
+- Reused timezone validation and display formatters through a 32-entry LRU cache. Repeated log and menu rendering no longer reconstructs `Intl.DateTimeFormat`, while arbitrary custom timezone input cannot grow sandbox memory without a bound.
 
 ### Changed – Human-facing timestamps
 
@@ -2279,10 +2280,10 @@ The release implements [Issue #35](https://github.com/Mord-Eagle/GameAssist/issu
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `06627AE1519A4A02D97C1D5237D66F12B5025C080CABFFA21740EDCF0F7674D7` |
-| `GameAssist.js` | `06627AE1519A4A02D97C1D5237D66F12B5025C080CABFFA21740EDCF0F7674D7` |
-| `GameAssist-v0.1.5.1` | `06627AE1519A4A02D97C1D5237D66F12B5025C080CABFFA21740EDCF0F7674D7` |
-| `previousversions/GameAssist v0.1.5.0` | `DEDDDBD189ADBDD8ACA75E664100B71BDB51050E7D3A5CE8EC4CA62C559B5C72` |
+| `GameAssist` | `561B1FC1311F2F251F215BF7B85FB96AF6A6CCC19423732AFA275D164887B24C` |
+| `GameAssist.js` | `561B1FC1311F2F251F215BF7B85FB96AF6A6CCC19423732AFA275D164887B24C` |
+| `GameAssist-v0.1.5.1` | `561B1FC1311F2F251F215BF7B85FB96AF6A6CCC19423732AFA275D164887B24C` |
+| `previousversions/GameAssist v0.1.5.0` | `254087C9F87E2539F1A6CEBFF5FFAE25D4AA31E65A2DA76D5FACE69D7778CBE7` |
 
 The development source, One-Click publication mirror, and v0.1.5.1 Roll20 test artifact are byte-identical. The preserved v0.1.5.0 previous-version artifact matches the accepted v0.1.5.0 hash.
 
@@ -2295,6 +2296,7 @@ The development source, One-Click publication mirror, and v0.1.5.1 Roll20 test a
 | IANA validation and persisted command setting | Passed |
 | Winter Eastern offset (`-0500`) | Passed |
 | Summer Eastern offset (`-0400`) | Passed |
+| Bounded `Intl.DateTimeFormat` reuse | Passed |
 | UTC-midnight to prior local-date crossover | Passed |
 | Immediate date-managed Session alignment | Passed |
 | Next-activity local-midnight rollover | Passed |
@@ -2304,10 +2306,10 @@ The development source, One-Click publication mirror, and v0.1.5.1 Roll20 test a
 | Sandbox reload persistence | Passed |
 | Historical report reformatting after timezone change | Passed |
 | Absolute ISO timestamp preservation | Passed |
-| Focused Issue #35 harness | Passed (22/22) |
+| Focused Issue #35 harness | Passed (23/23) |
 | v0.1.5.0 upgrade/lifecycle regression | Passed (46/46) |
 
 ### Roll20 acceptance
 
-The focused Roll20 v0.1.5.1 timezone smoke test remains open. Its required checks are: current named-zone time/date, status visibility, sandbox-restart persistence, invalid-name refusal, date-managed Session crossover between `Pacific/Kiritimati` and `Pacific/Honolulu`, custom Session retention, and unchanged history.
+The focused Roll20 v0.1.5.1 timezone smoke test passed on 2026-07-19. The owner tested the timezone workflow rather than rerunning the complete manual v0.1.5.1 suite; non-timezone confidence remains grounded in the automated regression results above. This release record therefore claims focused timezone acceptance, not a second full live regression of every module.
 
