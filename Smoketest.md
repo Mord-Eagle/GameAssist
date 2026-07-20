@@ -442,7 +442,793 @@ For the independence check, remove or disable standalone TokenMod and standalone
 Use a fresh linked NPC with known positive HP so older death history cannot be mistaken for the new result. If auto-hide is enabled, temporarily turn it off:
 
 ```roll20chat
-!ga-config set NPCManager au…8131 tokens truncated… positive HP but leave its death marker on, creating an HP/marker mismatch.
+!ga-config set NPCManager autoHide=false
+```
+
+Then add an unrelated numbered marker to both test tokens.
+
+#### M1. Startup Without TokenMod
+
+Run:
+
+```roll20chat
+!ga-status --details
+!ga-config modules
+```
+
+Pass when:
+
+- MarkerService v1.0.1 is enabled;
+- ConditionAssist, TokenAssist, NPCManager, and ConcentrationTracker are running;
+- all four show confirmed MarkerService dependencies;
+- none is skipped because TokenMod or StatusInfo is absent.
+
+#### M2. Numbered Death Marker
+
+Configure a numbered built-in marker:
+
+```roll20chat
+!ga-config set NPCManager deadMarker=dead@2
+```
+
+Set the linked test NPC from positive HP to `0`.
+
+Pass when:
+
+- the dead marker appears with number 2;
+- the unrelated numbered marker is unchanged;
+- the death is recorded once.
+
+Raise HP above `0`.
+
+Pass when:
+
+- the dead marker is removed;
+- the unrelated numbered marker is unchanged;
+- the existing death record is annotated as revived rather than duplicated.
+
+#### M3. Numbered Concentration Marker
+
+Select the linked `GA Test PC` token. Temporarily set that character's `constitution_save_bonus` to a value large enough to guarantee success, such as `100`, using the character sheet or its Attributes & Abilities tab. Then run each command after the previous result appears:
+
+```roll20chat
+!ga-config set ConcentrationTracker marker=stopwatch@3
+!concentration --damage 1 --mode normal
+!concentration --status
+```
+
+Pass when:
+
+- the stopwatch marker appears with number 3;
+- the unrelated numbered marker remains unchanged;
+- `--status` lists the test token.
+
+Clear it:
+
+```roll20chat
+!concentration --off
+!concentration --status
+```
+
+Pass when only the configured concentration marker is removed and the status command reports no concentrating test token.
+
+Restore the test character's normal Constitution save bonus afterward.
+
+#### M4. Custom Display Name and Exact Stored Tag
+
+An ordinary campaign that never uses custom token markers may skip this check. The Issue #25 release acceptance pass must create a disposable custom marker and must not skip it.
+
+Choose a disposable custom marker with a distinctive display name. Select a disposable token, then use a DebugTools dry run to reveal the exact stored tag without changing the token:
+
+```roll20chat
+!ga-enable DebugTools
+!ga-debug marker --marker "Custom Marker Name" --state on
+```
+
+The preview should say it would add a value in the form `Name::id`. Record that exact value. Do not include `--apply`.
+
+```roll20chat
+!ga-config set NPCManager deadMarker=<custom display name>
+```
+
+Perform one death/revival cycle. Then repeat with:
+
+```roll20chat
+!ga-config set NPCManager deadMarker=<Name::id>
+```
+
+Pass when both configurations target the intended custom marker and no similarly named marker changes.
+
+This also confirms that GameAssist can read the campaign's custom-marker library. If the exact stored tag works but the display name does not, record that distinction when reporting the problem; it identifies a marker-library lookup issue rather than a general marker failure.
+
+Optional numbered exact-tag check:
+
+```roll20chat
+!ga-config set NPCManager deadMarker=<Name::id>@3
+```
+
+Pass when the custom marker appears with number 3.
+
+Return DebugTools to its default state after recording the tag:
+
+```roll20chat
+!ga-disable DebugTools
+```
+
+#### M5. Individual Module Teardown and Re-enable
+
+Apply the configured death and concentration markers to disposable tokens. Then run each command separately:
+
+```roll20chat
+!ga-disable NPCManager
+!ga-enable NPCManager
+!ga-disable ConcentrationTracker
+!ga-enable ConcentrationTracker
+```
+
+Pass when:
+
+- teardown removes only each module's configured marker from current-page tokens;
+- unrelated markers and numbers remain unchanged;
+- both modules return to running;
+- NPC death history, buckets, and Arcs remain present.
+
+#### M6. MarkerService Opt-Out and Dependency Cascade
+
+Run each command after the previous response appears:
+
+```roll20chat
+!ga-disable MarkerService
+!ga-config modules
+!ga-enable TokenAssist
+```
+
+Pass when:
+
+- the command controls MarkerService rather than reporting `No such module` or `No such service`;
+- ConditionAssist, TokenAssist, NPCManager, ConcentrationTracker, and DebugTools are configured off and not running;
+- MarkerService is configured off and not running;
+- CritFumble, ConfigUI, and NPCHPRoller keep their prior configured/running state;
+- the disable notice names the affected modules and explains that unrelated GameAssist modules remain available;
+- the notice accurately describes standalone TokenMod and StatusInfo as separate alternatives rather than as a hidden GameAssist fallback;
+- the attempt to enable TokenAssist is refused with guidance to enable MarkerService first.
+
+Now restore the service and enabled dependents:
+
+```roll20chat
+!ga-enable MarkerService
+!ga-enable ConditionAssist
+!ga-enable TokenAssist
+!ga-enable NPCManager
+!ga-enable ConcentrationTracker
+!ga-config modules
+```
+
+Pass when MarkerService starts first, all four ordinary dependents can then start, and DebugTools remains disabled unless the GM explicitly enables it.
+
+#### M7. Reload and Persistence
+
+Disable MarkerService again, save or restart the Mod sandbox, then run:
+
+```roll20chat
+!ga-status --details
+!ga-config modules
+```
+
+Pass when MarkerService and its dependents remain configured off after reload while CritFumble, ConfigUI, and NPCHPRoller keep their previous settings.
+
+Restore normal marker operation, restart once more, and verify retained campaign data:
+
+```roll20chat
+!ga-enable MarkerService
+!ga-enable ConditionAssist
+!ga-enable TokenAssist
+!ga-enable NPCManager
+!ga-enable ConcentrationTracker
+!npc-death-report
+!concentration --status
+```
+
+Pass when the service and dependents run again, ConditionAssist definitions, TokenAssist settings, and existing NPC history are retained, and configuration remains consistent.
+
+#### M8. Restore Campaign Settings
+
+Restore the original `deadMarker`, `autoHide`, concentration `marker`, intended ConditionAssist permissions, and intended TokenAssist `players-can-ids` setting. Leave MarkerService and only the GameAssist modules the campaign uses in their intended final enabled state.
+
+### MarkerService Failure Evidence
+
+If any MarkerService check fails, record:
+
+- configured marker value;
+- exact token `statusmarkers` value before and after;
+- token name and ID;
+- whether the token is linked and on the Objects layer;
+- which other Mods could change token markers during the test;
+- `!ga-status --details` and `!ga-config modules` output;
+- exact GameAssist warning or API Console exception.
+
+---
+
+## 3. TurnTrackerService
+
+**What this proves:** GameAssist can read, preserve, observe, and safely hand off Roll20's native Turn Tracker through one toggleable core service.
+
+**Why test it:** InitiativeAssist must not erase custom counters, unknown fields, duplicate turns, text priorities, or rows created by another tool.
+
+**Skip when:** Never skip for v0.1.6.0 release acceptance. A campaign that will not use InitiativeAssist may limit this to the basic lifecycle check after release.
+
+### Basic Check
+
+1. Open Roll20's Turn Tracker on a disposable encounter page.
+2. Add one character turn and one custom item named `Round Test`.
+3. Record their order and values.
+4. Run each command after the prior response appears:
+
+```roll20chat
+!ga-config modules
+!ga-disable TurnTrackerService
+!ga-config modules
+!ga-enable TurnTrackerService
+!ga-config modules
+```
+
+Pass when disabling the service also disables InitiativeAssist, neither tracker row changes or disappears, and the service can be re-enabled without rebuilding the tracker.
+
+### Expanded TurnTrackerService Checks
+
+- [ ] An empty tracker produces a readable InitiativeAssist status after the module is enabled.
+- [ ] A custom row retains its name, value, position, and any Roll20 formula after `!Init-RR`.
+- [ ] A token deleted after entering initiative is reported as stale and remains untouched.
+- [ ] A tracker row for a token on another page is reported and remains untouched.
+- [ ] Disabling TurnTrackerService never clears or closes Roll20's native tracker.
+- [ ] Re-enabling the service does not duplicate tracker observations or chat output.
+
+The mixed-row write checks are performed through InitiativeAssist below because TurnTrackerService intentionally has no separate GM mutation command.
+
+---
+
+## 4. ConfigUI
+
+**What this proves:** The GM configuration interface opens, renders module controls, and routes button commands once.
+
+**Why test it:** Most DMs will manage GameAssist through this interface rather than raw configuration commands.
+
+**Skip when:** The campaign intentionally uses command-only configuration.
+
+### Basic Check
+
+Run either command:
+
+```roll20chat
+!ga-config ui
+!ga-config-ui
+```
+
+Pass when one Config UI panel appears for each command, module cards show their current states, and **Refresh** redraws the panel once.
+
+### Expanded ConfigUI Checks
+
+- [ ] Boolean settings appear as understandable buttons.
+- [ ] Module enable/disable buttons change the intended module.
+- [ ] Pagination works when more settings exist than fit on one page.
+- [ ] `!ga-config ui` and `!ga-config-ui` do not double-trigger.
+- [ ] A non-GM cannot use GM-only configuration actions.
+
+---
+
+## 5. CritFumble
+
+**What this proves:** CritFumble help, guided menus, direct table commands, and Natural 1 detection respond.
+
+**Why test it:** Help can work even when rollable tables or attack-template detection are misconfigured.
+
+**Skip when:** CritFumble is disabled and will not be used.
+
+### Basic Check
+
+Run:
+
+```roll20chat
+!critfumble help
+!critfumble menu
+!critfail
+```
+
+Pass when:
+
+- help opens the quick reference and shows **Open Natural 1 Menu**;
+- the menu shows numbered steps, attack types, direct rolls, and confirmation actions;
+- `!critfail` opens the GM player picker or explains that no active players are available.
+
+This basic check does not require rollable tables.
+
+### Expanded CritFumble Checks
+
+#### Direct Table Rolls
+
+Run only after creating all seven tables:
+
+```roll20chat
+!critfumble-melee
+!critfumble-ranged
+!critfumble-thrown
+!critfumble-spell
+!critfumble-natural
+!confirm-crit-martial
+!confirm-crit-magic
+```
+
+Pass when each command rolls the matching table.
+
+#### Natural 1 Detection
+
+Roll a real attack using a supported Roll20 template and a natural 1 on its d20.
+
+Supported templates include:
+
+```text
+atk
+atkdmg
+npcatk
+npcfullatk
+npcaction
+spell
+simple
+dmg
+default
+```
+
+Pass when the attacker receives the fumble workflow and the GM receives the expected notification.
+
+If the automatic test fails but direct commands work, record the roll template and inline-roll structure.
+
+---
+
+## 6. ConditionAssist
+
+**What this proves:** ConditionAssist opens readable guidance, manages selected-token conditions, and stays synchronized with MarkerService without standalone StatusInfo.
+
+**Why test it:** A condition can fail because of permissions, a malformed definition, an unrecognized custom marker, duplicate StatusInfo installation, or a disabled MarkerService.
+
+**Skip when:** ConditionAssist is deliberately disabled and no condition descriptions or controls will be used. Do not skip this section for Issue #26 acceptance.
+
+### Basic Check
+
+Remove or disable standalone StatusInfo, select one disposable token, and give that token one unrelated numbered marker such as `blue@2`. Then run:
+
+```roll20chat
+!ga-config modules
+!condition help
+!condition
+!CoNd-PrOnE
+!condition add prone poisoned stunned
+!condition
+!condition status
+!condition prone
+!condition remove prone poisoned stunned
+```
+
+Pass when:
+
+- ConditionAssist is configured on, running, and reports `deps confirmed`;
+- help gives a quick start and an **Open Condition Menu** button;
+- mixed-case `!CoNd-PrOnE` shows the configured Prone wording without changing any marker;
+- before the add, the menu names the selected token and accurately reports that no configured condition marker is active;
+- after the add, reopening the menu lists Prone, Poisoned, and Stunned rather than `No tracked conditions`;
+- `!condition status` lists that token on the current player page, puts Prone, Poisoned, and Stunned under configured conditions, and lists the numbered blue marker separately as **Blue (2)**;
+- removing the three conditions clears only their configured markers;
+- the unrelated `blue@2` marker remains unchanged throughout.
+
+### Expanded ConditionAssist Checks
+
+#### Current-Page Condition Status
+
+Place configured condition markers on one linked PC and one linked NPC, plus an unrelated or non-condition marker such as `dead`, `stopwatch`, or a numbered color. Run:
+
+```roll20chat
+!condition status
+!condition --status
+```
+
+Pass when both forms open the same GM-only roster, each marked linked token appears once, configured condition names are shown under **Conditions**, and every other active marker is shown separately under **Other markers**. The complete result must also appear in the updated `GameAssist Condition Status` handout when the chat summary is bounded. Unmarked tokens should be omitted. Marked unlinked scenery or labels may be counted as ignored but should not be presented as characters. A non-GM account must not receive the page-wide roster.
+
+#### Rules Wording Profiles
+
+Open `!condition config`. The fresh-install wording source should be **2014 SRD**. Confirm that **Manage Conditions** includes **Exhaustion** and does not list Inspiration as a condition. Then choose **Use 2024 SRD**, confirm the prompt, and run:
+
+```roll20chat
+!cond-grappled
+!cond-incapacitated
+!cond-exhaustion
+```
+
+Pass when the descriptions use the active 2024 mechanics: Grappled includes attacks against other targets and dragging costs, Incapacitated breaks Concentration and prevents a Bonus Action, and Exhaustion reduces D20 Tests and speed by level. Existing marker choices and campaign-added conditions must remain unchanged.
+
+Return to **Manage Conditions**, add or edit a disposable campaign condition such as **Moon-Touched**, and run `!COND-MOON-TOUCHED`. Pass when the custom wording appears despite mixed capitalization and Settings identifies an edited official wording set as **Campaign Custom**. Restore the intended 2014 or 2024 profile after the test if the edit was disposable.
+
+#### Marker Artwork
+
+With **Show marker artwork with descriptions** enabled, run `!cond-prone`. Pass when the Prone panel includes Roll20's `back-pain` marker artwork rather than only its identifier.
+
+Create a disposable custom Roll20 marker with an image, assign it to a custom condition, and run that condition's `!cond-<condition>` shortcut. Pass when the registered campaign-marker image appears. Then temporarily use an exact custom tag that Roll20 cannot match back to readable registry artwork. Pass when the condition wording still appears with a readable marker-name fallback rather than failing.
+
+#### Selected-Character Announcements
+
+Select two disposable tokens linked to characters, with at least one character assigned to a non-GM player. Put the condition marker you plan to test on one token and leave it off the other, then run:
+
+```roll20chat
+!condition announce
+!c-a
+!cond-!
+```
+
+Pass when each command, including mixed capitalization such as `!C-A` or `!CoNd-!`, opens the same alphabetical condition-button list for the captured characters. Choose a condition and verify the delivery menu offers:
+
+- **Toggle & Announce**;
+- **Toggle & Whisper**;
+- **Toggle & Post Wording**;
+- **Toggle & Whisper Wording**.
+
+Choosing the condition should not change either token yet. Click **Toggle & Announce** and pass when:
+
+- the token that lacked the condition now displays its configured marker;
+- the token that already had the condition no longer displays that marker;
+- unrelated markers and marker numbers remain unchanged;
+- the public message uses one neutral statement per character in the form **Mira is Prone** or **Orin is no longer Prone**;
+- the message includes **Read Exact Wording** but does not also produce a duplicate condition-description panel.
+
+Run the same final action again and pass when both marker states reverse cleanly. Clicking **Read Exact Wording** from a player account must whisper the exact configured wording to that player even when unrestricted player descriptions are disabled. The button should eventually expire rather than granting permanent access.
+
+The player-whisper choices should toggle the same captured markers once and go only to non-GM controllers of the linked characters. Characters without a player controller should still receive the marker change when at least one selected character has a valid recipient, while the GM is told which characters received no player whisper. If none of the selected characters has a non-GM controller, the whisper choice should refuse before changing any marker. Change the current token selection after opening the first menu and confirm later buttons still use the originally captured characters.
+
+If a saved or migrated campaign definition is named exactly **Concentration**, reload the sandbox and reopen the condition menu. Pass when its display name is **Concentrating** while its marker, description, and compatible `concentration` key remain unchanged.
+
+#### Permissions
+
+Open `!condition config`. Test **Players may view descriptions** and **Players may change token conditions** separately from a non-GM account. Pass when each permission affects only its named behavior and denied actions receive a clear explanation.
+
+#### Custom and Numbered Marker
+
+Create a disposable custom Roll20 marker named `Warded`. In **Manage Conditions**, add a Warded definition and configure either its display name, exact stored `Warded::id` tag, or a numbered value such as `Warded::id@3`. Add and remove it from the selected token.
+
+Pass when the exact custom marker changes, its number is retained, and unrelated markers remain unchanged.
+
+Assign the same disposable marker to two definitions and return to **Manage Conditions**. Pass when the menu warns which conditions share the marker. Restore separate marker assignments before continuing.
+
+#### Marker-Change Description
+
+With **Show descriptions when markers are added** enabled, add a configured condition marker directly from Roll20's token marker menu.
+
+Pass when one matching ConditionAssist description appears. Removing the marker should not re-add it.
+
+#### Validated Export and Import
+
+Run:
+
+```roll20chat
+!condition config export
+!ga-config set ConditionAssist conditions={}
+```
+
+Pass when the export contains `gameassist-condition-config`, schema version `2`, and the active `rulesProfile`, and the generic setter refuses to replace the protected condition map. Import only the unchanged exported JSON or a disposable, reviewed copy. Pass when the entire payload is validated before any setting changes.
+
+#### Legacy StatusInfo Migration
+
+Run this only when upgrading a campaign that previously used StatusInfo. Before removing standalone StatusInfo, record one customized condition and permission setting. Install the development GameAssist version, remove StatusInfo, reload, and open `!condition config` plus **Manage Conditions**.
+
+Pass when valid settings and definitions were copied, the migration is reported once, and rollback remains possible because GameAssist did not delete the legacy `state.STATUSINFO` branch.
+
+#### MarkerService Restart
+
+Run:
+
+```roll20chat
+!ga-disable MarkerService
+!ga-config modules
+!ga-enable markerservice
+!ga-enable conditionassist
+```
+
+Pass when MarkerService shutdown also turns off ConditionAssist, the unrelated modules remain available, both components re-enable case-insensitively, and a later direct marker addition still produces its condition description.
+
+#### Duplicate Installation Warning
+
+Temporarily load standalone StatusInfo only in a disposable test campaign and restart the sandbox. Pass when GameAssist warns that both tools respond to `!condition` and marker changes. Remove standalone StatusInfo before continuing.
+
+---
+
+## 7. TokenAssist
+
+**What this proves:** TokenAssist can safely control selected tokens through `!token-assist` and `!ta`/`!ta-*`, temporarily accept supported legacy macros during migration, and route every status-marker change through MarkerService.
+
+**Why test it:** General token controls touch many Roll20 properties. A useful acceptance pass must prove that targeting, authorization, relative values, linked bars, movement, reports, and markers change only the intended token data.
+
+**Skip when:** TokenAssist is deliberately disabled and the campaign uses none of its commands. Do not skip this section for Issue #27 acceptance.
+
+### Basic Check
+
+Remove standalone TokenMod and restart the Mod sandbox. Select only the disposable unlinked token, note its current name and bar 3 value, and add an unrelated numbered blue marker such as `blue@7`. Then run one command at a time:
+
+```roll20chat
+!ga-config modules
+!token-assist help
+!token-assist about
+!ta-flip showname
+!ta-set "name|GA TokenAssist Test" bar3_value|10
+!ta-set bar3_value|+2
+!ta-set statusmarkers|red:3
+!ta-set statusmarkers|-red
+```
+
+Pass when:
+
+- TokenAssist is configured on, running, and reports a confirmed MarkerService dependency;
+- the quick guide and attribution/limits panel both open;
+- the token-name visibility setting flips once;
+- the token is renamed and bar 3 ends at `12`;
+- red appears with number 3 and is then removed;
+- the unrelated `blue@7` marker remains unchanged;
+- no other selected or unselected token changes.
+
+Restore the token's original name, bar 3 value, and name-visibility setting after the check.
+
+### Full Issue #27 Acceptance Test
+
+Use a disposable page and keep standalone TokenMod absent except during the dedicated collision check. Record the initial TokenAssist setting:
+
+```roll20chat
+!ga-config get TokenAssist playersCanUseIds
+```
+
+#### T1. Help, Case, and Configuration
+
+Run:
+
+```roll20chat
+!ToKeN-AsSiSt HeLp
+!TA-HELP
+!ta-help-statusmarkers
+!token-assist config
+!token-mod --help
+```
+
+Pass when the full and short TokenAssist commands open the same readable guide, marker help explains add/remove/toggle/replace behavior, the settings button clearly reports whether player `--ids` targeting is on or off, and the legacy spelling produces a clear deprecation notice that names its v0.2.0 removal deadline.
+
+#### T2. Selected-Token Properties and Reports
+
+Select one disposable token. Record its current name, bar 3 value, aura 1 radius, aura 1 color, aura 1 shape, and name-visibility setting. Then run:
+
+```roll20chat
+!ta-on showname --set "name|GA Test Guardian" bar3_value|20 aura1_radius|5 aura1_color|336699 aura1_options|circle
+!ta-set bar3_value|-5 --report gm|"{name}: bar 3 changed from {bar3_value:before} to {bar3_value}"
+!ta-off showname
+```
+
+Pass when the selected token alone is renamed, its bar 3 value changes from 20 to 15, a visible five-unit circular aura appears in the chosen color, the GM receives an understandable before/after report, and name visibility ends off. Restore the original values afterward.
+
+#### T3. Movement and Order
+
+Place two disposable tokens where movement is easy to see. Select one and run:
+
+```roll20chat
+!ta-move 1g
+!ta-move =90|1u
+!ta-order tofront
+!ta-order toback
+```
+
+Pass when only the selected token moves, each displayed movement trail begins at the position where that command started instead of reconnecting to the token's first or older location, and both front/back order commands visibly affect stacking. Roll20's **Always show token movement** setting may make the new trail visible; it should not change its origin. Return the token to its starting position.
+
+#### T4. Built-In, Numbered, and Custom Markers
+
+Put `blue@7` on the selected token, then run:
+
+```roll20chat
+!token-assist --set statusmarkers|red:3
+!token-assist --set statusmarkers|!red
+!token-assist --set statusmarkers|red
+```
+
+Pass when red is added with 3, toggled off, and added again while `blue@7` remains unchanged.
+
+Create a disposable custom marker, then test its display name and exact stored `Name::id` tag:
+
+```roll20chat
+!token-assist --set "statusmarkers|Custom Marker Name"
+!token-assist --set "statusmarkers|-Custom Marker Name"
+!token-assist --set statusmarkers|Name::id:4
+!token-assist --set statusmarkers|-Name::id
+```
+
+Pass when only the intended custom marker changes and its numbered form displays 4. The literal `Name::id` above must be replaced with the actual stored tag.
+
+Finally, run an invalid replacement while `blue@7` is still present:
+
+```roll20chat
+!token-assist --set "statusmarkers|=Marker That Does Not Exist"
+```
+
+Pass when TokenAssist gives an actionable warning and does **not** clear `blue@7`. Remove the disposable red marker when finished.
+
+#### T5. Player Authorization
+
+Assign a disposable token to a non-GM player. With player `--ids` disabled, have that player select the token and run:
+
+```roll20chat
+!token-assist --flip showname
+```
+
+Pass when the selected-token command works because the player can control that token. Record its token ID, clear the selection, and run:
+
+```roll20chat
+!token-assist --ids TOKEN_ID --flip showname
+```
+
+Pass when TokenAssist refuses explicit-ID targeting without changing the token. The GM can temporarily enable the setting from `!token-assist config`; after enabling it, repeat the explicit-ID command and pass when the controlled token changes once. Restore the original setting and visibility value.
+
+#### T6. Linked Bar Update
+
+Use a disposable linked token and a disposable character attribute. Link token bar 3 to that attribute through Roll20's token settings, record the attribute's current and maximum values, then run:
+
+```roll20chat
+!token-assist --set bar3_value|17 bar3_max|25
+```
+
+Pass when the linked character attribute becomes current `17`, maximum `25`, and the sheet-backed token bar follows it. Restore the original values after the check.
+
+#### T7. Page Filters and Character IDs
+
+Put copies of one disposable character on two pages. From the GM account, run a command using the character ID rather than a token ID, first with `--current-page` and then without it:
+
+```roll20chat
+!token-assist --ignore-selected --ids CHARACTER_ID --current-page --flip showname
+!token-assist --ignore-selected --ids CHARACTER_ID --flip showname
+```
+
+Pass when the first command changes only the copy on the GM's current page and the second reaches all tokens representing that character. Restore both tokens afterward.
+
+#### T8. Legacy Setting Migration
+
+Run this only in an upgrade test campaign that previously used TokenMod. Before installing the development build, record standalone TokenMod's **Players can use --ids** setting. Remove TokenMod, install GameAssist, restart, and run:
+
+```roll20chat
+!ga-config get TokenAssist playersCanUseIds
+```
+
+Pass when the valid legacy boolean is copied once, the old `state.TokenMod` branch remains available for rollback, and later TokenAssist setting changes are not overwritten on reload.
+
+#### T9. MarkerService Lifecycle
+
+Run each command after the prior response appears:
+
+```roll20chat
+!ga-disable MarkerService
+!ga-config modules
+!ga-enable tokenassist
+!ga-enable markerservice
+!ga-enable tokenassist
+!token-assist help
+```
+
+Pass when disabling MarkerService also disables TokenAssist, the premature TokenAssist enable is refused, case-insensitive re-enabling works after MarkerService returns, and help opens once. Unrelated modules should retain their prior settings.
+
+#### T10. Standalone Collision Protection
+
+Use a disposable campaign for this check. Temporarily install standalone TokenMod beside GameAssist and restart. Run:
+
+```roll20chat
+!ga-status --details
+!token-assist about
+!ta-flip showname
+!token-mod --flip showname
+```
+
+Pass when GameAssist warns that standalone TokenMod was detected, `!ta-flip` still changes the selected token once, and the legacy `!token-mod` command is left to standalone TokenMod rather than also being applied by GameAssist. Remove standalone TokenMod and restart before continuing.
+
+#### T11. Explicit Compatibility Limit
+
+Select a disposable token whose name visibility is off, then run:
+
+```roll20chat
+!token-assist --set imgsrc|ignored --on showname
+```
+
+Pass when TokenAssist refuses the unsupported image-side property, explains that this feature is outside TokenAssist 1.0.1, and leaves name visibility unchanged. TokenAssist also does not claim default-token writes, computed or name-resolved attributes, advanced controller-list editing, advanced color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, exact TokenMod report-recipient distinctions, duplicate-index marker editing, conditional marker counts, or TokenMod help-handout rebuilding.
+
+#### T12. Restore Campaign Settings
+
+Restore changed token properties, linked attributes, marker choices, module enablement, and the original `players-can-ids` setting. Leave standalone TokenMod removed for normal TokenAssist use, and replace any remaining legacy `!token-mod` macros before v0.2.0.
+
+### TokenAssist Failure Evidence
+
+If any TokenAssist check fails, record:
+
+- the exact command and whether it came from a GM, player, macro, or another Mod;
+- selected token names/IDs and any explicit token or character IDs;
+- the property values and `statusmarkers` string before and after;
+- whether standalone TokenMod was installed or detected;
+- the TokenAssist and MarkerService rows from `!ga-config modules`;
+- `!ga-status --details` output and the exact API Console exception or warning.
+
+---
+
+## 8. InitiativeAssist
+
+**What this proves:** InitiativeAssist can guide players, read mixed 2014/2024 characters, reroll only eligible characters, and preserve every tracker row it does not own.
+
+**Why test it:** Initiative happens at a time-sensitive moment in play. A safe result must be quick to understand and must not disturb round counters, objects, dead NPCs, or another Mod's custom entries.
+
+**Skip when:** Never skip for v0.1.6.0 release acceptance. After release, campaigns that deliberately leave InitiativeAssist disabled may skip it.
+
+### Basic Check
+
+Open Roll20's Turn Tracker on the disposable encounter page, then run:
+
+```roll20chat
+!ga-enable InitiativeAssist
+!Init-Help
+!Init-Menu
+!Init-Status
+!Init-Go
+!Init-Go!
+```
+
+Pass when:
+
+- the help, menu, and status panels are readable and each appears once;
+- both Go commands make a public **Roll for Initiative** announcement;
+- the announcements include **Roll Initiative** and **Roll Options** buttons;
+- `!Init-Go` uses direct wording and `!Init-Go!` uses varied wording;
+- commands also work with different capitalization, such as `!iNiT-sTaTuS`.
+
+### Full InitiativeAssist Acceptance
+
+#### I1. Mixed 2014 and 2024 Setup
+
+Put these disposable tokens on one page and add their turns to Roll20's tracker:
+
+1. one player-controlled D&D 5E by Roll20 **2014** character;
+2. one living **2014** NPC;
+3. one player-controlled D&D **2024** character;
+4. one living **2024** Compendium NPC;
+5. one NPC at 0 HP with the configured death marker;
+6. one unlinked object token;
+7. one custom tracker item named `Round Test`.
+
+The 2024 characters may require Roll20's supported Experimental Mod API server. Record the initial order and initiative values before continuing.
+
+#### I2. Player Invitation and Permissions
+
+As the GM, run `!Init-Go`. As a player, click **Roll Initiative**.
+
+Pass when the player can choose only linked tokens they control on the active initiative page and the chosen character receives a numeric tracker result. The player must not be able to roll an uncontrolled NPC or a token from another page.
+
+#### I3. Roll Options
+
+Click **Roll Options** and test:
+
+- Normal;
+- Advantage;
+- Disadvantage;
+- Add One Die using a common die button;
+- Add Two Dice using two sequential die choices.
+
+Pass when each workflow asks only for necessary choices, updates the selected character, and reports a clear result. A custom die must accept whole-number sides from 2 through 100 and refuse invalid input. Haste is not presented as a built-in initiative bonus.
+
+#### I4. Reroll Everyone Without Touching Other Rows
+
+Run:
+
+```roll20chat
+!Init-RR
+```
+
+Pass when every PC and living NPC rerolls, while the dead NPC, object token, and `Round Test` row keep the same values and exact positions. The command must not add every token from the page; it rerolls eligible characters already in the tracker.
+
+#### I5. Duplicate, Mismatch, and Attention Rows
+
+1. Add the same living NPC token to the tracker a second time with a different value.
+2. Give another NPC positive HP but leave its death marker on, creating an HP/marker mismatch.
 3. Run `!Init-RR` again.
 
 Pass when both occurrences of the duplicate token receive one shared roll, the mismatched NPC is left unchanged, and the GM receives a bounded attention summary. Remove the test mismatch afterward.
