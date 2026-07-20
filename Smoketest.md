@@ -1175,7 +1175,9 @@ Open Roll20's Turn Tracker on the disposable encounter page, then run:
 
 Pass when:
 
-- the help, menu, and status panels are readable and each appears once;
+- `!Init-Help` opens **InitiativeAssist Guide**, which explains the workflow rather than acting like another control menu;
+- `!Init-Menu` opens **Initiative Control Center**, which groups actions by starting, rerolling, reviewing, and managing;
+- `!Init-Status` opens **Initiative Status Summary**, a concise chat snapshot rather than a full audit;
 - both Go commands make a public **Roll for Initiative** announcement;
 - the announcements include **Roll Initiative** and **Roll Options** buttons;
 - `!Init-Go` uses direct wording and `!Init-Go!` uses varied wording;
@@ -1196,7 +1198,7 @@ Put these disposable tokens on one page, open Roll20's Turn Tracker on that page
 
 The 2024 characters may require Roll20's supported Experimental Mod API server. Do not pre-populate the tracker or add the later `Round Test` custom row yet; the first checks prove InitiativeAssist can find a player's token before initiative exists.
 
-#### I2. Empty Tracker and Page Audit
+#### I2. Empty Tracker, Status Summary, and Audit Handout
 
 Run:
 
@@ -1205,13 +1207,13 @@ Run:
 !Init-Audit
 ```
 
-Pass when chat clearly says the tracker is empty while reporting linked characters available on the tracker page. Open `GameAssist Initiative Audit`; it should contain an empty Turn Tracker section and a separate list of the linked page characters it found. Neither command should add or change a turn.
+Pass when **Initiative Status Summary** clearly says the tracker is empty while reporting linked characters available on the encounter page. `!Init-Audit` should report **Initiative Audit Handout Updated**. Open `GameAssist Initiative Audit`; it should contain an empty Turn Tracker section and a separate list of the linked page characters it found. Neither command should add or change a turn.
 
-#### I3. Player Invitation, Privacy, and Pre-Tracker Roll
+#### I3. Player Invitation, Recipient, and Pre-Tracker Roll
 
-As the GM, run `!Init-Go`. As a player, click **Roll Initiative**.
+As the GM, run `!Init-Go`. In a separate player session that is **not logged in as a GM**, click **Roll Initiative**.
 
-Pass when the player can choose only linked tokens they control on the active initiative page and the chosen character is added to Turn Order with a numeric result. The token did not need an existing tracker row. Private choices and setup warnings should be visible to the clicking player, not another ordinary player; the public invitation and completed result remain visible to the table. The player must not be able to roll an uncontrolled NPC or a token from another page.
+Pass when the player can choose only linked tokens they control on the active encounter page and the chosen character is added to Turn Order with a numeric result. The token did not need an existing tracker row. Player-specific choices and setup warnings should be visible to the clicking player, not another ordinary player; the public invitation and completed result remain visible to the table. The player must not be able to roll an uncontrolled NPC or a token from another page.
 
 If the roll is refused, read the message literally: InitiativeAssist should distinguish a wrong tracker page, no object-layer tokens, no character linkage, and no player control instead of giving one generic failure.
 
@@ -1236,6 +1238,8 @@ Add the remaining 2014 PC/NPC and 2024 PC/NPC turns using InitiativeAssist or th
 ```
 
 Pass when every PC and living NPC rerolls, while the dead NPC, object token, and `Round Test` row keep the same values and exact positions. The command must not add every token from the page; it rerolls eligible characters already in the tracker.
+
+This check also covers the Roll20 sessions that expose an open Turn Tracker as boolean `true`: the GM should not receive a false wrong-page message or a false **No eligible PCs or living NPCs** warning when all tracker tokens belong to this encounter page.
 
 #### I6. Duplicate, Mismatch, and Attention Rows
 

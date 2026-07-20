@@ -303,7 +303,7 @@ This major feature release introduces a rules-neutral Turn Tracker authority and
 
 Issue #47 is complete only when the Roll20 sandbox confirms mixed 2014/2024 initiative, public player controls, case-insensitive commands, exact preservation of non-owned rows, duplicate handling, dead/mismatch skips, Observer mode, service cascading, and audit output without regressions in established modules.
 
-**Current evidence:** JavaScript syntax passes and the internal InitiativeAssist harness passes 46/46 checks, including pre-tracker player rolls, private response targeting, unlabeled 2014/2024 sheet-data probing, empty-tracker audits, preservation, and conflict handling. Live Roll20 sandbox acceptance remains pending.
+**Current evidence:** JavaScript syntax passes and the internal InitiativeAssist harness passes 53/53 checks, including pre-tracker player rolls, player-specific response routing, page-id and boolean tracker-page resolution, ambiguous multi-page refusal, unlabeled 2014/2024 sheet-data probing, empty-tracker audits, preservation, and conflict handling. The first live Roll20 pass exposed boolean tracker-page incompatibility and unclear screen roles; both are corrected locally and require a focused sandbox retest before acceptance.
 
 ---
 

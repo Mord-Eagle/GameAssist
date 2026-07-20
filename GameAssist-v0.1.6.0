@@ -2074,7 +2074,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Roll20 native Turn Tracker authority
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:TURNTRACKERSERVICE", title: "TurnTrackerService",
-    //   guarantees: ["Single GameAssist authority for native turn-order parsing, snapshots, guarded writes, and observations","Unknown fields, duplicate token occurrences, text priorities, and custom entries are preserved","Malformed or stale tracker data is refused rather than replaced","Disabling the service leaves Roll20's native Turn Tracker unchanged"],
+    //   guarantees: ["Single GameAssist authority for native turn-order parsing, page resolution, snapshots, guarded writes, and observations","Documented page ids and legacy boolean initiativepage values resolve without treating true as a token page id","Unknown fields, duplicate token occurrences, text priorities, and custom entries are preserved","Malformed, ambiguous, or stale tracker data is refused rather than replaced","Disabling the service leaves Roll20's native Turn Tracker unchanged"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]"], provides: ["GameAssist.TurnTrackerService"],
     //   observability: { spans: ["[GAMEASSIST:CORE:TURNTRACKERSERVICE]"] },
     //   last_updated_version: "v0.1.6.0",
@@ -2142,26 +2142,85 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
         }
 
+        /**
+         * resolvePage - Normalizes Roll20's tracker-page state without changing it.
+         * Context: current campaigns normally expose a page id, while older or
+         * migrated campaigns may expose boolean true when the tracker is open.
+         * Output: a resolved page id, its source, and an actionable warning when
+         * the tracker cannot be associated with one page safely.
+         */
+        function resolvePage(campaign, pageValue, entries) {
+            const normalized = String(pageValue ?? '').trim();
+            const open = !(
+                pageValue === false ||
+                pageValue === null ||
+                pageValue === undefined ||
+                normalized === '' ||
+                normalized.toLowerCase() === 'false'
+            );
+            if (!open) return { open: false, pageId: null, pageSource: 'closed', pageWarning: null };
+
+            if (pageValue !== true && normalized.toLowerCase() !== 'true') {
+                return { open: true, pageId: normalized, pageSource: 'initiativepage', pageWarning: null };
+            }
+
+            const tokenPages = Array.from(new Set(entries.map(entry => {
+                const id = String(entry?.id || '');
+                if (!id || id === '-1') return '';
+                const token = getObj('graphic', id);
+                return String(token?.get('pageid') || token?.get('_pageid') || '');
+            }).filter(Boolean)));
+            if (tokenPages.length === 1) {
+                return { open: true, pageId: tokenPages[0], pageSource: 'turnorder-token', pageWarning: null };
+            }
+            if (tokenPages.length > 1) {
+                return {
+                    open: true,
+                    pageId: null,
+                    pageSource: 'ambiguous-turnorder',
+                    pageWarning: 'The Turn Tracker contains tokens from more than one page. Remove the off-page entries or reopen the tracker on one encounter page.'
+                };
+            }
+
+            const playerPageId = String(campaign.get('playerpageid') || '').trim();
+            if (playerPageId) {
+                return { open: true, pageId: playerPageId, pageSource: 'playerpageid-fallback', pageWarning: null };
+            }
+            return {
+                open: true,
+                pageId: null,
+                pageSource: 'unresolved',
+                pageWarning: 'The Turn Tracker is open, but Roll20 did not identify its page. Move the player ribbon to the encounter page, reopen the tracker, and try again.'
+            };
+        }
+
         function snapshot() {
             if (!enabled) return failure('UNAVAILABLE', 'TurnTrackerService is disabled.');
             const campaign = Campaign();
             const stored = campaign.get('turnorder');
             const raw = stored === null || stored === undefined || stored === '' ? '' : String(stored);
             const pageValue = campaign.get('initiativepage');
-            const pageId = pageValue && pageValue !== 'false' ? String(pageValue) : null;
             const parsed = parseRaw(raw);
             if (!parsed.ok) {
-                return { ...parsed, raw, pageId, open: Boolean(pageId), revision: revisionFor(raw, pageId) };
+                const page = resolvePage(campaign, pageValue, []);
+                return {
+                    ...parsed,
+                    raw,
+                    initiativePageRaw: pageValue,
+                    ...page,
+                    revision: revisionFor(raw, page.pageId)
+                };
             }
+            const page = resolvePage(campaign, pageValue, parsed.entries);
             const entries = parsed.entries.map(entry => freeze(clone(entry)));
             return Object.freeze({
                 ok: true,
                 code: null,
                 message: null,
                 raw,
-                pageId,
-                open: Boolean(pageId),
-                revision: revisionFor(raw, pageId),
+                initiativePageRaw: pageValue,
+                ...page,
+                revision: revisionFor(raw, page.pageId),
                 entries: Object.freeze(entries)
             });
         }
@@ -2314,10 +2373,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         return Object.freeze({ version, isEnabled, snapshot, classifyEntry, apply, observe, clearObservers });
     })();
     // --- Notes & Comments ---
-    // Changed (v0.1.6.0): Added toggleable native Turn Tracker snapshots, structural classification, revision guards, lossless single-write mutations, and internal observations without initiative or combat rules.
+    // Changed (v0.1.6.0): Added toggleable native Turn Tracker snapshots, structural classification, revision guards, lossless single-write mutations, internal observations, and compatibility page resolution for both page-id and legacy boolean tracker state without initiative or combat rules.
     // Decision log:
     //   CHOICE: Preserve unknown fields and custom rows verbatim - ALT: normalize tracker objects; REJECTED: external Mods and future Roll20 fields may rely on data GameAssist does not understand.
     //   CHOICE: Treat initiativepage as part of every revision - ALT: hash turnorder alone; REJECTED: the same token ids can be unsafe when the tracker page changes.
+    //   CHOICE: Resolve boolean true from a unique tracker-token page, then the player ribbon page when the tracker is empty - ALT: treat "true" as an id or guess among multiple pages; REJECTED: both produce false off-page classifications or unsafe writes.
     //   CHOICE: Notify GameAssist observers after owned writes and suppress the matching Roll20 echo - ALT: rely on one event path; REJECTED: Mod-originated event behavior is not a stable cross-sandbox assumption.
     //   CHOICE: Refuse malformed JSON - ALT: replace it with an empty tracker; REJECTED: recovery must never destroy evidence or manually entered turns.
     // [GAMEASSIST:CORE:TURNTRACKERSERVICE] END
@@ -6711,7 +6771,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Native initiative workflow
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:INITIATIVEASSIST", title: "InitiativeAssist",
-    //   guarantees: ["Case-insensitive !Init- commands provide mixed 2014/2024 initiative without owning rounds or combat flow","!Init-RR rerolls each unique PC and living NPC once while preserving non-target tracker rows and fields","Player buttons revalidate token control and tracker-page eligibility at execution time","Encounter groups remain page-scoped and can be renamed without changing tracker rows","Missing Beacon data, ambiguous character type, death-state disagreement, and stale tracker targets are skipped rather than guessed"],
+    //   guarantees: ["Case-insensitive !Init- commands provide mixed 2014/2024 initiative without owning rounds or combat flow","!Init-RR rerolls each unique PC and living NPC once while preserving non-target tracker rows and fields","Player buttons revalidate token control and the normalized tracker page at execution time","Guide, Control Center, Status Summary, and Audit Handout each have one distinct user-facing purpose","Encounter groups remain page-scoped and can be renamed without changing tracker rows","Missing Beacon data, ambiguous character type, death-state disagreement, and stale tracker targets are skipped rather than guessed"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   observability: { spans: ["[GAMEASSIST:MODULES:INITIATIVEASSIST]"] },
     //   last_updated_version: "v0.1.6.0",
@@ -6755,26 +6815,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return String(modState.config.mode || '').toLowerCase() === 'manager';
         }
 
-        function safeWho(msg) {
-            const player = getObj('player', msg?.playerid);
-            const playerName = String(player?.get('_displayname') || player?.get('displayname') || '')
-                .replace(/\s+\(GM\)\s*$/i, '')
-                .replace(/["\\]/g, '')
-                .trim();
-            if (playerName) {
-                const characterCollision = findObjs({ _type: 'character', name: playerName }).length > 0;
-                // CHOICE: Exact player names are least ambiguous; Roll20's documented player-id helper uses the first word when a character has the same full name.
-                return characterCollision ? playerName.split(/\s+/)[0] : playerName;
-            }
-            return String(msg?.who || 'gm')
-                .replace(/\s+\(GM\)\s*$/i, '')
-                .replace(/["\\]/g, '')
-                .trim() || 'gm';
+        function playerName(playerId) {
+            const player = getObj('player', playerId);
+            const name = player?.get('_displayname') || player?.get('displayname') || 'gm';
+            return String(name).replace(/["\\]/g, '').trim() || 'gm';
         }
 
         function destinationFor(msg, gmOnly = false) {
             if (gmOnly || playerIsGM(msg?.playerid)) return '/w gm ';
-            return `/w "${safeWho(msg)}" `;
+            return `/w "${playerName(msg?.playerid)}" `;
         }
 
         function sendPanel(title, fields, { msg = null, publicMessage = false, gmOnly = false, speaker = MODULE_NAME } = {}) {
@@ -6797,7 +6846,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (isManagerMode()) return true;
             sendPanel('InitiativeAssist', [
                 { label: 'Observer Mode', value: 'InitiativeAssist is watching the tracker but will not change it.' },
-                { label: 'Actions', value: GameAssist.createButton('Open Menu', '!Init-Menu') }
+                { label: 'Next Step', value: GameAssist.createButton('Open Control Center', '!Init-Menu') }
             ], { msg });
             return false;
         }
@@ -6813,7 +6862,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return null;
             }
             if (!snapshot.open || !snapshot.pageId) {
-                warn(msg, 'Open Roll20\'s Turn Tracker on the encounter page, then try again.');
+                warn(msg, snapshot.pageWarning || 'Open Roll20\'s Turn Tracker on the encounter page, then try again.');
                 return null;
             }
             return snapshot;
@@ -7122,27 +7171,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return counts;
         }
 
-        function menuButtons() {
-            return [
-                GameAssist.createButton('Call for Initiative', '!Init-Go'),
-                GameAssist.createButton('Reroll Everyone', '!Init-RR'),
-                GameAssist.createButton('Reroll Choices', '!Init-RR-Menu'),
-                GameAssist.createButton('Audit Tracker', '!Init-Audit'),
-                GameAssist.createButton('Help', '!Init-Help')
-            ].join(' ');
-        }
-
         async function showMenu(msg) {
             const snapshot = GameAssist.TurnTrackerService.snapshot();
             if (!snapshot.ok) {
                 warn(msg, snapshot.message);
                 return;
             }
-            if (!snapshot.open) {
-                sendPanel('InitiativeAssist', [
+            if (!snapshot.open || !snapshot.pageId) {
+                sendPanel('Initiative Control Center', [
+                    { label: 'Purpose', value: 'This screen contains the controls used during an encounter.' },
                     { label: 'Turn Tracker', value: 'Closed. Open it on the encounter page before rolling.' },
                     { label: 'Mode', value: _sanitize(isManagerMode() ? 'Manager' : 'Observer') },
-                    { label: 'Actions', value: `${GameAssist.createButton('Help', '!Init-Help')} ${GameAssist.createButton('Refresh', '!Init-Menu')}` }
+                    { label: 'Next Step', value: `${GameAssist.createButton('Read Guide', '!Init-Help')} ${GameAssist.createButton('Check Again', '!Init-Menu')}` }
                 ], { msg, gmOnly: true });
                 return;
             }
@@ -7150,26 +7190,29 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const counts = rosterCounts(roster);
             const pageRoster = await classifyPageRoster(snapshot);
             const pageCounts = pageRosterCounts(pageRoster);
-            sendPanel('InitiativeAssist', [
-                { label: 'Tracker', value: `${snapshot.entries.length ? `${snapshot.entries.length} rows` : 'Empty'} on ${_sanitize(pageName(snapshot.pageId))}` },
-                { label: 'Page Characters', value: `${pageCounts.linked} linked | ${pageCounts.ready} ready to roll | ${Math.max(0, pageCounts.linked - pageCounts.inTracker)} not yet in tracker` },
-                { label: 'Characters', value: `${counts.pc} PCs | ${counts.npc} NPCs | ${counts.dead} dead NPCs` },
-                { label: 'Other Rows', value: `${counts.object} objects | ${counts.custom} custom | ${counts.missing} stale` },
-                { label: 'Ready', value: `${counts.eligible} eligible | ${counts.attention} need attention` },
-                { label: 'Mode', value: `${_sanitize(isManagerMode() ? 'Manager' : 'Observer')} ${GameAssist.createButton('Change', `!Init-Mode ${isManagerMode() ? 'observer' : 'manager'}`)}` },
-                { label: 'Actions', value: menuButtons() }
+            sendPanel('Initiative Control Center', [
+                { label: 'Purpose', value: 'Choose what InitiativeAssist should do next.' },
+                { label: 'Current Encounter', value: `${_sanitize(pageName(snapshot.pageId))}: ${snapshot.entries.length ? `${snapshot.entries.length} tracker rows` : 'tracker empty'} | ${pageCounts.ready} page characters ready | ${Math.max(0, pageCounts.linked - pageCounts.inTracker)} not yet in tracker` },
+                { label: 'Start Initiative', value: `${GameAssist.createButton('Invite Players', '!Init-Go')} ${GameAssist.createButton('Playful Invitation', '!Init-Go!')}` },
+                { label: 'Reroll Initiative', value: `${GameAssist.createButton(`Everyone (${counts.eligible})`, '!Init-RR')} ${GameAssist.createButton('Choose Who', '!Init-RR-Menu')}` },
+                { label: 'Review Encounter', value: `${GameAssist.createButton('Status Summary', '!Init-Status')} ${GameAssist.createButton('Write Audit Handout', '!Init-Audit')}` },
+                { label: 'Saved Groups', value: GameAssist.createButton('Manage Groups', '!Init-Group') },
+                { label: 'Write Mode', value: `${_sanitize(isManagerMode() ? 'Manager: changes initiative' : 'Observer: read-only')} ${GameAssist.createButton(isManagerMode() ? 'Use Observer' : 'Use Manager', `!Init-Mode ${isManagerMode() ? 'observer' : 'manager'}`)}` },
+                { label: 'Instructions', value: GameAssist.createButton('Read Guide', '!Init-Help') }
             ], { msg, gmOnly: true });
         }
 
         function showHelp(msg) {
-            sendPanel('InitiativeAssist Quick Guide', [
-                { label: 'Start a Fight', value: `Open Roll20's Turn Tracker, then click ${GameAssist.createButton('Call for Initiative', '!Init-Go')}. Players receive Roll and Roll Options buttons.` },
-                { label: 'Fast Reroll', value: `${GameAssist.createButton('Reroll Everyone', '!Init-RR')} rerolls every PC and living NPC already in the tracker. Counters, custom rows, objects, and dead NPCs stay where they are.` },
-                { label: 'Smaller Rerolls', value: `${GameAssist.createButton('Open Reroll Choices', '!Init-RR-Menu')} for PCs, NPCs, selected tokens, individuals, or a saved group.` },
+            sendPanel('InitiativeAssist Guide', [
+                { label: 'What It Does', value: 'Helps players enter Roll20\'s Turn Tracker and lets the GM reroll eligible characters without moving counters, objects, or other preserved rows.' },
+                { label: '1. Prepare', value: 'Move the player ribbon to the encounter page and open Roll20\'s Turn Tracker.' },
+                { label: '2. Invite Players', value: `${GameAssist.createButton('Invite Players', '!Init-Go')} posts Roll Initiative and Roll Options buttons in public chat. A character does not need to be in the tracker first.` },
+                { label: '3. Reroll Later', value: `${GameAssist.createButton('Reroll Everyone', '!Init-RR')} rerolls every eligible PC and living NPC already in the tracker. ${GameAssist.createButton('Choose Who', '!Init-RR-Menu')} handles smaller groups.` },
                 { label: 'Player Options', value: 'Normal, advantage, disadvantage, one extra die, or two extra dice. Extra dice use simple d4/d6/d8/d10/d12 buttons.' },
-                { label: '2014 and 2024', value: '2014 uses initiative_bonus. The 2024 Beacon sheet uses Roll20 asynchronous sheet data and may require the supported Experimental Mod API server.' },
+                { label: 'Which Screen?', value: '<strong>Control Center</strong> has encounter buttons. <strong>Status Summary</strong> is a quick chat check. <strong>Audit Handout</strong> is the detailed read-only report.' },
+                { label: '2014 and 2024', value: 'Both Roll20 D&D 5E sheets are supported. The 2024 sheet may require Roll20\'s supported Experimental Mod API server.' },
                 { label: 'Safety', value: 'InitiativeAssist never advances turns, adds round counters, changes conditions, or runs combat timers.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Open Menu', '!Init-Menu')} ${GameAssist.createButton('Audit Tracker', '!Init-Audit')}` }
+                { label: 'Open', value: `${GameAssist.createButton('Control Center', '!Init-Menu')} ${GameAssist.createButton('Status Summary', '!Init-Status')}` }
             ], { msg, gmOnly: playerIsGM(msg.playerid) });
         }
 
@@ -7183,13 +7226,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const attentionNames = roster.rows.filter(row => row.attention.length || row.kind === 'missing')
                 .slice(0, POLICY.initiative.statusChatLimit)
                 .map(row => _sanitize(row.label));
-            sendPanel('Initiative Status', [
+            sendPanel('Initiative Status Summary', [
                 { label: 'Rows', value: `${snapshot.entries.length} total | ${counts.eligible} ready` },
                 { label: 'Tracker Page', value: `${_sanitize(pageName(snapshot.pageId))} | ${pageCounts.linked} linked characters | ${Math.max(0, pageCounts.linked - pageCounts.inTracker)} not yet in tracker` },
                 { label: 'Characters', value: `${counts.pc} PCs | ${counts.npc} NPCs | ${counts.dead} dead NPCs` },
                 { label: 'Preserved', value: `${counts.custom} custom | ${counts.object} objects | ${counts.missing} stale` },
                 { label: 'Attention', value: attentionNames.length ? attentionNames.join(', ') : 'None' },
-                { label: 'Actions', value: `${GameAssist.createButton('Refresh', '!Init-Status')} ${GameAssist.createButton('Full Audit', '!Init-Audit')} ${GameAssist.createButton('Menu', '!Init-Menu')}` }
+                { label: 'Next Step', value: `${GameAssist.createButton('Refresh Summary', '!Init-Status')} ${GameAssist.createButton('Write Audit Handout', '!Init-Audit')} ${GameAssist.createButton('Control Center', '!Init-Menu')}` }
             ], { msg, gmOnly: true });
         }
 
@@ -7254,11 +7297,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const summary = roster.rows.length
                 ? `${roster.rows.length} tracker rows | ${counts.eligible} ready | ${counts.attention} need attention | ${Math.max(0, pageCounts.linked - pageCounts.inTracker)} page characters not yet in tracker`
                 : `Tracker is empty | ${pageCounts.ready} page character${pageCounts.ready === 1 ? '' : 's'} ready | ${pageCounts.attention} need attention`;
-            sendPanel('Initiative Audit Complete', [
-                { label: 'Handout', value: _sanitize(POLICY.initiative.auditHandoutName) },
-                { label: 'Summary', value: summary },
+            sendPanel('Initiative Audit Handout Updated', [
+                { label: 'Detailed Report', value: _sanitize(POLICY.initiative.auditHandoutName) },
+                { label: 'Tracker Review', value: summary },
                 { label: 'Changes', value: 'None. The audit is read-only.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Open Menu', '!Init-Menu')} ${GameAssist.createButton('Refresh Audit', '!Init-Audit')}` }
+                { label: 'Next Step', value: `${GameAssist.createButton('Run Audit Again', '!Init-Audit')} ${GameAssist.createButton('Control Center', '!Init-Menu')}` }
             ], { msg, gmOnly: true });
         }
 
@@ -7295,7 +7338,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function pageName(pageId) {
             const page = getObj('page', pageId);
-            return String(page?.get('name') || 'the Turn Tracker page');
+            return String(page?.get('name') || pageId || 'the Turn Tracker page');
         }
 
         function candidateFailureMessage(msg, snapshot) {
@@ -7674,7 +7717,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Quick Choices', value: `${GameAssist.createButton(`All (${counts.eligible})`, '!Init-RR')} ${GameAssist.createButton(`PCs (${counts.pc})`, '!Init-RR-PCs')} ${GameAssist.createButton(`Living NPCs (${Math.max(0, counts.npc - counts.dead)})`, '!Init-RR-NPCs')} ${GameAssist.createButton('Selected', '!Init-RR-Selected')}` },
                 { label: 'Individuals', value: individual.length ? individual.join(' ') : 'No eligible characters.' },
                 { label: 'Groups', value: groupButtons.length ? groupButtons.join(' ') : `${GameAssist.createButton('Create a Group', '!Init-Group')}` },
-                { label: 'Actions', value: `${GameAssist.createButton('Manage Groups', '!Init-Group')} ${GameAssist.createButton('Menu', '!Init-Menu')}` }
+                { label: 'Next Step', value: `${GameAssist.createButton('Manage Groups', '!Init-Group')} ${GameAssist.createButton('Control Center', '!Init-Menu')}` }
             ], { msg, gmOnly: true });
         }
 
@@ -7705,7 +7748,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel('Initiative Groups', [
                 { label: 'Create', value: `${GameAssist.createButton('Create From Selected', '!Init-Group --create "?{Group name|Enemies}"')} Select tracker tokens first.` },
                 { label: 'This Encounter', value: rows.length ? rows.join('<br>') : 'No groups are saved for this Turn Tracker page.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Reroll Choices', '!Init-RR-Menu')} ${GameAssist.createButton('Menu', '!Init-Menu')}` }
+                { label: 'Next Step', value: `${GameAssist.createButton('Reroll Choices', '!Init-RR-Menu')} ${GameAssist.createButton('Control Center', '!Init-Menu')}` }
             ], { msg, gmOnly: true });
         }
 
@@ -7868,7 +7911,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => GameAssist.TurnTrackerService.clearObservers('InitiativeAssist')
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.6.0): Added mixed D&D 2014/2024 initiative adapters with unlabeled-sheet probing, the case-insensitive !Init- command family, private clicker-targeted responses, pre-tracker controlled-token discovery, page-aware read-only audits, bounded roll options, page-scoped renameable encounter groups, and preservation-first rerolls through TurnTrackerService.
+    // Changed (v0.1.6.0): Added mixed D&D 2014/2024 initiative adapters with unlabeled-sheet probing, the case-insensitive !Init- command family, player-specific responses, pre-tracker controlled-token discovery, normalized tracker-page handling, distinct Guide/Control Center/Status Summary/Audit Handout surfaces, bounded roll options, page-scoped renameable encounter groups, and preservation-first rerolls through TurnTrackerService.
     // Decision log:
     //   CHOICE: Start disabled but default to Manager mode once deliberately enabled - ALT: require a second ownership toggle; REJECTED: unnecessary setup friction after explicit module enablement.
     //   CHOICE: Roll once per unique token and update duplicate occurrences consistently - ALT: roll every duplicate separately; REJECTED: duplicate turns still represent one character unless a later feature explicitly says otherwise.
