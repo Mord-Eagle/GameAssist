@@ -1242,9 +1242,9 @@ Run:
 !Init-Group
 ```
 
-Use the menu to reroll PCs only, living NPCs only, selected tracker tokens, and one individual. Then select two tracker tokens and create a named group.
+Use the menu to reroll PCs only, living NPCs only, selected tracker tokens, and one individual. Then select two tracker tokens and create a named group. Rename the group from its management row, briefly move the Turn Tracker to a different page to confirm the group is not shown there, then return to the original page.
 
-Pass when each action changes only the requested eligible rows, the saved group can be rerolled, and the group can be removed without deleting tracker entries.
+Pass when each action changes only the requested eligible rows, the saved group can be renamed and rerolled on its original page, it stays out of other-page menus, and it can be removed without deleting tracker entries.
 
 #### I7. Status and Read-Only Audit
 
