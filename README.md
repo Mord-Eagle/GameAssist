@@ -415,7 +415,7 @@ GM commands:
 * `!Init-Go` / `!Init-Go!` → Invite players to roll, with direct or varied wording.
 * `!Init-RR` → Reroll every unique PC and living NPC already in the tracker.
 * `!Init-RR-Menu` → Reroll only PCs, living NPCs, selected tokens, one character, or a saved encounter group.
-* `!Init-Group` → Create, review, reroll, or remove encounter groups built from selected tracker tokens.
+* `!Init-Group` → Create, review, rename, reroll, or remove page-scoped encounter groups built from selected tracker tokens.
 * `!Init-Audit` → Update the read-only `GameAssist Initiative Audit` handout.
 * `!Init-Mode observer|manager` → Choose read-only coexistence or InitiativeAssist-owned writes.
 
@@ -629,7 +629,7 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!Init-Roll` / `!Init-Options` | `[--token ID] [--mode normal\|adv\|dis] [--extra die[,die]]` | Roll an authorized linked token with guarded initiative options. Buttons normally build these commands. |
 |  | `!Init-RR` | — | Reroll every unique eligible PC and living NPC already in the tracker while preserving other rows. |
 |  | `!Init-RR-Menu` | — | Open PC, NPC, selected-token, individual, and saved-group reroll choices. |
-|  | `!Init-Group` | `[--create "Name"] [--remove ID]` | Manage encounter-scoped groups from selected tracker tokens. |
+|  | `!Init-Group` | `[--create "Name"] [--rename ID --name "Name"] [--remove ID]` | Manage page-scoped encounter groups from selected tracker tokens. |
 |  | `!Init-Audit` | — | Update the read-only InitiativeAssist audit handout. |
 |  | `!Init-Mode observer\|manager` | — | Choose read-only coexistence or InitiativeAssist tracker writes. |
 | **Token Controls** | `!token-assist help` / `!ta-help` | — | Open TokenAssist guidance, commands, compatibility limits, provenance, and attribution. |
