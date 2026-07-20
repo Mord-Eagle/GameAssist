@@ -2334,9 +2334,9 @@ Round counting, automatic turn advancement, status-duration countdowns, current-
   - the exact raw `turnorder` value;
   - parsed entries with original indices;
   - a revision fingerprint used to detect concurrent changes.
-- Added compatibility resolution for campaigns where Roll20 exposes an open Turn Tracker as boolean `true` rather than a page id. Existing tracker tokens establish the encounter page; an empty tracker falls back to the Player Ribbon page; genuinely mixed-page token rows are refused with an actionable warning.
+- Added compatibility resolution for campaigns where Roll20 exposes an open Turn Tracker as boolean `true` rather than a page id. Existing tracker tokens establish the encounter page; an empty tracker falls back to the Player Ribbon page; genuinely mixed-page token rows are refused with an actionable warning. Before a compatible write, the resolved page id is synchronized with `turnorder` in the same campaign update and both values are verified afterward.
 - Added structural row classification for custom rows, missing-token rows, current-page token rows, and off-page token rows without assigning D&D rules inside the core service.
-- Added preservation-first mutations. A consumer supplies a narrow transformation and TurnTrackerService performs at most one `Campaign().set('turnorder', ...)` write after confirming that the page and source revision still match.
+- Added preservation-first mutations. A consumer supplies a narrow transformation and TurnTrackerService performs at most one campaign update after confirming that the page and source revision still match. The update writes `turnorder` and, only when Roll20 supplied a compatibility-resolved boolean page state, the resolved `initiativepage` id.
 - Added observation of `change:campaign:turnorder` and `change:campaign:initiativepage` through Roll20's captured event seam.
 - Added own-write echo suppression so GameAssist observers do not process the same service-authored update twice.
 - Added the frozen `GameAssist.TurnTrackerService` integration surface for snapshots, classification, guarded application, and observer registration.
@@ -2350,20 +2350,24 @@ Round counting, automatic turn advancement, status-duration countdowns, current-
 - Added public buttons that let a player roll initiative for an eligible character they control. Player authorization and token eligibility are checked again when the button is used rather than trusted from the original chat message.
 - Added pre-tracker page discovery. A controlled, linked object-layer token may roll from the public invitation before it has a Turn Order row; the completed roll adds that token to Roll20's tracker.
 - Added player-specific panels for choices, setup guidance, and refusals while retaining public initiative invitations and completed results.
-- Added a compact player options panel for:
-  - normal rolls;
-  - advantage;
-  - disadvantage;
-  - one bonus die;
-  - two bonus dice.
-- Added common `d4`, `d6`, `d8`, `d10`, and `d12` buttons plus a bounded custom die-side prompt. Two-die rolls collect each die separately so combinations such as `1d6 + 1d4` do not require a special command language.
-- Added readable public result messages while preserving Roll20 inline-roll presentation. A failed or unavailable modifier lookup produces a clear response rather than inserting an initiative value of zero.
+- Added a staged player options panel that carries all prior choices forward. A player chooses normal, advantage, or disadvantage, may enter a bounded flat adjustment, and may then roll immediately or add one or two bounded bonus dice. These choices are cumulative rather than mutually exclusive.
+- Added common `d4`, `d6`, `d8`, `d10`, and `d12` buttons plus a bounded custom die-side prompt. Two-die rolls collect each die separately so combinations such as advantage plus a flat adjustment, `1d6`, and `1d4` remain easy to build.
+- Added detailed public result messages containing the dice Roll20 exposes, the final total, and the complete formula. InitiativeAssist verifies that Roll20 retained the tracker row before announcing success. A failed or unavailable modifier lookup produces a clear response rather than inserting an initiative value of zero.
+- Added six score-aware result-prose ranges for rolls requested through `!Init-Go!`: 0-5, 6-12, 13-19, 20-25, 26-34, and 35+. The direct `!Init-Go` workflow remains neutral.
 - Added `!Init-RR` to reroll every eligible living NPC and every Player Character already represented in the active tracker.
 - Added narrower reroll choices for PCs, NPCs, selected tracker tokens, individual tracker tokens, and saved encounter groups.
 - Added page-scoped group creation, renaming, rerolling, and removal from selected tracker tokens. Groups store token identities, not copies of tracker rows, remain bounded by policy limits, and stay out of other encounter-page menus.
 - Added a GM status panel that summarizes the active tracker, linked characters available on the tracker page, eligible actors, rows kept unchanged, service availability, and current Manager/Observer mode.
 - Added a read-only initiative audit handout with separate Turn Tracker and tracker-page character sections. An empty tracker now reports the characters available to roll instead of presenting a zero-row success with no context.
 - Added `GameAssist.InitiativeAssist.getRoster()` as a narrow read-only integration surface for future GameAssist features.
+
+### Changed – Live sandbox corrections
+
+- Synchronized Roll20's `initiativepage` with a newly saved Turn Order row when the sandbox exposes the open tracker as boolean `true`. This prevents a successful chat roll from being detached from the visible native tracker.
+- Added post-write verification for both the complete `turnorder` value and resolved tracker page before a player result is announced.
+- Replaced the mutually exclusive Roll Options paths with a short staged builder that combines d20 mode, flat adjustment, and up to two bonus dice.
+- Replaced the total-only result sentence with a concentration-style `Roll(s) … → total (from formula)` presentation.
+- Changed successful `!Init-RR` output from a public summary to a bounded GM whisper containing each updated character's roll evidence.
 
 ### Added – Mixed 2014/2024 sheet adapters
 
@@ -2383,6 +2387,7 @@ Round counting, automatic turn advancement, status-duration countdowns, current-
 - NPCs are treated as living only when HP or marker evidence supports that conclusion. Missing or contradictory death evidence is reported for attention rather than guessed.
 - InitiativeAssist verifies the active initiative page after asynchronous modifier resolution and aborts without writing if the page changed.
 - InitiativeAssist verifies target-row priorities before applying a completed reroll and aborts without writing if another script or GM changed those targets in the meantime.
+- InitiativeAssist verifies the completed tracker write before announcing an individual result; a missing or rejected row produces an actionable retry message instead of a false success.
 - Batch sizes, group counts, group-name lengths, picker sizes, and custom die sizes use bounded policy values.
 
 ### Added – Coexistence controls and diagnostics
@@ -2416,7 +2421,7 @@ Round counting, automatic turn advancement, status-duration countdowns, current-
 
 - Expanded `README.md` with InitiativeAssist onboarding, commands, mixed-sheet behavior, player options, reroll preservation rules, configuration, compatibility guidance, macros, troubleshooting, upgrade steps, developer APIs, and the CombatAssist boundary.
 - Rebuilt `Smoketest.md` around v0.1.6.0 clean-install and v0.1.5.1-upgrade tracks, then added dedicated TurnTrackerService and InitiativeAssist component tests.
-- Added focused tests for mixed-sheet and unlabeled-sheet actors, pre-tracker page discovery, player-specific response routing, page-id and boolean tracker states, ambiguous multi-page refusal, empty-tracker page audits, duplicate entries, custom rows, counters, dead NPCs, off-page rows, player authorization, bonus dice, page changes, concurrent priority changes, Observer mode, service disable cascade, malformed tracker data, and audit handout output.
+- Added focused tests for mixed-sheet and unlabeled-sheet actors, pre-tracker page discovery and synchronization, player-specific response routing, detailed roll evidence, cumulative roll options, six score-aware narration ranges, GM-whispered reroll summaries, page-id and boolean tracker states, ambiguous multi-page refusal, empty-tracker page audits, duplicate entries, custom rows, counters, dead NPCs, off-page rows, player authorization, page changes, concurrent priority changes, Observer mode, service disable cascade, malformed tracker data, and audit handout output.
 - Updated `ROADMAP.md` with the completed implementation scope for Issue #47 and the deferred CombatAssist scope in Issue #48.
 - Updated `script.json` to advertise v0.1.6.0, list the InitiativeAssist command family, include v0.1.5.1 in `previousversions`, declare Turn Tracker and sheet-data access, and describe initiative conflicts in user-facing terms.
 - Preserved `GameAssist-v0.1.5.1` and added `previousversions/GameAssist v0.1.5.1` before generating the new versioned artifact.
@@ -2425,9 +2430,9 @@ Round counting, automatic turn advancement, status-duration countdowns, current-
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `E81E6F1B1E425ACBEA3E67EAA89D5C7943AF54B2AF4D0E6957BB4CB7F95B9FF4` |
-| `GameAssist.js` | `E81E6F1B1E425ACBEA3E67EAA89D5C7943AF54B2AF4D0E6957BB4CB7F95B9FF4` |
-| `GameAssist-v0.1.6.0` | `E81E6F1B1E425ACBEA3E67EAA89D5C7943AF54B2AF4D0E6957BB4CB7F95B9FF4` |
+| `GameAssist` | `6CF9877DA71B8C8FEA6439F2EF88C6028BBE31D04FD318FAC97013F22DA4DF89` |
+| `GameAssist.js` | `6CF9877DA71B8C8FEA6439F2EF88C6028BBE31D04FD318FAC97013F22DA4DF89` |
+| `GameAssist-v0.1.6.0` | `6CF9877DA71B8C8FEA6439F2EF88C6028BBE31D04FD318FAC97013F22DA4DF89` |
 | `previousversions/GameAssist v0.1.5.1` | `561B1FC1311F2F251F215BF7B85FB96AF6A6CCC19423732AFA275D164887B24C` |
 
 The development source, One-Click publication mirror, and v0.1.6.0 Roll20 test artifact are byte-identical. The preserved v0.1.5.1 previous-version artifact matches its recorded release hash.
@@ -2438,7 +2443,7 @@ The development source, One-Click publication mirror, and v0.1.6.0 Roll20 test a
 | --- | --- |
 | JavaScript parse/compile | Passed |
 | MECHSUITS hierarchy and metadata audit | Passed (24/24 declared and actual sections) |
-| InitiativeAssist focused harness | Passed (53/53) |
+| InitiativeAssist focused harness | Passed (67/67) |
 | ConditionAssist regression harness | Passed (35/35) |
 | TokenAssist regression harness | Passed (45/45) |
 | v0.1.5.0 integration/lifecycle regression | Passed (46/46) |
@@ -2449,4 +2454,4 @@ The development source, One-Click publication mirror, and v0.1.6.0 Roll20 test a
 
 ### Roll20 acceptance gate
 
-Automated verification is complete. Roll20 sandbox acceptance remains open for the clean-install and v0.1.5.1-upgrade tracks in `Smoketest.md`, including mixed 2014/2024 initiative, public player buttons, page resolution, `!Init-RR` preservation, Manager/Observer behavior, the four distinct user-facing screens, and coexistence checks with any other campaign script that reads or writes the Turn Tracker. Issue #47 remains open until those live checks pass.
+Automated verification is complete. The focused and established regression harnesses pass 216 checks in total. Roll20 sandbox acceptance remains open for the clean-install and v0.1.5.1-upgrade tracks in `Smoketest.md`, including the corrected pre-tracker row write, detailed roll presentation, cumulative options, score-aware narration, GM-whispered `!Init-RR` results, mixed 2014/2024 initiative, preservation, Manager/Observer behavior, the four distinct user-facing screens, and coexistence checks with any other campaign script that reads or writes the Turn Tracker. Issue #47 remains open until those live checks pass.

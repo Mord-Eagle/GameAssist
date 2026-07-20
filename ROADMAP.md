@@ -290,7 +290,8 @@ This major feature release introduces a rules-neutral Turn Tracker authority and
 - [x] Support mixed D&D 5E by Roll20 2014 and D&D 2024 by Roll20 characters in one tracker.
 - [x] Use asynchronous Beacon/Computed access for 2024 initiative and refuse unreadable data rather than silently substituting zero.
 - [x] Add direct and varied public initiative invitations with secure player Roll and Roll Options buttons.
-- [x] Add normal, advantage, disadvantage, one-die, and two-die options with compact common-die choices.
+- [x] Add a staged roll builder that combines normal/advantage/disadvantage, a bounded flat adjustment, and up to two bounded bonus dice.
+- [x] Show Roll20-exposed dice, the final total, and the complete formula, and select optional creative result wording from six score ranges.
 - [x] Add `!Init-RR` for every unique PC and living NPC already in the tracker.
 - [x] Preserve custom rows, counters, objects, dead NPCs, mismatches, stale/off-page entries, duplicate metadata, text priorities, and unknown fields outside owned reroll slots.
 - [x] Add selective PC/NPC/selected/individual/group rerolls, encounter groups, status, read-only audit handout, and Manager/Observer modes.
@@ -303,7 +304,7 @@ This major feature release introduces a rules-neutral Turn Tracker authority and
 
 Issue #47 is complete only when the Roll20 sandbox confirms mixed 2014/2024 initiative, public player controls, case-insensitive commands, exact preservation of non-owned rows, duplicate handling, dead/mismatch skips, Observer mode, service cascading, and audit output without regressions in established modules.
 
-**Current evidence:** JavaScript syntax passes and the internal InitiativeAssist harness passes 53/53 checks, including pre-tracker player rolls, player-specific response routing, page-id and boolean tracker-page resolution, ambiguous multi-page refusal, unlabeled 2014/2024 sheet-data probing, empty-tracker audits, preservation, and conflict handling. The first live Roll20 pass exposed boolean tracker-page incompatibility and unclear screen roles; both are corrected locally and require a focused sandbox retest before acceptance.
+**Current evidence:** JavaScript syntax passes and the internal InitiativeAssist harness passes 67/67 checks. The second live Roll20 pass confirmed the revised screen roles, then exposed an unsynchronized pre-tracker row, terse roll output, mutually exclusive option paths, and a public reroll summary. The candidate now synchronizes and verifies the tracker page and rows, displays dice/total/formula evidence, carries combined roll choices through the guided menus, selects optional narration by score range, and whispers reroll results to the GM. These corrections require a focused sandbox retest before acceptance.
 
 ---
 

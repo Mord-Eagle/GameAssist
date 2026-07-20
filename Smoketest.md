@@ -1213,7 +1213,7 @@ Pass when **Initiative Status Summary** clearly says the tracker is empty while 
 
 As the GM, run `!Init-Go`. In a separate player session that is **not logged in as a GM**, click **Roll Initiative**.
 
-Pass when the player can choose only linked tokens they control on the active encounter page and the chosen character is added to Turn Order with a numeric result. The token did not need an existing tracker row. Player-specific choices and setup warnings should be visible to the clicking player, not another ordinary player; the public invitation and completed result remain visible to the table. The player must not be able to roll an uncontrolled NPC or a token from another page.
+Pass when the player can choose only linked tokens they control on the active encounter page and the chosen character is added to Turn Order with a numeric result. The token did not need an existing tracker row. The result must show `Roll(s)`, the final total, and the complete formula, and the Turn Order row must still be present after the announcement. Player-specific choices and setup warnings should be visible to the clicking player, not another ordinary player; the public invitation and completed initiative result remain visible to the table. The player must not be able to roll an uncontrolled NPC or a token from another page.
 
 If the roll is refused, read the message literally: InitiativeAssist should distinguish a wrong tracker page, no object-layer tokens, no character linkage, and no player control instead of giving one generic failure.
 
@@ -1221,13 +1221,14 @@ If the roll is refused, read the message literally: InitiativeAssist should dist
 
 Click **Roll Options** and test:
 
-- Normal;
-- Advantage;
-- Disadvantage;
-- Add One Die using a common die button;
-- Add Two Dice using two sequential die choices.
+- Normal with no additions;
+- Advantage plus a positive or negative flat adjustment;
+- Disadvantage plus one common bonus die;
+- Advantage plus a flat adjustment and two sequential bonus-die choices.
 
-Pass when each workflow asks only for necessary choices, updates the selected character, and reports a clear result. A custom die must accept whole-number sides from 2 through 100 and refuse invalid input. Haste is not presented as a built-in initiative bonus.
+Pass when the options appear in a short sequence, every earlier choice remains visible in the later button commands, and the final roll combines all selected parts. The result must list the exposed dice, total, and complete formula. A custom die must accept whole-number sides from 2 through 100 and refuse invalid input. Haste is not presented as a built-in initiative bonus; the flat adjustment and generic dice exist for effects chosen by the table.
+
+For the playful result check, use `!Init-Go!` and repeat with temporary flat adjustments that place completed totals in the ranges **0-5**, **6-12**, **13-19**, **20-25**, **26-34**, and **35+**. Pass when the optional narration matches the degree of readiness. `!Init-Go` should remain neutral regardless of score.
 
 #### I5. Populate the Mixed Tracker and Reroll Everyone
 
@@ -1237,7 +1238,7 @@ Add the remaining 2014 PC/NPC and 2024 PC/NPC turns using InitiativeAssist or th
 !Init-RR
 ```
 
-Pass when every PC and living NPC rerolls, while the dead NPC, object token, and `Round Test` row keep the same values and exact positions. The command must not add every token from the page; it rerolls eligible characters already in the tracker.
+Pass when every PC and living NPC rerolls, while the dead NPC, object token, and `Round Test` row keep the same values and exact positions. The command must not add every token from the page; it rerolls eligible characters already in the tracker. The completed reroll summary must be whispered to the GM and include bounded per-character roll details rather than posting the whole reroll list publicly.
 
 This check also covers the Roll20 sessions that expose an open Turn Tracker as boolean `true`: the GM should not receive a false wrong-page message or a false **No eligible PCs or living NPCs** warning when all tracker tokens belong to this encounter page.
 
@@ -1305,6 +1306,7 @@ Record:
 - Roll20 sheet year and `charactersheetname` for each affected character;
 - token name, ID, page, layer, control, bar 1 HP, and death-marker state;
 - tracker JSON or screenshots before and after;
+- the displayed `Roll(s)` values, total, and formula;
 - Mod API server selection for 2024 characters;
 - other Mods that read or write turn order;
 - `!Init-Status`, `!Init-Audit`, `!ga-status --details`, and `!ga-config modules` results;

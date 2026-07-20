@@ -247,6 +247,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         initiative: Object.freeze({
             minCustomDieSize: 2,
             maxCustomDieSize: 100,
+            minAdjustment: -100,
+            maxAdjustment: 100,
+            flairBandMaximums: Object.freeze([5, 12, 19, 25, 34]),
             maxBatchTokens: 100,
             maxPickerTokens: 20,
             maxGroups: 20,
@@ -264,7 +267,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.6.0): Added bounded initiative batch, picker, group, custom-die, observer-suppression, and audit-handout policy; rollback: remove initiative policy with InitiativeAssist and TurnTrackerService.
+    // Changed (v0.1.6.0): Added bounded initiative batch, picker, group, custom-die, flat-adjustment, score-band, observer-suppression, and audit-handout policy; rollback: remove initiative policy with InitiativeAssist and TurnTrackerService.
     // Decision log:
     //   CHOICE: Offer common IANA zones plus validated custom input - ALT: fixed numeric offsets; REJECTED: fixed offsets do not follow daylight-saving changes.
     //   CHOICE: Keep NPC initialization and snapshot knobs centralized while removing the unused external marker delay - ALT: retain the dead setting; REJECTED: implied behavior no caller performs.
@@ -2074,7 +2077,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Roll20 native Turn Tracker authority
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:TURNTRACKERSERVICE", title: "TurnTrackerService",
-    //   guarantees: ["Single GameAssist authority for native turn-order parsing, page resolution, snapshots, guarded writes, and observations","Documented page ids and legacy boolean initiativepage values resolve without treating true as a token page id","Unknown fields, duplicate token occurrences, text priorities, and custom entries are preserved","Malformed, ambiguous, or stale tracker data is refused rather than replaced","Disabling the service leaves Roll20's native Turn Tracker unchanged"],
+    //   guarantees: ["Single GameAssist authority for native turn-order parsing, page resolution, snapshots, guarded writes, and observations","Documented page ids and legacy boolean initiativepage values resolve without treating true as a token page id","Compatibility-resolved pages are synchronized with turnorder in one campaign update and verified afterward","Unknown fields, duplicate token occurrences, text priorities, and custom entries are preserved","Malformed, ambiguous, or stale tracker data is refused rather than replaced","Disabling the service leaves Roll20's native Turn Tracker unchanged"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]"], provides: ["GameAssist.TurnTrackerService"],
     //   observability: { spans: ["[GAMEASSIST:CORE:TURNTRACKERSERVICE]"] },
     //   last_updated_version: "v0.1.6.0",
@@ -2333,9 +2336,20 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return { ok: true, changed: false, before, after: before, meta: result?.meta || null };
             }
 
+            const normalizePage = before.open && before.pageId && before.pageSource !== 'initiativepage';
+            const campaignUpdate = { turnorder: nextRaw };
+            if (normalizePage) campaignUpdate.initiativepage = before.pageId;
             pendingOwnWrite = { raw: nextRaw, expiresAt: now() + POLICY.initiative.ownWriteSuppressionMs };
-            Campaign().set('turnorder', nextRaw);
+            Campaign().set(campaignUpdate);
             const after = snapshot();
+            if (!after.ok || after.raw !== nextRaw || after.pageId !== before.pageId) {
+                pendingOwnWrite = null;
+                return failure(
+                    'UNAVAILABLE',
+                    'Roll20 did not retain the requested Turn Tracker page and rows. Reopen the tracker on the encounter page and try again.',
+                    { before, after, requestedRaw: nextRaw }
+                );
+            }
             notify({
                 type: 'turnorder',
                 source: 'gameassist',
@@ -2344,7 +2358,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 current: after,
                 timestamp: isoNow()
             });
-            return { ok: true, changed: true, before, after, meta: result?.meta || null };
+            return { ok: true, changed: true, normalizedPage: normalizePage, before, after, meta: result?.meta || null };
         }
 
         function observe(callback, options = {}) {
@@ -2373,11 +2387,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         return Object.freeze({ version, isEnabled, snapshot, classifyEntry, apply, observe, clearObservers });
     })();
     // --- Notes & Comments ---
-    // Changed (v0.1.6.0): Added toggleable native Turn Tracker snapshots, structural classification, revision guards, lossless single-write mutations, internal observations, and compatibility page resolution for both page-id and legacy boolean tracker state without initiative or combat rules.
+    // Changed (v0.1.6.0): Added toggleable native Turn Tracker snapshots, structural classification, revision guards, verified lossless single-update mutations, internal observations, and compatibility page resolution that synchronizes legacy boolean tracker state to the resolved page id without initiative or combat rules.
     // Decision log:
     //   CHOICE: Preserve unknown fields and custom rows verbatim - ALT: normalize tracker objects; REJECTED: external Mods and future Roll20 fields may rely on data GameAssist does not understand.
     //   CHOICE: Treat initiativepage as part of every revision - ALT: hash turnorder alone; REJECTED: the same token ids can be unsafe when the tracker page changes.
     //   CHOICE: Resolve boolean true from a unique tracker-token page, then the player ribbon page when the tracker is empty - ALT: treat "true" as an id or guess among multiple pages; REJECTED: both produce false off-page classifications or unsafe writes.
+    //   CHOICE: Synchronize a compatibility-resolved page id in the same campaign update as turnorder - ALT: retain boolean true after inference; REJECTED: Roll20 requires initiativepage and turnorder to describe the same page and may not display unsynchronized rows.
     //   CHOICE: Notify GameAssist observers after owned writes and suppress the matching Roll20 echo - ALT: rely on one event path; REJECTED: Mod-originated event behavior is not a stable cross-sandbox assumption.
     //   CHOICE: Refuse malformed JSON - ALT: replace it with an empty tracker; REJECTED: recovery must never destroy evidence or manually entered turns.
     // [GAMEASSIST:CORE:TURNTRACKERSERVICE] END
@@ -6771,7 +6786,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Native initiative workflow
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:INITIATIVEASSIST", title: "InitiativeAssist",
-    //   guarantees: ["Case-insensitive !Init- commands provide mixed 2014/2024 initiative without owning rounds or combat flow","!Init-RR rerolls each unique PC and living NPC once while preserving non-target tracker rows and fields","Player buttons revalidate token control and the normalized tracker page at execution time","Guide, Control Center, Status Summary, and Audit Handout each have one distinct user-facing purpose","Encounter groups remain page-scoped and can be renamed without changing tracker rows","Missing Beacon data, ambiguous character type, death-state disagreement, and stale tracker targets are skipped rather than guessed"],
+    //   guarantees: ["Case-insensitive !Init- commands provide mixed 2014/2024 initiative without owning rounds or combat flow","Initiative results show the exposed dice, total, and complete formula before announcing a successfully retained tracker row","D20 mode, bounded flat adjustment, and up to two bounded bonus dice compose in one guided roll","Optional creative results use bounded score bands while direct initiative calls remain neutral","!Init-RR rerolls each unique PC and living NPC once, whispers its result summary to the GM, and preserves non-target tracker rows and fields","Player buttons revalidate token control and the normalized tracker page at execution time","Guide, Control Center, Status Summary, and Audit Handout each have one distinct user-facing purpose","Encounter groups remain page-scoped and can be renamed without changing tracker rows","Missing Beacon data, ambiguous character type, death-state disagreement, and stale tracker targets are skipped rather than guessed"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   observability: { spans: ["[GAMEASSIST:MODULES:INITIATIVEASSIST]"] },
     //   last_updated_version: "v0.1.6.0",
@@ -6804,11 +6819,42 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             'Time to discover who acts first. Roll for initiative!'
         ]);
         const RESULT_LINES = Object.freeze([
-            name => `${name} springs into action`,
-            name => `${name} answers the call`,
-            name => `${name} finds an opening`,
-            name => `${name} is ready for what comes next`,
-            name => `${name} moves when the moment arrives`
+            Object.freeze([
+                name => `${name} appears to have missed the memo that combat has begun.`,
+                name => `${name} is still deciding whether this is really happening.`,
+                name => `${name} needs a moment to locate both the danger and their readiness.`,
+                name => `${name} looks surprised that everyone else has started moving.`
+            ]),
+            Object.freeze([
+                name => `${name} realizes the conversation has taken a sharper turn.`,
+                name => `${name} notices that this has, in fact, become a fight.`,
+                name => `${name} catches up with the sudden change in plans.`,
+                name => `${name} recognizes the danger and starts considering a response.`
+            ]),
+            Object.freeze([
+                name => `${name} braces as the encounter snaps into focus.`,
+                name => `${name} sets their stance and prepares for the first opening.`,
+                name => `${name} gathers themselves as battle begins.`,
+                name => `${name} squares up, ready for what comes next.`
+            ]),
+            Object.freeze([
+                name => `${name} springs into action at the first opening.`,
+                name => `${name} moves decisively as the encounter begins.`,
+                name => `${name} seizes the moment and enters the fray.`,
+                name => `${name} answers the danger without hesitation.`
+            ]),
+            Object.freeze([
+                name => `${name} is already moving before the danger fully registers.`,
+                name => `${name} has turned readiness into action almost immediately.`,
+                name => `${name} is in motion while everyone else is still reacting.`,
+                name => `${name} meets the opening moments already at full speed.`
+            ]),
+            Object.freeze([
+                name => `${name} has apparently acted before anyone else noticed combat began.`,
+                name => `${name} is already revising their battle plan while others discover there is a battle.`,
+                name => `${name} seems to have arrived several seconds ahead of the encounter.`,
+                name => `${name} has taken the initiative so literally that time itself looks negotiable.`
+            ])
         ]);
 
         function isManagerMode() {
@@ -7208,7 +7254,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: '1. Prepare', value: 'Move the player ribbon to the encounter page and open Roll20\'s Turn Tracker.' },
                 { label: '2. Invite Players', value: `${GameAssist.createButton('Invite Players', '!Init-Go')} posts Roll Initiative and Roll Options buttons in public chat. A character does not need to be in the tracker first.` },
                 { label: '3. Reroll Later', value: `${GameAssist.createButton('Reroll Everyone', '!Init-RR')} rerolls every eligible PC and living NPC already in the tracker. ${GameAssist.createButton('Choose Who', '!Init-RR-Menu')} handles smaller groups.` },
-                { label: 'Player Options', value: 'Normal, advantage, disadvantage, one extra die, or two extra dice. Extra dice use simple d4/d6/d8/d10/d12 buttons.' },
+                { label: 'Player Options', value: 'Choose normal, advantage, or disadvantage; then optionally add a flat adjustment and one or two bonus dice. Every choice combines into the same roll.' },
+                { label: 'Roll Results', value: 'Each result shows the dice Roll20 exposed, the final total, and the complete formula. Playful invitations also choose narration that fits the initiative score.' },
                 { label: 'Which Screen?', value: '<strong>Control Center</strong> has encounter buttons. <strong>Status Summary</strong> is a quick chat check. <strong>Audit Handout</strong> is the detailed read-only report.' },
                 { label: '2014 and 2024', value: 'Both Roll20 D&D 5E sheets are supported. The 2024 sheet may require Roll20\'s supported Experimental Mod API server.' },
                 { label: 'Safety', value: 'InitiativeAssist never advances turns, adds round counters, changes conditions, or runs combat timers.' },
@@ -7379,8 +7426,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             });
         }
 
-        function optionSuffix(args = {}) {
-            return args.flair ? ' --flair' : '';
+        function optionSuffix(args = {}, overrides = {}) {
+            const mode = rollMode(overrides.mode ?? args.mode);
+            const adjustmentInput = overrides.adjust ?? args.adjust;
+            const adjustment = validateAdjustment(adjustmentInput);
+            let suffix = ` --mode ${mode}`;
+            if (typeof adjustmentInput === 'string' && /^\?\{.+\}$/.test(adjustmentInput)) {
+                suffix += ` --adjust ${adjustmentInput}`;
+            } else if (adjustment !== null && adjustment !== 0) {
+                suffix += ` --adjust ${adjustment}`;
+            }
+            if (args.flair) suffix += ' --flair';
+            return suffix;
         }
 
         function chooseToken(msg, args, command) {
@@ -7425,13 +7482,49 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function showOptions(msg, args) {
             const choice = chooseToken(msg, args, '!Init-Options');
             if (!choice) return;
+            if (validateAdjustment(args.adjust) === null) {
+                warn(msg, `The flat adjustment must be a number from ${POLICY.initiative.minAdjustment} to ${POLICY.initiative.maxAdjustment}.`);
+                return;
+            }
             const tokenArg = `--token ${choice.token.id}`;
-            const suffix = optionSuffix(args);
             sendPanel('Initiative Roll Options', [
                 { label: 'Character', value: _sanitize(choice.token.get('name') || choice.character.get('name')) },
-                { label: 'D20 Roll', value: `${GameAssist.createButton('Normal', `!Init-Roll ${tokenArg}${suffix}`)} ${GameAssist.createButton('Advantage', `!Init-Roll ${tokenArg} --mode adv${suffix}`)} ${GameAssist.createButton('Disadvantage', `!Init-Roll ${tokenArg} --mode dis${suffix}`)}` },
-                { label: 'Bonus Dice', value: `${GameAssist.createButton('Add One Die', `!Init-Die1 ${tokenArg}${suffix}`)} ${GameAssist.createButton('Add Two Dice', `!Init-Die2A ${tokenArg}${suffix}`)}` },
-                { label: 'How Bonus Dice Work', value: 'Choose d4, d6, d8, d10, d12, or a custom number. Two dice are chosen one at a time.' }
+                { label: 'Step 1 - D20 Roll', value: `${GameAssist.createButton('Normal', `!Init-Bonus ${tokenArg}${optionSuffix(args, { mode: 'normal' })}`)} ${GameAssist.createButton('Advantage', `!Init-Bonus ${tokenArg}${optionSuffix(args, { mode: 'adv' })}`)} ${GameAssist.createButton('Disadvantage', `!Init-Bonus ${tokenArg}${optionSuffix(args, { mode: 'dis' })}`)}` },
+                { label: 'Next', value: 'Choose how the d20 is rolled. The next screen adds a flat adjustment and up to two bonus dice without losing this choice.' }
+            ], { msg });
+        }
+
+        function modeLabel(mode) {
+            if (mode === 'adv') return 'Advantage';
+            if (mode === 'dis') return 'Disadvantage';
+            return 'Normal';
+        }
+
+        function adjustmentLabel(adjustment) {
+            if (!adjustment) return 'None';
+            return adjustment > 0 ? `+${adjustment}` : String(adjustment);
+        }
+
+        function showBonusOptions(msg, args) {
+            const choice = chooseToken(msg, args, '!Init-Bonus');
+            if (!choice) return;
+            const adjustment = validateAdjustment(args.adjust);
+            if (adjustment === null) {
+                warn(msg, `The flat adjustment must be a number from ${POLICY.initiative.minAdjustment} to ${POLICY.initiative.maxAdjustment}.`);
+                return;
+            }
+            const tokenArg = `--token ${choice.token.id}`;
+            const suffix = optionSuffix({ ...args, adjust: adjustment });
+            const changeAdjustment = `!Init-Bonus ${tokenArg}${optionSuffix(args, { adjust: '?{Flat initiative adjustment|0}' })}`;
+            const resetAdjustment = adjustment === 0
+                ? ''
+                : ` ${GameAssist.createButton('Reset', `!Init-Bonus ${tokenArg}${optionSuffix(args, { adjust: 0 })}`)}`;
+            sendPanel('Initiative Roll Options', [
+                { label: 'Character', value: _sanitize(choice.token.get('name') || choice.character.get('name')) },
+                { label: 'D20 Roll', value: `<strong>${modeLabel(rollMode(args.mode))}</strong> ${GameAssist.createButton('Change', `!Init-Options ${tokenArg}${optionSuffix(args)}`)}` },
+                { label: 'Flat Adjustment', value: `<strong>${adjustmentLabel(adjustment)}</strong> ${GameAssist.createButton('Change', changeAdjustment)}${resetAdjustment}` },
+                { label: 'Bonus Dice', value: `${GameAssist.createButton('Roll Now', `!Init-Roll ${tokenArg}${suffix}`)} ${GameAssist.createButton('Add One Die', `!Init-Die1 ${tokenArg}${suffix}`)} ${GameAssist.createButton('Add Two Dice', `!Init-Die2A ${tokenArg}${suffix}`)}` },
+                { label: 'How It Works', value: 'Your d20 choice, flat adjustment, and bonus dice are combined into one initiative roll.' }
             ], { msg });
         }
 
@@ -7483,6 +7576,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return dice.some(die => die === null) ? null : dice;
         }
 
+        function validateAdjustment(value) {
+            if (value === true || value === undefined || value === null || value === '') return 0;
+            const parsed = numeric(value);
+            if (parsed === null || parsed < POLICY.initiative.minAdjustment || parsed > POLICY.initiative.maxAdjustment) return null;
+            return parsed;
+        }
+
         function rollMode(value) {
             const mode = String(value || 'normal').toLowerCase();
             if (['adv', 'advantage'].includes(mode)) return 'adv';
@@ -7490,11 +7590,34 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return 'normal';
         }
 
-        function buildFormula(modifier, mode, extras) {
+        function buildFormula(modifier, mode, extras, adjustment = 0) {
             const base = mode === 'adv' ? '2d20kh1' : (mode === 'dis' ? '2d20kl1' : '1d20');
-            const dice = extras.map(sides => `+1d${sides}`).join('');
-            const bonus = modifier >= 0 ? `+${modifier}` : String(modifier);
-            return `${base}${dice}${bonus}`;
+            const terms = [base, ...extras.map(sides => `1d${sides}`)];
+            if (modifier !== 0) terms.push(modifier);
+            if (adjustment !== 0) terms.push(adjustment);
+            return terms.reduce((formula, term, index) => {
+                if (index === 0) return String(term);
+                const value = numeric(term);
+                if (value !== null) return `${formula}${value >= 0 ? '+' : ''}${value}`;
+                return `${formula}+${term}`;
+            }, '');
+        }
+
+        function collectDiceResults(value, collected = []) {
+            if (Array.isArray(value)) {
+                value.forEach(item => collectDiceResults(item, collected));
+                return collected;
+            }
+            if (!value || typeof value !== 'object') return collected;
+            if (value.type === 'R' && Array.isArray(value.results)) {
+                value.results.forEach(result => {
+                    const rolled = numeric(result?.v);
+                    if (rolled !== null) collected.push(rolled);
+                });
+                return collected;
+            }
+            Object.values(value).forEach(item => collectDiceResults(item, collected));
+            return collected;
         }
 
         function rollFormula(formula) {
@@ -7506,9 +7629,22 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         reject(new Error('Roll20 did not return a numeric initiative result.'));
                         return;
                     }
-                    resolve({ total, formula });
+                    resolve({
+                        total,
+                        formula: String(inline?.expression || formula),
+                        rolls: collectDiceResults(inline?.results?.rolls)
+                    });
                 });
             });
+        }
+
+        function displayFormula(formula) {
+            return String(formula || '').replace(/([+-])/g, ' $1 ').replace(/\s+/g, ' ').trim();
+        }
+
+        function formatRollSummary(rolled) {
+            const values = rolled.rolls.length ? rolled.rolls.join(', ') : 'not exposed by Roll20';
+            return `Roll(s) ${_sanitize(values)} &rarr; <strong>${_sanitize(rolled.total)}</strong> (from ${_sanitize(displayFormula(rolled.formula))})`;
         }
 
         function priorityList(entries, tokenId) {
@@ -7543,13 +7679,22 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             );
         }
 
-        function announceRoll(token, total, flair, msg) {
-            const name = _sanitize(token.get('name') || getObj('character', String(token.get('represents') || ''))?.get('name') || 'A character');
-            const line = flair ? RESULT_LINES[Math.floor(Math.random() * RESULT_LINES.length)](name) : `${name} rolls initiative`;
+        function flairLine(name, total) {
+            const band = POLICY.initiative.flairBandMaximums.findIndex(maximum => total <= maximum);
+            const choices = RESULT_LINES[band === -1 ? RESULT_LINES.length - 1 : band];
+            return choices[Math.floor(Math.random() * choices.length)](name);
+        }
+
+        function announceRoll(token, rolled, flair, msg) {
+            const rawName = token.get('name') || getObj('character', String(token.get('represents') || ''))?.get('name') || 'A character';
+            const name = _sanitize(rawName);
             const hidden = token.get('layer') === 'gmlayer';
-            sendPanel('Initiative Result', [
-                { label: 'Result', value: `${line}: <strong>${_sanitize(total)}</strong>` }
-            ], { msg, publicMessage: !hidden, gmOnly: hidden });
+            const fields = [
+                { label: 'Character', value: name },
+                { label: 'Result', value: formatRollSummary(rolled) }
+            ];
+            if (flair) fields.push({ label: 'Moment', value: _sanitize(flairLine(rawName, rolled.total)) });
+            sendPanel('Initiative Roll', fields, { msg, publicMessage: !hidden, gmOnly: hidden });
         }
 
         async function rollToken(msg, args) {
@@ -7570,8 +7715,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 warn(msg, `Bonus dice must be whole-number sizes from ${POLICY.initiative.minCustomDieSize} to ${POLICY.initiative.maxCustomDieSize}.`);
                 return;
             }
+            const adjustment = validateAdjustment(args.adjust);
+            if (adjustment === null) {
+                warn(msg, `The flat adjustment must be a number from ${POLICY.initiative.minAdjustment} to ${POLICY.initiative.maxAdjustment}.`);
+                return;
+            }
             const mode = rollMode(args.mode);
-            const formula = buildFormula(actor.initiativeModifier, mode, extras);
+            const formula = buildFormula(actor.initiativeModifier, mode, extras, adjustment);
             const initialRoster = await classifyRoster(choice.snapshot);
             const safeSortIds = new Set(initialRoster.rows.filter(row => row.eligible).map(row => row.id));
             safeSortIds.add(choice.token.id);
@@ -7604,7 +7754,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 warn(msg, result.message || 'The tracker changed before the roll could be saved. Please try again.');
                 return;
             }
-            announceRoll(choice.token, rolled.total, Boolean(args.flair), msg);
+            const storedRows = result.after.entries.filter(entry => String(entry?.id || '') === choice.token.id);
+            if (!storedRows.length || storedRows.some(entry => String(entry.pr ?? '') !== String(rolled.total))) {
+                warn(msg, 'Roll20 returned an initiative result, but the Turn Tracker did not retain it. Reopen the tracker on the encounter page and try again.');
+                return;
+            }
+            announceRoll(choice.token, rolled, Boolean(args.flair), msg);
         }
 
         function callForInitiative(msg, flair) {
@@ -7649,9 +7804,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             byToken.forEach((row, tokenId) => initialPriorities.set(tokenId, priorityList(snapshot.entries, tokenId)));
             const rolls = await Promise.all(Array.from(byToken.entries()).map(async ([tokenId, row]) => {
                 const result = await rollFormula(buildFormula(row.modifier, 'normal', []));
-                return [tokenId, result.total];
+                return [tokenId, result];
             }));
-            const totals = new Map(rolls);
+            const rolledByToken = new Map(rolls);
+            const totals = new Map(rolls.map(([tokenId, rolled]) => [tokenId, rolled.total]));
             const result = GameAssist.TurnTrackerService.apply((entries, current) => {
                 if (current.pageId !== snapshot.pageId) {
                     throw new Error('The active initiative page changed while the reroll was resolving. No reroll was saved; try again.');
@@ -7677,18 +7833,29 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     indices.push(index);
                 });
                 sortRowsInSlots(entries, indices);
-                return { entries, meta: { count: activeTargets.size } };
+                return { entries, meta: { count: activeTargets.size, tokenIds: Array.from(activeTargets) } };
             }, { label: 'Initiative reroll' });
             if (!result.ok) {
                 warn(msg, result.message || 'The tracker changed before the reroll could be saved. Please try again.');
                 return;
             }
-            const updated = Number(result.meta?.count || byToken.size);
+            const reportedCount = Number(result.meta?.count);
+            const updated = Number.isFinite(reportedCount) ? reportedCount : byToken.size;
+            const updatedIds = Array.isArray(result.meta?.tokenIds) ? result.meta.tokenIds : Array.from(byToken.keys());
+            const resultLines = updatedIds.slice(0, POLICY.initiative.statusChatLimit).map(tokenId => {
+                const row = byToken.get(tokenId);
+                const rolled = rolledByToken.get(tokenId);
+                return `<strong>${_sanitize(row?.label || tokenId)}</strong>: ${formatRollSummary(rolled)}`;
+            });
+            if (updatedIds.length > resultLines.length) {
+                resultLines.push(`+${updatedIds.length - resultLines.length} more; open Initiative Status for the complete tracker.`);
+            }
             sendPanel('Initiative Rerolled', [
                 { label: 'Updated', value: `${updated} character${updated === 1 ? '' : 's'}` },
+                { label: 'Results', value: resultLines.length ? resultLines.join('<br>') : 'No eligible rows remained when the rolls completed.' },
                 { label: 'Preserved', value: 'Custom rows, counters, objects, dead NPCs, and attention rows stayed in place.' },
                 { label: 'Actions', value: `${GameAssist.createButton('Reroll Choices', '!Init-RR-Menu')} ${GameAssist.createButton('Status', '!Init-Status')}` }
-            ], { publicMessage: true });
+            ], { msg, gmOnly: true });
             const skipped = roster.rows.filter(row => !row.eligible && (row.actorType === 'pc' || row.actorType === 'npc' || row.actorType === 'character-attention'));
             if (skipped.length) {
                 sendPanel('Initiative Attention', [{
@@ -7838,6 +8005,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 case '!init-options':
                     if (requireManager(msg)) showOptions(msg, args);
                     return;
+                case '!init-bonus':
+                    if (requireManager(msg)) showBonusOptions(msg, args);
+                    return;
                 case '!init-die1':
                     if (requireManager(msg)) showDieOne(msg, args);
                     return;
@@ -7911,14 +8081,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => GameAssist.TurnTrackerService.clearObservers('InitiativeAssist')
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.6.0): Added mixed D&D 2014/2024 initiative adapters with unlabeled-sheet probing, the case-insensitive !Init- command family, player-specific responses, pre-tracker controlled-token discovery, normalized tracker-page handling, distinct Guide/Control Center/Status Summary/Audit Handout surfaces, bounded roll options, page-scoped renameable encounter groups, and preservation-first rerolls through TurnTrackerService.
+    // Changed (v0.1.6.0): Added mixed D&D 2014/2024 initiative adapters with unlabeled-sheet probing, the case-insensitive !Init- command family, player-specific responses, pre-tracker controlled-token discovery, synchronized tracker-page handling, detailed roll evidence, composable d20/flat-adjustment/bonus-die options, score-banded optional flair, GM-whispered reroll summaries, distinct Guide/Control Center/Status Summary/Audit Handout surfaces, page-scoped renameable encounter groups, and preservation-first rerolls through TurnTrackerService.
     // Decision log:
     //   CHOICE: Start disabled but default to Manager mode once deliberately enabled - ALT: require a second ownership toggle; REJECTED: unnecessary setup friction after explicit module enablement.
     //   CHOICE: Roll once per unique token and update duplicate occurrences consistently - ALT: roll every duplicate separately; REJECTED: duplicate turns still represent one character unless a later feature explicitly says otherwise.
     //   CHOICE: Sort only inside owned character slots - ALT: globally sort every tracker row; REJECTED: custom counters and external entries must not move.
-    //   CHOICE: Use a compact GameAssist result when exact native &{tracker} targeting is uncertain - ALT: risk Roll20 selecting a different represented token; REJECTED: presentation cannot outrank tracker correctness.
+    //   CHOICE: Show Roll20's exposed dice, total, and complete formula after verifying the saved tracker row - ALT: announce only the total before checking persistence; REJECTED: a convincing chat result must not conceal a failed Turn Tracker write.
     //   CHOICE: Keep rerolls manual in 1.0.0 - ALT: automatic round-boundary policies; REJECTED: round ownership belongs to deferred CombatAssist.
-    //   CHOICE: Use generic extra-die controls - ALT: encode spell and feature rules; REJECTED: campaign effects vary and Haste does not grant base-rules initiative dice.
+    //   CHOICE: Stage d20 mode, flat adjustment, and generic extra-die controls while carrying every prior choice forward - ALT: make these mutually exclusive or encode named spell and feature rules; REJECTED: campaign effects can combine and their rules vary.
+    //   CHOICE: Select optional result prose from score bands - ALT: use one unrelated random pool; REJECTED: the narration should fit the actual degree of readiness.
     // [GAMEASSIST:MODULES:INITIATIVEASSIST] END
     // =============================================================================
 

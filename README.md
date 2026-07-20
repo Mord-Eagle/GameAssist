@@ -67,7 +67,7 @@ GameAssist’s kernel and bundled modules expose:
 * **TurnTrackerService** – `GameAssist.TurnTrackerService` reads, classifies, observes, and safely writes Roll20's native Turn Tracker while preserving custom entries, unknown fields, duplicate token turns, text priorities, and rows owned by other tools. Disabling it leaves the tracker unchanged and turns off InitiativeAssist.
 * **ConditionAssist** – supplies 2014 SRD condition wording by default, optional 2024 SRD wording, campaign-editable descriptions, case-insensitive `!cond-<condition>` quick references, marker artwork, an accurate selected-token menu, a GM current-page condition/marker status roster, verified marker-toggling announcements in public chat or player whispers, add/remove/toggle commands, guarded player permissions, and marker-change descriptions. Every condition marker operation and observation goes through MarkerService.
 * **TokenAssist** – provides general token controls through `!token-assist` and `!ta`/`!ta-*`, explicit-ID permissions, token-change observers, and MarkerService-backed status operations. Older supported `!token-mod` macros continue temporarily during v0.1.x and are not processed by GameAssist when standalone TokenMod is detected.
-* **InitiativeAssist** – provides the case-insensitive `!Init-` command family for D&D 5E 2014 and 2024 characters, public player invitations, normal/advantage/disadvantage and bonus-die rolls, selective rerolls, encounter groups, audits, and preservation-first `!Init-RR`. It does not advance turns, count rounds, run timers, or automate combat flow.
+* **InitiativeAssist** – provides the case-insensitive `!Init-` command family for D&D 5E 2014 and 2024 characters, public player invitations, composable roll options, detailed dice/formula results, score-aware optional narration, selective rerolls, encounter groups, audits, and preservation-first `!Init-RR`. It does not advance turns, count rounds, run timers, or automate combat flow.
 * **MECHSUITS Structure** – the executable script uses the literal codename `GAMEASSIST`, framed sections, file-scoped canonical tree metadata, and per-section change notes.
 
 **Design goal:** useful, inspectable campaign automation that reports failures clearly and can be upgraded incrementally.
@@ -405,7 +405,9 @@ Start here:
 !Init-Go
 ```
 
-All `!Init-` commands are case-insensitive. `!Init-Go` posts a direct public call for initiative; `!Init-Go!` uses a rotating set of light encounter announcements. Both include **Roll Initiative** and **Roll Options** buttons. A player's controlled, linked token does not need to be in Turn Order first: InitiativeAssist finds it on the active encounter page and adds it after the roll. Private choices and warnings are whispered to the player who clicked the button; the invitation and completed initiative result remain public. The options menu offers normal, advantage, disadvantage, one bonus die, or two bonus dice. Common die buttons avoid typing; custom dice accept whole-number sides from 2 to 100.
+All `!Init-` commands are case-insensitive. `!Init-Go` posts a direct public call for initiative; `!Init-Go!` uses a rotating set of light encounter announcements. Both include **Roll Initiative** and **Roll Options** buttons. A player's controlled, linked token does not need to be in Turn Order first: InitiativeAssist finds it on the active encounter page, synchronizes Roll20's tracker page when required, saves the new row, verifies it, and only then announces the result. Private choices and warnings are whispered to the player who clicked the button; the invitation and completed initiative result remain public.
+
+**Roll Options are cumulative.** First choose normal, advantage, or disadvantage. Then optionally add a flat adjustment and zero, one, or two bonus dice. Common die buttons avoid typing; custom dice accept whole-number sides from 2 to 100. The result shows every die Roll20 exposes, the final total, and the complete formula. Results requested through `!Init-Go!` also receive varied narration selected from six score ranges, from being caught unready at 5 or less to appearing to act before combat began at 35 or more. `!Init-Go` remains neutral and direct.
 
 The in-game screens have separate jobs: the **Guide** teaches the workflow, the **Control Center** contains encounter actions, the **Status Summary** provides a quick chat check, and the **Audit Handout** keeps the detailed read-only roster.
 
@@ -415,7 +417,7 @@ GM commands:
 * `!Init-Help` → Open the InitiativeAssist Guide.
 * `!Init-Status` → Open the quick Status Summary for PCs, NPCs, preserved rows, and items needing attention.
 * `!Init-Go` / `!Init-Go!` → Invite players to roll, with direct or varied wording.
-* `!Init-RR` → Reroll every unique PC and living NPC already in the tracker.
+* `!Init-RR` → Reroll every unique PC and living NPC already in the tracker, then whisper the bounded result summary to the GM.
 * `!Init-RR-Menu` → Reroll only PCs, living NPCs, selected tokens, one character, or a saved encounter group.
 * `!Init-Group` → Create, review, rename, reroll, or remove page-scoped encounter groups built from selected tracker tokens.
 * `!Init-Audit` → Update the detailed, read-only `GameAssist Initiative Audit` handout with both current tracker rows and linked character tokens available on the tracker page.
@@ -628,7 +630,7 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!ga-enable <ModuleOrService>` / `!ga-disable <ModuleOrService>` | — | Enable or disable a module or core service; names are case-insensitive. |
 | **Initiative** | `!Init-Menu` / `!Init-Help` / `!Init-Status` | — | Open InitiativeAssist controls, guidance, or the current native-tracker summary. |
 |  | `!Init-Go` / `!Init-Go!` | — | Publicly invite players to roll; the exclamation form varies the announcement. |
-|  | `!Init-Roll` / `!Init-Options` | `[--token ID] [--mode normal\|adv\|dis] [--extra die[,die]]` | Roll an authorized linked token with guarded initiative options. Buttons normally build these commands. |
+|  | `!Init-Roll` / `!Init-Options` | `[--token ID] [--mode normal\|adv\|dis] [--adjust number] [--extra die[,die]]` | Roll an authorized linked token. The guided options combine d20 mode, a bounded flat adjustment, and up to two bounded bonus dice. |
 |  | `!Init-RR` | — | Reroll every unique eligible PC and living NPC already in the tracker while preserving other rows. |
 |  | `!Init-RR-Menu` | — | Open PC, NPC, selected-token, individual, and saved-group reroll choices. |
 |  | `!Init-Group` | `[--create "Name"] [--rename ID --name "Name"] [--remove ID]` | Manage page-scoped encounter groups from selected tracker tokens. |
@@ -1137,7 +1139,7 @@ Select disposable tokens first. The first command opens the guide; the remaining
 !Init-Audit
 ```
 
-Use these only after opening Roll20's Turn Tracker on the encounter page. `!Init-RR` rerolls PCs and living NPCs already in that tracker; it does not add every page token or change custom counters.
+Use these only after opening Roll20's Turn Tracker on the encounter page. `!Init-RR` rerolls PCs and living NPCs already in that tracker, whispers the result list to the GM, and does not add every page token or change custom counters.
 
 `!Init-Help` opens instructions, `!Init-Menu` opens the action-focused Control Center, `!Init-Status` gives a quick chat summary, and `!Init-Audit` writes the detailed read-only handout.
 
@@ -1391,7 +1393,7 @@ Confirm Roll20's Turn Tracker is open on the intended encounter page and Initiat
 
 TurnTrackerService accepts both the normal Roll20 tracker page id and the open-tracker boolean used by some campaign sessions. With an empty tracker it uses the Player Ribbon page; with existing turns it identifies the single page containing those token rows. It refuses to guess if tracker tokens genuinely span multiple pages.
 
-The audit handout separates current Turn Tracker rows from linked characters found on the tracker page. It explains rows skipped because they are custom entries, objects, dead NPCs, off-page tokens, stale references, unsupported sheet data, HP/death-marker mismatches, or characters whose initiative data cannot be read. InitiativeAssist also probes compatible 2014 attributes or 2024 Beacon data when Roll20 omits or changes the character's sheet label.
+The audit handout separates current Turn Tracker rows from linked characters found on the tracker page. It explains rows skipped because they are custom entries, objects, dead NPCs, off-page tokens, stale references, unsupported sheet data, HP/death-marker mismatches, or characters whose initiative data cannot be read. InitiativeAssist also probes compatible 2014 attributes or 2024 Beacon data when Roll20 omits or changes the character's sheet label. If chat shows a completed result but the token is absent from Turn Order, reopen the Turn Tracker on the encounter page and retry; GameAssist now verifies both the saved row and tracker-page identity before reporting success.
 
 For D&D 2024 characters, use Roll20's supported Experimental Mod API server when Beacon computed data is unavailable. InitiativeAssist deliberately leaves an unreadable 2024 row unchanged rather than rolling with zero. For coexistence with another initiative or combat manager, use `!Init-Mode observer` and let only one tool write initiative values.
 
