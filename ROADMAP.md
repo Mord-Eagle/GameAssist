@@ -1,8 +1,8 @@
 # GameAssist Development Roadmap
 
-This roadmap records the transition from GameAssist's standalone-dependency `v0.1.4.x` line to the integrated `v0.1.5.0` marker, token, and condition architecture, followed by focused `v0.1.5.x` improvements.
+This roadmap records the transition from GameAssist's standalone-dependency `v0.1.4.x` line to the integrated `v0.1.5.x` marker, token, condition, and timezone architecture, followed by the native initiative foundation in `v0.1.6.0`.
 
-Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation notes, discoveries, and checklists. The umbrella tracker is [Issue #29](https://github.com/Mord-Eagle/GameAssist/issues/29).
+Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation notes, discoveries, and checklists. Issue #29 remains the completed integrated-architecture gate; current initiative work is tracked by [Issue #47](https://github.com/Mord-Eagle/GameAssist/issues/47).
 
 > The roadmap is a maintained plan, not a promise of dates. Issues #25 through #29 are development checkpoints within one release train; none is an intermediate public release.
 
@@ -29,6 +29,7 @@ Use this document for durable release boundaries, sequencing, and completion gat
 5. **ConditionAssist owns condition guidance.** It preserves supported `!condition` workflows while using MarkerService for marker behavior.
 6. **Attribution and license notices are mandatory.** TokenAssist and ConditionAssist preserve applicable MIT notices, authorship, upstream baselines, and adapted portions.
 7. **Roll20 is the final compatibility test.** Syntax checks and local reasoning are necessary but cannot replace sandbox smoke tests.
+8. **Initiative and combat remain separate responsibilities.** TurnTrackerService owns safe native-tracker mechanics, InitiativeAssist owns initiative calculation and reroll UX, and deferred CombatAssist will own rounds, turns, timers, and encounter flow.
 
 ---
 
@@ -48,6 +49,8 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | v0.1.5.0 release gate | Complete | [#29](https://github.com/Mord-Eagle/GameAssist/issues/29) | Attribution, documentation, metadata, artifact identity, automated checks, review, and full Roll20 acceptance are complete. |
 | Marker-registry lookup verification | Complete | [#32](https://github.com/Mord-Eagle/GameAssist/issues/32) | MarkerService prefers documented `token_markers`, falls back to `_token_markers`, and keeps built-ins and exact stored tags independent of registry parsing. |
 | DM-configurable timezone | Complete | [#35](https://github.com/Mord-Eagle/GameAssist/issues/35) | v0.1.5.1 adds one validated DM timezone for human-facing timestamps and date-based Session rollover while preserving absolute stored timestamps. The focused Roll20 timezone workflow passed; the complete live module suite was not rerun. |
+| Native Turn Tracker and initiative foundation | Sandbox verification | [#47](https://github.com/Mord-Eagle/GameAssist/issues/47) | v0.1.6.0 adds TurnTrackerService 1.0.0 and disabled-by-default InitiativeAssist 1.0.0 for mixed 2014/2024 initiative, player invitations, selective rerolls, groups, status, and audits. Local acceptance passes; live Roll20 acceptance is pending. |
+| CombatAssist encounter flow | Deferred | [#48](https://github.com/Mord-Eagle/GameAssist/issues/48) | Design rounds, turns, durations, end-of-turn controls, and encounter lifecycle only after Issue #47 passes in Roll20. |
 
 ---
 
@@ -274,6 +277,44 @@ Issue #35 is complete when Roll20 accepts a real named timezone, shows the corre
 
 ---
 
+## Phase 7: Native Initiative Foundation in `v0.1.6.0`
+
+**Tracking:** [Issue #47](https://github.com/Mord-Eagle/GameAssist/issues/47)
+
+This major feature release introduces a rules-neutral Turn Tracker authority and a DM-facing initiative module without taking ownership of rounds or combat flow.
+
+### Checklist
+
+- [x] Add toggleable TurnTrackerService 1.0.0 with immutable snapshots, structural classification, revision guards, lossless writes, and observations.
+- [x] Add disabled-by-default InitiativeAssist 1.0.0 with a literal, case-insensitive `!Init-` command family.
+- [x] Support mixed D&D 5E by Roll20 2014 and D&D 2024 by Roll20 characters in one tracker.
+- [x] Use asynchronous Beacon/Computed access for 2024 initiative and refuse unreadable data rather than silently substituting zero.
+- [x] Add direct and varied public initiative invitations with secure player Roll and Roll Options buttons.
+- [x] Add normal, advantage, disadvantage, one-die, and two-die options with compact common-die choices.
+- [x] Add `!Init-RR` for every unique PC and living NPC already in the tracker.
+- [x] Preserve custom rows, counters, objects, dead NPCs, mismatches, stale/off-page entries, duplicate metadata, text priorities, and unknown fields outside owned reroll slots.
+- [x] Add selective PC/NPC/selected/individual/group rerolls, encounter groups, status, read-only audit handout, and Manager/Observer modes.
+- [x] Add initiative/combat-manager overlap diagnostics and document one-writer responsibility.
+- [x] Add deterministic local mixed-sheet, permission, preservation, malformed-data, async-conflict, lifecycle, and audit checks.
+- [ ] Complete the dedicated Roll20 clean-install and upgrade acceptance tracks.
+- [ ] Resolve review findings, verify release artifacts, and close Issue #47.
+
+### Completion Gate
+
+Issue #47 is complete only when the Roll20 sandbox confirms mixed 2014/2024 initiative, public player controls, case-insensitive commands, exact preservation of non-owned rows, duplicate handling, dead/mismatch skips, Observer mode, service cascading, and audit output without regressions in established modules.
+
+**Current evidence:** JavaScript syntax passes and the internal InitiativeAssist harness passes 34/34 checks. Live Roll20 sandbox acceptance remains pending.
+
+---
+
+## Phase 8: Deferred CombatAssist
+
+**Tracking:** [Issue #48](https://github.com/Mord-Eagle/GameAssist/issues/48)
+
+CombatAssist is intentionally deferred until TurnTrackerService and InitiativeAssist pass live acceptance. It will evaluate encounter start/pause/resume/end, rounds, turn advancement, duration countdowns, end-of-turn controls, current-turn visuals, and integrations with conditions and encounter history. These responsibilities do not move into InitiativeAssist.
+
+---
+
 ## Post-v0.1.5.0 TokenAssist Expansion
 
 These items extend TokenAssist after the integrated v0.1.5.0 architecture is stable. They do not block Issues #28 or #29.
@@ -287,7 +328,7 @@ TokenAssist will continue to use its own help and `GameAssist.TokenAssist` API. 
 
 ---
 
-## Target `v0.1.5.0` Architecture
+## Current `v0.1.6.0` Architecture
 
 ```text
 [GAMEASSIST]/
@@ -299,6 +340,7 @@ TokenAssist will continue to use its own help and `GameAssist.TokenAssist` API. 
 │  ├─ [GAMEASSIST:CORE:COMPAT]
 │  ├─ [GAMEASSIST:CORE:STATE]
 │  ├─ [GAMEASSIST:CORE:MARKERSERVICE]
+│  ├─ [GAMEASSIST:CORE:TURNTRACKERSERVICE]
 │  └─ [GAMEASSIST:CORE:OBJECT]
 ├─ [GAMEASSIST:INTERFACES]
 │  ├─ [GAMEASSIST:INTERFACES:EVENTS]
@@ -308,6 +350,7 @@ TokenAssist will continue to use its own help and `GameAssist.TokenAssist` API. 
 │  ├─ [GAMEASSIST:MODULES:CRITFUMBLE]
 │  ├─ [GAMEASSIST:MODULES:CONDITIONASSIST]
 │  ├─ [GAMEASSIST:MODULES:TOKENASSIST]
+│  ├─ [GAMEASSIST:MODULES:INITIATIVEASSIST]
 │  ├─ [GAMEASSIST:MODULES:NPCMANAGER]
 │  ├─ [GAMEASSIST:MODULES:CONCENTRATIONTRACKER]
 │  ├─ [GAMEASSIST:MODULES:NPCHPROLLER]
