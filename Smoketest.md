@@ -1180,6 +1180,7 @@ Pass when:
 - `!Init-Status` opens **Initiative Status Summary**, a concise chat snapshot rather than a full audit;
 - both Go commands make a public **Roll for Initiative** announcement;
 - the announcements include **Roll Initiative** and **Roll Options** buttons;
+- the GM separately receives **GM Initiative Roster**, listing current-page PCs and NPCs with **Roll Everyone** and **Roll All NPCs** controls;
 - `!Init-Go` uses direct wording and `!Init-Go!` uses varied wording;
 - commands also work with different capitalization, such as `!iNiT-sTaTuS`.
 
@@ -1198,7 +1199,7 @@ Put these disposable tokens on one page, open Roll20's Turn Tracker on that page
 
 The 2024 characters may require Roll20's supported Experimental Mod API server. Do not pre-populate the tracker or add the later `Round Test` custom row yet; the first checks prove InitiativeAssist can find a player's token before initiative exists.
 
-#### I2. Empty Tracker, Status Summary, and Audit Handout
+#### I2. Empty Tracker, Status Summary, and Detailed Review
 
 Run:
 
@@ -1207,13 +1208,13 @@ Run:
 !Init-Audit
 ```
 
-Pass when **Initiative Status Summary** clearly says the tracker is empty while reporting linked characters available on the encounter page. `!Init-Audit` should report **Initiative Audit Handout Updated**. Open `GameAssist Initiative Audit`; it should contain an empty Turn Tracker section and a separate list of the linked page characters it found. Neither command should add or change a turn.
+Pass when **Initiative Status Summary** clearly says the tracker is empty while reporting linked characters available on the encounter page. `!Init-Audit` should whisper the GM an **Initiative Review** with an empty Turn Tracker section and a separate list of linked page characters not yet in Turn Order. Neither command should add or change a turn, and no InitiativeAssist handout should be created.
 
 #### I3. Player Invitation, Recipient, and Pre-Tracker Roll
 
-As the GM, run `!Init-Go`. In a separate player session that is **not logged in as a GM**, click **Roll Initiative**.
+As the GM, run `!Init-Go`. Confirm the public invitation is followed by a private **GM Initiative Roster** containing the PCs and NPCs from the encounter page. In a separate player session that is **not logged in as a GM**, click **Roll Initiative**.
 
-Pass when the player can choose only linked tokens they control on the active encounter page and the chosen character is added to Turn Order with a numeric result. The token did not need an existing tracker row. The result must show `Roll(s)`, the final total, and the complete formula, and the Turn Order row must still be present after the announcement. Player-specific choices and setup warnings should be visible to the clicking player, not another ordinary player; the public invitation and completed initiative result remain visible to the table. The player must not be able to roll an uncontrolled NPC or a token from another page.
+Pass when the player can choose only linked tokens they control on the active encounter page and the chosen character becomes a visible Turn Order row with a numeric result. The token did not need an existing tracker row or a Roll20 macro. The result must show `Roll(s)`, the final total, and the complete formula, and the Turn Order row must still be visible after the announcement. Player-specific choices and setup warnings should be visible to the clicking player, not another ordinary player; the public invitation and completed initiative result remain visible to the table. The player must not be able to roll an uncontrolled NPC or a token from another page.
 
 If the roll is refused, read the message literally: InitiativeAssist should distinguish a wrong tracker page, no object-layer tokens, no character linkage, and no player control instead of giving one generic failure.
 
@@ -1226,13 +1227,15 @@ Click **Roll Options** and test:
 - Disadvantage plus one common bonus die;
 - Advantage plus a flat adjustment and two sequential bonus-die choices.
 
-Pass when the options appear in a short sequence, every earlier choice remains visible in the later button commands, and the final roll combines all selected parts. The result must list the exposed dice, total, and complete formula. A custom die must accept whole-number sides from 2 through 100 and refuse invalid input. Haste is not presented as a built-in initiative bonus; the flat adjustment and generic dice exist for effects chosen by the table.
+Pass when the options appear in a short sequence, every earlier choice remains visible in the later button commands, and the final roll combines all selected parts. Advantage and disadvantage must show both d20 results, followed by any bonus dice, the final total, and the complete formula. A custom die must accept whole-number sides from 2 through 100 and refuse invalid input. Haste is not presented as a built-in initiative bonus; the flat adjustment and generic dice exist for effects chosen by the table.
 
 For the playful result check, use `!Init-Go!` and repeat with temporary flat adjustments that place completed totals in the ranges **0-5**, **6-12**, **13-19**, **20-25**, **26-34**, and **35+**. Pass when the optional narration matches the degree of readiness. `!Init-Go` should remain neutral regardless of score.
 
 #### I5. Populate the Mixed Tracker and Reroll Everyone
 
-Add the remaining 2014 PC/NPC and 2024 PC/NPC turns using InitiativeAssist or their normal sheet rolls. Add the dead NPC, unlinked object token, and a custom row named `Round Test` without changing the disposable setup described above. Record the complete order and values, then run:
+Return to the GM roster created by `!Init-Go` and click **Roll Everyone**. Pass when every eligible PC and living NPC on the encounter page is added or updated in Turn Order, while the dead NPC and unlinked object remain absent. Record one PC's score, then run `!Init-Go` again and click **Roll All NPCs**; pass when eligible NPCs change and that PC keeps the recorded score.
+
+Now add the dead NPC, unlinked object token, and a custom row named `Round Test` through Roll20's normal tracker controls. Record the complete order and values, then run:
 
 ```roll20chat
 !Init-RR
@@ -1263,7 +1266,7 @@ Use the menu to reroll PCs only, living NPCs only, selected tracker tokens, and 
 
 Pass when each action changes only the requested eligible rows, the saved group can be renamed and rerolled on its original page, it stays out of other-page menus, and it can be removed without deleting tracker entries.
 
-#### I8. Status and Read-Only Audit
+#### I8. Status and Read-Only Review
 
 Run:
 
@@ -1272,7 +1275,7 @@ Run:
 !Init-Audit
 ```
 
-Pass when status distinguishes PCs, NPCs, dead NPCs, objects, custom rows, stale/off-page items, and attention items. Open `GameAssist Initiative Audit`; it should contain the complete tracker row list plus the linked-character roster for the tracker page, and it should not change the tracker.
+Pass when status distinguishes PCs, NPCs, dead NPCs, objects, custom rows, stale/off-page items, and attention items. **Initiative Review** should list the bounded tracker details plus linked page characters not yet in Turn Order, remain private to the GM, create no handout, and change nothing in the tracker.
 
 #### I9. Observer Mode
 

@@ -294,7 +294,8 @@ This major feature release introduces a rules-neutral Turn Tracker authority and
 - [x] Show Roll20-exposed dice, the final total, and the complete formula, and select optional creative result wording from six score ranges.
 - [x] Add `!Init-RR` for every unique PC and living NPC already in the tracker.
 - [x] Preserve custom rows, counters, objects, dead NPCs, mismatches, stale/off-page entries, duplicate metadata, text priorities, and unknown fields outside owned reroll slots.
-- [x] Add selective PC/NPC/selected/individual/group rerolls, encounter groups, status, read-only audit handout, and Manager/Observer modes.
+- [x] Add selective PC/NPC/selected/individual/group rerolls, encounter groups, status, a read-only GM chat review, and Manager/Observer modes.
+- [x] Complete native pre-tracker population with page-owned rows, a GM PC/NPC roster, and Roll Everyone/Roll All NPCs controls that require no campaign macro.
 - [x] Add initiative/combat-manager overlap diagnostics and document one-writer responsibility.
 - [x] Add deterministic local mixed-sheet, permission, preservation, malformed-data, async-conflict, lifecycle, and audit checks.
 - [ ] Complete the dedicated Roll20 clean-install and upgrade acceptance tracks.
@@ -304,7 +305,7 @@ This major feature release introduces a rules-neutral Turn Tracker authority and
 
 Issue #47 is complete only when the Roll20 sandbox confirms mixed 2014/2024 initiative, public player controls, case-insensitive commands, exact preservation of non-owned rows, duplicate handling, dead/mismatch skips, Observer mode, service cascading, and audit output without regressions in established modules.
 
-**Current evidence:** JavaScript syntax passes and the internal InitiativeAssist harness passes 67/67 checks. The second live Roll20 pass confirmed the revised screen roles, then exposed an unsynchronized pre-tracker row, terse roll output, mutually exclusive option paths, and a public reroll summary. The candidate now synchronizes and verifies the tracker page and rows, displays dice/total/formula evidence, carries combined roll choices through the guided menus, selects optional narration by score range, and whispers reroll results to the GM. These corrections require a focused sandbox retest before acceptance.
+**Current evidence:** JavaScript syntax passes and the internal InitiativeAssist harness passes 83/83 checks. Live Roll20 testing confirmed rerolls of native rows, then exposed that GameAssist-created turns were retained in campaign JSON without appearing in the native tracker. The candidate now writes complete page-owned rows with `_pageid`, uses a dedicated `turnorder` update, verifies page ownership before announcing success, shows both d20s for advantage/disadvantage, whispers a GM PC/NPC roster with page-batch controls after initiative calls, and keeps the detailed review in chat instead of creating an initiative handout. These corrections require a focused sandbox retest before acceptance.
 
 ---
 
