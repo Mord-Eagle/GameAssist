@@ -2357,7 +2357,7 @@ Round counting, automatic turn advancement, status-duration countdowns, current-
 - Added readable public result messages while preserving Roll20 inline-roll presentation. A failed or unavailable modifier lookup produces a clear response rather than inserting an initiative value of zero.
 - Added `!Init-RR` to reroll every eligible living NPC and every Player Character already represented in the active tracker.
 - Added narrower reroll choices for PCs, NPCs, selected tracker tokens, individual tracker tokens, and saved encounter groups.
-- Added group creation and removal from selected tracker tokens. Groups store token identities, not copies of tracker rows, and remain bounded by policy limits.
+- Added page-scoped group creation, renaming, rerolling, and removal from selected tracker tokens. Groups store token identities, not copies of tracker rows, remain bounded by policy limits, and stay out of other encounter-page menus.
 - Added a GM status panel that summarizes the active tracker, eligible actors, rows kept unchanged, service availability, and current Manager/Observer mode.
 - Added a read-only initiative audit handout for larger troubleshooting results instead of filling chat with row-by-row diagnostics.
 - Added `GameAssist.InitiativeAssist.getRoster()` as a narrow read-only integration surface for future GameAssist features.
@@ -2421,9 +2421,9 @@ Round counting, automatic turn advancement, status-duration countdowns, current-
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `B072DB32E809A08AC5E0F6893746362D37D9A3B35222A27C3CC083B4EED042A4` |
-| `GameAssist.js` | `B072DB32E809A08AC5E0F6893746362D37D9A3B35222A27C3CC083B4EED042A4` |
-| `GameAssist-v0.1.6.0` | `B072DB32E809A08AC5E0F6893746362D37D9A3B35222A27C3CC083B4EED042A4` |
+| `GameAssist` | `93D34A488823A0E5EA94AB3077A500B3714AD5FC1D82E1DBB595E826B7091575` |
+| `GameAssist.js` | `93D34A488823A0E5EA94AB3077A500B3714AD5FC1D82E1DBB595E826B7091575` |
+| `GameAssist-v0.1.6.0` | `93D34A488823A0E5EA94AB3077A500B3714AD5FC1D82E1DBB595E826B7091575` |
 | `previousversions/GameAssist v0.1.5.1` | `561B1FC1311F2F251F215BF7B85FB96AF6A6CCC19423732AFA275D164887B24C` |
 
 The development source, One-Click publication mirror, and v0.1.6.0 Roll20 test artifact are byte-identical. The preserved v0.1.5.1 previous-version artifact matches its recorded release hash.
@@ -2434,7 +2434,7 @@ The development source, One-Click publication mirror, and v0.1.6.0 Roll20 test a
 | --- | --- |
 | JavaScript parse/compile | Passed |
 | MECHSUITS hierarchy and metadata audit | Passed (24/24 declared and actual sections) |
-| InitiativeAssist focused harness | Passed (34/34) |
+| InitiativeAssist focused harness | Passed (39/39) |
 | ConditionAssist regression harness | Passed (35/35) |
 | TokenAssist regression harness | Passed (45/45) |
 | v0.1.5.0 integration/lifecycle regression | Passed (46/46) |
@@ -2446,4 +2446,3 @@ The development source, One-Click publication mirror, and v0.1.6.0 Roll20 test a
 ### Roll20 acceptance gate
 
 Automated verification is complete. Roll20 sandbox acceptance remains open for the clean-install and v0.1.5.1-upgrade tracks in `Smoketest.md`, including mixed 2014/2024 initiative, public player buttons, `!Init-RR` preservation, Manager/Observer behavior, and coexistence checks with any other campaign script that reads or writes the Turn Tracker. Issue #47 remains open until those live checks pass.
-
