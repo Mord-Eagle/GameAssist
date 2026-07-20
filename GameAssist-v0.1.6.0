@@ -6711,7 +6711,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Native initiative workflow
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:INITIATIVEASSIST", title: "InitiativeAssist",
-    //   guarantees: ["Case-insensitive !Init- commands provide mixed 2014/2024 initiative without owning rounds or combat flow","!Init-RR rerolls each unique PC and living NPC once while preserving non-target tracker rows and fields","Player buttons revalidate token control and tracker-page eligibility at execution time","Missing Beacon data, ambiguous character type, death-state disagreement, and stale tracker targets are skipped rather than guessed"],
+    //   guarantees: ["Case-insensitive !Init- commands provide mixed 2014/2024 initiative without owning rounds or combat flow","!Init-RR rerolls each unique PC and living NPC once while preserving non-target tracker rows and fields","Player buttons revalidate token control and tracker-page eligibility at execution time","Encounter groups remain page-scoped and can be renamed without changing tracker rows","Missing Beacon data, ambiguous character type, death-state disagreement, and stale tracker targets are skipped rather than guessed"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   observability: { spans: ["[GAMEASSIST:MODULES:INITIATIVEASSIST]"] },
     //   last_updated_version: "v0.1.6.0",
@@ -7474,7 +7474,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const counts = rosterCounts(roster);
             const individual = roster.rows.filter(row => row.eligible).slice(0, POLICY.initiative.statusChatLimit)
                 .map(row => GameAssist.createButton(row.label, `!Init-RR-Token --token ${row.id}`));
-            const groupButtons = Object.values(groups).map(group => GameAssist.createButton(group.name, `!Init-RR-Group --group ${group.id}`));
+            const groupButtons = Object.values(groups)
+                .filter(group => !group.pageId || group.pageId === snapshot.pageId)
+                .map(group => GameAssist.createButton(group.name, `!Init-RR-Group --group ${group.id}`));
             sendPanel('Initiative Reroll Choices', [
                 { label: 'Quick Choices', value: `${GameAssist.createButton(`All (${counts.eligible})`, '!Init-RR')} ${GameAssist.createButton(`PCs (${counts.pc})`, '!Init-RR-PCs')} ${GameAssist.createButton(`Living NPCs (${Math.max(0, counts.npc - counts.dead)})`, '!Init-RR-NPCs')} ${GameAssist.createButton('Selected', '!Init-RR-Selected')}` },
                 { label: 'Individuals', value: individual.length ? individual.join(' ') : 'No eligible characters.' },
@@ -7493,24 +7495,55 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return value;
         }
 
-        function showGroups(msg) {
-            const rows = Object.values(groups).map(group => [
+        function groupQueryText(raw) {
+            return String(raw || '').replace(/[|{}?"]/g, ' ').replace(/\s+/g, ' ').trim() || 'Group';
+        }
+
+        function showGroups(msg, sourceSnapshot = null) {
+            const snapshot = sourceSnapshot || trackerSnapshot(msg);
+            if (!snapshot) return;
+            const pageGroups = Object.values(groups).filter(group => !group.pageId || group.pageId === snapshot.pageId);
+            const rows = pageGroups.map(group => [
                 `<strong>${_sanitize(group.name)}</strong> (${group.tokenIds.length})`,
                 GameAssist.createButton('Reroll', `!Init-RR-Group --group ${group.id}`),
+                GameAssist.createButton('Rename', `!Init-Group --rename ${group.id} --name "?{New group name|${groupQueryText(group.name)}}"`),
                 GameAssist.createButton('Remove', `!Init-Group --remove ${group.id}`)
             ].join(' '));
             sendPanel('Initiative Groups', [
                 { label: 'Create', value: `${GameAssist.createButton('Create From Selected', '!Init-Group --create "?{Group name|Enemies}"')} Select tracker tokens first.` },
-                { label: 'Saved Groups', value: rows.length ? rows.join('<br>') : 'No encounter groups saved.' },
+                { label: 'This Encounter', value: rows.length ? rows.join('<br>') : 'No groups are saved for this Turn Tracker page.' },
                 { label: 'Actions', value: `${GameAssist.createButton('Reroll Choices', '!Init-RR-Menu')} ${GameAssist.createButton('Menu', '!Init-Menu')}` }
             ], { msg, gmOnly: true });
         }
 
         function handleGroup(msg, args) {
             if (!requireGm(msg)) return;
+            const snapshot = trackerSnapshot(msg);
+            if (!snapshot) return;
             if (args.remove) {
-                if (groups[args.remove]) delete groups[args.remove];
-                showGroups(msg);
+                const group = groups[String(args.remove)];
+                if (!group || (group.pageId && group.pageId !== snapshot.pageId)) {
+                    warn(msg, 'That group does not belong to the current Turn Tracker page.');
+                    return;
+                }
+                delete groups[group.id];
+                showGroups(msg, snapshot);
+                return;
+            }
+            if (args.rename) {
+                const group = groups[String(args.rename)];
+                if (!group || (group.pageId && group.pageId !== snapshot.pageId)) {
+                    warn(msg, 'That group does not belong to the current Turn Tracker page.');
+                    return;
+                }
+                const name = groupName(args.name);
+                if (!name) {
+                    warn(msg, `Group names must be 1-${POLICY.initiative.maxGroupNameLength} characters.`);
+                    return;
+                }
+                group.name = name;
+                group.pageId = snapshot.pageId;
+                showGroups(msg, snapshot);
                 return;
             }
             if (args.create) {
@@ -7523,8 +7556,6 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     warn(msg, `InitiativeAssist keeps at most ${POLICY.initiative.maxGroups} encounter groups.`);
                     return;
                 }
-                const snapshot = trackerSnapshot(msg);
-                if (!snapshot) return;
                 const trackerIds = new Set(snapshot.entries.map(entry => String(entry?.id || '')));
                 const ids = selectedTokenIds(msg).filter(id => trackerIds.has(id));
                 const unique = Array.from(new Set(ids));
@@ -7533,9 +7564,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     return;
                 }
                 const id = groupId();
-                groups[id] = { id, name, tokenIds: unique, createdAt: isoNow() };
+                groups[id] = { id, name, pageId: snapshot.pageId, tokenIds: unique, createdAt: isoNow() };
             }
-            showGroups(msg);
+            showGroups(msg, snapshot);
         }
 
         function parseCommand(msg) {
@@ -7644,7 +7675,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => GameAssist.TurnTrackerService.clearObservers('InitiativeAssist')
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.6.0): Added mixed D&D 2014/2024 initiative adapters, the case-insensitive !Init- command family, secure public player invitations, bounded roll options, read-only audits, encounter groups, and preservation-first rerolls through TurnTrackerService.
+    // Changed (v0.1.6.0): Added mixed D&D 2014/2024 initiative adapters, the case-insensitive !Init- command family, secure public player invitations, bounded roll options, read-only audits, page-scoped renameable encounter groups, and preservation-first rerolls through TurnTrackerService.
     // Decision log:
     //   CHOICE: Start disabled but default to Manager mode once deliberately enabled - ALT: require a second ownership toggle; REJECTED: unnecessary setup friction after explicit module enablement.
     //   CHOICE: Roll once per unique token and update duplicate occurrences consistently - ALT: roll every duplicate separately; REJECTED: duplicate turns still represent one character unless a later feature explicitly says otherwise.
