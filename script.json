@@ -243,7 +243,7 @@
     "!Init-RR-Selected",
     "!Init-RR-Token --token <ID>",
     "!Init-RR-Group --group <ID>",
-    "!Init-Group [--create <Name>] [--remove <ID>]",
+    "!Init-Group [--create <Name>] [--rename <ID> --name <Name>] [--remove <ID>]",
     "!Init-Audit",
     "!Init-Mode <observer|manager>",
     "!concentration",
