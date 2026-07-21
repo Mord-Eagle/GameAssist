@@ -10,6 +10,8 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 | Revision | Status | Role |
 | --- | --- | --- |
+| **v0.1.6.1** | Automated verification passed; focused Roll20 acceptance pending | GM-private initiative start and optional table greetings |
+| **v0.1.6.0** | Automated verification passed; Roll20 sandbox acceptance pending | Native Turn Tracker service and mixed-sheet initiative workflows |
 | **v0.1.5.1** | Focused Roll20 timezone acceptance passed; complete manual module smoke not rerun | DM-configurable table time and NPC Session-date alignment |
 | **v0.1.5.0** | Accepted release candidate; Issues #25-#29 and #32 complete | Integrated marker, token, and condition architecture |
 | **v0.1.4.7** | Stable release; automated and Roll20 sandbox verification passed | Standalone TokenMod and StatusInfo interoperability |
@@ -2313,3 +2315,259 @@ The development source, One-Click publication mirror, and v0.1.5.1 Roll20 test a
 
 The focused Roll20 v0.1.5.1 timezone smoke test passed on 2026-07-19. The owner tested the timezone workflow rather than rerunning the complete manual v0.1.5.1 suite; non-timezone confidence remains grounded in the automated regression results above. This release record therefore claims focused timezone acceptance, not a second full live regression of every module.
 
+---
+
+## [0.1.6.0] – 2026-07-19
+
+### Release definition
+
+GameAssist v0.1.6.0 adds a native Roll20 Turn Tracker foundation and the first InitiativeAssist release. InitiativeAssist supports encounters containing both **D&D 5E by Roll20 (2014)** and **D&D 2024 by Roll20** characters, uses the case-insensitive `!Init-` command family, and keeps initiative setup and rerolls compact enough for active play.
+
+This release implements [Issue #47](https://github.com/Mord-Eagle/GameAssist/issues/47). `TurnTrackerService 1.0.0` becomes a new toggleable core service and `InitiativeAssist 1.0.0` becomes the ninth independently configurable GameAssist module. InitiativeAssist starts disabled so installing or upgrading GameAssist cannot unexpectedly take ownership of an active tracker.
+
+Round counting, automatic turn advancement, status-duration countdowns, current-turn visuals, encounter lifecycle automation, and end-of-turn effects remain outside InitiativeAssist. Those combat-flow responsibilities are deferred to [Issue #48](https://github.com/Mord-Eagle/GameAssist/issues/48) for a future CombatAssist module.
+
+### Added – TurnTrackerService 1.0.0
+
+- Added `[GAMEASSIST:CORE:TURNTRACKERSERVICE]` as the single GameAssist owner of native Turn Tracker reads, observations, and guarded writes.
+- Added immutable tracker snapshots containing:
+  - the resolved active initiative page and its source;
+  - the exact raw `turnorder` value;
+  - parsed entries with original indices;
+  - a revision fingerprint used to detect concurrent changes.
+- Added compatibility resolution for campaigns where Roll20 exposes an open Turn Tracker as boolean `true` rather than a page id. Existing tracker tokens establish the encounter page; an empty tracker falls back to the Player Ribbon page; genuinely mixed-page token rows are refused with an actionable warning. Before a compatible write, the resolved page id is synchronized first and the dedicated `turnorder` property is then written and verified.
+- Added structural row classification for custom rows, missing-token rows, current-page token rows, and off-page token rows without assigning D&D rules inside the core service.
+- Added preservation-first mutations. A consumer supplies a narrow transformation and TurnTrackerService confirms that the page and source revision still match, synchronizes a compatibility-resolved page when needed, writes `turnorder` through the established dedicated campaign property, and verifies the resulting page and rows.
+- Added observation of `change:campaign:turnorder` and `change:campaign:initiativepage` through Roll20's captured event seam.
+- Added own-write echo suppression so GameAssist observers do not process the same service-authored update twice.
+- Added the frozen `GameAssist.TurnTrackerService` integration surface for snapshots, classification, guarded application, and observer registration.
+- Registered TurnTrackerService with the existing GameAssist lifecycle. Disabling it automatically disables InitiativeAssist while leaving unrelated modules available.
+
+### Added – InitiativeAssist 1.0.0
+
+- Added a case-insensitive `!Init-` namespace with a Guide, action-focused Control Center, quick Status Summary, detailed private chat Review, public initiative calls, player rolls, GM page-roster controls, rerolls, saved groups, and Manager/Observer modes.
+- Added `!Init-Go` for a concise public **Roll for initiative** invitation.
+- Added `!Init-Go!` for a rotating set of light, table-friendly initiative announcements.
+- Added public buttons that let a player roll initiative for one eligible character or every eligible selected character they control. Player authorization and token eligibility are checked again when each button is used rather than trusted from the original chat message.
+- Added `!Init-Roll-Selected` for GMs and players who control multiple characters. It deduplicates the current selection, accepts characters that are not yet in Turn Order, refuses uncontrolled or stale targets, and adds or updates every remaining eligible character in one bounded batch.
+- Added a private **GM Initiative Roster** after every `!Init-Go` or `!Init-Go!` call. It separately lists current-page PCs, object-layer NPCs, and GM-layer NPCs, marks entries that need attention, and provides individual and bounded batch controls.
+- Expanded `!Init-Start` with `all`, `npc`, `gm-npc`, and `all-npc` scopes. The controls add or update eligible object-layer characters, object-layer NPCs, GM-layer NPCs, or NPCs across both layers while leaving dead NPCs, attention items, custom rows, and counters unchanged.
+- Added private-by-default NPC initiative evidence. `!Init-NPC-Rolls hidden|public` controls whether object-layer NPC inline rolls and readable result panels are GM-only; GM-layer NPC evidence always remains private.
+- Added pre-tracker page discovery. A controlled, linked object-layer token may roll from the public invitation before it has a Turn Order row; the completed roll adds that token to Roll20's tracker.
+- Added player-specific panels for choices, setup guidance, and refusals while retaining public initiative invitations and completed results.
+- Added a staged player options panel that carries all prior choices forward. A player chooses normal, advantage, or disadvantage, may enter a bounded flat adjustment, and may then roll immediately or add one or two bounded bonus dice. These choices are cumulative rather than mutually exclusive.
+- Added common `d4`, `d6`, `d8`, `d10`, and `d12` buttons plus a bounded custom die-side prompt. Two-die rolls collect each die separately so combinations such as advantage plus a flat adjustment, `1d6`, and `1d4` remain easy to build.
+- Added detailed result messages containing both d20s for advantage or disadvantage, any exposed bonus dice, the final total, and the complete formula. PC results remain public; NPC evidence follows the configured privacy rule. InitiativeAssist verifies that Roll20 retained a page-owned tracker row before announcing success. A failed or unavailable modifier lookup produces a clear response rather than inserting an initiative value of zero.
+- Added six score-aware result-prose ranges for rolls requested through `!Init-Go!`: 0-5, 6-12, 13-19, 20-25, 26-34, and 35+. The direct `!Init-Go` workflow remains neutral.
+- Added `!Init-RR` to reroll every eligible living NPC and every Player Character already represented in the active tracker.
+- Added narrower reroll choices for PCs, NPCs, selected tracker tokens, individual tracker tokens, and saved encounter groups.
+- Added page-scoped group creation, renaming, rerolling, and removal from selected tracker tokens. Groups store token identities, not copies of tracker rows, remain bounded by policy limits, and stay out of other encounter-page menus.
+- Added a GM status panel that summarizes the active tracker, linked characters available on the tracker page, eligible actors, rows kept unchanged, service availability, and current Manager/Observer mode.
+- Added a detailed read-only `!Init-Audit` chat review with separate Turn Tracker and not-yet-in-tracker character details. The review is whispered to the GM, changes no tracker data, and creates no persistent handout. An empty tracker reports the characters available to roll instead of presenting a zero-row success with no context.
+- Added `GameAssist.InitiativeAssist.getRoster()` as a narrow read-only integration surface for future GameAssist features.
+
+### Changed – Live sandbox corrections
+
+- Synchronized Roll20's `initiativepage` with a newly saved Turn Order row when the sandbox exposes the open tracker as boolean `true`. This prevents a successful chat roll from being detached from the visible native tracker.
+- Added Roll20's `_pageid` field to every GameAssist-created or repaired character turn. Live testing showed that a row could be retained in campaign JSON yet remain absent from the visible Turn Order when this page-ownership field was omitted.
+- Changed TurnTrackerService to write `turnorder` as a dedicated campaign property, matching established Roll20 initiative implementations rather than bundling it with an optional page normalization update.
+- Added post-write verification for the complete `turnorder` value, resolved tracker page, target initiative value, and target-row `_pageid` before a player result is announced.
+- Replaced the mutually exclusive Roll Options paths with a short staged builder that combines d20 mode, flat adjustment, and up to two bonus dice.
+- Replaced the total-only result sentence with a concentration-style `Roll(s) … → total (from formula)` presentation.
+- Changed successful `!Init-RR` output from a public summary to a bounded GM whisper containing each updated character's roll evidence.
+- Changed the roll callback itself, not only the final panel, to use a GM whisper for hidden NPCs so concealed modifiers and bonus dice cannot leak through Roll20's inline-roll message.
+
+### Added – Mixed 2014/2024 sheet adapters
+
+- Added D&D 5E by Roll20 (2014) initiative resolution using the represented character's `npc` and `initiative_bonus` attributes.
+- Added D&D 2024 by Roll20 initiative resolution through Roll20's asynchronous Computed/Beacon access when available.
+- Added 2024 character-type checks using supported sheet data and player-controller evidence rather than assuming every unfamiliar character is an NPC.
+- Added mixed encounters: 2014 PCs, 2014 NPCs, 2024 PCs, and 2024 NPCs may appear in the same tracker and reroll batch.
+- Added conservative sheet-data probing when Roll20 omits or changes a character's `charactersheetname`: valid 2014 `npc`/`initiative_bonus` attributes or valid 2024 Beacon fields may establish the supported adapter without converting missing values to zero.
+- Added a conservative unavailable-data path. If the 2024 sheet interface cannot provide initiative data, InitiativeAssist retains the existing row and explains that it needs attention.
+
+### Changed – Safe reroll behavior
+
+- `!Init-RR` rolls once for each unique eligible token. If the same token appears more than once in the tracker, each duplicate receives the same new result.
+- Sorting is limited to tracker slots owned by the eligible reroll targets. InitiativeAssist does not globally reorder the tracker.
+- Custom rows, round counters, objects, dead NPCs, HP/marker disagreements, stale references, off-page rows, and unknown rows retain their original positions and values.
+- Unknown properties on rerolled tracker entries are preserved.
+- NPCs are treated as living only when HP or marker evidence supports that conclusion. Missing or contradictory death evidence is reported for attention rather than guessed.
+- InitiativeAssist verifies the active initiative page after asynchronous modifier resolution and aborts without writing if the page changed.
+- InitiativeAssist verifies target-row priorities before applying a completed reroll and aborts without writing if another script or GM changed those targets in the meantime.
+- InitiativeAssist verifies the completed tracker write before announcing an individual result; a missing or rejected row produces an actionable retry message instead of a false success.
+- Batch sizes, group counts, group-name lengths, picker sizes, and custom die sizes use bounded policy values.
+
+### Added – Coexistence controls and diagnostics
+
+- Added **Manager mode** for deliberate InitiativeAssist tracker writes.
+- Added **Observer mode** for menus, status, and audits without tracker mutation.
+- Expanded compatibility diagnostics for GroupInitiative, CombatMaster, CombatTracker, InitiativeTrackerPlus, RoundMaster, TurnMarker1, and AddCustomTurn.
+- Compatibility messages describe the overlapping responsibility: initiative rolling, tracker ordering, custom rows, round ownership, or combat-flow management.
+- `!ga-status --details` now reports TurnTrackerService availability and InitiativeAssist mode/lifecycle state.
+- `!ga-config modules` continues to show the detailed enabled/running state for both the service and module.
+
+### State and migration impact
+
+- Added `state.GameAssist.TurnTrackerService.config.enabled`, defaulting to enabled.
+- Added `state.GameAssist.InitiativeAssist.config.enabled`, defaulting to disabled.
+- Added `state.GameAssist.InitiativeAssist.config.mode`, defaulting to `manager` for use after the GM explicitly enables the module.
+- Added `state.GameAssist.InitiativeAssist.config.hideNpcRolls`, defaulting to `true`; the Control Center and GM roster expose the same setting in table language.
+- Added bounded InitiativeAssist runtime storage for named encounter groups.
+- Existing GameAssist configuration, runtime data, timezone selection, marker state, condition definitions, NPC history, and TokenAssist state are preserved.
+- No existing Roll20 Turn Tracker rows are migrated, rewritten, or normalized during startup.
+- Rolling back to v0.1.5.1 leaves the new service/module branches inert.
+
+### MECHSUITS records
+
+- Advanced banner `project_version` and runtime `VERSION` to `v0.1.6.0`.
+- Added `CORE:TURNTRACKERSERVICE` and `MODULES:INITIATIVEASSIST` to the file-scoped `canonical_tree` with literal `GAMEASSIST` identifiers.
+- Added complete parent-owned section frames, section metadata, narratives, meaningful-change records, decision logs, and required Notes & Comments footers.
+- Updated affected ancestor contracts and bootstrap ordering to initialize TurnTrackerService before InitiativeAssist.
+- Mechanically verified 24 declared section tags against 24 actual section frames with balanced parent nesting, matching `area` metadata, `last_updated_version` records, and footer records.
+
+### Documentation and metadata
+
+- Expanded `README.md` with InitiativeAssist onboarding, commands, mixed-sheet behavior, player options, reroll preservation rules, configuration, compatibility guidance, macros, troubleshooting, upgrade steps, developer APIs, and the CombatAssist boundary.
+- Rebuilt `Smoketest.md` around v0.1.6.0 clean-install and v0.1.5.1-upgrade tracks, then added dedicated TurnTrackerService and InitiativeAssist component tests.
+- Added focused tests for mixed-sheet and unlabeled-sheet actors, visible `_pageid`-owned pre-tracker rows, dedicated campaign turnorder writes, hidden/public NPC evidence, GM-layer NPC batches, selected-character authorization, GM page-roster controls, player-specific response routing, advantage/disadvantage d20 evidence, cumulative roll options, six score-aware narration ranges, GM-whispered reroll summaries, page-id and boolean tracker states, ambiguous multi-page refusal, empty-tracker chat reviews, duplicate entries, custom rows, counters, dead NPCs, off-page rows, player authorization, page changes, concurrent priority changes, Observer mode, service disable cascade, malformed tracker data, and no-handout review behavior.
+- Updated `ROADMAP.md` with the completed implementation scope for Issue #47 and the deferred CombatAssist scope in Issue #48.
+- Updated `script.json` to advertise v0.1.6.0, list the InitiativeAssist command family, include v0.1.5.1 in `previousversions`, declare Turn Tracker and sheet-data access, and describe initiative conflicts in user-facing terms.
+- Preserved `GameAssist-v0.1.5.1` and added `previousversions/GameAssist v0.1.5.1` before generating the new versioned artifact.
+
+### Release artifacts
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `GameAssist` | `E20FCF251620407710DB87042674D8993704E12559321047968170180D005F04` |
+| `GameAssist.js` | `E20FCF251620407710DB87042674D8993704E12559321047968170180D005F04` |
+| `GameAssist-v0.1.6.0` | `E20FCF251620407710DB87042674D8993704E12559321047968170180D005F04` |
+| `previousversions/GameAssist v0.1.5.1` | `561B1FC1311F2F251F215BF7B85FB96AF6A6CCC19423732AFA275D164887B24C` |
+
+The development source, One-Click publication mirror, and v0.1.6.0 Roll20 test artifact are byte-identical. The preserved v0.1.5.1 previous-version artifact matches its recorded release hash.
+
+### Automated verification
+
+| Check | Result |
+| --- | --- |
+| JavaScript parse/compile | Passed |
+| MECHSUITS hierarchy and metadata audit | Passed (24/24 declared and actual sections) |
+| InitiativeAssist focused harness | Passed (105/105) |
+| ConditionAssist regression harness | Passed (35/35) |
+| TokenAssist regression harness | Passed (45/45) |
+| v0.1.5.0 integration/lifecycle regression | Passed (46/46) |
+| v0.1.5.1 timezone regression | Passed (23/23) |
+| `script.json` parse validation | Passed |
+| Current release artifact identity | Passed (3/3 byte-identical) |
+| Preserved v0.1.5.1 artifact identity | Passed |
+
+### Roll20 acceptance gate
+
+Automated verification is complete. The focused and established regression harnesses pass 254 checks in total. Live Roll20 testing has confirmed the native tracker population, reroll, invitation, detailed-roll, and GM-roster foundation. Focused acceptance remains open for private/public NPC evidence, GM-layer NPC batches, selected-character batches, and the complete clean-install and v0.1.5.1-upgrade tracks in `Smoketest.md`. Issue #47 remains open until those live checks pass.
+
+---
+
+## [0.1.6.1] – 2026-07-20
+
+### Release definition
+
+GameAssist v0.1.6.1 adds a private GM entry point to the accepted InitiativeAssist workflow and introduces the optional WelcomeAssist module. The release preserves the native Turn Tracker behavior from v0.1.6.0 while giving a GM a private copy of the initiative controls and a deliberate, configurable way to greet the table after GameAssist starts successfully.
+
+InitiativeAssist advances to module version 1.0.1. WelcomeAssist launches at module version 0.1.0 and remains disabled by default. No CombatAssist responsibilities, automatic turn advancement, round ownership, duration countdowns, or end-of-turn effects are included.
+
+### Added – InitiativeAssist 1.0.1
+
+- Added the case-insensitive `!Init-GM` command.
+- `!Init-GM` opens the neutral Roll for Initiative panel and the complete GM Initiative Roster as GM whispers. No invitation or roster is posted to players.
+- The private roster reuses the same current-page discovery, actor classification, eligibility checks, individual controls, batch controls, NPC-layer groups, and hidden-roll policy as `!Init-Go`.
+- Added **GM-Only Start** to the InitiativeAssist Control Center and documented the distinction among `!Init-Go`, `!Init-Go!`, and `!Init-GM` in the Guide.
+- Preserved all v0.1.6.0 public invitation, player authorization, native tracker population, mixed 2014/2024 sheet, selected-character, GM-layer NPC, hidden-roll, saved-group, audit, and reroll behavior.
+
+### Added – WelcomeAssist 0.1.0
+
+- Added an independently configurable WelcomeAssist module that starts disabled and can be enabled through the normal GameAssist module controls.
+- Added four greeting modes:
+  - `default` uses one professional table greeting;
+  - `builtin` chooses from the included greeting library;
+  - `custom` chooses from the campaign's saved greetings;
+  - `mixed` combines the professional greeting, all built-in greetings, and two copies of each custom greeting so campaign-specific text has greater individual weight.
+- Set `mixed` as the default mode once the GM enables the module.
+- Added GM-only help, status, preview, and configuration responses. Only an explicit announcement or the post-bootstrap automatic greeting is public.
+- Added `!welcome-assist announce` for an immediate public greeting. A manual announcement cancels any pending automatic greeting and consumes the automatic opportunity for that sandbox lifecycle, preventing a delayed duplicate.
+- Added bounded configuration commands for mode, startup delay, visible header, professional default text, and campaign-specific greetings.
+- Limited campaign greetings to ten entries of 240 characters each, removed duplicates case-insensitively, and required an exact list number for removal.
+- Retained the intentional library of brief recognizable references alongside original table humor.
+
+### Changed – Startup and health behavior
+
+- Added a post-bootstrap WelcomeAssist hook after GameAssist has attempted to initialize every configured component and recorded final startup metrics.
+- Enabling WelcomeAssist during a live sandbox does not post a greeting. This lets the GM configure and preview the module before reloading.
+- On reload, an enabled WelcomeAssist waits for its configured delay and confirms that every other configured GameAssist component is active.
+- If another configured component is still inactive, WelcomeAssist waits for a bounded additional health window. It then skips the public greeting and privately names the blocking component instead of announcing that the suite is ready.
+- Automatic output is limited to one greeting per sandbox lifecycle.
+
+### Added – Chat safety and configuration limits
+
+- Custom and default greeting text is normalized at configuration and escaped again when rendered.
+- Roll20 inline-roll, attribute, ability, macro-query, and template directive characters are neutralized before user-authored text reaches public chat.
+- Header text is limited to 80 characters, custom greetings to 240 characters, and the saved custom library to ten entries.
+- Startup delay is clamped to the policy range of 1–60 seconds; the default is 3 seconds.
+- Timer and current-sandbox announcement bookkeeping use the existing GameAssist clock and lifecycle seams.
+
+### State and migration impact
+
+- Added `state.GameAssist.WelcomeAssist.config.enabled`, defaulting to `false`.
+- Added WelcomeAssist configuration for `mode`, `delayMs`, `showHeader`, `header`, `defaultGreeting`, and `customGreetings`.
+- Added a small runtime record for the latest completed greeting. Current-sandbox announcement state remains in memory so a reload cannot mislabel an earlier greeting as current.
+- Existing GameAssist configuration, initiative groups, tracker data, timezone settings, marker state, conditions, NPC history, and TokenAssist state are preserved.
+- Rolling back to v0.1.6.0 leaves the WelcomeAssist state branch inert. InitiativeAssist's new command has no persistent-state requirement.
+
+### MECHSUITS records
+
+- Advanced banner `project_version` and runtime `VERSION` to `v0.1.6.1`.
+- Added `MODULES:WELCOMEASSIST` to the file-scoped `canonical_tree` with the literal `GAMEASSIST` codename.
+- Added a complete WelcomeAssist section frame with metadata, narrative, guarantees, dependency declarations, risks, decisions, and a required Notes & Comments footer.
+- Updated the affected POLICY, MODULES wrapper, InitiativeAssist, and BOOTSTRAP contracts and meaningful-change records.
+- Preserved physical parent wrapping and strict ancestor-only overlap for all 25 sections.
+
+### Documentation and metadata
+
+- Updated `README.md` with WelcomeAssist onboarding, commands, configuration, safety behavior, troubleshooting, upgrade guidance, and macro recipes.
+- Updated InitiativeAssist documentation with the private `!Init-GM` workflow.
+- Expanded `Smoketest.md` with a focused GM-only initiative test and a complete WelcomeAssist section covering disabled startup, previews, modes, custom text, directive safety, timer behavior, and health-gated output.
+- Updated `ROADMAP.md` with the v0.1.6.1 release stage and the continuing boundary between InitiativeAssist and the deferred CombatAssist module.
+- Updated `script.json` to version 0.1.6.1, add the new commands and module, preserve v0.1.6.0 in `previousversions`, and describe the startup-greeting overlap with other Mods in end-user terms.
+
+### Release artifacts
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `GameAssist` | `BB0CBDB3C2BED95FC7879743F59F0660528BFCE5A527243DF5F5FEEEB9C1F78F` |
+| `GameAssist.js` | `BB0CBDB3C2BED95FC7879743F59F0660528BFCE5A527243DF5F5FEEEB9C1F78F` |
+| `GameAssist-v0.1.6.1` | `BB0CBDB3C2BED95FC7879743F59F0660528BFCE5A527243DF5F5FEEEB9C1F78F` |
+| `GameAssist-v0.1.6.0` | `E20FCF251620407710DB87042674D8993704E12559321047968170180D005F04` |
+| `previousversions/GameAssist v0.1.6.0` | `E20FCF251620407710DB87042674D8993704E12559321047968170180D005F04` |
+
+The development source, One-Click publication mirror, and v0.1.6.1 Roll20 test artifact are byte-identical. Both copies of v0.1.6.0 remain unchanged as the prior release checkpoint.
+
+### Automated verification
+
+| Check | Result |
+| --- | --- |
+| JavaScript parse/compile | Passed (3/3 current artifacts) |
+| MECHSUITS hierarchy and metadata audit | Passed (25/25 declared and actual sections) |
+| InitiativeAssist focused harness | Passed (108/108) |
+| WelcomeAssist focused harness | Passed (20/20) |
+| ConditionAssist regression harness | Passed (35/35) |
+| TokenAssist regression harness | Passed (45/45) |
+| Integration and lifecycle regression | Passed (46/46) |
+| Timezone regression | Passed (23/23) |
+| `script.json` parse validation | Passed |
+| Current release artifact identity | Passed (3/3 byte-identical) |
+| Preserved v0.1.6.0 artifact identity | Passed |
+
+The focused and established automated suites pass 277 checks in total.
+
+### Roll20 acceptance gate
+
+The v0.1.6.0 native tracker population, reroll, invitation, detailed-roll, and GM-roster workflow is accepted as the foundation for this release. The focused v0.1.6.1 Roll20 pass also confirmed that `!Init-GM` remains private and that WelcomeAssist stays silent while disabled, keeps setup and preview private, posts once after a healthy enabled reload, and suppresses a delayed duplicate after manual announcement.

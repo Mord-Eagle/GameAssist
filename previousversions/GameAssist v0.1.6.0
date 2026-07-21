@@ -1,9 +1,9 @@
 /*
 ========================================
 GameAssist - Roll20 API Script
-Version: 0.1.6.1
-Last Updated: 2026-07-20 (America/New_York)
-Development line: private initiative controls and WelcomeAssist v0.1.6.1.
+Version: 0.1.6.0
+Last Updated: 2026-07-19 (America/New_York)
+Development line: native Turn Tracker and InitiativeAssist v0.1.6.0.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -12,13 +12,12 @@ DESCRIPTION
 GameAssist is a modular D&D 5E (2014 and 2024) automation suite with an explicit opt-in
 task queue, state/configuration helpers, consistent logging, and a core marker
 service. Normal event handlers execute directly unless a module deliberately
-calls GameAssist.enqueue(). This package ships with ten configurable modules:
+calls GameAssist.enqueue(). This package ships with nine configurable modules:
 - ConfigUI - GM-only chat controls for toggling modules and common options.
 - CritFumble - Detects natural-1 attacks and offers fumble/confirm menus.
 - ConditionAssist 1.0.1 - Provides condition wording, artwork, announcements, and marker controls.
 - TokenAssist 1.0.1 - Provides general token controls through !token-assist and !ta commands.
-- InitiativeAssist 1.0.1 - Uses Roll20's native Turn Tracker for mixed-sheet initiative workflows.
-- WelcomeAssist 0.1.0 - Optionally greets the table after a healthy GameAssist startup.
+- InitiativeAssist 1.0.0 - Uses Roll20's native Turn Tracker for mixed-sheet initiative workflows.
 - ConcentrationTracker - Runs concentration checks and manages its configured marker.
 - NPCManager 1.3.0 - Tracks NPC death markers, history, reports, audits, repair previews, and Arc rosters.
 - NPCHPRoller - Rolls npc_hpformula and writes the result to token bar 1.
@@ -50,10 +49,8 @@ MODULE COMMANDS
 - TokenAssist: !token-assist, !ta, !ta-<action>, !token-assist help|about|config;
   older supported !token-mod macros continue temporarily and must be updated before v0.2.0.
 - InitiativeAssist: !Init-Menu, !Init-Help, !Init-Go, !Init-Go!, !Init-Roll,
-  !Init-GM, !Init-Roll-Selected, !Init-Options, !Init-Start, !Init-NPC-Rolls,
+  !Init-Roll-Selected, !Init-Options, !Init-Start, !Init-NPC-Rolls,
   !Init-RR, !Init-RR-Menu, !Init-Group, !Init-Audit
-- WelcomeAssist: !welcome-assist help|status|preview|announce,
-  !welcome-assist mode|delay|header|default|custom
 - ConcentrationTracker: !concentration, !cc, !ga-conc-status
 - NPCManager: !npc-death-help, !npc-death-report, !npc-death-buckets,
   !npc-death-clear, !npc-death-write, !npc-wr, !npc-death-audit, !npc-death-repair,
@@ -61,7 +58,7 @@ MODULE COMMANDS
 - NPCHPRoller: !npc-hp-selected, !npc-hp-all
 - DebugTools: !ga-debug damage|marker|save
 
-V0.1.6.1 FOUNDATION
+V0.1.6.0 FOUNDATION
 - [GAMEASSIST:CORE:MARKERSERVICE] is the single GameAssist authority for marker
   resolution, reads, writes, toggles, duplicate handling, and change observation.
 - Built-in ids, custom display names, exact stored tags, numbered markers, and
@@ -71,16 +68,14 @@ V0.1.6.1 FOUNDATION
 - ConditionAssist uses MarkerService for condition reads, writes, and change observation.
 - TokenAssist uses MarkerService for every status-marker command.
 - Disabling MarkerService also disables ConditionAssist, TokenAssist, NPCManager,
-  ConcentrationTracker, and DebugTools while CritFumble, ConfigUI,
-  InitiativeAssist, WelcomeAssist, and NPCHPRoller remain available.
+  ConcentrationTracker, and DebugTools while CritFumble, ConfigUI, and
+  NPCHPRoller remain available.
 - Human-facing times and automatic Session date rollover use the DM's validated
   IANA timezone when configured; stored event timestamps remain absolute.
 - [GAMEASSIST:CORE:TURNTRACKERSERVICE] is the only GameAssist authority for
   Roll20 turn-order snapshots, guarded writes, and tracker observations.
 - InitiativeAssist supports official 2014 and 2024 Roll20 sheet initiative data;
   2024 Beacon access requires Roll20's supported asynchronous Mod API functions.
-- WelcomeAssist is disabled by default and can post one delayed public greeting
-  after a healthy GameAssist bootstrap when deliberately configured and enabled.
 - Queue timeouts release the queue but cannot terminate Roll20 operations.
 - Configuration snapshots contain configuration only, never runtime caches.
 
@@ -100,9 +95,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 // --- MECHSUITS BANNER (YAML) ---
 // mechsuit:
 //   codename: "GAMEASSIST"
-//   project_version: "v0.1.6.1"
-//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker and Turn Tracker authorities, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, optional health-gated table greetings, and a validated campaign timezone for human-facing dates. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, or automatic combat-round management."
-//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.turntrackerservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critfumble","modules.conditionassist","modules.tokenassist","modules.initiativeassist","modules.welcomeassist","modules.npcmanager","modules.concentrationtracker","modules.npchproller","modules.debugtools","bootstrap"]
+//   project_version: "v0.1.6.0"
+//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker and Turn Tracker authorities, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, and a validated campaign timezone for human-facing dates. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, or automatic combat-round management."
+//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.turntrackerservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critfumble","modules.conditionassist","modules.tokenassist","modules.initiativeassist","modules.npcmanager","modules.concentrationtracker","modules.npchproller","modules.debugtools","bootstrap"]
 //   env:
 //     required: []
 //     optional: []
@@ -115,7 +110,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //   observability:
 //     logs: "roll20_whisper_to_gm"
 //     metrics: [{ name: "gameassist.queue.task_duration_ms", unit: "ms" }]
-//     spans: ["[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:MODULES:INITIATIVEASSIST]","[GAMEASSIST:MODULES:WELCOMEASSIST]"]
+//     spans: ["[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:MODULES:INITIATIVEASSIST]"]
 //   performance: { notes: "No current benchmark claim; validate in the target Roll20 campaign sandbox." }
 //   concurrency: { model: "Direct event handlers plus explicit opt-in serialized task queue", idempotency: "N/A (event-driven)" }
 //   compatibility: { accepts: ["Roll20 API sandbox; current campaign smoke test required"], emits: "Roll20 chat whispers/logs" }
@@ -144,17 +139,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     │  ├─ [GAMEASSIST:MODULES:CONDITIONASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:TOKENASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:INITIATIVEASSIST]
-//     │  ├─ [GAMEASSIST:MODULES:WELCOMEASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:NPCMANAGER]
 //     │  ├─ [GAMEASSIST:MODULES:CONCENTRATIONTRACKER]
 //     │  ├─ [GAMEASSIST:MODULES:NPCHPROLLER]
 //     │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 //     └─ [GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
-// Guarantee: GameAssist v0.1.6.1 runs policy, utilities, guarded core services including MarkerService and TurnTrackerService, interfaces, independently lifecycle-managed condition/token/initiative/welcome/gameplay modules, then bootstrap in the declared order. Human-facing times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
+// Guarantee: GameAssist v0.1.6.0 runs policy, utilities, guarded core services including MarkerService and TurnTrackerService, interfaces, independently lifecycle-managed condition/token/initiative/gameplay modules, then bootstrap in the declared order. Human-facing times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
 
 // =============================
-// === GameAssist v0.1.6.1 ===
+// === GameAssist v0.1.6.0 ===
 // === Author: Mord Eagle ===
 // =============================
 // Released under the MIT License (see https://opensource.org/licenses/MIT)
@@ -187,8 +181,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Tunables and operational policy
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "POLICY", title: "Tunables",
-    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; NPC initialization, timezone input, condition, initiative, and welcome limits remain explicit"],
-    //   provides: ["POLICY"], last_updated_version: "v0.1.6.1", lifecycle: "active" }
+    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; NPC initialization, timezone input, condition-service, and initiative limits remain explicit"],
+    //   provides: ["POLICY"], last_updated_version: "v0.1.6.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // POLICY owns shared timeouts, cache limits, UI defaults, snapshot identifiers,
@@ -264,15 +258,6 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             statusChatLimit: 20,
             ownWriteSuppressionMs: 1000
         }),
-        welcome: Object.freeze({
-            minDelayMs: 1000,
-            maxDelayMs: 60000,
-            readinessPollMs: 500,
-            readinessWaitMs: 15000,
-            maxCustomGreetings: 10,
-            maxGreetingLength: 240,
-            maxHeaderLength: 80
-        }),
         config: Object.freeze({
             unsafeKeys: Object.freeze(['__proto__', 'prototype', 'constructor'])
         }),
@@ -282,12 +267,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.6.1): Added bounded WelcomeAssist delay, readiness polling, custom-list, greeting, and header limits; rollback: remove welcome policy with WelcomeAssist.
+    // Changed (v0.1.6.0): Added bounded initiative batch, picker, group, custom-die, flat-adjustment, score-band, observer-suppression, and chat-review policy; rollback: remove initiative policy with InitiativeAssist and TurnTrackerService.
     // Decision log:
     //   CHOICE: Offer common IANA zones plus validated custom input - ALT: fixed numeric offsets; REJECTED: fixed offsets do not follow daylight-saving changes.
     //   CHOICE: Keep NPC initialization and snapshot knobs centralized while removing the unused external marker delay - ALT: retain the dead setting; REJECTED: implied behavior no caller performs.
     // Prior notes:
-    //   v0.1.6.0: Added bounded initiative batch, picker, group, custom-die, flat-adjustment, score-band, observer-suppression, and chat-review policy.
     //   v0.1.5.1: Added bounded IANA timezone input, a bounded formatter cache, a stable display locale, and common GM menu choices.
     //   v0.1.5.0: Removed the obsolete standalone TokenMod verification delay and added bounded condition-definition, import, announcement-selection, private-reference, announcement-observer suppression, and current-page status limits for ConditionAssist.
     //   v0.1.4.7: Added a two-second NPC HP initialization grace period so auto-roll-on-add setup is not recorded as a death/revival.
@@ -928,7 +912,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE", title: "Core wrapper",
     //   guarantees: ["Core constants and kernel services are grouped; MarkerService owns marker mechanics and TurnTrackerService owns native tracker mechanics"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP]"], last_updated_version: "v0.1.6.1",
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP]"], last_updated_version: "v0.1.6.0",
     //   lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
@@ -937,7 +921,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // documents scope and anchors the hierarchy for MECHSUITS compliance.
     // -------------------------------------------------------------------------
 
-    const VERSION      = '0.1.6.1';
+    const VERSION      = '0.1.6.0';
     const STATE_KEY    = 'GameAssist';
     const MODULES      = {};
     const _transitioning   = {};
@@ -2895,9 +2879,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v0.1.6.1): Advanced runtime VERSION for the private initiative control and optional WelcomeAssist patch; core child order is unchanged.
+    // Changed (v0.1.6.0): Added CORE:TURNTRACKERSERVICE to the declared child order and advanced runtime VERSION for the native initiative release.
     // Prior notes:
-    //   v0.1.6.0: Added CORE:TURNTRACKERSERVICE to the declared child order and advanced runtime VERSION for the native initiative release.
     //   v0.1.5.1: Advanced runtime VERSION for the configurable campaign-timezone release; the established core child order was unchanged.
     //   v0.1.5.0: Added CORE:MARKERSERVICE to the declared child order and advanced runtime VERSION for the integrated marker architecture.
     //   v0.1.4.7: Advanced runtime VERSION for standalone TokenMod/StatusInfo interoperability; child order was unchanged.
@@ -3503,8 +3486,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Modules wrapper (bundled features)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES", title: "Modules wrapper",
-    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Condition, token, and gameplay marker consumers share CORE:MARKERSERVICE","TokenAssist owns the documented GameAssist token-command surface without assuming the TokenMod brand","InitiativeAssist uses CORE:TURNTRACKERSERVICE without owning rounds or combat flow","WelcomeAssist remains disabled by default and announces automatically only after completed bootstrap"],
-    //   depends_on: ["[GAMEASSIST:CORE]","[GAMEASSIST:INTERFACES]"], last_updated_version: "v0.1.6.1" }
+    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Condition, token, and gameplay marker consumers share CORE:MARKERSERVICE","TokenAssist owns the documented GameAssist token-command surface without assuming the TokenMod brand","InitiativeAssist uses CORE:TURNTRACKERSERVICE without owning rounds or combat flow"],
+    //   depends_on: ["[GAMEASSIST:CORE]","[GAMEASSIST:INTERFACES]"], last_updated_version: "v0.1.6.0" }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES encloses all shipped feature modules. Each child retains its own
@@ -6797,17 +6780,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:TOKENASSIST] END
     // =============================================================================
 
-    // ————— INITIATIVE ASSIST MODULE v1.0.1 —————
+    // ————— INITIATIVE ASSIST MODULE v1.0.0 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:INITIATIVEASSIST] BEGIN
     // Section Title: Native initiative workflow
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:INITIATIVEASSIST", title: "InitiativeAssist",
-    //   guarantees: ["Case-insensitive !Init- commands provide mixed 2014/2024 initiative without owning rounds or combat flow","Initiative results show both d20s for advantage or disadvantage, the total, and the complete formula before announcing a visible page-owned tracker row","D20 mode, bounded flat adjustment, and up to two bounded bonus dice compose in one guided roll","Optional creative results use bounded score bands while direct initiative calls remain neutral","NPC roll details can remain GM-only, and GM-layer NPC rolls are always private","GMs can batch-roll living NPCs on the objects layer, GM layer, or both while players can batch-roll their selected controlled characters","!Init-RR rerolls each unique PC and living NPC once, whispers its result summary to the GM, and preserves non-target tracker rows and fields","Player buttons revalidate token control and the normalized tracker page at execution time","Public initiative calls and !Init-GM provide the GM a current-page PC/NPC roster with individual and bounded batch controls","Guide, Control Center, Status Summary, and detailed chat Review each have one distinct user-facing purpose","Encounter groups remain page-scoped and can be renamed without changing tracker rows","Missing Beacon data, ambiguous character type, death-state disagreement, and stale tracker targets are skipped rather than guessed"],
+    //   guarantees: ["Case-insensitive !Init- commands provide mixed 2014/2024 initiative without owning rounds or combat flow","Initiative results show both d20s for advantage or disadvantage, the total, and the complete formula before announcing a visible page-owned tracker row","D20 mode, bounded flat adjustment, and up to two bounded bonus dice compose in one guided roll","Optional creative results use bounded score bands while direct initiative calls remain neutral","NPC roll details can remain GM-only, and GM-layer NPC rolls are always private","GMs can batch-roll living NPCs on the objects layer, GM layer, or both while players can batch-roll their selected controlled characters","!Init-RR rerolls each unique PC and living NPC once, whispers its result summary to the GM, and preserves non-target tracker rows and fields","Player buttons revalidate token control and the normalized tracker page at execution time","Public initiative calls also whisper the GM a current-page PC/NPC roster with individual and bounded batch controls","Guide, Control Center, Status Summary, and detailed chat Review each have one distinct user-facing purpose","Encounter groups remain page-scoped and can be renamed without changing tracker rows","Missing Beacon data, ambiguous character type, death-state disagreement, and stale tracker targets are skipped rather than guessed"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   observability: { spans: ["[GAMEASSIST:MODULES:INITIATIVEASSIST]"] },
-    //   last_updated_version: "v0.1.6.1",
-    //   independent_versions: { module_version: "1.0.1" }, lifecycle: "active" }
+    //   last_updated_version: "v0.1.6.0",
+    //   independent_versions: { module_version: "1.0.0" }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // InitiativeAssist classifies D&D 5E 2014 and 2024 tracker actors, resolves
@@ -6817,7 +6800,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('InitiativeAssist', function() {
         const MODULE_NAME = 'InitiativeAssist';
-        const MODULE_VERSION = '1.0.1';
+        const MODULE_VERSION = '1.0.0';
         const modState = GameAssist.getState(MODULE_NAME);
         Object.assign(modState.config, {
             enabled: false,
@@ -6828,8 +6811,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         modState.config.hideNpcRolls = ![false, 0, '0', 'false', 'off', 'public'].includes(modState.config.hideNpcRolls);
         const groups = ensureModRuntimeKey(modState, 'groups', 'object');
         const CALLS = Object.freeze([
-            'Roll for initiative!',
-            "Roll 'em!"
+            'Steel yourselves. Roll for initiative!',
+            'The situation has become complicated. Roll for initiative!',
+            'Plans meet consequences. Roll for initiative!',
+            'The talking part appears to be over. Roll for initiative!',
+            'A decisive moment arrives. Roll for initiative!',
+            'Ready or not, the encounter begins. Roll for initiative!',
+            'Everyone had a plan until now. Roll for initiative!',
+            'Time to discover who acts first. Roll for initiative!'
         ]);
         const RESULT_LINES = Object.freeze([
             Object.freeze([
@@ -7259,7 +7248,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel('Initiative Control Center', [
                 { label: 'Purpose', value: 'Choose what InitiativeAssist should do next.' },
                 { label: 'Current Encounter', value: `${_sanitize(pageName(snapshot.pageId))}: ${snapshot.entries.length ? `${snapshot.entries.length} tracker rows` : 'tracker empty'} | ${pageCounts.ready} page characters ready | ${Math.max(0, pageCounts.linked - pageCounts.inTracker)} not yet in tracker` },
-                { label: 'Start Initiative', value: `${GameAssist.createButton('Invite Players', '!Init-Go')} ${GameAssist.createButton('Playful Invitation', '!Init-Go!')} ${GameAssist.createButton('GM-Only Start', '!Init-GM')}` },
+                { label: 'Start Initiative', value: `${GameAssist.createButton('Invite Players', '!Init-Go')} ${GameAssist.createButton('Playful Invitation', '!Init-Go!')}` },
                 { label: 'NPC Roll Privacy', value: `${npcRollsHidden() ? 'Hidden from players' : 'Public'} ${GameAssist.createButton(npcRollsHidden() ? 'Make Public' : 'Hide NPC Rolls', `!Init-NPC-Rolls ${npcRollsHidden() ? 'public' : 'hidden'}`)}` },
                 { label: 'Reroll Initiative', value: `${GameAssist.createButton(`Everyone (${counts.eligible})`, '!Init-RR')} ${GameAssist.createButton('Choose Who', '!Init-RR-Menu')}` },
                 { label: 'Review Encounter', value: `${GameAssist.createButton('Status Summary', '!Init-Status')} ${GameAssist.createButton('Detailed Review', '!Init-Audit')}` },
@@ -7273,7 +7262,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel('InitiativeAssist Guide', [
                 { label: 'What It Does', value: 'Helps players enter Roll20\'s Turn Tracker and lets the GM reroll eligible characters without moving counters, objects, or other preserved rows.' },
                 { label: '1. Prepare', value: 'Move the player ribbon to the encounter page and open Roll20\'s Turn Tracker.' },
-                { label: '2. Start the Encounter', value: `${GameAssist.createButton('Invite Players', '!Init-Go')} posts player buttons publicly and whispers the GM a PC/NPC roster. ${GameAssist.createButton('GM-Only Start', '!Init-GM')} gives the same neutral controls only to the GM. No macro is required.` },
+                { label: '2. Start the Encounter', value: `${GameAssist.createButton('Invite Players', '!Init-Go')} posts player buttons publicly and whispers the GM a PC/NPC roster with individual, object-layer, and GM-layer batch controls. No macro is required.` },
                 { label: '3. Reroll Later', value: `${GameAssist.createButton('Reroll Everyone', '!Init-RR')} rerolls every eligible PC and living NPC already in the tracker. ${GameAssist.createButton('Choose Who', '!Init-RR-Menu')} handles smaller groups.` },
                 { label: 'Player Options', value: 'Choose normal, advantage, or disadvantage; then optionally add a flat adjustment and one or two bonus dice. Every choice combines into the same roll.' },
                 { label: 'Multiple Characters', value: `Select every controlled character token that should roll, then click ${GameAssist.createButton('Roll Selected', '!Init-Roll-Selected')}. Each token is checked again before rolling.` },
@@ -7793,7 +7782,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return shown.length ? shown.join(' ') : 'None found';
         }
 
-        async function callForInitiative(msg, flair, gmOnly = false) {
+        async function callForInitiative(msg, flair) {
             if (!requireGm(msg) || !requireManager(msg)) return;
             const snapshot = trackerSnapshot(msg);
             if (!snapshot) return;
@@ -7802,7 +7791,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel(flair ? 'The Encounter Begins' : 'Roll for Initiative', [
                 { label: 'Call', value: _sanitize(call) },
                 { label: 'Players', value: `${GameAssist.createButton('Roll Initiative', `!Init-Roll${suffix}`)} ${GameAssist.createButton('Roll Selected', `!Init-Roll-Selected${suffix}`)} ${GameAssist.createButton('Roll Options', `!Init-Options${suffix}`)}` }
-            ], gmOnly ? { msg, gmOnly: true } : { publicMessage: true });
+            ], { publicMessage: true });
             const pageRoster = await classifyPageRoster(snapshot, { includeGmLayer: true });
             const pcs = pageRoster.rows.filter(row => row.layer === 'objects' && row.actorType === 'pc');
             const npcs = pageRoster.rows.filter(row => row.layer === 'objects' && row.actorType === 'npc');
@@ -8211,9 +8200,6 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 case '!init-go!':
                     runAsync(() => callForInitiative(msg, true));
                     return;
-                case '!init-gm':
-                    runAsync(() => callForInitiative(msg, false, true));
-                    return;
                 case '!init-start':
                     if (requireGm(msg) && requireManager(msg)) {
                         GameAssist.enqueue(() => rollPageRoster(msg, args), { timeout: POLICY.queue.defaultTimeoutMs });
@@ -8300,7 +8286,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.onCommand('!Init-', handleCommand, MODULE_NAME, {
             match: { caseInsensitive: true, mode: 'prefix' }
         });
-        GameAssist.log(MODULE_NAME, 'Ready: !Init-Menu, !Init-Go, !Init-GM, and !Init-RR.', 'INFO', { startup: true });
+        GameAssist.log(MODULE_NAME, 'Ready: !Init-Menu, !Init-Go, and !Init-RR.', 'INFO', { startup: true });
     }, {
         enabled: false,
         prefixes: ['!Init-'],
@@ -8309,9 +8295,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => GameAssist.TurnTrackerService.clearObservers('InitiativeAssist')
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.6.1): Advanced InitiativeAssist to 1.0.1 and added !Init-GM, which presents the neutral initiative call and complete GM roster without posting the invitation publicly.
+    // Changed (v0.1.6.0): Added mixed D&D 2014/2024 initiative adapters with unlabeled-sheet probing, the case-insensitive !Init- command family, player-specific responses, visible page-owned pre-tracker rows, GM object/GM-layer NPC batch controls, selected-character batch rolling, private-by-default NPC roll evidence, concentration-style multi-die evidence, composable d20/flat-adjustment/bonus-die options, score-banded optional flair, GM-whispered reroll summaries, distinct Guide/Control Center/Status Summary/chat Review surfaces, page-scoped renameable encounter groups, and preservation-first rerolls through TurnTrackerService.
     // Decision log:
-    //   CHOICE: Reuse the ordinary neutral invitation and roster path for !Init-GM - ALT: maintain a second GM dashboard implementation; REJECTED: duplicated controls would drift from !Init-Go.
     //   CHOICE: Start disabled but default to Manager mode once deliberately enabled - ALT: require a second ownership toggle; REJECTED: unnecessary setup friction after explicit module enablement.
     //   CHOICE: Roll once per unique token and update duplicate occurrences consistently - ALT: roll every duplicate separately; REJECTED: duplicate turns still represent one character unless a later feature explicitly says otherwise.
     //   CHOICE: Sort only inside owned character slots - ALT: globally sort every tracker row; REJECTED: custom counters and external entries must not move.
@@ -8323,492 +8308,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Hide NPC roll evidence by default and always hide GM-layer NPC rolls - ALT: expose every inline roll publicly; REJECTED: initiative should not reveal concealed modifiers, bonus dice, or hidden encounter actors.
     //   CHOICE: Revalidate every selected token's page, linkage, control, and eligibility at execution time - ALT: trust selection identifiers captured by a chat button; REJECTED: players must never roll an uncontrolled or stale token through a batch command.
     //   CHOICE: Keep the detailed review in private chat - ALT: create a persistent initiative handout; REJECTED: initiative state is short-lived and the handout added campaign clutter without preserving a useful historical record.
-    // Prior notes:
-    //   v0.1.6.0: Added mixed D&D 2014/2024 adapters, native page-owned tracker rows, player and GM roster controls, private NPC evidence, composable roll options, score-banded flair, selected and grouped rerolls, and preservation-first writes through TurnTrackerService.
     // [GAMEASSIST:MODULES:INITIATIVEASSIST] END
-    // =============================================================================
-
-    // ————— WELCOMEASSIST MODULE v0.1.0 —————
-    // =============================================================================
-    // [GAMEASSIST:MODULES:WELCOMEASSIST] BEGIN
-    // Section Title: Optional table welcome and startup greeting
-    // -------------------------------------------------------------------------
-    // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:WELCOMEASSIST", title: "WelcomeAssist",
-    //   guarantees: ["Disabled-by-default public startup greeting","At most one automatic greeting per sandbox lifecycle","Automatic output begins only after completed GameAssist bootstrap and a bounded health check","Custom greetings are bounded, deduplicated, and neutralized against Roll20 chat directives","Configuration, status, and previews remain GM-only while explicit and automatic announcements are public"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:STATE]","[GAMEASSIST:CORE:OBJECT]"],
-    //   observability: { spans: ["[GAMEASSIST:MODULES:WELCOMEASSIST]"] },
-    //   last_updated_version: "v0.1.6.1", lifecycle: "active",
-    //   independent_versions: { module_version: "0.1.0" } }
-    // -------------------------------------------------------------------------
-    // Narrative
-    // WelcomeAssist optionally posts one public greeting after GameAssist completes
-    // bootstrap. Enabling it during a live sandbox never announces unexpectedly;
-    // the GM configures and previews first, then reloads for automatic behavior.
-    // Modes include one professional default, the built-in greeting library, one to ten
-    // campaign greetings, or a mixed pool where each campaign greeting has double
-    // the individual weight of a built-in line.
-    // -------------------------------------------------------------------------
-    const WELCOMEASSIST_MODULE_VERSION = '0.1.0';
-    const WELCOMEASSIST_MODES = Object.freeze(['default', 'builtin', 'custom', 'mixed']);
-    const WELCOMEASSIST_DEFAULTS = Object.freeze({
-        enabled: false,
-        mode: 'mixed',
-        delayMs: 3000,
-        showHeader: true,
-        header: '🎲 Game Night Is Ready',
-        defaultGreeting: 'Welcome, adventurers. The table is ready—may your plans be clever, your rolls be kind, and your game night be legendary.',
-        customGreetings: Object.freeze([])
-    });
-    const WELCOMEASSIST_BUILT_INS = Object.freeze([
-        'Welcome, adventurers. The table is ready—may your plans be clever, your rolls be kind, your game night be legendary, and may the odds be ever in your...and that is a nat one.',
-        'welcome'
-    ]);
-
-    let welcomeAssistTimer = null;
-    let welcomeAssistAutoAnnounced = false;
-    let welcomeAssistLastAnnouncement = null;
-
-    function clearWelcomeAssistTimer() {
-        if (welcomeAssistTimer === null) return;
-        clearTimeout(welcomeAssistTimer);
-        welcomeAssistTimer = null;
-    }
-
-    function normalizeWelcomeText(value, fallback, maxLength) {
-        const normalized = String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, maxLength);
-        return normalized || fallback;
-    }
-
-    function normalizeWelcomeMode(value) {
-        const normalized = String(value ?? '').trim().toLowerCase();
-        return WELCOMEASSIST_MODES.includes(normalized) ? normalized : WELCOMEASSIST_DEFAULTS.mode;
-    }
-
-    function normalizeWelcomeDelay(value) {
-        const numericValue = Number(value);
-        if (!Number.isFinite(numericValue)) return WELCOMEASSIST_DEFAULTS.delayMs;
-        return Math.min(POLICY.welcome.maxDelayMs, Math.max(POLICY.welcome.minDelayMs, Math.round(numericValue)));
-    }
-
-    function normalizeCustomGreetings(value) {
-        const source = Array.isArray(value) ? value : [];
-        const seen = new Set();
-        const normalized = [];
-        source.forEach(entry => {
-            if (normalized.length >= POLICY.welcome.maxCustomGreetings) return;
-            const greeting = normalizeWelcomeText(entry, '', POLICY.welcome.maxGreetingLength);
-            if (!greeting) return;
-            const key = greeting.toLowerCase();
-            if (seen.has(key)) return;
-            seen.add(key);
-            normalized.push(greeting);
-        });
-        return normalized;
-    }
-
-    function normalizeWelcomeConfig(modState) {
-        Object.assign(modState.config, {
-            enabled: WELCOMEASSIST_DEFAULTS.enabled,
-            mode: WELCOMEASSIST_DEFAULTS.mode,
-            delayMs: WELCOMEASSIST_DEFAULTS.delayMs,
-            showHeader: WELCOMEASSIST_DEFAULTS.showHeader,
-            header: WELCOMEASSIST_DEFAULTS.header,
-            defaultGreeting: WELCOMEASSIST_DEFAULTS.defaultGreeting,
-            customGreetings: [],
-            ...modState.config
-        });
-        modState.config.mode = normalizeWelcomeMode(modState.config.mode);
-        modState.config.delayMs = normalizeWelcomeDelay(modState.config.delayMs);
-        modState.config.showHeader = modState.config.showHeader !== false;
-        modState.config.header = normalizeWelcomeText(
-            modState.config.header,
-            WELCOMEASSIST_DEFAULTS.header,
-            POLICY.welcome.maxHeaderLength
-        );
-        modState.config.defaultGreeting = normalizeWelcomeText(
-            modState.config.defaultGreeting,
-            WELCOMEASSIST_DEFAULTS.defaultGreeting,
-            POLICY.welcome.maxGreetingLength
-        );
-        modState.config.customGreetings = normalizeCustomGreetings(modState.config.customGreetings);
-        return modState.config;
-    }
-
-    function pickWelcomeGreeting(pool) {
-        if (!Array.isArray(pool) || !pool.length) return WELCOMEASSIST_DEFAULTS.defaultGreeting;
-        return pool[randomInteger(pool.length) - 1];
-    }
-
-    function chooseWelcomeGreeting(config, modeOverride = null) {
-        const mode = normalizeWelcomeMode(modeOverride || config.mode);
-        const custom = normalizeCustomGreetings(config.customGreetings);
-        if (mode === 'default') return { mode, greeting: config.defaultGreeting };
-        if (mode === 'builtin') return { mode, greeting: pickWelcomeGreeting(WELCOMEASSIST_BUILT_INS) };
-        if (mode === 'custom') {
-            return {
-                mode,
-                greeting: custom.length ? pickWelcomeGreeting(custom) : config.defaultGreeting,
-                fallback: custom.length === 0
-            };
-        }
-        const mixed = [config.defaultGreeting].concat(WELCOMEASSIST_BUILT_INS);
-        custom.forEach(greeting => {
-            // CHOICE: Two entries give each campaign greeting twice the individual weight of a built-in or default line.
-            mixed.push(greeting, greeting);
-        });
-        return { mode: 'mixed', greeting: pickWelcomeGreeting(mixed), fallback: custom.length === 0 };
-    }
-
-    /**
-     * sanitizeWelcomeForChat — Escape layout HTML and neutralize Roll20 chat directives.
-     * Inputs: bounded owner-authored header or greeting text.
-     * Outputs: display-safe HTML text that cannot invoke inline rolls, attributes, abilities, or queries.
-     * Failure: never throws for null or malformed input; string conversion is deterministic.
-     * Design: public custom text remains expressive without becoming executable Roll20 chat syntax.
-     */
-    function sanitizeWelcomeForChat(value) {
-        return _sanitize(String(value ?? ''))
-            .replace(/\[/g, '&#91;')
-            .replace(/\]/g, '&#93;')
-            .replace(/@/g, '&#64;')
-            .replace(/%/g, '&#37;')
-            .replace(/\?/g, '&#63;');
-    }
-
-    function buildWelcomeCard(config, greeting) {
-        const header = config.showHeader
-            ? `<div style="font-weight:bold;color:#3f2f72;margin-bottom:4px;">${sanitizeWelcomeForChat(config.header)}</div>`
-            : '';
-        return [
-            '<div style="border:1px solid #6d5ca5;background:#f7f5ff;padding:8px 10px;border-radius:6px;">',
-            header,
-            `<div style="font-style:italic;">${sanitizeWelcomeForChat(greeting)}</div>`,
-            '</div>'
-        ].join('');
-    }
-
-    function getBlockingWelcomeModules() {
-        return Object.entries(MODULES)
-            .filter(([name]) => name !== 'WelcomeAssist')
-            .filter(([name, mod]) => {
-                const branch = getState(name);
-                return branch.config.enabled !== false && !(mod.initialized && mod.active);
-            })
-            .map(([name]) => name)
-            .sort((left, right) => left.localeCompare(right));
-    }
-
-    function recordWelcomeAnnouncement(modState, choice, reason) {
-        const record = {
-            greeting: choice.greeting,
-            mode: choice.mode,
-            reason,
-            announcedAt: isoNow()
-        };
-        welcomeAssistLastAnnouncement = record;
-        modState.runtime.lastGreeting = record.greeting;
-        modState.runtime.lastMode = record.mode;
-        modState.runtime.lastReason = record.reason;
-        modState.runtime.lastAnnouncedAt = record.announcedAt;
-    }
-
-    function announceWelcome(modState, reason = 'manual') {
-        const config = normalizeWelcomeConfig(modState);
-        const choice = chooseWelcomeGreeting(config);
-        if (choice.fallback && config.mode === 'custom') {
-            GameAssist.log('WelcomeAssist', 'Custom mode has no campaign greetings; using the professional default.', 'WARN');
-        }
-        sendChat('WelcomeAssist', buildWelcomeCard(config, choice.greeting));
-        recordWelcomeAnnouncement(modState, choice, reason);
-        if (reason === 'automatic') welcomeAssistAutoAnnounced = true;
-        return choice;
-    }
-
-    function scheduleWelcomeAfterBootstrap(modState) {
-        if (welcomeAssistAutoAnnounced || welcomeAssistTimer !== null) return;
-        const config = normalizeWelcomeConfig(modState);
-        const deadline = now() + config.delayMs + POLICY.welcome.readinessWaitMs;
-        const tryAnnouncement = () => {
-            welcomeAssistTimer = null;
-            if (!MODULES.WelcomeAssist?.initialized || !MODULES.WelcomeAssist?.active) return;
-            const blocking = getBlockingWelcomeModules();
-            if (!blocking.length) {
-                announceWelcome(modState, 'automatic');
-                return;
-            }
-            if (now() >= deadline) {
-                GameAssist.log(
-                    'WelcomeAssist',
-                    `Greeting skipped because these enabled GameAssist components were not ready: ${blocking.join(', ')}.`,
-                    'WARN'
-                );
-                return;
-            }
-            welcomeAssistTimer = setTimeout(tryAnnouncement, POLICY.welcome.readinessPollMs);
-        };
-        welcomeAssistTimer = setTimeout(tryAnnouncement, config.delayMs);
-    }
-
-    function whisperWelcomeAssist(message) {
-        sendChat('WelcomeAssist', `/w gm ${message}`);
-    }
-
-    function welcomeAssistPanel(title, content) {
-        whisperWelcomeAssist([
-            '<div style="border:1px solid #6d5ca5;background:#f7f5ff;padding:8px;border-radius:6px;">',
-            `<div style="font-weight:bold;font-size:1.1em;color:#3f2f72;">${sanitizeWelcomeForChat(title)}</div>`,
-            content,
-            '</div>'
-        ].join(''));
-    }
-
-    function welcomeModeButtons() {
-        return WELCOMEASSIST_MODES.map(mode => GameAssist.createButton(
-            mode[0].toUpperCase() + mode.slice(1),
-            `!welcome-assist mode ${mode}`
-        )).join(' ');
-    }
-
-    function showWelcomeHelp() {
-        welcomeAssistPanel('WelcomeAssist Guide', [
-            '<div style="margin-top:6px;"><strong>What It Does</strong><br>Posts one optional table greeting after GameAssist starts successfully. It is disabled until the GM chooses to use it.</div>',
-            '<div style="margin-top:8px;"><strong>Quick Setup</strong><br>1. Enable WelcomeAssist.<br>2. Choose a greeting mode and preview it.<br>3. Reload the Mod sandbox. The automatic greeting appears once after the configured delay.</div>',
-            `<div style="margin-top:8px;"><strong>Greeting Mode</strong><br>${welcomeModeButtons()}</div>`,
-            '<div style="margin-top:5px;"><strong>Default</strong> uses one professional greeting. <strong>Built-in</strong> chooses from the included greeting library. <strong>Custom</strong> uses campaign greetings. <strong>Mixed</strong> combines all three and gives each campaign greeting double weight.</div>',
-            `<div style="margin-top:8px;"><strong>Try It Safely</strong><br>${GameAssist.createButton('Preview to GM', '!welcome-assist preview')} ${GameAssist.createButton('Status & Settings', '!welcome-assist status')} ${GameAssist.createButton('Announce Now', '!welcome-assist announce')}</div>`,
-            `<div style="margin-top:8px;"><strong>Campaign Greetings</strong><br>${GameAssist.createButton('View List', '!welcome-assist custom list')} ${GameAssist.createButton('Add Greeting', '!welcome-assist custom add ?{Campaign greeting}')}</div>`,
-            `<div style="margin-top:8px;"><strong>Appearance & Delay</strong><br>${GameAssist.createButton('Change Header', '!welcome-assist header ?{Welcome header|Game Night Is Ready}')} ${GameAssist.createButton('Show Header', '!welcome-assist header show')} ${GameAssist.createButton('Hide Header', '!welcome-assist header hide')} ${GameAssist.createButton('Set Delay', '!welcome-assist delay ?{Delay in seconds|3}')}</div>`,
-            '<div style="margin-top:8px;"><strong>Important</strong><br>Enabling the module does not post immediately. <code>announce</code> is the deliberate public action; <code>preview</code>, setup, and status stay private to the GM.</div>'
-        ].join(''));
-    }
-
-    function showWelcomeStatus(modState) {
-        const config = normalizeWelcomeConfig(modState);
-        const last = welcomeAssistLastAnnouncement
-            ? `${sanitizeWelcomeForChat(welcomeAssistLastAnnouncement.greeting)}<br><em>${sanitizeWelcomeForChat(welcomeAssistLastAnnouncement.reason)} at ${sanitizeWelcomeForChat(localTime(new Date(welcomeAssistLastAnnouncement.announcedAt).getTime()))}</em>`
-            : 'None in this sandbox lifecycle.';
-        welcomeAssistPanel('WelcomeAssist Status', [
-            `<div style="margin-top:6px;"><strong>Module</strong>: ${WELCOMEASSIST_MODULE_VERSION} | Enabled and running</div>`,
-            `<div><strong>Mode</strong>: ${sanitizeWelcomeForChat(config.mode)} | <strong>Delay</strong>: ${(config.delayMs / 1000).toFixed(1)} seconds</div>`,
-            `<div><strong>Header</strong>: ${config.showHeader ? 'Shown' : 'Hidden'} | <strong>Campaign Greetings</strong>: ${config.customGreetings.length}/${POLICY.welcome.maxCustomGreetings}</div>`,
-            `<div><strong>Automatic Greeting</strong>: ${welcomeAssistAutoAnnounced ? 'Sent' : (welcomeAssistTimer !== null ? 'Waiting' : 'Not sent')}</div>`,
-            `<div style="margin-top:6px;"><strong>Last This Sandbox</strong><br>${last}</div>`,
-            `<div style="margin-top:8px;">${GameAssist.createButton('Preview', '!welcome-assist preview')} ${GameAssist.createButton('Announce Now', '!welcome-assist announce')} ${GameAssist.createButton('Custom List', '!welcome-assist custom list')} ${GameAssist.createButton('Guide', '!welcome-assist help')}</div>`,
-            `<div style="margin-top:6px;">${welcomeModeButtons()}</div>`
-        ].join(''));
-    }
-
-    function showCustomGreetings(modState) {
-        const config = normalizeWelcomeConfig(modState);
-        const rows = config.customGreetings.length
-            ? config.customGreetings.map((greeting, index) => [
-                `<div style="margin-top:5px;"><strong>${index + 1}.</strong> ${sanitizeWelcomeForChat(greeting)} `,
-                GameAssist.createButton('Remove', `!welcome-assist custom remove ${index + 1}`),
-                '</div>'
-            ].join('')).join('')
-            : '<div style="margin-top:6px;">No campaign greetings have been added.</div>';
-        welcomeAssistPanel(`Campaign Greetings (${config.customGreetings.length}/${POLICY.welcome.maxCustomGreetings})`, [
-            rows,
-            `<div style="margin-top:8px;">${GameAssist.createButton('Add Greeting', '!welcome-assist custom add ?{Campaign greeting}')} ${GameAssist.createButton('Clear All', '!welcome-assist custom clear --confirm')} ${GameAssist.createButton('Back to Status', '!welcome-assist status')}</div>`
-        ].join(''));
-    }
-
-    function splitWelcomeCommand(payload) {
-        const match = String(payload || '').trim().match(/^(\S+)(?:\s+([\s\S]*))?$/);
-        return {
-            command: (match?.[1] || 'help').toLowerCase(),
-            remainder: (match?.[2] || '').trim()
-        };
-    }
-
-    function stripMatchingQuotes(value) {
-        const text = String(value || '').trim();
-        if (text.length < 2) return text;
-        const first = text[0];
-        const last = text[text.length - 1];
-        if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
-            return text.slice(1, -1).trim();
-        }
-        return text;
-    }
-
-    function setWelcomeMode(modState, rawMode) {
-        const requested = String(rawMode || '').trim().toLowerCase();
-        if (!WELCOMEASSIST_MODES.includes(requested)) {
-            GameAssist.log('WelcomeAssist', 'Choose default, builtin, custom, or mixed.', 'WARN');
-            return;
-        }
-        modState.config.mode = requested;
-        GameAssist.log('WelcomeAssist', `Greeting mode set to ${requested}.`);
-        showWelcomeStatus(modState);
-    }
-
-    function setWelcomeDelay(modState, rawSeconds) {
-        const input = String(rawSeconds || '').trim();
-        if (!/^\d+(?:\.\d+)?$/.test(input)) {
-            GameAssist.log('WelcomeAssist', 'Delay must be a number of seconds from 1 to 60.', 'WARN');
-            return;
-        }
-        const requestedMs = Math.round(Number(input) * 1000);
-        const normalizedMs = normalizeWelcomeDelay(requestedMs);
-        modState.config.delayMs = normalizedMs;
-        if (normalizedMs !== requestedMs) {
-            GameAssist.log('WelcomeAssist', `Delay constrained to ${(normalizedMs / 1000).toFixed(1)} seconds.`, 'WARN');
-            return;
-        }
-        GameAssist.log('WelcomeAssist', `Delay set to ${(normalizedMs / 1000).toFixed(1)} seconds.`);
-    }
-
-    function setWelcomeText(modState, key, rawText) {
-        const maxLength = key === 'header' ? POLICY.welcome.maxHeaderLength : POLICY.welcome.maxGreetingLength;
-        const normalized = normalizeWelcomeText(stripMatchingQuotes(rawText), '', maxLength);
-        if (!normalized) {
-            GameAssist.log('WelcomeAssist', `${key === 'header' ? 'Header' : 'Default greeting'} cannot be blank.`, 'WARN');
-            return;
-        }
-        modState.config[key] = normalized;
-        GameAssist.log('WelcomeAssist', `${key === 'header' ? 'Header' : 'Default greeting'} updated.`);
-    }
-
-    function manageWelcomeHeader(modState, rawText) {
-        const requested = String(rawText || '').trim().toLowerCase();
-        if (requested === 'show' || requested === 'hide') {
-            modState.config.showHeader = requested === 'show';
-            GameAssist.log('WelcomeAssist', `Greeting header ${requested === 'show' ? 'enabled' : 'hidden'}.`);
-            return;
-        }
-        setWelcomeText(modState, 'header', rawText);
-    }
-
-    function manageCustomGreetings(modState, rawCommand) {
-        const parsed = splitWelcomeCommand(rawCommand);
-        const config = normalizeWelcomeConfig(modState);
-        if (parsed.command === 'list') {
-            showCustomGreetings(modState);
-            return;
-        }
-        if (parsed.command === 'add') {
-            const greeting = normalizeWelcomeText(stripMatchingQuotes(parsed.remainder), '', POLICY.welcome.maxGreetingLength);
-            if (!greeting) {
-                GameAssist.log('WelcomeAssist', 'Provide a greeting after custom add.', 'WARN');
-                return;
-            }
-            if (config.customGreetings.length >= POLICY.welcome.maxCustomGreetings) {
-                GameAssist.log('WelcomeAssist', `Campaign greetings are limited to ${POLICY.welcome.maxCustomGreetings}.`, 'WARN');
-                return;
-            }
-            if (config.customGreetings.some(existing => existing.toLowerCase() === greeting.toLowerCase())) {
-                GameAssist.log('WelcomeAssist', 'That campaign greeting is already present.', 'WARN');
-                return;
-            }
-            config.customGreetings.push(greeting);
-            modState.config.customGreetings = normalizeCustomGreetings(config.customGreetings);
-            GameAssist.log('WelcomeAssist', `Campaign greeting added (${modState.config.customGreetings.length}/${POLICY.welcome.maxCustomGreetings}).`);
-            return;
-        }
-        if (parsed.command === 'remove') {
-            if (!/^[1-9]\d*$/.test(parsed.remainder)) {
-                GameAssist.log('WelcomeAssist', 'Provide the exact campaign greeting number to remove.', 'WARN');
-                return;
-            }
-            const index = Number(parsed.remainder);
-            if (index > config.customGreetings.length) {
-                GameAssist.log('WelcomeAssist', 'That campaign greeting number does not exist.', 'WARN');
-                return;
-            }
-            config.customGreetings.splice(index - 1, 1);
-            modState.config.customGreetings = config.customGreetings;
-            GameAssist.log('WelcomeAssist', `Campaign greeting ${index} removed.`);
-            return;
-        }
-        if (parsed.command === 'clear') {
-            if (!/(?:^|\s)--confirm(?:\s|$)/i.test(parsed.remainder)) {
-                GameAssist.log('WelcomeAssist', 'Clearing campaign greetings requires --confirm.', 'WARN');
-                return;
-            }
-            modState.config.customGreetings = [];
-            GameAssist.log('WelcomeAssist', 'All campaign greetings cleared.');
-            return;
-        }
-        GameAssist.log('WelcomeAssist', 'Use custom list, custom add <text>, custom remove <number>, or custom clear --confirm.', 'WARN');
-    }
-
-    function teardownWelcomeAssist() {
-        clearWelcomeAssistTimer();
-        delete GameAssist.WelcomeAssist;
-    }
-
-    GameAssist.register('WelcomeAssist', function() {
-        const modState = GameAssist.getState('WelcomeAssist');
-        normalizeWelcomeConfig(modState);
-        GameAssist.WelcomeAssist = Object.freeze({
-            version: WELCOMEASSIST_MODULE_VERSION,
-            onBootstrapComplete() {
-                scheduleWelcomeAfterBootstrap(modState);
-            }
-        });
-        GameAssist.onCommand('!welcome-assist', msg => {
-            const payload = msg.content.replace(/^!welcome-assist\b\s*/i, '');
-            const parsed = splitWelcomeCommand(payload);
-            if (parsed.command === 'help') {
-                showWelcomeHelp();
-                return;
-            }
-            if (parsed.command === 'status') {
-                showWelcomeStatus(modState);
-                return;
-            }
-            if (parsed.command === 'preview') {
-                const config = normalizeWelcomeConfig(modState);
-                const choice = chooseWelcomeGreeting(config);
-                whisperWelcomeAssist(buildWelcomeCard(config, choice.greeting));
-                return;
-            }
-            if (parsed.command === 'announce') {
-                clearWelcomeAssistTimer();
-                welcomeAssistAutoAnnounced = true;
-                announceWelcome(modState, 'manual');
-                return;
-            }
-            if (parsed.command === 'mode') {
-                setWelcomeMode(modState, parsed.remainder);
-                return;
-            }
-            if (parsed.command === 'delay') {
-                setWelcomeDelay(modState, parsed.remainder);
-                return;
-            }
-            if (parsed.command === 'header') {
-                manageWelcomeHeader(modState, parsed.remainder);
-                return;
-            }
-            if (parsed.command === 'default') {
-                setWelcomeText(modState, 'defaultGreeting', parsed.remainder);
-                return;
-            }
-            if (parsed.command === 'custom') {
-                manageCustomGreetings(modState, parsed.remainder);
-                return;
-            }
-            showWelcomeHelp();
-        }, 'WelcomeAssist', { gmOnly: true });
-        GameAssist.log('WelcomeAssist', 'Ready: !welcome-assist help. Reload after setup for the automatic greeting.', 'INFO', { startup: true });
-    }, {
-        enabled: false,
-        prefixes: ['!welcome-assist'],
-        teardown: teardownWelcomeAssist,
-        preserveRuntimeOnDisable: false,
-        protectedConfigKeys: ['customGreetings']
-    });
-    // --- Notes & Comments ---
-    // Changed (v0.1.6.1): Added WelcomeAssist 0.1.0 with disabled-by-default post-bootstrap greetings, professional/built-in/custom/mixed modes, a curated built-in greeting library, double-weighted campaign greetings, bounded GM configuration, private previews, manual announcements, directive-neutralized public text, a complete configured-component health gate, and one automatic greeting per sandbox lifecycle.
-    // Decision log:
-    //   CHOICE: Trigger automatic output only through the post-bootstrap seam - ALT: schedule from module init; REJECTED: live enablement could surprise the table before the GM finishes configuration.
-    //   CHOICE: Refuse a public ready greeting while another configured GameAssist component remains inactive - ALT: announce after a fixed delay regardless; REJECTED: would present an unhealthy startup as ready.
-    //   CHOICE: Retain the owner-selected brief fandom references alongside original table humor - ALT: replace the pool with only generic prose; REJECTED: recognizable geek-culture playfulness is an intentional part of the module's voice.
-    //   CHOICE: Store plain bounded custom text and neutralize Roll20 directives at emission - ALT: permit executable chat syntax; REJECTED: a greeting must not trigger rolls, attributes, abilities, or queries.
-    //   CHOICE: Keep the current-sandbox announcement record in memory while retaining the latest historical record in runtime state - ALT: label persistent history as current; REJECTED: reloads would produce misleading status.
-    // [GAMEASSIST:MODULES:WELCOMEASSIST] END
     // =============================================================================
 
     // =============================================================================
@@ -11760,9 +11260,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v0.1.6.1): Added disabled-by-default WelcomeAssist to the bundled module contract and retained independent lifecycle management for every unrelated feature.
+    // Changed (v0.1.6.0): Added InitiativeAssist to the module contract and assigned all native Turn Tracker writes to CORE:TURNTRACKERSERVICE.
     // Prior notes:
-    //   v0.1.6.0: Added InitiativeAssist to the module contract and assigned all native Turn Tracker writes to CORE:TURNTRACKERSERVICE.
     //   v0.1.5.1: Added GM-only timezone configuration, status visibility, common/custom selection buttons, validation diagnostics, sandbox-default restoration, and immediate NPC Session-date refresh when that module is running.
     //   v0.1.5.0: Updated the module wrapper contract because all marker consumers share CORE:MARKERSERVICE and TokenAssist now owns supported general token commands.
     //   v0.1.4.3: Updated the wrapper contract after marker consumers adopted configured marker identity resolution.
@@ -11776,9 +11275,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Sandbox ready bootstrap
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "BOOTSTRAP", title: "Bootstrap",
-    //   guarantees: ["Repair known state, seed defaults, diagnose dependencies, preserve configured intent when dependencies prevent startup, init enabled modules","MarkerService and TurnTrackerService initialize before their consumers and may be disabled without disabling unrelated modules","An active WelcomeAssist receives one post-bootstrap completion signal after every configured module has been attempted"],
+    //   guarantees: ["Repair known state, seed defaults, diagnose dependencies, preserve configured intent when dependencies prevent startup, init enabled modules","MarkerService and TurnTrackerService initialize before their consumers and may be disabled without disabling unrelated modules"],
     //   depends_on: ["[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE]","[GAMEASSIST:MODULES]"],
-    //   last_updated_version: "v0.1.6.1", lifecycle: "active" }
+    //   last_updated_version: "v0.1.6.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // BOOTSTRAP runs at sandbox ready: repairs known state containers, seeds defaults,
@@ -11859,29 +11358,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         });
 
         GameAssist._metrics.lastUpdate = isoNow();
-
-        if (
-            MODULES.WelcomeAssist?.initialized &&
-            MODULES.WelcomeAssist?.active &&
-            typeof GameAssist.WelcomeAssist?.onBootstrapComplete === 'function'
-        ) {
-            try {
-                GameAssist.WelcomeAssist.onBootstrapComplete();
-            } catch (error) {
-                GameAssist.handleError('WelcomeAssist', error);
-            }
-        }
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.6.1): Added one guarded post-bootstrap WelcomeAssist completion signal after all configured component initialization attempts and final bootstrap metrics.
+    // Changed (v0.1.6.0): Startup initializes TurnTrackerService before InitiativeAssist and applies the existing service-disable cascade without changing unrelated modules.
     // Decision log:
-    //   CHOICE: Signal WelcomeAssist only after the complete module loop - ALT: schedule during module init; REJECTED: the health gate could observe modules that had not yet been attempted.
     //   CHOICE: Keep the core ready log visible while QUIET_STARTUP suppresses module-ready noise.
     //   CHOICE: Repair known state before seeding defaults so valid configuration survives.
     //   CHOICE: Preserve configured intent for dependency-skipped modules - ALT: force-disable config; REJECTED: hid startup failures and erased DM intent.
     //   CHOICE: Treat an explicitly disabled GameAssist service differently from an unavailable external dependency because the DM selected that lifecycle outcome.
     // Prior notes:
-    //   v0.1.6.0: Startup initialized TurnTrackerService before InitiativeAssist and applied the existing service-disable cascade without changing unrelated modules.
     //   v0.1.5.0: Startup migrated known unreleased component names before auditing state, initialized MarkerService before its consumers, cascaded deliberate service shutdown, and removed standalone TokenMod gating.
     //   v0.1.4.7: Startup reported the standalone-interoperability release; lifecycle order was unchanged.
     //   v0.1.4.6: Checked configured intent before dependencies and preserved enabled configuration when a confirmed dependency was missing.
