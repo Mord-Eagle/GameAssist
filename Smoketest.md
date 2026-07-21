@@ -105,6 +105,7 @@ Record the release result here:
 | ConditionAssist full acceptance | [ ] Pass [ ] Fail |
 | TokenAssist full acceptance | [ ] Pass [ ] Fail |
 | InitiativeAssist full acceptance | [ ] Pass [ ] Fail |
+| WelcomeAssist full acceptance | [ ] Pass [ ] Fail |
 | ConcentrationTracker basic workflow | [ ] Pass [ ] Fail [ ] Skipped by choice |
 | NPCManager basic workflow | [ ] Pass [ ] Fail [ ] Skipped by choice |
 | NPCHPRoller basic workflow | [ ] Pass [ ] Fail [ ] Skipped by choice |
@@ -161,7 +162,7 @@ Record the upgrade result here:
 | MarkerService and enabled dependents are running | [ ] Pass [ ] Fail |
 | Standalone TokenMod and StatusInfo are no longer required | [ ] Pass [ ] Fail |
 | New ConditionAssist and TokenAssist workflows pass | [ ] Pass [ ] Fail |
-| TurnTrackerService and InitiativeAssist acceptance passes | [ ] Pass [ ] Fail |
+| TurnTrackerService, InitiativeAssist, and WelcomeAssist acceptance passes | [ ] Pass [ ] Fail |
 | Existing gameplay module basic checks pass | [ ] Pass [ ] Fail |
 | Migrated state survives another sandbox restart | [ ] Pass [ ] Fail |
 
@@ -171,7 +172,7 @@ The v0.1.6.1 release regression passes only when:
 
 - Track A passes in a clean installation;
 - Track B passes after replacing v0.1.5.1 with v0.1.6.1;
-- MarkerService, TurnTrackerService, ConditionAssist, TokenAssist, and InitiativeAssist have no skipped acceptance checks;
+- MarkerService, TurnTrackerService, ConditionAssist, TokenAssist, InitiativeAssist, and WelcomeAssist have no skipped acceptance checks;
 - no unrelated marker, token property, character attribute, NPC history, or configuration is changed;
 - any optional skipped gameplay module is recorded with a clear reason.
 
