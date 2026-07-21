@@ -568,7 +568,7 @@ Typical session:
 > **Default:** Disabled<br>
 > **Automatic behavior:** At most one public greeting per sandbox lifecycle after completed GameAssist startup.
 
-WelcomeAssist gives the table a short opening greeting without turning startup into a wall of status messages. Its default `mixed` mode chooses from the professional greeting, 45 built-in geek-culture lines, and any campaign greetings the GM adds. Each campaign greeting has twice the individual chance of one built-in line.
+WelcomeAssist gives the table a short opening greeting without turning startup into a wall of status messages. Its default `mixed` mode chooses from the professional greeting, the included built-in greeting library, and any campaign greetings the GM adds. Each campaign greeting has twice the individual chance of one built-in line.
 
 Start here:
 
@@ -1756,12 +1756,12 @@ This is a separate project and is not implemented in v0.1.5.0.
 
 ## 18 · Changelog <a id="18-changelog"></a>
 
-### v0.1.6.1 – Private Initiative and WelcomeAssist *(in development)*
+### v0.1.6.1 – Private Initiative and WelcomeAssist
 
 * Advanced InitiativeAssist to `1.0.1` and added case-insensitive `!Init-GM`, which presents the neutral roll controls and complete encounter roster only to the GM.
-* Added disabled-by-default WelcomeAssist `0.1.0` with one health-gated automatic greeting per sandbox lifecycle, private preview/configuration, explicit public announcement, professional/built-in/custom/mixed modes, 45 geek-culture greetings, and up to ten double-weighted campaign greetings.
+* Added disabled-by-default WelcomeAssist `0.1.0` with one health-gated automatic greeting per sandbox lifecycle, private preview/configuration, explicit public announcement, professional/built-in/custom/mixed modes, an included built-in greeting library, and up to ten double-weighted campaign greetings.
 * Added bounded delay, header, default-text, and custom-list controls with HTML escaping and Roll20 chat-directive neutralization.
-* Added deterministic InitiativeAssist and WelcomeAssist coverage; focused Roll20 acceptance remains required before release.
+* Added deterministic InitiativeAssist and WelcomeAssist coverage; the focused Roll20 acceptance pass confirmed private `!Init-GM` delivery and WelcomeAssist startup behavior.
 
 ### v0.1.6.0 – Native Initiative Foundation
 

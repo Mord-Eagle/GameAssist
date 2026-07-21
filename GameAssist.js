@@ -6828,14 +6828,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         modState.config.hideNpcRolls = ![false, 0, '0', 'false', 'off', 'public'].includes(modState.config.hideNpcRolls);
         const groups = ensureModRuntimeKey(modState, 'groups', 'object');
         const CALLS = Object.freeze([
-            'Steel yourselves. Roll for initiative!',
-            'The situation has become complicated. Roll for initiative!',
-            'Plans meet consequences. Roll for initiative!',
-            'The talking part appears to be over. Roll for initiative!',
-            'A decisive moment arrives. Roll for initiative!',
-            'Ready or not, the encounter begins. Roll for initiative!',
-            'Everyone had a plan until now. Roll for initiative!',
-            'Time to discover who acts first. Roll for initiative!'
+            'Roll for initiative!',
+            "Roll 'em!"
         ]);
         const RESULT_LINES = Object.freeze([
             Object.freeze([
@@ -8350,7 +8344,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // WelcomeAssist optionally posts one public greeting after GameAssist completes
     // bootstrap. Enabling it during a live sandbox never announces unexpectedly;
     // the GM configures and previews first, then reloads for automatic behavior.
-    // Modes include one professional default, 45 geek-culture greetings, one to ten
+    // Modes include one professional default, the built-in greeting library, one to ten
     // campaign greetings, or a mixed pool where each campaign greeting has double
     // the individual weight of a built-in line.
     // -------------------------------------------------------------------------
@@ -8366,51 +8360,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         customGreetings: Object.freeze([])
     });
     const WELCOMEASSIST_BUILT_INS = Object.freeze([
-        'The table is live. Please roll responsibly.',
-        'Initiative is optional. Snacks are not.',
-        'May the dice be with you.',
-        'One does not simply skip game night.',
-        'Set phasers to fun; the encounter is ahead.',
-        'The dice are awake, and they have chosen chaos.',
-        'Nobody expects the critical success.',
-        'And now for something completely initiative.',
-        'Roll, you magnificent fools.',
-        'The fellowship has assembled; someone guard the snacks.',
-        "These are not the failed saves you're looking for.",
-        'The final frontier is apparently five feet beyond the dungeon door.',
-        'Engage imagination. Disengage common sense.',
-        'The GM has spoken. The dice will now file an appeal.',
-        'The airspeed velocity of an unladen d20 remains under peer review.',
-        'Your initiative modifier is respectable. Your plan remains under investigation.',
-        'The Knights Who Say Roll demand a skill check.',
-        'There is no secret cow level, but there may be a mimic.',
-        'The cake is probably trapped.',
-        'Never tell the dice the odds.',
-        'I find your lack of snacks disturbing.',
-        'Do or do not; either way, declare your action.',
-        'The party is boldly going where the map is least prepared.',
-        'Resistance is futile; scheduling was the real boss.',
-        'Make it so—and then make a saving throw.',
-        'Live long, prosper, and stop splitting the party.',
-        'The beacons are lit; game night calls for aid.',
-        'A wizard is never late, but the pizza sometimes is.',
-        'You shall not pass without rolling initiative.',
-        'There and back again, assuming the healer survives.',
-        'The council has decided: more dice.',
-        'Please keep hands, feet, and familiars inside the encounter.',
-        'The prophecy was vague, but it definitely mentioned snacks.',
-        "Tonight's forecast: scattered crits with a chance of goblins.",
-        'The map is ready, the minis are suspicious, and the dice are unsupervised.',
-        'The party has entered the chat. The dungeon regrets this.',
-        'Adventure is loading. Common sense has been disabled.',
-        'Sharpen your pencils and your alibis.',
-        'The GM prepared several outcomes. You will discover none of them as planned.',
-        "The quest begins when someone asks, 'What could go wrong?'",
-        'Tonight, even the side quests have side quests.',
-        'Roll for courage, snacks, and basic spatial awareness.',
-        'All systems nominal. Party judgment remains unverified.',
-        'The tavern is open, the quest board is full, and somebody already adopted the goblin.',
-        'Welcome back. The rules are guidelines; the consequences are binding.'
+        'Welcome, adventurers. The table is ready—may your plans be clever, your rolls be kind, your game night be legendary, and may the odds be ever in your...and that is a nat one.',
+        'welcome'
     ]);
 
     let welcomeAssistTimer = null;
@@ -8623,7 +8574,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             '<div style="margin-top:6px;"><strong>What It Does</strong><br>Posts one optional table greeting after GameAssist starts successfully. It is disabled until the GM chooses to use it.</div>',
             '<div style="margin-top:8px;"><strong>Quick Setup</strong><br>1. Enable WelcomeAssist.<br>2. Choose a greeting mode and preview it.<br>3. Reload the Mod sandbox. The automatic greeting appears once after the configured delay.</div>',
             `<div style="margin-top:8px;"><strong>Greeting Mode</strong><br>${welcomeModeButtons()}</div>`,
-            '<div style="margin-top:5px;"><strong>Default</strong> uses one professional greeting. <strong>Built-in</strong> chooses from 45 geek-culture lines. <strong>Custom</strong> uses campaign greetings. <strong>Mixed</strong> combines all three and gives each campaign greeting double weight.</div>',
+            '<div style="margin-top:5px;"><strong>Default</strong> uses one professional greeting. <strong>Built-in</strong> chooses from the included greeting library. <strong>Custom</strong> uses campaign greetings. <strong>Mixed</strong> combines all three and gives each campaign greeting double weight.</div>',
             `<div style="margin-top:8px;"><strong>Try It Safely</strong><br>${GameAssist.createButton('Preview to GM', '!welcome-assist preview')} ${GameAssist.createButton('Status & Settings', '!welcome-assist status')} ${GameAssist.createButton('Announce Now', '!welcome-assist announce')}</div>`,
             `<div style="margin-top:8px;"><strong>Campaign Greetings</strong><br>${GameAssist.createButton('View List', '!welcome-assist custom list')} ${GameAssist.createButton('Add Greeting', '!welcome-assist custom add ?{Campaign greeting}')}</div>`,
             `<div style="margin-top:8px;"><strong>Appearance & Delay</strong><br>${GameAssist.createButton('Change Header', '!welcome-assist header ?{Welcome header|Game Night Is Ready}')} ${GameAssist.createButton('Show Header', '!welcome-assist header show')} ${GameAssist.createButton('Hide Header', '!welcome-assist header hide')} ${GameAssist.createButton('Set Delay', '!welcome-assist delay ?{Delay in seconds|3}')}</div>`,
@@ -8850,7 +8801,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['customGreetings']
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.6.1): Added WelcomeAssist 0.1.0 with disabled-by-default post-bootstrap greetings, professional/built-in/custom/mixed modes, 45 intentional geek-culture references, double-weighted campaign greetings, bounded GM configuration, private previews, manual announcements, directive-neutralized public text, a complete configured-component health gate, and one automatic greeting per sandbox lifecycle.
+    // Changed (v0.1.6.1): Added WelcomeAssist 0.1.0 with disabled-by-default post-bootstrap greetings, professional/built-in/custom/mixed modes, a curated built-in greeting library, double-weighted campaign greetings, bounded GM configuration, private previews, manual announcements, directive-neutralized public text, a complete configured-component health gate, and one automatic greeting per sandbox lifecycle.
     // Decision log:
     //   CHOICE: Trigger automatic output only through the post-bootstrap seam - ALT: schedule from module init; REJECTED: live enablement could surprise the table before the GM finishes configuration.
     //   CHOICE: Refuse a public ready greeting while another configured GameAssist component remains inactive - ALT: announce after a fixed delay regardless; REJECTED: would present an unhealthy startup as ready.

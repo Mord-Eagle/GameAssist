@@ -2488,7 +2488,7 @@ InitiativeAssist advances to module version 1.0.1. WelcomeAssist launches at mod
 - Added an independently configurable WelcomeAssist module that starts disabled and can be enabled through the normal GameAssist module controls.
 - Added four greeting modes:
   - `default` uses one professional table greeting;
-  - `builtin` chooses from 45 game-night and popular-culture greetings;
+  - `builtin` chooses from the included greeting library;
   - `custom` chooses from the campaign's saved greetings;
   - `mixed` combines the professional greeting, all built-in greetings, and two copies of each custom greeting so campaign-specific text has greater individual weight.
 - Set `mixed` as the default mode once the GM enables the module.
@@ -2542,9 +2542,9 @@ InitiativeAssist advances to module version 1.0.1. WelcomeAssist launches at mod
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `7397EA659FC0CC092583A9CE8393114BCBE09277562EC83D2637B69C90731C19` |
-| `GameAssist.js` | `7397EA659FC0CC092583A9CE8393114BCBE09277562EC83D2637B69C90731C19` |
-| `GameAssist-v0.1.6.1` | `7397EA659FC0CC092583A9CE8393114BCBE09277562EC83D2637B69C90731C19` |
+| `GameAssist` | `BB0CBDB3C2BED95FC7879743F59F0660528BFCE5A527243DF5F5FEEEB9C1F78F` |
+| `GameAssist.js` | `BB0CBDB3C2BED95FC7879743F59F0660528BFCE5A527243DF5F5FEEEB9C1F78F` |
+| `GameAssist-v0.1.6.1` | `BB0CBDB3C2BED95FC7879743F59F0660528BFCE5A527243DF5F5FEEEB9C1F78F` |
 | `GameAssist-v0.1.6.0` | `E20FCF251620407710DB87042674D8993704E12559321047968170180D005F04` |
 | `previousversions/GameAssist v0.1.6.0` | `E20FCF251620407710DB87042674D8993704E12559321047968170180D005F04` |
 
@@ -2570,4 +2570,4 @@ The focused and established automated suites pass 277 checks in total.
 
 ### Roll20 acceptance gate
 
-The v0.1.6.0 native tracker population, reroll, invitation, detailed-roll, and GM-roster workflow has passed live Roll20 testing and is accepted as the foundation for this release. Focused live confirmation remains for `!Init-GM` privacy and for WelcomeAssist's disabled startup, private preview, one-per-reload public greeting, manual-announcement cancellation, and health-gated skip behavior.
+The v0.1.6.0 native tracker population, reroll, invitation, detailed-roll, and GM-roster workflow is accepted as the foundation for this release. The focused v0.1.6.1 Roll20 pass also confirmed that `!Init-GM` remains private and that WelcomeAssist stays silent while disabled, keeps setup and preview private, posts once after a healthy enabled reload, and suppresses a delayed duplicate after manual announcement.

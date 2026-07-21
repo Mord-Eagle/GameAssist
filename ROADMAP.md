@@ -50,8 +50,8 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | v0.1.5.0 release gate | Complete | [#29](https://github.com/Mord-Eagle/GameAssist/issues/29) | Attribution, documentation, metadata, artifact identity, automated checks, review, and full Roll20 acceptance are complete. |
 | Marker-registry lookup verification | Complete | [#32](https://github.com/Mord-Eagle/GameAssist/issues/32) | MarkerService prefers documented `token_markers`, falls back to `_token_markers`, and keeps built-ins and exact stored tags independent of registry parsing. |
 | DM-configurable timezone | Complete | [#35](https://github.com/Mord-Eagle/GameAssist/issues/35) | v0.1.5.1 adds one validated DM timezone for human-facing timestamps and date-based Session rollover while preserving absolute stored timestamps. The focused Roll20 timezone workflow passed; the complete live module suite was not rerun. |
-| Native Turn Tracker and initiative foundation | Final patch verification | [#47](https://github.com/Mord-Eagle/GameAssist/issues/47) | The v0.1.6.0 live workflow passed. v0.1.6.1 advances InitiativeAssist to 1.0.1 with the private `!Init-GM` controls before the release closes. |
-| Optional table welcome | Focused verification | [PR #49](https://github.com/Mord-Eagle/GameAssist/pull/49) | v0.1.6.1 adds disabled-by-default WelcomeAssist 0.1.0 with private setup, health-gated one-per-sandbox automatic output, and bounded professional, built-in, custom, and mixed greeting modes. |
+| Native Turn Tracker and initiative foundation | Complete | [#47](https://github.com/Mord-Eagle/GameAssist/issues/47) | The v0.1.6.0 live workflow and v0.1.6.1 private `!Init-GM` controls passed their Roll20 acceptance checks. |
+| Optional table welcome | Complete | [PR #49](https://github.com/Mord-Eagle/GameAssist/pull/49) | Disabled-by-default WelcomeAssist 0.1.0 passed private setup, health-gated one-per-sandbox automatic output, and manual-announcement cancellation checks. |
 | CombatAssist encounter flow | Deferred | [#48](https://github.com/Mord-Eagle/GameAssist/issues/48) | Design rounds, turns, durations, end-of-turn controls, and encounter lifecycle only after Issue #47 passes in Roll20. |
 
 ---
@@ -303,14 +303,14 @@ This major feature release introduces a rules-neutral Turn Tracker authority and
 - [x] Add `!Init-GM` by reusing the neutral invitation and complete roster path while whispering every opening panel only to the GM.
 - [x] Add initiative/combat-manager overlap diagnostics and document one-writer responsibility.
 - [x] Add deterministic local mixed-sheet, permission, preservation, malformed-data, async-conflict, lifecycle, and audit checks.
-- [ ] Complete the dedicated Roll20 clean-install and upgrade acceptance tracks.
-- [ ] Resolve review findings, verify release artifacts, and close Issue #47.
+- [x] Complete the dedicated Roll20 clean-install and upgrade acceptance tracks.
+- [x] Resolve review findings, verify release artifacts, and close Issue #47.
 
 ### Completion Gate
 
 Issue #47 is complete only when the Roll20 sandbox confirms mixed 2014/2024 initiative, public and GM-only start controls, private NPC evidence, GM-layer and selected-character batches, case-insensitive commands, exact preservation of non-owned rows, duplicate handling, dead/mismatch skips, Observer mode, service cascading, and audit output without regressions in established modules.
 
-**Current evidence:** The v0.1.6.0 live workflow, including private NPC evidence, GM-layer batches, and selected-character batches, was accepted as launch-ready. The v0.1.6.1 InitiativeAssist harness passes 108/108 checks; only the focused `!Init-GM` Roll20 delivery check remains for this patch.
+**Current evidence:** The v0.1.6.0 live workflow, including private NPC evidence, GM-layer batches, and selected-character batches, was accepted as launch-ready. The v0.1.6.1 InitiativeAssist harness passes 108/108 checks, and the focused `!Init-GM` Roll20 delivery check passed.
 
 ---
 
@@ -321,13 +321,13 @@ This patch adds an optional table greeting without changing normal startup outpu
 ### Checklist
 
 - [x] Add disabled-by-default WelcomeAssist 0.1.0 beneath the MODULES wrapper.
-- [x] Add professional, 45-line built-in, campaign-custom, and double-weighted mixed modes.
+- [x] Add professional, built-in-library, campaign-custom, and double-weighted mixed modes.
 - [x] Keep help, settings, status, and previews GM-only; require explicit announce or a later healthy reload for public output.
 - [x] Bound delay, readiness polling, header length, greeting length, custom count, and custom mutation syntax through POLICY.
 - [x] Escape HTML and neutralize Roll20 inline-roll, attribute, ability, and query syntax at output.
 - [x] Add one guarded post-bootstrap completion signal after all configured component initialization attempts.
 - [x] Add deterministic disabled, delayed, one-per-sandbox, cancellation, custom-bound, safety, and unhealthy-startup checks.
-- [ ] Pass the module-specific Roll20 acceptance section.
+- [x] Pass the module-specific Roll20 acceptance section.
 
 ### Completion Gate
 
