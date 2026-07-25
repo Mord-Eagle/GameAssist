@@ -89,7 +89,7 @@ Use a new disposable campaign, or a disposable campaign in which GameAssist stat
 
 1. Install GameAssist v0.1.6.1. Remove or disable standalone TokenMod and StatusInfo before testing their integrated replacements.
 2. Prepare the disposable PC, NPC, unlinked token, and optional CritFumble tables described under [Before Testing](#before-testing).
-3. Run every **Basic Check** in Components 1 through 12, except a deliberately disabled optional feature may be recorded as **Skipped by choice**.
+3. Run every **Basic Check** in Components 1 through 13, except a deliberately disabled optional feature may be recorded as **Skipped by choice**.
 4. Run the complete MarkerService, TurnTrackerService, ConditionAssist, TokenAssist, InitiativeAssist, and WelcomeAssist acceptance sections. These may not be skipped for v0.1.6.1 release approval.
 5. Run the cross-component permission, duplicate-installation, and state-recovery checks.
 6. Restart the sandbox once more and repeat `!ga-status`, `!ga-config modules`, one marker change, and one harmless TokenAssist command.
