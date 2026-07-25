@@ -6829,7 +6829,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const groups = ensureModRuntimeKey(modState, 'groups', 'object');
         const CALLS = Object.freeze([
             'Roll for initiative!',
-            "Roll 'em!"
+            "Roll 'em!",
+            'Steel yourselves. Roll for initiative!',
+            'The situation has become complicated. Roll for initiative!',
+            'Plans meet consequences. Roll for initiative!',
+            'The talking part appears to be over. Roll for initiative!',
+            'A decisive moment arrives. Roll for initiative!',
+            'Ready or not, the encounter begins. Roll for initiative!',
+            'The bad news is that they have you surrounded. The good news is that this removes the need to choose a direction. Roll for initiative!',
+            'Time to discover who acts first. Roll for initiative!'
         ]);
         const RESULT_LINES = Object.freeze([
             Object.freeze([
@@ -6932,9 +6940,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function controllerIds(token, character) {
-            const values = [token?.get('controlledby'), character?.get('controlledby')]
-                .filter(Boolean)
-                .join(',')
+            // CHOICE: linked character control is authoritative; token control is only meaningful when no character exists.
+            const source = character ? character.get('controlledby') : token?.get('controlledby');
+            const values = String(source || '')
                 .split(',')
                 .map(value => value.trim())
                 .filter(Boolean);
@@ -8309,7 +8317,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => GameAssist.TurnTrackerService.clearObservers('InitiativeAssist')
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.6.1): Advanced InitiativeAssist to 1.0.1 and added !Init-GM, which presents the neutral initiative call and complete GM roster without posting the invitation publicly.
+    // Changed (v0.1.6.1): Advanced InitiativeAssist to 1.0.1, added !Init-GM, restored the curated original initiative-call library, and made linked-character control authoritative over stale token-level assignments.
     // Decision log:
     //   CHOICE: Reuse the ordinary neutral invitation and roster path for !Init-GM - ALT: maintain a second GM dashboard implementation; REJECTED: duplicated controls would drift from !Init-Go.
     //   CHOICE: Start disabled but default to Manager mode once deliberately enabled - ALT: require a second ownership toggle; REJECTED: unnecessary setup friction after explicit module enablement.
@@ -8360,8 +8368,25 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         customGreetings: Object.freeze([])
     });
     const WELCOMEASSIST_BUILT_INS = Object.freeze([
-        'Welcome, adventurers. The table is ready—may your plans be clever, your rolls be kind, your game night be legendary, and may the odds be ever in your...and that is a nat one.',
-        'welcome'
+        'The table is live. Please roll responsibly.',
+        'Initiative is optional. Snacks are not.',
+        'The dice are awake, and they have chosen chaos.',
+        'The GM has spoken. The dice will now file an appeal.',
+        'The council has decided: more dice.',
+        'Please keep hands, feet, and familiars inside the encounter.',
+        'The prophecy was vague, but it definitely mentioned snacks.',
+        "Tonight's forecast: scattered crits with a chance of TPK.",
+        'The party has entered the chat. The dungeon regrets this.',
+        'Adventure is loading. Common sense has been disabled.',
+        'Sharpen your pencils and your alibis.',
+        'The GM prepared several outcomes. You will discover none of them as planned.',
+        "The quest begins when someone asks, 'What could go wrong?'",
+        'Tonight, even the side quests have side quests.',
+        'Roll for courage, snacks, and basic spatial awareness.',
+        'All systems nominal. Party judgment remains unverified.',
+        'The tavern is open, the quest board is full, and somebody already adopted the goblin.',
+        'Please remain calm while the party applies brute force to a problem that was carefully constructed to reward observation, diplomacy, and a basic understanding of levers.',
+        'The dungeon was designed according to sound architectural principles, peer-reviewed trap placement, and the assumption that no rational person would attempt the plan the party has come up with.'
     ]);
 
     let welcomeAssistTimer = null;
@@ -8801,7 +8826,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['customGreetings']
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.6.1): Added WelcomeAssist 0.1.0 with disabled-by-default post-bootstrap greetings, professional/built-in/custom/mixed modes, a curated built-in greeting library, double-weighted campaign greetings, bounded GM configuration, private previews, manual announcements, directive-neutralized public text, a complete configured-component health gate, and one automatic greeting per sandbox lifecycle.
+    // Changed (v0.1.6.1): Added WelcomeAssist 0.1.0 with disabled-by-default post-bootstrap greetings, professional/built-in/custom/mixed modes, a curated original built-in greeting library, double-weighted campaign greetings, bounded GM configuration, private previews, manual announcements, directive-neutralized public text, a complete configured-component health gate, and one automatic greeting per sandbox lifecycle.
     // Decision log:
     //   CHOICE: Trigger automatic output only through the post-bootstrap seam - ALT: schedule from module init; REJECTED: live enablement could surprise the table before the GM finishes configuration.
     //   CHOICE: Refuse a public ready greeting while another configured GameAssist component remains inactive - ALT: announce after a fixed delay regardless; REJECTED: would present an unhealthy startup as ready.

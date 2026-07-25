@@ -2481,6 +2481,7 @@ InitiativeAssist advances to module version 1.0.1. WelcomeAssist launches at mod
 - `!Init-GM` opens the neutral Roll for Initiative panel and the complete GM Initiative Roster as GM whispers. No invitation or roster is posted to players.
 - The private roster reuses the same current-page discovery, actor classification, eligibility checks, individual controls, batch controls, NPC-layer groups, and hidden-roll policy as `!Init-Go`.
 - Added **GM-Only Start** to the InitiativeAssist Control Center and documented the distinction among `!Init-Go`, `!Init-Go!`, and `!Init-GM` in the Guide.
+- Made a linked character's **Controlled By** setting authoritative for player initiative permission. A stale controller saved only on the represented token can no longer authorize a player whom the linked character does not name.
 - Preserved all v0.1.6.0 public invitation, player authorization, native tracker population, mixed 2014/2024 sheet, selected-character, GM-layer NPC, hidden-roll, saved-group, audit, and reroll behavior.
 
 ### Added – WelcomeAssist 0.1.0
@@ -2496,7 +2497,7 @@ InitiativeAssist advances to module version 1.0.1. WelcomeAssist launches at mod
 - Added `!welcome-assist announce` for an immediate public greeting. A manual announcement cancels any pending automatic greeting and consumes the automatic opportunity for that sandbox lifecycle, preventing a delayed duplicate.
 - Added bounded configuration commands for mode, startup delay, visible header, professional default text, and campaign-specific greetings.
 - Limited campaign greetings to ten entries of 240 characters each, removed duplicates case-insensitively, and required an exact list number for removal.
-- Retained the intentional library of brief recognizable references alongside original table humor.
+- Included a curated library of original table humor.
 
 ### Changed – Startup and health behavior
 
@@ -2542,9 +2543,9 @@ InitiativeAssist advances to module version 1.0.1. WelcomeAssist launches at mod
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `BB0CBDB3C2BED95FC7879743F59F0660528BFCE5A527243DF5F5FEEEB9C1F78F` |
-| `GameAssist.js` | `BB0CBDB3C2BED95FC7879743F59F0660528BFCE5A527243DF5F5FEEEB9C1F78F` |
-| `GameAssist-v0.1.6.1` | `BB0CBDB3C2BED95FC7879743F59F0660528BFCE5A527243DF5F5FEEEB9C1F78F` |
+| `GameAssist` | `165E62A05ABBCCFE420BFCF84B4567D72D462F966EE95457726EA3499A9A1EF7` |
+| `GameAssist.js` | `165E62A05ABBCCFE420BFCF84B4567D72D462F966EE95457726EA3499A9A1EF7` |
+| `GameAssist-v0.1.6.1` | `165E62A05ABBCCFE420BFCF84B4567D72D462F966EE95457726EA3499A9A1EF7` |
 | `GameAssist-v0.1.6.0` | `E20FCF251620407710DB87042674D8993704E12559321047968170180D005F04` |
 | `previousversions/GameAssist v0.1.6.0` | `E20FCF251620407710DB87042674D8993704E12559321047968170180D005F04` |
 
