@@ -54,7 +54,8 @@ MODULE COMMANDS
   !Init-GM, !Init-Roll-Selected, !Init-Options, !Init-Start, !Init-NPC-Rolls,
   !Init-RR, !Init-RR-Menu, !Init-Group, !Init-Audit
 - CombatAssist: !Combat-Menu, !Combat-Help, !Combat-Start, !Combat-Next,
-  !Combat-Pause, !Combat-Resume, !Combat-Status, !Combat-End, !Combat-Announce
+  !Combat-Prev, !Combat-End-Turn, !Combat-Pause, !Combat-Resume,
+  !Combat-Status, !Combat-End, !Combat-Announce
 - WelcomeAssist: !welcome-assist help|status|preview|announce,
   !welcome-assist mode|delay|header|default|custom
 - ConcentrationTracker: !concentration, !cc, !ga-conc-status
@@ -75,7 +76,7 @@ V0.1.7.0 FOUNDATION
 - TokenAssist uses MarkerService for every status-marker command.
 - Disabling MarkerService also disables ConditionAssist, TokenAssist, NPCManager,
   ConcentrationTracker, and DebugTools while CritFumble, ConfigUI,
-  InitiativeAssist, WelcomeAssist, and NPCHPRoller remain available.
+  InitiativeAssist, CombatAssist, WelcomeAssist, and NPCHPRoller remain available.
 - Human-facing times and automatic Session date rollover use the DM's validated
   IANA timezone when configured; stored event timestamps remain absolute.
 - [GAMEASSIST:CORE:TURNTRACKERSERVICE] is the only GameAssist authority for
@@ -84,7 +85,7 @@ V0.1.7.0 FOUNDATION
   2024 Beacon access requires Roll20's supported asynchronous Mod API functions.
 - CombatAssist starts disabled, observes exact tracker rotations, advances rounds
   only after a complete unambiguous forward cycle, and never rewrites tracker rows
-  except when the GM explicitly requests the next turn.
+  except for an explicit next, previous, or authorized End My Turn request.
 - WelcomeAssist is disabled by default and can post one delayed public greeting
   after a healthy GameAssist bootstrap when deliberately configured and enabled.
 - Queue timeouts release the queue but cannot terminate Roll20 operations.
@@ -8365,7 +8366,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Preservation-first encounter flow
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:COMBATASSIST", title: "CombatAssist",
-    //   guarantees: ["Disabled-by-default, GM-controlled encounter tracking through case-insensitive !Combat- commands","Only exact one-row forward or backward Turn Tracker rotations are accepted automatically","Rounds advance only after an uninterrupted, unambiguous forward cycle returns to the encounter anchor","Tracker closure, page changes, row changes, malformed rows, stale references, and ambiguous duplicates enter an attention state instead of being guessed","The only tracker mutation is an explicit GM next-turn request routed through CORE:TURNTRACKERSERVICE","Pause, resume, status, and end never alter tracker rows","CombatAssist 1.0.0 does not change conditions, markers, durations, timers, music, or NPC history"],
+    //   guarantees: ["Disabled-by-default, GM-configured encounter tracking through case-insensitive !Combat- commands","Only exact one-row forward or backward Turn Tracker rotations are accepted automatically","Rounds advance only after an uninterrupted, unambiguous forward cycle returns to the encounter anchor","Tracker closure, page changes, row changes, malformed rows, stale references, and ambiguous duplicates enter an attention state instead of being guessed","Explicit next, previous, and authorized End My Turn requests rotate exactly one row through CORE:TURNTRACKERSERVICE","Player End My Turn is available only in Whispers mode and is rebound to the current controlled token at execution time","Pause, resume, status, and end never alter tracker rows","CombatAssist does not replace Roll20's native Turn Tracker or make unrelated modules depend on CombatAssist"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   observability: { spans: ["[GAMEASSIST:MODULES:COMBATASSIST]"] },
     //   last_updated_version: "v0.1.7.0",
@@ -8381,7 +8382,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const MODULE_NAME = 'CombatAssist';
         const MODULE_VERSION = '1.0.0';
         const VALID_STATES = new Set(['active', 'paused', 'attention']);
-        const VALID_ANNOUNCEMENTS = new Set(['off', 'gm', 'public']);
+        const VALID_ANNOUNCEMENTS = new Set(['off', 'gm', 'public', 'whispers']);
         const modState = GameAssist.getState(MODULE_NAME);
         Object.assign(modState.config, {
             enabled: false,
@@ -8394,12 +8395,23 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             modState.config.announcements = String(modState.config.announcements).toLowerCase();
         }
 
-        function sendPanel(title, fields, { publicMessage = false } = {}) {
+        function sendPanel(title, fields, { publicMessage = false, whisperTo = '' } = {}) {
             const content = (fields || []).map(field => `{{${_sanitize(field.label)}=${field.value}}}`).join(' ');
-            const destination = publicMessage ? '' : '/w gm ';
+            const safeRecipient = String(whisperTo || '').replace(/["\\]/g, '').trim();
+            const destination = publicMessage
+                ? ''
+                : (safeRecipient ? `/w "${safeRecipient}" ` : '/w gm ');
             sendChat(MODULE_NAME, `${destination}&{template:default} {{name=${_sanitize(title)}}} ${content}`, null, {
                 noarchive: !publicMessage
             });
+        }
+
+        function sendPlayerPanel(playerId, title, fields) {
+            const player = getObj('player', playerId);
+            const name = String(player?.get('_displayname') || player?.get('displayname') || '').trim();
+            if (!name || playerIsGM(playerId)) return false;
+            sendPanel(title, fields, { whisperTo: name });
+            return true;
         }
 
         function warning(message, actions = '') {
@@ -8410,7 +8422,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function requireGm(msg) {
             if (playerIsGM(msg.playerid)) return true;
-            sendPanel('CombatAssist', [{
+            sendPlayerPanel(msg.playerid, 'CombatAssist', [{
                 label: 'GM Control',
                 value: 'Encounter controls are available only to the GM.'
             }]);
@@ -8475,6 +8487,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
             const identities = [];
             const labels = [];
+            const structures = [];
             for (let index = 0; index < snapshot.entries.length; index++) {
                 const entry = snapshot.entries[index];
                 const identity = identityFor(entry);
@@ -8496,6 +8509,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 }
                 identities.push(identity);
                 labels.push(labelFor(structure));
+                structures.push(structure);
             }
 
             const seen = new Set();
@@ -8506,7 +8520,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     reason: 'The Turn Tracker contains indistinguishable duplicate rows. CombatAssist will preserve them, but cannot count rounds safely until each row has a unique token or custom label.'
                 };
             }
-            return { ok: true, identities, labels };
+            return { ok: true, identities, labels, structures };
         }
 
         function sameOrder(left, right) {
@@ -8546,6 +8560,50 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return analysis?.labels?.[0] || '(Unknown row)';
         }
 
+        function gmTurnActions() {
+            return [
+                GameAssist.createButton('Next Turn', '!Combat-Next'),
+                GameAssist.createButton('Previous Turn', '!Combat-Prev'),
+                GameAssist.createButton('Open Menu', '!Combat-Menu')
+            ].join(' ');
+        }
+
+        function controllerIdsFor(structure) {
+            if (structure?.kind !== 'token') return [];
+            const token = structure.token;
+            const characterId = String(token.get('represents') || '').trim();
+            const character = characterId ? getObj('character', characterId) : null;
+            // CHOICE: A linked character's controller list is authoritative; token control is the fallback only for unlinked turns.
+            const source = character ? character.get('controlledby') : token.get('controlledby');
+            const ids = String(source || '')
+                .split(',')
+                .map(value => value.trim())
+                .filter(Boolean);
+            if (ids.includes('all')) {
+                return findObjs({ _type: 'player' })
+                    .map(player => player.id)
+                    .filter(id => !playerIsGM(id));
+            }
+            return Array.from(new Set(ids.filter(id => !playerIsGM(id) && getObj('player', id))));
+        }
+
+        function playerControlsStructure(playerId, structure) {
+            return controllerIdsFor(structure).includes(playerId);
+        }
+
+        function whisperCurrentPlayerTurn(encounter, analysis) {
+            if (announcementMode() !== 'whispers') return 0;
+            const structure = analysis?.structures?.[0];
+            if (structure?.kind !== 'token') return 0;
+            const recipients = controllerIdsFor(structure);
+            recipients.forEach(playerId => sendPlayerPanel(playerId, 'Your Turn', [
+                { label: 'Round', value: _sanitize(String(encounter.round)) },
+                { label: 'Character', value: _sanitize(currentLabel(analysis)) },
+                { label: 'When Finished', value: GameAssist.createButton('End My Turn', `!Combat-End-Turn --token ${structure.id}`) }
+            ]));
+            return recipients.length;
+        }
+
         function announcementMode() {
             const value = String(modState.config.announcements || '').toLowerCase();
             if (VALID_ANNOUNCEMENTS.has(value)) return value;
@@ -8553,21 +8611,39 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return 'gm';
         }
 
-        function announceForward(encounter, analysis) {
+        function announcementLabel() {
+            const mode = announcementMode();
+            if (mode === 'gm') return 'GM only';
+            if (mode === 'whispers') return 'GM and current-player whispers';
+            return mode === 'public' ? 'Public' : 'Off';
+        }
+
+        function announceTurn(encounter, analysis, direction) {
             const mode = announcementMode();
             if (mode === 'off') return;
-            sendPanel('Combat Turn', [
+            const backward = direction === 'backward';
+            const fields = [
                 { label: 'Round', value: _sanitize(String(encounter.round)) },
                 { label: 'Current Turn', value: _sanitize(currentLabel(analysis)) }
-            ], { publicMessage: mode === 'public' });
+            ];
+            if (backward) {
+                fields.push({ label: 'Round Count', value: 'Unchanged. Backward movement never advances a round.' });
+            }
+            if (mode === 'public') {
+                sendPanel(backward ? 'Combat Turn Moved Back' : 'Combat Turn', fields, { publicMessage: true });
+                return;
+            }
+            fields.push({ label: 'Controls', value: gmTurnActions() });
+            sendPanel(backward ? 'Combat Turn Moved Back' : 'Combat Turn', fields);
+            if (mode === 'whispers') whisperCurrentPlayerTurn(encounter, analysis);
+        }
+
+        function announceForward(encounter, analysis) {
+            announceTurn(encounter, analysis, 'forward');
         }
 
         function announceBackward(encounter, analysis) {
-            sendPanel('Combat Turn Moved Back', [
-                { label: 'Round', value: _sanitize(String(encounter.round)) },
-                { label: 'Current Turn', value: _sanitize(currentLabel(analysis)) },
-                { label: 'Round Count', value: 'Unchanged. Backward movement never advances a round.' }
-            ]);
+            announceTurn(encounter, analysis, 'backward');
         }
 
         function enterAttention(encounter, reason, snapshot = null, { notify = true } = {}) {
@@ -8713,9 +8789,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel('CombatAssist Started', [
                 { label: 'Encounter Page', value: _sanitize(pageName(snapshot.pageId)) },
                 { label: 'Starting Point', value: `Round 1 | ${_sanitize(currentLabel(analysis))}` },
-                { label: 'Tracking', value: `${analysis.identities.length} unique Turn Tracker rows. Exact forward and backward movement will be observed.${analysis.identities.length === 2 ? ' With two rows, use CombatAssist Next Turn because Roll20 does not expose native arrow direction.' : ''}` },
-                { label: 'Next Step', value: `${GameAssist.createButton('Next Turn', '!Combat-Next')} ${GameAssist.createButton('Open Control Center', '!Combat-Menu')}` }
+                { label: 'Tracking', value: `${analysis.identities.length} unique Turn Tracker rows. Exact forward and backward movement will be observed.${analysis.identities.length === 2 ? ' With two rows, use CombatAssist Next Turn or Previous Turn because Roll20 does not expose native arrow direction.' : ''}` },
+                { label: 'Turn Controls', value: gmTurnActions() }
             ]);
+            whisperCurrentPlayerTurn(modState.runtime.encounter, analysis);
         }
 
         function pauseEncounter() {
@@ -8797,8 +8874,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Round', value: _sanitize(String(encounter.round)) },
                 { label: 'Current Turn', value: _sanitize(currentLabel(analysis)) },
                 { label: 'Tracking', value: 'The current tracker order is the new safe baseline.' },
-                { label: 'Next Step', value: `${GameAssist.createButton('Next Turn', '!Combat-Next')} ${GameAssist.createButton('Open Control Center', '!Combat-Menu')}` }
+                { label: 'Turn Controls', value: gmTurnActions() }
             ]);
+            whisperCurrentPlayerTurn(encounter, analysis);
         }
 
         function endEncounter(confirmed) {
@@ -8826,11 +8904,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
-        function advanceTurn() {
+        function moveTurn(direction) {
+            const movingBackward = direction === 'backward';
             let encounter = synchronize({ notify: false });
             if (!encounter || encounter.status !== 'active') {
                 warning(
-                    encounter?.attention || 'Start or resume a healthy CombatAssist encounter before advancing.',
+                    encounter?.attention || `Start or resume a healthy CombatAssist encounter before moving ${movingBackward ? 'back' : 'forward'}.`,
                     `${GameAssist.createButton('Open Control Center', '!Combat-Menu')} ${GameAssist.createButton('Review Status', '!Combat-Status')}`
                 );
                 return;
@@ -8843,26 +8922,83 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             const result = GameAssist.TurnTrackerService.apply(entries => {
                 if (entries.length < POLICY.combat.minimumTrackedRows) {
-                    throw new Error('The Turn Tracker no longer has enough rows to advance safely.');
+                    throw new Error('The Turn Tracker no longer has enough rows to move safely.');
                 }
-                entries.push(entries.shift());
+                if (movingBackward) entries.unshift(entries.pop());
+                else entries.push(entries.shift());
                 return { entries };
             }, {
                 expectedRevision: before.revision,
-                label: 'CombatAssist next turn'
+                label: movingBackward ? 'CombatAssist previous turn' : 'CombatAssist next turn'
             });
             if (!result.ok || !result.changed) {
-                warning(result.message || 'Roll20 did not advance the Turn Tracker.', GameAssist.createButton('Review Status', '!Combat-Status'));
+                warning(result.message || `Roll20 did not move the Turn Tracker ${movingBackward ? 'back' : 'forward'}.`, GameAssist.createButton('Review Status', '!Combat-Status'));
                 return;
             }
             encounter = getEncounter();
             if (announcementMode() === 'off' && encounter?.status === 'active') {
                 const afterAnalysis = analyzeSnapshot(result.after);
-                sendPanel('Combat Turn Advanced', [
+                sendPanel(movingBackward ? 'Combat Turn Moved Back' : 'Combat Turn Advanced', [
                     { label: 'Round', value: _sanitize(String(encounter.round)) },
-                    { label: 'Current Turn', value: _sanitize(currentLabel(afterAnalysis)) }
+                    { label: 'Current Turn', value: _sanitize(currentLabel(afterAnalysis)) },
+                    { label: 'Controls', value: gmTurnActions() }
                 ]);
             }
+        }
+
+        function advanceTurn() {
+            moveTurn('forward');
+        }
+
+        function previousTurn() {
+            moveTurn('backward');
+        }
+
+        function endPlayerTurn(msg, args) {
+            if (playerIsGM(msg.playerid)) {
+                advanceTurn();
+                return;
+            }
+            if (announcementMode() !== 'whispers') {
+                sendPlayerPanel(msg.playerid, 'CombatAssist', [{
+                    label: 'End My Turn',
+                    value: 'Player turn controls are available only while the GM has selected Whispers announcements.'
+                }]);
+                return;
+            }
+
+            const encounter = synchronize({ notify: false });
+            if (!encounter || encounter.status !== 'active') {
+                sendPlayerPanel(msg.playerid, 'CombatAssist', [{
+                    label: 'End My Turn',
+                    value: _sanitize(encounter?.attention || 'This encounter is not currently ready to advance.')
+                }]);
+                return;
+            }
+            const snapshot = GameAssist.TurnTrackerService.snapshot();
+            const analysis = analyzeSnapshot(snapshot);
+            const structure = analysis?.structures?.[0];
+            const requestedTokenId = String(args.token || '').trim();
+            if (
+                !analysis.ok ||
+                structure?.kind !== 'token' ||
+                !requestedTokenId ||
+                structure.id !== requestedTokenId
+            ) {
+                sendPlayerPanel(msg.playerid, 'CombatAssist', [{
+                    label: 'End My Turn',
+                    value: 'That turn button is no longer current. Use the newest turn whisper, or ask the GM to review CombatAssist.'
+                }]);
+                return;
+            }
+            if (!playerControlsStructure(msg.playerid, structure)) {
+                sendPlayerPanel(msg.playerid, 'CombatAssist', [{
+                    label: 'End My Turn',
+                    value: 'You do not control the character whose turn is currently active.'
+                }]);
+                return;
+            }
+            advanceTurn();
         }
 
         function encounterFields(encounter, snapshot, analysis) {
@@ -8877,7 +9013,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Encounter Page', value: _sanitize(pageName(encounter.pageId)) },
                 { label: 'Round', value: _sanitize(String(encounter.round)) },
                 { label: 'Current Turn', value: _sanitize(analysis?.ok ? currentLabel(analysis) : '(Unavailable)') },
-                { label: 'Announcements', value: _sanitize(announcementMode() === 'gm' ? 'GM only' : announcementMode()) }
+                { label: 'Announcements', value: _sanitize(announcementLabel()) }
             ];
             if (encounter.attention) fields.push({ label: 'Needs Attention', value: _sanitize(encounter.attention) });
             return fields;
@@ -8909,6 +9045,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (encounter.status === 'active') {
                 return [
                     GameAssist.createButton('Next Turn', '!Combat-Next'),
+                    GameAssist.createButton('Previous Turn', '!Combat-Prev'),
                     GameAssist.createButton('Pause for Tracker Edits', '!Combat-Pause'),
                     GameAssist.createButton('End Encounter', '!Combat-End')
                 ].join(' ');
@@ -8932,7 +9069,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             fields.push({ label: 'Encounter Controls', value: controlButtons(encounter) });
             fields.push({
                 label: 'Turn Announcements',
-                value: `${GameAssist.createButton('GM Only', '!Combat-Announce gm')} ${GameAssist.createButton('Public', '!Combat-Announce public')} ${GameAssist.createButton('Off', '!Combat-Announce off')}`
+                value: `${GameAssist.createButton('GM Only', '!Combat-Announce gm')} ${GameAssist.createButton('Public', '!Combat-Announce public')} ${GameAssist.createButton('Whispers', '!Combat-Announce whispers')} ${GameAssist.createButton('Off', '!Combat-Announce off')}`
             });
             fields.push({
                 label: 'Review',
@@ -8946,11 +9083,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'What It Does', value: 'Counts turns and rounds after initiative is already in Roll20\'s Turn Tracker. It never rolls initiative or changes conditions.' },
                 { label: '1. Prepare Initiative', value: `Use Roll20 or ${GameAssist.createButton('InitiativeAssist', '!Init-Menu')} to place at least two distinct rows in the tracker.` },
                 { label: '2. Start Deliberately', value: `${GameAssist.createButton('Start Encounter', '!Combat-Start')} records the current first row as round 1's anchor. Opening the tracker alone never starts combat.` },
-                { label: '3. Advance Normally', value: `Use Roll20's next-turn arrow or ${GameAssist.createButton('Next Turn', '!Combat-Next')}. One exact forward step is accepted; one exact backward step never increases the round. With exactly two rows, use CombatAssist Next Turn because Roll20's native forward and backward results are indistinguishable.` },
+                { label: '3. Move Through Turns', value: `Use Roll20's native arrows, ${GameAssist.createButton('Next Turn', '!Combat-Next')}, or ${GameAssist.createButton('Previous Turn', '!Combat-Prev')}. A backward step never increases the round. With exactly two rows, use the CombatAssist buttons because Roll20's native forward and backward results are indistinguishable.` },
                 { label: '4. Edit Safely', value: `Click ${GameAssist.createButton('Pause', '!Combat-Pause')} before adding, removing, or reordering rows. Resume accepts the current order as a fresh baseline without changing the round number.` },
                 { label: 'Needs Attention', value: 'CombatAssist stops counting when the tracker closes, changes page, skips rows, contains stale or duplicate references, or changes in an unclear way. Restart tracking only after reviewing the tracker.' },
-                { label: 'Announcements', value: 'Turn notices can be whispered to the GM, posted publicly, or turned off. Setup, warnings, and status remain GM-only.' },
-                { label: 'Not In 1.0.0', value: 'No automatic turns, timers, duration countdowns, condition changes, marker changes, music, or NPC-history writes.' },
+                { label: 'Announcements', value: 'Choose GM Only, Public, Whispers, or Off. Whispers gives the GM turn controls and privately gives the current character\'s player an End My Turn button.' },
                 { label: 'Open', value: `${GameAssist.createButton('Control Center', '!Combat-Menu')} ${GameAssist.createButton('Status', '!Combat-Status')}` }
             ]);
         }
@@ -8958,7 +9094,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function setAnnouncements(value) {
             const requested = String(value || '').trim().toLowerCase();
             if (!VALID_ANNOUNCEMENTS.has(requested)) {
-                warning('Choose GM only, public, or off for CombatAssist turn announcements.', GameAssist.createButton('Open Control Center', '!Combat-Menu'));
+                warning('Choose GM only, public, whispers, or off for CombatAssist turn announcements.', GameAssist.createButton('Open Control Center', '!Combat-Menu'));
                 return;
             }
             modState.config.announcements = requested;
@@ -8977,8 +9113,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function handleCommand(msg) {
-            if (!requireGm(msg)) return;
             const { command, rest, args } = parseCommand(msg);
+            if (command === '!combat-end-turn') {
+                endPlayerTurn(msg, args);
+                return;
+            }
+            if (!requireGm(msg)) return;
             switch (command) {
                 case '!combat-':
                 case '!combat-menu':
@@ -8992,6 +9132,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     return;
                 case '!combat-next':
                     advanceTurn();
+                    return;
+                case '!combat-prev':
+                    previousTurn();
                     return;
                 case '!combat-pause':
                     pauseEncounter();
@@ -9037,7 +9180,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             processSnapshot(event.current, {
                 directionHint: event.source === 'gameassist' && event.label === 'CombatAssist next turn'
                     ? 'forward'
-                    : null
+                    : (event.source === 'gameassist' && event.label === 'CombatAssist previous turn'
+                        ? 'backward'
+                        : null)
             });
         }, { owner: MODULE_NAME });
 
@@ -9050,10 +9195,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         });
 
         GameAssist.onCommand('!Combat-', handleCommand, MODULE_NAME, {
-            gmOnly: true,
             match: { caseInsensitive: true, mode: 'prefix' }
         });
-        GameAssist.log(MODULE_NAME, 'Ready: !Combat-Menu, !Combat-Start, and !Combat-Status.', 'INFO', { startup: true });
+        GameAssist.log(MODULE_NAME, 'Ready: !Combat-Menu, !Combat-Start, !Combat-Next, and !Combat-Prev.', 'INFO', { startup: true });
     }, {
         enabled: false,
         prefixes: ['!Combat-'],
@@ -9061,14 +9205,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         preserveRuntimeOnDisable: true
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.7.0): Added CombatAssist 1.0.0 with explicit encounter lifecycle controls, exact forward/backward rotation observation, conservative round counting, guarded GM next-turn writes, configurable turn announcements, retained runtime state, and attention-first handling of every ambiguous tracker change.
+    // Changed (v0.1.7.0): Added CombatAssist 1.0.0 with explicit encounter lifecycle controls, native and guarded forward/backward movement, conservative round counting, GM/public/player-whisper announcement modes, an execution-time-authorized player End My Turn control, retained runtime state, and attention-first handling of every ambiguous tracker change.
     // Decision log:
     //   CHOICE: Start disabled and require explicit GM encounter start - ALT: infer combat from an open tracker; REJECTED: Roll20 trackers are also used for setup, exploration, and non-combat ordering.
     //   CHOICE: Identify token rows by token id and custom rows by exact label - ALT: include initiative priority; REJECTED: priority edits do not change row ownership or identity.
     //   CHOICE: Refuse indistinguishable duplicate rows and require CombatAssist Next Turn for a two-row tracker - ALT: guess native arrow direction; REJECTED: forward and backward produce the same two-row order.
     //   CHOICE: Require a complete uninterrupted forward cycle after backward movement before another round increment - ALT: increment on the next anchor return; REJECTED: undoing a backward step must not manufacture a new round.
     //   CHOICE: Rebase only after an explicit pause/resume - ALT: accept arbitrary live edits; REJECTED: implicit rebasing conceals skipped turns and row replacements.
-    //   CHOICE: Keep the GM next-turn action to one array rotation through TurnTrackerService - ALT: write Campaign turnorder directly; REJECTED: all native tracker mutation belongs to the guarded core authority.
+    //   CHOICE: Keep Next, Previous, and End My Turn to one array rotation through TurnTrackerService - ALT: write Campaign turnorder directly; REJECTED: all native tracker mutation belongs to the guarded core authority.
+    //   CHOICE: Authorize End My Turn against the current linked character and token id at execution time - ALT: trust an old whispered button; REJECTED: a player controlling multiple characters could otherwise advance a later turn with a stale button.
+    //   CHOICE: Keep every unrelated module independent of CombatAssist - ALT: make initiative, conditions, or NPC history consume encounter state; REJECTED: CombatAssist must remain an optional layer over Roll20's native tracker.
     //   CHOICE: Retain tracker state while disabled and mark uncertain resumes for attention - ALT: erase active encounter context; REJECTED: disabling a feature must not silently destroy recoverable campaign state.
     // [GAMEASSIST:MODULES:COMBATASSIST] END
     // =============================================================================

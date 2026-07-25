@@ -1358,7 +1358,7 @@ Record:
 
 ## 9. CombatAssist
 
-**What this proves:** CombatAssist starts only when asked, follows exact native tracker movement, counts a complete round without guessing, preserves tracker rows, and stops safely when the tracker changes ambiguously.
+**What this proves:** CombatAssist remains an optional observer over Roll20's native tracker, starts only when asked, follows exact native movement, provides guarded forward/backward controls, authorizes player turn completion safely, preserves tracker rows, and stops instead of guessing.
 
 **Why test it:** A false round count or destructive tracker update interrupts an encounter immediately. The test therefore checks both normal table use and the refusal paths that protect uncertain tracker state.
 
@@ -1378,7 +1378,7 @@ Put at least three distinct rows in Roll20's Turn Tracker on one page. Include o
 
 Pass when:
 
-- **CombatAssist Quick Guide** explains prepare, start, advance, pause/edit/resume, attention, and current 1.0.0 limits;
+- **CombatAssist Quick Guide** explains prepare, start, native or guarded movement, pause/edit/resume, attention, and announcement choices without displaying internal development notes;
 - **CombatAssist Control Center** clearly separates encounter controls, announcement choices, status, and help;
 - start identifies the encounter page, round 1, current first row, and number of tracked rows;
 - status reports `active`, round 1, the current turn, and a safe unique-row count;
@@ -1405,15 +1405,16 @@ From the round-2 anchor, use Roll20's native previous-turn arrow once and run `!
 
 Pass when the prior row becomes current and the round remains 2. Move forward once to undo that step. The round must still remain 2. Continue through one complete uninterrupted forward cycle; the round should then change to 3 exactly once.
 
-#### C3. Guarded Next Turn
+#### C3. Guarded Next and Previous Turns
 
 Record the complete tracker, then run:
 
 ```roll20chat
 !Combat-Next
+!Combat-Prev
 ```
 
-Pass when exactly the first row moves to the end, all row contents remain unchanged, and the GM receives the current round and turn. No new counter, token, handout, marker, or history entry should appear.
+Pass when Next moves exactly the first row to the end and Previous moves exactly the last row to the front. All row contents remain unchanged, backward movement does not change the round, and each GM turn whisper contains **Next Turn** and **Open Menu**. No new counter, token, handout, marker, or history entry should appear.
 
 #### C4. Pause, Edit, and Resume
 
@@ -1464,7 +1465,7 @@ Pass when CombatAssist enters attention and explains that native forward and bac
 !Combat-Status
 ```
 
-Pass when the first command advances one turn and the second returns to the anchor at round 2.
+Pass when the first command advances one turn and the second returns to the anchor at round 2. Restart once more and verify `!Combat-Prev` safely moves backward without entering attention or changing the round.
 
 #### C8. Announcement Audiences
 
@@ -1475,11 +1476,23 @@ With a healthy active encounter, test:
 !Combat-Next
 !Combat-Announce public
 !Combat-Next
+!Combat-Announce whispers
+!Combat-Next
 !Combat-Announce off
 !Combat-Next
 ```
 
-Pass when GM mode whispers the turn, public mode posts the turn to the table, and off mode suppresses automatic public turn output while the explicit Next Turn action still confirms privately to the GM. Setup, status, warnings, backward movement, and confirmations must remain GM-only in every mode.
+Pass when:
+
+- GM mode whispers the GM and includes **Next Turn** plus **Open Menu**;
+- public mode posts the current turn to the table;
+- Whispers mode privately sends those controls to the GM and separately whispers the current linked character's non-GM controller an **End My Turn** button;
+- clicking **End My Turn** advances exactly one row when that player still controls the current character;
+- clicking the old button again after the turn changes is refused and does not move the tracker;
+- a player who does not control the current linked character cannot advance it;
+- off mode suppresses automatic output while explicit Next or Previous still confirms privately to the GM.
+
+Setup, status, warnings, and encounter confirmation prompts remain GM-only. Test Whispers mode from a separate non-GM player login; a GM using **Rejoin as Player** still has GM permissions and is not a valid permission test.
 
 #### C9. End Confirmation
 
@@ -1516,6 +1529,17 @@ Pass when TurnTrackerService disables CombatAssist and InitiativeAssist, unrelat
 
 Pass when the saved encounter is available if the tracker did not change. Restart the Mod sandbox with the same healthy tracker and run `!Combat-Status` again. The encounter and round should remain available. If the tracker changes while CombatAssist is disabled or unavailable, re-enabling should produce attention rather than guessing what happened.
 
+#### C11. CombatAssist Isolation
+
+Record the native tracker and the enabled state of InitiativeAssist and several unrelated modules, then run:
+
+```roll20chat
+!ga-disable CombatAssist
+!ga-config modules
+```
+
+Pass when only CombatAssist is disabled, Roll20's tracker remains unchanged and usable through its native arrows, and InitiativeAssist plus every unrelated module retains its prior configuration. Re-enable CombatAssist only when its optional encounter controls are wanted.
+
 ### CombatAssist Failure Evidence
 
 Record:
@@ -1525,6 +1549,7 @@ Record:
 - tracker order, labels, priorities, and duplicate rows before and after;
 - the saved lifecycle state and round from `!Combat-Status`;
 - whether the change was forward, backward, an edit, or caused by another Mod;
+- announcement mode, current linked-character controller, and whether the End My Turn button was current or stale;
 - the CombatAssist and TurnTrackerService rows from `!ga-config modules`;
 - `!ga-status --details` and the exact API Console exception or GameAssist warning.
 
