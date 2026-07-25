@@ -1,8 +1,8 @@
-# GameAssist v0.1.6.1 Smoke Test and Troubleshooting Guide
+# GameAssist v0.1.7.0 Smoke Test and Troubleshooting Guide
 
 Use this guide after installing or updating GameAssist, before an important session, or while troubleshooting a feature.
 
-> This guide tests GameAssist v0.1.6.1. It retains the established module checks and adds dedicated TurnTrackerService, InitiativeAssist, and WelcomeAssist acceptance sections.
+> This guide tests GameAssist v0.1.7.0. It retains the established component checks and adds a dedicated CombatAssist acceptance section.
 
 The tests are organized by component. Each section explains:
 
@@ -24,11 +24,11 @@ Run commands one at a time. A multi-line command block is a checklist, not a sin
 
 **Why test it:** Timezone support affects logs, status panels, handouts, history displays, and the date boundary that creates a new Session.
 
-**Skip when:** Do not skip after first installing v0.1.6.1 or changing the campaign timezone. The cross-date test may be skipped when NPCManager is disabled and will not be used.
+**Skip when:** Do not skip after first installing v0.1.7.0 or changing the campaign timezone. The cross-date test may be skipped when NPCManager is disabled and will not be used.
 
 ### Quick Check
 
-1. Run `!ga-status` and confirm the title identifies **GameAssist 0.1.6.1**.
+1. Run `!ga-status` and confirm the title identifies **GameAssist 0.1.7.0**.
 2. Run `!ga-timezone`.
 3. Choose the city/region that governs the campaign clock, or use **Choose Another Timezone** and enter an IANA name such as `America/New_York`.
 4. Confirm **Current GameAssist time** and **Current Session date** match that location.
@@ -63,34 +63,34 @@ The maintainer test suite separately checks fixed winter and summer instants, a 
 
 ---
 
-## Full v0.1.6.1 Release Acceptance Test
+## Full v0.1.7.0 Release Acceptance Test
 
-This is the release test for v0.1.6.1. It has two distinct tracks:
+This is the release test for v0.1.7.0. It has two distinct tracks:
 
 | Track | Script being tested | Purpose |
 | --- | --- | --- |
-| **A. Clean installation** | **v0.1.6.1** | Proves the complete suite, native initiative foundation, and optional greeting module work together. |
-| **B. Upgrade** | **v0.1.6.1** | Proves v0.1.5.1 configuration, history, timezone, and module behavior survive the update. |
+| **A. Clean installation** | **v0.1.7.0** | Proves the complete suite and the new encounter-flow module work together. |
+| **B. Upgrade** | **v0.1.7.0** | Proves v0.1.6.1 configuration, history, initiative settings, welcome settings, and tracker contents survive the update. |
 
-Do not use an earlier release guide as the v0.1.6.1 acceptance test. In Track B, v0.1.5.1 is only the starting point used to create existing campaign state; every acceptance check after replacement is performed with v0.1.6.1.
+Do not use an earlier release guide as the v0.1.7.0 acceptance test. In Track B, v0.1.6.1 is only the starting point used to create existing campaign state; every acceptance check after replacement is performed with v0.1.7.0.
 
 ### Release Candidate Files
 
 Use the current repository copies of:
 
-- `GameAssist-v0.1.6.1` or the identical `GameAssist.js` One-Click artifact;
+- `GameAssist-v0.1.7.0` or the identical `GameAssist.js` One-Click artifact;
 - this `Smoketest.md` guide.
 
-After saving the script, wait for the Mod sandbox to restart. Do not continue unless the startup message and `!ga-status` both identify **GameAssist v0.1.6.1**.
+After saving the script, wait for the Mod sandbox to restart. Do not continue unless the startup message and `!ga-status` both identify **GameAssist v0.1.7.0**.
 
-### Track A: Clean v0.1.6.1 Installation
+### Track A: Clean v0.1.7.0 Installation
 
 Use a new disposable campaign, or a disposable campaign in which GameAssist state may be cleared safely.
 
-1. Install GameAssist v0.1.6.1. Remove or disable standalone TokenMod and StatusInfo before testing their integrated replacements.
+1. Install GameAssist v0.1.7.0. Remove or disable standalone TokenMod and StatusInfo before testing their integrated replacements.
 2. Prepare the disposable PC, NPC, unlinked token, and optional CritFumble tables described under [Before Testing](#before-testing).
-3. Run every **Basic Check** in Components 1 through 13, except a deliberately disabled optional feature may be recorded as **Skipped by choice**.
-4. Run the complete MarkerService, TurnTrackerService, ConditionAssist, TokenAssist, InitiativeAssist, and WelcomeAssist acceptance sections. These may not be skipped for v0.1.6.1 release approval.
+3. Run every **Basic Check** in Components 1 through 14, except a deliberately disabled optional feature may be recorded as **Skipped by choice**.
+4. Run the complete MarkerService, TurnTrackerService, ConditionAssist, TokenAssist, InitiativeAssist, CombatAssist, and WelcomeAssist acceptance sections. These may not be skipped for v0.1.7.0 release approval.
 5. Run the cross-component permission, duplicate-installation, and state-recovery checks.
 6. Restart the sandbox once more and repeat `!ga-status`, `!ga-config modules`, one marker change, and one harmless TokenAssist command.
 
@@ -105,6 +105,7 @@ Record the release result here:
 | ConditionAssist full acceptance | [ ] Pass [ ] Fail |
 | TokenAssist full acceptance | [ ] Pass [ ] Fail |
 | InitiativeAssist full acceptance | [ ] Pass [ ] Fail |
+| CombatAssist full acceptance | [ ] Pass [ ] Fail |
 | WelcomeAssist full acceptance | [ ] Pass [ ] Fail |
 | ConcentrationTracker basic workflow | [ ] Pass [ ] Fail [ ] Skipped by choice |
 | NPCManager basic workflow | [ ] Pass [ ] Fail [ ] Skipped by choice |
@@ -113,18 +114,20 @@ Record the release result here:
 | Cross-component checks | [ ] Pass [ ] Fail |
 | Restart persistence check | [ ] Pass [ ] Fail |
 
-### Track B: Upgrade v0.1.5.1 to v0.1.6.1
+### Track B: Upgrade v0.1.6.1 to v0.1.7.0
 
-Use a separate disposable campaign so the upgrade begins with authentic v0.1.5.1 state.
+Use a separate disposable campaign so the upgrade begins with authentic v0.1.6.1 state.
 
 #### Create the previous-release state
 
-1. Install GameAssist v0.1.5.1 without standalone TokenMod or StatusInfo.
+1. Install GameAssist v0.1.6.1 without standalone TokenMod or StatusInfo.
 2. Enable the ordinary modules the campaign will use.
 3. Change at least one non-default GameAssist setting.
 4. Create one NPC death and revival record.
 5. Give the active Campaign, Chapter, Section, and Session buckets recognizable test names.
-6. Record the output of:
+6. Enable InitiativeAssist, place at least three distinct rows in the native tracker, and save one InitiativeAssist group or non-default NPC-roll setting.
+7. Enable and configure WelcomeAssist without requiring a public greeting.
+8. Record the output of:
 
    ```roll20chat
    !ga-config modules
@@ -133,9 +136,9 @@ Use a separate disposable campaign so the upgrade begins with authentic v0.1.5.1
    !npc-death-report --scope session
    ```
 
-#### Install and test v0.1.6.1
+#### Install and test v0.1.7.0
 
-1. Replace the complete v0.1.5.1 script with the current v0.1.6.1 artifact.
+1. Replace the complete v0.1.6.1 script with the current v0.1.7.0 artifact.
 2. Confirm standalone TokenMod and StatusInfo remain absent so the integrated services can be tested without overlap.
 3. Restart the sandbox and run:
 
@@ -149,30 +152,31 @@ Use a separate disposable campaign so the upgrade begins with authentic v0.1.5.1
 
 4. Confirm the non-default setting, bucket names, and NPC history remain available.
 5. Confirm MarkerService is enabled and ConditionAssist, TokenAssist, NPCManager, and ConcentrationTracker report confirmed MarkerService dependencies.
-6. Run the inherited module checks plus the complete TurnTrackerService, InitiativeAssist, and WelcomeAssist sections using v0.1.6.1.
-7. Restart the sandbox and confirm the retained configuration, timezone, history, tracker, and InitiativeAssist setting remain available.
+6. Confirm CombatAssist is disabled by default and did not adopt or reorder the existing tracker.
+7. Run the inherited module checks plus the complete TurnTrackerService, InitiativeAssist, CombatAssist, and WelcomeAssist sections using v0.1.7.0.
+8. Restart the sandbox and confirm the retained configuration, timezone, history, tracker, InitiativeAssist setting/group, WelcomeAssist configuration, and CombatAssist setting remain available.
 
 Record the upgrade result here:
 
 | Upgrade requirement | Result |
 | --- | --- |
-| v0.1.6.1 starts without a new GameAssist exception | [ ] Pass [ ] Fail |
-| Valid v0.1.5.1 configuration is retained | [ ] Pass [ ] Fail |
+| v0.1.7.0 starts without a new GameAssist exception | [ ] Pass [ ] Fail |
+| Valid v0.1.6.1 configuration is retained | [ ] Pass [ ] Fail |
 | NPC history and bucket names are retained | [ ] Pass [ ] Fail |
 | MarkerService and enabled dependents are running | [ ] Pass [ ] Fail |
 | Standalone TokenMod and StatusInfo are no longer required | [ ] Pass [ ] Fail |
 | New ConditionAssist and TokenAssist workflows pass | [ ] Pass [ ] Fail |
-| TurnTrackerService, InitiativeAssist, and WelcomeAssist acceptance passes | [ ] Pass [ ] Fail |
+| TurnTrackerService, InitiativeAssist, CombatAssist, and WelcomeAssist acceptance passes | [ ] Pass [ ] Fail |
 | Existing gameplay module basic checks pass | [ ] Pass [ ] Fail |
 | Migrated state survives another sandbox restart | [ ] Pass [ ] Fail |
 
 ### Release Decision
 
-The v0.1.6.1 release regression passes only when:
+The v0.1.7.0 release regression passes only when:
 
 - Track A passes in a clean installation;
-- Track B passes after replacing v0.1.5.1 with v0.1.6.1;
-- MarkerService, TurnTrackerService, ConditionAssist, TokenAssist, InitiativeAssist, and WelcomeAssist have no skipped acceptance checks;
+- Track B passes after replacing v0.1.6.1 with v0.1.7.0;
+- MarkerService, TurnTrackerService, ConditionAssist, TokenAssist, InitiativeAssist, CombatAssist, and WelcomeAssist have no skipped acceptance checks;
 - no unrelated marker, token property, character attribute, NPC history, or configuration is changed;
 - any optional skipped gameplay module is recorded with a clear reason.
 
@@ -187,13 +191,14 @@ A failure should be recorded using [Bug Report Evidence](#bug-report-evidence) b
 | Core System | GameAssist loaded, responds, and started enabled modules. | Every other feature depends on the core. | Never after an install or update. |
 | Table Timezone | The saved table clock, readable timestamps, and date-managed Session agree. | A wrong date boundary can put NPC history in the wrong Session. | Only the cross-date portion may be skipped when NPCManager is disabled. |
 | MarkerService | GameAssist can change and read markers without standalone TokenMod while preserving unrelated markers. | NPC death and concentration markers depend on it. | Only when no enabled module or future service uses token markers. |
-| TurnTrackerService | Native tracker rows can be read, audited, and safely updated without losing custom or unknown data. | InitiativeAssist depends on one lossless Turn Tracker authority. | Never for v0.1.6.1 release acceptance. |
+| TurnTrackerService | Native tracker rows can be read, audited, and safely updated without losing custom or unknown data. | InitiativeAssist and CombatAssist depend on one lossless Turn Tracker authority. | Never for v0.1.7.0 release acceptance. |
 | ConfigUI | The GM settings interface opens and responds once. | It is the easiest way for most DMs to manage modules. | The campaign is intentionally managed only through commands. |
 | CritFumble | Help and the Natural 1 workflow respond. | Table automation can fail separately from the rest of GameAssist. | CritFumble is disabled and will not be used. |
 | ConditionAssist | Condition help, selected-token controls, descriptions, and MarkerService synchronization work. | Condition workflows combine permissions, configuration, markers, and chat output. | ConditionAssist is deliberately disabled and will not be used. |
 | TokenAssist | Selected-token controls, values, movement, reports, and MarkerService-backed status commands work. | It replaces the supported general token-control workflows previously supplied by standalone TokenMod. | TokenAssist is deliberately disabled and none of its commands, including the temporary older command, will be used. |
-| InitiativeAssist | Mixed 2014/2024 actors roll through the native tracker while counters, objects, dead NPCs, and attention rows remain untouched. | Initiative mistakes interrupt play and can damage another tool's tracker state. | Never for v0.1.6.1 release acceptance. |
-| WelcomeAssist | Optional greetings remain deliberate, bounded, private during setup, and limited to one automatic post per sandbox. | Startup output should welcome the table without misreporting unhealthy GameAssist components or executing custom chat syntax. | Never for v0.1.6.1 release acceptance. |
+| InitiativeAssist | Mixed 2014/2024 actors roll through the native tracker while counters, objects, dead NPCs, and attention rows remain untouched. | Initiative mistakes interrupt play and can damage another tool's tracker state. | Never for v0.1.7.0 release acceptance. |
+| CombatAssist | Explicit lifecycle, exact turns, rounds, pause/edit/resume, and attention handling work without rewriting tracker rows. | A false round or destructive tracker edit can disrupt an encounter immediately. | Never for v0.1.7.0 release acceptance. |
+| WelcomeAssist | Optional greetings remain deliberate, bounded, private during setup, and limited to one automatic post per sandbox. | Startup output should welcome the table without misreporting unhealthy GameAssist components or executing custom chat syntax. | Never for v0.1.7.0 release acceptance. |
 | ConcentrationTracker | Status, saving throws, and marker removal work on linked PC tokens. | It combines character data, rolls, chat, and MarkerService. | ConcentrationTracker is disabled and will not be used. |
 | NPCManager | Death, revival, audit, history, buckets, and Arc menus work. | It combines HP events, markers, saved records, and handouts. | NPCManager is disabled and will not be used. |
 | NPCHPRoller | Qualifying NPC HP formulas roll without changing PCs or unlinked tokens. | Incorrect eligibility can damage token HP or create false history. | NPCHPRoller is disabled and NPC HP is set another way. |
@@ -208,14 +213,14 @@ GameAssist is ready for normal use when:
 - the Roll20 Mod sandbox reloads without a new GameAssist exception;
 - the Core System basic test passes;
 - MarkerService passes if ConditionAssist, TokenAssist, NPCManager, ConcentrationTracker, or marker diagnostics will be used;
-- TurnTrackerService, InitiativeAssist, and WelcomeAssist pass before v0.1.6.1 is approved;
+- TurnTrackerService, InitiativeAssist, CombatAssist, and WelcomeAssist pass before v0.1.7.0 is approved;
 - every enabled module that matters to the coming session passes its basic test;
 - any skipped test is skipped for a stated reason, not because its result was unclear.
 
 Expected conditions that are not failures:
 
 - DebugTools is disabled by default.
-- Standalone TokenMod is not required for GameAssist marker operations or supported TokenAssist commands in v0.1.6.1. Remove it while testing TokenAssist so both scripts cannot respond to `!token-mod`.
+- Standalone TokenMod is not required for GameAssist marker operations or supported TokenAssist commands in v0.1.7.0. Remove it while testing TokenAssist so both scripts cannot respond to `!token-mod`.
 - ConditionAssist provides GameAssist's condition menus and marker descriptions; remove standalone StatusInfo while testing the overlapping workflows.
 - CritFumble help works without rollable tables, but table rolls require the seven exact table names.
 - Counts and timestamps in diagnostic panels vary by sandbox session.
@@ -232,7 +237,7 @@ Expected conditions that are not failures:
 
 ## Before Testing
 
-After saving GameAssist, wait for the Roll20 Mod sandbox to restart. The core-ready whisper should identify GameAssist v0.1.6.1.
+After saving GameAssist, wait for the Roll20 Mod sandbox to restart. The core-ready whisper should identify GameAssist v0.1.7.0.
 
 For expanded tests, prepare:
 
@@ -300,9 +305,9 @@ Run:
 
 Pass when:
 
-- `!ga-status` identifies GameAssist v0.1.6.1 and gives a clear overall result;
+- `!ga-status` identifies GameAssist v0.1.7.0 and gives a clear overall result;
 - MarkerService, TurnTrackerService, and seven default gameplay/administration modules are enabled and running;
-- InitiativeAssist and DebugTools are shown as disabled or paused until deliberately enabled;
+- InitiativeAssist, CombatAssist, WelcomeAssist, and DebugTools are shown as disabled or paused until deliberately enabled;
 - no enabled module is dependency-skipped;
 - the actions below `!ga-status` include **Troubleshooting Details**, **Modules & Services**, and **Open Settings**.
 
@@ -352,11 +357,11 @@ Open the `GameAssist Config` handout and check:
 - [ ] `format` is `gameassist-config-snapshot`.
 - [ ] `schemaVersion` is `1`.
 - [ ] `scope` is `configuration-only`.
-- [ ] `version` is `0.1.6.1`.
-- [ ] MarkerService, TurnTrackerService, and all nine module configuration objects are present.
+- [ ] `version` is `0.1.7.0`.
+- [ ] MarkerService, TurnTrackerService, and all eleven module configuration objects are present.
 - [ ] Runtime caches, metrics, death history, and Arc data are absent.
 
-This is a configuration snapshot, not a complete state backup, and it cannot be imported in v0.1.6.1.
+This is a configuration snapshot, not a complete state backup, and it cannot be imported in v0.1.7.0.
 
 #### Safe Configuration Round Trip
 
@@ -657,7 +662,7 @@ If any MarkerService check fails, record:
 
 **Why test it:** InitiativeAssist must not erase custom counters, unknown fields, duplicate turns, text priorities, or rows created by another tool.
 
-**Skip when:** Never skip for v0.1.6.1 release acceptance. A campaign that will not use InitiativeAssist may limit this to the basic lifecycle check after release.
+**Skip when:** Never skip for v0.1.7.0 release acceptance. A campaign that will use neither InitiativeAssist nor CombatAssist may limit this to the basic lifecycle check after release.
 
 ### Basic Check
 
@@ -674,7 +679,7 @@ If any MarkerService check fails, record:
 !ga-config modules
 ```
 
-Pass when disabling the service also disables InitiativeAssist, neither tracker row changes or disappears, and the service can be re-enabled without rebuilding the tracker.
+Pass when disabling the service also disables InitiativeAssist and CombatAssist, neither tracker row changes or disappears, and the service can be re-enabled without rebuilding the tracker.
 
 ### Expanded TurnTrackerService Checks
 
@@ -1160,7 +1165,7 @@ If any TokenAssist check fails, record:
 
 **Why test it:** Initiative happens at a time-sensitive moment in play. A safe result must be quick to understand and must not disturb round counters, objects, dead NPCs, or another Mod's custom entries.
 
-**Skip when:** Never skip for v0.1.6.1 release acceptance. After release, campaigns that deliberately leave InitiativeAssist disabled may skip it.
+**Skip when:** Never skip for v0.1.7.0 release acceptance. After release, campaigns that deliberately leave InitiativeAssist disabled may skip it.
 
 ### Basic Check
 
@@ -1351,7 +1356,181 @@ Record:
 
 ---
 
-## 9. ConcentrationTracker
+## 9. CombatAssist
+
+**What this proves:** CombatAssist starts only when asked, follows exact native tracker movement, counts a complete round without guessing, preserves tracker rows, and stops safely when the tracker changes ambiguously.
+
+**Why test it:** A false round count or destructive tracker update interrupts an encounter immediately. The test therefore checks both normal table use and the refusal paths that protect uncertain tracker state.
+
+**Skip when:** Never skip for v0.1.7.0 release acceptance. After release, campaigns that deliberately leave CombatAssist disabled may skip it.
+
+### Basic Check
+
+Put at least three distinct rows in Roll20's Turn Tracker on one page. Include one custom row if the campaign uses counters, lair actions, reminders, or other non-token entries. Record their exact order and values, then run:
+
+```roll20chat
+!ga-enable CombatAssist
+!Combat-Help
+!Combat-Menu
+!Combat-Start
+!Combat-Status
+```
+
+Pass when:
+
+- **CombatAssist Quick Guide** explains prepare, start, advance, pause/edit/resume, attention, and current 1.0.0 limits;
+- **CombatAssist Control Center** clearly separates encounter controls, announcement choices, status, and help;
+- start identifies the encounter page, round 1, current first row, and number of tracked rows;
+- status reports `active`, round 1, the current turn, and a safe unique-row count;
+- no tracker row, priority, custom label, or unknown field changes during help, menu, start, or status;
+- mixed capitalization such as `!cOmBaT-sTaTuS` works.
+
+### Full CombatAssist Acceptance
+
+#### C1. Exact Forward Turns and One Complete Round
+
+With the three-or-more-row tracker from the Basic Check, use Roll20's native next-turn arrow once, then run:
+
+```roll20chat
+!Combat-Status
+```
+
+Pass when the next row is current and the round remains 1. Continue forward until the original starting row returns to the top. Pass when the round changes to 2 exactly once.
+
+Compare the tracker with the recorded setup. Every row object, custom entry, initiative value, and extra field should still exist unchanged; only array order should have rotated.
+
+#### C2. Backward Safety
+
+From the round-2 anchor, use Roll20's native previous-turn arrow once and run `!Combat-Status`.
+
+Pass when the prior row becomes current and the round remains 2. Move forward once to undo that step. The round must still remain 2. Continue through one complete uninterrupted forward cycle; the round should then change to 3 exactly once.
+
+#### C3. Guarded Next Turn
+
+Record the complete tracker, then run:
+
+```roll20chat
+!Combat-Next
+```
+
+Pass when exactly the first row moves to the end, all row contents remain unchanged, and the GM receives the current round and turn. No new counter, token, handout, marker, or history entry should appear.
+
+#### C4. Pause, Edit, and Resume
+
+Run:
+
+```roll20chat
+!Combat-Pause
+```
+
+While paused, add one custom reminder row, remove it again, or deliberately reorder the tracker. Confirm CombatAssist does not count those edits. Then run:
+
+```roll20chat
+!Combat-Resume
+!Combat-Status
+```
+
+Pass when the prior round number is retained, the current first row becomes the new safe baseline, status returns to `active`, and CombatAssist does not rewrite the edited tracker.
+
+#### C5. Attention Instead of Guessing
+
+While active and **without pausing**, make one deliberate ambiguous change: add a temporary row, remove a row, swap two non-adjacent rows, close the tracker, or move it to another page.
+
+Pass when CombatAssist reports **Needs Attention**, does not increment the round, and changes no tracker data. Restore a sound tracker, review it, then use **Restart Tracking** or:
+
+```roll20chat
+!Combat-Start --confirm
+```
+
+Pass when the current first row becomes a deliberate round-1 anchor and normal exact movement works again.
+
+#### C6. Duplicate and Stale Rows
+
+On a disposable tracker, add the same token twice or create two custom rows with the same exact label, then try `!Combat-Start`.
+
+Pass when start is refused because the rows are indistinguishable and both rows remain untouched. Also test one tracker row whose token was deleted. CombatAssist should identify the missing or unrecognized reference rather than deleting it or starting.
+
+Restore distinct valid rows before continuing.
+
+#### C7. Two-Row Direction Limitation
+
+End the current test encounter, leave exactly two distinct valid rows, and start again. Use Roll20's native next-turn arrow once.
+
+Pass when CombatAssist enters attention and explains that native forward and backward movement produce the same two-row order. Restore and restart the two-row encounter, then use:
+
+```roll20chat
+!Combat-Next
+!Combat-Next
+!Combat-Status
+```
+
+Pass when the first command advances one turn and the second returns to the anchor at round 2.
+
+#### C8. Announcement Audiences
+
+With a healthy active encounter, test:
+
+```roll20chat
+!Combat-Announce gm
+!Combat-Next
+!Combat-Announce public
+!Combat-Next
+!Combat-Announce off
+!Combat-Next
+```
+
+Pass when GM mode whispers the turn, public mode posts the turn to the table, and off mode suppresses automatic public turn output while the explicit Next Turn action still confirms privately to the GM. Setup, status, warnings, backward movement, and confirmations must remain GM-only in every mode.
+
+#### C9. End Confirmation
+
+Record the tracker and run:
+
+```roll20chat
+!Combat-End
+```
+
+Pass when CombatAssist asks for confirmation and the encounter remains active. Confirm from the button or run:
+
+```roll20chat
+!Combat-End --confirm
+```
+
+Pass when CombatAssist reports no active encounter and the native tracker remains byte-for-byte unchanged.
+
+#### C10. TurnTrackerService Cascade and Reload
+
+Start a healthy disposable CombatAssist encounter, record the tracker and current round, then run:
+
+```roll20chat
+!ga-disable TurnTrackerService
+!ga-config modules
+```
+
+Pass when TurnTrackerService disables CombatAssist and InitiativeAssist, unrelated modules remain available, and the native tracker is unchanged. Re-enable in dependency order:
+
+```roll20chat
+!ga-enable TurnTrackerService
+!ga-enable CombatAssist
+!Combat-Status
+```
+
+Pass when the saved encounter is available if the tracker did not change. Restart the Mod sandbox with the same healthy tracker and run `!Combat-Status` again. The encounter and round should remain available. If the tracker changes while CombatAssist is disabled or unavailable, re-enabling should produce attention rather than guessing what happened.
+
+### CombatAssist Failure Evidence
+
+Record:
+
+- the exact `!Combat-` command or native tracker action;
+- tracker page and whether the tracker was open;
+- tracker order, labels, priorities, and duplicate rows before and after;
+- the saved lifecycle state and round from `!Combat-Status`;
+- whether the change was forward, backward, an edit, or caused by another Mod;
+- the CombatAssist and TurnTrackerService rows from `!ga-config modules`;
+- `!ga-status --details` and the exact API Console exception or GameAssist warning.
+
+---
+
+## 10. ConcentrationTracker
 
 **What this proves:** ConcentrationTracker reads linked character data, builds the correct save, remembers the last check, and uses MarkerService.
 
@@ -1407,7 +1586,7 @@ Select an unlinked token and repeat a check. Pass when GameAssist explains that 
 
 ---
 
-## 10. NPCManager
+## 11. NPCManager
 
 **What this proves:** NPCManager tracks genuine HP transitions, changes death markers, audits current-page mismatches, and maintains report buckets and Arc records.
 
@@ -1612,7 +1791,7 @@ Default behavior is `autoHide=false`. If enabled, dead NPCs intentionally move t
 
 ---
 
-## 11. NPCHPRoller
+## 12. NPCHPRoller
 
 **What this proves:** NPCHPRoller recognizes qualifying NPCs, rolls `npc_hpformula`, and protects initialization from false death history.
 
@@ -1683,7 +1862,7 @@ Restore the default:
 
 ---
 
-## 12. DebugTools
+## 13. DebugTools
 
 **What this proves:** DebugTools remains opt-in, previews mutations by default, and requires `--apply`.
 
@@ -1737,13 +1916,13 @@ Return DebugTools to its default state:
 
 ---
 
-## 13. WelcomeAssist
+## 14. WelcomeAssist
 
 **What this proves:** WelcomeAssist stays silent until deliberately enabled, keeps setup private, posts no more than one automatic greeting per sandbox lifecycle, and safely manages campaign greeting text.
 
 **Why test it:** The module writes to public chat during startup. It must never surprise the table while being configured, repeat itself, claim GameAssist is ready when an enabled component is unhealthy, or execute Roll20 syntax hidden inside custom text.
 
-**Skip when:** Never skip for v0.1.6.1 release acceptance. After release, campaigns that leave WelcomeAssist disabled may confirm the disabled check and skip the expanded tests.
+**Skip when:** Never skip for v0.1.7.0 release acceptance. After release, campaigns that leave WelcomeAssist disabled may confirm the disabled check and skip the expanded tests.
 
 ### Basic Check
 
@@ -1895,7 +2074,7 @@ If a command produces duplicate output:
 3. Keep only the intended implementation.
 4. Restart the sandbox and repeat the command.
 
-Scripts that independently respond to `!condition` or `!token-mod`, describe the same marker changes, modify the same NPC HP/bar 1, control the same token properties or death/concentration/condition markers, process the same Natural 1 workflow, or rewrite the native Turn Tracker may conflict even when their names differ. TokenAssist deliberately suspends only its deprecated `!token-mod` alias when standalone TokenMod is detected, but the standalone copy should still be removed for normal v0.1.6.1 use. Use InitiativeAssist Observer mode when another initiative or combat manager owns tracker writes.
+Scripts that independently respond to `!condition` or `!token-mod`, describe the same marker changes, modify the same NPC HP/bar 1, control the same token properties or death/concentration/condition markers, process the same Natural 1 workflow, or rewrite the native Turn Tracker may conflict even when their names differ. TokenAssist deliberately suspends only its deprecated `!token-mod` alias when standalone TokenMod is detected, but the standalone copy should still be removed for normal v0.1.7.0 use. Use InitiativeAssist Observer mode when another initiative roller owns initiative values; leave CombatAssist disabled when another encounter manager owns turn advancement or rounds.
 
 ## State Recovery
 
@@ -1963,7 +2142,7 @@ Check:
 - The configured built-in marker, custom display name, or exact stored tag exists.
 - The HP or concentration outcome actually requested the expected marker state.
 
-Standalone TokenMod permissions are not a repair for GameAssist marker failures in v0.1.6.1.
+Standalone TokenMod permissions are not a repair for GameAssist marker failures in v0.1.7.0.
 
 Stop testing and report the before/after marker values if an unrelated marker or number changes.
 

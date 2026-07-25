@@ -1,9 +1,9 @@
 /*
 ========================================
 GameAssist - Roll20 API Script
-Version: 0.1.6.1
-Last Updated: 2026-07-20 (America/New_York)
-Development line: private initiative controls and WelcomeAssist v0.1.6.1.
+Version: 0.1.7.0
+Last Updated: 2026-07-25 (America/New_York)
+Development line: preservation-first CombatAssist encounter flow v0.1.7.0.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -12,12 +12,13 @@ DESCRIPTION
 GameAssist is a modular D&D 5E (2014 and 2024) automation suite with an explicit opt-in
 task queue, state/configuration helpers, consistent logging, and a core marker
 service. Normal event handlers execute directly unless a module deliberately
-calls GameAssist.enqueue(). This package ships with ten configurable modules:
+calls GameAssist.enqueue(). This package ships with eleven configurable modules:
 - ConfigUI - GM-only chat controls for toggling modules and common options.
 - CritFumble - Detects natural-1 attacks and offers fumble/confirm menus.
 - ConditionAssist 1.0.1 - Provides condition wording, artwork, announcements, and marker controls.
 - TokenAssist 1.0.1 - Provides general token controls through !token-assist and !ta commands.
 - InitiativeAssist 1.0.1 - Uses Roll20's native Turn Tracker for mixed-sheet initiative workflows.
+- CombatAssist 1.0.0 - Tracks deliberate encounters, rounds, and exact native Turn Tracker movement.
 - WelcomeAssist 0.1.0 - Optionally greets the table after a healthy GameAssist startup.
 - ConcentrationTracker - Runs concentration checks and manages its configured marker.
 - NPCManager 1.3.0 - Tracks NPC death markers, history, reports, audits, repair previews, and Arc rosters.
@@ -52,6 +53,8 @@ MODULE COMMANDS
 - InitiativeAssist: !Init-Menu, !Init-Help, !Init-Go, !Init-Go!, !Init-Roll,
   !Init-GM, !Init-Roll-Selected, !Init-Options, !Init-Start, !Init-NPC-Rolls,
   !Init-RR, !Init-RR-Menu, !Init-Group, !Init-Audit
+- CombatAssist: !Combat-Menu, !Combat-Help, !Combat-Start, !Combat-Next,
+  !Combat-Pause, !Combat-Resume, !Combat-Status, !Combat-End, !Combat-Announce
 - WelcomeAssist: !welcome-assist help|status|preview|announce,
   !welcome-assist mode|delay|header|default|custom
 - ConcentrationTracker: !concentration, !cc, !ga-conc-status
@@ -61,7 +64,7 @@ MODULE COMMANDS
 - NPCHPRoller: !npc-hp-selected, !npc-hp-all
 - DebugTools: !ga-debug damage|marker|save
 
-V0.1.6.1 FOUNDATION
+V0.1.7.0 FOUNDATION
 - [GAMEASSIST:CORE:MARKERSERVICE] is the single GameAssist authority for marker
   resolution, reads, writes, toggles, duplicate handling, and change observation.
 - Built-in ids, custom display names, exact stored tags, numbered markers, and
@@ -79,6 +82,9 @@ V0.1.6.1 FOUNDATION
   Roll20 turn-order snapshots, guarded writes, and tracker observations.
 - InitiativeAssist supports official 2014 and 2024 Roll20 sheet initiative data;
   2024 Beacon access requires Roll20's supported asynchronous Mod API functions.
+- CombatAssist starts disabled, observes exact tracker rotations, advances rounds
+  only after a complete unambiguous forward cycle, and never rewrites tracker rows
+  except when the GM explicitly requests the next turn.
 - WelcomeAssist is disabled by default and can post one delayed public greeting
   after a healthy GameAssist bootstrap when deliberately configured and enabled.
 - Queue timeouts release the queue but cannot terminate Roll20 operations.
@@ -100,9 +106,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 // --- MECHSUITS BANNER (YAML) ---
 // mechsuit:
 //   codename: "GAMEASSIST"
-//   project_version: "v0.1.6.1"
-//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker and Turn Tracker authorities, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, optional health-gated table greetings, and a validated campaign timezone for human-facing dates. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, or automatic combat-round management."
-//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.turntrackerservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critfumble","modules.conditionassist","modules.tokenassist","modules.initiativeassist","modules.welcomeassist","modules.npcmanager","modules.concentrationtracker","modules.npchproller","modules.debugtools","bootstrap"]
+//   project_version: "v0.1.7.0"
+//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker and Turn Tracker authorities, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, preservation-first encounter flow, optional health-gated table greetings, and a validated campaign timezone for human-facing dates. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, automatic turn advancement, or automatic condition-duration management."
+//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.turntrackerservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critfumble","modules.conditionassist","modules.tokenassist","modules.initiativeassist","modules.combatassist","modules.welcomeassist","modules.npcmanager","modules.concentrationtracker","modules.npchproller","modules.debugtools","bootstrap"]
 //   env:
 //     required: []
 //     optional: []
@@ -115,7 +121,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //   observability:
 //     logs: "roll20_whisper_to_gm"
 //     metrics: [{ name: "gameassist.queue.task_duration_ms", unit: "ms" }]
-//     spans: ["[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:MODULES:INITIATIVEASSIST]","[GAMEASSIST:MODULES:WELCOMEASSIST]"]
+//     spans: ["[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:MODULES:INITIATIVEASSIST]","[GAMEASSIST:MODULES:COMBATASSIST]","[GAMEASSIST:MODULES:WELCOMEASSIST]"]
 //   performance: { notes: "No current benchmark claim; validate in the target Roll20 campaign sandbox." }
 //   concurrency: { model: "Direct event handlers plus explicit opt-in serialized task queue", idempotency: "N/A (event-driven)" }
 //   compatibility: { accepts: ["Roll20 API sandbox; current campaign smoke test required"], emits: "Roll20 chat whispers/logs" }
@@ -144,6 +150,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     │  ├─ [GAMEASSIST:MODULES:CONDITIONASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:TOKENASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:INITIATIVEASSIST]
+//     │  ├─ [GAMEASSIST:MODULES:COMBATASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:WELCOMEASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:NPCMANAGER]
 //     │  ├─ [GAMEASSIST:MODULES:CONCENTRATIONTRACKER]
@@ -151,10 +158,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 //     └─ [GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
-// Guarantee: GameAssist v0.1.6.1 runs policy, utilities, guarded core services including MarkerService and TurnTrackerService, interfaces, independently lifecycle-managed condition/token/initiative/welcome/gameplay modules, then bootstrap in the declared order. Human-facing times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
+// Guarantee: GameAssist v0.1.7.0 runs policy, utilities, guarded core services including MarkerService and TurnTrackerService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/gameplay modules, then bootstrap in the declared order. Human-facing times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
 
 // =============================
-// === GameAssist v0.1.6.1 ===
+// === GameAssist v0.1.7.0 ===
 // === Author: Mord Eagle ===
 // =============================
 // Released under the MIT License (see https://opensource.org/licenses/MIT)
@@ -187,8 +194,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Tunables and operational policy
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "POLICY", title: "Tunables",
-    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; NPC initialization, timezone input, condition, initiative, and welcome limits remain explicit"],
-    //   provides: ["POLICY"], last_updated_version: "v0.1.6.1", lifecycle: "active" }
+    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; NPC initialization, timezone input, condition, initiative, combat, and welcome limits remain explicit"],
+    //   provides: ["POLICY"], last_updated_version: "v0.1.7.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // POLICY owns shared timeouts, cache limits, UI defaults, snapshot identifiers,
@@ -264,6 +271,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             statusChatLimit: 20,
             ownWriteSuppressionMs: 1000
         }),
+        combat: Object.freeze({
+            minimumTrackedRows: 2,
+            maximumTrackedRows: 200
+        }),
         welcome: Object.freeze({
             minDelayMs: 1000,
             maxDelayMs: 60000,
@@ -282,11 +293,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.6.1): Added bounded WelcomeAssist delay, readiness polling, custom-list, greeting, and header limits; rollback: remove welcome policy with WelcomeAssist.
+    // Changed (v0.1.7.0): Added explicit minimum and maximum row bounds for CombatAssist encounter observation; rollback: remove combat policy with CombatAssist.
     // Decision log:
     //   CHOICE: Offer common IANA zones plus validated custom input - ALT: fixed numeric offsets; REJECTED: fixed offsets do not follow daylight-saving changes.
     //   CHOICE: Keep NPC initialization and snapshot knobs centralized while removing the unused external marker delay - ALT: retain the dead setting; REJECTED: implied behavior no caller performs.
     // Prior notes:
+    //   v0.1.6.1: Added bounded WelcomeAssist delay, readiness polling, custom-list, greeting, and header limits.
     //   v0.1.6.0: Added bounded initiative batch, picker, group, custom-die, flat-adjustment, score-band, observer-suppression, and chat-review policy.
     //   v0.1.5.1: Added bounded IANA timezone input, a bounded formatter cache, a stable display locale, and common GM menu choices.
     //   v0.1.5.0: Removed the obsolete standalone TokenMod verification delay and added bounded condition-definition, import, announcement-selection, private-reference, announcement-observer suppression, and current-page status limits for ConditionAssist.
@@ -928,7 +940,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE", title: "Core wrapper",
     //   guarantees: ["Core constants and kernel services are grouped; MarkerService owns marker mechanics and TurnTrackerService owns native tracker mechanics"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP]"], last_updated_version: "v0.1.6.1",
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP]"], last_updated_version: "v0.1.7.0",
     //   lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
@@ -937,7 +949,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // documents scope and anchors the hierarchy for MECHSUITS compliance.
     // -------------------------------------------------------------------------
 
-    const VERSION      = '0.1.6.1';
+    const VERSION      = '0.1.7.0';
     const STATE_KEY    = 'GameAssist';
     const MODULES      = {};
     const _transitioning   = {};
@@ -2895,8 +2907,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v0.1.6.1): Advanced runtime VERSION for the private initiative control and optional WelcomeAssist patch; core child order is unchanged.
+    // Changed (v0.1.7.0): Advanced runtime VERSION for the CombatAssist encounter-flow release; core child order is unchanged.
     // Prior notes:
+    //   v0.1.6.1: Advanced runtime VERSION for the private initiative control and optional WelcomeAssist patch; core child order was unchanged.
     //   v0.1.6.0: Added CORE:TURNTRACKERSERVICE to the declared child order and advanced runtime VERSION for the native initiative release.
     //   v0.1.5.1: Advanced runtime VERSION for the configurable campaign-timezone release; the established core child order was unchanged.
     //   v0.1.5.0: Added CORE:MARKERSERVICE to the declared child order and advanced runtime VERSION for the integrated marker architecture.
@@ -2951,16 +2964,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Admin/config commands (!ga-*)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "INTERFACES:COMMANDS", title: "Commands",
-    //   guarantees: ["GM-gated admin commands; unsafe and component-protected config keys refused; versioned config-only export; validated timezone menu; plain-language health summary with opt-in shared-service and standalone-integration details"],
+    //   guarantees: ["GM-gated admin commands; unsafe and component-protected config keys refused; versioned config-only export; validated timezone menu; plain-language health summary with opt-in shared-service, tracker-consumer, and standalone-integration details"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:CORE:STATE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
-    //   last_updated_version: "v0.1.6.0", lifecycle: "active" }
+    //   last_updated_version: "v0.1.7.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // INTERFACES:COMMANDS contains GM/admin chat commands for listing modules, toggling
     // config, exporting versioned configuration-only snapshots, and inspecting health.
     // The default status view prioritizes a DM's next action; --details preserves
     // session counters, queue state, timestamps, event-hook counts, dependency evidence,
-    // MarkerService lifecycle state and separately detected marker/condition Mod evidence.
+    // shared-service and tracker-consumer lifecycle state, plus separately detected
+    // marker/condition Mod evidence.
     // -------------------------------------------------------------------------
     function getModuleHealth() {
         return Object.entries(MODULES)
@@ -3118,13 +3132,20 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         const trackerService = modules.find(row => row.name === 'TurnTrackerService');
         const initiative = modules.find(row => row.name === 'InitiativeAssist');
+        const combat = modules.find(row => row.name === 'CombatAssist');
+        const combatEncounter = combat?.running
+            ? GameAssist.CombatAssist?.getStatus?.()
+            : null;
         const turnTrackerLines = [
             trackerService?.running
                 ? `TurnTrackerService v${TurnTrackerService.version}: enabled; native Turn Tracker reads and guarded writes are available.`
-                : `TurnTrackerService v${TurnTrackerService.version}: disabled; InitiativeAssist tracker work is unavailable.`,
+                : `TurnTrackerService v${TurnTrackerService.version}: disabled; InitiativeAssist and CombatAssist tracker work is unavailable.`,
             initiative?.running
                 ? `InitiativeAssist: running in ${String(initiative.cfg.mode || 'manager')} mode.`
-                : 'InitiativeAssist: disabled or paused; Roll20 initiative remains unchanged by GameAssist.'
+                : 'InitiativeAssist: disabled or paused; Roll20 initiative remains unchanged by GameAssist.',
+            combat?.running
+                ? `CombatAssist: running; ${combatEncounter ? `${combatEncounter.status} on round ${combatEncounter.round}.` : 'no encounter is currently being tracked.'}`
+                : 'CombatAssist: disabled; GameAssist is not counting turns or rounds.'
         ];
 
         const avgDuration = metrics.taskDurations.length
@@ -3468,7 +3489,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.log('Metrics', summary.join('\n'));
     }, 'Core', { gmOnly: true });
     // --- Notes & Comments ---
-    // Changed (v0.1.6.0): Added TurnTrackerService availability and InitiativeAssist mode/lifecycle details to the expanded health panel.
+    // Changed (v0.1.7.0): Added CombatAssist lifecycle and active-encounter state to the expanded Turn Tracker health details.
     // Decision log:
     //   CHOICE: Keep command syntax identical to legacy for drop-in replacement.
     //   CHOICE: Keep the default status action-oriented and volatile counters behind --details - ALT: one exhaustive panel; REJECTED: obscured the health signal.
@@ -3503,8 +3524,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Modules wrapper (bundled features)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES", title: "Modules wrapper",
-    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Condition, token, and gameplay marker consumers share CORE:MARKERSERVICE","TokenAssist owns the documented GameAssist token-command surface without assuming the TokenMod brand","InitiativeAssist uses CORE:TURNTRACKERSERVICE without owning rounds or combat flow","WelcomeAssist remains disabled by default and announces automatically only after completed bootstrap"],
-    //   depends_on: ["[GAMEASSIST:CORE]","[GAMEASSIST:INTERFACES]"], last_updated_version: "v0.1.6.1" }
+    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Condition, token, and gameplay marker consumers share CORE:MARKERSERVICE","TokenAssist owns the documented GameAssist token-command surface without assuming the TokenMod brand","InitiativeAssist owns initiative rules while CombatAssist owns deliberate preservation-first encounter flow through CORE:TURNTRACKERSERVICE","WelcomeAssist remains disabled by default and announces automatically only after completed bootstrap"],
+    //   depends_on: ["[GAMEASSIST:CORE]","[GAMEASSIST:INTERFACES]"], last_updated_version: "v0.1.7.0" }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES encloses all shipped feature modules. Each child retains its own
@@ -6812,8 +6833,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Narrative
     // InitiativeAssist classifies D&D 5E 2014 and 2024 tracker actors, resolves
     // initiative modifiers through the appropriate sheet adapter, and offers a
-    // compact native-tracker workflow. Round counters, durations, and encounter
-    // automation remain deferred to CombatAssist.
+    // compact native-tracker workflow. CombatAssist owns explicit encounter and
+    // round observation; duration and timer automation remain deferred.
     // -------------------------------------------------------------------------
     GameAssist.register('InitiativeAssist', function() {
         const MODULE_NAME = 'InitiativeAssist';
@@ -8317,7 +8338,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => GameAssist.TurnTrackerService.clearObservers('InitiativeAssist')
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.6.1): Advanced InitiativeAssist to 1.0.1, added !Init-GM, restored the curated original initiative-call library, and made linked-character control authoritative over stale token-level assignments.
+    // Maintenance (v0.1.7.0, no semantic change): Clarified that CombatAssist now owns explicit encounter and round observation while InitiativeAssist remains the initiative-rules owner.
     // Decision log:
     //   CHOICE: Reuse the ordinary neutral invitation and roster path for !Init-GM - ALT: maintain a second GM dashboard implementation; REJECTED: duplicated controls would drift from !Init-Go.
     //   CHOICE: Start disabled but default to Manager mode once deliberately enabled - ALT: require a second ownership toggle; REJECTED: unnecessary setup friction after explicit module enablement.
@@ -8332,8 +8353,724 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Revalidate every selected token's page, linkage, control, and eligibility at execution time - ALT: trust selection identifiers captured by a chat button; REJECTED: players must never roll an uncontrolled or stale token through a batch command.
     //   CHOICE: Keep the detailed review in private chat - ALT: create a persistent initiative handout; REJECTED: initiative state is short-lived and the handout added campaign clutter without preserving a useful historical record.
     // Prior notes:
+    //   v0.1.6.0: Added TurnTrackerService availability and InitiativeAssist mode/lifecycle details to the expanded health panel.
+    //   v0.1.6.1: Advanced InitiativeAssist to 1.0.1, added !Init-GM, restored the curated original initiative-call library, and made linked-character control authoritative over stale token-level assignments.
     //   v0.1.6.0: Added mixed D&D 2014/2024 adapters, native page-owned tracker rows, player and GM roster controls, private NPC evidence, composable roll options, score-banded flair, selected and grouped rerolls, and preservation-first writes through TurnTrackerService.
     // [GAMEASSIST:MODULES:INITIATIVEASSIST] END
+    // =============================================================================
+
+    // ————— COMBATASSIST MODULE v1.0.0 —————
+    // =============================================================================
+    // [GAMEASSIST:MODULES:COMBATASSIST] BEGIN
+    // Section Title: Preservation-first encounter flow
+    // -------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:COMBATASSIST", title: "CombatAssist",
+    //   guarantees: ["Disabled-by-default, GM-controlled encounter tracking through case-insensitive !Combat- commands","Only exact one-row forward or backward Turn Tracker rotations are accepted automatically","Rounds advance only after an uninterrupted, unambiguous forward cycle returns to the encounter anchor","Tracker closure, page changes, row changes, malformed rows, stale references, and ambiguous duplicates enter an attention state instead of being guessed","The only tracker mutation is an explicit GM next-turn request routed through CORE:TURNTRACKERSERVICE","Pause, resume, status, and end never alter tracker rows","CombatAssist 1.0.0 does not change conditions, markers, durations, timers, music, or NPC history"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
+    //   observability: { spans: ["[GAMEASSIST:MODULES:COMBATASSIST]"] },
+    //   last_updated_version: "v0.1.7.0",
+    //   independent_versions: { module_version: "1.0.0" }, lifecycle: "active" }
+    // -------------------------------------------------------------------------
+    // Narrative
+    // CombatAssist begins only after a GM explicitly starts it against an open,
+    // structurally sound native Turn Tracker. It observes order identities rather
+    // than initiative values, preserves every row and unknown field, and stops
+    // counting whenever tracker intent cannot be established safely.
+    // -------------------------------------------------------------------------
+    GameAssist.register('CombatAssist', function() {
+        const MODULE_NAME = 'CombatAssist';
+        const MODULE_VERSION = '1.0.0';
+        const VALID_STATES = new Set(['active', 'paused', 'attention']);
+        const VALID_ANNOUNCEMENTS = new Set(['off', 'gm', 'public']);
+        const modState = GameAssist.getState(MODULE_NAME);
+        Object.assign(modState.config, {
+            enabled: false,
+            announcements: 'gm',
+            ...modState.config
+        });
+        if (!VALID_ANNOUNCEMENTS.has(String(modState.config.announcements || '').toLowerCase())) {
+            modState.config.announcements = 'gm';
+        } else {
+            modState.config.announcements = String(modState.config.announcements).toLowerCase();
+        }
+
+        function sendPanel(title, fields, { publicMessage = false } = {}) {
+            const content = (fields || []).map(field => `{{${_sanitize(field.label)}=${field.value}}}`).join(' ');
+            const destination = publicMessage ? '' : '/w gm ';
+            sendChat(MODULE_NAME, `${destination}&{template:default} {{name=${_sanitize(title)}}} ${content}`, null, {
+                noarchive: !publicMessage
+            });
+        }
+
+        function warning(message, actions = '') {
+            const fields = [{ label: 'Needs Attention', value: _sanitize(message) }];
+            if (actions) fields.push({ label: 'Next Step', value: actions });
+            sendPanel('CombatAssist', fields);
+        }
+
+        function requireGm(msg) {
+            if (playerIsGM(msg.playerid)) return true;
+            sendPanel('CombatAssist', [{
+                label: 'GM Control',
+                value: 'Encounter controls are available only to the GM.'
+            }]);
+            return false;
+        }
+
+        function pageName(pageId) {
+            const page = pageId ? getObj('page', pageId) : null;
+            return String(page?.get('name') || pageId || 'Unknown page');
+        }
+
+        function identityFor(entry) {
+            if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
+            const id = String(entry.id ?? '').trim();
+            if (!id) return null;
+            if (id === '-1') {
+                const label = String(entry.custom || '').trim();
+                return label ? `custom:${label}` : null;
+            }
+            return `token:${id}`;
+        }
+
+        function labelFor(structure) {
+            if (structure.kind === 'custom') return structure.custom || '(Custom row)';
+            if (structure.kind !== 'token') return '(Unknown row)';
+            const characterId = String(structure.token.get('represents') || '');
+            const character = characterId ? getObj('character', characterId) : null;
+            return String(structure.token.get('name') || character?.get('name') || '(Unnamed token)');
+        }
+
+        /**
+         * analyzeSnapshot - Validate the exact tracker shape CombatAssist can follow.
+         * Inputs: one immutable TurnTrackerService snapshot.
+         * Outputs: unique row identities and current display labels.
+         * Invariants: all token rows exist on one tracker page; custom rows remain valid.
+         * Failure: returns an actionable reason without changing Roll20 or saved encounter state.
+         * Design: ambiguous identities and stale rows are refused because a plausible guess
+         * could silently increment the wrong round.
+         */
+        function analyzeSnapshot(snapshot) {
+            if (!snapshot?.ok) {
+                return { ok: false, reason: snapshot?.message || 'The Turn Tracker could not be read.' };
+            }
+            if (!snapshot.open || !snapshot.pageId) {
+                return {
+                    ok: false,
+                    reason: snapshot.pageWarning || 'Open Roll20\'s Turn Tracker on the encounter page before using CombatAssist.'
+                };
+            }
+            if (snapshot.entries.length < POLICY.combat.minimumTrackedRows) {
+                return {
+                    ok: false,
+                    reason: `CombatAssist needs at least ${POLICY.combat.minimumTrackedRows} distinct Turn Tracker rows so a turn change can be observed safely.`
+                };
+            }
+            if (snapshot.entries.length > POLICY.combat.maximumTrackedRows) {
+                return {
+                    ok: false,
+                    reason: `This tracker has ${snapshot.entries.length} rows; CombatAssist supports at most ${POLICY.combat.maximumTrackedRows} in one encounter.`
+                };
+            }
+
+            const identities = [];
+            const labels = [];
+            for (let index = 0; index < snapshot.entries.length; index++) {
+                const entry = snapshot.entries[index];
+                const identity = identityFor(entry);
+                if (!identity) {
+                    return { ok: false, reason: `Turn Tracker row ${index + 1} is malformed or has no usable id.` };
+                }
+                const structure = GameAssist.TurnTrackerService.classifyEntry(entry, index, snapshot);
+                if (structure.kind === 'token' && structure.offPage) {
+                    return {
+                        ok: false,
+                        reason: `${labelFor(structure)} is not on the active Turn Tracker page. Remove the off-page row or reopen the tracker on the encounter page.`
+                    };
+                }
+                if (!['token', 'custom'].includes(structure.kind)) {
+                    return {
+                        ok: false,
+                        reason: `Turn Tracker row ${index + 1} references a missing or unrecognized token. Remove or repair that row before starting CombatAssist.`
+                    };
+                }
+                identities.push(identity);
+                labels.push(labelFor(structure));
+            }
+
+            const seen = new Set();
+            const duplicate = identities.find(identity => seen.has(identity) || !seen.add(identity));
+            if (duplicate) {
+                return {
+                    ok: false,
+                    reason: 'The Turn Tracker contains indistinguishable duplicate rows. CombatAssist will preserve them, but cannot count rounds safely until each row has a unique token or custom label.'
+                };
+            }
+            return { ok: true, identities, labels };
+        }
+
+        function sameOrder(left, right) {
+            return Array.isArray(left) &&
+                Array.isArray(right) &&
+                left.length === right.length &&
+                left.every((value, index) => value === right[index]);
+        }
+
+        function rotateForward(values) {
+            return values.length ? values.slice(1).concat(values[0]) : [];
+        }
+
+        function rotateBackward(values) {
+            return values.length ? [values[values.length - 1]].concat(values.slice(0, -1)) : [];
+        }
+
+        function getEncounter() {
+            const value = modState.runtime?.encounter;
+            if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+            if (
+                !VALID_STATES.has(value.status) ||
+                !Array.isArray(value.order) ||
+                !Array.isArray(value.baseOrder) ||
+                !value.pageId ||
+                !value.anchor ||
+                !Number.isInteger(value.round) ||
+                value.round < 1
+            ) {
+                delete modState.runtime.encounter;
+                return null;
+            }
+            return value;
+        }
+
+        function currentLabel(analysis) {
+            return analysis?.labels?.[0] || '(Unknown row)';
+        }
+
+        function announcementMode() {
+            const value = String(modState.config.announcements || '').toLowerCase();
+            if (VALID_ANNOUNCEMENTS.has(value)) return value;
+            modState.config.announcements = 'gm';
+            return 'gm';
+        }
+
+        function announceForward(encounter, analysis) {
+            const mode = announcementMode();
+            if (mode === 'off') return;
+            sendPanel('Combat Turn', [
+                { label: 'Round', value: _sanitize(String(encounter.round)) },
+                { label: 'Current Turn', value: _sanitize(currentLabel(analysis)) }
+            ], { publicMessage: mode === 'public' });
+        }
+
+        function announceBackward(encounter, analysis) {
+            sendPanel('Combat Turn Moved Back', [
+                { label: 'Round', value: _sanitize(String(encounter.round)) },
+                { label: 'Current Turn', value: _sanitize(currentLabel(analysis)) },
+                { label: 'Round Count', value: 'Unchanged. Backward movement never advances a round.' }
+            ]);
+        }
+
+        function enterAttention(encounter, reason, snapshot = null, { notify = true } = {}) {
+            if (!encounter) return;
+            const wasAttention = encounter.status === 'attention' && encounter.attention === reason;
+            encounter.previousStatus = encounter.status === 'attention'
+                ? (encounter.previousStatus || 'active')
+                : encounter.status;
+            encounter.status = 'attention';
+            encounter.attention = String(reason || 'The Turn Tracker changed in a way CombatAssist could not verify.');
+            encounter.attentionAt = isoNow();
+            encounter.lastRevision = snapshot?.revision || encounter.lastRevision || null;
+            if (notify && !wasAttention) {
+                warning(encounter.attention, [
+                    GameAssist.createButton('Review Status', '!Combat-Status'),
+                    GameAssist.createButton('Restart Tracking', '!Combat-Start --confirm')
+                ].join(' '));
+            }
+        }
+
+        function processSnapshot(snapshot, { notify = true, directionHint = null } = {}) {
+            const encounter = getEncounter();
+            if (!encounter || encounter.status === 'paused' || encounter.status === 'attention') return encounter;
+            if (snapshot?.ok && snapshot.open && snapshot.pageId && snapshot.pageId !== encounter.pageId) {
+                enterAttention(
+                    encounter,
+                    `The Turn Tracker moved from ${pageName(encounter.pageId)} to ${pageName(snapshot.pageId)}. Restart tracking on the intended encounter page.`,
+                    snapshot,
+                    { notify }
+                );
+                return encounter;
+            }
+            const analysis = analyzeSnapshot(snapshot);
+            if (!analysis.ok) {
+                enterAttention(encounter, analysis.reason, snapshot, { notify });
+                return encounter;
+            }
+            if (analysis.identities.length !== encounter.order.length) {
+                enterAttention(
+                    encounter,
+                    'Turn Tracker rows were added or removed during the encounter. Pause before editing the tracker, then resume to establish a new safe baseline.',
+                    snapshot,
+                    { notify }
+                );
+                return encounter;
+            }
+            if (sameOrder(analysis.identities, encounter.order)) {
+                encounter.lastRevision = snapshot.revision;
+                encounter.lastObservedAt = isoNow();
+                return encounter;
+            }
+
+            let forward = sameOrder(analysis.identities, rotateForward(encounter.order));
+            let backward = sameOrder(analysis.identities, rotateBackward(encounter.order));
+            if (forward && backward) {
+                if (directionHint === 'forward') backward = false;
+                else if (directionHint === 'backward') forward = false;
+                else {
+                    enterAttention(
+                        encounter,
+                        'A two-row Turn Tracker moved, but Roll20 does not reveal whether the native arrow went forward or backward. Restart tracking and use CombatAssist Next Turn when direction must be counted.',
+                        snapshot,
+                        { notify }
+                    );
+                    return encounter;
+                }
+            }
+            if (!forward && !backward) {
+                enterAttention(
+                    encounter,
+                    'The Turn Tracker was reordered or changed by more than one exact step. CombatAssist stopped counting so it would not guess.',
+                    snapshot,
+                    { notify }
+                );
+                return encounter;
+            }
+
+            encounter.order = analysis.identities.slice();
+            encounter.lastRevision = snapshot.revision;
+            encounter.lastTransitionAt = isoNow();
+            encounter.turn = encounter.baseOrder.indexOf(encounter.order[0]) + 1;
+
+            if (backward) {
+                encounter.forwardStreak = 0;
+                encounter.lastDirection = 'backward';
+                if (notify) announceBackward(encounter, analysis);
+                return encounter;
+            }
+
+            encounter.forwardStreak = Number(encounter.forwardStreak || 0) + 1;
+            encounter.lastDirection = 'forward';
+            if (
+                encounter.order[0] === encounter.anchor &&
+                encounter.forwardStreak >= encounter.order.length
+            ) {
+                encounter.round++;
+                encounter.forwardStreak = 0;
+                encounter.lastRoundAt = encounter.lastTransitionAt;
+            }
+            if (notify) announceForward(encounter, analysis);
+            return encounter;
+        }
+
+        function synchronize({ notify = true } = {}) {
+            const encounter = getEncounter();
+            if (!encounter || encounter.status !== 'active') return encounter;
+            return processSnapshot(GameAssist.TurnTrackerService.snapshot(), { notify });
+        }
+
+        function startEncounter(msg, confirmed) {
+            const existing = getEncounter();
+            if (existing && !confirmed) {
+                sendPanel('CombatAssist Already Has an Encounter', [
+                    { label: 'Current State', value: _sanitize(existing.status) },
+                    { label: 'Round', value: _sanitize(String(existing.round)) },
+                    { label: 'Choose', value: `${GameAssist.createButton('Keep Current Encounter', '!Combat-Menu')} ${GameAssist.createButton('Restart From Current Tracker', '!Combat-Start --confirm')}` }
+                ]);
+                return;
+            }
+
+            const snapshot = GameAssist.TurnTrackerService.snapshot();
+            const analysis = analyzeSnapshot(snapshot);
+            if (!analysis.ok) {
+                warning(analysis.reason, GameAssist.createButton('Check Again', '!Combat-Start'));
+                return;
+            }
+
+            modState.runtime.encounter = {
+                status: 'active',
+                pageId: snapshot.pageId,
+                round: 1,
+                turn: 1,
+                anchor: analysis.identities[0],
+                order: analysis.identities.slice(),
+                baseOrder: analysis.identities.slice(),
+                forwardStreak: 0,
+                lastDirection: null,
+                lastRevision: snapshot.revision,
+                startedAt: isoNow(),
+                lastObservedAt: isoNow(),
+                attention: null
+            };
+            sendPanel('CombatAssist Started', [
+                { label: 'Encounter Page', value: _sanitize(pageName(snapshot.pageId)) },
+                { label: 'Starting Point', value: `Round 1 | ${_sanitize(currentLabel(analysis))}` },
+                { label: 'Tracking', value: `${analysis.identities.length} unique Turn Tracker rows. Exact forward and backward movement will be observed.${analysis.identities.length === 2 ? ' With two rows, use CombatAssist Next Turn because Roll20 does not expose native arrow direction.' : ''}` },
+                { label: 'Next Step', value: `${GameAssist.createButton('Next Turn', '!Combat-Next')} ${GameAssist.createButton('Open Control Center', '!Combat-Menu')}` }
+            ]);
+        }
+
+        function pauseEncounter() {
+            const encounter = getEncounter();
+            if (!encounter) {
+                warning('No CombatAssist encounter is active.', GameAssist.createButton('Start Encounter', '!Combat-Start'));
+                return;
+            }
+            if (encounter.status === 'attention') {
+                warning(
+                    encounter.attention || 'This encounter needs attention before it can be paused.',
+                    `${GameAssist.createButton('Review Status', '!Combat-Status')} ${GameAssist.createButton('Restart Tracking', '!Combat-Start --confirm')}`
+                );
+                return;
+            }
+            if (encounter.status === 'paused') {
+                sendPanel('CombatAssist Paused', [{
+                    label: 'Next Step',
+                    value: `${GameAssist.createButton('Resume', '!Combat-Resume')} ${GameAssist.createButton('Open Control Center', '!Combat-Menu')}`
+                }]);
+                return;
+            }
+            encounter.previousStatus = encounter.status;
+            encounter.status = 'paused';
+            encounter.pausedAt = isoNow();
+            sendPanel('CombatAssist Paused', [
+                { label: 'Tracker', value: 'Roll20 remains unchanged. CombatAssist will not count tracker movement while paused.' },
+                { label: 'Use This For', value: 'Adding, removing, or reordering Turn Tracker rows.' },
+                { label: 'Next Step', value: `${GameAssist.createButton('Resume With Current Order', '!Combat-Resume')} ${GameAssist.createButton('End Encounter', '!Combat-End')}` }
+            ]);
+        }
+
+        function resumeEncounter() {
+            const encounter = getEncounter();
+            if (!encounter) {
+                warning('No CombatAssist encounter is available to resume.', GameAssist.createButton('Start Encounter', '!Combat-Start'));
+                return;
+            }
+            if (encounter.status !== 'paused') {
+                warning(
+                    encounter.status === 'attention'
+                        ? 'This encounter needs a deliberate restart because its tracker history is ambiguous.'
+                        : 'This encounter is already active.',
+                    encounter.status === 'attention'
+                        ? GameAssist.createButton('Restart Tracking', '!Combat-Start --confirm')
+                        : GameAssist.createButton('Open Control Center', '!Combat-Menu')
+                );
+                return;
+            }
+
+            const snapshot = GameAssist.TurnTrackerService.snapshot();
+            if (snapshot?.ok && snapshot.open && snapshot.pageId && snapshot.pageId !== encounter.pageId) {
+                enterAttention(
+                    encounter,
+                    `The Turn Tracker is now on ${pageName(snapshot.pageId)}, not the encounter page ${pageName(encounter.pageId)}. Restart tracking on the intended page.`,
+                    snapshot
+                );
+                return;
+            }
+            const analysis = analyzeSnapshot(snapshot);
+            if (!analysis.ok) {
+                enterAttention(encounter, analysis.reason, snapshot);
+                return;
+            }
+
+            // CHOICE: An explicit resume accepts the current order as a fresh cycle baseline while preserving the GM's round count.
+            encounter.status = 'active';
+            encounter.order = analysis.identities.slice();
+            encounter.baseOrder = analysis.identities.slice();
+            encounter.anchor = analysis.identities[0];
+            encounter.turn = 1;
+            encounter.forwardStreak = 0;
+            encounter.lastDirection = null;
+            encounter.lastRevision = snapshot.revision;
+            encounter.lastObservedAt = isoNow();
+            encounter.attention = null;
+            delete encounter.attentionAt;
+            sendPanel('CombatAssist Resumed', [
+                { label: 'Round', value: _sanitize(String(encounter.round)) },
+                { label: 'Current Turn', value: _sanitize(currentLabel(analysis)) },
+                { label: 'Tracking', value: 'The current tracker order is the new safe baseline.' },
+                { label: 'Next Step', value: `${GameAssist.createButton('Next Turn', '!Combat-Next')} ${GameAssist.createButton('Open Control Center', '!Combat-Menu')}` }
+            ]);
+        }
+
+        function endEncounter(confirmed) {
+            const encounter = getEncounter();
+            if (!encounter) {
+                sendPanel('CombatAssist', [
+                    { label: 'Encounter', value: 'No CombatAssist encounter is currently recorded.' },
+                    { label: 'Next Step', value: GameAssist.createButton('Start Encounter', '!Combat-Start') }
+                ]);
+                return;
+            }
+            if (!confirmed) {
+                sendPanel('End CombatAssist Encounter?', [
+                    { label: 'What Changes', value: 'Only CombatAssist tracking is cleared. Roll20 Turn Tracker rows remain exactly as they are.' },
+                    { label: 'Confirm', value: `${GameAssist.createButton('End Encounter', '!Combat-End --confirm')} ${GameAssist.createButton('Keep Encounter', '!Combat-Menu')}` }
+                ]);
+                return;
+            }
+            const summary = `Ended on round ${encounter.round} while ${encounter.status}.`;
+            delete modState.runtime.encounter;
+            sendPanel('CombatAssist Encounter Ended', [
+                { label: 'Summary', value: _sanitize(summary) },
+                { label: 'Turn Tracker', value: 'Unchanged.' },
+                { label: 'Next Step', value: GameAssist.createButton('Start Another Encounter', '!Combat-Start') }
+            ]);
+        }
+
+        function advanceTurn() {
+            let encounter = synchronize({ notify: false });
+            if (!encounter || encounter.status !== 'active') {
+                warning(
+                    encounter?.attention || 'Start or resume a healthy CombatAssist encounter before advancing.',
+                    `${GameAssist.createButton('Open Control Center', '!Combat-Menu')} ${GameAssist.createButton('Review Status', '!Combat-Status')}`
+                );
+                return;
+            }
+            const before = GameAssist.TurnTrackerService.snapshot();
+            const analysis = analyzeSnapshot(before);
+            if (!analysis.ok || !sameOrder(analysis.identities, encounter.order)) {
+                enterAttention(encounter, analysis.reason || 'The Turn Tracker changed before the next-turn request could be applied.', before);
+                return;
+            }
+            const result = GameAssist.TurnTrackerService.apply(entries => {
+                if (entries.length < POLICY.combat.minimumTrackedRows) {
+                    throw new Error('The Turn Tracker no longer has enough rows to advance safely.');
+                }
+                entries.push(entries.shift());
+                return { entries };
+            }, {
+                expectedRevision: before.revision,
+                label: 'CombatAssist next turn'
+            });
+            if (!result.ok || !result.changed) {
+                warning(result.message || 'Roll20 did not advance the Turn Tracker.', GameAssist.createButton('Review Status', '!Combat-Status'));
+                return;
+            }
+            encounter = getEncounter();
+            if (announcementMode() === 'off' && encounter?.status === 'active') {
+                const afterAnalysis = analyzeSnapshot(result.after);
+                sendPanel('Combat Turn Advanced', [
+                    { label: 'Round', value: _sanitize(String(encounter.round)) },
+                    { label: 'Current Turn', value: _sanitize(currentLabel(afterAnalysis)) }
+                ]);
+            }
+        }
+
+        function encounterFields(encounter, snapshot, analysis) {
+            if (!encounter) {
+                return [
+                    { label: 'State', value: 'Not tracking an encounter.' },
+                    { label: 'Turn Tracker', value: snapshot?.open && snapshot?.pageId ? `${_sanitize(pageName(snapshot.pageId))} | ${snapshot.entries.length} rows` : 'Closed or unavailable.' }
+                ];
+            }
+            const fields = [
+                { label: 'State', value: _sanitize(encounter.status) },
+                { label: 'Encounter Page', value: _sanitize(pageName(encounter.pageId)) },
+                { label: 'Round', value: _sanitize(String(encounter.round)) },
+                { label: 'Current Turn', value: _sanitize(analysis?.ok ? currentLabel(analysis) : '(Unavailable)') },
+                { label: 'Announcements', value: _sanitize(announcementMode() === 'gm' ? 'GM only' : announcementMode()) }
+            ];
+            if (encounter.attention) fields.push({ label: 'Needs Attention', value: _sanitize(encounter.attention) });
+            return fields;
+        }
+
+        function showStatus() {
+            synchronize({ notify: false });
+            const encounter = getEncounter();
+            const snapshot = GameAssist.TurnTrackerService.snapshot();
+            const analysis = analyzeSnapshot(snapshot);
+            const fields = encounterFields(encounter, snapshot, analysis);
+            fields.push({
+                label: 'Tracker Safety',
+                value: analysis.ok
+                    ? `${analysis.identities.length} unique rows can be followed safely.`
+                    : _sanitize(analysis.reason)
+            });
+            fields.push({
+                label: 'Actions',
+                value: `${GameAssist.createButton('Control Center', '!Combat-Menu')} ${GameAssist.createButton('Refresh Status', '!Combat-Status')}`
+            });
+            sendPanel('CombatAssist Status', fields);
+        }
+
+        function controlButtons(encounter) {
+            if (!encounter) {
+                return `${GameAssist.createButton('Start Encounter', '!Combat-Start')} ${GameAssist.createButton('Read Guide', '!Combat-Help')}`;
+            }
+            if (encounter.status === 'active') {
+                return [
+                    GameAssist.createButton('Next Turn', '!Combat-Next'),
+                    GameAssist.createButton('Pause for Tracker Edits', '!Combat-Pause'),
+                    GameAssist.createButton('End Encounter', '!Combat-End')
+                ].join(' ');
+            }
+            if (encounter.status === 'paused') {
+                return `${GameAssist.createButton('Resume With Current Order', '!Combat-Resume')} ${GameAssist.createButton('End Encounter', '!Combat-End')}`;
+            }
+            return `${GameAssist.createButton('Restart Tracking', '!Combat-Start --confirm')} ${GameAssist.createButton('End Encounter', '!Combat-End')}`;
+        }
+
+        function showMenu() {
+            synchronize({ notify: false });
+            const encounter = getEncounter();
+            const snapshot = GameAssist.TurnTrackerService.snapshot();
+            const analysis = analyzeSnapshot(snapshot);
+            const fields = encounterFields(encounter, snapshot, analysis);
+            fields.unshift({
+                label: 'Purpose',
+                value: 'Track a deliberate encounter through Roll20\'s native Turn Tracker without moving or rewriting unrelated rows.'
+            });
+            fields.push({ label: 'Encounter Controls', value: controlButtons(encounter) });
+            fields.push({
+                label: 'Turn Announcements',
+                value: `${GameAssist.createButton('GM Only', '!Combat-Announce gm')} ${GameAssist.createButton('Public', '!Combat-Announce public')} ${GameAssist.createButton('Off', '!Combat-Announce off')}`
+            });
+            fields.push({
+                label: 'Review',
+                value: `${GameAssist.createButton('Status', '!Combat-Status')} ${GameAssist.createButton('Guide', '!Combat-Help')}`
+            });
+            sendPanel('CombatAssist Control Center', fields);
+        }
+
+        function showHelp() {
+            sendPanel('CombatAssist Quick Guide', [
+                { label: 'What It Does', value: 'Counts turns and rounds after initiative is already in Roll20\'s Turn Tracker. It never rolls initiative or changes conditions.' },
+                { label: '1. Prepare Initiative', value: `Use Roll20 or ${GameAssist.createButton('InitiativeAssist', '!Init-Menu')} to place at least two distinct rows in the tracker.` },
+                { label: '2. Start Deliberately', value: `${GameAssist.createButton('Start Encounter', '!Combat-Start')} records the current first row as round 1's anchor. Opening the tracker alone never starts combat.` },
+                { label: '3. Advance Normally', value: `Use Roll20's next-turn arrow or ${GameAssist.createButton('Next Turn', '!Combat-Next')}. One exact forward step is accepted; one exact backward step never increases the round. With exactly two rows, use CombatAssist Next Turn because Roll20's native forward and backward results are indistinguishable.` },
+                { label: '4. Edit Safely', value: `Click ${GameAssist.createButton('Pause', '!Combat-Pause')} before adding, removing, or reordering rows. Resume accepts the current order as a fresh baseline without changing the round number.` },
+                { label: 'Needs Attention', value: 'CombatAssist stops counting when the tracker closes, changes page, skips rows, contains stale or duplicate references, or changes in an unclear way. Restart tracking only after reviewing the tracker.' },
+                { label: 'Announcements', value: 'Turn notices can be whispered to the GM, posted publicly, or turned off. Setup, warnings, and status remain GM-only.' },
+                { label: 'Not In 1.0.0', value: 'No automatic turns, timers, duration countdowns, condition changes, marker changes, music, or NPC-history writes.' },
+                { label: 'Open', value: `${GameAssist.createButton('Control Center', '!Combat-Menu')} ${GameAssist.createButton('Status', '!Combat-Status')}` }
+            ]);
+        }
+
+        function setAnnouncements(value) {
+            const requested = String(value || '').trim().toLowerCase();
+            if (!VALID_ANNOUNCEMENTS.has(requested)) {
+                warning('Choose GM only, public, or off for CombatAssist turn announcements.', GameAssist.createButton('Open Control Center', '!Combat-Menu'));
+                return;
+            }
+            modState.config.announcements = requested;
+            showMenu();
+        }
+
+        function parseCommand(msg) {
+            const content = String(msg.content || '').trim();
+            const first = content.split(/\s+/)[0];
+            const rest = content.slice(first.length).trim();
+            return {
+                command: first.toLowerCase(),
+                rest,
+                args: _parseArgs(rest).args || {}
+            };
+        }
+
+        function handleCommand(msg) {
+            if (!requireGm(msg)) return;
+            const { command, rest, args } = parseCommand(msg);
+            switch (command) {
+                case '!combat-':
+                case '!combat-menu':
+                    showMenu();
+                    return;
+                case '!combat-help':
+                    showHelp();
+                    return;
+                case '!combat-start':
+                    startEncounter(msg, args.confirm === true);
+                    return;
+                case '!combat-next':
+                    advanceTurn();
+                    return;
+                case '!combat-pause':
+                    pauseEncounter();
+                    return;
+                case '!combat-resume':
+                    resumeEncounter();
+                    return;
+                case '!combat-status':
+                    showStatus();
+                    return;
+                case '!combat-end':
+                    endEncounter(args.confirm === true);
+                    return;
+                case '!combat-announce':
+                    setAnnouncements(rest.split(/\s+/)[0]);
+                    return;
+                default:
+                    warning('That CombatAssist command was not recognized.', GameAssist.createButton('Open Guide', '!Combat-Help'));
+            }
+        }
+
+        const savedEncounter = getEncounter();
+        if (savedEncounter?.status === 'active') {
+            const current = GameAssist.TurnTrackerService.snapshot();
+            const currentAnalysis = analyzeSnapshot(current);
+            if (
+                !currentAnalysis.ok ||
+                current.pageId !== savedEncounter.pageId ||
+                !sameOrder(currentAnalysis.identities, savedEncounter.order)
+            ) {
+                enterAttention(
+                    savedEncounter,
+                    currentAnalysis.reason || 'The Turn Tracker changed while CombatAssist was unavailable. Restart tracking after reviewing the current order.',
+                    current,
+                    { notify: false }
+                );
+            }
+        }
+
+        GameAssist.TurnTrackerService.clearObservers(MODULE_NAME);
+        GameAssist.TurnTrackerService.observe(event => {
+            if (!MODULES[MODULE_NAME]?.active) return;
+            processSnapshot(event.current, {
+                directionHint: event.source === 'gameassist' && event.label === 'CombatAssist next turn'
+                    ? 'forward'
+                    : null
+            });
+        }, { owner: MODULE_NAME });
+
+        GameAssist.CombatAssist = Object.freeze({
+            version: MODULE_VERSION,
+            getStatus: () => {
+                const encounter = getEncounter();
+                return encounter ? JSON.parse(JSON.stringify(encounter)) : null;
+            }
+        });
+
+        GameAssist.onCommand('!Combat-', handleCommand, MODULE_NAME, {
+            gmOnly: true,
+            match: { caseInsensitive: true, mode: 'prefix' }
+        });
+        GameAssist.log(MODULE_NAME, 'Ready: !Combat-Menu, !Combat-Start, and !Combat-Status.', 'INFO', { startup: true });
+    }, {
+        enabled: false,
+        prefixes: ['!Combat-'],
+        dependsOn: ['TurnTrackerService'],
+        preserveRuntimeOnDisable: true
+    });
+    // --- Notes & Comments ---
+    // Changed (v0.1.7.0): Added CombatAssist 1.0.0 with explicit encounter lifecycle controls, exact forward/backward rotation observation, conservative round counting, guarded GM next-turn writes, configurable turn announcements, retained runtime state, and attention-first handling of every ambiguous tracker change.
+    // Decision log:
+    //   CHOICE: Start disabled and require explicit GM encounter start - ALT: infer combat from an open tracker; REJECTED: Roll20 trackers are also used for setup, exploration, and non-combat ordering.
+    //   CHOICE: Identify token rows by token id and custom rows by exact label - ALT: include initiative priority; REJECTED: priority edits do not change row ownership or identity.
+    //   CHOICE: Refuse indistinguishable duplicate rows and require CombatAssist Next Turn for a two-row tracker - ALT: guess native arrow direction; REJECTED: forward and backward produce the same two-row order.
+    //   CHOICE: Require a complete uninterrupted forward cycle after backward movement before another round increment - ALT: increment on the next anchor return; REJECTED: undoing a backward step must not manufacture a new round.
+    //   CHOICE: Rebase only after an explicit pause/resume - ALT: accept arbitrary live edits; REJECTED: implicit rebasing conceals skipped turns and row replacements.
+    //   CHOICE: Keep the GM next-turn action to one array rotation through TurnTrackerService - ALT: write Campaign turnorder directly; REJECTED: all native tracker mutation belongs to the guarded core authority.
+    //   CHOICE: Retain tracker state while disabled and mark uncertain resumes for attention - ALT: erase active encounter context; REJECTED: disabling a feature must not silently destroy recoverable campaign state.
+    // [GAMEASSIST:MODULES:COMBATASSIST] END
     // =============================================================================
 
     // ————— WELCOMEASSIST MODULE v0.1.0 —————
@@ -11785,8 +12522,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v0.1.6.1): Added disabled-by-default WelcomeAssist to the bundled module contract and retained independent lifecycle management for every unrelated feature.
+    // Changed (v0.1.7.0): Added disabled-by-default CombatAssist to the bundled module contract and assigned encounter-flow ownership without changing InitiativeAssist initiative rules.
     // Prior notes:
+    //   v0.1.6.1: Added disabled-by-default WelcomeAssist to the bundled module contract and retained independent lifecycle management for every unrelated feature.
     //   v0.1.6.0: Added InitiativeAssist to the module contract and assigned all native Turn Tracker writes to CORE:TURNTRACKERSERVICE.
     //   v0.1.5.1: Added GM-only timezone configuration, status visibility, common/custom selection buttons, validation diagnostics, sandbox-default restoration, and immediate NPC Session-date refresh when that module is running.
     //   v0.1.5.0: Updated the module wrapper contract because all marker consumers share CORE:MARKERSERVICE and TokenAssist now owns supported general token commands.
