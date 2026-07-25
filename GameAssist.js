@@ -8399,7 +8399,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Preservation-first encounter flow
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:COMBATASSIST", title: "CombatAssist",
-    //   guarantees: ["Disabled-by-default, GM-configured encounter tracking through case-insensitive !Combat- commands","Exact one-row movement advances turns while valid roster, initiative, and manual-order changes preserve the round and establish a fresh counting baseline","Rounds advance only after an uninterrupted, unambiguous forward cycle returns to the current encounter anchor","Unreadable, off-page, malformed, stale, or ambiguous tracker states retain the last accepted snapshot and expose guarded recovery","Explicit next, previous, restore, and authorized End My Turn requests use CORE:TURNTRACKERSERVICE revision guards","Player End My Turn is available only in Whispers mode, is rebound at execution time, and confirms success or an already-advanced turn privately","Player confirmations describe the next initiative neutrally and never reveal GM-layer, unlinked, or custom tracker identities","The root guide stays compact while topic buttons reveal detailed reference panels","Baseline module operation remains independent; optional cross-module features must identify and locally enforce their prerequisites","CombatAssist does not replace Roll20's native Turn Tracker"],
+    //   guarantees: ["Disabled-by-default, GM-configured encounter tracking through case-insensitive !Combat- commands","Exact one-row movement advances turns while valid roster, initiative, and manual-order changes preserve the round and establish a fresh counting baseline","Rounds advance only after an uninterrupted, unambiguous forward cycle returns to the current encounter anchor","Unreadable, off-page, malformed, stale, or ambiguous tracker states retain the last accepted snapshot and expose guarded recovery","Explicit next, previous, restore, and authorized End My Turn requests use CORE:TURNTRACKERSERVICE revision guards","Player End My Turn is available only in Whispers mode, is rebound at execution time, and confirms success before a newly controlled character receives the next-turn prompt","Player confirmations describe the next initiative neutrally and never reveal GM-layer, unlinked, or custom tracker identities","Standard confirmation wording appears exactly once in the warmer Varied rotation","The root guide stays compact while its purpose action writes a persistent GM manual handout and topic buttons reveal focused references","Status, guide, help, GM, menu, info, and audit navigation aliases remain case-insensitive","Baseline module operation remains independent; optional cross-module features must identify and locally enforce their prerequisites","CombatAssist does not replace Roll20's native Turn Tracker"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   observability: { spans: ["[GAMEASSIST:MODULES:COMBATASSIST]"] },
     //   last_updated_version: "v0.1.7.0",
@@ -8417,12 +8417,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const VALID_STATES = new Set(['active', 'paused', 'attention']);
         const VALID_ANNOUNCEMENTS = new Set(['off', 'gm', 'public', 'whispers']);
         const VALID_PLAYER_CONFIRMATIONS = new Set(['standard', 'varied']);
+        const MANUAL_HANDOUT_NAME = 'GameAssist Guide - CombatAssist';
         const VARIED_TURN_CONFIRMATIONS = Object.freeze([
             'Your turn has ended. It is now {next}\'s turn.',
-            'Your turn is complete. The initiative has moved to {next}.',
-            'All set. Combat continues with {next}\'s turn.',
-            'Your action is recorded. It is now {next}\'s turn.'
+            'All set. {next} takes the next turn.',
+            'Turn complete. The spotlight moves to {next}.',
+            'Your turn is in the books. {next} is next in the order.',
+            'Nicely handled. Combat continues with {next}.',
+            'That wraps your turn. The next move belongs to {next}.',
+            'Your part is done for now. {next} takes the field.',
+            'Turn complete. The action shifts to {next}.'
         ]);
+        let pendingPlayerCompletion = null;
         const modState = GameAssist.getState(MODULE_NAME);
         Object.assign(modState.config, {
             enabled: false,
@@ -8772,6 +8778,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }]);
         }
 
+        function flushPendingPlayerCompletion(analysis) {
+            const pending = pendingPlayerCompletion;
+            if (
+                !pending ||
+                pending.delivered ||
+                analysis?.identities?.[0] !== pending.expectedNextIdentity
+            ) return false;
+            pending.delivered = true;
+            confirmPlayerTurnEnded(pending.playerId, analysis);
+            return true;
+        }
+
         function explainAlreadyAdvanced(playerId, analysis) {
             const current = playerVisibleTurnName(analysis);
             sendPlayerPanel(playerId, 'Turn Already Advanced', [{
@@ -8797,6 +8815,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function announceTurn(encounter, analysis, direction) {
+            // CHOICE: complete the outgoing player's A-B-A message sequence before any next-character whisper.
+            flushPendingPlayerCompletion(analysis);
             const mode = announcementMode();
             if (mode === 'off') return;
             const backward = direction === 'backward';
@@ -9346,15 +9366,28 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 }]);
                 return;
             }
+            const pending = {
+                playerId: msg.playerid,
+                expectedNextIdentity: analysis.identities[1],
+                delivered: false
+            };
+            pendingPlayerCompletion = pending;
             const outcome = advanceTurn();
             if (!outcome?.ok) {
+                if (pendingPlayerCompletion === pending) pendingPlayerCompletion = null;
                 sendPlayerPanel(msg.playerid, 'CombatAssist', [{
                     label: 'End My Turn',
                     value: 'The tracker changed before your turn could be advanced. Nothing extra was changed; the GM has been notified.'
                 }]);
                 return;
             }
-            confirmPlayerTurnEnded(msg.playerid, outcome.analysis);
+            // DANGER: some Roll20 engines deliver the tracker observer after apply() returns.
+            // The fallback preserves the same confirmation-before-next-prompt contract without duplicating it.
+            if (!pending.delivered) {
+                pending.delivered = true;
+                confirmPlayerTurnEnded(msg.playerid, outcome.analysis);
+            }
+            if (pendingPlayerCompletion === pending) pendingPlayerCompletion = null;
         }
 
         function encounterFields(encounter, snapshot, analysis) {
@@ -9375,7 +9408,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return fields;
         }
 
-        function showStatus() {
+        function showStatus({ audit = false } = {}) {
             synchronize({ notify: false });
             const encounter = getEncounter();
             const snapshot = GameAssist.TurnTrackerService.snapshot();
@@ -9397,7 +9430,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     GameAssist.createButton('Refresh Status', '!Combat-Status')
                 ].filter(Boolean).join(' ')
             });
-            sendPanel('CombatAssist Status', fields);
+            if (audit) {
+                fields.push({
+                    label: 'Changes',
+                    value: 'None. This audit reads the current tracker and CombatAssist record without changing either one.'
+                });
+            }
+            sendPanel(audit ? 'CombatAssist Tracker Audit' : 'CombatAssist Status', fields);
         }
 
         function controlButtons(encounter) {
@@ -9449,14 +9488,61 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel('CombatAssist Control Center', fields);
         }
 
+        function combatManualHtml() {
+            return [
+                '<h1>CombatAssist User Manual</h1>',
+                `<p><strong>GameAssist v${_sanitize(VERSION)} | CombatAssist ${_sanitize(MODULE_VERSION)}</strong></p>`,
+                '<p>CombatAssist adds deliberate encounter flow to Roll20\'s native Turn Tracker. Roll20 continues to own the visible tracker; CombatAssist follows it, counts reliable turns and rounds, provides permission-checked player turn controls, and helps the GM recover from uncertain tracker changes.</p>',
+                '<h2>Quick Start</h2>',
+                '<ol><li>Place at least two distinct entries in Roll20\'s Turn Tracker.</li><li>Run <code>!ga-enable CombatAssist</code>.</li><li>Run <code>!Combat-Start</code>.</li><li>Advance with Roll20\'s tracker arrows or the CombatAssist Next Turn button.</li><li>Run <code>!Combat-End</code> when the encounter is finished, then confirm the choice.</li></ol>',
+                '<h2>What CombatAssist Adds</h2>',
+                '<ul><li>Conservative round counting that does not invent progress after backward movement.</li><li>GM Next Turn, Previous Turn, Pause, Resume, status, and recovery controls.</li><li>Optional public, GM-only, or private turn announcements.</li><li>A permission-checked End My Turn button for the player controlling the current linked character.</li><li>One saved tracker checkpoint for previewed recovery after a mistaken or unreadable change.</li></ul>',
+                '<h2>Normal Encounter Flow</h2>',
+                '<p>CombatAssist begins at round 1 with the current first tracker entry. A round advances only after one complete, uninterrupted forward cycle returns to that anchor. Backward movement never advances or reduces the recorded round.</p>',
+                '<p>You may add or remove combatants, reroll initiative, change priorities, or reorder the native tracker during play. CombatAssist preserves the current round and begins a fresh counting cycle from Roll20\'s current first entry.</p>',
+                '<h2>Announcements and Player Controls</h2>',
+                '<p><strong>GM Only</strong> whispers turn notices and controls to the GM. <strong>Public</strong> announces turns to chat. <strong>Whispers</strong> gives the GM controls and privately gives the current linked character\'s controller an End My Turn button. <strong>Off</strong> suppresses automatic announcements.</p>',
+                '<p>Standard player confirmations use one direct sentence. Varied confirmations rotate through a small warmer library, with the Standard sentence included once. Hidden GM-layer tokens, unlinked objects, and custom tracker rows are never named to players.</p>',
+                '<h2>Tracker Changes and Recovery</h2>',
+                '<p>Use Pause and Resume when you want to make several quiet edits. Ordinary readable additions, removals, rerolls, and reordering can also be made directly. If the tracker becomes unreadable or ambiguous, CombatAssist stops guessing and offers Use Current Tracker, Restore Last Safe Tracker, or Restart at Round 1.</p>',
+                '<p>With exactly two tracker rows, Roll20 exposes the same resulting order for forward and backward movement. Use CombatAssist Next Turn or Previous Turn so the direction remains explicit.</p>',
+                '<h2>Command Reference</h2>',
+                '<ul><li><code>!Combat-Menu</code> or <code>!Combat-GM</code> - open GM controls.</li><li><code>!Combat-Help</code> or <code>!Combat-Guide</code> - open the compact guide.</li><li><code>!Combat-Info</code> - whisper a short purpose summary.</li><li><code>!Combat-Status</code> - show encounter state.</li><li><code>!Combat-Audit</code> - read the tracker and saved encounter without changing either.</li><li><code>!Combat-Start</code>, <code>!Combat-Pause</code>, <code>!Combat-Resume</code>, and <code>!Combat-End</code> - manage encounter tracking.</li><li><code>!Combat-Next</code> and <code>!Combat-Prev</code> - move exactly one tracker row.</li><li><code>!Combat-Announce gm|public|whispers|off</code> - choose turn-message recipients.</li><li><code>!Combat-Confirm standard|varied</code> - choose the player completion style.</li></ul>',
+                '<h2>Where Initiative Fits</h2>',
+                '<p>Use Roll20 or InitiativeAssist to roll and place initiative. CombatAssist begins after the Turn Tracker is ready and does not replace initiative calculation.</p>'
+            ].join('');
+        }
+
+        function writeCombatManual() {
+            let handout = findObjs({ type: 'handout', name: MANUAL_HANDOUT_NAME })[0];
+            if (!handout) handout = createObj('handout', { name: MANUAL_HANDOUT_NAME, archived: false });
+            if (!handout) {
+                warning('Roll20 could not create the CombatAssist manual handout. No existing handout was changed.', GameAssist.createButton('Whisper Short Version', '!Combat-Info'));
+                return;
+            }
+            handout.set('notes', combatManualHtml());
+            const handoutId = String(handout.id || handout.get('_id') || '');
+            const openHandout = handoutId
+                ? `[Open Manual](https://journal.roll20.net/handout/${_sanitize(handoutId)})`
+                : _sanitize(MANUAL_HANDOUT_NAME);
+            sendPanel('CombatAssist Manual Ready', [
+                { label: 'Handout', value: `${openHandout}<br>${_sanitize(MANUAL_HANDOUT_NAME)} was created or updated.` },
+                { label: 'Continue', value: `${GameAssist.createButton('Whisper Short Version', '!Combat-Info')} ${GameAssist.createButton('Open Control Center', '!Combat-Menu')}` }
+            ]);
+        }
+
+        function showInfo() {
+            sendPanel('What CombatAssist Does', [
+                { label: 'Purpose', value: 'Adds reliable round tracking, guarded turn controls, private player turn buttons, and recoverable tracker checkpoints to Roll20\'s native Turn Tracker.' },
+                { label: 'At The Table', value: 'Roll initiative normally, start CombatAssist, then keep using Roll20\'s tracker or the CombatAssist turn buttons.' },
+                { label: 'Learn More', value: `${GameAssist.createButton('Create or Update Manual', '!Combat-Manual')} ${GameAssist.createButton('Open Control Center', '!Combat-Menu')} ${GameAssist.createButton('Back to Guide', '!Combat-Help')}` }
+            ]);
+        }
+
         function showHelp(rawTopic = '') {
             const topic = String(rawTopic || '').trim().split(/\s+/)[0].toLowerCase();
             const back = GameAssist.createButton('Back to Guide', '!Combat-Help');
             const topics = {
-                overview: [
-                    { label: 'Purpose', value: 'CombatAssist counts turns and rounds after initiative is already in Roll20\'s native Turn Tracker.' },
-                    { label: 'Keeps Separate', value: 'It does not roll initiative, change conditions, run timers, play music, or write NPC history.' }
-                ],
                 turns: [
                     { label: 'Prepare', value: `Use Roll20 or ${GameAssist.createButton('InitiativeAssist', '!Init-Menu')} to place at least two distinct rows in the tracker.` },
                     { label: 'Begin', value: `${GameAssist.createButton('Start Encounter', '!Combat-Start')} records the current first row as round 1's anchor. Opening the tracker alone never starts combat.` },
@@ -9470,7 +9556,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ],
                 messages: [
                     { label: 'Audience', value: 'Choose GM Only, Public, Whispers, or Off. Whispers sends the GM controls and gives the current character\'s controller an End My Turn button.' },
-                    { label: 'Player Confirmation', value: 'Standard uses one direct message. Varied rotates among a few restrained messages, including the standard wording.' },
+                    { label: 'Player Confirmation', value: 'Standard uses one direct message. Varied rotates among warmer alternatives and includes the Standard sentence exactly once.' },
                     { label: 'Privacy', value: 'A completion message names only a linked token visible on the objects layer. Hidden NPCs, props, and custom rows use a generic next-initiative message.' }
                 ],
                 attention: [
@@ -9482,9 +9568,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 sendPanel('CombatAssist Guide', [...topics[topic], { label: 'Guide', value: back }]);
                 return;
             }
+            if (topic === 'overview' || topic === 'manual') {
+                writeCombatManual();
+                return;
+            }
             sendPanel('CombatAssist Quick Guide', [
                 { label: 'Actions', value: `${GameAssist.createButton('Control Center', '!Combat-Menu')} ${GameAssist.createButton('Current Status', '!Combat-Status')}` },
-                { label: 'Learn Or Review', value: `${GameAssist.createButton('What does CombatAssist do?', '!Combat-Help overview')} ${GameAssist.createButton('Start & Run Encounters', '!Combat-Help turns')} ${GameAssist.createButton('Edit & Recover Tracker', '!Combat-Help recovery')} ${GameAssist.createButton('Messages to Players', '!Combat-Help messages')} ${GameAssist.createButton('Help With A Problem', '!Combat-Help attention')}` }
+                { label: 'Learn Or Review', value: `${GameAssist.createButton('What does CombatAssist do?', '!Combat-Manual')} ${GameAssist.createButton('Start & Run Encounters', '!Combat-Help turns')} ${GameAssist.createButton('Edit & Recover Tracker', '!Combat-Help recovery')} ${GameAssist.createButton('Messages to Players', '!Combat-Help messages')} ${GameAssist.createButton('Help With A Problem', '!Combat-Help attention')}` }
             ]);
         }
 
@@ -9529,11 +9619,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!requireGm(msg)) return;
             switch (command) {
                 case '!combat-':
+                case '!combat-gm':
                 case '!combat-menu':
                     showMenu();
                     return;
+                case '!combat-guide':
                 case '!combat-help':
                     showHelp(rest);
+                    return;
+                case '!combat-manual':
+                    writeCombatManual();
+                    return;
+                case '!combat-info':
+                    showInfo();
                     return;
                 case '!combat-start':
                     startEncounter(msg, args.confirm === true);
@@ -9558,6 +9656,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     return;
                 case '!combat-status':
                     showStatus();
+                    return;
+                case '!combat-audit':
+                    showStatus({ audit: true });
                     return;
                 case '!combat-end':
                     endEncounter(args.confirm === true);
@@ -9623,7 +9724,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         preserveRuntimeOnDisable: true
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.7.0): Advanced CombatAssist to 1.0.2. Player completion messages now report the next initiative neutrally, conceal GM-layer and non-character identities, replace the public-facing light-hearted mode with a restrained Standard/Varied choice, and move detailed guidance behind topic buttons on a compact root guide.
+    // Changed (v0.1.7.0): Advanced CombatAssist to 1.0.2. Player completion messages now precede the next controlled-character prompt, report the next initiative neutrally, conceal GM-layer and non-character identities, replace the public-facing light-hearted mode with a warmer Standard/Varied choice whose Standard sentence appears once, expose consistent navigation aliases, and move the complete user manual into a persistent handout behind the compact root guide.
     // Decision log:
     //   CHOICE: Start disabled and require explicit GM encounter start - ALT: infer combat from an open tracker; REJECTED: Roll20 trackers are also used for setup, exploration, and non-combat ordering.
     //   CHOICE: Identify token rows by token id and custom rows by exact label - ALT: include initiative priority; REJECTED: priority edits do not change row ownership or identity.
@@ -9631,6 +9732,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Require a complete uninterrupted forward cycle after backward movement before another round increment - ALT: increment on the next anchor return; REJECTED: undoing a backward step must not manufacture a new round.
     //   CHOICE: Keep Next, Previous, and End My Turn to one array rotation through TurnTrackerService - ALT: write Campaign turnorder directly; REJECTED: all native tracker mutation belongs to the guarded core authority.
     //   CHOICE: Authorize End My Turn against the current linked character and token id at execution time - ALT: trust an old whispered button; REJECTED: a player controlling multiple characters could otherwise advance a later turn with a stale button.
+    //   CHOICE: Flush the outgoing player's confirmation inside the guarded tracker observer before the next current-player whisper - ALT: confirm only after apply returns; REJECTED: synchronous observer delivery produces A-A-B ordering for one player controlling consecutive characters.
+    //   CHOICE: Write the complete purpose and operating manual to one stable handout name - ALT: repeat the manual in chat; REJECTED: long chat guides bury encounter controls and are difficult to revisit.
     //   CHOICE: Preserve the round and begin a fresh cycle after a valid native roster or initiative change - ALT: enter attention for every edit; REJECTED: normal Roll20 encounter maintenance must not erase progress or require ritual pause/resume steps.
     //   CHOICE: Retain one complete accepted tracker checkpoint and require a revision-matched restore confirmation - ALT: provide no retcon path or maintain an unbounded history; REJECTED: the former strands the GM and the latter grows persistent state without limit.
     //   CHOICE: Keep baseline module operation independent while permitting explicitly labeled opt-in integrations - ALT: forbid every cross-module feature; REJECTED: useful optional interoperability may have a prerequisite without making either module generally dependent.

@@ -1360,7 +1360,7 @@ Record:
 
 ## 9. CombatAssist
 
-**What this proves:** CombatAssist remains an optional layer over Roll20's native tracker, starts only when asked, follows ordinary native movement, preserves the current round through valid lineup and initiative changes, offers one-step recovery, and authorizes player turn completion safely.
+**What this proves:** CombatAssist remains an optional layer over Roll20's native tracker, starts only when asked, follows ordinary native movement, preserves the current round through valid lineup and initiative changes, offers one-step recovery, orders shared-player turn messages correctly, and keeps long-form guidance in one reusable manual handout.
 
 **Why test it:** A false round count or destructive tracker update interrupts an encounter immediately. The test therefore checks both normal table use and the refusal paths that protect uncertain tracker state.
 
@@ -1373,9 +1373,14 @@ Put at least three distinct rows in Roll20's Turn Tracker on one page. Include o
 ```roll20chat
 !ga-enable CombatAssist
 !Combat-Help
+!Combat-Guide
 !Combat-Help turns
 !Combat-Help messages
 !Combat-Menu
+!Combat-GM
+!Combat-Info
+!Combat-Audit
+!Combat-Manual
 !Combat-Start
 !Combat-Status
 ```
@@ -1384,6 +1389,11 @@ Pass when:
 
 - **CombatAssist Quick Guide** shows only common actions and topic buttons;
 - the `turns` and `messages` topic panels reveal the detailed encounter and player-message guidance on demand and include **Back to Guide**;
+- `!Combat-Guide` opens the same compact guide, while `!Combat-GM` opens the same **CombatAssist Control Center** as `!Combat-Menu`;
+- `!Combat-Info` whispers a short purpose summary and buttons for the manual, Control Center, and guide;
+- `!Combat-Audit` labels the inspection read-only and changes neither the tracker nor encounter state;
+- `!Combat-Manual` creates or updates exactly one `GameAssist Guide - CombatAssist` handout containing Quick Start, normal play, recovery, privacy, and command-reference sections;
+- the manual confirmation offers **Open Manual**, **Whisper Short Version**, and **Open Control Center**; running `!Combat-Manual` a second time updates the same handout rather than creating another;
 - **CombatAssist Control Center** clearly separates encounter controls, announcement choices, status, and help;
 - start identifies the encounter page, round 1, current first row, and number of tracked rows;
 - status reports `active`, round 1, the current turn, and a plain-language **Tracker Check** with the number of readable distinct entries;
@@ -1419,7 +1429,7 @@ Record the complete tracker, then run:
 !Combat-Prev
 ```
 
-Pass when Next moves exactly the first row to the end and Previous moves exactly the last row to the front. All row contents remain unchanged, backward movement does not change the round, and each GM turn whisper contains **Next Turn** and **Open Menu**. No new counter, token, handout, marker, or history entry should appear.
+Pass when Next moves exactly the first row to the end and Previous moves exactly the last row to the front. All row contents remain unchanged, backward movement does not change the round, and each GM turn whisper contains **Next Turn** and **Open Menu**. No new counter, token, marker, history entry, or additional handout should appear.
 
 #### C4. Optional Pause, Edit, and Resume
 
@@ -1505,6 +1515,8 @@ With a healthy active encounter, test:
 
 Arrange the tracker so the current player-controlled character is followed by a different linked character token on the Objects layer. From the non-GM player's whisper, click **End My Turn** and retain that old button for the stale-button check. Then run `!Combat-Confirm varied`, advance to another player-controlled character, and click the new **End My Turn** button.
 
+Also test one player account that controls two consecutive characters. End the first character's turn from its button and read that player's private messages in received order.
+
 Repeat once with a player-controlled character followed by a GM-layer NPC or a custom row such as a lair action. Finally, run `!Combat-Announce off` followed by `!Combat-Next`.
 
 Pass when:
@@ -1513,9 +1525,10 @@ Pass when:
 - public mode posts the current turn to the table;
 - Whispers mode privately sends those controls to the GM and separately whispers the current linked character's non-GM controller an **End My Turn** button;
 - clicking **End My Turn** advances exactly one row when that player still controls the current character;
+- when one player controls consecutive characters, the received order is **Your Turn: first character**, **Turn Complete: first character**, then **Your Turn: second character**; the second prompt never arrives ahead of the first character's completion;
 - when the next entry is a linked Objects-layer token, the private confirmation says it is that character's turn without saying or implying the recipient controls that character;
 - when the next entry is a GM-layer token, unlinked object, or custom row, the player sees **Combat has continued with the next initiative** and does not see the hidden or non-character entry's name;
-- `standard` uses one direct confirmation, while `varied` rotates among restrained confirmations and includes the standard wording as one possible result;
+- `standard` uses one direct confirmation, while `varied` rotates among warmer confirmations and contains the complete Standard sentence as one library choice rather than appending it to every varied message;
 - clicking the old button again after the turn changes produces a friendly **Turn Already Advanced** notice and does not move the tracker;
 - a player who does not control the current linked character cannot advance it;
 - off mode suppresses automatic output while explicit Next or Previous still confirms privately to the GM.
