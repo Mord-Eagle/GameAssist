@@ -52,7 +52,7 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | DM-configurable timezone | Complete | [#35](https://github.com/Mord-Eagle/GameAssist/issues/35) | v0.1.5.1 adds one validated DM timezone for human-facing timestamps and date-based Session rollover while preserving absolute stored timestamps. The focused Roll20 timezone workflow passed; the complete live module suite was not rerun. |
 | Native Turn Tracker and initiative foundation | Complete | [#47](https://github.com/Mord-Eagle/GameAssist/issues/47) | The v0.1.6.0 live workflow and v0.1.6.1 private `!Init-GM` controls passed their Roll20 acceptance checks. |
 | Optional table welcome | Complete | [PR #49](https://github.com/Mord-Eagle/GameAssist/pull/49) | Disabled-by-default WelcomeAssist 0.1.0 passed private setup, health-gated one-per-sandbox automatic output, and manual-announcement cancellation checks. |
-| CombatAssist encounter flow | Sandbox verification | [#48](https://github.com/Mord-Eagle/GameAssist/issues/48) | v0.1.7.0 implements an optional layer over Roll20's native tracker with explicit lifecycle, exact rotation observation, conservative round counting, guarded next/previous controls, private current-player completion prompts, and attention-first diagnostics. No other module depends on it. |
+| CombatAssist encounter flow | Sandbox verification | [#48](https://github.com/Mord-Eagle/GameAssist/issues/48) | v0.1.7.0 includes CombatAssist 1.0.1: an optional native-tracker layer with explicit lifecycle, conservative rounds, preserved-round roster and initiative changes, one-step recovery, guarded movement, and configurable private player confirmations. TurnTrackerService is its only baseline prerequisite; future optional integrations must label and locally enforce their own prerequisites. |
 
 ---
 
@@ -339,32 +339,36 @@ WelcomeAssist is accepted when disabled campaigns remain silent, setup and previ
 
 **Tracking:** [Issue #48](https://github.com/Mord-Eagle/GameAssist/issues/48)
 
-CombatAssist 1.0.0 is the narrow encounter-flow foundation. It begins disabled, requires explicit GM intent, and uses TurnTrackerService rather than creating a second parser or writing `turnorder` directly.
+CombatAssist 1.0.1 is the narrow encounter-flow foundation. It begins disabled, requires explicit GM intent, and treats Roll20's native Turn Tracker as authoritative while using TurnTrackerService for guarded reads, writes, and observations.
 
 ### Checklist
 
 - [x] Add case-insensitive `!Combat-` Guide, Control Center, status, start, pause, resume, end, next-turn, previous-turn, and announcement controls.
 - [x] Require a readable open tracker on one page with bounded, distinct, structurally valid rows.
-- [x] Accept exact one-row forward and backward rotations while refusing skipped, inserted, removed, reordered, stale, malformed, off-page, closed, or ambiguous tracker states.
+- [x] Accept exact one-row forward and backward rotations for turn counting.
+- [x] Preserve the current round when valid combatants are added or removed, initiative is rerolled, priorities change, or the native tracker is manually reordered; establish a fresh full-cycle anchor without rewriting the edit.
 - [x] Advance the round only after an uninterrupted forward cycle returns to the recorded anchor.
 - [x] Ensure backward movement never advances a round.
 - [x] Route explicit GM **Next Turn** and **Previous Turn** actions through revision-guarded TurnTrackerService rotations.
 - [x] Preserve every row, custom entry, priority, object, and unknown field.
-- [x] Allow deliberate pause/edit/resume rebasing without changing the current round.
+- [x] Keep pause/edit/resume as an optional quiet-edit workflow rather than a requirement for ordinary tracker maintenance.
+- [x] Retain the current accepted native tracker plus one complete previous checkpoint, with revision-matched preview/confirmation for restore or undo.
+- [x] Reserve attention for unreadable, off-page, closed, malformed, stale, duplicate, or direction-ambiguous tracker states and provide explicit adopt, restore, status, and round-1 restart choices.
 - [x] Keep setup, status, confirmation, and attention messages GM-only; make turn announcements configurable as GM-only, public, current-player whispers, or off.
 - [x] In Whispers mode, send the GM private Next Turn, Previous Turn, and Open Menu controls while sending the current controlling player a token-bound End My Turn control.
-- [x] Recheck current-turn identity and character control when a player uses End My Turn; refuse stale or unauthorized buttons without moving the tracker.
-- [x] Keep CombatAssist optional and independent: no other module depends on it, disabling it does not disable unrelated features, and native Roll20 tracker arrows remain usable.
-- [x] Keep duration, timer, condition, marker, music, current-turn visual, automatic advancement, and NPC-history behavior out of 1.0.0.
+- [x] Recheck current-turn identity and character control when a player uses End My Turn; privately confirm a successful advance and gently acknowledge an already-advanced stale button without moving the tracker again.
+- [x] Offer standard and light-hearted player completion confirmations through an explicit setting.
+- [x] Keep baseline module operation independent: CombatAssist requires TurnTrackerService, no other baseline module requires CombatAssist, and any optional future integration must label and locally enforce its own prerequisite.
+- [x] Keep duration, timer, condition, marker, music, current-turn visual, automatic advancement, and NPC-history behavior out of 1.0.1.
 - [x] Add focused deterministic coverage and public documentation.
 - [ ] Pass the complete Roll20 CombatAssist smoke test.
 - [ ] Resolve review findings, verify identical release artifacts, and close Issue #48.
 
 ### Completion Gate
 
-Issue #48 is complete when Roll20 confirms explicit lifecycle controls, a complete forward round, backward safety, pause/edit/resume behavior, exact tracker preservation, attention handling, two-row Next/Previous behavior, GM and current-player whisper controls, stale-button refusal, independent disable behavior, reload behavior, and no regressions in InitiativeAssist or established modules.
+Issue #48 is complete when Roll20 confirms explicit lifecycle controls, a complete forward round, backward safety, preserved-round additions/removals/rerolls/reordering, one-step recovery, optional pause/edit/resume, exact tracker-field preservation, unreadable-state attention, two-row Next/Previous behavior, GM and current-player whisper controls, standard/fun/stale player confirmations, independent disable behavior, reload behavior, and no regressions in InitiativeAssist or established modules.
 
-**Current evidence:** JavaScript syntax passes, all six inherited suites pass, and the CombatAssist harness passes 76/76 deterministic checks. The seven behavior suites pass 353 assertions in total; live Roll20 acceptance remains required.
+**Current evidence:** The CombatAssist harness passes 102/102 deterministic checks, including preserved-round roster changes, reordered and same-order InitiativeAssist rerolls, one-step restore, and player confirmations. Full inherited-suite, artifact-identity, and live Roll20 acceptance remain required for this checkpoint.
 
 ---
 

@@ -197,7 +197,7 @@ A failure should be recorded using [Bug Report Evidence](#bug-report-evidence) b
 | ConditionAssist | Condition help, selected-token controls, descriptions, and MarkerService synchronization work. | Condition workflows combine permissions, configuration, markers, and chat output. | ConditionAssist is deliberately disabled and will not be used. |
 | TokenAssist | Selected-token controls, values, movement, reports, and MarkerService-backed status commands work. | It replaces the supported general token-control workflows previously supplied by standalone TokenMod. | TokenAssist is deliberately disabled and none of its commands, including the temporary older command, will be used. |
 | InitiativeAssist | Mixed 2014/2024 actors roll through the native tracker while counters, objects, dead NPCs, and attention rows remain untouched. | Initiative mistakes interrupt play and can damage another tool's tracker state. | Never for v0.1.7.0 release acceptance. |
-| CombatAssist | Explicit lifecycle, exact turns, rounds, pause/edit/resume, and attention handling work without rewriting tracker rows. | A false round or destructive tracker edit can disrupt an encounter immediately. | Never for v0.1.7.0 release acceptance. |
+| CombatAssist | Explicit lifecycle, rounds, ordinary native tracker edits, recovery, and player confirmations work without replacing Roll20's tracker. | A false round or destructive tracker edit can disrupt an encounter immediately. | Never for v0.1.7.0 release acceptance. |
 | WelcomeAssist | Optional greetings remain deliberate, bounded, private during setup, and limited to one automatic post per sandbox. | Startup output should welcome the table without misreporting unhealthy GameAssist components or executing custom chat syntax. | Never for v0.1.7.0 release acceptance. |
 | ConcentrationTracker | Status, saving throws, and marker removal work on linked PC tokens. | It combines character data, rolls, chat, and MarkerService. | ConcentrationTracker is disabled and will not be used. |
 | NPCManager | Death, revival, audit, history, buckets, and Arc menus work. | It combines HP events, markers, saved records, and handouts. | NPCManager is disabled and will not be used. |
@@ -1358,7 +1358,7 @@ Record:
 
 ## 9. CombatAssist
 
-**What this proves:** CombatAssist remains an optional observer over Roll20's native tracker, starts only when asked, follows exact native movement, provides guarded forward/backward controls, authorizes player turn completion safely, preserves tracker rows, and stops instead of guessing.
+**What this proves:** CombatAssist remains an optional layer over Roll20's native tracker, starts only when asked, follows ordinary native movement, preserves the current round through valid lineup and initiative changes, offers one-step recovery, and authorizes player turn completion safely.
 
 **Why test it:** A false round count or destructive tracker update interrupts an encounter immediately. The test therefore checks both normal table use and the refusal paths that protect uncertain tracker state.
 
@@ -1378,10 +1378,10 @@ Put at least three distinct rows in Roll20's Turn Tracker on one page. Include o
 
 Pass when:
 
-- **CombatAssist Quick Guide** explains prepare, start, native or guarded movement, pause/edit/resume, attention, and announcement choices without displaying internal development notes;
+- **CombatAssist Quick Guide** explains prepare, start, native or guarded movement, ordinary lineup changes, recovery, attention, and announcement choices without displaying internal development notes;
 - **CombatAssist Control Center** clearly separates encounter controls, announcement choices, status, and help;
 - start identifies the encounter page, round 1, current first row, and number of tracked rows;
-- status reports `active`, round 1, the current turn, and a safe unique-row count;
+- status reports `active`, round 1, the current turn, and a plain-language **Tracker Check** with the number of readable distinct entries;
 - no tracker row, priority, custom label, or unknown field changes during help, menu, start, or status;
 - mixed capitalization such as `!cOmBaT-sTaTuS` works.
 
@@ -1416,7 +1416,7 @@ Record the complete tracker, then run:
 
 Pass when Next moves exactly the first row to the end and Previous moves exactly the last row to the front. All row contents remain unchanged, backward movement does not change the round, and each GM turn whisper contains **Next Turn** and **Open Menu**. No new counter, token, handout, marker, or history entry should appear.
 
-#### C4. Pause, Edit, and Resume
+#### C4. Optional Pause, Edit, and Resume
 
 Run:
 
@@ -1431,21 +1431,38 @@ While paused, add one custom reminder row, remove it again, or deliberately reor
 !Combat-Status
 ```
 
-Pass when the prior round number is retained, the current first row becomes the new safe baseline, status returns to `active`, and CombatAssist does not rewrite the edited tracker.
+Pass when the prior round number is retained, the current first row becomes the new counting baseline, status returns to `active`, and CombatAssist does not rewrite the edited tracker. Pause is a convenience for making several quiet changes; it is not required for normal additions, removals, rerolls, or reordering.
 
-#### C5. Attention Instead of Guessing
+#### C5. Native Tracker Changes Preserve the Round
 
-While active and **without pausing**, make one deliberate ambiguous change: add a temporary row, remove a row, swap two non-adjacent rows, close the tracker, or move it to another page.
+While active and **without pausing**, record the round and complete tracker, then perform these one at a time:
 
-Pass when CombatAssist reports **Needs Attention**, does not increment the round, and changes no tracker data. Restore a sound tracker, review it, then use **Restart Tracking** or:
+1. Remove a non-current NPC that is leaving combat.
+2. Add a distinct NPC or custom row that is joining combat.
+3. Change initiative values or manually reorder two rows.
+4. When InitiativeAssist is enabled, run `!Init-RR` on eligible tracked characters.
+
+After each change, run `!Combat-Status`.
+
+Pass when CombatAssist remains active, preserves the recorded round, treats Roll20's current first entry as the beginning of a fresh full-cycle count, and never writes over the native edit. A changed order should produce a readable **Turn Tracker Updated** whisper with **Undo Last Tracker Change**.
+
+For at least one change, click **Undo Last Tracker Change** or run:
 
 ```roll20chat
-!Combat-Start --confirm
+!Combat-Restore
 ```
 
-Pass when the current first row becomes a deliberate round-1 anchor and normal exact movement works again.
+Pass when CombatAssist previews the complete saved tracker and requires confirmation. Confirm the restore and verify the exact prior rows, values, labels, and order return while the recorded round is preserved. Make one valid edit again and keep it; this proves recovery is optional rather than an automatic overwrite.
 
-#### C6. Duplicate and Stale Rows
+#### C6. Attention and Recovery for Unreadable Trackers
+
+Close the Turn Tracker or move it to another page while the encounter is active.
+
+Pass when CombatAssist reports **Needs Attention**, retains the recorded round and last accepted tracker, and offers **Use Current Tracker**, **Restore Last Safe Tracker**, status, and explicit **Restart at Round 1** choices. It must not alter Roll20's tracker.
+
+Return to the encounter page and reopen a valid tracker. CombatAssist may recover automatically. If attention remains, use `!Combat-Adopt` to keep the current readable tracker and round, or `!Combat-Restore` to preview and confirm the saved tracker. Use **Restart at Round 1** only when deliberately abandoning the recorded round.
+
+#### C7. Duplicate and Stale Rows
 
 On a disposable tracker, add the same token twice or create two custom rows with the same exact label, then try `!Combat-Start`.
 
@@ -1453,11 +1470,11 @@ Pass when start is refused because the rows are indistinguishable and both rows 
 
 Restore distinct valid rows before continuing.
 
-#### C7. Two-Row Direction Limitation
+#### C8. Two-Row Direction Limitation
 
 End the current test encounter, leave exactly two distinct valid rows, and start again. Use Roll20's native next-turn arrow once.
 
-Pass when CombatAssist enters attention and explains that native forward and backward movement produce the same two-row order. Restore and restart the two-row encounter, then use:
+Pass when CombatAssist enters attention and explains that native forward and backward movement produce the same two-row order. Use **Restore Last Safe Tracker** to preview and restore the prior order, or **Use Current Tracker** to keep the moved order and recorded round. Then use:
 
 ```roll20chat
 !Combat-Next
@@ -1467,7 +1484,7 @@ Pass when CombatAssist enters attention and explains that native forward and bac
 
 Pass when the first command advances one turn and the second returns to the anchor at round 2. Restart once more and verify `!Combat-Prev` safely moves backward without entering attention or changing the round.
 
-#### C8. Announcement Audiences
+#### C9. Announcement Audiences and Player Confirmations
 
 With a healthy active encounter, test:
 
@@ -1477,24 +1494,26 @@ With a healthy active encounter, test:
 !Combat-Announce public
 !Combat-Next
 !Combat-Announce whispers
-!Combat-Next
-!Combat-Announce off
+!Combat-Confirm standard
 !Combat-Next
 ```
+
+From the non-GM player's whisper, click **End My Turn** and retain that old button for the stale-button check. Then run `!Combat-Confirm fun`, advance to another player-controlled character, and click the new **End My Turn** button. Finally, run `!Combat-Announce off` followed by `!Combat-Next`.
 
 Pass when:
 
 - GM mode whispers the GM and includes **Next Turn** plus **Open Menu**;
 - public mode posts the current turn to the table;
 - Whispers mode privately sends those controls to the GM and separately whispers the current linked character's non-GM controller an **End My Turn** button;
-- clicking **End My Turn** advances exactly one row when that player still controls the current character;
-- clicking the old button again after the turn changes is refused and does not move the tracker;
+- clicking **End My Turn** advances exactly one row when that player still controls the current character and privately confirms which character is now up;
+- `standard` uses the straightforward confirmation, while `fun` chooses a light-hearted acknowledgement from the bounded built-in library;
+- clicking the old button again after the turn changes produces a friendly **Turn Already Advanced** notice and does not move the tracker;
 - a player who does not control the current linked character cannot advance it;
 - off mode suppresses automatic output while explicit Next or Previous still confirms privately to the GM.
 
 Setup, status, warnings, and encounter confirmation prompts remain GM-only. Test Whispers mode from a separate non-GM player login; a GM using **Rejoin as Player** still has GM permissions and is not a valid permission test.
 
-#### C9. End Confirmation
+#### C10. End Confirmation
 
 Record the tracker and run:
 
@@ -1510,7 +1529,7 @@ Pass when CombatAssist asks for confirmation and the encounter remains active. C
 
 Pass when CombatAssist reports no active encounter and the native tracker remains byte-for-byte unchanged.
 
-#### C10. TurnTrackerService Cascade and Reload
+#### C11. TurnTrackerService Cascade and Reload
 
 Start a healthy disposable CombatAssist encounter, record the tracker and current round, then run:
 
@@ -1529,7 +1548,7 @@ Pass when TurnTrackerService disables CombatAssist and InitiativeAssist, unrelat
 
 Pass when the saved encounter is available if the tracker did not change. Restart the Mod sandbox with the same healthy tracker and run `!Combat-Status` again. The encounter and round should remain available. If the tracker changes while CombatAssist is disabled or unavailable, re-enabling should produce attention rather than guessing what happened.
 
-#### C11. CombatAssist Isolation
+#### C12. CombatAssist Independence and Optional Interoperability
 
 Record the native tracker and the enabled state of InitiativeAssist and several unrelated modules, then run:
 
@@ -1538,7 +1557,7 @@ Record the native tracker and the enabled state of InitiativeAssist and several 
 !ga-config modules
 ```
 
-Pass when only CombatAssist is disabled, Roll20's tracker remains unchanged and usable through its native arrows, and InitiativeAssist plus every unrelated module retains its prior configuration. Re-enable CombatAssist only when its optional encounter controls are wanted.
+Pass when only CombatAssist is disabled, Roll20's tracker remains unchanged and usable through its native arrows, and InitiativeAssist plus every unrelated module retains its prior configuration. CombatAssist's baseline requires TurnTrackerService, but no other baseline module requires CombatAssist. Any future optional interoperability action must clearly name its prerequisite and disable only that action when the prerequisite is unavailable.
 
 ### CombatAssist Failure Evidence
 
