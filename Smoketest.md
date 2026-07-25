@@ -1174,6 +1174,7 @@ Open Roll20's Turn Tracker on the disposable encounter page, then run:
 ```roll20chat
 !ga-enable InitiativeAssist
 !Init-Help
+!Init-Help start
 !Init-Menu
 !Init-Status
 !Init-Go
@@ -1183,7 +1184,8 @@ Open Roll20's Turn Tracker on the disposable encounter page, then run:
 
 Pass when:
 
-- `!Init-Help` opens **InitiativeAssist Guide**, which explains the workflow rather than acting like another control menu;
+- `!Init-Help` opens a compact **InitiativeAssist Guide** with common actions and topic buttons rather than displaying the full manual at once;
+- `!Init-Help start` opens the focused starting-instructions panel and includes **Back to Guide**;
 - `!Init-Menu` opens **Initiative Control Center**, which groups actions by starting, rerolling, reviewing, and managing;
 - `!Init-Status` opens **Initiative Status Summary**, a concise chat snapshot rather than a full audit;
 - both Go commands make a public **Roll for Initiative** announcement;
@@ -1371,6 +1373,8 @@ Put at least three distinct rows in Roll20's Turn Tracker on one page. Include o
 ```roll20chat
 !ga-enable CombatAssist
 !Combat-Help
+!Combat-Help turns
+!Combat-Help messages
 !Combat-Menu
 !Combat-Start
 !Combat-Status
@@ -1378,7 +1382,8 @@ Put at least three distinct rows in Roll20's Turn Tracker on one page. Include o
 
 Pass when:
 
-- **CombatAssist Quick Guide** explains prepare, start, native or guarded movement, ordinary lineup changes, recovery, attention, and announcement choices without displaying internal development notes;
+- **CombatAssist Quick Guide** shows only common actions and topic buttons;
+- the `turns` and `messages` topic panels reveal the detailed encounter and player-message guidance on demand and include **Back to Guide**;
 - **CombatAssist Control Center** clearly separates encounter controls, announcement choices, status, and help;
 - start identifies the encounter page, round 1, current first row, and number of tracked rows;
 - status reports `active`, round 1, the current turn, and a plain-language **Tracker Check** with the number of readable distinct entries;
@@ -1498,15 +1503,19 @@ With a healthy active encounter, test:
 !Combat-Next
 ```
 
-From the non-GM player's whisper, click **End My Turn** and retain that old button for the stale-button check. Then run `!Combat-Confirm fun`, advance to another player-controlled character, and click the new **End My Turn** button. Finally, run `!Combat-Announce off` followed by `!Combat-Next`.
+Arrange the tracker so the current player-controlled character is followed by a different linked character token on the Objects layer. From the non-GM player's whisper, click **End My Turn** and retain that old button for the stale-button check. Then run `!Combat-Confirm varied`, advance to another player-controlled character, and click the new **End My Turn** button.
+
+Repeat once with a player-controlled character followed by a GM-layer NPC or a custom row such as a lair action. Finally, run `!Combat-Announce off` followed by `!Combat-Next`.
 
 Pass when:
 
 - GM mode whispers the GM and includes **Next Turn** plus **Open Menu**;
 - public mode posts the current turn to the table;
 - Whispers mode privately sends those controls to the GM and separately whispers the current linked character's non-GM controller an **End My Turn** button;
-- clicking **End My Turn** advances exactly one row when that player still controls the current character and privately confirms which character is now up;
-- `standard` uses the straightforward confirmation, while `fun` chooses a light-hearted acknowledgement from the bounded built-in library;
+- clicking **End My Turn** advances exactly one row when that player still controls the current character;
+- when the next entry is a linked Objects-layer token, the private confirmation says it is that character's turn without saying or implying the recipient controls that character;
+- when the next entry is a GM-layer token, unlinked object, or custom row, the player sees **Combat has continued with the next initiative** and does not see the hidden or non-character entry's name;
+- `standard` uses one direct confirmation, while `varied` rotates among restrained confirmations and includes the standard wording as one possible result;
 - clicking the old button again after the turn changes produces a friendly **Turn Already Advanced** notice and does not move the tracker;
 - a player who does not control the current linked character cannot advance it;
 - off mode suppresses automatic output while explicit Next or Previous still confirms privately to the GM.
@@ -1975,15 +1984,20 @@ Confirm `!ga-config modules` shows WelcomeAssist disabled. Reload the Mod sandbo
 ```roll20chat
 !ga-enable WelcomeAssist
 !welcome-assist help
+!welcome-assist help setup
+!welcome-assist help safety
 !welcome-assist status
 !welcome-assist preview
+!welcome-assist not-a-command
 ```
 
 Pass when:
 
-- the Guide explains setup, modes, preview, announcement, delay, header, and campaign greetings in plain language;
-- status reports module `0.1.0`, `mixed` mode on a first-time configuration, a 3-second delay, and no automatic greeting yet;
+- the root Guide is a compact action and topic menu rather than the complete setup manual;
+- the setup and safety topics explain their focused subjects and include **Back to Guide**;
+- status reports module `0.1.1`, `mixed` mode on a first-time configuration, a 3-second delay, and no automatic greeting yet;
 - preview is whispered only to the GM;
+- the unrecognized command returns **Needs Attention** with an **Open Guide** button rather than silently opening an unrelated screen;
 - enabling and previewing do not create any public message.
 
 Reload the Mod sandbox. Pass when exactly one public greeting appears after the delay. Wait at least 20 seconds and confirm no second automatic greeting appears.
