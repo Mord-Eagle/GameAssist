@@ -5840,7 +5840,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             const condition = getCondition(body);
             if (!condition) {
-                sendPanel('ConditionAssist', `No condition named ${_sanitize(body)} is configured. Use <code>!condition help</code> for guidance.`, { msg });
+                sendPanel('ConditionAssist', `<div>No condition named ${_sanitize(body)} is configured.</div><div style="margin-top:8px;">${GameAssist.createButton('Open Guide', '!condition help')}</div>`, { msg });
                 return;
             }
             showCondition(condition, { force: true });
@@ -5861,7 +5861,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             const condition = getCondition(requested);
             if (!condition) {
-                sendPanel('ConditionAssist', `No condition named ${_sanitize(requested || '(blank)')} is configured. Use <code>!condition help</code> for guidance.`, { msg });
+                sendPanel('ConditionAssist', `<div>No condition named ${_sanitize(requested || '(blank)')} is configured.</div><div style="margin-top:8px;">${GameAssist.createButton('Open Guide', '!condition help')}</div>`, { msg });
                 return;
             }
             showCondition(condition, { force: true });
