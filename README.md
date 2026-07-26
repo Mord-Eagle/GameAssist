@@ -3,7 +3,7 @@
 **Version 0.1.7.0 development line** | © 2025-2026 Mord Eagle · MIT License<br>
 **Lead Dev:** [@Mord-Eagle](https://github.com/Mord-Eagle)
 
-GameAssist v0.1.7.0 adds CombatAssist's deliberate encounter, turn, and round workflow to the native Turn Tracker foundation. InitiativeAssist still owns initiative rolls; CombatAssist begins only when the GM starts an encounter, preserves the round through valid native lineup and initiative changes, and stops counting only when tracker state is unreadable or direction is genuinely ambiguous.
+GameAssist v0.1.7.0 adds CombatAssist's deliberate encounter flow to the native Turn Tracker foundation. InitiativeAssist still owns initiative rolls; CombatAssist can use a clearly named native custom row as the round authority, preserves the round through valid lineup changes, and adds optional stale-safe timers and private-safe current-turn pings without automatically ending turns.
 
 ---
 
@@ -20,7 +20,7 @@ GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a
 | Core Lift | Guarded modules, conservative state repair, explicit queue API, session metrics, dependency diagnostics, GM health reporting, and toggleable marker and Turn Tracker services with dependent-module safeguards. |
 | Quick Install | 📥 Install the complete script → 📜 add the CritFumble tables if used → 🔄 reload → 🩺 run the health checks → 🎲 test the enabled features with disposable tokens. |
 | Flagship Player Commands | `!condition <name>`, `!cond-<condition>`, `!concentration`, `!cc`, `!critfumble-<type>` when the GM permits the relevant player action. |
-| Flagship GM Commands | `!Init-Menu`, `!Init-Go`, `!Init-GM`, `!Init-RR`, `!Combat-Menu`, `!Combat-Start`, `!Combat-Next`, `!welcome-assist help`, `!token-assist help`, `!condition`, `!condition status`, `!critfumble menu`, `!critfail`, `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report --help`, `!npc-death-buckets`, `!NPC-WR`, `!npc-death-audit`, `!npc-death-repair`, `!npc-death-arc`, `!ga-conc-status`, `!ga-config ui`. |
+| Flagship GM Commands | `!Init-Menu`, `!Init-Go`, `!Init-GM`, `!Init-RR`, `!Combat-Menu`, `!Combat-Start`, `!Combat-Next`, `!Combat-Timer`, `!Welcome`, `!token-assist help`, `!condition`, `!condition status`, `!critfumble menu`, `!critfail`, `!npc-hp-all`, `!npc-hp-selected`, `!npc-death-report --help`, `!npc-death-buckets`, `!NPC-WR`, `!npc-death-audit`, `!npc-death-repair`, `!npc-death-arc`, `!ga-conc-status`, `!ga-config ui`. |
 | Admin Controls | `!ga-config list|get|set|modules|cleanup|ui|timezone`, `!ga-timezone`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-metrics`, and `!ga-debug`. |
 | Table Time | `!ga-timezone` chooses a named IANA timezone, follows daylight-saving changes, and controls readable times plus date-managed NPC Sessions without rewriting stored event instants. |
 | Queue Model | Normal commands/events run directly. Only `GameAssist.enqueue(...)` work and module transitions use the serialized queue. |
@@ -68,8 +68,8 @@ GameAssist’s kernel and bundled modules expose:
 * **ConditionAssist** – supplies 2014 SRD condition wording by default, optional 2024 SRD wording, campaign-editable descriptions, case-insensitive `!cond-<condition>` quick references, marker artwork, an accurate selected-token menu, a GM current-page condition/marker status roster, verified marker-toggling announcements in public chat or player whispers, add/remove/toggle commands, guarded player permissions, and marker-change descriptions. Every condition marker operation and observation goes through MarkerService.
 * **TokenAssist** – provides general token controls through `!token-assist` and `!ta`/`!ta-*`, explicit-ID permissions, token-change observers, and MarkerService-backed status operations. Older supported `!token-mod` macros continue temporarily during v0.1.x and are not processed by GameAssist when standalone TokenMod is detected.
 * **InitiativeAssist** – provides the case-insensitive `!Init-` command family for D&D 5E 2014 and 2024 characters, public player invitations, composable roll options, detailed dice/formula results, score-aware optional narration, selective rerolls, encounter groups, audits, and preservation-first `!Init-RR`. It does not advance turns or own encounter rounds.
-* **CombatAssist** – provides the case-insensitive `!Combat-` command family as an optional layer over Roll20's native Turn Tracker. Native arrows remain available; guarded Next and Previous controls, private player turn prompts, deliberate encounter lifecycle, preserved-round tracker maintenance, and one-step recovery add convenience. TurnTrackerService is required for its tracker access; any optional cross-module feature must clearly name and locally enforce its own prerequisite.
-* **WelcomeAssist** – optionally posts one delayed table greeting after GameAssist completes a healthy startup. It starts disabled, offers professional, built-in table-humor, campaign-custom, and mixed greeting modes, and keeps configuration and previews private to the GM.
+* **CombatAssist** – provides the case-insensitive `!Combat-` command family as an optional layer over Roll20's native Turn Tracker. Native arrows remain available; a recognized native round-counter row can own the round number, while guarded movement, stale-safe timers, native pings, private player prompts, preserved-round maintenance, and one-step recovery add convenience. TurnTrackerService is required for tracker access; timers never advance initiative and pings never alter tokens.
+* **WelcomeAssist** – optionally posts one delayed table greeting after GameAssist completes a healthy startup. It starts disabled, offers professional, built-in table-humor, campaign-custom, and mixed greeting modes, keeps configuration and previews private to the GM, and uses the short case-insensitive `!Welcome` / `!Welcome-Action` command family.
 * **MECHSUITS Structure** – the executable script uses the literal codename `GAMEASSIST`, framed sections, file-scoped canonical tree metadata, and per-section change notes.
 
 **Design goal:** useful, inspectable campaign automation that reports failures clearly and can be upgraded incrementally.
@@ -86,7 +86,7 @@ GameAssist’s kernel and bundled modules expose:
 | 🔄 **4 · Reload** | Save or restart the Mod sandbox and wait for the GameAssist core ready whisper. Module-by-module startup whispers are normally quiet. |
 | 🩺 **5 · Check Health** | Run `!ga-status` and `!ga-config modules`. Confirm the features you enabled are running. |
 | 🕰️ **6 · Set Table Time** | Open `!ga-timezone`, choose the city/region that governs the campaign clock, and confirm the displayed time and Session date. The sandbox default remains available. |
-| 🎲 **7 · Try the Table Tools** | Test `!token-assist help`, `!condition help`, `!critfumble menu`, `!concentration --status`, `!npc-hp-selected`, `!Init-Help`, `!Combat-Help`, and `!welcome-assist help` for the modules you use. |
+| 🎲 **7 · Try the Table Tools** | Test `!token-assist help`, `!condition help`, `!critfumble menu`, `!concentration --status`, `!npc-hp-selected`, `!Init-Help`, `!Combat-Help`, and `!Welcome` for the modules you use. |
 | 🛡️ **8 · Verify Real Changes** | With disposable tokens, test one NPC death/revival, one concentration marker, and one mixed-character initiative reroll before the first live session. |
 
 The `v0.1.5.x` line replaces standalone TokenMod and StatusInfo for the token and condition workflows supported by GameAssist. It does not keep a hidden legacy path that sends GameAssist work back to those standalone scripts. Remove both standalone scripts before testing overlapping TokenAssist or ConditionAssist commands.
@@ -414,7 +414,7 @@ Config keys: `playersCanUseIds`, `warnOnStandalone`, and the protected `configSc
 
 ### 6.4 InitiativeAssist
 
-> **Module version:** `1.0.2`<br>
+> **Module version:** `1.0.3`<br>
 > **Core service:** `TurnTrackerService 1.0.0`<br>
 > **Default:** Disabled until the GM enables it.
 
@@ -456,13 +456,13 @@ GM commands:
 
 `!Init-RR` rolls once per unique eligible token. Duplicate occurrences receive the same result. Custom rows, counters, objects, dead NPCs, HP/death-marker mismatches, stale references, off-page tokens, unsupported sheets, and unreadable 2024 entries are not rerolled or repositioned. Eligible rows sort only among the positions InitiativeAssist owns, so a round counter or another Mod's custom entry stays exactly where the GM placed it.
 
-InitiativeAssist deliberately stops at initiative. CombatAssist owns deliberate encounter lifecycle, exact turn movement, and conservative round counting. Durations, timers, end-of-turn effects, and current-turn visuals remain outside both modules in v0.1.7.0.
+InitiativeAssist deliberately stops at initiative. CombatAssist owns deliberate encounter lifecycle, exact turn movement, native or conservative round counting, optional turn timers, and native current-turn pings. Condition-duration countdowns and automatic end-of-turn effects remain outside both modules in v0.1.7.0.
 
 Config keys: `enabled`, `mode` (`manager` or `observer`), `hideNpcRolls` (default `true`).
 
 ### 6.5 CombatAssist
 
-> **Module version:** `1.0.2`<br>
+> **Module version:** `1.0.3`<br>
 > **Core service:** `TurnTrackerService 1.0.0`<br>
 > **Default:** Disabled until the GM enables it.
 
@@ -484,7 +484,7 @@ All `!Combat-` commands are case-insensitive. The **Control Center** is the main
 * `!Combat-Help` or `!Combat-Guide` → Open the plain-language Quick Guide.
 * `!Combat-Manual` → Create or update the complete CombatAssist user-manual handout.
 * `!Combat-Info` → Whisper the abbreviated purpose and ordinary table workflow.
-* `!Combat-Start` → Begin tracking the current open Turn Tracker at round 1.
+* `!Combat-Start` → Begin tracking the current open Turn Tracker at its recognized round-counter value, or round 1 when no counter is present.
 * `!Combat-Start --confirm` → Deliberately replace the current CombatAssist encounter baseline.
 * `!Combat-Next` → Move exactly one native tracker row through TurnTrackerService.
 * `!Combat-Prev` → Move exactly one native tracker row backward without changing the saved round.
@@ -499,8 +499,17 @@ All `!Combat-` commands are case-insensitive. The **Control Center** is the main
 * `!Combat-End --confirm` → Clear only CombatAssist's encounter record; tracker rows remain unchanged.
 * `!Combat-Announce gm|public|whispers|off` → Whisper turns to the GM, post them publicly, privately notify the GM and current player, or suppress automatic turn notices.
 * `!Combat-Confirm standard|varied` → Choose one direct player turn-completion message or a warmer rotation that contains the Standard sentence exactly once.
+* `!Combat-Timer` → Open turn length, deadline audience, and early-reminder controls.
+* `!Combat-Timer on|off` → Enable or disable timers without changing initiative.
+* `!Combat-Timer duration <seconds>` → Set a 10-3600 second turn length.
+* `!Combat-Timer deadline gm|player|both|public` → Choose who hears that the configured turn time elapsed.
+* `!Combat-Timer add <seconds-remaining> <gm|player|both|public>` → Add or update one of five early reminders.
+* `!Combat-Timer remove <seconds-remaining>` / `clear --confirm` → Remove reminder points.
+* `!Combat-Cue off|gm|players|both|public` → Choose who receives Roll20's temporary native current-turn ping.
 
-CombatAssist counts an exact forward or backward row rotation as turn movement. A complete uninterrupted forward cycle back to the current anchor advances the round. Backward movement never advances a round. Valid additions, removals, InitiativeAssist rerolls, priority changes, and manual reordering keep the current round and establish the current first entry as a fresh cycle anchor. They do not restart CombatAssist or rewrite Roll20's chosen order.
+CombatAssist counts an exact forward or backward row rotation as turn movement. When exactly one custom item is clearly named **Round**, **Rounds**, **Round Count**, **Round Counter**, **Round Number**, **Round Tracker**, **Combat Round**, or **Current Round**, its positive whole-number value becomes the authoritative round. When CombatAssist moves that row to the top, it evaluates a simple signed whole-number Round Calculation such as `+1`; this replaces the native calculation that Roll20's API-side array write would otherwise skip. Multiple plausible counters are refused rather than guessed. Without a recognized counter, one uninterrupted forward cycle back to the anchor advances the internal round. Backward movement never advances a round.
+
+Valid additions, removals, InitiativeAssist rerolls, priority changes, and manual reordering keep the current round and establish the current first entry as a fresh cycle baseline. If a recognized round counter is present, its displayed value remains authoritative after that rebaseline. These changes do not restart CombatAssist or rewrite Roll20's chosen order.
 
 Pause remains useful when the GM wants to make several changes without intermediate notices. It is no longer required for ordinary roster maintenance. CombatAssist enters **attention** only when it cannot read a trustworthy tracker, such as a closed or wrong-page tracker, malformed data, a stale token reference, duplicate identities, or ambiguous native movement with exactly two entries.
 
@@ -510,7 +519,11 @@ With exactly two rows, Roll20's native forward and backward arrows produce the s
 
 Every private GM turn notice includes **Next Turn**, **Previous Turn**, and **Open Menu**. In `whispers` mode, the current linked character's non-GM controller also receives a private **End My Turn** button. A successful click receives its **Turn Complete** confirmation before any next-character **Your Turn** prompt, including when one player controls consecutive characters. The confirmation reports the next initiative without implying the recipient controls it. A linked token visible on the objects layer may be named; GM-layer tokens, unlinked objects, and custom rows use a generic continuation message. An older button explains that the turn has already advanced and makes no additional change. The GM can choose one Standard sentence or a warmer Varied rotation containing that Standard sentence once.
 
-Config keys: `enabled`, `announcements` (`gm`, `public`, `whispers`, or `off`; default `gm`), `playerConfirmations` (`standard` or `varied`; default `standard`). Saved pre-release `fun` values migrate to `varied`.
+Turn timers are disabled by default. Each callback is bound to the active encounter, round, current token identity, exact tracker revision, and stored deadline. Advancing through Roll20, CombatAssist, InitiativeAssist, or End My Turn invalidates the old callbacks. Pausing, attention, ending, or disabling CombatAssist cancels them. A timer reports elapsed time only and never advances the Turn Tracker. Player-targeted reminders are sent only for visible linked Objects-layer character turns; hidden, unlinked, and custom entries stay with the GM. When the sandbox reloads, a still-valid saved deadline resumes; an already-passed deadline produces no late player reminder.
+
+Current-turn pings are also disabled by default. They use Roll20's native `sendPing()` without recentering anyone's map or changing token state. A GM-layer or otherwise hidden token is restricted to GM visibility even if the configured audience is broader. Custom tracker rows receive no token ping.
+
+Config keys: `enabled`; `announcements` (`gm`, `public`, `whispers`, or `off`; default `gm`); `playerConfirmations` (`standard` or `varied`; default `standard`); `timerEnabled` (default `false`); `timerDurationSeconds` (default `120`); `timerDeadlineAudience` (default `gm`); `timerReminders` (up to five guarded reminder records); and `turnCue` (`off`, `gm`, `players`, `both`, or `public`; default `off`). Saved pre-release `fun` values migrate to `varied`.
 
 ### 6.6 Concentration Tracker
 
@@ -637,7 +650,7 @@ Typical session:
 
 ### 6.11 WelcomeAssist *(optional, GM-managed)*
 
-> **Module version:** `0.1.1`<br>
+> **Module version:** `0.1.2`<br>
 > **Default:** Disabled<br>
 > **Automatic behavior:** At most one public greeting per sandbox lifecycle after completed GameAssist startup.
 
@@ -647,25 +660,27 @@ Start here:
 
 ```roll20chat
 !ga-enable WelcomeAssist
-!welcome-assist help
-!welcome-assist preview
+!Welcome
+!Welcome-Preview
 ```
 
 Choose a mode, adjust the greeting if desired, then reload the Mod sandbox. WelcomeAssist waits for the configured delay and confirms that every other enabled GameAssist component is active before it posts. If a component remains unhealthy, the greeting is skipped and the GM receives the component name instead of a misleading ready announcement.
 
-Enabling WelcomeAssist during a running sandbox does **not** post publicly. `!welcome-assist preview` is always private to the GM. `!welcome-assist announce` is the explicit immediate public action and cancels any pending automatic greeting for that sandbox lifecycle.
+Enabling WelcomeAssist during a running sandbox does **not** post publicly. `!Welcome-Preview` is always private to the GM. `!Welcome-Announce` is the explicit immediate public action and cancels any pending automatic greeting for that sandbox lifecycle.
 
 Main commands:
 
-* `!welcome-assist help` → Open the compact action guide; its topic buttons reveal setup, mode, campaign-text, appearance, and startup details.
-* `!welcome-assist status` → Review the current mode, delay, header, custom-list count, timer, and current-sandbox announcement.
-* `!welcome-assist preview` → Show the next greeting only to the GM.
-* `!welcome-assist announce` → Post one greeting publicly now.
-* `!welcome-assist mode default|builtin|custom|mixed` → Choose the greeting pool.
-* `!welcome-assist delay <seconds>` → Set a delay from 1 to 60 seconds.
-* `!welcome-assist header show|hide|<text>` → Control the optional heading.
-* `!welcome-assist default <text>` → Replace the professional greeting.
-* `!welcome-assist custom list|add|remove|clear` → Manage up to ten campaign greetings; clearing requires `--confirm`.
+* `!Welcome` or `!Welcome-Help` → Open the compact action guide; its topic buttons reveal setup, mode, campaign-text, appearance, and startup details.
+* `!Welcome-Status` → Review the current mode, delay, header, custom-list count, timer, and current-sandbox announcement.
+* `!Welcome-Preview` → Show the next greeting only to the GM.
+* `!Welcome-Announce` → Post one greeting publicly now.
+* `!Welcome-Mode default|builtin|custom|mixed` → Choose the greeting pool.
+* `!Welcome-Delay <seconds>` → Set a delay from 1 to 60 seconds.
+* `!Welcome-Header show|hide|<text>` → Control the optional heading.
+* `!Welcome-Default <text>` → Replace the professional greeting.
+* `!Welcome-Custom list|add|remove|clear` → Manage up to ten campaign greetings; clearing requires `--confirm`.
+
+All short Welcome commands are case-insensitive. The longer `!welcome-assist ...` forms remain accepted so existing campaign macros do not break, but new menus and documentation use the shorter family.
 
 Custom greetings are plain text, limited to 240 characters, deduplicated without regard to capitalization, and escaped before public output. Roll20 inline-roll, attribute, ability, and query syntax is displayed as text rather than executed.
 
@@ -760,10 +775,10 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!Init-Audit` | — | Show the detailed read-only Initiative Review privately in chat. |
 |  | `!Init-Mode observer\|manager` | — | Choose read-only coexistence or InitiativeAssist tracker writes. |
 | **Combat** | `!Combat-Menu` / `!Combat-GM` | — | Open the CombatAssist Control Center. |
-|  | `!Combat-Help` / `!Combat-Guide` | `[turns\|recovery\|messages\|attention]` | Open the compact guide or one focused reference panel. |
+|  | `!Combat-Help` / `!Combat-Guide` | `[turns\|timers\|recovery\|messages\|attention]` | Open the compact guide or one focused reference panel. |
 |  | `!Combat-Manual` / `!Combat-Info` | — | Create or update the complete user-manual handout, or whisper its abbreviated purpose. |
 |  | `!Combat-Status` / `!Combat-Audit` | — | Review current encounter health, or run the explicitly read-only tracker inspection. |
-|  | `!Combat-Start` | `[--confirm]` | Start at round 1, or deliberately replace an existing encounter baseline after confirmation. |
+|  | `!Combat-Start` | `[--confirm]` | Start from a recognized native round counter or round 1, or deliberately replace an existing encounter baseline after confirmation. |
 |  | `!Combat-Next` | — | Rotate the native Turn Tracker forward exactly one row through TurnTrackerService. |
 |  | `!Combat-Prev` | — | Rotate the native Turn Tracker backward exactly one row without changing the round. |
 |  | `!Combat-End-Turn` | `--token <ID>` | Whispers-mode player button; advances only if the clicking player still controls the current token. |
@@ -773,13 +788,15 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!Combat-End` | `[--confirm]` | Clear only CombatAssist encounter state after confirmation; leave Roll20 tracker rows unchanged. |
 |  | `!Combat-Announce` | `gm\|public\|whispers\|off` | Choose GM-only, public, GM-plus-current-player, or disabled turn notices. |
 |  | `!Combat-Confirm` | `standard\|varied` | Choose one direct private player acknowledgement or a warmer rotation containing the Standard sentence exactly once. |
-| **Welcome** | `!welcome-assist help` / `status` / `preview` | — | Open the GM guide, review settings, or preview the next greeting privately. |
-|  | `!welcome-assist announce` | — | Post one greeting publicly now and cancel the pending automatic greeting for this sandbox. |
-|  | `!welcome-assist mode` | `default\|builtin\|custom\|mixed` | Choose the greeting pool. |
-|  | `!welcome-assist delay` | `<seconds>` | Set the automatic delay from 1 to 60 seconds. |
-|  | `!welcome-assist header` | `show\|hide\|<text>` | Show, hide, or replace the public greeting header. |
-|  | `!welcome-assist default` | `<text>` | Replace the professional default greeting. |
-|  | `!welcome-assist custom` | `list`, `add <text>`, `remove <number>`, `clear --confirm` | Manage the bounded campaign greeting list. |
+|  | `!Combat-Timer` | `on\|off\|duration N\|deadline audience\|add N audience\|remove N\|clear --confirm` | Configure stale-safe turn timing and per-reminder recipients; never auto-advance. |
+|  | `!Combat-Cue` | `off\|gm\|players\|both\|public` | Configure a temporary native current-turn ping without changing token properties or map position. |
+| **Welcome** | `!Welcome` / `!Welcome-Help` / `!Welcome-Status` / `!Welcome-Preview` | — | Open the GM guide, review settings, or preview the next greeting privately. |
+|  | `!Welcome-Announce` | — | Post one greeting publicly now and cancel the pending automatic greeting for this sandbox. |
+|  | `!Welcome-Mode` | `default\|builtin\|custom\|mixed` | Choose the greeting pool. |
+|  | `!Welcome-Delay` | `<seconds>` | Set the automatic delay from 1 to 60 seconds. |
+|  | `!Welcome-Header` | `show\|hide\|<text>` | Show, hide, or replace the public greeting header. |
+|  | `!Welcome-Default` | `<text>` | Replace the professional default greeting. |
+|  | `!Welcome-Custom` | `list`, `add <text>`, `remove <number>`, `clear --confirm` | Manage the bounded campaign greeting list. |
 | **Token Controls** | `!token-assist help` / `!ta-help` | — | Open TokenAssist guidance, commands, compatibility limits, provenance, and attribution. |
 |  | `!token-assist --help-statusmarkers` / `!ta-help-statusmarkers` | — | Open the marker-command guide. |
 |  | `!token-assist --on|--off|--flip <property...>` / `!ta-on|off|flip` | selected/authorized targets | Change supported boolean token properties. |
@@ -862,13 +879,18 @@ Setting `enabled=true` or `enabled=false` routes through component lifecycle con
 | **CombatAssist** | `enabled` | bool | `false` | Enable explicit encounter, turn, and round tracking through the `!Combat-` workflow. |
 |  | `announcements` | enum | `"gm"` | Send turn notices with `gm`, `public`, `whispers`, or `off`; Whispers privately gives the current player an authorized End My Turn button. |
 |  | `playerConfirmations` | enum | `"standard"` | Use `standard` or `varied` private acknowledgements after a player successfully ends a turn. |
+|  | `timerEnabled` | bool | `false` | Enable guarded turn timers; timers report only and never advance initiative. |
+|  | `timerDurationSeconds` | number | `120` | Set the turn deadline from 10 to 3600 seconds. |
+|  | `timerDeadlineAudience` | enum | `"gm"` | Send the deadline notice to `gm`, `player`, `both`, or `public`. |
+|  | `timerReminders` | array | `[]` | Up to five seconds-remaining/audience records managed through `!Combat-Timer`. |
+|  | `turnCue` | enum | `"off"` | Send a native non-centering ping to `gm`, `players`, `both`, or `public`; hidden turns remain GM-only. |
 | **WelcomeAssist** | `enabled` | bool | `false` | Enable the optional post-bootstrap table greeting. Reload after setup for automatic behavior. |
 |  | `mode` | enum | `"mixed"` | Use the professional default, built-ins, campaign greetings, or the combined weighted pool. |
 |  | `delayMs` | number | `3000` | Wait 1-60 seconds after Bootstrap before checking health and greeting the table. |
 |  | `showHeader` | bool | `true` | Show the greeting card header. |
 |  | `header` | string | `"Game Night Is Ready"` | Set the bounded heading text; the default also includes a die icon. |
 |  | `defaultGreeting` | string | professional greeting | Set the professional greeting used by default and mixed modes. |
-|  | `customGreetings` | array | `[]` | Protected list of up to ten campaign greetings; manage through `!welcome-assist custom`. |
+|  | `customGreetings` | array | `[]` | Protected list of up to ten campaign greetings; manage through `!Welcome-Custom`. |
 | **ConcentrationTracker** | `enabled` | bool | `true` | Enable concentration commands and tracking. |
 |  | `marker` | string | `"Concentrating"` | Marker name used for status checks and removal. |
 |  | `randomize` | bool | `true` | Randomize concentration emote flavor. |
@@ -1153,11 +1175,11 @@ The result retains the TurnTrackerService snapshot and adds InitiativeAssist cla
 const encounter = GameAssist.CombatAssist.getStatus();
 ```
 
-`version` reports CombatAssist `1.0.1`. `getStatus()` returns a defensive copy of the current encounter record or `null`; changing the returned object cannot alter saved GameAssist state. Tracker mutation remains behind GM-only Next, Previous, and confirmed Restore controls or the current player's token-bound End My Turn control, and every path uses TurnTrackerService authority. Valid native roster and initiative changes are observed and adopted without CombatAssist rewriting them.
+`version` reports CombatAssist `1.0.3`. `getStatus()` returns a defensive copy of the current encounter record or `null`; changing the returned object cannot alter saved GameAssist state. Tracker mutation remains behind GM-only Next, Previous, and confirmed Restore controls or the current player's token-bound End My Turn control, and every path uses TurnTrackerService authority. A recognized round counter is reported as the round source. Timer callbacks and native pings remain private module behavior and expose no mutation API.
 
 ### 10.12 WelcomeAssist
 
-`GameAssist.WelcomeAssist` exists only while WelcomeAssist is running. Its `version` field is available for inspection. The `onBootstrapComplete()` method is the module's internal post-bootstrap lifecycle hook; external modules should not call it to produce additional greetings. Public management belongs to the guarded `!welcome-assist` commands.
+`GameAssist.WelcomeAssist` exists only while WelcomeAssist is running. Its `version` field is available for inspection. The `onBootstrapComplete()` method is the module's internal post-bootstrap lifecycle hook; external modules should not call it to produce additional greetings. Public management belongs to the guarded short `!Welcome` commands; the longer `!welcome-assist` family remains a compatibility alias.
 
 ### 10.13 MECHSUITS Contribution Contract
 
@@ -1328,22 +1350,24 @@ Use these only after opening Roll20's Turn Tracker on the encounter page. `!Init
 !Combat-Pause
 !Combat-Resume
 !Combat-Status
+!Combat-Timer
+!Combat-Cue
 !Combat-End
 ```
 
-Establish initiative first. Start CombatAssist only when the encounter actually begins. Roll20's native arrows remain the normal tracker controls; Next and Previous are guarded alternatives. Adding or removing combatants, manually reordering the tracker, and using `!Init-RR` preserve the round and establish a fresh cycle from the current first entry. Pause is optional when making several edits. Restore previews one saved tracker checkpoint; `!Combat-End` asks for confirmation and leaves the native tracker intact.
+Establish initiative first. Start CombatAssist only when the encounter actually begins. Roll20's native arrows remain the normal tracker controls; Next and Previous are guarded alternatives. A single custom **Round Counter** row with value `1` and calculation `+1` can supply the round boundary and number. Adding or removing combatants, manually reordering the tracker, and using `!Init-RR` preserve the round and establish a fresh cycle from the current first entry. Pause is optional when making several edits. Restore previews one saved tracker checkpoint; `!Combat-End` asks for confirmation and leaves the native tracker intact.
 
 ### 12.11 WelcomeAssist Setup
 
 ```roll20chat
 !ga-enable WelcomeAssist
-!welcome-assist help
-!welcome-assist custom add Dovie'andi se tovya sagain
-!welcome-assist mode mixed
-!welcome-assist preview
+!Welcome
+!Welcome-Custom add Dovie'andi se tovya sagain
+!Welcome-Mode mixed
+!Welcome-Preview
 ```
 
-Preview privately, then reload the sandbox when the greeting is ready. Use `!welcome-assist announce` only when an immediate public greeting is intended.
+Preview privately, then reload the sandbox when the greeting is ready. Use `!Welcome-Announce` only when an immediate public greeting is intended.
 
 ---
 
@@ -1619,6 +1643,10 @@ With exactly two rows, use `!Combat-Next` or `!Combat-Prev`. Roll20 exposes the 
 
 If a player cannot use **End My Turn**, confirm announcement mode is `whispers`, the button came from the newest turn message, and the linked character still names that player as a controller. Character control is authoritative when a token is linked. A successful click receives a private Turn Complete message; an older button receives a friendly notice that the tracker already advanced.
 
+If a native custom **Round Counter** does not advance through `!Combat-Next`, confirm it has one of the documented whole-label names, a positive whole-number current value, and a simple signed whole-number Round Calculation such as `+1`. CombatAssist refuses multiple plausible counters rather than choosing one silently. Native Roll20 arrow movement normally evaluates the calculation itself; CombatAssist evaluates the same simple calculation on its own guarded forward movement.
+
+If a turn reminder appears late, record whether initiative was advanced through Roll20, CombatAssist, InitiativeAssist, or another Mod. GameAssist binds each callback to the exact encounter, round, current token, tracker revision, and deadline; a callback from an older turn should produce no message. `!Combat-Timer` shows the live configuration. `!Combat-Cue` shows the current ping audience; hidden and GM-layer turns are always restricted to the GM.
+
 If another Mod also advances turns, manages rounds, rewrites tracker rows, or inserts and updates counters, use only one encounter-flow owner. Disabling CombatAssist leaves InitiativeAssist and the native tracker available.
 
 ### 14.16 WelcomeAssist Does Not Greet the Table
@@ -1627,13 +1655,13 @@ Run:
 
 ```roll20chat
 !ga-config modules
-!welcome-assist status
-!welcome-assist preview
+!Welcome-Status
+!Welcome-Preview
 ```
 
 WelcomeAssist starts disabled. Enable it, configure and preview it, then reload the Mod sandbox; enabling it during a running sandbox intentionally does not announce. The automatic greeting waits 1-60 seconds, runs at most once per sandbox lifecycle, and is skipped when another configured GameAssist component remains inactive. In that case, the GM warning names the blocking component.
 
-`!welcome-assist preview` is private. `!welcome-assist announce` is public and consumes the automatic greeting opportunity for the current sandbox so the table does not receive a duplicate after the timer fires. Custom mode falls back to the professional greeting when its campaign list is empty.
+`!Welcome-Preview` is private. `!Welcome-Announce` is public and consumes the automatic greeting opportunity for the current sandbox so the table does not receive a duplicate after the timer fires. Custom mode falls back to the professional greeting when its campaign list is empty. Existing `!welcome-assist` macros remain accepted.
 
 ### 14.17 Compatibility Hints
 
@@ -1695,7 +1723,7 @@ TurnTrackerService should report enabled. InitiativeAssist starts disabled so it
 
 CombatAssist also starts disabled. Establish a disposable tracker with at least three distinct rows, enable CombatAssist, open `!Combat-Help`, and verify one complete forward cycle changes round 1 to round 2. Use `!Combat-End --confirm` when the test is complete.
 
-WelcomeAssist also starts disabled. Enabling it does not post immediately: open `!welcome-assist help`, choose and preview the greeting, then reload the sandbox when automatic table greetings are wanted.
+WelcomeAssist also starts disabled. Enabling it does not post immediately: open `!Welcome`, choose and preview the greeting, then reload the sandbox when automatic table greetings are wanted.
 
 IV. **Verify Configuration and Marker State**
 
@@ -1824,8 +1852,8 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 | DM-configurable timezone | **Implemented; focused acceptance passed** | One validated table timezone controls readable timestamps and date-managed NPC Sessions while stored event instants remain absolute. The complete live module suite was not rerun for v0.1.5.1. |
 | TurnTrackerService 1.0.0 | **Implemented; live foundation passed** | Toggleable native-tracker snapshots, structural row classification, guarded lossless writes, observations, dependency cascading, and visible page-owned row creation passed the focused Roll20 checkpoint. |
 | InitiativeAssist 1.0.2 | **Implemented; guide refinement pending live check** | Mixed 2014/2024 initiative, public and GM-only start pages, private NPC evidence, GM-layer NPC batches, selected-character batches, roll options, selective rerolls, encounter groups, status, audit, and a compact layered guide through the case-insensitive `!Init-` namespace. |
-| CombatAssist 1.0.2 | **Implemented; Roll20 acceptance pending** | Optional native-tracker layer with deliberate encounter lifecycle, conservative rounds, automatic preserved-round adoption of valid roster/reroll changes, one-step recovery, guarded movement, ordered privacy-safe player confirmations, a compact layered guide, and a persistent on-demand user manual. TurnTrackerService is required; any future cross-module feature must label and locally enforce its own prerequisite without making baseline modules mutually dependent. |
-| WelcomeAssist 0.1.1 | **Implemented; guide refinement pending live check** | Disabled-by-default post-bootstrap greeting with professional, built-in, campaign-custom, and mixed modes; private preview/configuration; bounded custom text; health-gated one-per-sandbox automatic output; compact layered guidance; and unknown-command recovery. |
+| CombatAssist 1.0.3 | **Implemented; Roll20 acceptance pending** | Optional native-tracker layer with native round-counter authority, conservative fallback rounds, preserved-round roster/reroll adoption, one-step recovery, guarded movement, stale-safe configurable timers, private-safe native pings, ordered player confirmations, compact guidance, and a persistent manual. TurnTrackerService is its only baseline prerequisite. |
+| WelcomeAssist 0.1.2 | **Implemented; short-command live check pending** | Disabled-by-default post-bootstrap greeting with professional, built-in, campaign-custom, and mixed modes; private preview/configuration; bounded custom text; health-gated one-per-sandbox automatic output; compact guidance; short `!Welcome` commands; and retained `!welcome-assist` compatibility. |
 | Configuration export | **Implemented, partial** | Versioned configuration-only snapshot; no import/restore. |
 | State self-healing | **Implemented, conservative** | Repairs known containers; does not auto-delete unknown branches. |
 | Public queue API | **Implemented, opt-in** | Does not route every event through the queue. |
@@ -1834,7 +1862,7 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 
 ### 17.2 Current Candidate: CombatAssist Sandbox Acceptance
 
-The v0.1.7.0 candidate must pass the complete CombatAssist section in `Smoketest.md`: explicit lifecycle, native forward and backward movement, preserved-round deletion/addition/reroll behavior, guarded recovery, GM and player whispers, A-B-A delivery for consecutive characters controlled by one player, privacy-safe Standard and Varied turn confirmations, manual-handout creation/update, common navigation aliases, a complete round, optional pause/edit/resume, attention states, two-entry handling, and confirmed end behavior. The compact InitiativeAssist and WelcomeAssist guide refinements also require their focused live checks, and the Roll20 sandbox remains the release gate.
+The v0.1.7.0 candidate must pass the complete CombatAssist section in `Smoketest.md`: explicit lifecycle; native and CombatAssist forward/backward movement; recognized native round-counter `+1`; preserved-round deletion/addition/reroll behavior; guarded recovery; GM and player whispers; A-B-A delivery for consecutive characters controlled by one player; privacy-safe Standard and Varied confirmations; stale-safe timer cancellation; GM/player/public ping privacy; manual-handout creation/update; common navigation aliases; optional pause/edit/resume; attention states; two-entry handling; and confirmed end behavior. The short WelcomeAssist aliases also require their focused live checks, and the Roll20 sandbox remains the release gate.
 
 ### 17.3 Later Candidate: Compatibility-First Bridge Character Sheet
 
@@ -1850,7 +1878,7 @@ This is a separate project and is not implemented in v0.1.5.0.
 ### 17.4 Planned GameAssist Work
 
 1. **Immediate CombatAssist Expansion**
-   * Implement configurable turn timers and stale-safe reminders under Issue #54, followed by reversible current-turn pings and visual indicators under Issue #55.
+   * Complete Roll20 acceptance for the implemented configurable turn timers and stale-safe reminders under Issue #54 and native current-turn pings under Issue #55; consider persistent highlights only if exact Legacy and Jumpgate restoration proves reliable.
    * Implement the explicit optional NPCManager encounter-summary handoff under Issue #56 and opt-in combat music hooks under Issue #57.
    * Continue with a read-only damage-change ledger under Issue #52 and a held-action workflow with player `!Now` under Issue #53 after the immediate notification features are accepted.
    * Keep condition, marker, initiative, and NPC-history ownership behind their existing module and service boundaries.
@@ -1899,7 +1927,7 @@ This is a separate project and is not implemented in v0.1.5.0.
 * No automatic deletion of unexpected state branches.
 * No guaranteed external dependency discovery.
 * No complete state import/restore.
-* No automatic turn advancement, automatic round-counter row, duration timer, condition countdown, end-of-turn effect, current-turn visual, combat music, NPC-history handoff, plugin loader, Rest Manager, or native Mord-sheet implementation.
+* No automatic turn advancement, automatic creation of a round-counter row, condition-duration countdown, end-of-turn effect, persistent token highlight, combat music, NPC-history handoff, plugin loader, Rest Manager, or native Mord-sheet implementation.
 
 ---
 
@@ -1907,11 +1935,11 @@ This is a separate project and is not implemented in v0.1.5.0.
 
 ### v0.1.7.0 – CombatAssist Encounter Flow
 
-* Added disabled-by-default CombatAssist `1.0.2` as an optional layer over the native Turn Tracker, with deliberate lifecycle, guarded next/previous controls, authorized player End My Turn prompts, and privacy-safe next-initiative confirmations.
-* Added conservative round counting for exact one-row movement while allowing valid combatant additions, removals, initiative rerolls, and manual reordering to preserve the current round and establish a fresh cycle.
+* Added disabled-by-default CombatAssist `1.0.3` as an optional layer over the native Turn Tracker, with deliberate lifecycle, guarded next/previous controls, authorized player End My Turn prompts, privacy-safe next-initiative confirmations, native round-counter support, turn timers, and current-turn pings.
+* Added native round authority from one clearly named custom Round Counter, including conservative `+1` evaluation when CombatAssist moves that row to the top. Without a counter, exact one-row movement retains conservative complete-cycle counting; valid combatant additions, removals, initiative rerolls, and manual reordering preserve the current round and establish a fresh cycle.
 * Added one-step recovery through a complete saved tracker checkpoint, revision-matched restore confirmation, and deliberate acceptance of the current native tracker without forcing a round-1 restart.
-* Added GM-only setup and diagnostics plus configurable GM, public, GM-and-current-player whispers, or disabled turn announcements. Successful and stale player controls receive private Standard or warmer Varied acknowledgements without exposing hidden tracker identities; consecutive characters controlled by one player now receive the outgoing confirmation before the next-turn prompt.
-* Refined InitiativeAssist to `1.0.2`, CombatAssist to `1.0.2`, and WelcomeAssist to `0.1.1` with compact root guides and focused topic panels; CombatAssist adds an on-demand persistent manual handout and common navigation aliases, while WelcomeAssist gives unknown commands a direct Open Guide recovery path.
+* Added GM-only setup and diagnostics plus configurable GM, public, GM-and-current-player whispers, or disabled turn announcements. Optional stale-safe timers support a bounded duration, deadline recipient, and up to five early reminders without advancing initiative. Optional native pings can identify the current token without recentering a map or changing token state, and hidden turns remain GM-only.
+* Refined InitiativeAssist to `1.0.2`, CombatAssist to `1.0.3`, and WelcomeAssist to `0.1.2` with compact root guides and focused topic panels; CombatAssist adds an on-demand persistent manual handout and common navigation aliases, while WelcomeAssist makes the short `!Welcome` command family primary and gives unknown commands a direct Open Guide recovery path.
 * Preserved all existing tracker rows and fields; unreadable, stale, duplicate, off-page, closed, or malformed states stop with recovery choices instead of guessing.
 
 ### v0.1.6.1 – Private Initiative and WelcomeAssist

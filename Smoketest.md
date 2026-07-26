@@ -1360,7 +1360,7 @@ Record:
 
 ## 9. CombatAssist
 
-**What this proves:** CombatAssist remains an optional layer over Roll20's native tracker, starts only when asked, follows ordinary native movement, preserves the current round through valid lineup and initiative changes, offers one-step recovery, orders shared-player turn messages correctly, and keeps long-form guidance in one reusable manual handout.
+**What this proves:** CombatAssist remains an optional layer over Roll20's native tracker, starts only when asked, honors a native custom round counter, preserves the current round through valid lineup and initiative changes, expires stale reminders, sends private-safe native pings, offers one-step recovery, orders shared-player turn messages correctly, and keeps long-form guidance in one reusable manual handout.
 
 **Why test it:** A false round count or destructive tracker update interrupts an encounter immediately. The test therefore checks both normal table use and the refusal paths that protect uncertain tracker state.
 
@@ -1375,12 +1375,15 @@ Put at least three distinct rows in Roll20's Turn Tracker on one page. Include o
 !Combat-Help
 !Combat-Guide
 !Combat-Help turns
+!Combat-Help timers
 !Combat-Help messages
 !Combat-Menu
 !Combat-GM
 !Combat-Info
 !Combat-Audit
 !Combat-Manual
+!Combat-Timer
+!Combat-Cue
 !Combat-Start
 !Combat-Status
 ```
@@ -1388,15 +1391,15 @@ Put at least three distinct rows in Roll20's Turn Tracker on one page. Include o
 Pass when:
 
 - **CombatAssist Quick Guide** shows only common actions and topic buttons;
-- the `turns` and `messages` topic panels reveal the detailed encounter and player-message guidance on demand and include **Back to Guide**;
+- the `turns`, `timers`, and `messages` topic panels reveal focused guidance on demand and include **Back to Guide**;
 - `!Combat-Guide` opens the same compact guide, while `!Combat-GM` opens the same **CombatAssist Control Center** as `!Combat-Menu`;
 - `!Combat-Info` whispers a short purpose summary and buttons for the manual, Control Center, and guide;
 - `!Combat-Audit` labels the inspection read-only and changes neither the tracker nor encounter state;
 - `!Combat-Manual` creates or updates exactly one `GameAssist Guide - CombatAssist` handout containing Quick Start, normal play, recovery, privacy, and command-reference sections;
 - the manual confirmation offers **Open Manual**, **Whisper Short Version**, and **Open Control Center**; running `!Combat-Manual` a second time updates the same handout rather than creating another;
-- **CombatAssist Control Center** clearly separates encounter controls, announcement choices, status, and help;
-- start identifies the encounter page, round 1, current first row, and number of tracked rows;
-- status reports `active`, round 1, the current turn, and a plain-language **Tracker Check** with the number of readable distinct entries;
+- **CombatAssist Control Center** clearly separates encounter controls, announcement choices, timer settings, current-turn ping settings, status, and help;
+- start identifies the encounter page, current first row, number of tracked rows, and either round 1 or the recognized native round-counter value;
+- status reports `active`, the round and its source, the current turn, and a plain-language **Tracker Check** with the number of readable distinct entries;
 - no tracker row, priority, custom label, or unknown field changes during help, menu, start, or status;
 - mixed capitalization such as `!cOmBaT-sTaTuS` works.
 
@@ -1431,7 +1434,21 @@ Record the complete tracker, then run:
 
 Pass when Next moves exactly the first row to the end and Previous moves exactly the last row to the front. All row contents remain unchanged, backward movement does not change the round, and each GM turn whisper contains **Next Turn** and **Open Menu**. No new counter, token, marker, history entry, or additional handout should appear.
 
-#### C4. Optional Pause, Edit, and Resume
+#### C4. Native Round Counter and `+1`
+
+End the disposable encounter and rebuild its native tracker in this exact order:
+
+1. One token row.
+2. A second token row.
+3. One Roll20 **Custom Item** named `Round Counter`, current value `1`, and Round Calculation `+1`.
+
+Start CombatAssist and run `!Combat-Status`. Pass when **Round Source** names the native Round Counter and the recorded round is 1. Run `!Combat-Next` once; the second token should become current and the round should remain 1. Run it again.
+
+Pass when the custom Round Counter reaches the top, its displayed value becomes 2, and CombatAssist reports round 2. Advance once more and confirm the first token begins round 2. Run `!Combat-Prev`; the Round Counter should return to the top without becoming 3.
+
+The same behavior should work for the exact whole-label variations **Round**, **Rounds**, **Round Count**, **Round Number**, **Round Tracker**, **Combat Round**, and **Current Round**. Ordinary custom rows such as `Round Reminder` must not be mistaken for the counter. Add a second plausible counter temporarily and confirm `!Combat-Start` refuses to choose between them and explains what to rename.
+
+#### C5. Optional Pause, Edit, and Resume
 
 Run:
 
@@ -1448,7 +1465,7 @@ While paused, add one custom reminder row, remove it again, or deliberately reor
 
 Pass when the prior round number is retained, the current first row becomes the new counting baseline, status returns to `active`, and CombatAssist does not rewrite the edited tracker. Pause is a convenience for making several quiet changes; it is not required for normal additions, removals, rerolls, or reordering.
 
-#### C5. Native Tracker Changes Preserve the Round
+#### C6. Native Tracker Changes Preserve the Round
 
 While active and **without pausing**, record the round and complete tracker, then perform these one at a time:
 
@@ -1469,7 +1486,7 @@ For at least one change, click **Undo Last Tracker Change** or run:
 
 Pass when CombatAssist previews the complete saved tracker and requires confirmation. Confirm the restore and verify the exact prior rows, values, labels, and order return while the recorded round is preserved. Make one valid edit again and keep it; this proves recovery is optional rather than an automatic overwrite.
 
-#### C6. Attention and Recovery for Unreadable Trackers
+#### C7. Attention and Recovery for Unreadable Trackers
 
 Close the Turn Tracker or move it to another page while the encounter is active.
 
@@ -1477,7 +1494,7 @@ Pass when CombatAssist reports **Needs Attention**, retains the recorded round a
 
 Return to the encounter page and reopen a valid tracker. CombatAssist may recover automatically. If attention remains, use `!Combat-Adopt` to keep the current readable tracker and round, or `!Combat-Restore` to preview and confirm the saved tracker. Use **Restart at Round 1** only when deliberately abandoning the recorded round.
 
-#### C7. Duplicate and Stale Rows
+#### C8. Duplicate and Stale Rows
 
 On a disposable tracker, add the same token twice or create two custom rows with the same exact label, then try `!Combat-Start`.
 
@@ -1485,7 +1502,7 @@ Pass when start is refused because the rows are indistinguishable and both rows 
 
 Restore distinct valid rows before continuing.
 
-#### C8. Two-Row Direction Limitation
+#### C9. Two-Row Direction Limitation
 
 End the current test encounter, leave exactly two distinct valid rows, and start again. Use Roll20's native next-turn arrow once.
 
@@ -1499,7 +1516,7 @@ Pass when CombatAssist enters attention and explains that native forward and bac
 
 Pass when the first command advances one turn and the second returns to the anchor at round 2. Restart once more and verify `!Combat-Prev` safely moves backward without entering attention or changing the round.
 
-#### C9. Announcement Audiences and Player Confirmations
+#### C10. Announcement Audiences and Player Confirmations
 
 With a healthy active encounter, test:
 
@@ -1535,7 +1552,38 @@ Pass when:
 
 Setup, status, warnings, and encounter confirmation prompts remain GM-only. Test Whispers mode from a separate non-GM player login; a GM using **Rejoin as Player** still has GM permissions and is not a valid permission test.
 
-#### C10. End Confirmation
+#### C11. Turn Timers and Current-Turn Pings
+
+Use a current player-controlled character followed by a different player-controlled character. Open `!Combat-Timer`, then configure:
+
+```roll20chat
+!Combat-Timer duration 15
+!Combat-Timer deadline gm
+!Combat-Timer add 10 player
+!Combat-Timer on
+```
+
+Pass when the timer menu explains a 15-second turn, a GM deadline, and a player reminder with 10 seconds remaining. Start or advance to the first character, wait about two seconds, then advance to the second character. At the original reminder time, the first character's controller must receive nothing; only a reminder still bound to the second character may appear. Let one disposable turn reach its deadline and confirm the GM is notified while the Turn Tracker remains on the same row.
+
+Run `!Combat-Pause` during another timed turn and wait beyond its former reminder/deadline. Pass when no stale reminder appears. Resume, then test `!Combat-Timer off`; no further timer notice should be scheduled. No timer path should expose an **Advance Automatically** control or move initiative.
+
+Test native pings with:
+
+```roll20chat
+!Combat-Cue gm
+!Combat-Next
+!Combat-Cue players
+!Combat-Next
+!Combat-Cue both
+!Combat-Next
+!Combat-Cue public
+!Combat-Next
+!Combat-Cue off
+```
+
+Pass when each enabled mode sends one temporary Roll20 ping at the current token without recentering anyone's map or changing its position, aura, tint, markers, or other properties. **Players** reaches only the current token's non-GM controllers; **Both** reaches those controllers and the GM; **Public** is visible to the table. Repeat Public with a GM-layer token current. Only the GM should see that ping. Also set the timer deadline to **player** for that hidden turn and confirm the notice stays with the GM rather than revealing the hidden actor. Custom rows should not produce a token ping or player timer notice.
+
+#### C12. End Confirmation
 
 Record the tracker and run:
 
@@ -1551,7 +1599,7 @@ Pass when CombatAssist asks for confirmation and the encounter remains active. C
 
 Pass when CombatAssist reports no active encounter and the native tracker remains byte-for-byte unchanged.
 
-#### C11. TurnTrackerService Cascade and Reload
+#### C13. TurnTrackerService Cascade and Reload
 
 Start a healthy disposable CombatAssist encounter, record the tracker and current round, then run:
 
@@ -1570,7 +1618,7 @@ Pass when TurnTrackerService disables CombatAssist and InitiativeAssist, unrelat
 
 Pass when the saved encounter is available if the tracker did not change. Restart the Mod sandbox with the same healthy tracker and run `!Combat-Status` again. The encounter and round should remain available. If the tracker changes while CombatAssist is disabled or unavailable, re-enabling should produce attention rather than guessing what happened.
 
-#### C12. CombatAssist Independence and Optional Interoperability
+#### C14. CombatAssist Independence and Optional Interoperability
 
 Record the native tracker and the enabled state of InitiativeAssist and several unrelated modules, then run:
 
@@ -1591,6 +1639,7 @@ Record:
 - the saved lifecycle state and round from `!Combat-Status`;
 - whether the change was forward, backward, an edit, or caused by another Mod;
 - announcement mode, current linked-character controller, and whether the End My Turn button was current or stale;
+- round source, round-counter label/value/formula when present, timer settings, and current-turn ping audience;
 - the CombatAssist and TurnTrackerService rows from `!ga-config modules`;
 - `!ga-status --details` and the exact API Console exception or GameAssist warning.
 
@@ -1996,21 +2045,23 @@ Confirm `!ga-config modules` shows WelcomeAssist disabled. Reload the Mod sandbo
 
 ```roll20chat
 !ga-enable WelcomeAssist
+!Welcome
+!Welcome-Help setup
+!Welcome-Help safety
+!Welcome-Status
+!Welcome-Preview
+!Welcome-Not-A-Command
 !welcome-assist help
-!welcome-assist help setup
-!welcome-assist help safety
-!welcome-assist status
-!welcome-assist preview
-!welcome-assist not-a-command
 ```
 
 Pass when:
 
 - the root Guide is a compact action and topic menu rather than the complete setup manual;
 - the setup and safety topics explain their focused subjects and include **Back to Guide**;
-- status reports module `0.1.1`, `mixed` mode on a first-time configuration, a 3-second delay, and no automatic greeting yet;
+- status reports module `0.1.2`, `mixed` mode on a first-time configuration, a 3-second delay, and no automatic greeting yet;
 - preview is whispered only to the GM;
 - the unrecognized command returns **Needs Attention** with an **Open Guide** button rather than silently opening an unrelated screen;
+- the retained `!welcome-assist help` alias opens one guide response rather than producing duplicate output;
 - enabling and previewing do not create any public message.
 
 Reload the Mod sandbox. Pass when exactly one public greeting appears after the delay. Wait at least 20 seconds and confirm no second automatic greeting appears.
@@ -2022,10 +2073,10 @@ Reload the Mod sandbox. Pass when exactly one public greeting appears after the 
 Run these one at a time and use **Preview** before **Announce Now**:
 
 ```roll20chat
-!welcome-assist mode default
-!welcome-assist mode builtin
-!welcome-assist mode custom
-!welcome-assist mode mixed
+!Welcome-Mode default
+!Welcome-Mode builtin
+!Welcome-Mode custom
+!Welcome-Mode mixed
 ```
 
 Pass when default uses the professional greeting, builtin uses one of the included geek-culture lines, empty custom mode falls back to the professional greeting with a GM warning, and mixed can use the default, built-ins, or campaign lines. Every preview remains private. Every deliberate `announce` is public.
@@ -2035,10 +2086,10 @@ Pass when default uses the professional greeting, builtin uses one of the includ
 Run:
 
 ```roll20chat
-!welcome-assist custom add Dovie'andi se tovya sagain
-!welcome-assist custom list
-!welcome-assist custom add DOVIE'ANDI SE TOVYA SAGAIN
-!welcome-assist custom remove 1 junk
+!Welcome-Custom add Dovie'andi se tovya sagain
+!Welcome-Custom list
+!Welcome-Custom add DOVIE'ANDI SE TOVYA SAGAIN
+!Welcome-Custom remove 1 junk
 ```
 
 Pass when the first greeting appears once in the list, the capitalization-only duplicate is refused, and the malformed removal value does not delete it. Add nine other disposable greetings; the tenth total entry should be accepted and an eleventh refused.
@@ -2046,8 +2097,8 @@ Pass when the first greeting appears once in the list, the capitalization-only d
 Remove one item with its exact number. Then test clearing:
 
 ```roll20chat
-!welcome-assist custom clear
-!welcome-assist custom clear --confirm
+!Welcome-Custom clear
+!Welcome-Custom clear --confirm
 ```
 
 Pass when the first command refuses and the confirmed command empties the list.
@@ -2057,10 +2108,10 @@ Pass when the first command refuses and the confirmed command empties the list.
 Add this disposable campaign greeting exactly as text:
 
 ```roll20chat
-!welcome-assist custom add [[1d20]] @{strength} %{ability} ?{query} <b>hello</b>
-!welcome-assist mode custom
-!welcome-assist preview
-!welcome-assist announce
+!Welcome-Custom add [[1d20]] @{strength} %{ability} ?{query} <b>hello</b>
+!Welcome-Mode custom
+!Welcome-Preview
+!Welcome-Announce
 ```
 
 Pass when the greeting displays the Roll20 expressions and HTML-like text literally. It must not roll dice, read an attribute, call an ability, open a query, or render a bold HTML element. Remove the disposable greeting afterward.
@@ -2070,14 +2121,14 @@ Pass when the greeting displays the Roll20 expressions and HTML-like text litera
 Run:
 
 ```roll20chat
-!welcome-assist header hide
-!welcome-assist preview
-!welcome-assist header show
-!welcome-assist header Campaign Ready
-!welcome-assist delay 5
+!Welcome-Header hide
+!Welcome-Preview
+!Welcome-Header show
+!Welcome-Header Campaign Ready
+!Welcome-Delay 5
 ```
 
-Pass when previews accurately hide, show, and rename the header, and status reports a 5-second delay. Reload, then use `!welcome-assist announce` before the five seconds expire. Pass when the manual greeting appears once and the pending automatic greeting does not appear afterward.
+Pass when previews accurately hide, show, and rename the header, and status reports a 5-second delay. Reload, then use `!Welcome-Announce` before the five seconds expire. Pass when the manual greeting appears once and the pending automatic greeting does not appear afterward.
 
 #### W5. Disable and Reload Safety
 
@@ -2096,7 +2147,7 @@ For the ordinary healthy-start test, every other configured module should be run
 Record:
 
 - enabled/running state from `!ga-config modules`;
-- `!welcome-assist status` output;
+- `!Welcome-Status` output;
 - selected mode, delay, header setting, and custom-list count;
 - whether the action was preview, manual announce, or automatic startup;
 - whether another enabled GameAssist component was inactive;
@@ -2125,7 +2176,7 @@ From a non-GM account, try:
 !token-assist config
 !token-assist --ids TOKEN_ID --flip showname
 !Init-RR
-!welcome-assist announce
+!Welcome-Announce
 !npc-hp-all
 !npc-death-audit
 ```
