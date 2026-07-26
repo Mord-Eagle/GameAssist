@@ -301,20 +301,35 @@ For each enabled module below:
 3. Open **Audit** and confirm it clearly says no changes were made.
 4. Enter the listed bad command and confirm it explains the problem and offers **Open Guide**.
 5. Where **Manual** is listed, run it twice. The second run must update the same handout rather than create a duplicate.
+6. Run both role aliases and confirm **GM** and **DM** open the same module-specific Game Master interaction screen.
 
-| Module | Guide | Status | Audit | Manual | Deliberate bad command |
-| --- | --- | --- | --- | --- | --- |
-| ConfigUI | `!ga-config-ui help` | `!ga-config-ui status` | `!ga-config-ui audit` | `!ga-config-ui manual` | `!ga-config-ui impossible` |
-| CritFumble | `!critfumble guide` | `!critfumble status` | `!critfumble audit` | `!critfumble manual` | `!critfumble impossible` |
-| ConditionAssist | `!condition guide` | `!condition status` | `!condition audit` | `!condition manual` | `!condition impossible` |
-| TokenAssist | `!ta-guide` | `!ta-status` | `!ta-audit` | `!ta-manual` | `!ta-impossible` |
-| InitiativeAssist | `!Init-Guide` | `!Init-Status` | `!Init-Audit` | `!Init-Manual` | `!Init-Impossible` |
-| CombatAssist | `!Combat-Guide` | `!Combat-Status` | `!Combat-Audit` | `!Combat-Manual` | `!Combat-Impossible` |
-| WelcomeAssist | `!Welcome-Guide` | `!Welcome-Status` | `!Welcome-Audit` | `!Welcome-Manual` | `!Welcome-Impossible` |
-| NPCManager | `!npc-death-guide` | `!npc-death-status` | `!npc-death-audit` | `!npc-death-manual` | `!npc-death-impossible` |
-| ConcentrationTracker | `!concentration guide` | `!concentration status` | `!concentration audit` | `!concentration manual` | `!concentration impossible` |
-| NPCHPRoller | `!npc-hp-guide` | `!npc-hp-status` | `!npc-hp-audit` | `!npc-hp-manual` | `!npc-hp-impossible` |
-| DebugTools | `!ga-debug guide` | `!ga-debug status` | `!ga-debug audit` | `!ga-debug manual` | `!ga-debug impossible` |
+| Module | GM / DM screen | Guide | Status | Audit | Manual | Deliberate bad command |
+| --- | --- | --- | --- | --- | --- | --- |
+| ConfigUI | `!ConfigUI-GM` / `!ConfigUI-DM` | `!ga-config-ui help` | `!ga-config-ui status` | `!ga-config-ui audit` | `!ga-config-ui manual` | `!ga-config-ui impossible` |
+| CritFumble | `!CritFumble-GM` / `!CritFumble-DM` | `!critfumble guide` | `!critfumble status` | `!critfumble audit` | `!critfumble manual` | `!critfumble impossible` |
+| ConditionAssist | `!Condition-GM` / `!Condition-DM` | `!condition guide` | `!condition status` | `!condition audit` | `!condition manual` | `!condition impossible` |
+| TokenAssist | `!TokenAssist-GM` / `!TokenAssist-DM` | `!ta-guide` | `!ta-status` | `!ta-audit` | `!ta-manual` | `!ta-impossible` |
+| InitiativeAssist | `!Init-GM` / `!Init-DM` | `!Init-Guide` | `!Init-Status` | `!Init-Audit` | `!Init-Manual` | `!Init-Impossible` |
+| CombatAssist | `!Combat-GM` / `!Combat-DM` | `!Combat-Guide` | `!Combat-Status` | `!Combat-Audit` | `!Combat-Manual` | `!Combat-Impossible` |
+| WelcomeAssist | `!Welcome-GM` / `!Welcome-DM` | `!Welcome-Guide` | `!Welcome-Status` | `!Welcome-Audit` | `!Welcome-Manual` | `!Welcome-Impossible` |
+| NPCManager | `!NPC-GM` / `!NPC-DM` | `!npc-death-guide` | `!npc-death-status` | `!npc-death-audit` | `!npc-death-manual` | `!npc-death-impossible` |
+| ConcentrationTracker | `!Con-GM` / `!Con-DM` | `!concentration guide` | `!concentration status` | `!concentration audit` | `!concentration manual` | `!concentration impossible` |
+| NPCHPRoller | `!npc-hp-gm` / `!npc-hp-dm` | `!npc-hp-guide` | `!npc-hp-status` | `!npc-hp-audit` | `!npc-hp-manual` | `!npc-hp-impossible` |
+| DebugTools | `!Debug-GM` / `!Debug-DM` | `!ga-debug guide` | `!ga-debug status` | `!ga-debug audit` | `!ga-debug manual` | `!ga-debug impossible` |
+
+### NPCManager and Concentration Alias Check
+
+Run these read-only commands:
+
+```roll20chat
+!NPC-Status
+!NPC-Death-Status
+!NPCManager-Status
+!Con-Status
+!Concentration-Status
+```
+
+Pass when the three NPC commands produce the same NPCManager status screen and the two concentration commands produce the same marker-status result. No token, marker, HP value, or history record should change.
 
 ConfigUI, NPCHPRoller, and DebugTools are deliberately brief. Their **Manual** command should explain that the complete guidance remains in chat. The other Manual commands create or update these handouts:
 
@@ -1189,7 +1204,7 @@ Select a disposable token whose name visibility is off, then run:
 !token-assist --set imgsrc|ignored --on showname
 ```
 
-Pass when TokenAssist refuses the unsupported image-side property, explains that this feature is outside TokenAssist 1.0.2, and leaves name visibility unchanged. TokenAssist also does not claim default-token writes, computed or name-resolved attributes, advanced controller-list editing, advanced color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, exact TokenMod report-recipient distinctions, duplicate-index marker editing, conditional marker counts, or TokenMod help-handout rebuilding.
+Pass when TokenAssist refuses the unsupported image-side property, explains that this feature is outside TokenAssist 1.0.3, and leaves name visibility unchanged. TokenAssist also does not claim default-token writes, computed or name-resolved attributes, advanced controller-list editing, advanced color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, exact TokenMod report-recipient distinctions, duplicate-index marker editing, conditional marker counts, or TokenMod help-handout rebuilding.
 
 #### T12. Restore Campaign Settings
 
@@ -1229,6 +1244,7 @@ Open Roll20's Turn Tracker on the disposable encounter page, then run:
 !Init-Go
 !Init-Go!
 !Init-GM
+!Init-DM
 ```
 
 Pass when:
@@ -1242,7 +1258,7 @@ Pass when:
 - the GM separately receives **GM Initiative Roster**, separating PCs, object-layer NPCs, and GM-layer NPCs with object-layer, GM-layer, and combined batch controls;
 - the Control Center shows whether object-layer NPC rolls are hidden or public;
 - `!Init-Go` uses direct wording and `!Init-Go!` uses varied wording;
-- `!Init-GM` whispers the GM both the neutral roll controls and complete GM Initiative Roster, with no public chat panel;
+- `!Init-GM` and `!Init-DM` each whisper the GM the same neutral roll controls and complete GM Initiative Roster, with no public chat panel;
 - commands also work with different capitalization, such as `!iNiT-sTaTuS`.
 
 ### Full InitiativeAssist Acceptance
@@ -1428,6 +1444,7 @@ Put at least three distinct rows in Roll20's Turn Tracker on one page. Include o
 !Combat-Help messages
 !Combat-Menu
 !Combat-GM
+!Combat-DM
 !Combat-Info
 !Combat-Audit
 !Combat-Manual
@@ -1441,7 +1458,7 @@ Pass when:
 
 - **CombatAssist Quick Guide** shows only common actions and topic buttons;
 - the `turns`, `timers`, and `messages` topic panels reveal focused guidance on demand and include **Back to Guide**;
-- `!Combat-Guide` opens the same compact guide, while `!Combat-GM` opens the same **CombatAssist Control Center** as `!Combat-Menu`;
+- `!Combat-Guide` opens the same compact guide, while `!Combat-GM` and `!Combat-DM` each open the same **CombatAssist Control Center** as `!Combat-Menu`;
 - `!Combat-Info` whispers a short purpose summary and buttons for the manual, Control Center, and guide;
 - `!Combat-Audit` labels the inspection read-only and changes neither the tracker nor encounter state;
 - `!Combat-Manual` creates or updates exactly one `GameAssist Guide - CombatAssist` handout containing Quick Start, normal play, recovery, privacy, and command-reference sections;
@@ -2097,6 +2114,8 @@ Confirm `!ga-config modules` shows WelcomeAssist disabled. Reload the Mod sandbo
 !Welcome
 !Welcome-Help setup
 !Welcome-Help safety
+!Welcome-GM
+!Welcome-DM
 !Welcome-Status
 !Welcome-Preview
 !Welcome-Not-A-Command
@@ -2107,7 +2126,8 @@ Pass when:
 
 - the root Guide is a compact action and topic menu rather than the complete setup manual;
 - the setup and safety topics explain their focused subjects and include **Back to Guide**;
-- status reports module `0.1.2`, `mixed` mode on a first-time configuration, a 3-second delay, and no automatic greeting yet;
+- `!Welcome-GM` and `!Welcome-DM` open the same private setup and status screen;
+- status reports module `0.1.4`, `mixed` mode on a first-time configuration, a 3-second delay, and no automatic greeting yet;
 - preview is whispered only to the GM;
 - the unrecognized command returns **Needs Attention** with an **Open Guide** button rather than silently opening an unrelated screen;
 - the retained `!welcome-assist help` alias opens one guide response rather than producing duplicate output;
