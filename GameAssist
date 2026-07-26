@@ -1,9 +1,9 @@
 /*
 ========================================
 GameAssist - Roll20 API Script
-Version: 0.1.6.1
-Last Updated: 2026-07-20 (America/New_York)
-Development line: private initiative controls and WelcomeAssist v0.1.6.1.
+Version: 0.1.7.0
+Last Updated: 2026-07-25 (America/New_York)
+Development line: preservation-first CombatAssist encounter flow v0.1.7.0.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -12,17 +12,18 @@ DESCRIPTION
 GameAssist is a modular D&D 5E (2014 and 2024) automation suite with an explicit opt-in
 task queue, state/configuration helpers, consistent logging, and a core marker
 service. Normal event handlers execute directly unless a module deliberately
-calls GameAssist.enqueue(). This package ships with ten configurable modules:
-- ConfigUI - GM-only chat controls for toggling modules and common options.
-- CritFumble - Detects natural-1 attacks and offers fumble/confirm menus.
-- ConditionAssist 1.0.1 - Provides condition wording, artwork, announcements, and marker controls.
-- TokenAssist 1.0.1 - Provides general token controls through !token-assist and !ta commands.
-- InitiativeAssist 1.0.1 - Uses Roll20's native Turn Tracker for mixed-sheet initiative workflows.
-- WelcomeAssist 0.1.0 - Optionally greets the table after a healthy GameAssist startup.
-- ConcentrationTracker - Runs concentration checks and manages its configured marker.
-- NPCManager 1.3.0 - Tracks NPC death markers, history, reports, audits, repair previews, and Arc rosters.
-- NPCHPRoller - Rolls npc_hpformula and writes the result to token bar 1.
-- DebugTools 0.2.0 - Optional dry-run-first GM diagnostics.
+calls GameAssist.enqueue(). This package ships with eleven configurable modules:
+- ConfigUI 0.2.2 - GM-only chat controls for toggling modules and common options.
+- CritFumble 0.2.5.1 - Detects natural-1 attacks and offers fumble/confirm menus.
+- ConditionAssist 1.0.3 - Provides condition wording, artwork, announcements, and marker controls.
+- TokenAssist 1.0.3 - Provides general token controls through !token-assist and !ta commands.
+- InitiativeAssist 1.0.4 - Uses Roll20's native Turn Tracker for mixed-sheet initiative workflows and compact topic guidance.
+- CombatAssist 1.0.5 - Tracks encounters, native round counters, guarded turns, optional timers, private-safe pings, and recoverable tracker changes.
+- WelcomeAssist 0.1.4 - Optionally greets the table after a healthy GameAssist startup through short !Welcome commands.
+- ConcentrationTracker 0.2.2 - Runs concentration checks and manages its configured marker.
+- NPCManager 1.3.2 - Tracks NPC death markers, history, reports, audits, repair previews, and Arc rosters.
+- NPCHPRoller 0.1.1.2 - Rolls npc_hpformula and writes the result to token bar 1.
+- DebugTools 0.2.2 - Optional dry-run-first GM diagnostics.
 
 INSTALL / USAGE
 - One-Click: install GameAssist.
@@ -42,6 +43,10 @@ CORE COMMANDS (GM)
 - !ga-debug <action>
 
 MODULE COMMANDS
+- Each established module prefix accepts compact Guide/Help, Menu/GM/DM, Status,
+  Info, Audit, and Manual navigation where applicable. Unknown commands provide
+  an Open Guide recovery path. Substantial modules update one stable
+  "GameAssist Guide - <Module>" handout; brief modules keep guidance in chat.
 - CritFumble: !critfail, !critfumble help, !critfumble menu,
   !critfumble-<melee|ranged|thrown|spell|natural>,
   !confirm-crit-martial, !confirm-crit-magic
@@ -50,18 +55,24 @@ MODULE COMMANDS
 - TokenAssist: !token-assist, !ta, !ta-<action>, !token-assist help|about|config;
   older supported !token-mod macros continue temporarily and must be updated before v0.2.0.
 - InitiativeAssist: !Init-Menu, !Init-Help, !Init-Go, !Init-Go!, !Init-Roll,
-  !Init-GM, !Init-Roll-Selected, !Init-Options, !Init-Start, !Init-NPC-Rolls,
+  !Init-GM, !Init-DM, !Init-Roll-Selected, !Init-Options, !Init-Start, !Init-NPC-Rolls,
   !Init-RR, !Init-RR-Menu, !Init-Group, !Init-Audit
-- WelcomeAssist: !welcome-assist help|status|preview|announce,
-  !welcome-assist mode|delay|header|default|custom
-- ConcentrationTracker: !concentration, !cc, !ga-conc-status
-- NPCManager: !npc-death-help, !npc-death-report, !npc-death-buckets,
+- CombatAssist: !Combat-Menu, !Combat-Help, !Combat-Start, !Combat-Next,
+  !Combat-Prev, !Combat-End-Turn, !Combat-Adopt, !Combat-Restore,
+  !Combat-Pause, !Combat-Resume, !Combat-Status, !Combat-End,
+  !Combat-Announce, !Combat-Confirm, !Combat-Timer, !Combat-Cue
+- WelcomeAssist: !Welcome, !Welcome-Help, !Welcome-Status, !Welcome-Preview,
+  !Welcome-Announce, !Welcome-Mode, !Welcome-Delay, !Welcome-Header,
+  !Welcome-Default, !Welcome-Custom; legacy !welcome-assist remains accepted.
+- ConcentrationTracker: !concentration, !concentration-<command>, !con-<command>, !cc, !ga-conc-status
+- NPCManager: !npc-<command>, !npc-death-<command>, !npcmanager-<command>,
+  including !npc-death-help, !npc-death-report, !npc-death-buckets,
   !npc-death-clear, !npc-death-write, !npc-wr, !npc-death-audit, !npc-death-repair,
   !npc-death-arc
 - NPCHPRoller: !npc-hp-selected, !npc-hp-all
 - DebugTools: !ga-debug damage|marker|save
 
-V0.1.6.1 FOUNDATION
+V0.1.7.0 FOUNDATION
 - [GAMEASSIST:CORE:MARKERSERVICE] is the single GameAssist authority for marker
   resolution, reads, writes, toggles, duplicate handling, and change observation.
 - Built-in ids, custom display names, exact stored tags, numbered markers, and
@@ -72,13 +83,19 @@ V0.1.6.1 FOUNDATION
 - TokenAssist uses MarkerService for every status-marker command.
 - Disabling MarkerService also disables ConditionAssist, TokenAssist, NPCManager,
   ConcentrationTracker, and DebugTools while CritFumble, ConfigUI,
-  InitiativeAssist, WelcomeAssist, and NPCHPRoller remain available.
+  InitiativeAssist, CombatAssist, WelcomeAssist, and NPCHPRoller remain available.
 - Human-facing times and automatic Session date rollover use the DM's validated
   IANA timezone when configured; stored event timestamps remain absolute.
 - [GAMEASSIST:CORE:TURNTRACKERSERVICE] is the only GameAssist authority for
   Roll20 turn-order snapshots, guarded writes, and tracker observations.
 - InitiativeAssist supports official 2014 and 2024 Roll20 sheet initiative data;
   2024 Beacon access requires Roll20's supported asynchronous Mod API functions.
+- CombatAssist starts disabled, observes exact tracker rotations, advances rounds
+  from either a recognized native round-counter row or a complete unambiguous
+  forward cycle, preserves the current round across valid native tracker edits,
+  and writes only for an explicit next, previous, authorized End My Turn, or
+  confirmed saved-tracker restoration. Optional stale-safe timers and native
+  current-turn pings never advance initiative or alter token properties.
 - WelcomeAssist is disabled by default and can post one delayed public greeting
   after a healthy GameAssist bootstrap when deliberately configured and enabled.
 - Queue timeouts release the queue but cannot terminate Roll20 operations.
@@ -100,9 +117,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 // --- MECHSUITS BANNER (YAML) ---
 // mechsuit:
 //   codename: "GAMEASSIST"
-//   project_version: "v0.1.6.1"
-//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker and Turn Tracker authorities, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, optional health-gated table greetings, and a validated campaign timezone for human-facing dates. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, or automatic combat-round management."
-//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.turntrackerservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critfumble","modules.conditionassist","modules.tokenassist","modules.initiativeassist","modules.welcomeassist","modules.npcmanager","modules.concentrationtracker","modules.npchproller","modules.debugtools","bootstrap"]
+//   project_version: "v0.1.7.0"
+//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker and Turn Tracker authorities, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, preservation-first encounter flow with native round counters, stale-safe timers and private-safe pings, optional health-gated table greetings, and a validated campaign timezone for human-facing dates. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, automatic turn advancement, or automatic condition-duration management."
+//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.turntrackerservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critfumble","modules.conditionassist","modules.tokenassist","modules.initiativeassist","modules.combatassist","modules.welcomeassist","modules.npcmanager","modules.concentrationtracker","modules.npchproller","modules.debugtools","bootstrap"]
 //   env:
 //     required: []
 //     optional: []
@@ -115,7 +132,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //   observability:
 //     logs: "roll20_whisper_to_gm"
 //     metrics: [{ name: "gameassist.queue.task_duration_ms", unit: "ms" }]
-//     spans: ["[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:MODULES:INITIATIVEASSIST]","[GAMEASSIST:MODULES:WELCOMEASSIST]"]
+//     spans: ["[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:MODULES:INITIATIVEASSIST]","[GAMEASSIST:MODULES:COMBATASSIST]","[GAMEASSIST:MODULES:WELCOMEASSIST]"]
 //   performance: { notes: "No current benchmark claim; validate in the target Roll20 campaign sandbox." }
 //   concurrency: { model: "Direct event handlers plus explicit opt-in serialized task queue", idempotency: "N/A (event-driven)" }
 //   compatibility: { accepts: ["Roll20 API sandbox; current campaign smoke test required"], emits: "Roll20 chat whispers/logs" }
@@ -144,6 +161,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     │  ├─ [GAMEASSIST:MODULES:CONDITIONASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:TOKENASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:INITIATIVEASSIST]
+//     │  ├─ [GAMEASSIST:MODULES:COMBATASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:WELCOMEASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:NPCMANAGER]
 //     │  ├─ [GAMEASSIST:MODULES:CONCENTRATIONTRACKER]
@@ -151,10 +169,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 //     └─ [GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
-// Guarantee: GameAssist v0.1.6.1 runs policy, utilities, guarded core services including MarkerService and TurnTrackerService, interfaces, independently lifecycle-managed condition/token/initiative/welcome/gameplay modules, then bootstrap in the declared order. Human-facing times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
+// Guarantee: GameAssist v0.1.7.0 runs policy, utilities, guarded core services including MarkerService and TurnTrackerService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/gameplay modules, then bootstrap in the declared order. Human-facing times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
 
 // =============================
-// === GameAssist v0.1.6.1 ===
+// === GameAssist v0.1.7.0 ===
 // === Author: Mord Eagle ===
 // =============================
 // Released under the MIT License (see https://opensource.org/licenses/MIT)
@@ -187,8 +205,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Tunables and operational policy
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "POLICY", title: "Tunables",
-    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; NPC initialization, timezone input, condition, initiative, and welcome limits remain explicit"],
-    //   provides: ["POLICY"], last_updated_version: "v0.1.6.1", lifecycle: "active" }
+    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; NPC initialization, timezone input, condition, initiative, combat, and welcome limits remain explicit"],
+    //   provides: ["POLICY"], last_updated_version: "v0.1.7.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // POLICY owns shared timeouts, cache limits, UI defaults, snapshot identifiers,
@@ -264,6 +282,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             statusChatLimit: 20,
             ownWriteSuppressionMs: 1000
         }),
+        combat: Object.freeze({
+            minimumTrackedRows: 2,
+            maximumTrackedRows: 200,
+            minimumTurnDurationSeconds: 10,
+            maximumTurnDurationSeconds: 3600,
+            maximumTimerReminders: 5
+        }),
         welcome: Object.freeze({
             minDelayMs: 1000,
             maxDelayMs: 60000,
@@ -282,11 +307,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.6.1): Added bounded WelcomeAssist delay, readiness polling, custom-list, greeting, and header limits; rollback: remove welcome policy with WelcomeAssist.
+    // Changed (v0.1.7.0): Added bounded CombatAssist turn-duration and reminder-count policy alongside the existing encounter row bounds; rollback: disable timers and retain the row bounds.
     // Decision log:
     //   CHOICE: Offer common IANA zones plus validated custom input - ALT: fixed numeric offsets; REJECTED: fixed offsets do not follow daylight-saving changes.
     //   CHOICE: Keep NPC initialization and snapshot knobs centralized while removing the unused external marker delay - ALT: retain the dead setting; REJECTED: implied behavior no caller performs.
     // Prior notes:
+    //   v0.1.6.1: Added bounded WelcomeAssist delay, readiness polling, custom-list, greeting, and header limits.
     //   v0.1.6.0: Added bounded initiative batch, picker, group, custom-die, flat-adjustment, score-band, observer-suppression, and chat-review policy.
     //   v0.1.5.1: Added bounded IANA timezone input, a bounded formatter cache, a stable display locale, and common GM menu choices.
     //   v0.1.5.0: Removed the obsolete standalone TokenMod verification delay and added bounded condition-definition, import, announcement-selection, private-reference, announcement-observer suppression, and current-page status limits for ConditionAssist.
@@ -305,8 +331,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: App wrapper (utilities and shared helpers)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "APP", title: "Wrapper",
-    //   guarantees: ["APP-scoped non-marker helpers are grouped here; marker authority belongs to CORE:MARKERSERVICE"],
-    //   depends_on: [], last_updated_version: "v0.1.5.1" }
+    //   guarantees: ["APP-scoped non-marker helpers are grouped here; marker authority belongs to CORE:MARKERSERVICE","Module manuals use one predictable GameAssist-owned handout per module and repeated requests update that handout"],
+    //   depends_on: [], last_updated_version: "v0.1.7.0" }
     // -------------------------------------------------------------------------
     // Narrative
     // The APP tree houses shared helpers used by core services and bundled modules.
@@ -320,8 +346,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Utilities (arg parsing, state helpers, audit, sanitize)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "APP:UTILS", title: "Utilities",
-    //   guarantees: ["Shared non-marker helpers; known module state branches self-heal without deleting valid config","Absolute timestamps remain unchanged while human displays and date keys use one validated DM timezone","Standalone-script evidence remains diagnostic rather than a marker dependency"],
-    //   depends_on: ["[GAMEASSIST:POLICY]"], last_updated_version: "v0.1.5.1", lifecycle: "active" }
+    //   guarantees: ["Shared non-marker helpers; known module state branches self-heal without deleting valid config","Absolute timestamps remain unchanged while human displays and date keys use one validated DM timezone","Standalone-script evidence remains diagnostic rather than a marker dependency","Explicit module-manual requests create or update one stable GameAssist-owned handout without touching other handouts"],
+    //   depends_on: ["[GAMEASSIST:POLICY]"], last_updated_version: "v0.1.7.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // APP:UTILS collects helpers for metrics/state initialization, conservative state
@@ -887,10 +913,64 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         return { token, character };
     }
+
+    /**
+     * writeModuleManual - Create or update one stable GameAssist-owned handout.
+     * Inputs: a registered module's literal name and trusted, module-built HTML.
+     * Outputs: a result containing the predictable handout name and journal link.
+     * Invariants: unrelated handouts are untouched; repeated requests reuse the same exact name.
+     * Failure: ambiguous duplicate reserved names are refused instead of choosing one.
+     * Design: full guidance persists in the Journal while ordinary chat menus stay compact.
+     */
+    function writeModuleManual(moduleName, html) {
+        const name = String(moduleName || '').trim();
+        if (!/^[A-Za-z0-9_]+$/.test(name)) {
+            return { ok: false, code: 'INVALID_ARGUMENT', message: 'A valid GameAssist module name is required.' };
+        }
+        const handoutName = `GameAssist Guide - ${name}`;
+        const matches = findObjs({ _type: 'handout', name: handoutName });
+        if (matches.length > 1) {
+            return {
+                ok: false,
+                code: 'CONFLICT',
+                name: handoutName,
+                message: `More than one handout is named "${handoutName}". Rename or remove the duplicate before updating the manual.`
+            };
+        }
+
+        let handout = matches[0] || null;
+        let created = false;
+        if (!handout) {
+            handout = createObj('handout', { name: handoutName, archived: false });
+            created = Boolean(handout);
+        }
+        if (!handout) {
+            return {
+                ok: false,
+                code: 'UNAVAILABLE',
+                name: handoutName,
+                message: `Roll20 could not create "${handoutName}". No handout was changed.`
+            };
+        }
+
+        handout.set('notes', String(html || ''));
+        const handoutId = String(handout.id || handout.get('_id') || '');
+        return {
+            ok: true,
+            created,
+            name: handoutName,
+            id: handoutId,
+            link: handoutId
+                ? `[Open Manual](https://journal.roll20.net/handout/${handoutId})`
+                : _sanitize(handoutName)
+        };
+    }
     // --- Notes & Comments ---
     // NOTE: State auditor warns about unexpected branches; no automatic deletion occurs.
+    // Changed (v0.1.7.0): Added the shared explicit module-manual writer after CombatAssist and the cross-module UX pass established the same stable-handout behavior in multiple modules.
     // Changed (v0.1.5.1): Added validated IANA timezone resolution, bounded formatter reuse, DST-aware human formatting, date-key generation, and legacy-display fallback while preserving stored absolute timestamps.
     // Decision log:
+    //   CHOICE: Reserve one exact `GameAssist Guide - <Module>` handout name and refuse duplicate-name ambiguity - ALT: create numbered copies; REJECTED: duplicate manuals become stale and can overwrite unrelated notes unpredictably.
     //   CHOICE: Keep standalone detection as diagnostics only - ALT: use it for marker dependency gating; REJECTED: MarkerService owns GameAssist marker behavior.
     //   CHOICE: Unknown branches remain warning-only; explicit cleanup is required before deletion.
     //   CHOICE: monotonic() falls back to Date.now() in Roll20 - ALT: assume performance.now; REJECTED: sandbox portability.
@@ -911,7 +991,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v0.1.5.1): APP now owns the shared validated timezone and human-facing date/time helpers while continuing to delegate marker ownership to CORE:MARKERSERVICE.
+    // Changed (v0.1.7.0): APP now also owns the stable on-demand module-manual handout helper used by multiple feature modules.
     // Prior notes:
     //   v0.1.5.0: APP explicitly excluded marker ownership and delegated that contract to CORE:MARKERSERVICE.
     //   v0.1.4.7: APP included verified standalone TokenMod requests while preserving StatusInfo observer delivery.
@@ -928,7 +1008,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE", title: "Core wrapper",
     //   guarantees: ["Core constants and kernel services are grouped; MarkerService owns marker mechanics and TurnTrackerService owns native tracker mechanics"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP]"], last_updated_version: "v0.1.6.1",
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP]"], last_updated_version: "v0.1.7.0",
     //   lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
@@ -937,7 +1017,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // documents scope and anchors the hierarchy for MECHSUITS compliance.
     // -------------------------------------------------------------------------
 
-    const VERSION      = '0.1.6.1';
+    const VERSION      = '0.1.7.0';
     const STATE_KEY    = 'GameAssist';
     const MODULES      = {};
     const _transitioning   = {};
@@ -2419,9 +2499,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: GameAssist kernel object
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:OBJECT", title: "Kernel",
-    //   guarantees: ["Logging, explicit enqueue, dependency diagnostics, register/enable/disable, listener management", "MarkerService, TurnTrackerService, and the validated time seam are exposed through the stable GameAssist object", "Module registration may explicitly retain durable runtime state and protect validated configuration maps", "Failed dependency enable checks preserve the module's existing configured intent"],
+    //   guarantees: ["Logging, explicit enqueue, dependency diagnostics, register/enable/disable, listener management", "MarkerService, TurnTrackerService, the validated time seam, and the stable module-manual writer are exposed through the GameAssist object", "Module registration may explicitly retain durable runtime state and protect validated configuration maps", "Failed dependency enable checks preserve the module's existing configured intent"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]"],
-    //   last_updated_version: "v0.1.6.0", lifecycle: "active" }
+    //   last_updated_version: "v0.1.7.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // CORE:OBJECT exposes the GameAssist singleton with metrics, logging, explicit
@@ -2856,6 +2936,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     GameAssist.getMetricsStore = getMetricsStore;
     GameAssist.recordMetric = recordMetric;
     GameAssist.getLinkedCharacter = getLinkedCharacter;
+    GameAssist.writeModuleManual = writeModuleManual;
 
     globalThis.GameAssist = GameAssist;
     GameAssist.register('MarkerService', () => {
@@ -2873,7 +2954,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => setTurnTrackerServiceEnabled(false)
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.6.0): Exposed and registered TurnTrackerService as a toggleable core service while retaining the existing GameAssist lifecycle and dependency cascade.
+    // Changed (v0.1.7.0): Exposed the shared stable module-manual writer through GameAssist for the standardized layered-help contract.
     // Decision log:
     //   CHOICE: Expose globally under the existing GameAssist name - ALT: add another global; REJECTED: unnecessary global pollution.
     //   CHOICE: Keep normal handlers direct and serialized work explicit through GameAssist.enqueue.
@@ -2895,8 +2976,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v0.1.6.1): Advanced runtime VERSION for the private initiative control and optional WelcomeAssist patch; core child order is unchanged.
+    // Changed (v0.1.7.0): Advanced runtime VERSION for the CombatAssist encounter-flow release; core child order is unchanged.
     // Prior notes:
+    //   v0.1.6.1: Advanced runtime VERSION for the private initiative control and optional WelcomeAssist patch; core child order was unchanged.
     //   v0.1.6.0: Added CORE:TURNTRACKERSERVICE to the declared child order and advanced runtime VERSION for the native initiative release.
     //   v0.1.5.1: Advanced runtime VERSION for the configurable campaign-timezone release; the established core child order was unchanged.
     //   v0.1.5.0: Added CORE:MARKERSERVICE to the declared child order and advanced runtime VERSION for the integrated marker architecture.
@@ -2951,16 +3033,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Admin/config commands (!ga-*)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "INTERFACES:COMMANDS", title: "Commands",
-    //   guarantees: ["GM-gated admin commands; unsafe and component-protected config keys refused; versioned config-only export; validated timezone menu; plain-language health summary with opt-in shared-service and standalone-integration details"],
+    //   guarantees: ["GM-gated admin commands; unsafe and component-protected config keys refused; versioned config-only export; validated timezone menu; plain-language health summary with opt-in shared-service, tracker-consumer, and standalone-integration details"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:CORE:STATE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
-    //   last_updated_version: "v0.1.6.0", lifecycle: "active" }
+    //   last_updated_version: "v0.1.7.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // INTERFACES:COMMANDS contains GM/admin chat commands for listing modules, toggling
     // config, exporting versioned configuration-only snapshots, and inspecting health.
     // The default status view prioritizes a DM's next action; --details preserves
     // session counters, queue state, timestamps, event-hook counts, dependency evidence,
-    // MarkerService lifecycle state and separately detected marker/condition Mod evidence.
+    // shared-service and tracker-consumer lifecycle state, plus separately detected
+    // marker/condition Mod evidence.
     // -------------------------------------------------------------------------
     function getModuleHealth() {
         return Object.entries(MODULES)
@@ -3118,13 +3201,20 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         const trackerService = modules.find(row => row.name === 'TurnTrackerService');
         const initiative = modules.find(row => row.name === 'InitiativeAssist');
+        const combat = modules.find(row => row.name === 'CombatAssist');
+        const combatEncounter = combat?.running
+            ? GameAssist.CombatAssist?.getStatus?.()
+            : null;
         const turnTrackerLines = [
             trackerService?.running
                 ? `TurnTrackerService v${TurnTrackerService.version}: enabled; native Turn Tracker reads and guarded writes are available.`
-                : `TurnTrackerService v${TurnTrackerService.version}: disabled; InitiativeAssist tracker work is unavailable.`,
+                : `TurnTrackerService v${TurnTrackerService.version}: disabled; InitiativeAssist and CombatAssist tracker work is unavailable.`,
             initiative?.running
                 ? `InitiativeAssist: running in ${String(initiative.cfg.mode || 'manager')} mode.`
-                : 'InitiativeAssist: disabled or paused; Roll20 initiative remains unchanged by GameAssist.'
+                : 'InitiativeAssist: disabled or paused; Roll20 initiative remains unchanged by GameAssist.',
+            combat?.running
+                ? `CombatAssist: running; ${combatEncounter ? `${combatEncounter.status} on round ${combatEncounter.round}.` : 'no encounter is currently being tracked.'}`
+                : 'CombatAssist: disabled; GameAssist is not counting turns or rounds.'
         ];
 
         const avgDuration = metrics.taskDurations.length
@@ -3468,7 +3558,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.log('Metrics', summary.join('\n'));
     }, 'Core', { gmOnly: true });
     // --- Notes & Comments ---
-    // Changed (v0.1.6.0): Added TurnTrackerService availability and InitiativeAssist mode/lifecycle details to the expanded health panel.
+    // Changed (v0.1.7.0): Added CombatAssist lifecycle and active-encounter state to the expanded Turn Tracker health details.
     // Decision log:
     //   CHOICE: Keep command syntax identical to legacy for drop-in replacement.
     //   CHOICE: Keep the default status action-oriented and volatile counters behind --details - ALT: one exhaustive panel; REJECTED: obscured the health signal.
@@ -3503,8 +3593,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Modules wrapper (bundled features)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES", title: "Modules wrapper",
-    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Condition, token, and gameplay marker consumers share CORE:MARKERSERVICE","TokenAssist owns the documented GameAssist token-command surface without assuming the TokenMod brand","InitiativeAssist uses CORE:TURNTRACKERSERVICE without owning rounds or combat flow","WelcomeAssist remains disabled by default and announces automatically only after completed bootstrap"],
-    //   depends_on: ["[GAMEASSIST:CORE]","[GAMEASSIST:INTERFACES]"], last_updated_version: "v0.1.6.1" }
+    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Condition, token, and gameplay marker consumers share CORE:MARKERSERVICE","TokenAssist owns the documented GameAssist token-command surface without assuming the TokenMod brand","InitiativeAssist owns initiative rules while CombatAssist owns deliberate preservation-first encounter flow through CORE:TURNTRACKERSERVICE","WelcomeAssist remains disabled by default and announces automatically only after completed bootstrap"],
+    //   depends_on: ["[GAMEASSIST:CORE]","[GAMEASSIST:INTERFACES]"], last_updated_version: "v0.1.7.0" }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES encloses all shipped feature modules. Each child retains its own
@@ -3512,16 +3602,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // sequencing while child sections own their observable behavior.
     // -------------------------------------------------------------------------
 
-    // ————— CONFIG UI MODULE v0.2.0 —————
+    // ————— CONFIG UI MODULE v0.2.2 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:CONFIGUI] BEGIN
     // Section Title: Config UI module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONFIGUI", title: "Config UI",
-    //   guarantees: ["GM chat menu for module and core-service toggles, timezone access, and quick config"],
+    //   guarantees: ["GM chat menu for module and core-service toggles, timezone access, and quick config","Compact guide, status, info, read-only audit, and unknown-command recovery use the established !ga-config-ui prefix"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:INTERFACES:COMMANDS]"],
-    //   last_updated_version: "v0.1.5.1",
-    //   independent_versions: { module_version: "0.2.0" } }
+    //   last_updated_version: "v0.1.7.0",
+    //   independent_versions: { module_version: "0.2.2" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:CONFIGUI provides GM-facing chat controls to page through modules,
@@ -3673,6 +3763,41 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendChat('GameAssist', `/w gm ${message}`);
         }
 
+        function sendConfigPanel(title, fields) {
+            const content = fields.map(field => `{{${_sanitize(field.label)}=${field.value}}}`).join(' ');
+            sendChat('GameAssist', `/w gm &{template:default} {{name=${_sanitize(title)}}} ${content}`);
+        }
+
+        function showConfigGuide() {
+            sendConfigPanel('ConfigUI Guide', [
+                { label: 'Actions', value: `${GameAssist.createButton('Open Settings', '!ga-config-ui menu')} ${GameAssist.createButton('Current Status', '!ga-config-ui status')}` },
+                { label: 'Learn Or Review', value: `${GameAssist.createButton('What does ConfigUI do?', '!ga-config-ui info')} ${GameAssist.createButton('Read-Only Audit', '!ga-config-ui audit')}` },
+                { label: 'Also Available', value: '<code>!ga-config ui</code> opens the same settings pages. Advanced values remain available through <code>!ga-config get</code> and <code>!ga-config set</code>.' }
+            ]);
+        }
+
+        function showConfigInfo() {
+            sendConfigPanel('What ConfigUI Does', [
+                { label: 'Purpose', value: 'Gives the GM a paged control panel for GameAssist modules, core services, common boolean settings, and the table timezone.' },
+                { label: 'At The Table', value: 'Open settings, change only the feature you need, and use the system status panel when something needs attention.' },
+                { label: 'Continue', value: `${GameAssist.createButton('Open Settings', '!ga-config-ui menu')} ${GameAssist.createButton('Back to Guide', '!ga-config-ui help')}` }
+            ]);
+        }
+
+        function showConfigStatus(audit = false) {
+            const entries = getModuleEntries();
+            const enabled = entries.filter(([name]) => GameAssist.getState(name).config.enabled !== false);
+            const running = enabled.filter(([, mod]) => mod.initialized && mod.active);
+            const fields = [
+                { label: 'ConfigUI', value: 'Enabled and responding.' },
+                { label: 'Components', value: `${entries.length} visible | ${enabled.length} enabled | ${running.length} running` },
+                { label: 'Page Size', value: `${getPageSize()} components per settings page` },
+                { label: 'Actions', value: `${GameAssist.createButton('Open Settings', '!ga-config-ui menu')} ${GameAssist.createButton('Open Guide', '!ga-config-ui help')}` }
+            ];
+            if (audit) fields.splice(3, 0, { label: 'Changes', value: 'None. This audit reads configuration and runtime state without changing either.' });
+            sendConfigPanel(audit ? 'ConfigUI Audit' : 'ConfigUI Status', fields);
+        }
+
         GameAssist.renderConfigUI = function(playerId, options = {}) {
             if (!MODULES.ConfigUI?.initialized || !MODULES.ConfigUI?.active) {
                 GameAssist.log('ConfigUI', 'Config UI module is disabled.', 'WARN');
@@ -3683,16 +3808,53 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         GameAssist.onCommand('!ga-config-ui', msg => {
             const rawArgs = msg.content.replace(/^!ga-config-ui\s*/i, '');
-            renderInternal(msg.playerid, { rawArgs });
+            const command = String(rawArgs || '').trim().split(/\s+/)[0].toLowerCase();
+            if (!command || command === 'menu' || command === 'gm' || command === 'dm' || command === 'config' || command === 'settings' || command === '--page' || /^\d+$/.test(command)) {
+                renderInternal(msg.playerid, { rawArgs });
+                return;
+            }
+            if (command === 'help' || command === 'guide') {
+                showConfigGuide();
+                return;
+            }
+            if (command === 'info' || command === 'about') {
+                showConfigInfo();
+                return;
+            }
+            if (command === 'status' || command === 'refresh') {
+                showConfigStatus(false);
+                return;
+            }
+            if (command === 'audit') {
+                showConfigStatus(true);
+                return;
+            }
+            if (command === 'manual') {
+                sendConfigPanel('ConfigUI Guide', [
+                    { label: 'Manual', value: 'ConfigUI is intentionally brief, so its complete guidance stays in chat instead of creating a campaign handout.' },
+                    { label: 'Continue', value: `${GameAssist.createButton('Open Guide', '!ga-config-ui help')} ${GameAssist.createButton('Open Settings', '!ga-config-ui menu')}` }
+                ]);
+                return;
+            }
+            sendConfigPanel('ConfigUI', [
+                { label: 'Needs Attention', value: 'That ConfigUI command was not recognized.' },
+                { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!ga-config-ui help') }
+            ]);
         }, 'ConfigUI', { gmOnly: true });
+
+        ['!ConfigUI-GM', '!ConfigUI-DM', '!Config-GM', '!Config-DM'].forEach(prefix => {
+            GameAssist.onCommand(prefix, msg => {
+                renderInternal(msg.playerid);
+            }, 'ConfigUI', { gmOnly: true });
+        });
 
         GameAssist.log('ConfigUI', 'Ready: !ga-config ui (or !ga-config-ui) to open chat controls.', 'INFO', { startup: true });
     }, {
         enabled: true,
-        prefixes: ['!ga-config-ui', '!ga-config ui']
+        prefixes: ['!ga-config-ui', '!ga-config ui', '!ConfigUI-GM', '!ConfigUI-DM', '!Config-GM', '!Config-DM']
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.1): ConfigUI module_version advanced to 0.2.0 and now exposes the active table timezone, current Session date, and direct timezone settings access on every page.
+    // Changed (v0.1.7.0): Advanced ConfigUI to 0.2.2; GM and DM role aliases now open the actual settings screen while compact Guide/Help, Info, Status, read-only Audit, and unknown-command recovery remain available under the established prefix.
     // Decision log:
     //   CHOICE: Button helper reused; nav uses the same command path for refresh/paging.
     // Prior notes:
@@ -3703,16 +3865,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:CONFIGUI] END
     // =============================================================================
 
-    // ————— CRITFUMBLE MODULE v0.2.4.9 —————
+    // ————— CRITFUMBLE MODULE v0.2.5.1 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:CRITFUMBLE] BEGIN
     // Section Title: CritFumble module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CRITFUMBLE", title: "CritFumble",
-    //   guarantees: ["Readable help output; natural‑1 detection bugfix retained"],
+    //   guarantees: ["Compact layered navigation, table-readiness status/audit, stable on-demand manual, and unknown-command recovery","Natural-1 detection bugfix retained"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]"],
-    //   last_updated_version: "v0.1.4.4",
-    //   independent_versions: { module_version: "0.2.4.9" } }
+    //   last_updated_version: "v0.1.7.0",
+    //   independent_versions: { module_version: "0.2.5.1" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:CRITFUMBLE watches rolltemplate outputs for natural-1 results and serves
@@ -3754,6 +3916,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             'Confirm-Crit-Martial',
             'Confirm-Crit-Magic'
         ];
+        const MODULE_VERSION = '0.2.5.1';
 
         function ensureCritFumbleRuntime() {
             const runtime = ensureRuntimeObject(modState);
@@ -3946,13 +4109,79 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function showHelpMessage(who) {
-            const menuButton = GameAssist.createButton('Open Natural 1 Menu', '!critfumble menu');
             sendTemplateMessage(who, "CritFumble Quick Reference", [
-                { label: "What It Does", value: "Helps resolve natural 1 attack rolls with a guided Natural 1 menu or direct table rolls." },
-                { label: "Best First Step", value: menuButton },
-                { label: "Common Commands", value: "!critfumble menu = guided Natural 1 menu<br>!critfail = open the player picker directly<br>!critfumble-melee = roll melee<br>!critfumble-ranged = roll ranged<br>!critfumble-thrown = roll thrown<br>!critfumble-spell = roll spell<br>!critfumble-natural = roll natural" },
-                { label: "Attack Types", value: "melee, ranged, thrown, spell, natural" },
-                { label: "Before First Use", value: "Create Roll20 rollable tables with these exact names:<br>" + REQUIRED_TABLES.join('<br>') }
+                { label: "Actions", value: `${GameAssist.createButton('Natural 1 Menu', '!critfumble menu')} ${GameAssist.createButton('Player Picker', '!critfail')} ${GameAssist.createButton('Check Setup', '!critfumble status')}` },
+                { label: "Learn Or Review", value: `${GameAssist.createButton('What does CritFumble do?', '!critfumble info')} ${GameAssist.createButton('Create or Update Manual', '!critfumble manual')} ${GameAssist.createButton('Table Audit', '!critfumble audit')}` }
+            ]);
+        }
+
+        function tableReadiness() {
+            const found = [];
+            const missing = [];
+            REQUIRED_TABLES.forEach(name => {
+                const exists = findObjs({ _type: 'rollabletable', name }).length > 0;
+                (exists ? found : missing).push(name);
+            });
+            return { found, missing };
+        }
+
+        function showCritFumbleStatus(who, audit = false) {
+            const readiness = tableReadiness();
+            const fields = [
+                { label: 'Module', value: `CritFumble ${MODULE_VERSION} is enabled and responding.` },
+                { label: 'Rollable Tables', value: `${readiness.found.length} of ${REQUIRED_TABLES.length} found.` },
+                { label: 'Needs Attention', value: readiness.missing.length ? `Create or correct: ${readiness.missing.join(', ')}` : 'None. Every required table name was found.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Natural 1 Menu', '!critfumble menu')} ${GameAssist.createButton('Open Guide', '!critfumble help')}` }
+            ];
+            if (audit) fields.splice(3, 0, { label: 'Changes', value: 'None. This audit checks required rollable-table names without changing tables or rolls.' });
+            sendTemplateMessage(who, audit ? 'CritFumble Table Audit' : 'CritFumble Status', fields);
+        }
+
+        function showCritFumbleInfo(who) {
+            sendTemplateMessage(who, 'What CritFumble Does', [
+                { label: 'Purpose', value: 'Recognizes natural 1 attack rolls from supported Roll20 templates, offers an attack-type menu, and rolls campaign-owned fumble or confirmation tables.' },
+                { label: 'At The Table', value: 'Use the automatic prompt, open the Natural 1 Menu, or ask the GM to use the Player Picker.' },
+                { label: 'Learn More', value: `${GameAssist.createButton('Create or Update Manual', '!critfumble manual')} ${GameAssist.createButton('Back to Guide', '!critfumble help')}` }
+            ]);
+        }
+
+        function critFumbleManualHtml() {
+            return [
+                '<h1>CritFumble User Manual</h1>',
+                `<p><strong>GameAssist v${_sanitize(VERSION)} | CritFumble ${MODULE_VERSION}</strong></p>`,
+                '<p>CritFumble helps a table resolve natural 1 attack rolls. Supported Roll20 attack templates can open the choice menu automatically, while the GM can open the same workflow manually.</p>',
+                '<h2>Quick Start</h2>',
+                '<ol><li>Create the seven required Roll20 rollable tables using the exact names below.</li><li>Run <code>!critfumble status</code> to check the names.</li><li>Use <code>!critfumble menu</code> for the guided Natural 1 menu or <code>!critfail</code> for the GM player picker.</li></ol>',
+                `<h2>Required Rollable Tables</h2><ul>${REQUIRED_TABLES.map(name => `<li><code>${_sanitize(name)}</code></li>`).join('')}</ul>`,
+                '<p>GameAssist does not create campaign fumble results. The GM chooses and maintains the entries in these tables.</p>',
+                '<h2>Attack Types</h2>',
+                '<ul><li><strong>Melee:</strong> close weapon attacks.</li><li><strong>Ranged:</strong> bows, crossbows, firearms, and other aimed attacks.</li><li><strong>Thrown:</strong> thrown weapons and objects.</li><li><strong>Spell:</strong> spell attack rolls.</li><li><strong>Natural:</strong> unarmed strikes, bites, claws, and similar attacks.</li></ul>',
+                '<h2>Command Reference</h2>',
+                '<ul><li><code>!critfumble help</code> or <code>!critfumble guide</code> - compact guide.</li><li><code>!critfumble menu</code> - guided Natural 1 menu.</li><li><code>!critfail</code>, <code>!CritFumble-GM</code>, or <code>!CritFumble-DM</code> - GM player picker.</li><li><code>!critfumble-melee|ranged|thrown|spell|natural</code> - direct table roll.</li><li><code>!confirm-crit-martial</code> and <code>!confirm-crit-magic</code> - confirmation table rolls.</li><li><code>!critfumble status</code> - concise setup health.</li><li><code>!critfumble audit</code> - read-only table-name check.</li></ul>',
+                '<h2>Troubleshooting</h2>',
+                '<p>If a direct roll fails while GameAssist responds, check the spelling of the required rollable table first. The table audit never changes or populates a table.</p>'
+            ].join('');
+        }
+
+        function writeCritFumbleManual(msg) {
+            if (!playerIsGM(msg.playerid)) {
+                sendTemplateMessage(sanitizeWho(msg.who), 'CritFumble Manual', [
+                    { label: 'GM Action', value: 'The campaign manual is created or updated only by the GM.' },
+                    { label: 'Continue', value: GameAssist.createButton('Open Quick Guide', '!critfumble help') }
+                ]);
+                return;
+            }
+            const result = GameAssist.writeModuleManual('CritFumble', critFumbleManualHtml());
+            if (!result.ok) {
+                sendTemplateMessage('gm', 'CritFumble Manual', [
+                    { label: 'Needs Attention', value: _sanitize(result.message) },
+                    { label: 'Continue', value: GameAssist.createButton('Whisper Short Version', '!critfumble info') }
+                ]);
+                return;
+            }
+            sendTemplateMessage('gm', 'CritFumble Manual Ready', [
+                { label: 'Handout', value: `${result.link}<br>${_sanitize(result.name)} was ${result.created ? 'created' : 'updated'}.` },
+                { label: 'Continue', value: `${GameAssist.createButton('Whisper Short Version', '!critfumble info')} ${GameAssist.createButton('Open Natural 1 Menu', '!critfumble menu')}` }
             ]);
         }
 
@@ -3999,8 +4228,27 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (/^!critfumble\s+menu$/.test(cmd)) {
                     return showCritFumbleMenu(msg.who);
                 }
-                if (/^!critfumble(?:\s+help)?$/.test(cmd)) {
+                if (/^!critfumble(?:\s+(?:help|guide))?$/.test(cmd)) {
                     return showHelpMessage(msg.who);
+                }
+                if (/^!critfumble(?:\s+|-)(?:gm|dm)$/.test(cmd)) {
+                    if (playerIsGM(msg.playerid)) return showManualTriggerMenu();
+                    return sendTemplateMessage(sanitizeWho(msg.who), 'CritFumble', [
+                        { label: 'GM Control', value: 'The player picker is available only to the GM.' },
+                        { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!critfumble help') }
+                    ]);
+                }
+                if (/^!critfumble\s+(?:status|refresh)$/.test(cmd)) {
+                    return showCritFumbleStatus(sanitizeWho(msg.who), false);
+                }
+                if (/^!critfumble\s+audit$/.test(cmd)) {
+                    return showCritFumbleStatus(sanitizeWho(msg.who), true);
+                }
+                if (/^!critfumble\s+(?:info|about)$/.test(cmd)) {
+                    return showCritFumbleInfo(sanitizeWho(msg.who));
+                }
+                if (/^!critfumble\s+manual$/.test(cmd)) {
+                    return writeCritFumbleManual(msg);
                 }
                 if (cmd.startsWith('!critfumblemenu')) {
                     const { args } = _parseArgs(rawCmd.replace('!critfumblemenu', '').trim());
@@ -4020,6 +4268,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     const rawCommand = msg.content.slice(1);  // e.g. "confirm-crit-martial"
                     debugLog(`${who} selected confirm type: ${rawCommand}`);
                     return rollConfirmTable(who, rawCommand);
+                }
+                if (cmd.startsWith('!critfumble ')) {
+                    return sendTemplateMessage(sanitizeWho(msg.who), 'CritFumble', [
+                        { label: 'Needs Attention', value: 'That CritFumble command was not recognized.' },
+                        { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!critfumble help') }
+                    ]);
                 }
                 return;
             }
@@ -4045,15 +4299,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         GameAssist.onEvent('chat:message', handleRoll, 'CritFumble');
-        GameAssist.log('CritFumble','v0.2.4.9 Ready: Auto fumble detection + !critfumble help/menu','INFO',{startup:true});
+        GameAssist.log('CritFumble',`v${MODULE_VERSION} Ready: Auto fumble detection + !critfumble help/menu/status`,'INFO',{startup:true});
     }, {
         enabled: true,
         events:   ['chat:message'],
-        prefixes: ['!critfail','!critfumble']
+        prefixes: ['!critfail','!critfumble','!CritFumble-GM','!CritFumble-DM']
     });
     // --- Notes & Comments ---
     // Bugfix retained: robust natural‑1 detection across templates/inlineroll variants.
-    // Changed (v0.1.4.4): CritFumble help is a quick reference; !critfumble menu opens the guided natural-1 dialogue; !critfail remains the direct player picker; command parsing tolerates extra whitespace and mixed-case direct rolls.
+    // Changed (v0.1.7.0): Advanced CritFumble to 0.2.5.1; GM and DM role aliases open the GM player picker, while compact Guide/Help navigation, table status/audit, Info, the stable manual, and every existing roll command remain available.
     // Maintenance (v0.1.4.3, no semantic change): Reworded an internal comment for collaborator clarity.
     // Maintenance (v0.1.4.1, no semantic change): Routed unchanged defaults through POLICY and timestamps through now().
     // Prior notes:
@@ -4064,17 +4318,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:CRITFUMBLE] END
     // =============================================================================
 
-    // ————— CONDITION ASSIST MODULE v1.0.1 —————
+    // ————— CONDITION ASSIST MODULE v1.0.3 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:CONDITIONASSIST] BEGIN
     // Section Title: GameAssist condition descriptions and controls
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONDITIONASSIST", title: "ConditionAssist",
-    //   guarantees: ["2014 SRD condition wording is the default, with selectable 2024 SRD and campaign-custom wording","!condition and case-insensitive !cond-[condition] provide condition-reference workflows for official and campaign conditions","Selected-token menus and current-page status report configured conditions from actual marker state and distinguish other active markers","Built-in and registered custom marker artwork may accompany readable condition text","GM announcements toggle and verify selected token markers before reporting character-first is/is-no-longer results through explicit public/private delivery","All condition marker reads, writes, and observations use CORE:MARKERSERVICE","Legacy state.STATUSINFO may be copied through a validated migration and is never silently deleted"],
+    //   guarantees: ["2014 SRD condition wording is the default, with selectable 2024 SRD and campaign-custom wording","!condition and case-insensitive !cond-[condition] provide condition-reference workflows for official and campaign conditions","Selected-token menus and current-page status report configured conditions from actual marker state and distinguish other active markers","Built-in and registered custom marker artwork may accompany readable condition text","GM announcements toggle and verify selected token markers before reporting character-first is/is-no-longer results through explicit public/private delivery","Compact layered navigation, a stable on-demand manual, read-only audit wording, and recovery responses preserve player/GM permissions","All condition marker reads, writes, and observations use CORE:MARKERSERVICE","Legacy state.STATUSINFO may be copied through a validated migration and is never silently deleted"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.ConditionAssist"],
-    //   last_updated_version: "v0.1.5.0",
-    //   independent_versions: { module_version: "1.0.1", condition_config_schema_version: 2 }, lifecycle: "active" }
+    //   last_updated_version: "v0.1.7.0",
+    //   independent_versions: { module_version: "1.0.3", condition_config_schema_version: 2 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // ConditionAssist is GameAssist's condition-information module. It preserves the
@@ -4086,7 +4340,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('ConditionAssist', function() {
         const MODULE_NAME = 'ConditionAssist';
-        const MODULE_VERSION = '1.0.1';
+        const MODULE_VERSION = '1.0.3';
         const CONFIG_SCHEMA_VERSION = 2;
         const PRIMARY_COMMAND = 'condition';
         const STATUS_HANDOUT_NAME = 'GameAssist Condition Status';
@@ -4974,7 +5228,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return true;
         }
 
-        function sendConditionStatus(msg) {
+        function sendConditionStatus(msg, { audit = false } = {}) {
             if (!playerIsGM(msg.playerid)) {
                 sendPanel('Condition Status', 'Only the GM can review conditions and markers across the current player page.', { msg });
                 return;
@@ -5042,7 +5296,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '</div>',
                 '<div style="margin-top:7px;font-size:0.9em;">Scope: linked character and NPC tokens on the current player page. Unmarked tokens are omitted. Other markers are shown separately and are not treated as configured conditions.</div>'
             ].join('');
-            sendPanel('Current Conditions and Markers', body, { msg, gmOnly: true });
+            const auditNote = audit
+                ? '<div style="margin-top:7px;"><strong>Changes:</strong> None. This audit reads markers and refreshes the named status handout; it does not change token conditions.</div>'
+                : '';
+            sendPanel(audit ? 'ConditionAssist Audit' : 'Current Conditions and Markers', body + auditNote, { msg, gmOnly: true });
         }
 
         function sendConditionMenu(msg) {
@@ -5073,23 +5330,58 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function sendHelp(msg) {
             const body = [
-                '<div><strong>What it does</strong><br>Shows plain-language condition reminders and manages status markers on selected tokens.</div>',
-                '<div style="margin-top:7px;"><strong>Quick start</strong><br>1. Select one or more tokens.<br>2. Open the condition menu.<br>3. Click a condition to add or remove it.</div>',
-                `<div style="margin-top:7px;">${GameAssist.createButton('Open Condition Menu', '!condition')}</div>`,
-                '<div style="margin-top:7px;"><strong>Useful commands</strong><br>',
-                '<code>!condition prone</code> - show one description<br>',
-                '<code>!cond-prone</code> - quick shortcut for the same description<br>',
-                '<code>!condition add prone</code> - add to selected tokens<br>',
-                '<code>!condition remove prone</code> - remove from selected tokens<br>',
-                '<code>!condition toggle prone</code> - switch the marker on or off<br>',
-                '<code>!condition status</code> - list current-page characters and NPCs with configured conditions or other markers<br>',
-                '<code>!condition announce</code>, <code>!c-a</code>, or <code>!cond-!</code> - toggle and communicate a condition for selected linked characters<br>',
-                '<code>!condition config</code> - GM settings and condition definitions</div>',
-                `<div style="margin-top:7px;"><strong>Rules wording</strong><br>${_sanitize(rulesProfileLabel())}. The GM can switch between 2014 and 2024 SRD wording or edit any description.</div>`,
-                '<div style="margin-top:7px;"><strong>Announcements</strong><br>Select linked character tokens first. A final public or whisper button toggles the condition marker once, verifies the result, and reports that each character is or is no longer affected by that condition. Exact wording is optional.</div>',
-                '<div style="margin-top:7px;font-size:0.9em;">Condition names and shortcuts are not case-sensitive. Campaign-created conditions work with the same menus and <code>!cond-&lt;condition&gt;</code> shortcut.</div>'
+                `<div><strong>Actions</strong><br>${GameAssist.createButton('Condition Menu', '!condition menu')} ${playerIsGM(msg.playerid) ? GameAssist.createButton('Current Status', '!condition status') : ''}</div>`,
+                `<div style="margin-top:8px;"><strong>Learn Or Review</strong><br>${GameAssist.createButton('What does ConditionAssist do?', '!condition info')} ${playerIsGM(msg.playerid) ? GameAssist.createButton('Create or Update Manual', '!condition manual') : ''} ${playerIsGM(msg.playerid) ? GameAssist.createButton('Read-Only Audit', '!condition audit') : ''}</div>`,
+                `<div style="margin-top:8px;"><strong>Quick Reference</strong><br>${GameAssist.createButton('Show Prone Wording', '!cond-prone')} ${playerIsGM(msg.playerid) ? GameAssist.createButton('Announce a Condition', '!condition announce') : ''} ${playerIsGM(msg.playerid) ? GameAssist.createButton('Settings', '!condition config') : ''}</div>`
             ].join('');
-            sendPanel('ConditionAssist Help', body, { msg });
+            sendPanel('ConditionAssist Guide', body, { msg });
+        }
+
+        function sendConditionInfo(msg) {
+            const body = [
+                '<div><strong>Purpose</strong><br>Shows plain-language condition wording, manages configured token markers, and helps the GM communicate condition changes.</div>',
+                '<div style="margin-top:7px;"><strong>At The Table</strong><br>Select tokens and open the Condition Menu. Condition names and <code>!cond-&lt;condition&gt;</code> shortcuts are not case-sensitive, including campaign-created conditions.</div>',
+                `<div style="margin-top:8px;">${playerIsGM(msg.playerid) ? GameAssist.createButton('Create or Update Manual', '!condition manual') : ''} ${GameAssist.createButton('Open Condition Menu', '!condition menu')} ${GameAssist.createButton('Back to Guide', '!condition help')}</div>`
+            ].join('');
+            sendPanel('What ConditionAssist Does', body, { msg });
+        }
+
+        function conditionManualHtml() {
+            return [
+                '<h1>ConditionAssist User Manual</h1>',
+                `<p><strong>GameAssist v${_sanitize(VERSION)} | ConditionAssist ${_sanitize(MODULE_VERSION)}</strong></p>`,
+                '<p>ConditionAssist provides readable condition references and MarkerService-backed token controls. It starts with D&amp;D 5E 2014 SRD wording, can use 2024 SRD wording, and lets the GM add or edit campaign conditions.</p>',
+                '<h2>Quick Start</h2>',
+                '<ol><li>Select one or more linked token objects.</li><li>Run <code>!condition</code> or <code>!condition menu</code>.</li><li>Choose a condition to toggle it on the selected tokens.</li><li>Use Announce a Condition when the table also needs a public or private message.</li></ol>',
+                '<h2>Condition References</h2>',
+                '<p><code>!condition prone</code> and <code>!cond-prone</code> show the configured wording. Names are case-insensitive, and custom campaign conditions use the same shortcut pattern.</p>',
+                '<h2>Announcements</h2>',
+                '<p>Select linked character tokens before opening the announcement menu. The final public or whisper button toggles each marker once, verifies the result, and reports that each character is or is no longer affected. Exact rules wording can be included or opened privately.</p>',
+                '<h2>Status And Audit</h2>',
+                '<p><code>!condition status</code> lists marked linked characters and NPCs on the current player page and updates the complete status handout. <code>!condition audit</code> performs the same read-only inspection and explicitly confirms that no token condition was changed.</p>',
+                '<h2>Settings And Definitions</h2>',
+                '<p><code>!condition config</code> controls player permissions, automatic descriptions, marker artwork, the wording profile, and campaign condition definitions. Switching the 2014/2024 profile preserves custom marker choices and added conditions.</p>',
+                '<h2>Command Reference</h2>',
+                '<ul><li><code>!condition help</code> or <code>!condition guide</code> - compact guide.</li><li><code>!condition</code>, <code>!Condition-GM</code>, or <code>!Condition-DM</code> - condition controls.</li><li><code>!condition add|remove|toggle &lt;name&gt;</code> - selected-token marker action.</li><li><code>!condition announce</code>, <code>!c-a</code>, or <code>!cond-!</code> - announcement workflow.</li><li><code>!condition status</code> or <code>!condition audit</code> - current-page inspection.</li><li><code>!condition config</code> or <code>!condition settings</code> - GM setup.</li></ul>',
+                '<h2>Interoperability</h2>',
+                '<p>ConditionAssist uses GameAssist MarkerService for all marker work. Do not enable another script that also automates the same condition markers and command surface unless its ownership is deliberately separated.</p>'
+            ].join('');
+        }
+
+        function writeConditionManual(msg) {
+            if (!playerIsGM(msg.playerid)) {
+                sendPanel('ConditionAssist Manual', `<div>The campaign manual is created or updated only by the GM.</div><div style="margin-top:8px;">${GameAssist.createButton('Open Guide', '!condition help')}</div>`, { msg });
+                return;
+            }
+            const result = GameAssist.writeModuleManual(MODULE_NAME, conditionManualHtml());
+            if (!result.ok) {
+                sendPanel('ConditionAssist Manual', `<div><strong>Needs Attention</strong><br>${_sanitize(result.message)}</div><div style="margin-top:8px;">${GameAssist.createButton('Whisper Short Version', '!condition info')}</div>`, { msg, gmOnly: true });
+                return;
+            }
+            sendPanel('ConditionAssist Manual Ready', [
+                `<div><strong>Handout</strong><br>${result.link}<br>${_sanitize(result.name)} was ${result.created ? 'created' : 'updated'}.</div>`,
+                `<div style="margin-top:8px;">${GameAssist.createButton('Whisper Short Version', '!condition info')} ${GameAssist.createButton('Open Condition Menu', '!condition menu')}</div>`
+            ].join(''), { msg, gmOnly: true });
         }
 
         function sendConfigMenu(msg, notice = '') {
@@ -5464,12 +5756,28 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 sendConditionMenu(msg);
                 return;
             }
-            if (first === 'help') {
+            if (first === 'help' || first === 'guide') {
                 sendHelp(msg);
                 return;
             }
-            if (first === 'status' || first === '--status') {
+            if (first === 'menu' || first === 'gm' || first === 'dm') {
+                sendConditionMenu(msg);
+                return;
+            }
+            if (first === 'info' || first === 'about') {
+                sendConditionInfo(msg);
+                return;
+            }
+            if (first === 'manual') {
+                writeConditionManual(msg);
+                return;
+            }
+            if (first === 'status' || first === '--status' || first === 'refresh') {
                 sendConditionStatus(msg);
+                return;
+            }
+            if (first === 'audit') {
+                sendConditionStatus(msg, { audit: true });
                 return;
             }
             if (first === 'details') {
@@ -5480,8 +5788,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 handleAnnouncement(msg, body);
                 return;
             }
-            if (first === 'config') {
-                handleConfig(msg, body);
+            if (first === 'config' || first === 'settings') {
+                handleConfig(msg, first === 'settings' ? body.replace(/^settings/i, 'config') : body);
+                return;
+            }
+            if (first === 'repair' || first === 'apply') {
+                sendPanel('ConditionAssist', `<div><strong>Feature Not Available</strong><br>ConditionAssist does not provide a bulk repair command. Use the read-only audit to review markers or the Condition Menu to change selected tokens deliberately.</div><div style="margin-top:8px;">${GameAssist.createButton('Read-Only Audit', '!condition audit')} ${GameAssist.createButton('Condition Menu', '!condition menu')} ${GameAssist.createButton('Open Guide', '!condition help')}</div>`, { msg });
                 return;
             }
             if (first === 'config-conditions') {
@@ -5535,7 +5847,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             const condition = getCondition(body);
             if (!condition) {
-                sendPanel('ConditionAssist', `No condition named ${_sanitize(body)} is configured. Use <code>!condition help</code> for guidance.`, { msg });
+                sendPanel('ConditionAssist', `<div>No condition named ${_sanitize(body)} is configured.</div><div style="margin-top:8px;">${GameAssist.createButton('Open Guide', '!condition help')}</div>`, { msg });
                 return;
             }
             showCondition(condition, { force: true });
@@ -5556,7 +5868,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             const condition = getCondition(requested);
             if (!condition) {
-                sendPanel('ConditionAssist', `No condition named ${_sanitize(requested || '(blank)')} is configured. Use <code>!condition help</code> for guidance.`, { msg });
+                sendPanel('ConditionAssist', `<div>No condition named ${_sanitize(requested || '(blank)')} is configured.</div><div style="margin-top:8px;">${GameAssist.createButton('Open Guide', '!condition help')}</div>`, { msg });
                 return;
             }
             showCondition(condition, { force: true });
@@ -5585,6 +5897,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         GameAssist.onCommand('!condition', handleInput, MODULE_NAME);
+        ['!Condition-GM', '!Condition-DM'].forEach(prefix => {
+            GameAssist.onCommand(prefix, msg => {
+                handleInput({ ...msg, content: '!condition gm' });
+            }, MODULE_NAME, { gmOnly: true });
+        });
         GameAssist.onCommand('!cond-', handleConditionShortcut, MODULE_NAME, {
             match: { caseInsensitive: true, mode: 'prefix' }
         });
@@ -5629,12 +5946,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }, {
         enabled: true,
         events: ['change:graphic:statusmarkers'],
-        prefixes: ['!condition', '!cond-', '!c-a'],
+        prefixes: ['!condition', '!cond-', '!c-a', '!Condition-GM', '!Condition-DM'],
         dependsOn: ['MarkerService'],
         protectedConfigKeys: ['conditions', 'rulesProfile', 'legacyStatusInfoMigration']
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Advanced unreleased ConditionAssist to 1.0.1 with accurate selected-token condition recognition, a bounded GM current-page condition/marker status view plus complete status handout, case-insensitive !cond-[condition] references for official/custom definitions, !c-a and !cond-! announcement aliases, complete 2014/2024/campaign wording, built-in/custom marker artwork, selected-character announcements that toggle and verify marker state, character-first is/is-no-longer reporting, Concentrating display-name repair, documented Roll20 player-name lookup for private delivery, bounded private-reference buttons, duplicate-marker warnings, schema-v2 import/export, and automatic repair of untouched 1.0.0 defaults.
+    // Changed (v0.1.7.0): Advanced ConditionAssist to 1.0.3; GM and DM role aliases open the selected-token condition controls, while compact Guide/Help, Info, Status, read-only Audit, Settings, Manual, and condition behavior remain intact.
     // Decision log:
     //   CHOICE: Name the GameAssist module ConditionAssist - ALT: retain StatusInfo branding; REJECTED: this is an independently maintained adaptation with a different lifecycle and marker architecture.
     //   CHOICE: Keep permanent !condition compatibility plus one optional custom alias - ALT: replace the command; REJECTED: upgrades should not strand familiar workflows.
@@ -5660,17 +5977,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:CONDITIONASSIST] END
     // =============================================================================
 
-    // ————— TOKEN ASSIST MODULE v1.0.1 —————
+    // ————— TOKEN ASSIST MODULE v1.0.3 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:TOKENASSIST] BEGIN
     // Section Title: GameAssist general token controls and TokenMod compatibility
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:TOKENASSIST", title: "TokenAssist",
-    //   guarantees: ["General token controls use !token-assist and !ta/!ta-* commands; older !token-mod syntax is removed no later than v0.2.0","Selected tokens are available to their users while explicit --ids targeting remains GM-only unless the DM opts in","Every status-marker command uses CORE:MARKERSERVICE","Valid legacy state.TokenMod playersCanUse_ids configuration is copied once without deleting the source state","A detected standalone TokenMod suspends only overlapping !token-mod handling and produces an actionable warning rather than double-applying token changes"],
+    //   guarantees: ["General token controls use !token-assist and !ta/!ta-* commands; older !token-mod syntax is removed no later than v0.2.0","Selected tokens are available to their users while explicit --ids targeting remains GM-only unless the DM opts in","Compact layered navigation, stable on-demand manual, read-only audit, and unknown-command recovery preserve the established command families","Every status-marker command uses CORE:MARKERSERVICE","Valid legacy state.TokenMod playersCanUse_ids configuration is copied once without deleting the source state","A detected standalone TokenMod suspends only overlapping !token-mod handling and produces an actionable warning rather than double-applying token changes"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.TokenAssist"],
-    //   last_updated_version: "v0.1.5.0",
-    //   independent_versions: { module_version: "1.0.1", token_config_schema_version: 1, tokenmod_reference_version: "0.8.88" }, lifecycle: "active" }
+    //   last_updated_version: "v0.1.7.0",
+    //   independent_versions: { module_version: "1.0.3", token_config_schema_version: 1, tokenmod_reference_version: "0.8.88" }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // TokenAssist provides GameAssist's general token controls through a verified,
@@ -5680,7 +5997,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     const TokenAssist = (() => {
         const MODULE_NAME = 'TokenAssist';
-        const MODULE_VERSION = '1.0.1';
+        const MODULE_VERSION = '1.0.3';
         const CONFIG_SCHEMA_VERSION = 1;
         const TOKENMOD_REFERENCE = Object.freeze({
             version: '0.8.88',
@@ -6559,33 +6876,90 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 `Players --ids: ${config.playersCanUseIds ? 'On' : 'Off'}`,
                 `!token-assist --config players-can-ids|${config.playersCanUseIds ? 'off' : 'on'}`
             );
-            const markerButton = GameAssist.createButton('Marker Help', '!token-assist --help-statusmarkers');
             whisper(msg, [
                 '<div style="border:1px solid #444;background:#fff;padding:8px;border-radius:5px">',
                 '<b style="font-size:1.15em">TokenAssist Quick Guide</b><br>',
-                'Select one or more tokens, then use a command below. <code>!token-assist</code> is the full name; <code>!ta</code> and <code>!ta-*</code> are the table-friendly shortcuts.<br><br>',
-                '<b>Visibility:</b> <code>!ta-on showname</code> / <code>!ta-off showname</code> / <code>!ta-flip showname</code><br>',
-                '<b>Values:</b> <code>!ta-set name|Guardian bar1_value|25</code><br>',
-                '<b>Relative values:</b> <code>--set bar1_value|-5 left|+70</code>; use <code>=-5</code> to assign a negative value.<br>',
-                '<b>Aura:</b> <code>!ta-set aura1_radius|5 aura1_color|336699 aura1_options|circle</code><br>',
-                '<b>Move:</b> <code>!ta-move 3g</code> or <code>!ta-move =90|2u</code><br>',
-                '<b>Layer/order:</b> <code>--set layer|gmlayer</code> or <code>--order tofront</code><br>',
-                '<b>Target:</b> <code>--ids TOKEN_ID</code>, <code>--current-page</code>, <code>--active-pages</code>, <code>--ignore-selected</code><br>',
-                '<b>Report:</b> <code>--report gm|"{name}: {bar1_value:before} to {bar1_value}"</code><br><br>',
-                '<span style="color:#7a4b00"><b>Older macros:</b> supported <code>!token-mod</code> syntax works temporarily, but update those macros before GameAssist v0.2.0.</span><br><br>',
-                `${markerButton} ${configButton} ${GameAssist.createButton('About and Limits', '!token-assist about')}`,
+                `<div style="margin-top:6px;"><b>Actions</b><br>${GameAssist.createButton('Selected Token Examples', '!token-assist info')} ${GameAssist.createButton('Marker Help', '!token-assist --help-statusmarkers')} ${GameAssist.createButton('Current Status', '!token-assist status')}</div>`,
+                `<div style="margin-top:8px;"><b>Learn Or Review</b><br>${GameAssist.createButton('Create or Update Manual', '!token-assist manual')} ${GameAssist.createButton('Read-Only Audit', '!token-assist audit')} ${configButton}</div>`,
+                '</div>'
+            ].join(''));
+        }
+
+        function showTokenControl(msg) {
+            const state = getModuleState();
+            const selected = (msg.selected || []).map(selection => getObj('graphic', selection._id)).filter(Boolean);
+            whisper(msg, [
+                '<div style="border:1px solid #444;background:#fff;padding:8px;border-radius:5px">',
+                '<b style="font-size:1.15em">TokenAssist GM Controls</b><br>',
+                `<div style="margin-top:6px;"><b>Current Selection</b><br>${selected.length} token${selected.length === 1 ? '' : 's'} selected.</div>`,
+                `<div style="margin-top:8px;"><b>Common Actions</b><br>${GameAssist.createButton('Show Names', '!ta-on showname')} ${GameAssist.createButton('Hide Names', '!ta-off showname')} ${GameAssist.createButton('Set Bar 1', '!ta-set bar1_value|?{Bar 1 value|0}')} ${GameAssist.createButton('Toggle Marker', '!ta-set statusmarkers|!?{Marker name|red}')}</div>`,
+                `<div style="margin-top:8px;"><b>Review And Setup</b><br>${GameAssist.createButton('Status', '!token-assist status')} ${GameAssist.createButton('Marker Help', '!token-assist --help-statusmarkers')} ${GameAssist.createButton(`Players --ids: ${state.config.playersCanUseIds ? 'On' : 'Off'}`, `!token-assist --config players-can-ids|${state.config.playersCanUseIds ? 'off' : 'on'}`)} ${GameAssist.createButton('Guide', '!token-assist help')}</div>`,
                 '</div>'
             ].join(''));
         }
 
         function showAbout(msg) {
             whisper(msg, [
-                '<b>About TokenAssist</b><br>',
-                `TokenAssist v${MODULE_VERSION} provides selected-token controls, authorized ID targeting, movement, reports, auras, lighting, and MarkerService-backed status changes.<br><br>`,
-                `Token-control design credit: TokenMod ${TOKENMOD_REFERENCE.version} by The Aaron, Arcane Scriptomancer. Source and MIT license details are preserved in ATTRIBUTIONS.md.<br><br>`,
-                '<b>Commands:</b> use <code>!token-assist</code>, <code>!ta</code>, or <code>!ta-*</code>. Update older <code>!token-mod</code> macros before GameAssist v0.2.0.<br><br>',
-                '<b>Current limits:</b> image-side stack editing, default-token writes, computed or name-resolved attributes, advanced controller-list editing, advanced color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, exact TokenMod report-recipient distinctions, duplicate-index markers, conditional marker counts, and TokenMod help-handout rebuilding are not yet supported.'
+                '<div style="border:1px solid #444;background:#fff;padding:8px;border-radius:5px">',
+                '<b style="font-size:1.15em">What TokenAssist Does</b><br>',
+                `TokenAssist v${MODULE_VERSION} changes selected tokens through concise <code>!ta-*</code> commands. It supports visibility, values, movement, layers, order, auras, lighting, reports, authorized ID targeting, and MarkerService-backed status changes.<br><br>`,
+                '<b>Examples</b><br><code>!ta-on showname</code><br><code>!ta-set bar1_value|25</code><br><code>!ta-move 3g</code><br><code>!ta-set statusmarkers|red</code><br><br>',
+                `${GameAssist.createButton('Create or Update Manual', '!token-assist manual')} ${GameAssist.createButton('Back to Guide', '!token-assist help')}`,
+                '</div>'
             ].join(''));
+        }
+
+        function showTokenStatus(msg, audit = false) {
+            const state = getModuleState();
+            const selected = (msg.selected || []).map(selection => getObj('graphic', selection._id)).filter(Boolean);
+            const markerReady = Boolean(GameAssist.MarkerService?.isEnabled?.());
+            whisper(msg, [
+                '<div style="border:1px solid #444;background:#fff;padding:8px;border-radius:5px">',
+                `<b style="font-size:1.15em">TokenAssist ${audit ? 'Audit' : 'Status'}</b><br>`,
+                `<b>Module:</b> ${MODULE_VERSION} | enabled and responding<br>`,
+                `<b>MarkerService:</b> ${markerReady ? 'available' : 'unavailable'}<br>`,
+                `<b>Selected tokens:</b> ${selected.length}<br>`,
+                `<b>Player ID targeting:</b> ${state.config.playersCanUseIds ? 'allowed by the GM' : 'GM only'}<br>`,
+                audit ? '<b>Changes:</b> None. This audit reads module settings and the current selection without changing tokens.<br>' : '',
+                `<div style="margin-top:8px;">${GameAssist.createButton('Open Guide', '!token-assist help')} ${GameAssist.createButton('Marker Help', '!token-assist --help-statusmarkers')}</div>`,
+                '</div>'
+            ].join(''));
+        }
+
+        function tokenAssistManualHtml() {
+            return [
+                '<h1>TokenAssist User Manual</h1>',
+                `<p><strong>GameAssist v${_sanitize(VERSION)} | TokenAssist ${_sanitize(MODULE_VERSION)}</strong></p>`,
+                '<p>TokenAssist provides practical token controls through the full <code>!token-assist</code> command and the shorter <code>!ta</code> and <code>!ta-*</code> forms. Select tokens first unless the GM deliberately uses an authorized targeting option.</p>',
+                '<h2>Quick Start</h2>',
+                '<ul><li><code>!ta-on showname</code> - show token names.</li><li><code>!ta-off showname</code> - hide token names.</li><li><code>!ta-flip showname</code> - toggle token-name visibility.</li><li><code>!ta-set name|Guardian bar1_value|25</code> - set token values.</li><li><code>!ta-move 3g</code> or <code>!ta-move =90|2u</code> - move in grid or absolute directions.</li></ul>',
+                '<h2>Values, Auras, Lighting, And Layers</h2>',
+                '<p>Use <code>!ta-set</code> for token properties. Relative values such as <code>bar1_value|-5</code> and <code>left|+70</code> adjust existing numbers; <code>=-5</code> assigns a literal negative value. Aura, tint, vision, and supported lighting properties use the same validated property/value form.</p>',
+                '<p>Use <code>--set layer|gmlayer</code> for layers and <code>--order tofront</code> or <code>--order toback</code> for stacking order.</p>',
+                '<h2>Status Markers</h2>',
+                '<p><code>!ta-set statusmarkers|red</code> adds a marker. Prefix the marker with <code>-</code> to remove it, <code>!</code> to toggle it, or <code>=</code> to replace the marker list. Built-in names, custom display names, exact stored tags, and number overlays are resolved through MarkerService.</p>',
+                '<h2>Targeting And Permissions</h2>',
+                '<p>Selected tokens follow ordinary Roll20 control. Explicit <code>--ids</code> targeting is GM-only unless the GM enables Players --ids. Current-page and active-page targeting are intended for deliberate batch work.</p>',
+                '<h2>Reports</h2>',
+                '<p><code>--report gm|"{name}: {bar1_value:before} to {bar1_value}"</code> can report before/after values to the GM. Keep player-visible reports free of hidden token information.</p>',
+                '<h2>Command Reference</h2>',
+                '<ul><li><code>!TokenAssist-GM</code> or <code>!TokenAssist-DM</code> - GM token controls.</li><li><code>!token-assist help</code>, <code>!ta-help</code>, or their Guide aliases - compact guide.</li><li><code>!token-assist info</code> or <code>!ta-info</code> - short examples.</li><li><code>!token-assist status</code> / <code>audit</code> - read module and selection state.</li><li><code>!token-assist --help-statusmarkers</code> - marker syntax.</li><li><code>!token-assist config</code> - GM targeting setting.</li></ul>',
+                '<h2>Compatibility And Credit</h2>',
+                `<p>Token-control design credit: TokenMod ${_sanitize(TOKENMOD_REFERENCE.version)} by The Aaron, Arcane Scriptomancer. Source and MIT license details are preserved in ATTRIBUTIONS.md. The older <code>!token-mod</code> spelling is temporary compatibility syntax and should be updated before GameAssist v0.2.0.</p>`
+            ].join('');
+        }
+
+        function writeTokenManual(msg) {
+            if (msg.playerid !== 'API' && !playerIsGM(msg.playerid)) {
+                whisper(msg, `The campaign manual is created or updated only by the GM. ${GameAssist.createButton('Open Quick Guide', '!token-assist help')}`);
+                return;
+            }
+            const result = GameAssist.writeModuleManual(MODULE_NAME, tokenAssistManualHtml());
+            if (!result.ok) {
+                whisper(msg, `<b>TokenAssist Manual Needs Attention</b><br>${_sanitize(result.message)}<br>${GameAssist.createButton('Whisper Short Version', '!token-assist info')}`);
+                return;
+            }
+            whisper(msg, `<b>TokenAssist Manual Ready</b><br>${result.link}<br>${_sanitize(result.name)} was ${result.created ? 'created' : 'updated'}.<br><br>${GameAssist.createButton('Whisper Short Version', '!token-assist info')} ${GameAssist.createButton('Open Guide', '!token-assist help')}`);
         }
 
         function handleConfig(msg, entries) {
@@ -6680,11 +7054,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function handleBranded(msg) {
             const raw = String(msg.content || '').trim();
-            const taFlag = raw.match(/^!ta-([a-z][a-z-]*)\b/i);
+            const taFlag = raw.match(/^!(?:ta|tokenassist)-([a-z][a-z-]*)\b/i);
             if (taFlag) {
                 const direct = String(taFlag[1]).toLowerCase();
-                if (['about'].includes(direct)) return showAbout(msg);
-                if (['menu'].includes(direct)) return showHelp(msg);
+                if (['help', 'guide'].includes(direct)) return showHelp(msg);
+                if (['menu', 'gm', 'dm'].includes(direct)) return showTokenControl(msg);
+                if (['about', 'info'].includes(direct)) return showAbout(msg);
+                if (['status', 'refresh'].includes(direct)) return showTokenStatus(msg, false);
+                if (direct === 'audit') return showTokenStatus(msg, true);
+                if (direct === 'manual') return writeTokenManual(msg);
+                if (['config', 'settings'].includes(direct)) return handleConfig(msg, tokenize(raw.slice(taFlag[0].length).trim()));
+                if (!['on', 'off', 'flip', 'set', 'move', 'order', 'report', 'ids', 'api-as', 'current-page', 'active-pages', 'ignore-selected', 'help-statusmarkers'].includes(direct)) {
+                    return whisper(msg, `That TokenAssist command was not recognized. ${GameAssist.createButton('Open Guide', '!token-assist help')}`);
+                }
                 return handleTokenRequest(msg);
             }
 
@@ -6692,9 +7074,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (body.startsWith('--')) return handleTokenRequest(msg);
             const words = tokenize(body);
             const command = String(words[0] || 'help').toLowerCase();
-            if (['help', 'menu'].includes(command)) return showHelp(msg);
-            if (command === 'about') return showAbout(msg);
-            if (command === 'config') return handleConfig(msg, words.slice(1));
+            if (['help', 'guide'].includes(command)) return showHelp(msg);
+            if (['menu', 'gm', 'dm'].includes(command)) return showTokenControl(msg);
+            if (['about', 'info'].includes(command)) return showAbout(msg);
+            if (['status', 'refresh'].includes(command)) return showTokenStatus(msg, false);
+            if (command === 'audit') return showTokenStatus(msg, true);
+            if (command === 'manual') return writeTokenManual(msg);
+            if (command === 'config' || command === 'settings') return handleConfig(msg, words.slice(1));
             if (['on', 'off', 'flip', 'set', 'move', 'order', 'report', 'ids', 'api-as', 'current-page', 'active-pages', 'ignore-selected', 'help-statusmarkers'].includes(command)) {
                 const commandContent = `!token-assist --${command}${body.slice(words[0].length)}`;
                 return handleTokenRequest({ ...msg, content: commandContent });
@@ -6744,6 +7130,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             GameAssist.onCommand('!ta-', handleBranded, MODULE_NAME, {
                 match: { caseInsensitive: true, mode: 'prefix' }
             });
+            GameAssist.onCommand('!TokenAssist-', handleBranded, MODULE_NAME, {
+                gmOnly: true,
+                match: { caseInsensitive: true, mode: 'prefix' }
+            });
             GameAssist.onCommand('!token-mod', handleLegacyCommand, MODULE_NAME, {
                 match: { caseInsensitive: true, mode: 'token' }
             });
@@ -6772,14 +7162,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     GameAssist.register('TokenAssist', TokenAssist.initialize, {
         enabled: true,
         events: ['chat:message'],
-        prefixes: ['!token-assist', '!ta', '!ta-', '!token-mod'],
+        prefixes: ['!token-assist', '!ta', '!ta-', '!TokenAssist-', '!token-mod'],
         teardown: TokenAssist.shutdown,
         dependsOn: ['MarkerService'],
         preserveRuntimeOnDisable: true,
         protectedConfigKeys: ['configSchemaVersion']
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): Advanced unreleased TokenAssist to 1.0.1; added canonical !token-assist, !ta, and !ta-* mutation commands, explicitly deprecated !token-mod for removal no later than v0.2.0, normalized aura option and literal color values, added number-blank aura toggles, and limited lastmove trails to the current command so movement does not reconnect to an old origin.
+    // Changed (v0.1.7.0): Advanced TokenAssist to 1.0.3; Menu, GM, and DM open an action-focused token control screen, while Guide/Help, Info, Status, Audit, Settings, Manual, and mutation syntax remain available across !token-assist, !ta, !ta-*, and !TokenAssist-*.
     // TokenMod provenance:
     //   Original project: TokenMod by The Aaron, Arcane Scriptomancer.
     //   Pinned reference: Roll20/roll20-api-scripts commit 9d634d3149985dcf10333920b3f4c41f215f39fc, TokenMod/0.8.88/TokenMod.js blob fc6c9cb45ec2f2ee254a24f849e089507a0e610a.
@@ -6797,27 +7187,27 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:TOKENASSIST] END
     // =============================================================================
 
-    // ————— INITIATIVE ASSIST MODULE v1.0.1 —————
+    // ————— INITIATIVE ASSIST MODULE v1.0.4 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:INITIATIVEASSIST] BEGIN
     // Section Title: Native initiative workflow
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:INITIATIVEASSIST", title: "InitiativeAssist",
-    //   guarantees: ["Case-insensitive !Init- commands provide mixed 2014/2024 initiative without owning rounds or combat flow","Initiative results show both d20s for advantage or disadvantage, the total, and the complete formula before announcing a visible page-owned tracker row","D20 mode, bounded flat adjustment, and up to two bounded bonus dice compose in one guided roll","Optional creative results use bounded score bands while direct initiative calls remain neutral","NPC roll details can remain GM-only, and GM-layer NPC rolls are always private","GMs can batch-roll living NPCs on the objects layer, GM layer, or both while players can batch-roll their selected controlled characters","!Init-RR rerolls each unique PC and living NPC once, whispers its result summary to the GM, and preserves non-target tracker rows and fields","Player buttons revalidate token control and the normalized tracker page at execution time","Public initiative calls and !Init-GM provide the GM a current-page PC/NPC roster with individual and bounded batch controls","Guide, Control Center, Status Summary, and detailed chat Review each have one distinct user-facing purpose","Encounter groups remain page-scoped and can be renamed without changing tracker rows","Missing Beacon data, ambiguous character type, death-state disagreement, and stale tracker targets are skipped rather than guessed"],
+    //   guarantees: ["Case-insensitive !Init- commands provide mixed 2014/2024 initiative without owning rounds or combat flow","Initiative results show both d20s for advantage or disadvantage, the total, and the complete formula before announcing a visible page-owned tracker row","D20 mode, bounded flat adjustment, and up to two bounded bonus dice compose in one guided roll","Optional creative results use bounded score bands while direct initiative calls remain neutral","NPC roll details can remain GM-only, and GM-layer NPC rolls are always private","GMs can batch-roll living NPCs on the objects layer, GM layer, or both while players can batch-roll their selected controlled characters","!Init-RR rerolls each unique PC and living NPC once, whispers its result summary to the GM, and preserves non-target tracker rows and fields","Player buttons revalidate token control and the normalized tracker page at execution time","Public initiative calls and the equal !Init-GM/!Init-DM role aliases provide the GM a current-page PC/NPC roster with individual and bounded batch controls","The root guide stays compact while topic buttons reveal detailed reference panels and a stable on-demand manual","Control Center, Status Summary, and detailed chat Review each have one distinct user-facing purpose","Encounter groups remain page-scoped and can be renamed without changing tracker rows","Missing Beacon data, ambiguous character type, death-state disagreement, and stale tracker targets are skipped rather than guessed"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   observability: { spans: ["[GAMEASSIST:MODULES:INITIATIVEASSIST]"] },
-    //   last_updated_version: "v0.1.6.1",
-    //   independent_versions: { module_version: "1.0.1" }, lifecycle: "active" }
+    //   last_updated_version: "v0.1.7.0",
+    //   independent_versions: { module_version: "1.0.4" }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // InitiativeAssist classifies D&D 5E 2014 and 2024 tracker actors, resolves
     // initiative modifiers through the appropriate sheet adapter, and offers a
-    // compact native-tracker workflow. Round counters, durations, and encounter
-    // automation remain deferred to CombatAssist.
+    // compact native-tracker workflow. CombatAssist owns explicit encounter,
+    // round, turn-timer, and current-turn-ping behavior; InitiativeAssist does not.
     // -------------------------------------------------------------------------
     GameAssist.register('InitiativeAssist', function() {
         const MODULE_NAME = 'InitiativeAssist';
-        const MODULE_VERSION = '1.0.1';
+        const MODULE_VERSION = '1.0.4';
         const modState = GameAssist.getState(MODULE_NAME);
         Object.assign(modState.config, {
             enabled: false,
@@ -7277,21 +7667,102 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ], { msg, gmOnly: true });
         }
 
-        function showHelp(msg) {
+        function showHelp(msg, rawTopic = '') {
+            const topic = String(rawTopic || '').trim().split(/\s+/)[0].toLowerCase();
+            const back = GameAssist.createButton('Back to Guide', '!Init-Help');
+            const gm = playerIsGM(msg.playerid);
+            const topics = {
+                overview: [
+                    { label: 'Purpose', value: 'InitiativeAssist helps characters roll into Roll20\'s native Turn Tracker and helps the GM reroll eligible combatants without moving preserved rows.' },
+                    { label: 'Keeps Separate', value: 'It does not count rounds, advance turns, run combat timers, or change conditions. CombatAssist can handle encounter flow after initiative is ready.' }
+                ],
+                start: [
+                    { label: 'Before Rolling', value: 'Move the Player Ribbon to the encounter page and open Roll20\'s Turn Tracker.' },
+                    { label: 'Invite the Table', value: `${GameAssist.createButton('Invite Players', '!Init-Go')} posts player roll buttons and gives the GM a private roster. ${GameAssist.createButton('GM-Only Start', '!Init-GM')} keeps the whole start panel private.` },
+                    { label: 'GM Batch Rolls', value: 'The private roster can roll object-layer characters, living NPCs, hidden GM-layer NPCs, or all NPCs. No macro is required.' }
+                ],
+                rolls: [
+                    { label: 'Build A Roll', value: 'Normal, advantage, or disadvantage can be combined with a flat adjustment and one or two bonus dice.' },
+                    { label: 'Multiple Characters', value: `Select controlled character tokens, then use ${GameAssist.createButton('Roll Selected', '!Init-Roll-Selected')}. Every token is rechecked before it rolls.` },
+                    { label: 'Readable Results', value: 'Advantage and disadvantage show both d20s. The result also shows bonus dice, the total, and the complete formula.' }
+                ],
+                rerolls: [
+                    { label: 'Everyone', value: `${GameAssist.createButton('Reroll Everyone', '!Init-RR')} rerolls each eligible PC and living NPC already in the tracker once.` },
+                    { label: 'Choose Who', value: `${GameAssist.createButton('Reroll Choices', '!Init-RR-Menu')} offers PCs, NPCs, selected tokens, individuals, and saved encounter groups.` },
+                    { label: 'Preserved Rows', value: 'Counters, custom entries, objects, dead NPCs, and rows needing attention stay unchanged.' }
+                ],
+                privacy: [
+                    { label: 'NPC Rolls', value: 'NPC roll details are private to the GM by default. Object-layer NPC results may be made public.' },
+                    { label: 'Hidden NPCs', value: 'GM-layer NPC names, modifiers, bonus dice, and results always remain private.' }
+                ],
+                troubleshooting: [
+                    { label: 'Supported Sheets', value: 'Roll20 D&D 5E 2014 and 2024 sheets are supported. The 2024 sheet may require Roll20\'s supported Experimental Mod API server.' },
+                    { label: 'Which Screen?', value: 'Control Center has actions. Status Summary is a quick check. Detailed Review explains every current tracker row without changing it.' },
+                    { label: 'Next Check', value: gm ? `${GameAssist.createButton('Status Summary', '!Init-Status')} ${GameAssist.createButton('Detailed Review', '!Init-Audit')}` : 'Ask the GM to open Initiative Status or Detailed Review.' }
+                ]
+            };
+            if (topics[topic]) {
+                sendPanel('InitiativeAssist Guide', [...topics[topic], { label: 'Guide', value: back }], { msg, gmOnly: gm });
+                return;
+            }
+            const actions = gm
+                ? `${GameAssist.createButton('Control Center', '!Init-Menu')} ${GameAssist.createButton('Status Summary', '!Init-Status')}`
+                : `${GameAssist.createButton('Roll Initiative', '!Init-Roll')} ${GameAssist.createButton('Roll Options', '!Init-Options')} ${GameAssist.createButton('Roll Selected', '!Init-Roll-Selected')}`;
             sendPanel('InitiativeAssist Guide', [
-                { label: 'What It Does', value: 'Helps players enter Roll20\'s Turn Tracker and lets the GM reroll eligible characters without moving counters, objects, or other preserved rows.' },
-                { label: '1. Prepare', value: 'Move the player ribbon to the encounter page and open Roll20\'s Turn Tracker.' },
-                { label: '2. Start the Encounter', value: `${GameAssist.createButton('Invite Players', '!Init-Go')} posts player buttons publicly and whispers the GM a PC/NPC roster. ${GameAssist.createButton('GM-Only Start', '!Init-GM')} gives the same neutral controls only to the GM. No macro is required.` },
-                { label: '3. Reroll Later', value: `${GameAssist.createButton('Reroll Everyone', '!Init-RR')} rerolls every eligible PC and living NPC already in the tracker. ${GameAssist.createButton('Choose Who', '!Init-RR-Menu')} handles smaller groups.` },
-                { label: 'Player Options', value: 'Choose normal, advantage, or disadvantage; then optionally add a flat adjustment and one or two bonus dice. Every choice combines into the same roll.' },
-                { label: 'Multiple Characters', value: `Select every controlled character token that should roll, then click ${GameAssist.createButton('Roll Selected', '!Init-Roll-Selected')}. Each token is checked again before rolling.` },
-                { label: 'Hidden NPC Rolls', value: 'NPC roll details are GM-only by default. The GM may make object-layer NPC rolls public; GM-layer NPC rolls always stay private.' },
-                { label: 'Roll Results', value: 'Advantage and disadvantage show both d20s. Results also show bonus dice, the final total, and the complete formula. Playful invitations choose narration that fits the initiative score.' },
-                { label: 'Which Screen?', value: '<strong>Control Center</strong> has encounter buttons. <strong>Status Summary</strong> is a quick check. <strong>Detailed Review</strong> is the fuller read-only GM report in chat.' },
-                { label: '2014 and 2024', value: 'Both Roll20 D&D 5E sheets are supported. The 2024 sheet may require Roll20\'s supported Experimental Mod API server.' },
-                { label: 'Safety', value: 'InitiativeAssist never advances turns, adds round counters, changes conditions, or runs combat timers.' },
-                { label: 'Open', value: `${GameAssist.createButton('Control Center', '!Init-Menu')} ${GameAssist.createButton('Status Summary', '!Init-Status')}` }
-            ], { msg, gmOnly: playerIsGM(msg.playerid) });
+                { label: 'Start Here', value: actions },
+                { label: 'Learn Or Review', value: `${gm ? GameAssist.createButton('What does InitiativeAssist do?', '!Init-Manual') : GameAssist.createButton('What does InitiativeAssist do?', '!Init-Info')} ${GameAssist.createButton('Starting Initiative', '!Init-Help start')} ${GameAssist.createButton('Roll Options', '!Init-Help rolls')} ${GameAssist.createButton('Rerolls & Groups', '!Init-Help rerolls')} ${GameAssist.createButton('NPC Privacy', '!Init-Help privacy')} ${GameAssist.createButton('Help With A Problem', '!Init-Help troubleshooting')}` }
+            ], { msg, gmOnly: gm });
+        }
+
+        function showInitiativeInfo(msg) {
+            const gm = playerIsGM(msg.playerid);
+            sendPanel('What InitiativeAssist Does', [
+                { label: 'Purpose', value: 'Rolls D&D 5E 2014 and 2024 initiative into Roll20\'s native Turn Tracker, offers combined roll options, and lets the GM reroll eligible combatants while preserving counters and other rows.' },
+                { label: 'At The Table', value: 'Open the Turn Tracker on the encounter page, invite the table or use the GM start panel, then keep using Roll20\'s tracker normally.' },
+                { label: 'Learn More', value: `${gm ? GameAssist.createButton('Create or Update Manual', '!Init-Manual') : ''} ${GameAssist.createButton('Back to Guide', '!Init-Help')} ${gm ? GameAssist.createButton('Open Control Center', '!Init-Menu') : GameAssist.createButton('Roll Options', '!Init-Options')}` }
+            ], { msg, gmOnly: gm });
+        }
+
+        function initiativeManualHtml() {
+            return [
+                '<h1>InitiativeAssist User Manual</h1>',
+                `<p><strong>GameAssist v${_sanitize(VERSION)} | InitiativeAssist ${_sanitize(MODULE_VERSION)}</strong></p>`,
+                '<p>InitiativeAssist works with Roll20\'s native Turn Tracker. It helps D&amp;D 5E 2014 and 2024 characters roll initiative, gives the GM private NPC controls, and rerolls chosen combatants without replacing counters, objects, or other preserved rows.</p>',
+                '<h2>Quick Start</h2>',
+                '<ol><li>Move the Player Ribbon to the encounter page.</li><li>Open Roll20\'s Turn Tracker on that page.</li><li>Run <code>!Init-Go</code> for a public invitation, <code>!Init-Go!</code> for a playful invitation, or <code>!Init-GM</code>/<code>!Init-DM</code> for a private Game Master start panel.</li><li>Players use Roll Initiative or Roll Options; the Game Master may roll NPCs individually or in groups.</li></ol>',
+                '<h2>Player Roll Options</h2>',
+                '<p>Normal, advantage, or disadvantage can be combined with a bounded flat adjustment and one or two custom bonus dice. Advantage and disadvantage results show both d20s, the chosen result, bonus dice, total, and full formula.</p>',
+                '<p>A player controlling several linked characters can select those token objects and use <code>!Init-Roll-Selected</code>. Every token is rechecked for page ownership and player control before rolling.</p>',
+                '<h2>GM NPC Controls And Privacy</h2>',
+                '<p>NPC rolls are hidden from players by default. The GM may roll living object-layer NPCs, GM-layer NPCs, or both. GM-layer names, bonuses, dice, and results always remain private.</p>',
+                '<h2>Rerolls And Preserved Rows</h2>',
+                '<p><code>!Init-RR</code> rerolls every eligible PC and living NPC already in the tracker once. The reroll menu can limit this to PCs, NPCs, selected tokens, one token, or a saved page-scoped group. Custom entries, counters, objects, dead NPCs, and rows needing attention remain unchanged.</p>',
+                '<h2>Status And Audit</h2>',
+                '<p><code>!Init-Status</code> gives a concise encounter summary. <code>!Init-Audit</code> explains each current tracker row without changing it. InitiativeAssist does not count rounds or advance turns; CombatAssist owns that optional workflow.</p>',
+                '<h2>Command Reference</h2>',
+                '<ul><li><code>!Init-GM</code> or <code>!Init-DM</code> - private Game Master initiative-start roster.</li><li><code>!Init-Help</code> or <code>!Init-Guide</code> - compact guide.</li><li><code>!Init-Menu</code> - GM control center.</li><li><code>!Init-Info</code> - short purpose summary.</li><li><code>!Init-Status</code> / <code>!Init-Audit</code> - read-only review.</li><li><code>!Init-Go</code> / <code>!Init-Go!</code> - public initiative invitations.</li><li><code>!Init-RR</code> / <code>!Init-RR-Menu</code> - reroll controls.</li><li><code>!Init-Group</code> - saved encounter groups.</li></ul>',
+                '<h2>Troubleshooting</h2>',
+                '<p>If a roll cannot enter the tracker, confirm that the Turn Tracker is open on the Player Ribbon page and that the token is linked to a supported character. The 2024 sheet may require Roll20\'s supported Experimental Mod API server.</p>'
+            ].join('');
+        }
+
+        function writeInitiativeManual(msg) {
+            if (!playerIsGM(msg.playerid)) {
+                sendPanel('InitiativeAssist Manual', [
+                    { label: 'GM Action', value: 'The campaign manual is created or updated only by the GM.' },
+                    { label: 'Continue', value: `${GameAssist.createButton('Whisper Short Version', '!Init-Info')} ${GameAssist.createButton('Open Guide', '!Init-Help')}` }
+                ], { msg });
+                return;
+            }
+            const result = GameAssist.writeModuleManual(MODULE_NAME, initiativeManualHtml());
+            if (!result.ok) {
+                warn(msg, result.message, GameAssist.createButton('Whisper Short Version', '!Init-Info'));
+                return;
+            }
+            sendPanel('InitiativeAssist Manual Ready', [
+                { label: 'Handout', value: `${result.link}<br>${_sanitize(result.name)} was ${result.created ? 'created' : 'updated'}.` },
+                { label: 'Continue', value: `${GameAssist.createButton('Whisper Short Version', '!Init-Info')} ${GameAssist.createButton('Open Control Center', '!Init-Menu')}` }
+            ], { msg, gmOnly: true });
         }
 
         async function showStatus(msg) {
@@ -8195,17 +8666,25 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function parseCommand(msg) {
             const first = String(msg.content || '').trim().split(/\s+/)[0];
             const rest = String(msg.content || '').trim().slice(first.length).trim();
-            return { command: first.toLowerCase(), args: _parseArgs(rest).args || {} };
+            return { command: first.toLowerCase(), rest, args: _parseArgs(rest).args || {} };
         }
 
         function handleCommand(msg) {
-            const { command, args } = parseCommand(msg);
+            const { command, rest, args } = parseCommand(msg);
             switch (command) {
                 case '!init-menu':
                     if (requireGm(msg)) runAsync(() => showMenu(msg));
                     return;
+                case '!init-guide':
                 case '!init-help':
-                    showHelp(msg);
+                    showHelp(msg, rest);
+                    return;
+                case '!init-info':
+                case '!init-about':
+                    showInitiativeInfo(msg);
+                    return;
+                case '!init-manual':
+                    writeInitiativeManual(msg);
                     return;
                 case '!init-status':
                     if (requireGm(msg)) runAsync(() => showStatus(msg));
@@ -8220,6 +8699,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     runAsync(() => callForInitiative(msg, true));
                     return;
                 case '!init-gm':
+                case '!init-dm':
                     runAsync(() => callForInitiative(msg, false, true));
                     return;
                 case '!init-start':
@@ -8308,7 +8788,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.onCommand('!Init-', handleCommand, MODULE_NAME, {
             match: { caseInsensitive: true, mode: 'prefix' }
         });
-        GameAssist.log(MODULE_NAME, 'Ready: !Init-Menu, !Init-Go, !Init-GM, and !Init-RR.', 'INFO', { startup: true });
+        GameAssist.log(MODULE_NAME, 'Ready: !Init-Menu, !Init-Go, !Init-GM/DM, and !Init-RR.', 'INFO', { startup: true });
     }, {
         enabled: false,
         prefixes: ['!Init-'],
@@ -8317,7 +8797,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => GameAssist.TurnTrackerService.clearObservers('InitiativeAssist')
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.6.1): Advanced InitiativeAssist to 1.0.1, added !Init-GM, restored the curated original initiative-call library, and made linked-character control authoritative over stale token-level assignments.
+    // Changed (v0.1.7.0): Advanced InitiativeAssist to 1.0.4; !Init-GM and !Init-DM are equal role aliases for the private initiative-start roster, with Guide/Help, Info, Manual, and complete layered navigation preserved.
     // Decision log:
     //   CHOICE: Reuse the ordinary neutral invitation and roster path for !Init-GM - ALT: maintain a second GM dashboard implementation; REJECTED: duplicated controls would drift from !Init-Go.
     //   CHOICE: Start disabled but default to Manager mode once deliberately enabled - ALT: require a second ownership toggle; REJECTED: unnecessary setup friction after explicit module enablement.
@@ -8332,21 +8812,1876 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Revalidate every selected token's page, linkage, control, and eligibility at execution time - ALT: trust selection identifiers captured by a chat button; REJECTED: players must never roll an uncontrolled or stale token through a batch command.
     //   CHOICE: Keep the detailed review in private chat - ALT: create a persistent initiative handout; REJECTED: initiative state is short-lived and the handout added campaign clutter without preserving a useful historical record.
     // Prior notes:
+    //   v0.1.7.0 / InitiativeAssist 1.0.2: Replaced the long single-screen guide with a compact action panel whose topic buttons reveal the detailed reference only when requested.
+    //   v0.1.5.0: Advanced unreleased TokenAssist to 1.0.1; added canonical !token-assist, !ta, and !ta-* mutation commands, explicitly deprecated !token-mod for removal no later than v0.2.0, normalized aura option and literal color values, added number-blank aura toggles, and limited lastmove trails to the current command so movement does not reconnect to an old origin.
+    //   v0.1.5.0: Advanced unreleased ConditionAssist to 1.0.1 with accurate selected-token condition recognition, a bounded GM current-page condition/marker status view plus complete status handout, case-insensitive !cond-[condition] references for official/custom definitions, !c-a and !cond-! announcement aliases, complete 2014/2024/campaign wording, built-in/custom marker artwork, selected-character announcements that toggle and verify marker state, character-first is/is-no-longer reporting, Concentrating display-name repair, documented Roll20 player-name lookup for private delivery, bounded private-reference buttons, duplicate-marker warnings, schema-v2 import/export, and automatic repair of untouched 1.0.0 defaults.
+    //   v0.1.7.0: Clarified that CombatAssist owns explicit encounter and round observation while InitiativeAssist remains the initiative-rules owner; runtime behavior was unchanged.
+    //   v0.1.6.0: Added TurnTrackerService availability and InitiativeAssist mode/lifecycle details to the expanded health panel.
+    //   v0.1.6.1: Advanced InitiativeAssist to 1.0.1, added !Init-GM, restored the curated original initiative-call library, and made linked-character control authoritative over stale token-level assignments.
     //   v0.1.6.0: Added mixed D&D 2014/2024 adapters, native page-owned tracker rows, player and GM roster controls, private NPC evidence, composable roll options, score-banded flair, selected and grouped rerolls, and preservation-first writes through TurnTrackerService.
     // [GAMEASSIST:MODULES:INITIATIVEASSIST] END
     // =============================================================================
 
-    // ————— WELCOMEASSIST MODULE v0.1.0 —————
+    // ————— COMBATASSIST MODULE v1.0.5 —————
+    // =============================================================================
+    // [GAMEASSIST:MODULES:COMBATASSIST] BEGIN
+    // Section Title: Preservation-first encounter flow
+    // -------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:COMBATASSIST", title: "CombatAssist",
+    //   guarantees: ["Disabled-by-default, GM-configured encounter tracking through case-insensitive !Combat- commands","Exact one-row movement advances turns while valid roster, initiative, and manual-order changes preserve the round and establish a fresh counting baseline","A single clearly named native custom round counter is authoritative; its simple signed whole-number calculation is evaluated when CombatAssist moves it to the top","Without a native round counter, rounds advance only after an uninterrupted, unambiguous forward cycle returns to the encounter anchor","Unreadable, off-page, malformed, stale, or ambiguous tracker states retain the last accepted snapshot and expose guarded recovery","Explicit next, previous, restore, and authorized End My Turn requests use CORE:TURNTRACKERSERVICE revision guards","Optional turn reminders validate encounter, round, current identity, revision, and deadline before notifying and never advance initiative","Optional current-turn cues use non-centering native pings, restrict hidden turns to GMs, and never mutate token properties","Player End My Turn is available only in Whispers mode, is rebound at execution time, and confirms success before a newly controlled character receives the next-turn prompt","Player confirmations describe the next initiative neutrally and never reveal GM-layer, unlinked, or custom tracker identities","Standard confirmation wording appears exactly once in the warmer Varied rotation","The root guide stays compact while its purpose action writes a persistent GM manual handout and topic buttons reveal focused references","Status, guide, help, GM, menu, info, and audit navigation aliases remain case-insensitive","Baseline module operation remains independent; optional cross-module features must identify and locally enforce their prerequisites","CombatAssist does not replace Roll20's native Turn Tracker"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
+    //   observability: { spans: ["[GAMEASSIST:MODULES:COMBATASSIST]"] },
+    //   last_updated_version: "v0.1.7.0",
+    //   independent_versions: { module_version: "1.0.5" }, lifecycle: "active" }
+    // -------------------------------------------------------------------------
+    // Narrative
+    // CombatAssist begins only after a GM explicitly starts it against an open,
+    // structurally sound native Turn Tracker. Exact rotations count turns. Valid
+    // roster or initiative changes are accepted as native tracker edits without
+    // resetting the round, while unreadable states retain a recoverable snapshot.
+    // A clearly named native custom round row becomes the round authority. Optional
+    // timers and pings add turn awareness without moving tokens or ending turns.
+    // -------------------------------------------------------------------------
+    let teardownCombatAssist = () => {};
+    GameAssist.register('CombatAssist', function() {
+        const MODULE_NAME = 'CombatAssist';
+        const MODULE_VERSION = '1.0.5';
+        const VALID_STATES = new Set(['active', 'paused', 'attention']);
+        const VALID_ANNOUNCEMENTS = new Set(['off', 'gm', 'public', 'whispers']);
+        const VALID_PLAYER_CONFIRMATIONS = new Set(['standard', 'varied']);
+        const VALID_TIMER_AUDIENCES = new Set(['gm', 'player', 'both', 'public']);
+        const VALID_TURN_CUES = new Set(['off', 'gm', 'players', 'both', 'public']);
+        const VARIED_TURN_CONFIRMATIONS = Object.freeze([
+            'Your turn has ended. It is now {next}\'s turn.',
+            'All set. {next} takes the next turn.',
+            'Turn complete. The spotlight moves to {next}.',
+            'Your turn is in the books. {next} is next in the order.',
+            'Nicely handled. Combat continues with {next}.',
+            'That wraps your turn. The next move belongs to {next}.',
+            'Your part is done for now. {next} takes the field.',
+            'Turn complete. The action shifts to {next}.'
+        ]);
+        let pendingPlayerCompletion = null;
+        let turnTimerGeneration = 0;
+        let turnTimerHandles = [];
+        let cueUnavailableReported = false;
+        const modState = GameAssist.getState(MODULE_NAME);
+        Object.assign(modState.config, {
+            enabled: false,
+            announcements: 'gm',
+            playerConfirmations: 'standard',
+            timerEnabled: false,
+            timerDurationSeconds: 120,
+            timerDeadlineAudience: 'gm',
+            timerReminders: [],
+            turnCue: 'off',
+            ...modState.config
+        });
+        if (!VALID_ANNOUNCEMENTS.has(String(modState.config.announcements || '').toLowerCase())) {
+            modState.config.announcements = 'gm';
+        } else {
+            modState.config.announcements = String(modState.config.announcements).toLowerCase();
+        }
+        if (String(modState.config.playerConfirmations || '').toLowerCase() === 'fun') {
+            modState.config.playerConfirmations = 'varied';
+        } else if (!VALID_PLAYER_CONFIRMATIONS.has(String(modState.config.playerConfirmations || '').toLowerCase())) {
+            modState.config.playerConfirmations = 'standard';
+        } else {
+            modState.config.playerConfirmations = String(modState.config.playerConfirmations).toLowerCase();
+        }
+        modState.config.timerEnabled = modState.config.timerEnabled === true;
+        const savedDuration = Number(modState.config.timerDurationSeconds);
+        modState.config.timerDurationSeconds = Number.isInteger(savedDuration)
+            ? Math.max(POLICY.combat.minimumTurnDurationSeconds, Math.min(POLICY.combat.maximumTurnDurationSeconds, savedDuration))
+            : 120;
+        modState.config.timerDeadlineAudience = VALID_TIMER_AUDIENCES.has(String(modState.config.timerDeadlineAudience || '').toLowerCase())
+            ? String(modState.config.timerDeadlineAudience).toLowerCase()
+            : 'gm';
+        modState.config.timerReminders = (Array.isArray(modState.config.timerReminders) ? modState.config.timerReminders : [])
+            .map(reminder => ({
+                remainingSeconds: Number(reminder?.remainingSeconds),
+                audience: String(reminder?.audience || '').toLowerCase()
+            }))
+            .filter(reminder =>
+                Number.isInteger(reminder.remainingSeconds) &&
+                reminder.remainingSeconds > 0 &&
+                reminder.remainingSeconds < modState.config.timerDurationSeconds &&
+                VALID_TIMER_AUDIENCES.has(reminder.audience)
+            )
+            .sort((left, right) => right.remainingSeconds - left.remainingSeconds)
+            .filter((reminder, index, reminders) =>
+                index === reminders.findIndex(candidate => candidate.remainingSeconds === reminder.remainingSeconds)
+            )
+            .slice(0, POLICY.combat.maximumTimerReminders);
+        modState.config.turnCue = VALID_TURN_CUES.has(String(modState.config.turnCue || '').toLowerCase())
+            ? String(modState.config.turnCue).toLowerCase()
+            : 'off';
+
+        function sendPanel(title, fields, { publicMessage = false, whisperTo = '' } = {}) {
+            const content = (fields || []).map(field => `{{${_sanitize(field.label)}=${field.value}}}`).join(' ');
+            const safeRecipient = String(whisperTo || '').replace(/["\\]/g, '').trim();
+            const destination = publicMessage
+                ? ''
+                : (safeRecipient ? `/w "${safeRecipient}" ` : '/w gm ');
+            sendChat(MODULE_NAME, `${destination}&{template:default} {{name=${_sanitize(title)}}} ${content}`, null, {
+                noarchive: !publicMessage
+            });
+        }
+
+        function sendPlayerPanel(playerId, title, fields) {
+            const player = getObj('player', playerId);
+            const name = String(player?.get('_displayname') || player?.get('displayname') || '').trim();
+            if (!name || playerIsGM(playerId)) return false;
+            sendPanel(title, fields, { whisperTo: name });
+            return true;
+        }
+
+        function warning(message, actions = '') {
+            const fields = [{ label: 'Needs Attention', value: _sanitize(message) }];
+            if (actions) fields.push({ label: 'Next Step', value: actions });
+            sendPanel('CombatAssist', fields);
+        }
+
+        function requireGm(msg) {
+            if (playerIsGM(msg.playerid)) return true;
+            sendPlayerPanel(msg.playerid, 'CombatAssist', [{
+                label: 'GM Control',
+                value: 'Encounter controls are available only to the GM.'
+            }]);
+            return false;
+        }
+
+        function pageName(pageId) {
+            const page = pageId ? getObj('page', pageId) : null;
+            return String(page?.get('name') || pageId || 'Unknown page');
+        }
+
+        function identityFor(entry) {
+            if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
+            const id = String(entry.id ?? '').trim();
+            if (!id) return null;
+            if (id === '-1') {
+                const label = String(entry.custom || '').trim();
+                return label ? `custom:${label}` : null;
+            }
+            return `token:${id}`;
+        }
+
+        function labelFor(structure) {
+            if (structure.kind === 'custom') return structure.custom || '(Custom row)';
+            if (structure.kind !== 'token') return '(Unknown row)';
+            const characterId = String(structure.token.get('represents') || '');
+            const character = characterId ? getObj('character', characterId) : null;
+            return String(structure.token.get('name') || character?.get('name') || '(Unnamed token)');
+        }
+
+        function isRoundCounterLabel(value) {
+            const normalized = String(value || '')
+                .trim()
+                .toLowerCase()
+                .replace(/[_-]+/g, ' ')
+                .replace(/\s+/g, ' ');
+            return /^(?:(?:combat|current)\s+)?round(?:s|\s+(?:count|counter|number|tracker))?$/.test(normalized);
+        }
+
+        function roundCounterDetails(structures, identities) {
+            const matches = structures.map((structure, index) => ({ structure, index }))
+                .filter(candidate => candidate.structure.kind === 'custom' && isRoundCounterLabel(candidate.structure.custom));
+            if (!matches.length) return { ok: true, counter: null };
+            if (matches.length > 1) {
+                return {
+                    ok: false,
+                    reason: 'More than one custom Turn Tracker row looks like a round counter. Keep one round counter or rename the others so CombatAssist does not choose the wrong round.'
+                };
+            }
+            const match = matches[0];
+            const value = Number(String(match.structure.entry?.pr ?? '').trim());
+            if (!Number.isInteger(value) || value < 1) {
+                return {
+                    ok: false,
+                    reason: `${labelFor(match.structure)} looks like a round counter, but its current value is not a positive whole number. Give it the current round number before starting CombatAssist.`
+                };
+            }
+            return {
+                ok: true,
+                counter: {
+                    identity: identities[match.index],
+                    index: match.index,
+                    label: labelFor(match.structure),
+                    value,
+                    formula: String(match.structure.entry?.formula || '').trim()
+                }
+            };
+        }
+
+        function applyRoundCounterFormula(entry) {
+            if (!entry || String(entry.id || '') !== '-1' || !isRoundCounterLabel(entry.custom)) return false;
+            const formula = String(entry.formula || '').trim();
+            const match = formula.match(/^([+-])\s*(\d+)$/);
+            const current = Number(String(entry.pr ?? '').trim());
+            if (!match || !Number.isFinite(current)) return false;
+            const adjustment = Number(match[2]) * (match[1] === '-' ? -1 : 1);
+            const next = current + adjustment;
+            if (!Number.isFinite(next)) return false;
+            entry.pr = String(Number(next.toFixed(6)));
+            return true;
+        }
+
+        /**
+         * analyzeSnapshot - Validate the exact tracker shape CombatAssist can follow.
+         * Inputs: one immutable TurnTrackerService snapshot.
+         * Outputs: unique row identities and current display labels.
+         * Invariants: all token rows exist on one tracker page; custom rows remain valid.
+         * Failure: returns an actionable reason without changing Roll20 or saved encounter state.
+         * Design: ambiguous identities and stale rows are refused because a plausible guess
+         * could silently increment the wrong round.
+         */
+        function analyzeSnapshot(snapshot) {
+            if (!snapshot?.ok) {
+                return { ok: false, reason: snapshot?.message || 'The Turn Tracker could not be read.' };
+            }
+            if (!snapshot.open || !snapshot.pageId) {
+                return {
+                    ok: false,
+                    reason: snapshot.pageWarning || 'Open Roll20\'s Turn Tracker on the encounter page before using CombatAssist.'
+                };
+            }
+            if (snapshot.entries.length < POLICY.combat.minimumTrackedRows) {
+                return {
+                    ok: false,
+                    reason: `CombatAssist needs at least ${POLICY.combat.minimumTrackedRows} distinct Turn Tracker rows so a turn change can be observed safely.`
+                };
+            }
+            if (snapshot.entries.length > POLICY.combat.maximumTrackedRows) {
+                return {
+                    ok: false,
+                    reason: `This tracker has ${snapshot.entries.length} rows; CombatAssist supports at most ${POLICY.combat.maximumTrackedRows} in one encounter.`
+                };
+            }
+
+            const identities = [];
+            const labels = [];
+            const structures = [];
+            for (let index = 0; index < snapshot.entries.length; index++) {
+                const entry = snapshot.entries[index];
+                const identity = identityFor(entry);
+                if (!identity) {
+                    return { ok: false, reason: `Turn Tracker row ${index + 1} is malformed or has no usable id.` };
+                }
+                const structure = GameAssist.TurnTrackerService.classifyEntry(entry, index, snapshot);
+                if (structure.kind === 'token' && structure.offPage) {
+                    return {
+                        ok: false,
+                        reason: `${labelFor(structure)} is not on the active Turn Tracker page. Remove the off-page row or reopen the tracker on the encounter page.`
+                    };
+                }
+                if (!['token', 'custom'].includes(structure.kind)) {
+                    return {
+                        ok: false,
+                        reason: `Turn Tracker row ${index + 1} references a missing or unrecognized token. Remove or repair that row before starting CombatAssist.`
+                    };
+                }
+                identities.push(identity);
+                labels.push(labelFor(structure));
+                structures.push(structure);
+            }
+
+            const seen = new Set();
+            const duplicate = identities.find(identity => seen.has(identity) || !seen.add(identity));
+            if (duplicate) {
+                return {
+                    ok: false,
+                    reason: 'The Turn Tracker contains indistinguishable duplicate rows. CombatAssist will preserve them, but cannot count rounds safely until each row has a unique token or custom label.'
+                };
+            }
+            const roundCounter = roundCounterDetails(structures, identities);
+            if (!roundCounter.ok) return roundCounter;
+            return { ok: true, identities, labels, structures, roundCounter: roundCounter.counter };
+        }
+
+        function sameOrder(left, right) {
+            return Array.isArray(left) &&
+                Array.isArray(right) &&
+                left.length === right.length &&
+                left.every((value, index) => value === right[index]);
+        }
+
+        function useRoundCounter(encounter, analysis, { preserveWithoutCounter = true, syncValue = true } = {}) {
+            const counter = analysis?.roundCounter || null;
+            if (!counter) {
+                delete encounter.roundCounterIdentity;
+                delete encounter.roundCounterLabel;
+                encounter.roundSource = 'combatassist';
+                if (!preserveWithoutCounter) encounter.round = 1;
+                return false;
+            }
+            if (syncValue) encounter.round = counter.value;
+            encounter.roundCounterIdentity = counter.identity;
+            encounter.roundCounterLabel = counter.label;
+            encounter.roundSource = 'tracker';
+            return true;
+        }
+
+        function rotateForward(values) {
+            return values.length ? values.slice(1).concat(values[0]) : [];
+        }
+
+        function rotateBackward(values) {
+            return values.length ? [values[values.length - 1]].concat(values.slice(0, -1)) : [];
+        }
+
+        function cloneData(value) {
+            return JSON.parse(JSON.stringify(value));
+        }
+
+        function entriesEqual(left, right) {
+            try {
+                return JSON.stringify(left || []) === JSON.stringify(right || []);
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function captureAcceptedState(encounter) {
+            if (!encounter || !Array.isArray(encounter.acceptedEntries) || !encounter.acceptedEntries.length) return null;
+            return {
+                pageId: encounter.pageId,
+                round: encounter.round,
+                turn: encounter.turn,
+                anchor: encounter.anchor,
+                order: encounter.order.slice(),
+                baseOrder: encounter.baseOrder.slice(),
+                forwardStreak: Number(encounter.forwardStreak || 0),
+                lastDirection: encounter.lastDirection || null,
+                entries: cloneData(encounter.acceptedEntries),
+                capturedAt: isoNow()
+            };
+        }
+
+        function checkpointIsUsable(checkpoint) {
+            return Boolean(
+                checkpoint &&
+                typeof checkpoint === 'object' &&
+                !Array.isArray(checkpoint) &&
+                checkpoint.pageId &&
+                Number.isInteger(checkpoint.round) &&
+                checkpoint.round >= 1 &&
+                Array.isArray(checkpoint.order) &&
+                Array.isArray(checkpoint.baseOrder) &&
+                Array.isArray(checkpoint.entries) &&
+                checkpoint.entries.length >= POLICY.combat.minimumTrackedRows
+            );
+        }
+
+        function rememberAcceptedState(encounter) {
+            const checkpoint = captureAcceptedState(encounter);
+            if (checkpoint) encounter.checkpoint = checkpoint;
+        }
+
+        function acceptSnapshot(encounter, snapshot) {
+            encounter.acceptedEntries = cloneData(snapshot.entries || []);
+            encounter.lastRevision = snapshot.revision;
+            encounter.lastObservedAt = isoNow();
+        }
+
+        function restoreEncounterState(encounter, checkpoint, snapshot) {
+            encounter.status = 'active';
+            encounter.pageId = checkpoint.pageId;
+            encounter.round = checkpoint.round;
+            encounter.turn = checkpoint.turn;
+            encounter.anchor = checkpoint.anchor;
+            encounter.order = checkpoint.order.slice();
+            encounter.baseOrder = checkpoint.baseOrder.slice();
+            encounter.forwardStreak = Number(checkpoint.forwardStreak || 0);
+            encounter.lastDirection = checkpoint.lastDirection || null;
+            acceptSnapshot(encounter, snapshot);
+            encounter.attention = null;
+            delete encounter.attentionAt;
+            delete encounter.previousStatus;
+            delete encounter.checkpoint;
+        }
+
+        function getEncounter() {
+            const value = modState.runtime?.encounter;
+            if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+            if (
+                !VALID_STATES.has(value.status) ||
+                !Array.isArray(value.order) ||
+                !Array.isArray(value.baseOrder) ||
+                !value.pageId ||
+                !value.anchor ||
+                !Number.isInteger(value.round) ||
+                value.round < 1
+            ) {
+                delete modState.runtime.encounter;
+                return null;
+            }
+            if (!Array.isArray(value.acceptedEntries)) {
+                const current = GameAssist.TurnTrackerService.snapshot();
+                const analysis = analyzeSnapshot(current);
+                value.acceptedEntries = analysis.ok &&
+                    current.pageId === value.pageId &&
+                    sameOrder(analysis.identities, value.order)
+                    ? cloneData(current.entries)
+                    : [];
+            }
+            if (value.checkpoint && !checkpointIsUsable(value.checkpoint)) delete value.checkpoint;
+            return value;
+        }
+
+        function currentLabel(analysis) {
+            return analysis?.labels?.[0] || '(Unknown row)';
+        }
+
+        function gmTurnActions() {
+            return [
+                GameAssist.createButton('Next Turn', '!Combat-Next'),
+                GameAssist.createButton('Previous Turn', '!Combat-Prev'),
+                GameAssist.createButton('Open Menu', '!Combat-Menu')
+            ].join(' ');
+        }
+
+        function controllerIdsFor(structure) {
+            if (structure?.kind !== 'token') return [];
+            const token = structure.token;
+            const characterId = String(token.get('represents') || '').trim();
+            const character = characterId ? getObj('character', characterId) : null;
+            // CHOICE: A linked character's controller list is authoritative; token control is the fallback only for unlinked turns.
+            const source = character ? character.get('controlledby') : token.get('controlledby');
+            const ids = String(source || '')
+                .split(',')
+                .map(value => value.trim())
+                .filter(Boolean);
+            if (ids.includes('all')) {
+                return findObjs({ _type: 'player' })
+                    .map(player => player.id)
+                    .filter(id => !playerIsGM(id));
+            }
+            return Array.from(new Set(ids.filter(id => !playerIsGM(id) && getObj('player', id))));
+        }
+
+        function playerControlsStructure(playerId, structure) {
+            return controllerIdsFor(structure).includes(playerId);
+        }
+
+        function gmPlayerIds() {
+            return findObjs({ _type: 'player' })
+                .map(player => player.id)
+                .filter(id => playerIsGM(id));
+        }
+
+        function clearTurnTimers(encounter = null, { forget = false } = {}) {
+            turnTimerGeneration++;
+            turnTimerHandles.forEach(handle => clearTimeout(handle));
+            turnTimerHandles = [];
+            if (forget && encounter) delete encounter.turnTimer;
+        }
+
+        function timerReminderSummary() {
+            if (!modState.config.timerReminders.length) return 'No early reminders.';
+            return modState.config.timerReminders
+                .map(reminder => `${reminder.remainingSeconds}s remaining -> ${reminder.audience}`)
+                .join('<br>');
+        }
+
+        function validTimerContext(schedule) {
+            if (!schedule || schedule.generation !== turnTimerGeneration) return null;
+            const encounter = getEncounter();
+            if (
+                !encounter ||
+                encounter.status !== 'active' ||
+                encounter.startedAt !== schedule.encounterStartedAt ||
+                encounter.round !== schedule.round ||
+                encounter.order?.[0] !== schedule.identity ||
+                encounter.turnTimer?.deadlineAt !== schedule.deadlineAt
+            ) return null;
+            const snapshot = GameAssist.TurnTrackerService.snapshot();
+            if (!snapshot.ok || snapshot.revision !== schedule.revision) return null;
+            const analysis = analyzeSnapshot(snapshot);
+            if (!analysis.ok || analysis.identities[0] !== schedule.identity) return null;
+            return { encounter, snapshot, analysis };
+        }
+
+        function sendTurnTimerNotice(schedule, remainingSeconds, audience) {
+            const context = validTimerContext(schedule);
+            if (!context) return false;
+            const { encounter, analysis } = context;
+            const structure = analysis.structures[0];
+            const visibleName = playerVisibleTurnName(analysis);
+            const expired = remainingSeconds === 0;
+            const title = expired ? 'Turn Timer Complete' : 'Turn Reminder';
+            const status = expired
+                ? 'The configured turn time has elapsed. CombatAssist did not advance the Turn Tracker.'
+                : `${remainingSeconds} second${remainingSeconds === 1 ? '' : 's'} remain in this turn.`;
+            const gmFields = [
+                { label: 'Round', value: _sanitize(String(encounter.round)) },
+                { label: 'Current Turn', value: _sanitize(currentLabel(analysis)) },
+                { label: expired ? 'Time' : 'Remaining', value: _sanitize(status) },
+                { label: 'Controls', value: gmTurnActions() }
+            ];
+            const playerFields = [
+                { label: 'Character', value: _sanitize(visibleName) },
+                { label: expired ? 'Time' : 'Remaining', value: _sanitize(status) }
+            ];
+            // DANGER: token control does not make a hidden or unlinked tracker identity safe to reveal.
+            const recipients = visibleName ? controllerIdsFor(structure) : [];
+            if (audience === 'public') {
+                if (visibleName) {
+                    sendPanel(title, [
+                        { label: 'Current Turn', value: _sanitize(visibleName) },
+                        { label: expired ? 'Time' : 'Remaining', value: _sanitize(status) }
+                    ], { publicMessage: true });
+                } else {
+                    sendPanel(title, [...gmFields, {
+                        label: 'Privacy',
+                        value: 'This reminder stayed with the GM because the current tracker entry is hidden or is not a linked character.'
+                    }]);
+                }
+                return true;
+            }
+            if (audience === 'gm' || audience === 'both') sendPanel(title, gmFields);
+            if (audience === 'player' || audience === 'both') {
+                if (recipients.length) recipients.forEach(playerId => sendPlayerPanel(playerId, title, playerFields));
+                else if (audience === 'player') {
+                    sendPanel(title, [...gmFields, {
+                        label: 'Recipient',
+                        value: 'This turn is hidden or has no visible linked non-GM controller, so the reminder stayed with the GM.'
+                    }]);
+                }
+            }
+            return true;
+        }
+
+        function scheduleTurnTimers(encounter, snapshot, analysis, { resume = false } = {}) {
+            clearTurnTimers();
+            if (!modState.config.timerEnabled || encounter?.status !== 'active') {
+                if (encounter) delete encounter.turnTimer;
+                return false;
+            }
+            const structure = analysis?.structures?.[0];
+            if (structure?.kind !== 'token') {
+                delete encounter.turnTimer;
+                return false;
+            }
+            const currentTime = now();
+            const saved = encounter.turnTimer;
+            const canResume = resume &&
+                saved &&
+                saved.identity === analysis.identities[0] &&
+                saved.round === encounter.round &&
+                saved.revision === snapshot.revision &&
+                Number.isFinite(Number(saved.deadlineAt));
+            const deadlineAt = canResume
+                ? Number(saved.deadlineAt)
+                : currentTime + (modState.config.timerDurationSeconds * 1000);
+            encounter.turnTimer = {
+                identity: analysis.identities[0],
+                round: encounter.round,
+                revision: snapshot.revision,
+                startedAt: canResume ? Number(saved.startedAt || currentTime) : currentTime,
+                deadlineAt
+            };
+            const generation = turnTimerGeneration;
+            const base = {
+                generation,
+                encounterStartedAt: encounter.startedAt,
+                identity: analysis.identities[0],
+                round: encounter.round,
+                revision: snapshot.revision,
+                deadlineAt
+            };
+            modState.config.timerReminders.forEach(reminder => {
+                const delay = deadlineAt - currentTime - (reminder.remainingSeconds * 1000);
+                if (delay <= 0) return;
+                turnTimerHandles.push(setTimeout(() => {
+                    sendTurnTimerNotice(base, reminder.remainingSeconds, reminder.audience);
+                }, delay));
+            });
+            const deadlineDelay = deadlineAt - currentTime;
+            if (deadlineDelay > 0) {
+                turnTimerHandles.push(setTimeout(() => {
+                    sendTurnTimerNotice(base, 0, modState.config.timerDeadlineAudience);
+                }, deadlineDelay));
+                return true;
+            }
+            if (resume) {
+                sendPanel('CombatAssist Timer', [
+                    { label: 'Reload Notice', value: 'The saved deadline for the current turn passed while the Mod sandbox was unavailable. No late player reminder was sent.' },
+                    { label: 'Next Turn', value: 'A fresh timer will begin when initiative advances.' }
+                ]);
+            }
+            return false;
+        }
+
+        function sendCurrentTurnCue(analysis) {
+            let mode = String(modState.config.turnCue || 'off').toLowerCase();
+            if (mode === 'off') return false;
+            const structure = analysis?.structures?.[0];
+            if (structure?.kind !== 'token' || !structure.token) return false;
+            if (typeof sendPing !== 'function') {
+                if (!cueUnavailableReported) {
+                    cueUnavailableReported = true;
+                    warning('Roll20 did not expose its native ping function. Turn messages still work, but no visual cue was sent.');
+                }
+                return false;
+            }
+            const token = structure.token;
+            const pageId = String(token.get('pageid') || token.get('_pageid') || '');
+            const left = Number(token.get('left'));
+            const top = Number(token.get('top'));
+            if (!pageId || !Number.isFinite(left) || !Number.isFinite(top)) return false;
+            const hidden = String(token.get('layer') || '') !== 'objects';
+            if (hidden && mode !== 'gm') mode = 'gm';
+            let visibleTo = null;
+            if (mode === 'gm') visibleTo = gmPlayerIds();
+            if (mode === 'players') visibleTo = controllerIdsFor(structure);
+            if (mode === 'both') visibleTo = Array.from(new Set([...gmPlayerIds(), ...controllerIdsFor(structure)]));
+            if (Array.isArray(visibleTo) && !visibleTo.length) return false;
+            // CHOICE: native pings do not alter token properties and never recenter a player's map.
+            if (mode === 'public') sendPing(left, top, pageId, null, false);
+            else sendPing(left, top, pageId, null, false, visibleTo);
+            return true;
+        }
+
+        function whisperCurrentPlayerTurn(encounter, analysis) {
+            if (announcementMode() !== 'whispers') return 0;
+            const structure = analysis?.structures?.[0];
+            if (structure?.kind !== 'token') return 0;
+            const recipients = controllerIdsFor(structure);
+            recipients.forEach(playerId => sendPlayerPanel(playerId, 'Your Turn', [
+                { label: 'Round', value: _sanitize(String(encounter.round)) },
+                { label: 'Character', value: _sanitize(currentLabel(analysis)) },
+                { label: 'When Finished', value: GameAssist.createButton('End My Turn', `!Combat-End-Turn --token ${structure.id}`) }
+            ]));
+            return recipients.length;
+        }
+
+        function playerConfirmationMode() {
+            const value = String(modState.config.playerConfirmations || '').toLowerCase();
+            if (VALID_PLAYER_CONFIRMATIONS.has(value)) return value;
+            modState.config.playerConfirmations = 'standard';
+            return 'standard';
+        }
+
+        function playerConfirmationLabel() {
+            return playerConfirmationMode() === 'varied' ? 'Varied' : 'Standard';
+        }
+
+        function playerVisibleTurnName(analysis) {
+            const structure = analysis?.structures?.[0];
+            if (structure?.kind !== 'token' || !structure.token) return '';
+            if (String(structure.token.get('layer') || '') !== 'objects') return '';
+            const characterId = String(structure.token.get('represents') || '').trim();
+            if (!characterId || !getObj('character', characterId)) return '';
+            return currentLabel(analysis);
+        }
+
+        function turnCompletionText(analysis) {
+            const nextName = playerVisibleTurnName(analysis);
+            if (!nextName) {
+                return 'Your turn has ended. Combat has continued with the next initiative.';
+            }
+            if (playerConfirmationMode() !== 'varied') {
+                return `Your turn has ended. It is now ${nextName}'s turn.`;
+            }
+            const template = VARIED_TURN_CONFIRMATIONS[randomInteger(VARIED_TURN_CONFIRMATIONS.length) - 1];
+            return template.replace(/\{next\}/g, nextName);
+        }
+
+        function confirmPlayerTurnEnded(playerId, analysis) {
+            sendPlayerPanel(playerId, 'Turn Complete', [{
+                label: 'Next Up',
+                value: _sanitize(turnCompletionText(analysis))
+            }]);
+        }
+
+        function flushPendingPlayerCompletion(analysis) {
+            const pending = pendingPlayerCompletion;
+            if (
+                !pending ||
+                pending.delivered ||
+                analysis?.identities?.[0] !== pending.expectedNextIdentity
+            ) return false;
+            pending.delivered = true;
+            confirmPlayerTurnEnded(pending.playerId, analysis);
+            return true;
+        }
+
+        function explainAlreadyAdvanced(playerId, analysis) {
+            const current = playerVisibleTurnName(analysis);
+            sendPlayerPanel(playerId, 'Turn Already Advanced', [{
+                label: 'All Set',
+                value: _sanitize(current
+                    ? `The Turn Tracker has already moved on. It is now ${current}'s turn. Nothing else changed when you clicked the older button.`
+                    : 'The Turn Tracker has already moved on. Combat has continued with the next initiative, and nothing else changed when you clicked the older button.')
+            }]);
+        }
+
+        function announcementMode() {
+            const value = String(modState.config.announcements || '').toLowerCase();
+            if (VALID_ANNOUNCEMENTS.has(value)) return value;
+            modState.config.announcements = 'gm';
+            return 'gm';
+        }
+
+        function announcementLabel() {
+            const mode = announcementMode();
+            if (mode === 'gm') return 'GM only';
+            if (mode === 'whispers') return 'GM and current-player whispers';
+            return mode === 'public' ? 'Public' : 'Off';
+        }
+
+        function announceTurn(encounter, analysis, direction) {
+            // CHOICE: complete the outgoing player's A-B-A message sequence before any next-character whisper.
+            flushPendingPlayerCompletion(analysis);
+            const currentSnapshot = GameAssist.TurnTrackerService.snapshot();
+            scheduleTurnTimers(encounter, currentSnapshot, analysis);
+            sendCurrentTurnCue(analysis);
+            const mode = announcementMode();
+            if (mode === 'off') return;
+            const backward = direction === 'backward';
+            const fields = [
+                { label: 'Round', value: _sanitize(String(encounter.round)) },
+                { label: 'Current Turn', value: _sanitize(currentLabel(analysis)) }
+            ];
+            if (backward) {
+                fields.push({ label: 'Round Count', value: 'Unchanged. Backward movement never advances a round.' });
+            }
+            if (mode === 'public') {
+                sendPanel(backward ? 'Combat Turn Moved Back' : 'Combat Turn', fields, { publicMessage: true });
+                return;
+            }
+            fields.push({ label: 'Controls', value: gmTurnActions() });
+            sendPanel(backward ? 'Combat Turn Moved Back' : 'Combat Turn', fields);
+            if (mode === 'whispers') whisperCurrentPlayerTurn(encounter, analysis);
+        }
+
+        function announceForward(encounter, analysis) {
+            announceTurn(encounter, analysis, 'forward');
+        }
+
+        function announceBackward(encounter, analysis) {
+            announceTurn(encounter, analysis, 'backward');
+        }
+
+        function recoveryButton(encounter) {
+            const canRestoreAttention = encounter?.status === 'attention' &&
+                Array.isArray(encounter.acceptedEntries) &&
+                encounter.acceptedEntries.length >= POLICY.combat.minimumTrackedRows;
+            if (canRestoreAttention) {
+                return GameAssist.createButton('Restore Last Safe Tracker', '!Combat-Restore');
+            }
+            if (checkpointIsUsable(encounter?.checkpoint)) {
+                return GameAssist.createButton('Undo Last Tracker Change', '!Combat-Restore');
+            }
+            return '';
+        }
+
+        function rebaseToSnapshot(encounter, snapshot, analysis, reason, { notify = true } = {}) {
+            rememberAcceptedState(encounter);
+            encounter.status = 'active';
+            encounter.order = analysis.identities.slice();
+            encounter.baseOrder = analysis.identities.slice();
+            encounter.anchor = analysis.identities[0];
+            encounter.turn = 1;
+            encounter.forwardStreak = 0;
+            encounter.lastDirection = 'rebase';
+            encounter.lastTransitionAt = isoNow();
+            encounter.lastChangeReason = String(reason || 'The native Turn Tracker order changed.');
+            useRoundCounter(encounter, analysis);
+            encounter.anchor = analysis.roundCounter?.identity || analysis.identities[0];
+            acceptSnapshot(encounter, snapshot);
+            encounter.attention = null;
+            delete encounter.attentionAt;
+            delete encounter.previousStatus;
+            scheduleTurnTimers(encounter, snapshot, analysis);
+            sendCurrentTurnCue(analysis);
+            if (notify) {
+                const restore = recoveryButton(encounter);
+                sendPanel('Turn Tracker Updated', [
+                    { label: analysis.roundCounter ? 'Round From Tracker' : 'Round Preserved', value: _sanitize(String(encounter.round)) },
+                    { label: 'Current Turn', value: _sanitize(currentLabel(analysis)) },
+                    { label: 'What Happened', value: _sanitize(encounter.lastChangeReason) },
+                    { label: 'What CombatAssist Did', value: analysis.roundCounter
+                        ? `Used ${_sanitize(analysis.roundCounter.label)} as the round authority and continued from the current native tracker entry.`
+                        : 'Kept the current round and began a fresh full-cycle count from the current native tracker entry.' },
+                    { label: 'Actions', value: [restore, GameAssist.createButton('Open Menu', '!Combat-Menu')].filter(Boolean).join(' ') }
+                ]);
+                whisperCurrentPlayerTurn(encounter, analysis);
+            }
+            return encounter;
+        }
+
+        function enterAttention(encounter, reason, snapshot = null, { notify = true } = {}) {
+            if (!encounter) return;
+            clearTurnTimers(encounter, { forget: true });
+            const wasAttention = encounter.status === 'attention' && encounter.attention === reason;
+            encounter.previousStatus = encounter.status === 'attention'
+                ? (encounter.previousStatus || 'active')
+                : encounter.status;
+            encounter.status = 'attention';
+            encounter.attention = String(reason || 'The Turn Tracker changed in a way CombatAssist could not verify.');
+            encounter.attentionAt = isoNow();
+            encounter.lastRevision = snapshot?.revision || encounter.lastRevision || null;
+            if (notify && !wasAttention) {
+                warning(encounter.attention, [
+                    GameAssist.createButton('Use Current Tracker', '!Combat-Adopt'),
+                    recoveryButton(encounter),
+                    GameAssist.createButton('Review Status', '!Combat-Status'),
+                    GameAssist.createButton('Restart at Round 1', '!Combat-Start --confirm')
+                ].filter(Boolean).join(' '));
+            }
+        }
+
+        function processSnapshot(snapshot, { notify = true, directionHint = null } = {}) {
+            const encounter = getEncounter();
+            if (!encounter || encounter.status === 'paused') return encounter;
+            if (snapshot?.ok && snapshot.open && snapshot.pageId && snapshot.pageId !== encounter.pageId) {
+                enterAttention(
+                    encounter,
+                    `The Turn Tracker moved from ${pageName(encounter.pageId)} to ${pageName(snapshot.pageId)}. Restart tracking on the intended encounter page.`,
+                    snapshot,
+                    { notify }
+                );
+                return encounter;
+            }
+            const analysis = analyzeSnapshot(snapshot);
+            if (!analysis.ok) {
+                enterAttention(encounter, analysis.reason, snapshot, { notify });
+                return encounter;
+            }
+            if (directionHint === 'rebase') {
+                return rebaseToSnapshot(
+                    encounter,
+                    snapshot,
+                    analysis,
+                    'Initiative values or tracker order were updated through GameAssist.',
+                    { notify }
+                );
+            }
+            if (sameOrder(analysis.identities, encounter.order)) {
+                if (encounter.status === 'attention') {
+                    return rebaseToSnapshot(
+                        encounter,
+                        snapshot,
+                        analysis,
+                        'The native Turn Tracker is readable again. CombatAssist kept the recorded round and continued from its current entry.',
+                        { notify }
+                    );
+                }
+                if (!entriesEqual(encounter.acceptedEntries, snapshot.entries)) {
+                    return rebaseToSnapshot(
+                        encounter,
+                        snapshot,
+                        analysis,
+                        'Initiative values or tracker row data changed in Roll20.',
+                        { notify }
+                    );
+                }
+                acceptSnapshot(encounter, snapshot);
+                return encounter;
+            }
+
+            if (analysis.identities.length !== encounter.order.length) {
+                return rebaseToSnapshot(
+                    encounter,
+                    snapshot,
+                    analysis,
+                    'A combatant or tracker entry was added or removed in Roll20.',
+                    { notify }
+                );
+            }
+
+            let forward = sameOrder(analysis.identities, rotateForward(encounter.order));
+            let backward = sameOrder(analysis.identities, rotateBackward(encounter.order));
+            if (forward && backward) {
+                if (directionHint === 'forward') backward = false;
+                else if (directionHint === 'backward') forward = false;
+                else {
+                    enterAttention(
+                        encounter,
+                        'A two-entry Turn Tracker moved, but Roll20 does not reveal whether the native arrow went forward or backward. Use the CombatAssist direction buttons, accept the current tracker without changing the round, or restore the last accepted tracker.',
+                        snapshot,
+                        { notify }
+                    );
+                    return encounter;
+                }
+            }
+            if (!forward && !backward) {
+                return rebaseToSnapshot(
+                    encounter,
+                    snapshot,
+                    analysis,
+                    'Initiative values or the native tracker order changed. CombatAssist treated the current Roll20 order as authoritative.',
+                    { notify }
+                );
+            }
+
+            rememberAcceptedState(encounter);
+            encounter.order = analysis.identities.slice();
+            acceptSnapshot(encounter, snapshot);
+            encounter.lastTransitionAt = isoNow();
+            encounter.turn = encounter.baseOrder.indexOf(encounter.order[0]) + 1;
+
+            if (backward) {
+                encounter.forwardStreak = 0;
+                encounter.lastDirection = 'backward';
+                if (notify) announceBackward(encounter, analysis);
+                return encounter;
+            }
+
+            encounter.forwardStreak = Number(encounter.forwardStreak || 0) + 1;
+            encounter.lastDirection = 'forward';
+            const trackerOwnsRound = useRoundCounter(encounter, analysis, {
+                syncValue: analysis.roundCounter?.index === 0
+            });
+            if (!trackerOwnsRound &&
+                encounter.order[0] === encounter.anchor &&
+                encounter.forwardStreak >= encounter.order.length
+            ) {
+                encounter.round++;
+                encounter.forwardStreak = 0;
+                encounter.lastRoundAt = encounter.lastTransitionAt;
+            }
+            if (notify) announceForward(encounter, analysis);
+            return encounter;
+        }
+
+        function synchronize({ notify = true } = {}) {
+            const encounter = getEncounter();
+            if (!encounter || encounter.status !== 'active') return encounter;
+            return processSnapshot(GameAssist.TurnTrackerService.snapshot(), { notify });
+        }
+
+        function startEncounter(msg, confirmed) {
+            const existing = getEncounter();
+            if (existing && !confirmed) {
+                sendPanel('CombatAssist Already Has an Encounter', [
+                    { label: 'Current State', value: _sanitize(existing.status) },
+                    { label: 'Round', value: _sanitize(String(existing.round)) },
+                    { label: 'Choose', value: `${GameAssist.createButton('Keep Current Encounter', '!Combat-Menu')} ${GameAssist.createButton('Restart From Current Tracker', '!Combat-Start --confirm')}` }
+                ]);
+                return;
+            }
+
+            const snapshot = GameAssist.TurnTrackerService.snapshot();
+            const analysis = analyzeSnapshot(snapshot);
+            if (!analysis.ok) {
+                warning(analysis.reason, GameAssist.createButton('Check Again', '!Combat-Start'));
+                return;
+            }
+
+            modState.runtime.encounter = {
+                status: 'active',
+                pageId: snapshot.pageId,
+                round: analysis.roundCounter?.value || 1,
+                turn: 1,
+                anchor: analysis.roundCounter?.identity || analysis.identities[0],
+                order: analysis.identities.slice(),
+                baseOrder: analysis.identities.slice(),
+                acceptedEntries: cloneData(snapshot.entries),
+                forwardStreak: 0,
+                lastDirection: null,
+                lastRevision: snapshot.revision,
+                startedAt: isoNow(),
+                lastObservedAt: isoNow(),
+                attention: null
+            };
+            useRoundCounter(modState.runtime.encounter, analysis);
+            sendPanel('CombatAssist Started', [
+                { label: 'Encounter Page', value: _sanitize(pageName(snapshot.pageId)) },
+                { label: 'Starting Point', value: `Round ${_sanitize(String(modState.runtime.encounter.round))} | ${_sanitize(currentLabel(analysis))}` },
+                { label: 'Round Source', value: analysis.roundCounter
+                    ? `${_sanitize(analysis.roundCounter.label)} in Roll20's Turn Tracker`
+                    : 'CombatAssist internal count' },
+                { label: 'Tracking', value: `Following ${analysis.identities.length} distinct native tracker entries. Valid additions, removals, rerolls, and manual reordering preserve the round and begin a fresh cycle from the current entry.${analysis.identities.length === 2 ? ' With two entries, use CombatAssist Next Turn or Previous Turn because Roll20 does not expose native arrow direction.' : ''}` },
+                { label: 'Turn Controls', value: gmTurnActions() }
+            ]);
+            scheduleTurnTimers(modState.runtime.encounter, snapshot, analysis);
+            sendCurrentTurnCue(analysis);
+            whisperCurrentPlayerTurn(modState.runtime.encounter, analysis);
+        }
+
+        function pauseEncounter() {
+            const encounter = getEncounter();
+            if (!encounter) {
+                warning('No CombatAssist encounter is active.', GameAssist.createButton('Start Encounter', '!Combat-Start'));
+                return;
+            }
+            if (encounter.status === 'attention') {
+                warning(
+                    encounter.attention || 'This encounter needs attention before it can be paused.',
+                    [
+                        GameAssist.createButton('Use Current Tracker', '!Combat-Adopt'),
+                        recoveryButton(encounter),
+                        GameAssist.createButton('Review Status', '!Combat-Status')
+                    ].filter(Boolean).join(' ')
+                );
+                return;
+            }
+            if (encounter.status === 'paused') {
+                sendPanel('CombatAssist Paused', [{
+                    label: 'Next Step',
+                    value: `${GameAssist.createButton('Resume', '!Combat-Resume')} ${GameAssist.createButton('Open Control Center', '!Combat-Menu')}`
+                }]);
+                return;
+            }
+            encounter.previousStatus = encounter.status;
+            encounter.status = 'paused';
+            encounter.pausedAt = isoNow();
+            clearTurnTimers(encounter, { forget: true });
+            sendPanel('CombatAssist Paused', [
+                { label: 'Tracker', value: 'Roll20 remains unchanged. CombatAssist will not count tracker movement while paused.' },
+                { label: 'Use This For', value: 'Adding, removing, or reordering Turn Tracker rows.' },
+                { label: 'Next Step', value: `${GameAssist.createButton('Resume With Current Order', '!Combat-Resume')} ${GameAssist.createButton('End Encounter', '!Combat-End')}` }
+            ]);
+        }
+
+        function resumeEncounter() {
+            const encounter = getEncounter();
+            if (!encounter) {
+                warning('No CombatAssist encounter is available to resume.', GameAssist.createButton('Start Encounter', '!Combat-Start'));
+                return;
+            }
+            if (encounter.status !== 'paused') {
+                if (encounter.status === 'attention') {
+                    adoptCurrentTracker();
+                    return;
+                }
+                warning('This encounter is already active.', GameAssist.createButton('Open Control Center', '!Combat-Menu'));
+                return;
+            }
+
+            const snapshot = GameAssist.TurnTrackerService.snapshot();
+            if (snapshot?.ok && snapshot.open && snapshot.pageId && snapshot.pageId !== encounter.pageId) {
+                enterAttention(
+                    encounter,
+                    `The Turn Tracker is now on ${pageName(snapshot.pageId)}, not the encounter page ${pageName(encounter.pageId)}. Restart tracking on the intended page.`,
+                    snapshot
+                );
+                return;
+            }
+            const analysis = analyzeSnapshot(snapshot);
+            if (!analysis.ok) {
+                enterAttention(encounter, analysis.reason, snapshot);
+                return;
+            }
+
+            // CHOICE: An explicit resume accepts the current order as a fresh cycle baseline while preserving the GM's round count.
+            rememberAcceptedState(encounter);
+            encounter.status = 'active';
+            encounter.order = analysis.identities.slice();
+            encounter.baseOrder = analysis.identities.slice();
+            encounter.anchor = analysis.identities[0];
+            encounter.turn = 1;
+            encounter.forwardStreak = 0;
+            encounter.lastDirection = null;
+            acceptSnapshot(encounter, snapshot);
+            useRoundCounter(encounter, analysis);
+            encounter.anchor = analysis.roundCounter?.identity || analysis.identities[0];
+            encounter.attention = null;
+            delete encounter.attentionAt;
+            sendPanel('CombatAssist Resumed', [
+                { label: 'Round', value: _sanitize(String(encounter.round)) },
+                { label: 'Current Turn', value: _sanitize(currentLabel(analysis)) },
+                { label: 'Tracking', value: 'The current tracker order is the new counting starting point.' },
+                { label: 'Turn Controls', value: gmTurnActions() }
+            ]);
+            scheduleTurnTimers(encounter, snapshot, analysis);
+            sendCurrentTurnCue(analysis);
+            whisperCurrentPlayerTurn(encounter, analysis);
+        }
+
+        function adoptCurrentTracker() {
+            const encounter = getEncounter();
+            if (!encounter) {
+                warning('No CombatAssist encounter is available to continue.', GameAssist.createButton('Start Encounter', '!Combat-Start'));
+                return;
+            }
+            const snapshot = GameAssist.TurnTrackerService.snapshot();
+            if (snapshot?.ok && snapshot.open && snapshot.pageId && snapshot.pageId !== encounter.pageId) {
+                enterAttention(
+                    encounter,
+                    `The Turn Tracker is on ${pageName(snapshot.pageId)}, not the recorded encounter page ${pageName(encounter.pageId)}.`,
+                    snapshot
+                );
+                return;
+            }
+            const analysis = analyzeSnapshot(snapshot);
+            if (!analysis.ok) {
+                enterAttention(encounter, analysis.reason, snapshot);
+                return;
+            }
+            rebaseToSnapshot(
+                encounter,
+                snapshot,
+                analysis,
+                'The GM chose the current native Turn Tracker order. The existing round was preserved.',
+                { notify: true }
+            );
+        }
+
+        function recoveryTarget(encounter) {
+            if (!encounter) return null;
+            if (encounter.status === 'attention') return captureAcceptedState(encounter);
+            return checkpointIsUsable(encounter.checkpoint) ? cloneData(encounter.checkpoint) : null;
+        }
+
+        function restoreTracker(args = {}) {
+            const encounter = getEncounter();
+            const target = recoveryTarget(encounter);
+            if (!encounter || !target) {
+                warning('CombatAssist does not have an earlier accepted tracker state to restore.', GameAssist.createButton('Open Control Center', '!Combat-Menu'));
+                return;
+            }
+            const current = GameAssist.TurnTrackerService.snapshot();
+            if (!current.ok || !current.open || !current.pageId) {
+                warning(current.message || current.pageWarning || 'The current Turn Tracker could not be read, so no restoration was attempted.');
+                return;
+            }
+            if (current.pageId !== target.pageId) {
+                warning(`The saved tracker belongs to ${pageName(target.pageId)}, but Roll20 is showing ${pageName(current.pageId)}. No restoration was attempted.`);
+                return;
+            }
+            const targetSnapshot = {
+                ...current,
+                entries: cloneData(target.entries),
+                raw: JSON.stringify(target.entries),
+                pageId: target.pageId
+            };
+            const targetAnalysis = analyzeSnapshot(targetSnapshot);
+            if (!targetAnalysis.ok) {
+                warning(`The saved tracker can no longer be restored: ${targetAnalysis.reason}`);
+                return;
+            }
+            if (args.confirm !== true) {
+                sendPanel(encounter.status === 'attention' ? 'Restore Last Safe Tracker?' : 'Undo Last Tracker Change?', [
+                    { label: 'Saved Point', value: `Round ${_sanitize(String(target.round))} | ${_sanitize(currentLabel(targetAnalysis))}` },
+                    { label: 'What Changes', value: `Roll20's current ${current.entries.length}-entry Turn Order will be replaced by the saved ${target.entries.length}-entry order. Every saved row and field is restored exactly.` },
+                    { label: 'Confirm', value: `${GameAssist.createButton('Restore Saved Tracker', `!Combat-Restore --confirm --revision ${current.revision}`)} ${GameAssist.createButton('Keep Current Tracker', '!Combat-Adopt')}` }
+                ]);
+                return;
+            }
+            const expectedRevision = String(args.revision || '');
+            if (!expectedRevision || expectedRevision !== current.revision) {
+                warning('The Turn Tracker changed after the restore preview. Review the current tracker before trying again.', GameAssist.createButton('Review Again', '!Combat-Restore'));
+                return;
+            }
+            const result = GameAssist.TurnTrackerService.apply(() => ({ entries: cloneData(target.entries) }), {
+                expectedRevision,
+                label: 'CombatAssist restore tracker'
+            });
+            if (!result.ok) {
+                warning(result.message || 'Roll20 did not restore the saved Turn Tracker.', GameAssist.createButton('Review Again', '!Combat-Restore'));
+                return;
+            }
+            restoreEncounterState(encounter, target, result.after);
+            const restoredAnalysis = analyzeSnapshot(result.after);
+            useRoundCounter(encounter, restoredAnalysis);
+            sendPanel('Turn Tracker Restored', [
+                { label: 'Round', value: _sanitize(String(encounter.round)) },
+                { label: 'Current Turn', value: _sanitize(currentLabel(restoredAnalysis)) },
+                { label: 'Restored', value: `${target.entries.length} saved entries and their complete Turn Tracker fields.` },
+                { label: 'Actions', value: gmTurnActions() }
+            ]);
+            scheduleTurnTimers(encounter, result.after, restoredAnalysis);
+            sendCurrentTurnCue(restoredAnalysis);
+            whisperCurrentPlayerTurn(encounter, restoredAnalysis);
+        }
+
+        function endEncounter(confirmed) {
+            const encounter = getEncounter();
+            if (!encounter) {
+                sendPanel('CombatAssist', [
+                    { label: 'Encounter', value: 'No CombatAssist encounter is currently recorded.' },
+                    { label: 'Next Step', value: GameAssist.createButton('Start Encounter', '!Combat-Start') }
+                ]);
+                return;
+            }
+            if (!confirmed) {
+                sendPanel('End CombatAssist Encounter?', [
+                    { label: 'What Changes', value: 'Only CombatAssist tracking is cleared. Roll20 Turn Tracker rows remain exactly as they are.' },
+                    { label: 'Confirm', value: `${GameAssist.createButton('End Encounter', '!Combat-End --confirm')} ${GameAssist.createButton('Keep Encounter', '!Combat-Menu')}` }
+                ]);
+                return;
+            }
+            const summary = `Ended on round ${encounter.round} while ${encounter.status}.`;
+            clearTurnTimers(encounter, { forget: true });
+            delete modState.runtime.encounter;
+            sendPanel('CombatAssist Encounter Ended', [
+                { label: 'Summary', value: _sanitize(summary) },
+                { label: 'Turn Tracker', value: 'Unchanged.' },
+                { label: 'Next Step', value: GameAssist.createButton('Start Another Encounter', '!Combat-Start') }
+            ]);
+        }
+
+        function moveTurn(direction) {
+            const movingBackward = direction === 'backward';
+            let encounter = synchronize({ notify: false });
+            if (!encounter || encounter.status !== 'active') {
+                warning(
+                    encounter?.attention || `Start or resume a healthy CombatAssist encounter before moving ${movingBackward ? 'back' : 'forward'}.`,
+                    `${GameAssist.createButton('Open Control Center', '!Combat-Menu')} ${GameAssist.createButton('Review Status', '!Combat-Status')}`
+                );
+                return { ok: false, encounter };
+            }
+            const before = GameAssist.TurnTrackerService.snapshot();
+            const analysis = analyzeSnapshot(before);
+            if (!analysis.ok || !sameOrder(analysis.identities, encounter.order)) {
+                enterAttention(encounter, analysis.reason || 'The Turn Tracker changed before the next-turn request could be applied.', before);
+                return { ok: false, encounter };
+            }
+            const result = GameAssist.TurnTrackerService.apply(entries => {
+                if (entries.length < POLICY.combat.minimumTrackedRows) {
+                    throw new Error('The Turn Tracker no longer has enough rows to move safely.');
+                }
+                if (movingBackward) entries.unshift(entries.pop());
+                else {
+                    entries.push(entries.shift());
+                    applyRoundCounterFormula(entries[0]);
+                }
+                return { entries };
+            }, {
+                expectedRevision: before.revision,
+                label: movingBackward ? 'CombatAssist previous turn' : 'CombatAssist next turn'
+            });
+            if (!result.ok || !result.changed) {
+                warning(result.message || `Roll20 did not move the Turn Tracker ${movingBackward ? 'back' : 'forward'}.`, GameAssist.createButton('Review Status', '!Combat-Status'));
+                return { ok: false, encounter, result };
+            }
+            encounter = getEncounter();
+            const afterAnalysis = analyzeSnapshot(result.after);
+            if (announcementMode() === 'off' && encounter?.status === 'active') {
+                sendPanel(movingBackward ? 'Combat Turn Moved Back' : 'Combat Turn Advanced', [
+                    { label: 'Round', value: _sanitize(String(encounter.round)) },
+                    { label: 'Current Turn', value: _sanitize(currentLabel(afterAnalysis)) },
+                    { label: 'Controls', value: gmTurnActions() }
+                ]);
+            }
+            return { ok: true, encounter, result, analysis: afterAnalysis };
+        }
+
+        function advanceTurn() {
+            return moveTurn('forward');
+        }
+
+        function previousTurn() {
+            return moveTurn('backward');
+        }
+
+        function endPlayerTurn(msg, args) {
+            if (playerIsGM(msg.playerid)) {
+                advanceTurn();
+                return;
+            }
+            if (announcementMode() !== 'whispers') {
+                sendPlayerPanel(msg.playerid, 'CombatAssist', [{
+                    label: 'End My Turn',
+                    value: 'Player turn controls are available only while the GM has selected Whispers announcements.'
+                }]);
+                return;
+            }
+
+            const encounter = synchronize({ notify: false });
+            if (!encounter || encounter.status !== 'active') {
+                sendPlayerPanel(msg.playerid, 'CombatAssist', [{
+                    label: 'End My Turn',
+                    value: _sanitize(encounter?.attention
+                        ? 'The Turn Tracker changed and the GM is reviewing it. Your click did not make another change.'
+                        : 'This encounter is not currently waiting for a player turn button. Your click did not change anything.')
+                }]);
+                return;
+            }
+            const snapshot = GameAssist.TurnTrackerService.snapshot();
+            const analysis = analyzeSnapshot(snapshot);
+            const structure = analysis?.structures?.[0];
+            const requestedTokenId = String(args.token || '').trim();
+            if (!analysis.ok || structure?.kind !== 'token') {
+                sendPlayerPanel(msg.playerid, 'CombatAssist', [{
+                    label: 'End My Turn',
+                    value: 'The current Turn Tracker entry cannot use a player turn button. Your click did not change anything.'
+                }]);
+                return;
+            }
+            if (!requestedTokenId || structure.id !== requestedTokenId) {
+                explainAlreadyAdvanced(msg.playerid, analysis);
+                return;
+            }
+            if (!playerControlsStructure(msg.playerid, structure)) {
+                sendPlayerPanel(msg.playerid, 'CombatAssist', [{
+                    label: 'End My Turn',
+                    value: 'You do not control the character whose turn is currently active.'
+                }]);
+                return;
+            }
+            const pending = {
+                playerId: msg.playerid,
+                expectedNextIdentity: analysis.identities[1],
+                delivered: false
+            };
+            pendingPlayerCompletion = pending;
+            const outcome = advanceTurn();
+            if (!outcome?.ok) {
+                if (pendingPlayerCompletion === pending) pendingPlayerCompletion = null;
+                sendPlayerPanel(msg.playerid, 'CombatAssist', [{
+                    label: 'End My Turn',
+                    value: 'The tracker changed before your turn could be advanced. Nothing extra was changed; the GM has been notified.'
+                }]);
+                return;
+            }
+            // DANGER: some Roll20 engines deliver the tracker observer after apply() returns.
+            // The fallback preserves the same confirmation-before-next-prompt contract without duplicating it.
+            if (!pending.delivered) {
+                pending.delivered = true;
+                confirmPlayerTurnEnded(msg.playerid, outcome.analysis);
+            }
+            if (pendingPlayerCompletion === pending) pendingPlayerCompletion = null;
+        }
+
+        function encounterFields(encounter, snapshot, analysis) {
+            if (!encounter) {
+                return [
+                    { label: 'State', value: 'Not tracking an encounter.' },
+                    { label: 'Turn Tracker', value: snapshot?.open && snapshot?.pageId ? `${_sanitize(pageName(snapshot.pageId))} | ${snapshot.entries.length} rows` : 'Closed or unavailable.' }
+                ];
+            }
+            const fields = [
+                { label: 'State', value: _sanitize(encounter.status) },
+                { label: 'Encounter Page', value: _sanitize(pageName(encounter.pageId)) },
+                { label: 'Round', value: _sanitize(String(encounter.round)) },
+                { label: 'Round Source', value: encounter.roundSource === 'tracker'
+                    ? _sanitize(`${encounter.roundCounterLabel || 'Native round counter'} in Roll20's Turn Tracker`)
+                    : 'CombatAssist internal count' },
+                { label: 'Current Turn', value: _sanitize(analysis?.ok ? currentLabel(analysis) : '(Unavailable)') },
+                { label: 'Announcements', value: _sanitize(announcementLabel()) },
+                { label: 'Turn Timer', value: modState.config.timerEnabled
+                    ? `${modState.config.timerDurationSeconds}s | deadline -> ${_sanitize(modState.config.timerDeadlineAudience)}`
+                    : 'Off' },
+                { label: 'Turn Cue', value: _sanitize(String(modState.config.turnCue || 'off')) }
+            ];
+            if (encounter.attention) fields.push({ label: 'Needs Attention', value: _sanitize(encounter.attention) });
+            return fields;
+        }
+
+        function showStatus({ audit = false } = {}) {
+            synchronize({ notify: false });
+            const encounter = getEncounter();
+            const snapshot = GameAssist.TurnTrackerService.snapshot();
+            const analysis = analyzeSnapshot(snapshot);
+            const fields = encounterFields(encounter, snapshot, analysis);
+            fields.push({
+                label: 'Tracker Check',
+                value: analysis.ok
+                    ? (encounter
+                        ? `Ready. Round ${encounter.round} is recorded, ${currentLabel(analysis)} is current, and ${analysis.identities.length} distinct tracker entries are readable.`
+                        : `${analysis.identities.length} distinct tracker entries are readable. Start CombatAssist when round tracking is needed.`)
+                    : _sanitize(analysis.reason)
+            });
+            fields.push({
+                label: 'Actions',
+                value: [
+                    recoveryButton(encounter),
+                    GameAssist.createButton('Control Center', '!Combat-Menu'),
+                    GameAssist.createButton('Refresh Status', '!Combat-Status')
+                ].filter(Boolean).join(' ')
+            });
+            if (audit) {
+                fields.push({
+                    label: 'Changes',
+                    value: 'None. This audit reads the current tracker and CombatAssist record without changing either one.'
+                });
+            }
+            sendPanel(audit ? 'CombatAssist Tracker Audit' : 'CombatAssist Status', fields);
+        }
+
+        function controlButtons(encounter) {
+            if (!encounter) {
+                return `${GameAssist.createButton('Start Encounter', '!Combat-Start')} ${GameAssist.createButton('Read Guide', '!Combat-Help')}`;
+            }
+            if (encounter.status === 'active') {
+                return [
+                    GameAssist.createButton('Next Turn', '!Combat-Next'),
+                    GameAssist.createButton('Previous Turn', '!Combat-Prev'),
+                    GameAssist.createButton('Pause for Tracker Edits', '!Combat-Pause'),
+                    GameAssist.createButton('End Encounter', '!Combat-End')
+                ].join(' ');
+            }
+            if (encounter.status === 'paused') {
+                return `${GameAssist.createButton('Resume With Current Order', '!Combat-Resume')} ${GameAssist.createButton('End Encounter', '!Combat-End')}`;
+            }
+            return [
+                GameAssist.createButton('Use Current Tracker', '!Combat-Adopt'),
+                recoveryButton(encounter),
+                GameAssist.createButton('Restart at Round 1', '!Combat-Start --confirm'),
+                GameAssist.createButton('End Encounter', '!Combat-End')
+            ].filter(Boolean).join(' ');
+        }
+
+        function showMenu() {
+            synchronize({ notify: false });
+            const encounter = getEncounter();
+            const snapshot = GameAssist.TurnTrackerService.snapshot();
+            const analysis = analyzeSnapshot(snapshot);
+            const fields = encounterFields(encounter, snapshot, analysis);
+            fields.unshift({
+                label: 'Purpose',
+                value: 'Track a deliberate encounter through Roll20\'s native Turn Tracker without moving or rewriting unrelated rows.'
+            });
+            fields.push({ label: 'Encounter Controls', value: controlButtons(encounter) });
+            fields.push({
+                label: 'Turn Announcements',
+                value: `${GameAssist.createButton('GM Only', '!Combat-Announce gm')} ${GameAssist.createButton('Public', '!Combat-Announce public')} ${GameAssist.createButton('Whispers', '!Combat-Announce whispers')} ${GameAssist.createButton('Off', '!Combat-Announce off')}`
+            });
+            fields.push({
+                label: 'Player Turn Message',
+                value: `${_sanitize(playerConfirmationLabel())}: ${GameAssist.createButton('Standard', '!Combat-Confirm standard')} ${GameAssist.createButton('Varied', '!Combat-Confirm varied')}`
+            });
+            fields.push({
+                label: 'Turn Timer',
+                value: `${modState.config.timerEnabled ? 'On' : 'Off'} | ${modState.config.timerDurationSeconds}s<br>${GameAssist.createButton('Timer Settings', '!Combat-Timer')} ${GameAssist.createButton(modState.config.timerEnabled ? 'Turn Off' : 'Turn On', `!Combat-Timer ${modState.config.timerEnabled ? 'off' : 'on'}`)}`
+            });
+            fields.push({
+                label: 'Current-Turn Ping',
+                value: `${_sanitize(String(modState.config.turnCue || 'off'))}: ${GameAssist.createButton('Off', '!Combat-Cue off')} ${GameAssist.createButton('GM', '!Combat-Cue gm')} ${GameAssist.createButton('Players', '!Combat-Cue players')} ${GameAssist.createButton('Both', '!Combat-Cue both')} ${GameAssist.createButton('Public', '!Combat-Cue public')}`
+            });
+            fields.push({
+                label: 'Review',
+                value: `${GameAssist.createButton('Status', '!Combat-Status')} ${GameAssist.createButton('Guide', '!Combat-Help')}`
+            });
+            sendPanel('CombatAssist Control Center', fields);
+        }
+
+        function combatManualHtml() {
+            return [
+                '<h1>CombatAssist User Manual</h1>',
+                `<p><strong>GameAssist v${_sanitize(VERSION)} | CombatAssist ${_sanitize(MODULE_VERSION)}</strong></p>`,
+                '<p>CombatAssist adds deliberate encounter flow to Roll20\'s native Turn Tracker. Roll20 continues to own the visible tracker; CombatAssist follows it, counts reliable turns and rounds, provides permission-checked player turn controls, and helps the GM recover from uncertain tracker changes.</p>',
+                '<h2>Quick Start</h2>',
+                '<ol><li>Place at least two distinct entries in Roll20\'s Turn Tracker.</li><li>Run <code>!ga-enable CombatAssist</code>.</li><li>Run <code>!Combat-Start</code>.</li><li>Advance with Roll20\'s tracker arrows or the CombatAssist Next Turn button.</li><li>Run <code>!Combat-End</code> when the encounter is finished, then confirm the choice.</li></ol>',
+                '<h2>What CombatAssist Adds</h2>',
+                '<ul><li>A clearly named native Round Counter row can own the round number and keep its +1 calculation when CombatAssist advances it.</li><li>Conservative internal round counting when no native counter exists.</li><li>GM Next Turn, Previous Turn, Pause, Resume, status, and recovery controls.</li><li>Optional stale-safe turn timers and private-safe current-turn pings.</li><li>Optional public, GM-only, or private turn announcements.</li><li>A permission-checked End My Turn button for the player controlling the current linked character.</li><li>One saved tracker checkpoint for previewed recovery after a mistaken or unreadable change.</li></ul>',
+                '<h2>Normal Encounter Flow</h2>',
+                '<p>If one custom tracker row is clearly named Round, Rounds, Round Count, Round Counter, Round Number, Round Tracker, Combat Round, or Current Round, its positive whole-number value becomes authoritative. A simple signed whole-number calculation such as <code>+1</code> is applied when CombatAssist moves that row to the top. With no recognized counter, CombatAssist begins at round 1 and advances after one complete uninterrupted forward cycle. Backward movement never changes the recorded round.</p>',
+                '<p>You may add or remove combatants, reroll initiative, change priorities, or reorder the native tracker during play. CombatAssist preserves the current round and begins a fresh counting cycle from Roll20\'s current first entry.</p>',
+                '<h2>Announcements and Player Controls</h2>',
+                '<p><strong>GM Only</strong> whispers turn notices and controls to the GM. <strong>Public</strong> announces turns to chat. <strong>Whispers</strong> gives the GM controls and privately gives the current linked character\'s controller an End My Turn button. <strong>Off</strong> suppresses automatic announcements.</p>',
+                '<p>Standard player confirmations use one direct sentence. Varied confirmations rotate through a small warmer library, with the Standard sentence included once. Hidden GM-layer tokens, unlinked objects, and custom tracker rows are never named to players.</p>',
+                '<h2>Tracker Changes and Recovery</h2>',
+                '<p>Use Pause and Resume when you want to make several quiet edits. Ordinary readable additions, removals, rerolls, and reordering can also be made directly. If the tracker becomes unreadable or ambiguous, CombatAssist stops guessing and offers Use Current Tracker, Restore Last Safe Tracker, or Restart at Round 1.</p>',
+                '<p>With exactly two tracker rows, Roll20 exposes the same resulting order for forward and backward movement. Use CombatAssist Next Turn or Previous Turn so the direction remains explicit.</p>',
+                '<h2>Turn Timers and Pings</h2>',
+                '<p>Turn timers are disabled by default. The GM chooses a turn length, the deadline recipient, and up to five early reminder points with their own GM, current-player, both, or public audience. Every callback verifies the same encounter, round, current token, tracker revision, and deadline before speaking. Timers report time only and never advance initiative.</p>',
+                '<p>Current-turn pings are also disabled by default. They use Roll20\'s temporary native ping without moving anyone\'s view or changing token properties. GM-layer and hidden tokens are always restricted to the GM, regardless of the selected audience.</p>',
+                '<h2>Command Reference</h2>',
+                '<ul><li><code>!Combat-GM</code> or <code>!Combat-DM</code> - open the Game Master control center.</li><li><code>!Combat-Help</code> or <code>!Combat-Guide</code> - open the compact guide.</li><li><code>!Combat-Info</code> - whisper a short purpose summary.</li><li><code>!Combat-Status</code> - show encounter state.</li><li><code>!Combat-Audit</code> - read the tracker and saved encounter without changing either.</li><li><code>!Combat-Start</code>, <code>!Combat-Pause</code>, <code>!Combat-Resume</code>, and <code>!Combat-End</code> - manage encounter tracking.</li><li><code>!Combat-Next</code> and <code>!Combat-Prev</code> - move exactly one tracker row.</li><li><code>!Combat-Announce gm|public|whispers|off</code> - choose turn-message recipients.</li><li><code>!Combat-Confirm standard|varied</code> - choose the player completion style.</li><li><code>!Combat-Timer</code> - configure duration, deadlines, and reminder points.</li><li><code>!Combat-Cue off|gm|players|both|public</code> - configure the native current-turn ping.</li></ul>',
+                '<h2>Where Initiative Fits</h2>',
+                '<p>Use Roll20 or InitiativeAssist to roll and place initiative. CombatAssist begins after the Turn Tracker is ready and does not replace initiative calculation.</p>'
+            ].join('');
+        }
+
+        function writeCombatManual() {
+            const result = GameAssist.writeModuleManual(MODULE_NAME, combatManualHtml());
+            if (!result.ok) {
+                warning(result.message, GameAssist.createButton('Whisper Short Version', '!Combat-Info'));
+                return;
+            }
+            sendPanel('CombatAssist Manual Ready', [
+                { label: 'Handout', value: `${result.link}<br>${_sanitize(result.name)} was ${result.created ? 'created' : 'updated'}.` },
+                { label: 'Continue', value: `${GameAssist.createButton('Whisper Short Version', '!Combat-Info')} ${GameAssist.createButton('Open Control Center', '!Combat-Menu')}` }
+            ]);
+        }
+
+        function showInfo() {
+            sendPanel('What CombatAssist Does', [
+                { label: 'Purpose', value: 'Adds native-counter-aware rounds, guarded turn controls, optional timers and pings, private player turn buttons, and recoverable tracker checkpoints to Roll20\'s native Turn Tracker.' },
+                { label: 'At The Table', value: 'Roll initiative normally, start CombatAssist, then keep using Roll20\'s tracker or the CombatAssist turn buttons.' },
+                { label: 'Learn More', value: `${GameAssist.createButton('Create or Update Manual', '!Combat-Manual')} ${GameAssist.createButton('Open Control Center', '!Combat-Menu')} ${GameAssist.createButton('Back to Guide', '!Combat-Help')}` }
+            ]);
+        }
+
+        function restartCurrentTurnTimer() {
+            const encounter = synchronize({ notify: false });
+            if (!encounter || encounter.status !== 'active') return false;
+            const snapshot = GameAssist.TurnTrackerService.snapshot();
+            const analysis = analyzeSnapshot(snapshot);
+            if (!analysis.ok || !sameOrder(analysis.identities, encounter.order)) return false;
+            return scheduleTurnTimers(encounter, snapshot, analysis);
+        }
+
+        function showTimerMenu() {
+            const reminderButtons = modState.config.timerReminders.length
+                ? modState.config.timerReminders.map(reminder => GameAssist.createButton(
+                    `Remove ${reminder.remainingSeconds}s`,
+                    `!Combat-Timer remove ${reminder.remainingSeconds}`
+                )).join(' ')
+                : 'No early reminders are configured.';
+            sendPanel('CombatAssist Turn Timer', [
+                { label: 'Status', value: modState.config.timerEnabled ? 'On. A fresh timer begins whenever a token turn becomes current.' : 'Off. No callbacks or reminders are scheduled.' },
+                { label: 'Turn Length', value: `${modState.config.timerDurationSeconds} seconds ${GameAssist.createButton('Change', '!Combat-Timer duration ?{Turn length in seconds|120}')}` },
+                { label: 'When Time Expires', value: `${_sanitize(modState.config.timerDeadlineAudience)} ${GameAssist.createButton('GM', '!Combat-Timer deadline gm')} ${GameAssist.createButton('Player', '!Combat-Timer deadline player')} ${GameAssist.createButton('Both', '!Combat-Timer deadline both')} ${GameAssist.createButton('Public', '!Combat-Timer deadline public')}` },
+                { label: 'Early Reminders', value: `${timerReminderSummary()}<br>${GameAssist.createButton('Add Reminder', '!Combat-Timer add ?{Seconds remaining|30} ?{Who receives it?|GM,gm|Current player,player|GM and player,both|Public chat,public}')}` },
+                { label: 'Remove Reminders', value: reminderButtons },
+                { label: 'Controls', value: `${GameAssist.createButton(modState.config.timerEnabled ? 'Turn Timer Off' : 'Turn Timer On', `!Combat-Timer ${modState.config.timerEnabled ? 'off' : 'on'}`)} ${GameAssist.createButton('Clear Reminders', '!Combat-Timer clear')} ${GameAssist.createButton('Back to Combat', '!Combat-Menu')}` },
+                { label: 'Safety', value: 'A reminder rechecks the encounter, round, current token, and exact Turn Tracker revision. It expires silently after initiative moves and never advances a turn.' }
+            ]);
+        }
+
+        function timerAudience(value) {
+            const requested = String(value || '').trim().toLowerCase();
+            return VALID_TIMER_AUDIENCES.has(requested) ? requested : null;
+        }
+
+        function handleTimerCommand(rest, args) {
+            const parts = String(rest || '').trim().split(/\s+/).filter(Boolean);
+            const action = String(parts[0] || '').toLowerCase();
+            if (!action || action === 'status' || action === 'menu') {
+                showTimerMenu();
+                return;
+            }
+            if (action === 'on' || action === 'off') {
+                modState.config.timerEnabled = action === 'on';
+                if (modState.config.timerEnabled) restartCurrentTurnTimer();
+                else clearTurnTimers(getEncounter(), { forget: true });
+                showTimerMenu();
+                return;
+            }
+            if (action === 'duration') {
+                const requested = Number(parts[1]);
+                if (!Number.isInteger(requested) || requested < POLICY.combat.minimumTurnDurationSeconds || requested > POLICY.combat.maximumTurnDurationSeconds) {
+                    warning(`Choose a whole-number turn length from ${POLICY.combat.minimumTurnDurationSeconds} to ${POLICY.combat.maximumTurnDurationSeconds} seconds.`, GameAssist.createButton('Timer Settings', '!Combat-Timer'));
+                    return;
+                }
+                modState.config.timerDurationSeconds = requested;
+                modState.config.timerReminders = modState.config.timerReminders.filter(reminder => reminder.remainingSeconds < requested);
+                restartCurrentTurnTimer();
+                showTimerMenu();
+                return;
+            }
+            if (action === 'deadline') {
+                const audience = timerAudience(parts[1]);
+                if (!audience) {
+                    warning('Choose GM, player, both, or public for the timer deadline.', GameAssist.createButton('Timer Settings', '!Combat-Timer'));
+                    return;
+                }
+                modState.config.timerDeadlineAudience = audience;
+                restartCurrentTurnTimer();
+                showTimerMenu();
+                return;
+            }
+            if (action === 'add') {
+                const remainingSeconds = Number(parts[1]);
+                const audience = timerAudience(parts[2] || 'gm');
+                if (!Number.isInteger(remainingSeconds) || remainingSeconds <= 0 || remainingSeconds >= modState.config.timerDurationSeconds || !audience) {
+                    warning(`Choose whole seconds greater than 0 and below the ${modState.config.timerDurationSeconds}-second turn length, followed by GM, player, both, or public.`, GameAssist.createButton('Timer Settings', '!Combat-Timer'));
+                    return;
+                }
+                const existing = modState.config.timerReminders.find(reminder => reminder.remainingSeconds === remainingSeconds);
+                if (existing) existing.audience = audience;
+                else if (modState.config.timerReminders.length >= POLICY.combat.maximumTimerReminders) {
+                    warning(`CombatAssist supports up to ${POLICY.combat.maximumTimerReminders} early reminders. Remove one before adding another.`, GameAssist.createButton('Timer Settings', '!Combat-Timer'));
+                    return;
+                } else modState.config.timerReminders.push({ remainingSeconds, audience });
+                modState.config.timerReminders.sort((left, right) => right.remainingSeconds - left.remainingSeconds);
+                restartCurrentTurnTimer();
+                showTimerMenu();
+                return;
+            }
+            if (action === 'remove') {
+                const remainingSeconds = Number(parts[1]);
+                modState.config.timerReminders = modState.config.timerReminders.filter(reminder => reminder.remainingSeconds !== remainingSeconds);
+                restartCurrentTurnTimer();
+                showTimerMenu();
+                return;
+            }
+            if (action === 'clear') {
+                if (args.confirm !== true) {
+                    sendPanel('Clear CombatAssist Reminders?', [
+                        { label: 'What Changes', value: 'Only the early reminder points are removed. The timer duration and deadline recipient stay configured.' },
+                        { label: 'Choose', value: `${GameAssist.createButton('Clear Reminders', '!Combat-Timer clear --confirm')} ${GameAssist.createButton('Keep Reminders', '!Combat-Timer')}` }
+                    ]);
+                    return;
+                }
+                modState.config.timerReminders = [];
+                restartCurrentTurnTimer();
+                showTimerMenu();
+                return;
+            }
+            warning('That timer command was not recognized.', GameAssist.createButton('Timer Settings', '!Combat-Timer'));
+        }
+
+        function setTurnCue(value) {
+            const requested = String(value || '').trim().toLowerCase();
+            if (!requested) {
+                sendPanel('CombatAssist Current-Turn Ping', [
+                    { label: 'Current Setting', value: _sanitize(String(modState.config.turnCue || 'off')) },
+                    { label: 'Audience', value: `${GameAssist.createButton('Off', '!Combat-Cue off')} ${GameAssist.createButton('GM', '!Combat-Cue gm')} ${GameAssist.createButton('Players', '!Combat-Cue players')} ${GameAssist.createButton('Both', '!Combat-Cue both')} ${GameAssist.createButton('Public', '!Combat-Cue public')}` },
+                    { label: 'Behavior', value: 'Uses Roll20\'s temporary native ping without moving anyone\'s view or changing the token. Hidden and GM-layer turns are restricted to GM visibility.' },
+                    { label: 'Return', value: GameAssist.createButton('Back to Combat', '!Combat-Menu') }
+                ]);
+                return;
+            }
+            if (!VALID_TURN_CUES.has(requested)) {
+                warning('Choose off, GM, players, both, or public for the current-turn ping.', GameAssist.createButton('Ping Settings', '!Combat-Cue'));
+                return;
+            }
+            modState.config.turnCue = requested;
+            if (requested !== 'off') {
+                const snapshot = GameAssist.TurnTrackerService.snapshot();
+                const analysis = analyzeSnapshot(snapshot);
+                if (analysis.ok) sendCurrentTurnCue(analysis);
+            }
+            showMenu();
+        }
+
+        function showHelp(rawTopic = '') {
+            const topic = String(rawTopic || '').trim().split(/\s+/)[0].toLowerCase();
+            const back = GameAssist.createButton('Back to Guide', '!Combat-Help');
+            const topics = {
+                turns: [
+                    { label: 'Prepare', value: `Use Roll20 or ${GameAssist.createButton('InitiativeAssist', '!Init-Menu')} to place at least two distinct rows in the tracker.` },
+                    { label: 'Begin', value: `${GameAssist.createButton('Start Encounter', '!Combat-Start')} reads the current tracker. A recognized round counter supplies the round; otherwise CombatAssist begins at round 1. Opening the tracker alone never starts combat.` },
+                    { label: 'During Play', value: `Use Roll20's arrows, ${GameAssist.createButton('Next Turn', '!Combat-Next')}, or ${GameAssist.createButton('Previous Turn', '!Combat-Prev')}. With exactly two rows, use the CombatAssist buttons so direction remains unambiguous.` },
+                    { label: 'Native Round Counter', value: 'A single custom row clearly named Round, Rounds, Round Count, Round Counter, Round Number, Round Tracker, Combat Round, or Current Round becomes authoritative. CombatAssist honors a simple +1 calculation when it moves that row to the top.' },
+                    { label: 'Lineup Changes', value: 'Add, remove, reroll, or reorder combatants normally. CombatAssist keeps the current round and starts a fresh counting cycle from the current entry.' }
+                ],
+                recovery: [
+                    { label: 'Several Quiet Edits', value: 'Pause, make the tracker changes, then resume with the current order.' },
+                    { label: 'Undo Or Restore', value: 'Undo Last Tracker Change restores the previous accepted order. Restore Last Safe Tracker is offered when the current tracker cannot be read safely. Both require confirmation.' },
+                    { label: 'Retained Progress', value: 'CombatAssist keeps the last accepted round and tracker checkpoint until the encounter is deliberately ended.' }
+                ],
+                messages: [
+                    { label: 'Audience', value: 'Choose GM Only, Public, Whispers, or Off. Whispers sends the GM controls and gives the current character\'s controller an End My Turn button.' },
+                    { label: 'Player Confirmation', value: 'Standard uses one direct message. Varied rotates among warmer alternatives and includes the Standard sentence exactly once.' },
+                    { label: 'Privacy', value: 'A completion message names only a linked token visible on the objects layer. Hidden NPCs, props, and custom rows use a generic next-initiative message.' }
+                ],
+                timers: [
+                    { label: 'Turn Timer', value: `${GameAssist.createButton('Open Timer Settings', '!Combat-Timer')} sets the turn length, deadline recipient, and up to ${POLICY.combat.maximumTimerReminders} early reminders.` },
+                    { label: 'Current-Turn Ping', value: `${GameAssist.createButton('Open Ping Settings', '!Combat-Cue')} uses Roll20's temporary native ping without moving views or changing tokens.` },
+                    { label: 'Safety', value: 'Old reminders expire silently after initiative changes. Timers never advance a turn, and hidden turns are never pinged to players.' }
+                ],
+                attention: [
+                    { label: 'Why Tracking Stops', value: 'The tracker may be closed, on another page, malformed, or contain stale or indistinguishable entries.' },
+                    { label: 'What To Do', value: `Open ${GameAssist.createButton('Status', '!Combat-Status')} and choose Use Current Tracker, Restore, Restart, or End Encounter as appropriate.` }
+                ]
+            };
+            if (topics[topic]) {
+                sendPanel('CombatAssist Guide', [...topics[topic], { label: 'Guide', value: back }]);
+                return;
+            }
+            if (topic === 'overview' || topic === 'manual') {
+                writeCombatManual();
+                return;
+            }
+            sendPanel('CombatAssist Quick Guide', [
+                { label: 'Actions', value: `${GameAssist.createButton('Control Center', '!Combat-Menu')} ${GameAssist.createButton('Current Status', '!Combat-Status')}` },
+                { label: 'Learn Or Review', value: `${GameAssist.createButton('What does CombatAssist do?', '!Combat-Manual')} ${GameAssist.createButton('Start & Run Encounters', '!Combat-Help turns')} ${GameAssist.createButton('Timers & Pings', '!Combat-Help timers')} ${GameAssist.createButton('Edit & Recover Tracker', '!Combat-Help recovery')} ${GameAssist.createButton('Messages to Players', '!Combat-Help messages')} ${GameAssist.createButton('Help With A Problem', '!Combat-Help attention')}` }
+            ]);
+        }
+
+        function setAnnouncements(value) {
+            const requested = String(value || '').trim().toLowerCase();
+            if (!VALID_ANNOUNCEMENTS.has(requested)) {
+                warning('Choose GM only, public, whispers, or off for CombatAssist turn announcements.', GameAssist.createButton('Open Control Center', '!Combat-Menu'));
+                return;
+            }
+            modState.config.announcements = requested;
+            showMenu();
+        }
+
+        function setPlayerConfirmations(value) {
+            const raw = String(value || '').trim().toLowerCase();
+            const requested = raw === 'fun' ? 'varied' : raw;
+            if (!VALID_PLAYER_CONFIRMATIONS.has(requested)) {
+                warning('Choose standard or varied for player End My Turn confirmations.', GameAssist.createButton('Open Control Center', '!Combat-Menu'));
+                return;
+            }
+            modState.config.playerConfirmations = requested;
+            showMenu();
+        }
+
+        function parseCommand(msg) {
+            const content = String(msg.content || '').trim();
+            const first = content.split(/\s+/)[0];
+            const rest = content.slice(first.length).trim();
+            return {
+                command: first.toLowerCase(),
+                rest,
+                args: _parseArgs(rest).args || {}
+            };
+        }
+
+        function handleCommand(msg) {
+            const { command, rest, args } = parseCommand(msg);
+            if (command === '!combat-end-turn') {
+                endPlayerTurn(msg, args);
+                return;
+            }
+            if (!requireGm(msg)) return;
+            switch (command) {
+                case '!combat-':
+                case '!combat-gm':
+                case '!combat-dm':
+                case '!combat-menu':
+                    showMenu();
+                    return;
+                case '!combat-guide':
+                case '!combat-help':
+                    showHelp(rest);
+                    return;
+                case '!combat-manual':
+                    writeCombatManual();
+                    return;
+                case '!combat-info':
+                    showInfo();
+                    return;
+                case '!combat-start':
+                    startEncounter(msg, args.confirm === true);
+                    return;
+                case '!combat-next':
+                    advanceTurn();
+                    return;
+                case '!combat-prev':
+                    previousTurn();
+                    return;
+                case '!combat-adopt':
+                    adoptCurrentTracker();
+                    return;
+                case '!combat-restore':
+                    restoreTracker(args);
+                    return;
+                case '!combat-pause':
+                    pauseEncounter();
+                    return;
+                case '!combat-resume':
+                    resumeEncounter();
+                    return;
+                case '!combat-status':
+                    showStatus();
+                    return;
+                case '!combat-audit':
+                    showStatus({ audit: true });
+                    return;
+                case '!combat-end':
+                    endEncounter(args.confirm === true);
+                    return;
+                case '!combat-announce':
+                    setAnnouncements(rest.split(/\s+/)[0]);
+                    return;
+                case '!combat-confirm':
+                    setPlayerConfirmations(rest.split(/\s+/)[0]);
+                    return;
+                case '!combat-timer':
+                    handleTimerCommand(rest, args);
+                    return;
+                case '!combat-cue':
+                    setTurnCue(rest.split(/\s+/)[0]);
+                    return;
+                default:
+                    warning('That CombatAssist command was not recognized.', GameAssist.createButton('Open Guide', '!Combat-Help'));
+            }
+        }
+
+        const savedEncounter = getEncounter();
+        if (savedEncounter?.status === 'active') {
+            const current = GameAssist.TurnTrackerService.snapshot();
+            const currentAnalysis = analyzeSnapshot(current);
+            if (
+                !currentAnalysis.ok ||
+                current.pageId !== savedEncounter.pageId ||
+                !sameOrder(currentAnalysis.identities, savedEncounter.order)
+            ) {
+                enterAttention(
+                    savedEncounter,
+                    currentAnalysis.reason || 'The Turn Tracker changed while CombatAssist was unavailable. Restart tracking after reviewing the current order.',
+                    current,
+                    { notify: false }
+                );
+            } else {
+                useRoundCounter(savedEncounter, currentAnalysis);
+                scheduleTurnTimers(savedEncounter, current, currentAnalysis, { resume: true });
+            }
+        }
+
+        GameAssist.TurnTrackerService.clearObservers(MODULE_NAME);
+        GameAssist.TurnTrackerService.observe(event => {
+            if (!MODULES[MODULE_NAME]?.active) return;
+            if (event.source === 'gameassist' && event.label === 'CombatAssist restore tracker') return;
+            processSnapshot(event.current, {
+                directionHint: event.source === 'gameassist' && event.label === 'CombatAssist next turn'
+                    ? 'forward'
+                    : (event.source === 'gameassist' && event.label === 'CombatAssist previous turn'
+                        ? 'backward'
+                        : (event.source === 'gameassist' ? 'rebase' : null))
+            });
+        }, { owner: MODULE_NAME });
+
+        GameAssist.CombatAssist = Object.freeze({
+            version: MODULE_VERSION,
+            getStatus: () => {
+                const encounter = getEncounter();
+                return encounter ? JSON.parse(JSON.stringify(encounter)) : null;
+            }
+        });
+
+        teardownCombatAssist = function() {
+            clearTurnTimers(getEncounter(), { forget: true });
+            GameAssist.TurnTrackerService?.clearObservers?.(MODULE_NAME);
+            delete GameAssist.CombatAssist;
+        };
+
+        GameAssist.onCommand('!Combat-', handleCommand, MODULE_NAME, {
+            match: { caseInsensitive: true, mode: 'prefix' }
+        });
+        GameAssist.log(MODULE_NAME, 'Ready: native tracker flow, round counters, turn timers, current-turn pings, recovery, and player confirmations.', 'INFO', { startup: true });
+    }, {
+        enabled: false,
+        prefixes: ['!Combat-'],
+        dependsOn: ['TurnTrackerService'],
+        // CHOICE: resolve the live closure at teardown time because register() captures option values before module init assigns its cleanup function.
+        teardown: () => teardownCombatAssist(),
+        preserveRuntimeOnDisable: true
+    });
+    // --- Notes & Comments ---
+    // Changed (v0.1.7.0): Advanced CombatAssist to 1.0.5; !Combat-GM and !Combat-DM are equal role aliases for the encounter control center, while the shared manual writer and all encounter, timer, ping, and tracker behavior remain unchanged.
+    // Decision log:
+    //   CHOICE: Start disabled and require explicit GM encounter start - ALT: infer combat from an open tracker; REJECTED: Roll20 trackers are also used for setup, exploration, and non-combat ordering.
+    //   CHOICE: Identify token rows by token id and custom rows by exact label - ALT: include initiative priority; REJECTED: priority edits do not change row ownership or identity.
+    //   CHOICE: Refuse indistinguishable duplicate rows and require CombatAssist Next Turn for a two-row tracker - ALT: guess native arrow direction; REJECTED: forward and backward produce the same two-row order.
+    //   CHOICE: Require a complete uninterrupted forward cycle after backward movement before another round increment - ALT: increment on the next anchor return; REJECTED: undoing a backward step must not manufacture a new round.
+    //   CHOICE: Keep Next, Previous, and End My Turn to one array rotation through TurnTrackerService - ALT: write Campaign turnorder directly; REJECTED: all native tracker mutation belongs to the guarded core authority.
+    //   CHOICE: Authorize End My Turn against the current linked character and token id at execution time - ALT: trust an old whispered button; REJECTED: a player controlling multiple characters could otherwise advance a later turn with a stale button.
+    //   CHOICE: Flush the outgoing player's confirmation inside the guarded tracker observer before the next current-player whisper - ALT: confirm only after apply returns; REJECTED: synchronous observer delivery produces A-A-B ordering for one player controlling consecutive characters.
+    //   CHOICE: Write the complete purpose and operating manual to one stable handout name - ALT: repeat the manual in chat; REJECTED: long chat guides bury encounter controls and are difficult to revisit.
+    //   CHOICE: Preserve the round and begin a fresh cycle after a valid native roster or initiative change - ALT: enter attention for every edit; REJECTED: normal Roll20 encounter maintenance must not erase progress or require ritual pause/resume steps.
+    //   CHOICE: Retain one complete accepted tracker checkpoint and require a revision-matched restore confirmation - ALT: provide no retcon path or maintain an unbounded history; REJECTED: the former strands the GM and the latter grows persistent state without limit.
+    //   CHOICE: Keep baseline module operation independent while permitting explicitly labeled opt-in integrations - ALT: forbid every cross-module feature; REJECTED: useful optional interoperability may have a prerequisite without making either module generally dependent.
+    //   CHOICE: Recognize only conservative whole-label round-counter names and refuse multiple candidates - ALT: treat every custom row containing "round" as authoritative; REJECTED: lair actions and reminders could be mistaken for the campaign round.
+    //   CHOICE: Evaluate only simple signed whole-number calculations on a recognized counter during forward GameAssist movement - ALT: execute arbitrary Roll20 expressions; REJECTED: the Mod API does not expose the native calculation parser as a safe reusable function.
+    //   CHOICE: Bind every timer callback to encounter start, round, current identity, tracker revision, and absolute deadline - ALT: trust the original timeout; REJECTED: a stale callback could remind a player after initiative moved.
+    //   CHOICE: Send player timer notices only for visible linked object-layer turns - ALT: trust token controllers for hidden or unlinked rows; REJECTED: control permission does not make a hidden tracker identity safe to reveal.
+    //   CHOICE: Implement current-turn visibility first with native non-centering pings - ALT: overwrite aura, tint, or marker properties; REJECTED: native pings are ephemeral and require no token-state restoration.
+    //   CHOICE: Defer teardown through a closure that resolves the initialized cleanup function - ALT: pass the pre-init placeholder directly; REJECTED: register() captures option values before module init assigns scoped cleanup.
+    //   CHOICE: Retain tracker state while disabled and mark uncertain resumes for attention - ALT: erase active encounter context; REJECTED: disabling a feature must not silently destroy recoverable campaign state.
+    // Prior notes:
+    //   v0.1.7.0 / CombatAssist 1.0.3: A single clearly named native round-counter row became authoritative and received its simple signed whole-number calculation on forward CombatAssist movement. Added disabled-by-default stale-safe turn timers, privacy-gated recipients, non-centering native current-turn pings, and teardown cleanup.
+    //   v0.1.7.0 / CombatAssist 1.0.2: Ordered outgoing completion before the next controlled-character prompt, made next-turn wording neutral and privacy-safe, added Standard/Varied confirmations, common navigation aliases, and a persistent manual handout.
+    //   v0.1.7.0 / CombatAssist 1.0.1: Valid native roster edits, initiative rerolls, and manual order changes preserve the round and rebase automatically; unreadable states retain a revision-guarded restorable snapshot; player End My Turn actions receive configurable private success and already-advanced confirmations.
+    //   v0.1.7.0 / CombatAssist 1.0.0: Introduced explicit lifecycle controls, exact native and guarded movement, conservative round counting, Whispers mode, and execution-time End My Turn authorization.
+    //   v0.1.7.0 / CombatAssist 1.0.0 decision superseded by 1.0.1: tracker rebasing originally required explicit pause/resume because arbitrary live edits could conceal skipped turns or row replacements.
+    // [GAMEASSIST:MODULES:COMBATASSIST] END
+    // =============================================================================
+
+    // ————— WELCOMEASSIST MODULE v0.1.4 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:WELCOMEASSIST] BEGIN
     // Section Title: Optional table welcome and startup greeting
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:WELCOMEASSIST", title: "WelcomeAssist",
-    //   guarantees: ["Disabled-by-default public startup greeting","At most one automatic greeting per sandbox lifecycle","Automatic output begins only after completed GameAssist bootstrap and a bounded health check","Custom greetings are bounded, deduplicated, and neutralized against Roll20 chat directives","Configuration, status, and previews remain GM-only while explicit and automatic announcements are public"],
+    //   guarantees: ["Disabled-by-default public startup greeting","At most one automatic greeting per sandbox lifecycle","Automatic output begins only after completed GameAssist bootstrap and a bounded health check","Custom greetings are bounded, deduplicated, and neutralized against Roll20 chat directives","Configuration, status, and previews remain GM-only while explicit and automatic announcements are public","Short case-insensitive !Welcome and !Welcome- commands are primary while the legacy !welcome-assist surface remains accepted once","The root guide stays compact while topic buttons and a stable on-demand manual reveal detailed guidance","Unknown commands explain the problem and provide a direct guide button"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:STATE]","[GAMEASSIST:CORE:OBJECT]"],
     //   observability: { spans: ["[GAMEASSIST:MODULES:WELCOMEASSIST]"] },
-    //   last_updated_version: "v0.1.6.1", lifecycle: "active",
-    //   independent_versions: { module_version: "0.1.0" } }
+    //   last_updated_version: "v0.1.7.0", lifecycle: "active",
+    //   independent_versions: { module_version: "0.1.4" } }
     // -------------------------------------------------------------------------
     // Narrative
     // WelcomeAssist optionally posts one public greeting after GameAssist completes
@@ -8356,7 +10691,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // campaign greetings, or a mixed pool where each campaign greeting has double
     // the individual weight of a built-in line.
     // -------------------------------------------------------------------------
-    const WELCOMEASSIST_MODULE_VERSION = '0.1.0';
+    const WELCOMEASSIST_MODULE_VERSION = '0.1.4';
     const WELCOMEASSIST_MODES = Object.freeze(['default', 'builtin', 'custom', 'mixed']);
     const WELCOMEASSIST_DEFAULTS = Object.freeze({
         enabled: false,
@@ -8590,36 +10925,105 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     function welcomeModeButtons() {
         return WELCOMEASSIST_MODES.map(mode => GameAssist.createButton(
             mode[0].toUpperCase() + mode.slice(1),
-            `!welcome-assist mode ${mode}`
+            `!Welcome-Mode ${mode}`
         )).join(' ');
     }
 
-    function showWelcomeHelp() {
+    function showWelcomeHelp(rawTopic = '') {
+        const topic = String(rawTopic || '').trim().split(/\s+/)[0].toLowerCase();
+        const back = GameAssist.createButton('Back to Guide', '!Welcome-Help');
+        const topics = {
+            overview: [
+                '<div style="margin-top:6px;"><strong>Purpose</strong><br>WelcomeAssist posts one optional greeting after GameAssist starts successfully. It is disabled until the GM chooses to use it.</div>',
+                '<div style="margin-top:8px;"><strong>What Stays Private</strong><br>Configuration, status, and previews are whispered to the GM. Only Announce Now and a completed automatic greeting are public.</div>'
+            ],
+            setup: [
+                '<div style="margin-top:6px;"><strong>1. Enable</strong><br>Enable WelcomeAssist from GameAssist settings.</div>',
+                '<div style="margin-top:8px;"><strong>2. Choose And Preview</strong><br>Select a greeting mode, then preview it privately.</div>',
+                '<div style="margin-top:8px;"><strong>3. Reload</strong><br>Reload the Mod sandbox. The automatic greeting appears once after the configured delay and a healthy GameAssist startup.</div>'
+            ],
+            modes: [
+                `<div style="margin-top:6px;"><strong>Choose A Mode</strong><br>${welcomeModeButtons()}</div>`,
+                '<div style="margin-top:8px;"><strong>Default</strong> uses one professional greeting. <strong>Built-in</strong> chooses from the included library. <strong>Custom</strong> uses campaign greetings. <strong>Mixed</strong> combines all three and gives each campaign greeting double weight.</div>'
+            ],
+            custom: [
+                `<div style="margin-top:6px;"><strong>Campaign Greetings</strong><br>${GameAssist.createButton('View List', '!Welcome-Custom list')} ${GameAssist.createButton('Add Greeting', '!Welcome-Custom add ?{Campaign greeting}')}</div>`,
+                '<div style="margin-top:8px;">WelcomeAssist keeps up to ten distinct campaign greetings. View List provides numbered removal and confirmed clear controls.</div>'
+            ],
+            appearance: [
+                `<div style="margin-top:6px;"><strong>Header</strong><br>${GameAssist.createButton('Change Header', '!Welcome-Header ?{Welcome header|Game Night Is Ready}')} ${GameAssist.createButton('Show Header', '!Welcome-Header show')} ${GameAssist.createButton('Hide Header', '!Welcome-Header hide')}</div>`,
+                `<div style="margin-top:8px;"><strong>Startup Delay</strong><br>${GameAssist.createButton('Set Delay', '!Welcome-Delay ?{Delay in seconds|3}')} waits 1 to 60 seconds after GameAssist is ready.</div>`
+            ],
+            safety: [
+                '<div style="margin-top:6px;"><strong>No Surprise Post</strong><br>Enabling WelcomeAssist does not announce immediately. Reloading schedules the automatic greeting; Announce Now is always deliberate.</div>',
+                '<div style="margin-top:8px;"><strong>Startup Check</strong><br>The automatic greeting is skipped if another enabled GameAssist component is still unavailable.</div>',
+                '<div style="margin-top:8px;"><strong>Campaign Text</strong><br>Custom greetings are stored as bounded plain text and cannot execute rolls, abilities, attributes, or Roll20 queries.</div>'
+            ]
+        };
+        if (topics[topic]) {
+            welcomeAssistPanel('WelcomeAssist Guide', [...topics[topic], `<div style="margin-top:8px;">${back}</div>`].join(''));
+            return;
+        }
         welcomeAssistPanel('WelcomeAssist Guide', [
-            '<div style="margin-top:6px;"><strong>What It Does</strong><br>Posts one optional table greeting after GameAssist starts successfully. It is disabled until the GM chooses to use it.</div>',
-            '<div style="margin-top:8px;"><strong>Quick Setup</strong><br>1. Enable WelcomeAssist.<br>2. Choose a greeting mode and preview it.<br>3. Reload the Mod sandbox. The automatic greeting appears once after the configured delay.</div>',
-            `<div style="margin-top:8px;"><strong>Greeting Mode</strong><br>${welcomeModeButtons()}</div>`,
-            '<div style="margin-top:5px;"><strong>Default</strong> uses one professional greeting. <strong>Built-in</strong> chooses from the included greeting library. <strong>Custom</strong> uses campaign greetings. <strong>Mixed</strong> combines all three and gives each campaign greeting double weight.</div>',
-            `<div style="margin-top:8px;"><strong>Try It Safely</strong><br>${GameAssist.createButton('Preview to GM', '!welcome-assist preview')} ${GameAssist.createButton('Status & Settings', '!welcome-assist status')} ${GameAssist.createButton('Announce Now', '!welcome-assist announce')}</div>`,
-            `<div style="margin-top:8px;"><strong>Campaign Greetings</strong><br>${GameAssist.createButton('View List', '!welcome-assist custom list')} ${GameAssist.createButton('Add Greeting', '!welcome-assist custom add ?{Campaign greeting}')}</div>`,
-            `<div style="margin-top:8px;"><strong>Appearance & Delay</strong><br>${GameAssist.createButton('Change Header', '!welcome-assist header ?{Welcome header|Game Night Is Ready}')} ${GameAssist.createButton('Show Header', '!welcome-assist header show')} ${GameAssist.createButton('Hide Header', '!welcome-assist header hide')} ${GameAssist.createButton('Set Delay', '!welcome-assist delay ?{Delay in seconds|3}')}</div>`,
-            '<div style="margin-top:8px;"><strong>Important</strong><br>Enabling the module does not post immediately. <code>announce</code> is the deliberate public action; <code>preview</code>, setup, and status stay private to the GM.</div>'
+            `<div style="margin-top:6px;"><strong>Actions</strong><br>${GameAssist.createButton('Preview to GM', '!Welcome-Preview')} ${GameAssist.createButton('Status & Settings', '!Welcome-Status')} ${GameAssist.createButton('Announce Now', '!Welcome-Announce')}</div>`,
+            `<div style="margin-top:8px;"><strong>Learn Or Configure</strong><br>${GameAssist.createButton('What does WelcomeAssist do?', '!Welcome-Manual')} ${GameAssist.createButton('Quick Setup', '!Welcome-Help setup')} ${GameAssist.createButton('Greeting Modes', '!Welcome-Help modes')} ${GameAssist.createButton('Campaign Greetings', '!Welcome-Help custom')} ${GameAssist.createButton('Appearance & Delay', '!Welcome-Help appearance')} ${GameAssist.createButton('Privacy & Startup', '!Welcome-Help safety')}</div>`
         ].join(''));
     }
 
-    function showWelcomeStatus(modState) {
+    function showWelcomeStatus(modState, { audit = false } = {}) {
         const config = normalizeWelcomeConfig(modState);
         const last = welcomeAssistLastAnnouncement
             ? `${sanitizeWelcomeForChat(welcomeAssistLastAnnouncement.greeting)}<br><em>${sanitizeWelcomeForChat(welcomeAssistLastAnnouncement.reason)} at ${sanitizeWelcomeForChat(localTime(new Date(welcomeAssistLastAnnouncement.announcedAt).getTime()))}</em>`
             : 'None in this sandbox lifecycle.';
-        welcomeAssistPanel('WelcomeAssist Status', [
+        welcomeAssistPanel(audit ? 'WelcomeAssist Audit' : 'WelcomeAssist Status', [
             `<div style="margin-top:6px;"><strong>Module</strong>: ${WELCOMEASSIST_MODULE_VERSION} | Enabled and running</div>`,
             `<div><strong>Mode</strong>: ${sanitizeWelcomeForChat(config.mode)} | <strong>Delay</strong>: ${(config.delayMs / 1000).toFixed(1)} seconds</div>`,
             `<div><strong>Header</strong>: ${config.showHeader ? 'Shown' : 'Hidden'} | <strong>Campaign Greetings</strong>: ${config.customGreetings.length}/${POLICY.welcome.maxCustomGreetings}</div>`,
             `<div><strong>Automatic Greeting</strong>: ${welcomeAssistAutoAnnounced ? 'Sent' : (welcomeAssistTimer !== null ? 'Waiting' : 'Not sent')}</div>`,
             `<div style="margin-top:6px;"><strong>Last This Sandbox</strong><br>${last}</div>`,
-            `<div style="margin-top:8px;">${GameAssist.createButton('Preview', '!welcome-assist preview')} ${GameAssist.createButton('Announce Now', '!welcome-assist announce')} ${GameAssist.createButton('Custom List', '!welcome-assist custom list')} ${GameAssist.createButton('Guide', '!welcome-assist help')}</div>`,
+            audit ? '<div style="margin-top:6px;"><strong>Changes</strong>: None. This audit reads WelcomeAssist configuration and current-sandbox activity without announcing or changing settings.</div>' : '',
+            `<div style="margin-top:8px;">${GameAssist.createButton('Preview', '!Welcome-Preview')} ${GameAssist.createButton('Announce Now', '!Welcome-Announce')} ${GameAssist.createButton('Custom List', '!Welcome-Custom list')} ${GameAssist.createButton('Guide', '!Welcome-Help')}</div>`,
             `<div style="margin-top:6px;">${welcomeModeButtons()}</div>`
+        ].join(''));
+    }
+
+    function showWelcomeInfo() {
+        welcomeAssistPanel('What WelcomeAssist Does', [
+            '<div style="margin-top:6px;"><strong>Purpose</strong><br>Posts one optional campaign greeting after a healthy GameAssist startup, with private preview and setup controls for the GM.</div>',
+            '<div style="margin-top:8px;"><strong>At The Table</strong><br>Choose a professional, built-in, campaign, or mixed greeting pool; preview it privately; then reload the sandbox when you want the automatic greeting enabled.</div>',
+            `<div style="margin-top:8px;">${GameAssist.createButton('Create or Update Manual', '!Welcome-Manual')} ${GameAssist.createButton('Status & Settings', '!Welcome-Status')} ${GameAssist.createButton('Back to Guide', '!Welcome-Help')}</div>`
+        ].join(''));
+    }
+
+    function welcomeManualHtml() {
+        return [
+            '<h1>WelcomeAssist User Manual</h1>',
+            `<p><strong>GameAssist v${_sanitize(VERSION)} | WelcomeAssist ${_sanitize(WELCOMEASSIST_MODULE_VERSION)}</strong></p>`,
+            '<p>WelcomeAssist posts one optional public greeting after GameAssist starts successfully. Setup, status, and previews remain private to the GM. The module is disabled by default.</p>',
+            '<h2>Quick Start</h2>',
+            '<ol><li>Enable WelcomeAssist in GameAssist settings.</li><li>Run <code>!Welcome-Status</code> and choose a greeting mode.</li><li>Use <code>!Welcome-Preview</code> to review the result privately.</li><li>Reload the Mod sandbox. WelcomeAssist waits for the configured delay and checks that other enabled GameAssist components are healthy before posting once.</li></ol>',
+            '<h2>Greeting Modes</h2>',
+            '<ul><li><strong>Default:</strong> one professional greeting.</li><li><strong>Built-in:</strong> one line from the included table-friendly library.</li><li><strong>Custom:</strong> one of the GM\'s campaign greetings.</li><li><strong>Mixed:</strong> combines all sources and gives each campaign greeting twice the individual weight of a built-in line.</li></ul>',
+            '<h2>Campaign Greetings</h2>',
+            '<p>Up to ten distinct campaign greetings can be added, listed, removed by number, or cleared with confirmation. Saved text is bounded and neutralized so it cannot execute Roll20 rolls, abilities, attributes, or queries.</p>',
+            '<h2>Privacy And Startup</h2>',
+            '<p>Preview, status, audit, and configuration are GM whispers. Only Announce Now and a completed automatic greeting are public. Enabling the module never posts immediately; the automatic greeting begins only after a later sandbox reload.</p>',
+            '<h2>Command Reference</h2>',
+            '<ul><li><code>!Welcome-GM</code> or <code>!Welcome-DM</code> - private Game Master settings and current state.</li><li><code>!Welcome-Help</code> or <code>!Welcome-Guide</code> - compact guide.</li><li><code>!Welcome-Status</code> or <code>!Welcome-Menu</code> - settings and current state.</li><li><code>!Welcome-Preview</code> - private preview.</li><li><code>!Welcome-Announce</code> - deliberate public greeting now.</li><li><code>!Welcome-Mode</code>, <code>!Welcome-Delay</code>, <code>!Welcome-Header</code>, and <code>!Welcome-Custom</code> - configuration.</li><li><code>!Welcome-Audit</code> - read-only configuration/activity check.</li></ul>',
+            '<h2>Troubleshooting</h2>',
+            '<p>If the automatic greeting is skipped, open WelcomeAssist Status and GameAssist system status. WelcomeAssist will not announce that the suite is ready while another enabled GameAssist component remains unavailable.</p>'
+        ].join('');
+    }
+
+    function writeWelcomeManual() {
+        const result = GameAssist.writeModuleManual('WelcomeAssist', welcomeManualHtml());
+        if (!result.ok) {
+            welcomeAssistPanel('WelcomeAssist Manual', `<div><strong>Needs Attention</strong><br>${_sanitize(result.message)}</div><div style="margin-top:8px;">${GameAssist.createButton('Whisper Short Version', '!Welcome-Info')}</div>`);
+            return;
+        }
+        welcomeAssistPanel('WelcomeAssist Manual Ready', [
+            `<div><strong>Handout</strong><br>${result.link}<br>${_sanitize(result.name)} was ${result.created ? 'created' : 'updated'}.</div>`,
+            `<div style="margin-top:8px;">${GameAssist.createButton('Whisper Short Version', '!Welcome-Info')} ${GameAssist.createButton('Status & Settings', '!Welcome-Status')}</div>`
         ].join(''));
     }
 
@@ -8628,13 +11032,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const rows = config.customGreetings.length
             ? config.customGreetings.map((greeting, index) => [
                 `<div style="margin-top:5px;"><strong>${index + 1}.</strong> ${sanitizeWelcomeForChat(greeting)} `,
-                GameAssist.createButton('Remove', `!welcome-assist custom remove ${index + 1}`),
+                GameAssist.createButton('Remove', `!Welcome-Custom remove ${index + 1}`),
                 '</div>'
             ].join('')).join('')
             : '<div style="margin-top:6px;">No campaign greetings have been added.</div>';
         welcomeAssistPanel(`Campaign Greetings (${config.customGreetings.length}/${POLICY.welcome.maxCustomGreetings})`, [
             rows,
-            `<div style="margin-top:8px;">${GameAssist.createButton('Add Greeting', '!welcome-assist custom add ?{Campaign greeting}')} ${GameAssist.createButton('Clear All', '!welcome-assist custom clear --confirm')} ${GameAssist.createButton('Back to Status', '!welcome-assist status')}</div>`
+            `<div style="margin-top:8px;">${GameAssist.createButton('Add Greeting', '!Welcome-Custom add ?{Campaign greeting}')} ${GameAssist.createButton('Clear All', '!Welcome-Custom clear --confirm')} ${GameAssist.createButton('Back to Status', '!Welcome-Status')}</div>`
         ].join(''));
     }
 
@@ -8772,15 +11176,35 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 scheduleWelcomeAfterBootstrap(modState);
             }
         });
-        GameAssist.onCommand('!welcome-assist', msg => {
-            const payload = msg.content.replace(/^!welcome-assist\b\s*/i, '');
+        const handleWelcomeCommand = msg => {
+            const content = String(msg.content || '').trim();
+            let payload = '';
+            if (/^!welcome-assist(?:\s|$)/i.test(content)) {
+                payload = content.replace(/^!welcome-assist\b\s*/i, '');
+            } else if (/^!welcome-/i.test(content)) {
+                payload = content.replace(/^!welcome-/i, '').replace(/^(\S+)(?:\s+|$)/, '$1 ');
+            } else {
+                payload = content.replace(/^!welcome\b\s*/i, '');
+            }
             const parsed = splitWelcomeCommand(payload);
-            if (parsed.command === 'help') {
-                showWelcomeHelp();
+            if (parsed.command === 'help' || parsed.command === 'guide') {
+                showWelcomeHelp(parsed.remainder);
                 return;
             }
-            if (parsed.command === 'status') {
+            if (['status', 'refresh', 'menu', 'gm', 'dm', 'config', 'settings'].includes(parsed.command)) {
                 showWelcomeStatus(modState);
+                return;
+            }
+            if (parsed.command === 'audit') {
+                showWelcomeStatus(modState, { audit: true });
+                return;
+            }
+            if (parsed.command === 'info' || parsed.command === 'about') {
+                showWelcomeInfo();
+                return;
+            }
+            if (parsed.command === 'manual') {
+                writeWelcomeManual();
                 return;
             }
             if (parsed.command === 'preview') {
@@ -8815,24 +11239,48 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 manageCustomGreetings(modState, parsed.remainder);
                 return;
             }
-            showWelcomeHelp();
-        }, 'WelcomeAssist', { gmOnly: true });
-        GameAssist.log('WelcomeAssist', 'Ready: !welcome-assist help. Reload after setup for the automatic greeting.', 'INFO', { startup: true });
+            welcomeAssistPanel('WelcomeAssist', [
+                '<div style="margin-top:6px;"><strong>Needs Attention</strong><br>That WelcomeAssist command was not recognized.</div>',
+                `<div style="margin-top:8px;"><strong>Next Step</strong><br>${GameAssist.createButton('Open Guide', '!Welcome-Help')}</div>`
+            ].join(''));
+        };
+        GameAssist.onCommand('!Welcome', handleWelcomeCommand, 'WelcomeAssist', {
+            gmOnly: true,
+            match: { caseInsensitive: true, mode: 'token' }
+        });
+        GameAssist.onCommand('!Welcome-', msg => {
+            // The retained legacy command also begins with !welcome-; its dedicated registration owns that exact surface.
+            if (/^!welcome-assist(?:\s|$)/i.test(String(msg.content || ''))) return;
+            handleWelcomeCommand(msg);
+        }, 'WelcomeAssist', {
+            gmOnly: true,
+            match: { caseInsensitive: true, mode: 'prefix' }
+        });
+        GameAssist.onCommand('!welcome-assist', handleWelcomeCommand, 'WelcomeAssist', {
+            gmOnly: true,
+            match: { caseInsensitive: true, mode: 'token' }
+        });
+        GameAssist.log('WelcomeAssist', 'Ready: !Welcome-Help. Reload after setup for the automatic greeting.', 'INFO', { startup: true });
     }, {
         enabled: false,
-        prefixes: ['!welcome-assist'],
+        prefixes: ['!Welcome', '!Welcome-', '!welcome-assist'],
         teardown: teardownWelcomeAssist,
         preserveRuntimeOnDisable: false,
         protectedConfigKeys: ['customGreetings']
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.6.1): Added WelcomeAssist 0.1.0 with disabled-by-default post-bootstrap greetings, professional/built-in/custom/mixed modes, a curated original built-in greeting library, double-weighted campaign greetings, bounded GM configuration, private previews, manual announcements, directive-neutralized public text, a complete configured-component health gate, and one automatic greeting per sandbox lifecycle.
+    // Changed (v0.1.7.0): Advanced WelcomeAssist to 0.1.4; !Welcome-GM and !Welcome-DM are equal role aliases for the private status and settings screen, with Guide/Help, Info, Audit, Manual, and short !Welcome navigation preserved.
     // Decision log:
     //   CHOICE: Trigger automatic output only through the post-bootstrap seam - ALT: schedule from module init; REJECTED: live enablement could surprise the table before the GM finishes configuration.
     //   CHOICE: Refuse a public ready greeting while another configured GameAssist component remains inactive - ALT: announce after a fixed delay regardless; REJECTED: would present an unhealthy startup as ready.
     //   CHOICE: Retain the owner-selected brief fandom references alongside original table humor - ALT: replace the pool with only generic prose; REJECTED: recognizable geek-culture playfulness is an intentional part of the module's voice.
+    //   CHOICE: Keep !welcome-assist as a compatibility alias while routing new buttons through !Welcome-Action - ALT: remove the longer command immediately; REJECTED: saved campaign macros should continue to work.
     //   CHOICE: Store plain bounded custom text and neutralize Roll20 directives at emission - ALT: permit executable chat syntax; REJECTED: a greeting must not trigger rolls, attributes, abilities, or queries.
     //   CHOICE: Keep the current-sandbox announcement record in memory while retaining the latest historical record in runtime state - ALT: label persistent history as current; REJECTED: reloads would produce misleading status.
+    // Prior notes:
+    //   v0.1.7.0 / WelcomeAssist 0.1.2: Made short case-insensitive !Welcome and !Welcome-Action commands the primary buttons while retaining the complete !welcome-assist command surface without duplicate handling.
+    //   v0.1.7.0 / WelcomeAssist 0.1.1: Replaced the long root guide with compact actions and topic references and added unknown-command recovery.
+    //   v0.1.6.1 / WelcomeAssist 0.1.0: Added disabled-by-default post-bootstrap greetings, professional/built-in/custom/mixed modes, a curated original built-in greeting library, double-weighted campaign greetings, bounded GM configuration, private previews, manual announcements, directive-neutralized public text, a complete configured-component health gate, and one automatic greeting per sandbox lifecycle.
     // [GAMEASSIST:MODULES:WELCOMEASSIST] END
     // =============================================================================
 
@@ -8841,10 +11289,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: NPCManager module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:NPCMANAGER", title: "NPCManager",
-    //   guarantees: ["Auto toggle resolved configured dead marker based on known HP transitions; maintain hierarchical death-history handouts and curated arc rosters", "Date-based Session rollover and timestamp rendering use the validated GameAssist timezone while stored instants remain absolute", "Audits are read-only; separately confirmed repair commands re-scan current HP and change only the configured death marker", "NPCHPRoller auto-roll initialization is not recorded as death/revival history", "Death-marker reads and writes use CORE:MARKERSERVICE"],
+    //   guarantees: ["Auto toggle resolved configured dead marker based on known HP transitions; maintain hierarchical death-history handouts and curated arc rosters", "Date-based Session rollover and timestamp rendering use the validated GameAssist timezone while stored instants remain absolute", "Compact layered navigation and a stable on-demand manual keep ordinary chat readable", "Audits are read-only; separately confirmed repair commands re-scan current HP and change only the configured death marker", "NPCHPRoller auto-roll initialization is not recorded as death/revival history", "Death-marker reads and writes use CORE:MARKERSERVICE"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
-    //   last_updated_version: "v0.1.5.1",
-    //   independent_versions: { module_version: "1.3.0" } }
+    //   last_updated_version: "v0.1.7.0",
+    //   independent_versions: { module_version: "1.3.2" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:NPCMANAGER monitors token HP changes to set or clear the configured
@@ -8890,7 +11338,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const DEATH_REPORT_SUMMARY_LIMIT = POLICY.runtime.deathReportSummaryLimit;
         const DEATH_REPORT_DETAIL_LIMIT = POLICY.runtime.deathReportDetailLimit;
         const AUDIT_HANDOUT_NAME = 'GameAssist NPC Death Audit';
-        const NPCMANAGER_MODULE_VERSION = '1.3.0';
+        const NPCMANAGER_MODULE_VERSION = '1.3.2';
         const initializingNpcHp = new Set();
 
         function currentSessionDateKey(raw = now()) {
@@ -9582,82 +12030,36 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return buttons.join(' ');
         }
 
-        function showDeathReportHelp() {
-            const names = ensureDeathBucketConfig();
-            const buckets = getActiveBuckets();
-            const activeLines = DEATH_BUCKET_SCOPES.map(scope =>
-                `${DEATH_BUCKET_TITLES[scope]}: ${names[scope]} (${buckets[scope].entries.length} deaths)`
-            );
-
-            sendNPCPanel('NPCManager Guide: Death Reports', [
+        function showDeathReportHelp(title = 'NPCManager Guide: Death Reports') {
+            sendNPCPanel(title, [
                 {
-                    label: 'Start Here',
+                    label: 'Actions',
                     value: [
-                        '1. Name the Campaign, Chapter, Section, and Session you are currently playing.',
-                        '2. Let linked NPC HP changes record deaths automatically.',
-                        '3. Read reports in chat or write the full histories to handouts.',
-                        '4. Use Arc buckets for a separate character or story tally.'
+                        GameAssist.createButton('Current Status', '!npc-death-status'),
+                        GameAssist.createButton('Session Report', '!npc-death-report --scope session'),
+                        GameAssist.createButton('Write Reports', '!npc-wr')
                     ]
                 },
                 {
-                    label: 'How The Four Levels Work',
+                    label: 'Manage',
                     value: [
-                        'Every new NPC death is recorded in all four active levels.',
-                        'Session is the smallest unit. Section contains its sessions; Chapter contains its sections; Campaign contains everything.',
-                        'When Session Date mode is active, the next NPCManager command or tracked HP change after a sandbox/UTC date change starts a new date-named Session.',
-                        'A custom Session name remains active across date changes until Reset Session Date is used.',
-                        'Changing a bucket name starts or resumes that named history; it does not erase the old one.'
-                    ]
-                },
-                { label: 'Active Now', value: activeLines },
-                {
-                    label: 'Read Reports',
-                    value: DEATH_BUCKET_SCOPES.map(scope =>
-                        GameAssist.createButton(DEATH_BUCKET_TITLES[scope], `!npc-death-report --scope ${scope}`)
-                    )
-                },
-                {
-                    label: 'Write Or Adjust Reports',
-                    value: [
-                        GameAssist.createButton('Open Report Writer', '!npc-wr'),
-                        GameAssist.createButton('Change Active Names', '!npc-death-buckets'),
-                        'The writer can update one report, all four reports, or start a new Section using only the current Session.'
+                        GameAssist.createButton('Campaign / Chapter / Section / Session', '!npc-death-buckets'),
+                        GameAssist.createButton('Arc Buckets', '!npc-death-arc'),
+                        GameAssist.createButton('Clear History', '!npc-death-clear --scope session')
                     ]
                 },
                 {
-                    label: 'Clear History',
+                    label: 'Review Or Repair',
                     value: [
-                        'A clear menu always offers the safest choice: clear only the selected bucket.',
-                        'Campaign, Chapter, and Section also offer a second choice that clears that level and every nested level beneath it.',
-                        ...DEATH_BUCKET_SCOPES.map(scope =>
-                            GameAssist.createButton(`Clear ${DEATH_BUCKET_TITLES[scope]}`, `!npc-death-clear --scope ${scope}`)
-                        )
-                    ]
-                },
-                {
-                    label: 'Arc Buckets',
-                    value: [
-                        'Arc buckets are separate story rosters. A creature appears once by default, even when selected manually and later imported with the whole Session.',
-                        'Manage an Arc to remove one entry, remove selected tokens, or undo the last addition. Use --allowDuplicates only when repetition is intentional.',
-                        GameAssist.createButton('Open Arc Menu', '!npc-death-arc')
-                    ]
-                },
-                {
-                    label: 'Current Page Audit',
-                    value: [
-                        'Audit compares linked NPC HP with the configured death marker. Player characters are excluded, and opening the audit never changes a token.',
                         GameAssist.createButton('Run Audit', '!npc-death-audit'),
                         GameAssist.createButton('Review Marker Repairs', '!npc-death-repair')
                     ]
                 },
                 {
-                    label: 'Expert Shortcuts',
+                    label: 'Learn Or Review',
                     value: [
-                        '!npc-death-report --scope campaign|chapter|section|session',
-                        '!npc-wr = report writer',
-                        '!npc-death-repair = preview marker corrections from current HP',
-                        '!npc-death-clear --scope chapter --nested --confirm',
-                        '!npc-death-arc --name "Arc Name" --manage'
+                        GameAssist.createButton('What does NPCManager do?', '!npc-death-info'),
+                        GameAssist.createButton('Create or Update Manual', '!npc-death-manual')
                     ]
                 }
             ]);
@@ -9665,6 +12067,76 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function showNPCManagerHelp() {
             showDeathReportHelp();
+        }
+
+        function showNPCManagerControl() {
+            showDeathReportHelp('NPCManager Control Center');
+        }
+
+        function showNPCManagerStatus() {
+            prepareNPCManagerActivity();
+            const names = ensureDeathBucketConfig();
+            const buckets = getActiveBuckets();
+            const activeLines = DEATH_BUCKET_SCOPES.map(scope =>
+                `${DEATH_BUCKET_TITLES[scope]}: ${names[scope]} (${buckets[scope].entries.length} recorded deaths)`
+            );
+            sendNPCPanel('NPCManager Status', [
+                { label: 'Module', value: `${NPCMANAGER_MODULE_VERSION} | enabled and responding` },
+                { label: 'Death Tracking', value: `${modState.config.autoTrackDeath === false ? 'Off' : 'On'} | marker ${modState.config.deadMarker || 'dead'} | bar 1 HP` },
+                { label: 'Active Histories', value: activeLines },
+                { label: 'Arc Buckets', value: `${ensureNPCManagerRuntime().arcs.length} saved` },
+                { label: 'Actions', value: `${GameAssist.createButton('Run Audit', '!npc-death-audit')} ${GameAssist.createButton('Open Guide', '!npc-death-help')} ${GameAssist.createButton('Manage Buckets', '!npc-death-buckets')}` }
+            ]);
+        }
+
+        function showNPCManagerInfo() {
+            sendNPCPanel('What NPCManager Does', [
+                { label: 'Purpose', value: 'Tracks linked NPC deaths and revivals from bar 1 HP, maintains the configured death marker, audits HP/marker mismatches, and organizes history into Campaign, Chapter, Section, Session, and separate Arc handouts.' },
+                { label: 'At The Table', value: 'Let HP changes record automatically, review a concise report when needed, and write the full history to stable handouts at the end of a scene or session.' },
+                { label: 'Learn More', value: `${GameAssist.createButton('Create or Update Manual', '!npc-death-manual')} ${GameAssist.createButton('Open Guide', '!npc-death-help')} ${GameAssist.createButton('Current Status', '!npc-death-status')}` }
+            ]);
+        }
+
+        function npcManagerManualHtml() {
+            return [
+                '<h1>NPCManager User Manual</h1>',
+                `<p><strong>GameAssist v${_sanitize(VERSION)} | NPCManager ${_sanitize(NPCMANAGER_MODULE_VERSION)}</strong></p>`,
+                '<p>NPCManager watches linked NPC bar 1 HP, records deaths and revivals, manages the configured death marker, and turns encounter history into readable Campaign, Chapter, Section, Session, and Arc records.</p>',
+                '<h2>Quick Start</h2>',
+                '<ol><li>Use <code>!npc-death-buckets</code> to name the active Campaign, Chapter, Section, and Session.</li><li>Use linked NPC tokens with numeric bar 1 HP.</li><li>Let HP cross from positive to 0 or below to record a death; raising HP above 0 records a revival.</li><li>Run <code>!npc-death-report</code> for a chat summary or <code>!npc-wr</code> to update report handouts.</li></ol>',
+                '<h2>Campaign, Chapter, Section, And Session</h2>',
+                '<p>Every death is recorded in all four active levels. Session is the smallest unit; Section contains its sessions, Chapter contains its sections, and Campaign contains everything. Changing a name starts or resumes that named history without erasing older buckets.</p>',
+                '<p>The Session defaults to the current GameAssist table date and advances after the configured timezone changes to a new date. A deliberately custom Session name stays active until the GM resets date-managed Sessions.</p>',
+                '<h2>Reports And Handouts</h2>',
+                '<p>Chat reports are intentionally summarized. The report writer updates one or all stable scope handouts. It can also begin a new Section using only the current Session when the GM needs to correct end-of-session organization.</p>',
+                '<h2>Clearing History</h2>',
+                '<p>Clear first opens a confirmation menu. The safest choice clears only the selected bucket. Campaign, Chapter, and Section also offer a nested clear that includes every lower level. Clearing history never happens without explicit confirmation.</p>',
+                '<h2>Arc Buckets</h2>',
+                '<p>Arcs are separate story rosters for selected linked NPC or PC tokens. Entries are deduplicated by default, including when a whole Session is imported after individual additions. Arc management can remove one entry, remove selected entries, or undo the last addition. Duplicates require the deliberate <code>--allowDuplicates</code> option.</p>',
+                '<h2>Audit And Repair</h2>',
+                '<p><code>!npc-death-audit</code> compares linked NPC bar 1 HP with the configured death marker on the current player page. Player characters are excluded. Audit is read-only and writes its detail to the stable audit handout.</p>',
+                '<p><code>!npc-death-repair</code> previews proposed marker corrections and requires confirmation. Repair rechecks current HP, changes only the configured death marker, and does not change HP, death history, report buckets, Arc records, or unrelated markers.</p>',
+                '<h2>Command Reference</h2>',
+                '<p>Every command below accepts the same suffix through <code>!NPC-*</code>, <code>!NPC-Death-*</code>, or <code>!NPCManager-*</code>. Commands are not case-sensitive.</p>',
+                '<ul><li><code>!NPC-GM</code> or <code>!NPC-DM</code> - Game Master control center.</li><li><code>!npc-death-help</code> or <code>!npc-death-guide</code> - compact guide.</li><li><code>!npc-death-status</code> - active configuration and history counts.</li><li><code>!npc-death-report --scope campaign|chapter|section|session</code> - read a report.</li><li><code>!npc-wr</code> or <code>!npc-death-write</code> - report writer.</li><li><code>!npc-death-buckets</code> - names and active scopes.</li><li><code>!npc-death-arc</code> - Arc controls.</li><li><code>!npc-death-audit</code> - read-only HP/marker review.</li><li><code>!npc-death-repair</code> - preview and confirm marker correction.</li><li><code>!npc-death-clear</code> - confirmed history clearing.</li></ul>',
+                '<h2>Token Eligibility</h2>',
+                '<p>NPCManager uses linked token objects whose character is marked as an NPC and whose bar 1 HP is numeric. Unlinked map items, scenery, labels, props, and player characters are outside death tracking.</p>'
+            ].join('');
+        }
+
+        function writeNPCManagerManual() {
+            const result = GameAssist.writeModuleManual('NPCManager', npcManagerManualHtml());
+            if (!result.ok) {
+                sendNPCPanel('NPCManager Manual', [
+                    { label: 'Needs Attention', value: result.message },
+                    { label: 'Continue', value: GameAssist.createButton('Whisper Short Version', '!npc-death-info') }
+                ]);
+                return;
+            }
+            sendNPCPanel('NPCManager Manual Ready', [
+                { label: 'Handout', value: `${result.link}<br>${result.name} was ${result.created ? 'created' : 'updated'}.` },
+                { label: 'Continue', value: `${GameAssist.createButton('Whisper Short Version', '!npc-death-info')} ${GameAssist.createButton('Open Guide', '!npc-death-help')}` }
+            ]);
         }
 
         function showDeathReportSummary(bucket) {
@@ -10313,12 +12785,68 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             checkForDeath(obj);
         }
 
-        GameAssist.onCommand('!npc-death-help', msg => {
+        const npcCommandFamilies = ['!npc-', '!npc-death-', '!npcmanager-'];
+        const npcKnownCommands = new Set();
+
+        function registerNPCCommand(suffix, handler) {
+            npcCommandFamilies.forEach(family => {
+                const prefix = `${family}${suffix}`;
+                npcKnownCommands.add(prefix.toLowerCase());
+                GameAssist.onCommand(prefix, msg => {
+                    const content = String(msg.content || '').trim();
+                    const first = content.split(/\s+/)[0];
+                    const remainder = content.slice(first.length).trim();
+                    handler({
+                        ...msg,
+                        content: `!npc-death-${suffix}${remainder ? ` ${remainder}` : ''}`
+                    });
+                }, 'NPCManager', { gmOnly: true });
+            });
+        }
+
+        registerNPCCommand('help', msg => {
             prepareNPCManagerActivity();
             showNPCManagerHelp();
-        }, 'NPCManager', { gmOnly: true });
+        });
 
-        GameAssist.onCommand('!npc-death-report', msg => {
+        registerNPCCommand('guide', () => {
+            prepareNPCManagerActivity();
+            showNPCManagerHelp();
+        });
+
+        ['menu', 'gm', 'dm'].forEach(suffix => {
+            registerNPCCommand(suffix, () => {
+                prepareNPCManagerActivity();
+                showNPCManagerControl();
+            });
+        });
+
+        registerNPCCommand('status', () => {
+            showNPCManagerStatus();
+        });
+
+        registerNPCCommand('refresh', () => {
+            showNPCManagerStatus();
+        });
+
+        ['info', 'about'].forEach(suffix => {
+            registerNPCCommand(suffix, () => {
+                showNPCManagerInfo();
+            });
+        });
+
+        registerNPCCommand('manual', () => {
+            writeNPCManagerManual();
+        });
+
+        ['settings', 'config'].forEach(suffix => {
+            registerNPCCommand(suffix, () => {
+                prepareNPCManagerActivity();
+                showDeathBucketsPanel();
+            });
+        });
+
+        registerNPCCommand('report', msg => {
             const { args } = _parseArgs(msg.content);
             prepareNPCManagerActivity();
 
@@ -10346,9 +12874,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
 
             showDeathReportSummary(bucket);
-        }, 'NPCManager', { gmOnly: true });
+        });
 
-        GameAssist.onCommand('!npc-death-clear', msg => {
+        registerNPCCommand('clear', msg => {
             const { args } = _parseArgs(msg.content);
             const scope = normalizeScope(args.scope);
             prepareNPCManagerActivity();
@@ -10368,14 +12896,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Mode', value: result.includeNested ? 'Selected level and all nested levels.' : 'Selected bucket only.' },
                 { label: 'Actions', value: deathReportActions(result.scope) }
             ]);
-        }, 'NPCManager', { gmOnly: true });
+        });
 
-        GameAssist.onCommand('!npc-death-buckets', msg => {
+        registerNPCCommand('buckets', msg => {
             const { args } = _parseArgs(msg.content);
             prepareNPCManagerActivity();
             const changed = updateDeathBucketNames(args);
             showDeathBucketsPanel(changed ? 'Bucket names updated and active bucket handouts refreshed.' : null);
-        }, 'NPCManager', { gmOnly: true });
+        });
 
         function reportWriterCommand(msg) {
             const { args } = _parseArgs(msg.content);
@@ -10383,10 +12911,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             handleReportWriter(args);
         }
 
-        GameAssist.onCommand('!npc-death-write', reportWriterCommand, 'NPCManager', { gmOnly: true });
-        GameAssist.onCommand('!npc-wr', reportWriterCommand, 'NPCManager', { gmOnly: true });
+        registerNPCCommand('write', reportWriterCommand);
+        ['!npc-wr', '!npc-death-wr', '!npcmanager-wr'].forEach(prefix => {
+            npcKnownCommands.add(prefix.toLowerCase());
+            GameAssist.onCommand(prefix, msg => {
+                const content = String(msg.content || '').trim();
+                const first = content.split(/\s+/)[0];
+                const remainder = content.slice(first.length).trim();
+                reportWriterCommand({ ...msg, content: `!npc-death-write${remainder ? ` ${remainder}` : ''}` });
+            }, 'NPCManager', { gmOnly: true });
+        });
 
-        GameAssist.onCommand('!npc-death-arc', msg => {
+        registerNPCCommand('arc', msg => {
             const { args } = _parseArgs(msg.content);
             prepareNPCManagerActivity();
 
@@ -10476,7 +13012,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     ]
                 }
             ]);
-        }, 'NPCManager', { gmOnly: true });
+        });
 
         function showDeathAudit() {
             prepareNPCManagerActivity();
@@ -10679,13 +13215,28 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
-        GameAssist.onCommand('!npc-death-audit', () => {
+        registerNPCCommand('audit', () => {
             showDeathAudit();
-        }, 'NPCManager', { gmOnly: true });
+        });
 
-        GameAssist.onCommand('!npc-death-repair', msg => {
+        registerNPCCommand('repair', msg => {
             showDeathRepair(/(?:^|\s)--confirm(?:\s|$)/i.test(String(msg.content || '')));
-        }, 'NPCManager', { gmOnly: true });
+        });
+
+        npcCommandFamilies.forEach(family => {
+            GameAssist.onCommand(family, msg => {
+                const command = String(msg.content || '').trim().split(/\s+/)[0].toLowerCase();
+                if (family === '!npc-' && command.startsWith('!npc-death-')) return;
+                if (npcKnownCommands.has(command)) return;
+                sendNPCPanel('NPCManager', [
+                    { label: 'Needs Attention', value: 'That NPCManager command was not recognized.' },
+                    { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!npc-death-help') }
+                ]);
+            }, 'NPCManager', {
+                gmOnly: true,
+                match: { caseInsensitive: true, mode: 'prefix' }
+            });
+        });
 
         GameAssist.onEvent('add:graphic', handleTokenAdd, 'NPCManager');
         GameAssist.onEvent('change:graphic:bar1_value', handleTokenChange, 'NPCManager');
@@ -10693,7 +13244,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }, {
         enabled: true,
         events: ['add:graphic', 'change:graphic:bar1_value'],
-        prefixes: ['!npc-death-help', '!npc-death-report', '!npc-death-clear', '!npc-death-audit', '!npc-death-repair', '!npc-death-buckets', '!npc-death-write', '!npc-wr', '!npc-death-arc'],
+        prefixes: ['!npc-', '!npc-death-', '!npcmanager-'],
         dependsOn: ['MarkerService'],
         preserveRuntimeOnDisable: true,
         teardown: () => {
@@ -10735,7 +13286,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.1): NPCManager module_version advanced to 1.3.0; date-based Session rollover and dynamically rendered death, revival, bucket, and Arc timestamps now follow the validated GameAssist timezone while stored ISO instants remain unchanged. A bounded public refresh hook lets a validated timezone change update an active date-managed Session immediately.
+    // Changed (v0.1.7.0): Advanced NPCManager to 1.3.2; every command is available through equivalent case-insensitive !NPC-*, !NPC-Death-*, and !NPCManager-* families, and GM/DM open the action-focused control center while Guide/Help remains instructional.
     // Decision log:
     //   CHOICE: Keep death-history recording independent from marker mutation success - ALT: record only after marker success; REJECTED: history should describe HP events even when a visual marker cannot change.
     //   CHOICE: Identify Arc creatures by token before character/name fallbacks - ALT: character-only identity; REJECTED: multiple NPC tokens may share one character sheet.
@@ -10754,16 +13305,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:NPCMANAGER] END
     // =============================================================================
 
-    // ————— CONCENTRATION TRACKER MODULE v0.2.0 —————
+    // ————— CONCENTRATION TRACKER MODULE v0.2.2 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:CONCENTRATIONTRACKER] BEGIN
     // Section Title: ConcentrationTracker module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONCENTRATIONTRACKER", title: "ConcentrationTracker",
-    //   guarantees: ["Chat UI for concentration saves; exact configured-marker status reporting; marker mutations through CORE:MARKERSERVICE"],
+    //   guarantees: ["Chat UI for concentration saves; exact configured-marker status reporting; marker mutations through CORE:MARKERSERVICE","Compact layered navigation, stable on-demand manual, read-only audit, and unknown-command recovery preserve !concentration and !cc"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
-    //   last_updated_version: "v0.1.5.0",
-    //   independent_versions: { module_version: "0.2.0" } }
+    //   last_updated_version: "v0.1.7.0",
+    //   independent_versions: { module_version: "0.2.2" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:CONCENTRATIONTRACKER manages concentration save rolls, whispering outcomes,
@@ -10781,6 +13332,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     });
 
     const LAST_DAMAGE_LIMIT = POLICY.runtime.lastDamageLimit;
+    const MODULE_VERSION = '0.2.2';
 
     function getEntryTimestamp(entry) {
         const ts = Number(entry && entry.timestamp);
@@ -10860,7 +13412,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     ensureConcentrationRuntime();
 
     // ─── Public Command Prefixes ───────────────────────────────────────────────────
-    const CMDS = ['!concentration', '!cc'];
+    const CMDS = ['!concentration', '!concentration-<command>', '!con-<command>', '!cc'];
 
     // ─── Marker Helper ──────────────────────────────────────────────────────────────
     function getMarker() {
@@ -10992,7 +13544,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
      * showStatus(player)
      *   Lists all tokens currently marked Concentrating.
      */
-    function showStatus(player) {
+    function showStatus(player, { audit = false } = {}) {
         const page = Campaign().get('playerpageid');
         const resolution = getMarkerResolution();
         if (!resolution.ok) {
@@ -11020,14 +13572,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             layer:  'objects'
         }).filter(t => GameAssist.MarkerService.has(t, resolution.id));
         if (!tokens.length) {
-            return sendChat('ConcentrationTracker',
-                `/w "${player}" No tokens concentrating.`
-            );
+            return sendChat('ConcentrationTracker', `/w "${player}" ${audit
+                ? `&{template:default} {{name=ConcentrationTracker Audit}} {{Result=No tokens concentrating.}} {{Marker=${_sanitize(getMarker())}}} {{Changes=None. This audit read current-page token markers without changing them.}}`
+                : 'No tokens concentrating.'}`);
         }
-        let out = `&{template:default} {{name=🧠 Concentration Status}}`;
+        let out = `&{template:default} {{name=${audit ? 'ConcentrationTracker Audit' : '🧠 Concentration Status'}}}`;
         tokens.forEach(t => {
             out += `{{${t.get('name') || 'Unnamed'}=Concentrating}}`;
         });
+        if (audit) out += ` {{Marker=${_sanitize(getMarker())}}} {{Changes=None. This audit read current-page token markers without changing them.}}`;
         sendChat('ConcentrationTracker', `/w "${player}" ${out}`);
     }
 
@@ -11072,17 +13625,60 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
      *   Whisper the full list of commands and usage.
      */
     function showHelp(player) {
-        const helpText = [
-            "🧠 Concentration Help:",
-            "• !concentration / !cc → Show buttons",
-            "• --damage X           → Roll vs DC = max(10,⌊X/2⌋)",
-            "• --mode normal|adv|dis→ Set roll mode",
-            "• --last               → Repeat last check",
-            "• --off                → Remove marker from selected tokens",
-            "• --status             → Who is concentrating",
-            "• --config randomize on|off → Toggle emote randomization"
-        ].join('<br>');
-        sendChat('ConcentrationTracker', `/w "${player}" ${helpText}`);
+        const out = `&{template:default} {{name=ConcentrationTracker Guide}}` +
+            ` {{Actions=${GameAssist.createButton('Open Check Buttons', '!concentration menu')} ${GameAssist.createButton('Current Status', '!concentration status')}}}` +
+            ` {{Learn Or Review=${GameAssist.createButton('What does ConcentrationTracker do?', '!concentration info')} ${GameAssist.createButton('Create or Update Manual', '!concentration manual')} ${GameAssist.createButton('Read-Only Audit', '!concentration audit')}}}` +
+            ` {{Settings=${GameAssist.createButton('Open Settings', '!concentration settings')}}}`;
+        sendChat('ConcentrationTracker', `/w "${player}" ${out}`);
+    }
+
+    function showConcentrationInfo(player) {
+        const out = `&{template:default} {{name=What ConcentrationTracker Does}}` +
+            ` {{Purpose=Builds normal, advantage, or disadvantage Constitution saves from damage, remembers each player's latest check, and manages the configured Concentrating marker.}}` +
+            ` {{At The Table=Select a linked character token, open the check buttons, enter damage, and choose the appropriate roll mode.}}` +
+            ` {{Learn More=${GameAssist.createButton('Create or Update Manual', '!concentration manual')} ${GameAssist.createButton('Back to Guide', '!concentration help')}}}`;
+        sendChat('ConcentrationTracker', `/w "${player}" ${out}`);
+    }
+
+    function showConcentrationSettings(player) {
+        const randomize = getConfig().randomize === true;
+        const out = `&{template:default} {{name=ConcentrationTracker Settings}}` +
+            ` {{Result Messages=${randomize ? 'Varied' : 'Standard'}}}` +
+            ` {{Choose=${GameAssist.createButton('Standard', '!concentration --config randomize off')} ${GameAssist.createButton('Varied', '!concentration --config randomize on')}}}` +
+            ` {{Marker=${_sanitize(getMarker())}}}` +
+            ` {{Return=${GameAssist.createButton('Back to Guide', '!concentration help')}}}`;
+        sendChat('ConcentrationTracker', `/w "${player}" ${out}`);
+    }
+
+    function concentrationManualHtml() {
+        return [
+            '<h1>ConcentrationTracker User Manual</h1>',
+            `<p><strong>GameAssist v${_sanitize(VERSION)} | ConcentrationTracker ${_sanitize(MODULE_VERSION)}</strong></p>`,
+            '<p>ConcentrationTracker builds D&amp;D 5E concentration checks from damage, reads the linked character\'s Constitution saving throw bonus, remembers the player\'s latest check, and manages the configured concentration marker.</p>',
+            '<h2>Quick Start</h2>',
+            '<ol><li>Select one linked character token on the Objects layer.</li><li>Run <code>!concentration</code> or <code>!cc</code>.</li><li>Choose normal, advantage, or disadvantage.</li><li>Enter the damage taken. The DC is the greater of 10 or half the damage, rounded down.</li></ol>',
+            '<h2>Results And Marker Behavior</h2>',
+            '<p>The player and GM receive the DC, every d20 result, final total, and full roll formula. A successful check applies the configured Concentrating marker; a failed check removes it. The public character emote can use one standard line or a varied set.</p>',
+            '<h2>Status And Audit</h2>',
+            '<p><code>!concentration status</code> or <code>!concentration --status</code> lists marked tokens on the current player page and always responds when the module is running. <code>!concentration audit</code> performs the same read-only marker inspection and states that no marker changed.</p>',
+            '<h2>Command Reference</h2>',
+            '<ul><li><code>!Con-GM</code>, <code>!Con-DM</code>, <code>!Concentration-GM</code>, or <code>!Concentration-DM</code> - check controls.</li><li><code>!concentration help</code> / <code>guide</code> - compact guide.</li><li><code>!concentration</code> or <code>!cc</code> - check buttons.</li><li><code>!concentration --damage 12 --mode normal|adv|dis</code> or <code>!Con-Damage 12 --mode normal|adv|dis</code> - run a check.</li><li><code>!concentration --last</code> - repeat the player\'s previous check.</li><li><code>!concentration --off</code> - remove the configured marker from selected linked tokens.</li><li><code>!concentration status</code> / <code>audit</code> - current-page marker review.</li><li><code>!concentration settings</code> - result-message choice.</li><li><code>!ga-conc-status</code> - GM activity summary.</li></ul>',
+            '<h2>Troubleshooting</h2>',
+            '<p>If the configured marker cannot be recognized, use the marker name or exact stored custom marker tag shown by Roll20. Status reads token markers directly; marker changes require GameAssist MarkerService to be enabled.</p>'
+        ].join('');
+    }
+
+    function writeConcentrationManual(msg, player) {
+        if (!playerIsGM(msg.playerid)) {
+            sendChat('ConcentrationTracker', `/w "${player}" The campaign manual is created or updated only by the GM. ${GameAssist.createButton('Open Guide', '!concentration help')}`);
+            return;
+        }
+        const result = GameAssist.writeModuleManual('ConcentrationTracker', concentrationManualHtml());
+        if (!result.ok) {
+            sendChat('ConcentrationTracker', `/w gm &{template:default} {{name=ConcentrationTracker Manual}} {{Needs Attention=${_sanitize(result.message)}}} {{Continue=${GameAssist.createButton('Whisper Short Version', '!concentration info')}}}`);
+            return;
+        }
+        sendChat('ConcentrationTracker', `/w gm &{template:default} {{name=ConcentrationTracker Manual Ready}} {{Handout=${result.link}<br>${_sanitize(result.name)} was ${result.created ? 'created' : 'updated'}.}} {{Continue=${GameAssist.createButton('Whisper Short Version', '!concentration info')} ${GameAssist.createButton('Open Check Buttons', '!concentration menu')}}}`);
     }
 
     /**
@@ -11220,19 +13816,54 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
 
     // ─── Core Handler (Case-Insensitive) ──────────────────────────────────────────
+    function normalizeConcentrationCommand(raw) {
+        const hyphen = raw.match(/^!(concentration|con)-([a-z][a-z-]*)(?:\s+([\s\S]*))?$/i);
+        if (hyphen) {
+            const command = String(hyphen[2] || '').toLowerCase();
+            const remainder = String(hyphen[3] || '').trim();
+            const option = ['damage', 'mode', 'last', 'off', 'config'].includes(command);
+            const body = `${option ? '--' : ''}${command}${remainder ? ` ${remainder}` : ''}`;
+            return { body, normalizedRaw: `!concentration ${body}` };
+        }
+        const spaced = raw.match(/^!(concentration|con|cc)(?:\s+([\s\S]*))?$/i);
+        if (!spaced) return null;
+        const body = String(spaced[2] || '').trim();
+        return { body, normalizedRaw: `!concentration${body ? ` ${body}` : ''}` };
+    }
+
     function handler(msg) {
         if (msg.type !== 'api') return;
 
-        // 1) Normalize prefix: trim + lowercase
-        const raw   = msg.content.trim();
-        const parts = raw.toLowerCase().split(/\s+--/);
-        const cmd   = parts.shift();             // "!concentration" or "!cc"
-        if (!CMDS.includes(cmd)) return;
+        // 1) Normalize the established prefix while accepting plain navigation words.
+        const raw = msg.content.trim();
+        const command = normalizeConcentrationCommand(raw);
+        if (!command) return;
+        const { body, normalizedRaw } = command;
+        const direct = body && !body.startsWith('--')
+            ? body.split(/\s+/)[0].toLowerCase()
+            : '';
 
         ensureConcentrationRuntime();
 
         // 2) Identify player (strip " (GM)")
         const player = msg.who.replace(/ \(GM\)$/, '');
+
+        if (direct) {
+            if (direct === 'help' || direct === 'guide') return showHelp(player);
+            if (direct === 'menu' || direct === 'gm' || direct === 'dm') return postButtons(player);
+            if (direct === 'status' || direct === 'refresh') return showStatus(player);
+            if (direct === 'audit') return showStatus(player, { audit: true });
+            if (direct === 'info' || direct === 'about') return showConcentrationInfo(player);
+            if (direct === 'manual') return writeConcentrationManual(msg, player);
+            if (direct === 'config' || direct === 'settings') return showConcentrationSettings(player);
+            return sendChat(
+                'ConcentrationTracker',
+                `/w "${player}" &{template:default} {{name=ConcentrationTracker}} {{Needs Attention=That ConcentrationTracker command was not recognized.}} {{Next Step=${GameAssist.createButton('Open Guide', '!concentration help')}}}`
+            );
+        }
+
+        const parts = normalizedRaw.toLowerCase().split(/\s+--/);
+        parts.shift();
 
         // 3) Config branch
         if (parts[0]?.startsWith('config ')) {
@@ -11251,12 +13882,25 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         // 4) Parse flags
         let damage = 0, mode = 'normal';
         for (let p of parts) {
-            if (p === 'help')   return showHelp(player);
+            if (p === 'help' || p === 'guide') return showHelp(player);
             if (p === 'status') return showStatus(player);
+            if (p === 'audit')  return showStatus(player, { audit: true });
+            if (p === 'info')   return showConcentrationInfo(player);
+            if (p === 'manual') return writeConcentrationManual(msg, player);
             if (p === 'last')   return handleLast(msg);
             if (p === 'off')    return handleClear(msg);
-            if (p.startsWith('damage ')) damage = parseInt(p.split(' ')[1], 10);
-            if (p.startsWith('mode '))   mode   = p.split(' ')[1];
+            if (p.startsWith('damage ')) {
+                damage = parseInt(p.split(' ')[1], 10);
+                if (damage > 0) continue;
+            }
+            if (p.startsWith('mode ')) {
+                mode = p.split(' ')[1];
+                if (['normal', 'adv', 'dis'].includes(mode)) continue;
+            }
+            return sendChat(
+                'ConcentrationTracker',
+                `/w "${player}" &{template:default} {{name=ConcentrationTracker}} {{Needs Attention=That ConcentrationTracker option was not recognized.}} {{Next Step=${GameAssist.createButton('Open Guide', '!concentration help')}}}`
+            );
         }
 
         // 5) Execute
@@ -11287,7 +13931,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 }, {
     enabled:  true,
     events: ['chat:message'],
-    prefixes: ['!concentration','!cc','!ga-conc-status'],
+    prefixes: ['!concentration','!concentration-','!con-','!cc','!ga-conc-status'],
     dependsOn: ['MarkerService'],
     teardown: () => {
         const page = Campaign().get('playerpageid');
@@ -11318,7 +13962,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): ConcentrationTracker module_version advanced to 0.2.0; status, toggle, and teardown marker behavior uses CORE:MARKERSERVICE without standalone TokenMod. Writes preserve configured numbered overlays such as Concentrating@2.
+    // Changed (v0.1.7.0): Advanced ConcentrationTracker to 0.2.2; case-insensitive !Con-* and !Concentration-* aliases cover its command surface, GM/DM open check controls, and !concentration, !cc, and every established --option form remain compatible.
     // Decision log:
     //   CHOICE: Keep lowercase parsing and established aliases - ALT: introduce a new command grammar; REJECTED: unnecessary user retraining.
     // Prior notes:
@@ -11331,15 +13975,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:CONCENTRATIONTRACKER] END
     // =============================================================================
 
-    // ————— NPC HP ROLLER MODULE v0.1.1.0 —————
+    // ————— NPC HP ROLLER MODULE v0.1.1.2 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:NPCHPROLLER] BEGIN
     // Section Title: NPCHPRoller module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:NPCHPROLLER", title: "NPCHPRoller",
-    //   guarantees: ["Parse NdM±K and set bar1 to rolled HP"],
-    //   last_updated_version: "v0.1.1.2",
-    //   independent_versions: { module_version: "0.1.1.0" } }
+    //   guarantees: ["Parse NdM±K and set bar1 to rolled HP","Compact guide, status, settings, read-only page audit, and unknown-command recovery use the established !npc-hp- prefix"],
+    //   last_updated_version: "v0.1.7.0",
+    //   independent_versions: { module_version: "0.1.1.2" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:NPCHPROLLER parses `npc_hpformula`, rolls HP, and writes to bar1 value/max
@@ -11348,6 +13992,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('NPCHPRoller', function() {
         const modState = GameAssist.getState('NPCHPRoller');
+        const MODULE_VERSION = '0.1.1.2';
 
     Object.assign(modState.config, {
         enabled: true,
@@ -11454,6 +14099,110 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return true;
         }
 
+        function sendNpcHpPanel(title, fields) {
+            const body = fields.map(field => `{{${_sanitize(field.label)}=${field.value}}}`).join(' ');
+            sendChat('NPCHPRoller', `/w gm &{template:default} {{name=${_sanitize(title)}}} ${body}`);
+        }
+
+        function showNpcHpGuide() {
+            sendNpcHpPanel('NPCHPRoller Guide', [
+                { label: 'Actions', value: `${GameAssist.createButton('Roll Selected NPCs', '!npc-hp-selected')} ${GameAssist.createButton('Roll Page NPCs', '!npc-hp-all')} ${GameAssist.createButton('Current Status', '!npc-hp-status')}` },
+                { label: 'Learn Or Review', value: `${GameAssist.createButton('What does NPCHPRoller do?', '!npc-hp-info')} ${GameAssist.createButton('Read-Only Audit', '!npc-hp-audit')} ${GameAssist.createButton('Settings', '!npc-hp-settings')}` }
+            ]);
+        }
+
+        function showNpcHpControl() {
+            const counts = inspectNpcHpPage();
+            sendNpcHpPanel('NPCHPRoller GM Controls', [
+                { label: 'Current Page', value: `${counts.eligible} eligible NPCs | ${counts.invalid} need an HP formula` },
+                { label: 'Roll HP', value: `${GameAssist.createButton('Selected NPCs', '!npc-hp-selected')} ${GameAssist.createButton('All Page NPCs', '!npc-hp-all')}` },
+                { label: 'Review And Setup', value: `${GameAssist.createButton('Status', '!npc-hp-status')} ${GameAssist.createButton('Read-Only Audit', '!npc-hp-audit')} ${GameAssist.createButton('Settings', '!npc-hp-settings')} ${GameAssist.createButton('Guide', '!npc-hp-help')}` }
+            ]);
+        }
+
+        function showNpcHpInfo() {
+            sendNpcHpPanel('What NPCHPRoller Does', [
+                { label: 'Purpose', value: 'Rolls each qualifying linked NPC\'s npc_hpformula and writes the result to bar 1 current and maximum HP.' },
+                { label: 'At The Table', value: 'Select NPC tokens for a deliberate roll, or roll every qualifying NPC on the current player page. Player characters, unlinked tokens, and invalid formulas are skipped.' },
+                { label: 'Guide', value: `${GameAssist.createButton('Back to Guide', '!npc-hp-help')} ${GameAssist.createButton('Read-Only Audit', '!npc-hp-audit')}` }
+            ]);
+        }
+
+        function inspectNpcHpPage() {
+            const pageId = Campaign().get('playerpageid');
+            const tokens = pageId ? findObjs({ _pageid: pageId, _type: 'graphic', layer: 'objects' }) : [];
+            const counts = { total: tokens.length, eligible: 0, unlinked: 0, pc: 0, invalid: 0 };
+            tokens.forEach(token => {
+                const linked = GameAssist.getLinkedCharacter(token);
+                if (!linked) {
+                    counts.unlinked++;
+                    return;
+                }
+                const npc = String(getAttrByName(linked.character.id, 'npc') || '') === '1';
+                if (!npc) {
+                    counts.pc++;
+                    return;
+                }
+                const formula = String(getAttrByName(linked.character.id, 'npc_hpformula') || '');
+                if (!parseDiceString(formula)) {
+                    counts.invalid++;
+                    return;
+                }
+                counts.eligible++;
+            });
+            return counts;
+        }
+
+        function showNpcHpStatus(audit = false) {
+            const counts = inspectNpcHpPage();
+            const fields = [
+                { label: 'Module', value: `${MODULE_VERSION} | enabled and responding` },
+                { label: 'Automatic Roll On Add', value: modState.config.autoRollOnAdd === true ? 'On' : 'Off' },
+                { label: 'Current Page', value: `${counts.eligible} eligible NPCs | ${counts.pc} player characters | ${counts.unlinked} unlinked items | ${counts.invalid} NPCs with missing or invalid formulas` },
+                { label: 'Actions', value: `${GameAssist.createButton('Roll Selected', '!npc-hp-selected')} ${GameAssist.createButton('Open Guide', '!npc-hp-help')}` }
+            ];
+            if (audit) fields.splice(3, 0, { label: 'Changes', value: 'None. This audit checks linkage, NPC flags, and HP formulas without rolling or changing bar 1.' });
+            sendNpcHpPanel(audit ? 'NPCHPRoller Audit' : 'NPCHPRoller Status', fields);
+        }
+
+        function showNpcHpSettings() {
+            const enabled = modState.config.autoRollOnAdd === true;
+            sendNpcHpPanel('NPCHPRoller Settings', [
+                { label: 'Automatic Roll On Add', value: `${enabled ? 'On' : 'Off'} ${GameAssist.createButton(enabled ? 'Turn Off' : 'Turn On', `!ga-config set NPCHPRoller autoRollOnAdd=${enabled ? 'false' : 'true'}`)}` },
+                { label: 'Behavior', value: 'When enabled, newly added qualifying NPC tokens receive rolled HP. Setup protection prevents that initialization from creating false NPCManager death or revival history.' },
+                { label: 'Return', value: GameAssist.createButton('Back to Guide', '!npc-hp-help') }
+            ]);
+        }
+
+        function showNpcHpManualNotice() {
+            sendNpcHpPanel('NPCHPRoller Guide', [
+                { label: 'Manual', value: 'NPCHPRoller is intentionally small, so its complete instructions stay in the compact chat guide instead of creating another campaign handout.' },
+                { label: 'Continue', value: `${GameAssist.createButton('Open Guide', '!npc-hp-help')} ${GameAssist.createButton('Read-Only Audit', '!npc-hp-audit')}` }
+            ]);
+        }
+
+        const npcHpNavigation = {
+            '!npc-hp-help': showNpcHpGuide,
+            '!npc-hp-guide': showNpcHpGuide,
+            '!npc-hp-menu': showNpcHpControl,
+            '!npc-hp-gm': showNpcHpControl,
+            '!npc-hp-dm': showNpcHpControl,
+            '!npc-hp-info': showNpcHpInfo,
+            '!npc-hp-about': showNpcHpInfo,
+            '!npc-hp-status': () => showNpcHpStatus(false),
+            '!npc-hp-refresh': () => showNpcHpStatus(false),
+            '!npc-hp-audit': () => showNpcHpStatus(true),
+            '!npc-hp-settings': showNpcHpSettings,
+            '!npc-hp-config': showNpcHpSettings,
+            '!npc-hp-manual': showNpcHpManualNotice
+        };
+        Object.entries(npcHpNavigation).forEach(([prefix, handler]) => {
+            GameAssist.onCommand(prefix, handler, 'NPCHPRoller', { gmOnly: true });
+        });
+        ['!NPCHP-GM', '!NPCHP-DM', '!NPCHPRoller-GM', '!NPCHPRoller-DM'].forEach(prefix => {
+            GameAssist.onCommand(prefix, showNpcHpControl, 'NPCHPRoller', { gmOnly: true });
+        });
+
         GameAssist.onCommand('!npc-hp-all', async msg => {
             const pageId = Campaign().get('playerpageid');
             const tokens = findObjs({
@@ -11530,35 +14279,51 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
         }, 'NPCHPRoller', { gmOnly: true });
 
+        GameAssist.onCommand('!npc-hp-', msg => {
+            const command = String(msg.content || '').trim().split(/\s+/)[0].toLowerCase();
+            const known = new Set(['!npc-hp-all', '!npc-hp-selected', ...Object.keys(npcHpNavigation)]);
+            if (known.has(command)) return;
+            sendNpcHpPanel('NPCHPRoller', [
+                { label: 'Needs Attention', value: 'That NPCHPRoller command was not recognized.' },
+                { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!npc-hp-help') }
+            ]);
+        }, 'NPCHPRoller', {
+            gmOnly: true,
+            match: { caseInsensitive: true, mode: 'prefix' }
+        });
+
         GameAssist.onEvent('add:graphic', token => {
             if (!modState.config.autoRollOnAdd) return;
             rollTokenHP(token, { logWarnings: false, reason: 'auto' });
         }, 'NPCHPRoller');
 
-    GameAssist.log('NPCHPRoller', 'v0.1.1.0 Ready: !npc-hp-all, !npc-hp-selected', 'INFO', { startup: true });
+    GameAssist.log('NPCHPRoller', `v${MODULE_VERSION} Ready: !npc-hp-help, !npc-hp-all, !npc-hp-selected`, 'INFO', { startup: true });
 }, {
     enabled: true,
     events: ['add:graphic'],
-    prefixes: ['!npc-hp-all', '!npc-hp-selected']
+        prefixes: ['!npc-hp-', '!NPCHP-', '!NPCHPRoller-']
 });
     // --- Notes & Comments ---
-    // CHOICE: Use Math.random for simplicity; acceptable for non‑critical HP rolls.
-    // Maintenance (v0.1.3, no semantic change): Added module narrative and aligned version
-    //   metadata; HP rolling behavior unchanged.
-    // Prior notes: Maintenance (v0.1.1.2, no semantic change): MECHSUITS metadata updated for compliance.
+    // Changed (v0.1.7.0): Advanced NPCHPRoller to 0.1.1.2; Menu, GM, and DM open an action-focused HP control screen, with equivalent NPCHP and NPCHPRoller role aliases and unchanged HP-roll behavior.
+    // Decision log:
+    //   CHOICE: Keep the complete short guide in chat - ALT: create a persistent manual handout; REJECTED: the module's ordinary workflow fits in a compact panel and another handout would add campaign clutter.
+    //   CHOICE: Use Math.random for simplicity; acceptable for non-critical HP rolls.
+    // Prior notes:
+    //   Maintenance (v0.1.3, no semantic change): Added module narrative and aligned version metadata; HP rolling behavior unchanged.
+    //   Maintenance (v0.1.1.2, no semantic change): MECHSUITS metadata updated for compliance.
     // [GAMEASSIST:MODULES:NPCHPROLLER] END
     // =============================================================================
 
-    // ————— DEBUG TOOLS MODULE v0.2.0 —————
+    // ————— DEBUG TOOLS MODULE v0.2.2 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:DEBUGTOOLS] BEGIN
     // Section Title: DebugTools module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:DEBUGTOOLS", title: "DebugTools",
-    //   guarantees: ["Dry-run friendly debugging helpers","Applied marker diagnostics use CORE:MARKERSERVICE"],
+    //   guarantees: ["Dry-run friendly debugging helpers","Compact guide, status, read-only audit, settings explanation, and unknown-command recovery use !ga-debug","Applied marker diagnostics use CORE:MARKERSERVICE"],
     //   depends_on: ["[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
-    //   last_updated_version: "v0.1.5.0",
-    //   independent_versions: { module_version: "0.2.0" } }
+    //   last_updated_version: "v0.1.7.0",
+    //   independent_versions: { module_version: "0.2.2" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:DEBUGTOOLS offers optional GM-only diagnostics for damage, markers, and
@@ -11567,6 +14332,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('DebugTools', function() {
         const modState = GameAssist.getState('DebugTools');
+        const MODULE_VERSION = '0.2.2';
         Object.assign(modState.config, {
             enabled: false,
             ...modState.config
@@ -11734,13 +14500,63 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             });
         }
 
+        function sendDebugPanel(title, fields) {
+            const body = fields.map(field => `{{${_sanitize(field.label)}=${field.value}}}`).join(' ');
+            sendChat('DebugTools', `/w gm &{template:default} {{name=${_sanitize(title)}}} ${body}`);
+        }
+
         function showHelp() {
-            GameAssist.log('DebugTools', [
-                'Debug helpers:',
-                '• !ga-debug damage --amount N [--token TOKENID|select] [--apply]',
-                '• !ga-debug marker --marker status [--state on|off|toggle] [--token TOKENID|select] [--apply]',
-                '• !ga-debug save --dc N [--bonus M] [--mode normal|adv|dis] [--label Text] [--apply]'
-            ].join('\n'));
+            sendDebugPanel('DebugTools Guide', [
+                { label: 'Actions', value: `${GameAssist.createButton('Damage Preview', '!ga-debug damage --amount ?{Damage|1}')} ${GameAssist.createButton('Marker Preview', '!ga-debug marker --marker ?{Marker|red}')} ${GameAssist.createButton('Save Preview', '!ga-debug save --dc ?{DC|10}')}` },
+                { label: 'Learn Or Review', value: `${GameAssist.createButton('What does DebugTools do?', '!ga-debug info')} ${GameAssist.createButton('Current Status', '!ga-debug status')} ${GameAssist.createButton('Read-Only Audit', '!ga-debug audit')}` },
+                { label: 'Safety', value: 'Preview is the default. A diagnostic changes a token or rolls a save only when the GM deliberately includes <code>--apply</code>.' }
+            ]);
+        }
+
+        function showDebugControl() {
+            sendDebugPanel('DebugTools GM Controls', [
+                { label: 'Preview Diagnostics', value: `${GameAssist.createButton('Damage', '!ga-debug damage --amount ?{Damage|1}')} ${GameAssist.createButton('Marker', '!ga-debug marker --marker ?{Marker|red}')} ${GameAssist.createButton('Saving Throw', '!ga-debug save --dc ?{DC|10}')}` },
+                { label: 'Review And Setup', value: `${GameAssist.createButton('Status', '!ga-debug status')} ${GameAssist.createButton('Read-Only Audit', '!ga-debug audit')} ${GameAssist.createButton('Settings', '!ga-debug settings')} ${GameAssist.createButton('Guide', '!ga-debug help')}` },
+                { label: 'Safety', value: 'Every diagnostic is a preview until the GM deliberately adds <code>--apply</code>.' }
+            ]);
+        }
+
+        function showDebugInfo() {
+            sendDebugPanel('What DebugTools Does', [
+                { label: 'Purpose', value: 'Helps the GM preview controlled damage, marker, and saving-throw diagnostics while troubleshooting GameAssist behavior.' },
+                { label: 'At The Table', value: 'Keep DebugTools disabled during ordinary play. Enable it for a focused check, preview the action, add <code>--apply</code> only when mutation is intended, then disable it again.' },
+                { label: 'Continue', value: `${GameAssist.createButton('Back to Guide', '!ga-debug help')} ${GameAssist.createButton('Current Status', '!ga-debug status')}` }
+            ]);
+        }
+
+        function showDebugStatus(audit = false) {
+            const runtime = ensureDebugRuntime();
+            const last = runtime.lastAction
+                ? `${_sanitize(runtime.lastAction.type || 'action')} on ${_sanitize(runtime.lastAction.token || 'unknown token')}`
+                : 'No applied diagnostic recorded in this runtime.';
+            const fields = [
+                { label: 'Module', value: `${MODULE_VERSION} | enabled and responding` },
+                { label: 'Default Behavior', value: 'Dry-run preview; <code>--apply</code> is required for mutation or a live save roll.' },
+                { label: 'MarkerService', value: GameAssist.MarkerService?.isEnabled?.() ? 'Available' : 'Unavailable' },
+                { label: 'Last Applied Action', value: last },
+                { label: 'Actions', value: GameAssist.createButton('Open Guide', '!ga-debug help') }
+            ];
+            if (audit) fields.splice(4, 0, { label: 'Changes', value: 'None. This audit reads DebugTools runtime and service availability without running a diagnostic.' });
+            sendDebugPanel(audit ? 'DebugTools Audit' : 'DebugTools Status', fields);
+        }
+
+        function showDebugSettings() {
+            sendDebugPanel('DebugTools Settings', [
+                { label: 'Module Setting', value: 'DebugTools has no separate behavior toggles. It is disabled by default, and each diagnostic is dry-run unless <code>--apply</code> is present.' },
+                { label: 'Module Control', value: `${GameAssist.createButton('Disable DebugTools', '!ga-disable DebugTools')} ${GameAssist.createButton('Back to Guide', '!ga-debug help')}` }
+            ]);
+        }
+
+        function showDebugManualNotice() {
+            sendDebugPanel('DebugTools Guide', [
+                { label: 'Manual', value: 'DebugTools is intentionally narrow, so its complete guidance stays in chat instead of creating a campaign handout.' },
+                { label: 'Continue', value: `${GameAssist.createButton('Open Guide', '!ga-debug help')} ${GameAssist.createButton('Read-Only Audit', '!ga-debug audit')}` }
+            ]);
         }
 
         const HANDLERS = {
@@ -11758,23 +14574,56 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
             const parsed = _parseArgs(payload);
             const action = (parsed.cmd || '').toLowerCase();
+            if (action === 'help' || action === 'guide') {
+                showHelp();
+                return;
+            }
+            if (action === 'menu' || action === 'gm' || action === 'dm') {
+                showDebugControl();
+                return;
+            }
+            if (action === 'info' || action === 'about') {
+                showDebugInfo();
+                return;
+            }
+            if (action === 'status' || action === 'refresh') {
+                showDebugStatus(false);
+                return;
+            }
+            if (action === 'audit') {
+                showDebugStatus(true);
+                return;
+            }
+            if (action === 'settings' || action === 'config') {
+                showDebugSettings();
+                return;
+            }
+            if (action === 'manual') {
+                showDebugManualNotice();
+                return;
+            }
             const handler = HANDLERS[action];
             if (!handler) {
-                GameAssist.log('DebugTools', `Unknown debug action: ${_sanitize(action || '(none)')}`, 'WARN');
-                showHelp();
+                sendDebugPanel('DebugTools', [
+                    { label: 'Needs Attention', value: 'That DebugTools command was not recognized.' },
+                    { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!ga-debug help') }
+                ]);
                 return;
             }
             handler(msg, parsed.args || {});
         }, 'DebugTools', { gmOnly: true });
+        ['!Debug-GM', '!Debug-DM', '!DebugTools-GM', '!DebugTools-DM'].forEach(prefix => {
+            GameAssist.onCommand(prefix, showDebugControl, 'DebugTools', { gmOnly: true });
+        });
 
         GameAssist.log('DebugTools', 'Debug module registered. Enable with !ga-enable DebugTools when needed.', 'INFO', { startup: true });
     }, {
         enabled: false,
-        prefixes: ['!ga-debug'],
+        prefixes: ['!ga-debug', '!Debug-', '!DebugTools-'],
         dependsOn: ['MarkerService']
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.5.0): DebugTools module_version advanced to 0.2.0; marker previews and applied changes now resolve and mutate through CORE:MARKERSERVICE.
+    // Changed (v0.1.7.0): Advanced DebugTools to 0.2.2; Menu, GM, and DM open an action-focused diagnostic screen through the established and module-name role aliases while Guide/Help remains instructional and diagnostics remain dry-run by default.
     // Decision log:
     //   CHOICE: Keep helpers dry-run by default and require --apply for mutation.
     // Prior notes:
@@ -11785,8 +14634,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v0.1.6.1): Added disabled-by-default WelcomeAssist to the bundled module contract and retained independent lifecycle management for every unrelated feature.
+    // Changed (v0.1.7.0): Added disabled-by-default CombatAssist to the bundled module contract and assigned encounter-flow ownership without changing InitiativeAssist initiative rules.
     // Prior notes:
+    //   v0.1.5.0: Advanced DebugTools to 0.2.0; marker previews and applied changes resolve and mutate through CORE:MARKERSERVICE.
+    //   v0.1.5.0: Advanced ConcentrationTracker to 0.2.0; status, toggle, and teardown marker behavior uses CORE:MARKERSERVICE without standalone TokenMod. Writes preserve configured numbered overlays such as Concentrating@2.
+    //   v0.1.5.1: Advanced NPCManager to 1.3.0; date-based Session rollover and dynamically rendered death, revival, bucket, and Arc timestamps follow the validated GameAssist timezone while stored ISO instants remain unchanged. A bounded refresh hook updates an active date-managed Session after a validated timezone change.
+    //   v0.1.6.1: Added disabled-by-default WelcomeAssist to the bundled module contract and retained independent lifecycle management for every unrelated feature.
     //   v0.1.6.0: Added InitiativeAssist to the module contract and assigned all native Turn Tracker writes to CORE:TURNTRACKERSERVICE.
     //   v0.1.5.1: Added GM-only timezone configuration, status visibility, common/custom selection buttons, validation diagnostics, sandbox-default restoration, and immediate NPC Session-date refresh when that module is running.
     //   v0.1.5.0: Updated the module wrapper contract because all marker consumers share CORE:MARKERSERVICE and TokenAssist now owns supported general token commands.

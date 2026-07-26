@@ -1,8 +1,8 @@
 # GameAssist Development Roadmap
 
-This roadmap records the transition from GameAssist's standalone-dependency `v0.1.4.x` line to the integrated `v0.1.5.x` marker, token, condition, and timezone architecture, followed by the native initiative foundation and optional startup greeting in `v0.1.6.1`.
+This roadmap records the transition from GameAssist's standalone-dependency `v0.1.4.x` line to the integrated `v0.1.5.x` marker, token, condition, and timezone architecture, the native initiative foundation and optional startup greeting in `v0.1.6.1`, and the preservation-first CombatAssist foundation in `v0.1.7.0`.
 
-Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation notes, discoveries, and checklists. Issue #29 remains the completed integrated-architecture gate; current initiative work is tracked by [Issue #47](https://github.com/Mord-Eagle/GameAssist/issues/47).
+Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation notes, discoveries, and checklists. Issue #29 remains the completed integrated-architecture gate; current encounter-flow work is tracked by [Issue #48](https://github.com/Mord-Eagle/GameAssist/issues/48).
 
 > The roadmap is a maintained plan, not a promise of dates. Issues #25 through #29 are development checkpoints within one release train; none is an intermediate public release.
 
@@ -29,7 +29,7 @@ Use this document for durable release boundaries, sequencing, and completion gat
 5. **ConditionAssist owns condition guidance.** It preserves supported `!condition` workflows while using MarkerService for marker behavior.
 6. **Attribution and license notices are mandatory.** TokenAssist and ConditionAssist preserve applicable MIT notices, authorship, upstream baselines, and adapted portions.
 7. **Roll20 is the final compatibility test.** Syntax checks and local reasoning are necessary but cannot replace sandbox smoke tests.
-8. **Initiative and combat remain separate responsibilities.** TurnTrackerService owns safe native-tracker mechanics, InitiativeAssist owns initiative calculation and reroll UX, and deferred CombatAssist will own rounds, turns, timers, and encounter flow.
+8. **Initiative and combat remain separate responsibilities.** TurnTrackerService owns safe native-tracker mechanics, InitiativeAssist owns initiative calculation and reroll UX, and CombatAssist owns deliberate encounter lifecycle plus conservative turn and round observation. Timers, reminders, current-turn indicators, reporting handoff, and music are staged immediately after the foundation acceptance rather than folded into tracker mechanics.
 9. **Public startup greetings remain deliberate.** WelcomeAssist starts disabled, previews privately, announces automatically only after completed healthy Bootstrap, and never treats live enablement as permission to post.
 
 ---
@@ -51,8 +51,14 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | Marker-registry lookup verification | Complete | [#32](https://github.com/Mord-Eagle/GameAssist/issues/32) | MarkerService prefers documented `token_markers`, falls back to `_token_markers`, and keeps built-ins and exact stored tags independent of registry parsing. |
 | DM-configurable timezone | Complete | [#35](https://github.com/Mord-Eagle/GameAssist/issues/35) | v0.1.5.1 adds one validated DM timezone for human-facing timestamps and date-based Session rollover while preserving absolute stored timestamps. The focused Roll20 timezone workflow passed; the complete live module suite was not rerun. |
 | Native Turn Tracker and initiative foundation | Complete | [#47](https://github.com/Mord-Eagle/GameAssist/issues/47) | The v0.1.6.0 live workflow and v0.1.6.1 private `!Init-GM` controls passed their Roll20 acceptance checks. |
-| Optional table welcome | Complete | [PR #49](https://github.com/Mord-Eagle/GameAssist/pull/49) | Disabled-by-default WelcomeAssist 0.1.0 passed private setup, health-gated one-per-sandbox automatic output, and manual-announcement cancellation checks. |
-| CombatAssist encounter flow | Deferred | [#48](https://github.com/Mord-Eagle/GameAssist/issues/48) | Design rounds, turns, durations, end-of-turn controls, and encounter lifecycle only after Issue #47 passes in Roll20. |
+| Optional table welcome | Complete | [PR #49](https://github.com/Mord-Eagle/GameAssist/pull/49) | WelcomeAssist 0.1.4 retains the accepted greeting workflow, compact navigation, stable manual, and equal GM/DM settings aliases. |
+| CombatAssist encounter flow | Complete | [#48](https://github.com/Mord-Eagle/GameAssist/issues/48) | v0.1.7.0 includes CombatAssist 1.0.5: native round-counter authority, preserved-round encounter flow, recovery, guarded movement, timers, native pings, privacy-safe confirmations, compact guidance, a stable manual, and equal GM/DM controls. The complete Roll20 acceptance pass succeeded. |
+| CombatAssist turn timers and reminders | Complete | [#54](https://github.com/Mord-Eagle/GameAssist/issues/54) | Disabled-by-default duration, deadline, and per-reminder recipient controls bind callbacks to the encounter, round, current identity, tracker revision, and deadline; the Roll20 acceptance pass confirmed timers never advance turns. |
+| CombatAssist current-turn visuals | Complete | [#55](https://github.com/Mord-Eagle/GameAssist/issues/55) | Disabled-by-default non-centering native pings support GM, player, combined, and public audiences while restricting hidden turns to the GM. Persistent token highlights remain separately deferred. |
+| CombatAssist NPCManager handoff | Deferred | [#56](https://github.com/Mord-Eagle/GameAssist/issues/56) | Valuable optional interoperability, but it does not block a dependable encounter-flow release and must not duplicate death or revival records. |
+| CombatAssist music hooks | Deferred | [#57](https://github.com/Mord-Eagle/GameAssist/issues/57) | Useful atmosphere control, but safe Jukebox ownership is independent of the current release gate. |
+| Compact help and command recovery | Complete | [#58](https://github.com/Mord-Eagle/GameAssist/issues/58) | Every feature module exposes compact navigation, an action-appropriate GM/DM screen, read-only audit wording, and friendly unknown-command recovery. |
+| Persistent module manuals | Complete | [#59](https://github.com/Mord-Eagle/GameAssist/issues/59) | Modules with substantial workflows create or update one stable `GameAssist Guide - <Module>` handout; brief modules keep complete guidance in chat. The Roll20 acceptance pass succeeded. |
 
 ---
 
@@ -310,7 +316,7 @@ This major feature release introduces a rules-neutral Turn Tracker authority and
 
 Issue #47 is complete only when the Roll20 sandbox confirms mixed 2014/2024 initiative, public and GM-only start controls, private NPC evidence, GM-layer and selected-character batches, case-insensitive commands, exact preservation of non-owned rows, duplicate handling, dead/mismatch skips, Observer mode, service cascading, and audit output without regressions in established modules.
 
-**Current evidence:** The v0.1.6.0 live workflow, including private NPC evidence, GM-layer batches, and selected-character batches, was accepted as launch-ready. The v0.1.6.1 InitiativeAssist harness passes 108/108 checks, and the focused `!Init-GM` Roll20 delivery check passed.
+**Current evidence:** The live workflow, including private NPC evidence, GM-layer batches, selected-character batches, and equal private `!Init-GM` / `!Init-DM` start pages, is accepted. The current InitiativeAssist 1.0.4 harness passes 116/116 checks.
 
 ---
 
@@ -335,28 +341,85 @@ WelcomeAssist is accepted when disabled campaigns remain silent, setup and previ
 
 ---
 
-## Phase 9: Deferred CombatAssist
+## Phase 9: CombatAssist Foundation in `v0.1.7.0`
 
 **Tracking:** [Issue #48](https://github.com/Mord-Eagle/GameAssist/issues/48)
 
-CombatAssist is intentionally deferred until TurnTrackerService and InitiativeAssist pass live acceptance. It will evaluate encounter start/pause/resume/end, rounds, turn advancement, duration countdowns, end-of-turn controls, current-turn visuals, and integrations with conditions and encounter history. These responsibilities do not move into InitiativeAssist.
+CombatAssist 1.0.5 begins disabled, requires explicit GM intent, and treats Roll20's native Turn Tracker as authoritative while using TurnTrackerService for guarded reads, writes, and observations. Native round-counter authority, stale-safe turn timers, private-safe native pings, and equal GM/DM control aliases passed the complete Roll20 acceptance check.
+
+### Checklist
+
+- [x] Add case-insensitive `!Combat-` Guide, Control Center, status, start, pause, resume, end, next-turn, previous-turn, and announcement controls.
+- [x] Require a readable open tracker on one page with bounded, distinct, structurally valid rows.
+- [x] Accept exact one-row forward and backward rotations for turn counting.
+- [x] Preserve the current round when valid combatants are added or removed, initiative is rerolled, priorities change, or the native tracker is manually reordered; establish a fresh full-cycle anchor without rewriting the edit.
+- [x] Advance the round only after an uninterrupted forward cycle returns to the recorded anchor.
+- [x] Prefer one clearly named native custom round counter as the round authority and evaluate its simple signed whole-number calculation when CombatAssist moves it to the top.
+- [x] Refuse multiple plausible round counters instead of guessing.
+- [x] Ensure backward movement never advances a round.
+- [x] Route explicit GM **Next Turn** and **Previous Turn** actions through revision-guarded TurnTrackerService rotations.
+- [x] Preserve every row, custom entry, priority, object, and unknown field.
+- [x] Keep pause/edit/resume as an optional quiet-edit workflow rather than a requirement for ordinary tracker maintenance.
+- [x] Retain the current accepted native tracker plus one complete previous checkpoint, with revision-matched preview/confirmation for restore or undo.
+- [x] Reserve attention for unreadable, off-page, closed, malformed, stale, duplicate, or direction-ambiguous tracker states and provide explicit adopt, restore, status, and round-1 restart choices.
+- [x] Keep setup, status, confirmation, and attention messages GM-only; make turn announcements configurable as GM-only, public, current-player whispers, or off.
+- [x] In Whispers mode, send the GM private Next Turn, Previous Turn, and Open Menu controls while sending the current controlling player a token-bound End My Turn control.
+- [x] Recheck current-turn identity and character control when a player uses End My Turn; privately confirm a successful advance and gently acknowledge an already-advanced stale button without moving the tracker again.
+- [x] Offer Standard and Varied player completion confirmations through an explicit setting; Varied includes the Standard sentence exactly once within a warmer rotation.
+- [x] Report a visible linked next character neutrally without implying player control; use a generic continuation for GM-layer, custom, unlinked, or non-character rows.
+- [x] Deliver an outgoing player's Turn Complete confirmation before the next Your Turn prompt when one player controls consecutive characters.
+- [x] Replace long InitiativeAssist, CombatAssist, and WelcomeAssist root guides with compact action/navigation panels and focused topic pages.
+- [x] Add CombatAssist Status, Guide/Help, GM/Menu, Info, and read-only Audit aliases as the reference navigation implementation.
+- [x] Put the complete CombatAssist user manual in one stable on-demand handout and keep only common actions in the root chat guide.
+- [x] Add disabled-by-default configurable turn timers, deadline recipients, and up to five per-recipient reminders whose callbacks expire after any relevant encounter or tracker change and never advance initiative.
+- [x] Add disabled-by-default non-centering native current-turn pings with GM, player, combined, and public audiences plus mandatory GM-only handling for hidden turns.
+- [x] Make short `!Welcome` and `!Welcome-Action` commands primary while retaining the longer WelcomeAssist compatibility surface.
+- [x] Give unrecognized WelcomeAssist commands the same clear Open Guide recovery pattern already used by CombatAssist and InitiativeAssist.
+- [x] Keep baseline module operation independent: CombatAssist requires TurnTrackerService, no other baseline module requires CombatAssist, and any optional future integration must label and locally enforce its own prerequisite.
+- [x] Keep automatic turn advancement, condition/marker mutation, music, and NPC-history behavior out of CombatAssist's baseline; timers and pings report or point only.
+- [x] Add focused deterministic coverage and public documentation.
+- [x] Pass the complete Roll20 CombatAssist smoke test.
+- [x] Resolve review findings and verify identical release artifacts; Issue #48 closes with PR #51.
+
+### Completion Gate
+
+Issue #48 is complete when Roll20 confirms explicit lifecycle controls, native round-counter `+1`, fallback forward rounds, backward safety, preserved-round additions/removals/rerolls/reordering, one-step recovery, optional pause/edit/resume, exact tracker-field preservation, unreadable-state attention, two-row behavior, stale-safe timers, ping audiences and hidden-turn privacy, GM/current-player controls, A-B-A delivery, privacy-safe confirmations, manual handout creation/update, common navigation aliases, compact guide routing, independent disable behavior, reload behavior, and no regressions in InitiativeAssist or established modules.
+
+**Current evidence:** The complete Roll20 smoke test passed. Deterministic coverage also confirms native round-counter calculations, stale timer invalidation, teardown cleanup, timer and ping privacy, preserved-round roster changes, InitiativeAssist rerolls, one-step restore, ordered player confirmations, navigation aliases, compact guidance, and stable module manuals. Final artifact identity and review closure are the remaining PR checks.
+
+---
+
+## Phase 10: Immediate CombatAssist Expansion
+
+The timer and native-ping implementations are part of the v0.1.7.0 candidate and remain open only for live Roll20 acceptance. The remaining expansion items are deliberately deferred so they do not hold the next module hostage.
+
+1. [Issue #54](https://github.com/Mord-Eagle/GameAssist/issues/54) - **complete** configurable turn timers and reminders, including live stale-callback and recipient acceptance.
+2. [Issue #55](https://github.com/Mord-Eagle/GameAssist/issues/55) - **complete** native current-turn pings, including live audience and hidden-layer acceptance; persistent token highlights remain separately deferred.
+3. [Issue #56](https://github.com/Mord-Eagle/GameAssist/issues/56) - **deferred** optional encounter-summary handoff to NPCManager without duplicate death or revival history.
+4. [Issue #57](https://github.com/Mord-Eagle/GameAssist/issues/57) - **deferred** opt-in combat music hooks that preserve unrelated Jukebox playback.
+
+Damage review (#52) is deferred. Held-action rules (#53) remain independently scoped and do not block PR #51.
 
 ---
 
 ## Post-v0.1.5.0 TokenAssist Expansion
 
-These items extend TokenAssist after the integrated v0.1.5.0 architecture is stable. They do not block Issues #28 or #29.
+These open items extend TokenAssist beyond the accepted integrated architecture and are intentionally deferred from v0.1.7.0.
 
-- [Issue #42](https://github.com/Mord-Eagle/GameAssist/issues/42) — advanced duplicate-index, conditional, and bounded marker expressions owned by MarkerService.
-- [Issue #43](https://github.com/Mord-Eagle/GameAssist/issues/43) — computed attributes, controller identity/list resolution, and report-recipient routing.
-- [Issue #44](https://github.com/Mord-Eagle/GameAssist/issues/44) — color arithmetic, dimming night-vision parameters, and relative/random multi-sided-token controls.
-- [Issue #45](https://github.com/Mord-Eagle/GameAssist/issues/45) — validated image-side stack and character default-token asset updates with preview and recovery safeguards.
+- [Issue #42](https://github.com/Mord-Eagle/GameAssist/issues/42) — **deferred** advanced duplicate-index, conditional, and bounded marker expressions owned by MarkerService.
+- [Issue #43](https://github.com/Mord-Eagle/GameAssist/issues/43) — **deferred** computed attributes, controller identity/list resolution, and report-recipient routing.
+- [Issue #44](https://github.com/Mord-Eagle/GameAssist/issues/44) — **deferred** color arithmetic, dimming night-vision parameters, and relative/random multi-sided-token controls.
+- [Issue #45](https://github.com/Mord-Eagle/GameAssist/issues/45) — **deferred** image-side stacks plus token-image and default-token asset updates, pending dedicated preview, recovery, and live-field compatibility safeguards.
 
 TokenAssist will continue to use its own help and `GameAssist.TokenAssist` API. Rebuilding TokenMod's help handout or creating a global `TokenMod` compatibility object is not planned.
 
+## Deferred Module Naming
+
+- [Issue #60](https://github.com/Mord-Eagle/GameAssist/issues/60) — **deferred** migration planning for ConcentrationAssist, NPCAssist, CritAssist, and the decision to rename NPCHPRoller as HPAssist or consolidate it into NPCAssist. Existing commands, state, handouts, dependencies, and public APIs must remain compatible through any later transition.
+
 ---
 
-## Current `v0.1.6.1` Architecture
+## Current `v0.1.7.0` Architecture
 
 ```text
 [GAMEASSIST]/
@@ -379,6 +442,7 @@ TokenAssist will continue to use its own help and `GameAssist.TokenAssist` API. 
 │  ├─ [GAMEASSIST:MODULES:CONDITIONASSIST]
 │  ├─ [GAMEASSIST:MODULES:TOKENASSIST]
 │  ├─ [GAMEASSIST:MODULES:INITIATIVEASSIST]
+│  ├─ [GAMEASSIST:MODULES:COMBATASSIST]
 │  ├─ [GAMEASSIST:MODULES:WELCOMEASSIST]
 │  ├─ [GAMEASSIST:MODULES:NPCMANAGER]
 │  ├─ [GAMEASSIST:MODULES:CONCENTRATIONTRACKER]
@@ -407,13 +471,17 @@ Every development checkpoint must satisfy the following before being marked comp
 
 ---
 
-## Explicitly Deferred
+## Work Outside The Immediate Sequence
 
-These remain outside this integration roadmap until the integrated architecture is stable:
+These remain outside the immediate CombatAssist expansion sequence or require their own later design work:
 
 - native Mord character-sheet development;
 - unrelated encounter, rest, resource, and roadmap modules;
 - broad plugin-loader work;
+- standard API_Meta diagnostic adoption, explicitly deferred in [Issue #50](https://github.com/Mord-Eagle/GameAssist/issues/50);
+- condition changes and automatic turn advancement, which remain unscoped and deferred;
+- deferred CombatAssist read-only damage-change history for guided retcon review, tracked in [Issue #52](https://github.com/Mord-Eagle/GameAssist/issues/52);
+- CombatAssist held-action and Ready/Delay workflows, including a public `!Now` signal, tracked in [Issue #53](https://github.com/Mord-Eagle/GameAssist/issues/53);
 - claims of complete TokenMod compatibility before command-family verification;
 - automatic deletion of legacy or unexpected persistent state.
 
