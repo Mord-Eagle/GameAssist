@@ -2580,9 +2580,9 @@ The v0.1.6.0 native tracker population, reroll, invitation, detailed-roll, and G
 
 ### Release definition
 
-GameAssist v0.1.7.0 introduces **CombatAssist 1.0.3**, a disabled-by-default encounter-flow module that works as an optional layer over Roll20's native Turn Tracker after initiative has been established. It provides a deliberate encounter lifecycle, recognized native round-counter authority, conservative fallback counting, guarded movement, stale-safe configurable timers, private-safe native pings, one-step tracker recovery, ordered player completion prompts, common navigation aliases, and a persistent on-demand user manual without taking initiative rules away from InitiativeAssist. InitiativeAssist is 1.0.2 and WelcomeAssist is 0.1.2 with short case-insensitive commands and compact layered guides.
+GameAssist v0.1.7.0 introduces **CombatAssist 1.0.4**, a disabled-by-default encounter-flow module that works as an optional layer over Roll20's native Turn Tracker after initiative has been established. It provides a deliberate encounter lifecycle, recognized native round-counter authority, conservative fallback counting, guarded movement, stale-safe configurable timers, private-safe native pings, one-step tracker recovery, ordered player completion prompts, compact navigation, and a persistent on-demand user manual without taking initiative rules away from InitiativeAssist. InitiativeAssist is 1.0.3 and WelcomeAssist is 0.1.3.
 
-This release implements the tracker-integrity and first turn-awareness stages of [Issue #48](https://github.com/Mord-Eagle/GameAssist/issues/48), [Issue #54](https://github.com/Mord-Eagle/GameAssist/issues/54), and [Issue #55](https://github.com/Mord-Eagle/GameAssist/issues/55). It does not automatically end turns, alter conditions or markers, apply persistent token highlights, play music, or write NPC history. NPCManager handoff and music remain separately scoped because their cross-module and Jukebox ownership rules differ from tracker observation.
+This release implements the tracker-integrity and first turn-awareness stages of [Issue #48](https://github.com/Mord-Eagle/GameAssist/issues/48), [Issue #54](https://github.com/Mord-Eagle/GameAssist/issues/54), and [Issue #55](https://github.com/Mord-Eagle/GameAssist/issues/55), then completes the project-wide navigation and manual work in [Issue #58](https://github.com/Mord-Eagle/GameAssist/issues/58) and [Issue #59](https://github.com/Mord-Eagle/GameAssist/issues/59). It does not automatically end turns, alter conditions or markers, apply persistent token highlights, play music, or write NPC history. NPCManager handoff and music remain separately scoped because their cross-module and Jukebox ownership rules differ from tracker observation.
 
 ### Added – CombatAssist 1.0.2
 
@@ -2633,6 +2633,29 @@ This release implements the tracker-integrity and first turn-awareness stages of
 - Makes `!Welcome` and the case-insensitive `!Welcome-Help`, `!Welcome-Status`, `!Welcome-Preview`, `!Welcome-Announce`, `!Welcome-Mode`, `!Welcome-Delay`, `!Welcome-Header`, `!Welcome-Default`, and `!Welcome-Custom` commands the primary menu and documentation surface.
 - Retains the complete `!welcome-assist ...` command family for existing campaign macros.
 - Prevents the retained `!welcome-assist` command from being processed a second time by the broader `!Welcome-` prefix handler.
+
+### Refined – Project-wide navigation and manuals
+
+- Advanced the affected module revisions without changing their established gameplay responsibilities:
+  - ConfigUI 0.2.1;
+  - CritFumble 0.2.5.0;
+  - ConditionAssist 1.0.2;
+  - TokenAssist 1.0.2;
+  - InitiativeAssist 1.0.3;
+  - CombatAssist 1.0.4;
+  - WelcomeAssist 0.1.3;
+  - NPCManager 1.3.1;
+  - ConcentrationTracker 0.2.1;
+  - NPCHPRoller 0.1.1.1;
+  - DebugTools 0.2.1.
+- Standardized a compact navigation vocabulary through each module's existing command prefix: **Guide/Help**, **Menu/GM**, **Status**, **Info**, **Audit**, and **Manual**.
+- Kept established specialized commands intact. In particular, `!Init-GM` remains the private GM initiative roster, `!critfail` remains the direct player picker, and existing concentration `--option` commands remain accepted.
+- Made audits explicitly read-only and ensured they always explain that no configuration, token, marker, tracker, HP, table, or history data was changed.
+- Added friendly recovery for unrecognized module commands. The response identifies the problem and provides a direct **Open Guide** button instead of failing silently or opening an unrelated action.
+- Added `GameAssist.writeModuleManual(...)`, which creates or updates one stable, reserved `GameAssist Guide - <Module>` handout and refuses ambiguous duplicate ownership.
+- Added stable user manuals for CritFumble, ConditionAssist, TokenAssist, InitiativeAssist, CombatAssist, WelcomeAssist, NPCManager, and ConcentrationTracker.
+- Kept ConfigUI, NPCHPRoller, and DebugTools guidance in chat because their complete safe-use instructions fit in their compact panels; their Manual commands explain that choice rather than creating redundant handouts.
+- Added focused regression checks for every new guide, status, audit, manual, and unknown-command path, including repeated manual writes that must update rather than duplicate a handout.
 
 ### Added – Exact tracker transition model
 
@@ -2735,8 +2758,8 @@ This release implements the tracker-integrity and first turn-awareness stages of
 - Added CombatAssist `Status`, `Guide`/`Help`, `GM`/`Menu`, `Info`, and read-only `Audit` navigation aliases as the reference implementation for the project-wide command convention.
 - Advanced WelcomeAssist to 0.1.1 and replaced its long setup page with a compact action panel plus focused setup, mode, campaign-greeting, appearance, and safety topics.
 - Added a WelcomeAssist unknown-command response that explains the command was not recognized and provides an **Open Guide** button, matching the recovery style already used by CombatAssist and InitiativeAssist.
-- Expanded [Issue #58](https://github.com/Mord-Eagle/GameAssist/issues/58) with the project-wide Status, Guide/Help, GM/Menu, Info, Audit, and unsupported-feature response contract so established modules can be reviewed individually rather than rewritten inside this release.
-- Added [Issue #59](https://github.com/Mord-Eagle/GameAssist/issues/59) for persistent on-demand user manuals where a module's full guidance is better kept in one stable handout than repeated in chat.
+- Completed [Issue #58](https://github.com/Mord-Eagle/GameAssist/issues/58) across all eleven feature modules while preserving each module's established prefix and specialized controls.
+- Completed [Issue #59](https://github.com/Mord-Eagle/GameAssist/issues/59) with stable on-demand manuals for substantial workflows and explicit in-chat guidance for brief modules.
 
 ### CombatAssist expansion records
 
@@ -2744,24 +2767,24 @@ This release implements the tracker-integrity and first turn-awareness stages of
 - Implemented the non-centering native-ping portion of [Issue #55](https://github.com/Mord-Eagle/GameAssist/issues/55) with GM-layer privacy. Persistent token-property highlights remain conditional on exact Legacy and Jumpgate restoration evidence.
 - Added [Issue #56](https://github.com/Mord-Eagle/GameAssist/issues/56) for an explicit, optional CombatAssist-to-NPCManager encounter-summary handoff that does not duplicate death or revival history.
 - Added [Issue #57](https://github.com/Mord-Eagle/GameAssist/issues/57) for opt-in combat music hooks that preserve unrelated Roll20 Jukebox playback.
-- Retained Issues #56 and #57 as the next optional expansion after timer and native-ping acceptance.
+- Deferred Issues #56 and #57 so optional cross-module history and Jukebox behavior do not block the next module phase.
 - Updated held-action [Issue #53](https://github.com/Mord-Eagle/GameAssist/issues/53) to inherit Standard/Varied wording and the same hidden/custom next-initiative privacy rule.
 
 ### Documentation and metadata
 
 - Expanded `README.md` with CombatAssist onboarding, module guide, commands, configuration, developer API, macros, troubleshooting, upgrade steps, roadmap state, ownership boundaries, and current non-goals.
 - Expanded `Smoketest.md` with a dedicated CombatAssist component section and v0.1.7.0 clean-install and upgrade acceptance requirements.
-- Updated `ROADMAP.md` to move Issues #54 and #55 from planned implementation to Roll20 acceptance and document the 1.0.3 native-counter, timer, and ping behavior.
-- Updated `script.json` to advertise v0.1.7.0, eleven modules, the expanded `!Combat-` family, short `!Welcome` commands, native encounter-flow safeguards, and Turn Tracker ownership conflicts in end-user language.
+- Updated `ROADMAP.md` to move Issues #54 and #55 from planned implementation to Roll20 acceptance, record the completed #58/#59 implementation, and explicitly defer #42, #44, #45, #50, #52, #56, and #57.
+- Updated `script.json` to advertise v0.1.7.0, eleven modules, the expanded module navigation commands, the complete `!Combat-` family, short `!Welcome` commands, native encounter-flow safeguards, and Turn Tracker ownership conflicts in end-user language.
 - Added v0.1.6.1 to `previousversions` and retained its publication artifact as the rollback checkpoint.
 
 ### Release artifacts
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `GameAssist` | `B8C6952B7B4E19498AA45D76049B41C03C95EA3C4D2DC1D59F4C92A24E8610B4` |
-| `GameAssist.js` | `B8C6952B7B4E19498AA45D76049B41C03C95EA3C4D2DC1D59F4C92A24E8610B4` |
-| `GameAssist-v0.1.7.0` | `B8C6952B7B4E19498AA45D76049B41C03C95EA3C4D2DC1D59F4C92A24E8610B4` |
+| `GameAssist` | `854A0496051A1492ADBCD308F848F170622741CC33579723B88FBD1BB9905F16` |
+| `GameAssist.js` | `854A0496051A1492ADBCD308F848F170622741CC33579723B88FBD1BB9905F16` |
+| `GameAssist-v0.1.7.0` | `854A0496051A1492ADBCD308F848F170622741CC33579723B88FBD1BB9905F16` |
 | `GameAssist-v0.1.6.1` | `165E62A05ABBCCFE420BFCF84B4567D72D462F966EE95457726EA3499A9A1EF7` |
 | `previousversions/GameAssist v0.1.6.1` | `165E62A05ABBCCFE420BFCF84B4567D72D462F966EE95457726EA3499A9A1EF7` |
 
@@ -2773,9 +2796,10 @@ The development source, One-Click publication mirror, and v0.1.7.0 Roll20 test a
 | --- | --- |
 | JavaScript parse/compile | Passed for all current and preserved release artifacts |
 | CombatAssist focused harness | Passed (144/144) |
-| InitiativeAssist focused harness | Passed (111/111) |
-| WelcomeAssist focused harness | Passed (26/26) |
-| ConditionAssist regression harness | Passed (35/35) |
+| InitiativeAssist focused harness | Passed (115/115) |
+| WelcomeAssist focused harness | Passed (29/29) |
+| ConditionAssist clean-install harness | Passed (59/59) |
+| ConditionAssist migrated-state and cross-module navigation harness | Passed (71/71) |
 | TokenAssist regression harness | Passed (45/45) |
 | Timezone regression harness | Passed (23/23) |
 | Integration and lifecycle regression | Passed (46/46) against the preserved v0.1.4.7 baseline |
@@ -2785,8 +2809,8 @@ The development source, One-Click publication mirror, and v0.1.7.0 Roll20 test a
 | Current release artifact identity | Passed |
 | Preserved v0.1.6.1 artifact identity | Passed |
 
-The seven automated behavior suites pass 430 assertions in total. The structural, metadata, syntax, and artifact-identity gates also pass.
+The eight automated behavior tracks pass 532 assertions in total. The structural, metadata, syntax, and artifact-identity gates also pass.
 
 ### Roll20 acceptance gate
 
-Automated checks do not replace the live Roll20 Mod sandbox. v0.1.7.0 remains at sandbox verification until the dedicated CombatAssist test confirms native round-counter `+1`, fallback round counting, backward safety, preserved-round tracker edits, stale timer cancellation, deadline non-advancement, ping audiences and hidden-turn privacy, recovery, GM/current-player controls, A-B-A delivery, privacy-safe confirmations, the persistent manual, navigation aliases, unreadable-state attention, two-row behavior, disable/reload behavior, and unchanged InitiativeAssist operation. The short WelcomeAssist routes also require their focused live button checks.
+Automated checks do not replace the live Roll20 Mod sandbox. v0.1.7.0 remains at sandbox verification until the dedicated CombatAssist test confirms native round-counter `+1`, fallback round counting, backward safety, preserved-round tracker edits, stale timer cancellation, deadline non-advancement, ping audiences and hidden-turn privacy, recovery, GM/current-player controls, A-B-A delivery, privacy-safe confirmations, the persistent manual, unreadable-state attention, two-row behavior, disable/reload behavior, and unchanged InitiativeAssist operation. The focused #58/#59 pass must also confirm compact navigation, read-only audit wording, unknown-command recovery, and stable non-duplicating manuals in the Roll20 sandbox.

@@ -290,7 +290,22 @@ GameAssist stores event instants as absolute ISO timestamps. Changing the table 
 
 ## 6 · Module Guides <a id="6-module-guides"></a>
 
+Every module now follows the same small navigation vocabulary through its established command family:
+
+| Choice | What it opens |
+| --- | --- |
+| **Guide** or **Help** | A compact starting panel with the most useful actions. |
+| **Menu** or **GM** | The module's main control panel when it has one. |
+| **Status** | A concise current-health or current-state summary. |
+| **Info** | A short explanation of what the module does at the table. |
+| **Audit** | A read-only inspection that explicitly says it changed nothing. |
+| **Manual** | A stable `GameAssist Guide - <Module>` handout for modules with substantial workflows. Brief modules explain that their complete guidance already fits in chat. |
+
+The exact prefix stays familiar to that feature: for example, `!critfumble guide`, `!condition audit`, `!npc-death-manual`, `!Init-Info`, and `!Welcome-Menu`. Commands are case-insensitive. An unrecognized command under a module's prefix now explains the problem and offers an **Open Guide** button instead of failing silently. A few established commands retain a more specific job: notably, `!Init-GM` remains the private GM initiative roster rather than becoming a second copy of the Control Center.
+
 ### 6.1 CritFumble
+
+> **Module version:** `0.2.5.0`
 
 CritFumble watches common attack and damage roll templates for a natural 1 and offers a player-targeted fumble menu. Calling `!critfumble menu` opens the guided Natural 1 dialogue; `!critfail` opens the direct GM-facing player picker.
 
@@ -303,8 +318,12 @@ atk, atkdmg, npcatk, npcfullatk, npcaction, spell, simple, dmg, default
 Commands:
 
 * `!critfumble` / `!critfumble help` → Whisper a quick reference with setup table names and a button to open the guided menu.
+* `!critfumble guide` → Open the same compact quick reference.
 * `!critfumble menu` → Whisper the guided Natural 1 dialogue with player-picker, direct-roll, and confirm-roll buttons.
-* `!critfail` → Open the direct manual player picker.
+* `!critfail` / `!critfumble gm` → Open the direct manual player picker for the GM.
+* `!critfumble status` / `!critfumble audit` → Check the seven required rollable-table names; Audit is explicitly read-only.
+* `!critfumble info` → Whisper the short module explanation.
+* `!critfumble manual` → Create or update the stable CritFumble user-manual handout.
 * `!critfumble-melee|ranged|thrown|spell|natural` → Roll the selected fumble table.
 * `!confirm-crit-martial` / `!confirm-crit-magic` → Roll the matching confirmation table.
 
@@ -318,7 +337,7 @@ Config keys: `debug`, `useEmojis`, `rollDelayMs`.
 
 ### 6.2 ConditionAssist
 
-> **Module version:** `1.0.1`
+> **Module version:** `1.0.2`
 
 ConditionAssist gives the table a readable condition reference and a marker-backed selected-token menu. It defaults to the fifteen SRD 5.1 conditions used by the 2014 rules, including Exhaustion rather than Inspiration. The GM can switch the official descriptions to SRD 5.2.1 wording for the 2024 rules or edit any description for campaign-specific wording. Open `!condition` after selecting tokens to see their active configured conditions and toggle another condition with one click. Use `!condition status` to review every linked character or NPC on the current player page that has a configured condition or another active marker. Select linked character tokens and use `!condition announce`, `!c-a`, or `!cond-!` to toggle a condition marker and report the verified result publicly or to their player controllers. `!condition help` is the quick-start guide.
 
@@ -326,7 +345,11 @@ Common commands:
 
 * `!condition` → Open the selected-token condition menu.
 * `!condition status` or `!condition --status` → Show a GM-only current-page summary of configured conditions and other active markers, and update the complete `GameAssist Condition Status` handout.
-* `!condition help` → Open the quick-start guide.
+* `!condition help` / `guide` → Open the compact guide.
+* `!condition menu` / `gm` → Open the selected-token condition menu.
+* `!condition info` → Whisper the short module explanation.
+* `!condition audit` → Inspect current-page condition markers without changing them.
+* `!condition manual` → Create or update the stable ConditionAssist user-manual handout.
 * `!condition <name>` → Show one configured condition description.
 * `!cond-<condition>` → Show the same description with a case-insensitive short reference command, such as `!cond-prone`, `!COND-EXHAUSTION`, or a DM-created condition key.
 * `!condition add <condition...>` → Add one or more conditions to selected tokens.
@@ -358,7 +381,7 @@ Config keys: `command`, `rulesProfile`, `userAllowed`, `userToggle`, `sendOnlyTo
 
 ### 6.3 TokenAssist
 
-> **Module version:** `1.0.1`
+> **Module version:** `1.0.2`
 
 TokenAssist provides general token controls without requiring standalone TokenMod. Use `!token-assist` for the full command name, `!ta` for a short form, or `!ta-<action>` for quick table commands such as `!ta-set` and `!ta-move`. Select one or more tokens before running a command. Players can affect tokens they can select, while direct `--ids` targeting remains GM-only unless the GM enables **Players can use --ids**.
 
@@ -366,6 +389,9 @@ Start here:
 
 ```roll20chat
 !token-assist help
+!token-assist status
+!token-assist audit
+!token-assist manual
 !token-assist about
 !ta-help
 !ta-help-statusmarkers
@@ -402,7 +428,7 @@ Relative numbers use `+`, `-`, `*`, or `/`. Use a leading `=` for exact assignme
 
 Status-marker syntax is handled only by MarkerService. An unprefixed name or `+name` adds a marker, `-name` removes it, `!name` toggles it, and `=name` replaces the complete marker list after the replacement resolves successfully. Use `red:3` for a number, a registered custom display name, or an exact `Name::id` tag. In Roll20 query/button syntax, `Name;;id;3` is accepted for a numbered custom tag. Unrelated markers and their numbers are preserved unless an explicit replacement is requested.
 
-TokenAssist `1.0.1` focuses on the token controls GameAssist and most table macros use directly. Its current scope does not include image-side stack editing, default-token writes, computed or name-resolved attribute links, advanced controller-list editing, color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, separate `token`/`character`/`control` report-recipient behavior, duplicate-index marker operations, conditional marker counts, or TokenMod help-handout rebuilding. Unsupported operations return a clear warning before unrelated requested changes are applied.
+TokenAssist `1.0.2` focuses on the token controls GameAssist and most table macros use directly. Its current scope does not include image-side stack editing, default-token writes, computed or name-resolved attribute links, advanced controller-list editing, color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, separate `token`/`character`/`control` report-recipient behavior, duplicate-index marker operations, conditional marker counts, or TokenMod help-handout rebuilding. Unsupported operations return a clear warning before unrelated requested changes are applied.
 
 That boundary keeps the first integrated release testable. Image stacks and default-token writes alter persistent token assets; computed attributes and controller-name editing require separate expression and identity-resolution rules; and color arithmetic, random side selection, advanced marker counts, and recipient distinctions add specialized parsers that none of GameAssist's current modules require. Those groups can be evaluated individually after the integrated architecture passes its Roll20 release gate. TokenAssist already supplies its own chat help, and integrations use `GameAssist.TokenAssist` rather than a global `TokenMod` object, so those two differences are intentional rather than unfinished compatibility work.
 
@@ -452,6 +478,8 @@ GM commands:
 * `!Init-RR-Menu` → Reroll only PCs, living NPCs, selected tokens, one character, or a saved encounter group.
 * `!Init-Group` → Create, review, rename, reroll, or remove page-scoped encounter groups built from selected tracker tokens.
 * `!Init-Audit` → Show a detailed, read-only GM chat review of current tracker rows and linked characters not yet in Turn Order.
+* `!Init-Info` → Whisper the short InitiativeAssist explanation.
+* `!Init-Manual` → Create or update the stable InitiativeAssist user-manual handout.
 * `!Init-Mode observer|manager` → Choose read-only coexistence or InitiativeAssist-owned writes.
 
 `!Init-RR` rolls once per unique eligible token. Duplicate occurrences receive the same result. Custom rows, counters, objects, dead NPCs, HP/death-marker mismatches, stale references, off-page tokens, unsupported sheets, and unreadable 2024 entries are not rerolled or repositioned. Eligible rows sort only among the positions InitiativeAssist owns, so a round counter or another Mod's custom entry stays exactly where the GM placed it.
@@ -462,7 +490,7 @@ Config keys: `enabled`, `mode` (`manager` or `observer`), `hideNpcRolls` (defaul
 
 ### 6.5 CombatAssist
 
-> **Module version:** `1.0.3`<br>
+> **Module version:** `1.0.4`<br>
 > **Core service:** `TurnTrackerService 1.0.0`<br>
 > **Default:** Disabled until the GM enables it.
 
@@ -527,16 +555,22 @@ Config keys: `enabled`; `announcements` (`gm`, `public`, `whispers`, or `off`; d
 
 ### 6.6 Concentration Tracker
 
+> **Module version:** `0.2.1`<br>
 > **Marker service:** ConcentrationTracker uses the integrated `GameAssist.MarkerService`; standalone TokenMod is not required.
 
-`!concentration` or `!cc` opens buttons for normal, advantage, or disadvantage rolls and accepts:
+`!concentration` or `!cc` opens buttons for normal, advantage, or disadvantage rolls. Plain navigation words are available alongside the established `--` options:
 
-* `--help` → Whisper the help panel.
+* `help` / `guide` / `--help` → Whisper the compact guide.
+* `menu` / `gm` → Open the concentration-check buttons.
+* `info` → Whisper the short module explanation.
+* `status` / `--status` → List tokens currently carrying the configured marker.
+* `audit` → Run the same marker inspection with an explicit read-only result.
+* `manual` → Create or update the stable ConcentrationTracker user-manual handout.
+* `settings` / `config` → Open result-message settings.
 * `--damage N` → Roll against DC `max(10, floor(N / 2))`.
 * `--mode normal|adv|dis` → Choose roll mode.
 * `--last` → Repeat the player’s last recorded check.
 * `--off` → Remove the configured marker from selected tokens.
-* `--status` → List tokens currently carrying the configured marker.
 * `--config randomize on|off` → Toggle emote randomization.
 * `!ga-conc-status` → GM-only snapshot of the most recent concentration DC and damage per player.
 
@@ -552,7 +586,7 @@ Config keys: `marker`, `randomize`.
 
 > **Marker service:** NPCManager uses the integrated `GameAssist.MarkerService`; death history remains independent from marker-write success.
 
-> **Module version:** NPCManager `1.3.0` in GameAssist v0.1.7.0. NPCManager `1.0.0` introduced the four-level history model; `1.1.0` added curated Arc management, hierarchical clearing, date rollover, and the report writer; `1.1.1` hardened standalone interoperability and new-token HP initialization; `1.2.0` migrated marker behavior to MarkerService; `1.2.1` added confirmation-gated marker repair; `1.3.0` applies the DM-selected timezone to Session dates and history displays without changing stored event instants.
+> **Module version:** NPCManager `1.3.1` in GameAssist v0.1.7.0. NPCManager `1.0.0` introduced the four-level history model; `1.1.0` added curated Arc management, hierarchical clearing, date rollover, and the report writer; `1.1.1` hardened standalone interoperability and new-token HP initialization; `1.2.0` migrated marker behavior to MarkerService; `1.2.1` added confirmation-gated marker repair; `1.3.0` applies the DM-selected timezone to Session dates and history displays without changing stored event instants; `1.3.1` adds compact navigation, status, and a persistent manual without changing death-history rules.
 
 NPCManager watches `change:graphic:bar1_value` for linked NPC characters with `npc=1`.
 
@@ -564,6 +598,11 @@ When NPCHPRoller `autoRollOnAdd=true`, NPCManager treats the short placeholder-H
 
 Commands:
 
+* `!npc-death-help` / `!npc-death-guide` → Open the compact NPCManager guide.
+* `!npc-death-menu` / `!npc-death-gm` → Open the same compact guide through familiar navigation names.
+* `!npc-death-status` → Show current bucket, history, marker, and Arc health.
+* `!npc-death-info` → Whisper the short module explanation.
+* `!npc-death-manual` → Create or update the stable NPCManager user-manual handout.
 * `!npc-death-report` → Show the active Session bucket summary.
 * `!npc-death-report --scope campaign|chapter|section|session` → View a different active bucket.
 * `!npc-death-report --recent` → Show the newest recorded death events for the selected bucket.
@@ -604,12 +643,17 @@ Config keys: `autoTrackDeath`, `deadMarker`, `autoHide`, `hideLayer`.
 
 ### 6.8 NPC HP Roller
 
+> **Module version:** `0.1.1.1`<br>
 > **Dependency:** NPCHPRoller does **not** require TokenMod.
 
 NPCHPRoller reads `npc=1` and `npc_hpformula` from linked characters, parses `NdM+K` or `NdM-K`, and writes the result to token `bar1_value` and `bar1_max`.
 
 * `!npc-hp-selected` → Roll HP for qualifying selected NPC tokens.
 * `!npc-hp-all` → Roll HP for qualifying NPC tokens on the current player page.
+* `!npc-hp-help` / `!npc-hp-guide` → Open the compact guide.
+* `!npc-hp-status` → Show module and auto-roll status.
+* `!npc-hp-audit` → Count qualifying, skipped, and invalid current-page tokens without changing HP.
+* `!npc-hp-info` → Whisper the short module explanation.
 * `autoRollOnAdd=true` → Quietly attempt HP rolling when a qualifying NPC token is added.
 
 Invalid, unlinked, and PC tokens are skipped.
@@ -617,6 +661,8 @@ Invalid, unlinked, and PC tokens are skipped.
 Config key: `autoRollOnAdd`.
 
 ### 6.9 Config UI
+
+> **Module version:** `0.2.1`
 
 `!ga-config ui` or `!ga-config-ui` whispers a GM-only chat control panel. Each module card can show:
 
@@ -629,7 +675,11 @@ Config keys: `pageSize`, `showSummaries`.
 
 Disable ConfigUI if you prefer command-only administration.
 
+Use `!ga-config-ui help|guide`, `menu|gm`, `status`, `info`, or `audit` for the standard compact screens. `!ga-config-ui manual` explains that this brief module keeps its complete guidance in chat.
+
 ### 6.10 Debug Tools *(GM-only)*
+
+> **Module version:** `0.2.1`
 
 DebugTools is disabled by default and remains dry-run unless `--apply` is present:
 
@@ -648,9 +698,11 @@ Typical session:
 !ga-disable DebugTools
 ```
 
+After enabling the module, use `!ga-debug help|guide`, `menu|gm`, `status`, `info`, `audit`, or `settings` for its standard compact screens. `!ga-debug manual` explains that the full dry-run-first guidance already fits in chat.
+
 ### 6.11 WelcomeAssist *(optional, GM-managed)*
 
-> **Module version:** `0.1.2`<br>
+> **Module version:** `0.1.3`<br>
 > **Default:** Disabled<br>
 > **Automatic behavior:** At most one public greeting per sandbox lifecycle after completed GameAssist startup.
 
@@ -671,6 +723,11 @@ Enabling WelcomeAssist during a running sandbox does **not** post publicly. `!We
 Main commands:
 
 * `!Welcome` or `!Welcome-Help` → Open the compact action guide; its topic buttons reveal setup, mode, campaign-text, appearance, and startup details.
+* `!Welcome-Guide` → Open the same compact guide.
+* `!Welcome-Menu` / `!Welcome-GM` → Open greeting settings and actions.
+* `!Welcome-Info` → Whisper the short module explanation.
+* `!Welcome-Audit` → Inspect readiness and saved greeting configuration without posting or changing anything.
+* `!Welcome-Manual` → Create or update the stable WelcomeAssist user-manual handout.
 * `!Welcome-Status` → Review the current mode, delay, header, custom-list count, timer, and current-sandbox announcement.
 * `!Welcome-Preview` → Show the next greeting only to the GM.
 * `!Welcome-Announce` → Post one greeting publicly now.
@@ -761,6 +818,7 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!ga-config modules` | — | Show feature-module and core-service configured/runtime/dependency status. |
 |  | `!ga-config cleanup` | — | Explicitly remove unknown/orphaned state branches. |
 |  | `!ga-config ui` / `!ga-config-ui` | `[--page N]` | Open the GM Config UI. |
+|  | `!ga-config-ui help|menu|status|info|audit|manual` | — | Open compact ConfigUI navigation, settings, health, explanation, read-only review, or its short-module manual notice. |
 |  | `!ga-enable <ModuleOrService>` / `!ga-disable <ModuleOrService>` | — | Enable or disable a module or core service; names are case-insensitive. |
 | **Initiative** | `!Init-Menu` / `!Init-Help` / `!Init-Status` | — | Open InitiativeAssist controls, guidance, or the current native-tracker summary. |
 |  | `!Init-Go` / `!Init-Go!` | — | Publicly invite players to roll, then whisper the GM a PC/NPC roster with individual and batch controls. |
@@ -773,6 +831,7 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!Init-RR-Menu` | — | Open PC, NPC, selected-token, individual, and saved-group reroll choices. |
 |  | `!Init-Group` | `[--create "Name"] [--rename ID --name "Name"] [--remove ID]` | Manage page-scoped encounter groups from selected tracker tokens. |
 |  | `!Init-Audit` | — | Show the detailed read-only Initiative Review privately in chat. |
+|  | `!Init-Info` / `!Init-Manual` | — | Whisper the short explanation or create/update the stable InitiativeAssist manual handout. |
 |  | `!Init-Mode observer\|manager` | — | Choose read-only coexistence or InitiativeAssist tracker writes. |
 | **Combat** | `!Combat-Menu` / `!Combat-GM` | — | Open the CombatAssist Control Center. |
 |  | `!Combat-Help` / `!Combat-Guide` | `[turns\|timers\|recovery\|messages\|attention]` | Open the compact guide or one focused reference panel. |
@@ -791,6 +850,8 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!Combat-Timer` | `on\|off\|duration N\|deadline audience\|add N audience\|remove N\|clear --confirm` | Configure stale-safe turn timing and per-reminder recipients; never auto-advance. |
 |  | `!Combat-Cue` | `off\|gm\|players\|both\|public` | Configure a temporary native current-turn ping without changing token properties or map position. |
 | **Welcome** | `!Welcome` / `!Welcome-Help` / `!Welcome-Status` / `!Welcome-Preview` | — | Open the GM guide, review settings, or preview the next greeting privately. |
+|  | `!Welcome-Guide` / `!Welcome-Menu` / `!Welcome-GM` | — | Open the compact guide or greeting controls. |
+|  | `!Welcome-Info` / `!Welcome-Audit` / `!Welcome-Manual` | — | Open the short explanation, read-only readiness review, or stable manual handout. |
 |  | `!Welcome-Announce` | — | Post one greeting publicly now and cancel the pending automatic greeting for this sandbox. |
 |  | `!Welcome-Mode` | `default\|builtin\|custom\|mixed` | Choose the greeting pool. |
 |  | `!Welcome-Delay` | `<seconds>` | Set the automatic delay from 1 to 60 seconds. |
@@ -798,6 +859,7 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!Welcome-Default` | `<text>` | Replace the professional default greeting. |
 |  | `!Welcome-Custom` | `list`, `add <text>`, `remove <number>`, `clear --confirm` | Manage the bounded campaign greeting list. |
 | **Token Controls** | `!token-assist help` / `!ta-help` | — | Open TokenAssist guidance, commands, compatibility limits, provenance, and attribution. |
+|  | `!token-assist menu|gm|status|info|audit|manual` | matching `!ta-*` aliases | Open controls, health, explanation, read-only review, or the stable TokenAssist manual. |
 |  | `!token-assist --help-statusmarkers` / `!ta-help-statusmarkers` | — | Open the marker-command guide. |
 |  | `!token-assist --on|--off|--flip <property...>` / `!ta-on|off|flip` | selected/authorized targets | Change supported boolean token properties. |
 |  | `!token-assist --set <property|value...>` / `!ta-set` | selected/authorized targets | Change supported token, bar, aura, vision, lighting, layer, position, and marker properties. |
@@ -809,7 +871,9 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!token-mod ...` | temporary older syntax | Accepts supported older macros during v0.1.x; replace them before v0.2.0. |
 | **GM** | `!npc-hp-all` | — | Roll and set HP for qualifying NPC tokens on the current page. |
 |  | `!npc-hp-selected` | — | Roll and set HP for qualifying selected NPC tokens. |
+|  | `!npc-hp-help|menu|status|info|audit|manual` | — | Open compact NPCHPRoller navigation and read-only checks; its short guidance remains in chat. |
 |  | `!npc-death-help` | — | Open the same central NPCManager guide as `!npc-death-report --help`. |
+|  | `!npc-death-guide|menu|gm|status|info|manual` | — | Open compact navigation, current health, the short explanation, or the stable NPCManager manual. |
 |  | `!npc-death-report` | `[--scope campaign\|chapter\|section\|session] [--recent] [--page N] [--write] [--help]` | Show bucket history; `--help` opens the central guide and `--write` opens the report writer. |
 |  | `!npc-death-buckets` | `[--campaign "Name"] [--chapter "Name"] [--section "Name"] [--session "Name"] [--resetSession]` | View or rename the active death-history buckets. |
 |  | `!npc-death-clear` | `[--scope session] [--nested] [--confirm]` | Clear only the selected bucket, or add `--nested` to clear that level and its descendants. |
@@ -821,19 +885,22 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!condition config` | — | Open ConditionAssist settings and condition-definition controls. |
 | **Player / GM** | `!critfumble` / `!critfumble help` | — | Whisper the CritFumble quick reference. |
 |  | `!critfumble menu` | — | Whisper the guided Natural 1 dialogue. |
+|  | `!critfumble guide|gm|status|info|audit|manual` | — | Open compact navigation, the GM picker, setup health, explanation, read-only table audit, or the stable manual. |
 |  | `!critfail` | — | Open the direct GM-facing manual fumble prompt. Intended for GM use, but not currently GM-gated. |
 | **Debug** | `!ga-debug damage` | `--amount N [--token ID] [--apply]` | Preview or apply bar1 damage. |
+|  | `!ga-debug help|menu|status|info|audit|settings|manual` | — | Open compact DebugTools navigation and read-only checks; its short guidance remains in chat. |
 |  | `!ga-debug marker` | `--marker NAME [--state on|off|toggle] [--token ID] [--apply]` | Preview or apply a status marker change. |
 |  | `!ga-debug save` | `--dc N [--bonus N] [--mode normal|adv|dis] [--label "Text"] [--apply]` | Preview or roll a save. |
 | **Player / GM** | `!critfumble-<type>` | `melee|ranged|thrown|spell|natural` | Roll the selected fumble table. |
 |  | `!confirm-crit-martial` / `!confirm-crit-magic` | — | Roll the matching confirmation table. |
 |  | `!condition` / `!condition help` | — | Open the selected-token condition menu or quick-start guide. |
+|  | `!condition guide|menu|gm|status|info|audit|manual` | — | Open compact navigation, selected-token controls, health, explanation, read-only review, or the stable manual. |
 |  | `!condition <name>` | — | Show one configured condition description when permitted. |
 |  | `!cond-<condition>` | — | Show any official or DM-created condition through the case-insensitive short reference prefix. |
 |  | `!condition add|remove|toggle <condition...>` | selected tokens | Change one or more condition markers when permitted. |
 | **GM** | `!condition announce` / `!c-a` / `!cond-!` | selected linked character tokens | Choose a condition, then toggle and verify its marker while announcing the result or exact wording publicly or to player controllers. |
 |  | `!condition status` / `!condition --status` | current player page | List linked characters and NPCs with configured conditions or other active markers. |
-|  | `!concentration` / `!cc` | `--damage N`, `--mode normal|adv|dis`, `--last`, `--off`, `--status`, `--config randomize on|off`, `--help` | Open or perform a concentration workflow. |
+|  | `!concentration` / `!cc` | `help|guide|menu|gm|status|info|audit|manual|settings`, plus established `--damage N`, `--mode normal|adv|dis`, `--last`, `--off`, `--status`, `--config randomize on|off`, `--help` | Open navigation or perform a concentration workflow. |
 
 ### 8.1 Configuration Safety
 
@@ -1470,7 +1537,7 @@ Select a disposable token and try:
 !ta-set aura1_radius|5 aura1_color|336699 aura1_options|circle
 ```
 
-Values containing spaces must be quoted. Players may use selected-token commands, but `--ids` remains restricted unless the GM enables it through `!token-assist --config players-can-ids|on` or `!ta-config players-can-ids|on`. Commands involving unsupported advanced image, default-token, computed/name-resolved attribute, controller-list, color-math, multi-sided-token, duplicate marker index, conditional marker count, or help-handout behavior are outside TokenAssist 1.0.1's compatibility boundary and should produce a clear warning rather than a partial mutation.
+Values containing spaces must be quoted. Players may use selected-token commands, but `--ids` remains restricted unless the GM enables it through `!token-assist --config players-can-ids|on` or `!ta-config players-can-ids|on`. Commands involving unsupported advanced image, default-token, computed/name-resolved attribute, controller-list, color-math, multi-sided-token, duplicate marker index, conditional marker count, or TokenMod-style help-handout rebuilding are outside TokenAssist 1.0.2's compatibility boundary and should produce a clear warning rather than a partial mutation.
 
 ### 14.5 ConditionAssist Does Not Respond, Shows the Wrong Wording, or Uses the Wrong Marker
 
@@ -1845,15 +1912,15 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 | Item | Status in v0.1.7.0 | Notes |
 | --- | --- | --- |
 | MarkerService | **Implemented and accepted** | One toggleable service owns GameAssist marker resolution, mutation, preservation, and observation. Disabling it turns off dependent modules without disabling unrelated features. |
-| Bundled marker consumers | **Migrated** | NPCManager 1.3.0, ConcentrationTracker 0.2.0, and DebugTools 0.2.0 no longer require standalone TokenMod. |
-| ConditionAssist 1.0.1 | **Implemented and accepted** | Condition references with `!condition` and case-insensitive `!cond-<condition>` commands, accurate selected-token recognition, current-page condition/marker status, selectable 2014/2024 SRD wording, campaign edits, marker artwork, verified marker-toggling announcements, validated legacy import, and MarkerService synchronization. |
-| TokenAssist 1.0.1 | **Implemented and accepted** | General token controls with `!token-assist` and `!ta`/`!ta-*` commands, temporary support for older `!token-mod` macros, MarkerService-backed markers, token-change observation, clear compatibility limits, and duplicate-install protection. |
+| Bundled marker consumers | **Migrated** | NPCManager 1.3.1, ConcentrationTracker 0.2.1, and DebugTools 0.2.1 no longer require standalone TokenMod. |
+| ConditionAssist 1.0.2 | **Implemented and accepted** | Condition references with `!condition` and case-insensitive `!cond-<condition>` commands, accurate selected-token recognition, current-page condition/marker status, selectable 2014/2024 SRD wording, campaign edits, marker artwork, verified marker-toggling announcements, validated legacy import, MarkerService synchronization, compact navigation, and a stable manual. |
+| TokenAssist 1.0.2 | **Implemented and accepted** | General token controls with `!token-assist` and `!ta`/`!ta-*` commands, temporary support for older `!token-mod` macros, MarkerService-backed markers, token-change observation, clear compatibility limits, duplicate-install protection, compact navigation, and a stable manual. |
 | Integrated architecture stabilization | **Complete** | Upgrade, migration, lifecycle, command, marker, documentation, and Roll20 sandbox checks passed under Issues #28 and #29. |
 | DM-configurable timezone | **Implemented; focused acceptance passed** | One validated table timezone controls readable timestamps and date-managed NPC Sessions while stored event instants remain absolute. The complete live module suite was not rerun for v0.1.5.1. |
 | TurnTrackerService 1.0.0 | **Implemented; live foundation passed** | Toggleable native-tracker snapshots, structural row classification, guarded lossless writes, observations, dependency cascading, and visible page-owned row creation passed the focused Roll20 checkpoint. |
-| InitiativeAssist 1.0.2 | **Implemented; guide refinement pending live check** | Mixed 2014/2024 initiative, public and GM-only start pages, private NPC evidence, GM-layer NPC batches, selected-character batches, roll options, selective rerolls, encounter groups, status, audit, and a compact layered guide through the case-insensitive `!Init-` namespace. |
-| CombatAssist 1.0.3 | **Implemented; Roll20 acceptance pending** | Optional native-tracker layer with native round-counter authority, conservative fallback rounds, preserved-round roster/reroll adoption, one-step recovery, guarded movement, stale-safe configurable timers, private-safe native pings, ordered player confirmations, compact guidance, and a persistent manual. TurnTrackerService is its only baseline prerequisite. |
-| WelcomeAssist 0.1.2 | **Implemented; short-command live check pending** | Disabled-by-default post-bootstrap greeting with professional, built-in, campaign-custom, and mixed modes; private preview/configuration; bounded custom text; health-gated one-per-sandbox automatic output; compact guidance; short `!Welcome` commands; and retained `!welcome-assist` compatibility. |
+| InitiativeAssist 1.0.3 | **Implemented; release closeout pending** | Mixed 2014/2024 initiative, public and GM-only start pages, private NPC evidence, GM-layer NPC batches, selected-character batches, roll options, selective rerolls, encounter groups, status, audit, compact navigation, and a stable manual through the case-insensitive `!Init-` namespace. |
+| CombatAssist 1.0.4 | **Implemented; Roll20 acceptance pending** | Optional native-tracker layer with native round-counter authority, conservative fallback rounds, preserved-round roster/reroll adoption, one-step recovery, guarded movement, stale-safe configurable timers, private-safe native pings, ordered player confirmations, compact guidance, and a persistent manual. TurnTrackerService is its only baseline prerequisite. |
+| WelcomeAssist 0.1.3 | **Implemented; release closeout pending** | Disabled-by-default post-bootstrap greeting with professional, built-in, campaign-custom, and mixed modes; private preview/configuration; bounded custom text; health-gated one-per-sandbox automatic output; compact standard navigation; a stable manual; short `!Welcome` commands; and retained `!welcome-assist` compatibility. |
 | Configuration export | **Implemented, partial** | Versioned configuration-only snapshot; no import/restore. |
 | State self-healing | **Implemented, conservative** | Repairs known containers; does not auto-delete unknown branches. |
 | Public queue API | **Implemented, opt-in** | Does not route every event through the queue. |
@@ -1862,7 +1929,7 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 
 ### 17.2 Current Candidate: CombatAssist Sandbox Acceptance
 
-The v0.1.7.0 candidate must pass the complete CombatAssist section in `Smoketest.md`: explicit lifecycle; native and CombatAssist forward/backward movement; recognized native round-counter `+1`; preserved-round deletion/addition/reroll behavior; guarded recovery; GM and player whispers; A-B-A delivery for consecutive characters controlled by one player; privacy-safe Standard and Varied confirmations; stale-safe timer cancellation; GM/player/public ping privacy; manual-handout creation/update; common navigation aliases; optional pause/edit/resume; attention states; two-entry handling; and confirmed end behavior. The short WelcomeAssist aliases also require their focused live checks, and the Roll20 sandbox remains the release gate.
+The v0.1.7.0 candidate must pass the complete CombatAssist section in `Smoketest.md`: explicit lifecycle; native and CombatAssist forward/backward movement; recognized native round-counter `+1`; preserved-round deletion/addition/reroll behavior; guarded recovery; GM and player whispers; A-B-A delivery for consecutive characters controlled by one player; privacy-safe Standard and Varied confirmations; stale-safe timer cancellation; GM/player/public ping privacy; optional pause/edit/resume; attention states; two-entry handling; and confirmed end behavior. The focused #58/#59 section must also confirm compact guides, read-only audits, friendly bad-command recovery, and stable non-duplicating manuals across the enabled module suite. The Roll20 sandbox remains the release gate.
 
 ### 17.3 Later Candidate: Compatibility-First Bridge Character Sheet
 
@@ -1879,20 +1946,16 @@ This is a separate project and is not implemented in v0.1.5.0.
 
 1. **Immediate CombatAssist Expansion**
    * Complete Roll20 acceptance for the implemented configurable turn timers and stale-safe reminders under Issue #54 and native current-turn pings under Issue #55; consider persistent highlights only if exact Legacy and Jumpgate restoration proves reliable.
-   * Implement the explicit optional NPCManager encounter-summary handoff under Issue #56 and opt-in combat music hooks under Issue #57.
-   * Continue with a read-only damage-change ledger under Issue #52 and a held-action workflow with player `!Now` under Issue #53 after the immediate notification features are accepted.
+   * Keep the optional NPCManager handoff (#56), combat music hooks (#57), and read-only damage ledger (#52) deferred until they are more valuable than the next module phase.
+   * Retain the held-action workflow with player `!Now` under Issue #53 as independent future work.
    * Keep condition, marker, initiative, and NPC-history ownership behind their existing module and service boundaries.
 
-2. **Module Navigation and Manuals**
-   * Apply the common Status, Guide/Help, GM/Menu, Info, and Audit intent contract one module at a time under Issue #58 while preserving established prefixes and commands.
-   * Add persistent on-demand module manuals where long-form guidance genuinely belongs in a handout under Issue #59.
-
-3. **Spell-Specific Concentration Integration**
+2. **Spell-Specific Concentration Integration**
    * Detect concentration spell casts.
    * Track spell name, duration, expiration, and optional reminders.
    * Clear concentration under explicitly defined conditions.
 
-4. **Expanded Module Suite**
+3. **Expanded Module Suite**
    * Cooldown tracker.
    * Encounter assistant.
    * Resource tracker.
@@ -1900,16 +1963,16 @@ This is a separate project and is not implemented in v0.1.5.0.
    * Rest and recovery tools.
    * Dynamic location/AoE helpers.
 
-5. **Plugin Registry and Discovery**
+4. **Plugin Registry and Discovery**
    * A validated extension contract for third-party modules.
    * No promise of filesystem-style “drop-in folders,” because Roll20’s sandbox does not expose a normal plugin directory.
 
-6. **Configuration and State Restore**
+5. **Configuration and State Restore**
    * Validated snapshot import.
    * Migration rules and preview/dry-run behavior.
    * Explicit handling for runtime caches, metrics, and unknown branches.
 
-7. **Rollable-Table Import/Export**
+6. **Rollable-Table Import/Export**
    * Shareable table formats with validation and collision behavior.
 
 7. **Verbose Diagnostics**
@@ -1935,11 +1998,12 @@ This is a separate project and is not implemented in v0.1.5.0.
 
 ### v0.1.7.0 – CombatAssist Encounter Flow
 
-* Added disabled-by-default CombatAssist `1.0.3` as an optional layer over the native Turn Tracker, with deliberate lifecycle, guarded next/previous controls, authorized player End My Turn prompts, privacy-safe next-initiative confirmations, native round-counter support, turn timers, and current-turn pings.
+* Added disabled-by-default CombatAssist `1.0.4` as an optional layer over the native Turn Tracker, with deliberate lifecycle, guarded next/previous controls, authorized player End My Turn prompts, privacy-safe next-initiative confirmations, native round-counter support, turn timers, and current-turn pings.
 * Added native round authority from one clearly named custom Round Counter, including conservative `+1` evaluation when CombatAssist moves that row to the top. Without a counter, exact one-row movement retains conservative complete-cycle counting; valid combatant additions, removals, initiative rerolls, and manual reordering preserve the current round and establish a fresh cycle.
 * Added one-step recovery through a complete saved tracker checkpoint, revision-matched restore confirmation, and deliberate acceptance of the current native tracker without forcing a round-1 restart.
 * Added GM-only setup and diagnostics plus configurable GM, public, GM-and-current-player whispers, or disabled turn announcements. Optional stale-safe timers support a bounded duration, deadline recipient, and up to five early reminders without advancing initiative. Optional native pings can identify the current token without recentering a map or changing token state, and hidden turns remain GM-only.
-* Refined InitiativeAssist to `1.0.2`, CombatAssist to `1.0.3`, and WelcomeAssist to `0.1.2` with compact root guides and focused topic panels; CombatAssist adds an on-demand persistent manual handout and common navigation aliases, while WelcomeAssist makes the short `!Welcome` command family primary and gives unknown commands a direct Open Guide recovery path.
+* Refined all eleven modules with compact navigation through their established prefixes, explicit read-only audits, and friendly unknown-command recovery. Substantial modules create or update one stable user-manual handout; brief modules keep complete guidance in chat.
+* Advanced InitiativeAssist to `1.0.3`, CombatAssist to `1.0.4`, and WelcomeAssist to `0.1.3`; retained short case-insensitive `!Welcome` commands and every established specialized command.
 * Preserved all existing tracker rows and fields; unreadable, stale, duplicate, off-page, closed, or malformed states stop with recovery choices instead of guessing.
 
 ### v0.1.6.1 – Private Initiative and WelcomeAssist

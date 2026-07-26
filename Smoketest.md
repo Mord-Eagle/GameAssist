@@ -284,6 +284,55 @@ Each table needs at least one item.
 
 ---
 
+## Compact Guides and Module Manuals
+
+**What this proves:** Every feature has a predictable way to find help, check its current state, run a read-only audit, and recover from a mistyped command. Modules with longer workflows create one stable user-manual handout instead of filling chat with a wall of instructions.
+
+**Why test it:** These screens are the front door for both first-time GMs and experienced users returning to a feature months later. A working feature is still difficult to use when its controls are hard to find.
+
+**Skip when:** Do not skip this section while approving v0.1.7.0 or after changing a module's command routing or help content. During ordinary troubleshooting, test only the affected enabled module. WelcomeAssist, InitiativeAssist, CombatAssist, and DebugTools may be skipped when they are deliberately disabled and will remain unused.
+
+### Quick Pattern
+
+For each enabled module below:
+
+1. Open **Guide** and confirm it is short, action-focused, and links to deeper information.
+2. Open **Status** and confirm the module gives a concise current-state response.
+3. Open **Audit** and confirm it clearly says no changes were made.
+4. Enter the listed bad command and confirm it explains the problem and offers **Open Guide**.
+5. Where **Manual** is listed, run it twice. The second run must update the same handout rather than create a duplicate.
+
+| Module | Guide | Status | Audit | Manual | Deliberate bad command |
+| --- | --- | --- | --- | --- | --- |
+| ConfigUI | `!ga-config-ui help` | `!ga-config-ui status` | `!ga-config-ui audit` | `!ga-config-ui manual` | `!ga-config-ui impossible` |
+| CritFumble | `!critfumble guide` | `!critfumble status` | `!critfumble audit` | `!critfumble manual` | `!critfumble impossible` |
+| ConditionAssist | `!condition guide` | `!condition status` | `!condition audit` | `!condition manual` | `!condition impossible` |
+| TokenAssist | `!ta-guide` | `!ta-status` | `!ta-audit` | `!ta-manual` | `!ta-impossible` |
+| InitiativeAssist | `!Init-Guide` | `!Init-Status` | `!Init-Audit` | `!Init-Manual` | `!Init-Impossible` |
+| CombatAssist | `!Combat-Guide` | `!Combat-Status` | `!Combat-Audit` | `!Combat-Manual` | `!Combat-Impossible` |
+| WelcomeAssist | `!Welcome-Guide` | `!Welcome-Status` | `!Welcome-Audit` | `!Welcome-Manual` | `!Welcome-Impossible` |
+| NPCManager | `!npc-death-guide` | `!npc-death-status` | `!npc-death-audit` | `!npc-death-manual` | `!npc-death-impossible` |
+| ConcentrationTracker | `!concentration guide` | `!concentration status` | `!concentration audit` | `!concentration manual` | `!concentration impossible` |
+| NPCHPRoller | `!npc-hp-guide` | `!npc-hp-status` | `!npc-hp-audit` | `!npc-hp-manual` | `!npc-hp-impossible` |
+| DebugTools | `!ga-debug guide` | `!ga-debug status` | `!ga-debug audit` | `!ga-debug manual` | `!ga-debug impossible` |
+
+ConfigUI, NPCHPRoller, and DebugTools are deliberately brief. Their **Manual** command should explain that the complete guidance remains in chat. The other Manual commands create or update these handouts:
+
+```text
+GameAssist Guide - CritFumble
+GameAssist Guide - ConditionAssist
+GameAssist Guide - TokenAssist
+GameAssist Guide - InitiativeAssist
+GameAssist Guide - CombatAssist
+GameAssist Guide - WelcomeAssist
+GameAssist Guide - NPCManager
+GameAssist Guide - ConcentrationTracker
+```
+
+Pass when every tested command responds once, every audit is visibly read-only, every bad command offers a useful recovery path, and no Manual command creates a second handout with the same module name.
+
+---
+
 # Component Tests
 
 ## 1. Core System
@@ -1140,7 +1189,7 @@ Select a disposable token whose name visibility is off, then run:
 !token-assist --set imgsrc|ignored --on showname
 ```
 
-Pass when TokenAssist refuses the unsupported image-side property, explains that this feature is outside TokenAssist 1.0.1, and leaves name visibility unchanged. TokenAssist also does not claim default-token writes, computed or name-resolved attributes, advanced controller-list editing, advanced color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, exact TokenMod report-recipient distinctions, duplicate-index marker editing, conditional marker counts, or TokenMod help-handout rebuilding.
+Pass when TokenAssist refuses the unsupported image-side property, explains that this feature is outside TokenAssist 1.0.2, and leaves name visibility unchanged. TokenAssist also does not claim default-token writes, computed or name-resolved attributes, advanced controller-list editing, advanced color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, exact TokenMod report-recipient distinctions, duplicate-index marker editing, conditional marker counts, or TokenMod help-handout rebuilding.
 
 #### T12. Restore Campaign Settings
 
