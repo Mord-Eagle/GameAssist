@@ -39,7 +39,7 @@ StatusInfo-derived compatibility concepts include the `!condition` command famil
 
 ## GameAssist TokenAssist
 
-`GameAssist.TokenAssist` provides general Roll20 token controls through `!token-assist` and the shorter `!ta`/`!ta-*` forms. Older supported `!token-mod` macros continue temporarily through GameAssist v0.1.x and must be updated before v0.2.0. All status-marker operations are delegated to `GameAssist.MarkerService`.
+`GameAssist.TokenAssist` provides general Roll20 token controls through `!token-assist` and the shorter `!ta`/`!ta-*` forms. Older supported `!token-mod` macros remain compatibility aliases during GameAssist v1.x and should be updated before v2.0.0. All status-marker operations are delegated to `GameAssist.MarkerService`.
 
 - GameAssist component: `TokenAssist`
 - Component version: `1.0.1`
