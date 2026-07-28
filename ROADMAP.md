@@ -1,8 +1,8 @@
 # GameAssist Development Roadmap
 
-This roadmap records the transition from GameAssist's standalone-dependency `v0.1.4.x` line to the integrated `v0.1.5.x` marker, token, condition, and timezone architecture, the native initiative foundation and optional startup greeting in `v0.1.6.1`, and the preservation-first CombatAssist foundation in `v0.1.7.0`.
+This roadmap records GameAssist's completed standalone-to-integrated transition, its native initiative and encounter foundations, and the current move into three-part project releases beginning with the `v1.8.x` module-identity and NPCAssist line.
 
-Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation notes, discoveries, and checklists. Issue #29 remains the completed integrated-architecture gate; current encounter-flow work is tracked by [Issue #48](https://github.com/Mord-Eagle/GameAssist/issues/48).
+Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation details and acceptance evidence. The active sequence is Issue #60, Issue #64, Issue #65, phased EffectAssist work under Issue #61, and phased AlmanacAssist work under Issue #62.
 
 > The roadmap is a maintained plan, not a promise of dates. Issues #25 through #29 are development checkpoints within one release train; none is an intermediate public release.
 
@@ -31,6 +31,7 @@ Use this document for durable release boundaries, sequencing, and completion gat
 7. **Roll20 is the final compatibility test.** Syntax checks and local reasoning are necessary but cannot replace sandbox smoke tests.
 8. **Initiative and combat remain separate responsibilities.** TurnTrackerService owns safe native-tracker mechanics, InitiativeAssist owns initiative calculation and reroll UX, and CombatAssist owns deliberate encounter lifecycle plus conservative turn and round observation. Timers, reminders, current-turn indicators, reporting handoff, and music are staged immediately after the foundation acceptance rather than folded into tracker mechanics.
 9. **Public startup greetings remain deliberate.** WelcomeAssist starts disabled, previews privately, announces automatically only after completed healthy Bootstrap, and never treats live enablement as permission to post.
+10. **Project releases use three-part semantic versions beginning with v1.8.0.** Historical four-part identifiers remain unchanged, and independently versioned modules keep their own established version sequences. Compatibility aliases are removed only through an explicit later migration issue, never merely because the project version format changed.
 
 ---
 
@@ -59,6 +60,12 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | CombatAssist music hooks | Deferred | [#57](https://github.com/Mord-Eagle/GameAssist/issues/57) | Useful atmosphere control, but safe Jukebox ownership is independent of the current release gate. |
 | Compact help and command recovery | Complete | [#58](https://github.com/Mord-Eagle/GameAssist/issues/58) | Every feature module exposes compact navigation, an action-appropriate GM/DM screen, read-only audit wording, and friendly unknown-command recovery. |
 | Persistent module manuals | Complete | [#59](https://github.com/Mord-Eagle/GameAssist/issues/59) | Modules with substantial workflows create or update one stable `GameAssist Guide - <Module>` handout; brief modules keep complete guidance in chat. The Roll20 acceptance pass succeeded. |
+| Canonical module identities | Sandbox verification | [#60](https://github.com/Mord-Eagle/GameAssist/issues/60), [PR #63](https://github.com/Mord-Eagle/GameAssist/pull/63) | v1.8.0 migrates CritAssist, NPCAssist, ConcentrationAssist, and HPAssist names while preserving valid state, records, handouts, APIs, and established commands. Local regression is complete; live Roll20 upgrade acceptance remains. |
+| NPCAssist Bloodied alerts | Planned | [#64](https://github.com/Mord-Eagle/GameAssist/issues/64) | v1.8.1 adds a focused GM-private 50% HP crossing alert without changing death-history semantics. |
+| Progressive NPC naming | Planned | [#65](https://github.com/Mord-Eagle/GameAssist/issues/65) | v1.8.2 prevents accidental duplicate NPC token names through page-local, current-token numbering that the GM can disable or deliberately override. |
+| EffectAssist Phase A | Deferred | [#61](https://github.com/Mord-Eagle/GameAssist/issues/61) | v2.x begins with semantic source/target effects, dependencies, stacking, marker/condition projection, and reconciliation; sheet mutation and automatic durations remain later phases. |
+| AlmanacAssist master program | Deferred | [#62](https://github.com/Mord-Eagle/GameAssist/issues/62) | v2.y tracks six implementation issues in order: Time, Climate, Astronomy, Weather, Environment, and Rest. |
+| TokenAssist and CombatAssist backlog | Deferred | [open issues](https://github.com/Mord-Eagle/GameAssist/issues) | v2.z revisits older parity and integration work after the new module foundations are stable. |
 
 ---
 
@@ -385,13 +392,13 @@ CombatAssist 1.0.5 begins disabled, requires explicit GM intent, and treats Roll
 
 Issue #48 is complete when Roll20 confirms explicit lifecycle controls, native round-counter `+1`, fallback forward rounds, backward safety, preserved-round additions/removals/rerolls/reordering, one-step recovery, optional pause/edit/resume, exact tracker-field preservation, unreadable-state attention, two-row behavior, stale-safe timers, ping audiences and hidden-turn privacy, GM/current-player controls, A-B-A delivery, privacy-safe confirmations, manual handout creation/update, common navigation aliases, compact guide routing, independent disable behavior, reload behavior, and no regressions in InitiativeAssist or established modules.
 
-**Current evidence:** The complete Roll20 smoke test passed. Deterministic coverage also confirms native round-counter calculations, stale timer invalidation, teardown cleanup, timer and ping privacy, preserved-round roster changes, InitiativeAssist rerolls, one-step restore, ordered player confirmations, navigation aliases, compact guidance, and stable module manuals. Final artifact identity and review closure are the remaining PR checks.
+**Current evidence:** The complete Roll20 smoke test, deterministic coverage, artifact identity check, review closure, and merge completed. Coverage confirms native round-counter calculations, stale timer invalidation, teardown cleanup, timer and ping privacy, preserved-round roster changes, InitiativeAssist rerolls, one-step restore, ordered player confirmations, navigation aliases, compact guidance, and stable module manuals.
 
 ---
 
 ## Phase 10: Immediate CombatAssist Expansion
 
-The timer and native-ping implementations are part of the v0.1.7.0 candidate and remain open only for live Roll20 acceptance. The remaining expansion items are deliberately deferred so they do not hold the next module hostage.
+The timer and native-ping implementations completed in v0.1.7.0. The remaining expansion items are deliberately deferred so they do not hold the current module sequence hostage.
 
 1. [Issue #54](https://github.com/Mord-Eagle/GameAssist/issues/54) - **complete** configurable turn timers and reminders, including live stale-callback and recipient acceptance.
 2. [Issue #55](https://github.com/Mord-Eagle/GameAssist/issues/55) - **complete** native current-turn pings, including live audience and hidden-layer acceptance; persistent token highlights remain separately deferred.
@@ -413,13 +420,66 @@ These open items extend TokenAssist beyond the accepted integrated architecture 
 
 TokenAssist will continue to use its own help and `GameAssist.TokenAssist` API. Rebuilding TokenMod's help handout or creating a global `TokenMod` compatibility object is not planned.
 
-## Deferred Module Naming
+## Phase 11: Canonical Module Identities in `v1.8.0`
 
-- [Issue #60](https://github.com/Mord-Eagle/GameAssist/issues/60) — **deferred** migration planning for ConcentrationAssist, NPCAssist, CritAssist, and the decision to rename NPCHPRoller as HPAssist or consolidate it into NPCAssist. Existing commands, state, handouts, dependencies, and public APIs must remain compatible through any later transition.
+**Tracking:** [Issue #60](https://github.com/Mord-Eagle/GameAssist/issues/60), [PR #63](https://github.com/Mord-Eagle/GameAssist/pull/63)
+
+This release adopts CritAssist, NPCAssist, ConcentrationAssist, and HPAssist as the canonical runtime, state, MECHSUITS, configuration, diagnostic, and documentation identities. HP rolling remains a separate module because its deliberate and automatic formula rolls have a narrower lifecycle than NPCAssist's history, markers, reports, and future NPC-state features.
+
+### Checklist
+
+- [x] Adopt three-part project release numbering as `v1.8.0` without rewriting historical release identifiers or independent module versions.
+- [x] Rename registration, handler ownership, dependencies, state branches, public labels, MECHSUITS tags, and canonical-tree entries.
+- [x] Migrate valid old state destination-first and remove the migrated source branch; retain malformed or unknown branches for warning-only diagnosis.
+- [x] Preserve every established command as a compatibility alias and add canonical command families.
+- [x] Preserve NPCAssist history, bucket, Arc, marker, and public API compatibility.
+- [x] Adopt and rename one unambiguous old guide handout rather than creating a duplicate.
+- [x] Pass syntax and the complete local regression suite.
+- [ ] Pass the focused clean-install and v0.1.7.0 upgrade smoke tracks in Roll20.
+- [ ] Complete PR #63 and close Issue #60.
+
+### Completion Gate
+
+The Roll20 module list uses only the four canonical names; valid settings and records survive upgrade; old and new command forms each dispatch once; old guide handouts are adopted without duplication; malformed legacy data remains diagnosable; and unrelated modules retain their accepted behavior.
 
 ---
 
-## Current `v0.1.7.0` Architecture
+## Phase 12: Focused NPCAssist Patches in `v1.8.1` and `v1.8.2`
+
+### v1.8.1 — Bloodied Alerts
+
+[Issue #64](https://github.com/Mord-Eagle/GameAssist/issues/64) adds a GM-private notice only when an eligible NPC crosses from above half of a valid positive maximum HP to half or below while remaining alive. It reuses HP-initialization protection and does not write Bloodied events into death-history buckets.
+
+### v1.8.2 — Progressive NPC Naming
+
+[Issue #65](https://github.com/Mord-Eagle/GameAssist/issues/65) assigns names from the live tokens on the newly added token's page. Existing tokens are never renamed. The default is enabled, the GM may disable it, and deliberate manual duplicates remain allowed. Number selection uses the lowest available positive suffix, so a deleted gap may be reused; no persistent campaign counter is required.
+
+---
+
+## Phase 13: EffectAssist Program in `v2.x`
+
+[Issue #61](https://github.com/Mord-Eagle/GameAssist/issues/61) is the master specification. Phase A establishes semantic effect instances, source and target ownership, dependencies, stacking, manual lifecycle, marker/condition projection, and read-only reconciliation. Character-sheet mutation, passive spell recognition, concentration observers, HP-loss prompting, and combat timing are separately gated later phases.
+
+EffectAssist remains a gameplay module. It consumes MarkerService and ConditionAssist capabilities where enabled and must not become another marker authority, Turn Tracker authority, concentration roller, or complete D&D rules engine.
+
+---
+
+## Phase 14: AlmanacAssist Program in `v2.y`
+
+[Issue #62](https://github.com/Mord-Eagle/GameAssist/issues/62) is the master specification for one GameAssist module with six independently toggleable internal submodules. Before implementation, create one issue for each phase and work in this order:
+
+1. [#66 TimeAlmanac](https://github.com/Mord-Eagle/GameAssist/issues/66).
+2. [#67 ClimateAlmanac](https://github.com/Mord-Eagle/GameAssist/issues/67).
+3. [#68 AstronomyAlmanac](https://github.com/Mord-Eagle/GameAssist/issues/68).
+4. [#69 WeatherAlmanac](https://github.com/Mord-Eagle/GameAssist/issues/69).
+5. [#70 EnviroAlmanac](https://github.com/Mord-Eagle/GameAssist/issues/70).
+6. [#71 RestAlmanac](https://github.com/Mord-Eagle/GameAssist/issues/71).
+
+Each phase must provide useful standalone behavior with explicit optional integrations. Fictional world time remains separate from GameAssist's real-world table timezone and NPCAssist's real-world Session dates.
+
+---
+
+## Current `v1.8.0` Architecture
 
 ```text
 [GAMEASSIST]/
@@ -438,15 +498,15 @@ TokenAssist will continue to use its own help and `GameAssist.TokenAssist` API. 
 │  └─ [GAMEASSIST:INTERFACES:COMMANDS]
 ├─ [GAMEASSIST:MODULES]
 │  ├─ [GAMEASSIST:MODULES:CONFIGUI]
-│  ├─ [GAMEASSIST:MODULES:CRITFUMBLE]
+│  ├─ [GAMEASSIST:MODULES:CRITASSIST]
 │  ├─ [GAMEASSIST:MODULES:CONDITIONASSIST]
 │  ├─ [GAMEASSIST:MODULES:TOKENASSIST]
 │  ├─ [GAMEASSIST:MODULES:INITIATIVEASSIST]
 │  ├─ [GAMEASSIST:MODULES:COMBATASSIST]
 │  ├─ [GAMEASSIST:MODULES:WELCOMEASSIST]
-│  ├─ [GAMEASSIST:MODULES:NPCMANAGER]
-│  ├─ [GAMEASSIST:MODULES:CONCENTRATIONTRACKER]
-│  ├─ [GAMEASSIST:MODULES:NPCHPROLLER]
+│  ├─ [GAMEASSIST:MODULES:NPCASSIST]
+│  ├─ [GAMEASSIST:MODULES:CONCENTRATIONASSIST]
+│  ├─ [GAMEASSIST:MODULES:HPASSIST]
 │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 └─ [GAMEASSIST:BOOTSTRAP]
 ```

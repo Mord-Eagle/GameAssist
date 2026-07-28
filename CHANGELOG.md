@@ -10,6 +10,7 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 | Revision | Status | Role |
 | --- | --- | --- |
+| **v1.8.0** | Release candidate; automated verification complete, focused Roll20 upgrade acceptance pending | Canonical module identities and migration-safe project version transition |
 | **v0.1.7.0** | Accepted after automated verification and live Roll20 smoke testing | Preservation-first encounter, turn, and round flow |
 | **v0.1.6.1** | Merged; focused Roll20 acceptance passed | GM-private initiative start and optional table greetings |
 | **v0.1.6.0** | Automated verification passed; Roll20 sandbox acceptance pending | Native Turn Tracker service and mixed-sheet initiative workflows |
@@ -36,6 +37,64 @@ This changelog is intentionally detailed. It records not only visible features, 
 - The attempted v0.1.5 file was not imported wholesale. Its unsafe or structurally unreliable changes were rejected; only isolated reviewed ideas were ported.
 - Older supplied notes used “Unreleased” and “Staging” labels for v0.1.3–v0.1.5 work. Those records are retained below as historical development evidence rather than silently discarded.
 - Where the supplied historical record did not establish a release date, this changelog does not invent one.
+
+---
+
+## [1.8.0] – 2026-07-28
+
+### Release definition
+
+GameAssist v1.8.0 is a compatibility-preserving module-identity release. It adopts **CritAssist**, **NPCAssist**, **ConcentrationAssist**, and **HPAssist** as the canonical names for the four remaining inherited modules while retaining the commands, settings, history, and campaign workflows established under CritFumble, NPCManager, ConcentrationTracker, and NPCHPRoller.
+
+This release also begins three-part GameAssist project versioning. The transition is from `v0.1.7.0` to `v1.8.0`; historical release numbers are not rewritten. Each module's independent version remains unchanged because the migration changes project-level ownership and naming rather than the module's established gameplay contract.
+
+### Canonical module identities
+
+- Renamed the four runtime registrations, lifecycle owners, dependency references, log speakers, configuration labels, public menus, manual titles, MECHSUITS tags, and canonical-tree entries.
+- Kept HP rolling in its own HPAssist module. NPCAssist owns NPC state, death/revival history, reports, audits, and Arc records; HPAssist owns deliberate and optional automatic `npc_hpformula` rolls.
+- Updated MarkerService dependents to NPCAssist and ConcentrationAssist without changing marker resolution, mutation, observation, teardown, or dependent-service safeguards.
+- Updated module health, configuration, and startup output so only canonical names appear as active components.
+
+### State and handout migration
+
+- Added a one-time valid-state migration from `CritFumble` to `CritAssist`, `NPCManager` to `NPCAssist`, `ConcentrationTracker` to `ConcentrationAssist`, and `NPCHPRoller` to `HPAssist` before startup auditing.
+- Uses destination-first merging: an already valid canonical value wins, while valid missing values from the old branch are retained.
+- Removes a well-formed old branch only after its valid data has been incorporated. Unknown branches and malformed old branches remain untouched so the state auditor can report them for diagnosis.
+- Canonicalizes legacy names passed to GameAssist state/configuration helpers, preventing an accepted old configuration command from recreating a second old-name branch.
+- Preserves NPCAssist Campaign, Chapter, Section, Session, Arc, death, and revival records, along with all valid module enablement and configuration values.
+- Extends stable manual handling so one unambiguous old `GameAssist Guide - <LegacyName>` handout is adopted, renamed, and updated. Multiple legacy matches are refused instead of guessed or overwritten.
+
+### Command and API compatibility
+
+- Added canonical `!CritAssist-*`, `!NPCAssist-*`, `!ConcentrationAssist-*`, `!HP-*`, and `!HPAssist-*` command families.
+- Preserved established `!critfumble*`, `!critfail`, `!NPC-*`, `!NPC-Death-*`, `!NPCManager-*`, `!concentration`, `!Concentration-*`, `!Con-*`, `!cc`, `!npc-hp-*`, `!NPCHP-*`, and `!NPCHPRoller-*` forms.
+- Ensured new and legacy HP command families share one dispatcher, including Guide, GM/DM, Status, Info, Audit, Settings, Manual, selected/page rolls, and friendly unknown-command recovery.
+- Retained `GameAssist.NPCManager` as a compatibility reference to `GameAssist.NPCAssist`; canonical consumers should use the new public name.
+- Continued the older `!token-mod` spelling as a v1.x compatibility alias with removal no earlier than GameAssist v2.0.0. The version-format change does not silently expire an existing command.
+
+### Documentation and release surfaces
+
+- Updated the executable banner, module inventory, project version, runtime version, MECHSUITS section metadata, and file-scoped canonical tree.
+- Updated README module guides, command/configuration examples, upgrade guidance, architecture diagram, and release sequence.
+- Updated `Smoketest.md` with a clean v1.8.0 path and a focused v0.1.7.0 upgrade path covering state, records, aliases, and handout adoption.
+- Updated `ROADMAP.md` with the accepted sequence: v1.8.0 naming migration, v1.8.1 Bloodied alerts, v1.8.2 progressive NPC naming, EffectAssist Phase A in v2.x, AlmanacAssist phases in v2.y, and deferred TokenAssist/CombatAssist work in v2.z.
+- Updated One-Click metadata and retained the previous v0.1.7.0 artifact as the immediate rollback source.
+
+### Verification
+
+- JavaScript syntax validation passes for the complete v1.8.0 candidate.
+- The existing automated suites pass 488 checks across state migration, module lifecycle, MarkerService and ConditionAssist behavior, TokenAssist behavior, timezone handling, InitiativeAssist, CombatAssist, and WelcomeAssist.
+- The focused Issue #60 harness passes 224 checks covering canonical state ownership, destination-first merges, malformed-source preservation, legacy configuration aliases, dependent-service names, command routing, unknown-command recovery, old-guide adoption, MECHSUITS structure, metadata, and artifact identity. Together with the established suites, v1.8.0 passes 712 automated checks.
+- `GameAssist`, `GameAssist.js`, and `GameAssist-v1.8.0` are byte-identical with SHA-256 `5C16D23FC46D88FF871B45E684EAB0AD86D08607958D70DA89D196D9D14BA9B2`.
+- Final acceptance still requires the focused Roll20 clean-install and v0.1.7.0 upgrade smoke tracks. Roll20 remains the authority for live sandbox behavior.
+
+### Deliberate exclusions
+
+- No Bloodied alert behavior; that is scoped to v1.8.1 under Issue #64.
+- No progressive NPC naming; that is scoped to v1.8.2 under Issue #65.
+- No EffectAssist or AlmanacAssist implementation.
+- No removal of established legacy commands or destructive cleanup of malformed state.
+- No change to initiative, combat, welcome, condition, token, marker, timezone, or NPC-history gameplay rules beyond the renamed ownership references required for migration.
 
 ---
 
