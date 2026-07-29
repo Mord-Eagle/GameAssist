@@ -289,7 +289,7 @@
     "!ta-report <recipient|message>",
     "!ta-ids <token-or-character-id...>",
     "!ta-help-statusmarkers",
-    "!token-mod <older supported macro syntax; replace before v2.0.0>",
+    "!token-mod <older supported compatibility syntax; use !token-assist or !ta for new macros>",
     "!Init-Help [overview|start|rolls|rerolls|privacy|troubleshooting]",
     "!Init-Guide [overview|start|rolls|rerolls|privacy|troubleshooting]",
     "!Init-Menu",

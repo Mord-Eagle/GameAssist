@@ -227,7 +227,7 @@ Build **TokenAssist** with the supported token-control workflows needed by GameA
 - [x] Record The Aaron attribution, upstream baseline, adapted portions, compatibility concepts, and MIT notice.
 - [x] Define the initial compatibility surface: help/config, selected and authorized-ID targeting, common booleans and token properties, relative values, movement, order, reports, page filters, and MarkerService-backed status commands.
 - [x] Document explicit 1.0.1 limits for image-side stacks, default-token writes, computed/name-resolved attributes, advanced controller lists and color arithmetic, relative/random multi-sided-token selection, duplicate-index markers, conditional marker counts, and help-handout rebuilding.
-- [x] Add `!token-assist`, `!ta`, and `!ta-*` command forms and warn when older `!token-mod` syntax is used, with a v0.2.0 removal deadline.
+- [x] Add `!token-assist`, `!ta`, and `!ta-*` command forms and retain older supported `!token-mod` syntax as a compatibility alias; any future removal requires a separately announced migration release.
 - [x] Normalize aura options, test a visible radius/color/shape combination, and stop movement trails from inheriting stale `lastmove` origins.
 - [x] Carry compatible settings forward from earlier v0.1.5.0 development builds before startup auditing.
 - [x] Copy a valid legacy `state.TokenMod.playersCanUse_ids` value once while preserving the complete legacy branch.
