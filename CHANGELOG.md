@@ -81,7 +81,7 @@ NPCAssist advances from `1.3.2` to `1.3.3`. No other module's independent versio
 - JavaScript syntax validation passes for `GameAssist`, `GameAssist.js`, and `GameAssist-v1.8.1`.
 - Seven executable harnesses pass 504 assertions across NPCAssist threshold behavior, v0.1.4.7 state migration, module lifecycle, MarkerService and ConditionAssist behavior, TokenAssist, timezone handling, InitiativeAssist, CombatAssist, and WelcomeAssist.
 - The focused Issue #64 static harness passes 232 checks covering the Bloodied contract, retained canonical module ownership and aliases, MECHSUITS nesting and canonical-tree agreement, One-Click metadata, previous-version ordering, and artifact identity. The complete local verification total is 736 checks.
-- `GameAssist`, `GameAssist.js`, and `GameAssist-v1.8.1` are byte-identical with SHA-256 `493DA3ECC534EE8B1FF8902E06F1297F7DA48B8508A50A0C13480C9EEA086BEB`.
+- `GameAssist`, `GameAssist.js`, and `GameAssist-v1.8.1` are byte-identical with SHA-256 `01BB828FA3E76CCFBB1DEC5AFEC770D98D19AB1E4941A38CC0FAAD858576FEC5`.
 - Roll20 sandbox acceptance must confirm the real `change:graphic:bar1_value` transition behavior and GM-only delivery.
 
 ### Deliberate exclusions
