@@ -1,8 +1,8 @@
-# GameAssist v1.8.2 Smoke Test and Troubleshooting Guide
+# GameAssist v2.0.0 Smoke Test and Troubleshooting Guide
 
 Use this guide after installing or updating GameAssist, before an important session, or while troubleshooting a feature.
 
-> This guide tests GameAssist v1.8.2. It retains the established component checks and adds focused NPCAssist progressive-naming and Bloodied-alert acceptance sections.
+> This guide tests GameAssist v2.0.0. It adds a focused EffectAssist acceptance track while retaining the established component checks and the v1.8.2 NPCAssist naming and Bloodied regressions.
 
 The tests are organized by component. Each section explains:
 
@@ -18,13 +18,174 @@ Run commands one at a time. A multi-line command block is a checklist, not a sin
 
 ---
 
+## Focused v2.0.0 EffectAssist Acceptance
+
+**What this proves:** EffectAssist records the reason an effect exists, keeps overlapping sources separate, shares one safe projection, preserves pre-existing campaign markers, and repairs only a freshly confirmed mismatch.
+
+**Why test it:** v2.0.0 introduces durable effect records and projection ownership. Roll20 must confirm real token selection, marker storage, module toggles, custom marker resolution, chat buttons, and persistent state.
+
+**Skip when:** Do not skip this section for v2.0.0 release acceptance. During an ordinary campaign update, the ConditionAssist projection and identity-drift checks may be skipped when those paths will not be used, but Bless overlap, pre-existing-marker preservation, audit/repair, and disable/re-enable must still pass.
+
+### Preparation
+
+Use one disposable page with:
+
+- two linked source tokens representing different characters;
+- one linked target token on the Objects layer;
+- one unlinked token;
+- MarkerService enabled;
+- ConditionAssist enabled for its optional projection check.
+
+EffectAssist begins disabled. Confirm that before changing anything:
+
+```roll20chat
+!ga-config modules
+!ga-enable EffectAssist
+!Effect-Guide
+!Effect-GM
+!Effect-Status
+!Effect-Audit
+```
+
+**Pass when:**
+
+- the initial module list shows EffectAssist configured off and paused;
+- enabling it changes only EffectAssist's lifecycle state;
+- Guide and GM controls are private, compact, and understandable;
+- Status reports zero active effects on a clean state;
+- Audit explicitly reports that it changed nothing.
+
+### Bless Source and Projection
+
+1. Select the linked target token.
+2. Run `!Effect-GM`.
+3. Click **Apply Bless**.
+4. Choose the first linked source in the source prompt.
+5. Run `!Effect-Status`.
+
+**Pass when:**
+
+- one active Bless instance names the chosen source and target;
+- the target has the configured `angel-outfit` projection;
+- unrelated markers, HP, bars, layer, controllers, character attributes, and Turn Tracker rows are unchanged;
+- Status offers an End button without requiring the GM to type the internal instance ID.
+
+### Overlapping Sources
+
+1. Keep the same target selected.
+2. Apply Bless again, choosing the second source.
+3. Confirm Status shows two active Bless instances but the target still has one effective Bless marker.
+4. End the first instance from its generated button.
+5. Confirm the marker remains.
+6. End the second instance.
+7. Confirm the marker is removed.
+
+**Pass when:** each source is independently removable, the first ending does not disturb the second, and final cleanup removes only the projection EffectAssist originally added.
+
+### Pre-Existing Marker Preservation
+
+1. Add the configured Bless marker to the target manually before creating an EffectAssist record.
+2. Apply one Bless instance.
+3. End that instance.
+
+**Pass when:** the marker remains. EffectAssist must record that the matching marker existed before its ownership began and must not claim or remove it.
+
+### Generic Paths
+
+With the target selected, open `!Effect-GM` and test:
+
+1. **Record Only** — use a temporary name; confirm no marker or condition is added.
+2. **Generic Marker** — choose a harmless marker; confirm it is added and removed when the final source ends.
+3. **Condition Effect** — choose a disposable configured condition; confirm ConditionAssist owns the condition lookup and MarkerService owns the marker change.
+
+**Pass when:** each record appears in Status, no unsupported text or unsafe key corrupts state, and every final cleanup preserves unrelated markers.
+
+**Skip note:** The Condition Effect step may be skipped when ConditionAssist is intentionally disabled. Record Only must still work.
+
+### Atomic Invalid Selection
+
+1. Select one linked target and one unlinked token together.
+2. Try to apply Bless.
+
+**Pass when:** EffectAssist refuses the complete request, creates no instance, and changes neither token. It must not partially apply to the eligible selection.
+
+### Read-Only Audit and Confirmed Repair
+
+1. Apply Bless to the linked target.
+2. Remove only its visible Bless marker manually.
+3. Run `!Effect-Audit`.
+4. Confirm the audit identifies the target and missing projection and says it changed nothing.
+5. Click **Confirm Current Repairs**.
+6. Run `!Effect-Audit` again.
+
+**Pass when:** the first audit does not restore the marker, the generated confirmation restores and verifies it, and the second audit is clean.
+
+For the stale-confirmation check:
+
+1. Create another mismatch and run Audit.
+2. Change the relevant token or effect before clicking the old confirmation.
+3. Click the old button.
+
+**Pass when:** the repair is refused and the GM is told to run a new audit.
+
+### Token Identity Drift
+
+1. Apply a disposable generic marker effect.
+2. Change the target token so it represents a different character.
+3. Run `!Effect-Audit`.
+4. Try to end the original effect.
+
+**Pass when:** Audit reports that the exact token now represents a different character, repair is not offered for that mismatch, and ending the semantic record leaves the token's marker unchanged with a clear cleanup warning.
+
+### Optional-Service Local Failure
+
+1. With EffectAssist still enabled, disable MarkerService.
+2. Apply a Record Only effect; it should work normally.
+3. Apply Bless; its semantic record should be created with a pending projection and an actionable explanation.
+4. Re-enable MarkerService.
+5. Run Audit and use a fresh confirmation to establish the missing safe projection.
+
+**Pass when:** disabling MarkerService does not disable EffectAssist, non-marker records remain usable, and only the unavailable projection is delayed.
+
+### Disable, Re-Enable, and Restart
+
+1. Leave one active disposable effect.
+2. Run `!ga-disable EffectAssist`.
+3. Confirm EffectAssist commands stop responding and no token, marker, or record is silently removed.
+4. Run `!ga-enable EffectAssist`.
+5. Confirm Status still shows the active record.
+6. Restart the sandbox and repeat Status and Audit.
+
+**Pass when:** valid active records, bounded ended history, definitions, and ownership ledgers survive module toggles and sandbox reload; no automation runs merely because EffectAssist was enabled.
+
+### Navigation and Recovery
+
+```roll20chat
+!Effect-GM
+!Effect-DM
+!Effect-Menu
+!Effect-Guide
+!Effect-Help
+!Effect-Info
+!Effect-Status
+!Effect-Definitions
+!Effect-Audit
+!Effect-Manual
+!Effect-Impossible
+!effect status
+```
+
+**Pass when:** commands are case-insensitive, GM/DM/Menu open the same primary controls, the stable manual is created or updated once, the unknown route offers useful recovery buttons, and the spaced command family reaches the same module exactly once.
+
+---
+
 ## Focused v1.8.2 NPCAssist Progressive-Naming Regression
 
 **What this proves:** NPCAssist gives newly added eligible NPC tokens clear page-local names without changing existing tokens, represented characters, or unrelated token properties.
 
 **Why test it:** This is the only new gameplay behavior in v1.8.2. Real `add:graphic` ordering and copied-token behavior must be confirmed inside Roll20.
 
-**Skip when:** Skip only when NPCAssist will remain disabled or automatic NPC names will remain off. Do not skip for v1.8.2 release acceptance.
+**Skip when:** Skip only when NPCAssist will remain disabled or automatic NPC names will remain off. Do not skip for v2.0.0 release acceptance.
 
 ### Control Center
 
@@ -88,7 +249,7 @@ When HPAssist automatic roll-on-add is enabled, repeat the test and confirm:
 
 **Why test it:** This is the only new gameplay behavior in v1.8.2. The checks confirm that the notice appears at the right moment, stays private, does not repeat, and does not mistake token setup or death for becoming Bloodied.
 
-**Skip when:** Skip only when NPCAssist will remain disabled or `notifyBloodied` will remain off. Do not skip for v1.8.2 release acceptance.
+**Skip when:** Skip only when NPCAssist will remain disabled or `notifyBloodied` will remain off. Do not skip for v2.0.0 release acceptance.
 
 ### Quick Check
 
@@ -188,7 +349,7 @@ If this section fails, record:
 
 **Why test it:** Timezone support affects logs, status panels, handouts, history displays, and the date boundary that creates a new Session.
 
-**Skip when:** Do not skip after first installing v1.8.2 or changing the campaign timezone. The cross-date test may be skipped when NPCAssist is disabled and will not be used.
+**Skip when:** Do not skip after first installing v2.0.0 or changing the campaign timezone. The cross-date test may be skipped when NPCAssist is disabled and will not be used.
 
 ### Quick Check
 
@@ -227,132 +388,71 @@ The maintainer test suite separately checks fixed winter and summer instants, a 
 
 ---
 
-## Full v1.8.2 Release Acceptance Test
+## Full v2.0.0 Release Acceptance Test
 
-This is the release test for v1.8.2. It has two distinct tracks:
+This release test has two tracks:
 
-| Track | Script being tested | Purpose |
+| Track | Starting point | Purpose |
 | --- | --- | --- |
-| **A. Clean installation** | **v1.8.2** | Proves the complete suite and the new NPCAssist Bloodied behavior work together. |
-| **B. Upgrade** | **v1.8.2** | Proves v0.1.7.0 configuration, history, guide handouts, optional-module settings, and tracker contents survive the module-name migration. |
+| **A. Clean installation** | No saved GameAssist state | Proves the complete v2.0.0 suite starts cleanly and EffectAssist creates safe, source-aware records. |
+| **B. Upgrade** | A working v1.8.2 campaign | Proves existing configuration and runtime history survive the v2.0.0 state upgrade. |
 
-Do not use an earlier release guide as the v1.8.2 acceptance test. In Track B, v0.1.7.0 is only the starting point used to create existing campaign state; every acceptance check after replacement is performed with v1.8.2.
+Every acceptance check after the script is replaced must use v2.0.0.
 
 ### Release Candidate Files
 
 Use the current repository copies of:
 
-- `GameAssist-v1.8.2` or the identical `GameAssist.js` One-Click artifact;
+- `GameAssist-v2.0.0` or the identical `GameAssist.js` One-Click artifact;
 - this `Smoketest.md` guide.
 
-After saving the script, wait for the Mod sandbox to restart. Do not continue unless the startup message and `!ga-status` both identify **GameAssist v1.8.2**.
+After saving the script, wait for the Mod sandbox to restart. Continue only when the startup message and `!ga-status` both identify **GameAssist v2.0.0**.
 
-### Track A: Clean v1.8.2 Installation
+### Track A: Clean v2.0.0 Installation
 
-Use a new disposable campaign, or a disposable campaign in which GameAssist state may be cleared safely.
+Use a disposable campaign, or a campaign where disposable test tokens and test effects can be removed safely.
 
-1. Install GameAssist v1.8.2. Remove or disable standalone TokenMod and StatusInfo before testing their integrated replacements.
-2. Prepare the disposable PC, NPC, unlinked token, and optional CritAssist tables described under [Before Testing](#before-testing).
-3. Run every **Basic Check** in Components 1 through 14, except a deliberately disabled optional feature may be recorded as **Skipped by choice**.
-4. Run the focused NPCAssist Bloodied regression plus the complete MarkerService, TurnTrackerService, ConditionAssist, TokenAssist, InitiativeAssist, CombatAssist, and WelcomeAssist acceptance sections. These may not be skipped for v1.8.2 release approval.
+1. Install GameAssist v2.0.0.
+2. Prepare the PC, NPC, unlinked token, and optional CritAssist tables described under [Before Testing](#before-testing).
+3. Run every **Basic Check** in Components 1 through 15. A deliberately disabled optional module may be recorded as **Skipped by choice**.
+4. Run the complete [Focused v2.0.0 EffectAssist Acceptance](#focused-v200-effectassist-acceptance) section. It may not be skipped for release approval.
 5. Run the cross-component permission, duplicate-installation, and state-recovery checks.
-6. Restart the sandbox once more and repeat `!ga-status`, `!ga-config modules`, one marker change, and one harmless TokenAssist command.
-
-Record the release result here:
+6. Restart the sandbox and repeat `!ga-status`, `!ga-config modules`, one marker change, and `!Effect-Status`.
 
 | Clean-install requirement | Result |
 | --- | --- |
-| Core System and ConfigUI | [ ] Pass [ ] Fail |
-| MarkerService full acceptance | [ ] Pass [ ] Fail |
-| TurnTrackerService full acceptance | [ ] Pass [ ] Fail |
-| CritAssist basic workflow | [ ] Pass [ ] Fail [ ] Skipped by choice |
-| ConditionAssist full acceptance | [ ] Pass [ ] Fail |
-| TokenAssist full acceptance | [ ] Pass [ ] Fail |
-| InitiativeAssist full acceptance | [ ] Pass [ ] Fail |
-| CombatAssist full acceptance | [ ] Pass [ ] Fail |
-| WelcomeAssist full acceptance | [ ] Pass [ ] Fail |
-| ConcentrationAssist basic workflow | [ ] Pass [ ] Fail [ ] Skipped by choice |
-| NPCAssist basic workflow | [ ] Pass [ ] Fail [ ] Skipped by choice |
-| NPCAssist Bloodied regression | [ ] Pass [ ] Fail |
-| HPAssist basic workflow | [ ] Pass [ ] Fail [ ] Skipped by choice |
-| DebugTools dry-run safeguard | [ ] Pass [ ] Fail |
-| Cross-component checks | [ ] Pass [ ] Fail |
-| Restart persistence check | [ ] Pass [ ] Fail |
+| Sandbox reloads without a new GameAssist exception | ☐ Pass ☐ Fail |
+| Core status identifies v2.0.0 | ☐ Pass ☐ Fail |
+| Required Components 1 through 15 pass | ☐ Pass ☐ Fail |
+| Focused EffectAssist acceptance passes | ☐ Pass ☐ Fail |
+| Cross-component checks pass | ☐ Pass ☐ Fail |
+| Restart check preserves active effect records | ☐ Pass ☐ Fail |
 
-### Track B: Upgrade v0.1.7.0 to v1.8.2
+### Track B: Upgrade from v1.8.2
 
-Use a separate disposable campaign so the upgrade begins with authentic v0.1.7.0 state.
+Use a disposable copy of a campaign that already has useful v1.8.2 state.
 
-#### Create the previous-release state
+Before replacing the script:
 
-1. Install GameAssist v0.1.7.0 without standalone TokenMod or StatusInfo.
-2. Enable the ordinary modules the campaign will use.
-3. Change at least one non-default GameAssist setting.
-4. Create one NPC death and revival record.
-5. Give the active Campaign, Chapter, Section, and Session buckets recognizable test names.
-6. Enable InitiativeAssist, place at least three distinct rows in the native tracker, and save one InitiativeAssist group or non-default NPC-roll setting.
-7. Enable and configure WelcomeAssist without requiring a public greeting.
-8. Run `!critfumble manual`, `!npc-death-manual`, and `!concentration manual` once so the old-name guide handouts exist.
-9. Record the output of:
+1. Run `!ga-status` and `!ga-config modules`.
+2. Record the active table timezone and at least one non-default module setting.
+3. Preserve one NPCAssist history record, one custom condition if available, and any existing guide handout.
+4. Confirm EffectAssist does not exist in the old module list.
 
-   ```roll20chat
-   !ga-config modules
-   !ga-config list
-   !npc-death-buckets
-   !npc-death-report --scope session
-   ```
-
-#### Install and test v1.8.2
-
-1. Replace the complete v0.1.7.0 script with the current v1.8.2 artifact.
-2. Confirm standalone TokenMod and StatusInfo remain absent so the integrated services can be tested without overlap.
-3. Restart the sandbox and run:
-
-   ```roll20chat
-   !ga-status
-   !ga-status --details
-   !ga-config modules
-   !npc-death-buckets
-   !npc-death-report --scope session
-   ```
-
-4. Confirm the non-default setting, bucket names, and NPC history remain available.
-5. Confirm the module list uses CritAssist, NPCAssist, ConcentrationAssist, and HPAssist. It should not list a second running copy under the old names.
-6. Confirm MarkerService is enabled and ConditionAssist, TokenAssist, NPCAssist, and ConcentrationAssist report confirmed MarkerService dependencies.
-7. Run `!ga-config get CritFumble`, `!ga-config get NPCManager`, `!ga-config get ConcentrationTracker`, and `!ga-config get NPCHPRoller`. Each legacy configuration name should resolve to the canonical module without recreating a second old-name state branch.
-8. Run each renamed module's `manual` command. One unambiguous old guide handout should be renamed and updated; no duplicate old/new pair should remain.
-9. Confirm CombatAssist remains disabled if it was disabled before the upgrade and did not adopt or reorder the existing tracker.
-10. Run the inherited module checks, the focused NPCAssist Bloodied regression, and the complete TurnTrackerService, InitiativeAssist, CombatAssist, and WelcomeAssist sections using v1.8.2.
-11. Restart the sandbox and confirm the retained configuration, timezone, history, tracker, InitiativeAssist setting/group, WelcomeAssist configuration, and CombatAssist setting remain available.
-
-Record the upgrade result here:
+Replace v1.8.2 with v2.0.0, save, and wait for the sandbox restart. Then verify:
 
 | Upgrade requirement | Result |
 | --- | --- |
-| v1.8.2 starts without a new GameAssist exception | [ ] Pass [ ] Fail |
-| Valid v0.1.7.0 configuration is retained | [ ] Pass [ ] Fail |
-| Old module branches migrate to the four canonical names | [ ] Pass [ ] Fail |
-| NPC history and bucket names are retained | [ ] Pass [ ] Fail |
-| Existing guide handouts are adopted without duplication | [ ] Pass [ ] Fail |
-| MarkerService and enabled dependents are running | [ ] Pass [ ] Fail |
-| Standalone TokenMod and StatusInfo are no longer required | [ ] Pass [ ] Fail |
-| New ConditionAssist and TokenAssist workflows pass | [ ] Pass [ ] Fail |
-| TurnTrackerService, InitiativeAssist, CombatAssist, and WelcomeAssist acceptance passes | [ ] Pass [ ] Fail |
-| Existing gameplay module basic checks pass | [ ] Pass [ ] Fail |
-| NPCAssist Bloodied regression passes | [ ] Pass [ ] Fail |
-| Migrated state survives another sandbox restart | [ ] Pass [ ] Fail |
+| Existing modules retain their enabled or disabled state | ☐ Pass ☐ Fail |
+| Existing configuration values remain intact | ☐ Pass ☐ Fail |
+| NPCAssist history and existing handouts remain intact | ☐ Pass ☐ Fail |
+| EffectAssist appears disabled by default | ☐ Pass ☐ Fail |
+| Enabling EffectAssist creates only its own state branches | ☐ Pass ☐ Fail |
+| A Bless test survives one sandbox restart | ☐ Pass ☐ Fail |
+| Disabling EffectAssist preserves records and stops its commands | ☐ Pass ☐ Fail |
+| Re-enabling EffectAssist restores access to the same records | ☐ Pass ☐ Fail |
 
-### Release Decision
-
-The v1.8.2 release regression passes only when:
-
-- Track A passes in a clean installation;
-- Track B passes after replacing v0.1.7.0 with v1.8.2;
-- NPCAssist Bloodied, MarkerService, TurnTrackerService, ConditionAssist, TokenAssist, InitiativeAssist, CombatAssist, and WelcomeAssist have no skipped acceptance checks;
-- no unrelated marker, token property, character attribute, NPC history, or configuration is changed;
-- any optional skipped gameplay module is recorded with a clear reason.
-
-A failure should be recorded using [Bug Report Evidence](#bug-report-evidence) before the sandbox or affected token is reset.
+Do not approve the release if an existing valid configuration, history record, or unrelated marker is silently removed.
 
 ---
 
@@ -363,18 +463,18 @@ A failure should be recorded using [Bug Report Evidence](#bug-report-evidence) b
 | Core System | GameAssist loaded, responds, and started enabled modules. | Every other feature depends on the core. | Never after an install or update. |
 | Table Timezone | The saved table clock, readable timestamps, and date-managed Session agree. | A wrong date boundary can put NPC history in the wrong Session. | Only the cross-date portion may be skipped when NPCAssist is disabled. |
 | MarkerService | GameAssist can change and read markers without standalone TokenMod while preserving unrelated markers. | NPC death and concentration markers depend on it. | Only when no enabled module or future service uses token markers. |
-| TurnTrackerService | Native tracker rows can be read, audited, and safely updated without losing custom or unknown data. | InitiativeAssist and CombatAssist depend on one lossless Turn Tracker authority. | Never for v1.8.2 release acceptance. |
+| TurnTrackerService | Native tracker rows can be read, audited, and safely updated without losing custom or unknown data. | InitiativeAssist and CombatAssist depend on one lossless Turn Tracker authority. | Never for v2.0.0 release acceptance. |
 | ConfigUI | The GM settings interface opens and responds once. | It is the easiest way for most DMs to manage modules. | The campaign is intentionally managed only through commands. |
 | CritAssist | Help and the Natural 1 workflow respond. | Table automation can fail separately from the rest of GameAssist. | CritAssist is disabled and will not be used. |
 | ConditionAssist | Condition help, selected-token controls, descriptions, and MarkerService synchronization work. | Condition workflows combine permissions, configuration, markers, and chat output. | ConditionAssist is deliberately disabled and will not be used. |
 | TokenAssist | Selected-token controls, values, movement, reports, and MarkerService-backed status commands work. | It replaces the supported general token-control workflows previously supplied by standalone TokenMod. | TokenAssist is deliberately disabled and none of its commands, including the temporary older command, will be used. |
-| InitiativeAssist | Mixed 2014/2024 actors roll through the native tracker while counters, objects, dead NPCs, and attention rows remain untouched. | Initiative mistakes interrupt play and can damage another tool's tracker state. | Never for v1.8.2 release acceptance. |
-| CombatAssist | Explicit lifecycle, rounds, ordinary native tracker edits, recovery, and player confirmations work without replacing Roll20's tracker. | A false round or destructive tracker edit can disrupt an encounter immediately. | Never for v1.8.2 release acceptance. |
-| WelcomeAssist | Optional greetings remain deliberate, bounded, private during setup, and limited to one automatic post per sandbox. | Startup output should welcome the table without misreporting unhealthy GameAssist components or executing custom chat syntax. | Never for v1.8.2 release acceptance. |
+| InitiativeAssist | Mixed 2014/2024 actors roll through the native tracker while counters, objects, dead NPCs, and attention rows remain untouched. | Initiative mistakes interrupt play and can damage another tool's tracker state. | Never for v2.0.0 release acceptance. |
+| CombatAssist | Explicit lifecycle, rounds, ordinary native tracker edits, recovery, and player confirmations work without replacing Roll20's tracker. | A false round or destructive tracker edit can disrupt an encounter immediately. | Never for v2.0.0 release acceptance. |
+| WelcomeAssist | Optional greetings remain deliberate, bounded, private during setup, and limited to one automatic post per sandbox. | Startup output should welcome the table without misreporting unhealthy GameAssist components or executing custom chat syntax. | Never for v2.0.0 release acceptance. |
 | ConcentrationAssist | Status, saving throws, and marker removal work on linked PC tokens. | It combines character data, rolls, chat, and MarkerService. | ConcentrationAssist is disabled and will not be used. |
 | NPCAssist | Death, revival, audit, history, buckets, and Arc menus work. | It combines HP events, markers, saved records, and handouts. | NPCAssist is disabled and will not be used. |
 | HPAssist | Qualifying NPC HP formulas roll without changing PCs or unlinked tokens. | Incorrect eligibility can damage token HP or create false history. | HPAssist is disabled and NPC HP is set another way. |
-| DebugTools | Dry runs remain non-destructive and `--apply` is explicit. | It verifies diagnostic safeguards and direct MarkerService access. | Normally skip; DebugTools is optional and disabled by default. |
+| EffectAssist | Source-aware effects, shared projections, audit, and repair work without deleting unrelated token state. | Effect records will become the foundation for later sheet, cast, HP, and duration integrations. | Never for v2.0.0 release acceptance. |\n| DebugTools | Dry runs remain non-destructive and `--apply` is explicit. | It verifies diagnostic safeguards and direct MarkerService access. | Normally skip; DebugTools is optional and disabled by default. |
 
 ---
 
@@ -385,14 +485,14 @@ GameAssist is ready for normal use when:
 - the Roll20 Mod sandbox reloads without a new GameAssist exception;
 - the Core System basic test passes;
 - MarkerService passes if ConditionAssist, TokenAssist, NPCAssist, ConcentrationAssist, or marker diagnostics will be used;
-- TurnTrackerService, InitiativeAssist, CombatAssist, and WelcomeAssist pass before v1.8.2 is approved;
+- TurnTrackerService, InitiativeAssist, CombatAssist, WelcomeAssist, and EffectAssist pass before v2.0.0 is approved;
 - every enabled module that matters to the coming session passes its basic test;
 - any skipped test is skipped for a stated reason, not because its result was unclear.
 
 Expected conditions that are not failures:
 
 - DebugTools is disabled by default.
-- Standalone TokenMod is not required for GameAssist marker operations or supported TokenAssist commands in v1.8.2. Remove it while testing TokenAssist so both scripts cannot respond to `!token-mod`.
+- Standalone TokenMod is not required for GameAssist marker operations or supported TokenAssist commands in v2.0.0. Remove it while testing TokenAssist so both scripts cannot respond to `!token-mod`.
 - ConditionAssist provides GameAssist's condition menus and marker descriptions; remove standalone StatusInfo while testing the overlapping workflows.
 - CritAssist help works without rollable tables, but table rolls require the seven exact table names.
 - Counts and timestamps in diagnostic panels vary by sandbox session.
@@ -409,7 +509,7 @@ Expected conditions that are not failures:
 
 ## Before Testing
 
-After saving GameAssist, wait for the Roll20 Mod sandbox to restart. The core-ready whisper should identify GameAssist v1.8.2.
+After saving GameAssist, wait for the Roll20 Mod sandbox to restart. The core-ready whisper should identify GameAssist v2.0.0.
 
 For expanded tests, prepare:
 
@@ -462,7 +562,7 @@ Each table needs at least one item.
 
 **Why test it:** These screens are the front door for both first-time GMs and experienced users returning to a feature months later. A working feature is still difficult to use when its controls are hard to find.
 
-**Skip when:** Do not skip this section while approving v1.8.2 or after changing a module's command routing or help content. During ordinary troubleshooting, test only the affected enabled module. WelcomeAssist, InitiativeAssist, CombatAssist, and DebugTools may be skipped when they are deliberately disabled and will remain unused.
+**Skip when:** Do not skip this section while approving v2.0.0 or after changing a module's command routing or help content. During ordinary troubleshooting, test only the affected enabled module. WelcomeAssist, InitiativeAssist, CombatAssist, and DebugTools may be skipped when they are deliberately disabled and will remain unused.
 
 ### Quick Pattern
 
@@ -525,7 +625,7 @@ GameAssist Guide - ConcentrationAssist
 
 Pass when every tested command responds once, every audit is visibly read-only, every bad command offers a useful recovery path, and no Manual command creates a second handout with the same module name.
 
-For an upgrade test, create the old `GameAssist Guide - CritFumble`, `GameAssist Guide - NPCManager`, and `GameAssist Guide - ConcentrationTracker` handouts under v0.1.7.0 first. After installing v1.8.2, the corresponding Manual commands should adopt and rename those handouts. If more than one old handout has the same legacy name, GameAssist should refuse to guess and explain the duplicate instead of overwriting either one.
+For an upgrade test, create the old `GameAssist Guide - CritFumble`, `GameAssist Guide - NPCManager`, and `GameAssist Guide - ConcentrationTracker` handouts under v0.1.7.0 first. After installing v2.0.0, the corresponding Manual commands should adopt and rename those handouts. If more than one old handout has the same legacy name, GameAssist should refuse to guess and explain the duplicate instead of overwriting either one.
 
 ---
 
@@ -550,7 +650,7 @@ Run:
 
 Pass when:
 
-- `!ga-status` identifies GameAssist v1.8.2 and gives a clear overall result;
+- `!ga-status` identifies GameAssist v2.0.0 and gives a clear overall result;
 - MarkerService, TurnTrackerService, and seven default gameplay/administration modules are enabled and running;
 - InitiativeAssist, CombatAssist, WelcomeAssist, and DebugTools are shown as disabled or paused until deliberately enabled;
 - no enabled module is dependency-skipped;
@@ -606,7 +706,7 @@ Open the `GameAssist Config` handout and check:
 - [ ] MarkerService, TurnTrackerService, and all eleven module configuration objects are present.
 - [ ] Runtime caches, metrics, death history, and Arc data are absent.
 
-This is a configuration snapshot, not a complete state backup, and it cannot be imported in v1.8.2.
+This is a configuration snapshot, not a complete state backup, and it cannot be imported in v2.0.0.
 
 #### Safe Configuration Round Trip
 
@@ -907,7 +1007,7 @@ If any MarkerService check fails, record:
 
 **Why test it:** InitiativeAssist must not erase custom counters, unknown fields, duplicate turns, text priorities, or rows created by another tool.
 
-**Skip when:** Never skip for v1.8.2 release acceptance. A campaign that will use neither InitiativeAssist nor CombatAssist may limit this to the basic lifecycle check after release.
+**Skip when:** Never skip for v2.0.0 release acceptance. A campaign that will use neither InitiativeAssist nor CombatAssist may limit this to the basic lifecycle check after release.
 
 ### Basic Check
 
@@ -1385,7 +1485,7 @@ Select a disposable token whose name visibility is off, then run:
 !token-assist --set imgsrc|ignored --on showname
 ```
 
-Pass when TokenAssist refuses the unsupported image-side property, explains that this feature is outside TokenAssist 1.0.3, and leaves name visibility unchanged. TokenAssist also does not claim default-token writes, computed or name-resolved attributes, advanced controller-list editing, advanced color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, exact TokenMod report-recipient distinctions, duplicate-index marker editing, conditional marker counts, or TokenMod help-handout rebuilding.
+Pass when TokenAssist refuses the unsupported image-side property, explains that this feature is outside TokenAssist 1.0.4, and leaves name visibility unchanged. TokenAssist also does not claim default-token writes, computed or name-resolved attributes, advanced controller-list editing, advanced color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, exact TokenMod report-recipient distinctions, duplicate-index marker editing, conditional marker counts, or TokenMod help-handout rebuilding.
 
 #### T12. Restore Campaign Settings
 
@@ -1410,7 +1510,7 @@ If any TokenAssist check fails, record:
 
 **Why test it:** Initiative happens at a time-sensitive moment in play. A safe result must be quick to understand and must not disturb round counters, objects, dead NPCs, or another Mod's custom entries.
 
-**Skip when:** Never skip for v1.8.2 release acceptance. After release, campaigns that deliberately leave InitiativeAssist disabled may skip it.
+**Skip when:** Never skip for v2.0.0 release acceptance. After release, campaigns that deliberately leave InitiativeAssist disabled may skip it.
 
 ### Basic Check
 
@@ -1610,7 +1710,7 @@ Record:
 
 **Why test it:** A false round count or destructive tracker update interrupts an encounter immediately. The test therefore checks both normal table use and the refusal paths that protect uncertain tracker state.
 
-**Skip when:** Never skip for v1.8.2 release acceptance. After release, campaigns that deliberately leave CombatAssist disabled may skip it.
+**Skip when:** Never skip for v2.0.0 release acceptance. After release, campaigns that deliberately leave CombatAssist disabled may skip it.
 
 ### Basic Check
 
@@ -2303,7 +2403,7 @@ Return DebugTools to its default state:
 
 **Why test it:** The module writes to public chat during startup. It must never surprise the table while being configured, repeat itself, claim GameAssist is ready when an enabled component is unhealthy, or execute Roll20 syntax hidden inside custom text.
 
-**Skip when:** Never skip for v1.8.2 release acceptance. After release, campaigns that leave WelcomeAssist disabled may confirm the disabled check and skip the expanded tests.
+**Skip when:** Never skip for v2.0.0 release acceptance. After release, campaigns that leave WelcomeAssist disabled may confirm the disabled check and skip the expanded tests.
 
 ### Basic Check
 
@@ -2427,6 +2527,73 @@ Restore the desired campaign greeting configuration. Leave WelcomeAssist disable
 
 ---
 
+## 15. EffectAssist
+
+**What this proves:** EffectAssist can record one semantic effect once, project it through GameAssist-owned token state, preserve overlapping sources, and explain or repair projection mismatches without taking ownership of unrelated markers.
+
+**Why test it:** Later automation will rely on these records. A projection error must never silently delete a marker the DM or another Mod already owned.
+
+**Skip when:** Never skip for v2.0.0 release acceptance. In ordinary play, the module may remain disabled until the campaign uses effect records.
+
+### Basic Check
+
+Enable the module and open its GM screen:
+
+```roll20chat
+!ga-enable EffectAssist
+!Effect-GM
+!Effect-Definitions
+!Effect-Status
+!Effect-Audit
+!Effect-Not-A-Command
+```
+
+Pass when:
+
+- the GM screen clearly separates applying, reviewing, auditing, and help;
+- Bless appears as a built-in definition;
+- status reports no active effects on a first run;
+- audit reports no mismatches;
+- the unrecognized command offers a clear route back to the Guide.
+
+Then select one linked disposable token and apply Bless through `!Effect-Apply`. Confirm:
+
+- one active effect is recorded;
+- the configured Bless marker appears;
+- `!Effect-Status` identifies the source and target;
+- applying the same submitted request twice does not create a duplicate;
+- `!Effect-End` removes the EffectAssist-owned marker and moves the record to recent history.
+
+Run the complete [Focused v2.0.0 EffectAssist Acceptance](#focused-v200-effectassist-acceptance) before approving the release.
+
+### Expanded EffectAssist Checks
+
+Use the focused section to prove:
+
+- two Bless sources share one non-stacking projection;
+- ending one source does not remove the remaining source's projection;
+- a pre-existing matching marker is preserved after all EffectAssist sources end;
+- mixed valid and invalid selections are rejected without partial application;
+- marker, ConditionAssist, and record-only definitions follow their declared projection type;
+- audit is read-only and repair requires a fresh, one-use GM authorization;
+- changed token identity causes a refusal rather than a write to the wrong representation;
+- disabling and re-enabling EffectAssist preserves its records;
+- malformed known state is reported without deleting unknown branches.
+
+### EffectAssist Failure Evidence
+
+Record:
+
+- the exact command;
+- the selected token names;
+- the effect instance ID shown by status;
+- the audit summary and mismatch reason;
+- whether the marker or condition existed before application;
+- whether another source still owned the same projection;
+- any new sandbox exception.
+
+---
+
 # Cross-Component Checks
 
 ## Permissions
@@ -2465,7 +2632,7 @@ If a command produces duplicate output:
 3. Keep only the intended implementation.
 4. Restart the sandbox and repeat the command.
 
-Scripts that independently respond to `!condition` or `!token-mod`, describe the same marker changes, modify the same NPC HP/bar 1, control the same token properties or death/concentration/condition markers, process the same Natural 1 workflow, or rewrite the native Turn Tracker may conflict even when their names differ. TokenAssist deliberately suspends only its deprecated `!token-mod` alias when standalone TokenMod is detected, but the standalone copy should still be removed for normal v1.8.2 use. Use InitiativeAssist Observer mode when another initiative roller owns initiative values; leave CombatAssist disabled when another encounter manager owns turn advancement or rounds.
+Scripts that independently respond to `!condition` or `!token-mod`, describe the same marker changes, modify the same NPC HP/bar 1, control the same token properties or death/concentration/condition markers, process the same Natural 1 workflow, or rewrite the native Turn Tracker may conflict even when their names differ. TokenAssist deliberately suspends only its deprecated `!token-mod` alias when standalone TokenMod is detected, but the standalone copy should still be removed for normal v2.0.0 use. Use InitiativeAssist Observer mode when another initiative roller owns initiative values; leave CombatAssist disabled when another encounter manager owns turn advancement or rounds.
 
 ## State Recovery
 
@@ -2533,7 +2700,7 @@ Check:
 - The configured built-in marker, custom display name, or exact stored tag exists.
 - The HP or concentration outcome actually requested the expected marker state.
 
-Standalone TokenMod permissions are not a repair for GameAssist marker failures in v1.8.2.
+Standalone TokenMod permissions are not a repair for GameAssist marker failures in v2.0.0.
 
 Stop testing and report the before/after marker values if an unrelated marker or number changes.
 

@@ -1,15 +1,15 @@
 # GameAssist – Modular API Framework for Roll20
 
-**Version 1.8.2 development line** | © 2025-2026 Mord Eagle · MIT License<br>
+**Version 2.0.0 development line** | © 2025-2026 Mord Eagle · MIT License<br>
 **Lead Dev:** [@Mord-Eagle](https://github.com/Mord-Eagle)
 
-GameAssist v1.8.2 adds optional page-local progressive names for newly added linked NPC tokens. It keeps existing tokens and character names untouched, uses the lowest available suffix from the page's current eligible tokens, and retains v1.8.1's private Bloodied controls and established compatibility.
+GameAssist v2.0.0 introduces EffectAssist: a disabled-by-default module that records an effect's source, targets, dependency, stacking, and lifecycle separately from its visible markers or conditions. Bless and a bounded generic workflow prove the model while ownership-aware cleanup, read-only audit, and confirmed repair protect pre-existing campaign state.
 
 ---
 
 ## 0 · What is GameAssist (in one paragraph)?
 
-GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a small shared kernel, dedicated marker and Turn Tracker services, and eleven bundled gameplay and administration modules—ConfigUI, CritAssist, ConditionAssist, TokenAssist, InitiativeAssist, CombatAssist, WelcomeAssist, ConcentrationAssist, NPCAssist, HPAssist, and DebugTools. It provides guided menus, guarded lifecycle controls, direct command and event routing, an explicit queue for work that truly requires serialization, persistent metrics, conservative state self-healing, and best-effort compatibility diagnostics. The goal is campaign automation that remains approachable at the table and understandable when something needs attention.
+GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a small shared kernel, dedicated marker and Turn Tracker services, a versioned semantic-event contract, and twelve bundled gameplay and administration modules—ConfigUI, CritAssist, ConditionAssist, TokenAssist, InitiativeAssist, CombatAssist, WelcomeAssist, ConcentrationAssist, NPCAssist, EffectAssist, HPAssist, and DebugTools. It provides guided menus, guarded lifecycle controls, direct command and event routing, an explicit queue for work that truly requires serialization, persistent metrics, conservative state self-healing, and best-effort compatibility diagnostics. The goal is campaign automation that remains approachable at the table and understandable when something needs attention.
 
 ---
 
@@ -17,10 +17,10 @@ GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a
 
 | Category | Highlights |
 | --- | --- |
-| Core Lift | Guarded modules, conservative state repair, explicit queue API, session metrics, dependency diagnostics, GM health reporting, and toggleable marker and Turn Tracker services with dependent-module safeguards. |
+| Core Lift | Guarded modules, conservative state repair, explicit queue API, versioned semantic events, session metrics, dependency diagnostics, GM health reporting, and toggleable marker and Turn Tracker services with dependent-module safeguards. |
 | Quick Install | 📥 Install the complete script → 📜 add the CritAssist tables if used → 🔄 reload → 🩺 run the health checks → 🎲 test the enabled features with disposable tokens. |
 | Flagship Player Commands | `!condition <name>`, `!cond-<condition>`, `!concentration`, `!cc`, `!critfumble-<type>` when the GM permits the relevant player action. |
-| Flagship GM Commands | `!Init-GM` / `!Init-DM`, `!Combat-GM` / `!Combat-DM`, `!Welcome-GM` / `!Welcome-DM`, `!TokenAssist-GM` / `!TokenAssist-DM`, `!Condition-GM` / `!Condition-DM`, `!CritAssist-GM` / `!CritAssist-DM`, `!NPC-GM` / `!NPC-DM`, `!Con-GM` / `!Con-DM`, plus each module's specialized commands below. |
+| Flagship GM Commands | `!Init-GM` / `!Init-DM`, `!Combat-GM` / `!Combat-DM`, `!Welcome-GM` / `!Welcome-DM`, `!TokenAssist-GM` / `!TokenAssist-DM`, `!Condition-GM` / `!Condition-DM`, `!CritAssist-GM` / `!CritAssist-DM`, `!NPC-GM` / `!NPC-DM`, `!Con-GM` / `!Con-DM`, `!Effect-GM` / `!Effect-DM`, plus each module's specialized commands below. |
 | Admin Controls | `!ga-config list|get|set|modules|cleanup|ui|timezone`, `!ga-timezone`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-metrics`, and `!ga-debug`. |
 | Table Time | `!ga-timezone` chooses a named IANA timezone, follows daylight-saving changes, and controls readable times plus date-managed NPC Sessions without rewriting stored event instants. |
 | Queue Model | Normal commands/events run directly. Only `GameAssist.enqueue(...)` work and module transitions use the serialized queue. |
@@ -65,11 +65,13 @@ GameAssist’s kernel and bundled modules expose:
 * **Table Timezone** – the GM can choose a validated city/region timezone for status panels, logs, handouts, history, and date-managed NPC Sessions. Named timezones follow daylight-saving changes; saved event instants remain absolute.
 * **MarkerService** – `GameAssist.MarkerService` resolves built-in and custom markers, supplies artwork metadata when Roll20 exposes it, preserves unrelated and numbered marker state, applies explicit add/remove/toggle operations, and exposes one observation contract. It can be disabled when another Mod needs exclusive control of marker behavior; GameAssist then turns off MarkerService-dependent modules while leaving unrelated modules available.
 * **TurnTrackerService** – `GameAssist.TurnTrackerService` reads, classifies, observes, and safely writes Roll20's native Turn Tracker while preserving custom entries, unknown fields, duplicate token turns, text priorities, and rows owned by other tools. Disabling it leaves the tracker unchanged and turns off InitiativeAssist and CombatAssist.
+* **SemanticEvents** – `GameAssist.SemanticEvents` publishes immutable, versioned, in-sandbox domain notifications for optional module integrations. Delivery is direct, ordered, non-persistent, and non-replayed; one observer failure cannot interrupt another.
 * **ConditionAssist** – supplies 2014 SRD condition wording by default, optional 2024 SRD wording, campaign-editable descriptions, case-insensitive `!cond-<condition>` quick references, marker artwork, an accurate selected-token menu, a GM current-page condition/marker status roster, verified marker-toggling announcements in public chat or player whispers, add/remove/toggle commands, guarded player permissions, and marker-change descriptions. Every condition marker operation and observation goes through MarkerService.
 * **TokenAssist** – provides general token controls through `!token-assist` and `!ta`/`!ta-*`, explicit-ID permissions, token-change observers, and MarkerService-backed status operations. Older supported `!token-mod` macros remain compatibility aliases during v1.x and are not processed by GameAssist when standalone TokenMod is detected.
 * **InitiativeAssist** – provides the case-insensitive `!Init-` command family for D&D 5E 2014 and 2024 characters, public player invitations, composable roll options, detailed dice/formula results, score-aware optional narration, selective rerolls, encounter groups, audits, and preservation-first `!Init-RR`. It does not advance turns or own encounter rounds.
 * **CombatAssist** – provides the case-insensitive `!Combat-` command family as an optional layer over Roll20's native Turn Tracker. Native arrows remain available; a recognized native round-counter row can own the round number, while guarded movement, stale-safe timers, native pings, private player prompts, preserved-round maintenance, and one-step recovery add convenience. TurnTrackerService is required for tracker access; timers never advance initiative and pings never alter tokens.
 * **WelcomeAssist** – optionally posts one delayed table greeting after GameAssist completes a healthy startup. It starts disabled, offers professional, built-in table-humor, campaign-custom, and mixed greeting modes, keeps configuration and previews private to the GM, and uses the short case-insensitive `!Welcome` / `!Welcome-Action` command family.
+* **EffectAssist** – starts disabled and records source-aware effect instances as the durable fact. Bless and generic manual effects may project one marker or ConditionAssist condition while overlapping sources remain independently removable, pre-existing markers remain owned by the campaign, and audit never writes without a fresh confirmation.
 * **MECHSUITS Structure** – the executable script uses the literal codename `GAMEASSIST`, framed sections, file-scoped canonical tree metadata, and per-section change notes.
 
 **Design goal:** useful, inspectable campaign automation that reports failures clearly and can be upgraded incrementally.
@@ -81,12 +83,12 @@ GameAssist’s kernel and bundled modules expose:
 | Step | What to do |
 | --- | --- |
 | 📥 **1 · Install** | Add GameAssist through Roll20 One-Click, or paste the complete `GameAssist.js` file into **Mod (API) Scripts**, then save. |
-| 🧩 **2 · Choose Features** | Open `!ga-config ui` and keep only the tools that fit the campaign. MarkerService and TurnTrackerService begin enabled; InitiativeAssist, CombatAssist, and WelcomeAssist begin disabled until the GM deliberately configures them. |
+| 🧩 **2 · Choose Features** | Open `!ga-config ui` and keep only the tools that fit the campaign. MarkerService and TurnTrackerService begin enabled; InitiativeAssist, CombatAssist, WelcomeAssist, and EffectAssist begin disabled until the GM deliberately configures them. |
 | 📜 **3 · Prepare CritAssist** | If CritAssist will be used, create the seven tables listed in [§11 · Roll-Table Cookbook](#11-roll-table-cookbook). Skip this step when CritAssist is disabled. |
 | 🔄 **4 · Reload** | Save or restart the Mod sandbox and wait for the GameAssist core ready whisper. Module-by-module startup whispers are normally quiet. |
 | 🩺 **5 · Check Health** | Run `!ga-status` and `!ga-config modules`. Confirm the features you enabled are running. |
 | 🕰️ **6 · Set Table Time** | Open `!ga-timezone`, choose the city/region that governs the campaign clock, and confirm the displayed time and Session date. The sandbox default remains available. |
-| 🎲 **7 · Try the Table Tools** | Test `!token-assist help`, `!condition help`, `!critfumble menu`, `!concentration --status`, `!HP-Selected`, `!Init-Help`, `!Combat-Help`, and `!Welcome` for the modules you use. |
+| 🎲 **7 · Try the Table Tools** | Test `!token-assist help`, `!condition help`, `!critfumble menu`, `!concentration --status`, `!HP-Selected`, `!Init-Help`, `!Combat-Help`, `!Welcome`, and `!Effect-Guide` for the modules you use. |
 | 🛡️ **8 · Verify Real Changes** | With disposable tokens, test one NPC death/revival, one concentration marker, and one mixed-character initiative reroll before the first live session. |
 
 The `v0.1.5.x` line replaces standalone TokenMod and StatusInfo for the token and condition workflows supported by GameAssist. It does not keep a hidden legacy path that sends GameAssist work back to those standalone scripts. Remove both standalone scripts before testing overlapping TokenAssist or ConditionAssist commands.
@@ -127,9 +129,13 @@ Run these commands after every update:
 !npc-death-audit
 !npc-death-repair
 !HP-Selected
+!ga-enable EffectAssist
+!Effect-GM
+!Effect-Status
+!Effect-Audit
 ```
 
-Then perform nine real actions:
+Then perform ten real actions:
 
 1. Drop a linked NPC below 1 HP and verify the death marker appears.
 2. Raise that NPC above 0 HP and verify the marker clears.
@@ -140,6 +146,7 @@ Then perform nine real actions:
 7. Put a PC, a living NPC, and a custom round/counter row in Roll20's Turn Tracker; run `!Init-RR` and verify only the two characters reroll.
 8. Start CombatAssist, move the native tracker through one complete forward cycle, move back once, remove or add one disposable combatant, and verify the round survives the native edit while row contents remain intact. Preview one restore before ending the test.
 9. If WelcomeAssist will be used, enable it, preview a greeting, reload the sandbox, and verify exactly one public greeting appears.
+10. With two linked source tokens and one disposable linked target, apply Bless from each source, end them one at a time, and verify the single projected marker remains until the final EffectAssist-owned source ends.
 
 ---
 
@@ -276,7 +283,7 @@ Module configuration belongs under `state.GameAssist.<Module>.config`. Runtime c
 }
 ```
 
-The snapshot excludes runtime caches and metrics. v1.8.1 does not import or restore snapshots.
+The snapshot excludes runtime caches and metrics. v2.0.0 does not import or restore snapshots.
 
 ### 5.6 Table Timezone
 
@@ -439,7 +446,7 @@ That boundary keeps the first integrated release testable. Image stacks and defa
 
 On first startup, TokenAssist copies a valid legacy `state.TokenMod.playersCanUse_ids` value into its own configuration. It records the migration and leaves `state.TokenMod` untouched for rollback. It does not expose a global `TokenMod` object; integrations should use `GameAssist.TokenAssist.observeTokenChange(...)` or MarkerService's marker observer.
 
-Existing supported `!token-mod` macros remain compatibility aliases during the v1.x line, but should be updated to `!token-assist`, `!ta`, or `!ta-*` before GameAssist v2.0.0. When standalone TokenMod is detected, GameAssist leaves `!token-mod` to that script while TokenAssist commands remain available. Remove standalone TokenMod for normal v1.8.1 use because both tools can change the same token properties and markers.
+Existing supported `!token-mod` macros remain compatibility aliases in v2.0.0, but new macros should use `!token-assist`, `!ta`, or `!ta-*`. Their eventual removal requires a separate announced migration release. When standalone TokenMod is detected, GameAssist leaves `!token-mod` to that script while TokenAssist commands remain available. Remove standalone TokenMod for normal v2.0.0 use because both tools can change the same token properties and markers.
 
 Config keys: `playersCanUseIds`, `warnOnStandalone`, and the protected `configSchemaVersion`.
 
@@ -492,7 +499,7 @@ GM commands:
 
 `!Init-RR` rolls once per unique eligible token. Duplicate occurrences receive the same result. Custom rows, counters, objects, dead NPCs, HP/death-marker mismatches, stale references, off-page tokens, unsupported sheets, and unreadable 2024 entries are not rerolled or repositioned. Eligible rows sort only among the positions InitiativeAssist owns, so a round counter or another Mod's custom entry stays exactly where the GM placed it.
 
-InitiativeAssist deliberately stops at initiative. CombatAssist owns deliberate encounter lifecycle, exact turn movement, native or conservative round counting, optional turn timers, and native current-turn pings. Condition-duration countdowns and automatic end-of-turn effects remain outside both modules in v1.8.1.
+InitiativeAssist deliberately stops at initiative. CombatAssist owns deliberate encounter lifecycle, exact turn movement, native or conservative round counting, optional turn timers, and native current-turn pings. Condition-duration countdowns and automatic end-of-turn effects remain outside both modules in v2.0.0.
 
 Config keys: `enabled`, `mode` (`manager` or `observer`), `hideNpcRolls` (default `true`).
 
@@ -594,7 +601,7 @@ Config keys: `marker`, `randomize`.
 
 > **Marker service:** NPCAssist uses the integrated `GameAssist.MarkerService`; death history remains independent from marker-write success.
 
-> **Module version:** NPCAssist `1.3.3` in GameAssist v1.8.1. NPCAssist `1.0.0` introduced the four-level history model; `1.1.0` added curated Arc management, hierarchical clearing, date rollover, and the report writer; `1.1.1` hardened standalone interoperability and new-token HP initialization; `1.2.0` migrated marker behavior to MarkerService; `1.2.1` added confirmation-gated marker repair; `1.3.0` applies the DM-selected timezone to Session dates and history displays without changing stored event instants; `1.3.1` added compact navigation, status, and a persistent manual; `1.3.2` added equivalent NPC command families and dedicated GM/DM control aliases; `1.3.3` adds configurable GM-private Bloodied threshold notices; `1.4.0` adds optional page-local progressive names for newly added linked NPC tokens.
+> **Module version:** NPCAssist `1.4.0` in GameAssist v2.0.0. NPCAssist `1.0.0` introduced the four-level history model; `1.1.0` added curated Arc management, hierarchical clearing, date rollover, and the report writer; `1.1.1` hardened standalone interoperability and new-token HP initialization; `1.2.0` migrated marker behavior to MarkerService; `1.2.1` added confirmation-gated marker repair; `1.3.0` applies the DM-selected timezone to Session dates and history displays without changing stored event instants; `1.3.1` added compact navigation, status, and a persistent manual; `1.3.2` added equivalent NPC command families and dedicated GM/DM control aliases; `1.3.3` adds configurable GM-private Bloodied threshold notices; `1.4.0` adds optional page-local progressive names for newly added linked NPC tokens.
 
 NPCAssist watches `change:graphic:bar1_value` for linked NPC characters with `npc=1`.
 
@@ -767,6 +774,51 @@ Config keys: `enabled`, `mode`, `delayMs`, `showHeader`, `header`, `defaultGreet
 
 ---
 
+### 6.12 EffectAssist *(optional, GM-managed)*
+
+> **Module version:** `1.0.0`<br>
+> **Default:** Disabled<br>
+> **Current mechanical boundary:** Players apply roll bonuses manually; this release does not write character-sheet modifiers or expire effects automatically.
+
+EffectAssist records **why** an effect exists instead of treating a token marker as the complete truth. Each active instance retains its source character and token, exact target characters and tokens, dependency, stacking group, manual duration note, creator, lifecycle, and projection health.
+
+Start here:
+
+```roll20chat
+!ga-enable EffectAssist
+!Effect-GM
+```
+
+Select every target token first. The GM screen then provides a source picker and these guided paths:
+
+* **Apply Bless** → Record a concentration-dependent Bless source and project the configured `angel-outfit` marker.
+* **Generic Marker** → Create or reuse a bounded campaign definition with one MarkerService projection.
+* **Condition Effect** → Create or reuse a definition backed by a configured ConditionAssist condition.
+* **Record Only** → Track a semantic effect without adding a marker or condition.
+
+Two Bless sources affecting the same target remain separate effect instances but share one visible non-stacking projection. Ending one source leaves the projection in place. Ending the final source removes it only when EffectAssist originally added it. A matching marker that existed before the first effect remains after every EffectAssist source ends.
+
+Main commands:
+
+* `!Effect-GM`, `!Effect-DM`, or `!Effect-Menu` → Open the Game Master control screen.
+* `!Effect-Guide` or `!Effect-Help` → Open the compact quick-start guide.
+* `!Effect-Status` → Review active effects, recent ended effects, source/target details, and projection health.
+* `!Effect-Definitions` → Review built-in and campaign definitions.
+* `!Effect-Audit` → Compare semantic records, exact projected tokens, ownership ledgers, and current markers without changing anything.
+* `!Effect-Repair` → Reopen the audit unless a fresh one-use confirmation grant is supplied by the audit button.
+* `!Effect-End --id <generated-id>` → End one exact source instance; ordinary menus generate this button so the GM need not memorize IDs.
+* `!Effect-Info` → Explain source ownership, overlap, and current supported boundaries.
+* `!Effect-Manual` → Create or update the stable EffectAssist user-manual handout.
+* `!effect <command>` → Use the same controls through the case-insensitive spaced command family.
+
+Audit reports missing tokens, token representation changes, unavailable optional projections, missing markers, missing ownership records, orphaned owned markers, and malformed preserved records. Repair is offered only for safe marker or condition mismatches, is bound to the GM who ran the audit, expires after five minutes, rechecks the complete mismatch signature, and verifies the result.
+
+Disabling EffectAssist stops its commands and future automation while preserving valid active records, ended history, definitions, and existing projections. Re-enable it and run Status or Audit before continuing. MarkerService or ConditionAssist can be unavailable without disabling record-only workflows; affected projections remain pending and visible.
+
+Config keys: `enabled`, `defaultBlessMarker`, and the protected `customDefinitions` map.
+
+---
+
 ## 7 · Installation <a id="7-installation"></a>
 
 I. **Open the Roll20 Mod/API Editor**
@@ -777,13 +829,13 @@ I. **Open the Roll20 Mod/API Editor**
 
 II. **Install GameAssist**
 
-1. Paste the complete contents of `GameAssist` v1.8.1.
+1. Paste the complete contents of `GameAssist` v2.0.0.
 2. Keep the script as one complete file; do not paste only individual MECHSUITS sections into Roll20.
 3. Save the script.
 
 III. **Remove Overlapping Standalone Marker Tools**
 
-GameAssist v1.8.1 replaces standalone TokenMod and StatusInfo for the token and condition workflows supported by TokenAssist and ConditionAssist. Remove both standalone scripts before enabling the overlapping GameAssist modules. TokenAssist and standalone TokenMod both recognize `!token-mod`; ConditionAssist and standalone StatusInfo both recognize `!condition` and marker changes.
+GameAssist v2.0.0 replaces standalone TokenMod and StatusInfo for the token and condition workflows supported by TokenAssist and ConditionAssist. Remove both standalone scripts before enabling the overlapping GameAssist modules. TokenAssist and standalone TokenMod both recognize `!token-mod`; ConditionAssist and standalone StatusInfo both recognize `!condition` and marker changes.
 
 If standalone TokenMod is accidentally left installed, TokenAssist suspends only its deprecated `!token-mod` alias and warns the GM instead of applying that command twice. The `!token-assist`, `!ta`, and `!ta-*` commands remain available, but this safeguard is diagnostic rather than a supported permanent dual-install arrangement.
 
@@ -880,6 +932,13 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!Welcome-Header` | `show\|hide\|<text>` | Show, hide, or replace the public greeting header. |
 |  | `!Welcome-Default` | `<text>` | Replace the professional default greeting. |
 |  | `!Welcome-Custom` | `list`, `add <text>`, `remove <number>`, `clear --confirm` | Manage the bounded campaign greeting list. |
+| **Effects** | `!Effect-GM` / `!Effect-DM` / `!Effect-Menu` | selected linked targets; guided source picker | Open EffectAssist's private action screen. |
+|  | `!Effect-Guide` / `!Effect-Help` / `!Effect-Info` / `!Effect-Manual` | — | Open compact guidance, the short explanation, or the stable manual handout. |
+|  | `!Effect-Status` / `!Effect-Definitions` | — | Review active and recent ended effects or available definitions. |
+|  | `!Effect-Apply` | `--effect bless` or bounded `--name` with `--marker`, `--condition`, or `--none`; generated `--source` | Apply one semantic effect atomically to selected eligible targets. Ordinary use is guided through the GM screen. |
+|  | `!Effect-End` | `--id <generated-id>` | End one exact source instance through generated buttons and remove only an unneeded EffectAssist-owned projection. |
+|  | `!Effect-Audit` / `!Effect-Repair` | fresh generated confirmation grant | Compare without writing, then deliberately repair only a still-current safe projection mismatch. |
+|  | `!effect <command>` / `!EffectAssist-<command>` | case-insensitive | Spaced canonical command family and compatibility family for the same guarded controls. |
 | **Token Controls** | `!token-assist help` / `!ta-help` | — | Open TokenAssist guidance, commands, compatibility limits, provenance, and attribution. |
 |  | `!token-assist menu|gm|dm|status|info|audit|manual` | matching `!ta-*` aliases; `!TokenAssist-GM|DM` | Open Game Master controls, health, explanation, read-only review, or the stable TokenAssist manual. |
 |  | `!token-assist --help-statusmarkers` / `!ta-help-statusmarkers` | — | Open the marker-command guide. |
@@ -890,7 +949,7 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!token-assist --report <recipient\|message>` / `!ta-report` | `{property}` placeholders | Report before/after token values to the GM, caller, table, or controllers. |
 |  | `!token-assist --ids <id...>` / `!ta-ids` | `--ignore-selected`, `--current-page`, `--active-pages` | Add explicit token/character targets when authorized and optionally filter their pages. |
 |  | `!token-assist --config players-can-ids|on|off` / `!ta-config` | GM only | Control whether players may supply explicit IDs; selected-token use remains available. |
-|  | `!token-mod ...` | temporary older syntax | Accepts supported older macros during v1.x; replace them before GameAssist v2.0.0. |
+|  | `!token-mod ...` | temporary older syntax | Accepts supported older macros in v2.0.0; use `!token-assist` or `!ta` for new macros. Removal requires a separately announced migration release. |
 | **GM** | `!HP-All` / `!hp all` | — | Roll and set HP for qualifying NPC tokens on the current page. |
 |  | `!HP-Selected` / `!hp selected` | — | Roll and set HP for qualifying selected NPC tokens. |
 |  | `!HP-<command>` / `!hp <command>` | case-insensitive | Open HPAssist controls, roll selected/page NPC HP, show guidance, or run read-only checks; older HP command families remain compatibility aliases only. |
@@ -958,7 +1017,7 @@ Setting `enabled=true` or `enabled=false` routes through component lifecycle con
 |  | `showDescOnStatusChange` | bool | `true` | Show a condition description when its marker is added. |
 |  | `showIconInDescription` | bool | `true` | Show built-in or registered custom marker artwork beside descriptions, with a readable fallback. |
 |  | `conditions` | object | 15 definitions | Validated condition name, marker, and description map; manage through `!condition config`. |
-| **TokenAssist** | `enabled` | bool | `true` | Enable general token controls and temporary support for older `!token-mod` macros. |
+| **TokenAssist** | `enabled` | bool | `true` | Enable general token controls and retained compatibility support for older `!token-mod` macros. |
 |  | `playersCanUseIds` | bool | legacy value or `false` | Allow players to add explicit `--ids` targets; selected-token controls remain available. |
 |  | `warnOnStandalone` | bool | `true` | Warn when standalone TokenMod is detected and compatibility handling is suspended. |
 |  | `configSchemaVersion` | number | `1` | Protected TokenAssist configuration schema identifier. |
@@ -990,6 +1049,9 @@ Setting `enabled=true` or `enabled=false` routes through component lifecycle con
 |  | `deadMarker` | string | `"dead"` | Marker used for death state. |
 |  | `autoHide` | bool | `false` | Move newly dead NPC tokens to another layer. |
 |  | `hideLayer` | string | `"gmlayer"` | Target layer used by `autoHide`. |
+| **EffectAssist** | `enabled` | bool | `false` | Enable source-aware semantic effect controls and future optional integrations. |
+|  | `defaultBlessMarker` | string | `"angel-outfit"` | Choose Bless's visible MarkerService projection. |
+|  | `customDefinitions` | object | `{}` | Protected bounded definitions created through EffectAssist's validated guided workflow. |
 | **HPAssist** | `enabled` | bool | `true` | Enable NPC HP commands. |
 |  | `autoRollOnAdd` | bool | `false` | Attempt HP rolling when qualifying tokens are added. |
 | **DebugTools** | `enabled` | bool | `false` | Enable GM-only dry-run/apply debug commands. |
@@ -1026,11 +1088,13 @@ Examples:
 | **Token Helper** | `GameAssist.getLinkedCharacter(token)` | Return `{ token, character }` for a valid linked object-layer token, otherwise `null`. |
 | **Marker Service** | `GameAssist.MarkerService` | Resolve markers and artwork metadata, inspect state, add, remove, toggle, set, and observe through one structured contract. |
 | **Turn Tracker Service** | `GameAssist.TurnTrackerService` | Read immutable native-tracker snapshots, classify rows, apply guarded lossless updates, and observe tracker changes. |
+| **Semantic Events** | `GameAssist.SemanticEvents` | Publish or observe immutable versioned in-sandbox domain events without persistence or replay. |
 | **Condition Assist** | `GameAssist.ConditionAssist` | Read validated condition definitions or apply add/remove/toggle actions through MarkerService. |
 | **Token Assist** | `GameAssist.TokenAssist` | Inspect component provenance/lifecycle and subscribe to token changes made through supported TokenAssist commands. |
 | **Initiative Assist** | `GameAssist.InitiativeAssist` | Inspect the currently classified mixed-sheet tracker roster while InitiativeAssist is running. |
 | **Combat Assist** | `GameAssist.CombatAssist` | Inspect the active CombatAssist component version and a defensive copy of its current encounter record. |
 | **Welcome Assist** | `GameAssist.WelcomeAssist` | Inspect the active module version; Bootstrap uses its guarded completion hook internally. |
+| **Effect Assist** | `GameAssist.EffectAssist` | Create, end, inspect, audit, and observe source-aware semantic effect instances while the module is enabled. |
 | **Chat Helpers** | `GameAssist.createButton(label, command)` / `GameAssist.rollTable(tableName)` | Create safe chat buttons or roll a sanitized table name. |
 | **Config UI** | `GameAssist.renderConfigUI(playerId, options)` | Open the ConfigUI when that module is active. |
 | **Metrics** | `GameAssist.getMetricsStore()` / `GameAssist.recordMetric(type, opts)` | Inspect or record metrics. |
@@ -1274,7 +1338,61 @@ const encounter = GameAssist.CombatAssist.getStatus();
 
 `GameAssist.WelcomeAssist` exists only while WelcomeAssist is running. Its `version` field is available for inspection. The `onBootstrapComplete()` method is the module's internal post-bootstrap lifecycle hook; external modules should not call it to produce additional greetings. Public management belongs to the guarded short `!Welcome` commands; the longer `!welcome-assist` family remains a compatibility alias.
 
-### 10.13 MECHSUITS Contribution Contract
+### 10.13 SemanticEvents
+
+`GameAssist.SemanticEvents` is always available as lightweight in-sandbox infrastructure. It does not discover or enable providers, persist events, replay startup history, or move ordinary handlers onto the queue.
+
+```js
+const subscription = GameAssist.SemanticEvents.observe(event => {
+    // event.type, event.producer, event.eventId, event.sequence, event.payload
+}, {
+    owner: 'MyModule',
+    types: ['effect.lifecycle.changed']
+});
+
+const result = GameAssist.SemanticEvents.publish(
+    'example.completed',
+    'MyModule',
+    { id: 'example-1' }
+);
+
+// Later:
+subscription.unsubscribe();
+```
+
+Every accepted event includes `eventSchemaVersion`, `eventId`, `streamId`, monotonic `sequence`, `type`, `producer`, RFC-3339 `occurredAt`, optional `causeEventId`, and a deeply frozen JSON-safe `payload`. Delivery is direct and ordered. Observer exceptions are isolated through GameAssist diagnostics.
+
+### 10.14 EffectAssist
+
+`GameAssist.EffectAssist` is created when EffectAssist is first enabled:
+
+```js
+const effects = GameAssist.EffectAssist;
+const result = effects.apply({
+    definitionId: 'bless',
+    sourceTokenId,
+    targetTokenIds,
+    createdBy: 'MyModule',
+    requestId
+});
+```
+
+| Method / Field | Result |
+| --- | --- |
+| `version` / `stateSchemaVersion` | EffectAssist module and durable-state contract versions. |
+| `isAvailable()` | Reports the saved module enablement state. |
+| `getDefinitions()` | Returns defensive copies of built-in and campaign effect definitions. |
+| `getActiveInstances()` / `getHistory()` | Returns defensive copies of active and bounded ended records. |
+| `apply(request)` | Atomically validates source and targets, records a semantic instance, and applies an available marker/condition projection. |
+| `end(instanceId, actor)` | Ends one source instance idempotently and removes only an unneeded owned projection. |
+| `audit()` | Returns a defensive read-only comparison without mutating token or state projections. |
+| `observe(callback, options)` | Filters SemanticEvents to `effect.lifecycle.changed`. |
+| `clearObservers(owner)` | Clears semantic observers registered under the exact owner. |
+| `registerProjectionAdapter(name, adapter)` | Reserves a validated adapter contract for later separately supported sheet projections. |
+
+A script-provided `requestId` is bounded and idempotent for the retained runtime window. Optional projection failure remains local: an unavailable MarkerService or ConditionAssist projection can be recorded as pending without inventing a second authority.
+
+### 10.15 MECHSUITS Contribution Contract
 
 The executable file follows MECHSUITS v1.5.2 conventions:
 
@@ -1563,7 +1681,7 @@ Select a disposable token and try:
 !ta-set aura1_radius|5 aura1_color|336699 aura1_options|circle
 ```
 
-Values containing spaces must be quoted. Players may use selected-token commands, but `--ids` remains restricted unless the GM enables it through `!token-assist --config players-can-ids|on` or `!ta-config players-can-ids|on`. Commands involving unsupported advanced image, default-token, computed/name-resolved attribute, controller-list, color-math, multi-sided-token, duplicate marker index, conditional marker count, or TokenMod-style help-handout rebuilding are outside TokenAssist 1.0.3's compatibility boundary and should produce a clear warning rather than a partial mutation.
+Values containing spaces must be quoted. Players may use selected-token commands, but `--ids` remains restricted unless the GM enables it through `!token-assist --config players-can-ids|on` or `!ta-config players-can-ids|on`. Commands involving unsupported advanced image, default-token, computed/name-resolved attribute, controller-list, color-math, multi-sided-token, duplicate marker index, conditional marker count, or TokenMod-style help-handout rebuilding are outside TokenAssist 1.0.4's compatibility boundary and should produce a clear warning rather than a partial mutation.
 
 ### 14.5 ConditionAssist Does Not Respond, Shows the Wrong Wording, or Uses the Wrong Marker
 
@@ -1608,7 +1726,7 @@ Unknown branches are not deleted automatically. Review the warning, then explici
 
 ### 14.8 `!ga-config list` Is Not a Full Backup
 
-The `GameAssist Config` handout contains flags, global config, and module config only. It excludes runtime caches, metrics, and unknown state branches. v1.8.1 cannot import the snapshot.
+The `GameAssist Config` handout contains flags, global config, and module config only. It excludes runtime caches, metrics, and unknown state branches. v2.0.0 cannot import the snapshot.
 
 Use it for configuration review and upgrade comparison—not as a full restore mechanism.
 
@@ -1756,7 +1874,18 @@ WelcomeAssist starts disabled. Enable it, configure and preview it, then reload 
 
 `!Welcome-Preview` is private. `!Welcome-Announce` is public and consumes the automatic greeting opportunity for the current sandbox so the table does not receive a duplicate after the timer fires. Custom mode falls back to the professional greeting when its campaign list is empty. Existing `!welcome-assist` macros remain accepted.
 
-### 14.17 Compatibility Hints
+### 14.17 EffectAssist Reports a Pending or Mismatched Projection
+
+1. Confirm EffectAssist is enabled with `!ga-config modules`.
+2. Open `!Effect-Status`, then run `!Effect-Audit`.
+3. A **pending** projection means the semantic effect record is safe but the optional MarkerService or ConditionAssist projection is unavailable.
+4. A **missing marker** means the effect record and ownership ledger still exist, but the visible projection changed.
+5. A **token identity change** means the exact token now represents a different character. EffectAssist refuses automatic cleanup or repair on that token.
+6. Use the audit's generated confirmation button only when the displayed repair matches the GM's intent. A stale, expired, or different-GM confirmation is refused.
+
+Disabling EffectAssist preserves valid records and projections. Re-enable it and audit before ending or repairing effects. A marker that existed before EffectAssist applied the first source is intentionally preserved after the final source ends.
+
+### 14.18 Compatibility Hints
 
 Compatibility scanning is debug-only:
 
@@ -1766,7 +1895,7 @@ GameAssist.flags.DEBUG_COMPAT = true;
 
 Reload, inspect the output, then return it to `false` to avoid noise. If another Mod processes the same natural-1 attack rolls, concentration markers, NPC death events, NPC HP/bar 1 changes, initiative values, custom tracker rows, rounds, or turn advancement, choose one tool to own that responsibility. InitiativeAssist Observer mode prevents its initiative writes; disabling CombatAssist prevents its encounter-flow controls while leaving the native tracker unchanged.
 
-### 14.18 Still Stuck?
+### 14.19 Still Stuck?
 
 Capture:
 
@@ -1783,60 +1912,53 @@ These details help maintainers reproduce the campaign conditions and focus the i
 
 ## 15 · Upgrade Paths <a id="15-upgrade-paths"></a>
 
-### 15.1 Recommended Upgrade: v0.1.7.0 → v1.8.1
+### 15.1 Recommended Upgrade: v1.8.2 → v2.0.0
 
 I. **Record the Working Campaign**
 
-1. Keep a copy of the complete v0.1.7.0 script.
+1. Keep a copy of the complete v1.8.2 script.
 2. Run `!ga-config list` for a configuration-only comparison snapshot.
-3. Record `!ga-config modules`, the current NPC bucket names, and any non-default settings under CritFumble, NPCManager, ConcentrationTracker, or NPCHPRoller.
+3. Record `!ga-config modules`, active NPC reporting scopes, and any non-default marker names.
 
-> The snapshot is not a full-state backup and cannot be imported automatically. NPC history, Arc records, and runtime caches are intentionally outside it.
+> The snapshot is not a full-state backup and cannot be imported automatically. NPC history, Arc records, runtime caches, and future EffectAssist instances are intentionally outside it.
 
 II. **Replace the Complete Script**
 
-1. Replace v0.1.7.0 with the complete GameAssist v1.8.1 file.
+1. Replace v1.8.2 with the complete GameAssist v2.0.0 file.
 2. Save or restart the Mod sandbox.
-3. Do not combine sections from different releases.
+3. Do not combine framed sections from different releases.
 
-III. **Confirm the Canonical Names**
+III. **Confirm Existing Modules First**
 
 ```roll20chat
 !ga-status
 !ga-status --details
 !ga-config modules
-!ga-config get CritAssist
-!ga-config get NPCAssist
-!ga-config get ConcentrationAssist
-!ga-config get HPAssist
+!NPC-Status
+!Con-Status
+!HP-Status
 ```
 
-The module list should use CritAssist, NPCAssist, ConcentrationAssist, and HPAssist. Valid old configuration and runtime branches migrate before startup auditing; destination values win when both names contain valid data. Unknown or malformed branches remain available for diagnosis instead of being deleted.
+EffectAssist should appear configured off and paused on first installation. Existing canonical module settings, NPC records, and established command aliases remain available.
 
-IV. **Confirm Compatibility and Durable Records**
+IV. **Enable and Prove EffectAssist Deliberately**
 
 ```roll20chat
-!critfumble status
-!CritAssist-Status
-!NPCManager-Status
-!NPCAssist-Status
-!Concentration-Status
-!ConcentrationAssist-Status
-!NPCHPRoller-Status
-!HPAssist-Status
-!npc-death-buckets
-!npc-death-report --scope session
+!ga-enable EffectAssist
+!Effect-GM
+!Effect-Status
+!Effect-Audit
 ```
 
-Each old/new command pair should reach the same module once. NPC Campaign, Chapter, Section, Session, Arc, death, and revival records must remain intact. Running each substantial module's `manual` command should adopt and rename one unambiguous old guide handout rather than creating a second guide.
+Use disposable linked tokens for one Bless source, two overlapping Bless sources, one final cleanup, one pre-existing-marker preservation check, and one manual marker-removal audit/repair cycle. Leave character-sheet bonuses manual in v2.0.0.
 
 V. **Run the Release Smoke Test**
 
-Use [§4.1 Minimum Smoke Test](#41-minimum-smoke-test), the dedicated v1.8.0 naming-migration track, and the focused v1.8.1 Bloodied track in `Smoketest.md`. Include one real death/revival, the half-HP crossing checks, one concentration marker cycle, one HP roll, one CritAssist menu/table check, module disable/re-enable, mixed-sheet initiative, and one complete CombatAssist round.
+Use [§4.1 Minimum Smoke Test](#41-minimum-smoke-test), the focused v2.0.0 EffectAssist track, and the retained v1.8.2 regression in `Smoketest.md`. Include the ordinary death/revival, concentration, HP, condition, initiative, combat, welcome, and module lifecycle checks used by the campaign.
 
 ### 15.2 Rollback
 
-If v1.8.1 fails its smoke test:
+If v2.0.0 fails its smoke test:
 
 1. Replace it with your complete previous working script.
 2. Save/reload.
@@ -1922,15 +2044,17 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 
 ### 17.1 Current Status
 
-| Item | Status in v1.8.1 | Notes |
+| Item | Status in v2.0.0 | Notes |
 | --- | --- | --- |
 | MarkerService | **Implemented and accepted** | One toggleable service owns GameAssist marker resolution, mutation, preservation, and observation. Disabling it turns off dependent modules without disabling unrelated features. |
 | Bundled marker consumers | **Migrated** | NPCAssist 1.4.0, ConcentrationAssist 0.2.2, and DebugTools 0.2.2 no longer require standalone TokenMod. |
 | ConditionAssist 1.0.3 | **Implemented and accepted** | Condition references with `!condition` and case-insensitive `!cond-<condition>` commands, accurate selected-token recognition, current-page condition/marker status, selectable 2014/2024 SRD wording, campaign edits, marker artwork, verified marker-toggling announcements, validated legacy import, MarkerService synchronization, compact navigation, and GM/DM control aliases. |
-| TokenAssist 1.0.3 | **Implemented and accepted** | General token controls with `!token-assist` and `!ta`/`!ta-*` commands, temporary support for older `!token-mod` macros, MarkerService-backed markers, token-change observation, clear compatibility limits, duplicate-install protection, an action-focused GM/DM screen, and a stable manual. |
+| TokenAssist 1.0.4 | **Implemented and accepted** | General token controls with `!token-assist` and `!ta`/`!ta-*` commands, temporary support for older `!token-mod` macros, MarkerService-backed markers, token-change observation, clear compatibility limits, duplicate-install protection, an action-focused GM/DM screen, and a stable manual. |
 | Integrated architecture stabilization | **Complete** | Upgrade, migration, lifecycle, command, marker, documentation, and Roll20 sandbox checks passed under Issues #28 and #29. |
 | DM-configurable timezone | **Implemented; focused acceptance passed** | One validated table timezone controls readable timestamps and date-managed NPC Sessions while stored event instants remain absolute. The complete live module suite was not rerun for v0.1.5.1. |
 | TurnTrackerService 1.0.0 | **Implemented; live foundation passed** | Toggleable native-tracker snapshots, structural row classification, guarded lossless writes, observations, dependency cascading, and visible page-owned row creation passed the focused Roll20 checkpoint. |
+| SemanticEvents 1 | **Implemented; local contract checks passed** | Immutable, versioned, direct-delivery domain events let optional modules interoperate without hard dependencies, persistence, replay, or implicit queueing. |
+| EffectAssist 1.0.0 | **v2.0.0 sandbox candidate** | Disabled-by-default semantic effects, Bless and generic proving paths, overlap-safe projection ownership, bounded history, read-only audit, and confirmed repair are ready for focused Roll20 testing. |
 | InitiativeAssist 1.0.4 | **Implemented and accepted** | Mixed 2014/2024 initiative, public and private GM/DM start pages, private NPC evidence, GM-layer NPC batches, selected-character batches, roll options, selective rerolls, encounter groups, status, audit, compact navigation, and a stable manual through the case-insensitive `!Init-` namespace. |
 | CombatAssist 1.0.5 | **Implemented and accepted** | Optional native-tracker layer with native round-counter authority, conservative fallback rounds, preserved-round roster/reroll adoption, one-step recovery, guarded movement, stale-safe configurable timers, private-safe native pings, ordered player confirmations, GM/DM controls, compact guidance, and a persistent manual. TurnTrackerService is its only baseline prerequisite. |
 | WelcomeAssist 0.1.4 | **Implemented and accepted** | Disabled-by-default post-bootstrap greeting with professional, built-in, campaign-custom, and mixed modes; private preview/configuration; bounded custom text; health-gated one-per-sandbox automatic output; compact standard navigation; GM/DM status controls; a stable manual; short `!Welcome` commands; and retained `!welcome-assist` compatibility. |
@@ -1940,9 +2064,9 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 | NPC death history | **Implemented** | Page-local progressive NPC names, four-level handouts, Arc management, report writer, date-managed Sessions, MarkerService-backed death markers, and optional GM-private Bloodied threshold notices. |
 | Native Mord character-sheet support | **Deferred** | Begin after the complete v0.1.5.0 marker, token, and condition architecture is stable. |
 
-### 17.2 Current Candidate: v1.8.2 Progressive NPC Token Naming
+### 17.2 Current Candidate: v2.0.0 EffectAssist Foundation
 
-The v1.8.2 candidate keeps v1.8.1's accepted Bloodied behavior and adds one bounded NPCAssist setup feature. When enabled, a newly added linked NPC token on the Objects or GM layer receives its represented character's name unless that name is already used by another eligible NPC on the same page. Collisions receive the lowest available positive suffix. Current page contents are the only sequence source, so deletion and sandbox restarts require no counter repair. Existing tokens and represented characters are never renamed.
+The v2.0.0 candidate adds EffectAssist 1.0.0 as a disabled-by-default semantic effect module. It proves source-aware overlapping effects with Bless and bounded generic definitions, treats markers and conditions as ownership-tracked projections, preserves pre-existing campaign markers, provides read-only audit plus fresh-confirmation repair, and retains valid active/ended records across module toggles. Character-sheet projection, passive cast recognition, concentration events, HP-loss offers, and automatic duration handling remain separately tracked phases.
 
 ### 17.3 Later Candidate: Compatibility-First Bridge Character Sheet
 
@@ -1959,27 +2083,39 @@ This is a separate project and is not implemented in v0.1.5.0.
 
 1. **v1.8.0 — Module Identity Migration:** completed through Issue #60 and PR #63 with canonical CritAssist, NPCAssist, ConcentrationAssist, and HPAssist names, migration-safe state and handout handling, and retained command aliases.
 2. **v1.8.1 — NPCAssist Bloodied Alerts:** completed through Issue #64 and PR #73 with a GM-private crossing notification and one-click Control Center toggle.
-3. **v1.8.2 — Progressive NPC Naming:** implement Issue #65 as the current candidate with page-local duplicate avoidance based on the tokens present when a new eligible NPC is added.
-4. **v2.x — EffectAssist Phase A:** establish source-aware semantic effect instances, targets, dependencies, stacking, marker/condition projection, and read-only reconciliation before attempting character-sheet mutation.
+3. **v1.8.2 — Progressive NPC Naming:** completed through Issue #65 and PR #74 with page-local duplicate avoidance based on the tokens present when a new eligible NPC is added.
+4. **v2.0.0 — EffectAssist Phase A:** in progress through Issues #61 and #75 with source-aware semantic effect instances, targets, dependencies, stacking, ownership-safe marker/condition projection, read-only audit, and deliberate repair. Issues #76-#80 carry the separately gated sheet, recognition, concentration, HP, and timing integrations.
 5. **v2.y — AlmanacAssist:** use Issue #62 as the master specification and implement Time, Climate, Astronomy, Weather, Environment, and Rest as six separately tracked internal submodule phases.
 6. **v2.z — Deferred Backlog:** revisit older TokenAssist parity work, CombatAssist integrations, and other deferred features after the new module foundations are stable.
 
 The public [development roadmap](ROADMAP.md) carries the detailed gates and issue links. Planned release labels describe sequence, not promised dates.
 
-### 17.5 Explicit Non-Goals for v1.8.2
+### 17.5 Explicit Non-Goals for v2.0.0
 
 * No implicit queueing of every command or event.
 * No claim that the watchdog can kill running work.
 * No automatic deletion of unexpected state branches.
 * No guaranteed external dependency discovery.
 * No complete state import/restore.
-* No Bloodied marker, public Bloodied announcement, configurable threshold, or Bloodied history entry.
-* No bulk renaming, existing-token renumbering, represented-character rename, campaign-wide sequence, or persistent naming counter.
-* No automatic turn advancement, automatic creation of a round-counter row, condition-duration countdown, end-of-turn effect, persistent token highlight, combat music, NPC-history handoff, plugin loader, Rest Manager, or native Mord-sheet implementation.
+* No character-sheet modifier writes.
+* No passive spell-card recognition.
+* No automatic concentration ending or concentration prompts from HP loss.
+* No automatic round, turn, minute, real-time, or fictional-world-time expiration.
+* No 2024 native Effect writes without a documented Roll20 contract.
+* No WildShape or token-representation interoperability guesswork.
+* No broad spell/effect catalog, plugin loader, Rest Manager, or native Mord-sheet implementation.
 
 ---
 
 ## 18 · Changelog <a id="18-changelog"></a>
+
+### v2.0.0 – EffectAssist Semantic Effects
+
+* Added disabled-by-default EffectAssist 1.0.0 with source, target, dependency, stacking, lifecycle, and bounded history records.
+* Added Bless and generic marker, condition, or record-only workflows through guided GM controls.
+* Preserves one effective non-stacking projection across overlapping sources and removes only final EffectAssist-owned state.
+* Adds read-only audit, GM-bound one-use repair confirmation, identity-drift refusal, and post-write verification.
+* Added CORE:SEMANTICEVENTS for immutable versioned optional-integration contracts without persistence, replay, or implicit queueing.
 
 ### v1.8.2 – Page-Local Progressive NPC Names
 

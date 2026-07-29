@@ -1,8 +1,8 @@
 # GameAssist Development Roadmap
 
-This roadmap records GameAssist's completed standalone-to-integrated transition, its native initiative and encounter foundations, and the current move into three-part project releases beginning with the `v1.8.x` module-identity and NPCAssist line.
+This roadmap records GameAssist's completed standalone-to-integrated transition, native initiative and encounter foundations, completed `v1.8.x` module and NPCAssist work, and the current v2.0.0 EffectAssist foundation.
 
-Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation details and acceptance evidence. Issues #60 and #64 are complete; the active sequence is Issue #65, phased EffectAssist work under Issue #61, and phased AlmanacAssist work under Issue #62.
+Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation details and acceptance evidence. Issues #60, #64, and #65 are complete; the active release is EffectAssist Phase A under Issue #75, with separately gated integration work in Issues #76 through #80.
 
 > The roadmap is a maintained plan, not a promise of dates. Issues #25 through #29 are development checkpoints within one release train; none is an intermediate public release.
 
@@ -31,7 +31,7 @@ Use this document for durable release boundaries, sequencing, and completion gat
 7. **Roll20 is the final compatibility test.** Syntax checks and local reasoning are necessary but cannot replace sandbox smoke tests.
 8. **Initiative and combat remain separate responsibilities.** TurnTrackerService owns safe native-tracker mechanics, InitiativeAssist owns initiative calculation and reroll UX, and CombatAssist owns deliberate encounter lifecycle plus conservative turn and round observation. Timers, reminders, current-turn indicators, reporting handoff, and music are staged immediately after the foundation acceptance rather than folded into tracker mechanics.
 9. **Public startup greetings remain deliberate.** WelcomeAssist starts disabled, previews privately, announces automatically only after completed healthy Bootstrap, and never treats live enablement as permission to post.
-10. **Project releases use three-part semantic versions beginning with v1.8.0.** Historical four-part identifiers remain unchanged, and independently versioned modules keep their own established version sequences. Compatibility aliases are removed only through an explicit later migration issue, never merely because the project version format changed.
+10. **Project releases use three-part semantic versions beginning with v1.8.0.** Historical four-part identifiers remain unchanged, and independently versioned modules keep their own established version sequences. Compatibility aliases are removed only through an explicit later migration issue, never merely because the project version format changed.\n11. **SemanticEvents carries notifications, not gameplay authority.** Owning modules persist durable truth; the core service delivers immutable in-memory events in publication order and isolates observers.\n12. **EffectAssist owns semantic effects and projection evidence.** MarkerService remains the marker authority, ConditionAssist remains the condition authority, and later sheet, concentration, HP, and timing integrations use explicit adapters or events rather than hidden cross-module writes.
 
 ---
 
@@ -62,8 +62,13 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | Persistent module manuals | Complete | [#59](https://github.com/Mord-Eagle/GameAssist/issues/59) | Modules with substantial workflows create or update one stable `GameAssist Guide - <Module>` handout; brief modules keep complete guidance in chat. The Roll20 acceptance pass succeeded. |
 | Canonical module identities | Complete | [#60](https://github.com/Mord-Eagle/GameAssist/issues/60), [PR #63](https://github.com/Mord-Eagle/GameAssist/pull/63) | v1.8.0 migrated CritAssist, NPCAssist, ConcentrationAssist, and HPAssist names while preserving valid state, records, handouts, APIs, and established commands. PR #63 merged and Issue #60 closed. |
 | NPCAssist Bloodied alerts | Complete | [#64](https://github.com/Mord-Eagle/GameAssist/issues/64), [PR #73](https://github.com/Mord-Eagle/GameAssist/pull/73) | v1.8.1 added a focused GM-private 50% HP crossing alert and one-click Control Center toggle without changing death-history semantics. |
-| Progressive NPC naming | In progress | [#65](https://github.com/Mord-Eagle/GameAssist/issues/65) | v1.8.2 prevents accidental duplicate NPC token names through page-local, current-token numbering that the GM can disable or deliberately override. |
-| EffectAssist Phase A | Deferred | [#61](https://github.com/Mord-Eagle/GameAssist/issues/61) | v2.x begins with semantic source/target effects, dependencies, stacking, marker/condition projection, and reconciliation; sheet mutation and automatic durations remain later phases. |
+| Progressive NPC naming | Complete | [#65](https://github.com/Mord-Eagle/GameAssist/issues/65), [PR #74](https://github.com/Mord-Eagle/GameAssist/pull/74) | v1.8.2 prevents accidental duplicate NPC token names through page-local, current-token numbering that the GM can disable or deliberately override. |
+| EffectAssist Phase A | Sandbox verification | [#75](https://github.com/Mord-Eagle/GameAssist/issues/75) | v2.0.0 implements source-aware semantic effects, safe non-stacking projections, lifecycle history, read-only audit, and authorized repair. |
+| EffectAssist 2014 sheet projection | Planned | [#76](https://github.com/Mord-Eagle/GameAssist/issues/76) | Project verified EffectAssist-owned repeating global modifier rows for official 2014 PC sheets; retain NPC and manual fallbacks. |
+| EffectAssist cast recognition | Planned | [#77](https://github.com/Mord-Eagle/GameAssist/issues/77) | Offer GM-confirmed 2014 Bless proposals; keep 2024 recognition observational until real template samples establish a safe contract. |
+| EffectAssist concentration observation | Planned | [#78](https://github.com/Mord-Eagle/GameAssist/issues/78) | Consume semantic concentration results without making either module responsible for the other's state. |
+| EffectAssist HP-loss offers | Planned | [#79](https://github.com/Mord-Eagle/GameAssist/issues/79) | Add provenance-aware HP events before offering concentration or effect actions. |
+| EffectAssist duration candidates | Planned | [#80](https://github.com/Mord-Eagle/GameAssist/issues/80) | Add encounter and world-time candidates while keeping expiration manual until live boundaries are proven. |
 | AlmanacAssist master program | Deferred | [#62](https://github.com/Mord-Eagle/GameAssist/issues/62) | v2.y tracks six implementation issues in order: Time, Climate, Astronomy, Weather, Environment, and Rest. |
 | TokenAssist and CombatAssist backlog | Deferred | [open issues](https://github.com/Mord-Eagle/GameAssist/issues) | v2.z revisits older parity and integration work after the new module foundations are stable. |
 | GameAssist handout organization | Deferred | [#72](https://github.com/Mord-Eagle/GameAssist/issues/72) | Preserve stable handouts after manual Journal filing, add safe indexing, and defer true folder routing until Roll20 exposes a supported writable Journal-folder API. |
@@ -436,8 +441,8 @@ This release adopts CritAssist, NPCAssist, ConcentrationAssist, and HPAssist as 
 - [x] Preserve NPCAssist history, bucket, Arc, marker, and public API compatibility.
 - [x] Adopt and rename one unambiguous old guide handout rather than creating a duplicate.
 - [x] Pass syntax and the complete local regression suite.
-- [ ] Pass the focused clean-install and v0.1.7.0 upgrade smoke tracks in Roll20.
-- [ ] Complete PR #63 and close Issue #60.
+- [x] Pass the focused clean-install and v0.1.7.0 upgrade smoke tracks in Roll20.
+- [x] Complete PR #63 and close Issue #60.
 
 ### Completion Gate
 
@@ -453,15 +458,73 @@ The Roll20 module list uses only the four canonical names; valid settings and re
 
 ### v1.8.2 — Progressive NPC Naming
 
-[Issue #65](https://github.com/Mord-Eagle/GameAssist/issues/65) assigns names from the live tokens on the newly added token's page. Existing tokens are never renamed. The default is enabled, the GM may disable it, and deliberate manual duplicates remain allowed. Number selection uses the lowest available positive suffix, so a deleted gap may be reused; no persistent campaign counter is required.
+[Issue #65](https://github.com/Mord-Eagle/GameAssist/issues/65) was completed through [PR #74](https://github.com/Mord-Eagle/GameAssist/pull/74). It assigns names from the live tokens on the newly added token's page. Existing tokens are never renamed. The default is enabled, the GM may disable it, and deliberate manual duplicates remain allowed. Number selection uses the lowest available positive suffix, so a deleted gap may be reused; no persistent campaign counter is required.
 
 ---
 
-## Phase 13: EffectAssist Program in `v2.x`
+## Phase 13: EffectAssist Program Beginning in `v2.0.0`
 
-[Issue #61](https://github.com/Mord-Eagle/GameAssist/issues/61) is the master specification. Phase A establishes semantic effect instances, source and target ownership, dependencies, stacking, manual lifecycle, marker/condition projection, and read-only reconciliation. Character-sheet mutation, passive spell recognition, concentration observers, HP-loss prompting, and combat timing are separately gated later phases.
+[Issue #61](https://github.com/Mord-Eagle/GameAssist/issues/61) is the master specification. The phases share one semantic identity and projection-ownership model, but each integration has its own release gate so uncertain Roll20 behavior cannot compromise the accepted foundation.
 
-EffectAssist remains a gameplay module. It consumes MarkerService and ConditionAssist capabilities where enabled and must not become another marker authority, Turn Tracker authority, concentration roller, or complete D&D rules engine.
+EffectAssist remains a gameplay module. MarkerService owns markers, ConditionAssist owns condition definitions and condition-marker workflows, character sheets own their native roll fields, ConcentrationAssist owns concentration checks, HP-writing modules own HP mutations, and TurnTrackerService owns native tracker access.
+
+### Phase A — Semantic Foundation, v2.0.0
+
+**Tracking:** [Issue #75](https://github.com/Mord-Eagle/GameAssist/issues/75)  
+**Status:** Sandbox verification
+
+- [x] Add source-aware effect definitions and active instances.
+- [x] Keep source character/token identity separate from every target identity.
+- [x] Add idempotent application and idempotent ending.
+- [x] Add shared non-stacking projection ownership with baseline preservation.
+- [x] Support MarkerService, ConditionAssist, and record-only projection definitions.
+- [x] Add bounded ended history and preserve runtime records across module disable/re-enable.
+- [x] Add read-only audit and short-lived, GM-bound, one-use repair authorization.
+- [x] Refuse partial target application and token-representation drift.
+- [x] Add the immutable in-memory SemanticEvents core service.
+- [x] Update executable, README, changelog, roadmap, One-Click metadata, and smoke tests.
+- [x] Pass focused local EffectAssist, SemanticEvents, syntax, and MECHSUITS checks.
+- [ ] Pass the clean-install and v1.8.2 upgrade smoke tracks in Roll20.
+- [ ] Complete the Phase A PR and close Issue #75.
+
+### Phase B — Official 2014 Sheet Projection
+
+**Tracking:** [Issue #76](https://github.com/Mord-Eagle/GameAssist/issues/76)  
+**Status:** Planned after Phase A acceptance
+
+Use EffectAssist-owned repeating attack and saving-throw global modifier rows for supported official 2014 PC sheets. Record exact attribute IDs and baseline values, use sheet workers, and retain manual or NPC fallbacks. Do not write aggregate worker outputs.
+
+### Phase C — Cast Recognition
+
+**Tracking:** [Issue #77](https://github.com/Mord-Eagle/GameAssist/issues/77)  
+**Status:** Planned
+
+Recognize only well-evidenced official 2014 Bless spell output and offer a GM-confirmed proposal; chat target text is not treated as token identity. Capture real 2024 template samples before defining a 2024 recognition contract.
+
+### Phase D — Concentration Observation
+
+**Tracking:** [Issue #78](https://github.com/Mord-Eagle/GameAssist/issues/78)  
+**Status:** Planned
+
+Publish and observe semantic concentration-completed and concentration-ended events. Neither module may write the other's persistent state directly.
+
+### Phase E — HP-Loss Offers
+
+**Tracking:** [Issue #79](https://github.com/Mord-Eagle/GameAssist/issues/79)  
+**Status:** Planned
+
+Introduce provenance-aware HP events so actual damage can be distinguished from healing, token setup, HPAssist initialization, and other automated writes before EffectAssist offers an action.
+
+### Phase F — Encounter and World-Time Durations
+
+**Tracking:** [Issue #80](https://github.com/Mord-Eagle/GameAssist/issues/80)  
+**Status:** Planned
+
+Consume semantic turn, round, encounter, and future world-time candidates. Reminders and expiration candidates may proceed first; automatic ending remains gated until live Roll20 evidence proves the boundary and ownership rules.
+
+### Completion Gate
+
+Phase A must survive the live Roll20 clean-install, upgrade, overlap, baseline-marker, audit/repair, disable/re-enable, and restart tests. Later phases may then build on the accepted instance and event contracts without changing Phase A's saved identity or ownership semantics.
 
 ---
 
@@ -480,7 +543,7 @@ Each phase must provide useful standalone behavior with explicit optional integr
 
 ---
 
-## Current `v1.8.0` Architecture
+## Current `v2.0.0` Architecture
 
 ```text
 [GAMEASSIST]/
@@ -493,6 +556,7 @@ Each phase must provide useful standalone behavior with explicit optional integr
 │  ├─ [GAMEASSIST:CORE:STATE]
 │  ├─ [GAMEASSIST:CORE:MARKERSERVICE]
 │  ├─ [GAMEASSIST:CORE:TURNTRACKERSERVICE]
+│  ├─ [GAMEASSIST:CORE:SEMANTICEVENTS]
 │  └─ [GAMEASSIST:CORE:OBJECT]
 ├─ [GAMEASSIST:INTERFACES]
 │  ├─ [GAMEASSIST:INTERFACES:EVENTS]
@@ -507,12 +571,13 @@ Each phase must provide useful standalone behavior with explicit optional integr
 │  ├─ [GAMEASSIST:MODULES:WELCOMEASSIST]
 │  ├─ [GAMEASSIST:MODULES:NPCASSIST]
 │  ├─ [GAMEASSIST:MODULES:CONCENTRATIONASSIST]
+│  ├─ [GAMEASSIST:MODULES:EFFECTASSIST]
 │  ├─ [GAMEASSIST:MODULES:HPASSIST]
 │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 └─ [GAMEASSIST:BOOTSTRAP]
 ```
 
-This target now matches the implemented executable section tree. Per MECHSUITS v1.5.2, it and the executable banner's `canonical_tree` must remain synchronized whenever a section tag changes.
+This tree matches the implemented executable section hierarchy. Per MECHSUITS v1.5.2, it and the executable banner's `canonical_tree` must remain synchronized whenever a section tag changes.
 
 ---
 

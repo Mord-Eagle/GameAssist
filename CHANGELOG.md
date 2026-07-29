@@ -10,7 +10,7 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 | Revision | Status | Role |
 | --- | --- | --- |
-| **v1.8.2** | Development candidate | Page-local progressive NPC token naming |
+| **v2.0.0** | Development candidate; automated EffectAssist checks passed; Roll20 acceptance pending | Source-aware semantic effects, projection ownership, audit, and repair |\n| **v1.8.2** | Merged through PR #74; Issue #65 closed | Page-local progressive NPC token naming |
 | **v1.8.1** | Merged through PR #73 | GM-private NPCAssist Bloodied threshold alerts and Control Center toggle |
 | **v1.8.0** | Merged through PR #63; 712 automated checks passed | Canonical module identities and migration-safe project version transition |
 | **v0.1.7.0** | Accepted after automated verification and live Roll20 smoke testing | Preservation-first encounter, turn, and round flow |
@@ -39,6 +39,109 @@ This changelog is intentionally detailed. It records not only visible features, 
 - The attempted v0.1.5 file was not imported wholesale. Its unsafe or structurally unreliable changes were rejected; only isolated reviewed ideas were ported.
 - Older supplied notes used “Unreleased” and “Staging” labels for v0.1.3–v0.1.5 work. Those records are retained below as historical development evidence rather than silently discarded.
 - Where the supplied historical record did not establish a release date, this changelog does not invent one.
+
+---
+
+## [2.0.0] – 2026-07-28
+
+### Release definition
+
+GameAssist v2.0.0 introduces EffectAssist 1.0.0 and the shared SemanticEvents core service. EffectAssist establishes a source-aware record of active game effects and projects only the token state it can prove GameAssist owns. This release is the stable foundation for later character-sheet, spell-recognition, concentration, HP-loss, turn, and duration integrations; those integrations are not represented as complete until their separately tracked Roll20 contracts are implemented and tested.
+
+EffectAssist starts disabled so existing campaigns upgrade without receiving new markers, conditions, chat messages, or state mutations.
+
+### Semantic effect records
+
+- Adds reusable effect definitions with stable identifiers, readable names, concentration requirements, and one declared projection type.
+- Includes Bless as the first built-in definition, using a non-stacking marker projection while players continue to add the mechanical roll bonus manually in v2.0.0.
+- Supports generic MarkerService, ConditionAssist, and record-only definitions for deliberate GM-managed effects.
+- Records the exact source character and source token separately from every target character and target token.
+- Preserves active instances across sandbox restarts and keeps a bounded history of the 100 most recently ended instances.
+- Generates stable instance identifiers and rejects overlong or unsafe request identifiers.
+- Makes repeated submission of the same request idempotent instead of creating duplicate effects.
+- Rejects a mixed valid/invalid target selection as one operation so a partial effect is never silently applied.
+
+### Projection ownership and overlap
+
+- Adds a shared projection ledger that records the projection's baseline state, whether GameAssist created it, and every active EffectAssist instance that currently owns it.
+- Allows overlapping sources to share one non-stacking marker or condition without multiplying visible token state.
+- Ending one source removes only that source's ownership while another source remains active.
+- Ending the final source removes the projection only when EffectAssist originally created it.
+- Preserves a matching marker or condition that already existed before EffectAssist began managing the effect.
+- Verifies marker and condition writes after the request and records a pending projection when the required optional service is unavailable.
+- Refuses to mutate a token when its represented character no longer matches the identity captured by the effect instance.
+
+### Audit and authorized repair
+
+- Adds a read-only audit that compares semantic instances, projection ownership, and current token state without changing the campaign.
+- Reports missing managed projections, unexpected remaining projections, unavailable services, malformed known records, and token-identity drift as distinct conditions.
+- Adds short-lived repair grants that are bound to the requesting GM and the exact mismatch signature.
+- Makes each repair grant single-use and requires EffectAssist to recheck the mismatch immediately before writing.
+- Refuses stale, expired, reused, altered, or non-GM repair requests.
+- Runs a fresh audit after an approved repair so the result is visible rather than assumed.
+
+### Game Master experience
+
+- Adds a compact EffectAssist GM/DM menu, Guide/Help, Info, Status/List, Definitions, Audit, Apply, End, Repair, and persistent Manual workflow.
+- Provides friendly unknown-command recovery with a direct route back to the Guide.
+- Keeps detailed conceptual guidance in the module manual while the ordinary chat menus remain task-oriented.
+- Adds EffectAssist to ConfigUI, module health reporting, the public command matrix, One-Click metadata, and the module-specific smoke-test guide.
+- Uses plain capability language in public screens; later integrations are identified as planned features rather than internal development phases.
+
+### TokenAssist compatibility wording
+
+- Advances TokenAssist from 1.0.3 to 1.0.4 without changing token mutation behavior or command routing.
+- Removes the expired instruction to replace older `!token-mod` macros before v2.0.0.
+- Retains `!token-mod` as a compatibility alias while recommending `!token-assist` and `!ta` for new macros.
+- Requires any future alias removal to be announced through a separate migration release rather than inferred from project-version numbering.
+
+### SemanticEvents core service
+
+- Adds an always-available in-memory service for immutable, JSON-safe semantic event envelopes.
+- Assigns an event schema version, event id, stream id, sequence, producer, occurrence time, optional cause event, and payload to each publication.
+- Delivers events directly and in publication order without routing ordinary handlers through the queue.
+- Allows observers to filter by exact event type and isolates observer exceptions so one integration cannot interrupt another.
+- Provides bounded observer registration and explicit cleanup by subscription or owner.
+- Publishes EffectAssist lifecycle changes as `effect.lifecycle.changed`.
+- Does not persist or replay events; durable gameplay truth remains in the owning module's state.
+
+### State and lifecycle safeguards
+
+- Adds EffectAssist defaults through the existing state self-healing path while preserving valid configuration and unknown state branches.
+- Reports malformed known definitions, instances, and projection records without deleting them automatically.
+- Preserves EffectAssist runtime records when the module is disabled and restores command access to the same records when it is re-enabled. Direct public API mutation requests return `UNAVAILABLE` while disabled; read-only inspection remains available.
+- Removes active handlers during disable without deleting the public state ledger.
+- Keeps MarkerService and ConditionAssist as optional projection providers rather than hard startup dependencies.
+- Adds explicit policy limits for active effects, history, definitions, targets, request identifiers, repair grants, names, descriptions, and chat output.
+
+### Parallel integration groundwork
+
+- Issue #76 now contains the official 2014-sheet Bless projection contract, including exact repeating global modifier attributes, ownership evidence, sheet-worker completion, and NPC/manual fallbacks.
+- Issue #77 now separates reliable 2014 cast proposals from a 2024 observation scaffold that requires real Roll20 samples before automation.
+- Issue #78 defines concentration-completion and concentration-ended semantic events without coupling ConcentrationAssist to EffectAssist.
+- Issue #79 defines an HP event seam with write provenance so later offers can distinguish real damage from setup, healing, and automated initialization.
+- Issue #80 defines turn and world-time candidate events while retaining manual expiration until live Roll20 evidence can prove an automatic boundary.
+- These contracts prevent later phases from rewriting EffectAssist's identity, ownership, or event model while keeping unverified behavior out of the v2.0.0 runtime.
+
+### Verification and release gate
+
+- JavaScript syntax parsing passes for the complete v2.0.0 executable.
+- MECHSUITS validation finds 28 correctly nested and paired sections, complete metadata and footers, and an exact file-scoped canonical tree.
+- Eighteen deterministic EffectAssist checks pass for disabled defaults, lifecycle preservation, Bless application, request idempotency, overlapping ownership, baseline preservation, repeated end, invalid-selection atomicity, pending optional services, bounded history, audit, repair, and identity drift.
+- Nine SemanticEvents checks pass for filtered ordered delivery, observer isolation, deep immutability, envelope shape, cleanup, and invalid-type refusal.
+- `script.json` parses with the v2.0.0 command and description additions.\n- `GameAssist`, `GameAssist.js`, and `GameAssist-v2.0.0` are byte-identical with SHA-256 `F9B3628A7A62A00FD5BBB85C788C46E0A8D2019F2CB4A5BE33DA25BC1098F1CC`.
+- Final acceptance requires both the clean-install and v1.8.2 upgrade tracks in `Smoketest.md`, including one full EffectAssist lifecycle in the live Roll20 Mod sandbox.
+
+### Deliberate exclusions
+
+- No character-sheet attribute writes in v2.0.0.
+- No automatic spell-card or cast recognition.
+- No automatic concentration cleanup from saving-throw outcomes.
+- No HP-loss effect offers.
+- No automatic turn, round, encounter, or world-time expiration.
+- No replayable event ledger or queueing of ordinary event handlers.
+- No automatic deletion of malformed or unknown saved state.
+- No change to the established behavior of NPCAssist, HPAssist, CritAssist, ConcentrationAssist, InitiativeAssist, CombatAssist, WelcomeAssist, TokenAssist, or ConditionAssist.
 
 ---
 

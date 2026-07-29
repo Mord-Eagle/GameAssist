@@ -1,9 +1,9 @@
 /*
 ========================================
 GameAssist - Roll20 API Script
-Version: 1.8.2
+Version: 2.0.0
 Last Updated: 2026-07-28 (America/New_York)
-Development line: page-local progressive NPC token naming.
+Development line: source-aware semantic effects with ownership-safe marker and condition projections.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -12,7 +12,7 @@ DESCRIPTION
 GameAssist is a modular D&D 5E (2014 and 2024) automation suite with an explicit opt-in
 task queue, state/configuration helpers, consistent logging, and a core marker
 service. Normal event handlers execute directly unless a module deliberately
-calls GameAssist.enqueue(). This package ships with eleven configurable modules:
+calls GameAssist.enqueue(). This package ships with twelve configurable modules:
 - ConfigUI 0.2.2 - GM-only chat controls for toggling modules and common options.
 - CritAssist 0.2.5.1 - Detects natural-1 attacks and offers fumble/confirm menus.
 - ConditionAssist 1.0.3 - Provides condition wording, artwork, announcements, and marker controls.
@@ -22,6 +22,7 @@ calls GameAssist.enqueue(). This package ships with eleven configurable modules:
 - WelcomeAssist 0.1.4 - Optionally greets the table after a healthy GameAssist startup through short !Welcome commands.
 - ConcentrationAssist 0.2.2 - Runs concentration checks and manages its configured marker.
 - NPCAssist 1.4.0 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, and Arc rosters.
+- EffectAssist 1.0.0 - Records source-aware effects and safely projects markers or conditions without claiming pre-existing token state.
 - HPAssist 0.1.1.3 - Rolls npc_hpformula and writes the result to token bar 1.
 - DebugTools 0.2.2 - Optional dry-run-first GM diagnostics.
 
@@ -69,15 +70,19 @@ MODULE COMMANDS
   including !npc-death-help, !npc-death-report, !npc-death-buckets,
   !npc-death-clear, !npc-death-write, !npc-wr, !npc-death-audit, !npc-death-repair,
   !npc-death-arc, !npc-bloodied, !npc-numbering
-- HPAssist: !HP, !npc-hp-selected, !npc-hp-all
+- EffectAssist: !Effect-GM, !Effect-Guide, !Effect-Status, !Effect-Definitions,
+  !Effect-Apply, !Effect-End, !Effect-Audit, !Effect-Repair, and !effect <command>
+- HPAssist: !HP-GM, !HP-Selected, !HP-All, !hp <command>
 - DebugTools: !ga-debug damage|marker|save
 
-V1.8.2 FOUNDATION
+V2.0.0 FOUNDATION
 - [GAMEASSIST:CORE:MARKERSERVICE] is the single GameAssist authority for marker
   resolution, reads, writes, toggles, duplicate handling, and change observation.
 - Built-in ids, custom display names, exact stored tags, numbered markers, and
   unrelated marker entries are preserved through a structured mutation contract.
 - NPCAssist can assign unique page-local names to newly added linked NPC tokens without persistent counters.
+- EffectAssist records semantic effect instances separately from visible marker or condition projections, preserving overlapping sources and pre-existing token state.
+- EffectAssist audits projection drift without writing and requires a fresh GM confirmation before repair.
 - NPCAssist, ConcentrationAssist, and DebugTools use GameAssist.MarkerService.
 - Marker-dependent GameAssist modules no longer depend on standalone TokenMod.
 - ConditionAssist uses MarkerService for condition reads, writes, and change observation.
@@ -118,9 +123,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 // --- MECHSUITS BANNER (YAML) ---
 // mechsuit:
 //   codename: "GAMEASSIST"
-//   project_version: "v1.8.2"
-//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, migration-safe module identities, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker and Turn Tracker authorities, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, preservation-first encounter flow, GM-private NPC Bloodied alerts, optional health-gated table greetings, and validated campaign time. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, automatic turn advancement, automatic Bloodied markers/history, or automatic condition-duration management."
-//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.turntrackerservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critassist","modules.conditionassist","modules.tokenassist","modules.initiativeassist","modules.combatassist","modules.welcomeassist","modules.npcassist","modules.concentrationassist","modules.hpassist","modules.debugtools","bootstrap"]
+//   project_version: "v2.0.0"
+//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, migration-safe module identities, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker and Turn Tracker authorities, source-aware semantic effects with ownership-safe projections, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, preservation-first encounter flow, GM-private NPC Bloodied alerts, optional health-gated table greetings, and validated campaign time. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, automatic turn advancement, automatic Bloodied markers/history, automatic condition-duration management, or silent effect repair."
+//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.turntrackerservice","core.semanticevents","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critassist","modules.conditionassist","modules.tokenassist","modules.initiativeassist","modules.combatassist","modules.welcomeassist","modules.npcassist","modules.concentrationassist","modules.effectassist","modules.hpassist","modules.debugtools","bootstrap"]
 //   env:
 //     required: []
 //     optional: []
@@ -133,7 +138,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //   observability:
 //     logs: "roll20_whisper_to_gm"
 //     metrics: [{ name: "gameassist.queue.task_duration_ms", unit: "ms" }]
-//     spans: ["[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:MODULES:INITIATIVEASSIST]","[GAMEASSIST:MODULES:COMBATASSIST]","[GAMEASSIST:MODULES:WELCOMEASSIST]"]
+//     spans: ["[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:MODULES:EFFECTASSIST]","[GAMEASSIST:MODULES:INITIATIVEASSIST]","[GAMEASSIST:MODULES:COMBATASSIST]","[GAMEASSIST:MODULES:WELCOMEASSIST]"]
 //   performance: { notes: "No current benchmark claim; validate in the target Roll20 campaign sandbox." }
 //   concurrency: { model: "Direct event handlers plus explicit opt-in serialized task queue", idempotency: "N/A (event-driven)" }
 //   compatibility: { accepts: ["Roll20 API sandbox; current campaign smoke test required"], emits: "Roll20 chat whispers/logs" }
@@ -152,6 +157,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     │  ├─ [GAMEASSIST:CORE:STATE]
 //     │  ├─ [GAMEASSIST:CORE:MARKERSERVICE]
 //     │  ├─ [GAMEASSIST:CORE:TURNTRACKERSERVICE]
+//     │  ├─ [GAMEASSIST:CORE:SEMANTICEVENTS]
 //     │  └─ [GAMEASSIST:CORE:OBJECT]
 //     ├─ [GAMEASSIST:INTERFACES]
 //     │  ├─ [GAMEASSIST:INTERFACES:EVENTS]
@@ -166,14 +172,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     │  ├─ [GAMEASSIST:MODULES:WELCOMEASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:NPCASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:CONCENTRATIONASSIST]
+//     │  ├─ [GAMEASSIST:MODULES:EFFECTASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:HPASSIST]
 //     │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 //     └─ [GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
-// Guarantee: GameAssist v1.8.2 runs policy, utilities, guarded core services including MarkerService and TurnTrackerService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/gameplay modules, then bootstrap in the declared order. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
+// Guarantee: GameAssist v2.0.0 runs policy, utilities, guarded core services including MarkerService and TurnTrackerService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/effect/gameplay modules, then bootstrap in the declared order. EffectAssist owns source-aware semantic effect records while visible markers and conditions remain auditable projections that are never silently repaired. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
 
 // =============================
-// === GameAssist v1.8.2 ===
+// === GameAssist v2.0.0 ===
 // === Author: Mord Eagle ===
 // =============================
 // Released under the MIT License (see https://opensource.org/licenses/MIT)
@@ -206,8 +213,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Tunables and operational policy
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "POLICY", title: "Tunables",
-    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; NPC initialization, timezone input, condition, initiative, combat, and welcome limits remain explicit"],
-    //   provides: ["POLICY"], last_updated_version: "v0.1.7.0", lifecycle: "active" }
+    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; NPC initialization, timezone input, condition, initiative, combat, welcome, semantic-event, and effect limits remain explicit"],
+    //   provides: ["POLICY"], last_updated_version: "v2.0.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // POLICY owns shared timeouts, cache limits, UI defaults, snapshot identifiers,
@@ -299,6 +306,27 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             maxGreetingLength: 240,
             maxHeaderLength: 80
         }),
+        semanticEvents: Object.freeze({
+            observerLimit: 100,
+            typeLength: 100,
+            ownerLength: 80
+        }),
+        effects: Object.freeze({
+            activeInstanceLimit: 100,
+            endedHistoryLimit: 100,
+            definitionLimit: 25,
+            targetLimit: 20,
+            sourcePickerLimit: 25,
+            conditionPickerLimit: 30,
+            requestIdLimit: 50,
+            requestIdLength: 100,
+            repairGrantLimit: 25,
+            repairGrantMs: 1000 * 60 * 5,
+            chatListLimit: 10,
+            nameLength: 80,
+            markerLength: 200,
+            descriptionLength: 1000
+        }),
         config: Object.freeze({
             unsafeKeys: Object.freeze(['__proto__', 'prototype', 'constructor'])
         }),
@@ -308,11 +336,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.7.0): Added bounded CombatAssist turn-duration and reminder-count policy alongside the existing encounter row bounds; rollback: disable timers and retain the row bounds.
+    // Changed (v2.0.0): Added bounded semantic-event observer/type/owner limits plus EffectAssist instance, history, definition, target, picker, request-id count/length, repair-grant, chat-list, name, marker, and description limits; rollback: disable EffectAssist and retain the stored configuration branch.
     // Decision log:
     //   CHOICE: Offer common IANA zones plus validated custom input - ALT: fixed numeric offsets; REJECTED: fixed offsets do not follow daylight-saving changes.
     //   CHOICE: Keep NPC initialization and snapshot knobs centralized while removing the unused external marker delay - ALT: retain the dead setting; REJECTED: implied behavior no caller performs.
     // Prior notes:
+    //   v0.1.7.0: Added bounded CombatAssist turn-duration and reminder-count policy alongside the existing encounter row bounds.
     //   v0.1.6.1: Added bounded WelcomeAssist delay, readiness polling, custom-list, greeting, and header limits.
     //   v0.1.6.0: Added bounded initiative batch, picker, group, custom-die, flat-adjustment, score-band, observer-suppression, and chat-review policy.
     //   v0.1.5.1: Added bounded IANA timezone input, a bounded formatter cache, a stable display locale, and common GM menu choices.
@@ -1053,17 +1082,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Core wrapper (constants and kernel services)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE", title: "Core wrapper",
-    //   guarantees: ["Core constants and kernel services are grouped; MarkerService owns marker mechanics and TurnTrackerService owns native tracker mechanics"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP]"], last_updated_version: "v0.1.7.0",
+    //   guarantees: ["Core constants and kernel services are grouped; MarkerService owns marker mechanics, TurnTrackerService owns native tracker mechanics, and SemanticEvents owns versioned in-sandbox domain notifications"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP]"], last_updated_version: "v2.0.0",
     //   lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // CORE wraps the foundational constants, queue, compatibility checks, state,
-    // marker service, Turn Tracker service, and object utilities. Children carry the executable code; this wrapper
+    // marker service, Turn Tracker service, semantic event contracts, and object utilities. Children carry the executable code; this wrapper
     // documents scope and anchors the hierarchy for MECHSUITS compliance.
     // -------------------------------------------------------------------------
 
-    const VERSION      = '1.8.2';
+    const VERSION      = '2.0.0';
     const STATE_KEY    = 'GameAssist';
     const MODULES      = {};
     const _transitioning   = {};
@@ -2541,6 +2570,145 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // =============================================================================
+    // [GAMEASSIST:CORE:SEMANTICEVENTS] BEGIN
+    // Section Title: In-sandbox semantic event contracts
+    // -----------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:SEMANTICEVENTS", title: "Semantic Events",
+    //   guarantees: ["Immutable versioned semantic envelopes; direct ordered observer delivery; no replay","Provider modules may remain independently disabled while consumers subscribe safely","Observer failures are isolated and never interrupt later observers"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]"],
+    //   provides: ["SemanticEvents"], last_updated_version: "v2.0.0",
+    //   independent_versions: { event_schema_version: 1 }, lifecycle: "active" }
+    // -----------------------------------------------------------------------------
+    // Narrative
+    // SemanticEvents gives independently toggleable modules one small public language
+    // for completed domain events. It does not replace Roll20 events, persist or replay
+    // traffic, serialize ordinary handlers, or imply that a provider is available.
+    // -----------------------------------------------------------------------------
+    const SemanticEvents = (() => {
+        const EVENT_SCHEMA_VERSION = 1;
+        const observers = new Map();
+        const streamId = 'GA-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+        let observerId = 0;
+        let sequence = 0;
+
+        function cloneAndFreeze(value) {
+            let copy;
+            try {
+                copy = JSON.parse(JSON.stringify(value ?? {}));
+            } catch {
+                return null;
+            }
+            const freeze = item => {
+                if (!item || typeof item !== 'object' || Object.isFrozen(item)) return item;
+                Object.keys(item).forEach(key => freeze(item[key]));
+                return Object.freeze(item);
+            };
+            return freeze(copy);
+        }
+
+        function validType(type) {
+            const requested = String(type || '').trim();
+            return requested.length > 0
+                && requested.length <= POLICY.semanticEvents.typeLength
+                && /^[a-z0-9]+(?:[.-][a-z0-9]+)*$/.test(requested);
+        }
+
+        function observe(callback, { owner = 'GameAssistConsumer', types = [] } = {}) {
+            if (typeof callback !== 'function') {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Semantic event observers require a callback function.' };
+            }
+            if (observers.size >= POLICY.semanticEvents.observerLimit) {
+                return { ok: false, code: 'RATE_LIMITED', message: 'The semantic event observer limit has been reached.' };
+            }
+            const requestedTypes = [...new Set((Array.isArray(types) ? types : [types])
+                .map(type => String(type || '').trim())
+                .filter(Boolean))];
+            if (requestedTypes.some(type => !validType(type))) {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'A semantic event type is invalid.' };
+            }
+            const id = ++observerId;
+            observers.set(id, {
+                owner: String(owner || 'GameAssistConsumer').slice(0, POLICY.semanticEvents.ownerLength),
+                types: new Set(requestedTypes),
+                callback
+            });
+            return { ok: true, id, unsubscribe: () => observers.delete(id) };
+        }
+
+        function clearObservers(owner) {
+            const requested = String(owner || '').slice(0, POLICY.semanticEvents.ownerLength);
+            let removed = 0;
+            observers.forEach((subscription, id) => {
+                if (subscription.owner !== requested) return;
+                observers.delete(id);
+                removed++;
+            });
+            return removed;
+        }
+
+        function publish(type, producer, payload = {}, { causeEventId = null } = {}) {
+            const eventType = String(type || '').trim();
+            const eventProducer = String(producer || '').trim();
+            if (!validType(eventType) || !eventProducer) {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Semantic events require a valid type and producer.' };
+            }
+            const safePayload = cloneAndFreeze(payload);
+            if (!safePayload) {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Semantic event payloads must be JSON-safe.' };
+            }
+            const currentSequence = ++sequence;
+            const event = Object.freeze({
+                eventSchemaVersion: EVENT_SCHEMA_VERSION,
+                eventId: streamId + ':' + currentSequence,
+                streamId,
+                sequence: currentSequence,
+                type: eventType,
+                producer: eventProducer,
+                occurredAt: isoNow(),
+                causeEventId: causeEventId ? String(causeEventId) : null,
+                payload: safePayload
+            });
+            let delivered = 0;
+            observers.forEach(subscription => {
+                if (subscription.types.size && !subscription.types.has(event.type)) return;
+                try {
+                    subscription.callback(event);
+                    delivered++;
+                } catch (error) {
+                    const api = globalThis.GameAssist;
+                    if (api && typeof api.handleError === 'function') {
+                        api.handleError(subscription.owner, error);
+                    }
+                }
+            });
+            return { ok: true, event, delivered };
+        }
+
+        return Object.freeze({
+            eventSchemaVersion: EVENT_SCHEMA_VERSION,
+            streamId,
+            isAvailable: () => true,
+            observe,
+            clearObservers,
+            publish,
+            getStatus: () => Object.freeze({
+                eventSchemaVersion: EVENT_SCHEMA_VERSION,
+                streamId,
+                sequence,
+                observers: observers.size
+            })
+        });
+    })();
+    // --- Notes & Comments ---
+    // Changed (v2.0.0): Added immutable, versioned, direct-delivery semantic event envelopes so optional EffectAssist integrations can share stable provider contracts without hard module dependencies.
+    // Decision log:
+    //   CHOICE: Keep events in-memory and non-replayed - ALT: persist an event log; REJECTED: sandbox restarts and stale replay would make effect cleanup unsafe.
+    //   CHOICE: Deliver directly in subscription order - ALT: route every event through CORE:QUEUE; REJECTED: ordinary module events remain synchronous unless a caller explicitly opts into serialization.
+    //   CHOICE: Isolate observer exceptions - ALT: fail the publication; REJECTED: one optional integration must not interrupt another module.
+    // [GAMEASSIST:CORE:SEMANTICEVENTS] END
+    // =============================================================================
+
+    // =============================================================================
     // [GAMEASSIST:CORE:OBJECT] BEGIN
     // Section Title: GameAssist kernel object
     // -------------------------------------------------------------------------
@@ -2574,6 +2742,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         flags: { DEBUG_COMPAT: false, QUIET_STARTUP: true },
         MarkerService,
         TurnTrackerService,
+        SemanticEvents,
         Time: Object.freeze({
             version: '1.0.0',
             validateTimeZone,
@@ -3010,6 +3179,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Preserve configured intent when dependency enablement is refused - ALT: force false; REJECTED: concealed dependency-skipped modules.
     //   CHOICE: Disable dependent modules before their service - ALT: disable the service first; REJECTED: dependent teardown would lose the marker access it needs for cleanup.
     // Prior notes:
+    //   v1.8.0: Advanced the project runtime version and added migration-safe branded component-name resolution; core child order was unchanged.
     //   v0.1.7.0: Exposed the shared stable module-manual writer through GameAssist for the standardized layered-help contract.
     //   v0.1.5.1: Exposed GameAssist.Time as the shared validated timezone, display-formatting, and date-key seam used by interfaces and NPCManager.
     //   v0.1.5.0: Exposed GameAssist.MarkerService as a toggleable core service, added case-insensitive module/service lifecycle resolution and protected config-key registration, cascaded service shutdown to dependent modules, and removed marker-module dependency gating on standalone TokenMod.
@@ -3025,7 +3195,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v1.8.0): Advanced the project runtime version and added migration-safe branded component-name resolution; core child order is unchanged.
+    // Changed (v2.0.0): Added CORE:SEMANTICEVENTS to the declared child order and advanced runtime VERSION for source-aware effect records and optional integration contracts.
     // Prior notes:
     //   v0.1.7.0: Advanced runtime VERSION for the CombatAssist encounter-flow release; core child order was unchanged.
     //   v0.1.6.1: Advanced runtime VERSION for the private initiative control and optional WelcomeAssist patch; core child order was unchanged.
@@ -3643,8 +3813,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Modules wrapper (bundled features)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES", title: "Modules wrapper",
-    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Condition, token, and gameplay marker consumers share CORE:MARKERSERVICE","TokenAssist owns the documented GameAssist token-command surface without assuming the TokenMod brand","InitiativeAssist owns initiative rules while CombatAssist owns deliberate preservation-first encounter flow through CORE:TURNTRACKERSERVICE","WelcomeAssist remains disabled by default and announces automatically only after completed bootstrap"],
-    //   depends_on: ["[GAMEASSIST:CORE]","[GAMEASSIST:INTERFACES]"], last_updated_version: "v1.8.0" }
+    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Condition, token, effect, and gameplay marker consumers share CORE:MARKERSERVICE","EffectAssist owns semantic effect instances and ownership-safe projections without hard-coupling unrelated modules","TokenAssist owns the documented GameAssist token-command surface without assuming the TokenMod brand","InitiativeAssist owns initiative rules while CombatAssist owns deliberate preservation-first encounter flow through CORE:TURNTRACKERSERVICE","WelcomeAssist remains disabled by default and announces automatically only after completed bootstrap"],
+    //   depends_on: ["[GAMEASSIST:CORE]","[GAMEASSIST:INTERFACES]"], last_updated_version: "v2.0.0" }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES encloses all shipped feature modules. Each child retains its own
@@ -4363,6 +4533,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // --- Notes & Comments ---
     // Changed (v1.8.0): Renamed the module to CritAssist while preserving the established !critfumble command family, campaign state, rollable-table names, and legacy controls.
     // Prior notes:
+    //   v1.8.0: Replaced the remaining inherited module identities with CritAssist, NPCAssist, ConcentrationAssist, and HPAssist while retaining compatibility aliases and independent lifecycle management.
     //   v0.1.7.0: Advanced CritFumble to 0.2.5.1; GM and DM role aliases open the GM player picker, while compact Guide/Help navigation, table status/audit, Info, the stable manual, and every existing roll command remain available.
     //   v0.1.4.3: Reworded an internal comment for collaborator clarity; no semantic change.
     //   v0.1.4.1: Routed unchanged defaults through POLICY and timestamps through now(); no semantic change.
@@ -6038,21 +6209,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: GameAssist general token controls and TokenMod compatibility
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:TOKENASSIST", title: "TokenAssist",
-    //   guarantees: ["General token controls use !token-assist and !ta/!ta-* commands; older !token-mod syntax remains a v1.x compatibility alias and is removed no earlier than v2.0.0","Selected tokens are available to their users while explicit --ids targeting remains GM-only unless the DM opts in","Compact layered navigation, stable on-demand manual, read-only audit, and unknown-command recovery preserve the established command families","Every status-marker command uses CORE:MARKERSERVICE","Valid legacy state.TokenMod playersCanUse_ids configuration is copied once without deleting the source state","A detected standalone TokenMod suspends only overlapping !token-mod handling and produces an actionable warning rather than double-applying token changes"],
+    //   guarantees: ["General token controls use !token-assist and !ta/!ta-* commands; older !token-mod syntax remains a compatibility alias until a separately announced migration release","Selected tokens are available to their users while explicit --ids targeting remains GM-only unless the DM opts in","Compact layered navigation, stable on-demand manual, read-only audit, and unknown-command recovery preserve the established command families","Every status-marker command uses CORE:MARKERSERVICE","Valid legacy state.TokenMod playersCanUse_ids configuration is copied once without deleting the source state","A detected standalone TokenMod suspends only overlapping !token-mod handling and produces an actionable warning rather than double-applying token changes"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.TokenAssist"],
-    //   last_updated_version: "v0.1.7.0",
-    //   independent_versions: { module_version: "1.0.3", token_config_schema_version: 1, tokenmod_reference_version: "0.8.88" }, lifecycle: "active" }
+    //   last_updated_version: "v2.0.0",
+    //   independent_versions: { module_version: "1.0.4", token_config_schema_version: 1, tokenmod_reference_version: "0.8.88" }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // TokenAssist provides GameAssist's general token controls through a verified,
-    // intentionally bounded command surface. Older !token-mod syntax remains temporary;
+    // intentionally bounded command surface. Older !token-mod syntax remains until a separately announced migration release;
     // GameAssist lifecycle, validation, diagnostics, and MarkerService own the behavior.
     // See ATTRIBUTIONS.md for TokenMod credit, pinned source, and the MIT notice.
     // -------------------------------------------------------------------------
     const TokenAssist = (() => {
         const MODULE_NAME = 'TokenAssist';
-        const MODULE_VERSION = '1.0.3';
+        const MODULE_VERSION = '1.0.4';
         const CONFIG_SCHEMA_VERSION = 1;
         const TOKENMOD_REFERENCE = Object.freeze({
             version: '0.8.88',
@@ -7000,7 +7171,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h2>Command Reference</h2>',
                 '<ul><li><code>!TokenAssist-GM</code> or <code>!TokenAssist-DM</code> - GM token controls.</li><li><code>!token-assist help</code>, <code>!ta-help</code>, or their Guide aliases - compact guide.</li><li><code>!token-assist info</code> or <code>!ta-info</code> - short examples.</li><li><code>!token-assist status</code> / <code>audit</code> - read module and selection state.</li><li><code>!token-assist --help-statusmarkers</code> - marker syntax.</li><li><code>!token-assist config</code> - GM targeting setting.</li></ul>',
                 '<h2>Compatibility And Credit</h2>',
-                `<p>Token-control design credit: TokenMod ${_sanitize(TOKENMOD_REFERENCE.version)} by The Aaron, Arcane Scriptomancer. Source and MIT license details are preserved in ATTRIBUTIONS.md. The older <code>!token-mod</code> spelling remains a v1.x compatibility alias and should be updated before GameAssist v2.0.0.</p>`
+                `<p>Token-control design credit: TokenMod ${_sanitize(TOKENMOD_REFERENCE.version)} by The Aaron, Arcane Scriptomancer. Source and MIT license details are preserved in ATTRIBUTIONS.md. The older <code>!token-mod</code> spelling remains a compatibility alias. Use <code>!token-assist</code> or <code>!ta</code> for new macros; any removal will be announced through a separate migration release.</p>`
             ].join('');
         }
 
@@ -7102,7 +7273,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             if (!legacyWarningShown) {
                 legacyWarningShown = true;
-                whisper(msg, '<b>Legacy command accepted.</b><br><code>!token-mod</code> is deprecated. Replace it with <code>!token-assist</code>, <code>!ta</code>, or a matching <code>!ta-*</code> command before GameAssist v2.0.0.');
+                whisper(msg, '<b>Legacy command accepted.</b><br><code>!token-mod</code> is a retained compatibility command. Use <code>!token-assist</code>, <code>!ta</code>, or a matching <code>!ta-*</code> command for new macros.');
             }
             handleTokenRequest(msg);
         }
@@ -7224,21 +7395,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['configSchemaVersion']
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.7.0): Advanced TokenAssist to 1.0.3; Menu, GM, and DM open an action-focused token control screen, while Guide/Help, Info, Status, Audit, Settings, Manual, and mutation syntax remain available across !token-assist, !ta, !ta-*, and !TokenAssist-*.
+    // Changed (v2.0.0): Advanced TokenAssist to 1.0.4 and replaced the expired v2.0.0 command-removal deadline with an explicit migration-release promise; token behavior and compatibility aliases are unchanged.
     // TokenMod provenance:
     //   Original project: TokenMod by The Aaron, Arcane Scriptomancer.
     //   Pinned reference: Roll20/roll20-api-scripts commit 9d634d3149985dcf10333920b3f4c41f215f39fc, TokenMod/0.8.88/TokenMod.js blob fc6c9cb45ec2f2ee254a24f849e089507a0e610a.
     //   License and public notice: MIT; see LICENSE and ATTRIBUTIONS.md. No upstream endorsement is implied.
     // Decision log:
     //   CHOICE: Name the module TokenAssist and tag it TOKENASSIST - ALT: retain TokenMod branding; REJECTED: GameAssist owns this implementation, lifecycle, limits, and support.
-    //   CHOICE: Make !token-assist and !ta/!ta-* canonical while retaining a warning-bearing !token-mod migration alias through v0.1.x - ALT: remove the old spelling immediately; REJECTED: test campaigns need a bounded macro migration window.
+    //   CHOICE: Keep !token-assist and !ta/!ta-* canonical while retaining !token-mod until a separately announced migration release - ALT: remove it at the project-version boundary; REJECTED: version renumbering is not evidence that campaign macros have migrated.
     //   CHOICE: Implement a bounded, documented command surface - ALT: paste the complete upstream implementation; REJECTED: unverified wholesale integration would duplicate marker authority and import unrelated state/lifecycle assumptions.
     //   CHOICE: Suspend compatibility handling when standalone TokenMod is detected - ALT: let both handlers run; REJECTED: one command could mutate the same token twice.
     //   CHOICE: Copy only practical legacy configuration and preserve state.TokenMod - ALT: rename or delete upstream state; REJECTED: rollback and migration diagnosis require the source state.
     //   CHOICE: Expose GameAssist.TokenAssist.observeTokenChange - ALT: create a global TokenMod compatibility object; REJECTED: the global would blur branding, provenance, and standalone-conflict detection.
     //   CHOICE: Route all status-marker syntax through MarkerService - ALT: write statusmarkers independently; REJECTED: GameAssist must have one marker authority.
     // Prior notes:
-    //   Earlier unreleased v0.1.5.0 checkpoints used the name TokenService, exposed !token-service, and treated !token-mod as the primary compatibility command. Saved test state is migrated to TokenAssist.
+    //   v0.1.7.0: Advanced TokenAssist to 1.0.3; added action-focused Menu/GM/DM navigation while retaining the established controls.\n    //   Earlier unreleased v0.1.5.0 checkpoints used the name TokenService, exposed !token-service, and treated !token-mod as the primary compatibility command. Saved test state is migrated to TokenAssist.
     // [GAMEASSIST:MODULES:TOKENASSIST] END
     // =============================================================================
 
@@ -14191,6 +14362,1226 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:CONCENTRATIONASSIST] END
     // =============================================================================
 
+// ————— EFFECTASSIST MODULE v1.0.0 —————
+    // =============================================================================
+    
+    // ————— EFFECTASSIST MODULE v1.0.0 —————
+    // =============================================================================
+    
+    // ————— EFFECTASSIST MODULE v1.0.0 —————
+    // =============================================================================
+    // [GAMEASSIST:MODULES:EFFECTASSIST] BEGIN
+    // Section Title: Source-aware semantic effects and projections
+    // -----------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:EFFECTASSIST", title: "EffectAssist",
+    //   guarantees: ["Effect instances, not markers or sheet fields, are the durable source of truth","Source-aware projection ledgers preserve overlapping non-stacking effects and pre-existing markers","Marker mutations use CORE:MARKERSERVICE; condition projections use ConditionAssist when available","Audit is read-only and repair requires a fresh bounded confirmation grant","Compact GM navigation, a stable manual, and case-insensitive !Effect-* / !effect commands require no memorized ids"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]","[GAMEASSIST:MODULES:CONDITIONASSIST]"],
+    //   provides: ["GameAssist.EffectAssist"],
+    //   last_updated_version: "v2.0.0",
+    //   independent_versions: { module_version: "1.0.0", effect_state_schema_version: 1 }, lifecycle: "active" }
+    // -----------------------------------------------------------------------------
+    // Narrative
+    // EffectAssist records why an effect exists, its source and targets, dependencies,
+    // stacking identity, lifecycle, and intended projections. Bless and a bounded generic
+    // manual path prove the model. Marker and condition state are projections that may be
+    // audited and deliberately repaired; startup never silently overwrites token state.
+    // Character-sheet writes, passive cast recognition, HP-loss prompts, and automatic
+    // duration handling remain adapters over this contract rather than alternate engines.
+    // -----------------------------------------------------------------------------
+    GameAssist.register('EffectAssist', function() {
+        const MODULE_NAME = 'EffectAssist';
+        const MODULE_VERSION = '1.0.0';
+        const STATE_SCHEMA_VERSION = 1;
+        const modState = GameAssist.getState(MODULE_NAME);
+        const repairGrants = new Map();
+        const projectionAdapters = new Map();
+
+        const BUILTIN_DEFINITIONS = Object.freeze({
+            bless: Object.freeze({
+                id: 'bless',
+                name: 'Bless',
+                description: 'A source-aware Bless record. Players add the mechanical bonus to their rolls manually in v2.0.0.',
+                dependency: 'concentration',
+                stackingGroup: 'bless',
+                stackingMode: 'nonstacking',
+                projection: Object.freeze({ kind: 'marker', value: 'angel-outfit' }),
+                builtin: true
+            })
+        });
+
+        Object.assign(modState.config, {
+            enabled: false,
+            defaultBlessMarker: 'angel-outfit',
+            customDefinitions: {},
+            ...modState.config
+        });
+
+        function isPlainObject(value) {
+            return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+        }
+
+        function clone(value) {
+            try {
+                return JSON.parse(JSON.stringify(value));
+            } catch {
+                return null;
+            }
+        }
+
+        function boundedText(value, maximum, label, { required = true } = {}) {
+            const text = String(value ?? '').trim();
+            if (required && !text) {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: `${label} is required.` };
+            }
+            if (text.length > maximum) {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: `${label} must be ${maximum} characters or fewer.` };
+            }
+            return { ok: true, value: text };
+        }
+
+        function normalizeDefinitionId(value) {
+            const normalized = String(value || '')
+                .trim()
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '')
+                .slice(0, 60);
+            return normalized && !POLICY.config.unsafeKeys.includes(normalized) ? normalized : '';
+        }
+
+        function ensureState() {
+            if (!isPlainObject(modState.config.customDefinitions)) {
+                modState.config.customDefinitions = {};
+            }
+            const runtime = ensureRuntimeObject(modState);
+            if (!isPlainObject(runtime.instances)) runtime.instances = {};
+            if (!Array.isArray(runtime.history)) runtime.history = [];
+            if (!isPlainObject(runtime.projections)) runtime.projections = {};
+            if (!isPlainObject(runtime.requestIds)) runtime.requestIds = {};
+            if (!Number.isInteger(runtime.nextInstanceNumber) || runtime.nextInstanceNumber < 1) {
+                runtime.nextInstanceNumber = 1;
+            }
+            if (!Number.isInteger(runtime.stateSchemaVersion) || runtime.stateSchemaVersion < 1) {
+                runtime.stateSchemaVersion = STATE_SCHEMA_VERSION;
+            }
+            runtime.history = runtime.history.slice(-POLICY.effects.endedHistoryLimit);
+            const requestEntries = Object.entries(runtime.requestIds);
+            if (requestEntries.length > POLICY.effects.requestIdLimit) {
+                requestEntries
+                    .sort(([, left], [, right]) => Number(left?.timestamp || 0) - Number(right?.timestamp || 0))
+                    .slice(0, requestEntries.length - POLICY.effects.requestIdLimit)
+                    .forEach(([key]) => delete runtime.requestIds[key]);
+            }
+            return runtime;
+        }
+
+        const runtime = ensureState();
+
+        function warnAboutPreservedState() {
+            const knownConfig = new Set(['enabled', 'defaultBlessMarker', 'customDefinitions']);
+            const knownRuntime = new Set(['instances', 'history', 'projections', 'requestIds', 'nextInstanceNumber', 'stateSchemaVersion']);
+            const unknownConfig = Object.keys(modState.config).filter(key => !knownConfig.has(key));
+            const unknownRuntime = Object.keys(runtime).filter(key => !knownRuntime.has(key));
+            const invalidDefinitions = Object.values(modState.config.customDefinitions)
+                .filter(definition => !isPlainObject(definition)
+                    || typeof definition.id !== 'string'
+                    || typeof definition.name !== 'string'
+                    || !isPlainObject(definition.projection))
+                .length;
+            if (unknownConfig.length || unknownRuntime.length) {
+                GameAssist.log(
+                    MODULE_NAME,
+                    'Unknown EffectAssist state branches were preserved for review: '
+                        + unknownConfig.map(key => 'config.' + key)
+                            .concat(unknownRuntime.map(key => 'runtime.' + key))
+                            .join(', '),
+                    'WARN'
+                );
+            }
+            if (invalidDefinitions || invalidInstanceCount()) {
+                GameAssist.log(
+                    MODULE_NAME,
+                    'EffectAssist preserved '
+                        + invalidDefinitions + ' malformed custom definition(s) and '
+                        + invalidInstanceCount() + ' malformed effect instance record(s) for manual review.',
+                    'WARN'
+                );
+            }
+        }
+
+        function validInstance(instance) {
+            return isPlainObject(instance)
+                && typeof instance.id === 'string'
+                && typeof instance.definitionId === 'string'
+                && isPlainObject(instance.source)
+                && Array.isArray(instance.targets)
+                && isPlainObject(instance.projection)
+                && instance.status === 'active';
+        }
+
+        function activeInstances() {
+            return Object.values(runtime.instances).filter(validInstance);
+        }
+
+        function invalidInstanceCount() {
+            return Object.values(runtime.instances).filter(instance => !validInstance(instance)).length;
+        }
+
+        warnAboutPreservedState();
+
+        function getCustomDefinitions() {
+            return Object.values(modState.config.customDefinitions).filter(definition =>
+                isPlainObject(definition)
+                && typeof definition.id === 'string'
+                && typeof definition.name === 'string'
+                && isPlainObject(definition.projection)
+            );
+        }
+
+        function getDefinitions() {
+            return Object.values(BUILTIN_DEFINITIONS)
+                .map(definition => ({ ...definition, projection: { ...definition.projection } }))
+                .concat(getCustomDefinitions().map(definition => clone(definition)));
+        }
+
+        function getDefinition(requested) {
+            const id = normalizeDefinitionId(requested);
+            if (!id) return null;
+            const builtin = BUILTIN_DEFINITIONS[id];
+            if (builtin) {
+                const definition = { ...builtin, projection: { ...builtin.projection } };
+                if (id === 'bless') definition.projection.value = String(modState.config.defaultBlessMarker || 'angel-outfit');
+                return definition;
+            }
+            const custom = modState.config.customDefinitions[id];
+            return isPlainObject(custom) ? clone(custom) : null;
+        }
+
+        function parseOptions(content) {
+            const options = {};
+            const expression = /--([a-z][a-z0-9-]*)(?:\s+(?:"([^"]*)"|'([^']*)'|([^\s]+)))?/gi;
+            let match;
+            while ((match = expression.exec(String(content || '')))) {
+                const key = match[1].toLowerCase();
+                options[key] = match[2] ?? match[3] ?? match[4] ?? true;
+            }
+            return options;
+        }
+
+        function commandAction(content) {
+            const text = String(content || '').trim();
+            const first = text.split(/\s+/)[0].toLowerCase();
+            if (first.startsWith('!effectassist-')) return first.slice('!effectassist-'.length);
+            if (first.startsWith('!effect-')) return first.slice('!effect-'.length);
+            const body = text.replace(/^!effect(?:\s+|$)/i, '').trim();
+            return (body.split(/\s+/)[0] || 'gm').toLowerCase();
+        }
+
+        function resolveLinkedToken(tokenId, label) {
+            const token = getObj('graphic', String(tokenId || ''));
+            if (!token) {
+                return { ok: false, code: 'NOT_FOUND', message: `${label} token was not found.` };
+            }
+            if (!['objects', 'gmlayer'].includes(String(token.get('layer') || ''))) {
+                return { ok: false, code: 'UNPROCESSABLE', message: `${label} must be on the Objects or GM layer.` };
+            }
+            const characterId = String(token.get('represents') || '');
+            const character = characterId ? getObj('character', characterId) : null;
+            if (!character) {
+                return { ok: false, code: 'UNPROCESSABLE', message: `${label} must represent a character.` };
+            }
+            return {
+                ok: true,
+                token,
+                character,
+                summary: {
+                    tokenId: token.id,
+                    tokenName: String(token.get('name') || character.get('name') || 'Unnamed token'),
+                    characterId: character.id,
+                    characterName: String(character.get('name') || token.get('name') || 'Unnamed character'),
+                    pageId: String(token.get('_pageid') || token.get('pageid') || ''),
+                    layer: String(token.get('layer') || '')
+                }
+            };
+        }
+
+        function selectedTargets(msg) {
+            const seen = new Set();
+            const targets = [];
+            let failure = null;
+            (Array.isArray(msg.selected) ? msg.selected : []).forEach(selection => {
+                const tokenId = String(selection?._id || '');
+                if (!tokenId || seen.has(tokenId) || failure) return;
+                seen.add(tokenId);
+                const resolved = resolveLinkedToken(tokenId, 'Each target');
+                if (!resolved.ok) {
+                    failure = resolved;
+                    return;
+                }
+                targets.push(resolved);
+            });
+            if (failure) return failure;
+            if (!targets.length) {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Select at least one linked character token before applying an effect.' };
+            }
+            if (targets.length > POLICY.effects.targetLimit) {
+                return { ok: false, code: 'RATE_LIMITED', message: `Select no more than ${POLICY.effects.targetLimit} targets at once.` };
+            }
+            return { ok: true, targets };
+        }
+
+        function safeQueryText(value) {
+            return String(value || '').replace(/[|,}]/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+
+        function sourceQuery() {
+            const pageId = String(Campaign().get('playerpageid') || '');
+            if (!pageId) return null;
+            const tokens = findObjs({ _type: 'graphic', _pageid: pageId })
+                .filter(token => ['objects', 'gmlayer'].includes(String(token.get('layer') || '')))
+                .map(token => resolveLinkedToken(token.id, 'Source'))
+                .filter(result => result.ok)
+                .sort((left, right) => left.summary.tokenName.localeCompare(right.summary.tokenName))
+                .slice(0, POLICY.effects.sourcePickerLimit);
+            if (!tokens.length) return null;
+            const choices = tokens.map(result =>
+                `${safeQueryText(result.summary.tokenName)},${result.summary.tokenId}`
+            );
+            return '?{Effect source|' + choices.join('|') + '}';
+        }
+
+        function conditionQuery() {
+            const conditions = GameAssist.ConditionAssist?.getConditions?.();
+            if (!isPlainObject(conditions)) return null;
+            const choices = Object.entries(conditions)
+                .slice(0, POLICY.effects.conditionPickerLimit)
+                .map(([key, definition]) => `${safeQueryText(definition?.name || key)},${safeQueryText(key)}`);
+            return choices.length ? '?{Condition|' + choices.join('|') + '}' : null;
+        }
+
+        function projectionDescriptor(projection) {
+            if (!isPlainObject(projection) || projection.kind === 'none') {
+                return { ok: true, kind: 'none', markerRef: null, markerId: null };
+            }
+            if (projection.kind === 'condition') {
+                const conditionApi = GameAssist.ConditionAssist;
+                const conditionConfigured = GameAssist.getState('ConditionAssist')?.config?.enabled !== false;
+                if (!conditionApi?.getCondition || !conditionConfigured) {
+                    return { ok: false, code: 'UNAVAILABLE', kind: 'condition', message: 'ConditionAssist is unavailable; the semantic effect can be recorded but its condition projection is pending.' };
+                }
+                const condition = conditionApi.getCondition(projection.value);
+                if (!condition?.marker) {
+                    return { ok: false, code: 'NOT_FOUND', kind: 'condition', message: `ConditionAssist does not recognize condition "${projection.value}".` };
+                }
+                if (!GameAssist.MarkerService?.isEnabled?.()) {
+                    return { ok: false, code: 'UNAVAILABLE', kind: 'condition', markerRef: condition.marker, message: 'MarkerService is unavailable; the condition projection is pending.' };
+                }
+                const resolution = GameAssist.MarkerService.resolve(condition.marker);
+                return resolution.ok
+                    ? { ok: true, kind: 'condition', condition: projection.value, markerRef: condition.marker, markerId: resolution.id }
+                    : { ...resolution, kind: 'condition', condition: projection.value, markerRef: condition.marker };
+            }
+            if (projection.kind !== 'marker') {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: `Unsupported projection kind: ${projection.kind}.` };
+            }
+            if (!GameAssist.MarkerService?.isEnabled?.()) {
+                return { ok: false, code: 'UNAVAILABLE', kind: 'marker', markerRef: projection.value, message: 'MarkerService is unavailable; the marker projection is pending.' };
+            }
+            const resolution = GameAssist.MarkerService.resolve(projection.value);
+            return resolution.ok
+                ? { ok: true, kind: 'marker', markerRef: projection.value, markerId: resolution.id }
+                : { ...resolution, kind: 'marker', markerRef: projection.value };
+        }
+
+        function projectionKey(tokenId, markerId) {
+            return `${String(tokenId)}::${GameAssist.MarkerService.normalizeId(markerId)}`;
+        }
+
+        function mutateProjection(token, descriptor, action) {
+            if (descriptor.kind === 'none') return { ok: true, changed: false };
+            if (descriptor.kind === 'condition') {
+                const api = GameAssist.ConditionAssist;
+                if (!api?.apply) {
+                    return { ok: false, code: 'UNAVAILABLE', message: 'ConditionAssist is unavailable.' };
+                }
+                const result = api.apply([token], [descriptor.condition], action);
+                return {
+                    ok: result.ok === true,
+                    changed: Number(result.changed || 0) > 0,
+                    message: result.ok ? null : `ConditionAssist could not ${action} ${descriptor.condition}.`,
+                    result
+                };
+            }
+            return GameAssist.MarkerService[action](token, descriptor.markerId, { owner: MODULE_NAME });
+        }
+
+        function notifyLifecycle(transition, instance) {
+            return GameAssist.SemanticEvents.publish(
+                'effect.lifecycle.changed',
+                MODULE_NAME,
+                { transition, instance: clone(instance) }
+            );
+        }
+
+        function registerLifecycleObserver(callback, { owner = 'EffectAssistConsumer' } = {}) {
+            return GameAssist.SemanticEvents.observe(callback, {
+                owner,
+                types: ['effect.lifecycle.changed']
+            });
+        }
+
+        function clearLifecycleObservers(owner) {
+            return GameAssist.SemanticEvents.clearObservers(owner);
+        }
+
+        function registerProjectionAdapter(name, adapter) {
+            const id = normalizeDefinitionId(name);
+            if (!id || !isPlainObject(adapter) || typeof adapter.audit !== 'function' || typeof adapter.apply !== 'function' || typeof adapter.remove !== 'function') {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Projection adapters require a name plus audit, apply, and remove functions.' };
+            }
+            if (projectionAdapters.has(id)) {
+                return { ok: false, code: 'CONFLICT', message: `Projection adapter "${id}" is already registered.` };
+            }
+            projectionAdapters.set(id, Object.freeze({ ...adapter }));
+            return { ok: true, id };
+        }
+
+        function createCustomDefinition(options) {
+            const nameResult = boundedText(options.name, POLICY.effects.nameLength, 'Effect name');
+            if (!nameResult.ok) return nameResult;
+            const id = normalizeDefinitionId(nameResult.value);
+            if (!id) return { ok: false, code: 'INVALID_ARGUMENT', message: 'The effect name could not form a safe definition id.' };
+            const existing = getDefinition(id);
+            let projection;
+            if (options.condition) {
+                const value = boundedText(options.condition, POLICY.effects.nameLength, 'Condition name');
+                if (!value.ok) return value;
+                projection = { kind: 'condition', value: value.value };
+            } else if (options.marker) {
+                const value = boundedText(options.marker, POLICY.effects.markerLength, 'Marker');
+                if (!value.ok) return value;
+                projection = { kind: 'marker', value: value.value };
+            } else if (options.none === true || String(options.none).toLowerCase() === 'true') {
+                projection = { kind: 'none', value: null };
+            } else {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Choose a marker, a ConditionAssist condition, or --none for the generic effect.' };
+            }
+
+            if (existing) {
+                const same = existing.name.toLowerCase() === nameResult.value.toLowerCase()
+                    && existing.projection.kind === projection.kind
+                    && String(existing.projection.value || '').toLowerCase() === String(projection.value || '').toLowerCase();
+                return same
+                    ? { ok: true, definition: existing, isNew: false }
+                    : { ok: false, code: 'CONFLICT', message: `An effect definition named "${existing.name}" already uses different projection settings.` };
+            }
+
+            if (getCustomDefinitions().length >= POLICY.effects.definitionLimit) {
+                return { ok: false, code: 'RATE_LIMITED', message: `EffectAssist already has the maximum of ${POLICY.effects.definitionLimit} custom definitions.` };
+            }
+
+            const dependency = ['none', 'manual', 'concentration'].includes(String(options.dependency || '').toLowerCase())
+                ? String(options.dependency).toLowerCase()
+                : 'manual';
+            const description = boundedText(options.description || '', POLICY.effects.descriptionLength, 'Description', { required: false });
+            if (!description.ok) return description;
+            return {
+                ok: true,
+                isNew: true,
+                definition: {
+                    id,
+                    name: nameResult.value,
+                    description: description.value,
+                    dependency,
+                    stackingGroup: id,
+                    stackingMode: 'nonstacking',
+                    projection,
+                    builtin: false
+                }
+            };
+        }
+
+        function nextInstanceId() {
+            let id;
+            do {
+                id = 'EA-' + String(runtime.nextInstanceNumber++).padStart(6, '0');
+            } while (runtime.instances[id]);
+            return id;
+        }
+
+        function requestKey(requestId) {
+            const raw = String(requestId || '').trim();
+            if (!raw) return '';
+            return 'request:' + raw;
+        }
+
+        function rememberRequest(requestId, instanceId) {
+            const key = requestKey(requestId);
+            if (!key) return;
+            runtime.requestIds[key] = { instanceId, timestamp: Date.now() };
+            ensureState();
+        }
+
+        function findRequest(requestId) {
+            const key = requestKey(requestId);
+            if (!key) return null;
+            const remembered = runtime.requestIds[key];
+            if (!remembered) return null;
+            return runtime.instances[remembered.instanceId]
+                || runtime.history.find(instance => instance.id === remembered.instanceId)
+                || null;
+        }
+
+        function applyEffectRequest(request) {
+            ensureState();
+            if (modState.config.enabled === false) {
+                return { ok: false, code: 'UNAVAILABLE', message: 'EffectAssist is disabled.' };
+            }
+            const rawRequestId = String(request.requestId || '').trim();
+            if (rawRequestId.length > POLICY.effects.requestIdLength) {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'The effect request identifier is too long.' };
+            }
+            const existingRequest = findRequest(rawRequestId);
+            if (existingRequest) {
+                return { ok: true, duplicate: true, instance: clone(existingRequest), message: 'That effect request was already applied.' };
+            }
+            if (activeInstances().length >= POLICY.effects.activeInstanceLimit) {
+                return { ok: false, code: 'RATE_LIMITED', message: `EffectAssist already has the maximum of ${POLICY.effects.activeInstanceLimit} active instances.` };
+            }
+
+            const source = resolveLinkedToken(request.sourceTokenId, 'The source');
+            if (!source.ok) return source;
+            const targetIds = [...new Set((request.targetTokenIds || []).map(String).filter(Boolean))];
+            if (!targetIds.length) {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'At least one target token is required.' };
+            }
+            if (targetIds.length > POLICY.effects.targetLimit) {
+                return { ok: false, code: 'RATE_LIMITED', message: `No more than ${POLICY.effects.targetLimit} targets may be applied at once.` };
+            }
+            const targets = targetIds.map(tokenId => resolveLinkedToken(tokenId, 'Each target'));
+            const targetFailure = targets.find(result => !result.ok);
+            if (targetFailure) return targetFailure;
+
+            let definitionResult;
+            if (request.definitionId) {
+                const definition = getDefinition(request.definitionId);
+                definitionResult = definition
+                    ? { ok: true, definition, isNew: false }
+                    : { ok: false, code: 'NOT_FOUND', message: `Effect definition "${request.definitionId}" was not found.` };
+            } else {
+                definitionResult = createCustomDefinition(request);
+            }
+            if (!definitionResult.ok) return definitionResult;
+            const definition = definitionResult.definition;
+            const descriptor = projectionDescriptor(definition.projection);
+            if (!descriptor.ok && !['UNAVAILABLE'].includes(descriptor.code)) return descriptor;
+
+            const instance = {
+                id: nextInstanceId(),
+                definitionId: definition.id,
+                name: definition.name,
+                description: definition.description || '',
+                source: source.summary,
+                targets: targets.map(target => target.summary),
+                dependency: {
+                    type: definition.dependency || 'manual',
+                    status: 'active',
+                    note: String(request.dependencyNote || '').slice(0, POLICY.effects.descriptionLength)
+                },
+                stacking: {
+                    group: definition.stackingGroup || definition.id,
+                    mode: definition.stackingMode || 'nonstacking'
+                },
+                projection: {
+                    kind: definition.projection.kind,
+                    value: definition.projection.value,
+                    status: descriptor.ok
+                        ? (descriptor.kind === 'none' ? 'not-required' : 'applying')
+                        : 'pending',
+                    message: descriptor.ok ? null : descriptor.message,
+                    lastReconciledAt: descriptor.ok && descriptor.kind === 'none' ? isoNow() : null,
+                    lastReconciliation: descriptor.ok && descriptor.kind === 'none'
+                        ? { status: 'not-required', verifiedTargets: 0 }
+                        : { status: descriptor.ok ? 'not-checked' : 'unavailable', verifiedTargets: 0 }
+                },
+                duration: {
+                    type: 'manual',
+                    label: String(request.duration || '').slice(0, POLICY.effects.nameLength)
+                },
+                status: 'active',
+                createdAt: isoNow(),
+                createdBy: String(request.createdBy || 'api')
+            };
+
+            const draftLedgers = [];
+            const changedTokens = [];
+            if (descriptor.ok && descriptor.kind !== 'none') {
+                for (const target of targets) {
+                    const key = projectionKey(target.token.id, descriptor.markerId);
+                    const current = runtime.projections[key];
+                    const actual = GameAssist.MarkerService.has(target.token, descriptor.markerId);
+                    if (!actual) {
+                        const mutation = mutateProjection(target.token, descriptor, 'add');
+                        if (!mutation.ok) {
+                            changedTokens.reverse().forEach(changed => {
+                                mutateProjection(changed.token, descriptor, 'remove');
+                            });
+                            return {
+                                ok: false,
+                                code: mutation.code || 'UNAVAILABLE',
+                                message: mutation.message || 'The effect projection could not be applied; completed marker changes were rolled back.'
+                            };
+                        }
+                        if (mutation.changed) changedTokens.push({ token: target.token });
+                    }
+                    draftLedgers.push({
+                        key,
+                        existing: current,
+                        target,
+                        actualBefore: actual,
+                        markerId: descriptor.markerId,
+                        markerRef: descriptor.markerRef,
+                        kind: descriptor.kind,
+                        condition: descriptor.condition || null
+                    });
+                }
+            }
+
+            const unverified = draftLedgers.filter(draft =>
+                !GameAssist.MarkerService.has(draft.target.token, draft.markerId)
+            );
+            if (unverified.length) {
+                changedTokens.reverse().forEach(changed => {
+                    mutateProjection(changed.token, descriptor, 'remove');
+                });
+                return {
+                    ok: false,
+                    code: 'CONFLICT',
+                    message: 'Roll20 did not retain every requested effect projection; completed changes were rolled back.'
+                };
+            }
+            if (descriptor.ok && descriptor.kind !== 'none') {
+                instance.projection.status = 'applied';
+                instance.projection.lastReconciledAt = isoNow();
+                instance.projection.lastReconciliation = {
+                    status: 'verified',
+                    verifiedTargets: draftLedgers.length
+                };
+            }
+
+            if (definitionResult.isNew) {
+                modState.config.customDefinitions[definition.id] = clone(definition);
+            }
+            runtime.instances[instance.id] = instance;
+            draftLedgers.forEach(draft => {
+                const ledger = isPlainObject(draft.existing)
+                    ? draft.existing
+                    : {
+                        tokenId: draft.target.summary.tokenId,
+                        characterId: draft.target.summary.characterId,
+                        markerId: draft.markerId,
+                        markerRef: draft.markerRef,
+                        kind: draft.kind,
+                        condition: draft.condition,
+                        baselinePresent: draft.actualBefore,
+                        managed: !draft.actualBefore,
+                        instanceIds: [],
+                        createdAt: isoNow()
+                    };
+                if (!draft.actualBefore) ledger.managed = true;
+                ledger.markerId = draft.markerId;
+                ledger.markerRef = draft.markerRef;
+                ledger.kind = draft.kind;
+                ledger.condition = draft.condition;
+                ledger.instanceIds = [...new Set((ledger.instanceIds || []).concat(instance.id))];
+                ledger.lastVerifiedAt = isoNow();
+                runtime.projections[draft.key] = ledger;
+            });
+            rememberRequest(rawRequestId, instance.id);
+            notifyLifecycle('created', instance);
+            return {
+                ok: true,
+                instance: clone(instance),
+                pending: !descriptor.ok,
+                message: descriptor.ok
+                    ? `${definition.name} was applied to ${targets.length} target(s).`
+                    : `${definition.name} was recorded for ${targets.length} target(s), but its projection is pending: ${descriptor.message}`
+            };
+        }
+
+        function ledgerOwners(ledger) {
+            return [...new Set((Array.isArray(ledger?.instanceIds) ? ledger.instanceIds : [])
+                .filter(id => validInstance(runtime.instances[id])))];
+        }
+
+        function endEffect(instanceId, actor = 'api') {
+            ensureState();
+            if (modState.config.enabled === false) {
+                return { ok: false, code: 'UNAVAILABLE', message: 'EffectAssist is disabled.' };
+            }
+            const requestedId = String(instanceId || '');
+            const instance = runtime.instances[requestedId];
+            if (!validInstance(instance)) {
+                const ended = runtime.history.find(entry => entry?.id === requestedId && entry?.status === 'ended');
+                return ended
+                    ? { ok: true, unchanged: true, instance: clone(ended), failures: [], message: 'That effect had already ended; nothing else was changed.' }
+                    : { ok: false, code: 'NOT_FOUND', message: 'That active effect instance was not found.' };
+            }
+            const failures = [];
+            Object.entries(runtime.projections).forEach(([key, ledger]) => {
+                if (!isPlainObject(ledger) || !Array.isArray(ledger.instanceIds) || !ledger.instanceIds.includes(instance.id)) return;
+                ledger.instanceIds = ledger.instanceIds.filter(id => id !== instance.id);
+                const owners = ledgerOwners(ledger);
+                ledger.instanceIds = owners;
+                if (owners.length) return;
+
+                const token = getObj('graphic', ledger.tokenId);
+                if (!token) {
+                    failures.push(`Token ${ledger.tokenId} no longer exists.`);
+                    return;
+                }
+                if (String(token.get('represents') || '') !== String(ledger.characterId || '')) {
+                    failures.push('Token ' + (token.get('name') || ledger.tokenId) + ' now represents a different character; its marker was left unchanged.');
+                    return;
+                }
+                if (ledger.managed === true && GameAssist.MarkerService?.isEnabled?.()) {
+                    const descriptor = {
+                        kind: ledger.kind,
+                        condition: ledger.condition,
+                        markerId: ledger.markerId,
+                        markerRef: ledger.markerRef
+                    };
+                    if (GameAssist.MarkerService.has(token, ledger.markerId)) {
+                        const mutation = mutateProjection(token, descriptor, 'remove');
+                        if (!mutation.ok) {
+                            failures.push(mutation.message || `Could not remove ${ledger.markerRef}.`);
+                            return;
+                        }
+                    }
+                }
+                delete runtime.projections[key];
+            });
+
+            delete runtime.instances[instance.id];
+            const ended = {
+                ...clone(instance),
+                status: 'ended',
+                endedAt: isoNow(),
+                endedBy: String(actor || 'api'),
+                cleanup: failures.length ? { status: 'needs-attention', failures } : { status: 'complete', failures: [] }
+            };
+            runtime.history.push(ended);
+            runtime.history = runtime.history.slice(-POLICY.effects.endedHistoryLimit);
+            notifyLifecycle('ended', ended);
+            return {
+                ok: true,
+                instance: clone(ended),
+                failures,
+                message: failures.length
+                    ? `${ended.name} ended, but ${failures.length} projection(s) need attention.`
+                    : `${ended.name} ended and its unneeded projections were removed.`
+            };
+        }
+
+        function auditEffects() {
+            ensureState();
+            const mismatches = [];
+            const checked = new Set();
+
+            activeInstances().forEach(instance => {
+                const descriptor = projectionDescriptor(instance.projection);
+                if (instance.projection.kind === 'none') return;
+                instance.targets.forEach(target => {
+                    if (!descriptor.ok) {
+                        mismatches.push({
+                            key: `pending:${instance.id}:${target.tokenId}`,
+                            type: 'projection-unavailable',
+                            instanceId: instance.id,
+                            tokenId: target.tokenId,
+                            name: target.tokenName,
+                            message: descriptor.message || 'Projection is unavailable.'
+                        });
+                        return;
+                    }
+                    const key = projectionKey(target.tokenId, descriptor.markerId);
+                    checked.add(key);
+                    const ledger = runtime.projections[key];
+                    const token = getObj('graphic', target.tokenId);
+                    if (!token) {
+                        mismatches.push({
+                            key,
+                            type: 'missing-token',
+                            instanceId: instance.id,
+                            tokenId: target.tokenId,
+                            name: target.tokenName,
+                            message: 'The projected token no longer exists.'
+                        });
+                        return;
+                    }
+                    if (String(token.get('represents') || '') !== String(target.characterId || '')) {
+                        mismatches.push({
+                            key: 'identity:' + instance.id + ':' + key,
+                            type: 'identity-drift',
+                            instanceId: instance.id,
+                            tokenId: target.tokenId,
+                            name: target.tokenName,
+                            message: target.tokenName + ' now represents a different character; no marker change is safe.'
+                        });
+                        return;
+                    }
+                    if (!isPlainObject(ledger) || !ledgerOwners(ledger).includes(instance.id)) {
+                        mismatches.push({
+                            key: `untracked:${instance.id}:${key}`,
+                            type: 'untracked-projection',
+                            instanceId: instance.id,
+                            tokenId: target.tokenId,
+                            name: target.tokenName,
+                            descriptor,
+                            message: 'The effect is active, but its projection ledger is missing.'
+                        });
+                        return;
+                    }
+                    if (!GameAssist.MarkerService.has(token, descriptor.markerId)) {
+                        mismatches.push({
+                            key,
+                            type: 'missing-marker',
+                            instanceId: instance.id,
+                            tokenId: target.tokenId,
+                            name: target.tokenName,
+                            descriptor,
+                            message: `${target.tokenName} is missing the ${instance.name} marker.`
+                        });
+                    }
+                });
+            });
+
+            Object.entries(runtime.projections).forEach(([key, ledger]) => {
+                if (!isPlainObject(ledger)) {
+                    mismatches.push({ key, type: 'invalid-ledger', message: 'A malformed projection ledger needs manual review.' });
+                    return;
+                }
+                const owners = ledgerOwners(ledger);
+                if (owners.length || checked.has(key)) return;
+                const token = getObj('graphic', ledger.tokenId);
+                if (token && String(token.get('represents') || '') !== String(ledger.characterId || '')) {
+                    mismatches.push({
+                        key: 'identity:orphan:' + key,
+                        type: 'identity-drift',
+                        tokenId: ledger.tokenId,
+                        name: token.get('name') || ledger.tokenId,
+                        message: 'A stored projection points to a token that now represents a different character; it was left unchanged.'
+                    });
+                    return;
+                }
+                const actual = token && GameAssist.MarkerService?.isEnabled?.()
+                    ? GameAssist.MarkerService.has(token, ledger.markerId)
+                    : false;
+                if (ledger.managed === true && actual) {
+                    mismatches.push({
+                        key,
+                        type: 'orphan-marker',
+                        tokenId: ledger.tokenId,
+                        name: token?.get('name') || ledger.tokenId,
+                        descriptor: {
+                            kind: ledger.kind,
+                            condition: ledger.condition,
+                            markerId: ledger.markerId,
+                            markerRef: ledger.markerRef
+                        },
+                        message: 'An EffectAssist-owned marker remains without an active effect.'
+                    });
+                }
+            });
+
+            const invalid = invalidInstanceCount();
+            if (invalid) {
+                mismatches.push({
+                    key: 'invalid-instances',
+                    type: 'invalid-state',
+                    message: `${invalid} malformed effect instance record(s) were preserved for manual review.`
+                });
+            }
+
+            return {
+                ok: mismatches.length === 0,
+                active: activeInstances().length,
+                ended: runtime.history.length,
+                definitions: getDefinitions().length,
+                invalid,
+                mismatches,
+                auditedAt: isoNow()
+            };
+        }
+
+        function mismatchSignature(mismatches) {
+            return mismatches.map(item => `${item.type}:${item.key}`).sort().join('|');
+        }
+
+        function createRepairGrant(audit, playerId) {
+            const id = 'ER-' + Math.random().toString(36).slice(2, 10);
+            repairGrants.set(id, {
+                signature: mismatchSignature(audit.mismatches),
+                playerId: String(playerId || ''),
+                expiresAt: Date.now() + POLICY.effects.repairGrantMs
+            });
+            if (repairGrants.size > POLICY.effects.repairGrantLimit) {
+                const oldest = repairGrants.keys().next().value;
+                repairGrants.delete(oldest);
+            }
+            return id;
+        }
+
+        function repairEffects(grantId, playerId) {
+            const grant = repairGrants.get(String(grantId || ''));
+            if (!grant || grant.expiresAt < Date.now() || grant.playerId !== String(playerId || '')) {
+                repairGrants.delete(String(grantId || ''));
+                return { ok: false, code: 'UNAUTHORIZED', message: 'That repair confirmation expired. Run the audit again.' };
+            }
+            const audit = auditEffects();
+            if (mismatchSignature(audit.mismatches) !== grant.signature) {
+                repairGrants.delete(String(grantId || ''));
+                return { ok: false, code: 'CONFLICT', message: 'Effect state changed after the preview. Run the audit again before repairing.' };
+            }
+            repairGrants.delete(String(grantId || ''));
+
+            const results = [];
+            audit.mismatches.forEach(item => {
+                if (!['missing-marker', 'untracked-projection', 'orphan-marker'].includes(item.type)) return;
+                if (item.type === 'orphan-marker') {
+                    const token = getObj('graphic', item.tokenId);
+                    const ledger = runtime.projections[item.key];
+                    if (!token || !item.descriptor || !isPlainObject(ledger)) {
+                        results.push({ ok: false, item, message: 'The orphaned token is unavailable.' });
+                        return;
+                    }
+                    if (String(token.get('represents') || '') !== String(ledger.characterId || '')) {
+                        results.push({ ok: false, item, message: 'The token now represents a different character and was left unchanged.' });
+                        return;
+                    }
+                    const result = mutateProjection(token, item.descriptor, 'remove');
+                    if (result.ok) delete runtime.projections[item.key];
+                    results.push({ ok: result.ok, item, message: result.message });
+                    return;
+                }
+
+                const instance = runtime.instances[item.instanceId];
+                const target = instance?.targets?.find(entry => entry.tokenId === item.tokenId);
+                const token = getObj('graphic', item.tokenId);
+                const descriptor = item.descriptor || (instance ? projectionDescriptor(instance.projection) : null);
+                if (!validInstance(instance) || !target || !token || !descriptor?.ok) {
+                    results.push({ ok: false, item, message: 'The active effect or target is no longer repairable.' });
+                    return;
+                }
+                if (String(token.get('represents') || '') !== String(target.characterId || '')) {
+                    results.push({ ok: false, item, message: 'The token now represents a different character and was left unchanged.' });
+                    return;
+                }
+                const key = projectionKey(token.id, descriptor.markerId);
+                let ledger = runtime.projections[key];
+                const actual = GameAssist.MarkerService.has(token, descriptor.markerId);
+                let mutation = { ok: true, changed: false };
+                if (!actual) mutation = mutateProjection(token, descriptor, 'add');
+                if (!mutation.ok) {
+                    results.push({ ok: false, item, message: mutation.message });
+                    return;
+                }
+                if (!isPlainObject(ledger)) {
+                    ledger = {
+                        tokenId: target.tokenId,
+                        characterId: target.characterId,
+                        markerId: descriptor.markerId,
+                        markerRef: descriptor.markerRef,
+                        kind: descriptor.kind,
+                        condition: descriptor.condition || null,
+                        baselinePresent: actual,
+                        managed: !actual,
+                        instanceIds: [],
+                        createdAt: isoNow()
+                    };
+                }
+                if (!actual) ledger.managed = true;
+                ledger.instanceIds = [...new Set((ledger.instanceIds || []).concat(instance.id))];
+                ledger.lastVerifiedAt = isoNow();
+                runtime.projections[key] = ledger;
+                instance.projection.status = 'applied';
+                instance.projection.message = null;
+                instance.projection.lastReconciledAt = isoNow();
+                instance.projection.lastReconciliation = { status: 'verified', verifiedTargets: instance.targets.length };
+                results.push({ ok: true, item });
+            });
+
+            const failed = results.filter(result => !result.ok);
+            const postAudit = auditEffects();
+            return {
+                ok: failed.length === 0 && !postAudit.mismatches.some(item =>
+                    ['missing-marker', 'untracked-projection', 'orphan-marker'].includes(item.type)
+                ),
+                attempted: results.length,
+                repaired: results.length - failed.length,
+                failed,
+                audit: postAudit
+            };
+        }
+
+        function panel(title, fields) {
+            const body = fields.map(field => `{{${_sanitize(field.label)}=${field.value}}}`).join(' ');
+            sendChat(MODULE_NAME, `/w gm &{template:default} {{name=${_sanitize(title)}}} ${body}`);
+        }
+
+        function activeSummary() {
+            const effects = activeInstances().slice(0, POLICY.effects.chatListLimit);
+            if (!effects.length) return 'No active effects.';
+            return effects.map(instance => {
+                const targets = instance.targets.map(target => _sanitize(target.tokenName)).join(', ');
+                return `<b>${_sanitize(instance.name)}</b> from ${_sanitize(instance.source.tokenName)} to ${targets} ${GameAssist.createButton('End', '!Effect-End --id ' + instance.id)}`;
+            }).join('<br>');
+        }
+
+        function showGuide() {
+            panel('EffectAssist Quick Guide', [
+                { label: 'Purpose', value: 'Record who created an effect, who it affects, and why its projection should remain.' },
+                { label: 'Apply', value: 'Select target tokens, open the GM screen, choose the source, then apply Bless or a generic effect.' },
+                { label: 'Review', value: 'Use Status for active effects and Audit before repairing marker or condition mismatches.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Open GM Screen', '!Effect-GM')} ${GameAssist.createButton('Status', '!Effect-Status')} ${GameAssist.createButton('Manual', '!Effect-Manual')}` }
+            ]);
+        }
+
+        function showControl() {
+            const source = sourceQuery();
+            const condition = conditionQuery();
+            const applyButtons = source
+                ? `${GameAssist.createButton('Apply Bless', '!Effect-Apply --effect bless --source ' + source)} `
+                    + `${GameAssist.createButton('Generic Marker', '!Effect-Apply --name "?{Effect name|Guidance}" --marker "?{Marker id or custom name|aura}" --source ' + source)} `
+                    + `${GameAssist.createButton('Record Only', '!Effect-Apply --name "?{Effect name|Inspiration}" --none true --source ' + source)} `
+                    + (condition
+                        ? `${GameAssist.createButton('Condition Effect', '!Effect-Apply --name "?{Effect name|Restrained}" --condition ' + condition + ' --source ' + source)}`
+                        : '')
+                : 'Place at least one linked character token on the current page so EffectAssist can build a source picker.';
+            panel('EffectAssist GM Controls', [
+                { label: 'Before Applying', value: 'Select every target token. The source is chosen separately in the button prompt.' },
+                { label: 'Apply Effect', value: applyButtons },
+                { label: 'Active Effects', value: activeSummary() },
+                { label: 'Review', value: `${GameAssist.createButton('Status', '!Effect-Status')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Definitions', '!Effect-Definitions')} ${GameAssist.createButton('Guide', '!Effect-Guide')}` }
+            ]);
+        }
+
+        function showInfo() {
+            panel('What EffectAssist Does', [
+                { label: 'Source Of Truth', value: 'An effect record owns the source, targets, dependency, stacking, and lifecycle. A marker is only a visible projection.' },
+                { label: 'Overlap', value: 'Two sources of the same effect remain independently removable. The shared projection remains until the final source ends.' },
+                { label: 'Current Capabilities', value: 'EffectAssist records and projects effects safely. Players still apply mechanical bonuses manually; sheet changes and automatic expiration require separately verified integrations.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Open GM Screen', '!Effect-GM')} ${GameAssist.createButton('Open Guide', '!Effect-Guide')}` }
+            ]);
+        }
+
+        function showDefinitions() {
+            const definitions = getDefinitions();
+            const rows = definitions.slice(0, POLICY.effects.chatListLimit)
+                .map(definition => `<b>${_sanitize(definition.name)}</b>: ${_sanitize(definition.projection.kind)}`
+                    + (definition.projection.value ? ` (${_sanitize(definition.projection.value)})` : '')
+                    + ` | dependency: ${_sanitize(definition.dependency)}`)
+                .join('<br>') || 'No definitions.';
+            panel('EffectAssist Definitions', [
+                { label: 'Definitions', value: rows },
+                { label: 'Limit', value: `${getCustomDefinitions().length}/${POLICY.effects.definitionLimit} custom definitions used.` },
+                { label: 'Return', value: GameAssist.createButton('Open GM Screen', '!Effect-GM') }
+            ]);
+        }
+
+        function endedSummary() {
+            const ended = runtime.history.slice(-POLICY.effects.chatListLimit).reverse();
+            if (!ended.length) return 'No ended effects recorded.';
+            return ended.map(instance => {
+                const targets = (instance.targets || []).map(target => _sanitize(target.tokenName)).join(', ') || 'unknown targets';
+                return `<b>${_sanitize(instance.name)}</b> from ${_sanitize(instance.source?.tokenName || 'unknown source')} to ${targets} | ended ${_sanitize(instance.endedAt || 'unknown time')}`;
+            }).join('<br>');
+        }
+
+        function showStatus() {
+            const audit = auditEffects();
+            panel('EffectAssist Status', [
+                { label: 'Module', value: `${MODULE_VERSION} | enabled and responding | state schema ${STATE_SCHEMA_VERSION}` },
+                { label: 'Records', value: `${audit.active} active | ${audit.ended} ended | ${audit.definitions} definitions` },
+                { label: 'Projection Health', value: audit.ok ? 'No mismatches found.' : `${audit.mismatches.length} item(s) need review.` },
+                { label: 'Active Effects', value: activeSummary() },
+                { label: 'Recent Ended Effects', value: endedSummary() },
+                { label: 'Actions', value: `${GameAssist.createButton('Open GM Screen', '!Effect-GM')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Guide', '!Effect-Guide')}` }
+            ]);
+        }
+
+        function showAudit(msg) {
+            const audit = auditEffects();
+            const details = audit.mismatches.slice(0, POLICY.effects.chatListLimit)
+                .map(item => `• ${_sanitize(item.message)}`)
+                .join('<br>');
+            const fields = [
+                { label: 'Summary', value: `${audit.active} active effects | ${audit.mismatches.length} mismatch(es)` },
+                { label: 'Changes', value: 'None. This audit is read-only.' },
+                { label: 'Details', value: details || 'No semantic/projection mismatches found.' }
+            ];
+            if (audit.mismatches.some(item => ['missing-marker', 'untracked-projection', 'orphan-marker'].includes(item.type))) {
+                const grant = createRepairGrant(audit, msg?.playerid);
+                fields.push({
+                    label: 'Repair',
+                    value: `${GameAssist.createButton('Confirm Current Repairs', '!Effect-Repair --grant ' + grant + ' --confirm')}`
+                });
+            }
+            fields.push({ label: 'Return', value: GameAssist.createButton('Open GM Screen', '!Effect-GM') });
+            panel('EffectAssist Audit', fields);
+        }
+
+        function manualHtml() {
+            return [
+                '<h1>EffectAssist User Manual</h1>',
+                `<p><strong>GameAssist v${_sanitize(VERSION)} | EffectAssist ${MODULE_VERSION}</strong></p>`,
+                '<h2>Purpose</h2>',
+                '<p>EffectAssist keeps a semantic record of each effect source and target. Markers and conditions are visible projections, not the database.</p>',
+                '<h2>Quick Start</h2>',
+                '<ol><li>Enable EffectAssist.</li><li>Select the target tokens.</li><li>Run <code>!Effect-GM</code>.</li><li>Choose the source and apply Bless or a generic effect.</li><li>Use Status or Audit to review it.</li><li>End the specific source instance when the effect ends.</li></ol>',
+                '<h2>Overlapping Sources</h2>',
+                '<p>Separate sources remain separate records. A shared non-stacking marker remains while any valid source is active.</p>',
+                '<h2>Audit And Repair</h2>',
+                '<p>Audit never changes tokens. Repair requires the confirmation button from a current audit and rechecks the state before changing markers.</p>',
+                '<h2>Commands</h2>',
+                '<p><code>!Effect-GM</code>, <code>!Effect-Guide</code>, <code>!Effect-Status</code>, <code>!Effect-Audit</code>, <code>!Effect-Definitions</code>, <code>!Effect-Manual</code>, <code>!Effect-End --id ID</code>.</p>',
+                '<h2>Current Capabilities</h2>',
+                '<p>This release records effects and manages their marker or condition projections. Character-sheet bonuses, automatic cast recognition, HP-loss prompts, and duration expiration are planned separately.</p>'
+            ].join('');
+        }
+
+        function showManual() {
+            const result = GameAssist.writeModuleManual(MODULE_NAME, manualHtml());
+            panel('EffectAssist Manual', [
+                { label: 'Result', value: result.ok ? 'The manual was created or updated.' : _sanitize(result.message) },
+                ...(result.ok ? [{ label: 'Handout', value: result.link }] : []),
+                { label: 'Actions', value: `${GameAssist.createButton('Open GM Screen', '!Effect-GM')} ${GameAssist.createButton('Abbreviated Guide', '!Effect-Guide')}` }
+            ]);
+        }
+
+        function handleApply(msg, options) {
+            const selected = selectedTargets(msg);
+            if (!selected.ok) {
+                panel('EffectAssist', [
+                    { label: 'Needs Attention', value: _sanitize(selected.message) },
+                    { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!Effect-Guide') }
+                ]);
+                return;
+            }
+            const sourceTokenId = String(options.source || '');
+            const request = {
+                definitionId: options.effect ? normalizeDefinitionId(options.effect) : null,
+                name: options.name,
+                marker: options.marker,
+                condition: options.condition,
+                none: options.none,
+                dependency: options.dependency,
+                dependencyNote: options.note,
+                duration: options.duration,
+                sourceTokenId,
+                targetTokenIds: selected.targets.map(target => target.summary.tokenId),
+                createdBy: msg.playerid,
+                requestId: options.request
+            };
+            const result = applyEffectRequest(request);
+            panel(result.ok ? 'Effect Applied' : 'EffectAssist', [
+                { label: result.ok ? 'Result' : 'Needs Attention', value: _sanitize(result.message || result.code) },
+                ...(result.ok ? [{ label: 'Instance', value: `${_sanitize(result.instance.id)} | ${_sanitize(result.instance.name)}` }] : []),
+                { label: 'Actions', value: `${GameAssist.createButton('Open GM Screen', '!Effect-GM')} ${GameAssist.createButton('Status', '!Effect-Status')}` }
+            ]);
+        }
+
+        function handleEnd(msg, options) {
+            const result = endEffect(options.id, msg.playerid);
+            panel(result.ok ? 'Effect Ended' : 'EffectAssist', [
+                { label: result.ok ? 'Result' : 'Needs Attention', value: _sanitize(result.message) },
+                ...(result.failures?.length ? [{ label: 'Cleanup', value: result.failures.map(_sanitize).join('<br>') }] : []),
+                { label: 'Actions', value: `${GameAssist.createButton('Open GM Screen', '!Effect-GM')} ${GameAssist.createButton('Audit', '!Effect-Audit')}` }
+            ]);
+        }
+
+        function handleRepair(msg, options) {
+            if (!options.confirm || !options.grant) {
+                showAudit(msg);
+                return;
+            }
+            const result = repairEffects(options.grant, msg.playerid);
+            panel(result.ok ? 'Effect Repair Complete' : 'Effect Repair Needs Attention', [
+                { label: 'Result', value: result.ok
+                    ? `${result.repaired} projection(s) repaired.`
+                    : _sanitize(result.message || 'Some projections could not be repaired.') },
+                ...(result.failed?.length ? [{ label: 'Failures', value: result.failed.map(item => _sanitize(item.message || item.item?.message)).join('<br>') }] : []),
+                { label: 'Actions', value: `${GameAssist.createButton('Run Audit', '!Effect-Audit')} ${GameAssist.createButton('Open GM Screen', '!Effect-GM')}` }
+            ]);
+        }
+
+        function handleCommand(msg) {
+            const action = commandAction(msg.content);
+            const options = parseOptions(msg.content);
+            if (['gm', 'dm', 'menu'].includes(action)) return showControl();
+            if (['guide', 'help'].includes(action)) return showGuide();
+            if (['info', 'about'].includes(action)) return showInfo();
+            if (['status', 'list', 'refresh'].includes(action)) return showStatus();
+            if (action === 'definitions') return showDefinitions();
+            if (action === 'audit') return showAudit(msg);
+            if (action === 'manual') return showManual();
+            if (action === 'apply') return handleApply(msg, options);
+            if (action === 'end') return handleEnd(msg, options);
+            if (action === 'repair') return handleRepair(msg, options);
+            panel('EffectAssist', [
+                { label: 'Needs Attention', value: 'That EffectAssist command was not recognized.' },
+                { label: 'Next Step', value: `${GameAssist.createButton('Open GM Screen', '!Effect-GM')} ${GameAssist.createButton('Open Guide', '!Effect-Guide')}` }
+            ]);
+        }
+
+        GameAssist.onCommand('!effect', handleCommand, MODULE_NAME, { gmOnly: true });
+        GameAssist.onCommand('!Effect-', handleCommand, MODULE_NAME, {
+            gmOnly: true,
+            match: { caseInsensitive: true, mode: 'prefix' }
+        });
+        GameAssist.onCommand('!EffectAssist-', handleCommand, MODULE_NAME, {
+            gmOnly: true,
+            match: { caseInsensitive: true, mode: 'prefix' }
+        });
+
+        GameAssist.EffectAssist = Object.freeze({
+            version: MODULE_VERSION,
+            stateSchemaVersion: STATE_SCHEMA_VERSION,
+            getDefinitions: () => clone(getDefinitions()),
+            getActiveInstances: () => clone(activeInstances()),
+            getHistory: () => clone(runtime.history),
+            apply: request => applyEffectRequest(request || {}),
+            end: (instanceId, actor) => endEffect(instanceId, actor),
+            audit: () => clone(auditEffects()),
+            isAvailable: () => modState.config.enabled !== false,
+            observe: registerLifecycleObserver,
+            clearObservers: clearLifecycleObservers,
+            registerProjectionAdapter
+        });
+
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: !Effect-GM opens the controls; EffectAssist starts disabled by default.`, 'INFO', { startup: true });
+    }, {
+        enabled: false,
+        prefixes: ['!Effect-', '!effect', '!EffectAssist-'],
+        preserveRuntimeOnDisable: true,
+        protectedConfigKeys: ['customDefinitions']
+    });
+    // --- Notes & Comments ---
+    // Changed (v2.0.0): Added disabled-by-default semantic effect instances, Bless and generic manual definitions, source-aware non-stacking marker/condition projection, bounded ended history, idempotent request support, read-only audit, fresh-confirmation repair, CORE:SEMANTICEVENTS lifecycle publication, projection-adapter registration, and disabled-state mutation refusal.
+    // Decision log:
+    //   CHOICE: Keep semantic instances authoritative - ALT: infer effects from markers; REJECTED: markers cannot identify source, dependency, overlap, or ownership.
+    //   CHOICE: Track a shared projection ledger with baseline and managed state - ALT: remove a marker whenever one instance ends; REJECTED: that would erase overlapping sources or pre-existing campaign markers.
+    //   CHOICE: Keep EffectAssist useful without hard module dependencies - ALT: disable it with MarkerService or ConditionAssist; REJECTED: semantic records and non-projection effects remain valid while optional projections are unavailable.
+    //   CHOICE: Require audit preview plus a short-lived confirmation grant - ALT: repair directly from audit; REJECTED: current token state may encode intentional GM housekeeping.
+    //   CHOICE: Expose observer and projection-adapter contracts now - ALT: add parallel engines in later phases; REJECTED: later sheet, cast, concentration, HP, and timing capabilities must extend the same state model.
+    // [GAMEASSIST:MODULES:EFFECTASSIST] END
+    // =============================================================================
+
+    // =============================================================================
+
+    // =============================================================================
+
+
+
     // ————— HPASSIST MODULE v0.1.1.3 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:HPASSIST] BEGIN
@@ -14872,7 +16263,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v1.8.0): Replaced the remaining inherited module identities with CritAssist, NPCAssist, ConcentrationAssist, and HPAssist while retaining compatibility aliases and independent lifecycle management.
+    // Changed (v2.0.0): Added disabled-by-default EffectAssist as the single owner of source-aware semantic effect instances, projection ownership, audit, repair confirmation, and future adapter contracts.
     // Prior notes:
     //   v0.1.7.0: Added disabled-by-default CombatAssist to the bundled module contract and assigned encounter-flow ownership without changing InitiativeAssist initiative rules.
     //   v0.1.5.0: Advanced DebugTools to 0.2.0; marker previews and applied changes resolve and mutate through CORE:MARKERSERVICE.
