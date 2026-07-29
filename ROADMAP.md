@@ -80,4 +80,592 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | WeatherAlmanac | Sandbox verification | [#69](https://github.com/Mord-Eagle/GameAssist/issues/69) | Structured continuity-aware current weather, optional context, fallback operation, forecasts, locks, manual weather, history, and events. |
 | EnviroAlmanac | Sandbox verification | [#70](https://github.com/Mord-Eagle/GameAssist/issues/70) | Structured descriptive environment context, weather derivation, manual presets, persistent override, and no automatic gameplay penalties. |
 | RestAlmanac | Sandbox verification | [#71](https://github.com/Mord-Eagle/GameAssist/issues/71) | Previewed and revalidated 2014-PC Short/Long/Extended/custom rests with verified fields, optional Time advancement, rollback, history, and events. |
-| TokenAssist and CombatAssist backlog | Deferred | [o×]:òÚ$z{-®éÜj×·…ÒF÷BF‡&VR×'B&ö¦V7B&VÆV6RçVÖ&W&–ær2cã‚ãv—F†÷WB&Ww&—F–ær†—7F÷&–6Â&VÆV6R–FVçF–f–W'2÷"–æFWVæFVçBÖöGVÆRfW'6–öç2à¢Ò·…Ò&VæÖR&Vv—7G&F–öâÂ†æFÆW"÷væW'6†—ÂFWVæFVæ6–W2Â7FFR'&æ6†W2ÂV&Æ–2Æ&VÇ2ÂÔT4…5T•E2Fw2ÂæB6æöæ–6Â×G&VRVçG&–W2à¢Ò·…ÒÖ–w&FRfÆ–BöÆB7FFRFW7F–æF–öâÖf—'7BæB&VÖ÷fRF†RÖ–w&FVB6÷W&6R'&æ6ƒ²&WF–âÖÆf÷&ÖVB÷"Væ¶æ÷vâ'&æ6†W2f÷"v&æ–ærÖöæÇ’F–væ÷6—2à¢Ò·…Ò&W6W'fRWfW'’W7F&Æ—6†VB6öÖÖæB26ö×F–&–Æ—G’Æ–2æBFB6æöæ–6Â6öÖÖæBfÖ–Æ–W2à¢Ò·…Ò&W6W'fRå476—7B†—7F÷'’Â'V6¶WBÂ&2ÂÖ&¶W"ÂæBV&Æ–2’6ö×F–&–Æ—G’à¢Ò·…ÒF÷BæB&VæÖRöæRVæÖ&–wV÷W2öÆBwV–FR†æF÷WB&F†W"F†â7&VF–ærGWÆ–6FRà¢Ò·…Ò727–çF‚æBF†R6ö×ÆWFRÆö6Â&Vw&W76–öâ7V—FRà¢Ò·…Ò72F†Rfö7W6VB6ÆVâÖ–ç7FÆÂæBcããrãWw&FR6Öö¶RG&6·2–â&öÆÃ#à¢Ò·…Ò6ö×ÆWFR"3c2æB6Æ÷6R—77VR3cà ¢2226ö×ÆWF–öâvFP ¥F†R&öÆÃ#ÖöGVÆRÆ—7BW6W2öæÇ’F†Rf÷W"6æöæ–6ÂæÖW3²fÆ–B6WGF–æw2æB&V6÷&G27W'f—fRWw&FS²öÆBæBæWr6öÖÖæBf÷&×2V6‚F—7F6‚öæ6S²öÆBwV–FR†æF÷WG2&RF÷FVBv—F†÷WBGWÆ–6F–öã²ÖÆf÷&ÖVBÆVv7’FF&VÖ–ç2F–væ÷6&ÆS²æBVç&VÆFVBÖöGVÆW2&WF–âF†V—"66WFVB&V†f–÷"à ¢ÒÒĞ Ğ¢22†6R#¢fö7W6VBå476—7BF6†W2–âcã‚ãæBcã‚ã&  ¢222cã‚ã(	B&ÆööF–VBÆW'G0 ¥´—77VR3cEÒ†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7Bö—77VW2ócB’v26ö×ÆWFVBF‡&÷Vv‚µ"3s5Ò†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7B÷VÆÂós2’â—BFG2tÒ×&—fFRæ÷F–6RöæÇ’v†VââVÆ–v–&ÆRå27&÷76W2g&öÒ&÷fR†ÆböbfÆ–B÷6—F—fRÖ†–×VÒ…Fò†Æb÷"&VÆ÷rv†–ÆR&VÖ–æ–ærÆ—fRÂÇW2öæRÖ6Æ–6²6öçG&öÂ6VçFW"FövvÆRâ—B&WW6W2…Ö–æ—F–Æ—¦F–öâ&÷FV7F–öâæBFöW2æ÷Bw&—FR&ÆööF–VBWfVçG2–çFòFVF‚Ö†—7F÷'’'V6¶WG2à ¢222cã‚ã"(	B&öw&W76—fRå2æÖ–æp ¥´—77VR3cUÒ†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7Bö—77VW2ócR’v26ö×ÆWFVBF‡&÷Vv‚µ"3sEÒ†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7B÷VÆÂósB’â—B76–vç2æÖW2g&öÒF†RÆ—fRFö¶Vç2öâF†RæWvÇ’FFVBFö¶Vâw2vRâW†—7F–ærFö¶Vç2&RæWfW"&VæÖVBâF†RFVfVÇB—2Væ&ÆVBÂF†RtÒÖ’F—6&ÆR—BÂæBFVÆ–&W&FRÖçVÂGWÆ–6FW2&VÖ–âÆÆ÷vVBâçVÖ&W"6VÆV7F–öâW6W2F†RÆ÷vW7Bf–Æ&ÆR÷6—F—fR7Vff—‚Â6òFVÆWFVBvÖ’&R&WW6VC²æòW'6—7FVçB6×–vâ6÷VçFW"—2&WV—&VBà ¢ÒÒĞ ¢22†6R3¢VffV7D76—7B#BÕ6†VWB&öw&Ò–âc"ãã  ¥´—77VR3cÒ†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7Bö—77VW2óc’—2F†RÖ7FW"7V6–f–6F–öââF†Rc"ããÆVæ6‚6öÖ&–æW2F†R6VÖçF–2Væv–æRÂF†RfW&–f–VBöff–6–Â#B×6†VWBFFW"Â6öæ6VçG&F–öâ6ö÷&F–æF–öâÂæBfö7W6VB6—‚ÖVffV7B6FÆörv—F‚Æ–W"67F–æræBtÒÆö6¶÷WBâÆFW"&V6övæ—F–öâÂ…ÂGW&F–öâÂvVöâ×7V6–f–2FÖvRÂæB##B×6†VWBv÷&²&WF–â6W&FRWf–FVæ6RvFW2à ¤VffV7D76—7B&VÖ–ç2vÖWÆ’ÖöGVÆRâÖ&¶W%6W'f–6R÷vç2Ö&¶W'2Â6öæF—F–öä76—7B÷vç26öæF—F–öâFVf–æ—F–öç2æB6öæF—F–öâÖÖ&¶W"v÷&¶fÆ÷w2Â6†&7FW"6†VWG2÷vâF†V—"æF—fR&öÆÂf–VÆG2Â6öæ6VçG&F–öä76—7B÷vç26öæ6VçG&F–öâ6†V6·2Â…×w&—F–ærÖöGVÆW2÷vâ…×WFF–öç2ÂæBGW&åG&6¶W%6W'f–6R÷vç2æF—fRG&6¶W"66W72à ¢222ÆVæ6‚Væv–æRæB6FÆör(	Bc"ãã  ¢¢¥G&6¶–æs¢¢¢´—77VR3sUÒ†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7Bö—77VW2ósR¢¢¥7FGW3¢¢¢6æF&÷‚fW&–f–6F–öà ¢Ò·…ÒFB6÷W&6RÖv&RVffV7BFVf–æ—F–öç2æB7F—fR–ç7Fæ6W2à¢Ò·…Ò¶VW6÷W&6R6†&7FW"÷Fö¶Vâ–FVçF—G’6W&FRg&öÒWfW'’F&vWB–FVçF—G’à¢Ò·…ÒFB–FV×÷FVçBÆ–6F–öâæB–FV×÷FVçBVæF–ærà¢Ò·…ÒFB6†&VB×VÇF’×&ö¦V7F–öâ÷væW'6†—v—F‚&6VÆ–æR&W6W'fF–öâà¢Ò·…Ò7W÷'BÖ&¶W%6W'f–6RÂ6öæF—F–öä76—7BÂ6öæ6VçG&F–öâÂ#B×6†VWBÂæB&V6÷&BÖöæÇ’&ö¦V7F–öç2à¢Ò·…ÒFB&ÆW72ÂwV–Fæ6RÂv&F–ær&öæBÂ†öÇ’vVöâÂ†7FRÂæB72v—F†÷WBG&6RÂ6W&FVB'’WFöÖF–öâÆWfVÂà¢Ò·…Ò&VÖ÷fRv–gBöbÆ7&—G’ÂÆöæw7G&–FW"ÂæB&V6öâöb†÷Rg&öÒF†R'V–ÇBÖ–âÆVæ6‚6FÆör&V6W6RF†V—"Ö&¶W"ÖöæÇ’F‡2Fòæ÷B&÷f–FRVæ÷Vv‚WFöÖF–öã²&WF–âvVæW&–2G&6¶–ærF‡2à¢Ò·…ÒÖ÷fR÷væW'6†—×6fRvVöâÂ7FVÇF‚Â–æ—F–F—fRÂÖ÷fVÖVçB×7VVBÂæB†VÆ–ærFFW"&W6V&6‚Fò´—77VR3ƒ%Ò†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7Bö—77VW2óƒ"’6ò—BFöW2æ÷B&Æö6²F†Rfö7W6VB&VÆV6Rà¢Ò·…ÒFBÆ–W"67F–ærg&öÒ6öçG&öÆÆVB6÷W&6W2ÂF—&V7B7VÆÂ6†÷'F7WG2ÂæBtÒÆö6¶÷WBà¢Ò·…Ò6†÷rWFöÖF–2Â76—7FVBÂæB–æf÷&ÖF–öæÂ&V†f–÷"&Vf÷&RÆ–6F–öâà¢Ò·…ÒFB&÷VæFVBVæFVB†—7F÷'’æB&W6W'fR'VçF–ÖR&V6÷&G27&÷72ÖöGVÆRF—6&ÆR÷&RÖVæ&ÆRà¢Ò·…ÒFB&VBÖöæÇ’VF—BæB6†÷'BÖÆ—fVBÂtÒÖ&÷VæBÂöæR×W6R&W—"WF†÷&—¦F–öâà¢Ò·…Ò&VgW6R'F–ÂF&vWBÆ–6F–öâæBFö¶Vâ×&W&W6VçFF–öâG&–gBà¢Ò·…ÒFBF†R–Ö×WF&ÆR–âÖÖVÖ÷'’6VÖçF–4WfVçG26÷&R6W'f–6Rà¢Ò·…ÒWFFRW†V7WF&ÆRÂ$TDÔRÂ6†ævVÆörÂ&öFÖÂöæRÔ6Æ–6²ÖWFFFÂæB6Öö¶RFW7G2à¢Ò·…Ò72’fö7W6VBÆö6ÂVffV7D76—7B6†V6·2ÇW27–çF‚fÆ–FF–öâà¢Ò²Ò72F†R6ÆVâÖ–ç7FÆÂæBcã‚ã"Ww&FR6Öö¶RG&6·2–â&öÆÃ#à¢Ò²Ò6ö×ÆWFRF†Rc"ãã"æB6Æ÷6R—77VW23sRÂ3sbÂæB3s‚à ¢222öff–6–Â#B6†VWB&ö¦V7F–öà ¢¢¥G&6¶–æs¢¢¢´—77VR3seÒ†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7Bö—77VW2ósb¢¢¥7FGW3¢¢¢6æF&÷‚fW&–f–6F–öà ¢Ò·…ÒFBW†7B&WVF–ærvÆö&ÂGF6²Â6f–ær×F‡&÷rÂ6¶–ÆÂÂæB2ÖöF–f–W"×&÷rFFW'2à¢Ò·…Ò&V6÷&BW†7B7&VFVBGG&–'WFR”G2ÂW‡V7FVBfÇVW2ÂæB&6VÆ–æR÷væW'6†—à¢Ò·…ÒW6R6†VWBv÷&¶W'2v†Vâf–Æ&ÆRæBfö–BvVæW&FVBvw&VvFR÷WGWG2à¢Ò·…ÒFB6ö×ÆWFR&ÆW72GF6²÷6fR&÷w2ÂwV–Fæ6R6¶–ÆÂ&÷w2Âv&F–ær&öæB2÷6fR&÷w2ÂæB†7FR2&÷w2à¢Ò·…Ò&W6W'fR&RÖW†—7F–æræBW‡FW&æÆÇ’VF—FVB&÷w2à¢Ò·…Ò&WF–âÖ&¶W"ÇW276—7FVB&V†f–÷"f÷"å72æBVç7W÷'FVB6†VWG2à¢Ò²Ò72F†RÆ—fR#B×6†VWBÆ–6F–öâÂ÷fW&ÆÂ6ÆVçWÂVF—B×&W6W'fF–öâÂæB&W7F'B6†V6·2à ¢222†6R2(	B67B&V6övæ—F–öà ¢¢¥G&6¶–æs¢¢¢´—77VR3suÒ†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7Bö—77VW2ósr¢¢¥7FGW3¢¢¢ÆææV@ ¥&V6övæ—¦RöæÇ’vVÆÂÖWf–FVæ6VBöff–6–Â#B&ÆW727VÆÂ÷WGWBæBöffW"tÒÖ6öæf—&ÖVB&÷÷6Ã²6†BF&vWBFW‡B—2æ÷BG&VFVB2Fö¶Vâ–FVçF—G’â6GW&R&VÂ##BFV×ÆFR6×ÆW2&Vf÷&RFVf–æ–ær##B&V6övæ—F–öâ6öçG&7Bà ¢2226öæ6VçG&F–öâ6ö÷&F–æF–öà ¢¢¥G&6¶–æs¢¢¢´—77VR3s…Ò†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7Bö—77VW2ós‚¢¢¥7FGW3¢¢¢6æF&÷‚fW&–f–6F–öà ¢Ò·…ÒFBF†R6öæ6VçG&F–öä76—7Bã2ãV&Æ–2Æ–fV7–6ÆR’à¢Ò·…ÒV&Æ—6‚6öæ6VçG&F–öâÖW7F&Æ—6†VBÂf–ÆVBÂæBVæFVBWfVçG2à¢Ò·…ÒW7F&Æ—6‚6÷W&6R6öæ6VçG&F–öâf÷"6FÆörVffV7G2F†B&WV—&R—Bà¢Ò·…ÒVæBFWVæFVçBVffV7G2v†Vâ6÷W&6R6öæ6VçG&F–öâVæG2à¢Ò·…Ò&VgW6R÷"FVÆ–&W&FVÇ’&WÆ6RâW†—7F–ær6öæ6VçG&F–öâVffV7Bà¢Ò·…Ò¶VW&÷F‚ÖöGVÆW2÷WBöbV6‚÷F†W"w2W'6—7FVçB7FFRà¢Ò²Ò72ÖçVÂÖ6ÆV"Âf–ÆVBÖ6†V6²Â&WÆ6VÖVçBÂtÒÖÆ–W"6÷W&6RÂæB&W7F'B6†V6·2–â&öÆÃ#à ¢222†6RR(	B…ÔÆ÷72öffW'0 ¢¢¥G&6¶–æs¢¢¢´—77VR3s•Ò†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7Bö—77VW2ós’¢¢¥7FGW3¢¢¢ÆææV@ ¤–çG&öGV6R&÷fVææ6RÖv&R…WfVçG26ò7GVÂFÖvR6â&RF—7F–æwV—6†VBg&öÒ†VÆ–ærÂFö¶Vâ6WGWÂ…76—7B–æ—F–Æ—¦F–öâÂæB÷F†W"WFöÖFVBw&—FW2&Vf÷&RVffV7D76—7BöffW'2â7F–öâà ¢222†6Rb(	BVæ6÷VçFW"æBv÷&ÆBÕF–ÖRGW&F–öç0 ¢¢¥G&6¶–æs¢¢¢´—77VR3ƒÒ†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7Bö—77VW2óƒ¢¢¥7FGW3¢¢¢ÆææV@ ¤6öç7VÖR6VÖçF–2GW&âÂ&÷VæBÂVæ6÷VçFW"ÂæBgWGW&Rv÷&ÆB×F–ÖR6æF–FFW2â&VÖ–æFW'2æBW‡—&F–öâ6æF–FFW2Ö’&ö6VVBf—'7C²WFöÖF–2VæF–ær&VÖ–ç2vFVBVçF–ÂÆ—fR&öÆÃ#Wf–FVæ6R&÷fW2F†R&÷VæF'’æB÷væW'6†—'VÆW2à ¢2226ö×ÆWF–öâvFP ¥F†RVffV7D76—7B÷'F–öâöbc"ãã×W7B7W'f—fRF†RÆ—fR&öÆÃ#6ÆVâÖ–ç7FÆÂÂWw&FRÂ6ö×ÆWFR&ÆW72Â6FÆör6÷fW&vRÂ#B×6†VWB&÷w2Â6öæ6VçG&F–öâ6ÆVçWÂ÷fW&ÆÂ&6VÆ–æR×7FFRÂVF—B÷&W—"ÂF—6&ÆR÷&RÖVæ&ÆRÂæB&W7F'BFW7G2â67B&V6övæ—F–öâÂ…ÖÆ÷72öffW'2ÂGW&F–öâ&÷f–FW'2ÂæB##B×6†VWB7W÷'B&VÖ–âÆFW"v÷&²VæFW"F†V—"÷vâ—77VW3²—77VR3ƒ‚&WF–ç2F†RÆ–W"×v÷&¶fÆ÷ræBU‚&W—'2v—F†÷WB&V÷Væ–ærF†R6ö×ÆWFVB&ööbÖöbÖ6öæ6WB–×ÆVÖVçFF–öâGW&–ærÆÖæ476—7BFWfVÆ÷ÖVçBà ¢ÒÒĞ ¢22†6RC¢6ö×ÆWFRÆÖæ476—7B&öw&Ò–âc"ãã  ¥´—77VR3c%Ò†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7Bö—77VW2óc"’—2F†RÖ7FW"7V6–f–6F–öâf÷"öæRvÖT76—7BÖöGVÆRv—F‚6—‚–æFWVæFVçFÇ’FövvÆV&ÆR–çFW&æÂ7—7FV×2âÆÂ6—‚&R–×ÆVÖVçFVBöâF†R6ÖR"3ƒc"ããFWfVÆ÷ÖVçBÆ–æS²F†R—77VR6WVVæ6R&W6W'fW2÷væW'6†—æB66WFæ6RWf–FVæ6R&F†W"F†â7&VF–ær'F–Â&VÆV6W3  £â²3cbF–ÖTÆÖæ5Ò†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7Bö—77VW2ócb’à£"â²3cr6Æ–ÖFTÆÖæ5Ò†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7Bö—77VW2ócr’à£2â²3c‚7G&öæö×”ÆÖæ5Ò†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7Bö—77VW2óc‚’à£Bâ²3c’vVF†W$ÆÖæ5Ò†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7Bö—77VW2óc’’à£Râ²3sVçf—&ôÆÖæ5Ò†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7Bö—77VW2ós’à£bâ²3s&W7DÆÖæ5Ò†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7Bö—77VW2ós’à ¤V6‚†6R×W7B&÷f–FRW6VgVÂ7FæFÆöæR&V†f–÷"v—F‚W‡Æ–6—B÷F–öæÂ–çFVw&F–öç2âf–7F–öæÂv÷&ÆBF–ÖR&VÖ–ç26W&FRg&öÒvÖT76—7Bw2&VÂ×v÷&ÆBF&ÆRF–ÖW¦öæRæBå476—7Bw2&VÂ×v÷&ÆB6W76–öâFFW2à ¢222–×ÆVÖVçFVB66÷P ¢Ò·…Ò&Vv—7FW"ÆÖæ476—7B2öæRF—6&ÆVBÖ'’ÖFVfVÇBfVGW&RÖöGVÆRv—F‚–æFWVæFVçBF–ÖRÂ6Æ–ÖFRÂ7G&öæö×’ÂvVF†W"ÂVçf—&öæÖVçBÂæB&W7B7v—F6†W2à¢Ò·…Ò–×ÆVÖVçBF–ÖTÆÖæ2v—F‚öæRVÆ6VBÖÖ–çWFRWF†÷&—G’Â7FæF&Bõ6öÆÖæ–2ô†'F÷2õv–f&W"&öf–ÆW2Â&÷VæFVB†—7F÷'’ÂwV&FVB&WfW'6ÂöW†7B6WGF–ærÂÆ–W"&VBÖöæÇ’÷WGWBÂæBv–f&W"†öÆ–F—2à¢Ò·…Ò–×ÆVÖVçB6Æ–ÖFTÆÖæ2v—F‚VF—F&ÆR'V–ÇBÖ–ç2Â&÷VæFVB7W7FöÒ&öf–ÆW2Â&Vv–öç2ÂG'VR&VçB–æ†W&—Fæ6RÂ÷fW'&–FW2Â7F—fR×&Vv–öâ6VÆV7F–öâÂæBÖçVÂ6V6öâfÆÆ&6²à¢Ò·…Ò–×ÆVÖVçB7G&öæö×”ÆÖæ2v—F‚6öæf–wW&&ÆRÖööâ7–6ÆW2ööfg6WG2÷†6W2ÂFWFW&Ö–æ—7F–2F–Æ–v‡BæB6V6öâ&÷VæF&–W2Â&÷VæFVBf÷&V67G2ÂæB6W&FVÇ’vV–v‡FVB&&RÖWfVçB7VvvW7F–öç2à¢Ò·…Ò–×ÆVÖVçBvVF†W$ÆÖæ2v—F‚7G'V7GW&VB6öçF–çV—G’Öv&RvVæW&F–öâÂ÷F–öæÂ6öçFW‡BÂ7FæFÆöæRfÆÆ&6²Â&VBÖöæÇ’f÷&V67G2ÂW‡Æ–6—BÖçVÂ7FFRÂÆö6²÷VæÆö6²Â†—7F÷'’ÂæBWfVçG2à¢Ò·…Ò–×ÆVÖVçBVçf—&ôÆÖæ2v—F‚7G'V7GW&VBvVF†W"ÖFW&—fVB6öçFW‡BÂ7FæFÆöæR&W6WG2Â&÷VæFVB7W7FöÒ÷fW'&–FRÂW‡Æ–6—B6ÆV"ÂæBæòWFöÖF–2vÖWÆ’VæÇF–W2à¢Ò·…Ò–×ÆVÖVçB&W7DÆÖæ2f÷"Æ–æ¶VB6öçG&öÆÆVB#B72v—F‚&Wf–WrÂW‡—&–æröæR×W6R6öæf—&ÖF–öâÂ6ö×ÆWFR&WfÆ–FF–öâÂfW&–f–VB…ô†—BF–6R÷6Æ÷Bw&—FW2Â÷F–öæÂF–ÖRGfæ6VÖVçBÂ&öÆÆ&6²Â†—7F÷'’ÂæB7W7FöÒ&W7G2à¢Ò·…ÒFB6†&VBæf–vF–öâÂ7F&ÆRÖçVÂÂfö7W6VB&VBÖöæÇ’VF—G2Â&÷VæFVBöÆ–7’Â&÷FV7FVB7G'V7GW&VB6öæf–wW&F–öâÂFVfVç6—fRV&Æ–26öçFW‡B—2ÂæB6VÖçF–2WfVçG2à¢Ò·…Ò72rfö7W6VBÆÖæ476—7B6†V6·2Â’VffV7D76—7B&Vw&W76–öâ6†V6·2Â¦f67&—B7–çF‚'6–ærÂæBF†R#’×6V7F–öâÔT4…5T•E27G'V7GW&ÂfÆ–FF÷"à¢Ò²Ò72F†R6ö×ÆWFRÆ—fR&öÆÃ#6ÆVâÖ–ç7FÆÂÆÖæ476—7BG&6²à¢Ò²Ò72F†R6ö×ÆWFRÆ—fR&öÆÃ#cã‚ã"×Fò×c"ããWw&FRG&6²à¢Ò²Ò6öæf—&ÒÆÂF‡&VR&VÆV6R67&—B'F–f7G2&R–FVçF–6ÂæBV&Æ–2Fö7VÖVçFF–öâöÖWFFFÖF6‚F†RFW7FVB&V†f–÷"à ¢222&VÆV6RvFP §c"ããFöW2æ÷BV&Æ—6‚VçF–ÂWfW'’–çFW&æÂ7—7FVÒ76W2F†Rfö7W6VB&öÆÃ#6Öö¶RG&6²Â–æFWVæFVçBF—6&ÆR÷&RÖVæ&ÆRæB&W7F'B&W6W'fF–öâ&R6öæf—&ÖVBÂ&W7DÆÖæ2w27W÷'FVB#B×6†VWBw&—FW2&R&÷fVâv—F‚F—7÷6&ÆR6†&7FW'2ÂæB"3ƒ&Wf–Wr—26ö×ÆWFRâ76–ærF–ÖTÆÖæ2ÆöæRÂ÷"ç’6ÖÆÆW"7V'6WBÂ—2æ÷B&VÆV6R6æF–FFRà ¢ÒÒĞ ¢227W'&VçBc"ãã&6†—FV7GW&P Ğ¦FW‡@Ğ¥´tÔT54•5EÒğĞ®)IÎ)H´tÔT54•5C¥ôÄ”5•ĞĞ®)IÎ)H´tÔT54•5C¤ĞĞ®)H")IN)H´tÔT54•5C¤¥UD”Å5ĞĞ®)IÎ)H´tÔT54•5C¤4õ$UĞĞ®)H")IÎ)H´tÔT54•5C¤4õ$S¥TUTUĞĞ®)H")IÎ)H´tÔT54•5C¤4õ$S¤4ôÕEĞĞ®)H")IÎ)H´tÔT54•5C¤4õ$S¥5DDUĞĞ®)H")IÎ)H´tÔT54•5C¤4õ$S¤Ô$´U%4U%d”4UĞĞ®)H")IÎ)H´tÔT54•5C¤4õ$S¥EU$åE$4´U%4U%d”4UĞĞ®)H")IÎ)H´tÔT54•5C¤4õ$S¥4TÔåD”4UdTåE5Ğ®)H")IN)H´tÔT54•5C¤4õ$S¤ô$¤T5EĞĞ®)IÎ)H´tÔT54•5C¤”åDU$d4U5ĞĞ®)H")IÎ)H´tÔT54•5C¤”åDU$d4U3¤UdTåE5ĞĞ®)H")IN)H´tÔT54•5C¤”åDU$d4U3¤4ôÔÔäE5ĞĞ®)IÎ)H´tÔT54•5C¤ÔôETÄU5ĞĞ®)H")IÎ)H´tÔT54•5C¤ÔôETÄU3¤4ôäd”uT•ĞĞ®)H")IÎ)H´tÔT54•5C¤ÔôETÄU3¤5$•D54•5EĞ®)H")IÎ)H´tÔT54•5C¤ÔôETÄU3¤4ôäD•D”ôä54•5EĞĞ®)H")IÎ)H´tÔT54•5C¤ÔôETÄU3¥Dô´Tä54•5EĞ®)H")IÎ)H´tÔT54•5C¤ÔôETÄU3¤”ä•D”D•dT54•5EĞ®)H")IÎ)H´tÔT54•5C¤ÔôETÄU3¤4ôÔ$D54•5EĞ®)H")IÎ)H´tÔT54•5C¤ÔôETÄU3¥tTÄ4ôÔT54•5EĞ®)H")IÎ)H´tÔT54•5C¤ÔôETÄU3¤å454•5EĞ®)H")IÎ)H´tÔT54•5C¤ÔôETÄU3¤4ôä4TåE$D”ôä54•5EĞ®)H")IÎ)H´tÔT54•5C¤ÔôETÄU3¤TddT5D54•5EĞ®)H")IÎ)H´tÔT54•5C¤ÔôETÄU3¤ÄÔä454•5EĞ®)H")IÎ)H´tÔT54•5C¤ÔôETÄU3¤…54•5EĞ®)H")IN)H´tÔT54•5C¤ÔôETÄU3¤DT%TuDôôÅ5ĞĞ®)IN)H´tÔT54•5C¤$ôõE5E$ĞĞ¦ Ğ Ğ¥F†—2G&VRÖF6†W2F†R–×ÆVÖVçFVBW†V7WF&ÆR6V7F–öâ†–W&&6‡’âW"ÔT4…5T•E2cãRã"Â—BæBF†RW†V7WF&ÆR&ææW"w26æöæ–6Å÷G&VV×W7B&VÖ–â7–æ6‡&öæ—¦VBv†VæWfW"6V7F–öâFr6†ævW2à Ğ¢ÒÒĞĞ Ğ¢227&÷72Ô7WGF–ær&VÆV6RvFW0Ğ Ğ¤WfW'’FWfVÆ÷ÖVçB6†V6·ö–çB×W7B6F—6g’F†RföÆÆ÷v–ær&Vf÷&R&V–ærÖ&¶VB6ö×ÆWFRâF†RV&Æ–2&VÆV6R&WV—&W2ÆÂ6†V6·ö–çG2Fò&R6ö×ÆWFRFövWF†W# Ğ Ğ¢Ò²Ò¦f67&—B7–çF‚6†V6·272àĞ¢Ò²Ò6†ævVB&V†f–÷"†2fö7W6VBFW7G2÷"Fö7VÖVçFVBÖçVÂ&ööbàĞ¢Ò²Ò&öÆÃ#6æF&÷‚6Öö¶RFW7G272f÷"6†ævVBv÷&¶fÆ÷w2àĞ¢Ò²ÒÖöGVÆRVæ&ÆRöF—6&ÆRæB&VÆöB&V†f–÷"—26†V6¶VBv†VâffV7FVBàĞ¢Ò²Ò7FFRÖ–w&F–öâæB&öÆÆ&6²6öç6WVVæ6W2&RFö7VÖVçFVBv†VâffV7FVBàĞ¢Ò²Ò$TDÔRÂ6†ævVÆörÂ6Öö¶RFW7G2ÂæBWw&FR–ç7G'V7F–öç2&RWFFVBàĞ¢Ò²ÒÔT4…5T•E2Fw2ÂæW7F–ærÂ6æöæ–6ÂG&VRÂ6V7F–öâÖWFFFÂæBfö÷FW'2&R67W&FRàĞ¢Ò²ÒÆ–6&ÆRGG&–'WF–öâÂ&÷fVææ6RÂæBÆ–6Vç6Ræ÷F–6W2&R&W6W'fVBàĞ¢Ò²Ò¶æ÷vâÆ–Ö—FF–öç2&RFö7VÖVçFVBàĞ Ğ¢ÒÒĞĞ Ğ¢22v÷&²÷WG6–FRF†R–ÖÖVF–FR6WVVæ6P Ğ¥F†W6R&VÖ–â÷WG6–FRF†R–ÖÖVF–FR6öÖ&D76—7BW‡ç6–öâ6WVVæ6R÷"&WV—&RF†V—"÷vâÆFW"FW6–vâv÷&³  Ğ¢ÒæF—fRÖ÷&B6†&7FW"×6†VWBFWfVÆ÷ÖVçC°¢ÒVç&VÆFVBVæ6÷VçFW"Â&W7BÂ&W6÷W&6RÂæB&öFÖÖöGVÆW3°¢Ò'&öBÇVv–âÖÆöFW"v÷&³°¢Ò7FæF&B•ôÖWFF–væ÷7F–2F÷F–öâÂW‡Æ–6—FÇ’FVfW'&VB–â´—77VR3SÒ†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7Bö—77VW2óS“°¢Ò6öæF—F–öâ6†ævW2æBWFöÖF–2GW&âGfæ6VÖVçBÂv†–6‚&VÖ–âVç66÷VBæBFVfW'&VC°¢ÒFVfW'&VB6öÖ&D76—7B&VBÖöæÇ’FÖvRÖ6†ævR†—7F÷'’f÷"wV–FVB&WF6öâ&Wf–WrÂG&6¶VB–â´—77VR3S%Ò†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7Bö—77VW2óS"“°¢Ò6öÖ&D76—7B†VÆBÖ7F–öâæB&VG’ôFVÆ’v÷&¶fÆ÷w2Â–æ6ÇVF–ærV&Æ–2æ÷v6–væÂÂG&6¶VB–â´—77VR3S5Ò†‡GG3¢òöv—F‡V"æ6öÒôÖ÷&BÔVvÆRôvÖT76—7Bö—77VW2óS2“°¢Ò6Æ–×2öb6ö×ÆWFRFö¶VäÖöB6ö×F–&–Æ—G’&Vf÷&R6öÖÖæBÖfÖ–Ç’fW&–f–6F–öã°¢ÒWFöÖF–2FVÆWF–öâöbÆVv7’÷"VæW‡V7FVBW'6—7FVçB7FFRàĞ Ğ¢ÒÒĞĞ Ğ¢22Ö–çF–æ–ærF†—2&öFÖ Ğ Ğ¥v†Vâv÷&²Gfæ6W3 Ğ Ğ£âWFFRF†R&VÆWfçB—77VR6†V6¶Æ—7BæBFB–çfW7F–vF–öâæ÷FW2F†W&RàĞ£"âWFFRF†R7FvR7FGW2–âF†—2Fö7VÖVçBv†Vâ—G2Æ–fV7–6ÆR6†ævW2àĞ£2âÖ&²7FvR6ö×ÆWFRöæÇ’gFW"—G266WFæ6R7&—FW&–æB&öÆÃ#&VÆV6RvFR72àĞ£Bâ–b66÷R6†ævW2ÖFW&–ÆÇ’ÂWFFR&÷F‚F†—2&öFÖæBF†R&VÆWfçB—77VR6òæV—F†W"&V6öÖW2Ö—6ÆVF–æràĞ£Râ¶VW&VÆV6Ræ÷FW2æBF†R$TDÔRÆ–væVBv—F‚v†B—2–×ÆVÖVçFVBÂæ÷BÖW&VÇ’ÆææVBàĞ 
+| TokenAssist and CombatAssist backlog | Deferred | [open issues](https://github.com/Mord-Eagle/GameAssist/issues) | Revisit older parity and integration work after the combined v2.0.0 release is stable. |
+| GameAssist handout organization | Deferred | [#72](https://github.com/Mord-Eagle/GameAssist/issues/72) | Preserve stable handouts after manual Journal filing, add safe indexing, and defer true folder routing until Roll20 exposes a supported writable Journal-folder API. |
+
+---
+
+## Phase 1: Finish the `v0.1.4.x` Standalone Line
+
+**Tracking:** [Issue #20](https://github.com/Mord-Eagle/GameAssist/issues/20), [Issue #21](https://github.com/Mord-Eagle/GameAssist/issues/21), [Issue #22](https://github.com/Mord-Eagle/GameAssist/issues/22), [Issue #23](https://github.com/Mord-Eagle/GameAssist/issues/23), and [Issue #24](https://github.com/Mord-Eagle/GameAssist/issues/24)
+
+### Release Contract
+
+Every `v0.1.4.x` production installation continues to use:
+
+- GameAssist as one Roll20 Mod/API script;
+- standalone TokenMod for marker mutation used by current dependent modules;
+- standalone StatusInfo when the campaign wants condition descriptions and menus.
+
+### Checklist
+
+- [x] Determine the exact `!concentration --status` failure path.
+- [x] Correct custom marker display-name versus stored-tag recognition.
+- [x] Make CritFumble help/menu output and NPC death-audit reports DM-readable.
+- [x] Improve NPC death-history reporting with scoped buckets, handout-backed reports, and curated Arc handouts.
+- [x] Add Arc deduplication, deliberate duplicate override, removal controls, and last-addition undo.
+- [x] Add selected-only and descendant clearing plus a report writer and date-managed Session rollover.
+- [x] Make `!ga-status` easier for DMs to interpret while retaining detailed diagnostics behind `--details`.
+- [x] Diagnose built-in `dead` marker mutation failures and remove GameAssist's dependence on TokenMod `players-can-ids` by using `--api-as`.
+- [x] Ensure marker-operation failures produce a delayed actionable warning instead of a silent success claim.
+- [x] Verify NPCManager marker add, remove, audit, report, and teardown behavior.
+- [x] Verify ConcentrationTracker marker add, remove, status, and teardown behavior.
+- [x] Verify standalone StatusInfo continues observing relevant marker changes.
+- [x] Update README, changelog, and smoke tests with the v0.1.4.7 behavior, supported standalone baselines, and live-test limitations.
+
+### Completion Gate
+
+The final `v0.1.4.x` release must pass its documented Roll20 smoke test with the supported standalone installation before `v0.1.5.0` becomes the production development focus.
+
+### Phase Status
+
+- v0.1.4.3 resolves configured custom marker display names to the exact tags Roll20 stores on tokens.
+- v0.1.4.4 separates CritFumble quick reference, guided Natural 1 menu, and direct player picker flows; NPC death audit now reports scope, PC exclusion, and marker mismatches in one grouped GM report.
+- v0.1.4.5 advances NPCManager to module version 1.1.0. It records NPC deaths into active Campaign/Chapter/Section/Session buckets, updates one handout per named bucket, moves audit details into `GameAssist NPC Death Audit`, rolls date-managed Sessions forward before activity, adds the `!NPC-WR` report writer, supports selected-only or nested clearing, and maintains deduplicated editable Arc rosters.
+- v0.1.4.6 makes the default `!ga-status` response action-oriented for DMs and moves volatile counters, queue timing, timestamps, and internal event-hook counts into `!ga-status --details`.
+- v0.1.4.7 uses TokenMod's documented `--api-as` script path, checks requested marker state after dispatch, detects TokenMod through its public contract/version metadata, reports optional StatusInfo evidence in troubleshooting details, and prevents NPCHPRoller token setup from creating false NPC death/revival history.
+- Static and simulated checks cover custom markers, counted markers, built-in markers, empty status, invalid-marker diagnostics, and ConcentrationTracker teardown commands.
+- Cross-revision simulation also verifies that NPCManager disable/enable preserves saved bucket and Arc records while marker teardown remains active.
+- Completion gate passed: v0.1.4.7 NPCManager, ConcentrationTracker, TokenMod, optional StatusInfo, and NPCHPRoller initialization checks completed successfully in the Roll20 API sandbox.
+- Follow-up complete: [Issue #32](https://github.com/Mord-Eagle/GameAssist/issues/32) now prefers Roll20's documented `token_markers` property and retains `_token_markers` as a compatibility fallback.
+- v0.1.4.7 retains its historical sandbox/UTC date boundary; configurable table time is implemented separately in v0.1.5.1 under [Issue #35](https://github.com/Mord-Eagle/GameAssist/issues/35).
+
+---
+
+## Phase 2: MarkerService Checkpoint for `v0.1.5.0`
+
+**Tracking:** [Issue #25](https://github.com/Mord-Eagle/GameAssist/issues/25)
+
+`[GAMEASSIST:CORE:MARKERSERVICE]` becomes shared infrastructure and the single marker authority. It is toggleable so campaigns can keep unrelated GameAssist features while another Mod owns marker behavior. Disabling MarkerService first disables its dependent modules and explains which features are unavailable.
+
+### Intended Internal Contract
+
+The accepted public surface is `GameAssist.MarkerService`:
+
+```js
+GameAssist.MarkerService.resolve(markerNameOrTag);
+GameAssist.MarkerService.read(token);
+GameAssist.MarkerService.inspect(token, markerNameOrTag);
+GameAssist.MarkerService.has(token, markerNameOrTag);
+GameAssist.MarkerService.add(token, markerNameOrTag);
+GameAssist.MarkerService.remove(token, markerNameOrTag);
+GameAssist.MarkerService.set(token, markerNameOrTag, enabled);
+GameAssist.MarkerService.toggle(token, markerNameOrTag);
+GameAssist.MarkerService.observe(handler, { owner: 'ModuleName' });
+```
+
+Operations should return useful results or diagnostics rather than assuming success.
+
+### Checklist
+
+- [x] Define MarkerService inputs, outputs, invariants, and failure results.
+- [x] Support built-in, legacy, custom, numbered, and duplicate marker forms in the service contract and static regression pass.
+- [x] Preserve unrelated markers and number overlays during changes.
+- [x] Observe marker changes through one consistent contract.
+- [x] Migrate NPCManager, ConcentrationTracker, and DebugTools.
+- [x] Remove standalone TokenMod dependency gating from modules that only require marker operations.
+- [x] Make MarkerService toggleable and cascade disablement to NPCManager, ConcentrationTracker, and DebugTools while preserving unrelated modules.
+- [x] Complete the focused Roll20 sandbox regression pass without standalone TokenMod.
+- [x] Update MECHSUITS tree, sections, documentation, changelog, and smoke-test instructions.
+
+### Completion Gate
+
+NPCManager and ConcentrationTracker must perform their marker workflows without standalone TokenMod. MarkerService must demonstrate correct custom-marker behavior and unrelated-marker preservation, and its disable path must turn off dependent modules without making CritFumble, ConfigUI, or NPCHPRoller unavailable.
+
+**Current evidence:** syntax and mocked-ready initialization pass; 23 focused MarkerService checks, 22 mocked marker-consumer workflow checks, 24 service-lifecycle checks, and an 18-check marker-mutation refresh pass. Coverage includes built-in/custom/direct-tag resolution, invalid registry diagnostics, numbered and duplicate markers, unrelated-marker preservation, NPC death/revival history, concentration status/off, DebugTools safeguards, dependent shutdown, opt-out persistence, lifecycle re-enable, and observation delivery. The focused Roll20 checkpoint passed; combined upgrade and release regression now belongs to Issue #28.
+
+---
+
+## Phase 3: ConditionAssist Checkpoint for `v0.1.5.0`
+
+**Tracking:** [Issue #26](https://github.com/Mord-Eagle/GameAssist/issues/26)
+
+Build `ConditionAssist`, preserving selected StatusInfo workflows while routing marker behavior through MarkerService. Its MECHSUITS tag is `[GAMEASSIST:MODULES:CONDITIONASSIST]`.
+
+### Ownership Boundary
+
+- The GameAssist condition-information service owns condition definitions, 2014/2024/campaign wording, selected-token and current-page status menus, `!cond-<condition>` references, announcements, and supported `!condition` compatibility workflows.
+- MarkerService owns marker identity, artwork metadata, state, mutation, and observation.
+- The condition-information service must not independently parse or mutate markers in ways that compete with MarkerService.
+
+### Checklist
+
+- [x] Add `ConditionAssist` and `[GAMEASSIST:MODULES:CONDITIONASSIST]`.
+- [x] Compare StatusInfo 0.3.11 with the published 0.3.12 package and pin the repository snapshot/file blob.
+- [x] Record Robin Kuiper attribution, upstream baseline, GameAssist changes, and the MIT notice.
+- [x] Define the supported command/configuration compatibility surface.
+- [x] Route commands, observations, and lifecycle through GameAssist.
+- [x] Route marker behavior through MarkerService.
+- [x] Copy valid `state.STATUSINFO` settings and definitions without deleting the legacy branch.
+- [x] Validate complete configuration imports before applying them and protect the definition map from generic replacement.
+- [x] Detect and warn about accidental standalone StatusInfo installation.
+- [x] Default clean campaigns to the complete SRD 5.1 condition catalog and offer SRD 5.2.1 or campaign-custom wording without deleting added definitions or marker choices.
+- [x] Add dynamic, case-insensitive, read-only `!cond-<condition>` references for official and campaign-created definitions.
+- [x] Add built-in and registered custom marker artwork with readable fallback behavior.
+- [x] Add a GM-only selected-character announcement menu with verified marker toggling, character-first is/is-no-longer reporting, `!c-a` and `!cond-!` aliases, public/player-whisper delivery, exact-wording choices, and bounded private-reference buttons.
+- [x] Add duplicate-marker assignment warnings.
+- [x] Correct selected-token active-condition recognition and add a GM-only current-page condition/other-marker status roster.
+- [x] Update documentation, attribution, changelog, upgrade notes, and component smoke tests.
+
+### Completion Gate
+
+Supported `!condition` workflows, `!cond-<condition>` references, selectable condition wording, artwork, and selected-character marker announcements must function through GameAssist and remain synchronized with MarkerService-managed markers without requiring standalone StatusInfo.
+
+**Current evidence:** JavaScript syntax passes, the mocked Roll20 legacy-migration suite passes 35/35 checks, and the clean-install suite passes 58/58 checks. Coverage includes accurate selected-token multi-condition recognition, GM-only current-page condition/other-marker status with a complete handout, documented and compatibility marker-registry lookup, built-in/exact-tag independence from invalid registry data, actionable registry diagnostics, the complete 2014 catalog, 2024 and campaign-custom profile changes, case-insensitive official/custom `!cond-<condition>` references, `!c-a` and `!cond-!` announcement aliases, legacy Concentration-to-Concentrating display repair, built-in/custom artwork and readable fallback, captured selected-character menus, verified mixed-state marker toggling, character-first is/is-no-longer public and controller-whisper reporting, partial and absent controller handling, duplicate-description suppression, bounded private-reference buttons without permission leakage, preservation of added conditions and marker choices, duplicate-marker warnings, schema-v2 export, profile capacity refusal, legacy migration retention, custom and numbered markers, add/remove/toggle, external marker observation, unsafe and protected-config refusal, validated import, MarkerService cascade disable, case-insensitive service restoration, and observer recovery. The focused and complete Roll20 checkpoints passed.
+
+---
+
+## Phase 4: TokenAssist Checkpoint for `v0.1.5.0`
+
+**Tracking:** [Issue #27](https://github.com/Mord-Eagle/GameAssist/issues/27)
+
+Build **TokenAssist** with the supported token-control workflows needed by GameAssist and remove the production requirement for standalone TokenMod. Its MECHSUITS tag is `[GAMEASSIST:MODULES:TOKENASSIST]`.
+
+### Ownership Boundary
+
+- TokenAssist owns `!token-assist` and `!ta`/`!ta-*` parsing and general token operations.
+- Older supported `!token-mod` macros continue temporarily through v0.1.x and must be updated before v0.2.0.
+- MarkerService owns marker resolution, mutation, and observation semantics.
+- Internal GameAssist modules call stable internal services directly rather than generating `!token-mod` chat commands.
+
+### Checklist
+
+- [x] Add `TokenAssist` and `[GAMEASSIST:MODULES:TOKENASSIST]`.
+- [x] Pin TokenMod `0.8.88` at Roll20 repository commit `9d634d3149985dcf10333920b3f4c41f215f39fc`, blob `fc6c9cb45ec2f2ee254a24f849e089507a0e610a`.
+- [x] Record The Aaron attribution, upstream baseline, adapted portions, compatibility concepts, and MIT notice.
+- [x] Define the initial compatibility surface: help/config, selected and authorized-ID targeting, common booleans and token properties, relative values, movement, order, reports, page filters, and MarkerService-backed status commands.
+- [x] Document explicit 1.0.1 limits for image-side stacks, default-token writes, computed/name-resolved attributes, advanced controller lists and color arithmetic, relative/random multi-sided-token selection, duplicate-index markers, conditional marker counts, and help-handout rebuilding.
+- [x] Add `!token-assist`, `!ta`, and `!ta-*` command forms and retain older supported `!token-mod` syntax as a compatibility alias; any future removal requires a separately announced migration release.
+- [x] Normalize aura options, test a visible radius/color/shape combination, and stop movement trails from inheriting stale `lastmove` origins.
+- [x] Carry compatible settings forward from earlier v0.1.5.0 development builds before startup auditing.
+- [x] Copy a valid legacy `state.TokenMod.playersCanUse_ids` value once while preserving the complete legacy branch.
+- [x] Route all status-marker operations through MarkerService.
+- [x] Route listeners and lifecycle through GameAssist and declare MarkerService as a lifecycle dependency.
+- [x] Provide `GameAssist.TokenAssist.observeTokenChange(...)` as the documented observer replacement without creating a misleading global `TokenMod` object.
+- [x] Detect standalone TokenMod, warn the GM, suspend only the deprecated alias so one command cannot be applied twice, and retain the `!token-assist`, `!ta`, and `!ta-*` commands.
+- [x] Remove standalone TokenMod from v0.1.5.0 installation instructions.
+- [x] Test the implemented command families incrementally in Roll20.
+
+### Completion Gate
+
+The completed `v0.1.5.0` implementation must no longer require standalone TokenMod. TokenAssist commands, temporary support for older macros, and all GameAssist marker consumers must share MarkerService semantics.
+
+**Current evidence:** JavaScript syntax passes. The local TokenAssist regression harness passes 45/45 normal-path assertions and 12/12 standalone-collision assertions. Coverage includes provenance, pre-release and legacy state migration, full/short/case-insensitive commands, deprecation warnings, visible aura storage, hex/RGB/HSV color normalization, stale movement-trail replacement, booleans, quoted text, relative values, built-in/custom/numbered marker operations, safe replacement failure, order, reports, linked bars, player `--ids` authorization, selected-token access, page filters, unsupported-feature refusal before side effects, observers, MarkerService cascade disable/re-enable, and TokenAssist command operation during standalone collision. The focused Roll20 checkpoint passed; combined upgrade, reload, and coexistence regression now belongs to Issue #28.
+
+---
+
+## Phase 5: Integrated Architecture Stabilization and `v0.1.5.0` Release Gate
+
+**Tracking:** [Issue #28](https://github.com/Mord-Eagle/GameAssist/issues/28) and [Issue #29](https://github.com/Mord-Eagle/GameAssist/issues/29)
+
+This phase verifies the complete integration before the first public `v0.1.5.0` release. It is not post-release cleanup.
+
+### Checklist
+
+- [x] Validate an executable upgrade fixture from the final supported `v0.1.4.x` release.
+- [x] Validate GameAssist, legacy TokenMod, and legacy StatusInfo state migration behavior.
+- [x] Expand verified TokenAssist compatibility-command coverage for the v0.1.5.0 boundary.
+- [x] Verify module/service disable, re-enable, dependency cascade, and sandbox reload behavior in isolated harnesses.
+- [x] Verify accidental standalone-script warnings.
+- [x] Correct active-condition reporting and add current-page condition/other-marker status.
+- [x] Keep NPC death audits read-only and add separately confirmed marker repair that preserves HP and history.
+- [x] Document known compatibility gaps without overstating support.
+- [x] Define a sustainable process for reviewing upstream changes.
+- [x] Complete the clean-install and v0.1.4.7-to-v0.1.5.0 live Roll20 release smoke tracks.
+
+### Completion Gate
+
+The integrated architecture is considered stable only when supported workflows have no known silent marker failures, upgrade guidance is tested, and compatibility claims match verified behavior.
+
+**Completed:** the automated suites, full Roll20 smoke pass, attribution audit, documentation audit, artifact-identity check, manifest validation, and review-thread audit all passed. The v0.1.5.0 release candidate is accepted for publication.
+
+---
+
+## Phase 6: DM-Configurable Table Time in `v0.1.5.1`
+
+**Tracking:** [Issue #35](https://github.com/Mord-Eagle/GameAssist/issues/35)
+
+This focused release gives the DM one campaign timezone for readable GameAssist dates and times. It changes presentation and date-managed Session boundaries while retaining absolute stored event instants.
+
+### Checklist
+
+- [x] Add a validated, persisted IANA timezone setting with a safe sandbox-clock fallback.
+- [x] Add a GM-friendly timezone menu with common region buttons, custom input, and clear/reset behavior.
+- [x] Show the active timezone, current GameAssist time, and Session date in status and ConfigUI.
+- [x] Apply the timezone to logs, status, handout update times, concentration records, NPC history, bucket reports, Arc reports, and configuration output.
+- [x] Make date-managed NPC Sessions use the selected timezone and refresh immediately when a timezone change crosses a date boundary.
+- [x] Preserve deliberately named Sessions across clock/date changes.
+- [x] Preserve absolute ISO event timestamps and dynamically reformat historical entries for the active timezone.
+- [x] Add deterministic winter/summer DST, UTC-midnight crossover, invalid-input, malformed-saved-value fallback, reload-persistence, history-preservation, and Session-rollover checks.
+- [x] Update README, changelog, smoke tests, manifest, MECHSUITS metadata, and versioned artifacts.
+- [x] Complete the focused Roll20 v0.1.5.1 timezone smoke test.
+
+### Completion Gate
+
+Issue #35 is complete when Roll20 accepts a real named timezone, shows the correct current table time and date, retains the setting after a sandbox restart, refuses an invalid name without losing the valid setting, and moves a date-managed NPC Session across the Kiritimati/Honolulu date boundary without changing history.
+
+**Result:** Passed on 2026-07-19 through the focused timezone smoke test. The complete live v0.1.5.1 module suite was not rerun.
+
+---
+
+## Phase 7: Native Initiative Foundation in `v0.1.6.0` and `v0.1.6.1`
+
+**Tracking:** [Issue #47](https://github.com/Mord-Eagle/GameAssist/issues/47)
+
+This major feature release introduces a rules-neutral Turn Tracker authority and a DM-facing initiative module without taking ownership of rounds or combat flow.
+
+### Checklist
+
+- [x] Add toggleable TurnTrackerService 1.0.0 with immutable snapshots, structural classification, revision guards, lossless writes, and observations.
+- [x] Add disabled-by-default InitiativeAssist 1.0.0 with a literal, case-insensitive `!Init-` command family, then advance it to 1.0.1 for the private `!Init-GM` page.
+- [x] Support mixed D&D 5E by Roll20 2014 and D&D 2024 by Roll20 characters in one tracker.
+- [x] Use asynchronous Beacon/Computed access for 2024 initiative and refuse unreadable data rather than silently substituting zero.
+- [x] Add direct and varied public initiative invitations with secure player Roll and Roll Options buttons.
+- [x] Add a staged roll builder that combines normal/advantage/disadvantage, a bounded flat adjustment, and up to two bounded bonus dice.
+- [x] Show Roll20-exposed dice, the final total, and the complete formula, and select optional creative result wording from six score ranges.
+- [x] Add `!Init-RR` for every unique PC and living NPC already in the tracker.
+- [x] Preserve custom rows, counters, objects, dead NPCs, mismatches, stale/off-page entries, duplicate metadata, text priorities, and unknown fields outside owned reroll slots.
+- [x] Add selective PC/NPC/selected/individual/group rerolls, encounter groups, status, a read-only GM chat review, and Manager/Observer modes.
+- [x] Complete native pre-tracker population with page-owned rows, a GM PC/NPC roster, and Roll Everyone/Roll All NPCs controls that require no campaign macro.
+- [x] Add private-by-default NPC roll evidence, always-private GM-layer NPC rolls, and GM controls for object-layer, GM-layer, or combined living-NPC batches.
+- [x] Add `!Init-Roll-Selected` so a GM or player can roll every eligible selected character they control, including characters not yet in Turn Order.
+- [x] Add `!Init-GM` by reusing the neutral invitation and complete roster path while whispering every opening panel only to the GM.
+- [x] Add initiative/combat-manager overlap diagnostics and document one-writer responsibility.
+- [x] Add deterministic local mixed-sheet, permission, preservation, malformed-data, async-conflict, lifecycle, and audit checks.
+- [x] Complete the dedicated Roll20 clean-install and upgrade acceptance tracks.
+- [x] Resolve review findings, verify release artifacts, and close Issue #47.
+
+### Completion Gate
+
+Issue #47 is complete only when the Roll20 sandbox confirms mixed 2014/2024 initiative, public and GM-only start controls, private NPC evidence, GM-layer and selected-character batches, case-insensitive commands, exact preservation of non-owned rows, duplicate handling, dead/mismatch skips, Observer mode, service cascading, and audit output without regressions in established modules.
+
+**Current evidence:** The live workflow, including private NPC evidence, GM-layer batches, selected-character batches, and equal private `!Init-GM` / `!Init-DM` start pages, is accepted. The current InitiativeAssist 1.0.4 harness passes 116/116 checks.
+
+---
+
+## Phase 8: WelcomeAssist in `v0.1.6.1`
+
+This patch adds an optional table greeting without changing normal startup output for existing campaigns.
+
+### Checklist
+
+- [x] Add disabled-by-default WelcomeAssist 0.1.0 beneath the MODULES wrapper.
+- [x] Add professional, built-in-library, campaign-custom, and double-weighted mixed modes.
+- [x] Keep help, settings, status, and previews GM-only; require explicit announce or a later healthy reload for public output.
+- [x] Bound delay, readiness polling, header length, greeting length, custom count, and custom mutation syntax through POLICY.
+- [x] Escape HTML and neutralize Roll20 inline-roll, attribute, ability, and query syntax at output.
+- [x] Add one guarded post-bootstrap completion signal after all configured component initialization attempts.
+- [x] Add deterministic disabled, delayed, one-per-sandbox, cancellation, custom-bound, safety, and unhealthy-startup checks.
+- [x] Pass the module-specific Roll20 acceptance section.
+
+### Completion Gate
+
+WelcomeAssist is accepted when disabled campaigns remain silent, setup and previews remain private, a healthy reload produces exactly one delayed greeting, manual announce cancels pending automatic output, malformed or duplicate custom entries are refused, and custom text cannot execute Roll20 chat directives.
+
+---
+
+## Phase 9: CombatAssist Foundation in `v0.1.7.0`
+
+**Tracking:** [Issue #48](https://github.com/Mord-Eagle/GameAssist/issues/48)
+
+CombatAssist 1.0.5 begins disabled, requires explicit GM intent, and treats Roll20's native Turn Tracker as authoritative while using TurnTrackerService for guarded reads, writes, and observations. Native round-counter authority, stale-safe turn timers, private-safe native pings, and equal GM/DM control aliases passed the complete Roll20 acceptance check.
+
+### Checklist
+
+- [x] Add case-insensitive `!Combat-` Guide, Control Center, status, start, pause, resume, end, next-turn, previous-turn, and announcement controls.
+- [x] Require a readable open tracker on one page with bounded, distinct, structurally valid rows.
+- [x] Accept exact one-row forward and backward rotations for turn counting.
+- [x] Preserve the current round when valid combatants are added or removed, initiative is rerolled, priorities change, or the native tracker is manually reordered; establish a fresh full-cycle anchor without rewriting the edit.
+- [x] Advance the round only after an uninterrupted forward cycle returns to the recorded anchor.
+- [x] Prefer one clearly named native custom round counter as the round authority and evaluate its simple signed whole-number calculation when CombatAssist moves it to the top.
+- [x] Refuse multiple plausible round counters instead of guessing.
+- [x] Ensure backward movement never advances a round.
+- [x] Route explicit GM **Next Turn** and **Previous Turn** actions through revision-guarded TurnTrackerService rotations.
+- [x] Preserve every row, custom entry, priority, object, and unknown field.
+- [x] Keep pause/edit/resume as an optional quiet-edit workflow rather than a requirement for ordinary tracker maintenance.
+- [x] Retain the current accepted native tracker plus one complete previous checkpoint, with revision-matched preview/confirmation for restore or undo.
+- [x] Reserve attention for unreadable, off-page, closed, malformed, stale, duplicate, or direction-ambiguous tracker states and provide explicit adopt, restore, status, and round-1 restart choices.
+- [x] Keep setup, status, confirmation, and attention messages GM-only; make turn announcements configurable as GM-only, public, current-player whispers, or off.
+- [x] In Whispers mode, send the GM private Next Turn, Previous Turn, and Open Menu controls while sending the current controlling player a token-bound End My Turn control.
+- [x] Recheck current-turn identity and character control when a player uses End My Turn; privately confirm a successful advance and gently acknowledge an already-advanced stale button without moving the tracker again.
+- [x] Offer Standard and Varied player completion confirmations through an explicit setting; Varied includes the Standard sentence exactly once within a warmer rotation.
+- [x] Report a visible linked next character neutrally without implying player control; use a generic continuation for GM-layer, custom, unlinked, or non-character rows.
+- [x] Deliver an outgoing player's Turn Complete confirmation before the next Your Turn prompt when one player controls consecutive characters.
+- [x] Replace long InitiativeAssist, CombatAssist, and WelcomeAssist root guides with compact action/navigation panels and focused topic pages.
+- [x] Add CombatAssist Status, Guide/Help, GM/Menu, Info, and read-only Audit aliases as the reference navigation implementation.
+- [x] Put the complete CombatAssist user manual in one stable on-demand handout and keep only common actions in the root chat guide.
+- [x] Add disabled-by-default configurable turn timers, deadline recipients, and up to five per-recipient reminders whose callbacks expire after any relevant encounter or tracker change and never advance initiative.
+- [x] Add disabled-by-default non-centering native current-turn pings with GM, player, combined, and public audiences plus mandatory GM-only handling for hidden turns.
+- [x] Make short `!Welcome` and `!Welcome-Action` commands primary while retaining the longer WelcomeAssist compatibility surface.
+- [x] Give unrecognized WelcomeAssist commands the same clear Open Guide recovery pattern already used by CombatAssist and InitiativeAssist.
+- [x] Keep baseline module operation independent: CombatAssist requires TurnTrackerService, no other baseline module requires CombatAssist, and any optional future integration must label and locally enforce its own prerequisite.
+- [x] Keep automatic turn advancement, condition/marker mutation, music, and NPC-history behavior out of CombatAssist's baseline; timers and pings report or point only.
+- [x] Add focused deterministic coverage and public documentation.
+- [x] Pass the complete Roll20 CombatAssist smoke test.
+- [x] Resolve review findings and verify identical release artifacts; Issue #48 closes with PR #51.
+
+### Completion Gate
+
+Issue #48 is complete when Roll20 confirms explicit lifecycle controls, native round-counter `+1`, fallback forward rounds, backward safety, preserved-round additions/removals/rerolls/reordering, one-step recovery, optional pause/edit/resume, exact tracker-field preservation, unreadable-state attention, two-row behavior, stale-safe timers, ping audiences and hidden-turn privacy, GM/current-player controls, A-B-A delivery, privacy-safe confirmations, manual handout creation/update, common navigation aliases, compact guide routing, independent disable behavior, reload behavior, and no regressions in InitiativeAssist or established modules.
+
+**Current evidence:** The complete Roll20 smoke test, deterministic coverage, artifact identity check, review closure, and merge completed. Coverage confirms native round-counter calculations, stale timer invalidation, teardown cleanup, timer and ping privacy, preserved-round roster changes, InitiativeAssist rerolls, one-step restore, ordered player confirmations, navigation aliases, compact guidance, and stable module manuals.
+
+---
+
+## Phase 10: Immediate CombatAssist Expansion
+
+The timer and native-ping implementations completed in v0.1.7.0. The remaining expansion items are deliberately deferred so they do not hold the current module sequence hostage.
+
+1. [Issue #54](https://github.com/Mord-Eagle/GameAssist/issues/54) - **complete** configurable turn timers and reminders, including live stale-callback and recipient acceptance.
+2. [Issue #55](https://github.com/Mord-Eagle/GameAssist/issues/55) - **complete** native current-turn pings, including live audience and hidden-layer acceptance; persistent token highlights remain separately deferred.
+3. [Issue #56](https://github.com/Mord-Eagle/GameAssist/issues/56) - **deferred** optional encounter-summary handoff to NPCManager without duplicate death or revival history.
+4. [Issue #57](https://github.com/Mord-Eagle/GameAssist/issues/57) - **deferred** opt-in combat music hooks that preserve unrelated Jukebox playback.
+
+Damage review (#52) is deferred. Held-action rules (#53) remain independently scoped and do not block PR #51.
+
+---
+
+## Post-v0.1.5.0 TokenAssist Expansion
+
+These open items extend TokenAssist beyond the accepted integrated architecture and are intentionally deferred from v0.1.7.0.
+
+- [Issue #42](https://github.com/Mord-Eagle/GameAssist/issues/42) â€” **deferred** advanced duplicate-index, conditional, and bounded marker expressions owned by MarkerService.
+- [Issue #43](https://github.com/Mord-Eagle/GameAssist/issues/43) â€” **deferred** computed attributes, controller identity/list resolution, and report-recipient routing.
+- [Issue #44](https://github.com/Mord-Eagle/GameAssist/issues/44) â€” **deferred** color arithmetic, dimming night-vision parameters, and relative/random multi-sided-token controls.
+- [Issue #45](https://github.com/Mord-Eagle/GameAssist/issues/45) â€” **deferred** image-side stacks plus token-image and default-token asset updates, pending dedicated preview, recovery, and live-field compatibility safeguards.
+
+TokenAssist will continue to use its own help and `GameAssist.TokenAssist` API. Rebuilding TokenMod's help handout or creating a global `TokenMod` compatibility object is not planned.
+
+## Phase 11: Canonical Module Identities in `v1.8.0`
+
+**Tracking:** [Issue #60](https://github.com/Mord-Eagle/GameAssist/issues/60), [PR #63](https://github.com/Mord-Eagle/GameAssist/pull/63)
+
+This release adopts CritAssist, NPCAssist, ConcentrationAssist, and HPAssist as the canonical runtime, state, MECHSUITS, configuration, diagnostic, and documentation identities. HP rolling remains a separate module because its deliberate and automatic formula rolls have a narrower lifecycle than NPCAssist's history, markers, reports, and future NPC-state features.
+
+### Checklist
+
+- [x] Adopt three-part project release numbering as `v1.8.0` without rewriting historical release identifiers or independent module versions.
+- [x] Rename registration, handler ownership, dependencies, state branches, public labels, MECHSUITS tags, and canonical-tree entries.
+- [x] Migrate valid old state destination-first and remove the migrated source branch; retain malformed or unknown branches for warning-only diagnosis.
+- [x] Preserve every established command as a compatibility alias and add canonical command families.
+- [x] Preserve NPCAssist history, bucket, Arc, marker, and public API compatibility.
+- [x] Adopt and rename one unambiguous old guide handout rather than creating a duplicate.
+- [x] Pass syntax and the complete local regression suite.
+- [x] Pass the focused clean-install and v0.1.7.0 upgrade smoke tracks in Roll20.
+- [x] Complete PR #63 and close Issue #60.
+
+### Completion Gate
+
+The Roll20 module list uses only the four canonical names; valid settings and records survive upgrade; old and new command forms each dispatch once; old guide handouts are adopted without duplication; malformed legacy data remains diagnosable; and unrelated modules retain their accepted behavior.
+
+---
+
+## Phase 12: Focused NPCAssist Patches in `v1.8.1` and `v1.8.2`
+
+### v1.8.1 â€” Bloodied Alerts
+
+[Issue #64](https://github.com/Mord-Eagle/GameAssist/issues/64) was completed through [PR #73](https://github.com/Mord-Eagle/GameAssist/pull/73). It adds a GM-private notice only when an eligible NPC crosses from above half of a valid positive maximum HP to half or below while remaining alive, plus a one-click Control Center toggle. It reuses HP-initialization protection and does not write Bloodied events into death-history buckets.
+
+### v1.8.2 â€” Progressive NPC Naming
+
+[Issue #65](https://github.com/Mord-Eagle/GameAssist/issues/65) was completed through [PR #74](https://github.com/Mord-Eagle/GameAssist/pull/74). It assigns names from the live tokens on the newly added token's page. Existing tokens are never renamed. The default is enabled, the GM may disable it, and deliberate manual duplicates remain allowed. Number selection uses the lowest available positive suffix, so a deleted gap may be reused; no persistent campaign counter is required.
+
+---
+
+## Phase 13: EffectAssist 2014-Sheet Program in `v2.0.0`
+
+[Issue #61](https://github.com/Mord-Eagle/GameAssist/issues/61) is the master specification. The v2.0.0 launch combines the semantic engine, the verified official 2014-sheet adapter, concentration coordination, and a focused six-effect catalog with player casting and GM lockout. Later recognition, HP, duration, weapon-specific damage, and 2024-sheet work retain separate evidence gates.
+
+EffectAssist remains a gameplay module. MarkerService owns markers, ConditionAssist owns condition definitions and condition-marker workflows, character sheets own their native roll fields, ConcentrationAssist owns concentration checks, HP-writing modules own HP mutations, and TurnTrackerService owns native tracker access.
+
+### Launch Engine and Catalog â€” v2.0.0
+
+**Tracking:** [Issue #75](https://github.com/Mord-Eagle/GameAssist/issues/75)
+**Status:** Sandbox verification
+
+- [x] Add source-aware effect definitions and active instances.
+- [x] Keep source character/token identity separate from every target identity.
+- [x] Add idempotent application and idempotent ending.
+- [x] Add shared multi-projection ownership with baseline preservation.
+- [x] Support MarkerService, ConditionAssist, concentration, 2014-sheet, and record-only projections.
+- [x] Add Bless, Guidance, Warding Bond, Holy Weapon, Haste, and Pass Without a Trace, separated by automation level.
+- [x] Remove Gift of Alacrity, Longstrider, and Beacon of Hope from the built-in launch catalog because their marker-only paths do not provide enough automation; retain generic tracking paths.
+- [x] Move ownership-safe weapon, Stealth, initiative, movement-speed, and healing adapter research to [Issue #82](https://github.com/Mord-Eagle/GameAssist/issues/82) so it does not block the focused release.
+- [x] Add player casting from controlled sources, direct spell shortcuts, and GM lockout.
+- [x] Show automatic, assisted, and informational behavior before application.
+- [x] Add bounded ended history and preserve runtime records across module disable/re-enable.
+- [x] Add read-only audit and short-lived, GM-bound, one-use repair authorization.
+- [x] Refuse partial target application and token-representation drift.
+- [x] Add the immutable in-memory SemanticEvents core service.
+- [x] Update executable, README, changelog, roadmap, One-Click metadata, and smoke tests.
+- [x] Pass 109 focused local EffectAssist checks plus syntax validation.
+- [ ] Pass the clean-install and v1.8.2 upgrade smoke tracks in Roll20.
+- [ ] Complete the v2.0.0 PR and close Issues #75, #76, and #78.
+
+### Official 2014 Sheet Projection
+
+**Tracking:** [Issue #76](https://github.com/Mord-Eagle/GameAssist/issues/76)
+**Status:** Sandbox verification
+
+- [x] Add exact repeating global attack, saving-throw, skill, and AC modifier-row adapters.
+- [x] Record exact created attribute IDs, expected values, and baseline ownership.
+- [x] Use sheet workers when available and avoid generated aggregate outputs.
+- [x] Add complete Bless attack/save rows, Guidance skill rows, Warding Bond AC/save rows, and Haste AC rows.
+- [x] Preserve pre-existing and externally edited rows.
+- [x] Retain marker plus assisted behavior for NPCs and unsupported sheets.
+- [ ] Pass the live 2014-sheet application, overlap, cleanup, edit-preservation, and restart checks.
+
+### Phase C â€” Cast Recognition
+
+**Tracking:** [Issue #77](https://github.com/Mord-Eagle/GameAssist/issues/77)
+**Status:** Planned
+
+Recognize only well-evidenced official 2014 Bless spell output and offer a GM-confirmed proposal; chat target text is not treated as token identity. Capture real 2024 template samples before defining a 2024 recognition contract.
+
+### Concentration Coordination
+
+**Tracking:** [Issue #78](https://github.com/Mord-Eagle/GameAssist/issues/78)
+**Status:** Sandbox verification
+
+- [x] Add the ConcentrationAssist 0.3.0 public lifecycle API.
+- [x] Publish concentration-established, failed, and ended events.
+- [x] Establish source concentration for catalog effects that require it.
+- [x] End dependent effects when source concentration ends.
+- [x] Refuse or deliberately replace an existing concentration effect.
+- [x] Keep both modules out of each other's persistent state.
+- [ ] Pass manual-clear, failed-check, replacement, GM-layer source, and restart checks in Roll20.
+
+### Phase E â€” HP-Loss Offers
+
+**Tracking:** [Issue #79](https://github.com/Mord-Eagle/GameAssist/issues/79)
+**Status:** Planned
+
+Introduce provenance-aware HP events so actual damage can be distinguished from healing, token setup, HPAssist initialization, and other automated writes before EffectAssist offers an action.
+
+### Phase F â€” Encounter and World-Time Durations
+
+**Tracking:** [Issue #80](https://github.com/Mord-Eagle/GameAssist/issues/80)
+**Status:** Planned
+
+Consume semantic turn, round, encounter, and future world-time candidates. Reminders and expiration candidates may proceed first; automatic ending remains gated until live Roll20 evidence proves the boundary and ownership rules.
+
+### Completion Gate
+
+The EffectAssist portion of v2.0.0 must survive the live Roll20 clean-install, upgrade, complete Bless, catalog coverage, 2014-sheet rows, concentration cleanup, overlap, baseline-state, audit/repair, disable/re-enable, and restart tests. Cast recognition, HP-loss offers, duration providers, and 2024-sheet support remain later work under their own issues; Issue #88 retains the player-workflow and UX repairs without reopening the completed proof-of-concept implementation during AlmanacAssist development.
+
+---
+
+## Phase 14: Complete AlmanacAssist Program in `v2.0.0`
+
+[Issue #62](https://github.com/Mord-Eagle/GameAssist/issues/62) is the master specification for one GameAssist module with six independently toggleable internal systems. All six are implemented on the same PR #81 v2.0.0 development line; the issue sequence preserves ownership and acceptance evidence rather than creating partial releases:
+
+1. [#66 TimeAlmanac](https://github.com/Mord-Eagle/GameAssist/issues/66).
+2. [#67 ClimateAlmanac](https://github.com/Mord-Eagle/GameAssist/issues/67).
+3. [#68 AstronomyAlmanac](https://github.com/Mord-Eagle/GameAssist/issues/68).
+4. [#69 WeatherAlmanac](https://github.com/Mord-Eagle/GameAssist/issues/69).
+5. [#70 EnviroAlmanac](https://github.com/Mord-Eagle/GameAssist/issues/70).
+6. [#71 RestAlmanac](https://github.com/Mord-Eagle/GameAssist/issues/71).
+
+Each phase must provide useful standalone behavior with explicit optional integrations. Fictional world time remains separate from GameAssist's real-world table timezone and NPCAssist's real-world Session dates.
+
+### Implemented Scope
+
+- [x] Register AlmanacAssist as one disabled-by-default feature module with independent Time, Climate, Astronomy, Weather, Environment, and Rest switches.
+- [x] Implement TimeAlmanac with one elapsed-minute authority, Standard/Solamnic/Harptos/Wayfarer profiles, bounded history, guarded reversal/exact setting, player read-only output, and Wayfarer holidays.
+- [x] Implement ClimateAlmanac with editable built-ins, bounded custom profiles, regions, true parent inheritance, overrides, active-region selection, and manual season fallback.
+- [x] Implement AstronomyAlmanac with configurable moon cycles/offsets/phases, deterministic daylight and season boundaries, bounded forecasts, and separately weighted rare-event suggestions.
+- [x] Implement WeatherAlmanac with structured continuity-aware generation, optional context, standalone fallback, read-only forecasts, explicit manual state, lock/unlock, history, and events.
+- [x] Implement EnviroAlmanac with structured weather-derived context, standalone presets, bounded custom override, explicit clear, and no automatic gameplay penalties.
+- [x] Implement RestAlmanac for linked controlled 2014 PCs with preview, expiring one-use confirmation, complete revalidation, verified HP/Hit Dice/slot writes, optional Time advancement, rollback, history, and custom rests.
+- [x] Add shared navigation, a stable manual, focused read-only audits, bounded policy, protected structured configuration, defensive public context APIs, and semantic events.
+- [x] Pass 107 focused AlmanacAssist checks, 109 EffectAssist regression checks, JavaScript syntax parsing, and the 29-section MECHSUITS structural validator.
+- [ ] Pass the complete live Roll20 clean-install AlmanacAssist track.
+- [ ] Pass the complete live Roll20 v1.8.2-to-v2.0.0 upgrade track.
+- [ ] Confirm all three release script artifacts are identical and public documentation/metadata match the tested behavior.
+
+### Release Gate
+
+v2.0.0 does not publish until every internal system passes the focused Roll20 smoke track, independent disable/re-enable and restart preservation are confirmed, RestAlmanac's supported 2014-sheet writes are proven with disposable characters, and PR #81 review is complete. Passing TimeAlmanac alone, or any smaller subset, is not a release candidate.
+
+---
+
+## Current `v2.0.0` Architecture
+
+```text
+[GAMEASSIST]/
+â”œâ”€ [GAMEASSIST:POLICY]
+â”œâ”€ [GAMEASSIST:APP]
+â”‚  â””â”€ [GAMEASSIST:APP:UTILS]
+â”œâ”€ [GAMEASSIST:CORE]
+â”‚  â”œâ”€ [GAMEASSIST:CORE:QUEUE]
+â”‚  â”œâ”€ [GAMEASSIST:CORE:COMPAT]
+â”‚  â”œâ”€ [GAMEASSIST:CORE:STATE]
+â”‚  â”œâ”€ [GAMEASSIST:CORE:MARKERSERVICE]
+â”‚  â”œâ”€ [GAMEASSIST:CORE:TURNTRACKERSERVICE]
+â”‚  â”œâ”€ [GAMEASSIST:CORE:SEMANTICEVENTS]
+â”‚  â””â”€ [GAMEASSIST:CORE:OBJECT]
+â”œâ”€ [GAMEASSIST:INTERFACES]
+â”‚  â”œâ”€ [GAMEASSIST:INTERFACES:EVENTS]
+â”‚  â””â”€ [GAMEASSIST:INTERFACES:COMMANDS]
+â”œâ”€ [GAMEASSIST:MODULES]
+â”‚  â”œâ”€ [GAMEASSIST:MODULES:CONFIGUI]
+â”‚  â”œâ”€ [GAMEASSIST:MODULES:CRITASSIST]
+â”‚  â”œâ”€ [GAMEASSIST:MODULES:CONDITIONASSIST]
+â”‚  â”œâ”€ [GAMEASSIST:MODULES:TOKENASSIST]
+â”‚  â”œâ”€ [GAMEASSIST:MODULES:INITIATIVEASSIST]
+â”‚  â”œâ”€ [GAMEASSIST:MODULES:COMBATASSIST]
+â”‚  â”œâ”€ [GAMEASSIST:MODULES:WELCOMEASSIST]
+â”‚  â”œâ”€ [GAMEASSIST:MODULES:NPCASSIST]
+â”‚  â”œâ”€ [GAMEASSIST:MODULES:CONCENTRATIONASSIST]
+â”‚  â”œâ”€ [GAMEASSIST:MODULES:EFFECTASSIST]
+â”‚  â”œâ”€ [GAMEASSIST:MODULES:ALMANACASSIST]
+â”‚  â”œâ”€ [GAMEASSIST:MODULES:HPASSIST]
+â”‚  â””â”€ [GAMEASSIST:MODULES:DEBUGTOOLS]
+â””â”€ [GAMEASSIST:BOOTSTRAP]
+```
+
+This tree matches the implemented executable section hierarchy. Per MECHSUITS v1.5.2, it and the executable banner's `canonical_tree` must remain synchronized whenever a section tag changes.
+
+---
+
+## Cross-Cutting Release Gates
+
+Every development checkpoint must satisfy the following before being marked complete. The public release requires all checkpoints to be complete together:
+
+- [ ] JavaScript syntax checks pass.
+- [ ] Changed behavior has focused tests or a documented manual proof.
+- [ ] Roll20 sandbox smoke tests pass for changed workflows.
+- [ ] Module enable/disable and reload behavior is checked when affected.
+- [ ] State migration and rollback consequences are documented when affected.
+- [ ] README, changelog, smoke tests, and upgrade instructions are updated.
+- [ ] MECHSUITS tags, nesting, canonical tree, section metadata, and footers are accurate.
+- [ ] Applicable attribution, provenance, and license notices are preserved.
+- [ ] Known limitations are documented.
+
+---
+
+## Work Outside The Immediate Sequence
+
+These remain outside the immediate CombatAssist expansion sequence or require their own later design work:
+
+- native Mord character-sheet development;
+- unrelated encounter, rest, resource, and roadmap modules;
+- broad plugin-loader work;
+- standard API_Meta diagnostic adoption, explicitly deferred in [Issue #50](https://github.com/Mord-Eagle/GameAssist/issues/50);
+- condition changes and automatic turn advancement, which remain unscoped and deferred;
+- deferred CombatAssist read-only damage-change history for guided retcon review, tracked in [Issue #52](https://github.com/Mord-Eagle/GameAssist/issues/52);
+- CombatAssist held-action and Ready/Delay workflows, including a public `!Now` signal, tracked in [Issue #53](https://github.com/Mord-Eagle/GameAssist/issues/53);
+- claims of complete TokenMod compatibility before command-family verification;
+- automatic deletion of legacy or unexpected persistent state.
+
+---
+
+## Maintaining This Roadmap
+
+When work advances:
+
+1. Update the relevant issue checklist and add investigation notes there.
+2. Update the stage status in this document when its lifecycle changes.
+3. Mark a stage complete only after its acceptance criteria and Roll20 release gate pass.
+4. If scope changes materially, update both this roadmap and the relevant issue so neither becomes misleading.
+5. Keep release notes and the README aligned with what is implemented, not merely planned.
