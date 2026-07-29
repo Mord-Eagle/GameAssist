@@ -3,7 +3,7 @@
 GameAssist - Roll20 API Script
 Version: 2.0.0
 Last Updated: 2026-07-29 (America/New_York)
-Release scope: EffectAssist 2.1.0, complete AlmanacAssist 1.0.0, HealthService 1.0.0, and verified CombatAssist duration events on one GameAssist v2.0.0 development line.
+Release scope: EffectAssist 2.2.0, complete AlmanacAssist 1.0.0, HealthService 1.0.0, and verified CombatAssist duration events on one GameAssist v2.0.0 development line.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -22,7 +22,7 @@ calls GameAssist.enqueue(). This development package contains thirteen configura
 - WelcomeAssist 0.1.4 - Optionally greets the table after a healthy GameAssist startup through short !Welcome commands.
 - ConcentrationAssist 0.4.0 - Runs manual and private HP-loss-offered concentration checks, manages its configured marker, and exposes concentration lifecycle events.
 - NPCAssist 1.4.0 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, and Arc rosters.
-- EffectAssist 2.1.0 - Coordinates catalog-driven effects, 2014-sheet modifiers, markers, conditions, concentration, ownership-safe cleanup, and optional GM-reviewed duration candidates.
+- EffectAssist 2.2.0 - Coordinates catalog-driven effects, 2014-sheet modifiers, markers, conditions, concentration, ownership-safe cleanup, GM-reviewed duration candidates, and bounded 2014 Bless cast proposals.
 - AlmanacAssist 1.0.0 - Coordinates fictional time, climate, astronomy, weather, environments, and verified 2014-sheet rests through six independently controlled internal systems.
 - HPAssist 0.2.0 - Rolls npc_hpformula and uses HealthService for verified token bar 1 writes when available.
 - DebugTools 0.3.0 - Optional dry-run-first GM diagnostics with verified supported HP damage writes.
@@ -74,6 +74,7 @@ MODULE COMMANDS
   !npc-death-arc, !npc-bloodied, !npc-numbering
 - EffectAssist: !Effect-GM, !Effect-Guide, !Effect-Catalog, !Effect-Active,
   !Effect-Status, !Effect-Definitions, !Effect-Duration, !Effect-Durations on|off,
+  !Effect-Casts, !Effect-Recognition on|off,
   !Effect-Targets, !Effect-Request,
   !Effect-Apply, !Effect-End,
   !Effect-Audit, !Effect-Repair, !Effect-Players, !effect, !Bless, !Guidance, !Guide,
@@ -104,6 +105,7 @@ V2.0.0 FOUNDATION
   assisted table steps instead of being represented by unsafe sheet rewrites.
 - EffectAssist audits projection drift without writing and requires a fresh GM confirmation before repair.
 - Built-in EffectAssist definitions carry formal duration rules. Accepted CombatAssist progression and committed AlmanacAssist time may create private GM review candidates, but elapsed time never ends an effect automatically.
+- A verified official 2014 Bless spell card may create one short-lived GM proposal; it never infers recipients or changes an effect before ordinary review and confirmation.
 - AlmanacAssist remains disabled until the GM enables it and provides all six
   independently controlled Time, Climate, Astronomy, Weather, Environment,
   and Rest systems as one complete v2.0.0 module.
@@ -157,7 +159,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 // mechsuit:
 //   codename: "GAMEASSIST"
 //   project_version: "v2.0.0"
-//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, migration-safe module identities, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker, Turn Tracker, and health authorities, source-aware semantic effects with ownership-safe projections and optional GM-reviewed duration candidates, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, preservation-first encounter flow, GM-private NPC Bloodied alerts, optional health-gated table greetings, validated real-world table time, and independently managed fictional time, climate, astronomy, weather, environments, and deliberate 2014-sheet rests. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, automatic turn advancement, automatic effect expiration from elapsed time, automatic Bloodied markers/history, automatic concentration rolls from observed HP changes, damage-source guessing, silent effect repair, automatic environmental penalties, or automatic reversal of campaign state when fictional time moves backward."
+//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, migration-safe module identities, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker, Turn Tracker, and health authorities, source-aware semantic effects with ownership-safe projections, bounded GM-reviewed official 2014 Bless cast proposals, and optional GM-reviewed duration candidates, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, preservation-first encounter flow, GM-private NPC Bloodied alerts, optional health-gated table greetings, validated real-world table time, and independently managed fictional time, climate, astronomy, weather, environments, and deliberate 2014-sheet rests. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, automatic turn advancement, automatic effect application or recipient inference from spell cards, automatic effect expiration from elapsed time, automatic Bloodied markers/history, automatic concentration rolls from observed HP changes, damage-source guessing, silent effect repair, automatic environmental penalties, or automatic reversal of campaign state when fictional time moves backward."
 //   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.turntrackerservice","core.semanticevents","core.healthservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critassist","modules.conditionassist","modules.tokenassist","modules.initiativeassist","modules.combatassist","modules.welcomeassist","modules.npcassist","modules.concentrationassist","modules.effectassist","modules.almanacassist","modules.hpassist","modules.debugtools","bootstrap"]
 //   env:
 //     required: []
@@ -212,7 +214,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 //     └─ [GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
-// Guarantee: GameAssist v2.0.0 runs policy, utilities, guarded core services including MarkerService, TurnTrackerService, SemanticEvents, and HealthService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/effect/almanac/gameplay modules, then bootstrap in the declared order. HealthService reports only verified supported HP transitions and refuses to guess damage causes, attackers, resistances, or temporary-HP interactions. EffectAssist may turn accepted CombatAssist progression and committed AlmanacAssist time into private GM duration candidates, but it refuses to end effects from elapsed time alone. AlmanacAssist owns its fictional time, climate, astronomy, weather, environment, and rest records without changing GameAssist real-world timestamps, NPCAssist Session dates, or CombatAssist timing. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing real-world times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
+// Guarantee: GameAssist v2.0.0 runs policy, utilities, guarded core services including MarkerService, TurnTrackerService, SemanticEvents, and HealthService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/effect/almanac/gameplay modules, then bootstrap in the declared order. HealthService reports only verified supported HP transitions and refuses to guess damage causes, attackers, resistances, or temporary-HP interactions. EffectAssist may offer a bounded private GM proposal for an unambiguous official 2014 Bless card, but it refuses to infer recipients or apply an effect before ordinary review and confirmation; it may also turn accepted CombatAssist progression and committed AlmanacAssist time into private GM duration candidates, but it refuses to end effects from elapsed time alone. AlmanacAssist owns its fictional time, climate, astronomy, weather, environment, and rest records without changing GameAssist real-world timestamps, NPCAssist Session dates, or CombatAssist timing. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing real-world times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
 
 // =============================
 // === GameAssist v2.0.0 ===
@@ -365,6 +367,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             durationCandidateLimit: 6,
             maximumEncounterDurationRounds: 10000,
             maximumWorldDurationMinutes: 5256000,
+            castProposalLimit: 20,
+            castProposalMs: 1000 * 60 * 5,
+            castDedupeMs: 15000,
             definitionLimit: 25,
             targetLimit: 20,
             sourcePickerLimit: 25,
@@ -424,7 +429,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Added bounded HealthService and concentration-offer limits plus EffectAssist duration-candidate, encounter-round, and world-minute limits; rollback: disable the affected optional integration while retaining manual workflows.
+    // Changed (v2.0.0): Added bounded HealthService and concentration-offer limits plus EffectAssist duration-candidate, encounter-round, world-minute, cast-proposal, and chat-deduplication limits; rollback: disable the affected optional integration while retaining manual workflows.
     // Decision log:
     //   CHOICE: Offer common IANA zones plus validated custom input - ALT: fixed numeric offsets; REJECTED: fixed offsets do not follow daylight-saving changes.
     //   CHOICE: Keep NPC initialization and snapshot knobs centralized while removing the unused external marker delay - ALT: retain the dead setting; REJECTED: implied behavior no caller performs.
@@ -15502,17 +15507,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:CONCENTRATIONASSIST] END
     // =============================================================================
 
-    // ————— EFFECTASSIST MODULE v2.1.0 —————
+    // ————— EFFECTASSIST MODULE v2.2.0 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:EFFECTASSIST] BEGIN
     // Section Title: Catalog-driven semantic effects and 2014 sheet projections
     // -----------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:EFFECTASSIST", title: "EffectAssist",
-    //   guarantees: ["Effect instances, not markers or sheet fields, are the durable source of truth","Definitions may coordinate multiple source and target projections through one versioned adapter pipeline","Verified 2014 repeating modifier rows are ownership-safe and never overwrite unrelated sheet data","ConcentrationAssist owns concentration state while EffectAssist owns dependent cleanup","Optional duration providers create reviewable GM candidates but never end effects automatically","Combat duration evidence comes only from accepted CombatAssist progression and world-time evidence comes only from committed AlmanacAssist changes","Provider absence, tracker rebases, backward movement, restarts, and large time jumps are handled without guessed or unbounded replay","Audit is read-only; application and repair require bounded confirmation","Player casting requires source control, uses visible native target selection, and may be locked by the GM","GM-assisted player requests preserve source authorization without exposing full GM controls","Successful player-originated applications announce the source, effect, and public target names","The built-in catalog distinguishes automated mechanics from tracked rules"],
+    //   guarantees: ["Effect instances, not markers or sheet fields, are the durable source of truth","Definitions may coordinate multiple source and target projections through one versioned adapter pipeline","Verified 2014 repeating modifier rows are ownership-safe and never overwrite unrelated sheet data","ConcentrationAssist owns concentration state while EffectAssist owns dependent cleanup","Optional duration providers create reviewable GM candidates but never end effects automatically","Combat duration evidence comes only from accepted CombatAssist progression and world-time evidence comes only from committed AlmanacAssist changes","Provider absence, tracker rebases, backward movement, restarts, and large time jumps are handled without guessed or unbounded replay","Official 2014 Bless spell cards create bounded GM proposals only when template, spell, character, page, token, and controller evidence are unambiguous","Cast recognition never infers recipients or bypasses the normal preview and confirmation pipeline","Audit is read-only; application and repair require bounded confirmation","Player casting requires source control, uses visible native target selection, and may be locked by the GM","GM-assisted player requests preserve source authorization without exposing full GM controls","Successful player-originated applications announce the source, effect, and public target names","The built-in catalog distinguishes automated mechanics from tracked rules"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]","[GAMEASSIST:MODULES:CONDITIONASSIST]","[GAMEASSIST:MODULES:CONCENTRATIONASSIST]"],
     //   provides: ["GameAssist.EffectAssist"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "2.1.0", effect_state_schema_version: 3 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "2.2.0", effect_state_schema_version: 3, cast_proposal_schema_version: 1 }, lifecycle: "active" }
     // -----------------------------------------------------------------------------
     // Narrative
     // EffectAssist is a catalog-driven rules coordinator. It records the source,
@@ -15525,13 +15530,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -----------------------------------------------------------------------------
     GameAssist.register('EffectAssist', function() {
         const MODULE_NAME = 'EffectAssist';
-        const MODULE_VERSION = '2.1.0';
+        const MODULE_VERSION = '2.2.0';
         const STATE_SCHEMA_VERSION = 3;
+        const CAST_PROPOSAL_SCHEMA_VERSION = 1;
         const modState = GameAssist.getState(MODULE_NAME);
         const repairGrants = new Map();
         const applyGrants = new Map();
         const projectionAdapters = new Map();
         const suppressedConcentrationTokens = new Map();
+        const castProposals = new Map();
+        const recentCastEvidence = new Map();
 
         const OGL_SECTIONS = Object.freeze({
             attack: Object.freeze({
@@ -15694,6 +15702,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             enabled: false,
             allowPlayerCasting: true,
             durationCandidates: true,
+            castRecognition: true,
             markerOverrides: {},
             customDefinitions: {},
             ...modState.config
@@ -15880,6 +15889,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!isPlainObject(modState.config.customDefinitions)) modState.config.customDefinitions = {};
             if (!isPlainObject(modState.config.markerOverrides)) modState.config.markerOverrides = {};
             modState.config.durationCandidates = modState.config.durationCandidates !== false;
+            modState.config.castRecognition = modState.config.castRecognition !== false;
             if (modState.config.defaultBlessMarker && !modState.config.markerOverrides.bless) {
                 modState.config.markerOverrides.bless = String(modState.config.defaultBlessMarker);
             }
@@ -16215,7 +16225,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function warnAboutPreservedState() {
-            const knownConfig = new Set(['enabled', 'allowPlayerCasting', 'durationCandidates', 'markerOverrides', 'customDefinitions', 'defaultBlessMarker']);
+            const knownConfig = new Set(['enabled', 'allowPlayerCasting', 'durationCandidates', 'castRecognition', 'markerOverrides', 'customDefinitions', 'defaultBlessMarker']);
             const knownRuntime = new Set(['instances', 'history', 'projectionLedgers', 'requestIds', 'dependencyIndex', 'operations', 'nextInstanceNumber', 'stateSchemaVersion', 'legacyProjectionSnapshot']);
             const unknownConfig = Object.keys(modState.config).filter(key => !knownConfig.has(key));
             const unknownRuntime = Object.keys(runtime).filter(key => !knownRuntime.has(key));
@@ -16363,6 +16373,244 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return String(overrides[playerId]);
             }
             return String(campaign.get('playerpageid') || '');
+        }
+
+        /**
+         * parseRollTemplateFields - Reads named fields from a Roll20 roll-template message.
+         * Context: recognition is a shortcut into GM review, never authority to apply an effect.
+         * Inputs: Roll20 chat content; malformed or unrelated content is accepted as empty evidence.
+         * Outputs: a lower-case-keyed field object containing bounded text values.
+         * Invariants: no field is evaluated and recipient prose is never interpreted as token identity.
+         */
+        function parseRollTemplateFields(content) {
+            const fields = {};
+            const expression = /{{\s*([a-z][a-z0-9_]*)\s*=([\s\S]*?)}}/gi;
+            let match;
+            while ((match = expression.exec(String(content || '')))) {
+                const key = String(match[1] || '').toLowerCase();
+                if (!Object.prototype.hasOwnProperty.call(fields, key)) {
+                    fields[key] = String(match[2] || '').trim().slice(0, POLICY.effects.descriptionLength);
+                }
+            }
+            return fields;
+        }
+
+        function normalizeTemplateValue(value) {
+            return String(value || '')
+                .replace(/<[^>]*>/g, ' ')
+                .replace(/&nbsp;|&#160;/gi, ' ')
+                .replace(/&amp;/gi, '&')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function recognitionPageId(playerId) {
+            const ribbonPage = effectPageId(playerId);
+            if (!playerIsGM(playerId)) return ribbonPage;
+            return String(getObj('player', playerId)?.get('_lastpage') || ribbonPage || '');
+        }
+
+        function pruneCastTracking(now = Date.now()) {
+            [...recentCastEvidence.entries()].forEach(([key, seenAt]) => {
+                if (now - Number(seenAt || 0) > POLICY.effects.castDedupeMs) recentCastEvidence.delete(key);
+            });
+            const evidenceLimit = POLICY.effects.castProposalLimit * 2;
+            if (recentCastEvidence.size > evidenceLimit) {
+                [...recentCastEvidence.keys()]
+                    .slice(0, recentCastEvidence.size - evidenceLimit)
+                    .forEach(key => recentCastEvidence.delete(key));
+            }
+            [...castProposals.entries()].forEach(([id, proposal]) => {
+                if (now - Number(proposal?.createdAt || 0) > POLICY.effects.castProposalMs) castProposals.delete(id);
+            });
+            if (castProposals.size > POLICY.effects.castProposalLimit) {
+                [...castProposals.values()]
+                    .sort((left, right) => Number(left.createdAt || 0) - Number(right.createdAt || 0))
+                    .slice(0, castProposals.size - POLICY.effects.castProposalLimit)
+                    .forEach(proposal => castProposals.delete(proposal.id));
+            }
+        }
+
+        function resolveRecognizedCaster(msg, characterName) {
+            const expectedName = normalizeTemplateValue(characterName).toLowerCase();
+            const characters = findObjs({ _type: 'character' }).filter(character =>
+                normalizeTemplateValue(character.get('name')).toLowerCase() === expectedName
+            );
+            if (characters.length !== 1) {
+                return {
+                    ok: false,
+                    message: characters.length
+                        ? `The Bless card named "${characterName}", but more than one character has that name. Use the Effect Catalog so the source is explicit.`
+                        : `The Bless card named "${characterName}", but no matching Roll20 character was found. Use the Effect Catalog so the source is explicit.`
+                };
+            }
+            const pageId = recognitionPageId(msg.playerid);
+            if (!pageId) return { ok: false, message: 'The Bless card was recognized, but its active Roll20 page could not be determined. Use the Effect Catalog.' };
+            const character = characters[0];
+            const sources = findObjs({ _type: 'graphic', _pageid: pageId })
+                .filter(token => String(token.get('represents') || '') === String(character.id))
+                .filter(token => ['objects', 'gmlayer'].includes(String(token.get('layer') || '')))
+                .map(token => resolveLinkedToken(token.id, 'The source'))
+                .filter(result => result.ok)
+                .filter(result => playerIsGM(msg.playerid)
+                    || (result.summary.layer === 'objects' && actorControlsSource(msg.playerid, result)));
+            if (sources.length !== 1) {
+                return {
+                    ok: false,
+                    message: sources.length
+                        ? `Bless was recognized for ${characterName}, but more than one eligible source token is on the active page. Use the Effect Catalog to choose the source.`
+                        : `Bless was recognized for ${characterName}, but no eligible linked source token is on the active page. Use the Effect Catalog after placing or linking the caster token.`
+                };
+            }
+            return { ok: true, source: sources[0] };
+        }
+
+        function castProposalSummary(proposal) {
+            const ageSeconds = Math.max(0, Math.floor((Date.now() - Number(proposal.createdAt || 0)) / 1000));
+            const requestedBy = getObj('player', proposal.playerId);
+            const requesterName = String(requestedBy?.get('_displayname') || requestedBy?.get('displayname') || proposal.who || 'Unknown player')
+                .replace(/\s*\(GM\)\s*$/i, '')
+                .trim();
+            return `<b>${_sanitize(proposal.effectName)}</b> from ${_sanitize(proposal.sourceName)} | ${_sanitize(requesterName)} | ${ageSeconds}s ago`;
+        }
+
+        function castProposalButtons(proposal) {
+            return `${GameAssist.createButton('Review Selected Recipients', `!Effect-Cast --proposal ${proposal.id} --replace ?{If this source is already concentrating, replace that effect?|Yes,yes|No,no}`)} ${GameAssist.createButton('Dismiss', `!Effect-Cast-Dismiss --proposal ${proposal.id}`)}`;
+        }
+
+        function showCastProposals(msg) {
+            pruneCastTracking();
+            const proposals = [...castProposals.values()].sort((left, right) => Number(right.createdAt || 0) - Number(left.createdAt || 0));
+            panel('Recognized Casts', [
+                { label: 'Pending', value: proposals.length
+                    ? proposals.slice(0, POLICY.effects.chatListLimit).map(proposal => `${castProposalSummary(proposal)}<br>${castProposalButtons(proposal)}`).join('<br><br>')
+                    : 'No supported spell cards are waiting for review.' },
+                { label: 'How To Apply', value: 'Select the actual recipient tokens on the map, then use that cast\'s Review Selected Recipients button. Spell-card target wording is never treated as token selection.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function handleCastRecognition(msg) {
+            if (modState.config.castRecognition === false || !msg || msg.type === 'api') return;
+            if (!getObj('player', String(msg.playerid || ''))) return;
+            if (!playerIsGM(msg.playerid) && !playerCastingAllowed(msg)) return;
+            if (String(msg.rolltemplate || '').trim().toLowerCase() !== 'spell') return;
+            const fields = parseRollTemplateFields(msg.content);
+            const spellName = normalizeTemplateValue(fields.name);
+            if (spellName.toLowerCase() !== 'bless') return;
+            const characterName = normalizeTemplateValue(fields.charname);
+            if (!characterName) return;
+
+            const now = Date.now();
+            pruneCastTracking(now);
+            const evidenceKey = fingerprint({
+                playerId: String(msg.playerid || ''),
+                rolltemplate: 'spell',
+                spellName: spellName.toLowerCase(),
+                characterName: characterName.toLowerCase(),
+                content: String(msg.content || '').slice(0, POLICY.effects.descriptionLength * 2)
+            });
+            if (recentCastEvidence.has(evidenceKey)) return;
+            recentCastEvidence.set(evidenceKey, now);
+
+            const caster = resolveRecognizedCaster(msg, characterName);
+            if (!caster.ok) {
+                panel('Bless Cast Recognized', [
+                    { label: 'Needs Attention', value: _sanitize(caster.message) },
+                    { label: 'No Changes Made', value: 'No effect record, marker, concentration, or sheet modifier was changed.' },
+                    { label: 'Next Step', value: GameAssist.createButton('Open Effect Catalog', '!Effect-Catalog') }
+                ], msg, { gmOnly: true });
+                return;
+            }
+
+            const proposal = {
+                id: `CAST-${now.toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+                schemaVersion: CAST_PROPOSAL_SCHEMA_VERSION,
+                definitionId: 'bless',
+                effectName: 'Bless',
+                sourceTokenId: caster.source.summary.tokenId,
+                sourceCharacterId: caster.source.summary.characterId,
+                sourceName: caster.source.summary.characterName,
+                playerId: String(msg.playerid || ''),
+                who: String(msg.who || ''),
+                targetText: normalizeTemplateValue(fields.target).slice(0, 240),
+                createdAt: now
+            };
+            castProposals.set(proposal.id, proposal);
+            pruneCastTracking(now);
+            panel('Bless Cast Recognized', [
+                { label: 'Source', value: _sanitize(proposal.sourceName) },
+                { label: 'Effect', value: 'Bless' },
+                { label: 'Choose Recipients', value: 'Select the actual recipient tokens on the map. GameAssist does not guess recipients from the spell-card text.' },
+                { label: 'Review', value: castProposalButtons(proposal) },
+                { label: 'Other Options', value: `${GameAssist.createButton('Pending Casts', '!Effect-Casts')} ${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function handleCastProposal(msg, options) {
+            pruneCastTracking();
+            const proposal = castProposals.get(String(options.proposal || ''));
+            if (!proposal) {
+                return panel('EffectAssist', [
+                    { label: 'Needs Attention', value: 'That recognized cast is no longer available. It may have expired, been dismissed, or already been reviewed.' },
+                    { label: 'Next Step', value: `${GameAssist.createButton('Pending Casts', '!Effect-Casts')} ${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')}` }
+                ], msg, { gmOnly: true });
+            }
+            const targets = selectedTargets(msg);
+            if (!targets.ok) {
+                return panel('EffectAssist', [
+                    { label: 'Needs Attention', value: 'Select the actual recipient token or tokens on the map, then click Review Selected Recipients again.' },
+                    { label: 'Cast', value: castProposalSummary(proposal) },
+                    { label: 'Try Again', value: castProposalButtons(proposal) }
+                ], msg, { gmOnly: true });
+            }
+            const source = resolveLinkedToken(proposal.sourceTokenId, 'The recognized source');
+            const sourceStillEligible = source.ok
+                && source.summary.characterId === proposal.sourceCharacterId
+                && source.summary.pageId === recognitionPageId(proposal.playerId)
+                && (playerIsGM(proposal.playerId)
+                    || (modState.config.allowPlayerCasting !== false
+                        && source.summary.layer === 'objects'
+                        && actorControlsSource(proposal.playerId, source)));
+            if (!sourceStillEligible) {
+                castProposals.delete(proposal.id);
+                return panel('EffectAssist', [
+                    { label: 'Needs Attention', value: 'The recognized source, page, layer, control, or player-casting permission changed. Open the Effect Catalog to choose the source again.' },
+                    { label: 'No Changes Made', value: 'No effect was applied.' }
+                ], msg, { gmOnly: true });
+            }
+            castProposals.delete(proposal.id);
+            handleApply(msg, {
+                effect: proposal.definitionId,
+                source: proposal.sourceTokenId,
+                replace: options.replace,
+                request: `recognized:${proposal.id}`,
+                'requested-by': playerIsGM(proposal.playerId) ? undefined : proposal.playerId,
+                announce: true
+            });
+        }
+
+        function handleCastProposalDismiss(msg, options) {
+            pruneCastTracking();
+            const proposalId = String(options.proposal || '');
+            const existed = castProposals.delete(proposalId);
+            panel('Recognized Casts', [
+                { label: 'Result', value: existed ? 'The cast proposal was dismissed. No effect changes were made.' : 'That cast proposal was already unavailable.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Pending Casts', '!Effect-Casts')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function handleRecognitionSetting(msg) {
+            const value = String(msg.content || '').trim().split(/\s+/)[1]?.toLowerCase();
+            if (!['on', 'off'].includes(value)) return showControl(msg);
+            modState.config.castRecognition = value === 'on';
+            panel('EffectAssist Cast Recognition', [
+                { label: 'Setting', value: modState.config.castRecognition
+                    ? 'On. Supported 2014 Bless spell cards may create a private GM proposal when their caster evidence is unambiguous.'
+                    : 'Off. Spell cards will not create proposals; the Effect Catalog remains fully available.' },
+                { label: 'Safety', value: 'Recognition never selects recipients or applies an effect automatically.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Pending Casts', '!Effect-Casts')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+            ], msg, { gmOnly: true });
         }
 
         function explicitTargets(msg, rawIds) {
@@ -17872,16 +18120,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Apply An Effect', value: playerIsGM(msg?.playerid) ? 'Select the affected tokens, open the catalog, choose the effect and source, review the changes, then confirm.' : 'Open the catalog, choose the effect and your casting character, then choose visible recipients directly on the map.' },
                 { label: 'End An Effect', value: playerIsGM(msg?.playerid) ? 'Open Active Effects and end the specific source. Shared markers and bonuses remain while another source still owns them.' : 'Use the End Effect button on your successful casting message.' },
                 ...(playerIsGM(msg?.playerid) ? [{ label: 'Review Duration', value: 'Duration providers can flag an effect for review, but only the GM decides whether it ends.' }] : []),
-                { label: 'Actions', value: `${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Control Center', '!Effect-GM') + ' ' + GameAssist.createButton('Active Effects', '!Effect-Active') + ' ' + GameAssist.createButton('Duration Review', '!Effect-Duration') : ''}` }
+                ...(playerIsGM(msg?.playerid) ? [{ label: 'Recognized Casts', value: 'A supported 2014 Bless spell card may offer a private shortcut. You still select the recipients and review every change.' }] : []),
+                { label: 'Actions', value: `${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Control Center', '!Effect-GM') + ' ' + GameAssist.createButton('Active Effects', '!Effect-Active') + ' ' + GameAssist.createButton('Pending Casts', '!Effect-Casts') + ' ' + GameAssist.createButton('Duration Review', '!Effect-Duration') : ''}` }
             ], msg);
         }
 
         function showControl(msg) {
+            pruneCastTracking();
             panel('EffectAssist Control Center', [
                 { label: 'Apply', value: GameAssist.createButton('Open Effect Catalog', '!Effect-Catalog') },
-                { label: 'Manage', value: `${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Duration Review', '!Effect-Duration')} ${GameAssist.createButton('Status', '!Effect-Status')}` },
+                { label: 'Manage', value: `${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Pending Casts', '!Effect-Casts')} ${GameAssist.createButton('Duration Review', '!Effect-Duration')} ${GameAssist.createButton('Status', '!Effect-Status')}` },
                 { label: 'Check', value: `${GameAssist.createButton('Audit and Repair', '!Effect-Audit')} ${GameAssist.createButton('Guide', '!Effect-Guide')}` },
                 { label: 'Player Casting', value: `${modState.config.allowPlayerCasting !== false ? 'Allowed' : 'Locked'} | ${GameAssist.createButton('Allow', '!Effect-Players on')} ${GameAssist.createButton('Lock', '!Effect-Players off')}` },
+                { label: '2014 Cast Recognition', value: `${modState.config.castRecognition !== false ? 'On' : 'Off'} | ${castProposals.size} pending | ${GameAssist.createButton('Turn On', '!Effect-Recognition on')} ${GameAssist.createButton('Turn Off', '!Effect-Recognition off')}` },
                 { label: 'Duration Candidates', value: `${modState.config.durationCandidates !== false ? 'On' : 'Off'} | ${GameAssist.createButton('Turn On', '!Effect-Durations on')} ${GameAssist.createButton('Turn Off', '!Effect-Durations off')}` },
                 { label: 'Learn', value: `${GameAssist.createButton('What does EffectAssist do?', '!Effect-Info')} ${GameAssist.createButton('Create or Update Manual', '!Effect-Manual')}` }
             ], msg, { gmOnly: true });
@@ -17891,7 +18142,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             panel('What EffectAssist Does', [
                 { label: 'Purpose', value: 'Applies and tracks spells, features, and custom effects as source-aware records with markers, supported 2014 sheet modifiers, concentration, and safe cleanup.' },
                 { label: 'Why It Is Not TokenAssist', value: 'TokenAssist performs an immediate token edit. EffectAssist remembers the rule relationship over time and removes only what that relationship owns.' },
-                { label: 'Safety', value: 'Unsupported mechanics are clearly labeled as manual. Existing or edited sheet values are preserved and reported instead of overwritten. Elapsed duration creates a GM decision, never an automatic ending.' },
+                { label: 'Safety', value: 'Unsupported mechanics are clearly labeled as manual. Existing or edited sheet values are preserved and reported instead of overwritten. Recognized spell cards and elapsed duration create GM decisions, never automatic changes.' },
                 { label: 'Actions', value: `${GameAssist.createButton('Open Catalog', '!Effect-Catalog')} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Open Manual', '!Effect-Manual') + ' ' + GameAssist.createButton('Control Center', '!Effect-GM') : ''}` }
             ], msg);
         }
@@ -17949,6 +18200,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function showStatus(msg) {
+            pruneCastTracking();
             const audit = auditEffects();
             const durationCandidates = activeInstances().reduce((sum, instance) => sum + openDurationCandidates(instance).length, 0);
             panel('EffectAssist Status', [
@@ -17956,8 +18208,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Records', value: `${audit.active} active | ${audit.ended} ended | ${audit.definitions} definitions` },
                 { label: 'Health', value: audit.ok ? 'No mismatches found.' : `${audit.mismatches.length} item(s) need review.` },
                 { label: 'Player Casting', value: modState.config.allowPlayerCasting !== false ? 'Allowed' : 'Locked' },
+                { label: '2014 Cast Recognition', value: `${modState.config.castRecognition !== false ? 'On' : 'Off'} | ${castProposals.size} pending Bless proposal(s)` },
                 { label: 'Duration Review', value: `${modState.config.durationCandidates !== false ? 'On' : 'Off'} | ${durationCandidates} open candidate(s)` },
-                { label: 'Actions', value: `${GameAssist.createButton('Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Durations', '!Effect-Duration')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+                { label: 'Actions', value: `${GameAssist.createButton('Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Pending Casts', '!Effect-Casts')} ${GameAssist.createButton('Durations', '!Effect-Duration')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
             ], msg, { gmOnly: true });
         }
 
@@ -18003,6 +18256,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<p>Players may open <code>!effect</code> or use a spell shortcut when the GM allows player casting. The player chooses a controlled casting character, then Roll20 asks them to point at the visible recipient token or tokens on the map; they do not need to control those recipients or preselect them. Every application shows a review and rechecks the source, recipients, page, and visibility before confirmation.</p>',
                 '<p>For hidden recipients, unusually large groups, or any cast the GM should place, the player may use <strong>Ask the GM</strong>. The GM receives a compact request with selected-token and map-target choices, but the normal review and confirmation still occur. A successful player-originated cast is announced publicly with the source, effect, and visible recipient names. Direct GM applications remain private unless deliberately announced.</p>',
                 '<p>Player menus expose only the built-in casting path and the player\'s own End Effect control. Status, audit, repair, custom effects, and configuration remain private to the GM.</p>',
+                '<h2>Recognized 2014 Spell Cards</h2>',
+                '<p>When cast recognition is on, an official D&amp;D 5E by Roll20 (2014) Bless spell card can create one short-lived private proposal for the GM. GameAssist accepts it only when the spell, character, active page, linked source token, and player control are unambiguous. The GM selects the actual recipients and uses the proposal button to enter the same review and confirmation path as the catalog.</p>',
+                '<p>Spell-card target wording is descriptive and is never used as token identity. Unsupported spells, ambiguous sources, and 2024-sheet cards do not create effect instances. Use <code>!Effect-Casts</code> to review pending proposals and <code>!Effect-Recognition on|off</code> to control this shortcut. The manual catalog remains available whether recognition is on or off.</p>',
                 '<h2>Concentration</h2>',
                 '<p>ConcentrationAssist owns concentration checks and the Concentrating marker. EffectAssist connects dependent effects to that source. A failed check, deliberate concentration clear, or manual removal of the source marker ends the dependent effect and removes its owned target projections. Removing only a target effect marker creates an audit mismatch so an accidental edit can be repaired; it does not silently end the source or every target.</p>',
                 '<h2>Overlapping Sources</h2>',
@@ -18015,7 +18271,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h2>Effect Catalog</h2>',
                 catalog,
                 '<h2>Commands</h2>',
-                '<p><code>!effect</code> opens the catalog directly. Player shortcuts are <code>!Bless</code>, <code>!Guidance</code> or <code>!Guide</code>, <code>!Haste</code>, <code>!Warding-Bond</code>, <code>!Holy-Weapon</code>, and <code>!PwoaT</code>. The generated <code>!Effect-Targets</code> and <code>!Effect-Request</code> buttons keep targeting and GM requests bounded; they are not commands players need to memorize. GM controls include <code>!Effect-GM</code>, <code>!Effect-DM</code>, <code>!Effect-Active</code>, <code>!Effect-Duration</code>, <code>!Effect-Durations on|off</code>, <code>!Effect-Status</code>, <code>!Effect-Audit</code>, <code>!Effect-Players on|off</code>, <code>!Effect-Manual</code>, and generated Apply, Confirm, End, and Repair buttons.</p>'
+                '<p><code>!effect</code> opens the catalog directly. Player shortcuts are <code>!Bless</code>, <code>!Guidance</code> or <code>!Guide</code>, <code>!Haste</code>, <code>!Warding-Bond</code>, <code>!Holy-Weapon</code>, and <code>!PwoaT</code>. The generated <code>!Effect-Targets</code> and <code>!Effect-Request</code> buttons keep targeting and GM requests bounded; they are not commands players need to memorize. GM controls include <code>!Effect-GM</code>, <code>!Effect-DM</code>, <code>!Effect-Active</code>, <code>!Effect-Casts</code>, <code>!Effect-Recognition on|off</code>, <code>!Effect-Duration</code>, <code>!Effect-Durations on|off</code>, <code>!Effect-Status</code>, <code>!Effect-Audit</code>, <code>!Effect-Players on|off</code>, <code>!Effect-Manual</code>, and generated Apply, Confirm, End, and Repair buttons.</p>'
             ].join('');
         }
 
@@ -18238,6 +18494,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (['gm', 'dm', 'menu'].includes(action)) return showControl(msg);
             if (['status', 'list', 'refresh'].includes(action)) return showStatus(msg);
             if (action === 'active') return showActive(msg);
+            if (action === 'cast') return handleCastProposal(msg, options);
+            if (action === 'casts') return showCastProposals(msg);
+            if (action === 'cast-dismiss') return handleCastProposalDismiss(msg, options);
+            if (action === 'recognition') return handleRecognitionSetting(msg);
             if (['duration', 'durations-review'].includes(action)) return showDurationReview(msg, options);
             if (action === 'duration-dismiss') return updateDurationCandidate(msg, options, 'dismissed');
             if (action === 'duration-restore') return updateDurationCandidate(msg, options, 'open');
@@ -18273,6 +18533,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             GameAssist.onCommand(prefix, msg => handleShortcut(msg, definitionId), MODULE_NAME);
         });
 
+        GameAssist.onEvent('chat:message', handleCastRecognition, MODULE_NAME);
         ensureMarkerObservation();
         const concentrationObservation = GameAssist.SemanticEvents.observe(observeConcentration, {
             owner: MODULE_NAME,
@@ -18297,9 +18558,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.EffectAssist = Object.freeze({
             version: MODULE_VERSION,
             stateSchemaVersion: STATE_SCHEMA_VERSION,
+            castProposalSchemaVersion: CAST_PROPOSAL_SCHEMA_VERSION,
             getDefinitions: () => clone(getDefinitions()),
             getActiveInstances: () => clone(activeInstances()),
             getHistory: () => clone(runtime.history),
+            getCastProposals: () => {
+                pruneCastTracking();
+                return clone([...castProposals.values()]);
+            },
             getDurationCandidates: () => clone(activeInstances().flatMap(instance =>
                 (instance.duration?.candidates || []).map(candidate => ({ instanceId: instance.id, effect: instance.name, ...candidate }))
             )),
@@ -18317,9 +18583,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             registerProjectionAdapter
         });
 
-        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: catalog-driven 2014 effects and optional duration review are available through !effect; the module starts disabled.`, 'INFO', { startup: true });
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: catalog-driven 2014 effects, bounded Bless cast proposals, and optional duration review are available through !effect; the module starts disabled.`, 'INFO', { startup: true });
     }, {
         enabled: false,
+        events: ['chat:message'],
         prefixes: ['!Effect-', '!effect', '!EffectAssist-','!Bless','!Guidance','!Guide','!Haste','!Warding-Bond','!WardingBond','!Holy-Weapon','!HolyWeapon','!PwoaT'],
         preserveRuntimeOnDisable: true,
         protectedConfigKeys: ['customDefinitions', 'markerOverrides'],
@@ -18329,8 +18596,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Advanced EffectAssist to 2.1.0 and state schema 3 with formal built-in duration rules, optional CombatAssist and AlmanacAssist provider anchors, bounded evidence-backed GM expiration candidates and encounter-end reminders, reversible candidate dismissal, restart/re-enable reconciliation, and observer registrations that remain inert while disabled and resume without duplication; no elapsed-time observation ends an effect automatically.
+    // Changed (v2.0.0): Advanced EffectAssist to 2.2.0 with bounded, deduplicated proposals for unambiguous official 2014 Bless spell cards; the GM selects recipients and the existing review/confirmation path remains the only route to effect application.
     // Decision log:
+    //   CHOICE: Recognize only exact Bless cards with one character and one eligible active-page source token - ALT: infer likely sources or recipients from descriptive card text; REJECTED: ambiguous automation could modify the wrong characters.
+    //   CHOICE: Keep proposals sandbox-local, short-lived, and single-use - ALT: persist cast traffic in campaign state; REJECTED: proposals are transient review work, not campaign records.
+    // Prior notes:
+    //   v2.0.0 / EffectAssist 2.1.0: Added state schema 3, formal built-in duration rules, optional CombatAssist and AlmanacAssist provider anchors, bounded evidence-backed GM expiration candidates and encounter-end reminders, reversible candidate dismissal, restart/re-enable reconciliation, and inert disabled-state observers; no elapsed-time observation ends an effect automatically.
     //   CHOICE: Present elapsed duration as a GM review candidate - ALT: remove projections automatically at the first observed boundary; REJECTED: provider gaps, table rulings, and interrupted encounters require a human decision.
     //   CHOICE: Consume accepted CombatAssist progression and committed Almanac time events - ALT: parse turnorder and replay elapsed minutes independently; REJECTED: duplicate clocks would disagree with their authoritative owners and large jumps could become unbounded.
     //   CHOICE: Migrate existing schema-v2 effects without retrospective anchors - ALT: infer their start from current provider state; REJECTED: that would silently grant a false start time.

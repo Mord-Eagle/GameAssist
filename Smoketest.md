@@ -2974,6 +2974,43 @@ Use the focused section to prove:
 - disabling and re-enabling EffectAssist preserves its records;
 - malformed known state is reported without deleting unknown branches.
 
+### EffectAssist 2014 Bless Recognition Checks
+
+**What this proves:** A supported official 2014 Bless spell card can save the GM a few setup clicks without applying an effect or guessing who received it.
+
+**Why test it:** Chat cards contain readable spell text, not reliable token identities. GameAssist must recognize the caster conservatively and still require the GM to choose the actual recipients.
+
+**Skip when:** Skip in ordinary play when cast recognition will remain off. Do not skip for Issue #77 or v2.0.0 release acceptance.
+
+Prepare one disposable caster on the Objects layer using the official D&D 5E by Roll20 2014 sheet. The character name must be unique, the token must be linked to that character, and the player casting Bless must control that source. Prepare one or more disposable linked recipient tokens on the same page.
+
+```roll20chat
+!ga-enable EffectAssist
+!Effect-Recognition on
+!Effect-Casts
+```
+
+Cast **Bless** from the caster's 2014 sheet. Pass when the GM receives exactly one private **Bless Cast Recognized** panel naming the correct source and asking the GM to select recipients. Confirm immediately that no Blessed marker, concentration marker, modifier row, or active EffectAssist instance was created.
+
+Select the real recipient tokens and click **Review Selected Recipients**. Pass when the ordinary **Review Effect Application** panel names the correct source and selected targets. Confirm the application and verify the same Bless marker, `1d4` attack/save rows, concentration, overlap, and cleanup behavior proven by the normal catalog test.
+
+Open the pending list:
+
+```roll20chat
+!Effect-Casts
+```
+
+Pass when the used proposal is gone. Clicking its old review button again must report that it is unavailable and must not create a second effect.
+
+Now test the conservative boundaries:
+
+1. Cast Guidance or another unsupported spell card. No proposal and no effect instance should appear.
+2. Give a second character the caster's exact name, or place a second eligible token for the same caster on the active page, then cast Bless again. The GM should receive an actionable ambiguity message and no effect instance.
+3. Remove the duplicate, run `!Effect-Recognition off`, and cast Bless. No proposal should appear; `!effect` must still open the complete manual catalog.
+4. Restore `!Effect-Recognition on` for campaigns that want the shortcut.
+
+Record failures with the roll-template name shown in the API Console if available, spell name, character name, actor, active page, number of linked source tokens on that page, pending-cast output, and whether any marker, concentration state, sheet row, or active instance changed before confirmation.
+
 ### EffectAssist Duration Provider Checks
 
 **What this proves:** CombatAssist and TimeAlmanac can provide conservative elapsed-duration evidence without ending an effect or replaying guessed history.

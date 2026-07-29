@@ -3,7 +3,7 @@
 **Version 2.0.0 development line** | © 2025-2026 Mord Eagle · MIT License<br>
 **Lead Dev:** [@Mord-Eagle](https://github.com/Mord-Eagle)
 
-GameAssist v2.0.0 introduces two substantial optional modules and a shared HP foundation. **EffectAssist** coordinates a focused catalog of 2014-sheet effects with source-aware ownership and concentration-linked cleanup. **AlmanacAssist** brings fictional calendars, climate regions, moons and celestial events, continuity-aware weather, structured environments, and deliberate 2014-sheet rest workflows together under one approachable campaign-world interface. **HealthService** gives supported 2014 characters and linked NPCs one evidence-first HP boundary, including optional private ConcentrationAssist check offers after relevant HP loss. EffectAssist and AlmanacAssist begin disabled so an existing campaign changes only when its GM deliberately enables them.
+GameAssist v2.0.0 introduces two substantial optional modules and a shared HP foundation. **EffectAssist** coordinates a focused catalog of 2014-sheet effects with source-aware ownership, concentration-linked cleanup, bounded official 2014 Bless proposals, and optional duration review. **AlmanacAssist** brings fictional calendars, climate regions, moons and celestial events, continuity-aware weather, structured environments, and deliberate 2014-sheet rest workflows together under one approachable campaign-world interface. **HealthService** gives supported 2014 characters and linked NPCs one evidence-first HP boundary, including optional private ConcentrationAssist check offers after relevant HP loss. EffectAssist and AlmanacAssist begin disabled so an existing campaign changes only when its GM deliberately enables them.
 
 ---
 
@@ -72,7 +72,7 @@ GameAssist’s kernel and bundled modules expose:
 * **InitiativeAssist** – provides the case-insensitive `!Init-` command family for D&D 5E 2014 and 2024 characters, public player invitations, composable roll options, detailed dice/formula results, score-aware optional narration, selective rerolls, encounter groups, audits, and preservation-first `!Init-RR`. It does not advance turns or own encounter rounds.
 * **CombatAssist** – provides the case-insensitive `!Combat-` command family as an optional layer over Roll20's native Turn Tracker. Native arrows remain available; a recognized native round-counter row can own the round number, while guarded movement, stale-safe timers, native pings, private player prompts, preserved-round maintenance, and one-step recovery add convenience. TurnTrackerService is required for tracker access; timers never advance initiative and pings never alter tokens.
 * **WelcomeAssist** – optionally posts one delayed table greeting after GameAssist completes a healthy startup. It starts disabled, offers professional, built-in table-humor, campaign-custom, and mixed greeting modes, keeps configuration and previews private to the GM, and uses the short case-insensitive `!Welcome` / `!Welcome-Action` command family.
-* **EffectAssist** – starts disabled and coordinates a focused catalog of source-aware effects for the official 2014 sheet. Bless, Guidance, Warding Bond, and Haste receive supported marker and sheet automation; Holy Weapon and Pass Without a Trace are explicitly labeled tracked/manual effects. Players may cast built-ins from controlled sources unless the GM locks that path. Overlapping sources remain independently removable, pre-existing state remains campaign-owned, and audit never writes without fresh confirmation.
+* **EffectAssist** – starts disabled and coordinates a focused catalog of source-aware effects for the official 2014 sheet. Bless, Guidance, Warding Bond, and Haste receive supported marker and sheet automation; Holy Weapon and Pass Without a Trace are explicitly labeled tracked/manual effects. Players may cast built-ins from controlled sources unless the GM locks that path. An unambiguous official 2014 Bless card can create a private GM proposal without choosing recipients or applying anything automatically. Overlapping sources remain independently removable, pre-existing state remains campaign-owned, and audit never writes without fresh confirmation.
 * **AlmanacAssist** – starts disabled and combines six independently controlled internal systems: Time, Climate, Astronomy, Weather, Environment, and Rest. Common actions use short commands such as `!date`, `!weather`, and `!rest`; deeper setup stays behind focused screens and one stable manual handout.
 * **MECHSUITS Structure** – the executable script uses the literal codename `GAMEASSIST`, framed sections, file-scoped canonical tree metadata, and per-section change notes.
 
@@ -807,7 +807,7 @@ Config keys: `enabled`, `mode`, `delayMs`, `showHeader`, `header`, `defaultGreet
 
 ### 6.12 EffectAssist *(optional, player-capable and GM-managed)*
 
-> **Module version:** `2.1.0`<br>
+> **Module version:** `2.2.0`<br>
 > **Default:** Disabled<br>
 > **Launch sheet:** Official D&D 5E by Roll20 2014 sheet. The 2024 sheet and other character sheets are deferred until their contracts can be implemented and tested separately.
 
@@ -835,6 +835,10 @@ The catalog separates **Marker and Sheet Automation** from **Tracked; Rules Stay
 
 Players can run `!effect` or a direct spell shortcut and apply a built-in effect from a linked source token or character they control. Every preview and confirmation rechecks source control. The GM retains the custom-effect, status, audit, repair, and configuration screens and can lock or restore player casting through the Control Center at any time.
 
+EffectAssist can also recognize an exact Bless card from the official D&D 5E by Roll20 2014 `spell` template. Recognition succeeds only when the spell name, character name, active page, linked source token, and player control identify one caster without ambiguity. It creates one short-lived private proposal for the GM; it does not apply Bless, select recipients, establish concentration, or change a marker or sheet field. The GM selects the actual recipient tokens and uses **Review Selected Recipients** to enter the same preview and confirmation path as the catalog. Repeated copies of the same chat card are suppressed, and a proposal can be used only once.
+
+Spell-card target wording is descriptive and is never interpreted as token identity. Unsupported spells, ambiguous character names or source tokens, and 2024-sheet cards do not create effect instances. Use `!Effect-Casts` to review pending proposals or `!Effect-Recognition on|off` to control the shortcut. The manual `!effect` catalog remains the complete and reliable path whether recognition is on or off.
+
 Two sources applying the same non-stacking effect to one target remain separate instances but share each effective projection. Ending one source leaves the other source's marker and sheet rows in place. Ending the final source removes only the state EffectAssist originally created. Matching markers or modifier rows that existed first remain untouched.
 
 Removing a target's effect marker manually does not silently end the source's concentration or remove the effect from every target. It creates a visible audit mismatch that the GM can repair or resolve by ending the effect. Removing the source's Concentrating marker, clearing concentration through ConcentrationAssist, or using **End Effect** ends the dependent effect and performs ownership-safe cleanup.
@@ -851,6 +855,8 @@ Main commands:
 * `!Bless`, `!Guidance` / `!Guide`, `!Haste`, `!Warding-Bond`, `!Holy-Weapon`, or `!PwoaT` → Open a compact source-and-review path for that effect; commands are case-insensitive.
 * `!Effect-Active` → Manage active instances and end one exact source.
 * `!Effect-Status` → Review compact module, record, health, and player-casting totals without printing the full active/recent history.
+* `!Effect-Casts` → Review short-lived official 2014 Bless proposals waiting for GM-selected recipients.
+* `!Effect-Recognition on|off` → Enable or disable supported spell-card proposals without changing the manual catalog.
 * `!Effect-Duration` → Review active duration rules and GM-only expiration candidates or encounter-end reminders.
 * `!Effect-Durations on|off` → Allow or stop duration-provider candidate processing without deleting active effects or saved evidence.
 * `!Effect-Definitions` → Review built-in and campaign definitions with automatic, assisted, and informational behavior.
@@ -866,7 +872,7 @@ Audit reports missing tokens, token representation changes, unavailable projecti
 
 Disabling EffectAssist stops its commands and future automation while preserving valid active records, ended history, definitions, and existing projections. Re-enable it and run Status or Audit before continuing. MarkerService, ConditionAssist, or ConcentrationAssist can be unavailable without corrupting the semantic record; affected projections remain visible as pending or needing attention.
 
-Config keys: `enabled`, `allowPlayerCasting`, `durationCandidates`, the protected `markerOverrides` map, and the protected `customDefinitions` map. In v2.0.0, the two protected maps are reserved for validated release data and are not edited through `!ga-config`; GMs use the built-in catalog or the guided custom Marker, Condition, and Record Only choices.
+Config keys: `enabled`, `allowPlayerCasting`, `castRecognition`, `durationCandidates`, the protected `markerOverrides` map, and the protected `customDefinitions` map. In v2.0.0, the two protected maps are reserved for validated release data and are not edited through `!ga-config`; GMs use the built-in catalog or the guided custom Marker, Condition, and Record Only choices.
 
 ---
 
@@ -1036,6 +1042,7 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!effect` / `!Effect-Catalog` | selected linked targets; guided source picker | Open the catalog directly. Bless, Guidance, Warding Bond, and Haste provide supported marker/sheet automation; Holy Weapon and Pass Without a Trace are clearly labeled tracked/manual entries. |
 |  | `!Bless` / `!Guidance` / `!Guide` / `!Haste` / `!Warding-Bond` / `!Holy-Weapon` / `!PwoaT` | selected linked targets; controlled source | Open a compact source-and-review path for one built-in effect. |
 |  | `!Effect-Active` / `!Effect-Status` / `!Effect-Definitions` | — | Manage active instances, review compact health totals, or inspect catalog behavior. |
+|  | `!Effect-Casts` / `!Effect-Recognition on\|off` | GM only | Review bounded official 2014 Bless proposals or enable/disable this recognition shortcut; the catalog remains available. |
 |  | `!Effect-Apply` | `--effect <catalog-id>` or bounded `--name` with `--marker`, `--condition`, or `--none`; generated `--source` | Preview one atomic application. The generated confirmation identifies automatic 2014-sheet changes and assisted table steps before writing. |
 |  | `!Effect-End` | `--id <generated-id>` | End one exact source instance through generated buttons and remove only an unneeded EffectAssist-owned projection. |
 |  | `!Effect-Audit` / `!Effect-Repair` | fresh generated confirmation grant | Compare records against marker, condition, concentration, and 2014-sheet projections without writing, then deliberately repair only a still-current safe mismatch. |
@@ -1552,10 +1559,11 @@ const result = effects.apply({
 
 | Method / Field | Result |
 | --- | --- |
-| `version` / `stateSchemaVersion` | EffectAssist module and durable-state contract versions. |
+| `version` / `stateSchemaVersion` / `castProposalSchemaVersion` | EffectAssist module, durable-state, and sandbox-local cast-proposal contract versions. |
 | `isAvailable()` | Reports the saved module enablement state. |
 | `getDefinitions()` | Returns defensive copies of built-in and campaign effect definitions. |
 | `getActiveInstances()` / `getHistory()` | Returns defensive copies of active and bounded ended records. |
+| `getCastProposals()` | Returns defensive copies of unexpired GM cast proposals; proposals are sandbox-local and never contain inferred recipient token IDs. |
 | `getDurationCandidates()` | Returns defensive copies of open and dismissed duration review evidence associated with active instances. |
 | `apply(request)` | Atomically validates source and targets, records one semantic instance, and applies every supported projection or rolls the operation back. |
 | `end(instanceId, actor)` | Ends one source instance idempotently and removes only unneeded EffectAssist-owned projections. |
@@ -1565,7 +1573,7 @@ const result = effects.apply({
 | `clearObservers(owner)` | Clears semantic observers registered under the exact owner. |
 | `registerProjectionAdapter(name, adapter)` | Adds a validated projection adapter without changing the stored effect identity. Built-ins cover MarkerService, ConditionAssist, record-only, and verified 2014 repeating modifiers. |
 
-A script-provided `requestId` is bounded and idempotent for the retained runtime window. A reused ID with a different intent is refused. Apply is transactional across its supported projections; a partial write is rolled back. Cleanup uses exact ownership evidence, preserves pre-existing state, and leaves externally edited sheet rows in place for GM review. Duration observations publish ordinary `effect.lifecycle.changed` transitions such as candidate creation, dismissal, and restoration; confirmed ending still uses the established `ended` transition.
+A script-provided `requestId` is bounded and idempotent for the retained runtime window. A reused ID with a different intent is refused. Apply is transactional across its supported projections; a partial write is rolled back. Cleanup uses exact ownership evidence, preserves pre-existing state, and leaves externally edited sheet rows in place for GM review. Recognized spell cards create transient review proposals and still enter this same application contract only after the GM selects recipients. Duration observations publish ordinary `effect.lifecycle.changed` transitions such as candidate creation, dismissal, and restoration; confirmed ending still uses the established `ended` transition.
 
 ### 10.17 AlmanacAssist
 
@@ -2281,7 +2289,7 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 | DM-configurable timezone | **Implemented; focused acceptance passed** | One validated table timezone controls readable timestamps and date-managed NPC Sessions while stored event instants remain absolute. The complete live module suite was not rerun for v0.1.5.1. |
 | TurnTrackerService 1.0.0 | **Implemented; live foundation passed** | Toggleable native-tracker snapshots, structural row classification, guarded lossless writes, observations, dependency cascading, and visible page-owned row creation passed the focused Roll20 checkpoint. |
 | SemanticEvents 1 | **Implemented; local contract checks passed** | Immutable, versioned, direct-delivery domain events let optional modules interoperate without hard dependencies, persistence, replay, or implicit queueing. |
-| EffectAssist 2.1.0 | **v2.0.0 sandbox candidate** | Disabled-by-default six-effect catalog for the official 2014 sheet, player casting with GM lockout, multi-projection ownership, concentration-linked cleanup, bounded history, read-only audit, confirmed repair, and optional GM-reviewed CombatAssist/Almanac duration candidates are ready for focused Roll20 testing. |
+| EffectAssist 2.2.0 | **v2.0.0 sandbox candidate** | Disabled-by-default six-effect catalog for the official 2014 sheet, player casting with GM lockout, multi-projection ownership, concentration-linked cleanup, bounded history, read-only audit, confirmed repair, bounded official 2014 Bless proposals, and optional GM-reviewed CombatAssist/Almanac duration candidates are ready for focused Roll20 testing. |
 | AlmanacAssist 1.0.0 | **v2.0.0 sandbox candidate** | Disabled-by-default Time, Climate, Astronomy, Weather, Environment, and Rest systems are implemented together with standalone fallbacks, bounded state/history, a shared manual, read-only audits, semantic events, and transactional 2014-sheet rest safeguards. |
 | InitiativeAssist 1.0.4 | **Implemented and accepted** | Mixed 2014/2024 initiative, public and private GM/DM start pages, private NPC evidence, GM-layer NPC batches, selected-character batches, roll options, selective rerolls, encounter groups, status, audit, compact navigation, and a stable manual through the case-insensitive `!Init-` namespace. |
 | CombatAssist 1.1.0 | **v2.0.0 integration candidate** | The accepted optional native-tracker layer retains native round-counter authority, conservative fallback rounds, preserved-round roster/reroll adoption, recovery, guarded movement, timers, pings, and GM/DM controls while adding immutable accepted-progression events for optional duration consumers. TurnTrackerService remains its only baseline prerequisite. |
@@ -2294,7 +2302,7 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 
 ### 17.2 Current Candidate: v2.0.0 EffectAssist and AlmanacAssist
 
-The v2.0.0 candidate combines two disabled-by-default modules on one development line. EffectAssist 2.1.0 supplies the source-aware 2014-sheet effect foundation plus optional GM-reviewed duration candidates; its separately tracked UX and player-casting repairs remain future work rather than a reason to fork or publish the release early. AlmanacAssist 1.0.0 must pass as a complete six-system module before v2.0.0 can ship: fictional Time, regional Climate, Astronomy, continuity-aware Weather, descriptive Environment, and deliberate Rest all belong to this release gate.
+The v2.0.0 candidate combines two disabled-by-default modules on one development line. EffectAssist 2.2.0 supplies the source-aware 2014-sheet effect foundation, bounded official 2014 Bless proposals, and optional GM-reviewed duration candidates; its separately tracked UX and player-casting repairs remain future work rather than a reason to fork or publish the release early. AlmanacAssist 1.0.0 must pass as a complete six-system module before v2.0.0 can ship: fictional Time, regional Climate, Astronomy, continuity-aware Weather, descriptive Environment, and deliberate Rest all belong to this release gate.
 
 The six Almanac systems are independently toggleable and remain useful without hidden prerequisites. They exchange optional context through explicit APIs and semantic events, preserve valid settings while disabled, and keep fictional chronology separate from real-world GameAssist timestamps. RestAlmanac is the only initial Almanac sheet writer and supports verified official 2014 PC fields through preview, revalidation, confirmation, and rollback safeguards.
 
@@ -2327,7 +2335,7 @@ The public [development roadmap](ROADMAP.md) carries the detailed gates and issu
 * No guaranteed external dependency discovery.
 * No complete state import/restore.
 * No 2024-sheet or third-party-sheet modifier writes.
-* No passive spell-card recognition.
+* No automatic effect application, concentration change, or recipient inference from spell-card text; supported official 2014 Bless cards create private GM proposals only.
 * No automatic concentration roll or concentration-ending decision inferred from HP loss; supported decreases may offer a private check that an authorized player or GM must choose.
 * No automatic effect expiration from rounds, turns, real time, or fictional TimeAlmanac advancement; verified CombatAssist and TimeAlmanac boundaries create GM review candidates only.
 * No 2024 native Effect writes without a documented Roll20 contract.
@@ -2341,7 +2349,7 @@ The public [development roadmap](ROADMAP.md) carries the detailed gates and issu
 
 ### v2.0.0 – EffectAssist and Complete AlmanacAssist
 
-* Added disabled-by-default EffectAssist 2.1.0 with a focused six-effect launch catalog, player casting from controlled sources, GM lockout, source and target records, dependencies, stacking, lifecycle, bounded history, and optional GM-reviewed duration candidates.
+* Added disabled-by-default EffectAssist 2.2.0 with a focused six-effect launch catalog, player casting from controlled sources, GM lockout, source and target records, dependencies, stacking, lifecycle, bounded history, bounded official 2014 Bless proposals, and optional GM-reviewed duration candidates.
 * Bless now coordinates its target marker, 2014-sheet `1d4` attack and save modifier rows, source concentration, overlap, and dependent cleanup.
 * Warding Bond and Haste add their verified AC/save rows; all catalog entries distinguish automatic mechanics from assisted table steps.
 * Preserves non-stacking projections across overlapping sources and removes only final EffectAssist-owned markers, conditions, concentration, and unedited sheet rows.
