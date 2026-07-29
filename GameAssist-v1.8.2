@@ -22,7 +22,7 @@ calls GameAssist.enqueue(). This package ships with eleven configurable modules:
 - WelcomeAssist 0.1.4 - Optionally greets the table after a healthy GameAssist startup through short !Welcome commands.
 - ConcentrationAssist 0.2.2 - Runs concentration checks and manages its configured marker.
 - NPCAssist 1.4.0 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, and Arc rosters.
-- HPAssist 0.1.1.2 - Rolls npc_hpformula and writes the result to token bar 1.
+- HPAssist 0.1.1.3 - Rolls npc_hpformula and writes the result to token bar 1.
 - DebugTools 0.2.2 - Optional dry-run-first GM diagnostics.
 
 INSTALL / USAGE
@@ -13430,7 +13430,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         npcCommandFamilies.forEach(family => {
             GameAssist.onCommand(family, msg => {
                 const command = String(msg.content || '').trim().split(/\s+/)[0].toLowerCase();
-                if (family === '!npc-' && command.startsWith('!npc-death-')) return;
+                if (family === '!npc-' && (command.startsWith('!npc-death-') || command.startsWith('!npc-hp-'))) return;
                 if (npcKnownCommands.has(command)) return;
                 sendNPCPanel('NPCAssist', [
                     { label: 'Needs Attention', value: 'That NPCAssist command was not recognized.' },
@@ -13490,7 +13490,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
     });
     // --- Notes & Comments ---
-    // Changed (v1.8.2): Added optional page-local progressive names for newly added linked NPC tokens on the Objects or GM layer; current eligible token names are the source of truth, the lowest available suffix is deterministic, and existing tokens are never renamed.
+    // Changed (v1.8.2): Added optional page-local progressive names for newly added linked NPC tokens on the Objects or GM layer; current eligible token names are the source of truth, the lowest available suffix is deterministic, existing tokens are never renamed, and the broad !npc-* recovery listener yields deprecated !npc-hp-* aliases to HPAssist.
     // Decision log:
     //   CHOICE: Derive every assignment from current eligible names on the token's page - ALT: persist campaign or page counters; REJECTED: saved counters drift after deletion, manual edits, copy/paste, and sandbox restarts.
     //   CHOICE: Keep successful naming quiet and change only the new token's name - ALT: announce or renumber the page; REJECTED: routine token setup should not interrupt play or rewrite deliberate existing names.
@@ -14191,15 +14191,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:CONCENTRATIONASSIST] END
     // =============================================================================
 
-    // ————— HPASSIST MODULE v0.1.1.2 —————
+    // ————— HPASSIST MODULE v0.1.1.3 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:HPASSIST] BEGIN
     // Section Title: HPAssist module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:HPASSIST", title: "HPAssist",
-    //   guarantees: ["Parse NdM±K and set bar1 to rolled HP","Compact guide, status, settings, read-only page audit, and unknown-command recovery use the established !npc-hp- prefix"],
-    //   last_updated_version: "v1.8.0",
-    //   independent_versions: { module_version: "0.1.1.2" } }
+    //   guarantees: ["Parse NdM±K and set bar1 to rolled HP","Case-insensitive !HP-<command> and !hp <command> routes own every public HPAssist action; older HP command families remain compatibility-only aliases"],
+    //   last_updated_version: "v1.8.2",
+    //   independent_versions: { module_version: "0.1.1.3" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:HPASSIST parses `npc_hpformula`, rolls HP, and writes to bar1 value/max
@@ -14208,7 +14208,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('HPAssist', function() {
         const modState = GameAssist.getState('HPAssist');
-        const MODULE_VERSION = '0.1.1.2';
+        const MODULE_VERSION = '0.1.1.3';
 
     Object.assign(modState.config, {
         enabled: true,
@@ -14322,8 +14322,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function showNpcHpGuide() {
             sendNpcHpPanel('HPAssist Guide', [
-                { label: 'Actions', value: `${GameAssist.createButton('Roll Selected NPCs', '!npc-hp-selected')} ${GameAssist.createButton('Roll Page NPCs', '!npc-hp-all')} ${GameAssist.createButton('Current Status', '!npc-hp-status')}` },
-                { label: 'Learn Or Review', value: `${GameAssist.createButton('What does HPAssist do?', '!hp-info')} ${GameAssist.createButton('Read-Only Audit', '!hp-audit')} ${GameAssist.createButton('Settings', '!hp-settings')}` }
+                { label: 'Actions', value: `${GameAssist.createButton('Roll Selected NPCs', '!HP-Selected')} ${GameAssist.createButton('Roll Page NPCs', '!HP-All')} ${GameAssist.createButton('Current Status', '!HP-Status')}` },
+                { label: 'Learn Or Review', value: `${GameAssist.createButton('What does HPAssist do?', '!HP-Info')} ${GameAssist.createButton('Read-Only Audit', '!HP-Audit')} ${GameAssist.createButton('Settings', '!HP-Settings')}` }
             ]);
         }
 
@@ -14331,8 +14331,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const counts = inspectNpcHpPage();
             sendNpcHpPanel('HPAssist GM Controls', [
                 { label: 'Current Page', value: `${counts.eligible} eligible NPCs | ${counts.invalid} need an HP formula` },
-                { label: 'Roll HP', value: `${GameAssist.createButton('Selected NPCs', '!npc-hp-selected')} ${GameAssist.createButton('All Page NPCs', '!npc-hp-all')}` },
-                { label: 'Review And Setup', value: `${GameAssist.createButton('Status', '!npc-hp-status')} ${GameAssist.createButton('Read-Only Audit', '!npc-hp-audit')} ${GameAssist.createButton('Settings', '!npc-hp-settings')} ${GameAssist.createButton('Guide', '!npc-hp-help')}` }
+                { label: 'Roll HP', value: `${GameAssist.createButton('Selected NPCs', '!HP-Selected')} ${GameAssist.createButton('All Page NPCs', '!HP-All')}` },
+                { label: 'Review And Setup', value: `${GameAssist.createButton('Status', '!HP-Status')} ${GameAssist.createButton('Read-Only Audit', '!HP-Audit')} ${GameAssist.createButton('Settings', '!HP-Settings')} ${GameAssist.createButton('Guide', '!HP-Guide')}` }
             ]);
         }
 
@@ -14340,7 +14340,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendNpcHpPanel('What HPAssist Does', [
                 { label: 'Purpose', value: 'Rolls each qualifying linked NPC\'s npc_hpformula and writes the result to bar 1 current and maximum HP.' },
                 { label: 'At The Table', value: 'Select NPC tokens for a deliberate roll, or roll every qualifying NPC on the current player page. Player characters, unlinked tokens, and invalid formulas are skipped.' },
-                { label: 'Guide', value: `${GameAssist.createButton('Back to Guide', '!npc-hp-help')} ${GameAssist.createButton('Read-Only Audit', '!npc-hp-audit')}` }
+                { label: 'Guide', value: `${GameAssist.createButton('Back to Guide', '!HP-Guide')} ${GameAssist.createButton('Read-Only Audit', '!HP-Audit')}` }
             ]);
         }
 
@@ -14375,7 +14375,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Module', value: `${MODULE_VERSION} | enabled and responding` },
                 { label: 'Automatic Roll On Add', value: modState.config.autoRollOnAdd === true ? 'On' : 'Off' },
                 { label: 'Current Page', value: `${counts.eligible} eligible NPCs | ${counts.pc} player characters | ${counts.unlinked} unlinked items | ${counts.invalid} NPCs with missing or invalid formulas` },
-                { label: 'Actions', value: `${GameAssist.createButton('Roll Selected', '!npc-hp-selected')} ${GameAssist.createButton('Open Guide', '!npc-hp-help')}` }
+                { label: 'Actions', value: `${GameAssist.createButton('Roll Selected', '!HP-Selected')} ${GameAssist.createButton('Open Guide', '!HP-Guide')}` }
             ];
             if (audit) fields.splice(3, 0, { label: 'Changes', value: 'None. This audit checks linkage, NPC flags, and HP formulas without rolling or changing bar 1.' });
             sendNpcHpPanel(audit ? 'HPAssist Audit' : 'HPAssist Status', fields);
@@ -14386,14 +14386,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendNpcHpPanel('HPAssist Settings', [
                 { label: 'Automatic Roll On Add', value: `${enabled ? 'On' : 'Off'} ${GameAssist.createButton(enabled ? 'Turn Off' : 'Turn On', `!ga-config set HPAssist autoRollOnAdd=${enabled ? 'false' : 'true'}`)}` },
                 { label: 'Behavior', value: 'When enabled, newly added qualifying NPC tokens receive rolled HP. Setup protection prevents that initialization from creating false NPCAssist death or revival history.' },
-                { label: 'Return', value: GameAssist.createButton('Back to Guide', '!npc-hp-help') }
+                { label: 'Return', value: GameAssist.createButton('Back to Guide', '!HP-Guide') }
             ]);
         }
 
         function showNpcHpManualNotice() {
             sendNpcHpPanel('HPAssist Guide', [
                 { label: 'Manual', value: 'HPAssist is intentionally small, so its complete instructions stay in the compact chat guide instead of creating another campaign handout.' },
-                { label: 'Continue', value: `${GameAssist.createButton('Open Guide', '!npc-hp-help')} ${GameAssist.createButton('Read-Only Audit', '!npc-hp-audit')}` }
+                { label: 'Continue', value: `${GameAssist.createButton('Open Guide', '!HP-Guide')} ${GameAssist.createButton('Read-Only Audit', '!HP-Audit')}` }
             ]);
         }
 
@@ -14524,7 +14524,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (command === 'selected') return rollSelectedNpcHp(msg);
             sendNpcHpPanel('HPAssist', [
                 { label: 'Needs Attention', value: 'That HPAssist command was not recognized.' },
-                { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!HP help') }
+                { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!HP-Guide') }
             ]);
         }, 'HPAssist', { gmOnly: true });
 
@@ -14533,18 +14533,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             rollTokenHP(token, { logWarnings: false, reason: 'auto' });
         }, 'HPAssist');
 
-    GameAssist.log('HPAssist', `v${MODULE_VERSION} Ready: !HP help, !HP all, !HP selected`, 'INFO', { startup: true });
+    GameAssist.log('HPAssist', `v${MODULE_VERSION} Ready: !HP-Guide, !HP-All, !HP-Selected, or !hp guide`, 'INFO', { startup: true });
 }, {
     enabled: true,
     events: ['add:graphic'],
-        prefixes: ['!HP', '!hp', '!hp-', '!npc-hp-', '!NPCHP-', '!NPCHPRoller-']
+        prefixes: ['!HP-', '!hp', '!HPAssist-', '!npc-hp-', '!NPCHP-', '!NPCHPRoller-']
 });
     // --- Notes & Comments ---
-    // Changed (v1.8.0): Renamed the module to HPAssist, added concise !HP controls, and preserved all !npc-hp, !NPCHP, and !NPCHPRoller compatibility commands and settings.
+    // Changed (v1.8.2): Made case-insensitive !HP-<command> and !hp <command> the generated and documented HPAssist interface; retained older !HPAssist-*, !npc-hp-*, !NPCHP-*, and !NPCHPRoller-* forms only as compatibility aliases, and prevented NPCAssist from intercepting the !npc-hp-* family.
     // Decision log:
     //   CHOICE: Keep the complete short guide in chat - ALT: create a persistent manual handout; REJECTED: the module's ordinary workflow fits in a compact panel and another handout would add campaign clutter.
     //   CHOICE: Use Math.random for simplicity; acceptable for non-critical HP rolls.
     // Prior notes:
+    //   v1.8.0: Renamed the module to HPAssist, added concise !HP controls, and preserved all !npc-hp, !NPCHP, and !NPCHPRoller compatibility commands and settings.
     //   Maintenance (v0.1.3, no semantic change): Added module narrative and aligned version metadata; HP rolling behavior unchanged.
     //   Maintenance (v0.1.1.2, no semantic change): MECHSUITS metadata updated for compliance.
     //   v0.1.7.0: Advanced NPCHPRoller to 0.1.1.2; Menu, GM, and DM open an action-focused HP control screen, with equivalent NPCHP and NPCHPRoller role aliases and unchanged HP-roll behavior.

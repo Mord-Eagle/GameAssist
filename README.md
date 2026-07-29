@@ -86,7 +86,7 @@ GameAssist’s kernel and bundled modules expose:
 | 🔄 **4 · Reload** | Save or restart the Mod sandbox and wait for the GameAssist core ready whisper. Module-by-module startup whispers are normally quiet. |
 | 🩺 **5 · Check Health** | Run `!ga-status` and `!ga-config modules`. Confirm the features you enabled are running. |
 | 🕰️ **6 · Set Table Time** | Open `!ga-timezone`, choose the city/region that governs the campaign clock, and confirm the displayed time and Session date. The sandbox default remains available. |
-| 🎲 **7 · Try the Table Tools** | Test `!token-assist help`, `!condition help`, `!critfumble menu`, `!concentration --status`, `!npc-hp-selected`, `!Init-Help`, `!Combat-Help`, and `!Welcome` for the modules you use. |
+| 🎲 **7 · Try the Table Tools** | Test `!token-assist help`, `!condition help`, `!critfumble menu`, `!concentration --status`, `!HP-Selected`, `!Init-Help`, `!Combat-Help`, and `!Welcome` for the modules you use. |
 | 🛡️ **8 · Verify Real Changes** | With disposable tokens, test one NPC death/revival, one concentration marker, and one mixed-character initiative reroll before the first live session. |
 
 The `v0.1.5.x` line replaces standalone TokenMod and StatusInfo for the token and condition workflows supported by GameAssist. It does not keep a hidden legacy path that sends GameAssist work back to those standalone scripts. Remove both standalone scripts before testing overlapping TokenAssist or ConditionAssist commands.
@@ -126,7 +126,7 @@ Run these commands after every update:
 !npc-death-buckets
 !npc-death-audit
 !npc-death-repair
-!npc-hp-selected
+!HP-Selected
 ```
 
 Then perform nine real actions:
@@ -660,21 +660,23 @@ Config keys: `autoTrackDeath`, `notifyBloodied`, `autoNumberNpcTokens`, `deadMar
 
 ### 6.8 HPAssist
 
-> **Module version:** `0.1.1.2`<br>
+> **Module version:** `0.1.1.3`<br>
 > **Dependency:** HPAssist does **not** require TokenMod.
 
 HPAssist reads `npc=1` and `npc_hpformula` from linked characters, parses `NdM+K` or `NdM-K`, and writes the result to token `bar1_value` and `bar1_max`.
 
-* `!npc-hp-selected` → Roll HP for qualifying selected NPC tokens.
-* `!npc-hp-all` → Roll HP for qualifying NPC tokens on the current player page.
-* `!npc-hp-help` / `!npc-hp-guide` → Open the compact guide.
-* `!npc-hp-status` → Show module and auto-roll status.
-* `!npc-hp-audit` → Count qualifying, skipped, and invalid current-page tokens without changing HP.
-* `!npc-hp-info` → Whisper the short module explanation.
-* `!HP-GM` / `!HP-DM` → Open the Game Master HP controls. `!HPAssist-GM|DM`, `!npc-hp-gm|dm`, `!NPCHP-GM|DM`, and `!NPCHPRoller-GM|DM` are equal aliases.
+Use either command style below. Commands are not case-sensitive.
+
+* `!HP-Selected` or `!hp selected` → Roll HP for qualifying selected NPC tokens.
+* `!HP-All` or `!hp all` → Roll HP for qualifying NPC tokens on the current player page.
+* `!HP-Guide` or `!hp guide` → Open the compact guide.
+* `!HP-Status` or `!hp status` → Show module and automatic-roll status.
+* `!HP-Audit` or `!hp audit` → Count qualifying, skipped, and invalid current-page tokens without changing HP.
+* `!HP-Info` or `!hp info` → Whisper the short module explanation.
+* `!HP-GM`, `!HP-DM`, `!hp gm`, or `!hp dm` → Open the Game Master HP controls.
 * `autoRollOnAdd=true` → Quietly attempt HP rolling when a qualifying NPC token is added.
 
-The complete `!HP-*` and `!HPAssist-*` families provide the canonical navigation and roll actions. Existing `!npc-hp-*`, `!NPCHP-*`, and `!NPCHPRoller-*` macros remain supported.
+Older `!HPAssist-*`, `!npc-hp-*`, `!NPCHP-*`, and `!NPCHPRoller-*` macros remain compatibility aliases, but new macros and every HPAssist button use `!HP-<command>` or `!hp <command>`.
 
 Invalid, unlinked, and PC tokens are skipped.
 
@@ -889,9 +891,9 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!token-assist --ids <id...>` / `!ta-ids` | `--ignore-selected`, `--current-page`, `--active-pages` | Add explicit token/character targets when authorized and optionally filter their pages. |
 |  | `!token-assist --config players-can-ids|on|off` / `!ta-config` | GM only | Control whether players may supply explicit IDs; selected-token use remains available. |
 |  | `!token-mod ...` | temporary older syntax | Accepts supported older macros during v1.x; replace them before GameAssist v2.0.0. |
-| **GM** | `!npc-hp-all` | — | Roll and set HP for qualifying NPC tokens on the current page. |
-|  | `!npc-hp-selected` | — | Roll and set HP for qualifying selected NPC tokens. |
-|  | `!HP-<command>` / `!HPAssist-<command>` | legacy `!npc-hp-*`, `!NPCHP-*`, and `!NPCHPRoller-*` | Open HPAssist controls, roll selected/page NPC HP, show guidance, or run read-only checks; its short guidance remains in chat. |
+| **GM** | `!HP-All` / `!hp all` | — | Roll and set HP for qualifying NPC tokens on the current page. |
+|  | `!HP-Selected` / `!hp selected` | — | Roll and set HP for qualifying selected NPC tokens. |
+|  | `!HP-<command>` / `!hp <command>` | case-insensitive | Open HPAssist controls, roll selected/page NPC HP, show guidance, or run read-only checks; older HP command families remain compatibility aliases only. |
 |  | `!npc-death-help` | — | Open the same central NPCAssist guide as `!npc-death-report --help`. |
 |  | `!NPC-<command>` / `!NPC-Death-<command>` / `!NPCAssist-<command>` | legacy `!NPCManager-<command>`; case-insensitive | Use any NPCAssist command through an equivalent family; GM and DM open the Control Center. |
 |  | `!npc-death-report` | `[--scope campaign\|chapter\|section\|session] [--recent] [--page N] [--write] [--help]` | Show bucket history; `--help` opens the central guide and `--write` opens the report writer. |
@@ -1387,7 +1389,7 @@ Leave InitiativeAssist, CombatAssist, WelcomeAssist, and DebugTools disabled unt
 ### 12.6 NPC HP Setup
 
 ```roll20chat
-!npc-hp-selected
+!HP-Selected
 ```
 
 Select the desired linked NPC tokens before running the macro.
@@ -1473,7 +1475,7 @@ Preview privately, then reload the sandbox when the greeting is ready. Use `!Wel
 | Roll20 sandbox | Experimental channel, April 2025-era build |
 | Dataset | 25 NPC tokens on one page |
 
-**Historical `!npc-hp-all` timing**
+**Historical `!HP-All` timing**
 
 | Run Group | Samples | Mean | Median | Standard Deviation | Min–Max |
 | --- | ---: | ---: | ---: | ---: | ---: |

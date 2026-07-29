@@ -46,7 +46,7 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ### Release definition
 
-GameAssist v1.8.2 adds optional page-local progressive naming for newly added linked NPC tokens. NPCAssist advances from `1.3.3` to `1.4.0`; no other module's independent version changes.
+GameAssist v1.8.2 adds optional page-local progressive naming for newly added linked NPC tokens and corrects HPAssist's public command routing. NPCAssist advances from `1.3.3` to `1.4.0`, and HPAssist advances from `0.1.1.2` to `0.1.1.3`.
 
 The feature prevents accidental same-page NPC token-name collisions without introducing a campaign counter, rewriting existing tokens, renaming represented characters, or preventing a GM from deliberately creating duplicate names later.
 
@@ -78,11 +78,19 @@ The feature prevents accidental same-page NPC token-name collisions without intr
 - Adds the setting to NPCAssist status, its persistent manual, the README configuration reference, One-Click command metadata, and the focused smoke test.
 - Keeps successful automatic naming quiet during ordinary token setup.
 
+### HPAssist command routing
+
+- Makes case-insensitive `!HP-<command>` and `!hp <command>` the generated and documented HPAssist command surface.
+- Updates HPAssist buttons, startup guidance, README examples, smoke tests, and One-Click command metadata to use the canonical names.
+- Prevents NPCAssist's broad `!npc-*` unknown-command recovery from intercepting deprecated `!npc-hp-*` macros.
+- Retains `!HPAssist-*`, `!npc-hp-*`, `!NPCHP-*`, and `!NPCHPRoller-*` as compatibility aliases for existing campaign macros.
+- Does not change HP formula parsing, token eligibility, bar writes, automatic rolling, or NPCAssist initialization protection.
+
 ### Verification and release gate
 
 - JavaScript syntax parsing passes for the v1.8.2 executable candidate.
 - Focused deterministic naming tests cover unsuffixed first use, collision suffixes, gap reuse, page independence, case-insensitive comparison, disabled behavior, and noneligible-token exclusions.
-- The release artifacts are byte-identical with SHA-256 `2DC2FDB873A87527FED9F07B50490805E8B23613526DD80D22D06997173C9554`.
+- The release artifacts are byte-identical with SHA-256 `0864AFB434DAF13BD4A8C6B1F24F0BF7C4A4657C5BD8732C7222EEBC17D0A505`.
 - Roll20 acceptance must confirm real `add:graphic` ordering, object/GM-layer behavior, Control Center toggling, rapid multi-token additions, and HPAssist coexistence.
 
 ### Deliberate exclusions

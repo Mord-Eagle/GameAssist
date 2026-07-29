@@ -486,7 +486,7 @@ For each enabled module below:
 | WelcomeAssist | `!Welcome-GM` / `!Welcome-DM` | `!Welcome-Guide` | `!Welcome-Status` | `!Welcome-Audit` | `!Welcome-Manual` | `!Welcome-Impossible` |
 | NPCAssist | `!NPCAssist-GM` / `!NPCAssist-DM` | `!NPCAssist-Guide` | `!NPCAssist-Status` | `!NPCAssist-Audit` | `!NPCAssist-Manual` | `!NPCAssist-Impossible` |
 | ConcentrationAssist | `!ConcentrationAssist-GM` / `!ConcentrationAssist-DM` | `!ConcentrationAssist-Guide` | `!ConcentrationAssist-Status` | `!ConcentrationAssist-Audit` | `!ConcentrationAssist-Manual` | `!ConcentrationAssist-Impossible` |
-| HPAssist | `!HPAssist-GM` / `!HPAssist-DM` | `!HPAssist-Guide` | `!HPAssist-Status` | `!HPAssist-Audit` | `!HPAssist-Manual` | `!HPAssist-Impossible` |
+| HPAssist | `!HP-GM` / `!HP-DM` | `!HP-Guide` | `!HP-Status` | `!HP-Audit` | `!HP-Manual` | `!HP-Impossible` |
 | DebugTools | `!Debug-GM` / `!Debug-DM` | `!ga-debug guide` | `!ga-debug status` | `!ga-debug audit` | `!ga-debug manual` | `!ga-debug impossible` |
 
 ### Renamed Module Compatibility Check
@@ -503,12 +503,12 @@ Run these read-only commands:
 !ConcentrationAssist-Status
 !critfumble status
 !CritAssist-Status
+!HP-Status
+!hp status
 !npc-hp-status
-!HPAssist-Status
-!NPCHPRoller-Status
 ```
 
-Pass when each command family reaches its one canonical module exactly once: four NPCAssist responses, three ConcentrationAssist responses, two CritAssist responses, and three HPAssist responses. No token, marker, HP value, or history record should change.
+Pass when each command family reaches its one canonical module exactly once: four NPCAssist responses, three ConcentrationAssist responses, two CritAssist responses, and three HPAssist responses. The deprecated `!npc-hp-status` check must reach HPAssist without an NPCAssist “command was not recognized” warning. No token, marker, HP value, or history record should change.
 
 ConfigUI, HPAssist, and DebugTools are deliberately brief. Their **Manual** command should explain that the complete guidance remains in chat. The other Manual commands create or update these handouts:
 
@@ -2167,12 +2167,25 @@ Default behavior is `autoHide=false`. If enabled, dead NPCs intentionally move t
 
 **Skip when:** HPAssist is disabled and all NPC HP is managed manually or by another script.
 
+### Command Routing Check
+
+Run these read-only commands with no token selected:
+
+```roll20chat
+!HP-Status
+!hp status
+!hP-gUiDe
+!npc-hp-status
+```
+
+Pass when all four commands produce one HPAssist response each, mixed capitalization works, and the deprecated `!npc-hp-status` alias does not produce an NPCAssist unrecognized-command warning.
+
 ### Basic Check
 
 Select the linked test NPC and run:
 
 ```roll20chat
-!npc-hp-selected
+!HP-Selected
 ```
 
 Pass when bar 1 current and maximum become the same rolled value and the result identifies the NPC and formula.
@@ -2184,7 +2197,7 @@ Pass when bar 1 current and maximum become the same rolled value and the result 
 Select the linked NPC, linked PC, and unlinked token:
 
 ```roll20chat
-!npc-hp-selected
+!HP-Selected
 ```
 
 Pass when only the qualifying NPC receives rolled HP.
@@ -2194,14 +2207,14 @@ Pass when only the qualifying NPC receives rolled HP.
 On the disposable page:
 
 ```roll20chat
-!npc-hp-all
+!HP-All
 ```
 
 Pass when qualifying NPCs roll, PCs remain unchanged, and unlinked tokens are skipped.
 
 #### Invalid Formula
 
-Temporarily replace `npc_hpformula` with invalid text and run `!npc-hp-selected`.
+Temporarily replace `npc_hpformula` with invalid text and run `!HP-Selected`.
 
 Pass when GameAssist reports the invalid formula without applying bad HP. Restore the formula afterward.
 
@@ -2433,7 +2446,7 @@ From a non-GM account, try:
 !token-assist --ids TOKEN_ID --flip showname
 !Init-RR
 !Welcome-Announce
-!npc-hp-all
+!HP-All
 !npc-death-audit
 ```
 
