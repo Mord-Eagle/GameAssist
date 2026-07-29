@@ -12126,7 +12126,43 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function showNPCManagerControl() {
-            showDeathReportHelp('NPCAssist Control Center');
+            const bloodiedEnabled = modState.config.notifyBloodied !== false;
+            sendNPCPanel('NPCAssist Control Center', [
+                {
+                    label: 'Bloodied Alerts',
+                    value: `${bloodiedEnabled ? 'On' : 'Off'} ${GameAssist.createButton(bloodiedEnabled ? 'Turn Off' : 'Turn On', '!npc-bloodied')}`
+                },
+                {
+                    label: 'Actions',
+                    value: [
+                        GameAssist.createButton('Current Status', '!npc-death-status'),
+                        GameAssist.createButton('Session Report', '!npc-death-report --scope session'),
+                        GameAssist.createButton('Write Reports', '!npc-wr')
+                    ]
+                },
+                {
+                    label: 'Manage',
+                    value: [
+                        GameAssist.createButton('Campaign / Chapter / Section / Session', '!npc-death-buckets'),
+                        GameAssist.createButton('Arc Buckets', '!npc-death-arc'),
+                        GameAssist.createButton('Clear History', '!npc-death-clear --scope session')
+                    ]
+                },
+                {
+                    label: 'Review Or Repair',
+                    value: [
+                        GameAssist.createButton('Run Audit', '!npc-death-audit'),
+                        GameAssist.createButton('Review Marker Repairs', '!npc-death-repair')
+                    ]
+                },
+                {
+                    label: 'Learn Or Review',
+                    value: [
+                        GameAssist.createButton('What does NPCAssist do?', '!npc-death-info'),
+                        GameAssist.createButton('Create or Update Manual', '!npc-death-manual')
+                    ]
+                }
+            ]);
         }
 
         function showNPCManagerStatus() {
@@ -12177,7 +12213,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<p>When <code>notifyBloodied</code> is enabled, NPCAssist whispers the GM when a living object-layer NPC crosses from above half of a valid positive maximum HP value to half HP or below. Remaining below half does not repeat the alert; healing above half naturally allows a later crossing to alert again. The notice does not add a marker or history entry and never reports NPC HP publicly.</p>',
                 '<h2>Command Reference</h2>',
                 '<p>Every command below accepts the same suffix through <code>!NPC-*</code>, <code>!NPCAssist-*</code>, <code>!NPC-Death-*</code>, or the legacy <code>!NPCManager-*</code> family. Commands are not case-sensitive.</p>',
-                '<ul><li><code>!NPC-GM</code> or <code>!NPC-DM</code> - Game Master control center.</li><li><code>!npc-death-help</code> or <code>!npc-death-guide</code> - compact guide.</li><li><code>!npc-death-status</code> - active configuration and history counts.</li><li><code>!npc-death-report --scope campaign|chapter|section|session</code> - read a report.</li><li><code>!npc-wr</code> or <code>!npc-death-write</code> - report writer.</li><li><code>!npc-death-buckets</code> - names and active scopes.</li><li><code>!npc-death-arc</code> - Arc controls.</li><li><code>!npc-death-audit</code> - read-only HP/marker review.</li><li><code>!npc-death-repair</code> - preview and confirm marker correction.</li><li><code>!npc-death-clear</code> - confirmed history clearing.</li></ul>',
+                '<ul><li><code>!NPC-GM</code> or <code>!NPC-DM</code> - Game Master control center.</li><li><code>!npc-death-help</code> or <code>!npc-death-guide</code> - compact guide.</li><li><code>!npc-death-status</code> - active configuration and history counts.</li><li><code>!npc-bloodied</code> - toggle private Bloodied alerts and return to the Control Center.</li><li><code>!npc-death-report --scope campaign|chapter|section|session</code> - read a report.</li><li><code>!npc-wr</code> or <code>!npc-death-write</code> - report writer.</li><li><code>!npc-death-buckets</code> - names and active scopes.</li><li><code>!npc-death-arc</code> - Arc controls.</li><li><code>!npc-death-audit</code> - read-only HP/marker review.</li><li><code>!npc-death-repair</code> - preview and confirm marker correction.</li><li><code>!npc-death-clear</code> - confirmed history clearing.</li></ul>',
                 '<h2>Token Eligibility</h2>',
                 '<p>NPCAssist uses linked token objects whose character is marked as an NPC and whose bar 1 HP is numeric. Unlinked map items, scenery, labels, props, and player characters are outside death tracking.</p>'
             ].join('');
@@ -12927,6 +12963,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             showNPCManagerStatus();
         });
 
+        registerNPCCommand('bloodied', () => {
+            modState.config.notifyBloodied = modState.config.notifyBloodied === false;
+            showNPCManagerControl();
+        });
+
         ['info', 'about'].forEach(suffix => {
             registerNPCCommand(suffix, () => {
                 showNPCManagerInfo();
@@ -13384,7 +13425,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
     });
     // --- Notes & Comments ---
-    // Changed (v1.8.1): Added optional GM-private Bloodied alerts for true above-half to living-at-or-below-half HP crossings on eligible object-layer NPCs; invalid maxima, setup transitions, PCs, unlinked tokens, GM-layer tokens, and deaths remain silent.
+    // Changed (v1.8.1): Added optional GM-private Bloodied alerts for true above-half to living-at-or-below-half HP crossings on eligible object-layer NPCs; invalid maxima, setup transitions, PCs, unlinked tokens, GM-layer tokens, and deaths remain silent. The NPCAssist Control Center now provides a one-click state-aware toggle.
     // Decision log:
     //   CHOICE: Use previous/current HP evidence instead of persistent Bloodied state - ALT: remember each token's threshold state; REJECTED: crossing evidence naturally suppresses repeats and rearms after healing without stale runtime data.
     //   CHOICE: Keep Bloodied notices private and independent from markers/history - ALT: add a marker or report entry; REJECTED: the notice must not reveal NPC HP or change established death-history semantics.

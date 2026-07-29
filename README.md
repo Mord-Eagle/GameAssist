@@ -609,6 +609,7 @@ Commands:
 
 * `!npc-death-help` / `!npc-death-guide` → Open the compact NPCAssist guide.
 * `!NPC-GM`, `!NPC-Death-GM`, or `!NPCAssist-GM` → Open the NPCAssist Control Center. Replace `GM` with `DM` for the equal Dungeon Master aliases.
+* `!npc-bloodied` → Toggle private Bloodied alerts and immediately return to the Control Center. The equivalent NPCAssist command families are also accepted.
 * `!npc-death-status` → Show current bucket, history, marker, and Arc health.
 * `!npc-death-info` → Whisper the short module explanation.
 * `!npc-death-manual` → Create or update the stable NPCAssist user-manual handout.
@@ -650,7 +651,7 @@ When mismatches exist, **Review Marker Repairs** opens the separate `!npc-death-
 
 Disabling NPCAssist stops its automation and requests removal of its configured marker from qualifying current-page tokens. Saved Campaign, Chapter, Section, Session, and Arc records remain available after the module is enabled again. Use the NPCAssist clear and Arc-management controls when history should actually be removed.
 
-Bloodied notices are whispered only to the GM and show the NPC name plus current/max HP. They do not add a Bloodied marker, write history, alter Arc records, or repeat while the NPC remains at or below half. Healing above half naturally rearms a later crossing. PCs, unlinked tokens, non-object-layer tokens, deaths, and blank, invalid, zero, or negative maximum HP values do not produce the notice.
+The NPCAssist Control Center shows whether Bloodied alerts are on and provides a one-click Turn On or Turn Off button. Bloodied notices are whispered only to the GM and show the NPC name plus current/max HP. They do not add a Bloodied marker, write history, alter Arc records, or repeat while the NPC remains at or below half. Healing above half naturally rearms a later crossing. PCs, unlinked tokens, non-object-layer tokens, deaths, and blank, invalid, zero, or negative maximum HP values do not produce the notice.
 
 Config keys: `autoTrackDeath`, `notifyBloodied`, `deadMarker`, `autoHide`, `hideLayer`.
 

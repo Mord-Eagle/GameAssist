@@ -75,20 +75,26 @@ Repeat an above-half-to-half-or-below change with each of these disposable token
 | Unlinked token | No Bloodied notice |
 | Linked NPC on GM layer | No Bloodied notice |
 
-### Configuration Opt-Out Check
+### Control Center Toggle and Configuration Opt-Out Check
+
+Run:
 
 ```roll20chat
-!ga-config set NPCAssist notifyBloodied=false
-!npc-death-status
+!NPC-GM
 ```
 
-Confirm the status panel says **Bloodied Alerts: Off**, then repeat the 51-to-50 change. No notice should appear. Confirm an ordinary death and revival still use the configured death marker and history normally.
+Confirm the NPCAssist Control Center shows **Bloodied Alerts: On** with a **Turn Off** button. Click **Turn Off**.
 
-Restore the release default when finished:
+Pass when the same Control Center redraws once, now shows **Bloodied Alerts: Off**, and offers **Turn On**. Repeat the 51-to-50 change; no notice should appear. Confirm an ordinary death and revival still use the configured death marker and history normally.
+
+Click **Turn On** to restore the release default. Confirm the redrawn Control Center says **Bloodied Alerts: On**. The command equivalents may also be checked directly:
 
 ```roll20chat
-!ga-config set NPCAssist notifyBloodied=true
+!npc-bloodied
+!NPC-Death-Bloodied
 ```
+
+Each command should toggle exactly once and return to the NPCAssist Control Center. Leave the setting **On** when finished.
 
 ### HPAssist Initialization Check
 

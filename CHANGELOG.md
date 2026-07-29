@@ -70,7 +70,8 @@ NPCAssist advances from `1.3.2` to `1.3.3`. No other module's independent versio
 ### Game Master controls and documentation
 
 - Adds Bloodied notice state to `!npc-death-status` and the NPCAssist manual.
-- Makes the setting available through existing configuration controls, including `!ga-config set NPCAssist notifyBloodied=false`.
+- Adds a state-aware one-click Bloodied toggle to the NPCAssist Control Center; `!npc-bloodied` and the equivalent command-family aliases toggle the setting and immediately redraw the controls.
+- Keeps the setting available through existing configuration controls, including `!ga-config set NPCAssist notifyBloodied=false`.
 - Updates the README configuration reference, release sequence, upgrade guidance, module behavior, and current release notes.
 - Updates the public roadmap with v1.8.0 completion, v1.8.1 active work, and deferred Issue #72 for safe GameAssist handout organization while Roll20's Mod API folder hierarchy remains read-only.
 - Adds a focused v1.8.1 Roll20 smoke track covering threshold crossing, repeat suppression, rearming, privacy, invalid maxima, death separation, and HPAssist initialization.
