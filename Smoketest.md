@@ -20,7 +20,7 @@ Run commands one at a time. A multi-line command block is a checklist, not a sin
 
 ## Focused v2.0.0 EffectAssist Acceptance
 
-**What this proves:** EffectAssist coordinates its nine-effect launch catalog, applies verified 2014-sheet modifiers where available, links concentration-dependent effects to their source, keeps overlapping sources separate, preserves pre-existing campaign state, and repairs only a freshly confirmed safe mismatch.
+**What this proves:** EffectAssist coordinates its focused six-effect launch catalog, applies verified 2014-sheet modifiers where available, authorizes player casting from controlled sources, links concentration-dependent effects to their source, keeps overlapping sources separate, preserves pre-existing campaign state, and repairs only a freshly confirmed safe mismatch.
 
 **Why test it:** v2.0.0 introduces durable effect records and ownership across tokens, concentration, and repeating character-sheet rows. Roll20 must confirm real 2014-sheet worker behavior, token selection, marker storage, module toggles, chat buttons, and persistent state.
 
@@ -42,9 +42,9 @@ EffectAssist begins disabled. Confirm that before changing anything:
 ```roll20chat
 !ga-config modules
 !ga-enable EffectAssist
+!effect
 !Effect-Guide
 !Effect-GM
-!Effect-Catalog
 !Effect-Status
 !Effect-Audit
 ```
@@ -53,19 +53,19 @@ EffectAssist begins disabled. Confirm that before changing anything:
 
 - the initial module list shows EffectAssist configured off and paused;
 - enabling it changes only EffectAssist's lifecycle state;
-- Guide and GM controls are private, compact, and understandable;
+- `!effect` opens the catalog directly, while Guide and GM controls remain compact and understandable;
 - Status reports zero active effects on a clean state;
 - Audit explicitly reports that it changed nothing.
 
 ### Complete Bless Lifecycle
 
 1. Select the linked target token.
-2. Run `!Effect-GM`.
-3. Click **Effect Catalog**, then **Bless**.
+2. Run `!effect`.
+3. Click **Bless**.
 4. Choose the first linked source in the source prompt.
 5. Review the preview and click **Apply This Effect**.
 6. Open the target's 2014 sheet and inspect its global attack and saving-throw modifiers.
-7. Run `!Effect-Status`.
+7. Confirm the **Effect Applied** result includes **End Effect**, then run `!Effect-Status`.
 
 **Pass when:**
 
@@ -74,7 +74,8 @@ EffectAssist begins disabled. Confirm that before changing anything:
 - the target sheet has one active `Bless (GameAssist)` attack row with `1d4` and one active `Bless (GameAssist)` saving-throw row with `1d4`;
 - the source has the configured Concentrating marker and ConcentrationAssist reports it as concentrating;
 - unrelated markers, HP, bars, layer, controllers, character attributes, and Turn Tracker rows are unchanged;
-- Status offers an End button without requiring the GM to type the internal instance ID.
+- the application result offers an End Effect button without requiring the GM to type the internal instance ID;
+- Status remains a compact summary rather than printing the complete active and ended history.
 
 Clear concentration from the source with ConcentrationAssist. Pass when the Bless instance ends, the target marker and both unedited GameAssist sheet rows are removed, and unrelated sheet rows remain.
 
@@ -84,16 +85,29 @@ Apply each remaining catalog effect once to disposable tokens through `!Effect-C
 
 | Effect | Confirm before ending it |
 | --- | --- |
-| Guidance | Target marker and source concentration are active; the preview explains the one-use `1d4` check. |
-| Gift of Alacrity | Target marker is active; the preview points to the initiative bonus-die workflow. |
+| Guidance | Target marker, source concentration, and one active `Guidance (GameAssist)` `1d4` global skill row exist; the preview explains that non-skill ability checks still need a manual d4. |
 | Warding Bond | Target marker plus `Warding Bond (GameAssist)` `+1` AC and save rows exist; no concentration marker is added. |
 | Holy Weapon | Target marker and source concentration are active; no global damage row changes every weapon. |
 | Haste | Target marker, `Haste (GameAssist)` `+2` AC row, and source concentration are active. |
-| Longstrider | Target marker is active; the character's free-text speed field is not rewritten. |
 | Pass Without a Trace | Target marker and source concentration are active; the preview identifies the `+10` Stealth step. |
-| Beacon of Hope | Target marker and source concentration are active; the preview identifies its save and healing steps. |
 
-End each effect from `!Effect-Active`. Pass when every owned marker and unedited sheet row clears, concentration clears only when it belongs to that effect, and the assisted instructions remain readable.
+End each effect from its **Effect Applied** panel or `!Effect-Active`. Pass when every owned marker and unedited sheet row clears, concentration clears only when it belongs to that effect, and the assisted instructions remain readable.
+
+Confirm the catalog visibly separates Bless, Guidance, Warding Bond, and Haste under **Marker And Sheet Automation** from Holy Weapon and Pass Without a Trace under **Tracked; Rules Stay Manual**. Gift of Alacrity, Longstrider, and Beacon of Hope should not appear as built-in launch buttons.
+
+### Player Casting and GM Lockout
+
+Use a separate non-GM player login with one linked character token that player controls.
+
+1. As the player, select one or more linked target tokens and run `!effect`.
+2. Apply Bless using the player's controlled character as the source.
+3. Confirm the review is whispered only to that player, then apply it.
+4. Confirm the result includes **End Effect** and use that button.
+5. As GM, run `!Effect-GM` and click **Lock** under Player Casting.
+6. As the player, run `!Bless` with a target selected.
+7. Restore **Allow** from the GM control center.
+
+**Pass when:** the player can apply and end a built-in effect only from a source they control; the player cannot see custom, audit, repair, or GM configuration controls; lockout produces a clear private notice and writes nothing; restoring access works without a sandbox restart.
 
 **NPC fallback:** Apply Bless, Warding Bond, and Haste to the disposable linked NPC. Pass when marker and lifecycle behavior work, no PC-only modifier rows are created for the NPC, and the result clearly identifies the manual mechanics.
 
@@ -145,7 +159,9 @@ With the target selected, open `!Effect-GM` and test:
 5. Click **Confirm Current Repairs**.
 6. Run `!Effect-Audit` again.
 
-**Pass when:** the first audit does not restore the marker, the generated confirmation restores and verifies it, and the second audit is clean.
+**Pass when:** the first audit does not restore the marker or end the source's concentration, the generated confirmation restores and verifies the target marker, and the second audit is clean. Removing only a target projection is repairable drift, not an instruction to end every target's effect.
+
+Then remove the source's Concentrating marker. Pass when the dependent Bless record ends and its unneeded target marker and sheet rows are cleaned up.
 
 Repeat with one GameAssist-created Bless row changed from `1d4` to another value. End Bless. Pass when EffectAssist preserves the edited row and reports that cleanup needs attention instead of deleting the GM's edit.
 
@@ -505,7 +521,7 @@ Do not approve the release if an existing valid configuration, history record, o
 | ConcentrationAssist | Status, saving throws, and marker removal work on linked PC tokens. | It combines character data, rolls, chat, and MarkerService. | ConcentrationAssist is disabled and will not be used. |
 | NPCAssist | Death, revival, audit, history, buckets, and Arc menus work. | It combines HP events, markers, saved records, and handouts. | NPCAssist is disabled and will not be used. |
 | HPAssist | Qualifying NPC HP formulas roll without changing PCs or unlinked tokens. | Incorrect eligibility can damage token HP or create false history. | HPAssist is disabled and NPC HP is set another way. |
-| EffectAssist | The nine-effect catalog coordinates owned markers, concentration, and 2014-sheet rows without deleting unrelated state. | Effects combine several campaign surfaces, so ownership and cleanup must be proven together. | Never for v2.0.0 release acceptance. |
+| EffectAssist | The focused six-effect catalog coordinates player-safe casting, owned markers, concentration, and 2014-sheet rows without deleting unrelated state. | Effects combine several campaign surfaces, so authorization, ownership, and cleanup must be proven together. | Never for v2.0.0 release acceptance. |
 | DebugTools | Dry runs remain non-destructive and `--apply` is explicit. | It verifies diagnostic safeguards and direct MarkerService access. | Normally skip; DebugTools is optional and disabled by default. |
 
 ---
@@ -2573,8 +2589,8 @@ Enable the module and open its GM screen:
 
 ```roll20chat
 !ga-enable EffectAssist
+!effect
 !Effect-GM
-!Effect-Catalog
 !Effect-Definitions
 !Effect-Active
 !Effect-Status
@@ -2585,7 +2601,7 @@ Enable the module and open its GM screen:
 Pass when:
 
 - the GM screen clearly separates applying, reviewing, auditing, and help;
-- all nine launch effects appear in the catalog;
+- the six focused launch effects appear and are separated into automation and tracked/manual groups;
 - status reports no active effects on a first run;
 - audit reports no mismatches;
 - the unrecognized command offers a clear route back to the Guide.
@@ -2594,7 +2610,7 @@ Then select one linked disposable 2014 PC target and apply Bless from another li
 
 - one active effect is recorded;
 - the configured Bless marker, the source concentration marker, and the target's `1d4` attack/save modifier rows appear;
-- `!Effect-Status` identifies the source and target;
+- the Effect Applied panel offers **End Effect**, `!Effect-Active` identifies the source and target, and `!Effect-Status` stays compact;
 - applying the same submitted request twice does not create a duplicate;
 - ending concentration or using `!Effect-End` removes the EffectAssist-owned marker and unedited modifier rows, then moves the record to recent history.
 
@@ -2607,7 +2623,9 @@ Use the focused section to prove:
 - two Bless sources share one non-stacking marker and one attack/save row pair;
 - ending one source does not remove the remaining source's projections;
 - pre-existing matching markers and rows are preserved after all EffectAssist sources end;
-- all nine catalog definitions can be applied and ended with their documented automatic and assisted behavior;
+- all six catalog definitions can be applied and ended with their documented automatic and assisted behavior;
+- Guidance owns one `1d4` global skill row and removes it safely;
+- player casting requires control of the source, stays private, and obeys the GM lockout without exposing GM-only menus;
 - Warding Bond creates only its `+1` AC/save rows and Haste creates only its `+2` AC row;
 - manual source-concentration removal ends dependent effects and cleans only owned target state;
 - edited EffectAssist-created sheet rows are preserved and reported for attention;

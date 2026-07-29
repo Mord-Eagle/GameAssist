@@ -53,14 +53,17 @@ EffectAssist starts disabled so existing campaigns upgrade without receiving new
 
 ### Launch effect catalog
 
-- Adds built-in definitions for Bless, Guidance, Gift of Alacrity, Warding Bond, Holy Weapon, Haste, Longstrider, Pass Without a Trace, and Beacon of Hope.
+- Adds focused built-in definitions for Bless, Guidance, Warding Bond, Holy Weapon, Haste, and Pass Without a Trace.
 - Gives every definition a stable identifier, readable rules summary, target guidance, duration guidance, concentration requirement, stacking group, projection list, and separate automatic, assisted, and informational instructions.
-- Presents a preview before application so the GM can see exactly what GameAssist will change and what still requires normal table adjudication.
+- Separates entries into **Marker and Sheet Automation** and **Tracked; Rules Stay Manual** before application.
+- Omits Gift of Alacrity, Longstrider, and Beacon of Hope as built-in launch buttons because marker-only treatment does not remove enough table work; the generic Marker, Condition, and Record Only paths remain available when a GM deliberately wants that tracking.
+- Presents a preview before application so the GM or casting player can see exactly what GameAssist will change and what still requires normal table adjudication.
 
 ### Official 2014 sheet projections
 
-- Adds an ownership-aware adapter for the official D&D 5E by Roll20 2014 repeating global attack, saving-throw, and AC modifier sections.
+- Adds an ownership-aware adapter for the official D&D 5E by Roll20 2014 repeating global attack, saving-throw, skill, and AC modifier sections.
 - Bless creates active `Bless (GameAssist)` `1d4` rows for global attack and saving-throw modifiers on eligible 2014 PC targets.
+- Guidance creates an active `Guidance (GameAssist)` `1d4` global skill modifier row on eligible 2014 PC targets; ability checks that are not represented by a sheet skill retain an explicit manual-d4 instruction.
 - Warding Bond creates active `Warding Bond (GameAssist)` `+1` rows for AC and saving throws.
 - Haste creates an active `Haste (GameAssist)` `+2` AC row.
 - Uses `setWithWorker` when Roll20 exposes it and avoids writing generated aggregate fields.
@@ -76,19 +79,16 @@ EffectAssist starts disabled so existing campaigns upgrade without receiving new
 - Establishes concentration on the source through ConcentrationAssist's public lifecycle contract.
 - Ends dependent Bless instances when source concentration ends through ConcentrationAssist or MarkerService observation.
 - Removes only the final unneeded EffectAssist-owned target marker and unedited sheet rows.
-- Rejects a second concentration effect from the same source unless the GM explicitly chooses to replace the current one.
+- Rejects a second concentration effect from the same source unless replacement is explicitly confirmed; the guided prompt now presents replacement as the default choice.
 - Rolls back partial work when any required projection cannot be established.
 
 ### Remaining catalog behavior
 
-- Guidance manages its marker and source concentration while identifying the one-use `1d4` check.
-- Gift of Alacrity manages its marker and points to InitiativeAssist's bonus-die controls instead of placing a die expression in a numeric initiative field.
+- Guidance manages its marker, safe `1d4` global skill row, source concentration, and cleanup while identifying non-skill ability checks as manual.
 - Warding Bond manages its marker and safe `+1` AC/save rows while leaving resistance and mirrored damage to the table.
 - Holy Weapon manages its marker and source concentration without adding a global damage row that would affect every weapon.
 - Haste manages its marker, safe `+2` AC row, source concentration, and cleanup while identifying its remaining speed, save, action, and lethargy rules.
-- Longstrider manages its marker without rewriting the 2014 sheet's free-text movement field.
 - Pass Without a Trace manages its marker and source concentration while identifying the `+10` Stealth and area-membership responsibilities.
-- Beacon of Hope manages its marker and source concentration while identifying its Wisdom-save, death-save, and healing responsibilities.
 
 ### Semantic effect records and transactions
 
@@ -111,6 +111,8 @@ EffectAssist starts disabled so existing campaigns upgrade without receiving new
 - Preserves matching markers, conditions, concentration, and sheet rows that existed before EffectAssist began managing the effect.
 - Verifies each supported write and records clear pending or needs-attention health when a projection cannot be completed or safely cleaned.
 - Refuses to mutate a token when its represented character no longer matches the identity captured by the effect instance.
+- Treats manual removal of a target effect marker as auditable, repairable projection drift rather than silently ending the source's concentration or every target's effect.
+- Continues to end dependent effects when the source's Concentrating marker is removed or ConcentrationAssist reports that concentration ended.
 
 ### Audit and authorized repair
 
@@ -124,6 +126,11 @@ EffectAssist starts disabled so existing campaigns upgrade without receiving new
 ### Game Master experience
 
 - Adds a compact EffectAssist GM/DM control center, Guide/Help, Catalog, Active Effects, Info, Status, Definitions, Audit, Apply/Confirm, End, Repair, and persistent Manual workflow.
+- Makes bare `!effect` open the catalog directly and keeps Status compact by moving complete active-instance controls to `!Effect-Active`.
+- Adds an **End Effect** button to every successful application result.
+- Adds a Player Casting switch to the GM control center; it is enabled by default and may be locked or restored without restarting the sandbox.
+- Adds case-insensitive player shortcuts for `!Bless`, `!Guidance` / `!Guide`, `!Haste`, `!Warding-Bond`, `!Holy-Weapon`, and `!PwoaT`.
+- Requires every player preview and confirmation to resolve a linked source currently controlled by that Roll20 player; custom effects, status, audit, repair, and configuration remain GM-only.
 - Provides friendly unknown-command recovery with a direct route back to the Guide.
 - Keeps detailed catalog and lifecycle guidance in the module manual while ordinary chat menus remain task-oriented.
 - Adds EffectAssist to ConfigUI, module health reporting, the public command matrix, One-Click metadata, and the module-specific smoke-test guide.
@@ -148,6 +155,7 @@ EffectAssist starts disabled so existing campaigns upgrade without receiving new
 ### State and lifecycle safeguards
 
 - Adds EffectAssist schema-2 defaults through the existing state self-healing path while preserving valid configuration and unknown state branches.
+- Adds the preserved `allowPlayerCasting` configuration key with a default of `true`.
 - Reports malformed known definitions, instances, and projection records without deleting them automatically.
 - Preserves EffectAssist runtime records when the module is disabled and restores command access to the same records when it is re-enabled. Direct public API mutation requests return `UNAVAILABLE` while disabled; read-only inspection remains available.
 - Removes active handlers during disable without deleting the public state ledger.
@@ -172,7 +180,7 @@ EffectAssist starts disabled so existing campaigns upgrade without receiving new
 
 - JavaScript syntax parsing passes for the complete v2.0.0 executable.
 - MECHSUITS validation finds 28 correctly nested and paired sections, complete metadata and footers, and an exact file-scoped canonical tree.
-- Eighty-eight focused deterministic checks pass for the nine-effect catalog, complete Bless automation, single-archive concentration cleanup, concentration replacement, overlapping ownership, cross-adapter marker sharing, shared and restored 2014 global-modifier flags, request idempotency and conflict refusal, pre-existing-state preservation, edited-row preservation, NPC fallback, optional MarkerService behavior, Warding Bond and Haste modifier rows, manual concentration-marker cleanup, and syntax-safe lifecycle handling.
+- Ninety-five focused deterministic checks pass for the six-effect catalog, complete Bless automation, Guidance's global skill row, single-archive concentration cleanup, concentration replacement, overlapping ownership, cross-adapter marker sharing, shared and restored 2014 global-modifier flags, request idempotency and conflict refusal, pre-existing-state preservation, edited-row preservation, NPC fallback, optional MarkerService behavior, Warding Bond and Haste modifier rows, player source authorization and lockout, compact status, immediate End Effect controls, manual concentration-marker cleanup, and syntax-safe lifecycle handling.
 - Nine SemanticEvents checks pass for filtered ordered delivery, observer isolation, deep immutability, envelope shape, cleanup, and invalid-type refusal.
 - `script.json` parses with the expanded v2.0.0 command and description additions.
 - Release acceptance includes the clean-install and v1.8.2 upgrade tracks in `Smoketest.md`, plus complete Bless, catalog coverage, concentration cleanup, overlap, audit/repair, disable/re-enable, and restart checks in the live Roll20 Mod sandbox.

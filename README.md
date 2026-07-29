@@ -3,7 +3,7 @@
 **Version 2.0.0 development line** | © 2025-2026 Mord Eagle · MIT License<br>
 **Lead Dev:** [@Mord-Eagle](https://github.com/Mord-Eagle)
 
-GameAssist v2.0.0 introduces EffectAssist: a disabled-by-default, catalog-driven effect coordinator for the official D&D 5E by Roll20 2014 sheet. Its first catalog covers Bless, Guidance, Gift of Alacrity, Warding Bond, Holy Weapon, Haste, Longstrider, Pass Without a Trace, and Beacon of Hope. EffectAssist records each source and target, applies the mechanics Roll20 can represent safely, identifies the remaining table steps, and removes only the marker, condition, concentration, or sheet state that it can prove it owns.
+GameAssist v2.0.0 introduces EffectAssist: a disabled-by-default, catalog-driven effect coordinator for the official D&D 5E by Roll20 2014 sheet. Its focused launch catalog covers Bless, Guidance, Warding Bond, Holy Weapon, Haste, and Pass Without a Trace, with each entry labeled by the automation it can actually provide. EffectAssist records each source and target, applies the mechanics Roll20 can represent safely, identifies the remaining table steps, and removes only the marker, condition, concentration, or sheet state that it can prove it owns.
 
 ---
 
@@ -19,7 +19,7 @@ GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a
 | --- | --- |
 | Core Lift | Guarded modules, conservative state repair, explicit queue API, versioned semantic events, session metrics, dependency diagnostics, GM health reporting, and toggleable marker and Turn Tracker services with dependent-module safeguards. |
 | Quick Install | 📥 Install the complete script → 📜 add the CritAssist tables if used → 🔄 reload → 🩺 run the health checks → 🎲 test the enabled features with disposable tokens. |
-| Flagship Player Commands | `!condition <name>`, `!cond-<condition>`, `!concentration`, `!cc`, `!critfumble-<type>` when the GM permits the relevant player action. |
+| Flagship Player Commands | `!effect`, `!Bless`, `!Guidance`, `!Guide`, `!Haste`, `!Warding-Bond`, `!Holy-Weapon`, `!PwoaT`, `!condition <name>`, `!cond-<condition>`, `!concentration`, `!cc`, and `!critfumble-<type>` when the GM permits the relevant player action. |
 | Flagship GM Commands | `!Init-GM` / `!Init-DM`, `!Combat-GM` / `!Combat-DM`, `!Welcome-GM` / `!Welcome-DM`, `!TokenAssist-GM` / `!TokenAssist-DM`, `!Condition-GM` / `!Condition-DM`, `!CritAssist-GM` / `!CritAssist-DM`, `!NPC-GM` / `!NPC-DM`, `!Con-GM` / `!Con-DM`, `!Effect-GM` / `!Effect-DM`, plus each module's specialized commands below. |
 | Admin Controls | `!ga-config list|get|set|modules|cleanup|ui|timezone`, `!ga-timezone`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-metrics`, and `!ga-debug`. |
 | Table Time | `!ga-timezone` chooses a named IANA timezone, follows daylight-saving changes, and controls readable times plus date-managed NPC Sessions without rewriting stored event instants. |
@@ -71,7 +71,7 @@ GameAssist’s kernel and bundled modules expose:
 * **InitiativeAssist** – provides the case-insensitive `!Init-` command family for D&D 5E 2014 and 2024 characters, public player invitations, composable roll options, detailed dice/formula results, score-aware optional narration, selective rerolls, encounter groups, audits, and preservation-first `!Init-RR`. It does not advance turns or own encounter rounds.
 * **CombatAssist** – provides the case-insensitive `!Combat-` command family as an optional layer over Roll20's native Turn Tracker. Native arrows remain available; a recognized native round-counter row can own the round number, while guarded movement, stale-safe timers, native pings, private player prompts, preserved-round maintenance, and one-step recovery add convenience. TurnTrackerService is required for tracker access; timers never advance initiative and pings never alter tokens.
 * **WelcomeAssist** – optionally posts one delayed table greeting after GameAssist completes a healthy startup. It starts disabled, offers professional, built-in table-humor, campaign-custom, and mixed greeting modes, keeps configuration and previews private to the GM, and uses the short case-insensitive `!Welcome` / `!Welcome-Action` command family.
-* **EffectAssist** – starts disabled and coordinates a catalog of source-aware effects for the official 2014 sheet. Bless receives automatic 1d4 global attack and saving-throw rows, a target marker, source concentration, and linked cleanup; Warding Bond and Haste receive their ownership-safe sheet modifiers; all nine launch effects receive tracked lifecycles with automatic, assisted, and informational steps stated plainly. Overlapping sources remain independently removable, pre-existing state remains campaign-owned, and audit never writes without fresh confirmation.
+* **EffectAssist** – starts disabled and coordinates a focused catalog of source-aware effects for the official 2014 sheet. Bless, Guidance, Warding Bond, and Haste receive supported marker and sheet automation; Holy Weapon and Pass Without a Trace are explicitly labeled tracked/manual effects. Players may cast built-ins from controlled sources unless the GM locks that path. Overlapping sources remain independently removable, pre-existing state remains campaign-owned, and audit never writes without fresh confirmation.
 * **MECHSUITS Structure** – the executable script uses the literal codename `GAMEASSIST`, framed sections, file-scoped canonical tree metadata, and per-section change notes.
 
 **Design goal:** useful, inspectable campaign automation that reports failures clearly and can be upgraded incrementally.
@@ -774,7 +774,7 @@ Config keys: `enabled`, `mode`, `delayMs`, `showHeader`, `header`, `defaultGreet
 
 ---
 
-### 6.12 EffectAssist *(optional, GM-managed)*
+### 6.12 EffectAssist *(optional, player-capable and GM-managed)*
 
 > **Module version:** `2.0.0`<br>
 > **Default:** Disabled<br>
@@ -786,47 +786,50 @@ Start here:
 
 ```roll20chat
 !ga-enable EffectAssist
-!Effect-GM
+!effect
 ```
 
-Select the target tokens, open the Effect Catalog, choose an effect, and choose its source. A confirmation panel shows what GameAssist will do automatically and what the table must still handle before anything changes.
+Select the target tokens, run `!effect`, choose an effect, and choose its source. A confirmation panel shows what GameAssist will do automatically and what the table must still handle before anything changes. Concentration replacement defaults to **Yes** in the prompt; choose **No** when the new cast should be cancelled instead.
 
-| Effect | Automatic in v2.0.0 | Assisted at the table |
-| --- | --- | --- |
-| **Bless** | Target marker; 2014-sheet `1d4` global attack and save rows; source concentration; linked cleanup. | Choose legal targets and end early when a non-concentration rule requires it. |
-| **Guidance** | Target marker; source concentration; linked cleanup. | Add `1d4` to one eligible ability check and end after use. |
-| **Gift of Alacrity** | Target marker and durable effect record. | Add `1d8` through InitiativeAssist or the normal initiative workflow. |
-| **Warding Bond** | Target marker; 2014-sheet `+1` AC and saving-throw rows. | Resolve resistance and mirrored damage. |
-| **Holy Weapon** | Target marker; source concentration; linked cleanup. | Apply bonus damage only to the affected weapon and resolve the optional burst. |
-| **Haste** | Target marker; 2014-sheet `+2` AC row; source concentration; linked cleanup. | Resolve speed, Dexterity-save advantage, the restricted action, and ending lethargy. |
-| **Longstrider** | Target marker and durable effect record. | Add 10 feet to the appropriate movement speed. |
-| **Pass Without a Trace** | Target marker; source concentration; linked cleanup. | Add `+10` to affected Stealth checks and maintain the area-based target list. |
-| **Beacon of Hope** | Target marker; source concentration; linked cleanup. | Resolve Wisdom-save and death-save advantage and maximum healing. |
+| Effect | Catalog level | Automatic in v2.0.0 | Still handled at the table |
+| --- | --- | --- | --- |
+| **Bless** | Marker and sheet automation | Target marker; 2014-sheet `1d4` global attack and save rows; source concentration; linked cleanup. | Choose legal targets and end early when a non-concentration rule requires it. |
+| **Guidance** | Marker and sheet automation | Target marker; 2014-sheet `1d4` global skill row; source concentration; linked cleanup. | Roll the d4 manually for an ability check that is not represented by a sheet skill, then end Guidance after its one bonus is used. |
+| **Warding Bond** | Marker and sheet automation | Target marker; 2014-sheet `+1` AC and saving-throw rows. | Resolve resistance and mirrored damage. |
+| **Haste** | Marker and sheet automation | Target marker; 2014-sheet `+2` AC row; source concentration; linked cleanup. | Resolve speed, Dexterity-save advantage, the restricted action, and ending lethargy. |
+| **Holy Weapon** | Tracked; mechanics manual | Target marker; source concentration; linked cleanup. | Apply bonus damage only to the affected weapon and resolve the optional burst. A global damage row is deliberately not used because it would affect every weapon. |
+| **Pass Without a Trace** | Tracked; mechanics manual | Target marker; source concentration; linked cleanup. | Add `+10` only to affected Stealth checks and maintain the area-based target list. The 2014 global skill row is deliberately not used because it would affect every skill. |
 
-Automatic means EffectAssist has an ownership-safe Roll20 representation. Assisted does not mean forgotten: the confirmation, status, catalog, and manual identify those mechanics so the GM knows exactly what remains.
+The catalog separates **Marker and Sheet Automation** from **Tracked; Rules Stay Manual** before the GM or player chooses an effect. Gift of Alacrity, Longstrider, and Beacon of Hope are not built-in launch entries because marker-only treatment would not remove enough table work to justify prominent buttons. A GM may still create a guided custom marker, condition, or record-only effect when tracking one of those rules is useful.
+
+Players can run `!effect` or a direct spell shortcut and apply a built-in effect from a linked source token or character they control. Every preview and confirmation rechecks source control. The GM retains the custom-effect, status, audit, repair, and configuration screens and can lock or restore player casting through the Control Center at any time.
 
 Two sources applying the same non-stacking effect to one target remain separate instances but share each effective projection. Ending one source leaves the other source's marker and sheet rows in place. Ending the final source removes only the state EffectAssist originally created. Matching markers or modifier rows that existed first remain untouched.
+
+Removing a target's effect marker manually does not silently end the source's concentration or remove the effect from every target. It creates a visible audit mismatch that the GM can repair or resolve by ending the effect. Removing the source's Concentrating marker, clearing concentration through ConcentrationAssist, or using **End Effect** ends the dependent effect and performs ownership-safe cleanup.
 
 Main commands:
 
 * `!Effect-GM`, `!Effect-DM`, or `!Effect-Menu` → Open the Game Master control screen.
 * `!Effect-Guide` or `!Effect-Help` → Open the compact quick-start guide.
-* `!Effect-Catalog` → Open the nine-effect launch catalog and guided application buttons.
+* `!effect` or `!Effect-Catalog` → Open the focused launch catalog directly.
+* `!Bless`, `!Guidance` / `!Guide`, `!Haste`, `!Warding-Bond`, `!Holy-Weapon`, or `!PwoaT` → Open a compact source-and-review path for that effect; commands are case-insensitive.
 * `!Effect-Active` → Manage active instances and end one exact source.
-* `!Effect-Status` → Review active effects, recent history, source/target details, concentration, and projection health.
+* `!Effect-Status` → Review compact module, record, health, and player-casting totals without printing the full active/recent history.
 * `!Effect-Definitions` → Review built-in and campaign definitions with automatic, assisted, and informational behavior.
 * `!Effect-Audit` → Compare semantic records, exact targets, ownership ledgers, markers, conditions, concentration, and sheet rows without changing anything.
 * `!Effect-Repair` → Reopen the audit unless a fresh one-use confirmation grant is supplied by the audit button.
 * `!Effect-End --id <generated-id>` → End one exact source instance; ordinary menus generate this button so the GM need not memorize IDs.
 * `!Effect-Info` → Explain source ownership, overlap, and current supported boundaries.
 * `!Effect-Manual` → Create or update the stable EffectAssist user-manual handout.
+* `!Effect-Players on|off` → Allow or lock player use of built-in casting controls; GM application remains available.
 * `!effect <command>` → Use the same controls through the case-insensitive spaced command family.
 
 Audit reports missing tokens, token representation changes, unavailable projections, missing or changed markers and sheet rows, missing ownership records, orphaned owned state, and malformed preserved records. Repair is offered only for safe current mismatches, is bound to the GM who ran the audit, expires after five minutes, rechecks the complete mismatch signature, and verifies the result. If a GM edits an EffectAssist-created sheet row, cleanup preserves that edited row and marks the instance for attention instead of deleting the GM's work.
 
 Disabling EffectAssist stops its commands and future automation while preserving valid active records, ended history, definitions, and existing projections. Re-enable it and run Status or Audit before continuing. MarkerService, ConditionAssist, or ConcentrationAssist can be unavailable without corrupting the semantic record; affected projections remain visible as pending or needing attention.
 
-Config keys: `enabled`, the protected `markerOverrides` map, and the protected `customDefinitions` map. In v2.0.0, the two protected maps are reserved for validated release data and are not edited through `!ga-config`; GMs use the built-in catalog or the guided custom Marker, Condition, and Record Only choices.
+Config keys: `enabled`, `allowPlayerCasting`, the protected `markerOverrides` map, and the protected `customDefinitions` map. In v2.0.0, the two protected maps are reserved for validated release data and are not edited through `!ga-config`; GMs use the built-in catalog or the guided custom Marker, Condition, and Record Only choices.
 
 ---
 
@@ -945,11 +948,13 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!Welcome-Custom` | `list`, `add <text>`, `remove <number>`, `clear --confirm` | Manage the bounded campaign greeting list. |
 | **Effects** | `!Effect-GM` / `!Effect-DM` / `!Effect-Menu` | selected linked targets; guided source picker | Open EffectAssist's private action screen. |
 |  | `!Effect-Guide` / `!Effect-Help` / `!Effect-Info` / `!Effect-Manual` | — | Open compact guidance, the short explanation, or the stable manual handout. |
-|  | `!Effect-Catalog` | selected linked targets; guided source picker | Choose from Bless, Guidance, Gift of Alacrity, Warding Bond, Holy Weapon, Haste, Longstrider, Pass Without a Trace, or Beacon of Hope. |
-|  | `!Effect-Active` / `!Effect-Status` / `!Effect-Definitions` | — | Manage active instances, review recent history and projection health, or inspect catalog behavior. |
+|  | `!effect` / `!Effect-Catalog` | selected linked targets; guided source picker | Open the catalog directly. Bless, Guidance, Warding Bond, and Haste provide supported marker/sheet automation; Holy Weapon and Pass Without a Trace are clearly labeled tracked/manual entries. |
+|  | `!Bless` / `!Guidance` / `!Guide` / `!Haste` / `!Warding-Bond` / `!Holy-Weapon` / `!PwoaT` | selected linked targets; controlled source | Open a compact source-and-review path for one built-in effect. |
+|  | `!Effect-Active` / `!Effect-Status` / `!Effect-Definitions` | — | Manage active instances, review compact health totals, or inspect catalog behavior. |
 |  | `!Effect-Apply` | `--effect <catalog-id>` or bounded `--name` with `--marker`, `--condition`, or `--none`; generated `--source` | Preview one atomic application. The generated confirmation identifies automatic 2014-sheet changes and assisted table steps before writing. |
 |  | `!Effect-End` | `--id <generated-id>` | End one exact source instance through generated buttons and remove only an unneeded EffectAssist-owned projection. |
 |  | `!Effect-Audit` / `!Effect-Repair` | fresh generated confirmation grant | Compare records against marker, condition, concentration, and 2014-sheet projections without writing, then deliberately repair only a still-current safe mismatch. |
+|  | `!Effect-Players on\|off` | GM only | Allow or lock player casting from controlled linked sources. |
 |  | `!effect <command>` / `!EffectAssist-<command>` | case-insensitive | Spaced canonical command family and compatibility family for the same guarded controls. |
 | **Token Controls** | `!token-assist help` / `!ta-help` | — | Open TokenAssist guidance, commands, compatibility limits, provenance, and attribution. |
 |  | `!token-assist menu|gm|dm|status|info|audit|manual` | matching `!ta-*` aliases; `!TokenAssist-GM|DM` | Open Game Master controls, health, explanation, read-only review, or the stable TokenAssist manual. |
@@ -1062,6 +1067,7 @@ Setting `enabled=true` or `enabled=false` routes through component lifecycle con
 |  | `autoHide` | bool | `false` | Move newly dead NPC tokens to another layer. |
 |  | `hideLayer` | string | `"gmlayer"` | Target layer used by `autoHide`. |
 | **EffectAssist** | `enabled` | bool | `false` | Enable catalog-driven effect controls and supported 2014-sheet projections. |
+| **EffectAssist** | `allowPlayerCasting` | bool | `true` | Allow players to apply built-in effects from linked sources they control; the GM can lock this from the module control center. |
 |  | `markerOverrides` | object | `{}` | Protected release data for validated effect-marker choices; not an end-user `!ga-config` setting. |
 |  | `customDefinitions` | object | `{}` | Protected bounded definitions created only through EffectAssist's guided custom-effect workflow. |
 | **HPAssist** | `enabled` | bool | `true` | Enable NPC HP commands. |
@@ -2067,7 +2073,7 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 | DM-configurable timezone | **Implemented; focused acceptance passed** | One validated table timezone controls readable timestamps and date-managed NPC Sessions while stored event instants remain absolute. The complete live module suite was not rerun for v0.1.5.1. |
 | TurnTrackerService 1.0.0 | **Implemented; live foundation passed** | Toggleable native-tracker snapshots, structural row classification, guarded lossless writes, observations, dependency cascading, and visible page-owned row creation passed the focused Roll20 checkpoint. |
 | SemanticEvents 1 | **Implemented; local contract checks passed** | Immutable, versioned, direct-delivery domain events let optional modules interoperate without hard dependencies, persistence, replay, or implicit queueing. |
-| EffectAssist 2.0.0 | **v2.0.0 sandbox candidate** | Disabled-by-default nine-effect catalog for the official 2014 sheet, multi-projection ownership, concentration-linked cleanup, bounded history, read-only audit, and confirmed repair are ready for focused Roll20 testing. |
+| EffectAssist 2.0.0 | **v2.0.0 sandbox candidate** | Disabled-by-default six-effect catalog for the official 2014 sheet, player casting with GM lockout, multi-projection ownership, concentration-linked cleanup, bounded history, read-only audit, and confirmed repair are ready for focused Roll20 testing. |
 | InitiativeAssist 1.0.4 | **Implemented and accepted** | Mixed 2014/2024 initiative, public and private GM/DM start pages, private NPC evidence, GM-layer NPC batches, selected-character batches, roll options, selective rerolls, encounter groups, status, audit, compact navigation, and a stable manual through the case-insensitive `!Init-` namespace. |
 | CombatAssist 1.0.5 | **Implemented and accepted** | Optional native-tracker layer with native round-counter authority, conservative fallback rounds, preserved-round roster/reroll adoption, one-step recovery, guarded movement, stale-safe configurable timers, private-safe native pings, ordered player confirmations, GM/DM controls, compact guidance, and a persistent manual. TurnTrackerService is its only baseline prerequisite. |
 | WelcomeAssist 0.1.4 | **Implemented and accepted** | Disabled-by-default post-bootstrap greeting with professional, built-in, campaign-custom, and mixed modes; private preview/configuration; bounded custom text; health-gated one-per-sandbox automatic output; compact standard navigation; GM/DM status controls; a stable manual; short `!Welcome` commands; and retained `!welcome-assist` compatibility. |
@@ -2079,7 +2085,7 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 
 ### 17.2 Current Candidate: v2.0.0 EffectAssist 2014 Launch
 
-The v2.0.0 candidate adds EffectAssist 2.0.0 as a disabled-by-default, catalog-driven 2014-sheet module. Bless is the complete acceptance example: it coordinates the target marker, `1d4` global attack and saving-throw rows, source concentration, overlap, and linked cleanup. Warding Bond and Haste add the other verified 2014-sheet modifier rows, while Guidance, Gift of Alacrity, Holy Weapon, Longstrider, Pass Without a Trace, and Beacon of Hope combine safe automation with explicit assisted steps. Passive cast recognition, HP-loss offers, automatic duration providers, and 2024-sheet projections remain separately tracked enhancements.
+The v2.0.0 candidate adds EffectAssist 2.0.0 as a disabled-by-default, catalog-driven 2014-sheet module. Bless is the complete acceptance example: it coordinates the target marker, `1d4` global attack and saving-throw rows, source concentration, overlap, and linked cleanup. Guidance adds its safe `1d4` global skill row; Warding Bond and Haste add the other verified 2014-sheet modifier rows. Holy Weapon and Pass Without a Trace remain clearly labeled tracked/manual entries. Players can apply built-ins from controlled sources unless the GM locks that path. Passive cast recognition, HP-loss offers, automatic duration providers, weapon-specific damage, and 2024-sheet projections remain separately tracked enhancements.
 
 ### 17.3 Later Candidate: Compatibility-First Bridge Character Sheet
 
@@ -2097,7 +2103,7 @@ This is a separate project and is not implemented in v0.1.5.0.
 1. **v1.8.0 — Module Identity Migration:** completed through Issue #60 and PR #63 with canonical CritAssist, NPCAssist, ConcentrationAssist, and HPAssist names, migration-safe state and handout handling, and retained command aliases.
 2. **v1.8.1 — NPCAssist Bloodied Alerts:** completed through Issue #64 and PR #73 with a GM-private crossing notification and one-click Control Center toggle.
 3. **v1.8.2 — Progressive NPC Naming:** completed through Issue #65 and PR #74 with page-local duplicate avoidance based on the tokens present when a new eligible NPC is added.
-4. **v2.0.0 — EffectAssist 2014 Launch:** in progress through Issues #61, #75, #76, and #78 with source-aware instances, a nine-effect catalog, ownership-safe marker/condition/2014-sheet projections, ConcentrationAssist lifecycle coordination, read-only audit, and deliberate repair. Issues #77, #79, and #80 retain the separately gated recognition, HP, and duration enhancements.
+4. **v2.0.0 — EffectAssist 2014 Launch:** in progress through Issues #61, #75, #76, and #78 with source-aware instances, a focused six-effect catalog, player casting with GM lockout, ownership-safe marker/condition/2014-sheet projections, ConcentrationAssist lifecycle coordination, read-only audit, and deliberate repair. Issues #77, #79, and #80 retain the separately gated recognition, HP, and duration enhancements.
 5. **v2.y — AlmanacAssist:** use Issue #62 as the master specification and implement Time, Climate, Astronomy, Weather, Environment, and Rest as six separately tracked internal submodule phases.
 6. **v2.z — Deferred Backlog:** revisit older TokenAssist parity work, CombatAssist integrations, and other deferred features after the new module foundations are stable.
 
@@ -2124,7 +2130,7 @@ The public [development roadmap](ROADMAP.md) carries the detailed gates and issu
 
 ### v2.0.0 – EffectAssist 2014 Sheet Automation
 
-* Added disabled-by-default EffectAssist 2.0.0 with a nine-effect launch catalog, source and target records, dependencies, stacking, lifecycle, and bounded history.
+* Added disabled-by-default EffectAssist 2.0.0 with a focused six-effect launch catalog, player casting from controlled sources, GM lockout, source and target records, dependencies, stacking, lifecycle, and bounded history.
 * Bless now coordinates its target marker, 2014-sheet `1d4` attack and save modifier rows, source concentration, overlap, and dependent cleanup.
 * Warding Bond and Haste add their verified AC/save rows; all catalog entries distinguish automatic mechanics from assisted table steps.
 * Preserves non-stacking projections across overlapping sources and removes only final EffectAssist-owned markers, conditions, concentration, and unedited sheet rows.

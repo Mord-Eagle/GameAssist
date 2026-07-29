@@ -65,7 +65,7 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | Canonical module identities | Complete | [#60](https://github.com/Mord-Eagle/GameAssist/issues/60), [PR #63](https://github.com/Mord-Eagle/GameAssist/pull/63) | v1.8.0 migrated CritAssist, NPCAssist, ConcentrationAssist, and HPAssist names while preserving valid state, records, handouts, APIs, and established commands. PR #63 merged and Issue #60 closed. |
 | NPCAssist Bloodied alerts | Complete | [#64](https://github.com/Mord-Eagle/GameAssist/issues/64), [PR #73](https://github.com/Mord-Eagle/GameAssist/pull/73) | v1.8.1 added a focused GM-private 50% HP crossing alert and one-click Control Center toggle without changing death-history semantics. |
 | Progressive NPC naming | Complete | [#65](https://github.com/Mord-Eagle/GameAssist/issues/65), [PR #74](https://github.com/Mord-Eagle/GameAssist/pull/74) | v1.8.2 prevents accidental duplicate NPC token names through page-local, current-token numbering that the GM can disable or deliberately override. |
-| EffectAssist 2014 launch | Sandbox verification | [#75](https://github.com/Mord-Eagle/GameAssist/issues/75) | v2.0.0 implements a nine-effect catalog, source-aware instances, multi-projection ownership, lifecycle history, read-only audit, and authorized repair. |
+| EffectAssist 2014 launch | Sandbox verification | [#75](https://github.com/Mord-Eagle/GameAssist/issues/75) | v2.0.0 implements a focused six-effect catalog, player casting with GM lockout, source-aware instances, multi-projection ownership, lifecycle history, read-only audit, and authorized repair. |
 | EffectAssist 2014 sheet projection | Sandbox verification | [#76](https://github.com/Mord-Eagle/GameAssist/issues/76) | Bless, Warding Bond, and Haste use ownership-safe repeating global modifier rows on official 2014 PC sheets, with NPC and assisted fallbacks. |
 | EffectAssist cast recognition | Planned | [#77](https://github.com/Mord-Eagle/GameAssist/issues/77) | Offer GM-confirmed 2014 Bless proposals; keep 2024 recognition observational until real template samples establish a safe contract. |
 | EffectAssist concentration observation | Sandbox verification | [#78](https://github.com/Mord-Eagle/GameAssist/issues/78) | ConcentrationAssist 0.3.0 owns concentration state and exposes lifecycle events used for dependent EffectAssist cleanup. |
@@ -466,13 +466,13 @@ The Roll20 module list uses only the four canonical names; valid settings and re
 
 ## Phase 13: EffectAssist 2014-Sheet Program in `v2.0.0`
 
-[Issue #61](https://github.com/Mord-Eagle/GameAssist/issues/61) is the master specification. The v2.0.0 launch combines the semantic engine, the verified official 2014-sheet adapter, concentration coordination, and a nine-effect catalog. Later recognition, HP, duration, and 2024-sheet work retain separate evidence gates.
+[Issue #61](https://github.com/Mord-Eagle/GameAssist/issues/61) is the master specification. The v2.0.0 launch combines the semantic engine, the verified official 2014-sheet adapter, concentration coordination, and a focused six-effect catalog with player casting and GM lockout. Later recognition, HP, duration, weapon-specific damage, and 2024-sheet work retain separate evidence gates.
 
 EffectAssist remains a gameplay module. MarkerService owns markers, ConditionAssist owns condition definitions and condition-marker workflows, character sheets own their native roll fields, ConcentrationAssist owns concentration checks, HP-writing modules own HP mutations, and TurnTrackerService owns native tracker access.
 
 ### Launch Engine and Catalog — v2.0.0
 
-**Tracking:** [Issue #75](https://github.com/Mord-Eagle/GameAssist/issues/75)  
+**Tracking:** [Issue #75](https://github.com/Mord-Eagle/GameAssist/issues/75)
 **Status:** Sandbox verification
 
 - [x] Add source-aware effect definitions and active instances.
@@ -480,40 +480,42 @@ EffectAssist remains a gameplay module. MarkerService owns markers, ConditionAss
 - [x] Add idempotent application and idempotent ending.
 - [x] Add shared multi-projection ownership with baseline preservation.
 - [x] Support MarkerService, ConditionAssist, concentration, 2014-sheet, and record-only projections.
-- [x] Add Bless, Guidance, Gift of Alacrity, Warding Bond, Holy Weapon, Haste, Longstrider, Pass Without a Trace, and Beacon of Hope.
+- [x] Add Bless, Guidance, Warding Bond, Holy Weapon, Haste, and Pass Without a Trace, separated by automation level.
+- [x] Remove Gift of Alacrity, Longstrider, and Beacon of Hope from the built-in launch catalog because their marker-only paths do not provide enough automation; retain generic tracking paths.
+- [x] Add player casting from controlled sources, direct spell shortcuts, and GM lockout.
 - [x] Show automatic, assisted, and informational behavior before application.
 - [x] Add bounded ended history and preserve runtime records across module disable/re-enable.
 - [x] Add read-only audit and short-lived, GM-bound, one-use repair authorization.
 - [x] Refuse partial target application and token-representation drift.
 - [x] Add the immutable in-memory SemanticEvents core service.
 - [x] Update executable, README, changelog, roadmap, One-Click metadata, and smoke tests.
-- [x] Pass 88 focused local EffectAssist checks plus syntax validation.
+- [x] Pass 95 focused local EffectAssist checks plus syntax validation.
 - [ ] Pass the clean-install and v1.8.2 upgrade smoke tracks in Roll20.
 - [ ] Complete the v2.0.0 PR and close Issues #75, #76, and #78.
 
 ### Official 2014 Sheet Projection
 
-**Tracking:** [Issue #76](https://github.com/Mord-Eagle/GameAssist/issues/76)  
+**Tracking:** [Issue #76](https://github.com/Mord-Eagle/GameAssist/issues/76)
 **Status:** Sandbox verification
 
-- [x] Add exact repeating global attack, saving-throw, and AC modifier-row adapters.
+- [x] Add exact repeating global attack, saving-throw, skill, and AC modifier-row adapters.
 - [x] Record exact created attribute IDs, expected values, and baseline ownership.
 - [x] Use sheet workers when available and avoid generated aggregate outputs.
-- [x] Add complete Bless attack/save rows, Warding Bond AC/save rows, and Haste AC rows.
+- [x] Add complete Bless attack/save rows, Guidance skill rows, Warding Bond AC/save rows, and Haste AC rows.
 - [x] Preserve pre-existing and externally edited rows.
 - [x] Retain marker plus assisted behavior for NPCs and unsupported sheets.
 - [ ] Pass the live 2014-sheet application, overlap, cleanup, edit-preservation, and restart checks.
 
 ### Phase C — Cast Recognition
 
-**Tracking:** [Issue #77](https://github.com/Mord-Eagle/GameAssist/issues/77)  
+**Tracking:** [Issue #77](https://github.com/Mord-Eagle/GameAssist/issues/77)
 **Status:** Planned
 
 Recognize only well-evidenced official 2014 Bless spell output and offer a GM-confirmed proposal; chat target text is not treated as token identity. Capture real 2024 template samples before defining a 2024 recognition contract.
 
 ### Concentration Coordination
 
-**Tracking:** [Issue #78](https://github.com/Mord-Eagle/GameAssist/issues/78)  
+**Tracking:** [Issue #78](https://github.com/Mord-Eagle/GameAssist/issues/78)
 **Status:** Sandbox verification
 
 - [x] Add the ConcentrationAssist 0.3.0 public lifecycle API.
@@ -526,14 +528,14 @@ Recognize only well-evidenced official 2014 Bless spell output and offer a GM-co
 
 ### Phase E — HP-Loss Offers
 
-**Tracking:** [Issue #79](https://github.com/Mord-Eagle/GameAssist/issues/79)  
+**Tracking:** [Issue #79](https://github.com/Mord-Eagle/GameAssist/issues/79)
 **Status:** Planned
 
 Introduce provenance-aware HP events so actual damage can be distinguished from healing, token setup, HPAssist initialization, and other automated writes before EffectAssist offers an action.
 
 ### Phase F — Encounter and World-Time Durations
 
-**Tracking:** [Issue #80](https://github.com/Mord-Eagle/GameAssist/issues/80)  
+**Tracking:** [Issue #80](https://github.com/Mord-Eagle/GameAssist/issues/80)
 **Status:** Planned
 
 Consume semantic turn, round, encounter, and future world-time candidates. Reminders and expiration candidates may proceed first; automatic ending remains gated until live Roll20 evidence proves the boundary and ownership rules.
