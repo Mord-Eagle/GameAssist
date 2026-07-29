@@ -82,7 +82,7 @@ The feature prevents accidental same-page NPC token-name collisions without intr
 
 - JavaScript syntax parsing passes for the v1.8.2 executable candidate.
 - Focused deterministic naming tests cover unsuffixed first use, collision suffixes, gap reuse, page independence, case-insensitive comparison, disabled behavior, and noneligible-token exclusions.
-- The release artifacts are byte-identical with SHA-256 `__V182_SHA256__`.
+- The release artifacts are byte-identical with SHA-256 `2DC2FDB873A87527FED9F07B50490805E8B23613526DD80D22D06997173C9554`.
 - Roll20 acceptance must confirm real `add:graphic` ordering, object/GM-layer behavior, Control Center toggling, rapid multi-token additions, and HPAssist coexistence.
 
 ### Deliberate exclusions
