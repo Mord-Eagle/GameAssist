@@ -1,9 +1,9 @@
 /*
 ========================================
 GameAssist - Roll20 API Script
-Version: 1.8.1
+Version: 1.8.2
 Last Updated: 2026-07-28 (America/New_York)
-Development line: focused NPCAssist Bloodied alerts.
+Development line: page-local progressive NPC token naming.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -21,8 +21,8 @@ calls GameAssist.enqueue(). This package ships with eleven configurable modules:
 - CombatAssist 1.0.5 - Tracks encounters, native round counters, guarded turns, optional timers, private-safe pings, and recoverable tracker changes.
 - WelcomeAssist 0.1.4 - Optionally greets the table after a healthy GameAssist startup through short !Welcome commands.
 - ConcentrationAssist 0.2.2 - Runs concentration checks and manages its configured marker.
-- NPCAssist 1.3.3 - Adds GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, and Arc rosters.
-- HPAssist 0.1.1.2 - Rolls npc_hpformula and writes the result to token bar 1.
+- NPCAssist 1.4.0 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, and Arc rosters.
+- HPAssist 0.1.1.3 - Rolls npc_hpformula and writes the result to token bar 1.
 - DebugTools 0.2.2 - Optional dry-run-first GM diagnostics.
 
 INSTALL / USAGE
@@ -68,15 +68,16 @@ MODULE COMMANDS
 - NPCAssist: !NPC, !NPCAssist, !npc-<command>, !npc-death-<command>, !npcmanager-<command>,
   including !npc-death-help, !npc-death-report, !npc-death-buckets,
   !npc-death-clear, !npc-death-write, !npc-wr, !npc-death-audit, !npc-death-repair,
-  !npc-death-arc
+  !npc-death-arc, !npc-bloodied, !npc-numbering
 - HPAssist: !HP, !npc-hp-selected, !npc-hp-all
 - DebugTools: !ga-debug damage|marker|save
 
-V1.8.1 FOUNDATION
+V1.8.2 FOUNDATION
 - [GAMEASSIST:CORE:MARKERSERVICE] is the single GameAssist authority for marker
   resolution, reads, writes, toggles, duplicate handling, and change observation.
 - Built-in ids, custom display names, exact stored tags, numbered markers, and
   unrelated marker entries are preserved through a structured mutation contract.
+- NPCAssist can assign unique page-local names to newly added linked NPC tokens without persistent counters.
 - NPCAssist, ConcentrationAssist, and DebugTools use GameAssist.MarkerService.
 - Marker-dependent GameAssist modules no longer depend on standalone TokenMod.
 - ConditionAssist uses MarkerService for condition reads, writes, and change observation.
@@ -117,7 +118,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 // --- MECHSUITS BANNER (YAML) ---
 // mechsuit:
 //   codename: "GAMEASSIST"
-//   project_version: "v1.8.1"
+//   project_version: "v1.8.2"
 //   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, migration-safe module identities, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker and Turn Tracker authorities, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, preservation-first encounter flow, GM-private NPC Bloodied alerts, optional health-gated table greetings, and validated campaign time. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, automatic turn advancement, automatic Bloodied markers/history, or automatic condition-duration management."
 //   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.turntrackerservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critassist","modules.conditionassist","modules.tokenassist","modules.initiativeassist","modules.combatassist","modules.welcomeassist","modules.npcassist","modules.concentrationassist","modules.hpassist","modules.debugtools","bootstrap"]
 //   env:
@@ -169,10 +170,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 //     └─ [GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
-// Guarantee: GameAssist v1.8.1 runs policy, utilities, guarded core services including MarkerService and TurnTrackerService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/gameplay modules, then bootstrap in the declared order. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
+// Guarantee: GameAssist v1.8.2 runs policy, utilities, guarded core services including MarkerService and TurnTrackerService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/gameplay modules, then bootstrap in the declared order. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
 
 // =============================
-// === GameAssist v1.8.1 ===
+// === GameAssist v1.8.2 ===
 // === Author: Mord Eagle ===
 // =============================
 // Released under the MIT License (see https://opensource.org/licenses/MIT)
@@ -1062,7 +1063,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // documents scope and anchors the hierarchy for MECHSUITS compliance.
     // -------------------------------------------------------------------------
 
-    const VERSION      = '1.8.1';
+    const VERSION      = '1.8.2';
     const STATE_KEY    = 'GameAssist';
     const MODULES      = {};
     const _transitioning   = {};
@@ -11343,10 +11344,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: NPCAssist module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:NPCASSIST", title: "NPCAssist",
-    //   guarantees: ["Auto toggle resolved configured dead marker based on known HP transitions; maintain hierarchical death-history handouts and curated arc rosters", "Optionally whisper the GM once when an eligible living object-layer NPC crosses from above half HP to half HP or below", "Date-based Session rollover and timestamp rendering use the validated GameAssist timezone while stored instants remain absolute", "Compact layered navigation and a stable on-demand manual keep ordinary chat readable", "Audits are read-only; separately confirmed repair commands re-scan current HP and change only the configured death marker", "HPAssist auto-roll initialization is not recorded as death/revival history or a Bloodied alert", "Death-marker reads and writes use CORE:MARKERSERVICE"],
+    //   guarantees: ["Auto toggle resolved configured dead marker based on known HP transitions; maintain hierarchical death-history handouts and curated arc rosters", "Assign page-local unique names to newly added linked NPC tokens without renaming existing tokens or storing sequence counters", "Optionally whisper the GM once when an eligible living object-layer NPC crosses from above half HP to half HP or below", "Date-based Session rollover and timestamp rendering use the validated GameAssist timezone while stored instants remain absolute", "Compact layered navigation and a stable on-demand manual keep ordinary chat readable", "Audits are read-only; separately confirmed repair commands re-scan current HP and change only the configured death marker", "HPAssist auto-roll initialization is not recorded as death/revival history or a Bloodied alert", "Death-marker reads and writes use CORE:MARKERSERVICE"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
-    //   last_updated_version: "v1.8.1",
-    //   independent_versions: { module_version: "1.3.3" } }
+    //   last_updated_version: "v1.8.2",
+    //   independent_versions: { module_version: "1.4.0" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:NPCAssist monitors token HP changes to set or clear the configured
@@ -11355,8 +11356,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // It records deaths into active Campaign, Chapter,
     // Section, and Session buckets; writes bucket/audit handouts; rolls date-based
     // sessions forward before new activity; maintains deduplicated, editable
-    // story arc rosters for selected linked PC/NPC tokens or Session imports; and
-    // can privately alert the GM on a true living-NPC half-HP threshold crossing.
+    // story arc rosters for selected linked PC/NPC tokens or Session imports;
+    // assigns collision-free page-local names when linked NPC tokens are added;
+    // and can privately alert the GM on a true living-NPC half-HP threshold crossing.
     // -------------------------------------------------------------------------
     GameAssist.register('NPCAssist', function() {
         const modState = GameAssist.getState('NPCAssist');
@@ -11365,6 +11367,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             enabled: true,
             autoTrackDeath: true,
             notifyBloodied: true,
+            autoNumberNpcTokens: true,
             deadMarker: 'dead',
             autoHide: false,
             hideLayer: 'gmlayer',
@@ -11394,7 +11397,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const DEATH_REPORT_SUMMARY_LIMIT = POLICY.runtime.deathReportSummaryLimit;
         const DEATH_REPORT_DETAIL_LIMIT = POLICY.runtime.deathReportDetailLimit;
         const AUDIT_HANDOUT_NAME = 'GameAssist NPC Death Audit';
-        const NPCMANAGER_MODULE_VERSION = '1.3.3';
+        const NPCMANAGER_MODULE_VERSION = '1.4.0';
         const initializingNpcHp = new Set();
 
         function currentSessionDateKey(raw = now()) {
@@ -12127,10 +12130,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function showNPCManagerControl() {
             const bloodiedEnabled = modState.config.notifyBloodied !== false;
+            const numberingEnabled = modState.config.autoNumberNpcTokens !== false;
             sendNPCPanel('NPCAssist Control Center', [
                 {
                     label: 'Bloodied Alerts',
                     value: `${bloodiedEnabled ? 'On' : 'Off'} ${GameAssist.createButton(bloodiedEnabled ? 'Turn Off' : 'Turn On', '!npc-bloodied')}`
+                },
+                {
+                    label: 'Automatic NPC Names',
+                    value: `${numberingEnabled ? 'On' : 'Off'} ${GameAssist.createButton(numberingEnabled ? 'Turn Off' : 'Turn On', '!npc-numbering')}`
                 },
                 {
                     label: 'Actions',
@@ -12176,6 +12184,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Module', value: `${NPCMANAGER_MODULE_VERSION} | enabled and responding` },
                 { label: 'Death Tracking', value: `${modState.config.autoTrackDeath === false ? 'Off' : 'On'} | marker ${modState.config.deadMarker || 'dead'} | bar 1 HP` },
                 { label: 'Bloodied Alerts', value: modState.config.notifyBloodied === false ? 'Off' : 'On | private GM notice at half HP' },
+                { label: 'Automatic NPC Names', value: modState.config.autoNumberNpcTokens === false ? 'Off' : 'On | page-local lowest available suffix' },
                 { label: 'Active Histories', value: activeLines },
                 { label: 'Arc Buckets', value: `${ensureNPCManagerRuntime().arcs.length} saved` },
                 { label: 'Actions', value: `${GameAssist.createButton('Run Audit', '!npc-death-audit')} ${GameAssist.createButton('Open Guide', '!npc-death-help')} ${GameAssist.createButton('Manage Buckets', '!npc-death-buckets')}` }
@@ -12184,7 +12193,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function showNPCManagerInfo() {
             sendNPCPanel('What NPCAssist Does', [
-                { label: 'Purpose', value: 'Privately reports qualifying Bloodied crossings, tracks linked NPC deaths and revivals from bar 1 HP, maintains the configured death marker, audits HP/marker mismatches, and organizes history into Campaign, Chapter, Section, Session, and separate Arc handouts.' },
+                { label: 'Purpose', value: 'Assigns clear page-local names to newly added linked NPC tokens, privately reports qualifying Bloodied crossings, tracks linked NPC deaths and revivals from bar 1 HP, maintains the configured death marker, audits HP/marker mismatches, and organizes history into Campaign, Chapter, Section, Session, and separate Arc handouts.' },
                 { label: 'At The Table', value: 'Let HP changes record automatically, review a concise report when needed, and write the full history to stable handouts at the end of a scene or session.' },
                 { label: 'Learn More', value: `${GameAssist.createButton('Create or Update Manual', '!npc-death-manual')} ${GameAssist.createButton('Open Guide', '!npc-death-help')} ${GameAssist.createButton('Current Status', '!npc-death-status')}` }
             ]);
@@ -12194,7 +12203,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return [
                 '<h1>NPCAssist User Manual</h1>',
                 `<p><strong>GameAssist v${_sanitize(VERSION)} | NPCAssist ${_sanitize(NPCMANAGER_MODULE_VERSION)}</strong></p>`,
-                '<p>NPCAssist watches linked NPC bar 1 HP, privately alerts the GM when an eligible living NPC crosses to half HP or below, records deaths and revivals, manages the configured death marker, and turns encounter history into readable Campaign, Chapter, Section, Session, and Arc records.</p>',
+                '<p>NPCAssist gives newly added linked NPC tokens clear page-local names, watches linked NPC bar 1 HP, privately alerts the GM when an eligible living NPC crosses to half HP or below, records deaths and revivals, manages the configured death marker, and turns encounter history into readable Campaign, Chapter, Section, Session, and Arc records.</p>',
                 '<h2>Quick Start</h2>',
                 '<ol><li>Use <code>!npc-death-buckets</code> to name the active Campaign, Chapter, Section, and Session.</li><li>Use linked NPC tokens with numeric bar 1 HP.</li><li>Let HP cross from positive to 0 or below to record a death; raising HP above 0 records a revival.</li><li>Run <code>!npc-death-report</code> for a chat summary or <code>!npc-wr</code> to update report handouts.</li></ol>',
                 '<h2>Campaign, Chapter, Section, And Session</h2>',
@@ -12209,11 +12218,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h2>Audit And Repair</h2>',
                 '<p><code>!npc-death-audit</code> compares linked NPC bar 1 HP with the configured death marker on the current player page. Player characters are excluded. Audit is read-only and writes its detail to the stable audit handout.</p>',
                 '<p><code>!npc-death-repair</code> previews proposed marker corrections and requires confirmation. Repair rechecks current HP, changes only the configured death marker, and does not change HP, death history, report buckets, Arc records, or unrelated markers.</p>',
+                '<h2>Automatic NPC Names</h2>',
+                '<p>When <code>autoNumberNpcTokens</code> is enabled, each newly added linked NPC token on the Objects or GM layer uses its represented character name. If that name is already used by another eligible NPC token on the same page, NPCAssist adds the lowest available positive suffix, such as Goblin 1 or Goblin 2. Other pages are independent, existing tokens are never renumbered, deleted names become available again, and a GM may turn the feature off or rename a token afterward to create a deliberate duplicate.</p>',
                 '<h2>Bloodied Alerts</h2>',
                 '<p>When <code>notifyBloodied</code> is enabled, NPCAssist whispers the GM when a living object-layer NPC crosses from above half of a valid positive maximum HP value to half HP or below. Remaining below half does not repeat the alert; healing above half naturally allows a later crossing to alert again. The notice does not add a marker or history entry and never reports NPC HP publicly.</p>',
                 '<h2>Command Reference</h2>',
                 '<p>Every command below accepts the same suffix through <code>!NPC-*</code>, <code>!NPCAssist-*</code>, <code>!NPC-Death-*</code>, or the legacy <code>!NPCManager-*</code> family. Commands are not case-sensitive.</p>',
-                '<ul><li><code>!NPC-GM</code> or <code>!NPC-DM</code> - Game Master control center.</li><li><code>!npc-death-help</code> or <code>!npc-death-guide</code> - compact guide.</li><li><code>!npc-death-status</code> - active configuration and history counts.</li><li><code>!npc-bloodied</code> - toggle private Bloodied alerts and return to the Control Center.</li><li><code>!npc-death-report --scope campaign|chapter|section|session</code> - read a report.</li><li><code>!npc-wr</code> or <code>!npc-death-write</code> - report writer.</li><li><code>!npc-death-buckets</code> - names and active scopes.</li><li><code>!npc-death-arc</code> - Arc controls.</li><li><code>!npc-death-audit</code> - read-only HP/marker review.</li><li><code>!npc-death-repair</code> - preview and confirm marker correction.</li><li><code>!npc-death-clear</code> - confirmed history clearing.</li></ul>',
+                '<ul><li><code>!NPC-GM</code> or <code>!NPC-DM</code> - Game Master control center.</li><li><code>!npc-death-help</code> or <code>!npc-death-guide</code> - compact guide.</li><li><code>!npc-death-status</code> - active configuration and history counts.</li><li><code>!npc-bloodied</code> - toggle private Bloodied alerts and return to the Control Center.</li><li><code>!npc-numbering</code> - toggle automatic page-local NPC names and return to the Control Center.</li><li><code>!npc-death-report --scope campaign|chapter|section|session</code> - read a report.</li><li><code>!npc-wr</code> or <code>!npc-death-write</code> - report writer.</li><li><code>!npc-death-buckets</code> - names and active scopes.</li><li><code>!npc-death-arc</code> - Arc controls.</li><li><code>!npc-death-audit</code> - read-only HP/marker review.</li><li><code>!npc-death-repair</code> - preview and confirm marker correction.</li><li><code>!npc-death-clear</code> - confirmed history clearing.</li></ul>',
                 '<h2>Token Eligibility</h2>',
                 '<p>NPCAssist uses linked token objects whose character is marked as an NPC and whose bar 1 HP is numeric. Unlinked map items, scenery, labels, props, and player characters are outside death tracking.</p>'
             ].join('');
@@ -12818,12 +12829,61 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return Number.isFinite(hp) ? hp : null;
         }
 
+        function getNpcNamingContext(token) {
+            if (!token || typeof token.get !== 'function') return null;
+            if (!['objects', 'gmlayer'].includes(token.get('layer'))) return null;
+            const characterId = token.get('represents');
+            if (!characterId) return null;
+            const character = getObj('character', characterId);
+            if (!character) return null;
+            const npcAttr = findObjs({ _type: 'attribute', _characterid: character.id, name: 'npc' })[0];
+            if (!npcAttr || String(npcAttr.get('current')) !== '1') return null;
+            const characterName = String(character.get('name') || '').trim();
+            const tokenName = String(token.get('name') || '').trim();
+            const baseName = characterName || tokenName;
+            return baseName ? { token, character, baseName } : null;
+        }
+
+        function normalizedNpcTokenName(raw) {
+            return String(raw || '').trim().toLowerCase();
+        }
+
         /**
-         * handleTokenAdd — Guard the short setup interval in which HPAssist replaces placeholder HP.
+         * autoNumberNpcToken — Give a newly added NPC the lowest available page-local name.
+         * Inputs: one newly added graphic; the linked NPC character name is authoritative when present.
+         * Invariants: current eligible page tokens are the only sequence source; existing tokens are never renamed.
+         * Failure: PCs, unlinked/blank tokens, map-layer graphics, and unreadable identity are skipped silently.
+         * Design: no saved counter means deletion and sandbox restart require no repair.
+         */
+        function autoNumberNpcToken(token) {
+            if (modState.config.autoNumberNpcTokens === false) return false;
+            const context = getNpcNamingContext(token);
+            const pageId = token && token.get('_pageid');
+            if (!context || !pageId) return false;
+            const usedNames = new Set(
+                findObjs({ _type: 'graphic', _pageid: pageId })
+                    .filter(other => other.id !== token.id && getNpcNamingContext(other))
+                    .map(other => normalizedNpcTokenName(other.get('name')))
+                    .filter(Boolean)
+            );
+            let assignedName = context.baseName;
+            if (usedNames.has(normalizedNpcTokenName(assignedName))) {
+                let suffix = 1;
+                while (usedNames.has(normalizedNpcTokenName(`${context.baseName} ${suffix}`))) suffix++;
+                assignedName = `${context.baseName} ${suffix}`;
+            }
+            if (String(token.get('name') || '') === assignedName) return false;
+            token.set('name', assignedName);
+            return true;
+        }
+
+        /**
+         * handleTokenAdd — Name a new NPC, then guard HPAssist's placeholder-HP interval.
          * Context: Roll20 can expose zero/blank bar values before auto-roll-on-add writes rolled HP.
          * Invariant: only active auto-roll-on-add receives the grace period; normal gameplay HP changes remain direct.
          */
         function handleTokenAdd(token) {
+            autoNumberNpcToken(token);
             const hpRollerConfig = GameAssist.getState('HPAssist')?.config;
             if (hpRollerConfig?.enabled === false || hpRollerConfig?.autoRollOnAdd !== true) return;
 
@@ -12965,6 +13025,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         registerNPCCommand('bloodied', () => {
             modState.config.notifyBloodied = modState.config.notifyBloodied === false;
+            showNPCManagerControl();
+        });
+
+        registerNPCCommand('numbering', () => {
+            modState.config.autoNumberNpcTokens = modState.config.autoNumberNpcTokens === false;
             showNPCManagerControl();
         });
 
@@ -13365,7 +13430,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         npcCommandFamilies.forEach(family => {
             GameAssist.onCommand(family, msg => {
                 const command = String(msg.content || '').trim().split(/\s+/)[0].toLowerCase();
-                if (family === '!npc-' && command.startsWith('!npc-death-')) return;
+                if (family === '!npc-' && (command.startsWith('!npc-death-') || command.startsWith('!npc-hp-'))) return;
                 if (npcKnownCommands.has(command)) return;
                 sendNPCPanel('NPCAssist', [
                     { label: 'Needs Attention', value: 'That NPCAssist command was not recognized.' },
@@ -13379,7 +13444,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         GameAssist.onEvent('add:graphic', handleTokenAdd, 'NPCAssist');
         GameAssist.onEvent('change:graphic:bar1_value', handleTokenChange, 'NPCAssist');
-        GameAssist.log('NPCAssist', `${NPCMANAGER_MODULE_VERSION} Ready: Private Bloodied alerts + auto death tracking + hierarchical reports/writer/audits/confirmed marker repair/arcs`, 'INFO', { startup: true });
+        GameAssist.log('NPCAssist', `${NPCMANAGER_MODULE_VERSION} Ready: Page-local NPC names + private Bloodied alerts + auto death tracking + hierarchical reports/writer/audits/confirmed marker repair/arcs`, 'INFO', { startup: true });
     }, {
         enabled: true,
         events: ['add:graphic', 'change:graphic:bar1_value'],
@@ -13425,11 +13490,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
     });
     // --- Notes & Comments ---
-    // Changed (v1.8.1): Added optional GM-private Bloodied alerts for true above-half to living-at-or-below-half HP crossings on eligible object-layer NPCs; invalid maxima, setup transitions, PCs, unlinked tokens, GM-layer tokens, and deaths remain silent. The NPCAssist Control Center now provides a one-click state-aware toggle.
+    // Changed (v1.8.2): Added optional page-local progressive names for newly added linked NPC tokens on the Objects or GM layer; current eligible token names are the source of truth, the lowest available suffix is deterministic, existing tokens are never renamed, and the broad !npc-* recovery listener yields deprecated !npc-hp-* aliases to HPAssist.
     // Decision log:
+    //   CHOICE: Derive every assignment from current eligible names on the token's page - ALT: persist campaign or page counters; REJECTED: saved counters drift after deletion, manual edits, copy/paste, and sandbox restarts.
+    //   CHOICE: Keep successful naming quiet and change only the new token's name - ALT: announce or renumber the page; REJECTED: routine token setup should not interrupt play or rewrite deliberate existing names.
     //   CHOICE: Use previous/current HP evidence instead of persistent Bloodied state - ALT: remember each token's threshold state; REJECTED: crossing evidence naturally suppresses repeats and rearms after healing without stale runtime data.
     //   CHOICE: Keep Bloodied notices private and independent from markers/history - ALT: add a marker or report entry; REJECTED: the notice must not reveal NPC HP or change established death-history semantics.
     // Prior notes:
+    //   v1.8.1 / NPCAssist 1.3.3: Added optional GM-private Bloodied alerts for true above-half to living-at-or-below-half HP crossings and a one-click Control Center toggle; invalid maxima, setup transitions, PCs, unlinked tokens, GM-layer tokens, and deaths remain silent.
+
     //   Changed (v1.8.0): Renamed the module to NPCAssist while preserving NPCManager state, reports, handouts, public API access, and every established command alias.
     //   Decision log:
     //     CHOICE: Keep death-history recording independent from marker mutation success - ALT: record only after marker success; REJECTED: history should describe HP events even when a visual marker cannot change.
@@ -14122,15 +14191,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:CONCENTRATIONASSIST] END
     // =============================================================================
 
-    // ————— HPASSIST MODULE v0.1.1.2 —————
+    // ————— HPASSIST MODULE v0.1.1.3 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:HPASSIST] BEGIN
     // Section Title: HPAssist module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:HPASSIST", title: "HPAssist",
-    //   guarantees: ["Parse NdM±K and set bar1 to rolled HP","Compact guide, status, settings, read-only page audit, and unknown-command recovery use the established !npc-hp- prefix"],
-    //   last_updated_version: "v1.8.0",
-    //   independent_versions: { module_version: "0.1.1.2" } }
+    //   guarantees: ["Parse NdM±K and set bar1 to rolled HP","Case-insensitive !HP-<command> and !hp <command> routes own every public HPAssist action; older HP command families remain compatibility-only aliases"],
+    //   last_updated_version: "v1.8.2",
+    //   independent_versions: { module_version: "0.1.1.3" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:HPASSIST parses `npc_hpformula`, rolls HP, and writes to bar1 value/max
@@ -14139,7 +14208,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('HPAssist', function() {
         const modState = GameAssist.getState('HPAssist');
-        const MODULE_VERSION = '0.1.1.2';
+        const MODULE_VERSION = '0.1.1.3';
 
     Object.assign(modState.config, {
         enabled: true,
@@ -14253,8 +14322,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function showNpcHpGuide() {
             sendNpcHpPanel('HPAssist Guide', [
-                { label: 'Actions', value: `${GameAssist.createButton('Roll Selected NPCs', '!npc-hp-selected')} ${GameAssist.createButton('Roll Page NPCs', '!npc-hp-all')} ${GameAssist.createButton('Current Status', '!npc-hp-status')}` },
-                { label: 'Learn Or Review', value: `${GameAssist.createButton('What does HPAssist do?', '!hp-info')} ${GameAssist.createButton('Read-Only Audit', '!hp-audit')} ${GameAssist.createButton('Settings', '!hp-settings')}` }
+                { label: 'Actions', value: `${GameAssist.createButton('Roll Selected NPCs', '!HP-Selected')} ${GameAssist.createButton('Roll Page NPCs', '!HP-All')} ${GameAssist.createButton('Current Status', '!HP-Status')}` },
+                { label: 'Learn Or Review', value: `${GameAssist.createButton('What does HPAssist do?', '!HP-Info')} ${GameAssist.createButton('Read-Only Audit', '!HP-Audit')} ${GameAssist.createButton('Settings', '!HP-Settings')}` }
             ]);
         }
 
@@ -14262,8 +14331,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const counts = inspectNpcHpPage();
             sendNpcHpPanel('HPAssist GM Controls', [
                 { label: 'Current Page', value: `${counts.eligible} eligible NPCs | ${counts.invalid} need an HP formula` },
-                { label: 'Roll HP', value: `${GameAssist.createButton('Selected NPCs', '!npc-hp-selected')} ${GameAssist.createButton('All Page NPCs', '!npc-hp-all')}` },
-                { label: 'Review And Setup', value: `${GameAssist.createButton('Status', '!npc-hp-status')} ${GameAssist.createButton('Read-Only Audit', '!npc-hp-audit')} ${GameAssist.createButton('Settings', '!npc-hp-settings')} ${GameAssist.createButton('Guide', '!npc-hp-help')}` }
+                { label: 'Roll HP', value: `${GameAssist.createButton('Selected NPCs', '!HP-Selected')} ${GameAssist.createButton('All Page NPCs', '!HP-All')}` },
+                { label: 'Review And Setup', value: `${GameAssist.createButton('Status', '!HP-Status')} ${GameAssist.createButton('Read-Only Audit', '!HP-Audit')} ${GameAssist.createButton('Settings', '!HP-Settings')} ${GameAssist.createButton('Guide', '!HP-Guide')}` }
             ]);
         }
 
@@ -14271,7 +14340,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendNpcHpPanel('What HPAssist Does', [
                 { label: 'Purpose', value: 'Rolls each qualifying linked NPC\'s npc_hpformula and writes the result to bar 1 current and maximum HP.' },
                 { label: 'At The Table', value: 'Select NPC tokens for a deliberate roll, or roll every qualifying NPC on the current player page. Player characters, unlinked tokens, and invalid formulas are skipped.' },
-                { label: 'Guide', value: `${GameAssist.createButton('Back to Guide', '!npc-hp-help')} ${GameAssist.createButton('Read-Only Audit', '!npc-hp-audit')}` }
+                { label: 'Guide', value: `${GameAssist.createButton('Back to Guide', '!HP-Guide')} ${GameAssist.createButton('Read-Only Audit', '!HP-Audit')}` }
             ]);
         }
 
@@ -14306,7 +14375,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Module', value: `${MODULE_VERSION} | enabled and responding` },
                 { label: 'Automatic Roll On Add', value: modState.config.autoRollOnAdd === true ? 'On' : 'Off' },
                 { label: 'Current Page', value: `${counts.eligible} eligible NPCs | ${counts.pc} player characters | ${counts.unlinked} unlinked items | ${counts.invalid} NPCs with missing or invalid formulas` },
-                { label: 'Actions', value: `${GameAssist.createButton('Roll Selected', '!npc-hp-selected')} ${GameAssist.createButton('Open Guide', '!npc-hp-help')}` }
+                { label: 'Actions', value: `${GameAssist.createButton('Roll Selected', '!HP-Selected')} ${GameAssist.createButton('Open Guide', '!HP-Guide')}` }
             ];
             if (audit) fields.splice(3, 0, { label: 'Changes', value: 'None. This audit checks linkage, NPC flags, and HP formulas without rolling or changing bar 1.' });
             sendNpcHpPanel(audit ? 'HPAssist Audit' : 'HPAssist Status', fields);
@@ -14317,14 +14386,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendNpcHpPanel('HPAssist Settings', [
                 { label: 'Automatic Roll On Add', value: `${enabled ? 'On' : 'Off'} ${GameAssist.createButton(enabled ? 'Turn Off' : 'Turn On', `!ga-config set HPAssist autoRollOnAdd=${enabled ? 'false' : 'true'}`)}` },
                 { label: 'Behavior', value: 'When enabled, newly added qualifying NPC tokens receive rolled HP. Setup protection prevents that initialization from creating false NPCAssist death or revival history.' },
-                { label: 'Return', value: GameAssist.createButton('Back to Guide', '!npc-hp-help') }
+                { label: 'Return', value: GameAssist.createButton('Back to Guide', '!HP-Guide') }
             ]);
         }
 
         function showNpcHpManualNotice() {
             sendNpcHpPanel('HPAssist Guide', [
                 { label: 'Manual', value: 'HPAssist is intentionally small, so its complete instructions stay in the compact chat guide instead of creating another campaign handout.' },
-                { label: 'Continue', value: `${GameAssist.createButton('Open Guide', '!npc-hp-help')} ${GameAssist.createButton('Read-Only Audit', '!npc-hp-audit')}` }
+                { label: 'Continue', value: `${GameAssist.createButton('Open Guide', '!HP-Guide')} ${GameAssist.createButton('Read-Only Audit', '!HP-Audit')}` }
             ]);
         }
 
@@ -14455,7 +14524,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (command === 'selected') return rollSelectedNpcHp(msg);
             sendNpcHpPanel('HPAssist', [
                 { label: 'Needs Attention', value: 'That HPAssist command was not recognized.' },
-                { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!HP help') }
+                { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!HP-Guide') }
             ]);
         }, 'HPAssist', { gmOnly: true });
 
@@ -14464,18 +14533,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             rollTokenHP(token, { logWarnings: false, reason: 'auto' });
         }, 'HPAssist');
 
-    GameAssist.log('HPAssist', `v${MODULE_VERSION} Ready: !HP help, !HP all, !HP selected`, 'INFO', { startup: true });
+    GameAssist.log('HPAssist', `v${MODULE_VERSION} Ready: !HP-Guide, !HP-All, !HP-Selected, or !hp guide`, 'INFO', { startup: true });
 }, {
     enabled: true,
     events: ['add:graphic'],
-        prefixes: ['!HP', '!hp', '!hp-', '!npc-hp-', '!NPCHP-', '!NPCHPRoller-']
+        prefixes: ['!HP-', '!hp', '!HPAssist-', '!npc-hp-', '!NPCHP-', '!NPCHPRoller-']
 });
     // --- Notes & Comments ---
-    // Changed (v1.8.0): Renamed the module to HPAssist, added concise !HP controls, and preserved all !npc-hp, !NPCHP, and !NPCHPRoller compatibility commands and settings.
+    // Changed (v1.8.2): Made case-insensitive !HP-<command> and !hp <command> the generated and documented HPAssist interface; retained older !HPAssist-*, !npc-hp-*, !NPCHP-*, and !NPCHPRoller-* forms only as compatibility aliases, and prevented NPCAssist from intercepting the !npc-hp-* family.
     // Decision log:
     //   CHOICE: Keep the complete short guide in chat - ALT: create a persistent manual handout; REJECTED: the module's ordinary workflow fits in a compact panel and another handout would add campaign clutter.
     //   CHOICE: Use Math.random for simplicity; acceptable for non-critical HP rolls.
     // Prior notes:
+    //   v1.8.0: Renamed the module to HPAssist, added concise !HP controls, and preserved all !npc-hp, !NPCHP, and !NPCHPRoller compatibility commands and settings.
     //   Maintenance (v0.1.3, no semantic change): Added module narrative and aligned version metadata; HP rolling behavior unchanged.
     //   Maintenance (v0.1.1.2, no semantic change): MECHSUITS metadata updated for compliance.
     //   v0.1.7.0: Advanced NPCHPRoller to 0.1.1.2; Menu, GM, and DM open an action-focused HP control screen, with equivalent NPCHP and NPCHPRoller role aliases and unchanged HP-roll behavior.

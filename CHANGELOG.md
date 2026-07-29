@@ -10,7 +10,8 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 | Revision | Status | Role |
 | --- | --- | --- |
-| **v1.8.1** | Development candidate | GM-private NPCAssist Bloodied threshold alerts |
+| **v1.8.2** | Development candidate | Page-local progressive NPC token naming |
+| **v1.8.1** | Merged through PR #73 | GM-private NPCAssist Bloodied threshold alerts and Control Center toggle |
 | **v1.8.0** | Merged through PR #63; 712 automated checks passed | Canonical module identities and migration-safe project version transition |
 | **v0.1.7.0** | Accepted after automated verification and live Roll20 smoke testing | Preservation-first encounter, turn, and round flow |
 | **v0.1.6.1** | Merged; focused Roll20 acceptance passed | GM-private initiative start and optional table greetings |
@@ -38,6 +39,67 @@ This changelog is intentionally detailed. It records not only visible features, 
 - The attempted v0.1.5 file was not imported wholesale. Its unsafe or structurally unreliable changes were rejected; only isolated reviewed ideas were ported.
 - Older supplied notes used “Unreleased” and “Staging” labels for v0.1.3–v0.1.5 work. Those records are retained below as historical development evidence rather than silently discarded.
 - Where the supplied historical record did not establish a release date, this changelog does not invent one.
+
+---
+
+## [1.8.2] – 2026-07-28
+
+### Release definition
+
+GameAssist v1.8.2 adds optional page-local progressive naming for newly added linked NPC tokens and corrects HPAssist's public command routing. NPCAssist advances from `1.3.3` to `1.4.0`, and HPAssist advances from `0.1.1.2` to `0.1.1.3`.
+
+The feature prevents accidental same-page NPC token-name collisions without introducing a campaign counter, rewriting existing tokens, renaming represented characters, or preventing a GM from deliberately creating duplicate names later.
+
+### Naming contract
+
+- Added the `autoNumberNpcTokens` NPCAssist configuration key, enabled by default.
+- Applies only when a linked character is explicitly marked `npc=1` and the newly added token is on the Objects or GM layer.
+- Uses the represented character's current nonblank name as the base name, falling back to the token's nonblank name only when necessary.
+- Reads other eligible NPC token names on the new token's page at that moment.
+- Keeps the unsuffixed base name when it is available.
+- When the base name is already used, assigns the lowest available positive suffix: `Goblin 1`, `Goblin 2`, and so on.
+- Compares names without case sensitivity so cosmetic capitalization does not create an accidental collision.
+- Existing tokens are never renamed, renumbered, reordered, or otherwise changed.
+- Deleted names become available again. Sandbox restarts require no repair because no sequence counter is stored.
+- A later manual rename remains untouched, including a deliberate duplicate.
+
+### Eligibility and safeguards
+
+- Skips player characters, unlinked tokens, map-layer graphics, missing represented characters, unreadable NPC identity, and blank base names without chat spam.
+- Changes only the new token's `name`.
+- Does not change `showname`, character names, HP, bars, markers, layer, controllers, vision, lighting, death history, report buckets, Arc records, or handouts.
+- Runs synchronously in NPCAssist's existing `add:graphic` handler before the HPAssist initialization guard is established.
+- Preserves HPAssist automatic HP rolling and NPCAssist's protection against false death, revival, or Bloodied events.
+
+### Game Master controls and documentation
+
+- Adds a state-aware **Automatic NPC Names** Turn On or Turn Off button to the NPCAssist Control Center.
+- Adds `!npc-numbering` and equivalent NPCAssist command-family aliases; each toggles once and redraws the Control Center.
+- Adds the setting to NPCAssist status, its persistent manual, the README configuration reference, One-Click command metadata, and the focused smoke test.
+- Keeps successful automatic naming quiet during ordinary token setup.
+
+### HPAssist command routing
+
+- Makes case-insensitive `!HP-<command>` and `!hp <command>` the generated and documented HPAssist command surface.
+- Updates HPAssist buttons, startup guidance, README examples, smoke tests, and One-Click command metadata to use the canonical names.
+- Prevents NPCAssist's broad `!npc-*` unknown-command recovery from intercepting deprecated `!npc-hp-*` macros.
+- Retains `!HPAssist-*`, `!npc-hp-*`, `!NPCHP-*`, and `!NPCHPRoller-*` as compatibility aliases for existing campaign macros.
+- Does not change HP formula parsing, token eligibility, bar writes, automatic rolling, or NPCAssist initialization protection.
+
+### Verification and release gate
+
+- JavaScript syntax parsing passes for the v1.8.2 executable candidate.
+- Focused deterministic naming tests cover unsuffixed first use, collision suffixes, gap reuse, page independence, case-insensitive comparison, disabled behavior, and noneligible-token exclusions.
+- The release artifacts are byte-identical with SHA-256 `0864AFB434DAF13BD4A8C6B1F24F0BF7C4A4657C5BD8732C7222EEBC17D0A505`.
+- Roll20 acceptance must confirm real `add:graphic` ordering, object/GM-layer behavior, Control Center toggling, rapid multi-token additions, and HPAssist coexistence.
+
+### Deliberate exclusions
+
+- No bulk rename command or repair pass for existing duplicate names.
+- No campaign-wide, character-wide, creation-order, or persistent counter.
+- No renaming of represented characters.
+- No enforcement after an ordinary manual token-name change.
+- No change to death, Bloodied, marker, history, Arc, handout, initiative, combat, condition, token-control, concentration, HP-roll, or welcome behavior.
 
 ---
 
