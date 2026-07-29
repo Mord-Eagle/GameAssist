@@ -10,7 +10,8 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 | Revision | Status | Role |
 | --- | --- | --- |
-| **v1.8.0** | Release candidate; automated verification complete, focused Roll20 upgrade acceptance pending | Canonical module identities and migration-safe project version transition |
+| **v1.8.1** | Development candidate | GM-private NPCAssist Bloodied threshold alerts |
+| **v1.8.0** | Merged through PR #63; 712 automated checks passed | Canonical module identities and migration-safe project version transition |
 | **v0.1.7.0** | Accepted after automated verification and live Roll20 smoke testing | Preservation-first encounter, turn, and round flow |
 | **v0.1.6.1** | Merged; focused Roll20 acceptance passed | GM-private initiative start and optional table greetings |
 | **v0.1.6.0** | Automated verification passed; Roll20 sandbox acceptance pending | Native Turn Tracker service and mixed-sheet initiative workflows |
@@ -37,6 +38,58 @@ This changelog is intentionally detailed. It records not only visible features, 
 - The attempted v0.1.5 file was not imported wholesale. Its unsafe or structurally unreliable changes were rejected; only isolated reviewed ideas were ported.
 - Older supplied notes used “Unreleased” and “Staging” labels for v0.1.3–v0.1.5 work. Those records are retained below as historical development evidence rather than silently discarded.
 - Where the supplied historical record did not establish a release date, this changelog does not invent one.
+
+---
+
+## [1.8.1] – 2026-07-28
+
+### Release definition
+
+GameAssist v1.8.1 is a focused NPCAssist update. It can privately notify the GM when an eligible living NPC crosses from above half of its maximum HP to half HP or below. The release preserves v1.8.0's canonical module identities and keeps the new notice outside death markers, death history, Arc records, and public chat.
+
+NPCAssist advances from `1.3.2` to `1.3.3`. No other module's independent version changes.
+
+### Bloodied threshold behavior
+
+- Added the `notifyBloodied` NPCAssist configuration key, enabled by default.
+- Uses the Roll20 `change:graphic:bar1_value` event's previous and current values as the threshold evidence.
+- Alerts only when previous HP was above half, current HP is half or below, current HP remains above 0, and current bar 1 maximum HP is numeric and positive.
+- Does not repeat while HP remains at or below half.
+- Naturally rearms after healing above half; a later qualifying drop can notify the GM again.
+- A direct drop to 0 or below remains a death event and does not also produce a Bloodied notice.
+
+### Eligibility, privacy, and safeguards
+
+- Restricts Bloodied notices to linked object-layer tokens whose represented character has `npc=1`.
+- Ignores player characters, unlinked tokens, GM-layer tokens, blank or non-numeric HP, and blank, zero, negative, or non-numeric maximum HP.
+- Reuses HPAssist's new-token initialization grace period so automatic HP setup cannot create a false Bloodied notice.
+- Whispers only the GM and includes the NPC name plus current/maximum HP.
+- Adds no Bloodied marker, persistent per-token threshold state, death-history entry, report-bucket entry, or Arc record.
+- Leaves `autoTrackDeath`, MarkerService requests, revival annotations, auto-hide behavior, audits, repair, and report writing unchanged.
+
+### Game Master controls and documentation
+
+- Adds Bloodied notice state to `!npc-death-status` and the NPCAssist manual.
+- Adds a state-aware one-click Bloodied toggle to the NPCAssist Control Center; `!npc-bloodied` and the equivalent command-family aliases toggle the setting and immediately redraw the controls.
+- Keeps the setting available through existing configuration controls, including `!ga-config set NPCAssist notifyBloodied=false`.
+- Updates the README configuration reference, release sequence, upgrade guidance, module behavior, and current release notes.
+- Updates the public roadmap with v1.8.0 completion, v1.8.1 active work, and deferred Issue #72 for safe GameAssist handout organization while Roll20's Mod API folder hierarchy remains read-only.
+- Adds a focused v1.8.1 Roll20 smoke track covering threshold crossing, repeat suppression, rearming, privacy, invalid maxima, death separation, and HPAssist initialization.
+
+### Verification and release gate
+
+- JavaScript syntax validation passes for `GameAssist`, `GameAssist.js`, and `GameAssist-v1.8.1`.
+- Seven executable harnesses pass 504 assertions across NPCAssist threshold behavior, v0.1.4.7 state migration, module lifecycle, MarkerService and ConditionAssist behavior, TokenAssist, timezone handling, InitiativeAssist, CombatAssist, and WelcomeAssist.
+- The focused Issue #64 static harness passes 232 checks covering the Bloodied contract, retained canonical module ownership and aliases, MECHSUITS nesting and canonical-tree agreement, One-Click metadata, previous-version ordering, and artifact identity. The complete local verification total is 736 checks.
+- `GameAssist`, `GameAssist.js`, and `GameAssist-v1.8.1` are byte-identical with SHA-256 `01BB828FA3E76CCFBB1DEC5AFEC770D98D19AB1E4941A38CC0FAAD858576FEC5`.
+- Roll20 sandbox acceptance must confirm the real `change:graphic:bar1_value` transition behavior and GM-only delivery.
+
+### Deliberate exclusions
+
+- No configurable Bloodied percentage in v1.8.1; the threshold is fixed at 50%.
+- No Bloodied status marker, public announcement, player whisper, history record, handout entry, or Arc integration.
+- No progressive NPC naming; that remains v1.8.2 work under Issue #65.
+- No EffectAssist, AlmanacAssist, TokenAssist parity, or CombatAssist backlog implementation.
 
 ---
 

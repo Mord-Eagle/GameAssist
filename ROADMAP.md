@@ -2,7 +2,7 @@
 
 This roadmap records GameAssist's completed standalone-to-integrated transition, its native initiative and encounter foundations, and the current move into three-part project releases beginning with the `v1.8.x` module-identity and NPCAssist line.
 
-Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation details and acceptance evidence. The active sequence is Issue #60, Issue #64, Issue #65, phased EffectAssist work under Issue #61, and phased AlmanacAssist work under Issue #62.
+Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation details and acceptance evidence. Issue #60 is complete; the active sequence is Issue #64, Issue #65, phased EffectAssist work under Issue #61, and phased AlmanacAssist work under Issue #62.
 
 > The roadmap is a maintained plan, not a promise of dates. Issues #25 through #29 are development checkpoints within one release train; none is an intermediate public release.
 
@@ -60,12 +60,13 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | CombatAssist music hooks | Deferred | [#57](https://github.com/Mord-Eagle/GameAssist/issues/57) | Useful atmosphere control, but safe Jukebox ownership is independent of the current release gate. |
 | Compact help and command recovery | Complete | [#58](https://github.com/Mord-Eagle/GameAssist/issues/58) | Every feature module exposes compact navigation, an action-appropriate GM/DM screen, read-only audit wording, and friendly unknown-command recovery. |
 | Persistent module manuals | Complete | [#59](https://github.com/Mord-Eagle/GameAssist/issues/59) | Modules with substantial workflows create or update one stable `GameAssist Guide - <Module>` handout; brief modules keep complete guidance in chat. The Roll20 acceptance pass succeeded. |
-| Canonical module identities | Sandbox verification | [#60](https://github.com/Mord-Eagle/GameAssist/issues/60), [PR #63](https://github.com/Mord-Eagle/GameAssist/pull/63) | v1.8.0 migrates CritAssist, NPCAssist, ConcentrationAssist, and HPAssist names while preserving valid state, records, handouts, APIs, and established commands. Local regression is complete; live Roll20 upgrade acceptance remains. |
-| NPCAssist Bloodied alerts | Planned | [#64](https://github.com/Mord-Eagle/GameAssist/issues/64) | v1.8.1 adds a focused GM-private 50% HP crossing alert without changing death-history semantics. |
+| Canonical module identities | Complete | [#60](https://github.com/Mord-Eagle/GameAssist/issues/60), [PR #63](https://github.com/Mord-Eagle/GameAssist/pull/63) | v1.8.0 migrated CritAssist, NPCAssist, ConcentrationAssist, and HPAssist names while preserving valid state, records, handouts, APIs, and established commands. PR #63 merged and Issue #60 closed. |
+| NPCAssist Bloodied alerts | In progress | [#64](https://github.com/Mord-Eagle/GameAssist/issues/64) | v1.8.1 adds a focused GM-private 50% HP crossing alert without changing death-history semantics. |
 | Progressive NPC naming | Planned | [#65](https://github.com/Mord-Eagle/GameAssist/issues/65) | v1.8.2 prevents accidental duplicate NPC token names through page-local, current-token numbering that the GM can disable or deliberately override. |
 | EffectAssist Phase A | Deferred | [#61](https://github.com/Mord-Eagle/GameAssist/issues/61) | v2.x begins with semantic source/target effects, dependencies, stacking, marker/condition projection, and reconciliation; sheet mutation and automatic durations remain later phases. |
 | AlmanacAssist master program | Deferred | [#62](https://github.com/Mord-Eagle/GameAssist/issues/62) | v2.y tracks six implementation issues in order: Time, Climate, Astronomy, Weather, Environment, and Rest. |
 | TokenAssist and CombatAssist backlog | Deferred | [open issues](https://github.com/Mord-Eagle/GameAssist/issues) | v2.z revisits older parity and integration work after the new module foundations are stable. |
+| GameAssist handout organization | Deferred | [#72](https://github.com/Mord-Eagle/GameAssist/issues/72) | Preserve stable handouts after manual Journal filing, add safe indexing, and defer true folder routing until Roll20 exposes a supported writable Journal-folder API. |
 
 ---
 

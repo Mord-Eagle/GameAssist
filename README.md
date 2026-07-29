@@ -1,9 +1,9 @@
 # GameAssist – Modular API Framework for Roll20
 
-**Version 1.8.0 development line** | © 2025-2026 Mord Eagle · MIT License<br>
+**Version 1.8.1 development line** | © 2025-2026 Mord Eagle · MIT License<br>
 **Lead Dev:** [@Mord-Eagle](https://github.com/Mord-Eagle)
 
-GameAssist v1.8.0 completes the remaining module-brand migration: CritFumble becomes CritAssist, NPCManager becomes NPCAssist, ConcentrationTracker becomes ConcentrationAssist, and NPCHPRoller becomes HPAssist. Existing commands, valid saved settings and history, public compatibility access, and established guide handouts continue through migration aliases, while new configuration and documentation use the canonical names.
+GameAssist v1.8.1 adds an optional private Bloodied notice when an eligible living NPC crosses from above half HP to half HP or below. It builds on v1.8.0's canonical CritAssist, NPCAssist, ConcentrationAssist, and HPAssist identities without changing death markers, encounter history, public chat, or established command compatibility.
 
 ---
 
@@ -269,14 +269,14 @@ Module configuration belongs under `state.GameAssist.<Module>.config`. Runtime c
   "schemaVersion": 1,
   "scope": "configuration-only",
   "generatedAt": "<ISO timestamp>",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "flags": {},
   "globalConfig": {},
   "modules": {}
 }
 ```
 
-The snapshot excludes runtime caches and metrics. v1.8.0 does not import or restore snapshots.
+The snapshot excludes runtime caches and metrics. v1.8.1 does not import or restore snapshots.
 
 ### 5.6 Table Timezone
 
@@ -439,7 +439,7 @@ That boundary keeps the first integrated release testable. Image stacks and defa
 
 On first startup, TokenAssist copies a valid legacy `state.TokenMod.playersCanUse_ids` value into its own configuration. It records the migration and leaves `state.TokenMod` untouched for rollback. It does not expose a global `TokenMod` object; integrations should use `GameAssist.TokenAssist.observeTokenChange(...)` or MarkerService's marker observer.
 
-Existing supported `!token-mod` macros remain compatibility aliases during the v1.x line, but should be updated to `!token-assist`, `!ta`, or `!ta-*` before GameAssist v2.0.0. When standalone TokenMod is detected, GameAssist leaves `!token-mod` to that script while TokenAssist commands remain available. Remove standalone TokenMod for normal v1.8.0 use because both tools can change the same token properties and markers.
+Existing supported `!token-mod` macros remain compatibility aliases during the v1.x line, but should be updated to `!token-assist`, `!ta`, or `!ta-*` before GameAssist v2.0.0. When standalone TokenMod is detected, GameAssist leaves `!token-mod` to that script while TokenAssist commands remain available. Remove standalone TokenMod for normal v1.8.1 use because both tools can change the same token properties and markers.
 
 Config keys: `playersCanUseIds`, `warnOnStandalone`, and the protected `configSchemaVersion`.
 
@@ -492,7 +492,7 @@ GM commands:
 
 `!Init-RR` rolls once per unique eligible token. Duplicate occurrences receive the same result. Custom rows, counters, objects, dead NPCs, HP/death-marker mismatches, stale references, off-page tokens, unsupported sheets, and unreadable 2024 entries are not rerolled or repositioned. Eligible rows sort only among the positions InitiativeAssist owns, so a round counter or another Mod's custom entry stays exactly where the GM placed it.
 
-InitiativeAssist deliberately stops at initiative. CombatAssist owns deliberate encounter lifecycle, exact turn movement, native or conservative round counting, optional turn timers, and native current-turn pings. Condition-duration countdowns and automatic end-of-turn effects remain outside both modules in v1.8.0.
+InitiativeAssist deliberately stops at initiative. CombatAssist owns deliberate encounter lifecycle, exact turn movement, native or conservative round counting, optional turn timers, and native current-turn pings. Condition-duration countdowns and automatic end-of-turn effects remain outside both modules in v1.8.1.
 
 Config keys: `enabled`, `mode` (`manager` or `observer`), `hideNpcRolls` (default `true`).
 
@@ -594,20 +594,22 @@ Config keys: `marker`, `randomize`.
 
 > **Marker service:** NPCAssist uses the integrated `GameAssist.MarkerService`; death history remains independent from marker-write success.
 
-> **Module version:** NPCAssist `1.3.2` in GameAssist v1.8.0. NPCAssist `1.0.0` introduced the four-level history model; `1.1.0` added curated Arc management, hierarchical clearing, date rollover, and the report writer; `1.1.1` hardened standalone interoperability and new-token HP initialization; `1.2.0` migrated marker behavior to MarkerService; `1.2.1` added confirmation-gated marker repair; `1.3.0` applies the DM-selected timezone to Session dates and history displays without changing stored event instants; `1.3.1` added compact navigation, status, and a persistent manual; `1.3.2` adds equivalent NPC command families and dedicated GM/DM control aliases without changing death-history rules.
+> **Module version:** NPCAssist `1.3.3` in GameAssist v1.8.1. NPCAssist `1.0.0` introduced the four-level history model; `1.1.0` added curated Arc management, hierarchical clearing, date rollover, and the report writer; `1.1.1` hardened standalone interoperability and new-token HP initialization; `1.2.0` migrated marker behavior to MarkerService; `1.2.1` added confirmation-gated marker repair; `1.3.0` applies the DM-selected timezone to Session dates and history displays without changing stored event instants; `1.3.1` added compact navigation, status, and a persistent manual; `1.3.2` added equivalent NPC command families and dedicated GM/DM control aliases; `1.3.3` adds configurable GM-private Bloodied threshold notices.
 
 NPCAssist watches `change:graphic:bar1_value` for linked NPC characters with `npc=1`.
 
 * HP below 1 → record the NPC death into the active Campaign, Chapter, Section, and Session buckets, then request the configured `deadMarker`.
 * HP above 0 → annotate the matching death entry as revived and request removal of the configured `deadMarker`.
+* HP crosses from above half to half or below while still above 0 → whisper the GM once when `notifyBloodied=true` and bar 1 max is valid and positive.
 * `autoHide=true` → move newly dead NPC tokens to `hideLayer`.
 
-When HPAssist `autoRollOnAdd=true`, NPCAssist treats the short placeholder-HP interval on a newly added token as setup rather than combat. Blank or unknown starting HP is not accepted as evidence that a living NPC crossed below 1 HP. The automatic roll therefore does not flash the death marker or add a false death/revival pair to history; later known-positive-to-zero changes remain ordinary tracked deaths.
+When HPAssist `autoRollOnAdd=true`, NPCAssist treats the short placeholder-HP interval on a newly added token as setup rather than combat. Blank or unknown starting HP is not accepted as evidence that a living NPC crossed below 1 HP. The automatic roll therefore does not flash the death marker, add a false death/revival pair to history, or produce a false Bloodied notice; later known gameplay changes remain ordinary tracked events.
 
 Commands:
 
 * `!npc-death-help` / `!npc-death-guide` → Open the compact NPCAssist guide.
 * `!NPC-GM`, `!NPC-Death-GM`, or `!NPCAssist-GM` → Open the NPCAssist Control Center. Replace `GM` with `DM` for the equal Dungeon Master aliases.
+* `!npc-bloodied` → Toggle private Bloodied alerts and immediately return to the Control Center. The equivalent NPCAssist command families are also accepted.
 * `!npc-death-status` → Show current bucket, history, marker, and Arc health.
 * `!npc-death-info` → Whisper the short module explanation.
 * `!npc-death-manual` → Create or update the stable NPCAssist user-manual handout.
@@ -649,7 +651,9 @@ When mismatches exist, **Review Marker Repairs** opens the separate `!npc-death-
 
 Disabling NPCAssist stops its automation and requests removal of its configured marker from qualifying current-page tokens. Saved Campaign, Chapter, Section, Session, and Arc records remain available after the module is enabled again. Use the NPCAssist clear and Arc-management controls when history should actually be removed.
 
-Config keys: `autoTrackDeath`, `deadMarker`, `autoHide`, `hideLayer`.
+The NPCAssist Control Center shows whether Bloodied alerts are on and provides a one-click Turn On or Turn Off button. Bloodied notices are whispered only to the GM and show the NPC name plus current/max HP. They do not add a Bloodied marker, write history, alter Arc records, or repeat while the NPC remains at or below half. Healing above half naturally rearms a later crossing. PCs, unlinked tokens, non-object-layer tokens, deaths, and blank, invalid, zero, or negative maximum HP values do not produce the notice.
+
+Config keys: `autoTrackDeath`, `notifyBloodied`, `deadMarker`, `autoHide`, `hideLayer`.
 
 ### 6.8 HPAssist
 
@@ -768,13 +772,13 @@ I. **Open the Roll20 Mod/API Editor**
 
 II. **Install GameAssist**
 
-1. Paste the complete contents of `GameAssist` v1.8.0.
+1. Paste the complete contents of `GameAssist` v1.8.1.
 2. Keep the script as one complete file; do not paste only individual MECHSUITS sections into Roll20.
 3. Save the script.
 
 III. **Remove Overlapping Standalone Marker Tools**
 
-GameAssist v1.8.0 replaces standalone TokenMod and StatusInfo for the token and condition workflows supported by TokenAssist and ConditionAssist. Remove both standalone scripts before enabling the overlapping GameAssist modules. TokenAssist and standalone TokenMod both recognize `!token-mod`; ConditionAssist and standalone StatusInfo both recognize `!condition` and marker changes.
+GameAssist v1.8.1 replaces standalone TokenMod and StatusInfo for the token and condition workflows supported by TokenAssist and ConditionAssist. Remove both standalone scripts before enabling the overlapping GameAssist modules. TokenAssist and standalone TokenMod both recognize `!token-mod`; ConditionAssist and standalone StatusInfo both recognize `!condition` and marker changes.
 
 If standalone TokenMod is accidentally left installed, TokenAssist suspends only its deprecated `!token-mod` alias and warns the GM instead of applying that command twice. The `!token-assist`, `!ta`, and `!ta-*` commands remain available, but this safeguard is diagnostic rather than a supported permanent dual-install arrangement.
 
@@ -976,6 +980,7 @@ Setting `enabled=true` or `enabled=false` routes through component lifecycle con
 |  | `randomize` | bool | `true` | Randomize concentration emote flavor. |
 | **NPCAssist** | `enabled` | bool | `true` | Enable NPC death tracking. |
 |  | `autoTrackDeath` | bool | `true` | Automatically add/remove the death marker. |
+|  | `notifyBloodied` | bool | `true` | Whisper the GM when an eligible living NPC crosses to half HP or below. |
 |  | `deadMarker` | string | `"dead"` | Marker used for death state. |
 |  | `autoHide` | bool | `false` | Move newly dead NPC tokens to another layer. |
 |  | `hideLayer` | string | `"gmlayer"` | Target layer used by `autoHide`. |
@@ -988,6 +993,7 @@ Examples:
 ```roll20chat
 !ga-config get NPCAssist
 !ga-config get NPCAssist deadMarker
+!ga-config set NPCAssist notifyBloodied=false
 !ga-config set NPCAssist autoHide=true
 !ga-config set NPCAssist hideLayer=gmlayer
 !ga-config set HPAssist autoRollOnAdd=true
@@ -1595,7 +1601,7 @@ Unknown branches are not deleted automatically. Review the warning, then explici
 
 ### 14.8 `!ga-config list` Is Not a Full Backup
 
-The `GameAssist Config` handout contains flags, global config, and module config only. It excludes runtime caches, metrics, and unknown state branches. v1.8.0 cannot import the snapshot.
+The `GameAssist Config` handout contains flags, global config, and module config only. It excludes runtime caches, metrics, and unknown state branches. v1.8.1 cannot import the snapshot.
 
 Use it for configuration review and upgrade comparison—not as a full restore mechanism.
 
@@ -1770,7 +1776,7 @@ These details help maintainers reproduce the campaign conditions and focus the i
 
 ## 15 · Upgrade Paths <a id="15-upgrade-paths"></a>
 
-### 15.1 Recommended Upgrade: v0.1.7.0 → v1.8.0
+### 15.1 Recommended Upgrade: v0.1.7.0 → v1.8.1
 
 I. **Record the Working Campaign**
 
@@ -1782,7 +1788,7 @@ I. **Record the Working Campaign**
 
 II. **Replace the Complete Script**
 
-1. Replace v0.1.7.0 with the complete GameAssist v1.8.0 file.
+1. Replace v0.1.7.0 with the complete GameAssist v1.8.1 file.
 2. Save or restart the Mod sandbox.
 3. Do not combine sections from different releases.
 
@@ -1819,11 +1825,11 @@ Each old/new command pair should reach the same module once. NPC Campaign, Chapt
 
 V. **Run the Release Smoke Test**
 
-Use [§4.1 Minimum Smoke Test](#41-minimum-smoke-test) and the dedicated v1.8.0 upgrade track in `Smoketest.md`. Include one real death/revival, one concentration marker cycle, one HP roll, one CritAssist menu/table check, module disable/re-enable, mixed-sheet initiative, and one complete CombatAssist round.
+Use [§4.1 Minimum Smoke Test](#41-minimum-smoke-test), the dedicated v1.8.0 naming-migration track, and the focused v1.8.1 Bloodied track in `Smoketest.md`. Include one real death/revival, the half-HP crossing checks, one concentration marker cycle, one HP roll, one CritAssist menu/table check, module disable/re-enable, mixed-sheet initiative, and one complete CombatAssist round.
 
 ### 15.2 Rollback
 
-If v1.8.0 fails its smoke test:
+If v1.8.1 fails its smoke test:
 
 1. Replace it with your complete previous working script.
 2. Save/reload.
@@ -1909,10 +1915,10 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 
 ### 17.1 Current Status
 
-| Item | Status in v1.8.0 | Notes |
+| Item | Status in v1.8.1 | Notes |
 | --- | --- | --- |
 | MarkerService | **Implemented and accepted** | One toggleable service owns GameAssist marker resolution, mutation, preservation, and observation. Disabling it turns off dependent modules without disabling unrelated features. |
-| Bundled marker consumers | **Migrated** | NPCAssist 1.3.2, ConcentrationAssist 0.2.2, and DebugTools 0.2.2 no longer require standalone TokenMod. |
+| Bundled marker consumers | **Migrated** | NPCAssist 1.3.3, ConcentrationAssist 0.2.2, and DebugTools 0.2.2 no longer require standalone TokenMod. |
 | ConditionAssist 1.0.3 | **Implemented and accepted** | Condition references with `!condition` and case-insensitive `!cond-<condition>` commands, accurate selected-token recognition, current-page condition/marker status, selectable 2014/2024 SRD wording, campaign edits, marker artwork, verified marker-toggling announcements, validated legacy import, MarkerService synchronization, compact navigation, and GM/DM control aliases. |
 | TokenAssist 1.0.3 | **Implemented and accepted** | General token controls with `!token-assist` and `!ta`/`!ta-*` commands, temporary support for older `!token-mod` macros, MarkerService-backed markers, token-change observation, clear compatibility limits, duplicate-install protection, an action-focused GM/DM screen, and a stable manual. |
 | Integrated architecture stabilization | **Complete** | Upgrade, migration, lifecycle, command, marker, documentation, and Roll20 sandbox checks passed under Issues #28 and #29. |
@@ -1924,12 +1930,12 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 | Configuration export | **Implemented, partial** | Versioned configuration-only snapshot; no import/restore. |
 | State self-healing | **Implemented, conservative** | Repairs known containers; does not auto-delete unknown branches. |
 | Public queue API | **Implemented, opt-in** | Does not route every event through the queue. |
-| NPC death history | **Implemented** | Four-level handouts, Arc management, report writer, date-managed Sessions, and MarkerService-backed death markers. |
+| NPC death history | **Implemented** | Four-level handouts, Arc management, report writer, date-managed Sessions, MarkerService-backed death markers, and optional GM-private Bloodied threshold notices. |
 | Native Mord character-sheet support | **Deferred** | Begin after the complete v0.1.5.0 marker, token, and condition architecture is stable. |
 
-### 17.2 Current Candidate: v1.8.0 Naming Migration
+### 17.2 Current Candidate: v1.8.1 NPCAssist Bloodied Alerts
 
-The v1.8.0 candidate must pass the dedicated upgrade track in `Smoketest.md`. A campaign upgraded from v0.1.7.0 must start with CritAssist, NPCAssist, ConcentrationAssist, and HPAssist as the canonical module identities while preserving valid settings, NPC history and Arc records, established commands, compatibility access, and one existing guide handout for each renamed module. New configuration writes and diagnostics must use only the canonical names. The focused automated harness proves the static migration contract; the Roll20 sandbox smoke test remains the release gate for persisted campaign state, handout adoption, and live command routing.
+The v1.8.1 candidate keeps the accepted v1.8.0 naming and migration contract, then adds one narrowly bounded NPCAssist behavior. A valid object-layer NPC with positive maximum HP whispers the GM when its bar 1 HP crosses from above half to half or below while remaining alive. The notice does not repeat below half, naturally rearms after healing above half, remains silent for deaths and invalid maxima, and does not change markers or history. The focused automated harness and Roll20 threshold smoke test are the release gates.
 
 ### 17.3 Later Candidate: Compatibility-First Bridge Character Sheet
 
@@ -1944,8 +1950,8 @@ This is a separate project and is not implemented in v0.1.5.0.
 
 ### 17.4 Planned GameAssist Work
 
-1. **v1.8.0 — Module Identity Migration:** complete Issue #60 through PR #63 with canonical CritAssist, NPCAssist, ConcentrationAssist, and HPAssist names, migration-safe state and handout handling, and retained command aliases.
-2. **v1.8.1 — NPCAssist Bloodied Alerts:** implement Issue #64 as a focused, GM-private crossing notification without changing death-history semantics.
+1. **v1.8.0 — Module Identity Migration:** completed through Issue #60 and PR #63 with canonical CritAssist, NPCAssist, ConcentrationAssist, and HPAssist names, migration-safe state and handout handling, and retained command aliases.
+2. **v1.8.1 — NPCAssist Bloodied Alerts:** implement Issue #64 as the current focused, GM-private crossing notification without changing death-history semantics.
 3. **v1.8.2 — Progressive NPC Naming:** implement Issue #65 with page-local duplicate avoidance based on the tokens present when a new eligible NPC is added.
 4. **v2.x — EffectAssist Phase A:** establish source-aware semantic effect instances, targets, dependencies, stacking, marker/condition projection, and read-only reconciliation before attempting character-sheet mutation.
 5. **v2.y — AlmanacAssist:** use Issue #62 as the master specification and implement Time, Climate, Astronomy, Weather, Environment, and Rest as six separately tracked internal submodule phases.
@@ -1953,18 +1959,26 @@ This is a separate project and is not implemented in v0.1.5.0.
 
 The public [development roadmap](ROADMAP.md) carries the detailed gates and issue links. Planned release labels describe sequence, not promised dates.
 
-### 17.5 Explicit Non-Goals for v1.8.0
+### 17.5 Explicit Non-Goals for v1.8.1
 
 * No implicit queueing of every command or event.
 * No claim that the watchdog can kill running work.
 * No automatic deletion of unexpected state branches.
 * No guaranteed external dependency discovery.
 * No complete state import/restore.
+* No Bloodied marker, public Bloodied announcement, configurable threshold, or Bloodied history entry.
 * No automatic turn advancement, automatic creation of a round-counter row, condition-duration countdown, end-of-turn effect, persistent token highlight, combat music, NPC-history handoff, plugin loader, Rest Manager, or native Mord-sheet implementation.
 
 ---
 
 ## 18 · Changelog <a id="18-changelog"></a>
+
+### v1.8.1 – Private NPCAssist Bloodied Alerts
+
+* Added `notifyBloodied`, enabled by default, to privately notify the GM when an eligible living object-layer NPC crosses from above half HP to half HP or below.
+* Uses Roll20's previous/current HP transition as the complete rearm rule: remaining below half does not repeat, while healing above half permits a later crossing notice.
+* Requires numeric HP and a valid positive bar 1 maximum; PCs, unlinked tokens, GM-layer tokens, deaths, invalid maxima, and HPAssist initialization transitions remain silent.
+* Keeps Bloodied notices out of markers, death history, report buckets, Arc records, and public chat.
 
 ### v1.8.0 – Canonical Module Names and Migration Safety
 
