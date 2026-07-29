@@ -10,7 +10,8 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 | Revision | Status | Role |
 | --- | --- | --- |
-| **v2.0.0** | Development candidate; automated EffectAssist checks passed; Roll20 acceptance pending | Source-aware semantic effects, projection ownership, audit, and repair |\n| **v1.8.2** | Merged through PR #74; Issue #65 closed | Page-local progressive NPC token naming |
+| **v2.0.0** | Development candidate; focused EffectAssist checks passed; Roll20 acceptance pending | Catalog-driven 2014-sheet effects, concentration coordination, projection ownership, audit, and repair |
+| **v1.8.2** | Merged through PR #74; Issue #65 closed | Page-local progressive NPC token naming |
 | **v1.8.1** | Merged through PR #73 | GM-private NPCAssist Bloodied threshold alerts and Control Center toggle |
 | **v1.8.0** | Merged through PR #63; 712 automated checks passed | Canonical module identities and migration-safe project version transition |
 | **v0.1.7.0** | Accepted after automated verification and live Roll20 smoke testing | Preservation-first encounter, turn, and round flow |
@@ -46,35 +47,75 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ### Release definition
 
-GameAssist v2.0.0 introduces EffectAssist 1.0.0 and the shared SemanticEvents core service. EffectAssist establishes a source-aware record of active game effects and projects only the token state it can prove GameAssist owns. This release is the stable foundation for later character-sheet, spell-recognition, concentration, HP-loss, turn, and duration integrations; those integrations are not represented as complete until their separately tracked Roll20 contracts are implemented and tested.
+GameAssist v2.0.0 introduces EffectAssist 2.0.0, a disabled-by-default, catalog-driven effect coordinator for the official D&D 5E by Roll20 2014 character sheet. It records the source, targets, stacking, duration guidance, concentration dependency, and projection ownership of each effect, then coordinates the marker, condition, concentration, and sheet mechanics Roll20 can represent safely. The shared SemanticEvents service provides immutable in-sandbox lifecycle notifications without coupling module state.
 
 EffectAssist starts disabled so existing campaigns upgrade without receiving new markers, conditions, chat messages, or state mutations.
 
-### Semantic effect records
+### Launch effect catalog
 
-- Adds reusable effect definitions with stable identifiers, readable names, concentration requirements, and one declared projection type.
-- Includes Bless as the first built-in definition, using a non-stacking marker projection while players continue to add the mechanical roll bonus manually in v2.0.0.
+- Adds built-in definitions for Bless, Guidance, Gift of Alacrity, Warding Bond, Holy Weapon, Haste, Longstrider, Pass Without a Trace, and Beacon of Hope.
+- Gives every definition a stable identifier, readable rules summary, target guidance, duration guidance, concentration requirement, stacking group, projection list, and separate automatic, assisted, and informational instructions.
+- Presents a preview before application so the GM can see exactly what GameAssist will change and what still requires normal table adjudication.
+
+### Official 2014 sheet projections
+
+- Adds an ownership-aware adapter for the official D&D 5E by Roll20 2014 repeating global attack, saving-throw, and AC modifier sections.
+- Bless creates active `Bless (GameAssist)` `1d4` rows for global attack and saving-throw modifiers on eligible 2014 PC targets.
+- Warding Bond creates active `Warding Bond (GameAssist)` `+1` rows for AC and saving throws.
+- Haste creates an active `Haste (GameAssist)` `+2` AC row.
+- Uses `setWithWorker` when Roll20 exposes it and avoids writing generated aggregate fields.
+- Records exact attribute and row identifiers so cleanup can distinguish EffectAssist-created state from campaign-owned rows.
+- Adopts matching pre-existing rows without claiming or deleting them.
+- Preserves an EffectAssist-created row if a GM or another Mod edits its managed values, then reports that cleanup needs attention.
+- Gives linked NPC targets marker and lifecycle support without creating PC-only modifier rows; unsupported mechanics remain explicit assisted steps.
+
+### Complete Bless lifecycle
+
+- Applies the configured Blessed marker to each target.
+- Applies the 2014-sheet `1d4` global attack and saving-throw rows to eligible PC targets.
+- Establishes concentration on the source through ConcentrationAssist's public lifecycle contract.
+- Ends dependent Bless instances when source concentration ends through ConcentrationAssist or MarkerService observation.
+- Removes only the final unneeded EffectAssist-owned target marker and unedited sheet rows.
+- Rejects a second concentration effect from the same source unless the GM explicitly chooses to replace the current one.
+- Rolls back partial work when any required projection cannot be established.
+
+### Remaining catalog behavior
+
+- Guidance manages its marker and source concentration while identifying the one-use `1d4` check.
+- Gift of Alacrity manages its marker and points to InitiativeAssist's bonus-die controls instead of placing a die expression in a numeric initiative field.
+- Warding Bond manages its marker and safe `+1` AC/save rows while leaving resistance and mirrored damage to the table.
+- Holy Weapon manages its marker and source concentration without adding a global damage row that would affect every weapon.
+- Haste manages its marker, safe `+2` AC row, source concentration, and cleanup while identifying its remaining speed, save, action, and lethargy rules.
+- Longstrider manages its marker without rewriting the 2014 sheet's free-text movement field.
+- Pass Without a Trace manages its marker and source concentration while identifying the `+10` Stealth and area-membership responsibilities.
+- Beacon of Hope manages its marker and source concentration while identifying its Wisdom-save, death-save, and healing responsibilities.
+
+### Semantic effect records and transactions
+
+- Migrates EffectAssist durable state to schema version 2 with exact projection bindings for every instance.
+- Adds reusable effect definitions with stable identifiers, readable names, concentration requirements, and multiple declared projections.
 - Supports generic MarkerService, ConditionAssist, and record-only definitions for deliberate GM-managed effects.
 - Records the exact source character and source token separately from every target character and target token.
 - Preserves active instances across sandbox restarts and keeps a bounded history of the 100 most recently ended instances.
 - Generates stable instance identifiers and rejects overlong or unsafe request identifiers.
-- Makes repeated submission of the same request idempotent instead of creating duplicate effects.
+- Makes repeated submission of the same request idempotent and refuses reuse of the same request ID for a different intent.
 - Rejects a mixed valid/invalid target selection as one operation so a partial effect is never silently applied.
+- Rolls back completed bindings if a later required binding fails during application.
 
 ### Projection ownership and overlap
 
-- Adds a shared projection ledger that records the projection's baseline state, whether GameAssist created it, and every active EffectAssist instance that currently owns it.
-- Allows overlapping sources to share one non-stacking marker or condition without multiplying visible token state.
+- Adds shared projection ledgers for markers, conditions, concentration, and 2014-sheet rows. Each ledger records baseline state, creation ownership, expected values, and every active instance that currently relies on it.
+- Allows overlapping sources to share non-stacking projections without multiplying visible or mechanical state.
 - Ending one source removes only that source's ownership while another source remains active.
 - Ending the final source removes the projection only when EffectAssist originally created it.
-- Preserves a matching marker or condition that already existed before EffectAssist began managing the effect.
-- Verifies marker and condition writes after the request and records a pending projection when the required optional service is unavailable.
+- Preserves matching markers, conditions, concentration, and sheet rows that existed before EffectAssist began managing the effect.
+- Verifies each supported write and records clear pending or needs-attention health when a projection cannot be completed or safely cleaned.
 - Refuses to mutate a token when its represented character no longer matches the identity captured by the effect instance.
 
 ### Audit and authorized repair
 
-- Adds a read-only audit that compares semantic instances, projection ownership, and current token state without changing the campaign.
-- Reports missing managed projections, unexpected remaining projections, unavailable services, malformed known records, and token-identity drift as distinct conditions.
+- Adds a read-only audit that compares semantic instances, projection ownership, marker/condition state, concentration state, and exact 2014-sheet rows without changing the campaign.
+- Reports missing or altered managed projections, unexpected remaining projections, unavailable services, malformed known records, incomplete cleanup, and token-identity drift as distinct conditions.
 - Adds short-lived repair grants that are bound to the requesting GM and the exact mismatch signature.
 - Makes each repair grant single-use and requires EffectAssist to recheck the mismatch immediately before writing.
 - Refuses stale, expired, reused, altered, or non-GM repair requests.
@@ -82,11 +123,10 @@ EffectAssist starts disabled so existing campaigns upgrade without receiving new
 
 ### Game Master experience
 
-- Adds a compact EffectAssist GM/DM menu, Guide/Help, Info, Status/List, Definitions, Audit, Apply, End, Repair, and persistent Manual workflow.
+- Adds a compact EffectAssist GM/DM control center, Guide/Help, Catalog, Active Effects, Info, Status, Definitions, Audit, Apply/Confirm, End, Repair, and persistent Manual workflow.
 - Provides friendly unknown-command recovery with a direct route back to the Guide.
-- Keeps detailed conceptual guidance in the module manual while the ordinary chat menus remain task-oriented.
+- Keeps detailed catalog and lifecycle guidance in the module manual while ordinary chat menus remain task-oriented.
 - Adds EffectAssist to ConfigUI, module health reporting, the public command matrix, One-Click metadata, and the module-specific smoke-test guide.
-- Uses plain capability language in public screens; later integrations are identified as planned features rather than internal development phases.
 
 ### TokenAssist compatibility wording
 
@@ -107,41 +147,46 @@ EffectAssist starts disabled so existing campaigns upgrade without receiving new
 
 ### State and lifecycle safeguards
 
-- Adds EffectAssist defaults through the existing state self-healing path while preserving valid configuration and unknown state branches.
+- Adds EffectAssist schema-2 defaults through the existing state self-healing path while preserving valid configuration and unknown state branches.
 - Reports malformed known definitions, instances, and projection records without deleting them automatically.
 - Preserves EffectAssist runtime records when the module is disabled and restores command access to the same records when it is re-enabled. Direct public API mutation requests return `UNAVAILABLE` while disabled; read-only inspection remains available.
 - Removes active handlers during disable without deleting the public state ledger.
-- Keeps MarkerService and ConditionAssist as optional projection providers rather than hard startup dependencies.
+- Keeps MarkerService, ConditionAssist, ConcentrationAssist, and the 2014-sheet adapter behind explicit projection contracts rather than blending their persistent state into EffectAssist.
 - Adds explicit policy limits for active effects, history, definitions, targets, request identifiers, repair grants, names, descriptions, and chat output.
 
-### Parallel integration groundwork
+### ConcentrationAssist contract
 
-- Issue #76 now contains the official 2014-sheet Bless projection contract, including exact repeating global modifier attributes, ownership evidence, sheet-worker completion, and NPC/manual fallbacks.
-- Issue #77 now separates reliable 2014 cast proposals from a 2024 observation scaffold that requires real Roll20 samples before automation.
-- Issue #78 defines concentration-completion and concentration-ended semantic events without coupling ConcentrationAssist to EffectAssist.
-- Issue #79 defines an HP event seam with write provenance so later offers can distinguish real damage from setup, healing, and automated initialization.
-- Issue #80 defines turn and world-time candidate events while retaining manual expiration until live Roll20 evidence can prove an automatic boundary.
-- These contracts prevent later phases from rewriting EffectAssist's identity, ownership, or event model while keeping unverified behavior out of the v2.0.0 runtime.
+- Advances ConcentrationAssist from 0.2.2 to 0.3.0 without changing its public command language.
+- Adds a public API for resolving the configured marker, checking current concentration, establishing or clearing concentration, and observing lifecycle changes.
+- Publishes immutable `concentration.established`, `concentration.failed`, and `concentration.ended` semantic events.
+- Allows eligible concentration source tokens on the Objects or GM layer.
+- Keeps ConcentrationAssist authoritative for concentration state while EffectAssist responds through public events and marker observation instead of writing ConcentrationAssist's persistent branch.
+
+### Tracked follow-up integrations
+
+- Issue #77 retains passive 2014 cast recognition and the evidence-first 2024 observation work.
+- Issue #79 retains provenance-aware HP events and concentration-check offers that can distinguish damage from healing or automated initialization.
+- Issue #80 retains turn, encounter, and future world-time duration providers; v2.0.0 keeps duration endings deliberate unless concentration ends first.
 
 ### Verification and release gate
 
 - JavaScript syntax parsing passes for the complete v2.0.0 executable.
 - MECHSUITS validation finds 28 correctly nested and paired sections, complete metadata and footers, and an exact file-scoped canonical tree.
-- Eighteen deterministic EffectAssist checks pass for disabled defaults, lifecycle preservation, Bless application, request idempotency, overlapping ownership, baseline preservation, repeated end, invalid-selection atomicity, pending optional services, bounded history, audit, repair, and identity drift.
+- Eighty-eight focused deterministic checks pass for the nine-effect catalog, complete Bless automation, single-archive concentration cleanup, concentration replacement, overlapping ownership, cross-adapter marker sharing, shared and restored 2014 global-modifier flags, request idempotency and conflict refusal, pre-existing-state preservation, edited-row preservation, NPC fallback, optional MarkerService behavior, Warding Bond and Haste modifier rows, manual concentration-marker cleanup, and syntax-safe lifecycle handling.
 - Nine SemanticEvents checks pass for filtered ordered delivery, observer isolation, deep immutability, envelope shape, cleanup, and invalid-type refusal.
-- `script.json` parses with the v2.0.0 command and description additions.\n- `GameAssist`, `GameAssist.js`, and `GameAssist-v2.0.0` are byte-identical with SHA-256 `2D3A4FF4722C421F7960258F2B9BD50C3EBE994A63587AC5A8123E15396EF138`.
-- Final acceptance requires both the clean-install and v1.8.2 upgrade tracks in `Smoketest.md`, including one full EffectAssist lifecycle in the live Roll20 Mod sandbox.
+- `script.json` parses with the expanded v2.0.0 command and description additions.
+- Release acceptance includes the clean-install and v1.8.2 upgrade tracks in `Smoketest.md`, plus complete Bless, catalog coverage, concentration cleanup, overlap, audit/repair, disable/re-enable, and restart checks in the live Roll20 Mod sandbox.
 
 ### Deliberate exclusions
 
-- No character-sheet attribute writes in v2.0.0.
+- No 2024-sheet or third-party-sheet effect writes.
 - No automatic spell-card or cast recognition.
-- No automatic concentration cleanup from saving-throw outcomes.
+- No HP-loss-triggered concentration prompts.
 - No HP-loss effect offers.
 - No automatic turn, round, encounter, or world-time expiration.
 - No replayable event ledger or queueing of ordinary event handlers.
 - No automatic deletion of malformed or unknown saved state.
-- No change to the established behavior of NPCAssist, HPAssist, CritAssist, ConcentrationAssist, InitiativeAssist, CombatAssist, WelcomeAssist, TokenAssist, or ConditionAssist.
+- No passive targeting guesses from chat text, WildShape identity guesses, or unsupported aggregate sheet-field rewrites.
 
 ---
 

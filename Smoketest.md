@@ -2,7 +2,7 @@
 
 Use this guide after installing or updating GameAssist, before an important session, or while troubleshooting a feature.
 
-> This guide tests GameAssist v2.0.0. It adds a focused EffectAssist acceptance track while retaining the established component checks and the v1.8.2 NPCAssist naming and Bloodied regressions.
+> This guide tests GameAssist v2.0.0. It adds the full 2014-sheet EffectAssist launch track while retaining the established component checks and the v1.8.2 NPCAssist naming and Bloodied regressions.
 
 The tests are organized by component. Each section explains:
 
@@ -20,18 +20,19 @@ Run commands one at a time. A multi-line command block is a checklist, not a sin
 
 ## Focused v2.0.0 EffectAssist Acceptance
 
-**What this proves:** EffectAssist records the reason an effect exists, keeps overlapping sources separate, shares one safe projection, preserves pre-existing campaign markers, and repairs only a freshly confirmed mismatch.
+**What this proves:** EffectAssist coordinates its nine-effect launch catalog, applies verified 2014-sheet modifiers where available, links concentration-dependent effects to their source, keeps overlapping sources separate, preserves pre-existing campaign state, and repairs only a freshly confirmed safe mismatch.
 
-**Why test it:** v2.0.0 introduces durable effect records and projection ownership. Roll20 must confirm real token selection, marker storage, module toggles, custom marker resolution, chat buttons, and persistent state.
+**Why test it:** v2.0.0 introduces durable effect records and ownership across tokens, concentration, and repeating character-sheet rows. Roll20 must confirm real 2014-sheet worker behavior, token selection, marker storage, module toggles, chat buttons, and persistent state.
 
-**Skip when:** Do not skip this section for v2.0.0 release acceptance. During an ordinary campaign update, the ConditionAssist projection and identity-drift checks may be skipped when those paths will not be used, but Bless overlap, pre-existing-marker preservation, audit/repair, and disable/re-enable must still pass.
+**Skip when:** Do not skip this section for v2.0.0 release acceptance. After release, a campaign that keeps EffectAssist disabled may skip it. Campaign updates using EffectAssist should always test Bless, concentration cleanup, overlap, audit, and disable/re-enable; the remaining catalog entries may use the shorter coverage pass below.
 
 ### Preparation
 
 Use one disposable page with:
 
-- two linked source tokens representing different characters;
-- one linked target token on the Objects layer;
+- two linked source tokens representing different official D&D 5E by Roll20 2014 PC sheets;
+- one linked 2014 PC target token on the Objects layer;
+- one linked NPC target token for fallback behavior;
 - one unlinked token;
 - MarkerService enabled;
 - ConditionAssist enabled for its optional projection check.
@@ -43,6 +44,7 @@ EffectAssist begins disabled. Confirm that before changing anything:
 !ga-enable EffectAssist
 !Effect-Guide
 !Effect-GM
+!Effect-Catalog
 !Effect-Status
 !Effect-Audit
 ```
@@ -55,40 +57,65 @@ EffectAssist begins disabled. Confirm that before changing anything:
 - Status reports zero active effects on a clean state;
 - Audit explicitly reports that it changed nothing.
 
-### Bless Source and Projection
+### Complete Bless Lifecycle
 
 1. Select the linked target token.
 2. Run `!Effect-GM`.
-3. Click **Apply Bless**.
+3. Click **Effect Catalog**, then **Bless**.
 4. Choose the first linked source in the source prompt.
-5. Run `!Effect-Status`.
+5. Review the preview and click **Apply This Effect**.
+6. Open the target's 2014 sheet and inspect its global attack and saving-throw modifiers.
+7. Run `!Effect-Status`.
 
 **Pass when:**
 
 - one active Bless instance names the chosen source and target;
-- the target has the configured `angel-outfit` projection;
+- the target has the configured Blessed marker;
+- the target sheet has one active `Bless (GameAssist)` attack row with `1d4` and one active `Bless (GameAssist)` saving-throw row with `1d4`;
+- the source has the configured Concentrating marker and ConcentrationAssist reports it as concentrating;
 - unrelated markers, HP, bars, layer, controllers, character attributes, and Turn Tracker rows are unchanged;
 - Status offers an End button without requiring the GM to type the internal instance ID.
+
+Clear concentration from the source with ConcentrationAssist. Pass when the Bless instance ends, the target marker and both unedited GameAssist sheet rows are removed, and unrelated sheet rows remain.
+
+### Launch Catalog Coverage
+
+Apply each remaining catalog effect once to disposable tokens through `!Effect-Catalog`:
+
+| Effect | Confirm before ending it |
+| --- | --- |
+| Guidance | Target marker and source concentration are active; the preview explains the one-use `1d4` check. |
+| Gift of Alacrity | Target marker is active; the preview points to the initiative bonus-die workflow. |
+| Warding Bond | Target marker plus `Warding Bond (GameAssist)` `+1` AC and save rows exist; no concentration marker is added. |
+| Holy Weapon | Target marker and source concentration are active; no global damage row changes every weapon. |
+| Haste | Target marker, `Haste (GameAssist)` `+2` AC row, and source concentration are active. |
+| Longstrider | Target marker is active; the character's free-text speed field is not rewritten. |
+| Pass Without a Trace | Target marker and source concentration are active; the preview identifies the `+10` Stealth step. |
+| Beacon of Hope | Target marker and source concentration are active; the preview identifies its save and healing steps. |
+
+End each effect from `!Effect-Active`. Pass when every owned marker and unedited sheet row clears, concentration clears only when it belongs to that effect, and the assisted instructions remain readable.
+
+**NPC fallback:** Apply Bless, Warding Bond, and Haste to the disposable linked NPC. Pass when marker and lifecycle behavior work, no PC-only modifier rows are created for the NPC, and the result clearly identifies the manual mechanics.
 
 ### Overlapping Sources
 
 1. Keep the same target selected.
 2. Apply Bless again, choosing the second source.
-3. Confirm Status shows two active Bless instances but the target still has one effective Bless marker.
+3. Confirm Status shows two active Bless instances but the target still has one effective marker and one attack/save row pair.
 4. End the first instance from its generated button.
 5. Confirm the marker remains.
 6. End the second instance.
-7. Confirm the marker is removed.
+7. Confirm the marker and sheet rows are removed.
 
-**Pass when:** each source is independently removable, the first ending does not disturb the second, and final cleanup removes only the projection EffectAssist originally added.
+**Pass when:** each source is independently removable, the first ending does not disturb the second, and final cleanup removes only the projections EffectAssist originally added.
 
 ### Pre-Existing Marker Preservation
 
-1. Add the configured Bless marker to the target manually before creating an EffectAssist record.
+1. Add the configured Bless marker and matching `Bless (GameAssist)` attack/save rows to the target manually before creating an EffectAssist record.
 2. Apply one Bless instance.
 3. End that instance.
 
-**Pass when:** the marker remains. EffectAssist must record that the matching marker existed before its ownership began and must not claim or remove it.
+**Pass when:** the marker and pre-existing rows remain. EffectAssist must record that matching state existed before its ownership began and must not claim or remove it.
 
 ### Generic Paths
 
@@ -112,13 +139,15 @@ With the target selected, open `!Effect-GM` and test:
 ### Read-Only Audit and Confirmed Repair
 
 1. Apply Bless to the linked target.
-2. Remove only its visible Bless marker manually.
+2. Remove its visible Bless marker manually.
 3. Run `!Effect-Audit`.
 4. Confirm the audit identifies the target and missing projection and says it changed nothing.
 5. Click **Confirm Current Repairs**.
 6. Run `!Effect-Audit` again.
 
 **Pass when:** the first audit does not restore the marker, the generated confirmation restores and verifies it, and the second audit is clean.
+
+Repeat with one GameAssist-created Bless row changed from `1d4` to another value. End Bless. Pass when EffectAssist preserves the edited row and reports that cleanup needs attention instead of deleting the GM's edit.
 
 For the stale-confirmation check:
 
@@ -137,15 +166,15 @@ For the stale-confirmation check:
 
 **Pass when:** Audit reports that the exact token now represents a different character, repair is not offered for that mismatch, and ending the semantic record leaves the token's marker unchanged with a clear cleanup warning.
 
-### Optional-Service Local Failure
+### Required-Service Failure and Recovery
 
 1. With EffectAssist still enabled, disable MarkerService.
 2. Apply a Record Only effect; it should work normally.
-3. Apply Bless; its semantic record should be created with a pending projection and an actionable explanation.
+3. Preview Bless, then try to confirm it.
 4. Re-enable MarkerService.
-5. Run Audit and use a fresh confirmation to establish the missing safe projection.
+5. Apply Bless again.
 
-**Pass when:** disabling MarkerService does not disable EffectAssist, non-marker records remain usable, and only the unavailable projection is delayed.
+**Pass when:** disabling MarkerService does not disable EffectAssist, non-marker records remain usable, the incomplete Bless request does not leave partial sheet or concentration state, and the retry succeeds after MarkerService is restored.
 
 ### Disable, Re-Enable, and Restart
 
@@ -168,6 +197,8 @@ For the stale-confirmation check:
 !Effect-Help
 !Effect-Info
 !Effect-Status
+!Effect-Catalog
+!Effect-Active
 !Effect-Definitions
 !Effect-Audit
 !Effect-Manual
@@ -474,7 +505,8 @@ Do not approve the release if an existing valid configuration, history record, o
 | ConcentrationAssist | Status, saving throws, and marker removal work on linked PC tokens. | It combines character data, rolls, chat, and MarkerService. | ConcentrationAssist is disabled and will not be used. |
 | NPCAssist | Death, revival, audit, history, buckets, and Arc menus work. | It combines HP events, markers, saved records, and handouts. | NPCAssist is disabled and will not be used. |
 | HPAssist | Qualifying NPC HP formulas roll without changing PCs or unlinked tokens. | Incorrect eligibility can damage token HP or create false history. | HPAssist is disabled and NPC HP is set another way. |
-| EffectAssist | Source-aware effects, shared projections, audit, and repair work without deleting unrelated token state. | Effect records will become the foundation for later sheet, cast, HP, and duration integrations. | Never for v2.0.0 release acceptance. |\n| DebugTools | Dry runs remain non-destructive and `--apply` is explicit. | It verifies diagnostic safeguards and direct MarkerService access. | Normally skip; DebugTools is optional and disabled by default. |
+| EffectAssist | The nine-effect catalog coordinates owned markers, concentration, and 2014-sheet rows without deleting unrelated state. | Effects combine several campaign surfaces, so ownership and cleanup must be proven together. | Never for v2.0.0 release acceptance. |
+| DebugTools | Dry runs remain non-destructive and `--apply` is explicit. | It verifies diagnostic safeguards and direct MarkerService access. | Normally skip; DebugTools is optional and disabled by default. |
 
 ---
 
@@ -2529,9 +2561,9 @@ Restore the desired campaign greeting configuration. Leave WelcomeAssist disable
 
 ## 15. EffectAssist
 
-**What this proves:** EffectAssist can record one semantic effect once, project it through GameAssist-owned token state, preserve overlapping sources, and explain or repair projection mismatches without taking ownership of unrelated markers.
+**What this proves:** EffectAssist can coordinate one catalog effect across GameAssist-owned markers, conditions, concentration, and verified 2014-sheet rows while preserving overlap and unrelated campaign state.
 
-**Why test it:** Later automation will rely on these records. A projection error must never silently delete a marker the DM or another Mod already owned.
+**Why test it:** EffectAssist now performs real character-sheet automation. A projection error must never silently delete a marker, condition, concentration state, or modifier row the GM or another Mod already owned.
 
 **Skip when:** Never skip for v2.0.0 release acceptance. In ordinary play, the module may remain disabled until the campaign uses effect records.
 
@@ -2542,7 +2574,9 @@ Enable the module and open its GM screen:
 ```roll20chat
 !ga-enable EffectAssist
 !Effect-GM
+!Effect-Catalog
 !Effect-Definitions
+!Effect-Active
 !Effect-Status
 !Effect-Audit
 !Effect-Not-A-Command
@@ -2551,18 +2585,18 @@ Enable the module and open its GM screen:
 Pass when:
 
 - the GM screen clearly separates applying, reviewing, auditing, and help;
-- Bless appears as a built-in definition;
+- all nine launch effects appear in the catalog;
 - status reports no active effects on a first run;
 - audit reports no mismatches;
 - the unrecognized command offers a clear route back to the Guide.
 
-Then select one linked disposable token and apply Bless through `!Effect-Apply`. Confirm:
+Then select one linked disposable 2014 PC target and apply Bless from another linked 2014 PC source through the catalog. Confirm:
 
 - one active effect is recorded;
-- the configured Bless marker appears;
+- the configured Bless marker, the source concentration marker, and the target's `1d4` attack/save modifier rows appear;
 - `!Effect-Status` identifies the source and target;
 - applying the same submitted request twice does not create a duplicate;
-- `!Effect-End` removes the EffectAssist-owned marker and moves the record to recent history.
+- ending concentration or using `!Effect-End` removes the EffectAssist-owned marker and unedited modifier rows, then moves the record to recent history.
 
 Run the complete [Focused v2.0.0 EffectAssist Acceptance](#focused-v200-effectassist-acceptance) before approving the release.
 
@@ -2570,11 +2604,16 @@ Run the complete [Focused v2.0.0 EffectAssist Acceptance](#focused-v200-effectas
 
 Use the focused section to prove:
 
-- two Bless sources share one non-stacking projection;
-- ending one source does not remove the remaining source's projection;
-- a pre-existing matching marker is preserved after all EffectAssist sources end;
+- two Bless sources share one non-stacking marker and one attack/save row pair;
+- ending one source does not remove the remaining source's projections;
+- pre-existing matching markers and rows are preserved after all EffectAssist sources end;
+- all nine catalog definitions can be applied and ended with their documented automatic and assisted behavior;
+- Warding Bond creates only its `+1` AC/save rows and Haste creates only its `+2` AC row;
+- manual source-concentration removal ends dependent effects and cleans only owned target state;
+- edited EffectAssist-created sheet rows are preserved and reported for attention;
+- linked NPC targets receive marker/lifecycle behavior without inappropriate PC-only modifier rows;
 - mixed valid and invalid selections are rejected without partial application;
-- marker, ConditionAssist, and record-only definitions follow their declared projection type;
+- marker, ConditionAssist, 2014-sheet, concentration, and record-only definitions follow their declared projection contracts;
 - audit is read-only and repair requires a fresh, one-use GM authorization;
 - changed token identity causes a refusal rather than a write to the wrong representation;
 - disabling and re-enabling EffectAssist preserves its records;
@@ -2588,7 +2627,7 @@ Record:
 - the selected token names;
 - the effect instance ID shown by status;
 - the audit summary and mismatch reason;
-- whether the marker or condition existed before application;
+- whether the marker, condition, concentration state, or sheet row existed before application;
 - whether another source still owned the same projection;
 - any new sandbox exception.
 

@@ -20,9 +20,9 @@ calls GameAssist.enqueue(). This package ships with twelve configurable modules:
 - InitiativeAssist 1.0.4 - Uses Roll20's native Turn Tracker for mixed-sheet initiative workflows and compact topic guidance.
 - CombatAssist 1.0.5 - Tracks encounters, native round counters, guarded turns, optional timers, private-safe pings, and recoverable tracker changes.
 - WelcomeAssist 0.1.4 - Optionally greets the table after a healthy GameAssist startup through short !Welcome commands.
-- ConcentrationAssist 0.2.2 - Runs concentration checks and manages its configured marker.
+- ConcentrationAssist 0.3.0 - Runs concentration checks, manages its configured marker, and exposes concentration lifecycle events.
 - NPCAssist 1.4.0 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, and Arc rosters.
-- EffectAssist 1.0.0 - Records source-aware effects and safely projects markers or conditions without claiming pre-existing token state.
+- EffectAssist 2.0.0 - Coordinates catalog-driven effects, 2014-sheet modifiers, markers, conditions, concentration, and ownership-safe cleanup.
 - HPAssist 0.1.1.3 - Rolls npc_hpformula and writes the result to token bar 1.
 - DebugTools 0.2.2 - Optional dry-run-first GM diagnostics.
 
@@ -70,8 +70,9 @@ MODULE COMMANDS
   including !npc-death-help, !npc-death-report, !npc-death-buckets,
   !npc-death-clear, !npc-death-write, !npc-wr, !npc-death-audit, !npc-death-repair,
   !npc-death-arc, !npc-bloodied, !npc-numbering
-- EffectAssist: !Effect-GM, !Effect-Guide, !Effect-Status, !Effect-Definitions,
-  !Effect-Apply, !Effect-End, !Effect-Audit, !Effect-Repair, and !effect <command>
+- EffectAssist: !Effect-GM, !Effect-Guide, !Effect-Catalog, !Effect-Active,
+  !Effect-Status, !Effect-Definitions, !Effect-Apply, !Effect-End,
+  !Effect-Audit, !Effect-Repair, and !effect <command>
 - HPAssist: !HP-GM, !HP-Selected, !HP-All, !hp <command>
 - DebugTools: !ga-debug damage|marker|save
 
@@ -81,7 +82,13 @@ V2.0.0 FOUNDATION
 - Built-in ids, custom display names, exact stored tags, numbered markers, and
   unrelated marker entries are preserved through a structured mutation contract.
 - NPCAssist can assign unique page-local names to newly added linked NPC tokens without persistent counters.
-- EffectAssist records semantic effect instances separately from visible marker or condition projections, preserving overlapping sources and pre-existing token state.
+- EffectAssist records semantic effect instances separately from their marker, condition, concentration, and 2014-sheet projections, preserving overlapping sources and pre-existing campaign state.
+- The launch catalog includes Bless, Guidance, Gift of Alacrity, Warding Bond,
+  Holy Weapon, Haste, Longstrider, Pass Without a Trace, and Beacon of Hope.
+- Bless automatically manages its target marker, 2014-sheet 1d4 global attack
+  and saving-throw modifiers, source concentration, and dependent cleanup.
+- Mechanics without an ownership-safe 2014-sheet field remain clearly listed as
+  assisted table steps instead of being represented by unsafe sheet rewrites.
 - EffectAssist audits projection drift without writing and requires a fresh GM confirmation before repair.
 - NPCAssist, ConcentrationAssist, and DebugTools use GameAssist.MarkerService.
 - Marker-dependent GameAssist modules no longer depend on standalone TokenMod.
@@ -177,7 +184,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 //     └─ [GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
-// Guarantee: GameAssist v2.0.0 runs policy, utilities, guarded core services including MarkerService and TurnTrackerService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/effect/gameplay modules, then bootstrap in the declared order. EffectAssist owns source-aware semantic effect records while visible markers and conditions remain auditable projections that are never silently repaired. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
+// Guarantee: GameAssist v2.0.0 runs policy, utilities, guarded core services including MarkerService and TurnTrackerService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/effect/gameplay modules, then bootstrap in the declared order. EffectAssist owns source-aware semantic effect records while markers, conditions, concentration, and verified 2014-sheet modifiers remain auditable projections that are never silently repaired. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
 
 // =============================
 // === GameAssist v2.0.0 ===
@@ -13689,16 +13696,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:NPCASSIST] END
     // =============================================================================
 
-    // ————— CONCENTRATIONASSIST MODULE v0.2.2 —————
+    // ————— CONCENTRATIONASSIST MODULE v0.3.0 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:CONCENTRATIONASSIST] BEGIN
     // Section Title: ConcentrationAssist module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONCENTRATIONASSIST", title: "ConcentrationAssist",
-    //   guarantees: ["Chat UI for concentration saves; exact configured-marker status reporting; marker mutations through CORE:MARKERSERVICE","Compact layered navigation, stable on-demand manual, read-only audit, and unknown-command recovery preserve !concentration and !cc"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
-    //   last_updated_version: "v1.8.0",
-    //   independent_versions: { module_version: "0.2.2" } }
+    //   guarantees: ["Chat UI for concentration saves; exact configured-marker status reporting; marker mutations through CORE:MARKERSERVICE","Stable public set/read/observe contracts let dependent modules react without scraping private state","Compact layered navigation, stable on-demand manual, read-only audit, and unknown-command recovery preserve !concentration and !cc"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
+    //   provides: ["GameAssist.ConcentrationAssist"],
+    //   last_updated_version: "v2.0.0",
+    //   independent_versions: { module_version: "0.3.0" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:CONCENTRATIONASSIST manages concentration save rolls, whispering outcomes,
@@ -13716,7 +13724,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     });
 
     const LAST_DAMAGE_LIMIT = POLICY.runtime.lastDamageLimit;
-    const MODULE_VERSION = '0.2.2';
+    const MODULE_VERSION = '0.3.0';
 
     function getEntryTimestamp(entry) {
         const ts = Number(entry && entry.timestamp);
@@ -13870,14 +13878,26 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
 
     /**
-     * toggleMarker(token, on)
-     *   Adds or removes the Concentrating status marker.
+     * setConcentrationMarker(tokenOrId, on, context)
+     *   Changes concentration through MarkerService and publishes one semantic result.
+     *   Context is bounded operational metadata; it never exposes private module state.
      */
-    function toggleMarker(token, on) {
+    function setConcentrationMarker(tokenOrId, on, context = {}) {
+        if (modState.config.enabled === false && context.allowDisabled !== true) {
+            return { ok: false, code: 'UNAVAILABLE', message: 'ConcentrationAssist is disabled.' };
+        }
+        const token = typeof tokenOrId === 'string' ? getObj('graphic', tokenOrId) : tokenOrId;
+        if (!token) return { ok: false, code: 'NOT_FOUND', message: 'The concentration token was not found.' };
+        if (!['objects', 'gmlayer'].includes(String(token.get('layer') || ''))) {
+            return { ok: false, code: 'UNPROCESSABLE', message: 'The concentration token must be on the Objects or GM layer.' };
+        }
+        const characterId = String(token.get('represents') || '');
+        const character = characterId ? getObj('character', characterId) : null;
+        if (!character) return { ok: false, code: 'UNPROCESSABLE', message: 'The concentration token must represent a character.' };
         const resolution = getMarkerResolution();
         if (!resolution.ok) {
             GameAssist.log('ConcentrationAssist', markerResolutionWarning(resolution), 'WARN');
-            return false;
+            return { ok: false, code: resolution.code || 'NOT_FOUND', message: markerResolutionWarning(resolution) };
         }
 
         if (resolution.ambiguous) {
@@ -13891,9 +13911,32 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const result = GameAssist.MarkerService.set(token, getMarker(), on, { owner: 'ConcentrationAssist' });
         if (!result.ok) {
             GameAssist.log('ConcentrationAssist', result.message || `Marker change failed (${result.code || 'INTERNAL'}).`, 'WARN');
-            return false;
+            return result;
         }
-        return true;
+        const reason = String(context.reason || (on ? 'established' : 'ended')).slice(0, POLICY.semanticEvents.typeLength);
+        const eventType = on
+            ? 'concentration.established'
+            : (reason === 'check-failed' ? 'concentration.failed' : 'concentration.ended');
+        if (result.changed || context.emitUnchanged === true || reason === 'check-failed') {
+            GameAssist.SemanticEvents.publish(eventType, 'ConcentrationAssist', {
+                tokenId: token.id,
+                tokenName: String(token.get('name') || character.get('name') || 'Unnamed token'),
+                characterId: character.id,
+                characterName: String(character.get('name') || token.get('name') || 'Unnamed character'),
+                active: on === true,
+                reason,
+                actor: String(context.actor || 'api').slice(0, POLICY.semanticEvents.ownerLength),
+                instanceId: context.instanceId ? String(context.instanceId).slice(0, POLICY.effects.requestIdLength) : null,
+                damage: Number.isFinite(Number(context.damage)) ? Number(context.damage) : null,
+                dc: Number.isFinite(Number(context.dc)) ? Number(context.dc) : null,
+                total: Number.isFinite(Number(context.total)) ? Number(context.total) : null
+            });
+        }
+        return { ...result, tokenId: token.id, characterId: character.id, marker: getMarker() };
+    }
+
+    function toggleMarker(token, on, context = {}) {
+        return setConcentrationMarker(token, on, context).ok === true;
     }
 
     /**
@@ -14140,7 +14183,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ? pool[Math.floor(Math.random() * pool.length)]
                 : pool[0];
             sendChat(`character|${character.id}`, `/em ${tail}`);
-            toggleMarker(token, ok);
+            toggleMarker(token, ok, {
+                actor: msg.playerid,
+                reason: ok ? 'check-succeeded' : 'check-failed',
+                emitUnchanged: !ok,
+                damage,
+                dc,
+                total
+            });
         });
     }
 
@@ -14170,7 +14220,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return;
             }
 
-            if (!toggleMarker(t, false)) {
+            if (!toggleMarker(t, false, { actor: msg.playerid, reason: 'manual-clear', emitUnchanged: true })) {
                 skipped.push(t.get('name') || '(Unnamed)');
             }
         });
@@ -14297,6 +14347,29 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
     }
 
+    // ─── Public Integration Contract ───────────────────────────────────────────────
+    function observeConcentration(callback, { owner = 'ConcentrationAssistConsumer' } = {}) {
+        return GameAssist.SemanticEvents.observe(callback, {
+            owner,
+            types: ['concentration.established', 'concentration.failed', 'concentration.ended']
+        });
+    }
+
+    GameAssist.ConcentrationAssist = Object.freeze({
+        version: MODULE_VERSION,
+        getMarker,
+        resolveMarker: getMarkerResolution,
+        isConcentrating: tokenOrId => {
+            const token = typeof tokenOrId === 'string' ? getObj('graphic', tokenOrId) : tokenOrId;
+            const resolution = getMarkerResolution();
+            return Boolean(token && resolution.ok && GameAssist.MarkerService.has(token, resolution.id));
+        },
+        set: (tokenOrId, active, context = {}) => setConcentrationMarker(tokenOrId, active === true, context),
+        observe: observeConcentration,
+        clearObservers: owner => GameAssist.SemanticEvents.clearObservers(owner),
+        isAvailable: () => modState.config.enabled !== false && GameAssist.MarkerService.isEnabled()
+    });
+
     // ─── Wire It Up ────────────────────────────────────────────────────────────────
     GameAssist.onCommand('!ga-conc-status', () => {
         const tpl = buildStatusTemplate();
@@ -14348,10 +14421,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
     });
     // --- Notes & Comments ---
-    // Changed (v1.8.0): Renamed the module to ConcentrationAssist while preserving saved concentration activity, !concentration, !con, !cc, and the complete prior option grammar.
+    // Changed (v2.0.0): Advanced ConcentrationAssist to 0.3.0 with stable set/read/observe methods and immutable concentration lifecycle events so EffectAssist can establish concentration and clean dependent effects after failure or deliberate clearing.
     // Decision log:
-    //   CHOICE: Keep lowercase parsing and established aliases - ALT: introduce a new command grammar; REJECTED: unnecessary user retraining.
+    //   CHOICE: Publish semantic concentration transitions after verified marker requests - ALT: let consumers scrape lastDamage or marker state; REJECTED: private caches do not prove lifecycle and create order-dependent coupling.
     // Prior notes:
+    //   v1.8.0: Renamed the module to ConcentrationAssist while preserving saved concentration activity, !concentration, !con, !cc, and the complete prior option grammar.
+    //   Decision: Keep lowercase parsing and established aliases instead of introducing a new command grammar.
     //   v0.1.4.7: Advanced to 0.1.0.6 and used verified TokenMod --api-as marker requests while preserving standalone StatusInfo observation.
     //   v0.1.4.3: Resolved custom marker names to stored tags and reported unrecognized configuration.
     //   v0.1.4.1: Routed lastDamage limits and timestamps through POLICY/shared time seams.
@@ -14371,47 +14446,213 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // ————— EFFECTASSIST MODULE v1.0.0 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:EFFECTASSIST] BEGIN
-    // Section Title: Source-aware semantic effects and projections
+    // Section Title: Catalog-driven semantic effects and 2014 sheet projections
     // -----------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:EFFECTASSIST", title: "EffectAssist",
-    //   guarantees: ["Effect instances, not markers or sheet fields, are the durable source of truth","Source-aware projection ledgers preserve overlapping non-stacking effects and pre-existing markers","Marker mutations use CORE:MARKERSERVICE; condition projections use ConditionAssist when available","Audit is read-only and repair requires a fresh bounded confirmation grant","Compact GM navigation, a stable manual, and case-insensitive !Effect-* / !effect commands require no memorized ids"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]","[GAMEASSIST:MODULES:CONDITIONASSIST]"],
+    //   guarantees: ["Effect instances, not markers or sheet fields, are the durable source of truth","Definitions may coordinate multiple source and target projections through one versioned adapter pipeline","Verified 2014 repeating modifier rows are ownership-safe and never overwrite unrelated sheet data","ConcentrationAssist owns concentration state while EffectAssist owns dependent cleanup","Audit is read-only; application and repair require bounded GM confirmation","The built-in catalog distinguishes automatic, assisted, and informational behavior"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]","[GAMEASSIST:MODULES:CONDITIONASSIST]","[GAMEASSIST:MODULES:CONCENTRATIONASSIST]"],
     //   provides: ["GameAssist.EffectAssist"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.0.0", effect_state_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "2.0.0", effect_state_schema_version: 2 }, lifecycle: "active" }
     // -----------------------------------------------------------------------------
     // Narrative
-    // EffectAssist records why an effect exists, its source and targets, dependencies,
-    // stacking identity, lifecycle, and intended projections. Bless and a bounded generic
-    // manual path prove the model. Marker and condition state are projections that may be
-    // audited and deliberately repaired; startup never silently overwrites token state.
-    // Character-sheet writes, passive cast recognition, HP-loss prompts, and automatic
-    // duration handling remain adapters over this contract rather than alternate engines.
+    // EffectAssist is a catalog-driven rules coordinator. It records the source,
+    // targets, stacking, duration, dependencies, and every visible or mechanical
+    // projection of an effect. MarkerService, ConditionAssist, ConcentrationAssist,
+    // and verified sheet adapters retain authority over their own mechanics.
+    // The v2.0.0 adapter supports the D&D 5E by Roll20 2014 sheet. Mechanics that
+    // cannot be represented safely remain explicit assisted steps instead of
+    // pretending that a token marker is complete automation.
     // -----------------------------------------------------------------------------
     GameAssist.register('EffectAssist', function() {
         const MODULE_NAME = 'EffectAssist';
-        const MODULE_VERSION = '1.0.0';
-        const STATE_SCHEMA_VERSION = 1;
+        const MODULE_VERSION = '2.0.0';
+        const STATE_SCHEMA_VERSION = 2;
         const modState = GameAssist.getState(MODULE_NAME);
         const repairGrants = new Map();
+        const applyGrants = new Map();
         const projectionAdapters = new Map();
+        const suppressedConcentrationTokens = new Map();
+
+        const OGL_SECTIONS = Object.freeze({
+            attack: Object.freeze({
+                section: 'tohitmod',
+                enableFlag: 'global_attack_mod_flag',
+                activeField: 'global_attack_active_flag',
+                nameField: 'global_attack_name',
+                valueField: 'global_attack_roll'
+            }),
+            save: Object.freeze({
+                section: 'savemod',
+                enableFlag: 'global_save_mod_flag',
+                activeField: 'global_save_active_flag',
+                nameField: 'global_save_name',
+                valueField: 'global_save_roll'
+            }),
+            ac: Object.freeze({
+                section: 'acmod',
+                enableFlag: 'global_ac_mod_flag',
+                activeField: 'global_ac_active_flag',
+                nameField: 'global_ac_name',
+                valueField: 'global_ac_val'
+            })
+        });
 
         const BUILTIN_DEFINITIONS = Object.freeze({
             bless: Object.freeze({
                 id: 'bless',
+                definitionVersion: 2,
                 name: 'Bless',
-                description: 'A source-aware Bless record. Players add the mechanical bonus to their rolls manually in v2.0.0.',
-                dependency: 'concentration',
-                stackingGroup: 'bless',
-                stackingMode: 'nonstacking',
-                projection: Object.freeze({ kind: 'marker', value: 'angel-outfit' }),
-                builtin: true
+                description: 'Blessed targets add 1d4 to attack rolls and saving throws.',
+                concentration: true,
+                duration: 'Up to 1 minute',
+                targets: 'Up to three creatures at base level; higher slots may affect more.',
+                stacking: Object.freeze({ group: 'bless', mode: 'nonstacking' }),
+                projections: Object.freeze([
+                    Object.freeze({ id: 'blessed-marker', adapter: 'marker', subject: 'target-token', marker: 'angel-outfit', label: 'Blessed marker' }),
+                    Object.freeze({ id: 'attack-bonus', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'attack', label: 'Bless (GameAssist)', value: '1d4', optional: true }),
+                    Object.freeze({ id: 'save-bonus', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'save', label: 'Bless (GameAssist)', value: '1d4', optional: true })
+                ]),
+                automatic: Object.freeze(['Blessed marker', '2014-sheet 1d4 global attack modifier', '2014-sheet 1d4 global saving-throw modifier', 'source concentration and cleanup']),
+                assisted: Object.freeze(['Choose the targets and end the effect early when a rule outside concentration requires it.']),
+                informational: Object.freeze([])
+            }),
+            guidance: Object.freeze({
+                id: 'guidance',
+                definitionVersion: 1,
+                name: 'Guidance',
+                description: 'The target may add 1d4 to one ability check before the spell ends.',
+                concentration: true,
+                duration: 'Up to 1 minute or until the bonus is used',
+                targets: 'One willing creature',
+                stacking: Object.freeze({ group: 'guidance', mode: 'nonstacking' }),
+                projections: Object.freeze([
+                    Object.freeze({ id: 'guidance-marker', adapter: 'marker', subject: 'target-token', marker: 'aura', label: 'Guidance marker' })
+                ]),
+                automatic: Object.freeze(['Guidance marker', 'source concentration and cleanup']),
+                assisted: Object.freeze(['Add 1d4 to one chosen ability check, then end Guidance after it is used.']),
+                informational: Object.freeze(['A global skill modifier would be inaccurate because Guidance can affect checks that are not sheet skills.'])
+            }),
+            'gift-of-alacrity': Object.freeze({
+                id: 'gift-of-alacrity',
+                definitionVersion: 1,
+                name: 'Gift of Alacrity',
+                description: 'The target adds 1d8 to initiative rolls for the duration.',
+                concentration: false,
+                duration: '8 hours',
+                targets: 'One willing creature',
+                stacking: Object.freeze({ group: 'gift-of-alacrity', mode: 'nonstacking' }),
+                projections: Object.freeze([
+                    Object.freeze({ id: 'alacrity-marker', adapter: 'marker', subject: 'target-token', marker: 'stopwatch', label: 'Gift of Alacrity marker' })
+                ]),
+                automatic: Object.freeze(['Gift of Alacrity marker and effect record']),
+                assisted: Object.freeze(['Use InitiativeAssist bonus-die controls or add 1d8 when initiative is rolled.']),
+                informational: Object.freeze(['The 2014 initiative modifier is numeric and cannot safely store a die expression.'])
+            }),
+            'warding-bond': Object.freeze({
+                id: 'warding-bond',
+                definitionVersion: 1,
+                name: 'Warding Bond',
+                description: 'The target gains +1 AC, +1 to saving throws, resistance to damage, and shares damage with the source.',
+                concentration: false,
+                duration: '1 hour',
+                targets: 'One willing creature',
+                stacking: Object.freeze({ group: 'warding-bond', mode: 'nonstacking' }),
+                projections: Object.freeze([
+                    Object.freeze({ id: 'bond-marker', adapter: 'marker', subject: 'target-token', marker: 'chained-heart', label: 'Warding Bond marker' }),
+                    Object.freeze({ id: 'bond-ac', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'ac', label: 'Warding Bond (GameAssist)', value: '1', optional: true }),
+                    Object.freeze({ id: 'bond-save', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'save', label: 'Warding Bond (GameAssist)', value: '1', optional: true })
+                ]),
+                automatic: Object.freeze(['Warding Bond marker', '2014-sheet +1 AC modifier', '2014-sheet +1 saving-throw modifier']),
+                assisted: Object.freeze(['Apply resistance and mirrored damage according to the spell.']),
+                informational: Object.freeze(['GameAssist does not alter damage because it cannot safely identify every damage source or resistance interaction.'])
+            }),
+            'holy-weapon': Object.freeze({
+                id: 'holy-weapon',
+                definitionVersion: 1,
+                name: 'Holy Weapon',
+                description: 'One weapon deals extra radiant damage and can be dismissed in a burst of radiance.',
+                concentration: true,
+                duration: 'Up to 1 hour',
+                targets: 'One weapon carried by a creature',
+                stacking: Object.freeze({ group: 'holy-weapon', mode: 'nonstacking' }),
+                projections: Object.freeze([
+                    Object.freeze({ id: 'holy-weapon-marker', adapter: 'marker', subject: 'target-token', marker: 'angel-outfit', label: 'Holy Weapon marker' })
+                ]),
+                automatic: Object.freeze(['Holy Weapon marker', 'source concentration and cleanup']),
+                assisted: Object.freeze(['Add 2d8 radiant damage only to the affected weapon and resolve the optional burst manually.']),
+                informational: Object.freeze(['A global damage row would incorrectly modify every weapon attack.'])
+            }),
+            haste: Object.freeze({
+                id: 'haste',
+                definitionVersion: 1,
+                name: 'Haste',
+                description: 'The target gains +2 AC and the other benefits and limits described by Haste.',
+                concentration: true,
+                duration: 'Up to 1 minute',
+                targets: 'One willing creature',
+                stacking: Object.freeze({ group: 'haste', mode: 'nonstacking' }),
+                projections: Object.freeze([
+                    Object.freeze({ id: 'haste-marker', adapter: 'marker', subject: 'target-token', marker: 'lightning-helix', label: 'Haste marker' }),
+                    Object.freeze({ id: 'haste-ac', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'ac', label: 'Haste (GameAssist)', value: '2', optional: true })
+                ]),
+                automatic: Object.freeze(['Haste marker', '2014-sheet +2 AC modifier', 'source concentration and cleanup']),
+                assisted: Object.freeze(['Apply doubled speed, Dexterity-save advantage, the restricted extra action, and ending lethargy at the table.']),
+                informational: Object.freeze(['The 2014 sheet has no isolated safe switch for all remaining Haste mechanics.'])
+            }),
+            longstrider: Object.freeze({
+                id: 'longstrider',
+                definitionVersion: 1,
+                name: 'Longstrider',
+                description: 'The target speed increases by 10 feet for the duration.',
+                concentration: false,
+                duration: '1 hour',
+                targets: 'One creature; higher slots may affect more.',
+                stacking: Object.freeze({ group: 'longstrider', mode: 'nonstacking' }),
+                projections: Object.freeze([
+                    Object.freeze({ id: 'longstrider-marker', adapter: 'marker', subject: 'target-token', marker: 'fluffy-wing', label: 'Longstrider marker' })
+                ]),
+                automatic: Object.freeze(['Longstrider marker and effect record']),
+                assisted: Object.freeze(['Add 10 feet to the appropriate movement speed.']),
+                informational: Object.freeze(['The 2014 speed field is free text and may contain several movement modes, so it is not rewritten automatically.'])
+            }),
+            'pass-without-a-trace': Object.freeze({
+                id: 'pass-without-a-trace',
+                definitionVersion: 1,
+                name: 'Pass Without a Trace',
+                description: 'Chosen creatures near the source gain +10 to Dexterity (Stealth) checks and cannot be tracked except by magic.',
+                concentration: true,
+                duration: 'Up to 1 hour',
+                targets: 'Chosen creatures within 30 feet of the source',
+                stacking: Object.freeze({ group: 'pass-without-a-trace', mode: 'nonstacking' }),
+                projections: Object.freeze([
+                    Object.freeze({ id: 'pass-without-trace-marker', adapter: 'marker', subject: 'target-token', marker: 'ninja-mask', label: 'Pass Without a Trace marker' })
+                ]),
+                automatic: Object.freeze(['Pass Without a Trace marker', 'source concentration and cleanup']),
+                assisted: Object.freeze(['Add +10 to affected Dexterity (Stealth) checks and keep the target list current as creatures enter or leave the area.']),
+                informational: Object.freeze(['The 2014 sheet does not expose an isolated ownership-safe Stealth-only repeating modifier.'])
+            }),
+            'beacon-of-hope': Object.freeze({
+                id: 'beacon-of-hope',
+                definitionVersion: 1,
+                name: 'Beacon of Hope',
+                description: 'Affected creatures gain the spell benefits for Wisdom saves, death saves, and healing.',
+                concentration: true,
+                duration: 'Up to 1 minute',
+                targets: 'Any number of creatures within 30 feet',
+                stacking: Object.freeze({ group: 'beacon-of-hope', mode: 'nonstacking' }),
+                projections: Object.freeze([
+                    Object.freeze({ id: 'beacon-marker', adapter: 'marker', subject: 'target-token', marker: 'aura', label: 'Beacon of Hope marker' })
+                ]),
+                automatic: Object.freeze(['Beacon of Hope marker', 'source concentration and cleanup']),
+                assisted: Object.freeze(['Apply Wisdom-save and death-save advantage and maximize healing received.']),
+                informational: Object.freeze(['The 2014 sheet has no isolated switch that safely represents all three mechanics.'])
             })
         });
 
         Object.assign(modState.config, {
             enabled: false,
-            defaultBlessMarker: 'angel-outfit',
+            markerOverrides: {},
             customDefinitions: {},
             ...modState.config
         });
@@ -14430,12 +14671,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function boundedText(value, maximum, label, { required = true } = {}) {
             const text = String(value ?? '').trim();
-            if (required && !text) {
-                return { ok: false, code: 'INVALID_ARGUMENT', message: `${label} is required.` };
-            }
-            if (text.length > maximum) {
-                return { ok: false, code: 'INVALID_ARGUMENT', message: `${label} must be ${maximum} characters or fewer.` };
-            }
+            if (required && !text) return { ok: false, code: 'INVALID_ARGUMENT', message: `${label} is required.` };
+            if (text.length > maximum) return { ok: false, code: 'INVALID_ARGUMENT', message: `${label} must be ${maximum} characters or fewer.` };
             return { ok: true, value: text };
         }
 
@@ -14445,26 +14682,88 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 .toLowerCase()
                 .replace(/[^a-z0-9]+/g, '-')
                 .replace(/^-+|-+$/g, '')
-                .slice(0, 60);
+                .slice(0, POLICY.effects.nameLength);
             return normalized && !POLICY.config.unsafeKeys.includes(normalized) ? normalized : '';
         }
 
+        function stableValue(value) {
+            if (Array.isArray(value)) return value.map(stableValue);
+            if (!isPlainObject(value)) return value;
+            return Object.keys(value).sort().reduce((result, key) => {
+                result[key] = stableValue(value[key]);
+                return result;
+            }, {});
+        }
+
+        function fingerprint(value) {
+            return JSON.stringify(stableValue(value));
+        }
+
+        function requestIntent(request) {
+            return fingerprint({
+                definitionId: request.definitionId || null,
+                name: request.name || null,
+                marker: request.marker || null,
+                condition: request.condition || null,
+                none: request.none || null,
+                dependency: request.dependency || null,
+                sourceTokenId: String(request.sourceTokenId || ''),
+                targetTokenIds: [...new Set((request.targetTokenIds || []).map(String))].sort(),
+                duration: request.duration || null
+            });
+        }
+
+        function attribute(characterId, name) {
+            return findObjs({ _type: 'attribute', _characterid: String(characterId), name: String(name) })[0] || null;
+        }
+
+        function setAttribute(target, values) {
+            if (!target) return;
+            if (typeof target.setWithWorker === 'function') target.setWithWorker(values);
+            else target.set(values);
+        }
+
+        function characterSheetHint(character) {
+            const direct = String(character?.get('charactersheetname') || '').trim().toLowerCase();
+            if (direct) return direct;
+            return String(getAttrByName(character.id, 'charactersheetname') || '').trim().toLowerCase();
+        }
+
+        function is2014Pc(character) {
+            if (!character) return false;
+            const hint = characterSheetHint(character);
+            if (hint === 'dnd2024byroll20') return false;
+            if (String(getAttrByName(character.id, 'npc') || '').trim() === '1') return false;
+            return hint === 'ogl5e'
+                || Boolean(attribute(character.id, 'initiative_bonus'))
+                || Boolean(attribute(character.id, 'constitution_save_bonus'));
+        }
+
+        function newRowId() {
+            if (typeof generateRowID === 'function') return generateRowID();
+            return '-GA' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+        }
+
         function ensureState() {
-            if (!isPlainObject(modState.config.customDefinitions)) {
-                modState.config.customDefinitions = {};
+            if (!isPlainObject(modState.config.customDefinitions)) modState.config.customDefinitions = {};
+            if (!isPlainObject(modState.config.markerOverrides)) modState.config.markerOverrides = {};
+            if (modState.config.defaultBlessMarker && !modState.config.markerOverrides.bless) {
+                modState.config.markerOverrides.bless = String(modState.config.defaultBlessMarker);
             }
             const runtime = ensureRuntimeObject(modState);
             if (!isPlainObject(runtime.instances)) runtime.instances = {};
             if (!Array.isArray(runtime.history)) runtime.history = [];
-            if (!isPlainObject(runtime.projections)) runtime.projections = {};
+            if (!isPlainObject(runtime.projectionLedgers)) runtime.projectionLedgers = {};
             if (!isPlainObject(runtime.requestIds)) runtime.requestIds = {};
-            if (!Number.isInteger(runtime.nextInstanceNumber) || runtime.nextInstanceNumber < 1) {
-                runtime.nextInstanceNumber = 1;
-            }
-            if (!Number.isInteger(runtime.stateSchemaVersion) || runtime.stateSchemaVersion < 1) {
-                runtime.stateSchemaVersion = STATE_SCHEMA_VERSION;
-            }
+            if (!isPlainObject(runtime.dependencyIndex)) runtime.dependencyIndex = {};
+            if (!isPlainObject(runtime.operations)) runtime.operations = {};
+            if (!Number.isInteger(runtime.nextInstanceNumber) || runtime.nextInstanceNumber < 1) runtime.nextInstanceNumber = 1;
+            if (!Number.isInteger(runtime.stateSchemaVersion) || runtime.stateSchemaVersion < 1) runtime.stateSchemaVersion = 1;
+
+            if (runtime.stateSchemaVersion < 2) migrateStateV1(runtime);
+            runtime.stateSchemaVersion = STATE_SCHEMA_VERSION;
             runtime.history = runtime.history.slice(-POLICY.effects.endedHistoryLimit);
+
             const requestEntries = Object.entries(runtime.requestIds);
             if (requestEntries.length > POLICY.effects.requestIdLimit) {
                 requestEntries
@@ -14475,39 +14774,33 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return runtime;
         }
 
-        const runtime = ensureState();
-
-        function warnAboutPreservedState() {
-            const knownConfig = new Set(['enabled', 'defaultBlessMarker', 'customDefinitions']);
-            const knownRuntime = new Set(['instances', 'history', 'projections', 'requestIds', 'nextInstanceNumber', 'stateSchemaVersion']);
-            const unknownConfig = Object.keys(modState.config).filter(key => !knownConfig.has(key));
-            const unknownRuntime = Object.keys(runtime).filter(key => !knownRuntime.has(key));
-            const invalidDefinitions = Object.values(modState.config.customDefinitions)
-                .filter(definition => !isPlainObject(definition)
-                    || typeof definition.id !== 'string'
-                    || typeof definition.name !== 'string'
-                    || !isPlainObject(definition.projection))
-                .length;
-            if (unknownConfig.length || unknownRuntime.length) {
-                GameAssist.log(
-                    MODULE_NAME,
-                    'Unknown EffectAssist state branches were preserved for review: '
-                        + unknownConfig.map(key => 'config.' + key)
-                            .concat(unknownRuntime.map(key => 'runtime.' + key))
-                            .join(', '),
-                    'WARN'
-                );
-            }
-            if (invalidDefinitions || invalidInstanceCount()) {
-                GameAssist.log(
-                    MODULE_NAME,
-                    'EffectAssist preserved '
-                        + invalidDefinitions + ' malformed custom definition(s) and '
-                        + invalidInstanceCount() + ' malformed effect instance record(s) for manual review.',
-                    'WARN'
-                );
+        function migrateStateV1(runtime) {
+            if (!isPlainObject(runtime.projectionLedgers)) runtime.projectionLedgers = {};
+            Object.values(runtime.instances || {}).forEach(instance => {
+                if (!isPlainObject(instance) || Array.isArray(instance.bindings)) return;
+                const legacy = isPlainObject(instance.projection) ? clone(instance.projection) : null;
+                instance.definitionVersion = 1;
+                instance.definitionSnapshot = {
+                    id: instance.definitionId,
+                    name: instance.name,
+                    description: instance.description || '',
+                    concentration: instance.dependency?.type === 'concentration',
+                    duration: instance.duration?.label || '',
+                    stacking: clone(instance.stacking || { group: instance.definitionId, mode: 'nonstacking' }),
+                    projections: legacy ? [legacy] : []
+                };
+                instance.bindings = [];
+                instance.assistance = ['This effect was created by the pre-release schema. Review it before adding new sheet or concentration projections.'];
+                instance.migrationStatus = 'legacy-incomplete';
+                instance.status = instance.status === 'active' ? 'active' : 'needs-attention';
+            });
+            if (isPlainObject(runtime.projections)) {
+                runtime.legacyProjectionSnapshot = clone(runtime.projections);
+                delete runtime.projections;
             }
         }
+
+        const runtime = ensureState();
 
         function validInstance(instance) {
             return isPlainObject(instance)
@@ -14515,46 +14808,85 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 && typeof instance.definitionId === 'string'
                 && isPlainObject(instance.source)
                 && Array.isArray(instance.targets)
-                && isPlainObject(instance.projection)
-                && instance.status === 'active';
+                && Array.isArray(instance.bindings)
+                && ['active', 'ending', 'needs-attention'].includes(instance.status);
         }
 
         function activeInstances() {
             return Object.values(runtime.instances).filter(validInstance);
         }
 
-        function invalidInstanceCount() {
-            return Object.values(runtime.instances).filter(instance => !validInstance(instance)).length;
+        function ledgerOwners(ledger) {
+            return [...new Set((Array.isArray(ledger?.instanceIds) ? ledger.instanceIds : [])
+                .filter(id => validInstance(runtime.instances[id])))];
         }
 
-        warnAboutPreservedState();
+        function rebuildDependencyIndex() {
+            runtime.dependencyIndex = {};
+            activeInstances().forEach(instance => {
+                if (instance.dependency?.type !== 'concentration' || !instance.dependency?.established) return;
+                const key = String(instance.source.characterId || '');
+                if (!key) return;
+                if (!Array.isArray(runtime.dependencyIndex[key])) runtime.dependencyIndex[key] = [];
+                runtime.dependencyIndex[key].push(instance.id);
+            });
+        }
+
+        function warnAboutPreservedState() {
+            const knownConfig = new Set(['enabled', 'markerOverrides', 'customDefinitions', 'defaultBlessMarker']);
+            const knownRuntime = new Set(['instances', 'history', 'projectionLedgers', 'requestIds', 'dependencyIndex', 'operations', 'nextInstanceNumber', 'stateSchemaVersion', 'legacyProjectionSnapshot']);
+            const unknownConfig = Object.keys(modState.config).filter(key => !knownConfig.has(key));
+            const unknownRuntime = Object.keys(runtime).filter(key => !knownRuntime.has(key));
+            const invalidInstances = Object.values(runtime.instances).filter(instance => !validInstance(instance)).length;
+            if (unknownConfig.length || unknownRuntime.length) {
+                GameAssist.log(MODULE_NAME, 'Unknown EffectAssist state branches were preserved for review: '
+                    + unknownConfig.map(key => 'config.' + key).concat(unknownRuntime.map(key => 'runtime.' + key)).join(', '), 'WARN');
+            }
+            if (invalidInstances) {
+                GameAssist.log(MODULE_NAME, `${invalidInstances} malformed effect instance record(s) were preserved for manual review.`, 'WARN');
+            }
+        }
+
+        function markerFor(definitionId, projection) {
+            const override = modState.config.markerOverrides[definitionId];
+            return String(override || projection.marker || '').trim();
+        }
+
+        function normalizeDefinition(definition) {
+            const copy = clone(definition);
+            if (!copy) return null;
+            copy.projections = Array.isArray(copy.projections)
+                ? copy.projections
+                : (isPlainObject(copy.projection) ? [copy.projection] : []);
+            copy.stacking = isPlainObject(copy.stacking)
+                ? copy.stacking
+                : { group: copy.stackingGroup || copy.id, mode: copy.stackingMode || 'nonstacking' };
+            copy.automatic = Array.isArray(copy.automatic) ? copy.automatic : [];
+            copy.assisted = Array.isArray(copy.assisted) ? copy.assisted : [];
+            copy.informational = Array.isArray(copy.informational) ? copy.informational : [];
+            return copy;
+        }
 
         function getCustomDefinitions() {
-            return Object.values(modState.config.customDefinitions).filter(definition =>
-                isPlainObject(definition)
-                && typeof definition.id === 'string'
-                && typeof definition.name === 'string'
-                && isPlainObject(definition.projection)
-            );
+            return Object.values(modState.config.customDefinitions)
+                .map(normalizeDefinition)
+                .filter(definition => definition && typeof definition.id === 'string' && typeof definition.name === 'string');
         }
 
         function getDefinitions() {
-            return Object.values(BUILTIN_DEFINITIONS)
-                .map(definition => ({ ...definition, projection: { ...definition.projection } }))
-                .concat(getCustomDefinitions().map(definition => clone(definition)));
+            return Object.values(BUILTIN_DEFINITIONS).map(normalizeDefinition).concat(getCustomDefinitions());
         }
 
         function getDefinition(requested) {
             const id = normalizeDefinitionId(requested);
             if (!id) return null;
-            const builtin = BUILTIN_DEFINITIONS[id];
-            if (builtin) {
-                const definition = { ...builtin, projection: { ...builtin.projection } };
-                if (id === 'bless') definition.projection.value = String(modState.config.defaultBlessMarker || 'angel-outfit');
-                return definition;
-            }
-            const custom = modState.config.customDefinitions[id];
-            return isPlainObject(custom) ? clone(custom) : null;
+            const definition = BUILTIN_DEFINITIONS[id] || modState.config.customDefinitions[id];
+            const normalized = normalizeDefinition(definition);
+            if (!normalized) return null;
+            normalized.projections.forEach(projection => {
+                if (projection.adapter === 'marker') projection.marker = markerFor(id, projection);
+            });
+            return normalized;
         }
 
         function parseOptions(content) {
@@ -14562,8 +14894,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const expression = /--([a-z][a-z0-9-]*)(?:\s+(?:"([^"]*)"|'([^']*)'|([^\s]+)))?/gi;
             let match;
             while ((match = expression.exec(String(content || '')))) {
-                const key = match[1].toLowerCase();
-                options[key] = match[2] ?? match[3] ?? match[4] ?? true;
+                options[match[1].toLowerCase()] = match[2] ?? match[3] ?? match[4] ?? true;
             }
             return options;
         }
@@ -14579,17 +14910,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function resolveLinkedToken(tokenId, label) {
             const token = getObj('graphic', String(tokenId || ''));
-            if (!token) {
-                return { ok: false, code: 'NOT_FOUND', message: `${label} token was not found.` };
-            }
+            if (!token) return { ok: false, code: 'NOT_FOUND', message: `${label} token was not found.` };
             if (!['objects', 'gmlayer'].includes(String(token.get('layer') || ''))) {
                 return { ok: false, code: 'UNPROCESSABLE', message: `${label} must be on the Objects or GM layer.` };
             }
             const characterId = String(token.get('represents') || '');
             const character = characterId ? getObj('character', characterId) : null;
-            if (!character) {
-                return { ok: false, code: 'UNPROCESSABLE', message: `${label} must represent a character.` };
-            }
+            if (!character) return { ok: false, code: 'UNPROCESSABLE', message: `${label} must represent a character.` };
             return {
                 ok: true,
                 token,
@@ -14614,16 +14941,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (!tokenId || seen.has(tokenId) || failure) return;
                 seen.add(tokenId);
                 const resolved = resolveLinkedToken(tokenId, 'Each target');
-                if (!resolved.ok) {
-                    failure = resolved;
-                    return;
-                }
-                targets.push(resolved);
+                if (!resolved.ok) failure = resolved;
+                else targets.push(resolved);
             });
             if (failure) return failure;
-            if (!targets.length) {
-                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Select at least one linked character token before applying an effect.' };
-            }
+            if (!targets.length) return { ok: false, code: 'INVALID_ARGUMENT', message: 'Select at least one linked character token before applying an effect.' };
             if (targets.length > POLICY.effects.targetLimit) {
                 return { ok: false, code: 'RATE_LIMITED', message: `Select no more than ${POLICY.effects.targetLimit} targets at once.` };
             }
@@ -14644,10 +14966,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 .sort((left, right) => left.summary.tokenName.localeCompare(right.summary.tokenName))
                 .slice(0, POLICY.effects.sourcePickerLimit);
             if (!tokens.length) return null;
-            const choices = tokens.map(result =>
+            return '?{Effect source|' + tokens.map(result =>
                 `${safeQueryText(result.summary.tokenName)},${result.summary.tokenId}`
-            );
-            return '?{Effect source|' + choices.join('|') + '}';
+            ).join('|') + '}';
         }
 
         function conditionQuery() {
@@ -14659,125 +14980,25 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return choices.length ? '?{Condition|' + choices.join('|') + '}' : null;
         }
 
-        function projectionDescriptor(projection) {
-            if (!isPlainObject(projection) || projection.kind === 'none') {
-                return { ok: true, kind: 'none', markerRef: null, markerId: null };
-            }
-            if (projection.kind === 'condition') {
-                const conditionApi = GameAssist.ConditionAssist;
-                const conditionConfigured = GameAssist.getState('ConditionAssist')?.config?.enabled !== false;
-                if (!conditionApi?.getCondition || !conditionConfigured) {
-                    return { ok: false, code: 'UNAVAILABLE', kind: 'condition', message: 'ConditionAssist is unavailable; the semantic effect can be recorded but its condition projection is pending.' };
-                }
-                const condition = conditionApi.getCondition(projection.value);
-                if (!condition?.marker) {
-                    return { ok: false, code: 'NOT_FOUND', kind: 'condition', message: `ConditionAssist does not recognize condition "${projection.value}".` };
-                }
-                if (!GameAssist.MarkerService?.isEnabled?.()) {
-                    return { ok: false, code: 'UNAVAILABLE', kind: 'condition', markerRef: condition.marker, message: 'MarkerService is unavailable; the condition projection is pending.' };
-                }
-                const resolution = GameAssist.MarkerService.resolve(condition.marker);
-                return resolution.ok
-                    ? { ok: true, kind: 'condition', condition: projection.value, markerRef: condition.marker, markerId: resolution.id }
-                    : { ...resolution, kind: 'condition', condition: projection.value, markerRef: condition.marker };
-            }
-            if (projection.kind !== 'marker') {
-                return { ok: false, code: 'INVALID_ARGUMENT', message: `Unsupported projection kind: ${projection.kind}.` };
-            }
-            if (!GameAssist.MarkerService?.isEnabled?.()) {
-                return { ok: false, code: 'UNAVAILABLE', kind: 'marker', markerRef: projection.value, message: 'MarkerService is unavailable; the marker projection is pending.' };
-            }
-            const resolution = GameAssist.MarkerService.resolve(projection.value);
-            return resolution.ok
-                ? { ok: true, kind: 'marker', markerRef: projection.value, markerId: resolution.id }
-                : { ...resolution, kind: 'marker', markerRef: projection.value };
-        }
-
-        function projectionKey(tokenId, markerId) {
-            return `${String(tokenId)}::${GameAssist.MarkerService.normalizeId(markerId)}`;
-        }
-
-        function mutateProjection(token, descriptor, action) {
-            if (descriptor.kind === 'none') return { ok: true, changed: false };
-            if (descriptor.kind === 'condition') {
-                const api = GameAssist.ConditionAssist;
-                if (!api?.apply) {
-                    return { ok: false, code: 'UNAVAILABLE', message: 'ConditionAssist is unavailable.' };
-                }
-                const result = api.apply([token], [descriptor.condition], action);
-                return {
-                    ok: result.ok === true,
-                    changed: Number(result.changed || 0) > 0,
-                    message: result.ok ? null : `ConditionAssist could not ${action} ${descriptor.condition}.`,
-                    result
-                };
-            }
-            return GameAssist.MarkerService[action](token, descriptor.markerId, { owner: MODULE_NAME });
-        }
-
-        function notifyLifecycle(transition, instance) {
-            return GameAssist.SemanticEvents.publish(
-                'effect.lifecycle.changed',
-                MODULE_NAME,
-                { transition, instance: clone(instance) }
-            );
-        }
-
-        function registerLifecycleObserver(callback, { owner = 'EffectAssistConsumer' } = {}) {
-            return GameAssist.SemanticEvents.observe(callback, {
-                owner,
-                types: ['effect.lifecycle.changed']
-            });
-        }
-
-        function clearLifecycleObservers(owner) {
-            return GameAssist.SemanticEvents.clearObservers(owner);
-        }
-
-        function registerProjectionAdapter(name, adapter) {
-            const id = normalizeDefinitionId(name);
-            if (!id || !isPlainObject(adapter) || typeof adapter.audit !== 'function' || typeof adapter.apply !== 'function' || typeof adapter.remove !== 'function') {
-                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Projection adapters require a name plus audit, apply, and remove functions.' };
-            }
-            if (projectionAdapters.has(id)) {
-                return { ok: false, code: 'CONFLICT', message: `Projection adapter "${id}" is already registered.` };
-            }
-            projectionAdapters.set(id, Object.freeze({ ...adapter }));
-            return { ok: true, id };
-        }
-
         function createCustomDefinition(options) {
             const nameResult = boundedText(options.name, POLICY.effects.nameLength, 'Effect name');
             if (!nameResult.ok) return nameResult;
             const id = normalizeDefinitionId(nameResult.value);
             if (!id) return { ok: false, code: 'INVALID_ARGUMENT', message: 'The effect name could not form a safe definition id.' };
-            const existing = getDefinition(id);
+
             let projection;
             if (options.condition) {
                 const value = boundedText(options.condition, POLICY.effects.nameLength, 'Condition name');
                 if (!value.ok) return value;
-                projection = { kind: 'condition', value: value.value };
+                projection = { id: 'condition', adapter: 'condition', subject: 'target-token', condition: value.value, label: value.value };
             } else if (options.marker) {
                 const value = boundedText(options.marker, POLICY.effects.markerLength, 'Marker');
                 if (!value.ok) return value;
-                projection = { kind: 'marker', value: value.value };
+                projection = { id: 'marker', adapter: 'marker', subject: 'target-token', marker: value.value, label: value.value };
             } else if (options.none === true || String(options.none).toLowerCase() === 'true') {
-                projection = { kind: 'none', value: null };
+                projection = { id: 'record', adapter: 'record-only', subject: 'instance', label: 'Record only' };
             } else {
-                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Choose a marker, a ConditionAssist condition, or --none for the generic effect.' };
-            }
-
-            if (existing) {
-                const same = existing.name.toLowerCase() === nameResult.value.toLowerCase()
-                    && existing.projection.kind === projection.kind
-                    && String(existing.projection.value || '').toLowerCase() === String(projection.value || '').toLowerCase();
-                return same
-                    ? { ok: true, definition: existing, isNew: false }
-                    : { ok: false, code: 'CONFLICT', message: `An effect definition named "${existing.name}" already uses different projection settings.` };
-            }
-
-            if (getCustomDefinitions().length >= POLICY.effects.definitionLimit) {
-                return { ok: false, code: 'RATE_LIMITED', message: `EffectAssist already has the maximum of ${POLICY.effects.definitionLimit} custom definitions.` };
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Choose a marker, a ConditionAssist condition, or --none for the custom effect.' };
             }
 
             const dependency = ['none', 'manual', 'concentration'].includes(String(options.dependency || '').toLowerCase())
@@ -14785,21 +15006,424 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 : 'manual';
             const description = boundedText(options.description || '', POLICY.effects.descriptionLength, 'Description', { required: false });
             if (!description.ok) return description;
+            const definition = {
+                id,
+                definitionVersion: 1,
+                name: nameResult.value,
+                description: description.value,
+                concentration: dependency === 'concentration',
+                duration: String(options.duration || 'Until the GM ends it').slice(0, POLICY.effects.nameLength),
+                targets: 'Selected linked character tokens',
+                stacking: { group: id, mode: 'nonstacking' },
+                projections: [projection],
+                automatic: projection.adapter === 'record-only' ? ['Effect record'] : ['Selected projection and effect record'],
+                assisted: dependency === 'manual' ? ['End the effect when its rule says it ends.'] : [],
+                informational: [],
+                builtin: false
+            };
+            const existing = getDefinition(id);
+            if (existing) {
+                return fingerprint(existing) === fingerprint(normalizeDefinition(definition))
+                    ? { ok: true, definition: existing, isNew: false }
+                    : { ok: false, code: 'CONFLICT', message: `An effect definition named "${existing.name}" already uses different settings.` };
+            }
+            if (getCustomDefinitions().length >= POLICY.effects.definitionLimit) {
+                return { ok: false, code: 'RATE_LIMITED', message: `EffectAssist already has the maximum of ${POLICY.effects.definitionLimit} custom definitions.` };
+            }
+            return { ok: true, definition, isNew: true };
+        }
+
+        function bindingKey(binding) {
+            let adapterIdentity = binding.adapter;
+            let intentIdentity = binding.intent;
+            if (binding.adapter === 'marker' || binding.adapter === 'condition') {
+                const condition = binding.adapter === 'condition'
+                    ? GameAssist.ConditionAssist?.getCondition?.(binding.intent.condition)
+                    : null;
+                const markerRef = condition?.marker || binding.intent.marker || `condition:${binding.intent.condition}`;
+                const resolution = GameAssist.MarkerService?.resolve?.(markerRef);
+                const markerId = resolution?.ok
+                    ? GameAssist.MarkerService.normalizeId(resolution.id)
+                    : String(markerRef || '').trim().toLowerCase();
+                adapterIdentity = 'token-marker';
+                intentIdentity = { markerId };
+            }
+            return [
+                adapterIdentity,
+                binding.subjectType,
+                binding.subjectId,
+                fingerprint(intentIdentity)
+            ].join('|');
+        }
+
+        function expandDefinition(definition, source, targets) {
+            const bindings = [];
+            const assistance = [...definition.assisted, ...definition.informational];
+            const seen = new Set();
+            definition.projections.forEach(projection => {
+                if (projection.adapter === 'record-only') return;
+                const subjects = projection.subject === 'source-token'
+                    ? [source]
+                    : projection.subject === 'source-character'
+                        ? [source]
+                        : targets;
+                subjects.forEach(subject => {
+                    if (projection.adapter === 'ogl-repeating' && !is2014Pc(subject.character)) {
+                        assistance.push(`${subject.summary.characterName}: ${projection.label} is not available as a verified 2014 PC-sheet projection; apply that rule manually.`);
+                        return;
+                    }
+                    const binding = {
+                        adapter: projection.adapter,
+                        projectionId: projection.id,
+                        label: projection.label || projection.id,
+                        subjectType: projection.subject.endsWith('character') ? 'character' : 'token',
+                        subjectId: projection.subject.endsWith('character') ? subject.character.id : subject.token.id,
+                        tokenId: subject.token.id,
+                        characterId: subject.character.id,
+                        expectedRepresents: subject.character.id,
+                        optional: projection.optional === true,
+                        intent: projection.adapter === 'marker'
+                            ? { marker: markerFor(definition.id, projection) }
+                            : projection.adapter === 'condition'
+                                ? { condition: projection.condition }
+                                : projection.adapter === 'ogl-repeating'
+                                    ? { modifier: projection.modifier, label: projection.label, value: String(projection.value) }
+                                    : {}
+                    };
+                    binding.key = bindingKey(binding);
+                    if (!seen.has(binding.key)) {
+                        seen.add(binding.key);
+                        bindings.push(binding);
+                    }
+                });
+            });
+            return { bindings, assistance: [...new Set(assistance)] };
+        }
+
+        function markerDescriptor(binding) {
+            if (!GameAssist.MarkerService?.isEnabled?.()) {
+                return { ok: false, code: 'UNAVAILABLE', message: 'MarkerService is unavailable.' };
+            }
+            const markerRef = binding.intent.marker;
+            const resolution = GameAssist.MarkerService.resolve(markerRef);
+            return resolution.ok
+                ? { ok: true, markerRef, markerId: resolution.id }
+                : { ...resolution, markerRef };
+        }
+
+        function conditionDescriptor(binding) {
+            const conditionApi = GameAssist.ConditionAssist;
+            const conditionConfigured = GameAssist.getState('ConditionAssist')?.config?.enabled !== false;
+            if (!conditionApi?.getCondition || !conditionConfigured) {
+                return { ok: false, code: 'UNAVAILABLE', message: 'ConditionAssist is unavailable.' };
+            }
+            const condition = conditionApi.getCondition(binding.intent.condition);
+            if (!condition?.marker) {
+                return { ok: false, code: 'NOT_FOUND', message: `ConditionAssist does not recognize "${binding.intent.condition}".` };
+            }
+            const marker = markerDescriptor({ intent: { marker: condition.marker } });
+            return marker.ok ? { ...marker, condition: binding.intent.condition } : marker;
+        }
+
+        function inspectMarker(binding) {
+            const descriptor = markerDescriptor(binding);
+            if (!descriptor.ok) return descriptor;
+            const token = getObj('graphic', binding.tokenId);
+            if (!token) return { ok: false, code: 'NOT_FOUND', state: 'missing-subject', message: `${binding.label}: token no longer exists.` };
+            if (String(token.get('represents') || '') !== String(binding.expectedRepresents || '')) {
+                return { ok: false, code: 'CONFLICT', state: 'identity-drift', message: `${binding.label}: token now represents another character.` };
+            }
             return {
                 ok: true,
-                isNew: true,
-                definition: {
-                    id,
-                    name: nameResult.value,
-                    description: description.value,
-                    dependency,
-                    stackingGroup: id,
-                    stackingMode: 'nonstacking',
-                    projection,
-                    builtin: false
+                state: GameAssist.MarkerService.has(token, descriptor.markerId) ? 'present' : 'missing',
+                token,
+                descriptor
+            };
+        }
+
+        function applyMarker(binding) {
+            const inspected = inspectMarker(binding);
+            if (!inspected.ok) return inspected;
+            if (inspected.state === 'present') {
+                return { ok: true, changed: false, managed: false, baselinePresent: true, metadata: { markerId: inspected.descriptor.markerId, markerRef: inspected.descriptor.markerRef } };
+            }
+            const result = GameAssist.MarkerService.add(inspected.token, inspected.descriptor.markerId, { owner: MODULE_NAME });
+            if (!result.ok || !GameAssist.MarkerService.has(inspected.token, inspected.descriptor.markerId)) {
+                return { ok: false, code: result.code || 'CONFLICT', message: result.message || `${binding.label} could not be verified.` };
+            }
+            return { ok: true, changed: result.changed === true, managed: true, baselinePresent: false, metadata: { markerId: inspected.descriptor.markerId, markerRef: inspected.descriptor.markerRef } };
+        }
+
+        function removeMarker(binding, ledger) {
+            const inspected = inspectMarker(binding);
+            if (!inspected.ok) return inspected;
+            if (ledger.managed !== true || inspected.state === 'missing') return { ok: true, changed: false };
+            const result = GameAssist.MarkerService.remove(inspected.token, ledger.metadata?.markerId || inspected.descriptor.markerId, { owner: MODULE_NAME });
+            if (!result.ok || GameAssist.MarkerService.has(inspected.token, ledger.metadata?.markerId || inspected.descriptor.markerId)) {
+                return { ok: false, code: result.code || 'CONFLICT', message: result.message || `${binding.label} could not be removed safely.` };
+            }
+            return { ok: true, changed: result.changed === true };
+        }
+
+        function inspectCondition(binding) {
+            const descriptor = conditionDescriptor(binding);
+            if (!descriptor.ok) return descriptor;
+            return inspectMarker({ ...binding, intent: { marker: descriptor.markerRef } });
+        }
+
+        function applyCondition(binding) {
+            const descriptor = conditionDescriptor(binding);
+            if (!descriptor.ok) return descriptor;
+            const token = getObj('graphic', binding.tokenId);
+            if (!token) return { ok: false, code: 'NOT_FOUND', message: `${binding.label}: token no longer exists.` };
+            const markerBinding = { ...binding, intent: { marker: descriptor.markerRef } };
+            const before = inspectMarker(markerBinding);
+            if (!before.ok) return before;
+            if (before.state === 'present') {
+                return { ok: true, changed: false, managed: false, baselinePresent: true, metadata: { markerId: descriptor.markerId, markerRef: descriptor.markerRef, condition: binding.intent.condition } };
+            }
+            const result = GameAssist.ConditionAssist.apply([token], [binding.intent.condition], 'add');
+            const after = inspectMarker(markerBinding);
+            if (!result.ok || !after.ok || after.state !== 'present') {
+                return { ok: false, code: 'CONFLICT', message: `${binding.label} could not be applied and verified through ConditionAssist.` };
+            }
+            return { ok: true, changed: true, managed: true, baselinePresent: false, metadata: { markerId: descriptor.markerId, markerRef: descriptor.markerRef, condition: binding.intent.condition } };
+        }
+
+        function removeCondition(binding, ledger) {
+            const descriptor = conditionDescriptor(binding);
+            if (!descriptor.ok) return descriptor;
+            if (ledger.managed !== true) return { ok: true, changed: false };
+            const token = getObj('graphic', binding.tokenId);
+            if (!token) return { ok: false, code: 'NOT_FOUND', message: `${binding.label}: token no longer exists.` };
+            const markerBinding = { ...binding, intent: { marker: descriptor.markerRef } };
+            const before = inspectMarker(markerBinding);
+            if (!before.ok) return before;
+            if (before.state === 'missing') return { ok: true, changed: false };
+            const result = GameAssist.ConditionAssist.apply([token], [binding.intent.condition], 'remove');
+            const after = inspectMarker(markerBinding);
+            if (!result.ok || !after.ok || after.state !== 'missing') {
+                return { ok: false, code: 'CONFLICT', message: `${binding.label} could not be removed and verified through ConditionAssist.` };
+            }
+            return { ok: true, changed: true };
+        }
+
+        function rowAttributes(characterId, section, rowId) {
+            const prefix = `repeating_${section}_${rowId}_`;
+            return findObjs({ _type: 'attribute', _characterid: String(characterId) })
+                .filter(item => String(item.get('name') || '').startsWith(prefix));
+        }
+
+        function expectedRow(binding) {
+            const config = OGL_SECTIONS[binding.intent.modifier];
+            if (!config) return null;
+            return {
+                config,
+                expected: {
+                    [config.activeField]: '1',
+                    [config.nameField]: binding.intent.label,
+                    [config.valueField]: String(binding.intent.value),
+                    'options-flag': '0'
                 }
             };
         }
+
+        function findMatchingRow(binding) {
+            const row = expectedRow(binding);
+            if (!row) return null;
+            const attrs = findObjs({ _type: 'attribute', _characterid: String(binding.characterId) });
+            const suffix = '_' + row.config.nameField;
+            const candidates = attrs.filter(item => {
+                const name = String(item.get('name') || '');
+                return name.startsWith(`repeating_${row.config.section}_`) && name.endsWith(suffix)
+                    && String(item.get('current') || '') === String(binding.intent.label);
+            });
+            for (const candidate of candidates) {
+                const name = String(candidate.get('name') || '');
+                const rowId = name.slice(`repeating_${row.config.section}_`.length, -suffix.length);
+                const values = Object.fromEntries(rowAttributes(binding.characterId, row.config.section, rowId)
+                    .map(item => [String(item.get('name')).slice(`repeating_${row.config.section}_${rowId}_`.length), String(item.get('current') ?? '')]));
+                if (Object.entries(row.expected).every(([field, value]) => String(values[field] ?? '') === String(value))) {
+                    return { rowId, attributes: rowAttributes(binding.characterId, row.config.section, rowId), expected: row.expected, config: row.config };
+                }
+            }
+            return null;
+        }
+
+        function inspectOgl(binding, ledger) {
+            const character = getObj('character', binding.characterId);
+            if (!character) return { ok: false, code: 'NOT_FOUND', state: 'missing-subject', message: `${binding.label}: character no longer exists.` };
+            if (!is2014Pc(character)) {
+                return { ok: false, code: 'UNAVAILABLE', state: 'unsupported-sheet', message: `${binding.label}: a supported 2014 PC sheet could not be verified.` };
+            }
+            if (!ledger?.metadata?.rowId) {
+                const match = findMatchingRow(binding);
+                return { ok: true, state: match ? 'present-untracked' : 'missing', match };
+            }
+            const row = expectedRow(binding);
+            const attrs = rowAttributes(binding.characterId, row.config.section, ledger.metadata.rowId);
+            if (!attrs.length) return { ok: true, state: 'missing' };
+            const byName = Object.fromEntries(attrs.map(item => [
+                String(item.get('name')).slice(`repeating_${row.config.section}_${ledger.metadata.rowId}_`.length),
+                item
+            ]));
+            const drift = Object.entries(row.expected).filter(([field, value]) =>
+                !byName[field] || String(byName[field].get('current') ?? '') !== String(value)
+            );
+            if (ledger.metadata?.flagManaged === true) {
+                const flag = ledger.metadata.flagId
+                    ? getObj('attribute', ledger.metadata.flagId)
+                    : attribute(binding.characterId, ledger.metadata.enableFlag);
+                if (!flag || String(flag.get('current') || '') !== '1') drift.push([ledger.metadata.enableFlag || 'global modifier flag']);
+            }
+            return drift.length
+                ? { ok: true, state: 'drift', drift: drift.map(entry => Array.isArray(entry) ? entry[0] : entry) }
+                : { ok: true, state: 'present', attributes: attrs };
+        }
+
+        function applyOgl(binding) {
+            const inspected = inspectOgl(binding, null);
+            if (!inspected.ok) return inspected;
+            const row = expectedRow(binding);
+            if (!row) return { ok: false, code: 'INVALID_ARGUMENT', message: `Unknown 2014 modifier type "${binding.intent.modifier}".` };
+            const matched = inspected.state === 'present-untracked' ? inspected.match : null;
+            const rowId = matched?.rowId || newRowId();
+            const created = [];
+            let flag = null;
+            let flagCreatedNow = false;
+            let flagChangedNow = false;
+            let flagBaseline = '';
+            let flagCreated = false;
+            try {
+                if (!matched) {
+                    Object.entries(row.expected).forEach(([field, value]) => {
+                        const item = createObj('attribute', {
+                            characterid: binding.characterId,
+                            name: `repeating_${row.config.section}_${rowId}_${field}`,
+                            current: value,
+                            max: ''
+                        });
+                        if (!item) throw new Error(`Roll20 did not create ${field}.`);
+                        created.push(item);
+                        setAttribute(item, { current: value, max: '' });
+                    });
+                }
+
+                flag = attribute(binding.characterId, row.config.enableFlag);
+                const sharedFlagOwner = Object.values(runtime.projectionLedgers).find(ledger =>
+                    ledger?.adapter === 'ogl-repeating'
+                    && String(ledger.binding?.characterId || '') === String(binding.characterId)
+                    && ledger.metadata?.enableFlag === row.config.enableFlag
+                    && ledger.metadata?.flagId
+                );
+                flagCreated = sharedFlagOwner ? sharedFlagOwner.metadata.flagCreated === true : !flag;
+                flagBaseline = sharedFlagOwner
+                    ? String(sharedFlagOwner.metadata.flagBaseline ?? '')
+                    : flag ? String(flag.get('current') ?? '') : '';
+                if (!flag) {
+                    flag = createObj('attribute', {
+                        characterid: binding.characterId,
+                        name: row.config.enableFlag,
+                        current: '1',
+                        max: ''
+                    });
+                    if (!flag) throw new Error(`Roll20 did not create ${row.config.enableFlag}.`);
+                    flagCreatedNow = true;
+                }
+                if (String(flag.get('current') || '') !== '1') {
+                    setAttribute(flag, { current: '1' });
+                    flagChangedNow = true;
+                }
+                const verify = rowAttributes(binding.characterId, row.config.section, rowId);
+                if (verify.length < Object.keys(row.expected).length) throw new Error('Roll20 did not retain every modifier-row field.');
+                if (String(flag.get('current') || '') !== '1') throw new Error(`Roll20 did not enable ${row.config.enableFlag}.`);
+                return {
+                    ok: true,
+                    changed: !matched || flagChangedNow,
+                    managed: !matched || flagCreated || flagBaseline !== '1',
+                    baselinePresent: Boolean(matched),
+                    metadata: {
+                        rowId,
+                        attributeIds: (matched?.attributes || created).map(item => item.id),
+                        expected: row.expected,
+                        section: row.config.section,
+                        rowManaged: !matched,
+                        enableFlag: row.config.enableFlag,
+                        flagId: flag.id,
+                        flagCreated,
+                        flagBaseline,
+                        flagManaged: flagCreated || flagBaseline !== '1'
+                    }
+                };
+            } catch (error) {
+                created.reverse().forEach(item => {
+                    try { item.remove(); } catch { }
+                });
+                if (flagCreatedNow && flag) {
+                    try { flag.remove(); } catch { }
+                } else if (flagChangedNow && flag) {
+                    try { setAttribute(flag, { current: flagBaseline }); } catch { }
+                }
+                return { ok: false, code: 'UNAVAILABLE', message: `${binding.label} could not be created: ${error.message}` };
+            }
+        }
+
+        function removeOgl(binding, ledger) {
+            if (ledger.managed !== true) return { ok: true, changed: false };
+            const inspected = inspectOgl(binding, ledger);
+            if (!inspected.ok) return inspected;
+            if (inspected.state === 'drift') {
+                return { ok: false, code: 'CONFLICT', message: `${binding.label} was edited outside EffectAssist and was preserved.` };
+            }
+            const metadata = ledger.metadata || {};
+            const rowManaged = metadata.rowManaged === true
+                || (metadata.rowManaged === undefined && ledger.managed === true && ledger.baselinePresent !== true);
+            if (rowManaged && inspected.state !== 'missing') {
+                inspected.attributes.forEach(item => item.remove());
+            }
+            const flag = metadata.flagId ? getObj('attribute', metadata.flagId) : attribute(binding.characterId, metadata.enableFlag);
+            const flagManaged = metadata.flagManaged === true
+                || (metadata.flagManaged === undefined && (metadata.flagCreated === true || String(metadata.flagBaseline || '') !== '1'));
+            if (flagManaged && flag && String(flag.get('current') || '') === '1' && String(metadata.flagBaseline || '') !== '1') {
+                const section = metadata.section;
+                const activeSuffix = '_' + expectedRow(binding).config.activeField;
+                const currentPrefix = `repeating_${section}_${metadata.rowId}_`;
+                const anotherOwnedFlagUser = Object.values(runtime.projectionLedgers).some(other =>
+                    other !== ledger
+                    && other?.adapter === 'ogl-repeating'
+                    && String(other.binding?.characterId || '') === String(binding.characterId)
+                    && other.metadata?.enableFlag === metadata.enableFlag
+                    && ledgerOwners(other).some(id => validInstance(runtime.instances[id]))
+                );
+                const otherActiveRows = findObjs({ _type: 'attribute', _characterid: String(binding.characterId) })
+                    .some(item => String(item.get('name') || '').startsWith(`repeating_${section}_`)
+                        && !String(item.get('name') || '').startsWith(currentPrefix)
+                        && String(item.get('name') || '').endsWith(activeSuffix)
+                        && String(item.get('current') || '') === '1');
+                if (!anotherOwnedFlagUser && !otherActiveRows) {
+                    if (metadata.flagCreated) flag.remove();
+                    else setAttribute(flag, { current: metadata.flagBaseline });
+                }
+            }
+            return { ok: true, changed: true };
+        }
+
+        function registerProjectionAdapter(name, adapter) {
+            const id = normalizeDefinitionId(name);
+            if (!id || !isPlainObject(adapter)
+                || typeof adapter.inspect !== 'function'
+                || typeof adapter.apply !== 'function'
+                || typeof adapter.remove !== 'function') {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Projection adapters require inspect, apply, and remove functions.' };
+            }
+            if (projectionAdapters.has(id)) return { ok: false, code: 'CONFLICT', message: `Projection adapter "${id}" is already registered.` };
+            projectionAdapters.set(id, Object.freeze({ ...adapter }));
+            return { ok: true, id };
+        }
+
+        registerProjectionAdapter('marker', { inspect: inspectMarker, apply: applyMarker, remove: removeMarker });
+        registerProjectionAdapter('condition', { inspect: inspectCondition, apply: applyCondition, remove: removeCondition });
+        registerProjectionAdapter('ogl-repeating', { inspect: inspectOgl, apply: applyOgl, remove: removeOgl });
 
         function nextInstanceId() {
             let id;
@@ -14811,39 +15435,38 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function requestKey(requestId) {
             const raw = String(requestId || '').trim();
-            if (!raw) return '';
-            return 'request:' + raw;
-        }
-
-        function rememberRequest(requestId, instanceId) {
-            const key = requestKey(requestId);
-            if (!key) return;
-            runtime.requestIds[key] = { instanceId, timestamp: Date.now() };
-            ensureState();
+            return raw ? 'request:' + raw : '';
         }
 
         function findRequest(requestId) {
-            const key = requestKey(requestId);
-            if (!key) return null;
-            const remembered = runtime.requestIds[key];
+            const remembered = runtime.requestIds[requestKey(requestId)];
             if (!remembered) return null;
-            return runtime.instances[remembered.instanceId]
-                || runtime.history.find(instance => instance.id === remembered.instanceId)
-                || null;
+            const instance = runtime.instances[remembered.instanceId]
+                || runtime.history.find(entry => entry.id === remembered.instanceId);
+            return instance ? { remembered, instance } : null;
         }
 
-        function applyEffectRequest(request) {
+        function rememberRequest(requestId, instanceId, intent) {
+            const key = requestKey(requestId);
+            if (!key) return;
+            runtime.requestIds[key] = { instanceId, intent, timestamp: Date.now() };
             ensureState();
-            if (modState.config.enabled === false) {
-                return { ok: false, code: 'UNAVAILABLE', message: 'EffectAssist is disabled.' };
-            }
+        }
+
+        function buildPlan(request) {
+            ensureState();
+            ensureMarkerObservation();
+            if (modState.config.enabled === false) return { ok: false, code: 'UNAVAILABLE', message: 'EffectAssist is disabled.' };
             const rawRequestId = String(request.requestId || '').trim();
             if (rawRequestId.length > POLICY.effects.requestIdLength) {
                 return { ok: false, code: 'INVALID_ARGUMENT', message: 'The effect request identifier is too long.' };
             }
-            const existingRequest = findRequest(rawRequestId);
-            if (existingRequest) {
-                return { ok: true, duplicate: true, instance: clone(existingRequest), message: 'That effect request was already applied.' };
+            const intent = requestIntent(request);
+            const existing = findRequest(rawRequestId);
+            if (existing) {
+                return existing.remembered.intent === intent
+                    ? { ok: true, duplicate: true, instance: clone(existing.instance), message: 'That identical effect request was already applied.' }
+                    : { ok: false, code: 'CONFLICT', message: 'That request identifier was already used for a different effect request.' };
             }
             if (activeInstances().length >= POLICY.effects.activeInstanceLimit) {
                 return { ok: false, code: 'RATE_LIMITED', message: `EffectAssist already has the maximum of ${POLICY.effects.activeInstanceLimit} active instances.` };
@@ -14852,9 +15475,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const source = resolveLinkedToken(request.sourceTokenId, 'The source');
             if (!source.ok) return source;
             const targetIds = [...new Set((request.targetTokenIds || []).map(String).filter(Boolean))];
-            if (!targetIds.length) {
-                return { ok: false, code: 'INVALID_ARGUMENT', message: 'At least one target token is required.' };
-            }
+            if (!targetIds.length) return { ok: false, code: 'INVALID_ARGUMENT', message: 'At least one target token is required.' };
             if (targetIds.length > POLICY.effects.targetLimit) {
                 return { ok: false, code: 'RATE_LIMITED', message: `No more than ${POLICY.effects.targetLimit} targets may be applied at once.` };
             }
@@ -14873,335 +15494,554 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             if (!definitionResult.ok) return definitionResult;
             const definition = definitionResult.definition;
-            const descriptor = projectionDescriptor(definition.projection);
-            if (!descriptor.ok && !['UNAVAILABLE'].includes(descriptor.code)) return descriptor;
+            const expanded = expandDefinition(definition, source, targets);
 
-            const instance = {
-                id: nextInstanceId(),
-                definitionId: definition.id,
-                name: definition.name,
-                description: definition.description || '',
-                source: source.summary,
-                targets: targets.map(target => target.summary),
-                dependency: {
-                    type: definition.dependency || 'manual',
-                    status: 'active',
-                    note: String(request.dependencyNote || '').slice(0, POLICY.effects.descriptionLength)
-                },
-                stacking: {
-                    group: definition.stackingGroup || definition.id,
-                    mode: definition.stackingMode || 'nonstacking'
-                },
-                projection: {
-                    kind: definition.projection.kind,
-                    value: definition.projection.value,
-                    status: descriptor.ok
-                        ? (descriptor.kind === 'none' ? 'not-required' : 'applying')
-                        : 'pending',
-                    message: descriptor.ok ? null : descriptor.message,
-                    lastReconciledAt: descriptor.ok && descriptor.kind === 'none' ? isoNow() : null,
-                    lastReconciliation: descriptor.ok && descriptor.kind === 'none'
-                        ? { status: 'not-required', verifiedTargets: 0 }
-                        : { status: descriptor.ok ? 'not-checked' : 'unavailable', verifiedTargets: 0 }
-                },
-                duration: {
-                    type: 'manual',
-                    label: String(request.duration || '').slice(0, POLICY.effects.nameLength)
-                },
-                status: 'active',
-                createdAt: isoNow(),
-                createdBy: String(request.createdBy || 'api')
-            };
-
-            const draftLedgers = [];
-            const changedTokens = [];
-            if (descriptor.ok && descriptor.kind !== 'none') {
-                for (const target of targets) {
-                    const key = projectionKey(target.token.id, descriptor.markerId);
-                    const current = runtime.projections[key];
-                    const actual = GameAssist.MarkerService.has(target.token, descriptor.markerId);
-                    if (!actual) {
-                        const mutation = mutateProjection(target.token, descriptor, 'add');
-                        if (!mutation.ok) {
-                            changedTokens.reverse().forEach(changed => {
-                                mutateProjection(changed.token, descriptor, 'remove');
-                            });
-                            return {
-                                ok: false,
-                                code: mutation.code || 'UNAVAILABLE',
-                                message: mutation.message || 'The effect projection could not be applied; completed marker changes were rolled back.'
-                            };
-                        }
-                        if (mutation.changed) changedTokens.push({ token: target.token });
-                    }
-                    draftLedgers.push({
-                        key,
-                        existing: current,
-                        target,
-                        actualBefore: actual,
-                        markerId: descriptor.markerId,
-                        markerRef: descriptor.markerRef,
-                        kind: descriptor.kind,
-                        condition: descriptor.condition || null
-                    });
-                }
-            }
-
-            const unverified = draftLedgers.filter(draft =>
-                !GameAssist.MarkerService.has(draft.target.token, draft.markerId)
-            );
-            if (unverified.length) {
-                changedTokens.reverse().forEach(changed => {
-                    mutateProjection(changed.token, descriptor, 'remove');
-                });
+            const concentrationConflicts = definition.concentration
+                ? activeInstances().filter(instance =>
+                    instance.dependency?.type === 'concentration'
+                    && instance.dependency?.established
+                    && String(instance.source.characterId) === String(source.summary.characterId)
+                )
+                : [];
+            const replace = ['yes', 'true', 'on', '1'].includes(String(request.replaceConcentration || '').toLowerCase());
+            if (concentrationConflicts.length && !replace) {
                 return {
                     ok: false,
                     code: 'CONFLICT',
-                    message: 'Roll20 did not retain every requested effect projection; completed changes were rolled back.'
-                };
-            }
-            if (descriptor.ok && descriptor.kind !== 'none') {
-                instance.projection.status = 'applied';
-                instance.projection.lastReconciledAt = isoNow();
-                instance.projection.lastReconciliation = {
-                    status: 'verified',
-                    verifiedTargets: draftLedgers.length
+                    message: `${source.summary.characterName} is already concentrating on ${concentrationConflicts.map(item => item.name).join(', ')}. Choose replacement deliberately.`,
+                    concentrationConflicts: concentrationConflicts.map(item => item.id)
                 };
             }
 
-            if (definitionResult.isNew) {
-                modState.config.customDefinitions[definition.id] = clone(definition);
-            }
-            runtime.instances[instance.id] = instance;
-            draftLedgers.forEach(draft => {
-                const ledger = isPlainObject(draft.existing)
-                    ? draft.existing
-                    : {
-                        tokenId: draft.target.summary.tokenId,
-                        characterId: draft.target.summary.characterId,
-                        markerId: draft.markerId,
-                        markerRef: draft.markerRef,
-                        kind: draft.kind,
-                        condition: draft.condition,
-                        baselinePresent: draft.actualBefore,
-                        managed: !draft.actualBefore,
-                        instanceIds: [],
-                        createdAt: isoNow()
-                    };
-                if (!draft.actualBefore) ledger.managed = true;
-                ledger.markerId = draft.markerId;
-                ledger.markerRef = draft.markerRef;
-                ledger.kind = draft.kind;
-                ledger.condition = draft.condition;
-                ledger.instanceIds = [...new Set((ledger.instanceIds || []).concat(instance.id))];
-                ledger.lastVerifiedAt = isoNow();
-                runtime.projections[draft.key] = ledger;
+            const hardFailures = [];
+            expanded.bindings.forEach(binding => {
+                const adapter = projectionAdapters.get(binding.adapter);
+                if (!adapter) {
+                    if (!binding.optional) hardFailures.push(`${binding.label}: projection adapter is unavailable.`);
+                    return;
+                }
+                const inspected = adapter.inspect(binding, runtime.projectionLedgers[binding.key]);
+                if (!inspected.ok && !binding.optional) hardFailures.push(inspected.message || `${binding.label} is unavailable.`);
             });
-            rememberRequest(rawRequestId, instance.id);
-            notifyLifecycle('created', instance);
+            if (definition.concentration) {
+                const api = GameAssist.ConcentrationAssist;
+                if (!api?.set || !api?.getMarker || GameAssist.getState('ConcentrationAssist')?.config?.enabled === false) {
+                    hardFailures.push('ConcentrationAssist must be enabled before applying a concentration effect.');
+                }
+            }
+            if (hardFailures.length) return { ok: false, code: 'UNAVAILABLE', message: hardFailures.join(' ') };
+
             return {
                 ok: true,
-                instance: clone(instance),
-                pending: !descriptor.ok,
-                message: descriptor.ok
-                    ? `${definition.name} was applied to ${targets.length} target(s).`
-                    : `${definition.name} was recorded for ${targets.length} target(s), but its projection is pending: ${descriptor.message}`
+                request: clone(request),
+                intent,
+                rawRequestId,
+                source,
+                targets,
+                definition,
+                definitionResult,
+                bindings: expanded.bindings,
+                assistance: expanded.assistance,
+                concentrationConflicts,
+                replace
             };
         }
 
-        function ledgerOwners(ledger) {
-            return [...new Set((Array.isArray(ledger?.instanceIds) ? ledger.instanceIds : [])
-                .filter(id => validInstance(runtime.instances[id])))];
+        function previewPlan(plan) {
+            const changes = [];
+            plan.bindings.forEach(binding => {
+                const ledger = runtime.projectionLedgers[binding.key];
+                const adapter = projectionAdapters.get(binding.adapter);
+                const inspected = adapter?.inspect(binding, ledger);
+                if (!adapter) changes.push(`${binding.label}: assisted only`);
+                else if (!inspected?.ok) changes.push(`${binding.label}: unavailable`);
+                else if (inspected.state === 'present' || inspected.state === 'present-untracked') changes.push(`${binding.label}: already present and will be shared`);
+                else if (inspected.state === 'drift') changes.push(`${binding.label}: edited value will be preserved for review`);
+                else changes.push(`${binding.label}: will be added`);
+            });
+            if (plan.definition.concentration) {
+                changes.push(`Concentration: ${plan.source.summary.characterName} will be marked Concentrating`);
+                if (plan.concentrationConflicts.length) changes.push(`Replacement: ${plan.concentrationConflicts.length} existing concentration effect(s) will end`);
+            }
+            return changes;
         }
 
-        function endEffect(instanceId, actor = 'api') {
+        function createApplyGrant(plan, playerId) {
+            const id = 'EP-' + Math.random().toString(36).slice(2, 10);
+            applyGrants.set(id, {
+                playerId: String(playerId || ''),
+                expiresAt: Date.now() + POLICY.effects.repairGrantMs,
+                request: clone(plan.request),
+                signature: fingerprint({
+                    source: plan.source.summary,
+                    targets: plan.targets.map(target => target.summary),
+                    definition: plan.definition,
+                    bindings: plan.bindings.map(binding => binding.key),
+                    conflicts: plan.concentrationConflicts.map(item => item.id)
+                })
+            });
+            if (applyGrants.size > POLICY.effects.repairGrantLimit) {
+                applyGrants.delete(applyGrants.keys().next().value);
+            }
+            return id;
+        }
+
+        function verifyApplyGrant(grantId, playerId) {
+            const grant = applyGrants.get(String(grantId || ''));
+            applyGrants.delete(String(grantId || ''));
+            if (!grant || grant.expiresAt < Date.now() || grant.playerId !== String(playerId || '')) {
+                return { ok: false, code: 'UNAUTHORIZED', message: 'That effect confirmation expired. Open the catalog and preview it again.' };
+            }
+            const plan = buildPlan(grant.request);
+            if (!plan.ok) return plan;
+            const signature = fingerprint({
+                source: plan.source.summary,
+                targets: plan.targets.map(target => target.summary),
+                definition: plan.definition,
+                bindings: plan.bindings.map(binding => binding.key),
+                conflicts: plan.concentrationConflicts.map(item => item.id)
+            });
+            return signature === grant.signature
+                ? plan
+                : { ok: false, code: 'CONFLICT', message: 'The source, targets, definition, or concentration state changed after preview. Preview the effect again.' };
+        }
+
+        function notifyLifecycle(transition, instance, context = {}) {
+            return GameAssist.SemanticEvents.publish('effect.lifecycle.changed', MODULE_NAME, {
+                transition,
+                instance: clone(instance),
+                context: clone(context)
+            });
+        }
+
+        function setConcentration(sourceTokenId, active, context = {}) {
+            const api = GameAssist.ConcentrationAssist;
+            if (!api?.set) return { ok: false, code: 'UNAVAILABLE', message: 'ConcentrationAssist is unavailable.' };
+            if (active === false) suppressedConcentrationTokens.set(String(sourceTokenId), Date.now() + 1500);
+            else suppressedConcentrationTokens.delete(String(sourceTokenId));
+            const result = api.set(sourceTokenId, active, {
+                actor: MODULE_NAME,
+                reason: context.reason || (active ? 'effect-established' : 'effect-ended'),
+                instanceId: context.instanceId || null
+            });
+            return result?.ok === true
+                ? result
+                : { ok: false, code: result?.code || 'UNAVAILABLE', message: result?.message || 'ConcentrationAssist could not change concentration.' };
+        }
+
+        function rollbackBindings(applied, instanceId) {
+            const failures = [];
+            [...applied].reverse().forEach(entry => {
+                const ledger = runtime.projectionLedgers[entry.binding.key];
+                if (!ledger) return;
+                ledger.instanceIds = (ledger.instanceIds || []).filter(id => id !== instanceId);
+                if (ledger.instanceIds.length) return;
+                const adapter = projectionAdapters.get(entry.binding.adapter);
+                const result = adapter?.remove(entry.binding, ledger) || { ok: false, message: 'Projection adapter unavailable during rollback.' };
+                if (result.ok) delete runtime.projectionLedgers[entry.binding.key];
+                else failures.push(result.message || entry.binding.label);
+            });
+            return failures;
+        }
+
+        function applyPlan(plan) {
+            if (plan.duplicate) return plan;
+            const instance = {
+                id: nextInstanceId(),
+                definitionId: plan.definition.id,
+                definitionVersion: plan.definition.definitionVersion || 1,
+                name: plan.definition.name,
+                description: plan.definition.description || '',
+                definitionSnapshot: clone(plan.definition),
+                source: plan.source.summary,
+                targets: plan.targets.map(target => target.summary),
+                dependency: {
+                    type: plan.definition.concentration ? 'concentration' : 'manual',
+                    status: plan.definition.concentration ? 'establishing' : 'not-required',
+                    established: false,
+                    marker: plan.definition.concentration ? String(GameAssist.ConcentrationAssist?.getMarker?.() || '') : null
+                },
+                stacking: clone(plan.definition.stacking),
+                bindings: plan.bindings.map(binding => clone(binding)),
+                assistance: clone(plan.assistance),
+                duration: {
+                    type: 'manual',
+                    label: String(plan.request.duration || plan.definition.duration || '').slice(0, POLICY.effects.nameLength)
+                },
+                status: 'applying',
+                createdAt: isoNow(),
+                createdBy: String(plan.request.createdBy || 'api')
+            };
+
+            runtime.operations[instance.id] = {
+                type: 'apply',
+                status: 'running',
+                startedAt: isoNow(),
+                bindingKeys: instance.bindings.map(binding => binding.key)
+            };
+
+            const applied = [];
+            const appliedBindingKeys = new Set();
+            for (const binding of plan.bindings) {
+                const adapter = projectionAdapters.get(binding.adapter);
+                if (!adapter) {
+                    if (binding.optional) {
+                        instance.assistance.push(`${binding.label}: adapter unavailable; apply manually.`);
+                        continue;
+                    }
+                    const rollbackFailures = rollbackBindings(applied, instance.id);
+                    delete runtime.operations[instance.id];
+                    return { ok: false, code: 'UNAVAILABLE', message: `${binding.label}: adapter unavailable.`, rollbackFailures };
+                }
+                let ledger = runtime.projectionLedgers[binding.key];
+                if (ledger) {
+                    const inspection = adapter.inspect(binding, ledger);
+                    if (!inspection.ok || !['present', 'present-untracked'].includes(inspection.state)) {
+                        if (binding.optional) {
+                            instance.assistance.push(`${binding.label}: unavailable or changed; apply manually.`);
+                            continue;
+                        }
+                        const rollbackFailures = rollbackBindings(applied, instance.id);
+                        delete runtime.operations[instance.id];
+                        return { ok: false, code: inspection.code || 'CONFLICT', message: inspection.message || `${binding.label} could not be verified.`, rollbackFailures };
+                    }
+                    ledger.instanceIds = [...new Set((ledger.instanceIds || []).concat(instance.id))];
+                    ledger.lastVerifiedAt = isoNow();
+                    applied.push({ binding, shared: true });
+                    appliedBindingKeys.add(binding.key);
+                    continue;
+                }
+
+                const result = adapter.apply(binding);
+                if (!result.ok) {
+                    if (binding.optional) {
+                        instance.assistance.push(`${binding.label}: ${result.message || 'apply manually.'}`);
+                        continue;
+                    }
+                    const rollbackFailures = rollbackBindings(applied, instance.id);
+                    delete runtime.operations[instance.id];
+                    return { ok: false, code: result.code || 'UNAVAILABLE', message: result.message || `${binding.label} could not be applied.`, rollbackFailures };
+                }
+                ledger = {
+                    key: binding.key,
+                    adapter: binding.adapter,
+                    adapterVersion: 1,
+                    binding: clone(binding),
+                    instanceIds: [instance.id],
+                    managed: result.managed === true,
+                    baselinePresent: result.baselinePresent === true,
+                    metadata: clone(result.metadata || {}),
+                    createdAt: isoNow(),
+                    lastVerifiedAt: isoNow()
+                };
+                runtime.projectionLedgers[binding.key] = ledger;
+                applied.push({ binding, shared: false });
+                appliedBindingKeys.add(binding.key);
+            }
+
+            instance.bindings = instance.bindings.filter(binding => appliedBindingKeys.has(binding.key));
+
+            if (plan.definition.concentration) {
+                const concentration = setConcentration(plan.source.token.id, true, { instanceId: instance.id, reason: 'effect-established' });
+                if (!concentration.ok) {
+                    const rollbackFailures = rollbackBindings(applied, instance.id);
+                    delete runtime.operations[instance.id];
+                    return { ok: false, code: concentration.code, message: concentration.message, rollbackFailures };
+                }
+                instance.dependency.status = 'active';
+                instance.dependency.established = true;
+                instance.dependency.marker = String(GameAssist.ConcentrationAssist?.getMarker?.() || instance.dependency.marker || '');
+            }
+
+            instance.status = 'active';
+            runtime.instances[instance.id] = instance;
+            if (plan.definitionResult.isNew) modState.config.customDefinitions[plan.definition.id] = clone(plan.definition);
+            rememberRequest(plan.rawRequestId, instance.id, plan.intent);
+            rebuildDependencyIndex();
+            runtime.operations[instance.id] = { ...runtime.operations[instance.id], status: 'complete', completedAt: isoNow() };
+
+            const replacementFailures = [];
+            plan.concentrationConflicts.forEach(conflict => {
+                const ended = endEffect(conflict.id, plan.request.createdBy || 'api', {
+                    skipConcentration: true,
+                    reason: `replaced-by:${instance.id}`
+                });
+                if (!ended.ok) replacementFailures.push(ended.message);
+            });
+            notifyLifecycle('created', instance, { replacementFailures });
+            return {
+                ok: replacementFailures.length === 0,
+                instance: clone(instance),
+                warnings: [...new Set(instance.assistance.concat(replacementFailures))],
+                message: replacementFailures.length
+                    ? `${instance.name} was applied, but an earlier concentration effect needs cleanup attention.`
+                    : `${instance.name} was applied to ${instance.targets.length} target(s).`
+            };
+        }
+
+        function applyEffectRequest(request) {
+            const plan = buildPlan(request || {});
+            return plan.ok ? applyPlan(plan) : plan;
+        }
+
+        function remainingConcentrationOwners(instance) {
+            return activeInstances().filter(other =>
+                other.id !== instance.id
+                && other.dependency?.type === 'concentration'
+                && other.dependency?.established
+                && String(other.source.characterId) === String(instance.source.characterId)
+                && other.status === 'active'
+            );
+        }
+
+        function endEffect(instanceId, actor = 'api', options = {}) {
             ensureState();
-            if (modState.config.enabled === false) {
+            if (modState.config.enabled === false && options.allowDisabled !== true) {
                 return { ok: false, code: 'UNAVAILABLE', message: 'EffectAssist is disabled.' };
             }
-            const requestedId = String(instanceId || '');
-            const instance = runtime.instances[requestedId];
+            const instance = runtime.instances[String(instanceId || '')];
             if (!validInstance(instance)) {
-                const ended = runtime.history.find(entry => entry?.id === requestedId && entry?.status === 'ended');
+                const ended = runtime.history.find(entry => entry?.id === String(instanceId || '') && entry?.status === 'ended');
                 return ended
-                    ? { ok: true, unchanged: true, instance: clone(ended), failures: [], message: 'That effect had already ended; nothing else was changed.' }
+                    ? { ok: true, unchanged: true, instance: clone(ended), failures: [], message: 'That effect had already ended.' }
                     : { ok: false, code: 'NOT_FOUND', message: 'That active effect instance was not found.' };
             }
-            const failures = [];
-            Object.entries(runtime.projections).forEach(([key, ledger]) => {
-                if (!isPlainObject(ledger) || !Array.isArray(ledger.instanceIds) || !ledger.instanceIds.includes(instance.id)) return;
-                ledger.instanceIds = ledger.instanceIds.filter(id => id !== instance.id);
-                const owners = ledgerOwners(ledger);
-                ledger.instanceIds = owners;
-                if (owners.length) return;
 
-                const token = getObj('graphic', ledger.tokenId);
-                if (!token) {
-                    failures.push(`Token ${ledger.tokenId} no longer exists.`);
+            instance.status = 'ending';
+            instance.endRequestedAt = isoNow();
+            instance.endRequestedBy = String(actor || 'api');
+            const failures = [];
+            instance.bindings.forEach(binding => {
+                const ledger = runtime.projectionLedgers[binding.key];
+                if (!ledger || !(ledger.instanceIds || []).includes(instance.id)) return;
+                const otherOwners = (ledger.instanceIds || []).filter(id => id !== instance.id && validInstance(runtime.instances[id]));
+                if (otherOwners.length) {
+                    ledger.instanceIds = [...new Set(otherOwners)];
                     return;
                 }
-                if (String(token.get('represents') || '') !== String(ledger.characterId || '')) {
-                    failures.push('Token ' + (token.get('name') || ledger.tokenId) + ' now represents a different character; its marker was left unchanged.');
+                const adapter = projectionAdapters.get(binding.adapter);
+                if (!adapter) {
+                    failures.push(`${binding.label}: projection adapter is unavailable.`);
                     return;
                 }
-                if (ledger.managed === true && GameAssist.MarkerService?.isEnabled?.()) {
-                    const descriptor = {
-                        kind: ledger.kind,
-                        condition: ledger.condition,
-                        markerId: ledger.markerId,
-                        markerRef: ledger.markerRef
-                    };
-                    if (GameAssist.MarkerService.has(token, ledger.markerId)) {
-                        const mutation = mutateProjection(token, descriptor, 'remove');
-                        if (!mutation.ok) {
-                            failures.push(mutation.message || `Could not remove ${ledger.markerRef}.`);
-                            return;
-                        }
-                    }
+                const result = adapter.remove(binding, ledger);
+                if (!result.ok) {
+                    failures.push(result.message || `${binding.label} could not be removed.`);
+                    return;
                 }
-                delete runtime.projections[key];
+                delete runtime.projectionLedgers[binding.key];
             });
 
+            if (!failures.length && instance.dependency?.type === 'concentration' && instance.dependency?.established
+                && options.skipConcentration !== true && !remainingConcentrationOwners(instance).length) {
+                const result = setConcentration(instance.source.tokenId, false, { instanceId: instance.id, reason: options.reason || 'effect-ended' });
+                if (!result.ok) failures.push(result.message || 'Concentration could not be cleared.');
+            }
+
+            if (failures.length) {
+                instance.status = 'needs-attention';
+                instance.cleanup = { status: 'needs-attention', failures, lastAttemptAt: isoNow() };
+                rebuildDependencyIndex();
+                notifyLifecycle('cleanup-needs-attention', instance, { failures, reason: options.reason || 'manual' });
+                return {
+                    ok: false,
+                    code: 'CONFLICT',
+                    instance: clone(instance),
+                    failures,
+                    message: `${instance.name} is ending, but ${failures.length} projection(s) need attention.`
+                };
+            }
+
             delete runtime.instances[instance.id];
+            delete runtime.operations[instance.id];
             const ended = {
                 ...clone(instance),
                 status: 'ended',
                 endedAt: isoNow(),
                 endedBy: String(actor || 'api'),
-                cleanup: failures.length ? { status: 'needs-attention', failures } : { status: 'complete', failures: [] }
+                endReason: String(options.reason || 'manual'),
+                cleanup: { status: 'complete', failures: [] }
             };
             runtime.history.push(ended);
             runtime.history = runtime.history.slice(-POLICY.effects.endedHistoryLimit);
-            notifyLifecycle('ended', ended);
-            return {
-                ok: true,
-                instance: clone(ended),
-                failures,
-                message: failures.length
-                    ? `${ended.name} ended, but ${failures.length} projection(s) need attention.`
-                    : `${ended.name} ended and its unneeded projections were removed.`
-            };
+            rebuildDependencyIndex();
+            notifyLifecycle('ended', ended, { reason: options.reason || 'manual' });
+            return { ok: true, instance: clone(ended), failures: [], message: `${ended.name} ended and its unneeded projections were removed.` };
+        }
+
+        function endConcentrationForToken(token, reason) {
+            const characterId = String(token?.get('represents') || '');
+            if (!characterId) return;
+            const ids = [...(runtime.dependencyIndex[characterId] || [])];
+            ids.forEach(id => endEffect(id, 'ConcentrationAssist', {
+                skipConcentration: true,
+                allowDisabled: true,
+                reason
+            }));
+        }
+
+        function concentrationMarkerId(markerOverride = null) {
+            const marker = String(markerOverride
+                || GameAssist.ConcentrationAssist?.getMarker?.()
+                || GameAssist.getState('ConcentrationAssist')?.config?.marker
+                || 'Concentrating');
+            const resolution = GameAssist.MarkerService.resolve(marker);
+            return resolution.ok ? GameAssist.MarkerService.normalizeId(resolution.id) : null;
+        }
+
+        function observeMarkerChanges(event) {
+            const removed = new Set((event?.removed || []).map(item =>
+                GameAssist.MarkerService.normalizeId(item.id || item.tag || item)
+            ));
+            const tokenId = String(event.tokenId || event.token?.id || '');
+            const characterId = String(event.token?.get('represents') || '');
+            const affected = activeInstances().filter(instance =>
+                instance.dependency?.type === 'concentration'
+                && instance.dependency?.established
+                && String(instance.source.characterId || '') === characterId
+                && removed.has(concentrationMarkerId(instance.dependency.marker))
+            );
+            if (!affected.length) return;
+            const suppressedUntil = Number(suppressedConcentrationTokens.get(tokenId) || 0);
+            if (suppressedUntil >= Date.now()) {
+                return;
+            }
+            affected.forEach(instance => endEffect(instance.id, 'MarkerService', {
+                skipConcentration: true,
+                allowDisabled: true,
+                reason: 'concentration-marker-removed'
+            }));
+        }
+
+        function ensureMarkerObservation() {
+            if (!GameAssist.MarkerService?.isEnabled?.()) {
+                return { ok: false, code: 'UNAVAILABLE', message: 'MarkerService is disabled.' };
+            }
+            GameAssist.MarkerService.clearObservers(MODULE_NAME);
+            return GameAssist.MarkerService.observe(observeMarkerChanges, { owner: MODULE_NAME });
+        }
+
+        function observeConcentration(event) {
+            const payload = event?.payload || {};
+            if (!['concentration.ended', 'concentration.failed'].includes(event?.type)) return;
+            const tokenId = String(payload.tokenId || '');
+            const suppressedUntil = Number(suppressedConcentrationTokens.get(tokenId) || 0);
+            if (tokenId && suppressedUntil >= Date.now()) {
+                suppressedConcentrationTokens.delete(tokenId);
+                return;
+            }
+            const token = payload.tokenId ? getObj('graphic', payload.tokenId) : null;
+            if (token) endConcentrationForToken(token, payload.reason || event.type);
+            else if (payload.characterId) {
+                [...(runtime.dependencyIndex[String(payload.characterId)] || [])].forEach(id =>
+                    endEffect(id, 'ConcentrationAssist', { skipConcentration: true, allowDisabled: true, reason: payload.reason || event.type })
+                );
+            }
         }
 
         function auditEffects() {
             ensureState();
             const mismatches = [];
-            const checked = new Set();
-
+            const checkedLedgers = new Set();
             activeInstances().forEach(instance => {
-                const descriptor = projectionDescriptor(instance.projection);
-                if (instance.projection.kind === 'none') return;
-                instance.targets.forEach(target => {
-                    if (!descriptor.ok) {
+                if (instance.migrationStatus === 'legacy-incomplete') {
+                    mismatches.push({
+                        key: `legacy:${instance.id}`,
+                        type: 'legacy-incomplete',
+                        instanceId: instance.id,
+                        message: `${instance.name} uses the pre-release schema and needs a reviewed reapplication.`
+                    });
+                }
+                instance.bindings.forEach(binding => {
+                    const ledger = runtime.projectionLedgers[binding.key];
+                    checkedLedgers.add(binding.key);
+                    if (!ledger || !ledgerOwners(ledger).includes(instance.id)) {
                         mismatches.push({
-                            key: `pending:${instance.id}:${target.tokenId}`,
-                            type: 'projection-unavailable',
-                            instanceId: instance.id,
-                            tokenId: target.tokenId,
-                            name: target.tokenName,
-                            message: descriptor.message || 'Projection is unavailable.'
-                        });
-                        return;
-                    }
-                    const key = projectionKey(target.tokenId, descriptor.markerId);
-                    checked.add(key);
-                    const ledger = runtime.projections[key];
-                    const token = getObj('graphic', target.tokenId);
-                    if (!token) {
-                        mismatches.push({
-                            key,
-                            type: 'missing-token',
-                            instanceId: instance.id,
-                            tokenId: target.tokenId,
-                            name: target.tokenName,
-                            message: 'The projected token no longer exists.'
-                        });
-                        return;
-                    }
-                    if (String(token.get('represents') || '') !== String(target.characterId || '')) {
-                        mismatches.push({
-                            key: 'identity:' + instance.id + ':' + key,
-                            type: 'identity-drift',
-                            instanceId: instance.id,
-                            tokenId: target.tokenId,
-                            name: target.tokenName,
-                            message: target.tokenName + ' now represents a different character; no marker change is safe.'
-                        });
-                        return;
-                    }
-                    if (!isPlainObject(ledger) || !ledgerOwners(ledger).includes(instance.id)) {
-                        mismatches.push({
-                            key: `untracked:${instance.id}:${key}`,
+                            key: `untracked:${instance.id}:${binding.key}`,
                             type: 'untracked-projection',
                             instanceId: instance.id,
-                            tokenId: target.tokenId,
-                            name: target.tokenName,
-                            descriptor,
-                            message: 'The effect is active, but its projection ledger is missing.'
+                            binding: clone(binding),
+                            message: `${instance.name}: ${binding.label} has no ownership record.`
                         });
                         return;
                     }
-                    if (!GameAssist.MarkerService.has(token, descriptor.markerId)) {
+                    const adapter = projectionAdapters.get(binding.adapter);
+                    if (!adapter) {
                         mismatches.push({
-                            key,
-                            type: 'missing-marker',
+                            key: `adapter:${binding.key}`,
+                            type: 'projection-unavailable',
                             instanceId: instance.id,
-                            tokenId: target.tokenId,
-                            name: target.tokenName,
-                            descriptor,
-                            message: `${target.tokenName} is missing the ${instance.name} marker.`
+                            binding: clone(binding),
+                            message: `${instance.name}: ${binding.label} adapter is unavailable.`
+                        });
+                        return;
+                    }
+                    const inspected = adapter.inspect(binding, ledger);
+                    if (!inspected.ok) {
+                        mismatches.push({
+                            key: `inspect:${binding.key}`,
+                            type: inspected.state || 'projection-unavailable',
+                            instanceId: instance.id,
+                            binding: clone(binding),
+                            message: inspected.message || `${instance.name}: ${binding.label} could not be inspected.`
+                        });
+                    } else if (inspected.state === 'missing') {
+                        mismatches.push({
+                            key: `missing:${binding.key}`,
+                            type: 'missing-projection',
+                            instanceId: instance.id,
+                            binding: clone(binding),
+                            message: `${instance.name}: ${binding.label} is missing.`
+                        });
+                    } else if (inspected.state === 'drift') {
+                        mismatches.push({
+                            key: `drift:${binding.key}`,
+                            type: 'projection-drift',
+                            instanceId: instance.id,
+                            binding: clone(binding),
+                            message: `${instance.name}: ${binding.label} was edited outside EffectAssist and was preserved.`
                         });
                     }
                 });
+                if (instance.dependency?.type === 'concentration' && instance.dependency?.established) {
+                    const token = getObj('graphic', instance.source.tokenId);
+                    const markerId = concentrationMarkerId(instance.dependency.marker);
+                    if (!token || !markerId || !GameAssist.MarkerService.has(token, markerId)) {
+                        mismatches.push({
+                            key: `concentration:${instance.id}`,
+                            type: 'concentration-lost',
+                            instanceId: instance.id,
+                            message: `${instance.name}: ${instance.source.characterName} is no longer marked Concentrating.`
+                        });
+                    }
+                }
+                if (instance.status === 'needs-attention') {
+                    mismatches.push({
+                        key: `cleanup:${instance.id}`,
+                        type: 'cleanup-pending',
+                        instanceId: instance.id,
+                        message: `${instance.name}: cleanup is incomplete.`
+                    });
+                }
             });
 
-            Object.entries(runtime.projections).forEach(([key, ledger]) => {
+            Object.entries(runtime.projectionLedgers).forEach(([key, ledger]) => {
                 if (!isPlainObject(ledger)) {
                     mismatches.push({ key, type: 'invalid-ledger', message: 'A malformed projection ledger needs manual review.' });
                     return;
                 }
                 const owners = ledgerOwners(ledger);
-                if (owners.length || checked.has(key)) return;
-                const token = getObj('graphic', ledger.tokenId);
-                if (token && String(token.get('represents') || '') !== String(ledger.characterId || '')) {
-                    mismatches.push({
-                        key: 'identity:orphan:' + key,
-                        type: 'identity-drift',
-                        tokenId: ledger.tokenId,
-                        name: token.get('name') || ledger.tokenId,
-                        message: 'A stored projection points to a token that now represents a different character; it was left unchanged.'
-                    });
-                    return;
-                }
-                const actual = token && GameAssist.MarkerService?.isEnabled?.()
-                    ? GameAssist.MarkerService.has(token, ledger.markerId)
-                    : false;
-                if (ledger.managed === true && actual) {
-                    mismatches.push({
-                        key,
-                        type: 'orphan-marker',
-                        tokenId: ledger.tokenId,
-                        name: token?.get('name') || ledger.tokenId,
-                        descriptor: {
-                            kind: ledger.kind,
-                            condition: ledger.condition,
-                            markerId: ledger.markerId,
-                            markerRef: ledger.markerRef
-                        },
-                        message: 'An EffectAssist-owned marker remains without an active effect.'
-                    });
-                }
+                if (owners.length || checkedLedgers.has(key)) return;
+                mismatches.push({
+                    key: `orphan:${key}`,
+                    type: 'orphan-projection',
+                    binding: clone(ledger.binding),
+                    message: `${ledger.binding?.label || 'A projection'} remains without an active effect owner.`
+                });
             });
 
-            const invalid = invalidInstanceCount();
-            if (invalid) {
-                mismatches.push({
-                    key: 'invalid-instances',
-                    type: 'invalid-state',
-                    message: `${invalid} malformed effect instance record(s) were preserved for manual review.`
-                });
-            }
-
+            const invalid = Object.values(runtime.instances).filter(instance => !validInstance(instance)).length;
+            if (invalid) mismatches.push({ key: 'invalid-instances', type: 'invalid-state', message: `${invalid} malformed effect instance record(s) were preserved for manual review.` });
             return {
                 ok: mismatches.length === 0,
                 active: activeInstances().length,
@@ -15224,10 +16064,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 playerId: String(playerId || ''),
                 expiresAt: Date.now() + POLICY.effects.repairGrantMs
             });
-            if (repairGrants.size > POLICY.effects.repairGrantLimit) {
-                const oldest = repairGrants.keys().next().value;
-                repairGrants.delete(oldest);
-            }
+            if (repairGrants.size > POLICY.effects.repairGrantLimit) repairGrants.delete(repairGrants.keys().next().value);
             return id;
         }
 
@@ -15240,87 +16077,97 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const audit = auditEffects();
             if (mismatchSignature(audit.mismatches) !== grant.signature) {
                 repairGrants.delete(String(grantId || ''));
-                return { ok: false, code: 'CONFLICT', message: 'Effect state changed after the preview. Run the audit again before repairing.' };
+                return { ok: false, code: 'CONFLICT', message: 'Effect state changed after the preview. Run the audit again.' };
             }
             repairGrants.delete(String(grantId || ''));
 
             const results = [];
             audit.mismatches.forEach(item => {
-                if (!['missing-marker', 'untracked-projection', 'orphan-marker'].includes(item.type)) return;
-                if (item.type === 'orphan-marker') {
-                    const token = getObj('graphic', item.tokenId);
-                    const ledger = runtime.projections[item.key];
-                    if (!token || !item.descriptor || !isPlainObject(ledger)) {
-                        results.push({ ok: false, item, message: 'The orphaned token is unavailable.' });
-                        return;
-                    }
-                    if (String(token.get('represents') || '') !== String(ledger.characterId || '')) {
-                        results.push({ ok: false, item, message: 'The token now represents a different character and was left unchanged.' });
-                        return;
-                    }
-                    const result = mutateProjection(token, item.descriptor, 'remove');
-                    if (result.ok) delete runtime.projections[item.key];
+                if (item.type === 'concentration-lost') {
+                    const ended = endEffect(item.instanceId, playerId, { skipConcentration: true, reason: 'confirmed-concentration-loss' });
+                    results.push({ ok: ended.ok, item, message: ended.message });
+                    return;
+                }
+                if (item.type === 'cleanup-pending') {
+                    const ended = endEffect(item.instanceId, playerId, { reason: 'cleanup-retry' });
+                    results.push({ ok: ended.ok, item, message: ended.message });
+                    return;
+                }
+                if (item.type === 'orphan-projection') {
+                    const ledgerKey = String(item.key).replace(/^orphan:/, '');
+                    const ledger = runtime.projectionLedgers[ledgerKey];
+                    const adapter = ledger && projectionAdapters.get(ledger.adapter);
+                    const result = adapter?.remove(ledger.binding, ledger) || { ok: false, message: 'The orphaned projection adapter is unavailable.' };
+                    if (result.ok) delete runtime.projectionLedgers[ledgerKey];
                     results.push({ ok: result.ok, item, message: result.message });
                     return;
                 }
-
+                if (!['missing-projection', 'untracked-projection'].includes(item.type)) return;
                 const instance = runtime.instances[item.instanceId];
-                const target = instance?.targets?.find(entry => entry.tokenId === item.tokenId);
-                const token = getObj('graphic', item.tokenId);
-                const descriptor = item.descriptor || (instance ? projectionDescriptor(instance.projection) : null);
-                if (!validInstance(instance) || !target || !token || !descriptor?.ok) {
-                    results.push({ ok: false, item, message: 'The active effect or target is no longer repairable.' });
+                const binding = item.binding;
+                const adapter = binding && projectionAdapters.get(binding.adapter);
+                if (!validInstance(instance) || !adapter) {
+                    results.push({ ok: false, item, message: 'The active effect or projection adapter is unavailable.' });
                     return;
                 }
-                if (String(token.get('represents') || '') !== String(target.characterId || '')) {
-                    results.push({ ok: false, item, message: 'The token now represents a different character and was left unchanged.' });
+                let ledger = runtime.projectionLedgers[binding.key];
+                if (ledger) {
+                    const applied = adapter.apply(binding);
+                    if (!applied.ok) {
+                        results.push({ ok: false, item, message: applied.message });
+                        return;
+                    }
+                    ledger.managed = ledger.managed || applied.managed === true;
+                    ledger.metadata = clone(applied.metadata || ledger.metadata || {});
+                    ledger.instanceIds = [...new Set((ledger.instanceIds || []).concat(instance.id))];
+                    ledger.lastVerifiedAt = isoNow();
+                    results.push({ ok: true, item });
                     return;
                 }
-                const key = projectionKey(token.id, descriptor.markerId);
-                let ledger = runtime.projections[key];
-                const actual = GameAssist.MarkerService.has(token, descriptor.markerId);
-                let mutation = { ok: true, changed: false };
-                if (!actual) mutation = mutateProjection(token, descriptor, 'add');
-                if (!mutation.ok) {
-                    results.push({ ok: false, item, message: mutation.message });
+                const applied = adapter.apply(binding);
+                if (!applied.ok) {
+                    results.push({ ok: false, item, message: applied.message });
                     return;
                 }
-                if (!isPlainObject(ledger)) {
-                    ledger = {
-                        tokenId: target.tokenId,
-                        characterId: target.characterId,
-                        markerId: descriptor.markerId,
-                        markerRef: descriptor.markerRef,
-                        kind: descriptor.kind,
-                        condition: descriptor.condition || null,
-                        baselinePresent: actual,
-                        managed: !actual,
-                        instanceIds: [],
-                        createdAt: isoNow()
-                    };
-                }
-                if (!actual) ledger.managed = true;
-                ledger.instanceIds = [...new Set((ledger.instanceIds || []).concat(instance.id))];
-                ledger.lastVerifiedAt = isoNow();
-                runtime.projections[key] = ledger;
-                instance.projection.status = 'applied';
-                instance.projection.message = null;
-                instance.projection.lastReconciledAt = isoNow();
-                instance.projection.lastReconciliation = { status: 'verified', verifiedTargets: instance.targets.length };
+                runtime.projectionLedgers[binding.key] = {
+                    key: binding.key,
+                    adapter: binding.adapter,
+                    adapterVersion: 1,
+                    binding: clone(binding),
+                    instanceIds: [instance.id],
+                    managed: applied.managed === true,
+                    baselinePresent: applied.baselinePresent === true,
+                    metadata: clone(applied.metadata || {}),
+                    createdAt: isoNow(),
+                    lastVerifiedAt: isoNow()
+                };
                 results.push({ ok: true, item });
             });
-
             const failed = results.filter(result => !result.ok);
-            const postAudit = auditEffects();
             return {
-                ok: failed.length === 0 && !postAudit.mismatches.some(item =>
-                    ['missing-marker', 'untracked-projection', 'orphan-marker'].includes(item.type)
-                ),
+                ok: failed.length === 0,
                 attempted: results.length,
                 repaired: results.length - failed.length,
                 failed,
-                audit: postAudit
+                audit: auditEffects()
             };
+        }
+
+        function reconcileMissedConcentrationLoss() {
+            activeInstances().forEach(instance => {
+                if (instance.migrationStatus === 'legacy-incomplete'
+                    || instance.dependency?.type !== 'concentration'
+                    || !instance.dependency?.established) return;
+                const token = getObj('graphic', instance.source.tokenId);
+                const markerId = concentrationMarkerId(instance.dependency.marker);
+                if (token && markerId && !GameAssist.MarkerService.has(token, markerId)) {
+                    endEffect(instance.id, 'EffectAssist startup', {
+                        skipConcentration: true,
+                        allowDisabled: true,
+                        reason: 'concentration-missing-on-enable'
+                    });
+                }
+            });
         }
 
         function panel(title, fields) {
@@ -15328,63 +16175,84 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendChat(MODULE_NAME, `/w gm &{template:default} {{name=${_sanitize(title)}}} ${body}`);
         }
 
+        function listText(values) {
+            return (Array.isArray(values) && values.length)
+                ? values.map(value => `• ${_sanitize(value)}`).join('<br>')
+                : 'None.';
+        }
+
         function activeSummary() {
             const effects = activeInstances().slice(0, POLICY.effects.chatListLimit);
             if (!effects.length) return 'No active effects.';
             return effects.map(instance => {
                 const targets = instance.targets.map(target => _sanitize(target.tokenName)).join(', ');
-                return `<b>${_sanitize(instance.name)}</b> from ${_sanitize(instance.source.tokenName)} to ${targets} ${GameAssist.createButton('End', '!Effect-End --id ' + instance.id)}`;
+                const state = instance.status === 'active' ? '' : ` | ${_sanitize(instance.status)}`;
+                return `<b>${_sanitize(instance.name)}</b> from ${_sanitize(instance.source.tokenName)} to ${targets}${state} ${GameAssist.createButton('End', '!Effect-End --id ' + instance.id)}`;
             }).join('<br>');
+        }
+
+        function catalogButtons() {
+            const source = sourceQuery();
+            if (!source) return 'Place at least one linked character token on the current player page so EffectAssist can offer a source picker.';
+            return getDefinitions().filter(definition => BUILTIN_DEFINITIONS[definition.id]).map(definition => {
+                const replacement = definition.concentration
+                    ? ' --replace ?{If this source is already concentrating, replace that effect?|No,no|Yes,yes}'
+                    : '';
+                return GameAssist.createButton(definition.name, `!Effect-Apply --effect ${definition.id} --source ${source}${replacement}`);
+            }).join(' ');
         }
 
         function showGuide() {
             panel('EffectAssist Quick Guide', [
-                { label: 'Purpose', value: 'Record who created an effect, who it affects, and why its projection should remain.' },
-                { label: 'Apply', value: 'Select target tokens, open the GM screen, choose the source, then apply Bless or a generic effect.' },
-                { label: 'Review', value: 'Use Status for active effects and Audit before repairing marker or condition mismatches.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Open GM Screen', '!Effect-GM')} ${GameAssist.createButton('Status', '!Effect-Status')} ${GameAssist.createButton('Manual', '!Effect-Manual')}` }
+                { label: 'Apply An Effect', value: 'Select the affected tokens, open the Effect Catalog, choose the effect and source, review the exact changes, then confirm.' },
+                { label: 'End An Effect', value: 'Open Active Effects and end the specific source. Shared markers and bonuses remain while another source still owns them.' },
+                { label: 'When Something Looks Wrong', value: 'Audit compares effect records with tokens, concentration, and supported 2014 sheet modifiers without changing anything.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Open Control Center', '!Effect-GM')} ${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Manual', '!Effect-Manual')}` }
             ]);
         }
 
         function showControl() {
-            const source = sourceQuery();
-            const condition = conditionQuery();
-            const applyButtons = source
-                ? `${GameAssist.createButton('Apply Bless', '!Effect-Apply --effect bless --source ' + source)} `
-                    + `${GameAssist.createButton('Generic Marker', '!Effect-Apply --name "?{Effect name|Guidance}" --marker "?{Marker id or custom name|aura}" --source ' + source)} `
-                    + `${GameAssist.createButton('Record Only', '!Effect-Apply --name "?{Effect name|Inspiration}" --none true --source ' + source)} `
-                    + (condition
-                        ? `${GameAssist.createButton('Condition Effect', '!Effect-Apply --name "?{Effect name|Restrained}" --condition ' + condition + ' --source ' + source)}`
-                        : '')
-                : 'Place at least one linked character token on the current page so EffectAssist can build a source picker.';
-            panel('EffectAssist GM Controls', [
-                { label: 'Before Applying', value: 'Select every target token. The source is chosen separately in the button prompt.' },
-                { label: 'Apply Effect', value: applyButtons },
-                { label: 'Active Effects', value: activeSummary() },
-                { label: 'Review', value: `${GameAssist.createButton('Status', '!Effect-Status')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Definitions', '!Effect-Definitions')} ${GameAssist.createButton('Guide', '!Effect-Guide')}` }
+            panel('EffectAssist Control Center', [
+                { label: 'Apply', value: GameAssist.createButton('Open Effect Catalog', '!Effect-Catalog') },
+                { label: 'Manage', value: `${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Status', '!Effect-Status')}` },
+                { label: 'Check', value: `${GameAssist.createButton('Audit and Repair', '!Effect-Audit')} ${GameAssist.createButton('Guide', '!Effect-Guide')}` },
+                { label: 'Learn', value: `${GameAssist.createButton('What does EffectAssist do?', '!Effect-Info')} ${GameAssist.createButton('Create or Update Manual', '!Effect-Manual')}` }
             ]);
         }
 
         function showInfo() {
             panel('What EffectAssist Does', [
-                { label: 'Source Of Truth', value: 'An effect record owns the source, targets, dependency, stacking, and lifecycle. A marker is only a visible projection.' },
-                { label: 'Overlap', value: 'Two sources of the same effect remain independently removable. The shared projection remains until the final source ends.' },
-                { label: 'Current Capabilities', value: 'EffectAssist records and projects effects safely. Players still apply mechanical bonuses manually; sheet changes and automatic expiration require separately verified integrations.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Open GM Screen', '!Effect-GM')} ${GameAssist.createButton('Open Guide', '!Effect-Guide')}` }
+                { label: 'Purpose', value: 'Applies and tracks spells, features, and custom effects as source-aware records with markers, supported 2014 sheet modifiers, concentration, and safe cleanup.' },
+                { label: 'Why It Is Not TokenAssist', value: 'TokenAssist performs an immediate token edit. EffectAssist remembers the rule relationship over time and removes only what that relationship owns.' },
+                { label: 'Safety', value: 'Unsupported mechanics remain guided steps. Existing or edited sheet values are preserved and reported instead of overwritten.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Open Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Open Manual', '!Effect-Manual')} ${GameAssist.createButton('Back', '!Effect-GM')}` }
+            ]);
+        }
+
+        function showCatalog() {
+            const source = sourceQuery() || '';
+            const condition = conditionQuery();
+            const customButtons = [
+                GameAssist.createButton('Marker Effect', '!Effect-Apply --name "?{Effect name|Custom Effect}" --marker "?{Marker id or custom name|aura}" --dependency "?{Dependency|Manual,manual|Concentration,concentration}" --source ' + source + ' --replace "?{Replace current concentration if needed?|No,no|Yes,yes}"'),
+                condition ? GameAssist.createButton('Condition Effect', '!Effect-Apply --name "?{Effect name|Custom Effect}" --condition ' + condition + ' --dependency "?{Dependency|Manual,manual|Concentration,concentration}" --source ' + source + ' --replace "?{Replace current concentration if needed?|No,no|Yes,yes}"') : '',
+                GameAssist.createButton('Record Only', '!Effect-Apply --name "?{Effect name|Custom Effect}" --none true --source ' + source)
+            ].filter(Boolean).join(' ');
+            panel('EffectAssist Catalog', [
+                { label: 'Before You Choose', value: 'Select every affected linked token. The next prompt asks who created the effect.' },
+                { label: 'Choose An Effect', value: catalogButtons() },
+                { label: 'Custom', value: customButtons },
+                { label: 'Learn Before Applying', value: `${GameAssist.createButton('Catalog Details', '!Effect-Definitions')} ${GameAssist.createButton('Back', '!Effect-GM')}` }
             ]);
         }
 
         function showDefinitions() {
-            const definitions = getDefinitions();
-            const rows = definitions.slice(0, POLICY.effects.chatListLimit)
-                .map(definition => `<b>${_sanitize(definition.name)}</b>: ${_sanitize(definition.projection.kind)}`
-                    + (definition.projection.value ? ` (${_sanitize(definition.projection.value)})` : '')
-                    + ` | dependency: ${_sanitize(definition.dependency)}`)
+            const rows = getDefinitions().slice(0, POLICY.effects.chatListLimit)
+                .map(definition => `<b>${_sanitize(definition.name)}</b> | ${definition.concentration ? 'Concentration' : 'No concentration'} | ${_sanitize(definition.duration)}`)
                 .join('<br>') || 'No definitions.';
-            panel('EffectAssist Definitions', [
-                { label: 'Definitions', value: rows },
-                { label: 'Limit', value: `${getCustomDefinitions().length}/${POLICY.effects.definitionLimit} custom definitions used.` },
-                { label: 'Return', value: GameAssist.createButton('Open GM Screen', '!Effect-GM') }
+            panel('Effect Catalog Details', [
+                { label: 'Catalog', value: rows },
+                { label: 'How To Read It', value: 'Open the manual for each effect’s automatic, assisted, and informational behavior.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Apply An Effect', '!Effect-Catalog')} ${GameAssist.createButton('Open Manual', '!Effect-Manual')} ${GameAssist.createButton('Back', '!Effect-GM')}` }
             ]);
         }
 
@@ -15400,52 +16268,62 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function showStatus() {
             const audit = auditEffects();
             panel('EffectAssist Status', [
-                { label: 'Module', value: `${MODULE_VERSION} | enabled and responding | state schema ${STATE_SCHEMA_VERSION}` },
+                { label: 'Module', value: `${MODULE_VERSION} | 2014 sheet adapter | state schema ${STATE_SCHEMA_VERSION}` },
                 { label: 'Records', value: `${audit.active} active | ${audit.ended} ended | ${audit.definitions} definitions` },
-                { label: 'Projection Health', value: audit.ok ? 'No mismatches found.' : `${audit.mismatches.length} item(s) need review.` },
+                { label: 'Health', value: audit.ok ? 'No mismatches found.' : `${audit.mismatches.length} item(s) need review.` },
                 { label: 'Active Effects', value: activeSummary() },
                 { label: 'Recent Ended Effects', value: endedSummary() },
-                { label: 'Actions', value: `${GameAssist.createButton('Open GM Screen', '!Effect-GM')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Guide', '!Effect-Guide')}` }
+                { label: 'Actions', value: `${GameAssist.createButton('Control Center', '!Effect-GM')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Catalog', '!Effect-Catalog')}` }
             ]);
         }
 
         function showAudit(msg) {
             const audit = auditEffects();
             const details = audit.mismatches.slice(0, POLICY.effects.chatListLimit)
-                .map(item => `• ${_sanitize(item.message)}`)
-                .join('<br>');
+                .map(item => `• ${_sanitize(item.message)}`).join('<br>');
             const fields = [
-                { label: 'Summary', value: `${audit.active} active effects | ${audit.mismatches.length} mismatch(es)` },
+                { label: 'Summary', value: `${audit.active} active effects | ${audit.mismatches.length} item(s) need attention` },
                 { label: 'Changes', value: 'None. This audit is read-only.' },
-                { label: 'Details', value: details || 'No semantic/projection mismatches found.' }
+                { label: 'Details', value: details || 'Effect records, concentration, markers, and supported 2014 sheet modifiers agree.' }
             ];
-            if (audit.mismatches.some(item => ['missing-marker', 'untracked-projection', 'orphan-marker'].includes(item.type))) {
+            const repairable = audit.mismatches.some(item =>
+                ['missing-projection', 'untracked-projection', 'orphan-projection', 'concentration-lost', 'cleanup-pending'].includes(item.type)
+            );
+            if (repairable) {
                 const grant = createRepairGrant(audit, msg?.playerid);
-                fields.push({
-                    label: 'Repair',
-                    value: `${GameAssist.createButton('Confirm Current Repairs', '!Effect-Repair --grant ' + grant + ' --confirm')}`
-                });
+                fields.push({ label: 'Repair', value: GameAssist.createButton('Confirm Current Repairs', '!Effect-Repair --grant ' + grant + ' --confirm') });
             }
-            fields.push({ label: 'Return', value: GameAssist.createButton('Open GM Screen', '!Effect-GM') });
+            fields.push({ label: 'Return', value: GameAssist.createButton('Control Center', '!Effect-GM') });
             panel('EffectAssist Audit', fields);
         }
 
         function manualHtml() {
+            const catalog = getDefinitions().map(definition => [
+                `<h3>${_sanitize(definition.name)}</h3>`,
+                `<p>${_sanitize(definition.description)}</p>`,
+                `<ul><li><strong>Concentration:</strong> ${definition.concentration ? 'Yes' : 'No'}</li>`,
+                `<li><strong>Duration:</strong> ${_sanitize(definition.duration)}</li>`,
+                `<li><strong>Targets:</strong> ${_sanitize(definition.targets)}</li></ul>`,
+                `<p><strong>GameAssist will handle</strong><br>${listText(definition.automatic)}</p>`,
+                `<p><strong>The GM still handles</strong><br>${listText(definition.assisted)}</p>`,
+                definition.informational.length ? `<p><strong>Why some parts stay manual</strong><br>${listText(definition.informational)}</p>` : ''
+            ].join('')).join('');
             return [
                 '<h1>EffectAssist User Manual</h1>',
                 `<p><strong>GameAssist v${_sanitize(VERSION)} | EffectAssist ${MODULE_VERSION}</strong></p>`,
-                '<h2>Purpose</h2>',
-                '<p>EffectAssist keeps a semantic record of each effect source and target. Markers and conditions are visible projections, not the database.</p>',
+                '<p>EffectAssist applies and tracks spells, features, and custom effects. Each active record remembers its source, targets, concentration, markers, supported D&amp;D 5E by Roll20 (2014) sheet modifiers, and cleanup responsibilities.</p>',
                 '<h2>Quick Start</h2>',
-                '<ol><li>Enable EffectAssist.</li><li>Select the target tokens.</li><li>Run <code>!Effect-GM</code>.</li><li>Choose the source and apply Bless or a generic effect.</li><li>Use Status or Audit to review it.</li><li>End the specific source instance when the effect ends.</li></ol>',
+                '<ol><li>Select every affected linked token.</li><li>Run <code>!Effect-GM</code> and open the Effect Catalog.</li><li>Choose the effect and source.</li><li>Review exactly what GameAssist will change.</li><li>Confirm.</li><li>Use Active Effects to end a specific source or Audit when something looks wrong.</li></ol>',
+                '<h2>Concentration</h2>',
+                '<p>ConcentrationAssist owns concentration checks and the Concentrating marker. EffectAssist connects dependent effects to that source. A failed check, deliberate concentration clear, or manual removal of the source marker ends the dependent effect and removes its owned target projections.</p>',
                 '<h2>Overlapping Sources</h2>',
-                '<p>Separate sources remain separate records. A shared non-stacking marker remains while any valid source is active.</p>',
+                '<p>Separate sources remain separate records. A non-stacking marker or modifier remains while any valid source still owns it.</p>',
                 '<h2>Audit And Repair</h2>',
-                '<p>Audit never changes tokens. Repair requires the confirmation button from a current audit and rechecks the state before changing markers.</p>',
+                '<p>Audit never changes anything. Repair requires a current confirmation, rechecks the state, preserves edited or ambiguous values, and reports anything that still needs attention.</p>',
+                '<h2>Effect Catalog</h2>',
+                catalog,
                 '<h2>Commands</h2>',
-                '<p><code>!Effect-GM</code>, <code>!Effect-Guide</code>, <code>!Effect-Status</code>, <code>!Effect-Audit</code>, <code>!Effect-Definitions</code>, <code>!Effect-Manual</code>, <code>!Effect-End --id ID</code>.</p>',
-                '<h2>Current Capabilities</h2>',
-                '<p>This release records effects and manages their marker or condition projections. Character-sheet bonuses, automatic cast recognition, HP-loss prompts, and duration expiration are planned separately.</p>'
+                '<p><code>!Effect-GM</code>, <code>!Effect-DM</code>, <code>!Effect-Catalog</code>, <code>!Effect-Active</code>, <code>!Effect-Status</code>, <code>!Effect-Audit</code>, <code>!Effect-Guide</code>, <code>!Effect-Manual</code>, and generated Apply, Confirm, End, and Repair buttons.</p>'
             ].join('');
         }
 
@@ -15454,7 +16332,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             panel('EffectAssist Manual', [
                 { label: 'Result', value: result.ok ? 'The manual was created or updated.' : _sanitize(result.message) },
                 ...(result.ok ? [{ label: 'Handout', value: result.link }] : []),
-                { label: 'Actions', value: `${GameAssist.createButton('Open GM Screen', '!Effect-GM')} ${GameAssist.createButton('Abbreviated Guide', '!Effect-Guide')}` }
+                { label: 'Actions', value: `${GameAssist.createButton('Control Center', '!Effect-GM')} ${GameAssist.createButton('Short Guide', '!Effect-Guide')}` }
             ]);
         }
 
@@ -15467,7 +16345,6 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ]);
                 return;
             }
-            const sourceTokenId = String(options.source || '');
             const request = {
                 definitionId: options.effect ? normalizeDefinitionId(options.effect) : null,
                 name: options.name,
@@ -15475,42 +16352,75 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 condition: options.condition,
                 none: options.none,
                 dependency: options.dependency,
-                dependencyNote: options.note,
+                description: options.description,
                 duration: options.duration,
-                sourceTokenId,
+                replaceConcentration: options.replace,
+                sourceTokenId: String(options.source || ''),
                 targetTokenIds: selected.targets.map(target => target.summary.tokenId),
                 createdBy: msg.playerid,
                 requestId: options.request
             };
-            const result = applyEffectRequest(request);
-            panel(result.ok ? 'Effect Applied' : 'EffectAssist', [
+            const plan = buildPlan(request);
+            if (!plan.ok) {
+                panel('EffectAssist', [
+                    { label: 'Needs Attention', value: _sanitize(plan.message || plan.code) },
+                    { label: 'Next Step', value: `${GameAssist.createButton('Open Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Active Effects', '!Effect-Active')}` }
+                ]);
+                return;
+            }
+            if (plan.duplicate) {
+                panel('Effect Already Applied', [
+                    { label: 'Result', value: _sanitize(plan.message) },
+                    { label: 'Actions', value: `${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+                ]);
+                return;
+            }
+            const grant = createApplyGrant(plan, msg.playerid);
+            panel('Review Effect Application', [
+                { label: 'Effect', value: _sanitize(plan.definition.name) },
+                { label: 'Source', value: _sanitize(plan.source.summary.characterName) },
+                { label: 'Targets', value: plan.targets.map(target => _sanitize(target.summary.tokenName)).join(', ') },
+                { label: 'GameAssist Will Do', value: previewPlan(plan).map(item => `• ${_sanitize(item)}`).join('<br>') || 'Record the effect.' },
+                { label: 'GM Still Handles', value: listText(plan.assistance) },
+                { label: 'Confirm', value: `${GameAssist.createButton('Apply This Effect', '!Effect-Confirm --grant ' + grant)} ${GameAssist.createButton('Cancel', '!Effect-Catalog')}` }
+            ]);
+        }
+
+        function handleConfirm(msg, options) {
+            const plan = verifyApplyGrant(options.grant, msg.playerid);
+            if (!plan.ok) {
+                panel('EffectAssist', [
+                    { label: 'Needs Attention', value: _sanitize(plan.message || plan.code) },
+                    { label: 'Next Step', value: GameAssist.createButton('Open Catalog', '!Effect-Catalog') }
+                ]);
+                return;
+            }
+            const result = applyPlan(plan);
+            panel(result.ok ? 'Effect Applied' : 'EffectAssist Needs Attention', [
                 { label: result.ok ? 'Result' : 'Needs Attention', value: _sanitize(result.message || result.code) },
-                ...(result.ok ? [{ label: 'Instance', value: `${_sanitize(result.instance.id)} | ${_sanitize(result.instance.name)}` }] : []),
-                { label: 'Actions', value: `${GameAssist.createButton('Open GM Screen', '!Effect-GM')} ${GameAssist.createButton('Status', '!Effect-Status')}` }
+                ...(result.instance ? [{ label: 'Effect', value: `${_sanitize(result.instance.name)} | ${_sanitize(result.instance.id)}` }] : []),
+                ...(result.warnings?.length ? [{ label: 'GM Still Handles', value: listText(result.warnings) }] : []),
+                ...(result.rollbackFailures?.length ? [{ label: 'Rollback Attention', value: listText(result.rollbackFailures) }] : []),
+                { label: 'Actions', value: `${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
             ]);
         }
 
         function handleEnd(msg, options) {
             const result = endEffect(options.id, msg.playerid);
-            panel(result.ok ? 'Effect Ended' : 'EffectAssist', [
+            panel(result.ok ? 'Effect Ended' : 'Effect Cleanup Needs Attention', [
                 { label: result.ok ? 'Result' : 'Needs Attention', value: _sanitize(result.message) },
-                ...(result.failures?.length ? [{ label: 'Cleanup', value: result.failures.map(_sanitize).join('<br>') }] : []),
-                { label: 'Actions', value: `${GameAssist.createButton('Open GM Screen', '!Effect-GM')} ${GameAssist.createButton('Audit', '!Effect-Audit')}` }
+                ...(result.failures?.length ? [{ label: 'Cleanup', value: listText(result.failures) }] : []),
+                { label: 'Actions', value: `${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
             ]);
         }
 
         function handleRepair(msg, options) {
-            if (!options.confirm || !options.grant) {
-                showAudit(msg);
-                return;
-            }
+            if (!options.confirm || !options.grant) return showAudit(msg);
             const result = repairEffects(options.grant, msg.playerid);
             panel(result.ok ? 'Effect Repair Complete' : 'Effect Repair Needs Attention', [
-                { label: 'Result', value: result.ok
-                    ? `${result.repaired} projection(s) repaired.`
-                    : _sanitize(result.message || 'Some projections could not be repaired.') },
-                ...(result.failed?.length ? [{ label: 'Failures', value: result.failed.map(item => _sanitize(item.message || item.item?.message)).join('<br>') }] : []),
-                { label: 'Actions', value: `${GameAssist.createButton('Run Audit', '!Effect-Audit')} ${GameAssist.createButton('Open GM Screen', '!Effect-GM')}` }
+                { label: 'Result', value: result.ok ? `${result.repaired} item(s) repaired.` : 'Some items could not be repaired safely.' },
+                ...(result.failed?.length ? [{ label: 'Needs Attention', value: listText(result.failed.map(entry => entry.message || entry.item?.message)) }] : []),
+                { label: 'Actions', value: `${GameAssist.createButton('Run Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
             ]);
         }
 
@@ -15520,16 +16430,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (['gm', 'dm', 'menu'].includes(action)) return showControl();
             if (['guide', 'help'].includes(action)) return showGuide();
             if (['info', 'about'].includes(action)) return showInfo();
-            if (['status', 'list', 'refresh'].includes(action)) return showStatus();
-            if (action === 'definitions') return showDefinitions();
+            if (['status', 'list', 'refresh', 'active'].includes(action)) return showStatus();
+            if (['definitions', 'catalog'].includes(action)) return action === 'catalog' ? showCatalog() : showDefinitions();
             if (action === 'audit') return showAudit(msg);
             if (action === 'manual') return showManual();
             if (action === 'apply') return handleApply(msg, options);
+            if (action === 'confirm') return handleConfirm(msg, options);
             if (action === 'end') return handleEnd(msg, options);
             if (action === 'repair') return handleRepair(msg, options);
             panel('EffectAssist', [
                 { label: 'Needs Attention', value: 'That EffectAssist command was not recognized.' },
-                { label: 'Next Step', value: `${GameAssist.createButton('Open GM Screen', '!Effect-GM')} ${GameAssist.createButton('Open Guide', '!Effect-Guide')}` }
+                { label: 'Next Step', value: `${GameAssist.createButton('Control Center', '!Effect-GM')} ${GameAssist.createButton('Open Guide', '!Effect-Guide')}` }
             ]);
         }
 
@@ -15543,36 +16454,66 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             match: { caseInsensitive: true, mode: 'prefix' }
         });
 
+        ensureMarkerObservation();
+        const concentrationObservation = GameAssist.SemanticEvents.observe(observeConcentration, {
+            owner: MODULE_NAME,
+            types: ['concentration.ended', 'concentration.failed']
+        });
+        if (!concentrationObservation.ok) throw new Error(concentrationObservation.message || 'EffectAssist could not observe concentration events.');
+
+        rebuildDependencyIndex();
+        reconcileMissedConcentrationLoss();
+        warnAboutPreservedState();
+
+        function registerLifecycleObserver(callback, { owner = 'EffectAssistConsumer' } = {}) {
+            return GameAssist.SemanticEvents.observe(callback, { owner, types: ['effect.lifecycle.changed'] });
+        }
+
         GameAssist.EffectAssist = Object.freeze({
             version: MODULE_VERSION,
             stateSchemaVersion: STATE_SCHEMA_VERSION,
             getDefinitions: () => clone(getDefinitions()),
             getActiveInstances: () => clone(activeInstances()),
             getHistory: () => clone(runtime.history),
+            preview: request => {
+                const plan = buildPlan(request || {});
+                return plan.ok ? { ok: true, definition: clone(plan.definition), source: clone(plan.source.summary), targets: clone(plan.targets.map(item => item.summary)), changes: previewPlan(plan), assistance: clone(plan.assistance) } : plan;
+            },
             apply: request => applyEffectRequest(request || {}),
             end: (instanceId, actor) => endEffect(instanceId, actor),
             audit: () => clone(auditEffects()),
             isAvailable: () => modState.config.enabled !== false,
             observe: registerLifecycleObserver,
-            clearObservers: clearLifecycleObservers,
+            clearObservers: owner => GameAssist.SemanticEvents.clearObservers(owner),
             registerProjectionAdapter
         });
 
-        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: !Effect-GM opens the controls; EffectAssist starts disabled by default.`, 'INFO', { startup: true });
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: catalog-driven 2014 effects are available through !Effect-GM; the module starts disabled.`, 'INFO', { startup: true });
     }, {
         enabled: false,
         prefixes: ['!Effect-', '!effect', '!EffectAssist-'],
         preserveRuntimeOnDisable: true,
-        protectedConfigKeys: ['customDefinitions']
+        protectedConfigKeys: ['customDefinitions', 'markerOverrides'],
+        teardown: () => {
+            GameAssist.MarkerService.clearObservers('EffectAssist');
+            GameAssist.SemanticEvents.clearObservers('EffectAssist');
+        }
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Added disabled-by-default semantic effect instances, Bless and generic manual definitions, source-aware non-stacking marker/condition projection, bounded ended history, idempotent request support, read-only audit, fresh-confirmation repair, CORE:SEMANTICEVENTS lifecycle publication, projection-adapter registration, and disabled-state mutation refusal.
+    // Changed (v2.0.0): Replaced the single-projection prototype with a catalog-driven schema-v2 engine, nine built-in effects, ownership-safe 2014 repeating modifier adapters and shared master-flag restoration, concentration-linked lifecycle cleanup, apply preview/confirmation, custom condition guidance, durable incomplete-cleanup state, generalized audit/repair, and conflict-aware idempotency.
     // Decision log:
-    //   CHOICE: Keep semantic instances authoritative - ALT: infer effects from markers; REJECTED: markers cannot identify source, dependency, overlap, or ownership.
-    //   CHOICE: Track a shared projection ledger with baseline and managed state - ALT: remove a marker whenever one instance ends; REJECTED: that would erase overlapping sources or pre-existing campaign markers.
-    //   CHOICE: Keep EffectAssist useful without hard module dependencies - ALT: disable it with MarkerService or ConditionAssist; REJECTED: semantic records and non-projection effects remain valid while optional projections are unavailable.
-    //   CHOICE: Require audit preview plus a short-lived confirmation grant - ALT: repair directly from audit; REJECTED: current token state may encode intentional GM housekeeping.
-    //   CHOICE: Expose observer and projection-adapter contracts now - ALT: add parallel engines in later phases; REJECTED: later sheet, cast, concentration, HP, and timing capabilities must extend the same state model.
+    //   CHOICE: Treat Bless as the complete acceptance example rather than the module boundary - ALT: ship a Bless-only marker ledger; REJECTED: EffectAssist must coordinate many effects and many projection kinds.
+    //   CHOICE: Automate only verified 2014 sheet fields - ALT: write generated totals, free-text speed, global damage, or ambiguous 2024 fields; REJECTED: those writes could change unrelated rolls or campaign-owned text.
+    //   CHOICE: Keep unsupported mechanics as explicit assisted steps - ALT: omit those effects from the catalog; REJECTED: the GM still benefits from source, target, concentration, marker, and lifecycle tracking.
+    //   CHOICE: Preserve edited and pre-existing projections - ALT: force the definition back onto the sheet; REJECTED: external edits may be deliberate and must remain visible for review.
+    //   CHOICE: Share and restore 2014 global-modifier flags independently from their rows - ALT: leave every enabled flag behind; REJECTED: cleanup should restore the prior sheet setting without disabling another active row.
+    //   CHOICE: Normalize marker and ConditionAssist bindings to the same stored marker identity - ALT: keep adapter-specific ledgers; REJECTED: two adapters may legitimately share one physical marker.
+    //   CHOICE: Let record-only effects remain available without MarkerService - ALT: make EffectAssist a hard marker dependency; REJECTED: the semantic record is useful even when marker automation is deliberately disabled.
+    //   CHOICE: Retain needs-attention instances until cleanup succeeds - ALT: archive them immediately; REJECTED: history must not falsely report incomplete cleanup as complete.
+    //   CHOICE: Observe both ConcentrationAssist events and source-marker removal - ALT: trust only one signal; REJECTED: a GM may deliberately remove the marker outside the concentration command.
+    //   CHOICE: Suppress both lifecycle signals during EffectAssist-owned concentration cleanup - ALT: suppress only the marker event; REJECTED: synchronous semantic delivery could archive the same effect twice.
+    // Prior notes:
+    //   v2.0.0 prototype: Introduced source-aware effect records, baseline marker ownership, bounded history, SemanticEvents lifecycle publication, and confirmed repair grants.
     // [GAMEASSIST:MODULES:EFFECTASSIST] END
     // =============================================================================
 
