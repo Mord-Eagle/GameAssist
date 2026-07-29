@@ -71,6 +71,7 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | EffectAssist concentration observation | Sandbox verification | [#78](https://github.com/Mord-Eagle/GameAssist/issues/78) | ConcentrationAssist 0.3.0 owns concentration state and exposes lifecycle events used for dependent EffectAssist cleanup. |
 | EffectAssist HP-loss offers | Planned | [#79](https://github.com/Mord-Eagle/GameAssist/issues/79) | Add provenance-aware HP events before offering concentration or effect actions. |
 | EffectAssist duration candidates | Planned | [#80](https://github.com/Mord-Eagle/GameAssist/issues/80) | Add encounter and world-time candidates while keeping expiration manual until live boundaries are proven. |
+| EffectAssist catalog expansion | Deferred | [#82](https://github.com/Mord-Eagle/GameAssist/issues/82) | Investigate ownership-safe weapon, Stealth, initiative, movement-speed, and healing adapters after the focused v2.0.0 release and planned AlmanacAssist work. |
 | AlmanacAssist master program | Deferred | [#62](https://github.com/Mord-Eagle/GameAssist/issues/62) | v2.y tracks six implementation issues in order: Time, Climate, Astronomy, Weather, Environment, and Rest. |
 | TokenAssist and CombatAssist backlog | Deferred | [open issues](https://github.com/Mord-Eagle/GameAssist/issues) | v2.z revisits older parity and integration work after the new module foundations are stable. |
 | GameAssist handout organization | Deferred | [#72](https://github.com/Mord-Eagle/GameAssist/issues/72) | Preserve stable handouts after manual Journal filing, add safe indexing, and defer true folder routing until Roll20 exposes a supported writable Journal-folder API. |
@@ -482,6 +483,7 @@ EffectAssist remains a gameplay module. MarkerService owns markers, ConditionAss
 - [x] Support MarkerService, ConditionAssist, concentration, 2014-sheet, and record-only projections.
 - [x] Add Bless, Guidance, Warding Bond, Holy Weapon, Haste, and Pass Without a Trace, separated by automation level.
 - [x] Remove Gift of Alacrity, Longstrider, and Beacon of Hope from the built-in launch catalog because their marker-only paths do not provide enough automation; retain generic tracking paths.
+- [x] Move ownership-safe weapon, Stealth, initiative, movement-speed, and healing adapter research to [Issue #82](https://github.com/Mord-Eagle/GameAssist/issues/82) so it does not block the focused release.
 - [x] Add player casting from controlled sources, direct spell shortcuts, and GM lockout.
 - [x] Show automatic, assisted, and informational behavior before application.
 - [x] Add bounded ended history and preserve runtime records across module disable/re-enable.
