@@ -16,7 +16,7 @@ calls GameAssist.enqueue(). This package ships with twelve configurable modules:
 - ConfigUI 0.2.2 - GM-only chat controls for toggling modules and common options.
 - CritAssist 0.2.5.1 - Detects natural-1 attacks and offers fumble/confirm menus.
 - ConditionAssist 1.0.3 - Provides condition wording, artwork, announcements, and marker controls.
-- TokenAssist 1.0.3 - Provides general token controls through !token-assist and !ta commands.
+- TokenAssist 1.0.4 - Provides general token controls through !token-assist and !ta commands.
 - InitiativeAssist 1.0.4 - Uses Roll20's native Turn Tracker for mixed-sheet initiative workflows and compact topic guidance.
 - CombatAssist 1.0.5 - Tracks encounters, native round counters, guarded turns, optional timers, private-safe pings, and recoverable tracker changes.
 - WelcomeAssist 0.1.4 - Optionally greets the table after a healthy GameAssist startup through short !Welcome commands.

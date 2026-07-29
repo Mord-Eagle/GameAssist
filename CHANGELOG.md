@@ -129,7 +129,7 @@ EffectAssist starts disabled so existing campaigns upgrade without receiving new
 - MECHSUITS validation finds 28 correctly nested and paired sections, complete metadata and footers, and an exact file-scoped canonical tree.
 - Eighteen deterministic EffectAssist checks pass for disabled defaults, lifecycle preservation, Bless application, request idempotency, overlapping ownership, baseline preservation, repeated end, invalid-selection atomicity, pending optional services, bounded history, audit, repair, and identity drift.
 - Nine SemanticEvents checks pass for filtered ordered delivery, observer isolation, deep immutability, envelope shape, cleanup, and invalid-type refusal.
-- `script.json` parses with the v2.0.0 command and description additions.\n- `GameAssist`, `GameAssist.js`, and `GameAssist-v2.0.0` are byte-identical with SHA-256 `F9B3628A7A62A00FD5BBB85C788C46E0A8D2019F2CB4A5BE33DA25BC1098F1CC`.
+- `script.json` parses with the v2.0.0 command and description additions.\n- `GameAssist`, `GameAssist.js`, and `GameAssist-v2.0.0` are byte-identical with SHA-256 `2D3A4FF4722C421F7960258F2B9BD50C3EBE994A63587AC5A8123E15396EF138`.
 - Final acceptance requires both the clean-install and v1.8.2 upgrade tracks in `Smoketest.md`, including one full EffectAssist lifecycle in the live Roll20 Mod sandbox.
 
 ### Deliberate exclusions
