@@ -16,4 +16,532 @@
     "0.1.1.1",
     "0.1.1.0"
   ],
-  "description": "**GameAssist is a modular D&D 5E automation suite for Roll20. Its critical-miss, condition, concentration, token, NPC, effect, reporting, configuration, and diagnostic tools support the 2014 sheet; InitiativeAssist adds mixed 2014 and 2024 initiative in Roll20's native Turn Tracker; CombatAssist provides deliberate encounter, turn, and round controls; and WelcomeAssist can open game night with a table greeting chosen by the GM.**\n\nGameAssist v2.0.0 includes twelve individually configurable modules supported by shared MarkerService, TurnTrackerService, and versioned semantic-event foundations. Guided menus and plain-language help make the common workflows approachable, while direct commands and deeper controls remain available when a campaign needs them. Every module treats its `GM` and `DM` commands as equal shortcuts to that module's primary private Game Master screen.\n\nCampaigns upgrading from v0.1.7.0 keep their established commands, valid settings, NPC history, Arc records, and guide handouts. The canonical module names are now **CritAssist**, **NPCAssist**, **ConcentrationAssist**, and **HPAssist**; legacy command forms remain available for existing macros.\n\n---\n\n## âš™ï¸ Requirements\n\n- **Roll20 access:** Mod scripts require a game created by a Roll20 Pro subscriber. Players in that game do not need their own Pro subscriptions.\n- **Character sheets:** EffectAssist and the established gameplay modules use D&D 5E by Roll20 (2014). InitiativeAssist supports both 2014 and D&D 2024 by Roll20 characters in the same encounter. Roll20's supported Experimental Mod API server may be needed for 2024 Beacon initiative data.\n- **Integrated services:** Remove standalone TokenMod and StatusInfo before normal v2.0.0 use. TokenAssist and ConditionAssist provide the supported integrated replacements, and MarkerService owns their shared marker behavior.\n- **NPC tokens:** NPCAssist and HPAssist use token bar 1 for HP. Tokens must be on the Objects layer, linked to a character with `npc=1`, and need `npc_hpformula` when GameAssist rolls their HP.\n- **CritAssist tables:** `CF-Melee`, `CF-Ranged`, `CF-Thrown`, `CF-Spell`, `CF-Natural`, `Confirm-Crit-Martial`, and `Confirm-Crit-Magic`\n\n> GameAssist does not invent your campaign's fumble results. Create and populate the seven rollable tables before using CritAssist table rolls.\n\n> TokenAssist uses `!token-assist` and `!ta`/`!ta-*` commands. Older supported `!token-mod` macros remain compatibility aliases in v2.0.0. Use `!token-assist` or `!ta` for new macros; any later removal will be announced through a separate migration release.\n\n---\n\n## ğŸš€ Quick Start\n\nGameAssist is controlled from Roll20 chat. Commands beginning with `!` are sent to Mods instead of appearing as ordinary chat messages; players do not install anything separately.\n\n1. From the game's **Settings**, open **Mod (API) Scripts** and add **GameAssist** from the One-Click library.\n2. Remove standalone TokenMod and StatusInfo so overlapping commands and marker listeners are not loaded twice.\n3. Create the seven CritAssist rollable tables if you plan to use CritAssist.\n4. Allow the Mod sandbox to restart, then type `!ga-status` in chat to check the installation.\n5. Run `!ga-timezone` and choose the city/region that governs the campaign clock.\n6. Open `!ga-config ui` and enable only the modules your campaign needs.\n7. When using native initiative tools, enable **InitiativeAssist**, open Roll20's Turn Tracker, and run `!Init-Help`.\n8. To track encounter turns and rounds, enable **CombatAssist**, establish initiative, then run `!Combat-Help` before starting the encounter.\n9. For an optional table greeting, enable **WelcomeAssist**, run `!Welcome`, preview the result, then reload the sandbox.\n10. To coordinate spell effects, enable **EffectAssist**, run `!effect`, and review the preview before confirming. GMs may preselect linked 2014-sheet recipients; players choose visible recipients through Roll20's map target prompt.\n\nUse `!Init-Help`, `!Combat-Help`, `!Welcome`, `!token-assist help`, `!condition help`, `!critfumble help`, `!concentration --help`, `!npc-death-report --help`, or `!Effect-Guide` whenever you want an in-game guide.\n\n## ğŸ§© Included Modules\n\n- **CritAssist** â€” Watches supported attack templates for natural 1s, offers the attacker clear choices, and rolls from your melee, ranged, thrown, spell, or natural-attack fumble tables. The GM can also open a player picker manually or roll martial and magic confirmation tables directly.\n- **ConditionAssist** â€” Uses 2014 SRD condition wording by default, offers optional 2024 SRD wording and campaign edits, and provides case-insensitive `!cond-<condition>` quick references, marker artwork, an accurate selected-token condition menu, a GM current-page condition/marker status roster, and verified marker-toggling announcements in public chat or player whispers. Valid legacy StatusInfo definitions can be copied without deleting the rollback state.\n- **TokenAssist** â€” Provides `!token-assist` and `!ta`/`!ta-*` token controls for selected or authorized tokens. It handles common visibility settings, names, tooltips, bars, auras, colors, layers, position, size, rotation, vision, lighting, links, controllers, relative values, movement, stacking order, reports, and built-in or custom status markers. Marker changes always pass through MarkerService.\n- **InitiativeAssist** â€” Works inside Roll20's native Turn Tracker with mixed 2014 and 2024 characters. Public initiative calls offer one-character, selected-character, and guided roll buttons while privately giving the GM object-layer and GM-layer NPC controls. `!Init-GM` and `!Init-DM` open the same neutral controls and complete roster only for the GM. NPC roll details are hidden by default, GM-layer rolls always stay private, and guided options combine d20 mode, a flat adjustment, and up to two bonus dice. `!Init-RR` whispers the GM a bounded result summary while preserving custom counters, objects, dead NPCs, mismatches, stale rows, and off-page entries.\n- **CombatAssist** â€” Adds an optional encounter layer to Roll20's native Turn Tracker without replacing it. A clearly named native Round Counter can provide the authoritative round and retain its simple `+1` calculation during CombatAssist movement. The GM starts, reviews, moves forward or backward, pauses when useful, and ends tracking through a case-insensitive `!Combat-` guide. Valid combatant additions, removals, rerolls, and manual reordering preserve the current round. Optional turn timers provide stale-safe reminders without auto-advancing, and native current-turn pings add an ephemeral visual cue without changing token properties or recentering anyone's map. Private turn prompts can give the current controlling player an End My Turn button followed by a privacy-safe confirmation.\n- **WelcomeAssist** â€” Starts disabled and optionally posts one delayed greeting after a healthy GameAssist startup. The GM can choose the professional greeting, the included built-in greeting library, up to ten campaign greetings, or a mixed pool that gives campaign lines double individual weight. Setup and previews stay private; automatic and explicit announcements are public.\n- **ConcentrationAssist** â€” Builds normal, advantage, or disadvantage Constitution saves from damage, remembers each player's latest check, manages a concentration marker through MarkerService, lists concentrating tokens on the Player Ribbon page, and provides the lifecycle contract used by concentration-dependent EffectAssist records.\n- **NPCAssist** â€” Marks defeated NPCs, records revivals, checks HP against death markers, previews separately confirmed marker repairs, and organizes encounter history into readable handouts using **Campaign > Chapter > Section > Session** scopes. Custom Arc rosters can follow NPCs connected to a character story, vow, rivalry, investigation, redemption, or any other campaign thread. Date-managed Sessions and readable history use the DM-selected table timezone. Optional automatic naming gives newly added linked NPC tokens unique page-local names without renaming existing tokens or characters. Optional Bloodied alerts privately notify the GM when an eligible living NPC crosses to half HP or below without adding a marker or history entry.\n- **EffectAssist** â€” Starts disabled and coordinates a focused six-effect catalog for the official 2014 sheet. Bless, Guidance, Warding Bond, and Haste apply supported marker and sheet automation; Holy Weapon and Pass Without a Trace are visibly labeled tracked effects whose rule mechanics remain manual. Players may cast built-ins from controlled sources, choose visible recipients they do not control through Roll20's map target prompt, or send the GM a compact placement request. Completed player-originated casts are announced publicly after verification; the GM can lock that path at any time. Overlap, pre-existing state, externally edited rows, audits, and repairs use ownership evidence rather than guesswork.\n- **HPAssist** â€” Rolls `npc_hpformula` for selected NPCs or qualifying NPCs on the page marked by Roll20's Player Ribbon. Optional automatic rolling handles newly added tokens while setup protection prevents placeholder HP from producing false death, revival, or Bloodied events.\n- **ConfigUI** â€” Provides a GM-only chat interface for enabling modules, changing common settings, reviewing configuration, and reading module summaries. Command-based configuration remains available for advanced users.\n- **DebugTools** â€” Provides optional GM-only damage, marker, and saving-throw diagnostics. DebugTools starts disabled, and every action remains a preview until the GM includes `--apply`.\n\n---\n\n## ğŸ² Example at the Table\n\nA linked NPC falls from positive HP to 0. NPCAssist records that death in the active Campaign, Chapter, Section, and Session scopes, then asks MarkerService to apply the configured death marker. If the NPC later rises above 0 HP, GameAssist records the revival and removes the marker through the same service.\n\nThe GM can review a recent summary, audit the current page, write polished records to campaign handouts, or collect selected NPCs into a custom Arc roster. When a token needs an adjustment outside those automated workflows, TokenAssist can change the selected token without introducing a second marker system.\n\nBefore a new encounter, the GM opens Roll20's Turn Tracker and uses `!Init-Go` to invite players to roll, or `!Init-GM` / `!Init-DM` to keep the opening controls private. Players can roll one controlled character, every selected character they control, or a guided combination of d20 mode, adjustment, and bonus dice. The GM receives private controls for object-layer and GM-layer NPCs; hidden NPC modifiers and bonus dice remain GM-only. After each page-owned row is saved and verified, the appropriate audience sees the readable result. Later, `!Init-RR` can refresh every PC and living NPC without moving a round counter, object, dead creature, or attention row.\n\nWhen the cleric blesses several allies, the GM may preselect the targets, while the controlling player can choose visible recipients through Roll20's map target prompt without needing control of their tokens. The caster then chooses Bless from `!effect`. After confirmation, the targets receive their Blessed markers and `Bless (GameAssist)` `1d4` attack/save rows while the cleric begins concentrating. A second Bless source shares those non-stacking projections without taking over the first. Ending concentration removes only the final unneeded EffectAssist-owned state; matching markers or modifier rows that existed first remain.\n\nWhen everyone is ready, the GM starts CombatAssist. A single custom row named Round, Rounds, Round Count, Round Counter, Round Number, Round Tracker, Combat Round, or Current Round becomes the round authority; when CombatAssist moves that row to the top, a simple signed whole-number calculation such as `+1` is honored. Without one, a full uninterrupted forward cycle advances CombatAssist's internal round and a backward step never does. Optional timers can remind the GM, current player, both, or public chat without advancing initiative, while native pings can briefly identify the current token without changing it. The GM can also recover the last readable tracker, pause for several quiet edits, or use `!Combat-Next` and `!Combat-Prev` for guarded one-step movement.\n\n## ğŸ’¬ Main Commands\n\n### System and Configuration\n\n- `!ga-status` â€” Show overall health, module state, errors, and dependency information\n- `!ga-status --details` â€” Add activity, listener, timing, marker-service, and overlap diagnostics\n- `!ga-config ui` or `!ga-config-ui` â€” Open the GM configuration panel\n- `!ConfigUI-GM` or `!ConfigUI-DM` â€” Open ConfigUI's private Game Master screen\n- `!ga-config modules` â€” List feature modules, core services, and their current status\n- `!ga-config list` â€” Write a versioned configuration-only snapshot handout\n- `!ga-config get <ModuleOrService> [key]` / `!ga-config set <ModuleOrService> <key>=<value>` â€” Review or change component configuration\n- `!ga-enable <ModuleOrService>` / `!ga-disable <ModuleOrService>` â€” Enable or disable a feature module or core service\n- `!ga-metrics` â€” Show GameAssist runtime metrics\n\n### Critical Misses\n\n- `!critfumble help` â€” Open the CritAssist quick-reference guide\n- `!critfumble menu` â€” Open the guided Natural 1 menu\n- `!CritAssist-GM` or `!CritAssist-DM` â€” Open CritAssist's private Game Master player picker\n- `!critfail` â€” Open the direct manual player picker\n- `!critfumble-<melee|ranged|thrown|spell|natural>` â€” Roll the selected fumble table\n- `!confirm-crit-martial` / `!confirm-crit-magic` â€” Roll confirmation tables\n\n### Conditions\n\n- `!condition` â€” Open the selected-token condition menu\n- `!Condition-GM` or `!Condition-DM` â€” Open ConditionAssist's private selected-token Game Master screen\n- `!condition help` â€” Open the quick-start guide\n- `!condition status` â€” List current-page characters and NPCs with configured conditions or other active markers\n- `!condition <name>` or `!cond-<condition>` â€” Show one configured condition description\n- `!condition add|remove|toggle <condition...>` â€” Change condition markers on selected tokens when permitted\n- `!condition announce`, `!c-a`, or `!cond-!` â€” Toggle a condition marker, then report who is or is no longer affected\n- `!condition config` â€” Choose 2014 SRD, 2024 SRD, or campaign-custom wording and open definitions or validateëø¶‰Ëkºwµç@€‰É…Á¡¥Œ¹‘¥Í…‰±•Q½­•¹5•¹Ôˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹±½­5½Ù•µ•¹Ğˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹™…‘•=¹=Ù•É±…Àˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹™…‘•=Á…¥Ñäˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹‰…Í•=Á…¥Ñäˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹É•¹‘•ÉÍM•¹•Éäˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹ÕÉÉ•¹ÑM¥‘”ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹±¥¡Ñ}É…‘¥ÕÌˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹±¥¡Ñ}‘¥µÉ…‘¥ÕÌˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹±¥¡Ñ}½Ñ¡•ÉÁ±…å•ÉÌˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹±¥¡Ñ}¡…ÍÍ¥¡Ğˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹±¥¡Ñ}…¹±”ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹±¥¡Ñ}±½Í…¹±”ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹±¥¡Ñ}µÕ±Ñ¥Á±¥•Èˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹…‘Ù}™½İ}Ù¥•İ}‘¥ÍÑ…¹”ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹¡…Í}‰É¥¡Ñ}±¥¡Ñ}Ù¥Í¥½¸ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹¡…Í}¹¥¡Ñ}Ù¥Í¥½¸ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹¡…Í}±¥µ¥Ñ}™¥•±‘}½™}Ù¥Í¥½¸ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹¡…Í}±¥µ¥Ñ}™¥•±‘}½™}¹¥¡Ñ}Ù¥Í¥½¸ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹¡…Í}‘¥É•Ñ¥½¹…±}‰É¥¡Ñ}±¥¡Ğˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹¡…Í}‘¥É•Ñ¥½¹…±}‘¥µ}±¥¡Ğˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹¹¥¡Ñ}Ù¥Í¥½¹}‘¥ÍÑ…¹”ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹¹¥¡Ñ}Ù¥Í¥½¹}Ñ¥¹Ğˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹¹¥¡Ñ}Ù¥Í¥½¹}•™™•Ğˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹•µ¥ÑÍ}‰É¥¡Ñ}±¥¡Ğˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹•µ¥ÑÍ}±½İ}±¥¡Ğˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹‰É¥¡Ñ}±¥¡Ñ}‘¥ÍÑ…¹”ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹±½İ}±¥¡Ñ}‘¥ÍÑ…¹”ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹±¥¡Ñ½±½Èˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹‘¥µ}±¥¡Ñ}½Á…¥Ñäˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹±¥¡Ñ}Í•¹Í¥Ñ¥Ù¥Ñå}µÕ±Ñ¥Á±¥•Èˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹±¥µ¥Ñ}™¥•±‘}½™}Ù¥Í¥½¹}•¹Ñ•Èˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹±¥µ¥Ñ}™¥•±‘}½™}¹¥¡Ñ}Ù¥Í¥½¹}•¹Ñ•Èˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹‘¥É•Ñ¥½¹…±}‰É¥¡Ñ}±¥¡Ñ}•¹Ñ•Èˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹‘¥É•Ñ¥½¹…±}‘¥µ}±¥¡Ñ}•¹Ñ•Èˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹±¥µ¥Ñ}™¥•±‘}½™}Ù¥Í¥½¹}Ñ½Ñ…°ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹±¥µ¥Ñ}™¥•±‘}½™}¹¥¡Ñ}Ù¥Í¥½¹}Ñ½Ñ…°ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹‘¥É•Ñ¥½¹…±}‰É¥¡Ñ}±¥¡Ñ}Ñ½Ñ…°ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹‘¥É•Ñ¥½¹…±}‘¥µ}±¥¡Ñ}Ñ½Ñ…°ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹‰…É}±½…Ñ¥½¸ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹½µÁ…Ñ}‰…Èˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹‰…ÈÅ}¹Õµ}Á•Éµ¥ÍÍ¥½¸ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹‰…ÈÉ}¹Õµ}Á•Éµ¥ÍÍ¥½¸ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹‰…ÈÍ}¹Õµ}Á•Éµ¥ÍÍ¥½¸ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰É…Á¡¥Œ¹‰…ÈÑ}¹Õµ}Á•Éµ¥ÍÍ¥½¸ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰¡…É…Ñ•È¹¹…µ”ˆè€‰É•…ˆ°(€€€€‰¡…É…Ñ•È¹¡…É…Ñ•ÉÍ¡••Ñ¹…µ”ˆè€‰É•…ˆ°(€€€€‰¡…É…Ñ•È¹½¹ÑÉ½±±•‘‰äˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰…ÑÑÉ¥‰ÕÑ”¹}¡…É…Ñ•É¥ˆè€‰É•…ˆ°(€€€€‰…ÑÑÉ¥‰ÕÑ”¹¹…µ”ˆè€‰É•…ˆ°(€€€€‰…ÑÑÉ¥‰ÕÑ”¹ÕÉÉ•¹Ğˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰…ÑÑÉ¥‰ÕÑ”¹µ…àˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰¡…¹‘½ÕĞ¹¹…µ”ˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰¡…¹‘½ÕĞ¹…É¡¥Ù•ˆè€‰İÉ¥Ñ”ˆ°(€€€€‰¡…¹‘½ÕĞ¹¹½Ñ•Ìˆè€‰İÉ¥Ñ”ˆ°(€€€€‰Á±…å•È¹‘¥ÍÁ±…å¹…µ”ˆè€‰É•…ˆ°(€€€€‰Á±…å•È¹}‘¥ÍÁ±…å¹…µ”ˆè€‰É•…ˆ°(€€€€‰Á±…å•È¹}±…ÍÑÁ…”ˆè€‰É•…ˆ°(€€€€‰Á±…å•È¹}½¹±¥¹”ˆè€‰É•…ˆ°(€€€€‰ÍÑ…Ñ”¹…µ•ÍÍ¥ÍĞˆè€‰É•…±İÉ¥Ñ”ˆ°(€€€€‰ÍÑ…Ñ”¹MQQUM%9<ˆè€‰É•…ˆ°(€€€€‰ÍÑ…Ñ”¹Q½­•¹5½ˆè€‰É•…ˆ(€ô°(€€‰½¹™±¥ÑÌˆèl(€€€€‰Q½­•¹5½ˆ°(€€€€‰MÑ…ÑÕÍ%¹™¼ˆ°(€€€€‰½¹•¹ÑÉ…Ñ¥½¸ˆ°(€€€€‰•…Ñ¡QÉ…­•Èˆ°(€€€€‰5½¹ÍÑ•É!¥Ñ¥”ˆ°(€€€€ˆÕÑ ‘¥Ñ¥½¸=0‰äI½±°ÈÀ½µÁ…¹¥½¸ˆ°(€€€€‰=Ñ¡•ÈÍÉ¥ÁÑÌÑ¡…Ğµ½‘¥™ä9A!@½ÈÕÍ”‰…ÈÅ}Ù…±Õ”ˆ°(€€€€‰=Ñ¡•ÈÍÉ¥ÁÑÌÑ¡…Ğ…ÕÑ½µ…Ñ¥…±±ä…‘½ÈÉ•µ½Ù”Ñ¡”Í…µ”‘•…Ñ °½¹•¹ÑÉ…Ñ¥½¸°½¹‘¥Ñ¥½¸°½È™™•ÑÍÍ¥ÍĞÁÉ½©•Ñ¥½¸µ…É­•ÉÌˆ°(€€€€‰=Ñ¡•ÈÍÉ¥ÁÑÌÑ¡…ĞÉ•…Ñ”°•‘¥Ğ°½ÈÉ•µ½Ù”±½‰…°…ÑÑ…¬°Í…Ù¥¹œµÑ¡É½Ü°½Èµ½‘¥™¥•ÈÉ½İÌ½¸Ñ¡”™€Õ‰äI½±°ÈÀ€ÈÀÄĞÍ¡••Ğˆ°(€€€€‰=Ñ¡•ÈÍÉ¥ÁÑÌÑ¡…Ğ…ÕÑ½µ…Ñ¥…±±äÁÉ½•ÍÌ¹…ÑÕÉ…°€Ä…ÑÑ…¬É½±±Ì½È½Á•¸É¥Ñ¥…°µ™Õµ‰±”µ•¹ÕÌˆ°(€€€€‰=Ñ¡•ÈÍÉ¥ÁÑÌÑ¡…ĞÉ•É½±°¥¹¥Ñ¥…Ñ¥Ù”°…‘Ù…¹”ÑÕÉ¹Ì°½Õ¹ĞÉ½Õ¹‘Ì°¥¹Í•ÉĞÉ½Õ¹½Õ¹Ñ•ÉÌ°½ÈÉ•İÉ¥Ñ”I½±°ÈÀÌQÕÉ¸QÉ…­•Èˆ°(€€€€‰=Ñ¡•ÈÍÉ¥ÁÑÌÑ¡…Ğ…ÕÑ½µ…Ñ¥…±±äÁ½ÍĞ…µÁ…¥¸µÉ•…‘ä½ÈÍÑ…ÉÑÕÀÉ••Ñ¥¹œµ•ÍÍ…•Ìˆ(€t°(€€‰½µµ…¹‘Ìˆèl(€€€€ˆ…„µÍÑ…ÑÕÌˆ°(€€€€ˆ…„µÍÑ…ÑÕÌ€´µ‘•Ñ…¥±Ìˆ°(€€€€ˆ…„µÑ¥µ•é½¹”ˆ°(€€€€ˆ…„µÑ¥µ•é½¹”Í•Ğ€ñ%9Ñ¥µ•é½¹”øˆ°(€€€€ˆ…„µÑ¥µ•é½¹”±•…Èˆ°(€€€€ˆ…„µ½¹™¥œÑ¥µ•é½¹”ˆ°(€€€€ˆ…„µ½¹™¥œÕ¤ˆ°(€€€€ˆ…„µ½¹™¥œµÕ¤ˆ°(€€€€ˆ…„µ½¹™¥œµÕ¤¡•±Àˆ°(€€€€ˆ…„µ½¹™¥œµÕ¤Õ¥‘”ˆ°(€€€€ˆ…„µ½¹™¥œµÕ¤µ•¹Ôˆ°(€€€€ˆ…„µ½¹™¥œµÕ¤´ˆ°(€€€€ˆ…„µ½¹™¥œµÕ¤‘´ˆ°(€€€€ˆ…½¹™¥U$µ4ˆ°(€€€€ˆ…½¹™¥U$µ4ˆ°(€€€€ˆ…½¹™¥œµ4ˆ°(€€€€ˆ…½¹™¥œµ4ˆ°(€€€€ˆ…„µ½¹™¥œµÕ¤ÍÑ…ÑÕÌˆ°(€€€€ˆ…„µ½¹™¥œµÕ¤¥¹™¼ˆ°(€€€€ˆ…„µ½¹™¥œµÕ¤…Õ‘¥Ğˆ°(€€€€ˆ…„µ½¹™¥œµÕ¤µ…¹Õ…°ˆ°(€€€€ˆ…„µ½¹™¥œµÕ¤Í•ÑÑ¥¹Ìˆ°(€€€€ˆ…„µ½¹™¥œµ½‘Õ±•Ìˆ°(€€€€ˆ…„µ½¹™¥œ±¥ÍĞˆ°(€€€€ˆ…„µ½¹™¥œ•Ğ€ñ5½‘Õ±•=ÉM•ÉÙ¥”øm­•åtˆ°(€€€€ˆ…„µ½¹™¥œÍ•Ğ€ñ5½‘Õ±•=ÉM•ÉÙ¥”ø€ñ­•äøôñÙ…±Õ”øˆ°(€€€€ˆ…„µ½¹™¥œ±•…¹ÕÀˆ°(€€€€ˆ…„µ•¹…‰±”€ñ5½‘Õ±•=ÉM•ÉÙ¥”øˆ°(€€€€ˆ…„µ‘¥Í…‰±”€ñ5½‘Õ±•=ÉM•ÉÙ¥”øˆ°(€€€€ˆ…„µµ•ÑÉ¥Ìˆ°(€€€€ˆ…„µµ•ÑÉ¥ÌÉ•Í•Ğˆ°(€€€€ˆ…É¥Ñ™Õµ‰±”ˆ°(€€€€ˆ…É¥Ñ™Õµ‰±”¡•±Àˆ°(€€€€ˆ…É¥Ñ™Õµ‰±”Õ¥‘”ˆ°(€€€€ˆ…É¥Ñ™Õµ‰±”µ•¹Ôˆ°(€€€€ˆ…É¥Ñ™Õµ‰±”´ˆ°(€€€€ˆ…É¥Ñ™Õµ‰±”‘´ˆ°(€€€€ˆ…É¥ÑÕµ‰±”µ4ˆ°(€€€€ˆ…É¥ÑÕµ‰±”µ4ˆ°(€€€€ˆ…É¥Ñ™Õµ‰±”ÍÑ…ÑÕÌˆ°(€€€€ˆ…É¥Ñ™Õµ‰±”¥¹™¼ˆ°(€€€€ˆ…É¥Ñ™Õµ‰±”…Õ‘¥Ğˆ°(€€€€ˆ…É¥Ñ™Õµ‰±”µ…¹Õ…°ˆ°(€€€€ˆ…É¥Ñ™…¥°ˆ°(€€€€ˆ…É¥Ñ™Õµ‰±”´ñµ•±••ñÉ…¹•‘ñÑ¡É½İ¹ñÍÁ•±±ñ¹…ÑÕÉ…°øˆ°(€€€€ˆ…½¹™¥É´µÉ¥Ğµµ…ÉÑ¥…°ˆ°(€€€€ˆ…½¹™¥É´µÉ¥Ğµµ…¥Œˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸ˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸ÍÑ…ÑÕÌˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸€´µÍÑ…ÑÕÌˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸…¹¹½Õ¹”ˆ°(€€€€ˆ…Œµ„ˆ°(€€€€ˆ…½¹´„ˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸¡•±Àˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸Õ¥‘”ˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸µ•¹Ôˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸´ˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸‘´ˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸µ4ˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸µ4ˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸¥¹™¼ˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸…Õ‘¥Ğˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸µ…¹Õ…°ˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸€ñ¹…µ”øˆ°(€€€€ˆ…½¹´ñ½¹‘¥Ñ¥½¸øˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸…‘€ñ½¹‘¥Ñ¥½¸¸¸¸øˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸É•µ½Ù”€ñ½¹‘¥Ñ¥½¸¸¸¸øˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸Ñ½±”€ñ½¹‘¥Ñ¥½¸¸¸¸øˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸½¹™¥œˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸½¹™¥œµ½¹‘¥Ñ¥½¹Ìˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸½¹™¥œ•áÁ½ÉĞˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸½¹™¥œ¥µÁ½ÉĞ€ñ)M=8øˆ°(€€€€ˆ…½¹‘¥Ñ¥½¸É•Í•Ğˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞ¡•±Àˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞÕ¥‘”ˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞµ•¹Ôˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞ´ˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞ‘´ˆ°(€€€€ˆ…Q½­•¹ÍÍ¥ÍĞµ4ˆ°(€€€€ˆ…Q½­•¹ÍÍ¥ÍĞµ4ˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞÍÑ…ÑÕÌˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞ¥¹™¼ˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞ…Õ‘¥Ğˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞµ…¹Õ…°ˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞÍ•ÑÑ¥¹Ìˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞ…‰½ÕĞˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞ½¹™¥œˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞ€´µ¡•±Àˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞ€´µ¡•±ÀµÍÑ…ÑÕÍµ…É­•ÉÌˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞ€´µ½¸€ñÁÉ½Á•ÉÑä¸¸¸øˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞ€´µ½™˜€ñÁÉ½Á•ÉÑä¸¸¸øˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞ€´µ™±¥À€ñÁÉ½Á•ÉÑä¸¸¸øˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞ€´µÍ•Ğ€ñÁÉ½Á•ÉÑåñÙ…±Õ”¸¸¸øˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞ€´µµ½Ù”€ñ‘¥ÍÑ…¹”øˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞ€´µµ½Ù”€ñ…¹±”ùğñ‘¥ÍÑ…¹”øˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞ€´µ½É‘•È€ñÑ½™É½¹ÑñÑ½‰…¬øˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞ€´µÉ•Á½ÉĞ€ñÉ•¥Á¥•¹Ññµ•ÍÍ…”øˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞ€´µ¥‘Ì€ñÑ½­•¸µ½Èµ¡…É…Ñ•Èµ¥¸¸¸øˆ°(€€€€ˆ…Ñ½­•¸µ…ÍÍ¥ÍĞ€´µ½¹™¥œÁ±…å•ÉÌµ…¸µ¥‘Íğñ½¹ñ½™˜øˆ°(€€€€ˆ…Ñ„ˆ°(€€€€ˆ…Ñ„µ¡•±Àˆ°(€€€€ˆ…Ñ„µÕ¥‘”ˆ°(€€€€ˆ…Ñ„µµ•¹Ôˆ°(€€€€ˆ…Ñ„µ´ˆ°(€€€€ˆ…Ñ„µ‘´ˆ°(€€€€ˆ…Ñ„µÍÑ…ÑÕÌˆ°(€€€€ˆ…Ñ„µ¥¹™¼ˆ°(€€€€ˆ…Ñ„µ…Õ‘¥Ğˆ°(€€€€ˆ…Ñ„µµ…¹Õ…°ˆ°(€€€€ˆ…Ñ„µÍ•ÑÑ¥¹Ìˆ°(€€€€ˆ…Ñ„µ…‰½ÕĞˆ°(€€€€ˆ…Ñ„µ½¹™¥œmÁ±…å•ÉÌµ…¸µ¥‘Íğñ½¹ñ½™˜ùtˆ°(€€€€ˆ…Ñ„µ½¸€ñÁÉ½Á•ÉÑä¸¸¸øˆ°(€€€€ˆ…Ñ„µ½™˜€ñÁÉ½Á•ÉÑä¸¸¸øˆ°(€€€€ˆ…Ñ„µ™±¥À€ñÁÉ½Á•ÉÑä¸¸¸øˆ°(€€€€ˆ…Ñ„µÍ•Ğ€ñÁÉ½Á•ÉÑåñÙ…±Õ”¸¸¸øˆ°(€€€€ˆ…Ñ„µµ½Ù”€ñ‘¥ÍÑ…¹”øˆ°(€€€€ˆ…Ñ„µµ½Ù”€ñ…¹±”ùğñ‘¥ÍÑ…¹”øˆ°(€€€€ˆ…Ñ„µ½É‘•È€ñÑ½™É½¹ÑñÑ½‰…¬øˆ°(€€€€ˆ…Ñ„µÉ•Á½ÉĞ€ñÉ•¥Á¥•¹Ññµ•ÍÍ…”øˆ°(€€€€ˆ…Ñ„µ¥‘Ì€ñÑ½­•¸µ½Èµ¡…É…Ñ•Èµ¥¸¸¸øˆ°(€€€€ˆ…Ñ„µ¡•±ÀµÍÑ…ÑÕÍµ…É­•ÉÌˆ°(€€€€ˆ…Ñ½­•¸µµ½€ñ½±‘•ÈÍÕÁÁ½ÉÑ•½µÁ…Ñ¥‰¥±¥ÑäÍå¹Ñ…àìÕÍ”€…Ñ½­•¸µ…ÍÍ¥ÍĞ½È€…Ñ„™½È¹•Üµ…É½Ìøˆ°(€€€€ˆ…%¹¥Ğµ!•±Àm½Ù•ÉÙ¥•İñÍÑ…ÉÑñÉ½±±ÍñÉ•É½±±ÍñÁÉ¥Ù…åñÑÉ½Õ‰±•Í¡½½Ñ¥¹tˆ°(€€€€ˆ…%¹¥ĞµÕ¥‘”m½Ù•ÉÙ¥•İñÍÑ…ÉÑñÉ½±±ÍñÉ•É½±±ÍñÁÉ¥Ù…åñÑÉ½Õ‰±•Í¡½½Ñ¥¹tˆ°(€€€€ˆ…%¹¥Ğµ5•¹Ôˆ°(€€€€ˆ…%¹¥ĞµMÑ…ÑÕÌˆ°(€€€€ˆ…%¹¥Ğµ%¹™¼ˆ°(€€€€ˆ…%¹¥Ğµ5…¹Õ…°ˆ°(€€€€ˆ…%¹¥Ğµ¼ˆ°(€€€€ˆ…%¹¥Ğµ¼„ˆ°(€€€€ˆ…%¹¥Ğµ4ˆ°(€€€€ˆ…%¹¥Ğµ4ˆ°(€€€€ˆ…%¹¥ĞµI½±°l´µÑ½­•¸€ñ%ùtl´µµ½‘”€ñ¹½Éµ…±ñ…‘Ùñ‘¥Ìùtl´µ…‘©ÕÍĞ€ñ¹Õµ‰•Èùtl´µ•áÑÉ„€ñ‘¥•l±‘¥•tùtˆ°(€€€€ˆ…%¹¥ĞµI½±°µM•±•Ñ•l´µµ½‘”€ñ¹½Éµ…±ñ…‘Ùñ‘¥Ìùtl´µ…‘©ÕÍĞ€ñ¹Õµ‰•Èùtl´µ•áÑÉ„€ñ‘¥•l±‘¥•tùtˆ°(€€€€ˆ…%¹¥Ğµ9AµI½±±Ì€ñ¡¥‘‘•¹ñÁÕ‰±¥Œøˆ°(€€€€ˆ…%¹¥Ğµ=ÁÑ¥½¹Ìl´µÑ½­•¸€ñ%ùtˆ°(€€€€ˆ…%¹¥Ğµ	½¹ÕÌ€´µÑ½­•¸€ñ%ø€´µµ½‘”€ñ¹½Éµ…±ñ…‘Ùñ‘¥Ìøl´µ…‘©ÕÍĞ€ñ¹Õµ‰•Èùtˆ°(€€€€ˆ…%¹¥Ğµ¥”Ä€´µÑ½­•¸€ñ%øl´µµ½‘”€ñ¹½Éµ…±ñ…‘Ùñ‘¥Ìùtl´µ…‘©ÕÍĞ€ñ¹Õµ‰•Èùtˆ°(€€€€ˆ…%¹¥Ğµ¥”É€´µÑ½­•¸€ñ%øl´µµ½‘”€ñ¹½Éµ…±ñ…‘Ùñ‘¥Ìùtl´µ…‘©ÕÍĞ€ñ¹Õµ‰•Èùtˆ°(€€€€ˆ…%¹¥Ğµ¥”É€´µÑ½­•¸€ñ%ø€´µ™¥ÉÍĞ€ñ‘¥”øl´µµ½‘”€ñ¹½Éµ…±ñ…‘Ùñ‘¥Ìùtl´µ…‘©ÕÍĞ€ñ¹Õµ‰•Èùtˆ°(€€€€ˆ…%¹¥ĞµMÑ…ÉĞ€´µÍ½Á”€ñ…±±ñ¹Áñ´µ¹Áñ…±°µ¹ÁŒøˆ°(€€€€ˆ…%¹¥ĞµIHˆ°(€€€€ˆ…%¹¥ĞµIHµ5•¹Ôˆ°(€€€€ˆ…%¹¥ĞµIHµAÌˆ°(€€€€ˆ…%¹¥ĞµIHµ9AÌˆ°(€€€€ˆ…%¹¥ĞµIHµM•±•Ñ•ˆ°(€€€€ˆ…%¹¥ĞµIHµQ½­•¸€´µÑ½­•¸€ñ%øˆ°(€€€€ˆ…%¹¥ĞµIHµÉ½ÕÀ€´µÉ½ÕÀ€ñ%øˆ°(€€€€ˆ…%¹¥ĞµÉ½ÕÀl´µÉ•…Ñ”€ñ9…µ”ùtl´µÉ•¹…µ”€ñ%ø€´µ¹…µ”€ñ9…µ”ùtl´µÉ•µ½Ù”€ñ%ùtˆ°(€€€€ˆ…%¹¥ĞµÕ‘¥Ğˆ°(€€€€ˆ…%¹¥Ğµ5½‘”€ñ½‰Í•ÉÙ•Éñµ…¹…•Èøˆ°(€€€€ˆ…½µ‰…Ğµ5•¹Ôˆ°(€€€€ˆ…½µ‰…Ğµ4ˆ°(€€€€ˆ…½µ‰…Ğµ4ˆ°(€€€€ˆ…½µ‰…Ğµ!•±Àm½Ù•ÉÙ¥•İñÑÕÉ¹ÍñÑ¥µ•ÉÍñÉ•½Ù•Éåñµ•ÍÍ…•Íñ…ÑÑ•¹Ñ¥½¹tˆ°(€€€€ˆ…½µ‰…ĞµÕ¥‘”mÑÕÉ¹ÍñÑ¥µ•ÉÍñÉ•½Ù•Éåñµ•ÍÍ…•Íñ…ÑÑ•¹Ñ¥½¹tˆ°(€€€€ˆ…½µ‰…Ğµ5…¹Õ…°ˆ°(€€€€ˆ…½µ‰…Ğµ%¹™¼ˆ°(€€€€ˆ…½µ‰…ĞµMÑ…ÉĞˆ°(€€€€ˆ…½µ‰…ĞµMÑ…ÉĞ€´µ½¹™¥É´ˆ°(€€€€ˆ…½µ‰…Ğµ9•áĞˆ°(€€€€ˆ…½µ‰…ĞµAÉ•Øˆ°(€€€€ˆ…½µ‰…Ğµ¹µQÕÉ¸€´µÑ½­•¸€ñ%øˆ°(€€€€ˆ…½µ‰…Ğµ‘½ÁĞˆ°(€€€€ˆ…½µ‰…ĞµI•ÍÑ½É”ˆ°(€€€€ˆ…½µ‰…ĞµA…ÕÍ”ˆ°(€€€€ˆ…½µ‰…ĞµI•ÍÕµ”ˆ°(€€€€ˆ…½µ‰…ĞµMÑ…ÑÕÌˆ°(€€€€ˆ…½µ‰…ĞµÕ‘¥Ğˆ°(€€€€ˆ…½µ‰…Ğµ¹ˆ°(€€€€ˆ…½µ‰…Ğµ¹€´µ½¹™¥É´ˆ°(€€€€ˆ…½µ‰…Ğµ¹¹½Õ¹”€ñµñÁÕ‰±¥ñİ¡¥ÍÁ•ÉÍñ½™˜øˆ°(€€€€ˆ…½µ‰…Ğµ½¹™¥É´€ñÍÑ…¹‘…É‘ñÙ…É¥•øˆ°(€€€€ˆ…½µ‰…ĞµQ¥µ•Èm½¹ñ½™™ñ‘ÕÉ…Ñ¥½¸€ñÍ•½¹‘Ìùñ‘•…‘±¥¹”€ñµñÁ±…å•Éñ‰½Ñ¡ñÁÕ‰±¥Œùñ…‘€ñÍ•½¹‘ÌµÉ•µ…¥¹¥¹œø€ñ…Õ‘¥•¹”ùñÉ•µ½Ù”€ñÍ•½¹‘ÌµÉ•µ…¥¹¥¹œùñ±•…È€´µ½¹™¥Éµtˆ°(€€€€ˆ…½µ‰…ĞµÕ”m½™™ñµñÁ±…å•ÉÍñ‰½Ñ¡ñÁÕ‰±¥tˆ°(€€€€ˆ…]•±½µ”ˆ°(€€€€ˆ…]•±½µ”µ!•±Àm½Ù•ÉÙ¥•İñÍ•ÑÕÁñµ½‘•ÍñÕÍÑ½µñ…ÁÁ•…É…¹•ñÍ…™•Ñåtˆ°(€€€€ˆ…]•±½µ”µÕ¥‘”m½Ù•ÉÙ¥•İñÍ•ÑÕÁñµ½‘•ÍñÕÍÑ½µñ…ÁÁ•…É…¹•ñÍ…™•Ñåtˆ°(€€€€ˆ…]•±½µ”µ5•¹Ôˆ°(€€€€ˆ…]•±½µ”µ4ˆ°(€€€€ˆ…]•±½µ”µ4ˆ°(€€€€ˆ…]•±½µ”µ%¹™¼ˆ°(€€€€ˆ…]•±½µ”µÕ‘¥Ğˆ°(€€€€ˆ…]•±½µ”µ5…¹Õ…°ˆ°(€€€€ˆ…]•±½µ”µM•ÑÑ¥¹Ìˆ°(€€€€ˆ…]•±½µ”µMÑ…ÑÕÌˆ°(€€€€ˆ…]•±½µ”µAÉ•Ù¥•Üˆ°(€€€€ˆ…]•±½µ”µ¹¹½Õ¹”ˆ°(€€€€ˆ…]•±½µ”µ5½‘”€ñ‘•™…Õ±Ññ‰Õ¥±Ñ¥¹ñÕÍÑ½µñµ¥á•øˆ°(€€€€ˆ…]•±½µ”µ•±…ä€ñÍ•½¹‘Ìøˆ°(€€€€ˆ…]•±½µ”µ!•…‘•È€ñÍ¡½İñ¡¥‘•ñÑ•áĞøˆ°(€€€€ˆ…]•±½µ”µ•™…Õ±Ğ€ñÑ•áĞøˆ°(€€€€ˆ…]•±½µ”µÕÍÑ½´±¥ÍĞˆ°(€€€€ˆ…]•±½µ”µÕÍÑ½´…‘€ñÑ•áĞøˆ°(€€€€ˆ…]•±½µ”µÕÍÑ½´É•µ½Ù”€ñ¹Õµ‰•Èøˆ°(€€€€ˆ…]•±½µ”µÕÍÑ½´±•…È€´µ½¹™¥É´ˆ°(€€€€ˆ…İ•±½µ”µ…ÍÍ¥ÍĞ¡•±Àm½Ù•ÉÙ¥•İñÍ•ÑÕÁñµ½‘•ÍñÕÍÑ½µñ…ÁÁ•…É…¹•ñÍ…™•Ñåtˆ°(€€€€ˆ…İ•±½µ”µ…ÍÍ¥ÍĞÍÑ…ÑÕÌˆ°(€€€€ˆ…İ•±½µ”µ…ÍÍ¥ÍĞÁÉ•Ù¥•Üˆ°(€€€€ˆ…İ•±½µ”µ…ÍÍ¥ÍĞ…¹¹½Õ¹”ˆ°(€€€€ˆ…İ•±½µ”µ…ÍÍ¥ÍĞµ½‘”€ñ‘•™…Õ±Ññ‰Õ¥±Ñ¥¹ñÕÍÑ½µñµ¥á•øˆ°(€€€€ˆ…İ•±½µ”µ…ÍÍ¥ÍĞ‘•±…ä€ñÍ•½¹‘Ìøˆ°(€€€€ˆ…İ•±½µ”µ…ÍÍ¥ÍĞ¡•…‘•È€ñÍ¡½İñ¡¥‘•ñÑ•áĞøˆ°(€€€€ˆ…İ•±½µ”µ…ÍÍ¥ÍĞ‘•™…Õ±Ğ€ñÑ•áĞøˆ°(€€€€ˆ…İ•±½µ”µ…ÍÍ¥ÍĞÕÍÑ½´±¥ÍĞˆ°(€€€€ˆ…İ•±½µ”µ…ÍÍ¥ÍĞÕÍÑ½´…‘€ñÑ•áĞøˆ°(€€€€ˆ…İ•±½µ”µ…ÍÍ¥ÍĞÕÍÑ½´É•µ½Ù”€ñ¹Õµ‰•Èøˆ°(€€€€ˆ…İ•±½µ”µ…ÍÍ¥ÍĞÕÍÑ½´±•…È€´µ½¹™¥É´ˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¸ˆ°(€€€€ˆ…Œˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¸¡•±Àˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¸Õ¥‘”ˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¸µ•¹Ôˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¸´ˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¸‘´ˆ°(€€€€ˆ…½¸µ4ˆ°(€€€€ˆ…½¸µ4ˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¸µ4ˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¸µ4ˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¸ÍÑ…ÑÕÌˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¸¥¹™¼ˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¸…Õ‘¥Ğˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¸µ…¹Õ…°ˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¸Í•ÑÑ¥¹Ìˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¸€´µ¡•±Àˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¸€´µ‘…µ…”€ñ…µ½Õ¹Ğø€´µµ½‘”€ñ¹½Éµ…±ñ…‘Ùñ‘¥Ìøˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¸€´µ±…ÍĞˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¸€´µ½™˜ˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¸€´µÍÑ…ÑÕÌˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¸€´µ½¹™¥œÉ…¹‘½µ¥é”½¹ñ½™˜ˆ°(€€€€ˆ…„µ½¹ŒµÍÑ…ÑÕÌˆ°(€€€€ˆ…½¸´ñ½µµ…¹øˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¸´ñ½µµ…¹øˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µ¡•±Àˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µÕ¥‘”ˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µµ•¹Ôˆ°(€€€€ˆ…9Aµ4ˆ°(€€€€ˆ…9Aµ4ˆ°(€€€€ˆ…9Aµ•…Ñ µ4ˆ°(€€€€ˆ…9Aµ•…Ñ µ4ˆ°(€€€€ˆ…9A5…¹…•Èµ4ˆ°(€€€€ˆ…9A5…¹…•Èµ4ˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µÍÑ…ÑÕÌˆ°(€€€€ˆ…¹ÁŒµ‰±½½‘¥•ˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µ‰±½½‘¥•ˆ°(€€€€ˆ…¹ÁŒµ¹Õµ‰•É¥¹œˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µ¹Õµ‰•É¥¹œˆ°(€€€€ˆ…9AÍÍ¥ÍĞµ9Õµ‰•É¥¹œˆ°(€€€€ˆ…9AÍÍ¥ÍĞµ	±½½‘¥•ˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µ¥¹™¼ˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µµ…¹Õ…°ˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µÍ•ÑÑ¥¹Ìˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µÉ•Á½ÉĞˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µÉ•Á½ÉĞ€´µÍ½Á”€ñ…µÁ…¥¹ñ¡…ÁÑ•ÉñÍ•Ñ¥½¹ñÍ•ÍÍ¥½¸øˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µÉ•Á½ÉĞ€´µÉ••¹Ğˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µÉ•Á½ÉĞ€´µÁ…”€ñ8øˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µÉ•Á½ÉĞ€´µİÉ¥Ñ”ˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µÉ•Á½ÉĞ€´µ¡•±Àˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µ‰Õ­•ÑÌˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µ‰Õ­•ÑÌl´µ…µÁ…¥¸€ñ9…µ”ùtl´µ¡…ÁÑ•È€ñ9…µ”ùtl´µÍ•Ñ¥½¸€ñ9…µ”ùtl´µÍ•ÍÍ¥½¸€ñ9…µ”ùtˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µ‰Õ­•ÑÌ€´µÉ•Í•ÑM•ÍÍ¥½¸ˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µ±•…Èˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µ±•…È€´µÍ½Á”€ñ…µÁ…¥¹ñ¡…ÁÑ•ÉñÍ•Ñ¥½¹ñÍ•ÍÍ¥½¸øl´µ¹•ÍÑ•‘tl´µ½¹™¥Éµtˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µİÉ¥Ñ”ˆ°(€€€€ˆ…¹ÁŒµİÈˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µİÉ¥Ñ”€´µ…±°ˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µİÉ¥Ñ”€´µÍ½Á”€ñ…µÁ…¥¹ñ¡…ÁÑ•ÉñÍ•Ñ¥½¹ñÍ•ÍÍ¥½¸øˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µİÉ¥Ñ”€´µ¹•İM•Ñ¥½¸€ñ9…µ”øˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µ…Õ‘¥Ğˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µÉ•Á…¥Èˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µÉ•Á…¥È€´µ½¹™¥É´ˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µ…ÉŒˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µ…ÉŒ€´µ¹…µ”€ñÉŒ9…µ”øˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µ…ÉŒ€´µ¹…µ”€ñÉŒ9…µ”ø€´µÍ•ÍÍ¥½¸ˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µ…ÉŒ€´µ¹…µ”€ñÉŒ9…µ”ø€´µ¹½Ñ”€ñQ•áĞøˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µ…ÉŒ€´µ¹…µ”€ñÉŒ9…µ”ø€´µµ…¹…”ˆ°(€€€€ˆ…¹ÁŒµ‘•…Ñ µ…ÉŒ€´µ¹…µ”€ñÉŒ9…µ”ø€´µ…±±½İÕÁ±¥…Ñ•Ìˆ°(€€€€ˆ…9A´ñ½µµ…¹øˆ°(€€€€ˆ…9Aµ•…Ñ ´ñ½µµ…¹øˆ°(€€€€ˆ…9A5…¹…•È´ñ½µµ…¹øˆ°(€€€€ˆ…!@µÕ¥‘”ˆ°(€€€€ˆ…!@µ!•±Àˆ°(€€€€ˆ…!@µ5•¹Ôˆ°(€€€€ˆ…!@µ4ˆ°(€€€€ˆ…!@µ4ˆ°(€€€€ˆ…!@µMÑ…ÑÕÌˆ°(€€€€ˆ…!@µ%¹™¼ˆ°(€€€€ˆ…!@µÕ‘¥Ğˆ°(€€€€ˆ…!@µ5…¹Õ…°ˆ°(€€€€ˆ…!@µM•ÑÑ¥¹Ìˆ°(€€€€ˆ…!@µM•±•Ñ•ˆ°(€€€€ˆ…!@µ±°ˆ°(€€€€ˆ…¡À€ñ½µµ…¹øˆ°(€€€€ˆ…¡ÀÕ¥‘”ˆ°(€€€€ˆ…¡À´ˆ°(€€€€ˆ…¡À‘´ˆ°(€€€€ˆ…¡ÀÍÑ…ÑÕÌˆ°(€€€€ˆ…¡À…Õ‘¥Ğˆ°(€€€€ˆ…¡ÀÍ•±•Ñ•ˆ°(€€€€ˆ…¡À…±°ˆ°(€€€€ˆ…„µ‘•‰Õœ¡•±Àˆ°(€€€€ˆ…„µ‘•‰ÕœÕ¥‘”ˆ°(€€€€ˆ…„µ‘•‰Õœµ•¹Ôˆ°(€€€€ˆ…„µ‘•‰Õœ´ˆ°(€€€€ˆ…„µ‘•‰Õœ‘´ˆ°(€€€€ˆ…•‰Õœµ4ˆ°(€€€€ˆ…•‰Õœµ4ˆ°(€€€€ˆ…•‰ÕQ½½±Ìµ4ˆ°(€€€€ˆ…•‰ÕQ½½±Ìµ4ˆ°(€€€€ˆ…„µ‘•‰ÕœÍÑ…ÑÕÌˆ°(€€€€ˆ…„µ‘•‰Õœ¥¹™¼ˆ°(€€€€ˆ…„µ‘•‰Õœ…Õ‘¥Ğˆ°(€€€€ˆ…„µ‘•‰Õœµ…¹Õ…°ˆ°(€€€€ˆ…„µ‘•‰ÕœÍ•ÑÑ¥¹Ìˆ°(€€€€ˆ…„µ‘•‰Õœ‘…µ…”€´µ…µ½Õ¹Ğ€ñ8øl´µÑ½­•¸€ñ%ùtl´µ…ÁÁ±åtˆ°(€€€€ˆ…„µ‘•‰Õœµ…É­•È€´µµ…É­•È€ñ9…µ”øl´µÍÑ…Ñ”½¹ñ½™™ñÑ½±•tl´µÑ½­•¸€ñ%ùtl´µ…ÁÁ±åtˆ°(€€€€ˆ…„µ‘•‰ÕœÍ…Ù”€´µ‘Œ€ñ8øl´µ‰½¹ÕÌ€ñ8ùtl´µµ½‘”¹½Éµ…±ñ…‘Ùñ‘¥Ítl´µ±…‰•°€ñQ•áĞùtl´µ…ÁÁ±åtˆ°(€€€€ˆ…É¥Ğˆ°(€€€€ˆ…É¥Ğ¡•±Àˆ°(€€€€ˆ…É¥ÑÍÍ¥ÍĞ´ñ½µµ…¹øˆ°(€€€€ˆ…É¥ÑÍÍ¥ÍĞµ!•±Àˆ°(€€€€ˆ…É¥ÑÍÍ¥ÍĞµÕ¥‘”ˆ°(€€€€ˆ…É¥ÑÍÍ¥ÍĞµ5•¹Ôˆ°(€€€€ˆ…É¥ÑÍÍ¥ÍĞµ4ˆ°(€€€€ˆ…É¥ÑÍÍ¥ÍĞµ4ˆ°(€€€€ˆ…É¥ÑÍÍ¥ÍĞµMÑ…ÑÕÌˆ°(€€€€ˆ…É¥ÑÍÍ¥ÍĞµ%¹™¼ˆ°(€€€€ˆ…É¥ÑÍÍ¥ÍĞµÕ‘¥Ğˆ°(€€€€ˆ…É¥ÑÍÍ¥ÍĞµ5…¹Õ…°ˆ°(€€€€ˆ…9AÍÍ¥ÍĞ´ñ½µµ…¹øˆ°(€€€€ˆ…9AÍÍ¥ÍĞµ4ˆ°(€€€€ˆ…9AÍÍ¥ÍĞµ4ˆ°(€€€€ˆ…9AÍÍ¥ÍĞµMÑ…ÑÕÌˆ°(€€€€ˆ…9AÍÍ¥ÍĞµ%¹™¼ˆ°(€€€€ˆ…9AÍÍ¥ÍĞµÕ‘¥Ğˆ°(€€€€ˆ…9AÍÍ¥ÍĞµ5…¹Õ…°ˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¹ÍÍ¥ÍĞ´ñ½µµ…¹øˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¹ÍÍ¥ÍĞµ4ˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¹ÍÍ¥ÍĞµ4ˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¹ÍÍ¥ÍĞµMÑ…ÑÕÌˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¹ÍÍ¥ÍĞµ%¹™¼ˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¹ÍÍ¥ÍĞµÕ‘¥Ğˆ°(€€€€ˆ…½¹•¹ÑÉ…Ñ¥½¹ÍÍ¥ÍĞµ5…¹Õ…°ˆ°(€€€€ˆ…™™•Ğµ4ˆ°(€€€€ˆ…™™•Ğµ4ˆ°(€€€€ˆ…™™•Ğµ5•¹Ôˆ°(€€€€ˆ…™™•ĞµÕ¥‘”ˆ°(€€€€ˆ…™™•Ğµ!•±Àˆ°(€€€€ˆ…™™•Ğµ%¹™¼ˆ°(€€€€ˆ…™™•ĞµMÑ…ÑÕÌˆ°(€€€€ˆ…™™•Ğµ•™¥¹¥Ñ¥½¹Ìˆ°(€€€€ˆ…™™•Ğµ…Ñ…±½œˆ°(€€€€ˆ…™™•ĞµÑ¥Ù”ˆ°(€€€€ˆ…™™•Ğµ½¹™¥É´€´µÉ…¹Ğ€ñ•¹•É…Ñ•µÉ…¹Ğøˆ°(€€€€ˆ…™™•ĞµÕ‘¥Ğˆ°(€€€€ˆ…™™•Ğµ5…¹Õ…°ˆ°(€€€€ˆ…™™•ĞµQ…É•ÑÌ€´µ•™™•Ğ€ñ•™™•Ğøˆ°(€€€€ˆ…™™•ĞµI•ÅÕ•ÍĞ€´µ•™™•Ğ€ñ•™™•Ğø€´µÍ½ÕÉ”€ñÑ½­•¸µ¥øˆ°(€€€€ˆ…™™•ĞµÁÁ±äˆ°(€€€€ˆ…™™•Ğµ¹ˆ°(€€€€ˆ…™™•ĞµI•Á…¥Èˆ°(€€€€ˆ…•™™•Ğ€ñ½µµ…¹øˆ°(€€€€ˆ…™™•ÑÍÍ¥ÍĞ´ñ½µµ…¹øˆ°(€€€€ˆ…•™™•Ğˆ°(€€€€ˆ…	±•ÍÌˆ°(€€€€ˆ…Õ¥‘…¹”ˆ°(€€€€ˆ…Õ¥‘”ˆ°(€€€€ˆ…!…ÍÑ”ˆ°(€€€€ˆ…]…É‘¥¹œµ	½¹ˆ°(€€€€ˆ…]…É‘¥¹	½¹ˆ°(€€€€ˆ…!½±äµ]•…Á½¸ˆ°(€€€€ˆ…!½±å]•…Á½¸ˆ°(€€€€ˆ…Aİ½…Pˆ°(€€€€ˆ…™™•ĞµA±…å•ÉÌ½¸ˆ°(€€€€ˆ…™™•ĞµA±…å•ÉÌ½™˜ˆ(€t)ô(
+  "description": "**GameAssist is a modular D&D 5E automation suite for Roll20. Its critical-miss, condition, concentration, token, NPC, effect, reporting, configuration, and diagnostic tools support the 2014 sheet; InitiativeAssist adds mixed 2014 and 2024 initiative in Roll20's native Turn Tracker; CombatAssist provides deliberate encounter, turn, and round controls; and WelcomeAssist can open game night with a table greeting chosen by the GM.**\n\nGameAssist v2.0.0 includes twelve individually configurable modules supported by shared MarkerService, TurnTrackerService, and versioned semantic-event foundations. Guided menus and plain-language help make the common workflows approachable, while direct commands and deeper controls remain available when a campaign needs them. Every module treats its `GM` and `DM` commands as equal shortcuts to that module's primary private Game Master screen.\n\nCampaigns upgrading from v0.1.7.0 keep their established commands, valid settings, NPC history, Arc records, and guide handouts. The canonical module names are now **CritAssist**, **NPCAssist**, **ConcentrationAssist**, and **HPAssist**; legacy command forms remain available for existing macros.\n\n---\n\n## âš™ï¸ Requirements\n\n- **Roll20 access:** Mod scripts require a game created by a Roll20 Pro subscriber. Players in that game do not need their own Pro subscriptions.\n- **Character sheets:** EffectAssist and the established gameplay modules use D&D 5E by Roll20 (2014). InitiativeAssist supports both 2014 and D&D 2024 by Roll20 characters in the same encounter. Roll20's supported Experimental Mod API server may be needed for 2024 Beacon initiative data.\n- **Integrated services:** Remove standalone TokenMod and StatusInfo before normal v2.0.0 use. TokenAssist and ConditionAssist provide the supported integrated replacements, and MarkerService owns their shared marker behavior.\n- **NPC tokens:** NPCAssist and HPAssist use token bar 1 for HP. Tokens must be on the Objects layer, linked to a character with `npc=1`, and need `npc_hpformula` when GameAssist rolls their HP.\n- **CritAssist tables:** `CF-Melee`, `CF-Ranged`, `CF-Thrown`, `CF-Spell`, `CF-Natural`, `Confirm-Crit-Martial`, and `Confirm-Crit-Magic`\n\n> GameAssist does not invent your campaign's fumble results. Create and populate the seven rollable tables before using CritAssist table rolls.\n\n> TokenAssist uses `!token-assist` and `!ta`/`!ta-*` commands. Older supported `!token-mod` macros remain compatibility aliases in v2.0.0. Use `!token-assist` or `!ta` for new macros; any later removal will be announced through a separate migration release.\n\n---\n\n## ğŸš€ Quick Start\n\nGameAssist is controlled from Roll20 chat. Commands beginning with `!` are sent to Mods instead of appearing as ordinary chat messages; players do not install anything separately.\n\n1. From the game's **Settings**, open **Mod (API) Scripts** and add **GameAssist** from the One-Click library.\n2. Remove standalone TokenMod and StatusInfo so overlapping commands and marker listeners are not loaded twice.\n3. Create the seven CritAssist rollable tables if you plan to use CritAssist.\n4. Allow the Mod sandbox to restart, then type `!ga-status` in chat to check the installation.\n5. Run `!ga-timezone` and choose the city/region that governs the campaign clock.\n6. Open `!ga-config ui` and enable only the modules your campaign needs.\n7. When using native initiative tools, enable **InitiativeAssist**, open Roll20's Turn Tracker, and run `!Init-Help`.\n8. To track encounter turns and rounds, enable **CombatAssist**, establish initiative, then run `!Combat-Help` before starting the encounter.\n9. For an optional table greeting, enable **WelcomeAssist**, run `!Welcome`, preview the result, then reload the sandbox.\n10. To coordinate spell effects, enable **EffectAssist**, run `!effect`, and review the preview before confirming. GMs may preselect linked 2014-sheet recipients; players choose visible recipients through Roll20's map target prompt.\n\nUse `!Init-Help`, `!Combat-Help`, `!Welcome`, `!token-assist help`, `!condition help`, `!critfumble help`, `!concentration --help`, `!npc-death-report --help`, or `!Effect-Guide` whenever you want an in-game guide.\n\n## ğŸ§© Included Modules\n\n- **CritAssist** â€” Watches supported attack templates for natural 1s, offers the attacker clear choices, and rolls from your melee, ranged, thrown, spell, or natural-attack fumble tables. The GM can also open a player picker manually or roll martial and magic confirmation tables directly.\n- **ConditionAssist** â€” Uses 2014 SRD condition wording by default, offers optional 2024 SRD wording and campaign edits, and provides case-insensitive `!cond-<condition>` quick references, marker artwork, an accurate selected-token condition menu, a GM current-page condition/marker status roster, and verified marker-toggling announcements in public chat or player whispers. Valid legacy StatusInfo definitions can be copied without deleting the rollback state.\n- **TokenAssist** â€” Provides `!token-assist` and `!ta`/`!ta-*` token controls for selected or authorized tokens. It handles common visibility settings, names, tooltips, bars, auras, colors, layers, position, size, rotation, vision, lighting, links, controllers, relative values, movement, stacking order, reports, and built-in or custom status markers. Marker changes always pass through MarkerService.\n- **InitiativeAssist** â€” Works inside Roll20's native Turn Tracker with mixed 2014 and 2024 characters. Public initiative calls offer one-character, selected-character, and guided roll buttons while privately giving the GM object-layer and GM-layer NPC controls. `!Init-GM` and `!Init-DM` open the same neutral controls and complete roster only for the GM. NPC roll details are hidden by default, GM-layer rolls always stay private, and guided options combine d20 mode, a flat adjustment, and up to two bonus dice. `!Init-RR` whispers the GM a bounded result summary while preserving custom counters, objects, dead NPCs, mismatches, stale rows, and off-page entries.\n- **CombatAssist** â€” Adds an optional encounter layer to Roll20's native Turn Tracker without replacing it. A clearly named native Round Counter can provide the authoritative round and retain its simple `+1` calculation during CombatAssist movement. The GM starts, reviews, moves forward or backward, pauses when useful, and ends tracking through a case-insensitive `!Combat-` guide. Valid combatant additions, removals, rerolls, and manual reordering preserve the current round. Optional turn timers provide stale-safe reminders without auto-advancing, and native current-turn pings add an ephemeral visual cue without changing token properties or recentering anyone's map. Private turn prompts can give the current controlling player an End My Turn button followed by a privacy-safe confirmation.\n- **WelcomeAssist** â€” Starts disabled and optionally posts one delayed greeting after a healthy GameAssist startup. The GM can choose the professional greeting, the included built-in greeting library, up to ten campaign greetings, or a mixed pool that gives campaign lines double individual weight. Setup and previews stay private; automatic and explicit announcements are public.\n- **ConcentrationAssist** â€” Builds normal, advantage, or disadvantage Constitution saves from damage, remembers each player's latest check, manages a concentration marker through MarkerService, lists concentrating tokens on the Player Ribbon page, and provides the lifecycle contract used by concentration-dependent EffectAssist records.\n- **NPCAssist** â€” Marks defeated NPCs, records revivals, checks HP against death markers, previews separately confirmed marker repairs, and organizes encounter history into readable handouts using **Campaign > Chapter > Section > Session** scopes. Custom Arc rosters can follow NPCs connected to a character story, vow, rivalry, investigation, redemption, or any other campaign thread. Date-managed Sessions and readable history use the DM-selected table timezone. Optional automatic naming gives newly added linked NPC tokens unique page-local names without renaming existing tokens or characters. Optional Bloodied alerts privately notify the GM when an eligible living NPC crosses to half HP or below without adding a marker or history entry.\n- **EffectAssist** â€” Starts disabled and coordinates a focused six-effect catalog for the official 2014 sheet. Bless, Guidance, Warding Bond, and Haste apply supported marker and sheet automation; Holy Weapon and Pass Without a Trace are visibly labeled tracked effects whose rule mechanics remain manual. Players may cast built-ins from controlled sources, choose visible recipients they do not control through Roll20's map target prompt, or send the GM a compact placement request. Completed player-originated casts are announced publicly after verification; the GM can lock that path at any time. Overlap, pre-existing state, externally edited rows, audits, and repairs use ownership evidence rather than guesswork.\n- **HPAssist** â€” Rolls `npc_hpformula` for selected NPCs or qualifying NPCs on the page marked by Roll20's Player Ribbon. Optional automatic rolling handles newly added tokens while setup protection prevents placeholder HP from producing false death, revival, or Bloodied events.\n- **ConfigUI** â€” Provides a GM-only chat interface for enabling modules, changing common settings, reviewing configuration, and reading module summaries. Command-based configuration remains available for advanced users.\n- **DebugTools** â€” Provides optional GM-only damage, marker, and saving-throw diagnostics. DebugTools starts disabled, and every action remains a preview until the GM includes `--apply`.\n\n---\n\n## ğŸ² Example at the Table\n\nA linked NPC falls from positive HP to 0. NPCAssist records that death in the active Campaign, Chapter, Section, and Session scopes, then asks MarkerService to apply the configured death marker. If the NPC later rises above 0 HP, GameAssist records the revival and removes the marker through the same service.\n\nThe GM can review a recent summary, audit the current page, write polished records to campaign handouts, or collect selected NPCs into a custom Arc roster. When a token needs an adjustment outside those automated workflows, TokenAssist can change the selected token without introducing a second marker system.\n\nBefore a new encounter, the GM opens Roll20's Turn Tracker and uses `!Init-Go` to invite players to roll, or `!Init-GM` / `!Init-DM` to keep the opening controls private. Players can roll one controlled character, every selected character they control, or a guided combination of d20 mode, adjustment, and bonus dice. The GM receives private controls for object-layer and GM-layer NPCs; hidden NPC modifiers and bonus dice remain GM-only. After each page-owned row is saved and verified, the appropriate audience sees the readable result. Later, `!Init-RR` can refresh every PC and living NPC without moving a round counter, object, dead creature, or attention row.\n\nWhen the cleric blesses several allies, the GM may preselect the targets, while the controlling player can choose visible recipients through Roll20's map target prompt without needing control of their tokens. The caster then chooses Bless from `!effect`. After confirmation, the targets receive their Blessed markers and `Bless (GameAssist)` `1d4` attack/save rows while the cleric begins concentrating. A second Bless source shares those non-stacking projections without taking over the first. Ending concentration removes only the final unneeded EffectAssist-owned state; matching markers or modifier rows that existed first remain.\n\nWhen everyone is ready, the GM starts CombatAssist. A single custom row named Round, Rounds, Round Count, Round Counter, Round Number, Round Tracker, Combat Round, or Current Round becomes the round authority; when CombatAssist moves that row to the top, a simple signed whole-number calculation such as `+1` is honored. Without one, a full uninterrupted forward cycle advances CombatAssist's internal round and a backward step never does. Optional timers can remind the GM, current player, both, or public chat without advancing initiative, while native pings can briefly identify the current token without changing it. The GM can also recover the last readable tracker, pause for several quiet edits, or use `!Combat-Next` and `!Combat-Prev` for guarded one-step movement.\n\n## ğŸ’¬ Main Commands\n\n### System and Configuration\n\n- `!ga-status` â€” Show overall health, module state, errors, and dependency information\n- `!ga-status --details` â€” Add activity, listener, timing, marker-service, and overlap diagnostics\n- `!ga-config ui` or `!ga-config-ui` â€” Open the GM configuration panel\n- `!ConfigUI-GM` or `!ConfigUI-DM` â€” Open ConfigUI's private Game Master screen\n- `!ga-config modules` â€” List feature modules, core services, and their current status\n- `!ga-config list` â€” Write a versioned configuration-only snapshot handout\n- `!ga-config get <ModuleOrService> [key]` / `!ga-config set <ModuleOrService> <key>=<value>` â€” Review or change component configuration\n- `!ga-enable <ModuleOrService>` / `!ga-disable <ModuleOrService>` â€” Enable or disable a feature module or core service\n- `!ga-metrics` â€” Show GameAssist runtime metrics\n\n### Critical Misses\n\n- `!critfumble help` â€” Open the CritAssist quick-reference guide\n- `!critfumble menu` â€” Open the guided Natural 1 menu\n- `!CritAssist-GM` or `!CritAssist-DM` â€” Open CritAssist's private Game Master player picker\n- `!critfail` â€” Open the direct manual player picker\n- `!critfumble-<melee|ranged|thrown|spell|natural>` â€” Roll the selected fumble table\n- `!confirm-crit-martial` / `!confirm-crit-magic` â€” Roll confirmation tables\n\n### Conditions\n\n- `!condition` â€” Open the selected-token condition menu\n- `!Condition-GM` or `!Condition-DM` â€” Open ConditionAssist's private selected-token Game Master screen\n- `!condition help` â€” Open the quick-start guide\n- `!condition status` â€” List current-page characters and NPCs with configured conditions or other active markers\n- `!condition <name>` or `!cond-<condition>` â€” Show one configured condition description\n- `!condition add|remove|toggle <condition...>` â€” Change condition markers on selected tokens when permitted\n- `!condition announce`, `!c-a`, or `!cond-!` â€” Toggle a condition marker, then report who is or is no longer affected\n- `!condition config` â€” Choose 2014 SRD, 2024 SRD, or campaign-custom wording and open definitions or validated import/export\n\n### Token Controls\n\n- `!TokenAssist-GM` or `!TokenAssist-DM` â€” Open TokenAssist's private selected-token control screen\n- `!token-assist help` or `!ta-help` â€” Open the TokenAssist quick guide\n- `!token-assist about` or `!ta-about` â€” Review attribution, supported behavior, and current limits\n- `!token-assist config` or `!ta-config` â€” Manage explicit player-ID targeting\n- `!ta-on|off|flip <property...>` â€” Change supported token switches\n- `!ta-set <property|value...>` â€” Change supported token values, auras, or status markers\n- `!ta-move`, `!ta-order`, or `!ta-report` â€” Move, stack, or report on targeted tokens\n- `!ta-ids <token-or-character-id...>` â€” Target explicit IDs when authorized\n- `!token-assist --<action> ...` â€” Use the same actions with the full command name\n- `!token-mod ...` â€” Retained compatibility syntax; use `!token-assist` or `!ta` for new macros\n\n### Initiative\n\n- `!Init-Help` / `!Init-Menu` â€” Open the InitiativeAssist Guide or action-focused Control Center\n- `!Init-Go` / `!Init-Go!` â€” Publicly invite players to roll, then whisper the GM a PC/NPC roster with individual and batch controls\n- `!Init-GM` / `!Init-DM` â€” Whisper the GM the neutral roll controls and complete roster without posting an invitation\n- `!Init-Roll` / `!Init-Options` â€” Roll a controlled character with cumulative d20, flat-adjustment, and bonus-die choices\n- `!Init-Roll-Selected` â€” Roll every eligible selected character controlled by the clicking GM or player\n- `!Init-Start --scope all|npc|gm-npc|all-npc` â€” Roll object-layer characters, object-layer NPCs, GM-layer NPCs, or NPCs across both layers\n- `!Init-NPC-Rolls hidden|public` â€” Choose whether object-layer NPC evidence is GM-only; GM-layer evidence always stays private\n- `!Init-RR` â€” Reroll every eligible PC and living NPC already in the tracker and whisper the result summary to the GM\n- `!Init-RR-Menu` â€” Choose PCs, NPCs, selected tokens, individuals, or saved groups\n- `!Init-Status` / `!Init-Audit` â€” Open the quick Status Summary or the detailed read-only GM chat review\n- `!Init-Mode observer|manager` â€” Choose read-only coexistence or InitiativeAssist-owned writes\n\n### Combat\n\n- `!Combat-GM` / `!Combat-DM` â€” Open the private CombatAssist Control Center\n- `!Combat-Menu` / `!Combat-Help` â€” Open the action-focused Control Center or plain-language Quick Guide\n- `!Combat-Start` / `!Combat-Start --confirm` â€” Begin round 1, or deliberately replace an existing encounter baseline\n- `!Combat-Next` / `!Combat-Prev` â€” Move the native Turn Tracker forward or backward by exactly one row through GameAssist's guarded tracker service\n- `!Combat-End-Turn --token <ID>` â€” Generated player control in Whispers mode; advances only if the clicking player still controls the current character\n- `!Combat-Adopt` / `!Combat-Restore` â€” Keep the current readable tracker or preview and confirm a one-step restoration of the last accepted tracker\n- `!Combat-Pause` / `!Combat-Resume` â€” Optionally pause while making several tracker edits, then resume without changing the round\n- `!Combat-Status` â€” Review the round, current turn, tracking state, and any action that needs attention\n- `!Combat-End` / `!Combat-End --confirm` â€” Clear only CombatAssist's encounter record and leave all tracker rows unchanged\n- `!Combat-Announce gm|public|whispers|off` â€” Choose GM-only, public, separate GM/current-player whispers, or no automatic turn announcements\n- `!Combat-Confirm standard|varied` â€” Choose one direct message or a restrained rotation of private acknowledgements after a player ends a turn\n- `!Combat-Timer` â€” Configure turn length, deadline recipients, and up to five early reminders; timers never advance initiative\n- `!Combat-Cue off|gm|players|both|public` â€” Configure Roll20's temporary native current-turn ping without changing token properties or map position\n\n### WelcomeAssist\n\n- `!Welcome-GM` / `!Welcome-DM` â€” Open WelcomeAssist's private setup and status screen\n- `!Welcome` / `!Welcome-Help` â€” Open the guide\n- `!Welcome-Status` / `!Welcome-Preview` â€” Review configuration or preview privately\n- `!Welcome-Announce` â€” Post one greeting publicly now\n- `!Welcome-Mode default|builtin|custom|mixed` â€” Choose the greeting pool\n- `!Welcome-Delay <seconds>` â€” Set the startup delay from 1 to 60 seconds\n- `!Welcome-Header show|hide|<text>` â€” Control the greeting header\n- `!Welcome-Custom list|add|remove|clear` â€” Manage campaign greetings\n\nThe longer `!welcome-assist ...` forms remain accepted for existing macros.\n\n### Concentration\n\n- `!Con-GM` / `!Con-DM` or `!Concentration-GM` / `!Concentration-DM` â€” Open the private ConcentrationAssist Game Master screen\n- `!concentration` or `!cc` â€” Open concentration-check buttons\n- `!Con-<command>` and `!Concentration-<command>` â€” Equivalent case-insensitive command families for the module controls below\n- `!concentration --damage <amount> --mode <normal|adv|dis>` â€” Roll a concentration save\n- `!concentration --last` â€” Repeat the player's previous check\n- `!concentration --off` â€” Remove the configured marker from selected linked tokens\n- `!concentration --status` â€” List concentrating tokens on the page marked by Roll20's Player Ribbon\n- `!ga-conc-status` â€” Show the GM concentration activity summary\n\n### NPC History and Reporting\n\n- `!NPC-GM`, `!NPC-Death-GM`, or `!NPCAssist-GM` â€” Open the private NPCAssist Game Master screen; each also accepts `-DM`\n- `!NPC-<command>`, `!NPC-Death-<command>`, and `!NPCAssist-<command>` â€” Equivalent case-insensitive NPCAssist command families\n- `!npc-death-report --help` or `!npc-death-help` â€” Open the central NPCAssist guide\n- `!npc-death-report [--scope campaign|chapter|section|session] [--recent|--page N|--write]` â€” Review a reporting scope or open the report writer\n- `!npc-death-buckets` â€” Review or rename active reporting scopes\n- `!npc-death-write` or `!npc-wr` â€” Write NPC history to handouts\n- `!npc-death-audit` â€” Check HP and death-marker consistency without changing tokens, then update the audit handout\n- `!npc-death-repair` â€” Preview marker corrections from current HP and require confirmation before changing only the configured death marker\n- `!npc-death-arc` â€” Create and manage custom Arc rosters from selected tokens or the current Session\n- `!npc-death-clear [--scope campaign|chapter|section|session] [--nested] [--confirm]` â€” Clear records using explicit confirmation\n\n### Effects\n\n- `!Effect-GM`, `!Effect-DM`, or `!Effect-Menu` â€” Open EffectAssist's private Game Master controls\n- `!effect` or `!Effect-Catalog` â€” Open the focused catalog directly; automated entries are separated from tracked/manual entries\n- `!Bless`, `!Guidance` / `!Guide`, `!Haste`, `!Warding-Bond`, `!Holy-Weapon`, or `!PwoaT` â€” Open a player-safe source and visible-recipient target path\n- `!Effect-Targets` / `!Effect-Request` â€” Generated buttons for native map targeting or a compact GM placement request; players do not need to memorize them\n- `!Effect-Active` / `!Effect-Status` / `!Effect-Definitions` â€” Manage active sources, review compact health totals, or inspect catalog details\n- `!Effect-Players on|off` â€” Allow or lock player casting from controlled linked sources\n- `!Effect-Audit` â€” Compare semantic records against exact markers, conditions, concentration state, and 2014-sheet rows without changing anything\n- `!Effect-Manual` â€” Create or update the stable EffectAssist manual handout\n- `!Effect-End --id <generated-id>` â€” End one exact source instance through generated buttons and remove only unneeded owned state\n- `!Effect-Guide` / `!Effect-Help` / `!Effect-Info` / `!effect <command>` â€” Open guidance or use the same case-insensitive controls through the spaced command family\n\n### NPC Hit Points and Diagnostics\n\n- `!HP-GM` / `!HP-DM` â€” Open HPAssist's private Game Master screen\n- `!HP-Selected` or `!hp selected` â€” Roll HP for selected qualifying NPCs\n- `!HP-All` or `!hp all` â€” Roll HP for qualifying NPCs on the page marked by Roll20's Player Ribbon\n- `!Debug-GM` / `!Debug-DM` â€” Open DebugTools' private Game Master screen after enabling the module\n- `!ga-debug` â€” Open diagnostics after enabling DebugTools\n\n> GameAssist help panels explain available choices in plain language. The full README contains the complete command matrix, permissions, examples, module settings, report workflows, migration guidance, and troubleshooting procedures.\n\n---\n\n## ğŸ”„ Working Alongside Other Mods\n\nGameAssist is designed to share a campaign with unrelated Roll20 Mods. Problems arise when two enabled tools respond to the same command, control the same token property, or react to the same event.\n\n- **General token controls:** TokenAssist uses `!token-assist` and `!ta`/`!ta-*`. Older `!token-mod` syntax is left to standalone TokenMod when that script is detected. Remove standalone TokenMod for normal v2.0.0 use because both tools can still change the same token properties and markers.\n- **Conditions:** Standalone StatusInfo overlaps ConditionAssist's `!condition` commands and marker descriptions. Remove it when ConditionAssist is enabled.\n- **Initiative and Turn Tracker:** Another initiative roller or combat manager may rewrite the same character turns, add round rows, advance turns, count rounds, or announce the same encounter. Use one initiative writer and one encounter-flow owner for a given encounter: InitiativeAssist can use Observer mode, and CombatAssist can remain disabled. GameAssist preserves custom tracker rows but cannot prevent another Mod from changing them later.\n- **NPC HP in token bar 1:** Another Mod that automatically rolls, replaces, damages, heals, or synchronizes bar 1 can trigger GameAssist's HP, Bloodied-notice, and death-history workflows. Choose one tool to own automatic NPC HP changes, or disable the overlapping feature.\n- **Status markers and effect projections:** Another Mod that automatically changes the same death, concentration, condition, or EffectAssist projection marker can compete with GameAssist and produce confusing results. Assign one automation tool to each marker or projection.\n- **Natural 1 attack handling:** Another Mod that watches the same attack templates for natural 1s can produce duplicate menus or multiple fumble results. Keep only one automatic critical-miss workflow enabled.\n- **Startup greetings:** Another Mod that automatically posts a campaign-ready or welcome message may produce duplicate table announcements. Disable one automatic greeting when the combined output is unwanted.\n- **GameAssist report handouts:** Report, audit, Arc, and configuration handouts are regenerated from GameAssist data when their write commands run. Keep unrelated campaign notes in separate handouts so they are not replaced.\n\nThese cautions concern overlapping behavior, not the mere presence of another Mod. Lighting, maps, macros, character utilities, and automation that does not also own GameAssist's token, marker, HP, fumble, or Turn Tracker responsibilities can continue normally.\n\n---\n\n## ğŸ›¡ï¸ Safeguards You Can See\n\n- Newly added NPC tokens receive a short setup window so placeholder HP does not create a false death, revival, or Bloodied notice.\n- Eligible living object-layer NPCs can privately alert the GM when they cross to half HP or below; the notice never reveals NPC HP publicly or adds marker/history state.\n- TokenAssist validates a command before changing token properties and refuses unsupported features without applying the other requested changes.\n- Every TokenAssist status operation uses MarkerService, including built-in, numbered, custom-name, and exact-tag markers.\n- Built-in and custom markers are matched to the exact marker Roll20 stores on the token, and ConditionAssist displays marker artwork when Roll20 exposes it.\n- `!npc-death-audit` creates or updates a dedicated handout listing NPCs that need attention without changing tokens.\n- `!npc-death-repair` separately previews, confirms, re-scans, and verifies death-marker corrections while preserving HP and history.\n- Named table timezones follow daylight-saving changes while stored event instants remain absolute.\n- TurnTrackerService resolves both page-id and open-tracker campaign states while preserving unknown fields and non-owned rows. GameAssist-created token turns include Roll20's encounter-page field, use a dedicated Turn Order update, and are verified before InitiativeAssist or CombatAssist reports success. NPC inline rolls and result panels respect the GM's privacy setting, and GM-layer NPC evidence is never posted publicly.\n- CombatAssist begins only when the GM starts it, uses one unambiguous native round-counter row when present, otherwise counts only proven complete forward cycles, preserves valid native lineup and initiative changes without resetting the round, and retains one confirmed recovery checkpoint. Timer callbacks recheck the exact encounter, round, current token, tracker revision, and deadline before sending anything; they never advance initiative. Current-turn pings use Roll20's temporary ping and never overwrite token markers, auras, tints, or positions. Its GM turn panels include Next Turn, Previous Turn, and Open Menu; Whispers mode separately gives the current controlling player an authorization-checked End My Turn button and private completion notice. TurnTrackerService is required. An optional integration may require another GameAssist component; when that component is unavailable, only the integration is unavailable and both modules keep their normal independent features.\n- EffectAssist keeps semantic records separate from marker, condition, concentration, and 2014-sheet projections; preserves pre-existing state; refuses to delete externally edited rows; verifies writes; requires player control of a casting source; treats target-marker removal as repairable drift; treats token representation changes as unsafe identity drift; and requires fresh GM-bound confirmation before repairing eligible audit mismatches.\n- SemanticEvents provides immutable, versioned, in-sandbox notifications for optional integrations without persisting, replaying, or silently enabling providers.\n- Every DebugTools action is a dry run until the GM includes `--apply`.\n- MarkerService can be disabled when another Mod must own marker behavior. GameAssist first disables ConditionAssist, TokenAssist, NPCAssist, ConcentrationAssist, and DebugTools, while CritAssist, ConfigUI, InitiativeAssist, WelcomeAssist, and HPAssist remain available.\n- TurnTrackerService can be disabled when another Mod must own native tracker behavior. InitiativeAssist and CombatAssist are disabled first, and the current Roll20 tracker is left unchanged.\n- WelcomeAssist starts disabled, previews privately, waits for healthy GameAssist startup, neutralizes Roll20 directives in campaign text, and automatically posts at most once per sandbox lifecycle.\n\n## ğŸ©º Troubleshooting\n\nStart with `!ga-status`, then use `!ga-status --details` and `!ga-config modules`. Open the affected module's help panel before changing persistent state or enabling DebugTools. For initiative, use `!Init-Status` and `!Init-Audit`; for encounter flow, use `!Combat-Status`, use Restore when a recent tracker edit must be undone, and verify Whispers mode with a separate non-GM player login; for table greetings, use `!Welcome-Status` and `!Welcome-Preview`; for effects, use `!Effect-Status` and the read-only `!Effect-Audit`; unreadable 2024 data, dead or mismatched NPCs, stale tokens, and custom rows are intentionally identified instead of guessed. If an initiative result appears without a Turn Order row, reopen the tracker on the encounter page and retry.\n\n> MarkerService should appear enabled when marker-dependent modules are in use. Test a real death, concentration marker, condition cycle, and harmless selected-token command on disposable tokens before relying on a new installation.\n\n## ğŸ“š Documentation and Support\n\nSee the [GameAssist README](https://github.com/Mord-Eagle/GameAssist#readme) for complete installation, configuration, command syntax, examples, permissions, report workflows, migration notes, troubleshooting, and upgrade guidance.\n\nBug reports and feature requests are welcome through [GameAssist Issues](https://github.com/Mord-Eagle/GameAssist/issues).",
+  "authors": "Mord Eagle",
+  "roll20userid": "10646976",
+  "patreon": "",
+  "tipeee": "",
+  "useroptions": [],
+  "dependencies": [],
+  "modifies": {
+    "campaign.playerpageid": "read",
+    "campaign.playerspecificpages": "read",
+    "campaign.initiativepage": "read,write",
+    "campaign.turnorder": "read,write",
+    "campaign.token_markers": "read",
+    "campaign._token_markers": "read",
+    "page.scale_number": "read",
+    "page.snapping_increment": "read",
+    "graphic._pageid": "read",
+    "graphic.pageid": "read",
+    "graphic.left": "read,write",
+    "graphic.top": "read,write",
+    "graphic.width": "read,write",
+    "graphic.height": "read,write",
+    "graphic.rotation": "read,write",
+    "graphic.lastmove": "read,write",
+    "graphic.bar1_value": "read,write",
+    "graphic.bar1_max": "read,write",
+    "graphic.bar1_link": "read,write",
+    "graphic.bar2_value": "read,write",
+    "graphic.bar2_max": "read,write",
+    "graphic.bar2_link": "read,write",
+    "graphic.bar3_value": "read,write",
+    "graphic.bar3_max": "read,write",
+    "graphic.bar3_link": "read,write",
+    "graphic.bar4_value": "read,write",
+    "graphic.bar4_max": "read,write",
+    "graphic.bar4_link": "read,write",
+    "graphic.statusmarkers": "read,write",
+    "graphic.represents": "read,write",
+    "graphic.name": "read,write",
+    "graphic.tooltip": "read,write",
+    "graphic.layer": "read,write",
+    "graphic.controlledby": "read,write",
+    "graphic.showname": "read,write",
+    "graphic.show_tooltip": "read,write",
+    "graphic.gm_only_tooltip": "read,write",
+    "graphic.showplayers_name": "read,write",
+    "graphic.showplayers_bar1": "read,write",
+    "graphic.showplayers_bar2": "read,write",
+    "graphic.showplayers_bar3": "read,write",
+    "graphic.showplayers_bar4": "read,write",
+    "graphic.playersedit_name": "read,write",
+    "graphic.playersedit_bar1": "read,write",
+    "graphic.playersedit_bar2": "read,write",
+    "graphic.playersedit_bar3": "read,write",
+    "graphic.playersedit_bar4": "read,write",
+    "graphic.aura1_radius": "read,write",
+    "graphic.aura1_color": "read,write",
+    "graphic.aura1_square": "read,write",
+    "graphic.aura1_options": "read,write",
+    "graphic.aura2_radius": "read,write",
+    "graphic.aura2_color": "read,write",
+    "graphic.aura2_square": "read,write",
+    "graphic.aura2_options": "read,write",
+    "graphic.showplayers_aura1": "read,write",
+    "graphic.showplayers_aura2": "read,write",
+    "graphic.playersedit_aura1": "read,write",
+    "graphic.playersedit_aura2": "read,write",
+    "graphic.tint_color": "read,write",
+    "graphic.flipv": "read,write",
+    "graphic.fliph": "read,write",
+    "graphic.isdrawing": "read,write",
+    "graphic.disableSnapping": "read,write",
+    "graphic.disableTokenMenu": "read,write",
+    "graphic.lockMovement": "read,write",
+    "graphic.fadeOnOverlap": "read,write",
+    "graphic.fadeOpacity": "read,write",
+    "graphic.baseOpacity": "read,write",
+    "graphic.renderAsScenery": "read,write",
+    "graphic.currentSide": "read,write",
+    "graphic.light_radius": "read,write",
+    "graphic.light_dimradius": "read,write",
+    "graphic.light_otherplayers": "read,write",
+    "graphic.light_hassight": "read,write",
+    "graphic.light_angle": "read,write",
+    "graphic.light_losangle": "read,write",
+    "graphic.light_multiplier": "read,write",
+    "graphic.adv_fow_view_distance": "read,write",
+    "graphic.has_bright_light_vision": "read,write",
+    "graphic.has_night_vision": "read,write",
+    "graphic.has_limit_field_of_vision": "read,write",
+    "graphic.has_limit_field_of_night_vision": "read,write",
+    "graphic.has_directional_bright_light": "read,write",
+    "graphic.has_directional_dim_light": "read,write",
+    "graphic.night_vision_distance": "read,write",
+    "graphic.night_vision_tint": "read,write",
+    "graphic.night_vision_effect": "read,write",
+    "graphic.emits_bright_light": "read,write",
+    "graphic.emits_low_light": "read,write",
+    "graphic.bright_light_distance": "read,write",
+    "graphic.low_light_distance": "read,write",
+    "graphic.lightColor": "read,write",
+    "graphic.dim_light_opacity": "read,write",
+    "graphic.light_sensitivity_multiplier": "read,write",
+    "graphic.limit_field_of_vision_center": "read,write",
+    "graphic.limit_field_of_night_vision_center": "read,write",
+    "graphic.directional_bright_light_center": "read,write",
+    "graphic.directional_dim_light_center": "read,write",
+    "graphic.limit_field_of_vision_total": "read,write",
+    "graphic.limit_field_of_night_vision_total": "read,write",
+    "graphic.directional_bright_light_total": "read,write",
+    "graphic.directional_dim_light_total": "read,write",
+    "graphic.bar_location": "read,write",
+    "graphic.compact_bar": "read,write",
+    "graphic.bar1_num_permission": "read,write",
+    "graphic.bar2_num_permission": "read,write",
+    "graphic.bar3_num_permission": "read,write",
+    "graphic.bar4_num_permission": "read,write",
+    "character.name": "read",
+    "character.charactersheetname": "read",
+    "character.controlledby": "read,write",
+    "attribute._characterid": "read",
+    "attribute.name": "read",
+    "attribute.current": "read,write",
+    "attribute.max": "read,write",
+    "handout.name": "read,write",
+    "handout.archived": "write",
+    "handout.notes": "write",
+    "player.displayname": "read",
+    "player._displayname": "read",
+    "player._lastpage": "read",
+    "player._online": "read",
+    "state.GameAssist": "read,write",
+    "state.STATUSINFO": "read",
+    "state.TokenMod": "read"
+  },
+  "conflicts": [
+    "TokenMod",
+    "StatusInfo",
+    "Concentration",
+    "DeathTracker",
+    "MonsterHitDice",
+    "5th Edition OGL by Roll20 Companion",
+    "Other scripts that modify NPC HP or use bar1_value",
+    "Other scripts that automatically add or remove the same death, concentration, condition, or EffectAssist projection markers",
+    "Other scripts that create, edit, or remove global attack, saving-throw, or AC modifier rows on the D&D 5E by Roll20 2014 sheet",
+    "Other scripts that automatically process natural 1 attack rolls or open critical-fumble menus",
+    "Other scripts that reroll initiative, advance turns, count rounds, insert round counters, or rewrite Roll20's Turn Tracker",
+    "Other scripts that automatically post campaign-ready or startup greeting messages"
+  ],
+  "commands": [
+    "!ga-status",
+    "!ga-status --details",
+    "!ga-timezone",
+    "!ga-timezone set <IANA timezone>",
+    "!ga-timezone clear",
+    "!ga-config timezone",
+    "!ga-config ui",
+    "!ga-config-ui",
+    "!ga-config-ui help",
+    "!ga-config-ui guide",
+    "!ga-config-ui menu",
+    "!ga-config-ui gm",
+    "!ga-config-ui dm",
+    "!ConfigUI-GM",
+    "!ConfigUI-DM",
+    "!Config-GM",
+    "!Config-DM",
+    "!ga-config-ui status",
+    "!ga-config-ui info",
+    "!ga-config-ui audit",
+    "!ga-config-ui manual",
+    "!ga-config-ui settings",
+    "!ga-config modules",
+    "!ga-config list",
+    "!ga-config get <ModuleOrService> [key]",
+    "!ga-config set <ModuleOrService> <key>=<value>",
+    "!ga-config cleanup",
+    "!ga-enable <ModuleOrService>",
+    "!ga-disable <ModuleOrService>",
+    "!ga-metrics",
+    "!ga-metrics reset",
+    "!critfumble",
+    "!critfumble help",
+    "!critfumble guide",
+    "!critfumble menu",
+    "!critfumble gm",
+    "!critfumble dm",
+    "!CritFumble-GM",
+    "!CritFumble-DM",
+    "!critfumble status",
+    "!critfumble info",
+    "!critfumble audit",
+    "!critfumble manual",
+    "!critfail",
+    "!critfumble-<melee|ranged|thrown|spell|natural>",
+    "!confirm-crit-martial",
+    "!confirm-crit-magic",
+    "!condition",
+    "!condition status",
+    "!condition --status",
+    "!condition announce",
+    "!c-a",
+    "!cond-!",
+    "!condition help",
+    "!condition guide",
+    "!condition menu",
+    "!condition gm",
+    "!condition dm",
+    "!Condition-GM",
+    "!Condition-DM",
+    "!condition info",
+    "!condition audit",
+    "!condition manual",
+    "!condition <name>",
+    "!cond-<condition>",
+    "!condition add <condition...>",
+    "!condition remove <condition...>",
+    "!condition toggle <condition...>",
+    "!condition config",
+    "!condition config-conditions",
+    "!condition config export",
+    "!condition config import <JSON>",
+    "!condition reset",
+    "!token-assist",
+    "!token-assist help",
+    "!token-assist guide",
+    "!token-assist menu",
+    "!token-assist gm",
+    "!token-assist dm",
+    "!TokenAssist-GM",
+    "!TokenAssist-DM",
+    "!token-assist status",
+    "!token-assist info",
+    "!token-assist audit",
+    "!token-assist manual",
+    "!token-assist settings",
+    "!token-assist about",
+    "!token-assist config",
+    "!token-assist --help",
+    "!token-assist --help-statusmarkers",
+    "!token-assist --on <property...>",
+    "!token-assist --off <property...>",
+    "!token-assist --flip <property...>",
+    "!token-assist --set <property|value...>",
+    "!token-assist --move <distance>",
+    "!token-assist --move <angle>|<distance>",
+    "!token-assist --order <tofront|toback>",
+    "!token-assist --report <recipient|message>",
+    "!token-assist --ids <token-or-character-id...>",
+    "!token-assist --config players-can-ids|<on|off>",
+    "!ta",
+    "!ta-help",
+    "!ta-guide",
+    "!ta-menu",
+    "!ta-gm",
+    "!ta-dm",
+    "!ta-status",
+    "!ta-info",
+    "!ta-audit",
+    "!ta-manual",
+    "!ta-settings",
+    "!ta-about",
+    "!ta-config [players-can-ids|<on|off>]",
+    "!ta-on <property...>",
+    "!ta-off <property...>",
+    "!ta-flip <property...>",
+    "!ta-set <property|value...>",
+    "!ta-move <distance>",
+    "!ta-move <angle>|<distance>",
+    "!ta-order <tofront|toback>",
+    "!ta-report <recipient|message>",
+    "!ta-ids <token-or-character-id...>",
+    "!ta-help-statusmarkers",
+    "!token-mod <older supported compatibility syntax; use !token-assist or !ta for new macros>",
+    "!Init-Help [overview|start|rolls|rerolls|privacy|troubleshooting]",
+    "!Init-Guide [overview|start|rolls|rerolls|privacy|troubleshooting]",
+    "!Init-Menu",
+    "!Init-Status",
+    "!Init-Info",
+    "!Init-Manual",
+    "!Init-Go",
+    "!Init-Go!",
+    "!Init-GM",
+    "!Init-DM",
+    "!Init-Roll [--token <ID>] [--mode <normal|adv|dis>] [--adjust <number>] [--extra <die[,die]>]",
+    "!Init-Roll-Selected [--mode <normal|adv|dis>] [--adjust <number>] [--extra <die[,die]>]",
+    "!Init-NPC-Rolls <hidden|public>",
+    "!Init-Options [--token <ID>]",
+    "!Init-Bonus --token <ID> --mode <normal|adv|dis> [--adjust <number>]",
+    "!Init-Die1 --token <ID> [--mode <normal|adv|dis>] [--adjust <number>]",
+    "!Init-Die2A --token <ID> [--mode <normal|adv|dis>] [--adjust <number>]",
+    "!Init-Die2B --token <ID> --first <die> [--mode <normal|adv|dis>] [--adjust <number>]",
+    "!Init-Start --scope <all|npc|gm-npc|all-npc>",
+    "!Init-RR",
+    "!Init-RR-Menu",
+    "!Init-RR-PCs",
+    "!Init-RR-NPCs",
+    "!Init-RR-Selected",
+    "!Init-RR-Token --token <ID>",
+    "!Init-RR-Group --group <ID>",
+    "!Init-Group [--create <Name>] [--rename <ID> --name <Name>] [--remove <ID>]",
+    "!Init-Audit",
+    "!Init-Mode <observer|manager>",
+    "!Combat-Menu",
+    "!Combat-GM",
+    "!Combat-DM",
+    "!Combat-Help [overview|turns|timers|recovery|messages|attention]",
+    "!Combat-Guide [turns|timers|recovery|messages|attention]",
+    "!Combat-Manual",
+    "!Combat-Info",
+    "!Combat-Start",
+    "!Combat-Start --confirm",
+    "!Combat-Next",
+    "!Combat-Prev",
+    "!Combat-End-Turn --token <ID>",
+    "!Combat-Adopt",
+    "!Combat-Restore",
+    "!Combat-Pause",
+    "!Combat-Resume",
+    "!Combat-Status",
+    "!Combat-Audit",
+    "!Combat-End",
+    "!Combat-End --confirm",
+    "!Combat-Announce <gm|public|whispers|off>",
+    "!Combat-Confirm <standard|varied>",
+    "!Combat-Timer [on|off|duration <seconds>|deadline <gm|player|both|public>|add <seconds-remaining> <audience>|remove <seconds-remaining>|clear --confirm]",
+    "!Combat-Cue [off|gm|players|both|public]",
+    "!Welcome",
+    "!Welcome-Help [overview|setup|modes|custom|appearance|safety]",
+    "!Welcome-Guide [overview|setup|modes|custom|appearance|safety]",
+    "!Welcome-Menu",
+    "!Welcome-GM",
+    "!Welcome-DM",
+    "!Welcome-Info",
+    "!Welcome-Audit",
+    "!Welcome-Manual",
+    "!Welcome-Settings",
+    "!Welcome-Status",
+    "!Welcome-Preview",
+    "!Welcome-Announce",
+    "!Welcome-Mode <default|builtin|custom|mixed>",
+    "!Welcome-Delay <seconds>",
+    "!Welcome-Header <show|hide|text>",
+    "!Welcome-Default <text>",
+    "!Welcome-Custom list",
+    "!Welcome-Custom add <text>",
+    "!Welcome-Custom remove <number>",
+    "!Welcome-Custom clear --confirm",
+    "!welcome-assist help [overview|setup|modes|custom|appearance|safety]",
+    "!welcome-assist status",
+    "!welcome-assist preview",
+    "!welcome-assist announce",
+    "!welcome-assist mode <default|builtin|custom|mixed>",
+    "!welcome-assist delay <seconds>",
+    "!welcome-assist header <show|hide|text>",
+    "!welcome-assist default <text>",
+    "!welcome-assist custom list",
+    "!welcome-assist custom add <text>",
+    "!welcome-assist custom remove <number>",
+    "!welcome-assist custom clear --confirm",
+    "!concentration",
+    "!cc",
+    "!concentration help",
+    "!concentration guide",
+    "!concentration menu",
+    "!concentration gm",
+    "!concentration dm",
+    "!Con-GM",
+    "!Con-DM",
+    "!Concentration-GM",
+    "!Concentration-DM",
+    "!concentration status",
+    "!concentration info",
+    "!concentration audit",
+    "!concentration manual",
+    "!concentration settings",
+    "!concentration --help",
+    "!concentration --damage <amount> --mode <normal|adv|dis>",
+    "!concentration --last",
+    "!concentration --off",
+    "!concentration --status",
+    "!concentration --config randomize on|off",
+    "!ga-conc-status",
+    "!Con-<command>",
+    "!Concentration-<command>",
+    "!npc-death-help",
+    "!npc-death-guide",
+    "!npc-death-menu",
+    "!NPC-GM",
+    "!NPC-DM",
+    "!NPC-Death-GM",
+    "!NPC-Death-DM",
+    "!NPCManager-GM",
+    "!NPCManager-DM",
+    "!npc-death-status",
+    "!npc-bloodied",
+    "!npc-death-bloodied",
+    "!npc-numbering",
+    "!npc-death-numbering",
+    "!NPCAssist-Numbering",
+    "!NPCAssist-Bloodied",
+    "!npc-death-info",
+    "!npc-death-manual",
+    "!npc-death-settings",
+    "!npc-death-report",
+    "!npc-death-report --scope <campaign|chapter|section|session>",
+    "!npc-death-report --recent",
+    "!npc-death-report --page <N>",
+    "!npc-death-report --write",
+    "!npc-death-report --help",
+    "!npc-death-buckets",
+    "!npc-death-buckets [--campaign <Name>] [--chapter <Name>] [--section <Name>] [--session <Name>]",
+    "!npc-death-buckets --resetSession",
+    "!npc-death-clear",
+    "!npc-death-clear --scope <campaign|chapter|section|session> [--nested] [--confirm]",
+    "!npc-death-write",
+    "!npc-wr",
+    "!npc-death-write --all",
+    "!npc-death-write --scope <campaign|chapter|section|session>",
+    "!npc-death-write --newSection <Name>",
+    "!npc-death-audit",
+    "!npc-death-repair",
+    "!npc-death-repair --confirm",
+    "!npc-death-arc",
+    "!npc-death-arc --name <Arc Name>",
+    "!npc-death-arc --name <Arc Name> --session",
+    "!npc-death-arc --name <Arc Name> --note <Text>",
+    "!npc-death-arc --name <Arc Name> --manage",
+    "!npc-death-arc --name <Arc Name> --allowDuplicates",
+    "!NPC-<command>",
+    "!NPC-Death-<command>",
+    "!NPCManager-<command>",
+    "!HP-Guide",
+    "!HP-Help",
+    "!HP-Menu",
+    "!HP-GM",
+    "!HP-DM",
+    "!HP-Status",
+    "!HP-Info",
+    "!HP-Audit",
+    "!HP-Manual",
+    "!HP-Settings",
+    "!HP-Selected",
+    "!HP-All",
+    "!hp <command>",
+    "!hp guide",
+    "!hp gm",
+    "!hp dm",
+    "!hp status",
+    "!hp audit",
+    "!hp selected",
+    "!hp all",
+    "!ga-debug help",
+    "!ga-debug guide",
+    "!ga-debug menu",
+    "!ga-debug gm",
+    "!ga-debug dm",
+    "!Debug-GM",
+    "!Debug-DM",
+    "!DebugTools-GM",
+    "!DebugTools-DM",
+    "!ga-debug status",
+    "!ga-debug info",
+    "!ga-debug audit",
+    "!ga-debug manual",
+    "!ga-debug settings",
+    "!ga-debug damage --amount <N> [--token <ID>] [--apply]",
+    "!ga-debug marker --marker <Name> [--state on|off|toggle] [--token <ID>] [--apply]",
+    "!ga-debug save --dc <N> [--bonus <N>] [--mode normal|adv|dis] [--label <Text>] [--apply]",
+    "!crit",
+    "!crit help",
+    "!CritAssist-<command>",
+    "!CritAssist-Help",
+    "!CritAssist-Guide",
+    "!CritAssist-Menu",
+    "!CritAssist-GM",
+    "!CritAssist-DM",
+    "!CritAssist-Status",
+    "!CritAssist-Info",
+    "!CritAssist-Audit",
+    "!CritAssist-Manual",
+    "!NPCAssist-<command>",
+    "!NPCAssist-GM",
+    "!NPCAssist-DM",
+    "!NPCAssist-Status",
+    "!NPCAssist-Info",
+    "!NPCAssist-Audit",
+    "!NPCAssist-Manual",
+    "!ConcentrationAssist-<command>",
+    "!ConcentrationAssist-GM",
+    "!ConcentrationAssist-DM",
+    "!ConcentrationAssist-Status",
+    "!ConcentrationAssist-Info",
+    "!ConcentrationAssist-Audit",
+    "!ConcentrationAssist-Manual",
+    "!Effect-GM",
+    "!Effect-DM",
+    "!Effect-Menu",
+    "!Effect-Guide",
+    "!Effect-Help",
+    "!Effect-Info",
+    "!Effect-Status",
+    "!Effect-Definitions",
+    "!Effect-Catalog",
+    "!Effect-Active",
+    "!Effect-Confirm --grant <generated-grant>",
+    "!Effect-Audit",
+    "!Effect-Manual",
+    "!Effect-Targets --effect <effect>",
+    "!Effect-Request --effect <effect> --source <token-id>",
+    "!Effect-Apply",
+    "!Effect-End",
+    "!Effect-Repair",
+    "!effect <command>",
+    "!EffectAssist-<command>",
+    "!effect",
+    "!Bless",
+    "!Guidance",
+    "!Guide",
+    "!Haste",
+    "!Warding-Bond",
+    "!WardingBond",
+    "!Holy-Weapon",
+    "!HolyWeapon",
+    "!PwoaT",
+    "!Effect-Players on",
+    "!Effect-Players off"
+  ]
+}
