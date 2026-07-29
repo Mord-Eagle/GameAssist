@@ -2,7 +2,7 @@
 
 This roadmap records GameAssist's completed standalone-to-integrated transition, native initiative and encounter foundations, completed `v1.8.x` module and NPCAssist work, and the current combined v2.0.0 EffectAssist, AlmanacAssist, and shared-health development line.
 
-Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation details and acceptance evidence. Issues #60, #64, and #65 are complete. PR #81 remains the single v2.0.0 development line: EffectAssist and all six AlmanacAssist systems are implemented checkpoints, Issue #88 retains future EffectAssist UX/player-workflow repairs, Issue #83 adds the shared HealthService foundation, and Issue #79 uses that foundation for private concentration-check offers. Issues #77 and #80 remain separately gated EffectAssist enhancements.
+Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation details and acceptance evidence. Issues #60, #64, and #65 are complete. PR #81 remains the single v2.0.0 development line: EffectAssist and all six AlmanacAssist systems are implemented checkpoints, Issue #88 retains future EffectAssist UX/player-workflow repairs, Issue #83 adds the shared HealthService foundation, Issue #79 uses that foundation for private concentration-check offers, and Issue #80 adds conservative effect-duration candidates. Issue #77 remains a separately gated EffectAssist enhancement.
 
 > The roadmap is a maintained plan, not a promise of dates. Issues #25 through #29 are development checkpoints within one release train; none is an intermediate public release.
 
@@ -73,7 +73,7 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | EffectAssist concentration observation | Sandbox verification | [#78](https://github.com/Mord-Eagle/GameAssist/issues/78) | ConcentrationAssist 0.3.0 owns concentration state and exposes lifecycle events used for dependent EffectAssist cleanup. |
 | Shared HealthService foundation | Sandbox verification | [#83](https://github.com/Mord-Eagle/GameAssist/issues/83) | Add canonical supported HP snapshots, immutable deduplicated transitions, bounded evidence, and verified producer-identified writes without assigning unknown causes. |
 | ConcentrationAssist HP-loss offers | Sandbox verification | [#79](https://github.com/Mord-Eagle/GameAssist/issues/79) | ConcentrationAssist 0.4.0 consumes HealthService evidence through private, deduplicated, revalidated check offers without treating every decrease as proven damage. |
-| EffectAssist duration candidates | Planned | [#80](https://github.com/Mord-Eagle/GameAssist/issues/80) | Add encounter and world-time candidates while keeping expiration manual until live boundaries are proven. |
+| EffectAssist duration candidates | Sandbox verification | [#80](https://github.com/Mord-Eagle/GameAssist/issues/80) | EffectAssist 2.1.0 consumes accepted CombatAssist progression and committed Almanac time to create private, reversible GM review candidates without automatic expiration. |
 | EffectAssist catalog expansion | Deferred | [#82](https://github.com/Mord-Eagle/GameAssist/issues/82) | Investigate ownership-safe weapon, Stealth, initiative, movement-speed, and healing adapters after the focused v2.0.0 release and planned AlmanacAssist work. |
 | AlmanacAssist master program | Sandbox verification | [#62](https://github.com/Mord-Eagle/GameAssist/issues/62), [PR #81](https://github.com/Mord-Eagle/GameAssist/pull/81) | v2.0.0 implements all six internal systems together; publication waits for complete live Roll20 acceptance. |
 | TimeAlmanac | Sandbox verification | [#66](https://github.com/Mord-Eagle/GameAssist/issues/66) | One elapsed fictional-minute authority, four profiles, editable Wayfarer structure and holidays, guarded changes, player read-only output, history, and events. |
@@ -574,13 +574,26 @@ ConcentrationAssist consumes HealthService evidence conservatively while preserv
 ### Phase F — Encounter and World-Time Durations
 
 **Tracking:** [Issue #80](https://github.com/Mord-Eagle/GameAssist/issues/80)
-**Status:** Planned
+**Status:** Sandbox verification
 
-Consume semantic turn, round, encounter, and future world-time candidates. Reminders and expiration candidates may proceed first; automatic ending remains gated until live Roll20 evidence proves the boundary and ownership rules.
+EffectAssist 2.1.0 records formal duration rules and whichever verified provider anchors are available when a built-in effect begins. CombatAssist 1.1.0 publishes immutable encounter identity and accepted forward/backward transition evidence; AlmanacAssist continues to publish one committed event for each world-time change.
+
+- [x] Record ten-round/one-minute rules for Bless, Guidance, and Haste plus six-hundred-round/sixty-minute rules for Warding Bond, Holy Weapon, and Pass Without a Trace.
+- [x] Anchor encounter durations only to an active CombatAssist encounter on the effect source's page.
+- [x] Anchor world durations only to available committed Almanac time.
+- [x] Create one bounded private GM expiration candidate when either verified boundary is reached; never end the effect automatically.
+- [x] Create an encounter-end reminder when a round boundary was not verified before CombatAssist ended.
+- [x] Ignore backward turns, tracker rebases, initiative edits, and backward Almanac movement as duration progress.
+- [x] Compare large Almanac jumps once without replaying every elapsed minute.
+- [x] Let the GM end the effect, keep it active, or reopen a dismissed candidate from `!Effect-Duration`.
+- [x] Preserve manual ending and explain provider absence, disabled candidate processing, custom duration text, and pre-schema-3 effects without inventing start times.
+- [x] Reconcile persisted anchors after startup and when the GM opens Duration Review following re-enable, without unbounded event replay.
+- [x] Pass the focused local provider, boundary, reversal, restart, spoofing, and non-automatic-ending harness plus existing HealthService and ConcentrationAssist regressions.
+- [ ] Pass the live Roll20 same-page encounter, tracker edit, backward turn, encounter end, Almanac advance/retreat, provider-disabled, restart, and manual-decision checks.
 
 ### Completion Gate
 
-The EffectAssist portion of v2.0.0 must survive the live Roll20 clean-install, upgrade, complete Bless, catalog coverage, 2014-sheet rows, concentration cleanup, overlap, baseline-state, audit/repair, disable/re-enable, and restart tests. ConcentrationAssist HP-loss offers require their separate live Issue #79 acceptance. Cast recognition, duration providers, and 2024-sheet support remain later work under their own issues; Issue #88 retains the player-workflow and UX repairs without reopening the completed proof-of-concept implementation during AlmanacAssist development.
+The EffectAssist portion of v2.0.0 must survive the live Roll20 clean-install, upgrade, complete Bless, catalog coverage, 2014-sheet rows, concentration cleanup, overlap, baseline-state, audit/repair, duration-provider, disable/re-enable, and restart tests. ConcentrationAssist HP-loss offers require their separate live Issue #79 acceptance. Cast recognition and 2024-sheet support remain later work under their own issues; Issue #88 retains the player-workflow and UX repairs without reopening the completed proof-of-concept implementation during AlmanacAssist development.
 
 ---
 

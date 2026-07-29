@@ -807,7 +807,7 @@ Config keys: `enabled`, `mode`, `delayMs`, `showHeader`, `header`, `defaultGreet
 
 ### 6.12 EffectAssist *(optional, player-capable and GM-managed)*
 
-> **Module version:** `2.0.0`<br>
+> **Module version:** `2.1.0`<br>
 > **Default:** Disabled<br>
 > **Launch sheet:** Official D&D 5E by Roll20 2014 sheet. The 2024 sheet and other character sheets are deferred until their contracts can be implemented and tested separately.
 
@@ -839,6 +839,10 @@ Two sources applying the same non-stacking effect to one target remain separate 
 
 Removing a target's effect marker manually does not silently end the source's concentration or remove the effect from every target. It creates a visible audit mismatch that the GM can repair or resolve by ending the effect. Removing the source's Concentrating marker, clearing concentration through ConcentrationAssist, or using **End Effect** ends the dependent effect and performs ownership-safe cleanup.
 
+Built-in effects also carry formal duration rules. When an effect begins during an active CombatAssist encounter on the same page, EffectAssist records the accepted round and initiative point. When TimeAlmanac is active, it records the committed fictional minute as a second optional source of evidence. Reaching either verified boundary creates a private **Effect Duration Review** item for the GM; the effect remains active until the GM ends it or another established ending rule, such as lost concentration, resolves it.
+
+Tracker rebases, initiative edits, backward movement, disabled providers, and effects created before duration tracking are not guessed through. Ending an encounter before a tracked round boundary produces a reminder rather than an expiration claim. Large Almanac jumps are compared once instead of replaying every elapsed minute. The GM can keep a candidate active, reopen that decision later, turn duration candidates off, or continue using the existing manual End Effect controls.
+
 Main commands:
 
 * `!Effect-GM`, `!Effect-DM`, or `!Effect-Menu` → Open the Game Master control screen.
@@ -847,6 +851,8 @@ Main commands:
 * `!Bless`, `!Guidance` / `!Guide`, `!Haste`, `!Warding-Bond`, `!Holy-Weapon`, or `!PwoaT` → Open a compact source-and-review path for that effect; commands are case-insensitive.
 * `!Effect-Active` → Manage active instances and end one exact source.
 * `!Effect-Status` → Review compact module, record, health, and player-casting totals without printing the full active/recent history.
+* `!Effect-Duration` → Review active duration rules and GM-only expiration candidates or encounter-end reminders.
+* `!Effect-Durations on|off` → Allow or stop duration-provider candidate processing without deleting active effects or saved evidence.
 * `!Effect-Definitions` → Review built-in and campaign definitions with automatic, assisted, and informational behavior.
 * `!Effect-Audit` → Compare semantic records, exact targets, ownership ledgers, markers, conditions, concentration, and sheet rows without changing anything.
 * `!Effect-Repair` → Reopen the audit unless a fresh one-use confirmation grant is supplied by the audit button.
@@ -860,7 +866,7 @@ Audit reports missing tokens, token representation changes, unavailable projecti
 
 Disabling EffectAssist stops its commands and future automation while preserving valid active records, ended history, definitions, and existing projections. Re-enable it and run Status or Audit before continuing. MarkerService, ConditionAssist, or ConcentrationAssist can be unavailable without corrupting the semantic record; affected projections remain visible as pending or needing attention.
 
-Config keys: `enabled`, `allowPlayerCasting`, the protected `markerOverrides` map, and the protected `customDefinitions` map. In v2.0.0, the two protected maps are reserved for validated release data and are not edited through `!ga-config`; GMs use the built-in catalog or the guided custom Marker, Condition, and Record Only choices.
+Config keys: `enabled`, `allowPlayerCasting`, `durationCandidates`, the protected `markerOverrides` map, and the protected `customDefinitions` map. In v2.0.0, the two protected maps are reserved for validated release data and are not edited through `!ga-config`; GMs use the built-in catalog or the guided custom Marker, Condition, and Record Only choices.
 
 ---
 
@@ -1446,7 +1452,7 @@ The result retains the TurnTrackerService snapshot and adds InitiativeAssist cla
 const encounter = GameAssist.CombatAssist.getStatus();
 ```
 
-`version` reports CombatAssist `1.0.5`. `getStatus()` returns a defensive copy of the current encounter record or `null`; changing the returned object cannot alter saved GameAssist state. Tracker mutation remains behind GM-only Next, Previous, and confirmed Restore controls or the current player's token-bound End My Turn control, and every path uses TurnTrackerService authority. A recognized round counter is reported as the round source. Timer callbacks and native pings remain private module behavior and expose no mutation API.
+`version` reports CombatAssist `1.1.0`. `getStatus()` returns a defensive copy of the current encounter record or `null`; changing the returned object cannot alter saved GameAssist state. `combatEventSchemaVersion` reports schema 1, while `observe(callback, options)` and `clearObservers(owner)` expose immutable encounter and verified-turn events without giving consumers tracker-write authority. Tracker mutation remains behind GM-only Next, Previous, and confirmed Restore controls or the current player's token-bound End My Turn control, and every path uses TurnTrackerService authority. A recognized round counter is reported as the round source. Timer callbacks and native pings remain private module behavior and expose no mutation API.
 
 ### 10.12 WelcomeAssist
 
@@ -1550,14 +1556,16 @@ const result = effects.apply({
 | `isAvailable()` | Reports the saved module enablement state. |
 | `getDefinitions()` | Returns defensive copies of built-in and campaign effect definitions. |
 | `getActiveInstances()` / `getHistory()` | Returns defensive copies of active and bounded ended records. |
+| `getDurationCandidates()` | Returns defensive copies of open and dismissed duration review evidence associated with active instances. |
 | `apply(request)` | Atomically validates source and targets, records one semantic instance, and applies every supported projection or rolls the operation back. |
 | `end(instanceId, actor)` | Ends one source instance idempotently and removes only unneeded EffectAssist-owned projections. |
+| `reconcileDurations()` | Compares saved provider anchors against current verified provider state once and returns newly created review candidates; it never ends an effect. |
 | `audit()` | Returns a defensive read-only comparison of records, ownership, marker/condition state, concentration, and 2014-sheet rows. |
 | `observe(callback, options)` | Filters SemanticEvents to `effect.lifecycle.changed`. |
 | `clearObservers(owner)` | Clears semantic observers registered under the exact owner. |
 | `registerProjectionAdapter(name, adapter)` | Adds a validated projection adapter without changing the stored effect identity. Built-ins cover MarkerService, ConditionAssist, record-only, and verified 2014 repeating modifiers. |
 
-A script-provided `requestId` is bounded and idempotent for the retained runtime window. A reused ID with a different intent is refused. Apply is transactional across its supported projections; a partial write is rolled back. Cleanup uses exact ownership evidence, preserves pre-existing state, and leaves externally edited sheet rows in place for GM review.
+A script-provided `requestId` is bounded and idempotent for the retained runtime window. A reused ID with a different intent is refused. Apply is transactional across its supported projections; a partial write is rolled back. Cleanup uses exact ownership evidence, preserves pre-existing state, and leaves externally edited sheet rows in place for GM review. Duration observations publish ordinary `effect.lifecycle.changed` transitions such as candidate creation, dismissal, and restoration; confirmed ending still uses the established `ended` transition.
 
 ### 10.17 AlmanacAssist
 
@@ -2273,10 +2281,10 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 | DM-configurable timezone | **Implemented; focused acceptance passed** | One validated table timezone controls readable timestamps and date-managed NPC Sessions while stored event instants remain absolute. The complete live module suite was not rerun for v0.1.5.1. |
 | TurnTrackerService 1.0.0 | **Implemented; live foundation passed** | Toggleable native-tracker snapshots, structural row classification, guarded lossless writes, observations, dependency cascading, and visible page-owned row creation passed the focused Roll20 checkpoint. |
 | SemanticEvents 1 | **Implemented; local contract checks passed** | Immutable, versioned, direct-delivery domain events let optional modules interoperate without hard dependencies, persistence, replay, or implicit queueing. |
-| EffectAssist 2.0.0 | **v2.0.0 sandbox candidate** | Disabled-by-default six-effect catalog for the official 2014 sheet, player casting with GM lockout, multi-projection ownership, concentration-linked cleanup, bounded history, read-only audit, and confirmed repair are ready for focused Roll20 testing. |
+| EffectAssist 2.1.0 | **v2.0.0 sandbox candidate** | Disabled-by-default six-effect catalog for the official 2014 sheet, player casting with GM lockout, multi-projection ownership, concentration-linked cleanup, bounded history, read-only audit, confirmed repair, and optional GM-reviewed CombatAssist/Almanac duration candidates are ready for focused Roll20 testing. |
 | AlmanacAssist 1.0.0 | **v2.0.0 sandbox candidate** | Disabled-by-default Time, Climate, Astronomy, Weather, Environment, and Rest systems are implemented together with standalone fallbacks, bounded state/history, a shared manual, read-only audits, semantic events, and transactional 2014-sheet rest safeguards. |
 | InitiativeAssist 1.0.4 | **Implemented and accepted** | Mixed 2014/2024 initiative, public and private GM/DM start pages, private NPC evidence, GM-layer NPC batches, selected-character batches, roll options, selective rerolls, encounter groups, status, audit, compact navigation, and a stable manual through the case-insensitive `!Init-` namespace. |
-| CombatAssist 1.0.5 | **Implemented and accepted** | Optional native-tracker layer with native round-counter authority, conservative fallback rounds, preserved-round roster/reroll adoption, one-step recovery, guarded movement, stale-safe configurable timers, private-safe native pings, ordered player confirmations, GM/DM controls, compact guidance, and a persistent manual. TurnTrackerService is its only baseline prerequisite. |
+| CombatAssist 1.1.0 | **v2.0.0 integration candidate** | The accepted optional native-tracker layer retains native round-counter authority, conservative fallback rounds, preserved-round roster/reroll adoption, recovery, guarded movement, timers, pings, and GM/DM controls while adding immutable accepted-progression events for optional duration consumers. TurnTrackerService remains its only baseline prerequisite. |
 | WelcomeAssist 0.1.4 | **Implemented and accepted** | Disabled-by-default post-bootstrap greeting with professional, built-in, campaign-custom, and mixed modes; private preview/configuration; bounded custom text; health-gated one-per-sandbox automatic output; compact standard navigation; GM/DM status controls; a stable manual; short `!Welcome` commands; and retained `!welcome-assist` compatibility. |
 | Configuration export | **Implemented, partial** | Versioned configuration-only snapshot; no import/restore. |
 | State self-healing | **Implemented, conservative** | Repairs known containers; does not auto-delete unknown branches. |
@@ -2286,7 +2294,7 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 
 ### 17.2 Current Candidate: v2.0.0 EffectAssist and AlmanacAssist
 
-The v2.0.0 candidate combines two disabled-by-default modules on one development line. EffectAssist 2.0.0 supplies the accepted source-aware 2014-sheet effect foundation; its separately tracked UX and player-casting repairs remain future work rather than a reason to fork or publish the release early. AlmanacAssist 1.0.0 must pass as a complete six-system module before v2.0.0 can ship: fictional Time, regional Climate, Astronomy, continuity-aware Weather, descriptive Environment, and deliberate Rest all belong to this release gate.
+The v2.0.0 candidate combines two disabled-by-default modules on one development line. EffectAssist 2.1.0 supplies the source-aware 2014-sheet effect foundation plus optional GM-reviewed duration candidates; its separately tracked UX and player-casting repairs remain future work rather than a reason to fork or publish the release early. AlmanacAssist 1.0.0 must pass as a complete six-system module before v2.0.0 can ship: fictional Time, regional Climate, Astronomy, continuity-aware Weather, descriptive Environment, and deliberate Rest all belong to this release gate.
 
 The six Almanac systems are independently toggleable and remain useful without hidden prerequisites. They exchange optional context through explicit APIs and semantic events, preserve valid settings while disabled, and keep fictional chronology separate from real-world GameAssist timestamps. RestAlmanac is the only initial Almanac sheet writer and supports verified official 2014 PC fields through preview, revalidation, confirmation, and rollback safeguards.
 
@@ -2321,7 +2329,7 @@ The public [development roadmap](ROADMAP.md) carries the detailed gates and issu
 * No 2024-sheet or third-party-sheet modifier writes.
 * No passive spell-card recognition.
 * No automatic concentration roll or concentration-ending decision inferred from HP loss; supported decreases may offer a private check that an authorized player or GM must choose.
-* No automatic effect expiration from rounds, turns, real time, or fictional TimeAlmanac advancement.
+* No automatic effect expiration from rounds, turns, real time, or fictional TimeAlmanac advancement; verified CombatAssist and TimeAlmanac boundaries create GM review candidates only.
 * No 2024 native Effect writes without a documented Roll20 contract.
 * No WildShape or token-representation interoperability guesswork.
 * No automatic environmental penalties, weather-driven marker changes, or unverified class-resource rest writes.
@@ -2333,12 +2341,13 @@ The public [development roadmap](ROADMAP.md) carries the detailed gates and issu
 
 ### v2.0.0 – EffectAssist and Complete AlmanacAssist
 
-* Added disabled-by-default EffectAssist 2.0.0 with a focused six-effect launch catalog, player casting from controlled sources, GM lockout, source and target records, dependencies, stacking, lifecycle, and bounded history.
+* Added disabled-by-default EffectAssist 2.1.0 with a focused six-effect launch catalog, player casting from controlled sources, GM lockout, source and target records, dependencies, stacking, lifecycle, bounded history, and optional GM-reviewed duration candidates.
 * Bless now coordinates its target marker, 2014-sheet `1d4` attack and save modifier rows, source concentration, overlap, and dependent cleanup.
 * Warding Bond and Haste add their verified AC/save rows; all catalog entries distinguish automatic mechanics from assisted table steps.
 * Preserves non-stacking projections across overlapping sources and removes only final EffectAssist-owned markers, conditions, concentration, and unedited sheet rows.
 * Adds read-only audit, GM-bound one-use repair confirmation, identity-drift refusal, external-edit preservation, and post-write verification.
 * Added CORE:SEMANTICEVENTS for immutable versioned optional-integration contracts without persistence, replay, or implicit queueing.
+* Advanced CombatAssist to 1.1.0 with immutable accepted encounter and turn-progression events, and added formal EffectAssist duration rules that consume those events or committed Almanac time without ending effects automatically.
 * Added disabled-by-default AlmanacAssist 1.0.0 with independently controlled Time, Climate, Astronomy, Weather, Environment, and Rest systems in the same release candidate.
 * Added four calendar profiles, editable Wayfarer calendars and holidays, regional climate inheritance, configurable moons and celestial events, continuity-aware weather, structured environment context, and transactional 2014-sheet rest previews.
 * Keeps every Almanac system useful through explicit fallbacks, preserves valid state while disabled, and separates fictional world time from real-world table timestamps and NPCAssist Session dates.

@@ -47,7 +47,7 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ### Release definition
 
-GameAssist v2.0.0 remains one active development line in PR #81. EffectAssist 2.0.0 is a catalog-driven effect coordinator for the official D&D 5E by Roll20 2014 character sheet. AlmanacAssist 1.0.0 combines fictional Time, regional Climate, Astronomy, continuity-aware Weather, descriptive Environment, and deliberate Rest as six independently controlled internal systems. HealthService 1.0.0 adds one canonical supported HP-observation and verified-write boundary. ConcentrationAssist 0.4.0 uses that evidence for optional private, revalidated concentration-check offers after supported HP loss. The shared SemanticEvents service provides immutable in-sandbox lifecycle notifications without coupling module state.
+GameAssist v2.0.0 remains one active development line in PR #81. EffectAssist 2.1.0 is a catalog-driven effect coordinator for the official D&D 5E by Roll20 2014 character sheet with optional GM-reviewed duration candidates. AlmanacAssist 1.0.0 combines fictional Time, regional Climate, Astronomy, continuity-aware Weather, descriptive Environment, and deliberate Rest as six independently controlled internal systems. HealthService 1.0.0 adds one canonical supported HP-observation and verified-write boundary. ConcentrationAssist 0.4.0 uses that evidence for optional private, revalidated concentration-check offers after supported HP loss. CombatAssist 1.1.0 supplies immutable accepted encounter-progression events without exposing tracker-write authority. The shared SemanticEvents service provides immutable in-sandbox lifecycle notifications without coupling module state.
 
 EffectAssist and AlmanacAssist start disabled so existing campaigns upgrade without receiving new markers, conditions, sheet writes, fictional chronology, weather, or chat output until the GM deliberately enables them.
 
@@ -212,7 +212,29 @@ EffectAssist and AlmanacAssist start disabled so existing campaigns upgrade with
 ### Tracked follow-up integrations
 
 - Issue #77 retains passive 2014 cast recognition and the evidence-first 2024 observation work.
-- Issue #80 retains turn, encounter, and future world-time duration providers; v2.0.0 keeps duration endings deliberate unless concentration ends first.
+
+### Effect duration providers
+
+- Advances EffectAssist from 2.0.0 to 2.1.0 and its durable state schema from 2 to 3.
+- Adds formal encounter-round, world-minute, and ending-rule metadata to each built-in launch definition.
+- Records a CombatAssist anchor only when an active accepted encounter exists on the effect source's page, including the encounter identity, current round, current initiative identity, and target round.
+- Records an Almanac anchor only when TimeAlmanac is available, including the committed starting minute, target minute, and revision.
+- Advances CombatAssist from 1.0.5 to 1.1.0 with stable encounter identity, monotonic accepted-forward progression, and immutable schema-1 encounter and turn events.
+- Publishes CombatAssist start, rebase, attention, pause, resume, end, forward-turn, and backward-turn observations without exposing a consumer tracker-write method.
+- Creates a private GM expiration candidate only after an accepted forward CombatAssist boundary or committed forward Almanac boundary is reached.
+- Creates an encounter-end reminder, rather than an expiration claim, when CombatAssist ends before an anchored round boundary can be verified.
+- Keeps every effect active until an existing explicit ending path succeeds; no duration callback removes markers, sheet rows, concentration, or semantic records automatically.
+- Lets the GM end the exact effect, keep it active by dismissing the candidate, or reopen a dismissed candidate through `!Effect-Duration`.
+- Adds `!Effect-Durations on|off` so candidate processing can be disabled without deleting active effects, provider anchors, or prior review evidence.
+- Ignores backward turns, tracker rebases, initiative edits, and backward Almanac movement as elapsed-duration proof.
+- Compares a large committed Almanac jump once and deduplicates providers so the same elapsed boundary does not produce repeated expiration candidates.
+- Reconciles persisted anchors after module initialization and when the GM opens Duration Review following re-enable; SemanticEvents remains non-persistent and no elapsed event history is replayed.
+- Migrates existing schema-2 effects without inventing retrospective start times. Those effects retain their original duration label and receive an explicit manual-duration note.
+- Leaves effects manual when no provider was active at application time, the GM disabled duration candidates, or a custom duration replaced the catalog wording.
+- Adds GM-facing duration state to EffectAssist Status, Active Effects, the Control Center, Quick Guide, and the stable manual handout.
+- Exposes defensive `getDurationCandidates()` and deliberate `reconcileDurations()` inspection methods while preserving the existing lifecycle observer contract.
+- Adds bounded policy limits for retained duration candidates, encounter-round values, and world-minute values.
+- Passes 40 focused local duration-provider checks, 34 ConcentrationAssist/HealthService regression checks, 70 HealthService checks, and JavaScript syntax validation. Live Roll20 duration-provider acceptance remains required before Issue #80 is complete.
 
 ### Complete AlmanacAssist module
 

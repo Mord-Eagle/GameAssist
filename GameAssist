@@ -3,7 +3,7 @@
 GameAssist - Roll20 API Script
 Version: 2.0.0
 Last Updated: 2026-07-29 (America/New_York)
-Release scope: EffectAssist 2.0.0, complete AlmanacAssist 1.0.0, and HealthService 1.0.0 on one GameAssist v2.0.0 development line.
+Release scope: EffectAssist 2.1.0, complete AlmanacAssist 1.0.0, HealthService 1.0.0, and verified CombatAssist duration events on one GameAssist v2.0.0 development line.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -18,11 +18,11 @@ calls GameAssist.enqueue(). This development package contains thirteen configura
 - ConditionAssist 1.0.3 - Provides condition wording, artwork, announcements, and marker controls.
 - TokenAssist 1.0.4 - Provides general token controls through !token-assist and !ta commands.
 - InitiativeAssist 1.0.4 - Uses Roll20's native Turn Tracker for mixed-sheet initiative workflows and compact topic guidance.
-- CombatAssist 1.0.5 - Tracks encounters, native round counters, guarded turns, optional timers, private-safe pings, and recoverable tracker changes.
+- CombatAssist 1.1.0 - Tracks encounters, native round counters, guarded turns, optional timers, private-safe pings, recoverable tracker changes, and verified semantic progression events.
 - WelcomeAssist 0.1.4 - Optionally greets the table after a healthy GameAssist startup through short !Welcome commands.
 - ConcentrationAssist 0.4.0 - Runs manual and private HP-loss-offered concentration checks, manages its configured marker, and exposes concentration lifecycle events.
 - NPCAssist 1.4.0 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, and Arc rosters.
-- EffectAssist 2.0.0 - Coordinates catalog-driven effects, 2014-sheet modifiers, markers, conditions, concentration, and ownership-safe cleanup.
+- EffectAssist 2.1.0 - Coordinates catalog-driven effects, 2014-sheet modifiers, markers, conditions, concentration, ownership-safe cleanup, and optional GM-reviewed duration candidates.
 - AlmanacAssist 1.0.0 - Coordinates fictional time, climate, astronomy, weather, environments, and verified 2014-sheet rests through six independently controlled internal systems.
 - HPAssist 0.2.0 - Rolls npc_hpformula and uses HealthService for verified token bar 1 writes when available.
 - DebugTools 0.3.0 - Optional dry-run-first GM diagnostics with verified supported HP damage writes.
@@ -73,7 +73,8 @@ MODULE COMMANDS
   !npc-death-clear, !npc-death-write, !npc-wr, !npc-death-audit, !npc-death-repair,
   !npc-death-arc, !npc-bloodied, !npc-numbering
 - EffectAssist: !Effect-GM, !Effect-Guide, !Effect-Catalog, !Effect-Active,
-  !Effect-Status, !Effect-Definitions, !Effect-Targets, !Effect-Request,
+  !Effect-Status, !Effect-Definitions, !Effect-Duration, !Effect-Durations on|off,
+  !Effect-Targets, !Effect-Request,
   !Effect-Apply, !Effect-End,
   !Effect-Audit, !Effect-Repair, !Effect-Players, !effect, !Bless, !Guidance, !Guide,
   !Haste, !Warding-Bond, !Holy-Weapon, and !PwoaT
@@ -102,6 +103,7 @@ V2.0.0 FOUNDATION
 - Mechanics without an ownership-safe 2014-sheet field remain clearly listed as
   assisted table steps instead of being represented by unsafe sheet rewrites.
 - EffectAssist audits projection drift without writing and requires a fresh GM confirmation before repair.
+- Built-in EffectAssist definitions carry formal duration rules. Accepted CombatAssist progression and committed AlmanacAssist time may create private GM review candidates, but elapsed time never ends an effect automatically.
 - AlmanacAssist remains disabled until the GM enables it and provides all six
   independently controlled Time, Climate, Astronomy, Weather, Environment,
   and Rest systems as one complete v2.0.0 module.
@@ -155,7 +157,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 // mechsuit:
 //   codename: "GAMEASSIST"
 //   project_version: "v2.0.0"
-//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, migration-safe module identities, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker, Turn Tracker, and health authorities, source-aware semantic effects with ownership-safe projections, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, preservation-first encounter flow, GM-private NPC Bloodied alerts, optional health-gated table greetings, validated real-world table time, and independently managed fictional time, climate, astronomy, weather, environments, and deliberate 2014-sheet rests. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, automatic turn advancement, automatic Bloodied markers/history, automatic concentration rolls from observed HP changes, damage-source guessing, silent effect repair, automatic environmental penalties, or automatic reversal of campaign state when fictional time moves backward."
+//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, migration-safe module identities, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker, Turn Tracker, and health authorities, source-aware semantic effects with ownership-safe projections and optional GM-reviewed duration candidates, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, preservation-first encounter flow, GM-private NPC Bloodied alerts, optional health-gated table greetings, validated real-world table time, and independently managed fictional time, climate, astronomy, weather, environments, and deliberate 2014-sheet rests. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, automatic turn advancement, automatic effect expiration from elapsed time, automatic Bloodied markers/history, automatic concentration rolls from observed HP changes, damage-source guessing, silent effect repair, automatic environmental penalties, or automatic reversal of campaign state when fictional time moves backward."
 //   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.turntrackerservice","core.semanticevents","core.healthservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critassist","modules.conditionassist","modules.tokenassist","modules.initiativeassist","modules.combatassist","modules.welcomeassist","modules.npcassist","modules.concentrationassist","modules.effectassist","modules.almanacassist","modules.hpassist","modules.debugtools","bootstrap"]
 //   env:
 //     required: []
@@ -210,7 +212,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 //     └─ [GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
-// Guarantee: GameAssist v2.0.0 runs policy, utilities, guarded core services including MarkerService, TurnTrackerService, SemanticEvents, and HealthService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/effect/almanac/gameplay modules, then bootstrap in the declared order. HealthService reports only verified supported HP transitions and refuses to guess damage causes, attackers, resistances, or temporary-HP interactions. EffectAssist remains on the v2.0.0 development line, with later UX repairs tracked separately. AlmanacAssist owns its fictional time, climate, astronomy, weather, environment, and rest records without changing GameAssist real-world timestamps, NPCAssist Session dates, or CombatAssist timing. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing real-world times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
+// Guarantee: GameAssist v2.0.0 runs policy, utilities, guarded core services including MarkerService, TurnTrackerService, SemanticEvents, and HealthService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/effect/almanac/gameplay modules, then bootstrap in the declared order. HealthService reports only verified supported HP transitions and refuses to guess damage causes, attackers, resistances, or temporary-HP interactions. EffectAssist may turn accepted CombatAssist progression and committed AlmanacAssist time into private GM duration candidates, but it refuses to end effects from elapsed time alone. AlmanacAssist owns its fictional time, climate, astronomy, weather, environment, and rest records without changing GameAssist real-world timestamps, NPCAssist Session dates, or CombatAssist timing. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing real-world times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
 
 // =============================
 // === GameAssist v2.0.0 ===
@@ -360,6 +362,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         effects: Object.freeze({
             activeInstanceLimit: 100,
             endedHistoryLimit: 100,
+            durationCandidateLimit: 6,
+            maximumEncounterDurationRounds: 10000,
+            maximumWorldDurationMinutes: 5256000,
             definitionLimit: 25,
             targetLimit: 20,
             sourcePickerLimit: 25,
@@ -419,7 +424,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Added bounded HealthService transition, operation, pending-write, deduplication, producer, and operation-id limits plus a ten-minute, fifty-offer ceiling for optional concentration prompts; rollback: disable the affected service or ConcentrationAssist health prompts while retaining manual checks.
+    // Changed (v2.0.0): Added bounded HealthService and concentration-offer limits plus EffectAssist duration-candidate, encounter-round, and world-minute limits; rollback: disable the affected optional integration while retaining manual workflows.
     // Decision log:
     //   CHOICE: Offer common IANA zones plus validated custom input - ALT: fixed numeric offsets; REJECTED: fixed offsets do not follow daylight-saving changes.
     //   CHOICE: Keep NPC initialization and snapshot knobs centralized while removing the unused external marker delay - ALT: retain the dead setting; REJECTED: implied behavior no caller performs.
@@ -9757,17 +9762,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:INITIATIVEASSIST] END
     // =============================================================================
 
-    // ————— COMBATASSIST MODULE v1.0.5 —————
+    // ————— COMBATASSIST MODULE v1.1.0 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:COMBATASSIST] BEGIN
     // Section Title: Preservation-first encounter flow
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:COMBATASSIST", title: "CombatAssist",
-    //   guarantees: ["Disabled-by-default, GM-configured encounter tracking through case-insensitive !Combat- commands","Exact one-row movement advances turns while valid roster, initiative, and manual-order changes preserve the round and establish a fresh counting baseline","A single clearly named native custom round counter is authoritative; its simple signed whole-number calculation is evaluated when CombatAssist moves it to the top","Without a native round counter, rounds advance only after an uninterrupted, unambiguous forward cycle returns to the encounter anchor","Unreadable, off-page, malformed, stale, or ambiguous tracker states retain the last accepted snapshot and expose guarded recovery","Explicit next, previous, restore, and authorized End My Turn requests use CORE:TURNTRACKERSERVICE revision guards","Optional turn reminders validate encounter, round, current identity, revision, and deadline before notifying and never advance initiative","Optional current-turn cues use non-centering native pings, restrict hidden turns to GMs, and never mutate token properties","Player End My Turn is available only in Whispers mode, is rebound at execution time, and confirms success before a newly controlled character receives the next-turn prompt","Player confirmations describe the next initiative neutrally and never reveal GM-layer, unlinked, or custom tracker identities","Standard confirmation wording appears exactly once in the warmer Varied rotation","The root guide stays compact while its purpose action writes a persistent GM manual handout and topic buttons reveal focused references","Status, guide, help, GM, menu, info, and audit navigation aliases remain case-insensitive","Baseline module operation remains independent; optional cross-module features must identify and locally enforce their prerequisites","CombatAssist does not replace Roll20's native Turn Tracker"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
+    //   guarantees: ["Disabled-by-default, GM-configured encounter tracking through case-insensitive !Combat- commands","Exact one-row movement advances turns while valid roster, initiative, and manual-order changes preserve the round and establish a fresh counting baseline","A single clearly named native custom round counter is authoritative; its simple signed whole-number calculation is evaluated when CombatAssist moves it to the top","Without a native round counter, rounds advance only after an uninterrupted, unambiguous forward cycle returns to the encounter anchor","Unreadable, off-page, malformed, stale, or ambiguous tracker states retain the last accepted snapshot and expose guarded recovery","Explicit next, previous, restore, and authorized End My Turn requests use CORE:TURNTRACKERSERVICE revision guards","Verified encounter transitions publish immutable semantic events without granting consumers tracker-write authority","Optional turn reminders validate encounter, round, current identity, revision, and deadline before notifying and never advance initiative","Optional current-turn cues use non-centering native pings, restrict hidden turns to GMs, and never mutate token properties","Player End My Turn is available only in Whispers mode, is rebound at execution time, and confirms success before a newly controlled character receives the next-turn prompt","Player confirmations describe the next initiative neutrally and never reveal GM-layer, unlinked, or custom tracker identities","Standard confirmation wording appears exactly once in the warmer Varied rotation","The root guide stays compact while its purpose action writes a persistent GM manual handout and topic buttons reveal focused references","Status, guide, help, GM, menu, info, and audit navigation aliases remain case-insensitive","Baseline module operation remains independent; optional cross-module features must identify and locally enforce their prerequisites","CombatAssist does not replace Roll20's native Turn Tracker"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
     //   observability: { spans: ["[GAMEASSIST:MODULES:COMBATASSIST]"] },
-    //   last_updated_version: "v0.1.7.0",
-    //   independent_versions: { module_version: "1.0.5" }, lifecycle: "active" }
+    //   last_updated_version: "v2.0.0",
+    //   independent_versions: { module_version: "1.1.0", combat_event_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // CombatAssist begins only after a GM explicitly starts it against an open,
@@ -9780,7 +9785,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     let teardownCombatAssist = () => {};
     GameAssist.register('CombatAssist', function() {
         const MODULE_NAME = 'CombatAssist';
-        const MODULE_VERSION = '1.0.5';
+        const MODULE_VERSION = '1.1.0';
+        const COMBAT_EVENT_SCHEMA_VERSION = 1;
         const VALID_STATES = new Set(['active', 'paused', 'attention']);
         const VALID_ANNOUNCEMENTS = new Set(['off', 'gm', 'public', 'whispers']);
         const VALID_PLAYER_CONFIRMATIONS = new Set(['standard', 'varied']);
@@ -9800,6 +9806,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         let turnTimerGeneration = 0;
         let turnTimerHandles = [];
         let cueUnavailableReported = false;
+        let encounterSequence = 0;
         const modState = GameAssist.getState(MODULE_NAME);
         Object.assign(modState.config, {
             enabled: false,
@@ -10160,8 +10167,34 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     ? cloneData(current.entries)
                     : [];
             }
+            if (!value.id) {
+                value.id = `combat-${Date.now().toString(36)}-${(++encounterSequence).toString(36)}`;
+            }
+            if (!Number.isInteger(value.progression) || value.progression < 0) value.progression = 0;
             if (value.checkpoint && !checkpointIsUsable(value.checkpoint)) delete value.checkpoint;
             return value;
+        }
+
+        function publishCombatEvent(type, encounter, analysis, details = {}) {
+            if (!encounter) return { ok: false, code: 'NOT_FOUND', message: 'No CombatAssist encounter is available.' };
+            const current = analysis?.structures?.[0];
+            return GameAssist.SemanticEvents.publish(type, MODULE_NAME, {
+                combatEventSchemaVersion: COMBAT_EVENT_SCHEMA_VERSION,
+                encounterId: String(encounter.id || ''),
+                pageId: String(encounter.pageId || ''),
+                status: String(encounter.status || ''),
+                round: Number(encounter.round || 0),
+                turn: Number(encounter.turn || 0),
+                progression: Number(encounter.progression || 0),
+                current: {
+                    identity: String(analysis?.identities?.[0] || encounter.order?.[0] || ''),
+                    label: String(currentLabel(analysis)),
+                    tokenId: current?.kind === 'token' ? String(current.id || '') : null,
+                    kind: String(current?.kind || 'unknown')
+                },
+                trackerRevision: String(encounter.lastRevision || ''),
+                details: cloneData(details || {})
+            });
         }
 
         function currentLabel(analysis) {
@@ -10544,6 +10577,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ]);
                 whisperCurrentPlayerTurn(encounter, analysis);
             }
+            publishCombatEvent('combat.encounter.rebased', encounter, analysis, { reason: encounter.lastChangeReason });
             return encounter;
         }
 
@@ -10566,6 +10600,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     GameAssist.createButton('Restart at Round 1', '!Combat-Start --confirm')
                 ].filter(Boolean).join(' '));
             }
+            if (!wasAttention) publishCombatEvent('combat.encounter.attention', encounter, null, { reason: encounter.attention });
         }
 
         function processSnapshot(snapshot, { notify = true, directionHint = null } = {}) {
@@ -10653,6 +10688,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
 
             rememberAcceptedState(encounter);
+            const previous = {
+                round: encounter.round,
+                turn: encounter.turn,
+                identity: String(encounter.order?.[0] || '')
+            };
             encounter.order = analysis.identities.slice();
             acceptSnapshot(encounter, snapshot);
             encounter.lastTransitionAt = isoNow();
@@ -10661,12 +10701,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (backward) {
                 encounter.forwardStreak = 0;
                 encounter.lastDirection = 'backward';
+                publishCombatEvent('combat.turn.changed', encounter, analysis, { direction: 'backward', previous });
                 if (notify) announceBackward(encounter, analysis);
                 return encounter;
             }
 
             encounter.forwardStreak = Number(encounter.forwardStreak || 0) + 1;
             encounter.lastDirection = 'forward';
+            encounter.progression = Number(encounter.progression || 0) + 1;
             const trackerOwnsRound = useRoundCounter(encounter, analysis, {
                 syncValue: analysis.roundCounter?.index === 0
             });
@@ -10678,6 +10720,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 encounter.forwardStreak = 0;
                 encounter.lastRoundAt = encounter.lastTransitionAt;
             }
+            publishCombatEvent('combat.turn.changed', encounter, analysis, { direction: 'forward', previous });
             if (notify) announceForward(encounter, analysis);
             return encounter;
         }
@@ -10707,6 +10750,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
 
             modState.runtime.encounter = {
+                id: `combat-${Date.now().toString(36)}-${(++encounterSequence).toString(36)}`,
                 status: 'active',
                 pageId: snapshot.pageId,
                 round: analysis.roundCounter?.value || 1,
@@ -10715,6 +10759,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 order: analysis.identities.slice(),
                 baseOrder: analysis.identities.slice(),
                 acceptedEntries: cloneData(snapshot.entries),
+                progression: 0,
                 forwardStreak: 0,
                 lastDirection: null,
                 lastRevision: snapshot.revision,
@@ -10735,6 +10780,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             scheduleTurnTimers(modState.runtime.encounter, snapshot, analysis);
             sendCurrentTurnCue(analysis);
             whisperCurrentPlayerTurn(modState.runtime.encounter, analysis);
+            publishCombatEvent('combat.encounter.started', modState.runtime.encounter, analysis, { reason: 'gm-started' });
         }
 
         function pauseEncounter() {
@@ -10765,6 +10811,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             encounter.status = 'paused';
             encounter.pausedAt = isoNow();
             clearTurnTimers(encounter, { forget: true });
+            publishCombatEvent('combat.encounter.paused', encounter, null, { reason: 'gm-paused' });
             sendPanel('CombatAssist Paused', [
                 { label: 'Tracker', value: 'Roll20 remains unchanged. CombatAssist will not count tracker movement while paused.' },
                 { label: 'Use This For', value: 'Adding, removing, or reordering Turn Tracker rows.' },
@@ -10825,6 +10872,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             scheduleTurnTimers(encounter, snapshot, analysis);
             sendCurrentTurnCue(analysis);
             whisperCurrentPlayerTurn(encounter, analysis);
+            publishCombatEvent('combat.encounter.resumed', encounter, analysis, { reason: 'gm-resumed' });
         }
 
         function adoptCurrentTracker() {
@@ -10922,6 +10970,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             scheduleTurnTimers(encounter, result.after, restoredAnalysis);
             sendCurrentTurnCue(restoredAnalysis);
             whisperCurrentPlayerTurn(encounter, restoredAnalysis);
+            publishCombatEvent('combat.encounter.rebased', encounter, restoredAnalysis, { reason: 'tracker-restored' });
         }
 
         function endEncounter(confirmed) {
@@ -10942,6 +10991,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             const summary = `Ended on round ${encounter.round} while ${encounter.status}.`;
             clearTurnTimers(encounter, { forget: true });
+            const endingSnapshot = GameAssist.TurnTrackerService.snapshot();
+            const endingAnalysis = analyzeSnapshot(endingSnapshot);
+            publishCombatEvent('combat.encounter.ended', encounter, endingAnalysis.ok ? endingAnalysis : null, { reason: 'gm-ended' });
             delete modState.runtime.encounter;
             sendPanel('CombatAssist Encounter Ended', [
                 { label: 'Summary', value: _sanitize(summary) },
@@ -11552,10 +11604,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         GameAssist.CombatAssist = Object.freeze({
             version: MODULE_VERSION,
+            combatEventSchemaVersion: COMBAT_EVENT_SCHEMA_VERSION,
             getStatus: () => {
                 const encounter = getEncounter();
                 return encounter ? JSON.parse(JSON.stringify(encounter)) : null;
-            }
+            },
+            observe: (callback, { owner = 'CombatAssistConsumer' } = {}) => GameAssist.SemanticEvents.observe(callback, {
+                owner,
+                types: ['combat.encounter.started', 'combat.encounter.rebased', 'combat.encounter.attention', 'combat.encounter.paused', 'combat.encounter.resumed', 'combat.encounter.ended', 'combat.turn.changed']
+            }),
+            clearObservers: owner => GameAssist.SemanticEvents.clearObservers(owner)
         });
 
         teardownCombatAssist = function() {
@@ -11577,8 +11635,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         preserveRuntimeOnDisable: true
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.7.0): Advanced CombatAssist to 1.0.5; !Combat-GM and !Combat-DM are equal role aliases for the encounter control center, while the shared manual writer and all encounter, timer, ping, and tracker behavior remain unchanged.
+    // Changed (v2.0.0): Advanced CombatAssist to 1.1.0 with stable encounter identity, monotonic verified-forward progression, and immutable public semantic events for optional consumers; native tracker ownership and all established encounter controls remain unchanged.
     // Decision log:
+    //   CHOICE: Publish verified encounter observations without exposing a consumer write path - ALT: let EffectAssist parse Roll20 turnorder independently; REJECTED: duplicate tracker interpretation would drift from CombatAssist's accepted baseline and safety rules.
+    // Prior notes:
+    //   v0.1.7.0: Advanced CombatAssist to 1.0.5; !Combat-GM and !Combat-DM are equal role aliases for the encounter control center, while the shared manual writer and all encounter, timer, ping, and tracker behavior remained unchanged.
     //   CHOICE: Start disabled and require explicit GM encounter start - ALT: infer combat from an open tracker; REJECTED: Roll20 trackers are also used for setup, exploration, and non-combat ordering.
     //   CHOICE: Identify token rows by token id and custom rows by exact label - ALT: include initiative priority; REJECTED: priority edits do not change row ownership or identity.
     //   CHOICE: Refuse indistinguishable duplicate rows and require CombatAssist Next Turn for a two-row tracker - ALT: guess native arrow direction; REJECTED: forward and backward produce the same two-row order.
@@ -15441,17 +15502,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:CONCENTRATIONASSIST] END
     // =============================================================================
 
-    // ————— EFFECTASSIST MODULE v2.0.0 —————
+    // ————— EFFECTASSIST MODULE v2.1.0 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:EFFECTASSIST] BEGIN
     // Section Title: Catalog-driven semantic effects and 2014 sheet projections
     // -----------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:EFFECTASSIST", title: "EffectAssist",
-    //   guarantees: ["Effect instances, not markers or sheet fields, are the durable source of truth","Definitions may coordinate multiple source and target projections through one versioned adapter pipeline","Verified 2014 repeating modifier rows are ownership-safe and never overwrite unrelated sheet data","ConcentrationAssist owns concentration state while EffectAssist owns dependent cleanup","Audit is read-only; application and repair require bounded confirmation","Player casting requires source control, uses visible native target selection, and may be locked by the GM","GM-assisted player requests preserve source authorization without exposing full GM controls","Successful player-originated applications announce the source, effect, and public target names","The built-in catalog distinguishes automated mechanics from tracked rules"],
+    //   guarantees: ["Effect instances, not markers or sheet fields, are the durable source of truth","Definitions may coordinate multiple source and target projections through one versioned adapter pipeline","Verified 2014 repeating modifier rows are ownership-safe and never overwrite unrelated sheet data","ConcentrationAssist owns concentration state while EffectAssist owns dependent cleanup","Optional duration providers create reviewable GM candidates but never end effects automatically","Combat duration evidence comes only from accepted CombatAssist progression and world-time evidence comes only from committed AlmanacAssist changes","Provider absence, tracker rebases, backward movement, restarts, and large time jumps are handled without guessed or unbounded replay","Audit is read-only; application and repair require bounded confirmation","Player casting requires source control, uses visible native target selection, and may be locked by the GM","GM-assisted player requests preserve source authorization without exposing full GM controls","Successful player-originated applications announce the source, effect, and public target names","The built-in catalog distinguishes automated mechanics from tracked rules"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]","[GAMEASSIST:MODULES:CONDITIONASSIST]","[GAMEASSIST:MODULES:CONCENTRATIONASSIST]"],
     //   provides: ["GameAssist.EffectAssist"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "2.0.0", effect_state_schema_version: 2 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "2.1.0", effect_state_schema_version: 3 }, lifecycle: "active" }
     // -----------------------------------------------------------------------------
     // Narrative
     // EffectAssist is a catalog-driven rules coordinator. It records the source,
@@ -15464,8 +15525,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -----------------------------------------------------------------------------
     GameAssist.register('EffectAssist', function() {
         const MODULE_NAME = 'EffectAssist';
-        const MODULE_VERSION = '2.0.0';
-        const STATE_SCHEMA_VERSION = 2;
+        const MODULE_VERSION = '2.1.0';
+        const STATE_SCHEMA_VERSION = 3;
         const modState = GameAssist.getState(MODULE_NAME);
         const repairGrants = new Map();
         const applyGrants = new Map();
@@ -15511,6 +15572,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 description: 'Blessed targets add 1d4 to attack rolls and saving throws.',
                 concentration: true,
                 duration: 'Up to 1 minute',
+                durationRules: Object.freeze({ encounterRounds: 10, worldMinutes: 1, ending: Object.freeze(['manual', 'concentration']) }),
                 targets: 'Up to three creatures at base level; higher slots may affect more.',
                 catalogGroup: 'automated',
                 stacking: Object.freeze({ group: 'bless', mode: 'nonstacking' }),
@@ -15530,6 +15592,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 description: 'The target may add 1d4 to one ability check before the spell ends.',
                 concentration: true,
                 duration: 'Up to 1 minute or until the bonus is used',
+                durationRules: Object.freeze({ encounterRounds: 10, worldMinutes: 1, ending: Object.freeze(['manual', 'concentration', 'bonus-used']) }),
                 targets: 'One willing creature',
                 catalogGroup: 'automated',
                 stacking: Object.freeze({ group: 'guidance', mode: 'nonstacking' }),
@@ -15548,6 +15611,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 description: 'The target gains +1 AC, +1 to saving throws, resistance to damage, and shares damage with the source.',
                 concentration: false,
                 duration: '1 hour',
+                durationRules: Object.freeze({ encounterRounds: 600, worldMinutes: 60, ending: Object.freeze(['manual', 'source-or-target-rule']) }),
                 targets: 'One willing creature',
                 catalogGroup: 'automated',
                 stacking: Object.freeze({ group: 'warding-bond', mode: 'nonstacking' }),
@@ -15567,6 +15631,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 description: 'One weapon deals extra radiant damage and can be dismissed in a burst of radiance.',
                 concentration: true,
                 duration: 'Up to 1 hour',
+                durationRules: Object.freeze({ encounterRounds: 600, worldMinutes: 60, ending: Object.freeze(['manual', 'concentration', 'dismissed-for-burst']) }),
                 targets: 'One weapon carried by a creature',
                 catalogGroup: 'tracked',
                 stacking: Object.freeze({ group: 'holy-weapon', mode: 'nonstacking' }),
@@ -15584,6 +15649,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 description: 'The target gains +2 AC and the other benefits and limits described by Haste.',
                 concentration: true,
                 duration: 'Up to 1 minute',
+                durationRules: Object.freeze({ encounterRounds: 10, worldMinutes: 1, ending: Object.freeze(['manual', 'concentration']) }),
                 targets: 'One willing creature',
                 catalogGroup: 'automated',
                 stacking: Object.freeze({ group: 'haste', mode: 'nonstacking' }),
@@ -15602,6 +15668,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 description: 'Chosen creatures near the source gain +10 to Dexterity (Stealth) checks and cannot be tracked except by magic.',
                 concentration: true,
                 duration: 'Up to 1 hour',
+                durationRules: Object.freeze({ encounterRounds: 600, worldMinutes: 60, ending: Object.freeze(['manual', 'concentration', 'target-leaves-area']) }),
                 targets: 'Chosen creatures within 30 feet of the source',
                 catalogGroup: 'tracked',
                 stacking: Object.freeze({ group: 'pass-without-a-trace', mode: 'nonstacking' }),
@@ -15626,6 +15693,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         Object.assign(modState.config, {
             enabled: false,
             allowPlayerCasting: true,
+            durationCandidates: true,
             markerOverrides: {},
             customDefinitions: {},
             ...modState.config
@@ -15658,6 +15726,96 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 .replace(/^-+|-+$/g, '')
                 .slice(0, POLICY.effects.nameLength);
             return normalized && !POLICY.config.unsafeKeys.includes(normalized) ? normalized : '';
+        }
+
+        function normalizeDurationRules(value) {
+            if (!isPlainObject(value)) return null;
+            const encounterRounds = Math.floor(Number(value.encounterRounds));
+            const worldMinutes = Math.floor(Number(value.worldMinutes));
+            const ending = [...new Set((Array.isArray(value.ending) ? value.ending : [])
+                .map(item => String(item || '').trim().toLowerCase())
+                .filter(Boolean))].slice(0, 8);
+            const rules = {
+                encounterRounds: Number.isFinite(encounterRounds)
+                    && encounterRounds >= 1
+                    && encounterRounds <= POLICY.effects.maximumEncounterDurationRounds
+                    ? encounterRounds
+                    : null,
+                worldMinutes: Number.isFinite(worldMinutes)
+                    && worldMinutes >= 1
+                    && worldMinutes <= POLICY.effects.maximumWorldDurationMinutes
+                    ? worldMinutes
+                    : null,
+                ending
+            };
+            return rules.encounterRounds || rules.worldMinutes || rules.ending.length ? rules : null;
+        }
+
+        function normalizeDurationAnchor(value, provider) {
+            if (!isPlainObject(value)) return null;
+            if (provider === 'combat') {
+                const startRound = Math.floor(Number(value.startRound));
+                const targetRound = Math.floor(Number(value.targetRound));
+                if (!value.encounterId || startRound < 1 || targetRound <= startRound) return null;
+                return {
+                    encounterId: String(value.encounterId),
+                    pageId: String(value.pageId || ''),
+                    startRound,
+                    targetRound,
+                    startIdentity: String(value.startIdentity || ''),
+                    startProgression: Math.max(0, Math.floor(Number(value.startProgression) || 0)),
+                    anchoredAt: typeof value.anchoredAt === 'string' ? value.anchoredAt : null
+                };
+            }
+            const startWorldMinute = Math.floor(Number(value.startWorldMinute));
+            const targetWorldMinute = Math.floor(Number(value.targetWorldMinute));
+            if (startWorldMinute < 0 || targetWorldMinute <= startWorldMinute) return null;
+            return {
+                startWorldMinute,
+                targetWorldMinute,
+                startRevision: Math.max(0, Math.floor(Number(value.startRevision) || 0)),
+                anchoredAt: typeof value.anchoredAt === 'string' ? value.anchoredAt : null
+            };
+        }
+
+        function normalizeDurationCandidate(value) {
+            if (!isPlainObject(value) || !value.id || !value.dedupeKey) return null;
+            return {
+                id: String(value.id),
+                dedupeKey: String(value.dedupeKey),
+                provider: ['combat', 'world-time'].includes(value.provider) ? value.provider : 'manual',
+                kind: value.kind === 'reminder' ? 'reminder' : 'expiration-candidate',
+                status: value.status === 'dismissed' ? 'dismissed' : 'open',
+                reason: String(value.reason || 'Review this effect duration.'),
+                evidence: isPlainObject(value.evidence) ? clone(value.evidence) : {},
+                createdAt: typeof value.createdAt === 'string' ? value.createdAt : isoNow(),
+                dismissedAt: typeof value.dismissedAt === 'string' ? value.dismissedAt : null,
+                dismissedBy: value.dismissedBy ? String(value.dismissedBy) : null
+            };
+        }
+
+        function normalizeDurationRecord(instance) {
+            const definition = BUILTIN_DEFINITIONS[instance?.definitionId] || instance?.definitionSnapshot || {};
+            const current = isPlainObject(instance?.duration) ? instance.duration : {};
+            const rules = normalizeDurationRules(current.rules || instance?.definitionSnapshot?.durationRules || definition.durationRules);
+            const anchors = isPlainObject(current.anchors) ? current.anchors : {};
+            const candidates = (Array.isArray(current.candidates) ? current.candidates : [])
+                .map(normalizeDurationCandidate)
+                .filter(Boolean)
+                .slice(-POLICY.effects.durationCandidateLimit);
+            instance.duration = {
+                type: rules && (normalizeDurationAnchor(anchors.combat, 'combat') || normalizeDurationAnchor(anchors.world, 'world') || candidates.length)
+                    ? 'provider-candidates'
+                    : 'manual',
+                label: String(current.label || instance?.definitionSnapshot?.duration || definition.duration || '').slice(0, POLICY.effects.nameLength),
+                rules,
+                anchors: {
+                    combat: normalizeDurationAnchor(anchors.combat, 'combat'),
+                    world: normalizeDurationAnchor(anchors.world, 'world')
+                },
+                candidates
+            };
+            return instance.duration;
         }
 
         function stableValue(value) {
@@ -15721,6 +15879,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function ensureState() {
             if (!isPlainObject(modState.config.customDefinitions)) modState.config.customDefinitions = {};
             if (!isPlainObject(modState.config.markerOverrides)) modState.config.markerOverrides = {};
+            modState.config.durationCandidates = modState.config.durationCandidates !== false;
             if (modState.config.defaultBlessMarker && !modState.config.markerOverrides.bless) {
                 modState.config.markerOverrides.bless = String(modState.config.defaultBlessMarker);
             }
@@ -15735,7 +15894,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!Number.isInteger(runtime.stateSchemaVersion) || runtime.stateSchemaVersion < 1) runtime.stateSchemaVersion = 1;
 
             if (runtime.stateSchemaVersion < 2) migrateStateV1(runtime);
+            if (runtime.stateSchemaVersion < 3) migrateStateV2(runtime);
             runtime.stateSchemaVersion = STATE_SCHEMA_VERSION;
+            Object.values(runtime.instances).filter(isPlainObject).forEach(normalizeDurationRecord);
             runtime.history = runtime.history.slice(-POLICY.effects.endedHistoryLimit);
 
             const requestEntries = Object.entries(runtime.requestIds);
@@ -15774,6 +15935,23 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
         }
 
+        function migrateStateV2(runtime) {
+            Object.values(runtime.instances || {}).forEach(instance => {
+                if (!isPlainObject(instance)) return;
+                const priorLabel = String(instance.duration?.label || instance.definitionSnapshot?.duration || '');
+                instance.duration = {
+                    type: 'manual',
+                    label: priorLabel,
+                    rules: normalizeDurationRules(instance.definitionSnapshot?.durationRules || BUILTIN_DEFINITIONS[instance.definitionId]?.durationRules),
+                    anchors: { combat: null, world: null },
+                    candidates: []
+                };
+                if (!Array.isArray(instance.assistance)) instance.assistance = [];
+                const note = 'This effect began before duration providers were recorded; keep its remaining duration manually.';
+                if (!instance.assistance.includes(note)) instance.assistance.push(note);
+            });
+        }
+
         const runtime = ensureState();
 
         function validInstance(instance) {
@@ -15788,6 +15966,236 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function activeInstances() {
             return Object.values(runtime.instances).filter(validInstance);
+        }
+
+        function currentCombatDurationAnchor(rules, source) {
+            if (GameAssist.getState('CombatAssist')?.config?.enabled === false) return null;
+            const encounter = GameAssist.CombatAssist?.getStatus?.();
+            if (!rules?.encounterRounds || !encounter || encounter.status !== 'active') return null;
+            if (String(encounter.pageId || '') !== String(source?.pageId || '')) return null;
+            const startRound = Math.floor(Number(encounter.round));
+            const startIdentity = String(encounter.order?.[0] || '');
+            if (startRound < 1 || !startIdentity || !encounter.id) return null;
+            return {
+                encounterId: String(encounter.id),
+                pageId: String(encounter.pageId || ''),
+                startRound,
+                targetRound: startRound + rules.encounterRounds,
+                startIdentity,
+                startProgression: Math.max(0, Math.floor(Number(encounter.progression) || 0)),
+                anchoredAt: isoNow()
+            };
+        }
+
+        function currentWorldDurationAnchor(rules) {
+            const current = GameAssist.AlmanacAssist?.getTime?.();
+            const startWorldMinute = Math.floor(Number(current?.worldMinute));
+            if (!rules?.worldMinutes || !Number.isFinite(startWorldMinute) || startWorldMinute < 0) return null;
+            return {
+                startWorldMinute,
+                targetWorldMinute: startWorldMinute + rules.worldMinutes,
+                startRevision: Math.max(0, Math.floor(Number(current?.revision) || 0)),
+                anchoredAt: isoNow()
+            };
+        }
+
+        function createDurationRecord(definition, request, source) {
+            const label = String(request.duration || definition.duration || '').slice(0, POLICY.effects.nameLength);
+            const rules = request.duration ? null : normalizeDurationRules(definition.durationRules);
+            const record = {
+                type: 'manual',
+                label,
+                rules,
+                anchors: { combat: null, world: null },
+                candidates: []
+            };
+            const assistance = [];
+            if (!rules) {
+                if (request.duration) assistance.push('A custom duration was entered, so its remaining time stays manual.');
+                return { record, assistance };
+            }
+            if (modState.config.durationCandidates === false) {
+                assistance.push('Duration candidates are turned off; end this effect manually when its duration is reached.');
+                return { record, assistance };
+            }
+            record.anchors.combat = currentCombatDurationAnchor(rules, source);
+            record.anchors.world = currentWorldDurationAnchor(rules);
+            if (record.anchors.combat || record.anchors.world) {
+                record.type = 'provider-candidates';
+            } else {
+                assistance.push('No duration provider was active when this effect began, so its remaining time stays manual.');
+            }
+            return { record, assistance };
+        }
+
+        function durationRuleSummary(instance) {
+            const rules = instance?.duration?.rules;
+            if (!rules) return instance?.duration?.label || 'Manual duration';
+            const units = [];
+            if (rules.encounterRounds) units.push(`${rules.encounterRounds} encounter round${rules.encounterRounds === 1 ? '' : 's'}`);
+            if (rules.worldMinutes) units.push(`${rules.worldMinutes} world minute${rules.worldMinutes === 1 ? '' : 's'}`);
+            return units.length ? units.join(' or ') : (instance.duration.label || 'Manual duration');
+        }
+
+        function durationProviderSummary(instance, provider) {
+            const rules = instance?.duration?.rules;
+            if (provider === 'combat' && rules?.encounterRounds) {
+                return `${rules.encounterRounds}-round`;
+            }
+            if (provider === 'world-time' && rules?.worldMinutes) {
+                return `${rules.worldMinutes}-world-minute`;
+            }
+            return durationRuleSummary(instance);
+        }
+
+        function openDurationCandidates(instance) {
+            return (instance?.duration?.candidates || []).filter(candidate => candidate.status === 'open');
+        }
+
+        function addDurationCandidate(instance, candidate) {
+            if (!validInstance(instance) || modState.config.durationCandidates === false) return null;
+            const duration = normalizeDurationRecord(instance);
+            if (candidate.kind === 'expiration-candidate'
+                && duration.candidates.some(item => item.kind === 'expiration-candidate')) return null;
+            if (duration.candidates.some(item => item.dedupeKey === candidate.dedupeKey)) return null;
+            const created = normalizeDurationCandidate({
+                ...candidate,
+                id: `DUR-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+                status: 'open',
+                createdAt: isoNow()
+            });
+            if (!created) return null;
+            duration.candidates.push(created);
+            if (duration.candidates.length > POLICY.effects.durationCandidateLimit) {
+                const dismissedIndex = duration.candidates.findIndex(item => item.status === 'dismissed');
+                if (dismissedIndex >= 0) duration.candidates.splice(dismissedIndex, 1);
+                while (duration.candidates.length > POLICY.effects.durationCandidateLimit) duration.candidates.shift();
+            }
+            notifyLifecycle('duration-candidate-created', instance, { candidate: created });
+            return { instance, candidate: created };
+        }
+
+        function combatDurationReached(anchor, payload) {
+            if (!anchor || !payload || String(payload.encounterId || '') !== anchor.encounterId) return false;
+            if (anchor.pageId && String(payload.pageId || '') !== anchor.pageId) return false;
+            const round = Math.floor(Number(payload.round));
+            const identity = String(payload.current?.identity || payload.order?.[0] || '');
+            return round > anchor.targetRound || (round === anchor.targetRound && identity === anchor.startIdentity);
+        }
+
+        function worldDurationReached(anchor, payload) {
+            if (!anchor) return false;
+            const currentWorldMinute = Math.floor(Number(payload?.current?.worldMinute ?? payload?.worldMinute));
+            return Number.isFinite(currentWorldMinute) && currentWorldMinute >= anchor.targetWorldMinute;
+        }
+
+        function announceDurationCandidates(created) {
+            if (!created.length) return;
+            const rows = created.slice(0, POLICY.effects.chatListLimit).map(item =>
+                `<b>${_sanitize(item.instance.name)}</b>: ${_sanitize(item.candidate.reason)} `
+                + GameAssist.createButton('End Effect', '!Effect-End --id ' + item.instance.id) + ' '
+                + GameAssist.createButton('Keep Active', `!Effect-Duration-Dismiss --id ${item.instance.id} --candidate ${item.candidate.id}`)
+            ).join('<br>');
+            panel('Effect Duration Review', [
+                { label: 'GM Decision Needed', value: `${created.length} effect duration item(s) are ready for review. Nothing has ended automatically.` },
+                { label: 'Effects', value: rows },
+                { label: 'Actions', value: `${GameAssist.createButton('Review Durations', '!Effect-Duration')} ${GameAssist.createButton('Active Effects', '!Effect-Active')}` }
+            ], null, { gmOnly: true });
+        }
+
+        function observeDurationProvider(event) {
+            if (modState.config.enabled === false || modState.config.durationCandidates === false) return;
+            const payload = event?.payload || {};
+            const created = [];
+            if (event?.type.startsWith('combat.') && event?.producer !== 'CombatAssist') return;
+            if (event?.type === 'almanac.time.changed' && event?.producer !== 'AlmanacAssist') return;
+            if (event?.type === 'combat.turn.changed'
+                && payload.combatEventSchemaVersion === 1
+                && payload.details?.direction === 'forward') {
+                activeInstances().forEach(instance => {
+                    const anchor = instance.duration?.anchors?.combat;
+                    if (!combatDurationReached(anchor, payload)) return;
+                    const item = addDurationCandidate(instance, {
+                        dedupeKey: `combat-expired:${anchor.encounterId}:${anchor.targetRound}`,
+                        provider: 'combat',
+                        kind: 'expiration-candidate',
+                        reason: `${instance.name} reached its ${durationProviderSummary(instance, 'combat')} boundary in the verified encounter.`,
+                        evidence: { encounterId: anchor.encounterId, round: payload.round, progression: payload.progression, identity: payload.current?.identity || '' }
+                    });
+                    if (item) created.push(item);
+                });
+            } else if (event?.type === 'combat.encounter.ended') {
+                activeInstances().forEach(instance => {
+                    const anchor = instance.duration?.anchors?.combat;
+                    if (!anchor || anchor.encounterId !== String(payload.encounterId || '')) return;
+                    if ((instance.duration?.candidates || []).some(item => item.kind === 'expiration-candidate')) return;
+                    const item = addDurationCandidate(instance, {
+                        dedupeKey: `combat-ended:${anchor.encounterId}`,
+                        provider: 'combat',
+                        kind: 'reminder',
+                        reason: `The tracked encounter ended before ${instance.name}'s round boundary was verified. Keep it active or end it after reviewing the spell.`,
+                        evidence: { encounterId: anchor.encounterId, round: payload.round, progression: payload.progression }
+                    });
+                    if (item) created.push(item);
+                });
+            } else if (event?.type === 'almanac.time.changed') {
+                const previousMinute = Math.floor(Number(payload.previous?.worldMinute));
+                const currentMinute = Math.floor(Number(payload.current?.worldMinute));
+                if (!Number.isFinite(previousMinute) || !Number.isFinite(currentMinute) || currentMinute <= previousMinute) return;
+                activeInstances().forEach(instance => {
+                    const anchor = instance.duration?.anchors?.world;
+                    if (!worldDurationReached(anchor, payload)) return;
+                    const item = addDurationCandidate(instance, {
+                        dedupeKey: `world-expired:${anchor.targetWorldMinute}`,
+                        provider: 'world-time',
+                        kind: 'expiration-candidate',
+                        reason: `${instance.name} reached its ${durationProviderSummary(instance, 'world-time')} boundary in committed Almanac time.`,
+                        evidence: { previousWorldMinute: previousMinute, currentWorldMinute: currentMinute, revision: payload.revision || payload.current?.revision || 0 }
+                    });
+                    if (item) created.push(item);
+                });
+            }
+            announceDurationCandidates(created);
+        }
+
+        function reconcileDurationProviders(options = {}) {
+            if (modState.config.enabled === false || modState.config.durationCandidates === false) return [];
+            const created = [];
+            const encounter = GameAssist.CombatAssist?.getStatus?.();
+            const world = GameAssist.AlmanacAssist?.getTime?.();
+            activeInstances().forEach(instance => {
+                const combat = instance.duration?.anchors?.combat;
+                if (combat && encounter && ['active', 'paused'].includes(encounter.status)
+                    && combatDurationReached(combat, {
+                        encounterId: encounter.id,
+                        pageId: encounter.pageId,
+                        round: encounter.round,
+                        progression: encounter.progression,
+                        current: { identity: String(encounter.order?.[0] || '') }
+                    })) {
+                    const item = addDurationCandidate(instance, {
+                        dedupeKey: `combat-expired:${combat.encounterId}:${combat.targetRound}`,
+                        provider: 'combat',
+                        kind: 'expiration-candidate',
+                        reason: `${instance.name} has reached its ${durationProviderSummary(instance, 'combat')} boundary in the verified encounter.`,
+                        evidence: { encounterId: encounter.id, round: encounter.round, progression: encounter.progression, reconciled: true }
+                    });
+                    if (item) created.push(item);
+                }
+                const worldAnchor = instance.duration?.anchors?.world;
+                if (worldDurationReached(worldAnchor, world)) {
+                    const item = addDurationCandidate(instance, {
+                        dedupeKey: `world-expired:${worldAnchor.targetWorldMinute}`,
+                        provider: 'world-time',
+                        kind: 'expiration-candidate',
+                        reason: `${instance.name} has reached its ${durationProviderSummary(instance, 'world-time')} boundary in committed Almanac time.`,
+                        evidence: { currentWorldMinute: world.worldMinute, revision: world.revision || 0, reconciled: true }
+                    });
+                    if (item) created.push(item);
+                }
+            });
+            if (options.announce !== false) announceDurationCandidates(created);
+            return created;
         }
 
         function ledgerOwners(ledger) {
@@ -15807,7 +16215,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function warnAboutPreservedState() {
-            const knownConfig = new Set(['enabled', 'allowPlayerCasting', 'markerOverrides', 'customDefinitions', 'defaultBlessMarker']);
+            const knownConfig = new Set(['enabled', 'allowPlayerCasting', 'durationCandidates', 'markerOverrides', 'customDefinitions', 'defaultBlessMarker']);
             const knownRuntime = new Set(['instances', 'history', 'projectionLedgers', 'requestIds', 'dependencyIndex', 'operations', 'nextInstanceNumber', 'stateSchemaVersion', 'legacyProjectionSnapshot']);
             const unknownConfig = Object.keys(modState.config).filter(key => !knownConfig.has(key));
             const unknownRuntime = Object.keys(runtime).filter(key => !knownRuntime.has(key));
@@ -15838,6 +16246,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             copy.automatic = Array.isArray(copy.automatic) ? copy.automatic : [];
             copy.assisted = Array.isArray(copy.assisted) ? copy.assisted : [];
             copy.informational = Array.isArray(copy.informational) ? copy.informational : [];
+            copy.durationRules = normalizeDurationRules(copy.durationRules);
             copy.catalogGroup = copy.catalogGroup === 'automated' ? 'automated' : 'tracked';
             return copy;
         }
@@ -16690,6 +17099,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function applyPlan(plan) {
             if (plan.duplicate) return plan;
+            const durationSetup = createDurationRecord(plan.definition, plan.request, plan.source.summary);
             const instance = {
                 id: nextInstanceId(),
                 definitionId: plan.definition.id,
@@ -16707,11 +17117,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 },
                 stacking: clone(plan.definition.stacking),
                 bindings: plan.bindings.map(binding => clone(binding)),
-                assistance: clone(plan.assistance),
-                duration: {
-                    type: 'manual',
-                    label: String(plan.request.duration || plan.definition.duration || '').slice(0, POLICY.effects.nameLength)
-                },
+                assistance: clone(plan.assistance.concat(durationSetup.assistance)),
+                duration: durationSetup.record,
                 status: 'applying',
                 createdAt: isoNow(),
                 createdBy: String(plan.request.createdBy || 'api'),
@@ -16935,6 +17342,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function observeMarkerChanges(event) {
+            if (modState.config.enabled === false) return;
             const removed = new Set((event?.removed || []).map(item =>
                 GameAssist.MarkerService.normalizeId(item.id || item.tag || item)
             ));
@@ -16967,6 +17375,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function observeConcentration(event) {
+            if (modState.config.enabled === false) return;
             const payload = event?.payload || {};
             if (!['concentration.ended', 'concentration.failed'].includes(event?.type)) return;
             const tokenId = String(payload.tokenId || '');
@@ -17370,8 +17779,69 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return effects.map(instance => {
                 const targets = instance.targets.map(target => _sanitize(target.tokenName)).join(', ');
                 const state = instance.status === 'active' ? '' : ` | ${_sanitize(instance.status)}`;
-                return `<b>${_sanitize(instance.name)}</b> from ${_sanitize(instance.source.tokenName)} to ${targets}${state} ${GameAssist.createButton('End', '!Effect-End --id ' + instance.id)}`;
+                const duration = openDurationCandidates(instance).length
+                    ? ` | <b>duration review needed</b> ${GameAssist.createButton('Review', '!Effect-Duration --id ' + instance.id)}`
+                    : '';
+                return `<b>${_sanitize(instance.name)}</b> from ${_sanitize(instance.source.tokenName)} to ${targets}${state}${duration} ${GameAssist.createButton('End', '!Effect-End --id ' + instance.id)}`;
             }).join('<br>');
+        }
+
+        function durationProviderSummary(instance) {
+            const duration = instance?.duration;
+            if (!duration?.rules) return 'Manual';
+            const providers = [];
+            if (duration.anchors?.combat) providers.push('CombatAssist rounds');
+            if (duration.anchors?.world) providers.push('Almanac time');
+            return providers.length ? providers.join(' + ') : 'Manual; no provider was active when applied';
+        }
+
+        function showDurationReview(msg, options = {}) {
+            reconcileDurationProviders({ announce: false });
+            const requestedId = String(options.id || '');
+            const effects = activeInstances().filter(instance => !requestedId || instance.id === requestedId);
+            const rows = effects.slice(0, POLICY.effects.chatListLimit).map(instance => {
+                const candidates = instance.duration?.candidates || [];
+                const candidateRows = candidates.map(candidate => {
+                    const action = candidate.status === 'dismissed'
+                        ? GameAssist.createButton('Reopen', `!Effect-Duration-Restore --id ${instance.id} --candidate ${candidate.id}`)
+                        : `${GameAssist.createButton('End Effect', '!Effect-End --id ' + instance.id)} ${GameAssist.createButton('Keep Active', `!Effect-Duration-Dismiss --id ${instance.id} --candidate ${candidate.id}`)}`;
+                    return `${candidate.status === 'dismissed' ? 'Kept active' : 'Review'}: ${_sanitize(candidate.reason)} ${action}`;
+                }).join('<br>');
+                return `<b>${_sanitize(instance.name)}</b> | ${_sanitize(durationRuleSummary(instance))}<br>`
+                    + `Provider: ${_sanitize(durationProviderSummary(instance))}<br>`
+                    + (candidateRows || 'No duration candidate has been raised.');
+            }).join('<hr>');
+            panel('Effect Duration Review', [
+                ...(options.notice ? [{ label: 'Updated', value: _sanitize(options.notice) }] : []),
+                { label: 'How This Works', value: 'Provider evidence creates a GM review item. EffectAssist never ends an effect from elapsed time alone.' },
+                { label: 'Active Durations', value: rows || 'No matching active effects.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function updateDurationCandidate(msg, options, status) {
+            const instance = runtime.instances[String(options.id || '')];
+            const candidate = validInstance(instance)
+                ? (instance.duration?.candidates || []).find(item => item.id === String(options.candidate || ''))
+                : null;
+            if (!candidate) {
+                return showDurationReview(msg, { notice: 'That duration item is no longer available.' });
+            }
+            candidate.status = status;
+            if (status === 'dismissed') {
+                candidate.dismissedAt = isoNow();
+                candidate.dismissedBy = String(msg.playerid || 'gm');
+            } else {
+                candidate.dismissedAt = null;
+                candidate.dismissedBy = null;
+            }
+            notifyLifecycle(status === 'dismissed' ? 'duration-candidate-dismissed' : 'duration-candidate-restored', instance, { candidate });
+            showDurationReview(msg, {
+                id: instance.id,
+                notice: status === 'dismissed'
+                    ? `${instance.name} remains active. The duration item can be reopened here.`
+                    : `${instance.name}'s duration item is open for review again.`
+            });
         }
 
         function catalogButtons(msg, group) {
@@ -17401,16 +17871,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             panel('EffectAssist Quick Guide', [
                 { label: 'Apply An Effect', value: playerIsGM(msg?.playerid) ? 'Select the affected tokens, open the catalog, choose the effect and source, review the changes, then confirm.' : 'Open the catalog, choose the effect and your casting character, then choose visible recipients directly on the map.' },
                 { label: 'End An Effect', value: playerIsGM(msg?.playerid) ? 'Open Active Effects and end the specific source. Shared markers and bonuses remain while another source still owns them.' : 'Use the End Effect button on your successful casting message.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Control Center', '!Effect-GM') + ' ' + GameAssist.createButton('Active Effects', '!Effect-Active') : ''}` }
+                ...(playerIsGM(msg?.playerid) ? [{ label: 'Review Duration', value: 'Duration providers can flag an effect for review, but only the GM decides whether it ends.' }] : []),
+                { label: 'Actions', value: `${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Control Center', '!Effect-GM') + ' ' + GameAssist.createButton('Active Effects', '!Effect-Active') + ' ' + GameAssist.createButton('Duration Review', '!Effect-Duration') : ''}` }
             ], msg);
         }
 
         function showControl(msg) {
             panel('EffectAssist Control Center', [
                 { label: 'Apply', value: GameAssist.createButton('Open Effect Catalog', '!Effect-Catalog') },
-                { label: 'Manage', value: `${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Status', '!Effect-Status')}` },
+                { label: 'Manage', value: `${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Duration Review', '!Effect-Duration')} ${GameAssist.createButton('Status', '!Effect-Status')}` },
                 { label: 'Check', value: `${GameAssist.createButton('Audit and Repair', '!Effect-Audit')} ${GameAssist.createButton('Guide', '!Effect-Guide')}` },
                 { label: 'Player Casting', value: `${modState.config.allowPlayerCasting !== false ? 'Allowed' : 'Locked'} | ${GameAssist.createButton('Allow', '!Effect-Players on')} ${GameAssist.createButton('Lock', '!Effect-Players off')}` },
+                { label: 'Duration Candidates', value: `${modState.config.durationCandidates !== false ? 'On' : 'Off'} | ${GameAssist.createButton('Turn On', '!Effect-Durations on')} ${GameAssist.createButton('Turn Off', '!Effect-Durations off')}` },
                 { label: 'Learn', value: `${GameAssist.createButton('What does EffectAssist do?', '!Effect-Info')} ${GameAssist.createButton('Create or Update Manual', '!Effect-Manual')}` }
             ], msg, { gmOnly: true });
         }
@@ -17419,7 +17891,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             panel('What EffectAssist Does', [
                 { label: 'Purpose', value: 'Applies and tracks spells, features, and custom effects as source-aware records with markers, supported 2014 sheet modifiers, concentration, and safe cleanup.' },
                 { label: 'Why It Is Not TokenAssist', value: 'TokenAssist performs an immediate token edit. EffectAssist remembers the rule relationship over time and removes only what that relationship owns.' },
-                { label: 'Safety', value: 'Unsupported mechanics are clearly labeled as manual. Existing or edited sheet values are preserved and reported instead of overwritten.' },
+                { label: 'Safety', value: 'Unsupported mechanics are clearly labeled as manual. Existing or edited sheet values are preserved and reported instead of overwritten. Elapsed duration creates a GM decision, never an automatic ending.' },
                 { label: 'Actions', value: `${GameAssist.createButton('Open Catalog', '!Effect-Catalog')} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Open Manual', '!Effect-Manual') + ' ' + GameAssist.createButton('Control Center', '!Effect-GM') : ''}` }
             ], msg);
         }
@@ -17478,12 +17950,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function showStatus(msg) {
             const audit = auditEffects();
+            const durationCandidates = activeInstances().reduce((sum, instance) => sum + openDurationCandidates(instance).length, 0);
             panel('EffectAssist Status', [
                 { label: 'Module', value: `${MODULE_VERSION} | 2014 sheet adapter | state schema ${STATE_SCHEMA_VERSION}` },
                 { label: 'Records', value: `${audit.active} active | ${audit.ended} ended | ${audit.definitions} definitions` },
                 { label: 'Health', value: audit.ok ? 'No mismatches found.' : `${audit.mismatches.length} item(s) need review.` },
                 { label: 'Player Casting', value: modState.config.allowPlayerCasting !== false ? 'Allowed' : 'Locked' },
-                { label: 'Actions', value: `${GameAssist.createButton('Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+                { label: 'Duration Review', value: `${modState.config.durationCandidates !== false ? 'On' : 'Off'} | ${durationCandidates} open candidate(s)` },
+                { label: 'Actions', value: `${GameAssist.createButton('Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Durations', '!Effect-Duration')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
             ], msg, { gmOnly: true });
         }
 
@@ -17533,12 +18007,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<p>ConcentrationAssist owns concentration checks and the Concentrating marker. EffectAssist connects dependent effects to that source. A failed check, deliberate concentration clear, or manual removal of the source marker ends the dependent effect and removes its owned target projections. Removing only a target effect marker creates an audit mismatch so an accidental edit can be repaired; it does not silently end the source or every target.</p>',
                 '<h2>Overlapping Sources</h2>',
                 '<p>Separate sources remain separate records. A non-stacking marker or modifier remains while any valid source still owns it.</p>',
+                '<h2>Duration Review</h2>',
+                '<p>Built-in definitions carry formal round and world-time duration rules. If CombatAssist is actively following the same page when an effect begins, EffectAssist records its current round and initiative point. If AlmanacAssist fictional time is active, it also records the current world minute. Reaching either verified boundary creates a private GM review item; it never ends the effect automatically.</p>',
+                '<p>Use <code>!Effect-Duration</code> to end an effect, keep it active, or reopen a dismissed review item. Pauses, backward movement, tracker rebases, provider absence, and effects created before duration tracking are not guessed through. The original manual End Effect control always remains available. Use <code>!Effect-Durations on|off</code> to enable or disable new candidate processing.</p>',
                 '<h2>Audit And Repair</h2>',
                 '<p>Audit never changes anything. Repair requires a current confirmation, rechecks the state, preserves edited or ambiguous values, and reports anything that still needs attention.</p>',
                 '<h2>Effect Catalog</h2>',
                 catalog,
                 '<h2>Commands</h2>',
-                '<p><code>!effect</code> opens the catalog directly. Player shortcuts are <code>!Bless</code>, <code>!Guidance</code> or <code>!Guide</code>, <code>!Haste</code>, <code>!Warding-Bond</code>, <code>!Holy-Weapon</code>, and <code>!PwoaT</code>. The generated <code>!Effect-Targets</code> and <code>!Effect-Request</code> buttons keep targeting and GM requests bounded; they are not commands players need to memorize. GM controls include <code>!Effect-GM</code>, <code>!Effect-DM</code>, <code>!Effect-Active</code>, <code>!Effect-Status</code>, <code>!Effect-Audit</code>, <code>!Effect-Players on|off</code>, <code>!Effect-Manual</code>, and generated Apply, Confirm, End, and Repair buttons.</p>'
+                '<p><code>!effect</code> opens the catalog directly. Player shortcuts are <code>!Bless</code>, <code>!Guidance</code> or <code>!Guide</code>, <code>!Haste</code>, <code>!Warding-Bond</code>, <code>!Holy-Weapon</code>, and <code>!PwoaT</code>. The generated <code>!Effect-Targets</code> and <code>!Effect-Request</code> buttons keep targeting and GM requests bounded; they are not commands players need to memorize. GM controls include <code>!Effect-GM</code>, <code>!Effect-DM</code>, <code>!Effect-Active</code>, <code>!Effect-Duration</code>, <code>!Effect-Durations on|off</code>, <code>!Effect-Status</code>, <code>!Effect-Audit</code>, <code>!Effect-Players on|off</code>, <code>!Effect-Manual</code>, and generated Apply, Confirm, End, and Repair buttons.</p>'
             ].join('');
         }
 
@@ -17727,6 +18204,20 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ], msg, { gmOnly: true });
         }
 
+        function handleDurationSetting(msg) {
+            const value = String(msg.content || '').trim().split(/\s+/)[1]?.toLowerCase();
+            if (!['on', 'off'].includes(value)) return showControl(msg);
+            modState.config.durationCandidates = value === 'on';
+            const reconciled = modState.config.durationCandidates ? reconcileDurationProviders({ announce: false }) : [];
+            panel('EffectAssist Duration Review', [
+                { label: 'Setting', value: modState.config.durationCandidates
+                    ? 'Duration providers may create private GM review candidates. Effects still end only by an explicit effect or concentration action.'
+                    : 'Duration provider processing is off. Active effects and their saved duration evidence remain available for manual review.' },
+                ...(reconciled.length ? [{ label: 'Review', value: `${reconciled.length} existing duration item(s) are now ready for review.` }] : []),
+                { label: 'Actions', value: `${GameAssist.createButton('Review Durations', '!Effect-Duration')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+            ], msg, { gmOnly: true });
+        }
+
         function handleShortcut(msg, definitionId) {
             if (!playerCastingAllowed(msg)) return showCatalog(msg);
             handleTargetStep(msg, { effect: definitionId });
@@ -17747,6 +18238,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (['gm', 'dm', 'menu'].includes(action)) return showControl(msg);
             if (['status', 'list', 'refresh'].includes(action)) return showStatus(msg);
             if (action === 'active') return showActive(msg);
+            if (['duration', 'durations-review'].includes(action)) return showDurationReview(msg, options);
+            if (action === 'duration-dismiss') return updateDurationCandidate(msg, options, 'dismissed');
+            if (action === 'duration-restore') return updateDurationCandidate(msg, options, 'open');
+            if (action === 'durations') return handleDurationSetting(msg);
             if (action === 'audit') return showAudit(msg);
             if (action === 'manual') return showManual(msg);
             if (action === 'repair') return handleRepair(msg, options);
@@ -17784,10 +18279,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             types: ['concentration.ended', 'concentration.failed']
         });
         if (!concentrationObservation.ok) throw new Error(concentrationObservation.message || 'EffectAssist could not observe concentration events.');
+        const durationObservation = GameAssist.SemanticEvents.observe(observeDurationProvider, {
+            owner: MODULE_NAME,
+            types: ['combat.turn.changed', 'combat.encounter.ended', 'almanac.time.changed']
+        });
+        if (!durationObservation.ok) throw new Error(durationObservation.message || 'EffectAssist could not observe duration-provider events.');
 
         rebuildDependencyIndex();
         reconcileMissedConcentrationLoss();
         warnAboutPreservedState();
+        setTimeout(reconcileDurationProviders, 0);
 
         function registerLifecycleObserver(callback, { owner = 'EffectAssistConsumer' } = {}) {
             return GameAssist.SemanticEvents.observe(callback, { owner, types: ['effect.lifecycle.changed'] });
@@ -17799,12 +18300,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             getDefinitions: () => clone(getDefinitions()),
             getActiveInstances: () => clone(activeInstances()),
             getHistory: () => clone(runtime.history),
+            getDurationCandidates: () => clone(activeInstances().flatMap(instance =>
+                (instance.duration?.candidates || []).map(candidate => ({ instanceId: instance.id, effect: instance.name, ...candidate }))
+            )),
             preview: request => {
                 const plan = buildPlan(request || {});
                 return plan.ok ? { ok: true, definition: clone(plan.definition), source: clone(plan.source.summary), targets: clone(plan.targets.map(item => item.summary)), changes: previewPlan(plan), assistance: clone(plan.assistance) } : plan;
             },
             apply: request => applyEffectRequest(request || {}),
             end: (instanceId, actor) => endEffect(instanceId, actor),
+            reconcileDurations: () => clone(reconcileDurationProviders()),
             audit: () => clone(auditEffects()),
             isAvailable: () => modState.config.enabled !== false,
             observe: registerLifecycleObserver,
@@ -17812,20 +18317,23 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             registerProjectionAdapter
         });
 
-        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: catalog-driven 2014 effects are available through !effect; the module starts disabled.`, 'INFO', { startup: true });
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: catalog-driven 2014 effects and optional duration review are available through !effect; the module starts disabled.`, 'INFO', { startup: true });
     }, {
         enabled: false,
         prefixes: ['!Effect-', '!effect', '!EffectAssist-','!Bless','!Guidance','!Guide','!Haste','!Warding-Bond','!WardingBond','!Holy-Weapon','!HolyWeapon','!PwoaT'],
         preserveRuntimeOnDisable: true,
         protectedConfigKeys: ['customDefinitions', 'markerOverrides'],
         teardown: () => {
-            GameAssist.MarkerService.clearObservers('EffectAssist');
-            GameAssist.SemanticEvents.clearObservers('EffectAssist');
+            // Observers remain registered across ordinary module toggles and self-gate on saved enablement.
+            // CHOICE: retain one registration - ALT: re-register during enable; REJECTED: module initializers are intentionally wired once.
         }
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Replaced the single-projection prototype with a catalog-driven schema-v2 engine, six useful built-in effects, ownership-safe 2014 repeating modifier adapters and shared master-flag restoration, concentration-linked lifecycle cleanup, player-safe casting with native visible-recipient targeting, a bounded GM-request fallback, public player-originated cast announcements, GM lockout, apply preview/confirmation, custom condition guidance, durable incomplete-cleanup state, generalized audit/repair, and conflict-aware idempotency.
+    // Changed (v2.0.0): Advanced EffectAssist to 2.1.0 and state schema 3 with formal built-in duration rules, optional CombatAssist and AlmanacAssist provider anchors, bounded evidence-backed GM expiration candidates and encounter-end reminders, reversible candidate dismissal, restart/re-enable reconciliation, and observer registrations that remain inert while disabled and resume without duplication; no elapsed-time observation ends an effect automatically.
     // Decision log:
+    //   CHOICE: Present elapsed duration as a GM review candidate - ALT: remove projections automatically at the first observed boundary; REJECTED: provider gaps, table rulings, and interrupted encounters require a human decision.
+    //   CHOICE: Consume accepted CombatAssist progression and committed Almanac time events - ALT: parse turnorder and replay elapsed minutes independently; REJECTED: duplicate clocks would disagree with their authoritative owners and large jumps could become unbounded.
+    //   CHOICE: Migrate existing schema-v2 effects without retrospective anchors - ALT: infer their start from current provider state; REJECTED: that would silently grant a false start time.
     //   CHOICE: Treat Bless as the complete acceptance example rather than the module boundary - ALT: ship a Bless-only marker ledger; REJECTED: EffectAssist must coordinate many effects and many projection kinds.
     //   CHOICE: Automate only verified 2014 sheet fields - ALT: write generated totals, free-text speed, global damage, or ambiguous 2024 fields; REJECTED: those writes could change unrelated rolls or campaign-owned text.
     //   CHOICE: Keep Holy Weapon and Pass Without a Trace as clearly labeled tracked effects while removing built-ins that offered no useful launch behavior - ALT: present every researched spell equally; REJECTED: a catalog entry should either automate meaningful work or make its limited tracking value unmistakable.
@@ -17841,6 +18349,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Offer a compact GM request for hidden or unusually broad targeting - ALT: expose complete GM EffectAssist controls to players; REJECTED: player casting should remain a narrow application workflow.
     //   CHOICE: Announce successful player-originated casts after verified application - ALT: announce the request or preview; REJECTED: public chat should describe completed state, not an unconfirmed intention.
     // Prior notes:
+    //   v2.0.0: Replaced the single-projection prototype with a catalog-driven schema-v2 engine, six useful built-in effects, ownership-safe 2014 repeating modifier adapters and shared master-flag restoration, concentration-linked lifecycle cleanup, player-safe casting with native visible-recipient targeting, a bounded GM-request fallback, public player-originated cast announcements, GM lockout, apply preview/confirmation, custom condition guidance, durable incomplete-cleanup state, generalized audit/repair, and conflict-aware idempotency.
     //   v2.0.0 prototype: Introduced source-aware effect records, baseline marker ownership, bounded history, SemanticEvents lifecycle publication, and confirmed repair grants.
     // [GAMEASSIST:MODULES:EFFECTASSIST] END
     // =============================================================================

@@ -2928,6 +2928,7 @@ Enable the module and open its GM screen:
 !Effect-GM
 !Effect-Definitions
 !Effect-Active
+!Effect-Duration
 !Effect-Status
 !Effect-Audit
 !Effect-Not-A-Command
@@ -2946,6 +2947,7 @@ Then select one linked disposable 2014 PC target and apply Bless from another li
 - one active effect is recorded;
 - the configured Bless marker, the source concentration marker, and the target's `1d4` attack/save modifier rows appear;
 - the Effect Applied panel offers **End Effect**, `!Effect-Active` identifies the source and target, and `!Effect-Status` stays compact;
+- `!Effect-Duration` shows the effect's formal duration and whichever verified providers were available when it began;
 - applying the same submitted request twice does not create a duplicate;
 - ending concentration or using `!Effect-End` removes the EffectAssist-owned marker and unedited modifier rows, then moves the record to recent history.
 
@@ -2971,6 +2973,59 @@ Use the focused section to prove:
 - changed token identity causes a refusal rather than a write to the wrong representation;
 - disabling and re-enabling EffectAssist preserves its records;
 - malformed known state is reported without deleting unknown branches.
+
+### EffectAssist Duration Provider Checks
+
+**What this proves:** CombatAssist and TimeAlmanac can provide conservative elapsed-duration evidence without ending an effect or replaying guessed history.
+
+**Why test it:** These integrations cross module boundaries and persistent state. A bad boundary could remove a valid effect too early, while a missing observer could leave the GM unaware that a duration was reached.
+
+**Skip when:** Skip in ordinary play when EffectAssist duration candidates will remain off. Do not skip for Issue #80 or v2.0.0 release acceptance.
+
+Prepare two disposable linked 2014 characters on the same page. Enable EffectAssist, CombatAssist, and AlmanacAssist; ensure TimeAlmanac is on. Put at least the two characters in Roll20's Turn Tracker and start CombatAssist.
+
+```roll20chat
+!ga-enable CombatAssist
+!ga-enable AlmanacAssist
+!ga-enable EffectAssist
+!Combat-Start
+!effect
+!Effect-Duration
+```
+
+Apply **Bless** from one character to the other. Pass when Duration Review identifies the ten-round/one-minute rule and lists both **CombatAssist rounds** and **Almanac time** as providers.
+
+Advance fictional time by one minute:
+
+```roll20chat
+!aa-time advance --minutes 1
+```
+
+Pass when the GM receives one private **Effect Duration Review** notice with **End Effect** and **Keep Active** buttons. Confirm that Bless, its markers, its sheet rows, and concentration are still present. Click **Keep Active**, reopen `!Effect-Duration`, click **Reopen**, and confirm the candidate is available again. End the exact effect only after that review.
+
+Apply **Haste** during the same encounter, then change an initiative value or add/remove a legitimate tracker row. Pass when CombatAssist accepts or asks the GM to adopt the new baseline without raising a duration candidate. Move one turn backward and confirm no candidate appears. Resume forward play and complete ten full rounds until the Turn Tracker returns to the initiative point at which Haste began. Pass when one candidate appears and Haste remains active.
+
+Apply another timed effect, then end CombatAssist before its round boundary:
+
+```roll20chat
+!Combat-End --confirm
+```
+
+Pass when the GM receives an encounter-end reminder that asks for review without claiming the effect expired. The effect must remain active.
+
+Test the disabled and restart paths with a fresh one-minute effect:
+
+1. Apply the effect while TimeAlmanac is active.
+2. Disable EffectAssist.
+3. Advance TimeAlmanac by one minute.
+4. Re-enable EffectAssist.
+5. Run `!Effect-Duration`.
+
+Pass when no effect changes while EffectAssist is disabled, the saved effect returns after re-enable, and Duration Review creates at most one candidate from the current committed time. Repeat with `!Effect-Durations off`; a newly applied effect should state that its duration remains manual and no elapsed-time candidate should appear.
+
+Finally, move TimeAlmanac backward with its normal confirmation. Pass when the calendar changes but no duration candidate is created and no existing effect is restored, removed, or rewound.
+
+Record failures with the effect name and instance ID, active CombatAssist round/current row, current Almanac date/time, Duration Review output, whether the effect actually changed, and the exact API Console error.
 
 ### EffectAssist Failure Evidence
 
