@@ -72,7 +72,8 @@ MODULE COMMANDS
   !npc-death-arc, !npc-bloodied, !npc-numbering
 - EffectAssist: !Effect-GM, !Effect-Guide, !Effect-Catalog, !Effect-Active,
   !Effect-Status, !Effect-Definitions, !Effect-Apply, !Effect-End,
-  !Effect-Audit, !Effect-Repair, and !effect <command>
+  !Effect-Audit, !Effect-Repair, !Effect-Players, !effect, !Bless, !Guidance, !Guide,
+  !Haste, !Warding-Bond, !Holy-Weapon, and !PwoaT
 - HPAssist: !HP-GM, !HP-Selected, !HP-All, !hp <command>
 - DebugTools: !ga-debug damage|marker|save
 
@@ -83,10 +84,14 @@ V2.0.0 FOUNDATION
   unrelated marker entries are preserved through a structured mutation contract.
 - NPCAssist can assign unique page-local names to newly added linked NPC tokens without persistent counters.
 - EffectAssist records semantic effect instances separately from their marker, condition, concentration, and 2014-sheet projections, preserving overlapping sources and pre-existing campaign state.
-- The launch catalog includes Bless, Guidance, Gift of Alacrity, Warding Bond,
-  Holy Weapon, Haste, Longstrider, Pass Without a Trace, and Beacon of Hope.
+- The launch catalog includes Bless, Guidance, Warding Bond, Holy Weapon,
+  Haste, and Pass Without a Trace, separated by automation level.
 - Bless automatically manages its target marker, 2014-sheet 1d4 global attack
   and saving-throw modifiers, source concentration, and dependent cleanup.
+- Guidance manages its marker, 2014-sheet 1d4 global skill modifier, source
+  concentration, and cleanup while calling out non-skill checks as a manual d4.
+- Players may apply built-in effects from controlled sources unless the GM uses
+  the EffectAssist control center to lock player casting.
 - Mechanics without an ownership-safe 2014-sheet field remain clearly listed as
   assisted table steps instead of being represented by unsafe sheet rewrites.
 - EffectAssist audits projection drift without writing and requires a fresh GM confirmation before repair.
@@ -14439,17 +14444,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
 // ————— EFFECTASSIST MODULE v1.0.0 —————
     // =============================================================================
-    
+
     // ————— EFFECTASSIST MODULE v1.0.0 —————
     // =============================================================================
-    
+
     // ————— EFFECTASSIST MODULE v1.0.0 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:EFFECTASSIST] BEGIN
     // Section Title: Catalog-driven semantic effects and 2014 sheet projections
     // -----------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:EFFECTASSIST", title: "EffectAssist",
-    //   guarantees: ["Effect instances, not markers or sheet fields, are the durable source of truth","Definitions may coordinate multiple source and target projections through one versioned adapter pipeline","Verified 2014 repeating modifier rows are ownership-safe and never overwrite unrelated sheet data","ConcentrationAssist owns concentration state while EffectAssist owns dependent cleanup","Audit is read-only; application and repair require bounded GM confirmation","The built-in catalog distinguishes automatic, assisted, and informational behavior"],
+    //   guarantees: ["Effect instances, not markers or sheet fields, are the durable source of truth","Definitions may coordinate multiple source and target projections through one versioned adapter pipeline","Verified 2014 repeating modifier rows are ownership-safe and never overwrite unrelated sheet data","ConcentrationAssist owns concentration state while EffectAssist owns dependent cleanup","Audit is read-only; application and repair require bounded confirmation","Player casting requires source control and may be locked by the GM","The built-in catalog distinguishes automated mechanics from tracked rules"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]","[GAMEASSIST:MODULES:CONDITIONASSIST]","[GAMEASSIST:MODULES:CONCENTRATIONASSIST]"],
     //   provides: ["GameAssist.EffectAssist"],
     //   last_updated_version: "v2.0.0",
@@ -14489,6 +14494,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 nameField: 'global_save_name',
                 valueField: 'global_save_roll'
             }),
+            skill: Object.freeze({
+                section: 'skillmod',
+                enableFlag: 'global_skill_mod_flag',
+                activeField: 'global_skill_active_flag',
+                nameField: 'global_skill_name',
+                valueField: 'global_skill_roll'
+            }),
             ac: Object.freeze({
                 section: 'acmod',
                 enableFlag: 'global_ac_mod_flag',
@@ -14507,6 +14519,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 concentration: true,
                 duration: 'Up to 1 minute',
                 targets: 'Up to three creatures at base level; higher slots may affect more.',
+                catalogGroup: 'automated',
                 stacking: Object.freeze({ group: 'bless', mode: 'nonstacking' }),
                 projections: Object.freeze([
                     Object.freeze({ id: 'blessed-marker', adapter: 'marker', subject: 'target-token', marker: 'angel-outfit', label: 'Blessed marker' }),
@@ -14519,35 +14532,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }),
             guidance: Object.freeze({
                 id: 'guidance',
-                definitionVersion: 1,
+                definitionVersion: 2,
                 name: 'Guidance',
                 description: 'The target may add 1d4 to one ability check before the spell ends.',
                 concentration: true,
                 duration: 'Up to 1 minute or until the bonus is used',
                 targets: 'One willing creature',
+                catalogGroup: 'automated',
                 stacking: Object.freeze({ group: 'guidance', mode: 'nonstacking' }),
                 projections: Object.freeze([
-                    Object.freeze({ id: 'guidance-marker', adapter: 'marker', subject: 'target-token', marker: 'aura', label: 'Guidance marker' })
+                    Object.freeze({ id: 'guidance-marker', adapter: 'marker', subject: 'target-token', marker: 'aura', label: 'Guidance marker' }),
+                    Object.freeze({ id: 'guidance-skill', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'skill', label: 'Guidance (GameAssist)', value: '1d4', optional: true })
                 ]),
-                automatic: Object.freeze(['Guidance marker', 'source concentration and cleanup']),
-                assisted: Object.freeze(['Add 1d4 to one chosen ability check, then end Guidance after it is used.']),
-                informational: Object.freeze(['A global skill modifier would be inaccurate because Guidance can affect checks that are not sheet skills.'])
-            }),
-            'gift-of-alacrity': Object.freeze({
-                id: 'gift-of-alacrity',
-                definitionVersion: 1,
-                name: 'Gift of Alacrity',
-                description: 'The target adds 1d8 to initiative rolls for the duration.',
-                concentration: false,
-                duration: '8 hours',
-                targets: 'One willing creature',
-                stacking: Object.freeze({ group: 'gift-of-alacrity', mode: 'nonstacking' }),
-                projections: Object.freeze([
-                    Object.freeze({ id: 'alacrity-marker', adapter: 'marker', subject: 'target-token', marker: 'stopwatch', label: 'Gift of Alacrity marker' })
-                ]),
-                automatic: Object.freeze(['Gift of Alacrity marker and effect record']),
-                assisted: Object.freeze(['Use InitiativeAssist bonus-die controls or add 1d8 when initiative is rolled.']),
-                informational: Object.freeze(['The 2014 initiative modifier is numeric and cannot safely store a die expression.'])
+                automatic: Object.freeze(['Guidance marker', '2014-sheet 1d4 global skill modifier', 'source concentration and cleanup']),
+                assisted: Object.freeze(['For an ability check that is not represented by a sheet skill, roll the Guidance d4 manually; end Guidance after its one bonus is used.']),
+                informational: Object.freeze(['The 2014 sheet global skill modifier covers sheet skill checks but not every possible ability check.'])
             }),
             'warding-bond': Object.freeze({
                 id: 'warding-bond',
@@ -14557,6 +14556,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 concentration: false,
                 duration: '1 hour',
                 targets: 'One willing creature',
+                catalogGroup: 'automated',
                 stacking: Object.freeze({ group: 'warding-bond', mode: 'nonstacking' }),
                 projections: Object.freeze([
                     Object.freeze({ id: 'bond-marker', adapter: 'marker', subject: 'target-token', marker: 'chained-heart', label: 'Warding Bond marker' }),
@@ -14575,6 +14575,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 concentration: true,
                 duration: 'Up to 1 hour',
                 targets: 'One weapon carried by a creature',
+                catalogGroup: 'tracked',
                 stacking: Object.freeze({ group: 'holy-weapon', mode: 'nonstacking' }),
                 projections: Object.freeze([
                     Object.freeze({ id: 'holy-weapon-marker', adapter: 'marker', subject: 'target-token', marker: 'angel-outfit', label: 'Holy Weapon marker' })
@@ -14591,6 +14592,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 concentration: true,
                 duration: 'Up to 1 minute',
                 targets: 'One willing creature',
+                catalogGroup: 'automated',
                 stacking: Object.freeze({ group: 'haste', mode: 'nonstacking' }),
                 projections: Object.freeze([
                     Object.freeze({ id: 'haste-marker', adapter: 'marker', subject: 'target-token', marker: 'lightning-helix', label: 'Haste marker' }),
@@ -14600,22 +14602,6 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 assisted: Object.freeze(['Apply doubled speed, Dexterity-save advantage, the restricted extra action, and ending lethargy at the table.']),
                 informational: Object.freeze(['The 2014 sheet has no isolated safe switch for all remaining Haste mechanics.'])
             }),
-            longstrider: Object.freeze({
-                id: 'longstrider',
-                definitionVersion: 1,
-                name: 'Longstrider',
-                description: 'The target speed increases by 10 feet for the duration.',
-                concentration: false,
-                duration: '1 hour',
-                targets: 'One creature; higher slots may affect more.',
-                stacking: Object.freeze({ group: 'longstrider', mode: 'nonstacking' }),
-                projections: Object.freeze([
-                    Object.freeze({ id: 'longstrider-marker', adapter: 'marker', subject: 'target-token', marker: 'fluffy-wing', label: 'Longstrider marker' })
-                ]),
-                automatic: Object.freeze(['Longstrider marker and effect record']),
-                assisted: Object.freeze(['Add 10 feet to the appropriate movement speed.']),
-                informational: Object.freeze(['The 2014 speed field is free text and may contain several movement modes, so it is not rewritten automatically.'])
-            }),
             'pass-without-a-trace': Object.freeze({
                 id: 'pass-without-a-trace',
                 definitionVersion: 1,
@@ -14624,6 +14610,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 concentration: true,
                 duration: 'Up to 1 hour',
                 targets: 'Chosen creatures within 30 feet of the source',
+                catalogGroup: 'tracked',
                 stacking: Object.freeze({ group: 'pass-without-a-trace', mode: 'nonstacking' }),
                 projections: Object.freeze([
                     Object.freeze({ id: 'pass-without-trace-marker', adapter: 'marker', subject: 'target-token', marker: 'ninja-mask', label: 'Pass Without a Trace marker' })
@@ -14631,27 +14618,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 automatic: Object.freeze(['Pass Without a Trace marker', 'source concentration and cleanup']),
                 assisted: Object.freeze(['Add +10 to affected Dexterity (Stealth) checks and keep the target list current as creatures enter or leave the area.']),
                 informational: Object.freeze(['The 2014 sheet does not expose an isolated ownership-safe Stealth-only repeating modifier.'])
-            }),
-            'beacon-of-hope': Object.freeze({
-                id: 'beacon-of-hope',
-                definitionVersion: 1,
-                name: 'Beacon of Hope',
-                description: 'Affected creatures gain the spell benefits for Wisdom saves, death saves, and healing.',
-                concentration: true,
-                duration: 'Up to 1 minute',
-                targets: 'Any number of creatures within 30 feet',
-                stacking: Object.freeze({ group: 'beacon-of-hope', mode: 'nonstacking' }),
-                projections: Object.freeze([
-                    Object.freeze({ id: 'beacon-marker', adapter: 'marker', subject: 'target-token', marker: 'aura', label: 'Beacon of Hope marker' })
-                ]),
-                automatic: Object.freeze(['Beacon of Hope marker', 'source concentration and cleanup']),
-                assisted: Object.freeze(['Apply Wisdom-save and death-save advantage and maximize healing received.']),
-                informational: Object.freeze(['The 2014 sheet has no isolated switch that safely represents all three mechanics.'])
             })
         });
 
         Object.assign(modState.config, {
             enabled: false,
+            allowPlayerCasting: true,
             markerOverrides: {},
             customDefinitions: {},
             ...modState.config
@@ -14833,7 +14805,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function warnAboutPreservedState() {
-            const knownConfig = new Set(['enabled', 'markerOverrides', 'customDefinitions', 'defaultBlessMarker']);
+            const knownConfig = new Set(['enabled', 'allowPlayerCasting', 'markerOverrides', 'customDefinitions', 'defaultBlessMarker']);
             const knownRuntime = new Set(['instances', 'history', 'projectionLedgers', 'requestIds', 'dependencyIndex', 'operations', 'nextInstanceNumber', 'stateSchemaVersion', 'legacyProjectionSnapshot']);
             const unknownConfig = Object.keys(modState.config).filter(key => !knownConfig.has(key));
             const unknownRuntime = Object.keys(runtime).filter(key => !knownRuntime.has(key));
@@ -14864,6 +14836,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             copy.automatic = Array.isArray(copy.automatic) ? copy.automatic : [];
             copy.assisted = Array.isArray(copy.assisted) ? copy.assisted : [];
             copy.informational = Array.isArray(copy.informational) ? copy.informational : [];
+            copy.catalogGroup = copy.catalogGroup === 'automated' ? 'automated' : 'tracked';
             return copy;
         }
 
@@ -14905,7 +14878,24 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (first.startsWith('!effectassist-')) return first.slice('!effectassist-'.length);
             if (first.startsWith('!effect-')) return first.slice('!effect-'.length);
             const body = text.replace(/^!effect(?:\s+|$)/i, '').trim();
-            return (body.split(/\s+/)[0] || 'gm').toLowerCase();
+            return (body.split(/\s+/)[0] || 'catalog').toLowerCase();
+        }
+
+        function controllerIds(entity) {
+            return String(entity?.get('controlledby') || '')
+                .split(',')
+                .map(value => value.trim())
+                .filter(Boolean);
+        }
+
+        function actorControlsSource(playerId, source) {
+            if (playerIsGM(playerId)) return true;
+            const ids = new Set(controllerIds(source?.token).concat(controllerIds(source?.character)));
+            return ids.has('all') || ids.has(String(playerId || ''));
+        }
+
+        function playerCastingAllowed(msg) {
+            return playerIsGM(msg?.playerid) || modState.config.allowPlayerCasting !== false;
         }
 
         function resolveLinkedToken(tokenId, label) {
@@ -14956,13 +14946,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return String(value || '').replace(/[|,}]/g, ' ').replace(/\s+/g, ' ').trim();
         }
 
-        function sourceQuery() {
+        function sourceQuery(msg = null) {
             const pageId = String(Campaign().get('playerpageid') || '');
             if (!pageId) return null;
             const tokens = findObjs({ _type: 'graphic', _pageid: pageId })
                 .filter(token => ['objects', 'gmlayer'].includes(String(token.get('layer') || '')))
                 .map(token => resolveLinkedToken(token.id, 'Source'))
                 .filter(result => result.ok)
+                .filter(result => playerIsGM(msg?.playerid) || result.summary.layer === 'objects')
+                .filter(result => !msg || actorControlsSource(msg.playerid, result))
                 .sort((left, right) => left.summary.tokenName.localeCompare(right.summary.tokenName))
                 .slice(0, POLICY.effects.sourcePickerLimit);
             if (!tokens.length) return null;
@@ -16170,9 +16162,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             });
         }
 
-        function panel(title, fields) {
+        function panel(title, fields, msg = null, { gmOnly = false } = {}) {
             const body = fields.map(field => `{{${_sanitize(field.label)}=${field.value}}}`).join(' ');
-            sendChat(MODULE_NAME, `/w gm &{template:default} {{name=${_sanitize(title)}}} ${body}`);
+            const player = msg?.playerid ? getObj('player', msg.playerid) : null;
+            const displayName = String(player?.get('_displayname') || player?.get('displayname') || msg?.who || '')
+                .replace(/["\\]/g, '')
+                .replace(/\s*\(GM\)\s*$/i, '')
+                .trim();
+            const destination = gmOnly || !msg || playerIsGM(msg.playerid) || !displayName
+                ? '/w gm '
+                : `/w "${displayName}" `;
+            sendChat(MODULE_NAME, `${destination}&{template:default} {{name=${_sanitize(title)}}} ${body}`);
         }
 
         function listText(values) {
@@ -16191,69 +16191,82 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }).join('<br>');
         }
 
-        function catalogButtons() {
-            const source = sourceQuery();
-            if (!source) return 'Place at least one linked character token on the current player page so EffectAssist can offer a source picker.';
-            return getDefinitions().filter(definition => BUILTIN_DEFINITIONS[definition.id]).map(definition => {
+        function catalogButtons(msg, group) {
+            const source = sourceQuery(msg);
+            if (!source) return playerIsGM(msg?.playerid)
+                ? 'Place at least one linked character token on the current player page so EffectAssist can offer a source picker.'
+                : 'No linked character token you control is available on the current player page.';
+            return getDefinitions().filter(definition =>
+                BUILTIN_DEFINITIONS[definition.id] && definition.catalogGroup === group
+            ).map(definition => {
                 const replacement = definition.concentration
-                    ? ' --replace ?{If this source is already concentrating, replace that effect?|No,no|Yes,yes}'
+                    ? ' --replace ?{If this source is already concentrating, replace that effect?|Yes,yes|No,no}'
                     : '';
                 return GameAssist.createButton(definition.name, `!Effect-Apply --effect ${definition.id} --source ${source}${replacement}`);
-            }).join(' ');
+            }).join(' ') || 'None.';
         }
 
-        function showGuide() {
+        function showGuide(msg) {
             panel('EffectAssist Quick Guide', [
-                { label: 'Apply An Effect', value: 'Select the affected tokens, open the Effect Catalog, choose the effect and source, review the exact changes, then confirm.' },
+                { label: 'Apply An Effect', value: 'Select the affected tokens, open the catalog, choose the effect and source, review the changes, then confirm.' },
                 { label: 'End An Effect', value: 'Open Active Effects and end the specific source. Shared markers and bonuses remain while another source still owns them.' },
-                { label: 'When Something Looks Wrong', value: 'Audit compares effect records with tokens, concentration, and supported 2014 sheet modifiers without changing anything.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Open Control Center', '!Effect-GM')} ${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Manual', '!Effect-Manual')}` }
-            ]);
+                { label: 'Actions', value: `${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Control Center', '!Effect-GM') + ' ' + GameAssist.createButton('Active Effects', '!Effect-Active') : ''}` }
+            ], msg);
         }
 
-        function showControl() {
+        function showControl(msg) {
             panel('EffectAssist Control Center', [
                 { label: 'Apply', value: GameAssist.createButton('Open Effect Catalog', '!Effect-Catalog') },
                 { label: 'Manage', value: `${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Status', '!Effect-Status')}` },
                 { label: 'Check', value: `${GameAssist.createButton('Audit and Repair', '!Effect-Audit')} ${GameAssist.createButton('Guide', '!Effect-Guide')}` },
+                { label: 'Player Casting', value: `${modState.config.allowPlayerCasting !== false ? 'Allowed' : 'Locked'} | ${GameAssist.createButton('Allow', '!Effect-Players on')} ${GameAssist.createButton('Lock', '!Effect-Players off')}` },
                 { label: 'Learn', value: `${GameAssist.createButton('What does EffectAssist do?', '!Effect-Info')} ${GameAssist.createButton('Create or Update Manual', '!Effect-Manual')}` }
-            ]);
+            ], msg, { gmOnly: true });
         }
 
-        function showInfo() {
+        function showInfo(msg) {
             panel('What EffectAssist Does', [
                 { label: 'Purpose', value: 'Applies and tracks spells, features, and custom effects as source-aware records with markers, supported 2014 sheet modifiers, concentration, and safe cleanup.' },
                 { label: 'Why It Is Not TokenAssist', value: 'TokenAssist performs an immediate token edit. EffectAssist remembers the rule relationship over time and removes only what that relationship owns.' },
-                { label: 'Safety', value: 'Unsupported mechanics remain guided steps. Existing or edited sheet values are preserved and reported instead of overwritten.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Open Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Open Manual', '!Effect-Manual')} ${GameAssist.createButton('Back', '!Effect-GM')}` }
-            ]);
+                { label: 'Safety', value: 'Unsupported mechanics are clearly labeled as manual. Existing or edited sheet values are preserved and reported instead of overwritten.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Open Catalog', '!Effect-Catalog')} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Open Manual', '!Effect-Manual') + ' ' + GameAssist.createButton('Control Center', '!Effect-GM') : ''}` }
+            ], msg);
         }
 
-        function showCatalog() {
-            const source = sourceQuery() || '';
+        function showCatalog(msg) {
+            if (!playerCastingAllowed(msg)) {
+                return panel('EffectAssist', [
+                    { label: 'Player Casting Is Locked', value: 'The GM has temporarily limited EffectAssist casting controls.' }
+                ], msg);
+            }
+            const source = sourceQuery(msg) || '';
             const condition = conditionQuery();
-            const customButtons = [
-                GameAssist.createButton('Marker Effect', '!Effect-Apply --name "?{Effect name|Custom Effect}" --marker "?{Marker id or custom name|aura}" --dependency "?{Dependency|Manual,manual|Concentration,concentration}" --source ' + source + ' --replace "?{Replace current concentration if needed?|No,no|Yes,yes}"'),
-                condition ? GameAssist.createButton('Condition Effect', '!Effect-Apply --name "?{Effect name|Custom Effect}" --condition ' + condition + ' --dependency "?{Dependency|Manual,manual|Concentration,concentration}" --source ' + source + ' --replace "?{Replace current concentration if needed?|No,no|Yes,yes}"') : '',
+            const customButtons = playerIsGM(msg?.playerid) && source ? [
+                GameAssist.createButton('Marker Effect', '!Effect-Apply --name "?{Effect name|Custom Effect}" --marker "?{Marker id or custom name|aura}" --dependency "?{Dependency|Manual,manual|Concentration,concentration}" --source ' + source + ' --replace "?{Replace current concentration if needed?|Yes,yes|No,no}"'),
+                condition ? GameAssist.createButton('Condition Effect', '!Effect-Apply --name "?{Effect name|Custom Effect}" --condition ' + condition + ' --dependency "?{Dependency|Manual,manual|Concentration,concentration}" --source ' + source + ' --replace "?{Replace current concentration if needed?|Yes,yes|No,no}"') : '',
                 GameAssist.createButton('Record Only', '!Effect-Apply --name "?{Effect name|Custom Effect}" --none true --source ' + source)
-            ].filter(Boolean).join(' ');
+            ].filter(Boolean).join(' ') : '';
             panel('EffectAssist Catalog', [
                 { label: 'Before You Choose', value: 'Select every affected linked token. The next prompt asks who created the effect.' },
-                { label: 'Choose An Effect', value: catalogButtons() },
-                { label: 'Custom', value: customButtons },
-                { label: 'Learn Before Applying', value: `${GameAssist.createButton('Catalog Details', '!Effect-Definitions')} ${GameAssist.createButton('Back', '!Effect-GM')}` }
-            ]);
+                { label: 'Marker And Sheet Automation', value: catalogButtons(msg, 'automated') },
+                { label: 'Tracked; Rules Stay Manual', value: catalogButtons(msg, 'tracked') },
+                ...(customButtons ? [{ label: 'Custom', value: customButtons }] : []),
+                { label: 'Learn Before Applying', value: `${GameAssist.createButton('Catalog Details', '!Effect-Definitions')} ${GameAssist.createButton('Quick Guide', '!Effect-Guide')}` }
+            ], msg);
         }
 
-        function showDefinitions() {
-            const rows = getDefinitions().slice(0, POLICY.effects.chatListLimit)
-                .map(definition => `<b>${_sanitize(definition.name)}</b> | ${definition.concentration ? 'Concentration' : 'No concentration'} | ${_sanitize(definition.duration)}`)
+        function showDefinitions(msg) {
+            const visibleDefinitions = playerIsGM(msg?.playerid)
+                ? getDefinitions()
+                : getDefinitions().filter(definition => BUILTIN_DEFINITIONS[definition.id]);
+            const rows = visibleDefinitions.slice(0, POLICY.effects.chatListLimit)
+                .map(definition => `<b>${_sanitize(definition.name)}</b> | ${definition.catalogGroup === 'tracked' ? 'Tracked; mechanics manual' : 'Marker and sheet automation'} | ${definition.concentration ? 'Concentration' : 'No concentration'} | ${_sanitize(definition.duration)}`)
                 .join('<br>') || 'No definitions.';
             panel('Effect Catalog Details', [
                 { label: 'Catalog', value: rows },
-                { label: 'How To Read It', value: 'Open the manual for each effect’s automatic, assisted, and informational behavior.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Apply An Effect', '!Effect-Catalog')} ${GameAssist.createButton('Open Manual', '!Effect-Manual')} ${GameAssist.createButton('Back', '!Effect-GM')}` }
-            ]);
+                { label: 'How To Read It', value: 'Automated entries change supported marker and 2014-sheet fields. Tracked entries manage the source, marker, concentration, and cleanup while their rule mechanics remain manual.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Apply An Effect', '!Effect-Catalog')} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Open Manual', '!Effect-Manual') : ''}` }
+            ], msg);
         }
 
         function endedSummary() {
@@ -16265,16 +16278,22 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }).join('<br>');
         }
 
-        function showStatus() {
+        function showActive(msg) {
+            panel('Active Effects', [
+                { label: 'Current Effects', value: activeSummary() },
+                { label: 'Actions', value: `${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function showStatus(msg) {
             const audit = auditEffects();
             panel('EffectAssist Status', [
                 { label: 'Module', value: `${MODULE_VERSION} | 2014 sheet adapter | state schema ${STATE_SCHEMA_VERSION}` },
                 { label: 'Records', value: `${audit.active} active | ${audit.ended} ended | ${audit.definitions} definitions` },
                 { label: 'Health', value: audit.ok ? 'No mismatches found.' : `${audit.mismatches.length} item(s) need review.` },
-                { label: 'Active Effects', value: activeSummary() },
-                { label: 'Recent Ended Effects', value: endedSummary() },
-                { label: 'Actions', value: `${GameAssist.createButton('Control Center', '!Effect-GM')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Catalog', '!Effect-Catalog')}` }
-            ]);
+                { label: 'Player Casting', value: modState.config.allowPlayerCasting !== false ? 'Allowed' : 'Locked' },
+                { label: 'Actions', value: `${GameAssist.createButton('Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+            ], msg, { gmOnly: true });
         }
 
         function showAudit(msg) {
@@ -16294,7 +16313,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 fields.push({ label: 'Repair', value: GameAssist.createButton('Confirm Current Repairs', '!Effect-Repair --grant ' + grant + ' --confirm') });
             }
             fields.push({ label: 'Return', value: GameAssist.createButton('Control Center', '!Effect-GM') });
-            panel('EffectAssist Audit', fields);
+            panel('EffectAssist Audit', fields, msg, { gmOnly: true });
         }
 
         function manualHtml() {
@@ -16302,6 +16321,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 `<h3>${_sanitize(definition.name)}</h3>`,
                 `<p>${_sanitize(definition.description)}</p>`,
                 `<ul><li><strong>Concentration:</strong> ${definition.concentration ? 'Yes' : 'No'}</li>`,
+                `<li><strong>Automation level:</strong> ${definition.catalogGroup === 'tracked' ? 'Tracked; rule mechanics remain manual' : 'Marker and supported sheet automation'}</li>`,
                 `<li><strong>Duration:</strong> ${_sanitize(definition.duration)}</li>`,
                 `<li><strong>Targets:</strong> ${_sanitize(definition.targets)}</li></ul>`,
                 `<p><strong>GameAssist will handle</strong><br>${listText(definition.automatic)}</p>`,
@@ -16313,9 +16333,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 `<p><strong>GameAssist v${_sanitize(VERSION)} | EffectAssist ${MODULE_VERSION}</strong></p>`,
                 '<p>EffectAssist applies and tracks spells, features, and custom effects. Each active record remembers its source, targets, concentration, markers, supported D&amp;D 5E by Roll20 (2014) sheet modifiers, and cleanup responsibilities.</p>',
                 '<h2>Quick Start</h2>',
-                '<ol><li>Select every affected linked token.</li><li>Run <code>!Effect-GM</code> and open the Effect Catalog.</li><li>Choose the effect and source.</li><li>Review exactly what GameAssist will change.</li><li>Confirm.</li><li>Use Active Effects to end a specific source or Audit when something looks wrong.</li></ol>',
+                '<ol><li>Select every affected linked token.</li><li>Run <code>!effect</code> to open the Effect Catalog directly.</li><li>Choose the effect and source.</li><li>Review exactly what GameAssist will change.</li><li>Confirm.</li><li>Use the immediate End Effect button or Active Effects to end a specific source.</li></ol>',
+                '<h2>Player Casting</h2>',
+                '<p>Players may open <code>!effect</code> or use a spell shortcut when the GM allows player casting. Every application rechecks that the player controls the linked source token or character. Deeper status, audit, repair, custom-effect, and configuration controls remain private to the GM.</p>',
                 '<h2>Concentration</h2>',
-                '<p>ConcentrationAssist owns concentration checks and the Concentrating marker. EffectAssist connects dependent effects to that source. A failed check, deliberate concentration clear, or manual removal of the source marker ends the dependent effect and removes its owned target projections.</p>',
+                '<p>ConcentrationAssist owns concentration checks and the Concentrating marker. EffectAssist connects dependent effects to that source. A failed check, deliberate concentration clear, or manual removal of the source marker ends the dependent effect and removes its owned target projections. Removing only a target effect marker creates an audit mismatch so an accidental edit can be repaired; it does not silently end the source or every target.</p>',
                 '<h2>Overlapping Sources</h2>',
                 '<p>Separate sources remain separate records. A non-stacking marker or modifier remains while any valid source still owns it.</p>',
                 '<h2>Audit And Repair</h2>',
@@ -16323,17 +16345,37 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h2>Effect Catalog</h2>',
                 catalog,
                 '<h2>Commands</h2>',
-                '<p><code>!Effect-GM</code>, <code>!Effect-DM</code>, <code>!Effect-Catalog</code>, <code>!Effect-Active</code>, <code>!Effect-Status</code>, <code>!Effect-Audit</code>, <code>!Effect-Guide</code>, <code>!Effect-Manual</code>, and generated Apply, Confirm, End, and Repair buttons.</p>'
+                '<p><code>!effect</code> opens the catalog directly. Player shortcuts are <code>!Bless</code>, <code>!Guidance</code> or <code>!Guide</code>, <code>!Haste</code>, <code>!Warding-Bond</code>, <code>!Holy-Weapon</code>, and <code>!PwoaT</code>. GM controls include <code>!Effect-GM</code>, <code>!Effect-DM</code>, <code>!Effect-Active</code>, <code>!Effect-Status</code>, <code>!Effect-Audit</code>, <code>!Effect-Players on|off</code>, <code>!Effect-Manual</code>, and generated Apply, Confirm, End, and Repair buttons.</p>'
             ].join('');
         }
 
-        function showManual() {
+        function showManual(msg) {
             const result = GameAssist.writeModuleManual(MODULE_NAME, manualHtml());
             panel('EffectAssist Manual', [
                 { label: 'Result', value: result.ok ? 'The manual was created or updated.' : _sanitize(result.message) },
                 ...(result.ok ? [{ label: 'Handout', value: result.link }] : []),
                 { label: 'Actions', value: `${GameAssist.createButton('Control Center', '!Effect-GM')} ${GameAssist.createButton('Short Guide', '!Effect-Guide')}` }
-            ]);
+            ], msg, { gmOnly: true });
+        }
+
+        function authorizeCast(msg, source, definitionId) {
+            if (!playerCastingAllowed(msg)) {
+                return { ok: false, code: 'FORBIDDEN', message: 'The GM has temporarily locked player casting through EffectAssist.' };
+            }
+            if (!playerIsGM(msg.playerid) && (!definitionId || !BUILTIN_DEFINITIONS[definitionId])) {
+                return { ok: false, code: 'FORBIDDEN', message: 'Players may use the built-in catalog; custom effects remain GM-only.' };
+            }
+            if (!actorControlsSource(msg.playerid, source)) {
+                return { ok: false, code: 'FORBIDDEN', message: 'Choose a source token controlled by your Roll20 player account.' };
+            }
+            return { ok: true };
+        }
+
+        function canEndInstance(msg, instance) {
+            if (playerIsGM(msg.playerid)) return true;
+            if (String(instance?.createdBy || '') === String(msg.playerid || '')) return true;
+            const source = resolveLinkedToken(instance?.source?.tokenId, 'The source');
+            return source.ok && actorControlsSource(msg.playerid, source);
         }
 
         function handleApply(msg, options) {
@@ -16342,7 +16384,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 panel('EffectAssist', [
                     { label: 'Needs Attention', value: _sanitize(selected.message) },
                     { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!Effect-Guide') }
-                ]);
+                ], msg);
+                return;
+            }
+            const source = resolveLinkedToken(String(options.source || ''), 'The source');
+            const authorization = source.ok
+                ? authorizeCast(msg, source, options.effect ? normalizeDefinitionId(options.effect) : null)
+                : source;
+            if (!authorization.ok) {
+                panel('EffectAssist', [
+                    { label: 'Needs Attention', value: _sanitize(authorization.message) },
+                    { label: 'Next Step', value: GameAssist.createButton('Open Catalog', '!Effect-Catalog') }
+                ], msg);
                 return;
             }
             const request = {
@@ -16365,14 +16418,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 panel('EffectAssist', [
                     { label: 'Needs Attention', value: _sanitize(plan.message || plan.code) },
                     { label: 'Next Step', value: `${GameAssist.createButton('Open Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Active Effects', '!Effect-Active')}` }
-                ]);
+                ], msg);
                 return;
             }
             if (plan.duplicate) {
                 panel('Effect Already Applied', [
                     { label: 'Result', value: _sanitize(plan.message) },
                     { label: 'Actions', value: `${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
-                ]);
+                ], msg);
                 return;
             }
             const grant = createApplyGrant(plan, msg.playerid);
@@ -16381,9 +16434,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Source', value: _sanitize(plan.source.summary.characterName) },
                 { label: 'Targets', value: plan.targets.map(target => _sanitize(target.summary.tokenName)).join(', ') },
                 { label: 'GameAssist Will Do', value: previewPlan(plan).map(item => `• ${_sanitize(item)}`).join('<br>') || 'Record the effect.' },
-                { label: 'GM Still Handles', value: listText(plan.assistance) },
+                { label: 'Still Handled At The Table', value: listText(plan.assistance) },
                 { label: 'Confirm', value: `${GameAssist.createButton('Apply This Effect', '!Effect-Confirm --grant ' + grant)} ${GameAssist.createButton('Cancel', '!Effect-Catalog')}` }
-            ]);
+            ], msg);
         }
 
         function handleConfirm(msg, options) {
@@ -16392,26 +16445,49 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 panel('EffectAssist', [
                     { label: 'Needs Attention', value: _sanitize(plan.message || plan.code) },
                     { label: 'Next Step', value: GameAssist.createButton('Open Catalog', '!Effect-Catalog') }
-                ]);
+                ], msg);
+                return;
+            }
+            const authorization = authorizeCast(msg, plan.source, plan.definition.id);
+            if (!authorization.ok) {
+                panel('EffectAssist', [
+                    { label: 'Needs Attention', value: _sanitize(authorization.message) },
+                    { label: 'Next Step', value: GameAssist.createButton('Open Catalog', '!Effect-Catalog') }
+                ], msg);
                 return;
             }
             const result = applyPlan(plan);
+            const endButton = result.instance && canEndInstance(msg, result.instance)
+                ? GameAssist.createButton('End Effect', '!Effect-End --id ' + result.instance.id)
+                : '';
+            const navigation = playerIsGM(msg.playerid)
+                ? `${endButton} ${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}`
+                : `${endButton} ${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')}`;
             panel(result.ok ? 'Effect Applied' : 'EffectAssist Needs Attention', [
                 { label: result.ok ? 'Result' : 'Needs Attention', value: _sanitize(result.message || result.code) },
                 ...(result.instance ? [{ label: 'Effect', value: `${_sanitize(result.instance.name)} | ${_sanitize(result.instance.id)}` }] : []),
-                ...(result.warnings?.length ? [{ label: 'GM Still Handles', value: listText(result.warnings) }] : []),
+                ...(result.warnings?.length ? [{ label: 'Still Handled At The Table', value: listText(result.warnings) }] : []),
                 ...(result.rollbackFailures?.length ? [{ label: 'Rollback Attention', value: listText(result.rollbackFailures) }] : []),
-                { label: 'Actions', value: `${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
-            ]);
+                { label: 'Actions', value: navigation }
+            ], msg);
         }
 
         function handleEnd(msg, options) {
+            const instance = runtime.instances[String(options.id || '')];
+            if (validInstance(instance) && !canEndInstance(msg, instance)) {
+                return panel('EffectAssist', [
+                    { label: 'Needs Attention', value: 'Only the GM, the effect creator, or a controller of its source can end this effect.' }
+                ], msg);
+            }
             const result = endEffect(options.id, msg.playerid);
+            const navigation = playerIsGM(msg.playerid)
+                ? `${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}`
+                : GameAssist.createButton('Effect Catalog', '!Effect-Catalog');
             panel(result.ok ? 'Effect Ended' : 'Effect Cleanup Needs Attention', [
                 { label: result.ok ? 'Result' : 'Needs Attention', value: _sanitize(result.message) },
                 ...(result.failures?.length ? [{ label: 'Cleanup', value: listText(result.failures) }] : []),
-                { label: 'Actions', value: `${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
-            ]);
+                { label: 'Actions', value: navigation }
+            ], msg);
         }
 
         function handleRepair(msg, options) {
@@ -16421,37 +16497,88 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Result', value: result.ok ? `${result.repaired} item(s) repaired.` : 'Some items could not be repaired safely.' },
                 ...(result.failed?.length ? [{ label: 'Needs Attention', value: listText(result.failed.map(entry => entry.message || entry.item?.message)) }] : []),
                 { label: 'Actions', value: `${GameAssist.createButton('Run Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
-            ]);
+            ], msg, { gmOnly: true });
+        }
+
+        function handlePlayerCastingSetting(msg) {
+            if (!playerIsGM(msg.playerid)) return showCatalog(msg);
+            const value = String(msg.content || '').trim().split(/\s+/)[1]?.toLowerCase();
+            if (!['on', 'off'].includes(value)) return showControl(msg);
+            modState.config.allowPlayerCasting = value === 'on';
+            panel('EffectAssist Player Casting', [
+                { label: 'Setting', value: modState.config.allowPlayerCasting ? 'Players may apply built-in effects from sources they control.' : 'Player casting controls are locked. GM controls remain available.' },
+                { label: 'Return', value: GameAssist.createButton('Control Center', '!Effect-GM') }
+            ], msg, { gmOnly: true });
+        }
+
+        function handleShortcut(msg, definitionId) {
+            if (!playerCastingAllowed(msg)) return showCatalog(msg);
+            const selected = selectedTargets(msg);
+            if (!selected.ok) {
+                return panel('EffectAssist', [
+                    { label: 'Before Casting', value: _sanitize(selected.message) },
+                    { label: 'Next Step', value: GameAssist.createButton('Open Effect Catalog', '!Effect-Catalog') }
+                ], msg);
+            }
+            const definition = getDefinition(definitionId);
+            const source = sourceQuery(msg);
+            if (!definition || !source) {
+                return panel('EffectAssist', [
+                    { label: 'Needs Attention', value: definition ? 'No linked character token you control is available as the source.' : 'That built-in effect is unavailable.' }
+                ], msg);
+            }
+            const replacement = definition.concentration
+                ? ' --replace ?{If this source is already concentrating, replace that effect?|Yes,yes|No,no}'
+                : '';
+            panel(`Cast ${definition.name}`, [
+                { label: 'Targets', value: selected.targets.map(target => _sanitize(target.summary.tokenName)).join(', ') },
+                { label: 'Continue', value: GameAssist.createButton('Choose Source And Review', `!Effect-Apply --effect ${definition.id} --source ${source}${replacement}`) },
+                { label: 'Note', value: 'Keep the intended target tokens selected while you choose the source.' }
+            ], msg);
         }
 
         function handleCommand(msg) {
             const action = commandAction(msg.content);
             const options = parseOptions(msg.content);
-            if (['gm', 'dm', 'menu'].includes(action)) return showControl();
-            if (['guide', 'help'].includes(action)) return showGuide();
-            if (['info', 'about'].includes(action)) return showInfo();
-            if (['status', 'list', 'refresh', 'active'].includes(action)) return showStatus();
-            if (['definitions', 'catalog'].includes(action)) return action === 'catalog' ? showCatalog() : showDefinitions();
-            if (action === 'audit') return showAudit(msg);
-            if (action === 'manual') return showManual();
             if (action === 'apply') return handleApply(msg, options);
             if (action === 'confirm') return handleConfirm(msg, options);
             if (action === 'end') return handleEnd(msg, options);
+            if (['definitions', 'catalog'].includes(action)) return action === 'catalog' ? showCatalog(msg) : showDefinitions(msg);
+            if (['guide', 'help'].includes(action)) return showGuide(msg);
+            if (['info', 'about'].includes(action)) return showInfo(msg);
+            if (!playerIsGM(msg.playerid)) return showCatalog(msg);
+            if (['gm', 'dm', 'menu'].includes(action)) return showControl(msg);
+            if (['status', 'list', 'refresh'].includes(action)) return showStatus(msg);
+            if (action === 'active') return showActive(msg);
+            if (action === 'audit') return showAudit(msg);
+            if (action === 'manual') return showManual(msg);
             if (action === 'repair') return handleRepair(msg, options);
+            if (action === 'players') return handlePlayerCastingSetting(msg);
             panel('EffectAssist', [
                 { label: 'Needs Attention', value: 'That EffectAssist command was not recognized.' },
                 { label: 'Next Step', value: `${GameAssist.createButton('Control Center', '!Effect-GM')} ${GameAssist.createButton('Open Guide', '!Effect-Guide')}` }
-            ]);
+            ], msg);
         }
 
-        GameAssist.onCommand('!effect', handleCommand, MODULE_NAME, { gmOnly: true });
+        GameAssist.onCommand('!effect', handleCommand, MODULE_NAME);
         GameAssist.onCommand('!Effect-', handleCommand, MODULE_NAME, {
-            gmOnly: true,
             match: { caseInsensitive: true, mode: 'prefix' }
         });
         GameAssist.onCommand('!EffectAssist-', handleCommand, MODULE_NAME, {
-            gmOnly: true,
             match: { caseInsensitive: true, mode: 'prefix' }
+        });
+        [
+            ['!Bless', 'bless'],
+            ['!Guidance', 'guidance'],
+            ['!Guide', 'guidance'],
+            ['!Haste', 'haste'],
+            ['!Warding-Bond', 'warding-bond'],
+            ['!WardingBond', 'warding-bond'],
+            ['!Holy-Weapon', 'holy-weapon'],
+            ['!HolyWeapon', 'holy-weapon'],
+            ['!PwoaT', 'pass-without-a-trace']
+        ].forEach(([prefix, definitionId]) => {
+            GameAssist.onCommand(prefix, msg => handleShortcut(msg, definitionId), MODULE_NAME);
         });
 
         ensureMarkerObservation();
@@ -16488,10 +16615,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             registerProjectionAdapter
         });
 
-        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: catalog-driven 2014 effects are available through !Effect-GM; the module starts disabled.`, 'INFO', { startup: true });
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: catalog-driven 2014 effects are available through !effect; the module starts disabled.`, 'INFO', { startup: true });
     }, {
         enabled: false,
-        prefixes: ['!Effect-', '!effect', '!EffectAssist-'],
+        prefixes: ['!Effect-', '!effect', '!EffectAssist-','!Bless','!Guidance','!Guide','!Haste','!Warding-Bond','!WardingBond','!Holy-Weapon','!HolyWeapon','!PwoaT'],
         preserveRuntimeOnDisable: true,
         protectedConfigKeys: ['customDefinitions', 'markerOverrides'],
         teardown: () => {
@@ -16500,11 +16627,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Replaced the single-projection prototype with a catalog-driven schema-v2 engine, nine built-in effects, ownership-safe 2014 repeating modifier adapters and shared master-flag restoration, concentration-linked lifecycle cleanup, apply preview/confirmation, custom condition guidance, durable incomplete-cleanup state, generalized audit/repair, and conflict-aware idempotency.
+    // Changed (v2.0.0): Replaced the single-projection prototype with a catalog-driven schema-v2 engine, six useful built-in effects, ownership-safe 2014 repeating modifier adapters and shared master-flag restoration, concentration-linked lifecycle cleanup, player-safe casting with GM lockout, apply preview/confirmation, custom condition guidance, durable incomplete-cleanup state, generalized audit/repair, and conflict-aware idempotency.
     // Decision log:
     //   CHOICE: Treat Bless as the complete acceptance example rather than the module boundary - ALT: ship a Bless-only marker ledger; REJECTED: EffectAssist must coordinate many effects and many projection kinds.
     //   CHOICE: Automate only verified 2014 sheet fields - ALT: write generated totals, free-text speed, global damage, or ambiguous 2024 fields; REJECTED: those writes could change unrelated rolls or campaign-owned text.
-    //   CHOICE: Keep unsupported mechanics as explicit assisted steps - ALT: omit those effects from the catalog; REJECTED: the GM still benefits from source, target, concentration, marker, and lifecycle tracking.
+    //   CHOICE: Keep Holy Weapon and Pass Without a Trace as clearly labeled tracked effects while removing built-ins that offered no useful launch behavior - ALT: present every researched spell equally; REJECTED: a catalog entry should either automate meaningful work or make its limited tracking value unmistakable.
+    //   CHOICE: Treat target-marker removal as auditable projection drift - ALT: end the source's concentration when any target marker disappears; REJECTED: an accidental marker edit should be repairable and one missing target projection must not silently end every target's effect.
     //   CHOICE: Preserve edited and pre-existing projections - ALT: force the definition back onto the sheet; REJECTED: external edits may be deliberate and must remain visible for review.
     //   CHOICE: Share and restore 2014 global-modifier flags independently from their rows - ALT: leave every enabled flag behind; REJECTED: cleanup should restore the prior sheet setting without disabling another active row.
     //   CHOICE: Normalize marker and ConditionAssist bindings to the same stored marker identity - ALT: keep adapter-specific ledgers; REJECTED: two adapters may legitimately share one physical marker.
