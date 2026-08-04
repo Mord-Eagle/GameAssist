@@ -10,7 +10,7 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 | Revision | Status | Role |
 | --- | --- | --- |
-| **v2.0.0** | Active development in PR #81; focused EffectAssist, cast-recognition, duration, AlmanacAssist, HealthService, and concentration-offer checks passed; Roll20 acceptance pending | Source-aware effects, bounded 2014 Bless proposals, complete campaign-world systems, canonical HP evidence, and private HP-loss check offers |
+| **v2.0.0** | Active development in PR #81; focused EffectAssist, player-casting, cast-recognition, duration, AlmanacAssist, HealthService, and concentration-offer checks passed; Roll20 acceptance pending | Source-aware effects, secure player casting and retained GM requests, bounded 2014 Bless proposals, complete campaign-world systems, canonical HP evidence, and private HP-loss check offers |
 | **v1.8.2** | Merged through PR #74; Issue #65 closed | Page-local progressive NPC token naming |
 | **v1.8.1** | Merged through PR #73 | GM-private NPCAssist Bloodied threshold alerts and Control Center toggle |
 | **v1.8.0** | Merged through PR #63; 712 automated checks passed | Canonical module identities and migration-safe project version transition |
@@ -47,7 +47,7 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ### Release definition
 
-GameAssist v2.0.0 remains one active development line in PR #81. EffectAssist 2.2.0 is a catalog-driven effect coordinator for the official D&D 5E by Roll20 2014 character sheet with bounded GM-reviewed Bless cast proposals and optional GM-reviewed duration candidates. AlmanacAssist 1.0.0 combines fictional Time, regional Climate, Astronomy, continuity-aware Weather, descriptive Environment, and deliberate Rest as six independently controlled internal systems. HealthService 1.0.0 adds one canonical supported HP-observation and verified-write boundary. ConcentrationAssist 0.4.0 uses that evidence for optional private, revalidated concentration-check offers after supported HP loss. CombatAssist 1.1.0 supplies immutable accepted encounter-progression events without exposing tracker-write authority. The shared SemanticEvents service provides immutable in-sandbox lifecycle notifications without coupling module state.
+GameAssist v2.0.0 remains one active development line in PR #81. EffectAssist 2.3.0 is a catalog-driven effect coordinator for the official D&D 5E by Roll20 2014 character sheet with controlled player casting, retained GM placement requests, bounded GM-reviewed Bless cast proposals, and optional GM-reviewed duration candidates. AlmanacAssist 1.0.0 combines fictional Time, regional Climate, Astronomy, continuity-aware Weather, descriptive Environment, and deliberate Rest as six independently controlled internal systems. HealthService 1.0.0 adds one canonical supported HP-observation and verified-write boundary. ConcentrationAssist 0.4.0 uses that evidence for optional private, revalidated concentration-check offers after supported HP loss. CombatAssist 1.1.0 supplies immutable accepted encounter-progression events without exposing tracker-write authority. The shared SemanticEvents service provides immutable in-sandbox lifecycle notifications without coupling module state.
 
 EffectAssist and AlmanacAssist start disabled so existing campaigns upgrade without receiving new markers, conditions, sheet writes, fictional chronology, weather, or chat output until the GM deliberately enables them.
 
@@ -135,6 +135,22 @@ EffectAssist and AlmanacAssist start disabled so existing campaigns upgrade with
 - Keeps detailed catalog and lifecycle guidance in the module manual while ordinary chat menus remain task-oriented.
 - Adds EffectAssist to ConfigUI, module health reporting, the public command matrix, One-Click metadata, and the module-specific smoke-test guide.
 
+### Player casting and retained GM requests
+
+- Advances EffectAssist from 2.2.0 to 2.3.0 without changing durable effect-state schema 3 or cast-proposal schema 1; player casting uses a separate sandbox-local flow schema 1.
+- Replaces generated player buttons containing source token or character identifiers with short-lived opaque choices bound to the requesting player, source, effect definition, workflow stage, and expiry.
+- Rechecks source identity, current control, active page, token layer, module availability, and player-casting permission at each player step instead of trusting an earlier menu.
+- Uses Roll20's native map target query for visible linked recipients, allowing a player to choose a recipient they can see without requiring control of that recipient.
+- Returns a clear **Start Again** action when a player button is stale, reused, fabricated, or belongs to another player instead of failing silently.
+- Adds bounded, expiring player requests for hidden or off-page recipients. `!Effect-Requests` retains those requests for GM review instead of relying on a single transient whisper.
+- Adds generated GM apply and dismiss actions, revalidates a request when the GM opens it and again before confirmation, and invalidates a pending request if the GM later locks player casting.
+- Keeps invalidated requests visible as needing attention until they are dismissed or expire, while completed requests are removed from the inbox.
+- Adds direct built-in effect buttons and a current player-request count to the EffectAssist GM Control Center so ordinary GM application does not require unnecessary intermediate menus.
+- Keeps player-visible menus limited to casting choices and recovery. Definitions, active records, configuration, audits, repair, duration review, cast proposals, and the request inbox remain GM-only.
+- Omits hidden recipient names from public cast announcements while preserving private GM evidence.
+- Bounds player casting flows to fifty five-minute entries and retained GM requests to twenty ten-minute entries.
+- Passes 34 focused local checks covering opaque buttons, source authorization, visible non-controlled targeting, preview and confirmation, request retention, direct GM controls, hidden-recipient privacy, lock invalidation, stale and fabricated buttons, single use, and defensive public inspection. Live separate-player Roll20 acceptance remains required before Issue #88 is complete.
+
 ### Official 2014 Bless cast proposals
 
 - Advances EffectAssist from 2.1.0 to 2.2.0 and adds sandbox-local cast-proposal schema 1 without changing durable effect-state schema 3.
@@ -197,7 +213,7 @@ EffectAssist and AlmanacAssist start disabled so existing campaigns upgrade with
 - Preserves EffectAssist runtime records when the module is disabled and restores command access to the same records when it is re-enabled. Direct public API mutation requests return `UNAVAILABLE` while disabled; read-only inspection remains available.
 - Removes active handlers during disable without deleting the public state ledger.
 - Keeps MarkerService, ConditionAssist, ConcentrationAssist, and the 2014-sheet adapter behind explicit projection contracts rather than blending their persistent state into EffectAssist.
-- Adds explicit policy limits for active effects, history, definitions, targets, request identifiers, repair grants, names, descriptions, and chat output.
+- Adds explicit policy limits for active effects, history, definitions, targets, request identifiers, player casting flows, retained GM requests, repair grants, names, descriptions, and chat output.
 
 ### ConcentrationAssist contract
 
@@ -329,6 +345,7 @@ EffectAssist and AlmanacAssist start disabled so existing campaigns upgrade with
 - Seventy focused HealthService semantic transitions pass for supported 2014 PC and linked-NPC snapshots, linked event deduplication, legitimate repeated-transition preservation, explicit damage/healing/initialization provenance, unknown external changes, blank/invalid handling, immutable payloads, observer isolation, idempotent operation identity, bounded evidence, and disabled-service refusal.
 - Thirty-four focused ConcentrationAssist/HealthService checks pass for default configuration, GM-only setting control, linked-event deduplication, GM/controller privacy, unrelated-player refusal, unknown-versus-verified wording, DC calculation, advantage roll evidence, last-damage compatibility, single use, stale HP, ended concentration, silent healing/synchronization, module opt-out, disabled-service fallback, verified DebugTools damage, hidden NPC privacy, and unchanged manual checks.
 - One hundred nine focused EffectAssist regression checks pass for the launch catalog, complete Bless automation, Guidance's global skill row, concentration cleanup and replacement, overlapping ownership, cross-adapter sharing, idempotency, preserved baseline state, edited-row preservation, NPC fallback, player authorization and lockout, audit/repair, and lifecycle handling.
+- Thirty-four focused EffectAssist player-casting checks pass for opaque source choices, visible non-controlled targeting, retained GM placement requests, direct GM controls, hidden-recipient privacy, actor/stage/expiry revalidation, lock invalidation, single use, and visible stale-button recovery.
 - Thirty focused cast-recognition checks pass for exact 2014 Bless evidence, real-player actor identity, private proposal creation, non-mutating recognition, target-text refusal, duplicate suppression, missing-selection recovery, normal preview/confirmation reuse, single use, stale authorization, player lockout, unsupported spells, ambiguous characters, the recognition toggle, manual catalog availability, and unchanged concentration replacement.
 - One hundred seven focused AlmanacAssist checks pass for all six systems, calendar/profile boundaries, Wayfarer configuration, climate inheritance, astronomy configuration and forecasting, weather continuity and locks, environment overrides, rest preview/revalidation/rollback, independent toggles, preserved state, public availability, and focused audits.
 - `script.json` parses with the expanded v2.0.0 command and description additions.

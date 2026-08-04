@@ -2,7 +2,7 @@
 
 This roadmap records GameAssist's completed standalone-to-integrated transition, native initiative and encounter foundations, completed `v1.8.x` module and NPCAssist work, and the current combined v2.0.0 EffectAssist, AlmanacAssist, and shared-health development line.
 
-Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation details and acceptance evidence. Issues #60, #64, and #65 are complete. PR #81 remains the single v2.0.0 development line: EffectAssist and all six AlmanacAssist systems are implemented checkpoints, Issue #88 retains future EffectAssist UX/player-workflow repairs, Issue #83 adds the shared HealthService foundation, Issue #79 uses that foundation for private concentration-check offers, Issue #80 adds conservative effect-duration candidates, and Issue #77 adds bounded official 2014 Bless cast proposals. None of this work creates a parallel release branch.
+Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation details and acceptance evidence. Issues #60, #64, and #65 are complete. PR #81 remains the single v2.0.0 development line: EffectAssist and all six AlmanacAssist systems are implemented checkpoints, Issue #88 repairs the player-casting and retained GM-request workflow, Issue #83 adds the shared HealthService foundation, Issue #79 uses that foundation for private concentration-check offers, Issue #80 adds conservative effect-duration candidates, and Issue #77 adds bounded official 2014 Bless cast proposals. None of this work creates a parallel release branch.
 
 > The roadmap is a maintained plan, not a promise of dates. Issues #25 through #29 are development checkpoints within one release train; none is an intermediate public release.
 
@@ -69,7 +69,8 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | Progressive NPC naming | Complete | [#65](https://github.com/Mord-Eagle/GameAssist/issues/65), [PR #74](https://github.com/Mord-Eagle/GameAssist/pull/74) | v1.8.2 prevents accidental duplicate NPC token names through page-local, current-token numbering that the GM can disable or deliberately override. |
 | EffectAssist 2014 launch | Sandbox verification | [#75](https://github.com/Mord-Eagle/GameAssist/issues/75) | v2.0.0 implements a focused six-effect catalog, player casting with GM lockout, source-aware instances, multi-projection ownership, lifecycle history, read-only audit, and authorized repair. |
 | EffectAssist 2014 sheet projection | Sandbox verification | [#76](https://github.com/Mord-Eagle/GameAssist/issues/76) | Bless, Warding Bond, and Haste use ownership-safe repeating global modifier rows on official 2014 PC sheets, with NPC and assisted fallbacks. |
-| EffectAssist cast recognition | Sandbox verification | [#77](https://github.com/Mord-Eagle/GameAssist/issues/77) | EffectAssist 2.2.0 offers bounded, deduplicated, single-use GM proposals for unambiguous official 2014 Bless cards; it never infers recipients or bypasses ordinary review and confirmation. |
+| EffectAssist cast recognition | Sandbox verification | [#77](https://github.com/Mord-Eagle/GameAssist/issues/77) | EffectAssist offers bounded, deduplicated, single-use GM proposals for unambiguous official 2014 Bless cards; it never infers recipients or bypasses ordinary review and confirmation. |
+| EffectAssist player-casting workflow | Sandbox verification | [#88](https://github.com/Mord-Eagle/GameAssist/issues/88) | EffectAssist 2.3.0 uses short-lived player-bound choices, native Roll20 targeting, retained GM requests, direct GM controls, and visible stale-button recovery without exposing source identifiers in player buttons. |
 | EffectAssist concentration observation | Sandbox verification | [#78](https://github.com/Mord-Eagle/GameAssist/issues/78) | ConcentrationAssist 0.3.0 owns concentration state and exposes lifecycle events used for dependent EffectAssist cleanup. |
 | Shared HealthService foundation | Sandbox verification | [#83](https://github.com/Mord-Eagle/GameAssist/issues/83) | Add canonical supported HP snapshots, immutable deduplicated transitions, bounded evidence, and verified producer-identified writes without assigning unknown causes. |
 | ConcentrationAssist HP-loss offers | Sandbox verification | [#79](https://github.com/Mord-Eagle/GameAssist/issues/79) | ConcentrationAssist 0.4.0 consumes HealthService evidence through private, deduplicated, revalidated check offers without treating every decrease as proven damage. |
@@ -522,7 +523,7 @@ EffectAssist remains a gameplay module. MarkerService owns markers, ConditionAss
 **Tracking:** [Issue #77](https://github.com/Mord-Eagle/GameAssist/issues/77)
 **Status:** Sandbox verification
 
-EffectAssist 2.2.0 recognizes only well-evidenced official 2014 Bless spell output and offers a private GM-confirmed proposal. Chat target text is descriptive and is never treated as token identity. The proposal remains sandbox-local, bounded, deduplicated, short-lived, and single-use; selecting recipients and passing through the existing preview and confirmation path remain mandatory.
+EffectAssist 2.3.0 recognizes only well-evidenced official 2014 Bless spell output and offers a private GM-confirmed proposal. Chat target text is descriptive and is never treated as token identity. The proposal remains sandbox-local, bounded, deduplicated, short-lived, and single-use; selecting recipients and passing through the existing preview and confirmation path remain mandatory.
 
 - [x] Require the exact official 2014 `spell` template and normalized Bless name.
 - [x] Require one exact character-name match and one eligible linked source token on the actor's active page.
@@ -535,6 +536,24 @@ EffectAssist 2.2.0 recognizes only well-evidenced official 2014 Bless spell outp
 - [ ] Pass the live Roll20 supported-card, duplicate, ambiguity, recipient-selection, disable/re-enable, and ordinary-catalog checks.
 
 Capture real 2024 template samples before defining a 2024 recognition contract; 2024 effect recognition remains outside this phase.
+
+### Player Casting and GM Requests
+
+**Tracking:** [Issue #88](https://github.com/Mord-Eagle/GameAssist/issues/88)
+**Status:** Sandbox verification
+
+EffectAssist 2.3.0 keeps player casting compact without weakening the established source-control, review, confirmation, or privacy boundaries. Generated player buttons carry short-lived opaque choices rather than raw token or character identifiers. Visible linked recipients use Roll20's native target picker; hidden or off-page cases can be retained privately for the GM to finish through the same preview and confirmation path.
+
+- [x] Bind each player casting choice to its player, source, effect, workflow stage, and expiry.
+- [x] Revalidate source identity, control, page, layer, module state, and player-casting permission before each step.
+- [x] Replace silent stale, reused, fabricated, or wrong-player button failures with a visible **Start Again** route.
+- [x] Let players target visible linked recipients through Roll20's native target query without requiring control of the recipient.
+- [x] Add bounded, expiring GM requests with `!Effect-Requests`, generated apply controls, and explicit dismissal.
+- [x] Keep invalidated requests visible as needing attention until the GM dismisses them or they expire.
+- [x] Add direct built-in effect buttons and a request count to the GM Control Center.
+- [x] Omit hidden target names from public announcements.
+- [x] Pass 34 focused player-flow, privacy, revalidation, request, and recovery checks plus the established EffectAssist regression harnesses.
+- [ ] Pass the live Roll20 separate-player source, visible non-controlled recipient, retained request, hidden-recipient privacy, later-lock, stale-button, and direct-GM-control checks.
 
 ### Concentration Coordination
 
@@ -605,7 +624,7 @@ EffectAssist 2.1.0 records formal duration rules and whichever verified provider
 
 ### Completion Gate
 
-The EffectAssist portion of v2.0.0 must survive the live Roll20 clean-install, upgrade, complete Bless, catalog coverage, 2014-sheet rows, concentration cleanup, overlap, baseline-state, audit/repair, cast-recognition, duration-provider, disable/re-enable, and restart tests. ConcentrationAssist HP-loss offers require their separate live Issue #79 acceptance. The 2024-sheet contract remains later work; Issue #88 retains the player-workflow and UX repairs without reopening the completed proof-of-concept implementation during AlmanacAssist development.
+The EffectAssist portion of v2.0.0 must survive the live Roll20 clean-install, upgrade, complete Bless, catalog coverage, 2014-sheet rows, concentration cleanup, overlap, baseline-state, audit/repair, cast-recognition, player-casting and retained-request, duration-provider, disable/re-enable, and restart tests. ConcentrationAssist HP-loss offers require their separate live Issue #79 acceptance. The 2024-sheet contract remains later work; Issue #88 is implemented at the sandbox checkpoint and remains open until its separate-player Roll20 acceptance passes.
 
 ---
 

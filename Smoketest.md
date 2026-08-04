@@ -270,19 +270,33 @@ End each effect from its **Effect Applied** panel or `!Effect-Active`. Pass when
 
 Confirm the catalog visibly separates Bless, Guidance, Warding Bond, and Haste under **Marker And Sheet Automation** from Holy Weapon and Pass Without a Trace under **Tracked; Rules Stay Manual**. Gift of Alacrity, Longstrider, and Beacon of Hope should not appear as built-in launch buttons.
 
-### Player Casting and GM Lockout
+### Player Casting, GM Requests, and Lockout
 
-Use a separate non-GM player login with one linked character token that player controls.
+Use a separate non-GM player login with two linked character tokens that player controls. Keep one visible linked recipient controlled by someone else and one disposable linked recipient on the GM layer.
 
-1. As the player, select one or more linked target tokens and run `!effect`.
-2. Apply Bless using the player's controlled character as the source.
+1. As the player, run `!Bless` without selecting a recipient first.
+2. Click one caster button, then click **Choose 1 Recipient** and point at the visible linked recipient on the map.
 3. Confirm the review is whispered only to that player, then apply it.
-4. Confirm the result includes **End Effect** and use that button.
-5. As GM, run `!Effect-GM` and click **Lock** under Player Casting.
-6. As the player, run `!Bless` with a target selected.
-7. Restore **Allow** from the GM control center.
+4. Confirm the public announcement appears only after application and the private result includes **End Effect**.
+5. Click the old caster button or recipient button again.
+6. Start another effect, choose a caster, and click **Ask the GM** instead of choosing a visible recipient.
+7. As GM, open `!Effect-GM`, confirm **Player Requests (1)** appears, then open `!Effect-Requests`.
+8. Select the GM-layer recipient, click **Use Selected Tokens**, review the request, and confirm it.
+9. Confirm the public announcement does not name the hidden recipient.
+10. Create one more player request, preview it as the GM, then lock Player Casting before clicking the old confirmation.
+11. Restore **Allow** from the GM control center.
 
-**Pass when:** the player can apply and end a built-in effect only from a source they control; the player cannot see custom, audit, repair, or GM configuration controls; lockout produces a clear private notice and writes nothing; restoring access works without a sandbox restart.
+**Pass when:**
+
+- caster buttons reach recipient selection and contain no visible raw token or character identifier;
+- a player can target a visible linked recipient they do not control;
+- used, stale, fabricated, or wrong-player casting buttons produce a private **Start Again** recovery panel and never apply twice;
+- **Ask the GM** remains available under Player Requests instead of disappearing with one chat whisper;
+- the GM may place a hidden or off-page recipient through the ordinary preview and confirmation;
+- hidden recipient names are not included in the public completion announcement;
+- the player cannot see custom, audit, repair, request-management, or configuration controls;
+- a later lock invalidates an unconfirmed player request without changing an effect;
+- restoring access works without a sandbox restart.
 
 **NPC fallback:** Apply Bless, Warding Bond, and Haste to the disposable linked NPC. Pass when marker and lifecycle behavior work, no PC-only modifier rows are created for the NPC, and the result clearly identifies the manual mechanics.
 
@@ -390,6 +404,7 @@ For the stale-confirmation check:
 !Effect-Status
 !Effect-Catalog
 !Effect-Active
+!Effect-Requests
 !Effect-Definitions
 !Effect-Audit
 !Effect-Manual
