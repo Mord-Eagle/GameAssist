@@ -3,7 +3,7 @@
 GameAssist - Roll20 API Script
 Version: 2.0.0
 Last Updated: 2026-08-04 (America/New_York)
-Release scope: EffectAssist 2.3.0, HealAssist 1.0.0, complete AlmanacAssist 1.1.0, HealthService 1.0.0, and verified CombatAssist duration events on one GameAssist v2.0.0 development line.
+Release scope: EffectAssist 2.3.0, HealAssist 1.0.0, AttackAssist 1.0.0, complete AlmanacAssist 1.1.0, HealthService 1.0.0, and verified CombatAssist duration events on one GameAssist v2.0.0 development line.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -14,7 +14,7 @@ task queue, state/configuration helpers, consistent logging, and a core marker
 service plus a shared health-observation and verified-write contract. Optional
 PC health-band alerts use that shared evidence and remain private to the GM.
 Normal event handlers execute directly unless a module deliberately
-calls GameAssist.enqueue(). This development package contains fourteen configurable modules:
+calls GameAssist.enqueue(). This development package contains fifteen configurable modules:
 - ConfigUI 0.2.3 - GM-only chat controls for toggling modules, common options, and PC health alerts.
 - CritAssist 0.2.5.1 - Detects natural-1 attacks and offers fumble/confirm menus.
 - ConditionAssist 1.0.3 - Provides condition wording, artwork, announcements, and marker controls.
@@ -26,6 +26,7 @@ calls GameAssist.enqueue(). This development package contains fourteen configura
 - NPCAssist 1.4.0 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, and Arc rosters.
 - EffectAssist 2.3.0 - Coordinates catalog-driven effects, direct GM casting, opaque player flows, retained GM requests, 2014-sheet modifiers, concentration, ownership-safe cleanup, duration candidates, and bounded 2014 Bless proposals.
 - HealAssist 1.0.0 - Guides verified 2014 healing rolls, visible PC targeting, private GM requests, complete HP review, and one-use HealthService application.
+- AttackAssist 1.0.0 - Guides authorized 2014 repeating attacks, visible targeting, private GM placement, and one-use native-template rolls without applying damage.
 - AlmanacAssist 1.1.0 - Adds guided Wayfarer drafts to fictional time, climate, astronomy, weather, environments, and verified 2014-sheet rests across six independently controlled internal systems.
 - HPAssist 0.2.0 - Rolls npc_hpformula and uses HealthService for verified token bar 1 writes when available.
 - DebugTools 0.3.0 - Optional dry-run-first GM diagnostics with verified supported HP damage writes.
@@ -82,6 +83,10 @@ MODULE COMMANDS
   !Effect-Apply, !Effect-End,
   !Effect-Audit, !Effect-Repair, !Effect-Players, !effect, !Bless, !Guidance, !Guide,
   !Haste, !Warding-Bond, !Holy-Weapon, and !PwoaT
+- HealAssist: !Heal, !Heal-GM, !Heal-Menu, !Heal-Guide, !Heal-Status,
+  !Heal-Audit, !Heal-Requests, !Heal-Players, and !Heal-Results
+- AttackAssist: !Attack, !Attack-GM, !Attack-Menu, !Attack-Guide,
+  !Attack-Status, !Attack-Audit, !Attack-Requests, and !Attack-Players
 - AlmanacAssist: !Almanac, !aa, !cal, !date, !time, !clim, !astro,
   !weather, !enviro, !rest, !aa-time, !aa-climate, !aa-astro,
   !aa-weather, !aa-enviro, !aa-rest, !aa-wayfarer, !Almanac-GM,
@@ -131,6 +136,9 @@ V2.0.0 FOUNDATION
 - HealAssist remains disabled until deliberately enabled. It uses HealthService
   for reviewed official-2014 healing and verified HP application, and it never
   spends slots, inventory, class resources, or temporary HP automatically.
+- AttackAssist remains disabled until deliberately enabled. It verifies stable
+  official-2014 repeating-attack rows, preserves the sheet's stored formula and
+  official roll template, and never applies damage or changes encounter state.
 - NPCAssist, ConcentrationAssist, and DebugTools use GameAssist.MarkerService.
 - Marker-dependent GameAssist modules no longer depend on standalone TokenMod.
 - ConditionAssist uses MarkerService for condition reads, writes, and change observation.
@@ -174,8 +182,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 // mechsuit:
 //   codename: "GAMEASSIST"
 //   project_version: "v2.0.0"
-//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, migration-safe module identities, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker, Turn Tracker, and health authorities, optional GM-private PC health-band alerts, source-aware semantic effects with ownership-safe projections, guided verified 2014 healing, bounded GM-reviewed official 2014 Bless cast proposals, and optional GM-reviewed duration candidates, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, preservation-first encounter flow, GM-private NPC Bloodied alerts, optional health-gated table greetings, validated real-world table time, and independently managed fictional time, climate, astronomy, weather, environments, and deliberate 2014-sheet rests. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, automatic turn advancement, automatic effect application or recipient inference from spell cards, automatic effect expiration from elapsed time, automatic healing-card interpretation or resource consumption, automatic Bloodied markers/history, automatic concentration rolls from observed HP changes, public or player-facing health-threshold disclosure, damage-source guessing, silent effect repair, automatic environmental penalties, or automatic reversal of campaign state when fictional time moves backward."
-//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.turntrackerservice","core.semanticevents","core.healthservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critassist","modules.conditionassist","modules.tokenassist","modules.initiativeassist","modules.combatassist","modules.welcomeassist","modules.npcassist","modules.concentrationassist","modules.effectassist","modules.healassist","modules.almanacassist","modules.hpassist","modules.debugtools","bootstrap"]
+//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, migration-safe module identities, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker, Turn Tracker, and health authorities, optional GM-private PC health-band alerts, source-aware semantic effects with ownership-safe projections, guided verified 2014 healing, guided authorized 2014 repeating attacks, bounded GM-reviewed official 2014 Bless cast proposals, and optional GM-reviewed duration candidates, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, preservation-first encounter flow, GM-private NPC Bloodied alerts, optional health-gated table greetings, validated real-world table time, and independently managed fictional time, climate, astronomy, weather, environments, and deliberate 2014-sheet rests. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, automatic turn advancement, automatic effect application or recipient inference from spell cards, automatic effect expiration from elapsed time, automatic healing-card interpretation or resource consumption, automatic damage application from guided attack rolls, automatic Bloodied markers/history, automatic concentration rolls from observed HP changes, public or player-facing health-threshold disclosure, damage-source guessing, silent effect repair, automatic environmental penalties, or automatic reversal of campaign state when fictional time moves backward."
+//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.turntrackerservice","core.semanticevents","core.healthservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critassist","modules.conditionassist","modules.tokenassist","modules.initiativeassist","modules.combatassist","modules.welcomeassist","modules.npcassist","modules.concentrationassist","modules.effectassist","modules.healassist","modules.attackassist","modules.almanacassist","modules.hpassist","modules.debugtools","bootstrap"]
 //   env:
 //     required: []
 //     optional: []
@@ -188,7 +196,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //   observability:
 //     logs: "roll20_whisper_to_gm"
 //     metrics: [{ name: "gameassist.queue.task_duration_ms", unit: "ms" }]
-//     spans: ["[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:MODULES:EFFECTASSIST]","[GAMEASSIST:MODULES:HEALASSIST]","[GAMEASSIST:MODULES:ALMANACASSIST]","[GAMEASSIST:MODULES:INITIATIVEASSIST]","[GAMEASSIST:MODULES:COMBATASSIST]","[GAMEASSIST:MODULES:WELCOMEASSIST]"]
+//     spans: ["[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:MODULES:EFFECTASSIST]","[GAMEASSIST:MODULES:HEALASSIST]","[GAMEASSIST:MODULES:ATTACKASSIST]","[GAMEASSIST:MODULES:ALMANACASSIST]","[GAMEASSIST:MODULES:INITIATIVEASSIST]","[GAMEASSIST:MODULES:COMBATASSIST]","[GAMEASSIST:MODULES:WELCOMEASSIST]"]
 //   performance: { notes: "No current benchmark claim; validate in the target Roll20 campaign sandbox." }
 //   concurrency: { model: "Direct event handlers plus explicit opt-in serialized task queue", idempotency: "N/A (event-driven)" }
 //   compatibility: { accepts: ["Roll20 API sandbox; current campaign smoke test required"], emits: "Roll20 chat whispers/logs" }
@@ -225,12 +233,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     │  ├─ [GAMEASSIST:MODULES:CONCENTRATIONASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:EFFECTASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:HEALASSIST]
+//     │  ├─ [GAMEASSIST:MODULES:ATTACKASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:ALMANACASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:HPASSIST]
 //     │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 //     └─ [GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
-// Guarantee: GameAssist v2.0.0 runs policy, utilities, guarded core services including MarkerService, TurnTrackerService, SemanticEvents, and HealthService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/effect/healing/almanac/gameplay modules, then bootstrap in the declared order. HealthService reports only verified supported HP transitions and refuses to guess damage causes, attackers, resistances, or temporary-HP interactions; its optional PC threshold consumer whispers only the GM. HealAssist guides an authorized 2014 healing roll through exact HP review and one-use verified application while refusing to infer or consume spell slots, items, features, or temporary HP. EffectAssist may offer a bounded private GM proposal for an unambiguous official 2014 Bless card, but it refuses to infer recipients or apply an effect before ordinary review and confirmation; it may also turn accepted CombatAssist progression and committed AlmanacAssist time into private GM duration candidates, but it refuses to end effects from elapsed time alone. AlmanacAssist owns its fictional time, climate, astronomy, weather, environment, and rest records without changing GameAssist real-world timestamps, NPCAssist Session dates, or CombatAssist timing. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing real-world times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
+// Guarantee: GameAssist v2.0.0 runs policy, utilities, guarded core services including MarkerService, TurnTrackerService, SemanticEvents, and HealthService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/effect/healing/attack/almanac/gameplay modules, then bootstrap in the declared order. HealthService reports only verified supported HP transitions and refuses to guess damage causes, attackers, resistances, or temporary-HP interactions; its optional PC threshold consumer whispers only the GM. HealAssist guides an authorized 2014 healing roll through exact HP review and one-use verified application while refusing to infer or consume spell slots, items, features, or temporary HP. AttackAssist guides a verified 2014 repeating attack through authorized source selection, targeting, and one-use roll submission while refusing to apply damage or mutate combat state. EffectAssist may offer a bounded private GM proposal for an unambiguous official 2014 Bless card, but it refuses to infer recipients or apply an effect before ordinary review and confirmation; it may also turn accepted CombatAssist progression and committed AlmanacAssist time into private GM duration candidates, but it refuses to end effects from elapsed time alone. AlmanacAssist owns its fictional time, climate, astronomy, weather, environment, and rest records without changing GameAssist real-world timestamps, NPCAssist Session dates, or CombatAssist timing. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing real-world times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
 
 // =============================
 // === GameAssist v2.0.0 ===
@@ -385,6 +394,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             maximumSides: 1000,
             maximumFlat: 1000
         }),
+        attacks: Object.freeze({
+            interactionMs: 1000 * 60 * 10,
+            flowLimit: 50,
+            requestLimit: 50,
+            submissionLimit: 50,
+            sourceListLimit: 12,
+            attackListLimit: 30,
+            rowIdLength: 120,
+            rollBaseLength: 12000,
+            nameLength: 120
+        }),
         concentration: Object.freeze({
             healthOfferLimit: 50,
             healthOfferMs: 1000 * 60 * 10
@@ -461,11 +481,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Added bounded HealAssist interaction, recipient, formula, and rollback limits plus the fixed 50%, 25%, and 10% PC health-alert thresholds alongside EffectAssist player-casting flows, retained GM-request limits, HealthService, concentration-offer, duration-candidate, encounter-round, world-minute, cast-proposal, and chat-deduplication limits; rollback: disable the affected optional integration while retaining manual workflows.
+    // Changed (v2.0.0): Added bounded AttackAssist source, row, request, submission, rollbase, and interaction limits alongside the existing HealAssist, HealthService, EffectAssist, AlmanacAssist, and concentration limits; rollback: disable the affected optional module while retaining native sheet workflows.
     // Decision log:
     //   CHOICE: Offer common IANA zones plus validated custom input - ALT: fixed numeric offsets; REJECTED: fixed offsets do not follow daylight-saving changes.
     //   CHOICE: Keep NPC initialization and snapshot knobs centralized while removing the unused external marker delay - ALT: retain the dead setting; REJECTED: implied behavior no caller performs.
     // Prior notes:
+    //   v2.0.0: Added bounded HealAssist interaction, recipient, formula, and rollback limits plus the fixed 50%, 25%, and 10% PC health-alert thresholds alongside EffectAssist player-casting flows, retained GM-request limits, HealthService, concentration-offer, duration-candidate, encounter-round, world-minute, cast-proposal, and chat-deduplication limits.
     //   v2.0.0: Added bounded HealthService and concentration-offer limits plus EffectAssist duration-candidate, encounter-round, world-minute, cast-proposal, and chat-deduplication limits.
     //   v2.0.0: Added bounded AlmanacAssist chronology, calendar/holiday, climate-profile/tag/temperature, region/depth, moon/phase, rare-event/weight, forecast, environment, rest-definition, confirmation-grant, and retained-history limits.
     //   v2.0.0: Added bounded semantic-event observer/type/owner limits plus EffectAssist instance, history, definition, target, picker, request-id count/length, repair-grant, chat-list, name, marker, and description limits.
@@ -4803,7 +4824,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Modules wrapper (bundled features)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES", title: "Modules wrapper",
-    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Condition, token, effect, and gameplay marker consumers share CORE:MARKERSERVICE","EffectAssist owns semantic effect instances and ownership-safe projections without hard-coupling unrelated modules","HealAssist consumes CORE:HEALTHSERVICE for deliberate verified healing without becoming an HP observer or prerequisite for unrelated modules","AlmanacAssist owns fictional chronology without changing real-world timestamps or unrelated module state","TokenAssist owns the documented GameAssist token-command surface without assuming the TokenMod brand","InitiativeAssist owns initiative rules while CombatAssist owns deliberate preservation-first encounter flow through CORE:TURNTRACKERSERVICE","WelcomeAssist remains disabled by default and announces automatically only after completed bootstrap"],
+    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Condition, token, effect, and gameplay marker consumers share CORE:MARKERSERVICE","EffectAssist owns semantic effect instances and ownership-safe projections without hard-coupling unrelated modules","HealAssist consumes CORE:HEALTHSERVICE for deliberate verified healing without becoming an HP observer or prerequisite for unrelated modules","AttackAssist guides verified 2014 repeating attacks without owning damage, HP, effects, initiative, or encounter flow","AlmanacAssist owns fictional chronology without changing real-world timestamps or unrelated module state","TokenAssist owns the documented GameAssist token-command surface without assuming the TokenMod brand","InitiativeAssist owns initiative rules while CombatAssist owns deliberate preservation-first encounter flow through CORE:TURNTRACKERSERVICE","WelcomeAssist remains disabled by default and announces automatically only after completed bootstrap"],
     //   depends_on: ["[GAMEASSIST:CORE]","[GAMEASSIST:INTERFACES]"], last_updated_version: "v2.0.0" }
     // -------------------------------------------------------------------------
     // Narrative
@@ -19985,6 +20006,813 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // =============================================================================
+    // [GAMEASSIST:MODULES:ATTACKASSIST] BEGIN
+    // Section Title: Guided official-2014 repeating attacks
+    // -------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:ATTACKASSIST", title: "AttackAssist",
+    //   guarantees: ["Only authorized official-2014 linked sources and verified repeating-attack row identities enter a guided roll","Visible targets use Roll20's native map prompt without requiring target control; hidden or off-page placement remains GM-reviewed","One-use roll submissions preserve the sheet-generated attack formula and supported official template fields without rewriting character roll settings","AttackAssist never applies damage or changes HP, conditions, effects, initiative, turns, or encounter state"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:OBJECT]"],
+    //   provides: ["GameAssist.AttackAssist"], last_updated_version: "v2.0.0",
+    //   independent_versions: { module_version: "1.0.0", interaction_schema_version: 1 }, lifecycle: "active" }
+    // -------------------------------------------------------------------------
+    // Narrative
+    // AttackAssist is a disabled-by-default convenience layer for the official 2014
+    // sheet. It verifies one repeating attack, binds every choice to the requesting
+    // player and current source, uses a native target query, then submits one familiar
+    // 2014 attack roll as the character. Native sheet buttons remain fully independent.
+    // -------------------------------------------------------------------------
+    GameAssist.register('AttackAssist', function() {
+        const MODULE_NAME = 'AttackAssist';
+        const MODULE_VERSION = '1.0.0';
+        const INTERACTION_SCHEMA_VERSION = 1;
+        const modState = GameAssist.getState(MODULE_NAME);
+        modState.config = {
+            enabled: false,
+            allowPlayerAttacks: true,
+            ...modState.config
+        };
+        if (typeof modState.config.allowPlayerAttacks !== 'boolean') modState.config.allowPlayerAttacks = true;
+
+        const MODE_FRAGMENTS = Object.freeze({
+            normal: '{{query=1}} {{normal=1}} {{r2=[[0d20',
+            advantage: '{{query=1}} {{advantage=1}} {{r2=[[@{d20}',
+            disadvantage: '{{query=1}} {{disadvantage=1}} {{r2=[[@{d20}'
+        });
+        const flows = new Map();
+        const requests = new Map();
+        const submissions = new Map();
+        let interactionSequence = 0;
+
+        function clone(value) {
+            try { return JSON.parse(JSON.stringify(value)); } catch (_error) { return null; }
+        }
+
+        function playerIsGm(playerId) {
+            return typeof playerIsGM === 'function' && playerIsGM(playerId);
+        }
+
+        function playerName(playerId, fallback = 'Player') {
+            return String(getObj('player', playerId)?.get('_displayname') || fallback)
+                .replace(/\s*\(GM\)\s*$/i, '')
+                .replace(/"/g, "'")
+                .trim() || fallback;
+        }
+
+        function whisperPrefix(msg, gmOnly = false) {
+            if (gmOnly || playerIsGm(msg?.playerid)) return '/w gm';
+            return `/w "${playerName(msg?.playerid, msg?.who || 'Player')}"`;
+        }
+
+        function panel(title, fields, msg, { gmOnly = false } = {}) {
+            const body = (fields || []).map(field => `{{${_sanitize(field.label)}=${field.value}}}`).join(' ');
+            sendChat(MODULE_NAME, `${whisperPrefix(msg, gmOnly)} &{template:default} {{name=${_sanitize(title)}}} ${body}`);
+        }
+
+        function privateNotice(playerId, title, message, actions = '') {
+            const who = playerIsGm(playerId) ? 'gm' : `"${playerName(playerId)}"`;
+            sendChat(MODULE_NAME, `/w ${who} &{template:default} {{name=${_sanitize(title)}}} {{Result=${_sanitize(message)}}}${actions ? ` {{Actions=${actions}}}` : ''}`);
+        }
+
+        function playerPageId(playerId) {
+            const campaign = Campaign();
+            let overrides = campaign.get('playerspecificpages');
+            if (typeof overrides === 'string' && overrides) {
+                try { overrides = JSON.parse(overrides); } catch (_error) { overrides = null; }
+            }
+            if (overrides && typeof overrides === 'object' && overrides[playerId]) return String(overrides[playerId]);
+            if (playerIsGm(playerId)) {
+                const lastPage = getObj('player', playerId)?.get('_lastpage');
+                if (lastPage) return String(lastPage);
+            }
+            return String(campaign.get('playerpageid') || '');
+        }
+
+        function ribbonPageId() {
+            return String(Campaign().get('playerpageid') || '');
+        }
+
+        function tokenPageId(token) {
+            return String(token?.get('_pageid') || token?.get('pageid') || '');
+        }
+
+        function linkedCharacter(token) {
+            const characterId = String(token?.get('represents') || '');
+            return characterId ? getObj('character', characterId) : null;
+        }
+
+        function controllers(value) {
+            return String(value || '').split(',').map(item => item.trim()).filter(Boolean);
+        }
+
+        function controlsToken(playerId, token, character) {
+            if (playerIsGm(playerId)) return true;
+            const allowed = new Set([...controllers(token?.get('controlledby')), ...controllers(character?.get('controlledby'))]);
+            return allowed.has('all') || allowed.has(String(playerId || ''));
+        }
+
+        function attributesFor(characterId) {
+            let attributes = findObjs({ _type: 'attribute', _characterid: String(characterId || '') });
+            if (!attributes.length) {
+                attributes = findObjs({ _type: 'attribute' }).filter(attribute => String(attribute.get('_characterid') || '') === String(characterId || ''));
+            }
+            return attributes;
+        }
+
+        function attributeMap(characterId) {
+            return new Map(attributesFor(characterId).map(attribute => [String(attribute.get('name') || ''), attribute]));
+        }
+
+        function characterSheetHint(character) {
+            const direct = String(character?.get('charactersheetname') || '').trim().toLowerCase();
+            if (direct) return direct;
+            return String(getAttrByName(character?.id, 'charactersheetname') || '').trim().toLowerCase();
+        }
+
+        function is2014Pc(character, attributes = null) {
+            if (!character || String(getAttrByName(character.id, 'npc') || '').trim() === '1') return false;
+            const hint = characterSheetHint(character);
+            if (hint === 'dnd2024byroll20') return false;
+            const values = attributes || attributeMap(character.id);
+            return hint === 'ogl5e'
+                || values.has('initiative_bonus')
+                || values.has('constitution_save_bonus')
+                || [...values.keys()].some(name => /^repeating_attack_[^_]+_rollbase$/i.test(name));
+        }
+
+        function verifiedRollbase(value) {
+            const rollbase = String(value || '').trim();
+            if (!rollbase || rollbase.length > POLICY.attacks.rollBaseLength || /[\r\n]/.test(rollbase)) return false;
+            if (!/^@\{wtype\}&\{template:(?:atk|atkdmg)\}\s/i.test(rollbase)) return false;
+            return rollbase.includes('{{r1=[[') && rollbase.includes('@{rtype}');
+        }
+
+        function attackRows(character) {
+            if (!character) return [];
+            const attributes = attributeMap(character.id);
+            if (!is2014Pc(character, attributes)) return [];
+            const rows = [];
+            attributes.forEach((nameAttribute, name) => {
+                const match = name.match(/^repeating_attack_([^_]+)_atkname$/i);
+                if (!match || match[1].length > POLICY.attacks.rowIdLength) return;
+                const rowId = match[1];
+                const prefix = `repeating_attack_${rowId}`;
+                const attackName = String(nameAttribute.get('current') || '').trim().slice(0, POLICY.attacks.nameLength);
+                const rollbase = String(attributes.get(`${prefix}_rollbase`)?.get('current') || '').trim();
+                const attackFlag = String(attributes.get(`${prefix}_atkflag`)?.get('current') || '').trim();
+                if (!attackName || attackFlag === '0' || !verifiedRollbase(rollbase)) return;
+                rows.push({
+                    rowId,
+                    prefix,
+                    name: attackName,
+                    range: String(attributes.get(`${prefix}_atkrange`)?.get('current') || '').trim().slice(0, POLICY.attacks.nameLength),
+                    bonus: String(attributes.get(`${prefix}_atkbonus`)?.get('current') || '').trim().slice(0, POLICY.attacks.nameLength),
+                    rollbase,
+                    attributes
+                });
+            });
+            const reporder = String(attributes.get('_reporder_repeating_attack')?.get('current') || '')
+                .split(',').map(value => value.trim()).filter(Boolean);
+            const positions = new Map(reporder.map((rowId, index) => [rowId, index]));
+            rows.sort((left, right) => {
+                const leftOrder = positions.has(left.rowId) ? positions.get(left.rowId) : Number.MAX_SAFE_INTEGER;
+                const rightOrder = positions.has(right.rowId) ? positions.get(right.rowId) : Number.MAX_SAFE_INTEGER;
+                return leftOrder - rightOrder || left.name.localeCompare(right.name) || left.rowId.localeCompare(right.rowId);
+            });
+            const totals = rows.reduce((result, row) => {
+                const key = row.name.toLowerCase();
+                result[key] = (result[key] || 0) + 1;
+                return result;
+            }, {});
+            const seen = {};
+            rows.forEach(row => {
+                const key = row.name.toLowerCase();
+                seen[key] = (seen[key] || 0) + 1;
+                row.label = totals[key] > 1 ? `${row.name} (${seen[key]})` : row.name;
+            });
+            return rows.slice(0, POLICY.attacks.attackListLimit);
+        }
+
+        function attackRow(character, rowId) {
+            return attackRows(character).find(row => row.rowId === String(rowId || '')) || null;
+        }
+
+        function supportedSource(token) {
+            if (!token || !['objects', 'gmlayer'].includes(String(token.get('layer') || ''))) {
+                return { ok: false, message: 'The attacking token is not available on a supported map layer.' };
+            }
+            const character = linkedCharacter(token);
+            if (!character) return { ok: false, message: 'The attacker must be linked to a character.' };
+            if (characterSheetHint(character) === 'dnd2024byroll20') {
+                return { ok: false, message: 'AttackAssist 1.0.0 supports official 2014 repeating attacks only. Native 2024 attack buttons remain available.' };
+            }
+            if (!is2014Pc(character)) {
+                return { ok: false, message: 'The attacker is not a supported official 2014 player character.' };
+            }
+            return {
+                ok: true,
+                token,
+                character,
+                name: String(character.get('name') || token.get('name') || 'Attacker').slice(0, POLICY.attacks.nameLength)
+            };
+        }
+
+        function resolveSource(tokenId) {
+            return supportedSource(getObj('graphic', String(tokenId || '')));
+        }
+
+        function sourceAuthorized(msg, source) {
+            if (!source?.ok) return source || { ok: false, message: 'The attacker is unavailable.' };
+            if (!playerIsGm(msg?.playerid)) {
+                if (modState.config.allowPlayerAttacks === false) return { ok: false, message: 'The GM has temporarily locked player-guided attacks.' };
+                if (String(source.token.get('layer') || '') !== 'objects' || tokenPageId(source.token) !== playerPageId(msg.playerid)) {
+                    return { ok: false, message: 'Choose a visible attacking token on your current Roll20 page.' };
+                }
+            }
+            return controlsToken(msg?.playerid, source.token, source.character)
+                ? { ok: true }
+                : { ok: false, message: 'Choose an attacker controlled by your Roll20 player account.' };
+        }
+
+        function selectedTokenIds(msg) {
+            return [...new Set((msg?.selected || []).map(item => String(item?._id || '')).filter(Boolean))];
+        }
+
+        function pageTokens(pageId, includeGmLayer) {
+            let tokens = findObjs({ _type: 'graphic', _pageid: String(pageId || '') });
+            if (!tokens.length) tokens = findObjs({ _type: 'graphic' });
+            return tokens.filter(token => tokenPageId(token) === String(pageId || '')
+                && (String(token.get('layer') || '') === 'objects' || (includeGmLayer && String(token.get('layer') || '') === 'gmlayer')));
+        }
+
+        function sourceCandidates(msg) {
+            const selectedIds = selectedTokenIds(msg);
+            const selected = selectedIds
+                .map(id => supportedSource(getObj('graphic', id)))
+                .filter(source => source.ok && sourceAuthorized(msg, source).ok);
+            // CHOICE: An explicit selection is authoritative even when unsupported - falling back to another page token would make the wrong character attack.
+            if (selectedIds.length) return selected.slice(0, POLICY.attacks.sourceListLimit);
+            return pageTokens(playerPageId(msg?.playerid), playerIsGm(msg?.playerid))
+                .map(supportedSource)
+                .filter(source => source.ok && sourceAuthorized(msg, source).ok)
+                .slice(0, POLICY.attacks.sourceListLimit);
+        }
+
+        function interactionId(prefix) {
+            interactionSequence++;
+            return `${prefix}-${Date.now().toString(36)}-${interactionSequence.toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+        }
+
+        function pruneInteractions(now = Date.now()) {
+            [flows, requests, submissions].forEach(collection => {
+                [...collection.entries()].forEach(([id, value]) => {
+                    if (Number(value?.expiresAt || 0) <= now) collection.delete(id);
+                });
+            });
+            [[flows, POLICY.attacks.flowLimit], [requests, POLICY.attacks.requestLimit], [submissions, POLICY.attacks.submissionLimit]]
+                .forEach(([collection, limit]) => {
+                    while (collection.size > limit) collection.delete(collection.keys().next().value);
+                });
+        }
+
+        function rememberFlow(msg, source, rowId = null) {
+            pruneInteractions();
+            const id = interactionId('ATF');
+            flows.set(id, Object.freeze({
+                schemaVersion: INTERACTION_SCHEMA_VERSION,
+                id,
+                playerId: String(msg?.playerid || ''),
+                sourceTokenId: String(source.token.id),
+                attackRowId: rowId ? String(rowId) : null,
+                expiresAt: Date.now() + POLICY.attacks.interactionMs
+            }));
+            pruneInteractions();
+            return id;
+        }
+
+        function resolveFlow(msg, flowId, requireAttack = false) {
+            pruneInteractions();
+            const flow = flows.get(String(flowId || ''));
+            if (!flow || flow.playerId !== String(msg?.playerid || '')) {
+                return { ok: false, message: 'That attack choice expired or belongs to another player. Start again.' };
+            }
+            const source = resolveSource(flow.sourceTokenId);
+            const authorization = source.ok ? sourceAuthorized(msg, source) : source;
+            if (!authorization.ok) return authorization;
+            const row = flow.attackRowId ? attackRow(source.character, flow.attackRowId) : null;
+            if (requireAttack && !row) return { ok: false, message: 'That repeating attack changed or is no longer supported. Choose it again.' };
+            return { ok: true, flow, source, row };
+        }
+
+        function parseOptions(content) {
+            const options = {};
+            const expression = /--([a-z0-9-]+)(?:\s+(?:"([^"]*)"|'([^']*)'|([^\s]+)))?/gi;
+            let match;
+            while ((match = expression.exec(String(content || '')))) {
+                options[String(match[1] || '').toLowerCase()] = match[2] ?? match[3] ?? match[4] ?? true;
+            }
+            return options;
+        }
+
+        function safeQueryText(value) {
+            return String(value || '').replace(/[|{},]/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+
+        function targetReference() {
+            return '@{target|Attack target|token_id}';
+        }
+
+        function showAttackPicker(msg, source) {
+            const rows = attackRows(source.character);
+            if (!rows.length) {
+                return panel(MODULE_NAME, [
+                    { label: 'Needs Attention', value: `${_sanitize(source.name)} has no verified official-2014 repeating attack available to AttackAssist.` },
+                    { label: 'Native Option', value: 'The attack buttons on the character sheet remain available.' },
+                    { label: 'Next Step', value: GameAssist.createButton('Choose Another Attacker', '!Attack-Menu') }
+                ], msg);
+            }
+            panel('AttackAssist: Choose An Attack', [
+                { label: 'Attacker', value: _sanitize(source.name) },
+                { label: 'Attacks', value: rows.map(row => GameAssist.createButton(row.label, `!Attack-Target --flow ${rememberFlow(msg, source, row.rowId)}`)).join(' ') },
+                { label: 'Duplicate Names', value: 'Numbered labels identify separate repeating rows; the saved row identity, not the display name, is used.' },
+                { label: 'Return', value: GameAssist.createButton('Choose Another Attacker', '!Attack-Menu') }
+            ], msg);
+        }
+
+        function showSourcePicker(msg) {
+            const sources = sourceCandidates(msg);
+            if (!sources.length) {
+                const selectedIds = selectedTokenIds(msg);
+                let message = 'No supported linked 2014 attacker controlled by you is available on this page.';
+                if (selectedIds.length) {
+                    const selectedSource = supportedSource(getObj('graphic', selectedIds[0]));
+                    const authorization = selectedSource.ok ? sourceAuthorized(msg, selectedSource) : selectedSource;
+                    if (authorization?.message) message = authorization.message;
+                }
+                return panel(MODULE_NAME, [
+                    { label: 'Needs Attention', value: message },
+                    { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!Attack-Guide') }
+                ], msg);
+            }
+            if (sources.length === 1) return showAttackPicker(msg, sources[0]);
+            panel('AttackAssist: Choose The Attacker', [
+                { label: 'Characters', value: sources.map(source => GameAssist.createButton(source.name, `!Attack-Attacks --flow ${rememberFlow(msg, source)}`)).join(' ') },
+                { label: 'Tip', value: 'Select one controlled attacker before opening AttackAssist to skip this choice.' },
+                { label: 'Return', value: GameAssist.createButton('Quick Guide', '!Attack-Guide') }
+            ], msg);
+        }
+
+        function showTargetPicker(msg, flowResult) {
+            panel(`${flowResult.row.name}: Choose A Target`, [
+                { label: 'Attacker', value: _sanitize(flowResult.source.name) },
+                { label: 'Visible Target', value: GameAssist.createButton('Choose On The Map', `!Attack-Review --flow ${flowResult.flow.id} --target ${targetReference()}`) },
+                ...(!playerIsGm(msg.playerid) ? [{ label: 'Hidden Or Off-Page Target', value: GameAssist.createButton('Ask The GM', `!Attack-Request --flow ${flowResult.flow.id}`) }] : []),
+                { label: 'How Targeting Works', value: 'Roll20 lets you point at a visible token even when you do not control it. No target property is changed.' },
+                { label: 'Return', value: GameAssist.createButton('Choose Another Attack', `!Attack-Attacks --flow ${rememberFlow(msg, flowResult.source)}`) }
+            ], msg);
+        }
+
+        function targetName(token) {
+            const character = linkedCharacter(token);
+            return String(character?.get('name') || token?.get('name') || 'Target').trim().slice(0, POLICY.attacks.nameLength) || 'Target';
+        }
+
+        function resolveTarget(tokenId, msg, { gmReview = false } = {}) {
+            const token = getObj('graphic', String(tokenId || ''));
+            if (!token || !['objects', 'gmlayer'].includes(String(token.get('layer') || ''))) {
+                return { ok: false, message: 'The target token is no longer available on a supported map layer.' };
+            }
+            const layer = String(token.get('layer') || '');
+            const pageId = tokenPageId(token);
+            if (!playerIsGm(msg?.playerid) && !gmReview && (layer !== 'objects' || pageId !== playerPageId(msg.playerid))) {
+                return { ok: false, requiresGm: true, token, message: 'Hidden or off-page targets require GM placement.' };
+            }
+            return {
+                ok: true,
+                token,
+                name: targetName(token),
+                layer,
+                pageId,
+                private: layer !== 'objects' || pageId !== ribbonPageId()
+            };
+        }
+
+        function selectedTargetId(msg) {
+            return selectedTokenIds(msg)[0] || '';
+        }
+
+        function rememberRequest(msg, flowResult, suggestedTargetId = '') {
+            pruneInteractions();
+            const id = interactionId('ATR');
+            requests.set(id, Object.freeze({
+                schemaVersion: INTERACTION_SCHEMA_VERSION,
+                id,
+                playerId: String(msg?.playerid || ''),
+                requesterName: playerName(msg?.playerid, msg?.who || 'Player'),
+                sourceTokenId: String(flowResult.source.token.id),
+                sourceName: flowResult.source.name,
+                attackRowId: flowResult.row.rowId,
+                attackName: flowResult.row.name,
+                suggestedTargetId: String(suggestedTargetId || ''),
+                expiresAt: Date.now() + POLICY.attacks.interactionMs
+            }));
+            pruneInteractions();
+            return requests.get(id);
+        }
+
+        function resolveRequest(requestId) {
+            pruneInteractions();
+            const request = requests.get(String(requestId || ''));
+            if (!request) return { ok: false, message: 'That attack request expired or was already reviewed.' };
+            const source = resolveSource(request.sourceTokenId);
+            const authorization = source.ok && getObj('player', request.playerId)
+                ? sourceAuthorized({ playerid: request.playerId }, source)
+                : { ok: false, message: 'The original attacker or requesting player is no longer available.' };
+            if (!authorization.ok) return authorization;
+            const row = attackRow(source.character, request.attackRowId);
+            return row ? { ok: true, request, source, row } : { ok: false, message: 'The requested repeating attack changed or is no longer supported.' };
+        }
+
+        function showRequests(msg, notice = '') {
+            pruneInteractions();
+            const rows = [...requests.values()].map(request => {
+                const resolved = resolveRequest(request.id);
+                if (!resolved.ok) return `<b>Request Needs Attention</b><br>${_sanitize(resolved.message)} ${GameAssist.createButton('Dismiss', `!Attack-Request-Dismiss --request ${request.id}`)}`;
+                const suggested = request.suggestedTargetId
+                    ? `${GameAssist.createButton('Review Suggested Target', `!Attack-Review --request ${request.id} --suggested true`)} `
+                    : '';
+                return `<b>${_sanitize(request.sourceName)}: ${_sanitize(request.attackName)}</b><br>Requested by ${_sanitize(request.requesterName)}<br>${suggested}${GameAssist.createButton('Use Selected Token', `!Attack-Review --request ${request.id}`)} ${GameAssist.createButton('Choose Target', `!Attack-Review --request ${request.id} --target ${targetReference()}`)} ${GameAssist.createButton('Dismiss', `!Attack-Request-Dismiss --request ${request.id}`)}`;
+            }).join('<hr>') || 'No attack requests are waiting.';
+            panel('Player Attack Requests', [
+                ...(notice ? [{ label: 'Updated', value: _sanitize(notice) }] : []),
+                { label: 'Pending', value: rows },
+                { label: 'Return', value: GameAssist.createButton('AttackAssist Controls', '!Attack-GM') }
+            ], msg, { gmOnly: true });
+        }
+
+        function handleRequest(msg, options) {
+            const flowResult = resolveFlow(msg, options.flow, true);
+            if (!flowResult.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(flowResult.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Attack') }], msg);
+            flows.delete(flowResult.flow.id);
+            rememberRequest(msg, flowResult);
+            panel('Attack Request Sent', [
+                { label: 'Request', value: `${_sanitize(flowResult.source.name)} is ready to use ${_sanitize(flowResult.row.name)}. The GM can place the hidden or off-page target privately.` },
+                { label: 'Next', value: GameAssist.createButton('Choose Another Attack', '!Attack') }
+            ], msg);
+            showRequests(msg, 'A player sent a new attack request.');
+        }
+
+        function rememberSubmission(msg, source, row, target, request = null) {
+            pruneInteractions();
+            const id = interactionId('ATS');
+            submissions.set(id, Object.freeze({
+                schemaVersion: INTERACTION_SCHEMA_VERSION,
+                id,
+                confirmPlayerId: String(msg?.playerid || ''),
+                requestedBy: request ? String(request.playerId || '') : '',
+                sourceTokenId: String(source.token.id),
+                sourceCharacterId: String(source.character.id),
+                sourceName: source.name,
+                attackRowId: row.rowId,
+                attackName: row.name,
+                rollbase: row.rollbase,
+                targetTokenId: String(target.token.id),
+                targetName: target.name,
+                targetLayer: target.layer,
+                targetPageId: target.pageId,
+                privateTarget: Boolean(target.private || request),
+                expiresAt: Date.now() + POLICY.attacks.interactionMs
+            }));
+            pruneInteractions();
+            return submissions.get(id);
+        }
+
+        function showRollChoices(msg, source, row, target, request = null) {
+            const submission = rememberSubmission(msg, source, row, target, request);
+            if (request) requests.delete(request.id);
+            panel(`${row.name}: Review Attack`, [
+                { label: 'Attacker', value: _sanitize(source.name) },
+                { label: 'Target', value: _sanitize(target.name) },
+                { label: 'Attack', value: `${_sanitize(row.name)}${row.bonus ? ` (${_sanitize(row.bonus)})` : ''}${row.range ? ` | ${_sanitize(row.range)}` : ''}` },
+                { label: 'Roll', value: `${GameAssist.createButton('Use Sheet Setting', `!Attack-Roll --submission ${submission.id} --mode sheet`)} ${GameAssist.createButton('Normal', `!Attack-Roll --submission ${submission.id} --mode normal`)} ${GameAssist.createButton('Advantage', `!Attack-Roll --submission ${submission.id} --mode advantage`)} ${GameAssist.createButton('Disadvantage', `!Attack-Roll --submission ${submission.id} --mode disadvantage`)}` },
+                { label: 'Changes', value: 'None. One button submits one attack roll; AttackAssist never applies damage or changes combat state.' },
+                { label: 'Cancel', value: GameAssist.createButton('Discard And Return', '!Attack-Menu') }
+            ], msg, { gmOnly: Boolean(request) });
+        }
+
+        function handleReview(msg, options) {
+            if (options.request) {
+                if (!playerIsGm(msg.playerid)) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: 'Only the GM can review a retained attack request.' }], msg);
+                const resolved = resolveRequest(options.request);
+                if (!resolved.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(resolved.message) }, { label: 'Next Step', value: GameAssist.createButton('Pending Requests', '!Attack-Requests') }], msg, { gmOnly: true });
+                const targetId = String(options.target || (options.suggested ? resolved.request.suggestedTargetId : '') || selectedTargetId(msg));
+                const target = resolveTarget(targetId, msg, { gmReview: true });
+                if (!target.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(target.message) }, { label: 'Next Step', value: GameAssist.createButton('Pending Requests', '!Attack-Requests') }], msg, { gmOnly: true });
+                return showRollChoices(msg, resolved.source, resolved.row, target, resolved.request);
+            }
+
+            const flowResult = resolveFlow(msg, options.flow, true);
+            if (!flowResult.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(flowResult.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Attack') }], msg);
+            const targetId = String(options.target || selectedTargetId(msg));
+            const target = resolveTarget(targetId, msg);
+            if (!target.ok && target.requiresGm && !playerIsGm(msg.playerid)) {
+                flows.delete(flowResult.flow.id);
+                rememberRequest(msg, flowResult, targetId);
+                panel('GM Review Requested', [
+                    { label: 'Result', value: 'That target is hidden or off-page. The GM received the attack and suggested target without exposing private token details.' },
+                    { label: 'Return', value: GameAssist.createButton('Choose Another Attack', '!Attack') }
+                ], msg);
+                return showRequests(msg, 'A player selected a target that requires private GM placement.');
+            }
+            if (!target.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(target.message) }, { label: 'Next Step', value: GameAssist.createButton('Choose Target Again', `!Attack-Target --flow ${flowResult.flow.id}`) }], msg);
+            flows.delete(flowResult.flow.id);
+            showRollChoices(msg, flowResult.source, flowResult.row, target);
+        }
+
+        function qualifyRollbase(source, row, mode, forceGmWhisper) {
+            let rollbase = String(row.rollbase || '').trim();
+            if (!verifiedRollbase(rollbase)) return { ok: false, message: 'The repeating attack roll formula is no longer supported.' };
+            if (!['sheet', 'normal', 'advantage', 'disadvantage'].includes(mode)) return { ok: false, message: 'Choose Sheet Setting, Normal, Advantage, or Disadvantage.' };
+            if (forceGmWhisper) rollbase = rollbase.replace(/^@\{wtype\}/i, '');
+            if (mode !== 'sheet') rollbase = rollbase.replace(/@\{rtype\}/g, MODE_FRAGMENTS[mode]);
+
+            rollbase = rollbase.replace(/~repeating_attack_(attack(?:_(?:dmg|crit))?)/gi,
+                (_match, button) => `~${source.character.id}|repeating_attack_${row.rowId}_${button}`);
+
+            const attributes = row.attributes || attributeMap(source.character.id);
+            rollbase = rollbase.replace(/@\{([^{}]+)\}/g, (match, inner) => {
+                const parts = String(inner || '').split('|');
+                if (parts.length > 2 || (parts.length === 2 && parts[1] !== 'max')) return match;
+                const name = parts[0];
+                if (!name || ['selected', 'target', 'tracker'].includes(name.toLowerCase())) return match;
+                const rowName = name.startsWith(`${row.prefix}_`) ? name : `${row.prefix}_${name}`;
+                const resolvedName = attributes.has(rowName) ? rowName : name;
+                return `@{${source.character.id}|${resolvedName}${parts[1] === 'max' ? '|max' : ''}}`;
+            });
+            return { ok: true, command: `${forceGmWhisper ? '/w gm ' : ''}${rollbase}` };
+        }
+
+        function safeAnnouncementText(value) {
+            return String(value || '').replace(/[\r\n\[\]{}@%]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, POLICY.attacks.nameLength);
+        }
+
+        function currentSubmission(msg, submissionId) {
+            pruneInteractions();
+            const submission = submissions.get(String(submissionId || ''));
+            if (!submission || submission.confirmPlayerId !== String(msg?.playerid || '')) {
+                return { ok: false, message: 'That attack review expired, was already used, or belongs to another player.' };
+            }
+            const source = resolveSource(submission.sourceTokenId);
+            if (!source.ok || String(source.character.id) !== submission.sourceCharacterId) return { ok: false, message: source.message || 'The attacker changed or is unavailable.' };
+            const authorization = submission.requestedBy
+                ? sourceAuthorized({ playerid: submission.requestedBy }, source)
+                : sourceAuthorized(msg, source);
+            if (!authorization.ok) return authorization;
+            const row = attackRow(source.character, submission.attackRowId);
+            if (!row || row.rollbase !== submission.rollbase) return { ok: false, message: 'The repeating attack changed after review. Choose it again.' };
+            const target = resolveTarget(submission.targetTokenId, msg, { gmReview: Boolean(submission.requestedBy) });
+            if (!target.ok || target.layer !== submission.targetLayer || target.pageId !== submission.targetPageId) {
+                return { ok: false, message: 'The target changed page or layer after review. Choose it again.' };
+            }
+            return { ok: true, submission, source, row, target };
+        }
+
+        function announceSubmittedAttack(msg, resolved) {
+            const { submission, source, row, target } = resolved;
+            if (!submission.privateTarget && source.token.get('layer') === 'objects' && tokenPageId(source.token) === ribbonPageId()) {
+                const attacker = safeAnnouncementText(source.name) || 'The attacker';
+                const targetText = safeAnnouncementText(target.name) || 'the target';
+                const attack = safeAnnouncementText(row.name) || 'an attack';
+                sendChat(`character|${source.character.id}`, `/em attacks ${targetText} with ${attack}.`);
+            } else {
+                sendChat(MODULE_NAME, `/w gm ${_sanitize(source.name)} submitted ${_sanitize(row.name)} against ${_sanitize(target.name)}.`);
+            }
+            panel('Attack Submitted', [
+                { label: 'Result', value: `${_sanitize(source.name)} rolled ${_sanitize(row.name)}${submission.privateTarget ? ' against a GM-reviewed target' : ` against ${_sanitize(target.name)}`}.` },
+                { label: 'Damage', value: 'No HP or damage was applied by AttackAssist. Use the normal sheet result and your table rules.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Attack Again', '!Attack-Menu')} ${playerIsGm(msg.playerid) ? GameAssist.createButton('Control Center', '!Attack-GM') : GameAssist.createButton('Guide', '!Attack-Guide')}` }
+            ], msg);
+            if (submission.requestedBy && submission.requestedBy !== String(msg.playerid || '')) {
+                privateNotice(submission.requestedBy, 'Attack Request Completed', `${source.name}'s ${row.name} was reviewed and submitted by the GM.`, GameAssist.createButton('Attack Again', '!Attack-Menu'));
+            }
+        }
+
+        function handleRoll(msg, options) {
+            const resolved = currentSubmission(msg, options.submission);
+            if (!resolved.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(resolved.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Attack') }], msg);
+            const mode = String(options.mode || 'sheet').toLowerCase();
+            const command = qualifyRollbase(resolved.source, resolved.row, mode, resolved.submission.privateTarget);
+            if (!command.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(command.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Attack') }], msg);
+            submissions.delete(resolved.submission.id);
+            sendChat(`character|${resolved.source.character.id}`, command.command, operations => {
+                if (!Array.isArray(operations) || !operations.length) {
+                    return panel(MODULE_NAME, [
+                        { label: 'Needs Attention', value: 'Roll20 did not confirm an attack result. No target announcement was sent.' },
+                        { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Attack') }
+                    ], msg, { gmOnly: resolved.submission.privateTarget });
+                }
+                announceSubmittedAttack(msg, resolved);
+            });
+        }
+
+        function showGuide(msg) {
+            const moreHelp = playerIsGm(msg.playerid)
+                ? `${GameAssist.createButton('What Does AttackAssist Do?', '!Attack-Info')} ${GameAssist.createButton('Create Manual', '!Attack-Manual')} ${GameAssist.createButton('Status', '!Attack-Status')}`
+                : `${GameAssist.createButton('What Does AttackAssist Do?', '!Attack-Info')} ${GameAssist.createButton('Status', '!Attack-Status')}`;
+            panel('AttackAssist Quick Guide', [
+                { label: 'Start An Attack', value: GameAssist.createButton('Choose Attacker And Attack', '!Attack-Menu') },
+                { label: 'At The Table', value: 'Choose a controlled 2014 character, one verified repeating attack, a visible target, and the roll mode. The ordinary character-sheet buttons still work.' },
+                { label: 'What It Does Not Do', value: 'AttackAssist does not apply damage, spend resources, change conditions or effects, or move the Turn Tracker.' },
+                { label: 'More Help', value: moreHelp }
+            ], msg);
+        }
+
+        function showInfo(msg) {
+            panel('What AttackAssist Does', [
+                { label: 'Purpose', value: 'Adds a guided official-2014 attack path without replacing the character sheet or requiring control of the target.' },
+                { label: 'Roll Contract', value: 'The verified repeating row supplies the attack name, formula, critical range, modifiers, and official template fields. AttackAssist safely qualifies that row and submits it as the character.' },
+                { label: 'Privacy', value: 'Visible player-ribbon targets may be announced publicly after the roll. Hidden, GM-layer, and off-page placement stays in a private GM request.' },
+                { label: 'Boundaries', value: 'No 2024 adapter, NPC-action adapter, automatic damage, HP write, final-blow attribution, condition change, effect change, initiative change, or resource spending.' },
+                { label: 'Continue', value: `${GameAssist.createButton('Start An Attack', '!Attack-Menu')} ${GameAssist.createButton('Back To Guide', '!Attack-Guide')}` }
+            ], msg);
+        }
+
+        function showStatus(msg) {
+            const candidates = sourceCandidates(msg);
+            const verified = candidates.reduce((total, source) => total + attackRows(source.character).length, 0);
+            panel('AttackAssist Status', [
+                { label: 'Module', value: `AttackAssist ${MODULE_VERSION} is enabled and responding.` },
+                { label: 'Player-Guided Attacks', value: modState.config.allowPlayerAttacks === false ? 'Locked by the GM' : 'Allowed' },
+                { label: 'Available Here', value: `${candidates.length} authorized 2014 source(s) | ${verified} verified repeating attack(s)` },
+                { label: 'Pending', value: `${(pruneInteractions(), requests.size)} GM request(s) | ${submissions.size} reviewed roll(s)` },
+                { label: 'Actions', value: `${GameAssist.createButton('Start An Attack', '!Attack-Menu')} ${playerIsGm(msg.playerid) ? GameAssist.createButton('Control Center', '!Attack-GM') : ''}` }
+            ], msg);
+        }
+
+        function rawAttackRowCount(character) {
+            return attributesFor(character.id).filter(attribute => /^repeating_attack_[^_]+_atkname$/i.test(String(attribute.get('name') || ''))).length;
+        }
+
+        function showAudit(msg) {
+            const sources = pageTokens(playerPageId(msg?.playerid), true).map(supportedSource).filter(source => source.ok);
+            const verified = sources.reduce((total, source) => total + attackRows(source.character).length, 0);
+            const raw = sources.reduce((total, source) => total + rawAttackRowCount(source.character), 0);
+            panel('AttackAssist Audit', [
+                { label: 'Page Review', value: `${sources.length} supported 2014 source(s) | ${verified} verified repeating attack(s) | ${Math.max(0, raw - verified)} unsupported or incomplete row(s)` },
+                { label: 'Checks', value: 'Linked source, 2014 sheet evidence, stable row identity, attack flag, official attack template, stored first roll, and sheet roll-mode seam.' },
+                { label: 'Changes', value: 'None. This audit is read-only.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Start An Attack', '!Attack-Menu')} ${GameAssist.createButton('Control Center', '!Attack-GM')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function manualHtml() {
+            return [
+                '<h1>AttackAssist User Manual</h1>',
+                `<p><strong>GameAssist v${_sanitize(VERSION)} | AttackAssist ${MODULE_VERSION}</strong></p>`,
+                '<p>AttackAssist provides an optional guided path for official D&amp;D 5E by Roll20 2014 repeating attacks. Native character-sheet attack buttons remain available.</p>',
+                '<h2>Quick Start</h2>',
+                '<ol><li>Enable AttackAssist.</li><li>Select a controlled linked 2014 character token.</li><li>Run <code>!Attack</code>.</li><li>Choose a verified repeating attack and point at a visible target.</li><li>Choose the sheet setting, normal, advantage, or disadvantage.</li></ol>',
+                '<h2>Targeting And Privacy</h2>',
+                '<p>Visible targets do not need to be controlled by the attacker. Hidden, GM-layer, and off-page placement uses a private request in <code>!Attack-Requests</code>.</p>',
+                '<h2>Safety Boundary</h2>',
+                '<p>One reviewed choice submits one roll. AttackAssist does not apply damage, write HP, spend ammunition or spell slots, change conditions or effects, move initiative, or manage turns.</p>',
+                '<h2>Commands</h2>',
+                '<ul><li><code>!Attack</code> or <code>!Attack-Menu</code> - start.</li><li><code>!Attack-GM</code> / <code>!Attack-DM</code> - private GM controls.</li><li><code>!Attack-Status</code> - concise health.</li><li><code>!Attack-Audit</code> - read-only row audit.</li><li><code>!Attack-Requests</code> - retained private placement requests.</li><li><code>!Attack-Players on|off</code> - allow or lock player starts.</li></ul>',
+                '<h2>Unsupported Sheets Or Rows</h2>',
+                '<p>The first adapter does not interpret the 2024 sheet, NPC action rows, or incomplete/custom roll formulas. Use the native sheet button for anything AttackAssist refuses.</p>'
+            ].join('');
+        }
+
+        function showManual(msg) {
+            if (!playerIsGm(msg.playerid)) {
+                return panel('AttackAssist Manual', [
+                    { label: 'Needs Attention', value: 'The campaign manual is created or updated only by the GM.' },
+                    { label: 'Continue', value: GameAssist.createButton('Open Quick Guide', '!Attack-Guide') }
+                ], msg);
+            }
+            const result = GameAssist.writeModuleManual(MODULE_NAME, manualHtml());
+            if (!result.ok) {
+                return panel('AttackAssist Manual', [
+                    { label: 'Needs Attention', value: _sanitize(result.message) },
+                    { label: 'Continue', value: GameAssist.createButton('Whisper Short Version', '!Attack-Info') }
+                ], msg, { gmOnly: true });
+            }
+            panel('AttackAssist Manual Ready', [
+                { label: 'Handout', value: result.link },
+                { label: 'Result', value: `${_sanitize(result.name)} was ${result.created ? 'created' : 'updated'}.` },
+                { label: 'Continue', value: `${GameAssist.createButton('Whisper Short Version', '!Attack-Info')} ${GameAssist.createButton('Start An Attack', '!Attack-Menu')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function showControl(msg, notice = '') {
+            pruneInteractions();
+            panel('AttackAssist GM Controls', [
+                ...(notice ? [{ label: 'Updated', value: _sanitize(notice) }] : []),
+                { label: 'Start', value: GameAssist.createButton('Choose Attacker And Attack', '!Attack-Menu') },
+                { label: 'Player Attacks', value: `${modState.config.allowPlayerAttacks === false ? 'Locked' : 'Allowed'} ${GameAssist.createButton(modState.config.allowPlayerAttacks === false ? 'Allow Players' : 'Lock Players', `!Attack-Players ${modState.config.allowPlayerAttacks === false ? 'on' : 'off'}`)}` },
+                { label: 'Review', value: `${GameAssist.createButton(`Pending Requests (${requests.size})`, '!Attack-Requests')} ${GameAssist.createButton('Status', '!Attack-Status')} ${GameAssist.createButton('Audit', '!Attack-Audit')}` },
+                { label: 'Help', value: `${GameAssist.createButton('Quick Guide', '!Attack-Guide')} ${GameAssist.createButton('Manual', '!Attack-Manual')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function commandAction(content) {
+            const text = String(content || '').trim();
+            let match = text.match(/^!attackassist-([^\s]+)/i) || text.match(/^!attack-([^\s]+)/i);
+            if (match) return String(match[1] || '').toLowerCase();
+            match = text.match(/^!attack(?:assist)?(?:\s+([^\s]+))?/i);
+            return String(match?.[1] || 'menu').toLowerCase();
+        }
+
+        function handleCommand(msg) {
+            const action = commandAction(msg.content);
+            const options = parseOptions(msg.content);
+            if (['menu', 'start', 'start-here'].includes(action)) return showSourcePicker(msg);
+            if (['guide', 'help'].includes(action)) return showGuide(msg);
+            if (['info', 'about'].includes(action)) return showInfo(msg);
+            if (action === 'status') return showStatus(msg);
+            if (action === 'attacks') {
+                const flowResult = resolveFlow(msg, options.flow, false);
+                return flowResult.ok
+                    ? showAttackPicker(msg, flowResult.source)
+                    : panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(flowResult.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Attack') }], msg);
+            }
+            if (action === 'target') {
+                const flowResult = resolveFlow(msg, options.flow, true);
+                return flowResult.ok
+                    ? showTargetPicker(msg, flowResult)
+                    : panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(flowResult.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Attack') }], msg);
+            }
+            if (action === 'review') return handleReview(msg, options);
+            if (action === 'request') return handleRequest(msg, options);
+            if (action === 'roll') return handleRoll(msg, options);
+            if (!playerIsGm(msg.playerid)) return showGuide(msg);
+            if (['gm', 'dm', 'control', 'controls'].includes(action)) return showControl(msg);
+            if (action === 'requests') return showRequests(msg);
+            if (action === 'request-dismiss') {
+                requests.delete(String(options.request || ''));
+                return showRequests(msg, 'The selected request was dismissed.');
+            }
+            if (action === 'players') {
+                const value = String(msg.content || '').trim().split(/\s+/).pop().toLowerCase();
+                if (!['on', 'off'].includes(value)) return showControl(msg, 'Choose whether player-guided attacks are on or off.');
+                modState.config.allowPlayerAttacks = value === 'on';
+                if (!modState.config.allowPlayerAttacks) {
+                    flows.clear();
+                    [...requests.entries()].filter(([, request]) => !playerIsGm(request.playerId)).forEach(([id]) => requests.delete(id));
+                    [...submissions.entries()].filter(([, submission]) => submission.requestedBy).forEach(([id]) => submissions.delete(id));
+                }
+                return showControl(msg, `Player-guided attacks turned ${value}.`);
+            }
+            if (action === 'audit') return showAudit(msg);
+            if (action === 'manual') return showManual(msg);
+            panel(MODULE_NAME, [
+                { label: 'Needs Attention', value: 'That AttackAssist command was not recognized.' },
+                { label: 'Next Step', value: `${GameAssist.createButton('Control Center', '!Attack-GM')} ${GameAssist.createButton('Open Guide', '!Attack-Guide')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        GameAssist.onCommand('!Attack', handleCommand, MODULE_NAME, { match: { caseInsensitive: true, mode: 'token' } });
+        GameAssist.onCommand('!Attack-', handleCommand, MODULE_NAME, { match: { caseInsensitive: true, mode: 'prefix' } });
+        GameAssist.onCommand('!AttackAssist-', handleCommand, MODULE_NAME, { match: { caseInsensitive: true, mode: 'prefix' } });
+
+        GameAssist.AttackAssist = Object.freeze({
+            version: MODULE_VERSION,
+            interactionSchemaVersion: INTERACTION_SCHEMA_VERSION,
+            getStatus: () => Object.freeze({
+                enabled: modState.config.enabled !== false,
+                allowPlayerAttacks: modState.config.allowPlayerAttacks !== false,
+                pendingFlows: (pruneInteractions(), flows.size),
+                pendingRequests: requests.size,
+                pendingSubmissions: submissions.size
+            }),
+            listAttacks: characterId => {
+                const character = getObj('character', String(characterId || ''));
+                return Object.freeze(attackRows(character).map(row => Object.freeze({ rowId: row.rowId, name: row.name, label: row.label, range: row.range, bonus: row.bonus })));
+            },
+            _clearTransient: () => {
+                flows.clear();
+                requests.clear();
+                submissions.clear();
+            }
+        });
+
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} ready: verified 2014 repeating attacks, native targeting, and one-use roll submission; the module starts disabled.`, 'INFO', { startup: true });
+    }, {
+        enabled: false,
+        prefixes: ['!Attack', '!Attack-', '!AttackAssist-'],
+        teardown: () => GameAssist.AttackAssist?._clearTransient?.()
+    });
+    // --- Notes & Comments ---
+    // Changed (v2.0.0): Added AttackAssist 1.0.0 with authorized official-2014 source selection, stable repeating-row identity, native visible targeting, retained private GM placement requests, sheet-setting and explicit roll modes, one-use submission, familiar official templates, and post-submission attacker/target announcements.
+    // Decision log:
+    //   CHOICE: Qualify the sheet-generated repeating-row rollbase and substitute the official roll-mode fragment - ALT: temporarily rewrite the character's rtype setting; REJECTED: a temporary sheet mutation can race with ordinary sheet clicks and other Mods.
+    //   CHOICE: Submit the roll as character|id - ALT: submit as AttackAssist; REJECTED: familiar character attribution and CritAssist's supported natural-1 observation require the character sender.
+    //   CHOICE: Use Roll20's target prompt for visible tokens without target control and retain hidden/off-page requests for the GM - ALT: expose raw hidden token lists to players; REJECTED: hidden identity and placement are GM information.
+    //   CHOICE: Consume one reviewed submission before sendChat and announce only from its callback - ALT: leave buttons reusable or announce before the roll; REJECTED: either path can produce duplicate or false attack announcements.
+    //   CHOICE: Leave damage, HP, resources, effects, conditions, initiative, and turns untouched - ALT: infer a full attack-resolution engine; REJECTED: those mechanics have separate owners and unresolved table-specific decisions.
+    // [GAMEASSIST:MODULES:ATTACKASSIST] END
+    // =============================================================================
+
+    // =============================================================================
     // [GAMEASSIST:MODULES:ALMANACASSIST] BEGIN
     // Section Title: AlmanacAssist fictional calendar and world time
     // -------------------------------------------------------------------------
@@ -23677,8 +24505,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Added disabled-by-default HealAssist as a HealthService-only verified healing client while retaining disabled-by-default AlmanacAssist and preserving every unrelated module's state and ownership boundaries.
+    // Changed (v2.0.0): Added disabled-by-default AttackAssist for guided official-2014 repeating attacks while preserving native sheet buttons and every unrelated module's state and ownership boundaries.
     // Prior notes:
+    //   v2.0.0: Added disabled-by-default HealAssist as a HealthService-only verified healing client while retaining disabled-by-default AlmanacAssist and preserving every unrelated module's state and ownership boundaries.
     //   v2.0.0: Added disabled-by-default AlmanacAssist with independently controlled Time, Climate, Astronomy, Weather, Environment, and Rest systems while preserving every unrelated module's state and ownership boundaries.
     //   v2.0.0: Added disabled-by-default EffectAssist as the single owner of source-aware semantic effect instances, projection ownership, audit, repair confirmation, and future adapter contracts.
     //   v0.1.7.0: Added disabled-by-default CombatAssist to the bundled module contract and assigned encounter-flow ownership without changing InitiativeAssist initiative rules.

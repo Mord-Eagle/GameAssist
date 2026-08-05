@@ -10,7 +10,7 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 | Revision | Status | Role |
 | --- | --- | --- |
-| **v2.0.0** | Active development in PR #81; focused EffectAssist, HealAssist, player-casting, cast-recognition, duration, AlmanacAssist, HealthService, PC health-alert, and concentration-offer checks passed; Roll20 acceptance pending | Source-aware effects, guided verified healing, secure player casting and retained GM requests, bounded 2014 Bless proposals, complete campaign-world systems, canonical HP evidence, GM-private PC health bands, and private HP-loss check offers |
+| **v2.0.0** | Active development in PR #81; focused EffectAssist, HealAssist, AttackAssist, player-casting, cast-recognition, duration, AlmanacAssist, HealthService, PC health-alert, and concentration-offer checks passed; Roll20 acceptance pending | Source-aware effects, guided verified healing and attacks, secure player workflows and retained GM requests, bounded 2014 Bless proposals, complete campaign-world systems, canonical HP evidence, GM-private PC health bands, and private HP-loss check offers |
 | **v1.8.2** | Merged through PR #74; Issue #65 closed | Page-local progressive NPC token naming |
 | **v1.8.1** | Merged through PR #73 | GM-private NPCAssist Bloodied threshold alerts and Control Center toggle |
 | **v1.8.0** | Merged through PR #63; 712 automated checks passed | Canonical module identities and migration-safe project version transition |
@@ -47,9 +47,9 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ### Release definition
 
-GameAssist v2.0.0 remains one active development line in PR #81. EffectAssist 2.3.0 is a catalog-driven effect coordinator for the official D&D 5E by Roll20 2014 character sheet with controlled player casting, retained GM placement requests, bounded GM-reviewed Bless cast proposals, and optional GM-reviewed duration candidates. HealAssist 1.0.0 adds guided official-2014 healing with authorized sources, native visible-PC targeting, retained private GM placement requests, exact roll and HP review, and verified HealthService application. AlmanacAssist 1.1.0 combines guided Wayfarer calendar setup, fictional Time, regional Climate, Astronomy, continuity-aware Weather, descriptive Environment, and deliberate Rest as six independently controlled internal systems. HealthService 1.0.0 adds one canonical supported HP-observation and verified-write boundary plus an optional GM-private PC threshold consumer. ConcentrationAssist 0.4.0 uses the same evidence for optional private, revalidated concentration-check offers after supported HP loss. CombatAssist 1.1.0 supplies immutable accepted encounter-progression events without exposing tracker-write authority. The shared SemanticEvents service provides immutable in-sandbox lifecycle notifications without coupling module state.
+GameAssist v2.0.0 remains one active development line in PR #81. EffectAssist 2.3.0 is a catalog-driven effect coordinator for the official D&D 5E by Roll20 2014 character sheet with controlled player casting, retained GM placement requests, bounded GM-reviewed Bless cast proposals, and optional GM-reviewed duration candidates. HealAssist 1.0.0 adds guided official-2014 healing with authorized sources, native visible-PC targeting, retained private GM placement requests, exact roll and HP review, and verified HealthService application. AttackAssist 1.0.0 adds guided official-2014 repeating attacks with stable row identity, native visible targeting, retained private GM placement requests, explicit roll-mode choices, one-use character-attributed rolls, and no automatic attack consequences. AlmanacAssist 1.1.0 combines guided Wayfarer calendar setup, fictional Time, regional Climate, Astronomy, continuity-aware Weather, descriptive Environment, and deliberate Rest as six independently controlled internal systems. HealthService 1.0.0 adds one canonical supported HP-observation and verified-write boundary plus an optional GM-private PC threshold consumer. ConcentrationAssist 0.4.0 uses the same evidence for optional private, revalidated concentration-check offers after supported HP loss. CombatAssist 1.1.0 supplies immutable accepted encounter-progression events without exposing tracker-write authority. The shared SemanticEvents service provides immutable in-sandbox lifecycle notifications without coupling module state.
 
-EffectAssist, HealAssist, and AlmanacAssist start disabled so existing campaigns upgrade without receiving new markers, conditions, HP writes, other sheet writes, fictional chronology, weather, or chat output until the GM deliberately enables them.
+EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so existing campaigns upgrade without receiving new markers, conditions, HP writes, other sheet writes, attack rolls, fictional chronology, weather, or chat output until the GM deliberately enables them.
 
 ### Launch effect catalog
 
@@ -280,6 +280,34 @@ EffectAssist, HealAssist, and AlmanacAssist start disabled so existing campaigns
 - Keeps source choices, retained GM requests, rolled proposals, and confirmation capabilities bounded in memory and clears them on module teardown or sandbox restart.
 - Adds a focused 64-check automated harness covering catalog and formulas, player authorization, visible non-controlled PC targeting, review evidence, no-write-before-confirmation, HealthService provenance, one-use and stale refusal, maximum-HP capping, manual-formula validation, NPC privacy and GM review, result settings, player lockout, read-only audit, and multi-target rollback.
 - Keeps Issue #84 open at the sandbox-verification checkpoint until its complete live Roll20 acceptance track passes.
+
+### AttackAssist guided attacks
+
+- Adds disabled-by-default AttackAssist 1.0.0 as an independently toggleable feature module with no required feature-module dependency and an enabled-by-default player-guided setting that the GM may lock.
+- Supports linked official D&D 5E by Roll20 2014 PC repeating attacks at launch. Official 2024 characters, NPC action formulas, unlinked tokens, and unsupported sheets receive a clear refusal while their native sheet controls remain available.
+- Verifies the source token layer, linked character, official-2014 PC attributes, current controller, current visible page, and player-access setting before accepting a player source.
+- Treats an explicit selected token as authoritative. An unsupported selection does not silently fall back to another eligible character on the page.
+- Reads repeating attack rows in the sheet's saved `_reporder_repeating_attack` order and uses the persistent Roll20 row ID rather than the attack display name as the action identity.
+- Adds numbered labels when multiple rows share the same name, allowing the user to choose the intended row without changing either character-sheet entry.
+- Refuses rows without a verified official `atk` or `atkdmg` rollbase instead of constructing an inferred attack formula from partial attributes.
+- Uses Roll20's native target query for visible tokens so a player can target a creature they do not control without gaining token control or exposing a raw token list.
+- Retains hidden, GM-layer, and off-page placement as a bounded private GM request. Player confirmation and completion messages never reveal the hidden target's name or placement.
+- Offers **Use Sheet Setting**, **Normal**, **Advantage**, and **Disadvantage** from one final review.
+- Preserves the verified sheet-generated rollbase and substitutes the official 2014 roll-mode fragment rather than temporarily mutating the character's saved `rtype` attribute.
+- Qualifies top-level and repeating-row attribute references to the exact acting character and exact stable attack row, including the generated damage and critical-damage action links.
+- Submits the accepted roll as `character|id`, preserving familiar character attribution and allowing CritAssist to observe the official attack card through its established natural-1 path.
+- Consumes the reviewed submission before calling Roll20 chat, then announces a visible attacker and target only after the roll callback. A reused roll button cannot submit or announce again.
+- Binds source choices, placement requests, and submissions to the initiating player, expires them after ten minutes, bounds each collection to fifty records, and clears all transient capabilities on module teardown or sandbox restart.
+- Revalidates module state, player permission, source identity and control, exact repeating row, target page and layer, and one-use submission immediately before rolling.
+- Refuses expired, stale, reused, fabricated, changed-row, wrong-player, changed-control, changed-page, deleted-token, and unsupported-source paths with a clear route to start again.
+- Leaves target HP, markers, effects, conditions, position, token properties, character resources, campaign state, initiative, rounds, and turns unchanged. AttackAssist guides the roll but does not resolve its consequences.
+- Adds compact `!Attack`, `!Attack-Menu`, `!Attack-GM`, `!Attack-DM`, Guide/Help, Info, Status, Audit, Manual, Requests, Players, and compatibility `!AttackAssist-*` surfaces.
+- Creates one stable `GameAssist Guide - AttackAssist` handout through the existing module-manual helper.
+- Exposes observational `GameAssist.AttackAssist.getStatus()` and `listAttacks(characterId)` methods while deliberately withholding a public target-selection or roll-submission shortcut.
+- Bases the implementation on Roll20's documented repeating-attack button syntax and the official 2014 legacy sheet's `roll_attack`, `rollbase`, `rtype`, `atk`, and `atkdmg` contracts rather than an independently invented card format.
+- Adds one One-Click conflict warning for another script or macro that guides or automatically submits the same repeating attack or announces the same attacker and target.
+- Adds a focused 55-check automated harness covering stable order and duplicate labels, unsupported sheets, native target prompts, all four roll modes, exact row qualification, character sender, post-roll announcement, one natural-1 delivery to CritAssist, stale and reused refusal, cross-player authorization, hidden-target privacy, player lockout, read-only audit, stable manual creation, and no target or campaign mutation.
+- Keeps Issue #87 open at the sandbox-verification checkpoint until its complete live Roll20 acceptance track passes.
 
 ### Effect duration providers
 

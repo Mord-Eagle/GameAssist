@@ -1,8 +1,8 @@
 # GameAssist Development Roadmap
 
-This roadmap records GameAssist's completed standalone-to-integrated transition, native initiative and encounter foundations, completed `v1.8.x` module and NPCAssist work, and the current combined v2.0.0 EffectAssist, HealAssist, AlmanacAssist, shared-health, and guided-play development line.
+This roadmap records GameAssist's completed standalone-to-integrated transition, native initiative and encounter foundations, completed `v1.8.x` module and NPCAssist work, and the current combined v2.0.0 EffectAssist, HealAssist, AttackAssist, AlmanacAssist, shared-health, and guided-play development line.
 
-Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation details and acceptance evidence. Issues #60, #64, and #65 are complete. PR #81 remains the single v2.0.0 development line: EffectAssist, HealAssist, and all six AlmanacAssist systems are implemented checkpoints, Issue #88 repairs the player-casting and retained GM-request workflow, Issue #89 rebuilds guided Wayfarer setup, Issue #83 adds the shared HealthService foundation, Issue #79 uses that foundation for private concentration-check offers, Issue #80 adds conservative effect-duration candidates, Issue #77 adds bounded official 2014 Bless cast proposals, and Issue #84 adds reviewed 2014 healing through verified HealthService writes. None of this work creates a parallel release branch or authorizes publication.
+Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation details and acceptance evidence. Issues #60, #64, and #65 are complete. PR #81 remains the single v2.0.0 development line: EffectAssist, HealAssist, AttackAssist, and all six AlmanacAssist systems are implemented checkpoints, Issue #88 repairs the player-casting and retained GM-request workflow, Issue #89 rebuilds guided Wayfarer setup, Issue #83 adds the shared HealthService foundation, Issue #79 uses that foundation for private concentration-check offers, Issue #80 adds conservative effect-duration candidates, Issue #77 adds bounded official 2014 Bless cast proposals, Issue #84 adds reviewed 2014 healing through verified HealthService writes, and Issue #87 adds guided official-2014 repeating attacks without resolving damage. None of this work creates a parallel release branch or authorizes publication.
 
 > The roadmap is a maintained plan, not a promise of dates. Issues #25 through #29 are development checkpoints within one release train; none is an intermediate public release.
 
@@ -37,6 +37,7 @@ Use this document for durable release boundaries, sequencing, and completion gat
 13. **v2.0.0 contains the complete AlmanacAssist module.** Time, Climate, Astronomy, Weather, Environment, and Rest are six independently controlled systems in one module and one release gate. None ships as a separate partial release, and none becomes a hidden prerequisite for unrelated GameAssist modules.
 14. **HealthService records evidence, not combat conclusions.** It normalizes supported 2014-PC HP attributes and linked-NPC bar 1 transitions, verifies GameAssist-owned writes, and deduplicates linked Roll20 events. Unknown external changes remain unknown; consumers retain their own rules, state, confirmation, and manual paths.
 15. **HealAssist guides healing without owning resources.** It uses HealthService for supported HP, requires an exact roll and before/after review, routes private recipients to the GM, and never spends spell slots, items, class resources, or temporary HP on the table's behalf.
+16. **AttackAssist guides attacks without owning their consequences.** It reuses verified official-2014 repeating attack formulas and native target prompts, keeps hidden placement with the GM, and never applies damage, spends resources, changes effects or conditions, or moves the Turn Tracker.
 
 ---
 
@@ -87,7 +88,7 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | Guided Wayfarer setup | Sandbox verification | [#89](https://github.com/Mord-Eagle/GameAssist/issues/89) | AlmanacAssist 1.1.0 separates persistent drafts from the active calendar and adds staged setup, preview, duplication, atomic activation, elapsed-time preservation, and one rollback point. |
 | GM-private PC health alerts | Sandbox verification | [#86](https://github.com/Mord-Eagle/GameAssist/issues/86) | Optional 50%, 25%, and 10% downward-crossing notices now consume canonical HealthService events, remain GM-private, combine large drops, hide exact HP by default, and leave NPC policy unchanged. |
 | HealAssist guided healing | Sandbox verification | [#84](https://github.com/Mord-Eagle/GameAssist/issues/84) | HealAssist 1.0.0 adds authorized sources, supported 2014 actions, exact roll/HP review, private GM placement requests, one-use confirmation, and verified HealthService writes without consuming resources. |
-| AttackAssist guided attacks | Queued | [#87](https://github.com/Mord-Eagle/GameAssist/issues/87) | Add bounded 2014 repeating-attack selection and native target prompts without owning HP, damage, turns, conditions, or effects. |
+| AttackAssist guided attacks | Sandbox verification | [#87](https://github.com/Mord-Eagle/GameAssist/issues/87) | AttackAssist 1.0.0 adds authorized official-2014 repeating-attack selection, stable row identity, native visible targeting, retained private placement requests, explicit roll modes, one-use submission, and no damage or combat-state writes. |
 | Guidance verified consumption | Evidence gated | [#85](https://github.com/Mord-Eagle/GameAssist/issues/85) | Capture live official 2014 roll-template evidence before ending an EffectAssist Guidance instance automatically. |
 | TokenAssist and CombatAssist backlog | Deferred | [open issues](https://github.com/Mord-Eagle/GameAssist/issues) | Revisit older parity and integration work after the combined v2.0.0 release is stable. |
 | GameAssist handout organization | Deferred | [#72](https://github.com/Mord-Eagle/GameAssist/issues/72) | Preserve stable handouts after manual Journal filing, add safe indexing, and defer true folder routing until Roll20 exposes a supported writable Journal-folder API. |
@@ -665,7 +666,7 @@ Each phase must provide useful standalone behavior with explicit optional integr
 
 ### Release Gate
 
-v2.0.0 does not publish until every internal system passes the focused Roll20 smoke track, guided Wayfarer draft and activation behavior passes Issue #89, GM-private PC threshold behavior passes Issue #86, guided HealAssist review and verified application passes Issue #84, independent disable/re-enable and restart preservation are confirmed, RestAlmanac's supported 2014-sheet writes are proven with disposable characters, and PR #81 review is complete. Passing TimeAlmanac alone, or any smaller subset, is not a release candidate.
+v2.0.0 does not publish until every internal system passes the focused Roll20 smoke track, guided Wayfarer draft and activation behavior passes Issue #89, GM-private PC threshold behavior passes Issue #86, guided HealAssist review and verified application passes Issue #84, guided AttackAssist source/target/roll/privacy behavior passes Issue #87, independent disable/re-enable and restart preservation are confirmed, RestAlmanac's supported 2014-sheet writes are proven with disposable characters, and PR #81 review is complete. Passing TimeAlmanac alone, or any smaller subset, is not a release candidate.
 
 ---
 
@@ -698,15 +699,44 @@ Issue #84 remains at **Sandbox verification** until the complete focused HealAss
 
 ---
 
-## Phase 16: Continue The `v2.0.0` Issue Queue In PR #81
+## Phase 16: AttackAssist Guided Attacks in `v2.0.0`
+
+**Tracking:** [Issue #87](https://github.com/Mord-Eagle/GameAssist/issues/87), [PR #81](https://github.com/Mord-Eagle/GameAssist/pull/81)
+
+AttackAssist is a disabled-by-default guide for official D&D 5E by Roll20 2014 PC repeating attacks. It shortens source, attack, target, and roll-mode selection while leaving the character sheet, damage, resources, HP, effects, conditions, initiative, and turn flow under their established owners.
+
+### Implemented Scope
+
+- [x] Register AttackAssist as an independently toggleable module with optional player access and no required feature-module dependency.
+- [x] Require a linked authorized official-2014 PC source and refuse unsupported, 2024, NPC, unlinked, hidden, off-page, or uncontrolled player sources with actionable guidance.
+- [x] Read verified repeating attacks in saved sheet order and preserve exact stable row identity when display names are duplicated.
+- [x] Use Roll20's native target picker for visible map tokens without requiring target control.
+- [x] Retain player requests for hidden, GM-layer, or off-page placement as private GM work without exposing the target identity to the player.
+- [x] Offer the saved sheet roll mode plus explicit Normal, Advantage, and Disadvantage using the official 2014 sheet fragments without temporarily changing the character's `rtype` setting.
+- [x] Qualify the verified sheet-generated roll formula to the exact character and repeating row, then submit it as the acting character so the familiar template and CritAssist natural-1 path remain intact.
+- [x] Bind flows, requests, and submissions to the initiating player, expire them after ten minutes, consume submissions before rolling, and refuse stale, reused, changed-row, or cross-player buttons.
+- [x] Announce the attacker and visible target only after the roll callback; keep hidden-target completion private.
+- [x] Leave target HP, markers, effects, conditions, resources, position, Turn Tracker state, and campaign data unchanged.
+- [x] Add standard GM/DM, Guide/Help, Info, Status, Audit, Manual, Requests, player-lockout, and full module-name command surfaces.
+- [x] Add documentation, configuration and observational public API references, One-Click metadata, focused smoke tests, and a 55-check local regression harness.
+- [ ] Pass the live Roll20 visible-target workflow with a separate non-GM account and an official-2014 PC containing duplicate display-name attacks.
+- [ ] Pass sheet/Normal/Advantage/Disadvantage modes, natural-1 single delivery to CritAssist, stale/reused/cross-player refusal, private hidden-target request, player lockout, disable/re-enable, and sandbox-restart checks.
+
+### Completion Gate
+
+Issue #87 remains at **Sandbox verification** until the complete focused AttackAssist track passes in Roll20. No v2.0.0 release is approved from the local harness alone. Automatic damage, resource spending, 2024-sheet attacks, NPC action formulas, and arbitrary roll-card interpretation remain outside the launch contract.
+
+---
+
+## Phase 17: Continue The `v2.0.0` Issue Queue In PR #81
 
 PR #81 remains the only v2.0.0 development line. These issues are taken one at a time in dependency-aware order and do not create intermediate public releases:
 
 1. **Issue #89 — Guided Wayfarer setup:** implemented at sandbox verification; complete the live custom-calendar track before closing.
 2. **Issue #86 — GM-private PC health alerts:** implemented at sandbox verification; complete the live privacy, crossing, rearm, and service-disable track before closing.
 3. **Issue #84 — HealAssist:** implemented at sandbox verification; complete the live player, NPC privacy, stale-confirmation, multi-recipient, and HealthService lifecycle track before closing.
-4. **Issue #87 — AttackAssist:** next after the HealAssist checkpoint; add bounded 2014 repeating-attack selection and native target prompts without owning HP, damage, turns, conditions, or effects.
-5. **Issue #85 — Guidance consumption:** evidence gated; implement only after representative live 2014 roll-template evidence proves that an EffectAssist-owned Guidance row can be distinguished from unrelated d4 modifiers.
+4. **Issue #87 — AttackAssist:** implemented at sandbox verification; complete the live source, duplicate-row, target, roll-mode, natural-1, privacy, stale-button, and lifecycle track before closing.
+5. **Issue #85 — Guidance consumption:** next evidence-gated issue; implement only after representative live 2014 roll-template evidence proves that an EffectAssist-owned Guidance row can be distinguished from unrelated d4 modifiers.
 
 Issue #82 remains post-v2.0 catalog expansion. Issues #42-45, #50, #52, #53, #56, and #57 remain intentionally deferred unless their priority is explicitly changed. Implemented issues remain open at **Sandbox verification** until their own live Roll20 acceptance checks pass.
 
@@ -743,6 +773,7 @@ Issue #82 remains post-v2.0 catalog expansion. Issues #42-45, #50, #52, #53, #56
 │  ├─ [GAMEASSIST:MODULES:CONCENTRATIONASSIST]
 │  ├─ [GAMEASSIST:MODULES:EFFECTASSIST]
 │  ├─ [GAMEASSIST:MODULES:HEALASSIST]
+│  ├─ [GAMEASSIST:MODULES:ATTACKASSIST]
 │  ├─ [GAMEASSIST:MODULES:ALMANACASSIST]
 │  ├─ [GAMEASSIST:MODULES:HPASSIST]
 │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]

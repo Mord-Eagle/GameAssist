@@ -2,7 +2,7 @@
 
 Use this guide after installing or updating GameAssist, before an important session, or while troubleshooting a feature.
 
-> This guide tests GameAssist v2.0.0. It covers the accepted 2014-sheet EffectAssist foundation, the complete AlmanacAssist release track, the shared HealthService foundation, optional GM-private PC health alerts, and private ConcentrationAssist HP-loss offers while retaining the established component checks and the v1.8.2 NPCAssist naming and Bloodied regressions.
+> This guide tests GameAssist v2.0.0. It covers the accepted 2014-sheet EffectAssist foundation, guided HealAssist and AttackAssist workflows, the complete AlmanacAssist release track, the shared HealthService foundation, optional GM-private PC health alerts, and private ConcentrationAssist HP-loss offers while retaining the established component checks and the v1.8.2 NPCAssist naming and Bloodied regressions.
 
 The tests are organized by component. Each section explains:
 
@@ -306,6 +306,98 @@ Restart the sandbox. Pass when settings persist, pending requests and confirmati
 | NPC, hidden, GM-layer, and off-page requests remain private and GM-reviewed | ☐ Pass ☐ Fail |
 | Multi-recipient healing uses one review and produces no silently accepted partial result | ☐ Pass ☐ Fail |
 | Player lockout, HealthService cascade, re-enable, and restart behavior pass | ☐ Pass ☐ Fail |
+
+---
+
+## Focused v2.0.0 AttackAssist Acceptance
+
+**What this proves:** AttackAssist guides an authorized official-2014 PC through one exact repeating attack, a native target choice, and a familiar character-attributed roll without applying damage or changing the encounter.
+
+**Why test it:** The workflow combines stable repeating-row identity, player control, Roll20 target prompts, hidden-token privacy, official roll-mode fragments, CritAssist observation, and expiring one-use buttons. A normal character-sheet click does not prove those boundaries.
+
+**Skip when:** Do not skip for Issue #87 or v2.0.0 release acceptance. After release, skip only when AttackAssist remains deliberately disabled.
+
+### Preparation
+
+Prepare:
+
+- one linked official D&D 5E by Roll20 2014 PC token controlled by a separate non-GM test player;
+- at least two repeating attacks on that character, including two rows with the same display name when practical;
+- one visible target token the player does not control;
+- one hidden, GM-layer, or off-page target for the private-request check;
+- one supported 2024 character token for the refusal check;
+- CritAssist enabled and AttackAssist enabled through `!ga-enable AttackAssist`.
+
+Run:
+
+```roll20chat
+!Attack-GM
+!Attack-Guide
+!Attack-Status
+!Attack-Audit
+!Attack-Manual
+```
+
+Pass when the Control Center is private, the Guide gives the short player path, Status reports player access and pending choices, Audit explicitly says it is read-only, and the manual creates or updates `GameAssist Guide - AttackAssist`.
+
+### Visible Target and Stable Attack Row
+
+1. As the non-GM player, select the controlled 2014 PC and run `!Attack`.
+2. Choose one repeating attack. When two rows share a name, choose one of the numbered labels.
+3. Click **Choose On The Map** and point at the visible target the player does not control.
+4. Choose **Normal**.
+
+Pass when Roll20 accepts the target without granting control, the familiar official attack card appears once as the attacking character, and the attacker/target announcement follows the roll. Confirm the chosen row's bonus, range, and damage links match the numbered attack selected. The target's HP, markers, position, effects, conditions, and Roll20 Turn Tracker must remain unchanged.
+
+Click the same roll button again. Pass when AttackAssist refuses it without a second roll or announcement.
+
+### Roll Modes and Sheet Preservation
+
+Repeat the same disposable attack through **Use Sheet Setting**, **Advantage**, and **Disadvantage**. Pass when:
+
+- the sheet choice follows the character's saved 2014 roll mode;
+- Normal rolls one d20;
+- Advantage shows two d20s and keeps the higher result;
+- Disadvantage shows two d20s and keeps the lower result;
+- the character's saved roll-mode setting is unchanged after every test.
+
+### CritAssist Natural 1 Delivery
+
+With CritAssist enabled, use the disposable attack until its official first d20 is a natural 1. Pass when CritAssist opens its established Natural 1 workflow exactly once for that attack. The later attacker/target announcement must not trigger another fumble response.
+
+### Stale Row and Wrong Player
+
+Open an attack menu, then rename, remove, or structurally change that repeating row before using the older button. Pass when AttackAssist asks for a fresh choice and does not roll the previous formula.
+
+Open another valid review as the test player, then have a different player use its generated roll command. Pass when the second player is refused and the rightful player can still use a fresh review.
+
+### Hidden or Off-Page Target Privacy
+
+As the non-GM player, begin an attack and choose **Ask The GM**. Pass when the player receives a neutral confirmation that does not name any hidden target.
+
+As the GM, open `!Attack-Requests`, choose the retained request, select the hidden, GM-layer, or off-page target, and complete the roll. Pass when the roll and target completion remain GM-private. The requesting player may receive a completion notice, but it must not reveal the hidden target's identity or placement.
+
+### Unsupported Source, Lockout, and Lifecycle
+
+Select the supported 2024 test token and run `!Attack`. Pass when AttackAssist explains that 1.0.0 supports official-2014 repeating attacks and that the native 2024 attack buttons remain available.
+
+Run `!Attack-Players off`. Pass when the player can still read guidance but cannot begin or complete a guided attack; GM attacks remain available. Restore `!Attack-Players on` afterward.
+
+Disable and re-enable AttackAssist. Pass when unrelated modules remain active, old flow/request/roll buttons expire, and one fresh workflow succeeds without duplicate messages. Restart the sandbox and confirm the configured player-access choice persists while pending transient choices do not.
+
+### Acceptance Record
+
+| Requirement | Result |
+| --- | --- |
+| GM controls, Guide, Status, Audit, and manual are readable and private where expected | ☐ Pass ☐ Fail |
+| Controlled 2014 PC and exact repeating row are verified, including duplicate display names | ☐ Pass ☐ Fail |
+| Visible non-controlled target is accepted without changing target or encounter state | ☐ Pass ☐ Fail |
+| Sheet, Normal, Advantage, and Disadvantage modes are correct without a saved-setting mutation | ☐ Pass ☐ Fail |
+| One accepted roll and one post-roll announcement occur; reused buttons cannot roll again | ☐ Pass ☐ Fail |
+| A natural 1 reaches CritAssist exactly once | ☐ Pass ☐ Fail |
+| Stale-row and wrong-player buttons refuse safely | ☐ Pass ☐ Fail |
+| Hidden, GM-layer, and off-page target identity remains private and GM-reviewed | ☐ Pass ☐ Fail |
+| 2024 refusal, player lockout, disable/re-enable, and restart behavior pass | ☐ Pass ☐ Fail |
 
 ---
 
@@ -885,8 +977,8 @@ This release test has two tracks:
 
 | Track | Starting point | Purpose |
 | --- | --- | --- |
-| **A. Clean installation** | No saved GameAssist state | Proves the complete v2.0.0 suite starts cleanly, EffectAssist creates safe source-aware records, HealAssist applies reviewed healing, and all six AlmanacAssist systems operate together. |
-| **B. Upgrade** | A working v1.8.2 campaign | Proves existing configuration and runtime history survive the v2.0.0 state upgrade while all three new modules begin disabled. |
+| **A. Clean installation** | No saved GameAssist state | Proves the complete v2.0.0 suite starts cleanly, EffectAssist creates safe source-aware records, HealAssist applies reviewed healing, AttackAssist submits guarded attacks, and all six AlmanacAssist systems operate together. |
+| **B. Upgrade** | A working v1.8.2 campaign | Proves existing configuration and runtime history survive the v2.0.0 state upgrade while all four new modules begin disabled. |
 
 Every acceptance check after the script is replaced must use v2.0.0.
 
@@ -905,22 +997,24 @@ Use a disposable campaign, or a campaign where disposable test tokens and test e
 
 1. Install GameAssist v2.0.0.
 2. Prepare the PC, NPC, unlinked token, and optional CritAssist tables described under [Before Testing](#before-testing).
-3. Run every **Basic Check** in Components 1 through 17 and the HealthService core-service check. A deliberately disabled optional module may be recorded as **Skipped by choice**, except for the three v2.0.0 release modules.
+3. Run every **Basic Check** in Components 1 through 18 and the HealthService core-service check. A deliberately disabled optional module may be recorded as **Skipped by choice**, except for the four v2.0.0 release modules.
 4. Run the complete [Focused v2.0.0 HealthService Acceptance](#focused-v200-healthservice-acceptance) section, including the Issue #86 PC health-alert track. It may not be skipped for release approval.
 5. Run the complete [Focused v2.0.0 EffectAssist Acceptance](#focused-v200-effectassist-acceptance) section. It may not be skipped for release approval.
 6. Run the complete [Focused v2.0.0 HealAssist Acceptance](#focused-v200-healassist-acceptance) section. It may not be skipped for release approval.
-7. Run the complete [Focused v2.0.0 Complete AlmanacAssist Acceptance](#focused-v200-complete-almanacassist-acceptance) section. It may not be skipped for release approval.
-8. Run the cross-component permission, duplicate-installation, and state-recovery checks.
-9. Restart the sandbox and repeat `!ga-status`, `!ga-config modules`, `!ga-health`, one marker change, `!Effect-Status`, `!Heal-Status`, and `!Almanac-Status`.
+7. Run the complete [Focused v2.0.0 AttackAssist Acceptance](#focused-v200-attackassist-acceptance) section. It may not be skipped for release approval.
+8. Run the complete [Focused v2.0.0 Complete AlmanacAssist Acceptance](#focused-v200-complete-almanacassist-acceptance) section. It may not be skipped for release approval.
+9. Run the cross-component permission, duplicate-installation, and state-recovery checks.
+10. Restart the sandbox and repeat `!ga-status`, `!ga-config modules`, `!ga-health`, one marker change, `!Effect-Status`, `!Heal-Status`, `!Attack-Status`, and `!Almanac-Status`.
 
 | Clean-install requirement | Result |
 | --- | --- |
 | Sandbox reloads without a new GameAssist exception | ☐ Pass ☐ Fail |
 | Core status identifies v2.0.0 | ☐ Pass ☐ Fail |
-| Required Components 1 through 17 pass | ☐ Pass ☐ Fail |
+| Required Components 1 through 18 pass | ☐ Pass ☐ Fail |
 | Focused HealthService and GM-private PC alert acceptance passes | ☐ Pass ☐ Fail |
 | Focused EffectAssist acceptance passes | ☐ Pass ☐ Fail |
 | Focused HealAssist acceptance passes | ☐ Pass ☐ Fail |
+| Focused AttackAssist acceptance passes | ☐ Pass ☐ Fail |
 | Complete AlmanacAssist acceptance passes | ☐ Pass ☐ Fail |
 | Cross-component checks pass | ☐ Pass ☐ Fail |
 | Restart check preserves active effect records and Almanac state | ☐ Pass ☐ Fail |
@@ -934,7 +1028,7 @@ Before replacing the script:
 1. Run `!ga-status` and `!ga-config modules`.
 2. Record the active table timezone and at least one non-default module setting.
 3. Preserve one NPCAssist history record, one custom condition if available, and any existing guide handout.
-4. Confirm EffectAssist and AlmanacAssist do not exist in the old module list.
+4. Confirm EffectAssist, HealAssist, AttackAssist, and AlmanacAssist do not exist in the old module list.
 
 Replace v1.8.2 with v2.0.0, save, and wait for the sandbox restart. Then verify:
 
@@ -946,12 +1040,15 @@ Replace v1.8.2 with v2.0.0, save, and wait for the sandbox restart. Then verify:
 | HealthService appears enabled with empty sandbox-local evidence | ☐ Pass ☐ Fail |
 | EffectAssist appears disabled by default | ☐ Pass ☐ Fail |
 | HealAssist appears disabled by default | ☐ Pass ☐ Fail |
+| AttackAssist appears disabled by default | ☐ Pass ☐ Fail |
 | AlmanacAssist appears disabled by default | ☐ Pass ☐ Fail |
 | Enabling EffectAssist creates only its own state branches | ☐ Pass ☐ Fail |
 | Enabling HealAssist creates only its config/runtime branch and no HP change | ☐ Pass ☐ Fail |
+| Enabling AttackAssist creates only its config/runtime branch and no roll or target change | ☐ Pass ☐ Fail |
 | Enabling AlmanacAssist creates only its own bounded config/runtime branches | ☐ Pass ☐ Fail |
 | A Bless test survives one sandbox restart | ☐ Pass ☐ Fail |
 | HealAssist settings survive restart while pending healing buttons expire | ☐ Pass ☐ Fail |
+| AttackAssist settings survive restart while pending attack buttons expire | ☐ Pass ☐ Fail |
 | A fictional-time change and one setting in every Almanac system survive restart | ☐ Pass ☐ Fail |
 | Disabling EffectAssist preserves records and stops its commands | ☐ Pass ☐ Fail |
 | Re-enabling EffectAssist restores access to the same records | ☐ Pass ☐ Fail |
@@ -981,6 +1078,7 @@ Do not approve the release if an existing valid configuration, history record, o
 | HPAssist | Qualifying NPC HP formulas roll without changing PCs or unlinked tokens. | Incorrect eligibility can damage token HP or create false history. | HPAssist is disabled and NPC HP is set another way. |
 | EffectAssist | The focused six-effect catalog coordinates player-safe casting, owned markers, concentration, and 2014-sheet rows without deleting unrelated state. | Effects combine several campaign surfaces, so authorization, ownership, and cleanup must be proven together. | Never for v2.0.0 release acceptance. |
 | HealAssist | Guided official-2014 healing rolls once, previews exact HP results, and writes only after fresh confirmation through HealthService. | Player permissions, private NPC data, stale buttons, maximum HP, and multi-target writes must be proven together. | Never for v2.0.0 release acceptance. |
+| AttackAssist | Guided official-2014 repeating attacks preserve exact rows, native targeting, familiar roll cards, and one-use submission without resolving damage. | Player control, hidden-target privacy, stale buttons, roll modes, and CritAssist delivery must be proven together. | Never for v2.0.0 release acceptance. |
 | AlmanacAssist | Time, Climate, Astronomy, Weather, Environment, and Rest work independently and together while preserving valid state and deliberate write boundaries. | v2.0.0 promises the complete world-context suite, and Rest performs guarded 2014-sheet writes. | Never for v2.0.0 release acceptance. |
 | DebugTools | Dry runs remain non-destructive and `--apply` is explicit. | It verifies diagnostic safeguards and direct MarkerService access. | Normally skip; DebugTools is optional and disabled by default. |
 
@@ -993,7 +1091,7 @@ GameAssist is ready for normal use when:
 - the Roll20 Mod sandbox reloads without a new GameAssist exception;
 - the Core System basic test passes;
 - MarkerService passes if ConditionAssist, TokenAssist, NPCAssist, ConcentrationAssist, or marker diagnostics will be used;
-- TurnTrackerService, InitiativeAssist, CombatAssist, WelcomeAssist, EffectAssist, HealAssist, and all six AlmanacAssist systems pass before v2.0.0 is approved;
+- TurnTrackerService, InitiativeAssist, CombatAssist, WelcomeAssist, EffectAssist, HealAssist, AttackAssist, and all six AlmanacAssist systems pass before v2.0.0 is approved;
 - every enabled module that matters to the coming session passes its basic test;
 - any skipped test is skipped for a stated reason, not because its result was unclear.
 
@@ -3282,7 +3380,49 @@ Record:
 
 ---
 
-## 17. AlmanacAssist
+## 17. AttackAssist
+
+**What this proves:** The guided official-2014 attack path can find the intended character-sheet row, target a visible token, and produce one familiar roll.
+
+**Why test it:** AttackAssist can report healthy even when a selected token, repeating row, target prompt, or player permission needs attention.
+
+**Skip when:** Skip only when AttackAssist will remain disabled. Do not skip for v2.0.0 release approval.
+
+### Basic Check
+
+Use a disposable linked official-2014 PC with at least one repeating attack and a visible target token. Then run:
+
+```roll20chat
+!ga-enable AttackAssist
+!Attack-GM
+!Attack-Guide
+!Attack-Status
+!Attack-Audit
+!Attack
+```
+
+Choose the attack, target, and Normal roll. Pass when the familiar attack card appears once as the character, the visible attacker and target are announced after it, and no damage, HP, marker, condition, effect, resource, or Turn Tracker change occurs.
+
+### Expanded AttackAssist Checks
+
+Run the complete [Focused v2.0.0 AttackAssist Acceptance](#focused-v200-attackassist-acceptance) before release approval. For ordinary troubleshooting, prioritize one visible target the player does not control, duplicate attack names, one reused button, one stale row, one hidden-target GM request, player lockout, and CritAssist's next natural-1 response.
+
+### AttackAssist Failure Evidence
+
+Record:
+
+- the actor role and selected source token;
+- source sheet type, control, page, and layer;
+- the repeating attack name and whether another row shares that name;
+- selected target layer/page without publishing a hidden target's identity;
+- chosen roll mode and resulting attack card;
+- `!Attack-Status`, `!Attack-Audit`, and `!ga-config modules` output;
+- whether CritAssist responded and whether any target or Turn Tracker state changed;
+- any new sandbox exception.
+
+---
+
+## 18. AlmanacAssist
 
 **What this proves:** The master controls can reach all six AlmanacAssist systems, each system reports its own state, and the module preserves deliberate boundaries between fictional time, descriptive context, and verified sheet changes.
 
