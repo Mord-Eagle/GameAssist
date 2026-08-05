@@ -217,6 +217,98 @@ Turn offers back on, disable HealthService, and repeat those two checks. The aut
 
 ---
 
+## Focused v2.0.0 HealAssist Acceptance
+
+**What this proves:** HealAssist guides official-2014 healing from an authorized source to reviewed recipients, rolls once, changes HP only after confirmation, and verifies every accepted write through HealthService.
+
+**Why test it:** Healing combines player permissions, native target prompts, private NPC information, formula rules, maximum-HP limits, stale-button protection, and multi-target writes. A normal sheet roll does not prove those safeguards.
+
+**Skip when:** Do not skip for Issue #84 or v2.0.0 release acceptance. After release, skip only when HealAssist remains deliberately disabled.
+
+### Preparation
+
+Prepare:
+
+- one linked official 2014 PC healer controlled by a separate non-GM test player, with nonzero Intelligence, Wisdom, and Charisma modifiers;
+- one damaged linked 2014 PC on the Objects layer that the test player does not control;
+- a second damaged linked 2014 PC for multi-recipient healing;
+- one damaged linked NPC on the Objects layer and, when practical, one on the GM layer;
+- valid current and maximum HP on every recipient;
+- HealthService enabled and HealAssist enabled through `!ga-enable HealAssist`.
+
+Run `!Heal-GM`, `!Heal-Guide`, `!Heal-Status`, and `!Heal-Audit`. Pass when the Control Center is private, the Guide identifies the short path, Status reports HealthService available, and Audit explicitly says it is read-only.
+
+### Player Heals a Visible PC
+
+1. As the non-GM player, run `!Heal`.
+2. Choose the controlled healer and **Cure Wounds**.
+3. Choose a slot level and the intended casting ability.
+4. Use Roll20's target prompt to choose the visible damaged PC that the player does not control.
+
+Pass when HealAssist accepts the visible PC without granting token control and produces one private review containing:
+
+- every raw healing die and the complete formula;
+- the recipient's current HP, proposed HP, and maximum HP;
+- the amount that will actually be restored;
+- a reminder that the spell slot remains a manual sheet responsibility.
+
+The recipient's HP must remain unchanged before confirmation. Click **Apply Healing** once; pass when the reviewed value is written, `!ga-health recent` identifies a declared-and-verified HealAssist healing operation, and the same button cannot apply the heal again.
+
+### Maximum HP and Public Result
+
+Set a PC one point below maximum, choose a healing action capable of restoring more than one point, and confirm it. Pass when proposed HP stops at maximum and the public result, when public results are enabled, reports only the amount actually regained.
+
+Run `!Heal-Results private` and repeat a small PC heal. Pass when no public completion message appears. Restore the campaign's preferred result setting afterward.
+
+### Manual Formula Boundary
+
+Choose **Manual Healing Formula** and test a simple formula such as `2d6+3`. Pass when the review names that exact formula and reminds the table to resolve its resource manually.
+
+Start again and try an expression containing attributes, roll queries, keep/drop operators, multiplication, or another compound expression. Pass when HealAssist refuses it before rolling or changing HP and retains a clear Start Again route.
+
+### Stale and Single-Use Confirmation
+
+Create a valid healing review, then change the recipient's current HP manually before clicking confirmation. Pass when HealAssist refuses the stale review, does not roll again, and does not overwrite the newer HP.
+
+Create another review and use its confirmation successfully. Click it again. Pass when the second click is refused without another write.
+
+### NPC and Hidden Placement Request
+
+As the non-GM player, begin a healing action and choose the path for a recipient the player cannot place directly. Pass when the request is retained privately for the GM and neither the NPC's name nor HP appears publicly or in the player's review.
+
+As the GM, open `!Heal-Requests`, choose the request, select the intended NPC, and continue through review and confirmation. Pass when the NPC's token bar 1 receives the verified value and all NPC roll, HP, and completion evidence remains private. Repeat with a GM-layer NPC when practical.
+
+### Multi-Recipient Healing
+
+Choose Prayer of Healing, Mass Healing Word, or Mass Cure Wounds and select two damaged PCs. Pass when one roll is used for both recipients, each proposed value is capped independently, and neither HP value changes before confirmation. After confirmation, both recipients must match the accepted review.
+
+The maintainer harness simulates a failure on the second HealthService write and verifies that HealAssist attempts a checked synchronization rollback of the first recipient. A live failure does not need to be manufactured destructively; if one occurs naturally, treat any recipient that does not return to its reviewed starting value as a release blocker.
+
+### Player Lockout and Service Lifecycle
+
+Run `!Heal-Players off` as the GM. The player may still open guidance, but cannot begin or complete a healing action; GM healing remains available. Run `!Heal-Players on` to restore the player path.
+
+Disable HealthService. Pass when HealAssist also stops, reports the dependency through `!ga-config modules`, and unrelated modules remain available. Re-enable HealthService and HealAssist, then confirm one fresh healing workflow works without duplicate messages or writes.
+
+Restart the sandbox. Pass when settings persist, pending requests and confirmation buttons expire, no HP changes occur during startup, and a new workflow succeeds.
+
+### Acceptance Record
+
+| Requirement | Result |
+| --- | --- |
+| GM controls, Guide, Status, Audit, and manual are readable and private where expected | ☐ Pass ☐ Fail |
+| Controlled player healer can target a visible non-controlled PC | ☐ Pass ☐ Fail |
+| Roll detail, formula, current/proposed/maximum HP, actual gain, and manual resource step are accurate | ☐ Pass ☐ Fail |
+| HP remains unchanged before confirmation and the accepted write has verified HealthService provenance | ☐ Pass ☐ Fail |
+| Maximum-HP cap and public/private result policy are correct | ☐ Pass ☐ Fail |
+| Bounded manual formula works and unsafe expressions are refused | ☐ Pass ☐ Fail |
+| Stale, reused, fabricated, expired, and wrong-player actions refuse without another write | ☐ Pass ☐ Fail |
+| NPC, hidden, GM-layer, and off-page requests remain private and GM-reviewed | ☐ Pass ☐ Fail |
+| Multi-recipient healing uses one review and produces no silently accepted partial result | ☐ Pass ☐ Fail |
+| Player lockout, HealthService cascade, re-enable, and restart behavior pass | ☐ Pass ☐ Fail |
+
+---
+
 ## Focused v2.0.0 EffectAssist Acceptance
 
 **What this proves:** EffectAssist coordinates its focused six-effect launch catalog, applies verified 2014-sheet modifiers where available, authorizes player casting from controlled sources, links concentration-dependent effects to their source, keeps overlapping sources separate, preserves pre-existing campaign state, and repairs only a freshly confirmed safe mismatch.
@@ -793,8 +885,8 @@ This release test has two tracks:
 
 | Track | Starting point | Purpose |
 | --- | --- | --- |
-| **A. Clean installation** | No saved GameAssist state | Proves the complete v2.0.0 suite starts cleanly, EffectAssist creates safe source-aware records, and all six AlmanacAssist systems operate together. |
-| **B. Upgrade** | A working v1.8.2 campaign | Proves existing configuration and runtime history survive the v2.0.0 state upgrade while both new modules begin disabled. |
+| **A. Clean installation** | No saved GameAssist state | Proves the complete v2.0.0 suite starts cleanly, EffectAssist creates safe source-aware records, HealAssist applies reviewed healing, and all six AlmanacAssist systems operate together. |
+| **B. Upgrade** | A working v1.8.2 campaign | Proves existing configuration and runtime history survive the v2.0.0 state upgrade while all three new modules begin disabled. |
 
 Every acceptance check after the script is replaced must use v2.0.0.
 
@@ -813,20 +905,22 @@ Use a disposable campaign, or a campaign where disposable test tokens and test e
 
 1. Install GameAssist v2.0.0.
 2. Prepare the PC, NPC, unlinked token, and optional CritAssist tables described under [Before Testing](#before-testing).
-3. Run every **Basic Check** in Components 1 through 16 and the HealthService core-service check. A deliberately disabled optional module may be recorded as **Skipped by choice**, except for the two v2.0.0 release modules.
+3. Run every **Basic Check** in Components 1 through 17 and the HealthService core-service check. A deliberately disabled optional module may be recorded as **Skipped by choice**, except for the three v2.0.0 release modules.
 4. Run the complete [Focused v2.0.0 HealthService Acceptance](#focused-v200-healthservice-acceptance) section, including the Issue #86 PC health-alert track. It may not be skipped for release approval.
 5. Run the complete [Focused v2.0.0 EffectAssist Acceptance](#focused-v200-effectassist-acceptance) section. It may not be skipped for release approval.
-6. Run the complete [Focused v2.0.0 Complete AlmanacAssist Acceptance](#focused-v200-complete-almanacassist-acceptance) section. It may not be skipped for release approval.
-7. Run the cross-component permission, duplicate-installation, and state-recovery checks.
-8. Restart the sandbox and repeat `!ga-status`, `!ga-config modules`, `!ga-health`, one marker change, `!Effect-Status`, and `!Almanac-Status`.
+6. Run the complete [Focused v2.0.0 HealAssist Acceptance](#focused-v200-healassist-acceptance) section. It may not be skipped for release approval.
+7. Run the complete [Focused v2.0.0 Complete AlmanacAssist Acceptance](#focused-v200-complete-almanacassist-acceptance) section. It may not be skipped for release approval.
+8. Run the cross-component permission, duplicate-installation, and state-recovery checks.
+9. Restart the sandbox and repeat `!ga-status`, `!ga-config modules`, `!ga-health`, one marker change, `!Effect-Status`, `!Heal-Status`, and `!Almanac-Status`.
 
 | Clean-install requirement | Result |
 | --- | --- |
 | Sandbox reloads without a new GameAssist exception | ☐ Pass ☐ Fail |
 | Core status identifies v2.0.0 | ☐ Pass ☐ Fail |
-| Required Components 1 through 16 pass | ☐ Pass ☐ Fail |
+| Required Components 1 through 17 pass | ☐ Pass ☐ Fail |
 | Focused HealthService and GM-private PC alert acceptance passes | ☐ Pass ☐ Fail |
 | Focused EffectAssist acceptance passes | ☐ Pass ☐ Fail |
+| Focused HealAssist acceptance passes | ☐ Pass ☐ Fail |
 | Complete AlmanacAssist acceptance passes | ☐ Pass ☐ Fail |
 | Cross-component checks pass | ☐ Pass ☐ Fail |
 | Restart check preserves active effect records and Almanac state | ☐ Pass ☐ Fail |
@@ -851,10 +945,13 @@ Replace v1.8.2 with v2.0.0, save, and wait for the sandbox restart. Then verify:
 | NPCAssist history and existing handouts remain intact | ☐ Pass ☐ Fail |
 | HealthService appears enabled with empty sandbox-local evidence | ☐ Pass ☐ Fail |
 | EffectAssist appears disabled by default | ☐ Pass ☐ Fail |
+| HealAssist appears disabled by default | ☐ Pass ☐ Fail |
 | AlmanacAssist appears disabled by default | ☐ Pass ☐ Fail |
 | Enabling EffectAssist creates only its own state branches | ☐ Pass ☐ Fail |
+| Enabling HealAssist creates only its config/runtime branch and no HP change | ☐ Pass ☐ Fail |
 | Enabling AlmanacAssist creates only its own bounded config/runtime branches | ☐ Pass ☐ Fail |
 | A Bless test survives one sandbox restart | ☐ Pass ☐ Fail |
+| HealAssist settings survive restart while pending healing buttons expire | ☐ Pass ☐ Fail |
 | A fictional-time change and one setting in every Almanac system survive restart | ☐ Pass ☐ Fail |
 | Disabling EffectAssist preserves records and stops its commands | ☐ Pass ☐ Fail |
 | Re-enabling EffectAssist restores access to the same records | ☐ Pass ☐ Fail |
@@ -883,6 +980,7 @@ Do not approve the release if an existing valid configuration, history record, o
 | NPCAssist | Death, revival, audit, history, buckets, and Arc menus work. | It combines HP events, markers, saved records, and handouts. | NPCAssist is disabled and will not be used. |
 | HPAssist | Qualifying NPC HP formulas roll without changing PCs or unlinked tokens. | Incorrect eligibility can damage token HP or create false history. | HPAssist is disabled and NPC HP is set another way. |
 | EffectAssist | The focused six-effect catalog coordinates player-safe casting, owned markers, concentration, and 2014-sheet rows without deleting unrelated state. | Effects combine several campaign surfaces, so authorization, ownership, and cleanup must be proven together. | Never for v2.0.0 release acceptance. |
+| HealAssist | Guided official-2014 healing rolls once, previews exact HP results, and writes only after fresh confirmation through HealthService. | Player permissions, private NPC data, stale buttons, maximum HP, and multi-target writes must be proven together. | Never for v2.0.0 release acceptance. |
 | AlmanacAssist | Time, Climate, Astronomy, Weather, Environment, and Rest work independently and together while preserving valid state and deliberate write boundaries. | v2.0.0 promises the complete world-context suite, and Rest performs guarded 2014-sheet writes. | Never for v2.0.0 release acceptance. |
 | DebugTools | Dry runs remain non-destructive and `--apply` is explicit. | It verifies diagnostic safeguards and direct MarkerService access. | Normally skip; DebugTools is optional and disabled by default. |
 
@@ -895,7 +993,7 @@ GameAssist is ready for normal use when:
 - the Roll20 Mod sandbox reloads without a new GameAssist exception;
 - the Core System basic test passes;
 - MarkerService passes if ConditionAssist, TokenAssist, NPCAssist, ConcentrationAssist, or marker diagnostics will be used;
-- TurnTrackerService, InitiativeAssist, CombatAssist, WelcomeAssist, EffectAssist, and all six AlmanacAssist systems pass before v2.0.0 is approved;
+- TurnTrackerService, InitiativeAssist, CombatAssist, WelcomeAssist, EffectAssist, HealAssist, and all six AlmanacAssist systems pass before v2.0.0 is approved;
 - every enabled module that matters to the coming session passes its basic test;
 - any skipped test is skipped for a stated reason, not because its result was unclear.
 
@@ -3143,7 +3241,48 @@ Record:
 
 ---
 
-## 16. AlmanacAssist
+## 16. HealAssist
+
+**What this proves:** The healing catalog, private controls, review boundary, and verified HP application respond in a normal Roll20 session.
+
+**Why test it:** HealAssist can appear healthy while a character-sheet field, target prompt, permission, or HealthService write still needs attention.
+
+**Skip when:** Skip only when HealAssist will remain disabled. Do not skip for v2.0.0 release approval.
+
+### Basic Check
+
+Damage a disposable linked official-2014 PC, then run:
+
+```roll20chat
+!ga-enable HealAssist
+!Heal-GM
+!Heal-Guide
+!Heal-Status
+!Heal-Audit
+!Heal
+```
+
+Choose one supported spell or potion, target the damaged PC, and review the result. Pass when HP remains unchanged until confirmation, the review shows the roll plus current/proposed/maximum HP, and one confirmation applies the reviewed value. `!ga-health recent` should identify HealAssist as a verified healing producer.
+
+### Expanded HealAssist Checks
+
+Run the complete [Focused v2.0.0 HealAssist Acceptance](#focused-v200-healassist-acceptance) before release approval. For ordinary troubleshooting, prioritize player targeting of a visible non-controlled PC, one stale confirmation, one NPC GM request, maximum-HP capping, player lockout, and HealthService disable/re-enable.
+
+### HealAssist Failure Evidence
+
+Record:
+
+- the chosen action, slot level or formula, and healing ability;
+- whether the actor was the GM or a separate player;
+- source and recipient token layers, pages, linked characters, and control;
+- the private review text without publishing hidden NPC HP;
+- HP before review, before confirmation, and after the result;
+- `!Heal-Status`, `!Heal-Audit`, and `!ga-health recent` output;
+- any new sandbox exception.
+
+---
+
+## 17. AlmanacAssist
 
 **What this proves:** The master controls can reach all six AlmanacAssist systems, each system reports its own state, and the module preserves deliberate boundaries between fictional time, descriptive context, and verified sheet changes.
 

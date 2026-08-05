@@ -3,7 +3,7 @@
 GameAssist - Roll20 API Script
 Version: 2.0.0
 Last Updated: 2026-08-04 (America/New_York)
-Release scope: EffectAssist 2.3.0, complete AlmanacAssist 1.1.0, HealthService 1.0.0, and verified CombatAssist duration events on one GameAssist v2.0.0 development line.
+Release scope: EffectAssist 2.3.0, HealAssist 1.0.0, complete AlmanacAssist 1.1.0, HealthService 1.0.0, and verified CombatAssist duration events on one GameAssist v2.0.0 development line.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -14,7 +14,7 @@ task queue, state/configuration helpers, consistent logging, and a core marker
 service plus a shared health-observation and verified-write contract. Optional
 PC health-band alerts use that shared evidence and remain private to the GM.
 Normal event handlers execute directly unless a module deliberately
-calls GameAssist.enqueue(). This development package contains thirteen configurable modules:
+calls GameAssist.enqueue(). This development package contains fourteen configurable modules:
 - ConfigUI 0.2.3 - GM-only chat controls for toggling modules, common options, and PC health alerts.
 - CritAssist 0.2.5.1 - Detects natural-1 attacks and offers fumble/confirm menus.
 - ConditionAssist 1.0.3 - Provides condition wording, artwork, announcements, and marker controls.
@@ -25,6 +25,7 @@ calls GameAssist.enqueue(). This development package contains thirteen configura
 - ConcentrationAssist 0.4.0 - Runs manual and private HP-loss-offered concentration checks, manages its configured marker, and exposes concentration lifecycle events.
 - NPCAssist 1.4.0 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, and Arc rosters.
 - EffectAssist 2.3.0 - Coordinates catalog-driven effects, direct GM casting, opaque player flows, retained GM requests, 2014-sheet modifiers, concentration, ownership-safe cleanup, duration candidates, and bounded 2014 Bless proposals.
+- HealAssist 1.0.0 - Guides verified 2014 healing rolls, visible PC targeting, private GM requests, complete HP review, and one-use HealthService application.
 - AlmanacAssist 1.1.0 - Adds guided Wayfarer drafts to fictional time, climate, astronomy, weather, environments, and verified 2014-sheet rests across six independently controlled internal systems.
 - HPAssist 0.2.0 - Rolls npc_hpformula and uses HealthService for verified token bar 1 writes when available.
 - DebugTools 0.3.0 - Optional dry-run-first GM diagnostics with verified supported HP damage writes.
@@ -127,13 +128,18 @@ V2.0.0 FOUNDATION
   GameAssist HP writes without guessing the cause of unexplained changes.
 - Optional PC health alerts privately notify the GM only when a supported PC
   crosses an enabled 50%, 25%, or 10% health threshold; NPC alerts remain with NPCAssist.
+- HealAssist remains disabled until deliberately enabled. It uses HealthService
+  for reviewed official-2014 healing and verified HP application, and it never
+  spends slots, inventory, class resources, or temporary HP automatically.
 - NPCAssist, ConcentrationAssist, and DebugTools use GameAssist.MarkerService.
 - Marker-dependent GameAssist modules no longer depend on standalone TokenMod.
 - ConditionAssist uses MarkerService for condition reads, writes, and change observation.
 - TokenAssist uses MarkerService for every status-marker command.
 - Disabling MarkerService also disables ConditionAssist, TokenAssist, NPCAssist,
   ConcentrationAssist, and DebugTools while CritAssist, ConfigUI,
-  InitiativeAssist, CombatAssist, WelcomeAssist, and HPAssist remain available.
+  InitiativeAssist, CombatAssist, WelcomeAssist, HealAssist, and HPAssist remain available.
+- Disabling HealthService also disables HealAssist while every unrelated module
+  and Roll20's native sheet-healing controls remain available.
 - Human-facing times and automatic Session date rollover use the DM's validated
   IANA timezone when configured; stored event timestamps remain absolute.
 - [GAMEASSIST:CORE:TURNTRACKERSERVICE] is the only GameAssist authority for
@@ -168,8 +174,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 // mechsuit:
 //   codename: "GAMEASSIST"
 //   project_version: "v2.0.0"
-//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, migration-safe module identities, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker, Turn Tracker, and health authorities, optional GM-private PC health-band alerts, source-aware semantic effects with ownership-safe projections, bounded GM-reviewed official 2014 Bless cast proposals, and optional GM-reviewed duration candidates, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, preservation-first encounter flow, GM-private NPC Bloodied alerts, optional health-gated table greetings, validated real-world table time, and independently managed fictional time, climate, astronomy, weather, environments, and deliberate 2014-sheet rests. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, automatic turn advancement, automatic effect application or recipient inference from spell cards, automatic effect expiration from elapsed time, automatic Bloodied markers/history, automatic concentration rolls from observed HP changes, public or player-facing health-threshold disclosure, damage-source guessing, silent effect repair, automatic environmental penalties, or automatic reversal of campaign state when fictional time moves backward."
-//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.turntrackerservice","core.semanticevents","core.healthservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critassist","modules.conditionassist","modules.tokenassist","modules.initiativeassist","modules.combatassist","modules.welcomeassist","modules.npcassist","modules.concentrationassist","modules.effectassist","modules.almanacassist","modules.hpassist","modules.debugtools","bootstrap"]
+//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, migration-safe module identities, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker, Turn Tracker, and health authorities, optional GM-private PC health-band alerts, source-aware semantic effects with ownership-safe projections, guided verified 2014 healing, bounded GM-reviewed official 2014 Bless cast proposals, and optional GM-reviewed duration candidates, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, preservation-first encounter flow, GM-private NPC Bloodied alerts, optional health-gated table greetings, validated real-world table time, and independently managed fictional time, climate, astronomy, weather, environments, and deliberate 2014-sheet rests. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, automatic turn advancement, automatic effect application or recipient inference from spell cards, automatic effect expiration from elapsed time, automatic healing-card interpretation or resource consumption, automatic Bloodied markers/history, automatic concentration rolls from observed HP changes, public or player-facing health-threshold disclosure, damage-source guessing, silent effect repair, automatic environmental penalties, or automatic reversal of campaign state when fictional time moves backward."
+//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.turntrackerservice","core.semanticevents","core.healthservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critassist","modules.conditionassist","modules.tokenassist","modules.initiativeassist","modules.combatassist","modules.welcomeassist","modules.npcassist","modules.concentrationassist","modules.effectassist","modules.healassist","modules.almanacassist","modules.hpassist","modules.debugtools","bootstrap"]
 //   env:
 //     required: []
 //     optional: []
@@ -182,7 +188,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //   observability:
 //     logs: "roll20_whisper_to_gm"
 //     metrics: [{ name: "gameassist.queue.task_duration_ms", unit: "ms" }]
-//     spans: ["[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:MODULES:EFFECTASSIST]","[GAMEASSIST:MODULES:ALMANACASSIST]","[GAMEASSIST:MODULES:INITIATIVEASSIST]","[GAMEASSIST:MODULES:COMBATASSIST]","[GAMEASSIST:MODULES:WELCOMEASSIST]"]
+//     spans: ["[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:MODULES:EFFECTASSIST]","[GAMEASSIST:MODULES:HEALASSIST]","[GAMEASSIST:MODULES:ALMANACASSIST]","[GAMEASSIST:MODULES:INITIATIVEASSIST]","[GAMEASSIST:MODULES:COMBATASSIST]","[GAMEASSIST:MODULES:WELCOMEASSIST]"]
 //   performance: { notes: "No current benchmark claim; validate in the target Roll20 campaign sandbox." }
 //   concurrency: { model: "Direct event handlers plus explicit opt-in serialized task queue", idempotency: "N/A (event-driven)" }
 //   compatibility: { accepts: ["Roll20 API sandbox; current campaign smoke test required"], emits: "Roll20 chat whispers/logs" }
@@ -218,12 +224,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     │  ├─ [GAMEASSIST:MODULES:NPCASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:CONCENTRATIONASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:EFFECTASSIST]
+//     │  ├─ [GAMEASSIST:MODULES:HEALASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:ALMANACASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:HPASSIST]
 //     │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 //     └─ [GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
-// Guarantee: GameAssist v2.0.0 runs policy, utilities, guarded core services including MarkerService, TurnTrackerService, SemanticEvents, and HealthService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/effect/almanac/gameplay modules, then bootstrap in the declared order. HealthService reports only verified supported HP transitions and refuses to guess damage causes, attackers, resistances, or temporary-HP interactions; its optional PC threshold consumer whispers only the GM. EffectAssist may offer a bounded private GM proposal for an unambiguous official 2014 Bless card, but it refuses to infer recipients or apply an effect before ordinary review and confirmation; it may also turn accepted CombatAssist progression and committed AlmanacAssist time into private GM duration candidates, but it refuses to end effects from elapsed time alone. AlmanacAssist owns its fictional time, climate, astronomy, weather, environment, and rest records without changing GameAssist real-world timestamps, NPCAssist Session dates, or CombatAssist timing. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing real-world times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
+// Guarantee: GameAssist v2.0.0 runs policy, utilities, guarded core services including MarkerService, TurnTrackerService, SemanticEvents, and HealthService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/effect/healing/almanac/gameplay modules, then bootstrap in the declared order. HealthService reports only verified supported HP transitions and refuses to guess damage causes, attackers, resistances, or temporary-HP interactions; its optional PC threshold consumer whispers only the GM. HealAssist guides an authorized 2014 healing roll through exact HP review and one-use verified application while refusing to infer or consume spell slots, items, features, or temporary HP. EffectAssist may offer a bounded private GM proposal for an unambiguous official 2014 Bless card, but it refuses to infer recipients or apply an effect before ordinary review and confirmation; it may also turn accepted CombatAssist progression and committed AlmanacAssist time into private GM duration candidates, but it refuses to end effects from elapsed time alone. AlmanacAssist owns its fictional time, climate, astronomy, weather, environment, and rest records without changing GameAssist real-world timestamps, NPCAssist Session dates, or CombatAssist timing. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing real-world times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
 
 // =============================
 // === GameAssist v2.0.0 ===
@@ -259,7 +266,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Tunables and operational policy
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "POLICY", title: "Tunables",
-    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; NPC initialization, timezone input, condition, concentration, initiative, combat, welcome, semantic-event, health threshold, effect, and almanac limits remain explicit"],
+    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; NPC initialization, timezone input, condition, concentration, initiative, combat, welcome, semantic-event, health threshold, healing, effect, and almanac limits remain explicit"],
     //   provides: ["POLICY"], last_updated_version: "v2.0.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
@@ -367,6 +374,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             operationIdLength: 120,
             pcAlertThresholds: Object.freeze([50, 25, 10])
         }),
+        healing: Object.freeze({
+            interactionMs: 1000 * 60 * 10,
+            flowLimit: 50,
+            requestLimit: 50,
+            proposalLimit: 50,
+            targetLimit: 6,
+            sourceListLimit: 12,
+            maximumDice: 20,
+            maximumSides: 1000,
+            maximumFlat: 1000
+        }),
         concentration: Object.freeze({
             healthOfferLimit: 50,
             healthOfferMs: 1000 * 60 * 10
@@ -443,7 +461,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Added the fixed 50%, 25%, and 10% PC health-alert thresholds alongside bounded EffectAssist player-casting flows, retained GM-request limits, HealthService, concentration-offer, duration-candidate, encounter-round, world-minute, cast-proposal, and chat-deduplication limits; rollback: disable the affected optional integration while retaining manual workflows.
+    // Changed (v2.0.0): Added bounded HealAssist interaction, recipient, formula, and rollback limits plus the fixed 50%, 25%, and 10% PC health-alert thresholds alongside EffectAssist player-casting flows, retained GM-request limits, HealthService, concentration-offer, duration-candidate, encounter-round, world-minute, cast-proposal, and chat-deduplication limits; rollback: disable the affected optional integration while retaining manual workflows.
     // Decision log:
     //   CHOICE: Offer common IANA zones plus validated custom input - ALT: fixed numeric offsets; REJECTED: fixed offsets do not follow daylight-saving changes.
     //   CHOICE: Keep NPC initialization and snapshot knobs centralized while removing the unused external marker delay - ALT: retain the dead setting; REJECTED: implied behavior no caller performs.
@@ -4785,7 +4803,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Modules wrapper (bundled features)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES", title: "Modules wrapper",
-    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Condition, token, effect, and gameplay marker consumers share CORE:MARKERSERVICE","EffectAssist owns semantic effect instances and ownership-safe projections without hard-coupling unrelated modules","AlmanacAssist owns fictional chronology without changing real-world timestamps or unrelated module state","TokenAssist owns the documented GameAssist token-command surface without assuming the TokenMod brand","InitiativeAssist owns initiative rules while CombatAssist owns deliberate preservation-first encounter flow through CORE:TURNTRACKERSERVICE","WelcomeAssist remains disabled by default and announces automatically only after completed bootstrap"],
+    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Condition, token, effect, and gameplay marker consumers share CORE:MARKERSERVICE","EffectAssist owns semantic effect instances and ownership-safe projections without hard-coupling unrelated modules","HealAssist consumes CORE:HEALTHSERVICE for deliberate verified healing without becoming an HP observer or prerequisite for unrelated modules","AlmanacAssist owns fictional chronology without changing real-world timestamps or unrelated module state","TokenAssist owns the documented GameAssist token-command surface without assuming the TokenMod brand","InitiativeAssist owns initiative rules while CombatAssist owns deliberate preservation-first encounter flow through CORE:TURNTRACKERSERVICE","WelcomeAssist remains disabled by default and announces automatically only after completed bootstrap"],
     //   depends_on: ["[GAMEASSIST:CORE]","[GAMEASSIST:INTERFACES]"], last_updated_version: "v2.0.0" }
     // -------------------------------------------------------------------------
     // Narrative
@@ -19107,6 +19125,866 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // =============================================================================
+    // [GAMEASSIST:MODULES:HEALASSIST] BEGIN
+    // Section Title: Guided healing and verified HP application
+    // -------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:HEALASSIST", title: "HealAssist",
+    //   guarantees: ["Official 2014-sheet healing uses short-lived source, target, roll, review, and one-use confirmation boundaries","Every accepted HP change uses HealthService provenance and verification; multi-target failures attempt verified rollback","Players may target visible supported PCs they do not control while NPC, hidden, and off-page placement remains GM-reviewed","Spell slots, class resources, temporary HP, damage causes, resistance, and unsupported sheet fields are never inferred or consumed"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
+    //   provides: ["GameAssist.HealAssist"], last_updated_version: "v2.0.0",
+    //   independent_versions: { module_version: "1.0.0", interaction_schema_version: 1 }, lifecycle: "active" }
+    // -------------------------------------------------------------------------
+    // Narrative
+    // HealAssist is a disabled-by-default HealthService client. It guides an authorized
+    // healer through a bounded 2014 action or validated formula, visible recipients,
+    // one Roll20 roll, a complete HP preview, and an expiring confirmation. It owns no
+    // HP listener and leaves every unrelated module and native sheet healing independent.
+    // -------------------------------------------------------------------------
+    GameAssist.register('HealAssist', function() {
+        const MODULE_NAME = 'HealAssist';
+        const MODULE_VERSION = '1.0.0';
+        const INTERACTION_SCHEMA_VERSION = 1;
+        const modState = GameAssist.getState(MODULE_NAME);
+        modState.config = {
+            enabled: false,
+            allowPlayerHealing: true,
+            resultAudience: 'public',
+            ...modState.config
+        };
+        if (!['public', 'private'].includes(String(modState.config.resultAudience || '').toLowerCase())) {
+            modState.config.resultAudience = 'public';
+        }
+        if (typeof modState.config.allowPlayerHealing !== 'boolean') modState.config.allowPlayerHealing = true;
+
+        const ACTIONS = Object.freeze({
+            'cure-wounds': Object.freeze({ id: 'cure-wounds', name: 'Cure Wounds', group: 'magic', minimumSlot: 1, maximumSlot: 9, die: 8, diceForSlot: slot => slot, ability: true, targetCounts: [1], tableStep: 'Mark off the spell slot on the character sheet after the heal is confirmed.' }),
+            'healing-word': Object.freeze({ id: 'healing-word', name: 'Healing Word', group: 'magic', minimumSlot: 1, maximumSlot: 9, die: 4, diceForSlot: slot => slot, ability: true, targetCounts: [1], tableStep: 'Mark off the spell slot on the character sheet after the heal is confirmed.' }),
+            'prayer-of-healing': Object.freeze({ id: 'prayer-of-healing', name: 'Prayer of Healing', group: 'magic', minimumSlot: 2, maximumSlot: 9, die: 8, diceForSlot: slot => slot, ability: true, targetCounts: [1, 2, 3, 4, 5, 6], tableStep: 'Prayer of Healing takes 10 minutes to cast. Mark off the spell slot after confirmation.' }),
+            'mass-healing-word': Object.freeze({ id: 'mass-healing-word', name: 'Mass Healing Word', group: 'magic', minimumSlot: 3, maximumSlot: 9, die: 4, diceForSlot: slot => slot - 2, ability: true, targetCounts: [1, 2, 3, 4, 5, 6], tableStep: 'Mark off the spell slot on the character sheet after the heal is confirmed.' }),
+            'mass-cure-wounds': Object.freeze({ id: 'mass-cure-wounds', name: 'Mass Cure Wounds', group: 'magic', minimumSlot: 5, maximumSlot: 9, die: 8, diceForSlot: slot => slot - 2, ability: true, targetCounts: [1, 2, 3, 4, 5, 6], tableStep: 'Mark off the spell slot on the character sheet after the heal is confirmed.' }),
+            heal: Object.freeze({ id: 'heal', name: 'Heal', group: 'magic', minimumSlot: 6, maximumSlot: 9, flatForSlot: slot => 70 + ((slot - 6) * 10), ability: false, targetCounts: [1], tableStep: 'Mark off the spell slot on the character sheet after the heal is confirmed. Heal does not restore temporary hit points.' }),
+            'potion-healing': Object.freeze({ id: 'potion-healing', name: 'Potion of Healing', group: 'items', formula: '2d4+2', targetCounts: [1], tableStep: 'Remove one Potion of Healing from the appropriate inventory after confirmation.' }),
+            'potion-greater': Object.freeze({ id: 'potion-greater', name: 'Potion of Greater Healing', group: 'items', formula: '4d4+4', targetCounts: [1], tableStep: 'Remove one Potion of Greater Healing from the appropriate inventory after confirmation.' }),
+            'potion-superior': Object.freeze({ id: 'potion-superior', name: 'Potion of Superior Healing', group: 'items', formula: '8d4+8', targetCounts: [1], tableStep: 'Remove one Potion of Superior Healing from the appropriate inventory after confirmation.' }),
+            'potion-supreme': Object.freeze({ id: 'potion-supreme', name: 'Potion of Supreme Healing', group: 'items', formula: '10d4+20', targetCounts: [1], tableStep: 'Remove one Potion of Supreme Healing from the appropriate inventory after confirmation.' }),
+            manual: Object.freeze({ id: 'manual', name: 'Manual Healing Formula', group: 'manual', manual: true, targetCounts: [1, 2, 3, 4, 5, 6], tableStep: 'Resolve any spell slot, item, feature, or class-resource use manually after confirmation.' })
+        });
+        const flows = new Map();
+        const requests = new Map();
+        const proposals = new Map();
+        let interactionSequence = 0;
+
+        function clone(value) {
+            try { return JSON.parse(JSON.stringify(value)); } catch (_error) { return null; }
+        }
+
+        function playerIsGm(playerId) {
+            return typeof playerIsGM === 'function' && playerIsGM(playerId);
+        }
+
+        function playerName(playerId, fallback = 'Player') {
+            return String(getObj('player', playerId)?.get('_displayname') || fallback)
+                .replace(/\s*\(GM\)\s*$/i, '')
+                .replace(/"/g, "'")
+                .trim() || fallback;
+        }
+
+        function whisperPrefix(msg, gmOnly = false) {
+            if (gmOnly || playerIsGm(msg?.playerid)) return '/w gm';
+            return `/w "${playerName(msg?.playerid, msg?.who || 'Player')}"`;
+        }
+
+        function panel(title, fields, msg, { gmOnly = false } = {}) {
+            const body = (fields || []).map(field => `{{${_sanitize(field.label)}=${field.value}}}`).join(' ');
+            sendChat(MODULE_NAME, `${whisperPrefix(msg, gmOnly)} &{template:default} {{name=${_sanitize(title)}}} ${body}`);
+        }
+
+        function privateNotice(playerId, title, message, actions = '') {
+            const who = playerIsGm(playerId) ? 'gm' : `"${playerName(playerId)}"`;
+            sendChat(MODULE_NAME, `/w ${who} &{template:default} {{name=${_sanitize(title)}}} {{Result=${_sanitize(message)}}}${actions ? ` {{Actions=${actions}}}` : ''}`);
+        }
+
+        function playerPageId(playerId) {
+            const campaign = Campaign();
+            let overrides = campaign.get('playerspecificpages');
+            if (typeof overrides === 'string' && overrides) {
+                try { overrides = JSON.parse(overrides); } catch (_error) { overrides = null; }
+            }
+            if (overrides && typeof overrides === 'object' && overrides[playerId]) return String(overrides[playerId]);
+            if (playerIsGm(playerId)) {
+                const lastPage = getObj('player', playerId)?.get('_lastpage');
+                if (lastPage) return String(lastPage);
+            }
+            return String(campaign.get('playerpageid') || '');
+        }
+
+        function tokenPageId(token) {
+            return String(token?.get('_pageid') || token?.get('pageid') || '');
+        }
+
+        function linkedCharacter(token) {
+            const characterId = String(token?.get('represents') || '');
+            return characterId ? getObj('character', characterId) : null;
+        }
+
+        function controllers(value) {
+            return String(value || '').split(',').map(item => item.trim()).filter(Boolean);
+        }
+
+        function controlsToken(playerId, token, character) {
+            if (playerIsGm(playerId)) return true;
+            const allowed = new Set([...controllers(token?.get('controlledby')), ...controllers(character?.get('controlledby'))]);
+            return allowed.has('all') || allowed.has(String(playerId || ''));
+        }
+
+        function isNpc(character) {
+            return String(getAttrByName(character?.id, 'npc') || '').trim() === '1';
+        }
+
+        function supportedSource(token) {
+            if (!token || !['objects', 'gmlayer'].includes(String(token.get('layer') || ''))) {
+                return { ok: false, message: 'The healer token is not available on a supported map layer.' };
+            }
+            const character = linkedCharacter(token);
+            if (!character) return { ok: false, message: 'The healer must be linked to a character.' };
+            if (String(character.get('charactersheetname') || '').trim().toLowerCase() === 'dnd2024byroll20') {
+                return { ok: false, message: 'HealAssist 1.0.0 supports the official 2014 sheet only.' };
+            }
+            const snapshot = isNpc(character)
+                ? GameAssist.HealthService.readToken(token)
+                : GameAssist.HealthService.readCharacter(character);
+            if (!snapshot) return { ok: false, message: 'The healer is not a supported official 2014 character.' };
+            return { ok: true, token, character, snapshot, name: String(character.get('name') || token.get('name') || 'Healer') };
+        }
+
+        function resolveSource(tokenId) {
+            return supportedSource(getObj('graphic', String(tokenId || '')));
+        }
+
+        function sourceAuthorized(msg, source) {
+            if (!source?.ok) return source || { ok: false, message: 'The healer is unavailable.' };
+            if (!playerIsGm(msg?.playerid)) {
+                if (modState.config.allowPlayerHealing === false) return { ok: false, message: 'The GM has temporarily locked player healing.' };
+                if (String(source.token.get('layer') || '') !== 'objects' || tokenPageId(source.token) !== playerPageId(msg.playerid)) {
+                    return { ok: false, message: 'Choose a visible healer token on your current Roll20 page.' };
+                }
+            }
+            return controlsToken(msg?.playerid, source.token, source.character)
+                ? { ok: true }
+                : { ok: false, message: 'Choose a healer controlled by your Roll20 player account.' };
+        }
+
+        function selectedTokenIds(msg) {
+            return [...new Set((msg?.selected || []).map(item => String(item?._id || '')).filter(Boolean))];
+        }
+
+        function pageTokens(pageId, includeGmLayer) {
+            let tokens = findObjs({ _type: 'graphic', _pageid: String(pageId || '') });
+            if (!tokens.length) tokens = findObjs({ _type: 'graphic' });
+            return tokens.filter(token => tokenPageId(token) === String(pageId || '')
+                && (String(token.get('layer') || '') === 'objects' || (includeGmLayer && String(token.get('layer') || '') === 'gmlayer')));
+        }
+
+        function sourceCandidates(msg) {
+            const selected = selectedTokenIds(msg)
+                .map(id => supportedSource(getObj('graphic', id)))
+                .filter(source => source.ok && sourceAuthorized(msg, source).ok);
+            if (selected.length) return selected.slice(0, POLICY.healing.sourceListLimit);
+            return pageTokens(playerPageId(msg?.playerid), playerIsGm(msg?.playerid))
+                .map(supportedSource)
+                .filter(source => source.ok && sourceAuthorized(msg, source).ok)
+                .slice(0, POLICY.healing.sourceListLimit);
+        }
+
+        function interactionId(prefix) {
+            interactionSequence++;
+            return `${prefix}-${Date.now().toString(36)}-${interactionSequence.toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+        }
+
+        function pruneInteractions(now = Date.now()) {
+            [flows, requests, proposals].forEach(collection => {
+                [...collection.entries()].forEach(([id, value]) => {
+                    if (Number(value?.expiresAt || 0) <= now) collection.delete(id);
+                });
+            });
+            [[flows, POLICY.healing.flowLimit], [requests, POLICY.healing.requestLimit], [proposals, POLICY.healing.proposalLimit]]
+                .forEach(([collection, limit]) => {
+                    while (collection.size > limit) collection.delete(collection.keys().next().value);
+                });
+        }
+
+        function rememberFlow(msg, action, source) {
+            pruneInteractions();
+            const id = interactionId('HLF');
+            flows.set(id, Object.freeze({
+                schemaVersion: INTERACTION_SCHEMA_VERSION,
+                id,
+                playerId: String(msg?.playerid || ''),
+                actionId: action.id,
+                sourceTokenId: String(source.token.id),
+                expiresAt: Date.now() + POLICY.healing.interactionMs
+            }));
+            pruneInteractions();
+            return id;
+        }
+
+        function resolveFlow(msg, flowId) {
+            pruneInteractions();
+            const flow = flows.get(String(flowId || ''));
+            if (!flow || flow.playerId !== String(msg?.playerid || '')) {
+                return { ok: false, message: 'That healing choice expired or belongs to another player. Start again.' };
+            }
+            const action = ACTIONS[flow.actionId];
+            const source = resolveSource(flow.sourceTokenId);
+            const authorization = action && source.ok ? sourceAuthorized(msg, source) : (source.ok ? { ok: false, message: 'That healing action is unavailable.' } : source);
+            return authorization.ok ? { ok: true, flow, action, source } : authorization;
+        }
+
+        function parseOptions(content) {
+            const options = {};
+            const expression = /--([a-z0-9-]+)(?:\s+(?:"([^"]*)"|'([^']*)'|([^\s]+)))?/gi;
+            let match;
+            while ((match = expression.exec(String(content || '')))) {
+                options[String(match[1] || '').toLowerCase()] = match[2] ?? match[3] ?? match[4] ?? true;
+            }
+            return options;
+        }
+
+        function actionQuery(action) {
+            if (action.manual) return ' --formula ?{Healing formula - examples 2d8+5 or 15|1d8}';
+            const pieces = [];
+            if (action.minimumSlot) {
+                const levels = [];
+                for (let level = action.minimumSlot; level <= action.maximumSlot; level++) levels.push(`${level},${level}`);
+                pieces.push(`--slot ?{Spell slot level|${levels.join('|')}}`);
+            }
+            if (action.ability) pieces.push('--ability ?{Healing ability|Wisdom,wisdom|Charisma,charisma|Intelligence,intelligence}');
+            return pieces.length ? ` ${pieces.join(' ')}` : '';
+        }
+
+        function simpleFormula(raw) {
+            const text = String(raw || '').toLowerCase().replace(/\s+/g, '');
+            if (/^\d{1,4}$/.test(text)) {
+                const flat = Number(text);
+                return flat >= 0 && flat <= POLICY.healing.maximumFlat ? { ok: true, formula: String(flat) } : { ok: false, message: 'That flat healing value is outside the supported range.' };
+            }
+            const match = text.match(/^(\d{1,2})d(\d{1,4})([+-]\d{1,4})?$/);
+            if (!match) return { ok: false, message: 'Use one simple healing formula such as 2d8+5 or 15.' };
+            const dice = Number(match[1]);
+            const sides = Number(match[2]);
+            const flat = Number(match[3] || 0);
+            if (dice < 1 || dice > POLICY.healing.maximumDice || sides < 2 || sides > POLICY.healing.maximumSides || Math.abs(flat) > POLICY.healing.maximumFlat) {
+                return { ok: false, message: 'That healing formula is outside the supported dice or modifier limits.' };
+            }
+            return { ok: true, formula: `${dice}d${sides}${flat ? `${flat > 0 ? '+' : ''}${flat}` : ''}` };
+        }
+
+        function formulaPlan(action, source, options) {
+            if (action.manual) {
+                const parsed = simpleFormula(options.formula);
+                return parsed.ok ? { ok: true, actionId: action.id, actionName: action.name, formula: parsed.formula, tableStep: action.tableStep } : parsed;
+            }
+            if (action.formula) return { ok: true, actionId: action.id, actionName: action.name, formula: action.formula, tableStep: action.tableStep };
+            const slot = Number(options.slot);
+            if (!Number.isInteger(slot) || slot < action.minimumSlot || slot > action.maximumSlot) {
+                return { ok: false, message: `${action.name} requires a spell-slot level from ${action.minimumSlot} to ${action.maximumSlot}.` };
+            }
+            let modifier = 0;
+            let ability = null;
+            if (action.ability) {
+                ability = String(options.ability || '').toLowerCase();
+                if (!['wisdom', 'charisma', 'intelligence'].includes(ability)) return { ok: false, message: 'Choose Wisdom, Charisma, or Intelligence as the healing ability.' };
+                modifier = Number(getAttrByName(source.character.id, `${ability}_mod`));
+                if (!Number.isFinite(modifier) || modifier < -20 || modifier > 30) return { ok: false, message: `${source.name} does not expose a usable ${ability} modifier on the supported 2014 sheet.` };
+            }
+            const formula = action.flatForSlot
+                ? String(action.flatForSlot(slot))
+                : `${action.diceForSlot(slot)}d${action.die}${modifier ? `${modifier > 0 ? '+' : ''}${modifier}` : ''}`;
+            return { ok: true, actionId: action.id, actionName: action.name, formula, slot, ability, modifier, tableStep: action.tableStep };
+        }
+
+        function safeQueryText(value) {
+            return String(value || '').replace(/[|{},]/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+
+        function targetReferences(action, count) {
+            return Array.from({ length: count }, (_unused, index) => `@{target|${safeQueryText(action.name)} recipient ${index + 1}|token_id}`).join(',');
+        }
+
+        function recipientButtons(action, flowId) {
+            const query = actionQuery(action);
+            return action.targetCounts.map(count => GameAssist.createButton(
+                `Choose ${count} Recipient${count === 1 ? '' : 's'}`,
+                `!Heal-Review --flow ${flowId}${query} --targets ${targetReferences(action, count)}`
+            )).join(' ');
+        }
+
+        function showRecipientPicker(msg, action, source) {
+            const flowId = rememberFlow(msg, action, source);
+            panel(`${action.name}: Choose Recipients`, [
+                { label: 'Healing As', value: _sanitize(source.name) },
+                { label: 'Choose On The Map', value: recipientButtons(action, flowId) },
+                ...(!playerIsGm(msg.playerid) ? [{ label: 'Hidden Or Off-Page Recipient', value: GameAssist.createButton('Ask the GM', `!Heal-Request --flow ${flowId}${actionQuery(action)}`) }] : []),
+                { label: 'Next', value: 'Click a recipient button, answer any short Roll20 prompts, then click the requested visible token or tokens. Players do not need to control another player character to heal it.' },
+                { label: 'Return', value: GameAssist.createButton('Healing Actions', '!Heal-Menu') }
+            ], msg);
+        }
+
+        function showSourcePicker(msg, action) {
+            const sources = sourceCandidates(msg);
+            if (!sources.length) {
+                return panel(MODULE_NAME, [
+                    { label: 'Needs Attention', value: 'No supported linked 2014 healer controlled by you is available on this page.' },
+                    { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!Heal-Guide') }
+                ], msg);
+            }
+            if (sources.length === 1) return showRecipientPicker(msg, action, sources[0]);
+            panel(`${action.name}: Choose The Healer`, [
+                { label: 'Healers', value: sources.map(source => GameAssist.createButton(source.name, `!Heal-Recipients --flow ${rememberFlow(msg, action, source)}`)).join(' ') },
+                { label: 'Tip', value: 'Selecting the healer token before opening this screen keeps the list short.' },
+                { label: 'Return', value: GameAssist.createButton('Healing Actions', '!Heal-Menu') }
+            ], msg);
+        }
+
+        function resolveTarget(tokenId, msg, { allowNpc = false } = {}) {
+            const token = getObj('graphic', String(tokenId || ''));
+            if (!token || !['objects', 'gmlayer'].includes(String(token.get('layer') || ''))) return { ok: false, message: 'A recipient token is no longer available.' };
+            const character = linkedCharacter(token);
+            if (!character) return { ok: false, message: `${token.get('name') || 'A recipient'} is not linked to a character.` };
+            const npc = isNpc(character);
+            if (npc && !allowNpc) return { ok: false, npcRequiresGm: true, token, character, message: 'NPC healing requires GM review.' };
+            if (!playerIsGm(msg?.playerid) && (String(token.get('layer') || '') !== 'objects' || tokenPageId(token) !== playerPageId(msg.playerid))) {
+                return { ok: false, message: 'Players may heal only visible recipients on their current Roll20 page.' };
+            }
+            const snapshot = npc ? GameAssist.HealthService.readToken(token) : GameAssist.HealthService.readCharacter(character);
+            const current = snapshot?.values?.current;
+            const maximum = snapshot?.values?.maximum;
+            if (!snapshot || current?.state !== 'valid' || maximum?.state !== 'valid' || Number(maximum.value) <= 0) {
+                return { ok: false, message: `${character.get('name') || token.get('name') || 'That recipient'} does not expose valid current and maximum HP through the supported 2014 health surface.` };
+            }
+            return {
+                ok: true,
+                token,
+                character,
+                snapshot,
+                npc,
+                writer: npc ? 'token' : 'character',
+                name: String(character.get('name') || token.get('name') || 'Recipient'),
+                current: Number(current.value),
+                maximum: Number(maximum.value)
+            };
+        }
+
+        function targetIdsFrom(msg, options, fallback = []) {
+            const explicit = String(options.targets || '').split(',').map(item => item.trim()).filter(Boolean);
+            const ids = explicit.length ? explicit : (selectedTokenIds(msg).length ? selectedTokenIds(msg) : fallback);
+            return [...new Set(ids)].slice(0, POLICY.healing.targetLimit + 1);
+        }
+
+        function resolveTargets(msg, options, { allowNpc = false, fallback = [] } = {}) {
+            const ids = targetIdsFrom(msg, options, fallback);
+            if (!ids.length) return { ok: false, message: 'Choose at least one recipient token.' };
+            if (ids.length > POLICY.healing.targetLimit) return { ok: false, message: `Choose no more than ${POLICY.healing.targetLimit} recipients at once.` };
+            const targets = [];
+            for (const id of ids) {
+                const target = resolveTarget(id, msg, { allowNpc });
+                if (!target.ok) return target;
+                targets.push(target);
+            }
+            return { ok: true, targets };
+        }
+
+        function rememberRequest(msg, flowResult, plan, suggestedTargetIds = []) {
+            pruneInteractions();
+            const id = interactionId('HLR');
+            requests.set(id, Object.freeze({
+                schemaVersion: INTERACTION_SCHEMA_VERSION,
+                id,
+                playerId: String(msg.playerid || ''),
+                requesterName: playerName(msg.playerid, msg.who || 'Player'),
+                sourceTokenId: String(flowResult.source.token.id),
+                sourceName: flowResult.source.name,
+                actionId: flowResult.action.id,
+                plan: Object.freeze({ ...plan }),
+                suggestedTargetIds: Object.freeze([...suggestedTargetIds]),
+                expiresAt: Date.now() + POLICY.healing.interactionMs
+            }));
+            pruneInteractions();
+            return requests.get(id);
+        }
+
+        function resolveRequest(requestId) {
+            pruneInteractions();
+            const request = requests.get(String(requestId || ''));
+            if (!request) return { ok: false, message: 'That healing request expired or was already reviewed.' };
+            const source = resolveSource(request.sourceTokenId);
+            const requester = getObj('player', request.playerId);
+            const authorization = requester && source.ok
+                ? sourceAuthorized({ playerid: request.playerId }, source)
+                : { ok: false, message: 'The original healer or requesting player is no longer available.' };
+            return authorization.ok ? { ok: true, request, source, action: ACTIONS[request.actionId], plan: request.plan } : authorization;
+        }
+
+        function requestTargetButtons(request, action) {
+            return action.targetCounts.map(count => GameAssist.createButton(
+                `Choose ${count} Recipient${count === 1 ? '' : 's'}`,
+                `!Heal-Review --request ${request.id} --targets ${targetReferences(action, count)}`
+            )).join(' ');
+        }
+
+        function showRequests(msg, notice = '') {
+            pruneInteractions();
+            const rows = [...requests.values()].map(request => {
+                const resolved = resolveRequest(request.id);
+                if (!resolved.ok) return `<b>Request Needs Attention</b><br>${_sanitize(resolved.message)} ${GameAssist.createButton('Dismiss', `!Heal-Request-Dismiss --request ${request.id}`)}`;
+                const suggested = request.suggestedTargetIds.length
+                    ? `${GameAssist.createButton('Review Suggested Recipients', `!Heal-Review --request ${request.id} --suggested true`)} `
+                    : '';
+                return `<b>${_sanitize(request.sourceName)}: ${_sanitize(resolved.action.name)}</b><br>Requested by ${_sanitize(request.requesterName)}<br>${suggested}${GameAssist.createButton('Use Selected Tokens', `!Heal-Review --request ${request.id}`)} ${requestTargetButtons(request, resolved.action)} ${GameAssist.createButton('Dismiss', `!Heal-Request-Dismiss --request ${request.id}`)}`;
+            }).join('<hr>') || 'No healing requests are waiting.';
+            panel('Player Healing Requests', [
+                ...(notice ? [{ label: 'Updated', value: _sanitize(notice) }] : []),
+                { label: 'Pending', value: rows },
+                { label: 'Return', value: GameAssist.createButton('HealAssist Controls', '!Heal-GM') }
+            ], msg, { gmOnly: true });
+        }
+
+        function handleRequest(msg, options) {
+            const flowResult = resolveFlow(msg, options.flow);
+            if (!flowResult.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(flowResult.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            const plan = formulaPlan(flowResult.action, flowResult.source, options);
+            if (!plan.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(plan.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            flows.delete(flowResult.flow.id);
+            rememberRequest(msg, flowResult, plan);
+            panel('Healing Request Sent', [
+                { label: 'Request', value: `${_sanitize(flowResult.source.name)} is ready to use ${_sanitize(flowResult.action.name)}. The GM can choose the hidden or off-page recipient privately.` },
+                { label: 'Next', value: GameAssist.createButton('Healing Actions', '!Heal-Menu') }
+            ], msg);
+            showRequests({ playerid: msg.playerid, who: msg.who }, 'A player sent a new healing request.');
+        }
+
+        function collectDice(value, found = []) {
+            if (Array.isArray(value)) {
+                value.forEach(item => collectDice(item, found));
+                return found;
+            }
+            if (!value || typeof value !== 'object') return found;
+            if (value.type === 'R' && Array.isArray(value.results)) {
+                value.results.forEach(result => {
+                    const number = Number(result?.v);
+                    if (Number.isFinite(number)) found.push(number);
+                });
+                return found;
+            }
+            Object.values(value).forEach(item => collectDice(item, found));
+            return found;
+        }
+
+        function rollAndReview(msg, source, action, plan, targets, { request = null } = {}) {
+            sendChat(MODULE_NAME, `/w gm [[${plan.formula}]]`, operations => {
+                const inline = operations?.[0]?.inlinerolls?.[0];
+                const total = Number(inline?.results?.total);
+                if (!Number.isFinite(total) || total <= 0) {
+                    return panel(MODULE_NAME, [
+                        { label: 'Needs Attention', value: 'Roll20 did not return a positive healing result. No HP was changed.' },
+                        { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }
+                    ], msg);
+                }
+                const healing = Math.floor(total);
+                const targetPlans = targets.map(target => {
+                    const proposed = target.current >= target.maximum
+                        ? target.current
+                        : Math.min(target.maximum, target.current + healing);
+                    return Object.freeze({
+                        tokenId: String(target.token.id),
+                        characterId: String(target.character.id),
+                        canonicalKey: String(target.snapshot.canonicalKey),
+                        writer: target.writer,
+                        npc: target.npc,
+                        name: target.name,
+                        layer: String(target.token.get('layer') || ''),
+                        pageId: tokenPageId(target.token),
+                        before: target.current,
+                        maximum: target.maximum,
+                        proposed,
+                        gained: Math.max(0, proposed - target.current)
+                    });
+                });
+                const id = interactionId('HLP');
+                const proposal = Object.freeze({
+                    schemaVersion: INTERACTION_SCHEMA_VERSION,
+                    id,
+                    confirmPlayerId: String(msg.playerid || ''),
+                    requestedBy: request ? String(request.playerId || '') : '',
+                    sourceTokenId: String(source.token.id),
+                    sourceName: source.name,
+                    actionId: action.id,
+                    actionName: action.name,
+                    plan: Object.freeze({ ...plan }),
+                    formula: String(inline?.expression || plan.formula),
+                    total: healing,
+                    rolls: Object.freeze(collectDice(inline?.results?.rolls)),
+                    targets: Object.freeze(targetPlans),
+                    expiresAt: Date.now() + POLICY.healing.interactionMs
+                });
+                proposals.set(id, proposal);
+                pruneInteractions();
+                if (request) requests.delete(request.id);
+                const targetLines = targetPlans.map(target => `${_sanitize(target.name)}: ${target.before} &rarr; ${target.proposed} of ${target.maximum} (+${target.gained})`);
+                panel(`${action.name}: Review Healing`, [
+                    { label: 'Healer', value: _sanitize(source.name) },
+                    { label: 'Roll', value: `Roll(s) ${proposal.rolls.length ? _sanitize(proposal.rolls.join(', ')) : 'not exposed by Roll20'} &rarr; <strong>${healing}</strong> (from ${_sanitize(proposal.formula)})` },
+                    { label: 'Recipients', value: targetLines.join('<br>') },
+                    { label: 'Manual Table Step', value: _sanitize(plan.tableStep) },
+                    { label: 'Changes', value: 'None yet. Current and maximum HP will be rechecked before one verified HealthService transaction.' },
+                    { label: 'Confirm', value: GameAssist.createButton('Apply This Healing', `!Heal-Confirm --proposal ${id}`) },
+                    { label: 'Cancel', value: GameAssist.createButton('Discard And Return', '!Heal-Menu') }
+                ], msg);
+            }, { noarchive: true });
+        }
+
+        function handleReview(msg, options) {
+            if (options.request) {
+                if (!playerIsGm(msg.playerid)) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: 'Only the GM can review a retained healing request.' }], msg);
+                const resolved = resolveRequest(options.request);
+                if (!resolved.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(resolved.message) }, { label: 'Next Step', value: GameAssist.createButton('Pending Requests', '!Heal-Requests') }], msg, { gmOnly: true });
+                const fallback = options.suggested ? resolved.request.suggestedTargetIds : [];
+                const targets = resolveTargets(msg, options, { allowNpc: true, fallback });
+                if (!targets.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(targets.message) }, { label: 'Next Step', value: GameAssist.createButton('Pending Requests', '!Heal-Requests') }], msg, { gmOnly: true });
+                return rollAndReview(msg, resolved.source, resolved.action, resolved.plan, targets.targets, { request: resolved.request });
+            }
+
+            const flowResult = resolveFlow(msg, options.flow);
+            if (!flowResult.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(flowResult.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            const plan = formulaPlan(flowResult.action, flowResult.source, options);
+            if (!plan.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(plan.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            const ids = targetIdsFrom(msg, options);
+            const direct = resolveTargets(msg, options, { allowNpc: playerIsGm(msg.playerid) });
+            if (!direct.ok && direct.npcRequiresGm && !playerIsGm(msg.playerid)) {
+                flows.delete(flowResult.flow.id);
+                rememberRequest(msg, flowResult, plan, ids);
+                panel('GM Review Requested', [
+                    { label: 'Result', value: 'NPC HP remains private. The GM received this healing action and the suggested recipient for review.' },
+                    { label: 'Return', value: GameAssist.createButton('Healing Actions', '!Heal-Menu') }
+                ], msg);
+                return showRequests(msg, 'A player selected an NPC recipient. Review is required before any HP change.');
+            }
+            if (!direct.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(direct.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            flows.delete(flowResult.flow.id);
+            rollAndReview(msg, flowResult.source, flowResult.action, plan, direct.targets);
+        }
+
+        function currentTarget(targetPlan) {
+            const token = getObj('graphic', targetPlan.tokenId);
+            const character = getObj('character', targetPlan.characterId);
+            if (!token || !character) return { ok: false, message: `${targetPlan.name} is no longer available.` };
+            const snapshot = targetPlan.writer === 'token'
+                ? GameAssist.HealthService.readToken(token)
+                : GameAssist.HealthService.readCharacter(character);
+            const current = snapshot?.values?.current;
+            const maximum = snapshot?.values?.maximum;
+            if (!snapshot || snapshot.canonicalKey !== targetPlan.canonicalKey || current?.state !== 'valid' || maximum?.state !== 'valid') {
+                return { ok: false, message: `${targetPlan.name}'s supported HP surface changed or became unavailable.` };
+            }
+            if (Number(current.value) !== targetPlan.before || Number(maximum.value) !== targetPlan.maximum) {
+                return { ok: false, message: `${targetPlan.name}'s HP changed after the review. Start a fresh healing action.` };
+            }
+            return { ok: true, token, character, snapshot };
+        }
+
+        function writeTarget(proposal, targetPlan, index, current) {
+            const request = {
+                producer: MODULE_NAME,
+                operationId: `${proposal.id}.apply.${index}`,
+                classification: 'healing',
+                current: targetPlan.proposed
+            };
+            return targetPlan.writer === 'token'
+                ? GameAssist.HealthService.writeToken({ ...request, token: current.token })
+                : GameAssist.HealthService.writeCharacter({ ...request, character: current.character });
+        }
+
+        function rollbackTarget(proposal, targetPlan, index) {
+            const token = getObj('graphic', targetPlan.tokenId);
+            const character = getObj('character', targetPlan.characterId);
+            const request = {
+                producer: MODULE_NAME,
+                operationId: `${proposal.id}.rollback.${index}`,
+                classification: 'synchronization',
+                current: targetPlan.before
+            };
+            return targetPlan.writer === 'token'
+                ? GameAssist.HealthService.writeToken({ ...request, token })
+                : GameAssist.HealthService.writeCharacter({ ...request, character });
+        }
+
+        function completionSummary(proposal) {
+            return proposal.targets.map(target => `${target.name} +${target.gained}`).join(', ');
+        }
+
+        function announceCompletion(msg, proposal) {
+            const allPublicPc = proposal.targets.every(target => !target.npc && target.layer === 'objects');
+            if (modState.config.resultAudience === 'public' && allPublicPc) {
+                const results = proposal.targets.map(target => `${target.name} regains ${target.gained} HP`).join('; ');
+                sendChat(`character|${getObj('graphic', proposal.sourceTokenId)?.get('represents') || ''}`, `/em uses ${proposal.actionName}. ${results}.`);
+            }
+            const summary = `${proposal.actionName} completed: ${completionSummary(proposal)}.`;
+            panel('Healing Applied', [
+                { label: 'Result', value: _sanitize(summary) },
+                { label: 'Verification', value: 'HealthService verified every supported HP write.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Heal Again', '!Heal-Menu')} ${playerIsGm(msg.playerid) ? GameAssist.createButton('Control Center', '!Heal-GM') : GameAssist.createButton('Guide', '!Heal-Guide')}` }
+            ], msg);
+            if (!playerIsGm(msg.playerid)) {
+                sendChat(MODULE_NAME, `/w gm ${_sanitize(proposal.sourceName)} completed ${_sanitize(summary)}`);
+            }
+            if (proposal.requestedBy && proposal.requestedBy !== String(msg.playerid || '')) {
+                privateNotice(proposal.requestedBy, 'Healing Request Completed', `${proposal.sourceName}'s ${proposal.actionName} was reviewed and applied by the GM.`, GameAssist.createButton('Healing Actions', '!Heal-Menu'));
+            }
+        }
+
+        function handleConfirm(msg, options) {
+            pruneInteractions();
+            const proposal = proposals.get(String(options.proposal || ''));
+            if (!proposal || proposal.confirmPlayerId !== String(msg.playerid || '')) {
+                return panel(MODULE_NAME, [{ label: 'Needs Attention', value: 'That healing review expired, was already used, or belongs to another player.' }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            }
+            if (!GameAssist.HealthService.isEnabled()) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: 'HealthService is disabled. No HP was changed.' }], msg);
+            const source = resolveSource(proposal.sourceTokenId);
+            const authorization = source.ok
+                ? (proposal.requestedBy
+                    ? sourceAuthorized({ playerid: proposal.requestedBy }, source)
+                    : sourceAuthorized(msg, source))
+                : source;
+            if (!authorization.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(authorization.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            const current = [];
+            for (const target of proposal.targets) {
+                const checked = currentTarget(target);
+                if (!checked.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(checked.message) }, { label: 'Changes', value: 'None. The complete proposal was refused before writing.' }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+                current.push(checked);
+            }
+            proposals.delete(proposal.id);
+            const applied = [];
+            for (let index = 0; index < proposal.targets.length; index++) {
+                const result = writeTarget(proposal, proposal.targets[index], index, current[index]);
+                if (!result.ok) {
+                    const rollbackFailures = applied
+                        .map(appliedIndex => ({ index: appliedIndex, result: rollbackTarget(proposal, proposal.targets[appliedIndex], appliedIndex) }))
+                        .filter(item => !item.result.ok);
+                    return panel('Healing Needs Attention', [
+                        { label: 'Result', value: _sanitize(result.message || 'A verified HP write failed.') },
+                        { label: 'Rollback', value: rollbackFailures.length ? `${rollbackFailures.length} earlier recipient(s) could not be restored automatically. Review them now.` : 'Every earlier recipient was restored to the reviewed value.' },
+                        { label: 'Next Step', value: `${GameAssist.createButton('Health Evidence', '!ga-health recent')} ${GameAssist.createButton('Start Again', '!Heal')}` }
+                    ], msg, { gmOnly: rollbackFailures.length > 0 });
+                }
+                applied.push(index);
+            }
+            announceCompletion(msg, proposal);
+        }
+
+        function actionButtons(group) {
+            return Object.values(ACTIONS).filter(action => action.group === group)
+                .map(action => GameAssist.createButton(action.name, `!Heal-Start --action ${action.id}`)).join(' ');
+        }
+
+        function showCatalog(msg) {
+            panel('HealAssist: Healing Actions', [
+                { label: 'Magic', value: actionButtons('magic') },
+                { label: 'Potions', value: actionButtons('items') },
+                { label: 'Other Healing', value: actionButtons('manual') },
+                { label: 'How It Works', value: 'Choose an action, choose a controlled healer, point at visible recipients, review the roll and HP changes, then confirm once.' },
+                { label: 'Learn Or Review', value: `${GameAssist.createButton('Quick Guide', '!Heal-Guide')} ${playerIsGm(msg.playerid) ? `${GameAssist.createButton('Pending Requests', '!Heal-Requests')} ${GameAssist.createButton('GM Controls', '!Heal-GM')}` : ''}` }
+            ], msg);
+        }
+
+        function showGuide(msg) {
+            const moreHelp = playerIsGm(msg.playerid)
+                ? `${GameAssist.createButton('What Does HealAssist Do?', '!Heal-Info')} ${GameAssist.createButton('Create Manual', '!Heal-Manual')} ${GameAssist.createButton('Status', '!Heal-Status')}`
+                : `${GameAssist.createButton('What Does HealAssist Do?', '!Heal-Info')} ${GameAssist.createButton('Status', '!Heal-Status')}`;
+            panel('HealAssist Quick Guide', [
+                { label: 'Start Healing', value: GameAssist.createButton('Open Healing Actions', '!Heal-Menu') },
+                { label: 'At The Table', value: 'HealAssist rolls and verifies supported HP. It does not spend spell slots, potions, class resources, or temporary HP for you.' },
+                { label: 'Hidden Or NPC Recipients', value: 'Players send these to a compact GM review. No hidden NPC HP is revealed.' },
+                { label: 'More Help', value: moreHelp }
+            ], msg);
+        }
+
+        function showInfo(msg) {
+            panel('What HealAssist Does', [
+                { label: 'Purpose', value: 'Provides deliberate 2014-sheet healing rolls and verified HP application without replacing native sheet healing.' },
+                { label: 'Safety', value: 'Every recipient is rechecked immediately before one-use confirmation. Multi-target writes stop on failure and attempt to restore earlier recipients.' },
+                { label: 'Boundaries', value: 'No automatic spell-card interpretation, slot use, inventory use, damage reversal, resistance, temporary HP, 2024 write adapter, or causal guesswork.' },
+                { label: 'Return', value: `${GameAssist.createButton('Healing Actions', '!Heal-Menu')} ${GameAssist.createButton('Quick Guide', '!Heal-Guide')}` }
+            ], msg);
+        }
+
+        function showStatus(msg) {
+            pruneInteractions();
+            panel('HealAssist Status', [
+                { label: 'Module', value: `v${MODULE_VERSION} | ${modState.config.enabled === false ? 'Disabled' : 'Running'} | HealthService ${GameAssist.HealthService.isEnabled() ? 'available' : 'unavailable'}` },
+                { label: 'Player Healing', value: modState.config.allowPlayerHealing === false ? 'Locked' : 'Allowed for controlled 2014 healers and visible supported PCs' },
+                { label: 'Result Messages', value: modState.config.resultAudience === 'public' ? 'Public for visible PC-only healing; private for NPC or hidden work' : 'Private' },
+                { label: 'Waiting', value: `${flows.size} guided choice(s) | ${requests.size} GM request(s) | ${proposals.size} confirmation(s)` },
+                { label: 'Actions', value: `${GameAssist.createButton('Healing Actions', '!Heal-Menu')} ${playerIsGm(msg.playerid) ? `${GameAssist.createButton('Pending Requests', '!Heal-Requests')} ${GameAssist.createButton('GM Controls', '!Heal-GM')}` : GameAssist.createButton('Quick Guide', '!Heal-Guide')}` }
+            ], msg, { gmOnly: playerIsGm(msg.playerid) });
+        }
+
+        function showAudit(msg) {
+            const pageId = playerPageId(msg.playerid);
+            const supported = pageTokens(pageId, true).map(token => resolveTarget(token.id, { playerid: msg.playerid }, { allowNpc: true })).filter(item => item.ok);
+            panel('HealAssist Audit', [
+                { label: 'Current Page', value: `${supported.length} supported recipient token(s): ${supported.filter(item => !item.npc).length} PC and ${supported.filter(item => item.npc).length} NPC.` },
+                { label: 'HealthService', value: GameAssist.HealthService.isEnabled() ? 'Available for verified reads and writes.' : 'Disabled; HealAssist cannot apply HP.' },
+                { label: 'Changes', value: 'None. This audit is read-only.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Status', '!Heal-Status')} ${GameAssist.createButton('Control Center', '!Heal-GM')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function manualHtml() {
+            return [
+                '<h1>HealAssist User Manual</h1>',
+                `<p><strong>GameAssist v${_sanitize(VERSION)} | HealAssist ${MODULE_VERSION}</strong></p>`,
+                '<p>HealAssist provides a short healing workflow for supported official D&amp;D 5E by Roll20 (2014) characters. It uses HealthService for canonical HP reads, provenance, writes, events, and verification; it does not install another HP watcher.</p>',
+                '<h2>Quick Start</h2>',
+                '<ol><li>Run <code>!Heal</code>.</li><li>Choose a supported spell, potion, or simple manual formula.</li><li>Choose a linked 2014 healer you control.</li><li>Point at the visible recipient token or tokens.</li><li>Review the dice, current HP, proposed HP, maximum HP, and manual resource reminder.</li><li>Confirm once.</li></ol>',
+                '<h2>Player And GM Roles</h2>',
+                '<p>Players may heal visible supported PCs without controlling the recipient token. NPC, GM-layer, hidden, and off-page placement remains a private GM review so NPC health is not exposed. The GM may lock player healing without disabling HealAssist.</p>',
+                '<h2>Supported Actions</h2>',
+                `<p>${Object.values(ACTIONS).map(action => `<strong>${_sanitize(action.name)}</strong>`).join(', ')}</p>`,
+                '<p>Spell actions ask for a verified slot level and, when needed, Wisdom, Charisma, or Intelligence. HealAssist reads that ability modifier from the selected 2014 source. Manual formulas accept one bounded form such as <code>2d8+5</code> or <code>15</code>.</p>',
+                '<h2>What Remains Manual</h2>',
+                '<p>HealAssist never spends a spell slot, removes a potion, consumes a class feature, applies temporary HP, interprets arbitrary spell cards, reverses damage, or adjudicates resistance. The review names the manual table step before HP changes.</p>',
+                '<h2>Transaction Safety</h2>',
+                '<p>Every recipient is re-read before confirmation. Stale and reused buttons make no change. Healing never raises a supported recipient above its maximum. If a later write in a multi-target action fails, HealAssist stops and attempts a verified rollback of earlier recipients.</p>',
+                '<h2>Commands</h2>',
+                '<p><code>!Heal</code> or <code>!Heal-Menu</code> opens healing actions. <code>!Heal-GM</code> and <code>!Heal-DM</code> open private controls. Standard references are <code>!Heal-Guide</code>, <code>!Heal-Help</code>, <code>!Heal-Info</code>, <code>!Heal-Status</code>, <code>!Heal-Audit</code>, and <code>!Heal-Manual</code>. GM settings are <code>!Heal-Players on|off</code> and <code>!Heal-Results public|private</code>.</p>'
+            ].join('');
+        }
+
+        function showManual(msg) {
+            const result = GameAssist.writeModuleManual(MODULE_NAME, manualHtml());
+            panel('HealAssist Manual', [
+                { label: 'Result', value: result.ok ? 'The manual was created or updated.' : _sanitize(result.message) },
+                ...(result.ok ? [{ label: 'Handout', value: result.link }] : []),
+                { label: 'Actions', value: `${GameAssist.createButton('Control Center', '!Heal-GM')} ${GameAssist.createButton('Quick Guide', '!Heal-Guide')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function showControl(msg, notice = '') {
+            pruneInteractions();
+            panel('HealAssist GM Controls', [
+                ...(notice ? [{ label: 'Updated', value: _sanitize(notice) }] : []),
+                { label: 'Start', value: GameAssist.createButton('Healing Actions', '!Heal-Menu') },
+                { label: 'Player Healing', value: `${modState.config.allowPlayerHealing === false ? 'Locked' : 'Allowed'} ${GameAssist.createButton(modState.config.allowPlayerHealing === false ? 'Allow Players' : 'Lock Players', `!Heal-Players ${modState.config.allowPlayerHealing === false ? 'on' : 'off'}`)}` },
+                { label: 'Result Messages', value: `${modState.config.resultAudience === 'public' ? 'Public when safe' : 'Private'} ${GameAssist.createButton(modState.config.resultAudience === 'public' ? 'Make Private' : 'Allow Public PC Results', `!Heal-Results ${modState.config.resultAudience === 'public' ? 'private' : 'public'}`)}` },
+                { label: 'Review', value: `${GameAssist.createButton(`Pending Requests (${requests.size})`, '!Heal-Requests')} ${GameAssist.createButton('Status', '!Heal-Status')} ${GameAssist.createButton('Audit', '!Heal-Audit')}` },
+                { label: 'Help', value: `${GameAssist.createButton('Quick Guide', '!Heal-Guide')} ${GameAssist.createButton('Manual', '!Heal-Manual')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function commandAction(content) {
+            const text = String(content || '').trim();
+            let match = text.match(/^!healassist-([^\s]+)/i) || text.match(/^!heal-([^\s]+)/i);
+            if (match) return String(match[1] || '').toLowerCase();
+            match = text.match(/^!heal(?:assist)?(?:\s+([^\s]+))?/i);
+            return String(match?.[1] || 'menu').toLowerCase();
+        }
+
+        function handleCommand(msg) {
+            const action = commandAction(msg.content);
+            const options = parseOptions(msg.content);
+            if (['menu', 'catalog', 'start-here'].includes(action)) return showCatalog(msg);
+            if (['guide', 'help'].includes(action)) return showGuide(msg);
+            if (['info', 'about'].includes(action)) return showInfo(msg);
+            if (action === 'status') return showStatus(msg);
+            if (action === 'start') {
+                const definition = ACTIONS[String(options.action || '').toLowerCase()];
+                return definition ? showSourcePicker(msg, definition) : showCatalog(msg);
+            }
+            if (action === 'recipients') {
+                const flowResult = resolveFlow(msg, options.flow);
+                return flowResult.ok
+                    ? showRecipientPicker(msg, flowResult.action, flowResult.source)
+                    : panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(flowResult.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            }
+            if (action === 'review') return handleReview(msg, options);
+            if (action === 'confirm') return handleConfirm(msg, options);
+            if (action === 'request') return handleRequest(msg, options);
+            if (!playerIsGm(msg.playerid)) return showCatalog(msg);
+            if (['gm', 'dm', 'control', 'controls'].includes(action)) return showControl(msg);
+            if (action === 'requests') return showRequests(msg);
+            if (action === 'request-dismiss') {
+                requests.delete(String(options.request || ''));
+                return showRequests(msg, 'The selected request was dismissed.');
+            }
+            if (action === 'players') {
+                const value = String(msg.content || '').trim().split(/\s+/).pop().toLowerCase();
+                if (!['on', 'off'].includes(value)) return showControl(msg, 'Choose whether player healing is on or off.');
+                modState.config.allowPlayerHealing = value === 'on';
+                if (!modState.config.allowPlayerHealing) {
+                    flows.clear();
+                    [...requests.entries()].filter(([, request]) => !playerIsGm(request.playerId)).forEach(([id]) => requests.delete(id));
+                }
+                return showControl(msg, `Player healing turned ${value}.`);
+            }
+            if (action === 'results') {
+                const value = String(msg.content || '').trim().split(/\s+/).pop().toLowerCase();
+                if (!['public', 'private'].includes(value)) return showControl(msg, 'Choose public or private result messages.');
+                modState.config.resultAudience = value;
+                return showControl(msg, `Safe healing results are now ${value}.`);
+            }
+            if (action === 'audit') return showAudit(msg);
+            if (action === 'manual') return showManual(msg);
+            panel(MODULE_NAME, [
+                { label: 'Needs Attention', value: 'That HealAssist command was not recognized.' },
+                { label: 'Next Step', value: `${GameAssist.createButton('Control Center', '!Heal-GM')} ${GameAssist.createButton('Open Guide', '!Heal-Guide')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        GameAssist.onCommand('!Heal', handleCommand, MODULE_NAME, { match: { caseInsensitive: true, mode: 'token' } });
+        GameAssist.onCommand('!Heal-', handleCommand, MODULE_NAME, { match: { caseInsensitive: true, mode: 'prefix' } });
+        GameAssist.onCommand('!HealAssist-', handleCommand, MODULE_NAME, { match: { caseInsensitive: true, mode: 'prefix' } });
+
+        GameAssist.HealAssist = Object.freeze({
+            version: MODULE_VERSION,
+            interactionSchemaVersion: INTERACTION_SCHEMA_VERSION,
+            getStatus: () => Object.freeze({
+                enabled: modState.config.enabled !== false,
+                healthServiceAvailable: GameAssist.HealthService.isEnabled(),
+                allowPlayerHealing: modState.config.allowPlayerHealing !== false,
+                resultAudience: modState.config.resultAudience,
+                pendingFlows: (pruneInteractions(), flows.size),
+                pendingRequests: requests.size,
+                pendingProposals: proposals.size
+            }),
+            getActions: () => clone(Object.values(ACTIONS).map(action => ({ id: action.id, name: action.name, group: action.group, targetCounts: action.targetCounts }))),
+            _clearTransient: () => {
+                flows.clear();
+                requests.clear();
+                proposals.clear();
+            }
+        });
+
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} ready: guided 2014 healing, GM requests, and verified HealthService application; the module starts disabled.`, 'INFO', { startup: true });
+    }, {
+        enabled: false,
+        prefixes: ['!Heal', '!Heal-', '!HealAssist-'],
+        dependsOn: ['HealthService'],
+        protectedConfigKeys: ['resultAudience'],
+        teardown: () => GameAssist.HealAssist?._clearTransient?.()
+    });
+    // --- Notes & Comments ---
+    // Changed (v2.0.0): Added HealAssist 1.0.0 with guided official-2014 healing actions, bounded manual formulas, native visible-recipient targeting, private GM placement requests, complete roll/HP review, expiring one-use confirmations, HealthService provenance and verification, over-healing prevention, and multi-target rollback attempts.
+    // Decision log:
+    //   CHOICE: Use HealthService as the only HP read/write authority - ALT: add module-specific HP listeners and setters; REJECTED: duplicate engines would disagree and emit duplicate evidence.
+    //   CHOICE: Permit players to target visible supported PCs they do not control while routing NPC and hidden work to the GM - ALT: grant direct player writes to every pointed token; REJECTED: NPC identity and HP must remain private and GM-authorized.
+    //   CHOICE: Ask for slot level and healing ability, then read the selected 2014 ability modifier - ALT: infer class, prepared spell, slot use, or casting ability; REJECTED: multiclass and campaign rules make those guesses unsafe.
+    //   CHOICE: Roll before the mutation review and consume confirmation once - ALT: roll again during apply; REJECTED: the GM and player must confirm the exact evidence that will be used.
+    //   CHOICE: Revalidate every target before any write and roll back earlier recipients if a later write fails - ALT: accept partial multi-target healing silently; REJECTED: one reviewed action should not leave an unexplained half-applied result.
+    //   CHOICE: Keep resource consumption and temporary HP manual - ALT: modify spell slots, inventory, features, or temporary HP automatically; REJECTED: the initial verified adapter does not own those sheet contracts.
+    // [GAMEASSIST:MODULES:HEALASSIST] END
+    // =============================================================================
+
+    // =============================================================================
     // [GAMEASSIST:MODULES:ALMANACASSIST] BEGIN
     // Section Title: AlmanacAssist fictional calendar and world time
     // -------------------------------------------------------------------------
@@ -22799,8 +23677,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Added disabled-by-default AlmanacAssist with independently controlled Time, Climate, Astronomy, Weather, Environment, and Rest systems while preserving every unrelated module's state and ownership boundaries.
+    // Changed (v2.0.0): Added disabled-by-default HealAssist as a HealthService-only verified healing client while retaining disabled-by-default AlmanacAssist and preserving every unrelated module's state and ownership boundaries.
     // Prior notes:
+    //   v2.0.0: Added disabled-by-default AlmanacAssist with independently controlled Time, Climate, Astronomy, Weather, Environment, and Rest systems while preserving every unrelated module's state and ownership boundaries.
     //   v2.0.0: Added disabled-by-default EffectAssist as the single owner of source-aware semantic effect instances, projection ownership, audit, repair confirmation, and future adapter contracts.
     //   v0.1.7.0: Added disabled-by-default CombatAssist to the bundled module contract and assigned encounter-flow ownership without changing InitiativeAssist initiative rules.
     //   v0.1.5.0: Advanced DebugTools to 0.2.0; marker previews and applied changes resolve and mutate through CORE:MARKERSERVICE.
