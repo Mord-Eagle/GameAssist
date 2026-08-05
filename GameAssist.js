@@ -1,9 +1,9 @@
 /*
 ========================================
 GameAssist - Roll20 API Script
-Version: 1.8.2
-Last Updated: 2026-07-28 (America/New_York)
-Development line: page-local progressive NPC token naming.
+Version: 2.0.0
+Last Updated: 2026-08-04 (America/New_York)
+Release scope: EffectAssist 2.3.0, HealAssist 1.0.0, AttackAssist 1.0.0, complete AlmanacAssist 1.1.0, HealthService 1.0.0, and verified CombatAssist duration events on one GameAssist v2.0.0 development line.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -11,19 +11,25 @@ Homepage: https://github.com/Mord-Eagle/GameAssist
 DESCRIPTION
 GameAssist is a modular D&D 5E (2014 and 2024) automation suite with an explicit opt-in
 task queue, state/configuration helpers, consistent logging, and a core marker
-service. Normal event handlers execute directly unless a module deliberately
-calls GameAssist.enqueue(). This package ships with eleven configurable modules:
-- ConfigUI 0.2.2 - GM-only chat controls for toggling modules and common options.
+service plus a shared health-observation and verified-write contract. Optional
+PC health-band alerts use that shared evidence and remain private to the GM.
+Normal event handlers execute directly unless a module deliberately
+calls GameAssist.enqueue(). This development package contains fifteen configurable modules:
+- ConfigUI 0.2.3 - GM-only chat controls for toggling modules, common options, and PC health alerts.
 - CritAssist 0.2.5.1 - Detects natural-1 attacks and offers fumble/confirm menus.
 - ConditionAssist 1.0.3 - Provides condition wording, artwork, announcements, and marker controls.
-- TokenAssist 1.0.3 - Provides general token controls through !token-assist and !ta commands.
+- TokenAssist 1.0.4 - Provides general token controls through !token-assist and !ta commands.
 - InitiativeAssist 1.0.4 - Uses Roll20's native Turn Tracker for mixed-sheet initiative workflows and compact topic guidance.
-- CombatAssist 1.0.5 - Tracks encounters, native round counters, guarded turns, optional timers, private-safe pings, and recoverable tracker changes.
+- CombatAssist 1.1.0 - Tracks encounters, native round counters, guarded turns, optional timers, private-safe pings, recoverable tracker changes, and verified semantic progression events.
 - WelcomeAssist 0.1.4 - Optionally greets the table after a healthy GameAssist startup through short !Welcome commands.
-- ConcentrationAssist 0.2.2 - Runs concentration checks and manages its configured marker.
+- ConcentrationAssist 0.4.0 - Runs manual and private HP-loss-offered concentration checks, manages its configured marker, and exposes concentration lifecycle events.
 - NPCAssist 1.4.0 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, and Arc rosters.
-- HPAssist 0.1.1.3 - Rolls npc_hpformula and writes the result to token bar 1.
-- DebugTools 0.2.2 - Optional dry-run-first GM diagnostics.
+- EffectAssist 2.3.0 - Coordinates catalog-driven effects, direct GM casting, opaque player flows, retained GM requests, 2014-sheet modifiers, concentration, ownership-safe cleanup, duration candidates, and bounded 2014 Bless proposals.
+- HealAssist 1.0.0 - Guides verified 2014 healing rolls, visible PC targeting, private GM requests, complete HP review, and one-use HealthService application.
+- AttackAssist 1.0.0 - Guides authorized 2014 repeating attacks, visible targeting, private GM placement, and one-use native-template rolls without applying damage.
+- AlmanacAssist 1.1.0 - Adds guided Wayfarer drafts to fictional time, climate, astronomy, weather, environments, and verified 2014-sheet rests across six independently controlled internal systems.
+- HPAssist 0.2.0 - Rolls npc_hpformula and uses HealthService for verified token bar 1 writes when available.
+- DebugTools 0.3.0 - Optional dry-run-first GM diagnostics with verified supported HP damage writes.
 
 INSTALL / USAGE
 - One-Click: install GameAssist.
@@ -39,6 +45,7 @@ CORE COMMANDS (GM)
 - !ga-config ui / !ga-config-ui
 - !ga-enable <ModuleOrService> / !ga-disable <ModuleOrService>
 - !ga-status [--details]
+- !ga-health [recent|audit|alerts]
 - !ga-timezone [set <IANA timezone>|clear]
 - !ga-debug <action>
 
@@ -69,22 +76,78 @@ MODULE COMMANDS
   including !npc-death-help, !npc-death-report, !npc-death-buckets,
   !npc-death-clear, !npc-death-write, !npc-wr, !npc-death-audit, !npc-death-repair,
   !npc-death-arc, !npc-bloodied, !npc-numbering
-- HPAssist: !HP, !npc-hp-selected, !npc-hp-all
+- EffectAssist: !Effect-GM, !Effect-Guide, !Effect-Catalog, !Effect-Active,
+  !Effect-Status, !Effect-Definitions, !Effect-Duration, !Effect-Durations on|off,
+  !Effect-Casts, !Effect-Recognition on|off, !Effect-Requests,
+  !Effect-Targets, !Effect-Request,
+  !Effect-Apply, !Effect-End,
+  !Effect-Audit, !Effect-Repair, !Effect-Players, !effect, !Bless, !Guidance, !Guide,
+  !Haste, !Warding-Bond, !Holy-Weapon, and !PwoaT
+- HealAssist: !Heal, !Heal-GM, !Heal-Menu, !Heal-Guide, !Heal-Status,
+  !Heal-Audit, !Heal-Requests, !Heal-Players, and !Heal-Results
+- AttackAssist: !Attack, !Attack-GM, !Attack-Menu, !Attack-Guide,
+  !Attack-Status, !Attack-Audit, !Attack-Requests, and !Attack-Players
+- AlmanacAssist: !Almanac, !aa, !cal, !date, !time, !clim, !astro,
+  !weather, !enviro, !rest, !aa-time, !aa-climate, !aa-astro,
+  !aa-weather, !aa-enviro, !aa-rest, !aa-wayfarer, !Almanac-GM,
+  !Almanac-DM, !Almanac-Status, !Almanac-Audit
+- HPAssist: !HP-GM, !HP-Selected, !HP-All, !hp <command>
 - DebugTools: !ga-debug damage|marker|save
 
-V1.8.2 FOUNDATION
+V2.0.0 FOUNDATION
 - [GAMEASSIST:CORE:MARKERSERVICE] is the single GameAssist authority for marker
   resolution, reads, writes, toggles, duplicate handling, and change observation.
 - Built-in ids, custom display names, exact stored tags, numbered markers, and
   unrelated marker entries are preserved through a structured mutation contract.
 - NPCAssist can assign unique page-local names to newly added linked NPC tokens without persistent counters.
+- EffectAssist records semantic effect instances separately from their marker, condition, concentration, and 2014-sheet projections, preserving overlapping sources and pre-existing campaign state.
+- The launch catalog includes Bless, Guidance, Warding Bond, Holy Weapon,
+  Haste, and Pass Without a Trace, separated by automation level.
+- Bless automatically manages its target marker, 2014-sheet 1d4 global attack
+  and saving-throw modifiers, source concentration, and dependent cleanup.
+- Guidance manages its marker, 2014-sheet 1d4 global skill modifier, source
+  concentration, and cleanup while calling out non-skill checks as a manual d4.
+- Players may apply built-in effects from controlled sources unless the GM uses
+  the EffectAssist control center to lock player casting.
+- Player casting buttons use short-lived opaque choices, and Ask the GM requests
+  remain available briefly in the GM control center instead of relying on one whisper.
+- Mechanics without an ownership-safe 2014-sheet field remain clearly listed as
+  assisted table steps instead of being represented by unsafe sheet rewrites.
+- EffectAssist audits projection drift without writing and requires a fresh GM confirmation before repair.
+- Built-in EffectAssist definitions carry formal duration rules. Accepted CombatAssist progression and committed AlmanacAssist time may create private GM review candidates, but elapsed time never ends an effect automatically.
+- A verified official 2014 Bless spell card may create one short-lived GM proposal; it never infers recipients or changes an effect before ordinary review and confirmation.
+- AlmanacAssist remains disabled until the GM enables it and provides all six
+  independently controlled Time, Climate, Astronomy, Weather, Environment,
+  and Rest systems as one complete v2.0.0 module.
+- Wayfarer setup keeps persistent draft work separate from the active calendar,
+  validates before atomic activation, preserves elapsed time for active-calendar
+  edits when possible, and retains one deliberate rollback point.
+- Almanac systems exchange optional context without hidden prerequisites;
+  disabling one preserves its valid state and leaves unrelated systems usable
+  through explicit manual or bounded fallback context.
+- RestAlmanac is the only initial Almanac sheet writer. It previews and
+  revalidates supported 2014 PC HP, Hit Dice, and spell-slot changes before one
+  confirmed transaction, while Environment remains descriptive only.
+- [GAMEASSIST:CORE:HEALTHSERVICE] publishes bounded supported HP evidence,
+  deduplicates linked PC sheet/token notifications, and verifies identified
+  GameAssist HP writes without guessing the cause of unexplained changes.
+- Optional PC health alerts privately notify the GM only when a supported PC
+  crosses an enabled 50%, 25%, or 10% health threshold; NPC alerts remain with NPCAssist.
+- HealAssist remains disabled until deliberately enabled. It uses HealthService
+  for reviewed official-2014 healing and verified HP application, and it never
+  spends slots, inventory, class resources, or temporary HP automatically.
+- AttackAssist remains disabled until deliberately enabled. It verifies stable
+  official-2014 repeating-attack rows, preserves the sheet's stored formula and
+  official roll template, and never applies damage or changes encounter state.
 - NPCAssist, ConcentrationAssist, and DebugTools use GameAssist.MarkerService.
 - Marker-dependent GameAssist modules no longer depend on standalone TokenMod.
 - ConditionAssist uses MarkerService for condition reads, writes, and change observation.
 - TokenAssist uses MarkerService for every status-marker command.
 - Disabling MarkerService also disables ConditionAssist, TokenAssist, NPCAssist,
   ConcentrationAssist, and DebugTools while CritAssist, ConfigUI,
-  InitiativeAssist, CombatAssist, WelcomeAssist, and HPAssist remain available.
+  InitiativeAssist, CombatAssist, WelcomeAssist, HealAssist, and HPAssist remain available.
+- Disabling HealthService also disables HealAssist while every unrelated module
+  and Roll20's native sheet-healing controls remain available.
 - Human-facing times and automatic Session date rollover use the DM's validated
   IANA timezone when configured; stored event timestamps remain absolute.
 - [GAMEASSIST:CORE:TURNTRACKERSERVICE] is the only GameAssist authority for
@@ -110,7 +173,7 @@ COMPATIBILITY / FOOTPRINT
   ownership even though TokenMod is no longer required by GameAssist.
 
 SUPPORT
-Use !ga-status for system health and !ga-config list for a configuration snapshot.
+Use !ga-status for system health, !ga-health for supported HP evidence, and !ga-config list for a configuration snapshot.
 For bug reports, include the relevant GameAssist chat output and sandbox console error.
 ========================================
 */
@@ -118,9 +181,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 // --- MECHSUITS BANNER (YAML) ---
 // mechsuit:
 //   codename: "GAMEASSIST"
-//   project_version: "v1.8.2"
-//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, migration-safe module identities, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker and Turn Tracker authorities, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, preservation-first encounter flow, GM-private NPC Bloodied alerts, optional health-gated table greetings, and validated campaign time. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, automatic turn advancement, automatic Bloodied markers/history, or automatic condition-duration management."
-//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.turntrackerservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critassist","modules.conditionassist","modules.tokenassist","modules.initiativeassist","modules.combatassist","modules.welcomeassist","modules.npcassist","modules.concentrationassist","modules.hpassist","modules.debugtools","bootstrap"]
+//   project_version: "v2.0.0"
+//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, migration-safe module identities, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker, Turn Tracker, and health authorities, optional GM-private PC health-band alerts, source-aware semantic effects with ownership-safe projections, guided verified 2014 healing, guided authorized 2014 repeating attacks, bounded GM-reviewed official 2014 Bless cast proposals, and optional GM-reviewed duration candidates, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, preservation-first encounter flow, GM-private NPC Bloodied alerts, optional health-gated table greetings, validated real-world table time, and independently managed fictional time, climate, astronomy, weather, environments, and deliberate 2014-sheet rests. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, automatic turn advancement, automatic effect application or recipient inference from spell cards, automatic effect expiration from elapsed time, automatic healing-card interpretation or resource consumption, automatic damage application from guided attack rolls, automatic Bloodied markers/history, automatic concentration rolls from observed HP changes, public or player-facing health-threshold disclosure, damage-source guessing, silent effect repair, automatic environmental penalties, or automatic reversal of campaign state when fictional time moves backward."
+//   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.turntrackerservice","core.semanticevents","core.healthservice","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critassist","modules.conditionassist","modules.tokenassist","modules.initiativeassist","modules.combatassist","modules.welcomeassist","modules.npcassist","modules.concentrationassist","modules.effectassist","modules.healassist","modules.attackassist","modules.almanacassist","modules.hpassist","modules.debugtools","bootstrap"]
 //   env:
 //     required: []
 //     optional: []
@@ -133,7 +196,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //   observability:
 //     logs: "roll20_whisper_to_gm"
 //     metrics: [{ name: "gameassist.queue.task_duration_ms", unit: "ms" }]
-//     spans: ["[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:MODULES:INITIATIVEASSIST]","[GAMEASSIST:MODULES:COMBATASSIST]","[GAMEASSIST:MODULES:WELCOMEASSIST]"]
+//     spans: ["[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:MODULES:EFFECTASSIST]","[GAMEASSIST:MODULES:HEALASSIST]","[GAMEASSIST:MODULES:ATTACKASSIST]","[GAMEASSIST:MODULES:ALMANACASSIST]","[GAMEASSIST:MODULES:INITIATIVEASSIST]","[GAMEASSIST:MODULES:COMBATASSIST]","[GAMEASSIST:MODULES:WELCOMEASSIST]"]
 //   performance: { notes: "No current benchmark claim; validate in the target Roll20 campaign sandbox." }
 //   concurrency: { model: "Direct event handlers plus explicit opt-in serialized task queue", idempotency: "N/A (event-driven)" }
 //   compatibility: { accepts: ["Roll20 API sandbox; current campaign smoke test required"], emits: "Roll20 chat whispers/logs" }
@@ -152,6 +215,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     │  ├─ [GAMEASSIST:CORE:STATE]
 //     │  ├─ [GAMEASSIST:CORE:MARKERSERVICE]
 //     │  ├─ [GAMEASSIST:CORE:TURNTRACKERSERVICE]
+//     │  ├─ [GAMEASSIST:CORE:SEMANTICEVENTS]
+//     │  ├─ [GAMEASSIST:CORE:HEALTHSERVICE]
 //     │  └─ [GAMEASSIST:CORE:OBJECT]
 //     ├─ [GAMEASSIST:INTERFACES]
 //     │  ├─ [GAMEASSIST:INTERFACES:EVENTS]
@@ -166,14 +231,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     │  ├─ [GAMEASSIST:MODULES:WELCOMEASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:NPCASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:CONCENTRATIONASSIST]
+//     │  ├─ [GAMEASSIST:MODULES:EFFECTASSIST]
+//     │  ├─ [GAMEASSIST:MODULES:HEALASSIST]
+//     │  ├─ [GAMEASSIST:MODULES:ATTACKASSIST]
+//     │  ├─ [GAMEASSIST:MODULES:ALMANACASSIST]
 //     │  ├─ [GAMEASSIST:MODULES:HPASSIST]
 //     │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 //     └─ [GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
-// Guarantee: GameAssist v1.8.2 runs policy, utilities, guarded core services including MarkerService and TurnTrackerService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/gameplay modules, then bootstrap in the declared order. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
+// Guarantee: GameAssist v2.0.0 runs policy, utilities, guarded core services including MarkerService, TurnTrackerService, SemanticEvents, and HealthService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/effect/healing/attack/almanac/gameplay modules, then bootstrap in the declared order. HealthService reports only verified supported HP transitions and refuses to guess damage causes, attackers, resistances, or temporary-HP interactions; its optional PC threshold consumer whispers only the GM. HealAssist guides an authorized 2014 healing roll through exact HP review and one-use verified application while refusing to infer or consume spell slots, items, features, or temporary HP. AttackAssist guides a verified 2014 repeating attack through authorized source selection, targeting, and one-use roll submission while refusing to apply damage or mutate combat state. EffectAssist may offer a bounded private GM proposal for an unambiguous official 2014 Bless card, but it refuses to infer recipients or apply an effect before ordinary review and confirmation; it may also turn accepted CombatAssist progression and committed AlmanacAssist time into private GM duration candidates, but it refuses to end effects from elapsed time alone. AlmanacAssist owns its fictional time, climate, astronomy, weather, environment, and rest records without changing GameAssist real-world timestamps, NPCAssist Session dates, or CombatAssist timing. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing real-world times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
 
 // =============================
-// === GameAssist v1.8.2 ===
+// === GameAssist v2.0.0 ===
 // === Author: Mord Eagle ===
 // =============================
 // Released under the MIT License (see https://opensource.org/licenses/MIT)
@@ -206,8 +275,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Tunables and operational policy
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "POLICY", title: "Tunables",
-    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; NPC initialization, timezone input, condition, initiative, combat, and welcome limits remain explicit"],
-    //   provides: ["POLICY"], last_updated_version: "v0.1.7.0", lifecycle: "active" }
+    //   guarantees: ["Shared behavioral knobs and snapshot identifiers have one owner; NPC initialization, timezone input, condition, concentration, initiative, combat, welcome, semantic-event, health threshold, healing, effect, and almanac limits remain explicit"],
+    //   provides: ["POLICY"], last_updated_version: "v2.0.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // POLICY owns shared timeouts, cache limits, UI defaults, snapshot identifiers,
@@ -299,6 +368,110 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             maxGreetingLength: 240,
             maxHeaderLength: 80
         }),
+        semanticEvents: Object.freeze({
+            observerLimit: 100,
+            typeLength: 100,
+            ownerLength: 80
+        }),
+        health: Object.freeze({
+            recentTransitionLimit: 50,
+            completedOperationLimit: 100,
+            pendingWriteLimit: 50,
+            dedupeMs: 5000,
+            pendingWriteMs: 5000,
+            producerLength: 80,
+            operationIdLength: 120,
+            pcAlertThresholds: Object.freeze([50, 25, 10])
+        }),
+        healing: Object.freeze({
+            interactionMs: 1000 * 60 * 10,
+            flowLimit: 50,
+            requestLimit: 50,
+            proposalLimit: 50,
+            targetLimit: 6,
+            sourceListLimit: 12,
+            maximumDice: 20,
+            maximumSides: 1000,
+            maximumFlat: 1000
+        }),
+        attacks: Object.freeze({
+            interactionMs: 1000 * 60 * 10,
+            flowLimit: 50,
+            requestLimit: 50,
+            submissionLimit: 50,
+            sourceListLimit: 12,
+            attackListLimit: 30,
+            rowIdLength: 120,
+            rollBaseLength: 12000,
+            nameLength: 120
+        }),
+        concentration: Object.freeze({
+            healthOfferLimit: 50,
+            healthOfferMs: 1000 * 60 * 10
+        }),
+        effects: Object.freeze({
+            activeInstanceLimit: 100,
+            endedHistoryLimit: 100,
+            durationCandidateLimit: 6,
+            maximumEncounterDurationRounds: 10000,
+            maximumWorldDurationMinutes: 5256000,
+            castProposalLimit: 20,
+            castProposalMs: 1000 * 60 * 5,
+            castDedupeMs: 15000,
+            playerCastFlowLimit: 50,
+            playerCastFlowMs: 1000 * 60 * 5,
+            playerRequestLimit: 20,
+            playerRequestMs: 1000 * 60 * 10,
+            definitionLimit: 25,
+            targetLimit: 20,
+            sourcePickerLimit: 25,
+            conditionPickerLimit: 30,
+            requestIdLimit: 50,
+            requestIdLength: 100,
+            repairGrantLimit: 25,
+            repairGrantMs: 1000 * 60 * 5,
+            chatListLimit: 10,
+            nameLength: 80,
+            markerLength: 200,
+            descriptionLength: 1000
+        }),
+        almanac: Object.freeze({
+            minimumYear: 1,
+            maximumYear: 9999,
+            maximumAdvanceDays: 1000000,
+            historyLimit: 50,
+            maximumMonths: 24,
+            maximumWeekdays: 14,
+            maximumIntercalaryDays: 20,
+            maximumHolidays: 40,
+            maximumDaysPerMonth: 100,
+            maximumDaysPerYear: 1000,
+            maximumNameLength: 40,
+            maximumRegions: 40,
+            maximumRegionDepth: 4,
+            maximumClimateProfiles: 20,
+            maximumClimateTags: 12,
+            minimumClimateTemperatureF: -150,
+            maximumClimateTemperatureF: 150,
+            minimumClimateTemperatureBias: -100,
+            maximumClimateTemperatureBias: 100,
+            maximumClimateWindMph: 150,
+            maximumMoons: 8,
+            maximumMoonCycleDays: 10000,
+            maximumMoonPhases: 16,
+            maximumRareEvents: 20,
+            maximumRareEventWeight: 1000,
+            astronomyHistoryLimit: 30,
+            weatherHistoryLimit: 30,
+            weatherForecastLimit: 14,
+            environmentHistoryLimit: 30,
+            restHistoryLimit: 50,
+            restGrantLimit: 30,
+            restGrantMs: 1000 * 60 * 5,
+            customRestLimit: 10,
+            maximumRestHours: 720,
+            maximumSummaryLength: 160
+        }),
         config: Object.freeze({
             unsafeKeys: Object.freeze(['__proto__', 'prototype', 'constructor'])
         }),
@@ -308,11 +481,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.7.0): Added bounded CombatAssist turn-duration and reminder-count policy alongside the existing encounter row bounds; rollback: disable timers and retain the row bounds.
+    // Changed (v2.0.0): Added bounded AttackAssist source, row, request, submission, rollbase, and interaction limits alongside the existing HealAssist, HealthService, EffectAssist, AlmanacAssist, and concentration limits; rollback: disable the affected optional module while retaining native sheet workflows.
     // Decision log:
     //   CHOICE: Offer common IANA zones plus validated custom input - ALT: fixed numeric offsets; REJECTED: fixed offsets do not follow daylight-saving changes.
     //   CHOICE: Keep NPC initialization and snapshot knobs centralized while removing the unused external marker delay - ALT: retain the dead setting; REJECTED: implied behavior no caller performs.
     // Prior notes:
+    //   v2.0.0: Added bounded HealAssist interaction, recipient, formula, and rollback limits plus the fixed 50%, 25%, and 10% PC health-alert thresholds alongside EffectAssist player-casting flows, retained GM-request limits, HealthService, concentration-offer, duration-candidate, encounter-round, world-minute, cast-proposal, and chat-deduplication limits.
+    //   v2.0.0: Added bounded HealthService and concentration-offer limits plus EffectAssist duration-candidate, encounter-round, world-minute, cast-proposal, and chat-deduplication limits.
+    //   v2.0.0: Added bounded AlmanacAssist chronology, calendar/holiday, climate-profile/tag/temperature, region/depth, moon/phase, rare-event/weight, forecast, environment, rest-definition, confirmation-grant, and retained-history limits.
+    //   v2.0.0: Added bounded semantic-event observer/type/owner limits plus EffectAssist instance, history, definition, target, picker, request-id count/length, repair-grant, chat-list, name, marker, and description limits.
+    //   v0.1.7.0: Added bounded CombatAssist turn-duration and reminder-count policy alongside the existing encounter row bounds.
     //   v0.1.6.1: Added bounded WelcomeAssist delay, readiness polling, custom-list, greeting, and header limits.
     //   v0.1.6.0: Added bounded initiative batch, picker, group, custom-die, flat-adjustment, score-band, observer-suppression, and chat-review policy.
     //   v0.1.5.1: Added bounded IANA timezone input, a bounded formatter cache, a stable display locale, and common GM menu choices.
@@ -1053,17 +1231,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Core wrapper (constants and kernel services)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE", title: "Core wrapper",
-    //   guarantees: ["Core constants and kernel services are grouped; MarkerService owns marker mechanics and TurnTrackerService owns native tracker mechanics"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP]"], last_updated_version: "v0.1.7.0",
+    //   guarantees: ["Core constants and kernel services are grouped; MarkerService owns marker mechanics, TurnTrackerService owns native tracker mechanics, SemanticEvents owns versioned in-sandbox domain notifications, and HealthService owns supported HP observation and verified writes"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP]"], last_updated_version: "v2.0.0",
     //   lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // CORE wraps the foundational constants, queue, compatibility checks, state,
-    // marker service, Turn Tracker service, and object utilities. Children carry the executable code; this wrapper
+    // marker service, Turn Tracker service, semantic event contracts, health service, and object utilities. Children carry the executable code; this wrapper
     // documents scope and anchors the hierarchy for MECHSUITS compliance.
     // -------------------------------------------------------------------------
 
-    const VERSION      = '1.8.2';
+    const VERSION      = '2.0.0';
     const STATE_KEY    = 'GameAssist';
     const MODULES      = {};
     const _transitioning   = {};
@@ -2541,13 +2719,667 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // =============================================================================
+    // [GAMEASSIST:CORE:SEMANTICEVENTS] BEGIN
+    // Section Title: In-sandbox semantic event contracts
+    // -----------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:SEMANTICEVENTS", title: "Semantic Events",
+    //   guarantees: ["Immutable versioned semantic envelopes; direct ordered observer delivery; no replay","Provider modules may remain independently disabled while consumers subscribe safely","Observer failures are isolated and never interrupt later observers"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]"],
+    //   provides: ["SemanticEvents"], last_updated_version: "v2.0.0",
+    //   independent_versions: { event_schema_version: 1 }, lifecycle: "active" }
+    // -----------------------------------------------------------------------------
+    // Narrative
+    // SemanticEvents gives independently toggleable modules one small public language
+    // for completed domain events. It does not replace Roll20 events, persist or replay
+    // traffic, serialize ordinary handlers, or imply that a provider is available.
+    // -----------------------------------------------------------------------------
+    const SemanticEvents = (() => {
+        const EVENT_SCHEMA_VERSION = 1;
+        const observers = new Map();
+        const streamId = 'GA-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+        let observerId = 0;
+        let sequence = 0;
+
+        function cloneAndFreeze(value) {
+            let copy;
+            try {
+                copy = JSON.parse(JSON.stringify(value ?? {}));
+            } catch {
+                return null;
+            }
+            const freeze = item => {
+                if (!item || typeof item !== 'object' || Object.isFrozen(item)) return item;
+                Object.keys(item).forEach(key => freeze(item[key]));
+                return Object.freeze(item);
+            };
+            return freeze(copy);
+        }
+
+        function validType(type) {
+            const requested = String(type || '').trim();
+            return requested.length > 0
+                && requested.length <= POLICY.semanticEvents.typeLength
+                && /^[a-z0-9]+(?:[.-][a-z0-9]+)*$/.test(requested);
+        }
+
+        function observe(callback, { owner = 'GameAssistConsumer', types = [] } = {}) {
+            if (typeof callback !== 'function') {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Semantic event observers require a callback function.' };
+            }
+            if (observers.size >= POLICY.semanticEvents.observerLimit) {
+                return { ok: false, code: 'RATE_LIMITED', message: 'The semantic event observer limit has been reached.' };
+            }
+            const requestedTypes = [...new Set((Array.isArray(types) ? types : [types])
+                .map(type => String(type || '').trim())
+                .filter(Boolean))];
+            if (requestedTypes.some(type => !validType(type))) {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'A semantic event type is invalid.' };
+            }
+            const id = ++observerId;
+            observers.set(id, {
+                owner: String(owner || 'GameAssistConsumer').slice(0, POLICY.semanticEvents.ownerLength),
+                types: new Set(requestedTypes),
+                callback
+            });
+            return { ok: true, id, unsubscribe: () => observers.delete(id) };
+        }
+
+        function clearObservers(owner) {
+            const requested = String(owner || '').slice(0, POLICY.semanticEvents.ownerLength);
+            let removed = 0;
+            observers.forEach((subscription, id) => {
+                if (subscription.owner !== requested) return;
+                observers.delete(id);
+                removed++;
+            });
+            return removed;
+        }
+
+        function publish(type, producer, payload = {}, { causeEventId = null } = {}) {
+            const eventType = String(type || '').trim();
+            const eventProducer = String(producer || '').trim();
+            if (!validType(eventType) || !eventProducer) {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Semantic events require a valid type and producer.' };
+            }
+            const safePayload = cloneAndFreeze(payload);
+            if (!safePayload) {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Semantic event payloads must be JSON-safe.' };
+            }
+            const currentSequence = ++sequence;
+            const event = Object.freeze({
+                eventSchemaVersion: EVENT_SCHEMA_VERSION,
+                eventId: streamId + ':' + currentSequence,
+                streamId,
+                sequence: currentSequence,
+                type: eventType,
+                producer: eventProducer,
+                occurredAt: isoNow(),
+                causeEventId: causeEventId ? String(causeEventId) : null,
+                payload: safePayload
+            });
+            let delivered = 0;
+            observers.forEach(subscription => {
+                if (subscription.types.size && !subscription.types.has(event.type)) return;
+                try {
+                    subscription.callback(event);
+                    delivered++;
+                } catch (error) {
+                    const api = globalThis.GameAssist;
+                    if (api && typeof api.handleError === 'function') {
+                        api.handleError(subscription.owner, error);
+                    }
+                }
+            });
+            return { ok: true, event, delivered };
+        }
+
+        return Object.freeze({
+            eventSchemaVersion: EVENT_SCHEMA_VERSION,
+            streamId,
+            isAvailable: () => true,
+            observe,
+            clearObservers,
+            publish,
+            getStatus: () => Object.freeze({
+                eventSchemaVersion: EVENT_SCHEMA_VERSION,
+                streamId,
+                sequence,
+                observers: observers.size
+            })
+        });
+    })();
+    // --- Notes & Comments ---
+    // Changed (v2.0.0): Added immutable, versioned, direct-delivery semantic event envelopes so optional EffectAssist integrations can share stable provider contracts without hard module dependencies.
+    // Decision log:
+    //   CHOICE: Keep events in-memory and non-replayed - ALT: persist an event log; REJECTED: sandbox restarts and stale replay would make effect cleanup unsafe.
+    //   CHOICE: Deliver directly in subscription order - ALT: route every event through CORE:QUEUE; REJECTED: ordinary module events remain synchronous unless a caller explicitly opts into serialization.
+    //   CHOICE: Isolate observer exceptions - ALT: fail the publication; REJECTED: one optional integration must not interrupt another module.
+    // [GAMEASSIST:CORE:SEMANTICEVENTS] END
+    // =============================================================================
+
+    // =============================================================================
+    // [GAMEASSIST:CORE:HEALTHSERVICE] BEGIN
+    // Section Title: Canonical health observation and verified writes
+    // -----------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:HEALTHSERVICE", title: "HealthService",
+    //   guarantees: ["Supported 2014-PC HP attributes and linked-NPC bar 1 changes normalize into one immutable health.transition contract","GameAssist-owned HP writes require producer and operation identity, verify the resulting object, and deduplicate linked token/sheet events","Unknown Roll20 changes remain unknown; the service never guesses an attacker, damage type, resistance, temporary-HP interaction, concentration result, or combat cause","Observer failures remain isolated through SemanticEvents and retained evidence is bounded in memory"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]"],
+    //   provides: ["HealthService"], last_updated_version: "v2.0.0",
+    //   independent_versions: { service_version: "1.0.0", health_event_schema_version: 1 }, lifecycle: "active" }
+    // -----------------------------------------------------------------------------
+    // Narrative
+    // HealthService is the shared HP boundary for GameAssist. It observes only
+    // explicitly supported Roll20 surfaces, publishes evidence rather than causal
+    // guesses, and offers verified writes to modules that supply stable operation
+    // identity. It does not roll healing, adjudicate damage, alter concentration,
+    // record NPC deaths, advance combat, or persist a causal combat ledger.
+    // -----------------------------------------------------------------------------
+    const HealthService = (() => {
+        const SERVICE_VERSION = '1.0.0';
+        const HEALTH_EVENT_SCHEMA_VERSION = 1;
+        const EVENT_TYPE = 'health.transition';
+        const CLASSIFICATIONS = new Set([
+            'damage', 'healing', 'initialization', 'synchronization', 'clearing', 'invalid', 'unknown'
+        ]);
+        const pendingWrites = new Map();
+        const recentSignatures = new Map();
+        const completedOperations = new Map();
+        const recentEvents = [];
+        let enabled = false;
+        let listenersWired = false;
+        let transitionSequence = 0;
+
+        function cloneAndFreeze(value) {
+            let copy;
+            try {
+                copy = JSON.parse(JSON.stringify(value));
+            } catch {
+                return null;
+            }
+            const freeze = item => {
+                if (!item || typeof item !== 'object' || Object.isFrozen(item)) return item;
+                Object.keys(item).forEach(key => freeze(item[key]));
+                return Object.freeze(item);
+            };
+            return freeze(copy);
+        }
+
+        function parseHealthField(raw) {
+            if (raw === null || raw === undefined || String(raw).trim() === '') {
+                return { state: 'blank', value: null, raw: '' };
+            }
+            const text = String(raw).trim();
+            const value = Number(text);
+            if (!Number.isFinite(value)) return { state: 'invalid', value: null, raw: text };
+            return { state: 'valid', value, raw: text };
+        }
+
+        function healthValues(current, maximum) {
+            return {
+                current: parseHealthField(current),
+                maximum: parseHealthField(maximum)
+            };
+        }
+
+        function attribute(characterId, name) {
+            return findObjs({ _type: 'attribute', _characterid: String(characterId), name: String(name) })[0] || null;
+        }
+
+        function characterSheetHint(character) {
+            const direct = String(character?.get('charactersheetname') || '').trim().toLowerCase();
+            if (direct) return direct;
+            return String(getAttrByName(character?.id, 'charactersheetname') || '').trim().toLowerCase();
+        }
+
+        function actorType(character) {
+            if (!character) return null;
+            if (String(getAttrByName(character.id, 'npc') || '').trim() === '1') return 'npc';
+            const hint = characterSheetHint(character);
+            if (hint === 'dnd2024byroll20') return null;
+            if (
+                hint === 'ogl5e' ||
+                Boolean(attribute(character.id, 'initiative_bonus')) ||
+                Boolean(attribute(character.id, 'constitution_save_bonus')) ||
+                Boolean(attribute(character.id, 'hit_dice'))
+            ) return 'pc';
+            return null;
+        }
+
+        function tokenIdentity(token) {
+            if (!token) return null;
+            return {
+                id: String(token.id),
+                name: String(token.get('name') || ''),
+                layer: String(token.get('layer') || ''),
+                pageId: String(token.get('_pageid') || token.get('pageid') || '')
+            };
+        }
+
+        function characterIdentity(character, type) {
+            return {
+                id: String(character.id),
+                name: String(character.get('name') || ''),
+                actorType: type
+            };
+        }
+
+        function linkedHealthToken(character, hpAttribute) {
+            if (!character || !hpAttribute) return null;
+            const matches = findObjs({ _type: 'graphic', represents: String(character.id) })
+                .filter(token =>
+                    ['objects', 'gmlayer'].includes(String(token.get('layer') || '')) &&
+                    String(token.get('bar1_link') || '') === String(hpAttribute.id)
+                )
+                .sort((left, right) => String(left.id).localeCompare(String(right.id)));
+            return matches.length === 1 ? matches[0] : null;
+        }
+
+        function tokenSnapshot(token, previous = null) {
+            if (!token || typeof token.get !== 'function') return null;
+            if (!['objects', 'gmlayer'].includes(String(token.get('layer') || ''))) return null;
+            const characterId = String(token.get('represents') || '');
+            const character = characterId ? getObj('character', characterId) : null;
+            const type = actorType(character);
+            if (!character || !type) return null;
+
+            let canonicalKey;
+            if (type === 'pc') {
+                const hpAttribute = attribute(character.id, 'hp');
+                if (!hpAttribute || String(token.get('bar1_link') || '') !== String(hpAttribute.id)) return null;
+                canonicalKey = `character:${character.id}:hp`;
+            } else {
+                canonicalKey = `token:${token.id}:bar1`;
+            }
+
+            const source = previous && typeof previous === 'object' ? previous : null;
+            const current = source && Object.prototype.hasOwnProperty.call(source, 'bar1_value')
+                ? source.bar1_value
+                : token.get('bar1_value');
+            const maximum = source && Object.prototype.hasOwnProperty.call(source, 'bar1_max')
+                ? source.bar1_max
+                : token.get('bar1_max');
+            return {
+                healthSchemaVersion: HEALTH_EVENT_SCHEMA_VERSION,
+                canonicalKey,
+                character: characterIdentity(character, type),
+                token: tokenIdentity(token),
+                pageId: String(token.get('_pageid') || token.get('pageid') || ''),
+                surface: {
+                    kind: 'token-bar1',
+                    objectId: String(token.id),
+                    currentField: 'bar1_value',
+                    maximumField: 'bar1_max'
+                },
+                values: healthValues(current, maximum)
+            };
+        }
+
+        function characterSnapshot(characterOrId, previous = null) {
+            const character = typeof characterOrId === 'string'
+                ? getObj('character', characterOrId)
+                : characterOrId;
+            if (!character || actorType(character) !== 'pc') return null;
+            const hpAttribute = attribute(character.id, 'hp');
+            if (!hpAttribute) return null;
+            const source = previous && typeof previous === 'object' ? previous : null;
+            const current = source && Object.prototype.hasOwnProperty.call(source, 'current')
+                ? source.current
+                : hpAttribute.get('current');
+            const maximum = source && Object.prototype.hasOwnProperty.call(source, 'max')
+                ? source.max
+                : hpAttribute.get('max');
+            const token = linkedHealthToken(character, hpAttribute);
+            return {
+                healthSchemaVersion: HEALTH_EVENT_SCHEMA_VERSION,
+                canonicalKey: `character:${character.id}:hp`,
+                character: characterIdentity(character, 'pc'),
+                token: tokenIdentity(token),
+                pageId: token ? String(token.get('_pageid') || token.get('pageid') || '') : null,
+                surface: {
+                    kind: 'character-attribute',
+                    objectId: String(hpAttribute.id),
+                    currentField: 'current',
+                    maximumField: 'max'
+                },
+                values: healthValues(current, maximum)
+            };
+        }
+
+        function transitionSignature(before, after) {
+            return JSON.stringify([
+                after.canonicalKey,
+                before.values.current.state,
+                before.values.current.raw,
+                before.values.maximum.state,
+                before.values.maximum.raw,
+                after.values.current.state,
+                after.values.current.raw,
+                after.values.maximum.state,
+                after.values.maximum.raw
+            ]);
+        }
+
+        function sameValues(left, right) {
+            return left.current.state === right.current.state
+                && left.current.raw === right.current.raw
+                && left.maximum.state === right.maximum.state
+                && left.maximum.raw === right.maximum.raw;
+        }
+
+        function transitionDirection(before, after) {
+            if (before.current.state !== 'valid' || after.current.state !== 'valid') return 'unavailable';
+            if (after.current.value < before.current.value) return 'decrease';
+            if (after.current.value > before.current.value) return 'increase';
+            return 'unchanged';
+        }
+
+        function inferredClassification(before, after) {
+            if (after.current.state === 'invalid') return 'invalid';
+            if (after.current.state === 'blank') return 'clearing';
+            if (before.current.state !== 'valid' && after.current.state === 'valid') return 'initialization';
+            return 'unknown';
+        }
+
+        function pruneCaches() {
+            const cutoff = Date.now();
+            for (const [key, item] of pendingWrites) {
+                if (!item || item.expiresAt <= cutoff) pendingWrites.delete(key);
+            }
+            for (const [key, item] of recentSignatures) {
+                if (!item || item.expiresAt <= cutoff) recentSignatures.delete(key);
+            }
+            while (pendingWrites.size > POLICY.health.pendingWriteLimit) {
+                pendingWrites.delete(pendingWrites.keys().next().value);
+            }
+            while (completedOperations.size > POLICY.health.completedOperationLimit) {
+                completedOperations.delete(completedOperations.keys().next().value);
+            }
+            if (recentEvents.length > POLICY.health.recentTransitionLimit) {
+                recentEvents.splice(0, recentEvents.length - POLICY.health.recentTransitionLimit);
+            }
+        }
+
+        function matchesExpected(snapshot, expected) {
+            if (expected.current !== undefined && snapshot.values.current.raw !== expected.current) return false;
+            if (expected.maximum !== undefined && snapshot.values.maximum.raw !== expected.maximum) return false;
+            return true;
+        }
+
+        function publishTransition(before, after, explicitWrite = null) {
+            if (!enabled || !before || !after || before.canonicalKey !== after.canonicalKey) {
+                return { ok: false, code: 'UNAVAILABLE', message: 'HealthService is unavailable for that transition.' };
+            }
+            if (sameValues(before.values, after.values)) {
+                return { ok: true, changed: false, deduplicated: false, event: null };
+            }
+            pruneCaches();
+            const signature = transitionSignature(before, after);
+            const duplicate = recentSignatures.get(after.canonicalKey);
+            if (duplicate?.signature === signature) return { ...duplicate.result, deduplicated: true };
+
+            const pending = explicitWrite || pendingWrites.get(after.canonicalKey) || null;
+            const verifiedWrite = pending && matchesExpected(after, pending.expected);
+            const requestedClassification = verifiedWrite && CLASSIFICATIONS.has(pending.classification)
+                ? pending.classification
+                : null;
+            const classification = requestedClassification || inferredClassification(before.values, after.values);
+            const direction = transitionDirection(before.values, after.values);
+            const delta = before.values.current.state === 'valid' && after.values.current.state === 'valid'
+                ? after.values.current.value - before.values.current.value
+                : null;
+            const payload = {
+                healthSchemaVersion: HEALTH_EVENT_SCHEMA_VERSION,
+                transitionId: `health-${Date.now().toString(36)}-${++transitionSequence}`,
+                classification,
+                confidence: verifiedWrite ? 'declared-and-verified' : (classification === 'unknown' ? 'unknown' : 'observed'),
+                direction,
+                delta,
+                before: before.values,
+                after: after.values,
+                character: after.character,
+                token: after.token,
+                pageId: after.pageId,
+                surface: after.surface,
+                provenance: {
+                    kind: verifiedWrite ? 'gameassist-write' : 'roll20-observation',
+                    producer: verifiedWrite ? pending.producer : null,
+                    operationId: verifiedWrite ? pending.operationId : null
+                }
+            };
+            const result = SemanticEvents.publish(EVENT_TYPE, 'HealthService', payload);
+            if (!result.ok) return result;
+            const response = Object.freeze({ ok: true, changed: true, deduplicated: false, event: result.event });
+            // CHOICE: retain only the latest signature per subject so linked echoes collapse while A→B, B→A, A→B remains three real transitions.
+            recentSignatures.set(after.canonicalKey, {
+                signature,
+                expiresAt: Date.now() + POLICY.health.dedupeMs,
+                result: response
+            });
+            recentEvents.push(result.event);
+            if (verifiedWrite) pending.result = response;
+            pruneCaches();
+            return response;
+        }
+
+        function observeTokenChange(token, previous) {
+            if (!enabled) return;
+            const before = tokenSnapshot(token, previous);
+            const after = tokenSnapshot(token);
+            if (!before || !after) return;
+            publishTransition(before, after);
+        }
+
+        function observeAttributeChange(hpAttribute, previous) {
+            if (!enabled || !hpAttribute || String(hpAttribute.get('name') || '').toLowerCase() !== 'hp') return;
+            const characterId = String(hpAttribute.get('_characterid') || hpAttribute.get('characterid') || '');
+            const before = characterSnapshot(characterId, previous);
+            const after = characterSnapshot(characterId);
+            if (!before || !after) return;
+            publishTransition(before, after);
+        }
+
+        function normalizeWriteValue(value) {
+            if (value === '' || value === null) return { ok: true, raw: '' };
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric)) {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'HP writes require a finite number or an explicit blank value.' };
+            }
+            return { ok: true, raw: String(numeric) };
+        }
+
+        function validateWriteIdentity(request) {
+            const producer = String(request?.producer || '').trim();
+            const operationId = String(request?.operationId || '').trim();
+            const classification = String(request?.classification || 'unknown').trim().toLowerCase();
+            if (!producer || producer.length > POLICY.health.producerLength || !/^[A-Za-z0-9_.:-]+$/.test(producer)) {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'A bounded producer identifier is required.' };
+            }
+            if (!operationId || operationId.length > POLICY.health.operationIdLength || !/^[A-Za-z0-9_.:-]+$/.test(operationId)) {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'A bounded operation id is required.' };
+            }
+            if (!CLASSIFICATIONS.has(classification)) {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'That health classification is not supported.' };
+            }
+            return { ok: true, producer, operationId, classification };
+        }
+
+        function performWrite(before, request, apply, reread) {
+            if (!enabled) return { ok: false, code: 'UNAVAILABLE', message: 'HealthService is disabled.' };
+            if (!before) return { ok: false, code: 'UNPROCESSABLE', message: 'That HP surface is not supported.' };
+            const identity = validateWriteIdentity(request);
+            if (!identity.ok) return identity;
+            if (!Object.prototype.hasOwnProperty.call(request, 'current') && !Object.prototype.hasOwnProperty.call(request, 'maximum')) {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'A current or maximum HP value is required.' };
+            }
+            const current = Object.prototype.hasOwnProperty.call(request, 'current')
+                ? normalizeWriteValue(request.current)
+                : { ok: true, raw: undefined };
+            const maximum = Object.prototype.hasOwnProperty.call(request, 'maximum')
+                ? normalizeWriteValue(request.maximum)
+                : { ok: true, raw: undefined };
+            if (!current.ok) return current;
+            if (!maximum.ok) return maximum;
+            const expected = { current: current.raw, maximum: maximum.raw };
+            const operationKey = `${identity.producer}:${identity.operationId}:${before.canonicalKey}`;
+            const fingerprint = JSON.stringify([before.canonicalKey, expected, identity.classification]);
+            const completed = completedOperations.get(operationKey);
+            if (completed) {
+                if (completed.fingerprint !== fingerprint) {
+                    return { ok: false, code: 'CONFLICT', message: 'That operation id was already used for a different HP write.' };
+                }
+                return Object.freeze({ ...completed.result, idempotent: true });
+            }
+            pruneCaches();
+            if (pendingWrites.has(before.canonicalKey)) {
+                return { ok: false, code: 'CONFLICT', message: 'Another verified HP write is already pending for that subject.' };
+            }
+            const noCurrentChange = expected.current === undefined || expected.current === before.values.current.raw;
+            const noMaximumChange = expected.maximum === undefined || expected.maximum === before.values.maximum.raw;
+            if (noCurrentChange && noMaximumChange) {
+                const result = Object.freeze({ ok: true, changed: false, verified: true, event: null, idempotent: false });
+                completedOperations.set(operationKey, { fingerprint, result });
+                pruneCaches();
+                return result;
+            }
+
+            const pending = {
+                producer: identity.producer,
+                operationId: identity.operationId,
+                classification: identity.classification,
+                expected,
+                expiresAt: Date.now() + POLICY.health.pendingWriteMs,
+                result: null
+            };
+            pendingWrites.set(before.canonicalKey, pending);
+            try {
+                apply(expected);
+            } catch (error) {
+                pendingWrites.delete(before.canonicalKey);
+                return { ok: false, code: 'UNAVAILABLE', message: `Roll20 refused the HP write: ${error.message || error}` };
+            }
+            const after = reread();
+            if (!after || !matchesExpected(after, expected)) {
+                pendingWrites.delete(before.canonicalKey);
+                return { ok: false, code: 'UNAVAILABLE', message: 'Roll20 did not preserve the requested HP value.' };
+            }
+            const transition = pending.result || publishTransition(before, after, pending);
+            pendingWrites.delete(before.canonicalKey);
+            if (!transition.ok) return transition;
+            const result = Object.freeze({
+                ok: true,
+                changed: transition.changed === true,
+                verified: true,
+                event: transition.event || null,
+                idempotent: false
+            });
+            completedOperations.set(operationKey, { fingerprint, result });
+            pruneCaches();
+            return result;
+        }
+
+        function writeToken(request = {}) {
+            const token = typeof request.token === 'string' ? getObj('graphic', request.token) : request.token;
+            const before = tokenSnapshot(token);
+            return performWrite(
+                before,
+                request,
+                expected => {
+                    const updates = {};
+                    if (expected.current !== undefined) updates.bar1_value = expected.current;
+                    if (expected.maximum !== undefined) updates.bar1_max = expected.maximum;
+                    token.set(updates);
+                },
+                () => tokenSnapshot(token)
+            );
+        }
+
+        function writeCharacter(request = {}) {
+            const character = typeof request.character === 'string'
+                ? getObj('character', request.character)
+                : request.character;
+            const before = characterSnapshot(character);
+            const hpAttribute = character ? attribute(character.id, 'hp') : null;
+            return performWrite(
+                before,
+                request,
+                expected => {
+                    const updates = {};
+                    if (expected.current !== undefined) updates.current = expected.current;
+                    if (expected.maximum !== undefined) updates.max = expected.maximum;
+                    if (typeof hpAttribute.setWithWorker === 'function') hpAttribute.setWithWorker(updates);
+                    else hpAttribute.set(updates);
+                },
+                () => characterSnapshot(character)
+            );
+        }
+
+        function wire(api) {
+            if (listenersWired) return;
+            listenersWired = true;
+            api.onEvent('change:graphic:bar1_value', observeTokenChange, 'HealthService');
+            api.onEvent('change:graphic:bar1_max', observeTokenChange, 'HealthService');
+            api.onEvent('change:attribute:current', observeAttributeChange, 'HealthService');
+            api.onEvent('change:attribute:max', observeAttributeChange, 'HealthService');
+        }
+
+        function setEnabled(value) {
+            enabled = value === true;
+            if (!enabled) {
+                pendingWrites.clear();
+                recentSignatures.clear();
+                completedOperations.clear();
+                recentEvents.length = 0;
+            }
+        }
+
+        return Object.freeze({
+            version: SERVICE_VERSION,
+            healthEventSchemaVersion: HEALTH_EVENT_SCHEMA_VERSION,
+            eventType: EVENT_TYPE,
+            isEnabled: () => enabled,
+            readToken: token => cloneAndFreeze(tokenSnapshot(typeof token === 'string' ? getObj('graphic', token) : token)),
+            readCharacter: character => cloneAndFreeze(characterSnapshot(character)),
+            writeToken,
+            writeCharacter,
+            observe: (callback, { owner = 'HealthServiceConsumer' } = {}) => SemanticEvents.observe(callback, {
+                owner,
+                types: [EVENT_TYPE]
+            }),
+            getRecent: (limit = POLICY.health.recentTransitionLimit) => Object.freeze(
+                recentEvents.slice(-Math.max(0, Math.min(POLICY.health.recentTransitionLimit, Number(limit) || 0)))
+            ),
+            getStatus: () => Object.freeze({
+                version: SERVICE_VERSION,
+                healthEventSchemaVersion: HEALTH_EVENT_SCHEMA_VERSION,
+                enabled,
+                pendingWrites: pendingWrites.size,
+                completedOperations: completedOperations.size,
+                recentTransitions: recentEvents.length
+            }),
+            _wire: wire,
+            _setEnabled: setEnabled,
+            _observeTokenChange: observeTokenChange,
+            _observeAttributeChange: observeAttributeChange
+        });
+    })();
+    // --- Notes & Comments ---
+    // Changed (v2.0.0): Added HealthService 1.0.0 with canonical supported HP snapshots, immutable semantic transitions, bounded deduplication, and verified producer/operation-aware writes for linked NPC bar 1 and official 2014 PC HP attributes.
+    // Decision log:
+    //   CHOICE: Treat an unexplained numeric decrease or increase as unknown evidence - ALT: label it damage or healing from direction alone; REJECTED: Roll20 does not expose attack, resistance, temporary-HP, synchronization, or causal metadata reliably.
+    //   CHOICE: Deduplicate by canonical subject plus before/after values - ALT: expose token and attribute events separately; REJECTED: linked bars can represent one logical write on two Roll20 surfaces.
+    //   CHOICE: Retain only bounded in-memory recent evidence - ALT: persist a combat ledger; REJECTED: sandbox restarts and unknown external causes would make durable causal claims misleading.
+    //   CHOICE: Require producer and operation identity for writes - ALT: accept anonymous mutation; REJECTED: consumers need idempotency and provenance without sharing private state branches.
+    // [GAMEASSIST:CORE:HEALTHSERVICE] END
+    // =============================================================================
+
+    // =============================================================================
     // [GAMEASSIST:CORE:OBJECT] BEGIN
     // Section Title: GameAssist kernel object
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:OBJECT", title: "Kernel",
-    //   guarantees: ["Logging, explicit enqueue, dependency diagnostics, register/enable/disable, listener management", "MarkerService, TurnTrackerService, the validated time seam, and the stable module-manual writer are exposed through the GameAssist object", "Module registration may explicitly retain durable runtime state and protect validated configuration maps", "Failed dependency enable checks preserve the module's existing configured intent"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]"],
-    //   last_updated_version: "v1.8.0", lifecycle: "active" }
+    //   guarantees: ["Logging, explicit enqueue, dependency diagnostics, register/enable/disable, listener management", "MarkerService, TurnTrackerService, SemanticEvents, HealthService, the validated time seam, and the stable module-manual writer are exposed through the GameAssist object", "Module registration may explicitly retain durable runtime state and protect validated configuration maps", "Failed dependency enable checks preserve the module's existing configured intent"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:HEALTHSERVICE]"],
+    //   last_updated_version: "v2.0.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // CORE:OBJECT exposes the GameAssist singleton with metrics, logging, explicit
@@ -2574,6 +3406,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         flags: { DEBUG_COMPAT: false, QUIET_STARTUP: true },
         MarkerService,
         TurnTrackerService,
+        SemanticEvents,
+        HealthService,
         Time: Object.freeze({
             version: '1.0.0',
             validateTimeZone,
@@ -3001,8 +3835,23 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         service: true,
         teardown: () => setTurnTrackerServiceEnabled(false)
     });
+    GameAssist.register('HealthService', () => {
+        HealthService._setEnabled(true);
+        HealthService._wire(GameAssist);
+    }, {
+        enabled: true,
+        service: true,
+        events: [
+            'change:graphic:bar1_value',
+            'change:graphic:bar1_max',
+            'change:attribute:current',
+            'change:attribute:max'
+        ],
+        protectedConfigKeys: ['pcAlerts'],
+        teardown: () => HealthService._setEnabled(false)
+    });
     // --- Notes & Comments ---
-    // Changed (v1.8.0): Added canonical component-name resolution for lifecycle, dependency, state, and configuration operations while retaining explicit legacy module aliases.
+    // Changed (v2.0.0): Protected HealthService's validated PC-alert settings from generic config writes while retaining the shared toggleable HP evidence and verified-write lifecycle.
     // Decision log:
     //   CHOICE: Expose globally under the existing GameAssist name - ALT: add another global; REJECTED: unnecessary global pollution.
     //   CHOICE: Keep normal handlers direct and serialized work explicit through GameAssist.enqueue.
@@ -3010,6 +3859,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Preserve configured intent when dependency enablement is refused - ALT: force false; REJECTED: concealed dependency-skipped modules.
     //   CHOICE: Disable dependent modules before their service - ALT: disable the service first; REJECTED: dependent teardown would lose the marker access it needs for cleanup.
     // Prior notes:
+    //   v1.8.0: Added canonical component-name resolution for lifecycle, dependency, state, and configuration operations while retaining explicit legacy module aliases.
+    //   v1.8.0: Advanced the project runtime version and added migration-safe branded component-name resolution; core child order was unchanged.
     //   v0.1.7.0: Exposed the shared stable module-manual writer through GameAssist for the standardized layered-help contract.
     //   v0.1.5.1: Exposed GameAssist.Time as the shared validated timezone, display-formatting, and date-key seam used by interfaces and NPCManager.
     //   v0.1.5.0: Exposed GameAssist.MarkerService as a toggleable core service, added case-insensitive module/service lifecycle resolution and protected config-key registration, cascaded service shutdown to dependent modules, and removed marker-module dependency gating on standalone TokenMod.
@@ -3025,8 +3876,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v1.8.0): Advanced the project runtime version and added migration-safe branded component-name resolution; core child order is unchanged.
+    // Changed (v2.0.0): Added CORE:HEALTHSERVICE after SemanticEvents in the declared child order so supported HP observations and verified writes can publish immutable semantic evidence without changing existing module ownership.
     // Prior notes:
+    //   v2.0.0: Added CORE:SEMANTICEVENTS to the declared child order and advanced runtime VERSION for source-aware effect records and optional integration contracts.
     //   v0.1.7.0: Advanced runtime VERSION for the CombatAssist encounter-flow release; core child order was unchanged.
     //   v0.1.6.1: Advanced runtime VERSION for the private initiative control and optional WelcomeAssist patch; core child order was unchanged.
     //   v0.1.6.0: Added CORE:TURNTRACKERSERVICE to the declared child order and advanced runtime VERSION for the native initiative release.
@@ -3083,9 +3935,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Admin/config commands (!ga-*)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "INTERFACES:COMMANDS", title: "Commands",
-    //   guarantees: ["GM-gated admin commands; unsafe and component-protected config keys refused; versioned config-only export; validated timezone menu; plain-language health summary with opt-in shared-service, tracker-consumer, and standalone-integration details"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:CORE:STATE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
-    //   last_updated_version: "v0.1.7.0", lifecycle: "active" }
+    //   guarantees: ["GM-gated admin commands; unsafe and component-protected config keys refused; versioned config-only export; validated timezone menu; plain-language system and HealthService diagnostics with opt-in shared-service, tracker-consumer, and standalone-integration details","Optional supported-PC health-band alerts are GM-private, threshold-configurable, downward-crossing only, and never duplicate NPCAssist NPC policy"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:CORE:STATE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
+    //   last_updated_version: "v2.0.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // INTERFACES:COMMANDS contains GM/admin chat commands for listing modules, toggling
@@ -3093,7 +3945,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // The default status view prioritizes a DM's next action; --details preserves
     // session counters, queue state, timestamps, event-hook counts, dependency evidence,
     // shared-service and tracker-consumer lifecycle state, plus separately detected
-    // marker/condition Mod evidence.
+    // marker/condition Mod evidence. The health screen exposes only bounded evidence
+    // and optional GM-private PC threshold controls; neither path interprets an
+    // unexplained HP change as a combat cause.
     // -------------------------------------------------------------------------
     function getModuleHealth() {
         return Object.entries(MODULES)
@@ -3255,6 +4109,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const combatEncounter = combat?.running
             ? GameAssist.CombatAssist?.getStatus?.()
             : null;
+        const health = GameAssist.HealthService?.getStatus?.() || null;
+        const pcHealthAlerts = ensurePcHealthAlertConfig();
         const turnTrackerLines = [
             trackerService?.running
                 ? `TurnTrackerService v${TurnTrackerService.version}: enabled; native Turn Tracker reads and guarded writes are available.`
@@ -3265,6 +4121,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             combat?.running
                 ? `CombatAssist: running; ${combatEncounter ? `${combatEncounter.status} on round ${combatEncounter.round}.` : 'no encounter is currently being tracked.'}`
                 : 'CombatAssist: disabled; GameAssist is not counting turns or rounds.'
+        ];
+        const healthServiceLines = [
+            health?.enabled
+                ? `HealthService v${health.version}: enabled; ${health.recentTransitions} recent transition${health.recentTransitions === 1 ? '' : 's'} retained this sandbox.`
+                : `HealthService v${health?.version || HealthService.version}: disabled; shared HP evidence and verified writes are unavailable.`,
+            `PC health alerts: ${pcHealthAlerts.enabled ? 'on' : 'off'}; ${enabledPcHealthThresholds(pcHealthAlerts).map(value => `${value}%`).join(', ') || 'no'} threshold${enabledPcHealthThresholds(pcHealthAlerts).length === 1 ? '' : 's'} enabled; exact HP ${pcHealthAlerts.showExactHp ? 'shown' : 'hidden'}.`,
+            'Unexplained HP changes remain unknown evidence; they are not automatically labeled as damage or healing.'
         ];
 
         const avgDuration = metrics.taskDurations.length
@@ -3289,6 +4152,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             dependencyLines,
             integrationLines: getStandaloneIntegrationLines(),
             turnTrackerLines,
+            healthServiceLines,
             avgDuration,
             listenerCount: Object.values(GameAssist._listeners).flat().length
         };
@@ -3319,6 +4183,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 statusField('GameAssist Event Hooks', `${snapshot.listenerCount} tracked internally. This is troubleshooting information, not a pass/fail test.`),
                 statusField('Shared Services and Standalone Integrations', [
                     ...snapshot.turnTrackerLines,
+                    ...snapshot.healthServiceLines,
                     ...snapshot.integrationLines
                 ])
             );
@@ -3330,12 +4195,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 GameAssist.createButton('Simple View', '!ga-status'),
                 GameAssist.createButton('Modules & Services', '!ga-config modules'),
                 GameAssist.createButton('Metrics', '!ga-metrics'),
+                GameAssist.createButton('Health Evidence', '!ga-health'),
                 GameAssist.createButton('Timezone', '!ga-timezone')
             ]
             : [
                 GameAssist.createButton('Troubleshooting Details', '!ga-status --details'),
                 GameAssist.createButton('Modules & Services', '!ga-config modules'),
                 GameAssist.createButton('Open Settings', '!ga-config ui'),
+                GameAssist.createButton('Health Evidence', '!ga-health'),
                 GameAssist.createButton('Timezone', '!ga-timezone')
             ];
         const actionTitle = detailed ? 'Troubleshooting Actions' : 'GameAssist Actions';
@@ -3533,6 +4400,317 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         sendStatusPanel(buildStatusSnapshot(), detailed);
     }, 'Core', { gmOnly: true });
 
+    function healthEvidenceLabel(event) {
+        const payload = event?.payload || {};
+        const name = payload.character?.name || payload.token?.name || 'Unknown subject';
+        const before = payload.before?.current?.raw === '' ? 'blank' : (payload.before?.current?.raw ?? 'unknown');
+        const after = payload.after?.current?.raw === '' ? 'blank' : (payload.after?.current?.raw ?? 'unknown');
+        const source = payload.provenance?.kind === 'gameassist-write'
+            ? `${payload.provenance.producer || 'GameAssist'} verified write`
+            : 'Roll20 observation';
+        return `${name}: ${before} to ${after} | ${payload.classification || 'unknown'} | ${source}`;
+    }
+
+    const PC_HEALTH_ALERT_LABELS = Object.freeze({
+        50: 'Bloodied (at or below half health)',
+        25: 'Critical (at or below one-quarter health)',
+        10: 'Near Defeat (at or below one-tenth health)'
+    });
+
+    /**
+     * ensurePcHealthAlertConfig — Repair the protected, configuration-only alert branch.
+     * Inputs: saved HealthService configuration, which may be absent or malformed.
+     * Outputs: one canonical object with enabled, showExactHp, and known threshold flags.
+     * Invariants: valid booleans survive; unknown values never become executable policy.
+     * Failure: malformed fields fall back independently without changing HealthService.
+     * Design: keep campaign choices persistent while alert delivery remains stateless.
+     */
+    function ensurePcHealthAlertConfig() {
+        const branch = GameAssist.getState('HealthService');
+        const saved = branch.config.pcAlerts;
+        const source = saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {};
+        const savedThresholds = source.thresholds && typeof source.thresholds === 'object' && !Array.isArray(source.thresholds)
+            ? source.thresholds
+            : {};
+        const thresholds = {};
+        POLICY.health.pcAlertThresholds.forEach(value => {
+            thresholds[String(value)] = typeof savedThresholds[String(value)] === 'boolean'
+                ? savedThresholds[String(value)]
+                : true;
+        });
+        branch.config.pcAlerts = {
+            enabled: typeof source.enabled === 'boolean' ? source.enabled : false,
+            showExactHp: typeof source.showExactHp === 'boolean' ? source.showExactHp : false,
+            thresholds
+        };
+        return branch.config.pcAlerts;
+    }
+
+    function enabledPcHealthThresholds(config = ensurePcHealthAlertConfig()) {
+        return POLICY.health.pcAlertThresholds.filter(value => config.thresholds[String(value)] === true);
+    }
+
+    function pcHealthBand(percent) {
+        if (percent <= 10) return PC_HEALTH_ALERT_LABELS[10];
+        if (percent <= 25) return PC_HEALTH_ALERT_LABELS[25];
+        return PC_HEALTH_ALERT_LABELS[50];
+    }
+
+    /**
+     * evaluatePcHealthAlert — Convert one canonical transition into threshold evidence.
+     * Inputs: an immutable HealthService health.transition event and validated config.
+     * Outputs: crossed thresholds and display values, or null when no alert is warranted.
+     * Invariants: only supported PCs, stable positive maximum HP, and numeric decreases qualify.
+     * Failure: initialization, synchronization, blank/invalid values, NPCs, and max-HP changes stay silent.
+     * Design: detect A > threshold and B <= threshold directly, so healing naturally rearms it.
+     */
+    function evaluatePcHealthAlert(event, config = ensurePcHealthAlertConfig()) {
+        if (!config.enabled || event?.type !== 'health.transition') return null;
+        const payload = event.payload || {};
+        if (payload.character?.actorType !== 'pc' || payload.direction !== 'decrease') return null;
+        if (['initialization', 'synchronization', 'clearing', 'invalid'].includes(payload.classification)) return null;
+        const beforeCurrent = payload.before?.current;
+        const afterCurrent = payload.after?.current;
+        const beforeMaximum = payload.before?.maximum;
+        const afterMaximum = payload.after?.maximum;
+        if (
+            beforeCurrent?.state !== 'valid' || afterCurrent?.state !== 'valid' ||
+            beforeMaximum?.state !== 'valid' || afterMaximum?.state !== 'valid'
+        ) return null;
+        const maximum = Number(afterMaximum.value);
+        if (!Number.isFinite(maximum) || maximum <= 0 || Number(beforeMaximum.value) !== maximum) return null;
+        const beforeValue = Number(beforeCurrent.value);
+        const afterValue = Number(afterCurrent.value);
+        if (!Number.isFinite(beforeValue) || !Number.isFinite(afterValue) || afterValue >= beforeValue) return null;
+        const beforePercent = (beforeValue / maximum) * 100;
+        const afterPercent = (afterValue / maximum) * 100;
+        const crossed = enabledPcHealthThresholds(config)
+            .filter(value => beforePercent > value && afterPercent <= value);
+        if (!crossed.length) return null;
+        return {
+            name: String(payload.character?.name || payload.token?.name || 'Player Character'),
+            beforeValue,
+            afterValue,
+            maximum,
+            beforePercent,
+            afterPercent,
+            crossed,
+            band: pcHealthBand(afterPercent)
+        };
+    }
+
+    function pcHealthCrossingText(crossed) {
+        return crossed.map(value => `${PC_HEALTH_ALERT_LABELS[value]} (${value}%)`);
+    }
+
+    function sendPcHealthAlert(alert, { preview = false } = {}) {
+        const config = ensurePcHealthAlertConfig();
+        const fields = [
+            '&{template:default} {{name=Player Character Health Alert}}',
+            preview ? statusField('Preview', 'Example only. No character HP changed.') : '',
+            statusField('Character', alert.name),
+            statusField('Current Health Band', alert.band),
+            statusField('Thresholds Crossed', pcHealthCrossingText(alert.crossed)),
+            config.showExactHp
+                ? statusField('HP', `${alert.beforeValue} to ${alert.afterValue} of ${alert.maximum}`)
+                : '',
+            statusField('Privacy', 'Sent only to the GM. No marker, history, healing, damage, or combat action was applied.')
+        ].filter(Boolean);
+        sendChat('GameAssist', `/w gm ${fields.join(' ')}`);
+    }
+
+    function handlePcHealthAlert(event) {
+        const alert = evaluatePcHealthAlert(event);
+        if (alert) sendPcHealthAlert(alert);
+    }
+
+    function pcHealthAlertSettingsNotice(config) {
+        const thresholds = enabledPcHealthThresholds(config);
+        if (!config.enabled) return 'Alerts are off. HealthService continues to observe supported HP normally.';
+        if (!GameAssist.HealthService.isEnabled()) return 'Alerts are configured on, but HealthService is currently disabled.';
+        if (!thresholds.length) return 'Alerts are on, but every threshold is off; no notices will be sent.';
+        return 'Alerts are ready and will whisper only the GM when a supported PC crosses downward.';
+    }
+
+    function sendPcHealthAlertSettings(notice = '') {
+        const config = ensurePcHealthAlertConfig();
+        const thresholdLines = POLICY.health.pcAlertThresholds.map(value => {
+            const active = config.thresholds[String(value)] === true;
+            return `${value}% - ${PC_HEALTH_ALERT_LABELS[value]}: ${active ? 'On' : 'Off'}`;
+        });
+        const fields = [
+            '&{template:default} {{name=PC Health Alerts}}',
+            notice ? statusField('Update', notice) : '',
+            statusField('Status', pcHealthAlertSettingsNotice(config)),
+            statusField('Alerts', config.enabled ? 'On' : 'Off'),
+            statusField('Health Thresholds', thresholdLines),
+            statusField('Exact HP', config.showExactHp ? 'Shown' : 'Hidden'),
+            statusField('Who Is Included', 'Supported official 2014 player characters. NPC alerts remain separately managed by NPCAssist.'),
+        ].filter(Boolean);
+        const thresholdControls = POLICY.health.pcAlertThresholds.map(value => {
+            const active = config.thresholds[String(value)] === true;
+            return `${value}%: ${GameAssist.createButton(active ? 'Turn Off' : 'Turn On', `!ga-health alerts threshold ${value} ${active ? 'off' : 'on'}`)}`;
+        });
+        const controls = [
+            `<strong>PC Health Alert Controls</strong>`,
+            `Alerts: ${GameAssist.createButton(config.enabled ? 'Turn Off' : 'Turn On', `!ga-health alerts ${config.enabled ? 'off' : 'on'}`)} ${GameAssist.createButton('Preview Alert', '!ga-health alerts preview')}`,
+            `Exact HP: ${GameAssist.createButton(config.showExactHp ? 'Hide Exact HP' : 'Show Exact HP', `!ga-health alerts exact ${config.showExactHp ? 'off' : 'on'}`)}`,
+            ...thresholdControls,
+            [
+                GameAssist.createButton('Health Status', '!ga-health'),
+                GameAssist.createButton('Recent Evidence', '!ga-health recent'),
+                GameAssist.createButton('Page Audit', '!ga-health audit'),
+                GameAssist.createButton('Open Settings', '!ga-config ui')
+            ].join(' ')
+        ];
+        sendChat('GameAssist', `/w gm ${fields.join(' ')}`);
+        // CHOICE: Keep button-heavy controls in a normal whisper because Roll20 can omit template-only control rows.
+        sendChat('GameAssist', `/w gm <div>${controls.join('<br>')}</div>`);
+    }
+
+    function previewPcHealthAlert() {
+        const config = ensurePcHealthAlertConfig();
+        const crossed = enabledPcHealthThresholds(config);
+        if (!crossed.length) {
+            sendPcHealthAlertSettings('Turn on at least one threshold before previewing an alert.');
+            return;
+        }
+        const lowest = crossed[crossed.length - 1];
+        const afterValue = lowest === 10 ? 5 : (lowest === 25 ? 20 : 40);
+        sendPcHealthAlert({
+            name: 'Example Hero',
+            beforeValue: 100,
+            afterValue,
+            maximum: 100,
+            beforePercent: 100,
+            afterPercent: afterValue,
+            crossed,
+            band: pcHealthBand(afterValue)
+        }, { preview: true });
+        sendPcHealthAlertSettings('Preview sent. No character HP was changed.');
+    }
+
+    function setPcHealthAlertOption(parts) {
+        const config = ensurePcHealthAlertConfig();
+        const action = String(parts[0] || '').toLowerCase();
+        if (!action || action === 'status' || action === 'menu' || action === 'settings') {
+            sendPcHealthAlertSettings();
+            return;
+        }
+        if (action === 'preview' || action === 'test') {
+            previewPcHealthAlert();
+            return;
+        }
+        if (action === 'on' || action === 'off') {
+            config.enabled = action === 'on';
+            sendPcHealthAlertSettings(`PC health alerts turned ${action}.`);
+            return;
+        }
+        if (action === 'exact') {
+            const value = String(parts[1] || '').toLowerCase();
+            if (!['on', 'off'].includes(value)) {
+                sendPcHealthAlertSettings('Choose whether exact HP should be on or off.');
+                return;
+            }
+            config.showExactHp = value === 'on';
+            sendPcHealthAlertSettings(`Exact HP display turned ${value}.`);
+            return;
+        }
+        if (action === 'threshold') {
+            const threshold = Number(parts[1]);
+            const value = String(parts[2] || '').toLowerCase();
+            if (!POLICY.health.pcAlertThresholds.includes(threshold) || !['on', 'off'].includes(value)) {
+                sendPcHealthAlertSettings('Choose the 50%, 25%, or 10% threshold and set it on or off.');
+                return;
+            }
+            config.thresholds[String(threshold)] = value === 'on';
+            sendPcHealthAlertSettings(`${threshold}% alerts turned ${value}.`);
+            return;
+        }
+        sendPcHealthAlertSettings('That PC health-alert option was not recognized.');
+    }
+
+    /**
+     * sendHealthDiagnostics — Present bounded HealthService evidence to the GM.
+     * Inputs: status, recent, or audit mode from the GM-only !ga-health command.
+     * Outputs: a compact private panel; audit reads the Player Ribbon page without writes.
+     * Invariants: unknown observations remain unknown and no retained evidence is mutated.
+     * Failure: missing pages or unsupported tokens are reported without guessing identity.
+     * Design: make live acceptance inspectable without turning a core service into gameplay.
+     */
+    function sendHealthDiagnostics(mode = 'status') {
+        const status = GameAssist.HealthService.getStatus();
+        const recent = GameAssist.HealthService.getRecent(10);
+        const actions = [
+            GameAssist.createButton('Status', '!ga-health'),
+            GameAssist.createButton('Recent Evidence', '!ga-health recent'),
+            GameAssist.createButton('Page Audit', '!ga-health audit'),
+            GameAssist.createButton('PC Alerts', '!ga-health alerts'),
+            GameAssist.createButton('Modules & Services', '!ga-config modules')
+        ].join(' ');
+        const fields = [`&{template:default} {{name=GameAssist Health Evidence}}`];
+
+        if (mode === 'audit') {
+            const pageId = String(Campaign().get('playerpageid') || '');
+            if (!pageId) {
+                fields.push(statusField('Needs Attention', 'The Player Ribbon page could not be determined.'));
+            } else {
+                const tokens = findObjs({ _type: 'graphic', _pageid: pageId })
+                    .filter(token => ['objects', 'gmlayer'].includes(String(token.get('layer') || '')));
+                const supported = tokens
+                    .map(token => GameAssist.HealthService.readToken(token))
+                    .filter(Boolean);
+                const pcs = supported.filter(snapshot => snapshot.character?.actorType === 'pc').length;
+                const npcs = supported.filter(snapshot => snapshot.character?.actorType === 'npc').length;
+                fields.push(
+                    statusField('Supported On This Page', `${supported.length} token${supported.length === 1 ? '' : 's'}: ${pcs} linked 2014 PC${pcs === 1 ? '' : 's'} and ${npcs} linked NPC${npcs === 1 ? '' : 's'}.`),
+                    statusField('Not Included', `${tokens.length - supported.length} object/GM-layer token${tokens.length - supported.length === 1 ? '' : 's'} did not match a supported HealthService surface.`),
+                    statusField('Changes', 'None. This audit is read-only.')
+                );
+            }
+        } else if (mode === 'recent') {
+            fields.push(
+                statusField('Recent Evidence', recent.length
+                    ? recent.slice().reverse().map(healthEvidenceLabel)
+                    : 'No supported HP transition has been observed during this sandbox session.'),
+                statusField('Reading The Result', 'Declared and verified means a GameAssist writer identified and verified its own operation. Roll20 observation means the cause is not known to HealthService.')
+            );
+        } else {
+            const declared = recent.filter(event => event.payload?.provenance?.kind === 'gameassist-write').length;
+            const unknown = recent.filter(event => event.payload?.classification === 'unknown').length;
+            fields.push(
+                statusField('Service', `HealthService v${status.version} is ${status.enabled ? 'enabled' : 'disabled'}.`),
+                statusField('Supported HP', 'Official 2014 PC hp attributes and linked NPC token bar 1.'),
+                statusField('This Sandbox Session', `${status.recentTransitions} recent transition${status.recentTransitions === 1 ? '' : 's'} retained | ${declared} declared and verified | ${unknown} unknown.`),
+                statusField('PC Health Alerts', pcHealthAlertSettingsNotice(ensurePcHealthAlertConfig())),
+                statusField('Important Limit', 'An unexplained decrease shows that HP went down. It does not prove damage, an attacker, a damage type, resistance, temporary HP, or a concentration trigger.')
+            );
+        }
+
+        sendChat('GameAssist', `/w gm ${fields.join(' ')}`);
+        // CHOICE: Keep navigation in a normal whisper because Roll20 can omit button-only template rows.
+        sendChat('GameAssist', `/w gm <div><strong>Health Evidence Actions</strong><br>${actions}</div>`);
+    }
+
+    GameAssist.onCommand('!ga-health', msg => {
+        const raw = String(msg.content || '').replace(/^!ga-health\s*/i, '').trim();
+        const parts = raw.split(/\s+/).filter(Boolean);
+        const mode = String(parts.shift() || '').toLowerCase();
+        if (!mode || mode === 'status') return sendHealthDiagnostics('status');
+        if (mode === 'recent') return sendHealthDiagnostics('recent');
+        if (mode === 'audit') return sendHealthDiagnostics('audit');
+        if (mode === 'alerts' || mode === 'alert') return setPcHealthAlertOption(parts);
+        GameAssist.log('HealthService', 'Use !ga-health, !ga-health recent, !ga-health audit, or !ga-health alerts.', 'WARN');
+    }, 'Core', { gmOnly: true });
+
+    ensurePcHealthAlertConfig();
+    const pcHealthAlertObservation = GameAssist.HealthService.observe(handlePcHealthAlert, {
+        owner: 'Core.PCHealthAlerts'
+    });
+    if (!pcHealthAlertObservation.ok) {
+        GameAssist.log('HealthService', `PC health alerts could not subscribe: ${pcHealthAlertObservation.message}`, 'WARN');
+    }
+
     GameAssist.onCommand('!ga-metrics', msg => {
         const parts = msg.content.trim().split(/\s+/);
         const sub = (parts[1] || 'summary').toLowerCase();
@@ -3608,11 +4786,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.log('Metrics', summary.join('\n'));
     }, 'Core', { gmOnly: true });
     // --- Notes & Comments ---
-    // Changed (v0.1.7.0): Added CombatAssist lifecycle and active-encounter state to the expanded Turn Tracker health details.
+    // Changed (v2.0.0): Added protected, optional GM-private PC health alerts with independently selectable 50%, 25%, and 10% downward-crossing thresholds, combined notices, optional exact HP, safe preview, status controls, and HealthService-only observation without changing NPCAssist NPC policy.
     // Decision log:
     //   CHOICE: Keep command syntax identical to legacy for drop-in replacement.
     //   CHOICE: Keep the default status action-oriented and volatile counters behind --details - ALT: one exhaustive panel; REJECTED: obscured the health signal.
     //   CHOICE: Send status navigation as a separate normal whisper - ALT: button-only template row; REJECTED: Roll20 omitted that row in live testing.
+    //   CHOICE: Consume canonical HealthService events - ALT: add another HP listener; REJECTED: linked PC token and sheet echoes would duplicate policy and notifications.
+    //   CHOICE: Derive rearming from an actual rise above a threshold followed by a new downward crossing - ALT: persist per-character latch state; REJECTED: crossing evidence already provides the rule without stale state after restarts.
+    //   CHOICE: Keep exact HP hidden by default and every alert GM-private - ALT: disclose threshold details to players; REJECTED: the feature is a GM awareness aid, not a public health announcement.
     //   CHOICE: Report dependency certainty instead of treating unavailable script metadata as absence.
     //   CHOICE: Export flags/global/module config in one snapshot - ALT: module-only export; REJECTED: incomplete configuration evidence.
     // Prior notes:
@@ -3643,8 +4824,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Modules wrapper (bundled features)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES", title: "Modules wrapper",
-    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Condition, token, and gameplay marker consumers share CORE:MARKERSERVICE","TokenAssist owns the documented GameAssist token-command surface without assuming the TokenMod brand","InitiativeAssist owns initiative rules while CombatAssist owns deliberate preservation-first encounter flow through CORE:TURNTRACKERSERVICE","WelcomeAssist remains disabled by default and announces automatically only after completed bootstrap"],
-    //   depends_on: ["[GAMEASSIST:CORE]","[GAMEASSIST:INTERFACES]"], last_updated_version: "v1.8.0" }
+    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Condition, token, effect, and gameplay marker consumers share CORE:MARKERSERVICE","EffectAssist owns semantic effect instances and ownership-safe projections without hard-coupling unrelated modules","HealAssist consumes CORE:HEALTHSERVICE for deliberate verified healing without becoming an HP observer or prerequisite for unrelated modules","AttackAssist guides verified 2014 repeating attacks without owning damage, HP, effects, initiative, or encounter flow","AlmanacAssist owns fictional chronology without changing real-world timestamps or unrelated module state","TokenAssist owns the documented GameAssist token-command surface without assuming the TokenMod brand","InitiativeAssist owns initiative rules while CombatAssist owns deliberate preservation-first encounter flow through CORE:TURNTRACKERSERVICE","WelcomeAssist remains disabled by default and announces automatically only after completed bootstrap"],
+    //   depends_on: ["[GAMEASSIST:CORE]","[GAMEASSIST:INTERFACES]"], last_updated_version: "v2.0.0" }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES encloses all shipped feature modules. Each child retains its own
@@ -3652,16 +4833,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // sequencing while child sections own their observable behavior.
     // -------------------------------------------------------------------------
 
-    // ————— CONFIG UI MODULE v0.2.2 —————
+    // ————— CONFIG UI MODULE v0.2.3 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:CONFIGUI] BEGIN
     // Section Title: Config UI module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONFIGUI", title: "Config UI",
-    //   guarantees: ["GM chat menu for module and core-service toggles, timezone access, and quick config","Compact guide, status, info, read-only audit, and unknown-command recovery use the established !ga-config-ui prefix"],
+    //   guarantees: ["GM chat menu for module and core-service toggles, timezone access, quick config, and direct access to protected HealthService PC-alert controls","Compact guide, status, info, read-only audit, and unknown-command recovery use the established !ga-config-ui prefix"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:INTERFACES:COMMANDS]"],
-    //   last_updated_version: "v1.8.0",
-    //   independent_versions: { module_version: "0.2.2" } }
+    //   last_updated_version: "v2.0.0",
+    //   independent_versions: { module_version: "0.2.3" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:CONFIGUI provides GM-facing chat controls to page through modules,
@@ -3701,6 +4882,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         display = `${Object.keys(val).length} definitions`;
                     } else if (key === 'legacyStatusInfoMigration' && val && typeof val === 'object') {
                         display = 'completed';
+                    } else if (key === 'pcAlerts' && val && typeof val === 'object') {
+                        const thresholds = Object.entries(val.thresholds || {})
+                            .filter(([, enabled]) => enabled === true)
+                            .map(([threshold]) => `${threshold}%`)
+                            .join(', ') || 'none';
+                        display = `${val.enabled === true ? 'on' : 'off'}; thresholds ${thresholds}; exact HP ${val.showExactHp === true ? 'shown' : 'hidden'}`;
                     }
                     return `<span><strong>${_sanitize(key)}</strong>: ${_sanitize(display)}</span>`;
                 });
@@ -3765,6 +4952,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const toggleCmd  = enabled ? `!ga-disable ${name}` : `!ga-enable ${name}`;
             const toggleBtn  = GameAssist.createButton(`${enabled ? 'Disable' : 'Enable'} ${name}`, toggleCmd);
             const configButtons = buildConfigButtons(name, cfg);
+            const settingsButton = name === 'HealthService'
+                ? GameAssist.createButton('Manage PC Health Alerts', '!ga-health alerts')
+                : '';
             const summary = modState.config.showSummaries ? formatConfigSummary(cfg) : '';
 
             const rows = [
@@ -3774,6 +4964,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (configButtons) {
                 rows.push(`Config: ${configButtons}`);
             }
+            if (settingsButton) rows.push(`Settings: ${settingsButton}`);
             if (summary) {
                 rows.push(summary);
             }
@@ -3904,10 +5095,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         prefixes: ['!ga-config-ui', '!ga-config ui', '!ConfigUI-GM', '!ConfigUI-DM', '!Config-GM', '!Config-DM']
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.7.0): Advanced ConfigUI to 0.2.2; GM and DM role aliases now open the actual settings screen while compact Guide/Help, Info, Status, read-only Audit, and unknown-command recovery remain available under the established prefix.
+    // Changed (v2.0.0): Advanced ConfigUI to 0.2.3 with a direct HealthService PC-alert settings button and a readable alert summary instead of raw protected configuration JSON.
     // Decision log:
     //   CHOICE: Button helper reused; nav uses the same command path for refresh/paging.
     // Prior notes:
+    //   v0.1.7.0: Advanced ConfigUI to 0.2.2; GM and DM role aliases open the actual settings screen while compact Guide/Help, Info, Status, read-only Audit, and unknown-command recovery remain available under the established prefix.
     //   v0.1.5.0: Core services appeared with an explicit label, used the same guarded enable/disable controls as modules, and summarized large condition/migration maps without dumping them into the settings panel.
     //   Maintenance (v0.1.4.1, no semantic change): Routed the unchanged default page size through POLICY.
     //   Maintenance (v0.1.3, no semantic change): Added module narrative; preserved UI behavior and pagination defaults.
@@ -4363,6 +5555,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // --- Notes & Comments ---
     // Changed (v1.8.0): Renamed the module to CritAssist while preserving the established !critfumble command family, campaign state, rollable-table names, and legacy controls.
     // Prior notes:
+    //   v1.8.0: Replaced the remaining inherited module identities with CritAssist, NPCAssist, ConcentrationAssist, and HPAssist while retaining compatibility aliases and independent lifecycle management.
     //   v0.1.7.0: Advanced CritFumble to 0.2.5.1; GM and DM role aliases open the GM player picker, while compact Guide/Help navigation, table status/audit, Info, the stable manual, and every existing roll command remain available.
     //   v0.1.4.3: Reworded an internal comment for collaborator clarity; no semantic change.
     //   v0.1.4.1: Routed unchanged defaults through POLICY and timestamps through now(); no semantic change.
@@ -6038,21 +7231,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: GameAssist general token controls and TokenMod compatibility
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:TOKENASSIST", title: "TokenAssist",
-    //   guarantees: ["General token controls use !token-assist and !ta/!ta-* commands; older !token-mod syntax remains a v1.x compatibility alias and is removed no earlier than v2.0.0","Selected tokens are available to their users while explicit --ids targeting remains GM-only unless the DM opts in","Compact layered navigation, stable on-demand manual, read-only audit, and unknown-command recovery preserve the established command families","Every status-marker command uses CORE:MARKERSERVICE","Valid legacy state.TokenMod playersCanUse_ids configuration is copied once without deleting the source state","A detected standalone TokenMod suspends only overlapping !token-mod handling and produces an actionable warning rather than double-applying token changes"],
+    //   guarantees: ["General token controls use !token-assist and !ta/!ta-* commands; older !token-mod syntax remains a compatibility alias until a separately announced migration release","Selected tokens are available to their users while explicit --ids targeting remains GM-only unless the DM opts in","Compact layered navigation, stable on-demand manual, read-only audit, and unknown-command recovery preserve the established command families","Every status-marker command uses CORE:MARKERSERVICE","Valid legacy state.TokenMod playersCanUse_ids configuration is copied once without deleting the source state","A detected standalone TokenMod suspends only overlapping !token-mod handling and produces an actionable warning rather than double-applying token changes"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.TokenAssist"],
-    //   last_updated_version: "v0.1.7.0",
-    //   independent_versions: { module_version: "1.0.3", token_config_schema_version: 1, tokenmod_reference_version: "0.8.88" }, lifecycle: "active" }
+    //   last_updated_version: "v2.0.0",
+    //   independent_versions: { module_version: "1.0.4", token_config_schema_version: 1, tokenmod_reference_version: "0.8.88" }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // TokenAssist provides GameAssist's general token controls through a verified,
-    // intentionally bounded command surface. Older !token-mod syntax remains temporary;
+    // intentionally bounded command surface. Older !token-mod syntax remains until a separately announced migration release;
     // GameAssist lifecycle, validation, diagnostics, and MarkerService own the behavior.
     // See ATTRIBUTIONS.md for TokenMod credit, pinned source, and the MIT notice.
     // -------------------------------------------------------------------------
     const TokenAssist = (() => {
         const MODULE_NAME = 'TokenAssist';
-        const MODULE_VERSION = '1.0.3';
+        const MODULE_VERSION = '1.0.4';
         const CONFIG_SCHEMA_VERSION = 1;
         const TOKENMOD_REFERENCE = Object.freeze({
             version: '0.8.88',
@@ -7000,7 +8193,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h2>Command Reference</h2>',
                 '<ul><li><code>!TokenAssist-GM</code> or <code>!TokenAssist-DM</code> - GM token controls.</li><li><code>!token-assist help</code>, <code>!ta-help</code>, or their Guide aliases - compact guide.</li><li><code>!token-assist info</code> or <code>!ta-info</code> - short examples.</li><li><code>!token-assist status</code> / <code>audit</code> - read module and selection state.</li><li><code>!token-assist --help-statusmarkers</code> - marker syntax.</li><li><code>!token-assist config</code> - GM targeting setting.</li></ul>',
                 '<h2>Compatibility And Credit</h2>',
-                `<p>Token-control design credit: TokenMod ${_sanitize(TOKENMOD_REFERENCE.version)} by The Aaron, Arcane Scriptomancer. Source and MIT license details are preserved in ATTRIBUTIONS.md. The older <code>!token-mod</code> spelling remains a v1.x compatibility alias and should be updated before GameAssist v2.0.0.</p>`
+                `<p>Token-control design credit: TokenMod ${_sanitize(TOKENMOD_REFERENCE.version)} by The Aaron, Arcane Scriptomancer. Source and MIT license details are preserved in ATTRIBUTIONS.md. The older <code>!token-mod</code> spelling remains a compatibility alias. Use <code>!token-assist</code> or <code>!ta</code> for new macros; any removal will be announced through a separate migration release.</p>`
             ].join('');
         }
 
@@ -7102,7 +8295,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             if (!legacyWarningShown) {
                 legacyWarningShown = true;
-                whisper(msg, '<b>Legacy command accepted.</b><br><code>!token-mod</code> is deprecated. Replace it with <code>!token-assist</code>, <code>!ta</code>, or a matching <code>!ta-*</code> command before GameAssist v2.0.0.');
+                whisper(msg, '<b>Legacy command accepted.</b><br><code>!token-mod</code> is a retained compatibility command. Use <code>!token-assist</code>, <code>!ta</code>, or a matching <code>!ta-*</code> command for new macros.');
             }
             handleTokenRequest(msg);
         }
@@ -7224,21 +8417,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['configSchemaVersion']
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.7.0): Advanced TokenAssist to 1.0.3; Menu, GM, and DM open an action-focused token control screen, while Guide/Help, Info, Status, Audit, Settings, Manual, and mutation syntax remain available across !token-assist, !ta, !ta-*, and !TokenAssist-*.
+    // Changed (v2.0.0): Advanced TokenAssist to 1.0.4 and replaced the expired v2.0.0 command-removal deadline with an explicit migration-release promise; token behavior and compatibility aliases are unchanged.
     // TokenMod provenance:
     //   Original project: TokenMod by The Aaron, Arcane Scriptomancer.
     //   Pinned reference: Roll20/roll20-api-scripts commit 9d634d3149985dcf10333920b3f4c41f215f39fc, TokenMod/0.8.88/TokenMod.js blob fc6c9cb45ec2f2ee254a24f849e089507a0e610a.
     //   License and public notice: MIT; see LICENSE and ATTRIBUTIONS.md. No upstream endorsement is implied.
     // Decision log:
     //   CHOICE: Name the module TokenAssist and tag it TOKENASSIST - ALT: retain TokenMod branding; REJECTED: GameAssist owns this implementation, lifecycle, limits, and support.
-    //   CHOICE: Make !token-assist and !ta/!ta-* canonical while retaining a warning-bearing !token-mod migration alias through v0.1.x - ALT: remove the old spelling immediately; REJECTED: test campaigns need a bounded macro migration window.
+    //   CHOICE: Keep !token-assist and !ta/!ta-* canonical while retaining !token-mod until a separately announced migration release - ALT: remove it at the project-version boundary; REJECTED: version renumbering is not evidence that campaign macros have migrated.
     //   CHOICE: Implement a bounded, documented command surface - ALT: paste the complete upstream implementation; REJECTED: unverified wholesale integration would duplicate marker authority and import unrelated state/lifecycle assumptions.
     //   CHOICE: Suspend compatibility handling when standalone TokenMod is detected - ALT: let both handlers run; REJECTED: one command could mutate the same token twice.
     //   CHOICE: Copy only practical legacy configuration and preserve state.TokenMod - ALT: rename or delete upstream state; REJECTED: rollback and migration diagnosis require the source state.
     //   CHOICE: Expose GameAssist.TokenAssist.observeTokenChange - ALT: create a global TokenMod compatibility object; REJECTED: the global would blur branding, provenance, and standalone-conflict detection.
     //   CHOICE: Route all status-marker syntax through MarkerService - ALT: write statusmarkers independently; REJECTED: GameAssist must have one marker authority.
     // Prior notes:
-    //   Earlier unreleased v0.1.5.0 checkpoints used the name TokenService, exposed !token-service, and treated !token-mod as the primary compatibility command. Saved test state is migrated to TokenAssist.
+    //   v0.1.7.0: Advanced TokenAssist to 1.0.3; added action-focused Menu/GM/DM navigation while retaining the established controls.\n    //   Earlier unreleased v0.1.5.0 checkpoints used the name TokenService, exposed !token-service, and treated !token-mod as the primary compatibility command. Saved test state is migrated to TokenAssist.
     // [GAMEASSIST:MODULES:TOKENASSIST] END
     // =============================================================================
 
@@ -8867,6 +10060,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Revalidate every selected token's page, linkage, control, and eligibility at execution time - ALT: trust selection identifiers captured by a chat button; REJECTED: players must never roll an uncontrolled or stale token through a batch command.
     //   CHOICE: Keep the detailed review in private chat - ALT: create a persistent initiative handout; REJECTED: initiative state is short-lived and the handout added campaign clutter without preserving a useful historical record.
     // Prior notes:
+    //   v0.1.7.0: Added CombatAssist lifecycle and active-encounter state to the expanded Turn Tracker health details.
     //   v0.1.7.0 / InitiativeAssist 1.0.2: Replaced the long single-screen guide with a compact action panel whose topic buttons reveal the detailed reference only when requested.
     //   v0.1.5.0: Advanced unreleased TokenAssist to 1.0.1; added canonical !token-assist, !ta, and !ta-* mutation commands, explicitly deprecated !token-mod for removal no later than v0.2.0, normalized aura option and literal color values, added number-blank aura toggles, and limited lastmove trails to the current command so movement does not reconnect to an old origin.
     //   v0.1.5.0: Advanced unreleased ConditionAssist to 1.0.1 with accurate selected-token condition recognition, a bounded GM current-page condition/marker status view plus complete status handout, case-insensitive !cond-[condition] references for official/custom definitions, !c-a and !cond-! announcement aliases, complete 2014/2024/campaign wording, built-in/custom marker artwork, selected-character announcements that toggle and verify marker state, character-first is/is-no-longer reporting, Concentrating display-name repair, documented Roll20 player-name lookup for private delivery, bounded private-reference buttons, duplicate-marker warnings, schema-v2 import/export, and automatic repair of untouched 1.0.0 defaults.
@@ -8877,17 +10071,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:INITIATIVEASSIST] END
     // =============================================================================
 
-    // ————— COMBATASSIST MODULE v1.0.5 —————
+    // ————— COMBATASSIST MODULE v1.1.0 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:COMBATASSIST] BEGIN
     // Section Title: Preservation-first encounter flow
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:COMBATASSIST", title: "CombatAssist",
-    //   guarantees: ["Disabled-by-default, GM-configured encounter tracking through case-insensitive !Combat- commands","Exact one-row movement advances turns while valid roster, initiative, and manual-order changes preserve the round and establish a fresh counting baseline","A single clearly named native custom round counter is authoritative; its simple signed whole-number calculation is evaluated when CombatAssist moves it to the top","Without a native round counter, rounds advance only after an uninterrupted, unambiguous forward cycle returns to the encounter anchor","Unreadable, off-page, malformed, stale, or ambiguous tracker states retain the last accepted snapshot and expose guarded recovery","Explicit next, previous, restore, and authorized End My Turn requests use CORE:TURNTRACKERSERVICE revision guards","Optional turn reminders validate encounter, round, current identity, revision, and deadline before notifying and never advance initiative","Optional current-turn cues use non-centering native pings, restrict hidden turns to GMs, and never mutate token properties","Player End My Turn is available only in Whispers mode, is rebound at execution time, and confirms success before a newly controlled character receives the next-turn prompt","Player confirmations describe the next initiative neutrally and never reveal GM-layer, unlinked, or custom tracker identities","Standard confirmation wording appears exactly once in the warmer Varied rotation","The root guide stays compact while its purpose action writes a persistent GM manual handout and topic buttons reveal focused references","Status, guide, help, GM, menu, info, and audit navigation aliases remain case-insensitive","Baseline module operation remains independent; optional cross-module features must identify and locally enforce their prerequisites","CombatAssist does not replace Roll20's native Turn Tracker"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
+    //   guarantees: ["Disabled-by-default, GM-configured encounter tracking through case-insensitive !Combat- commands","Exact one-row movement advances turns while valid roster, initiative, and manual-order changes preserve the round and establish a fresh counting baseline","A single clearly named native custom round counter is authoritative; its simple signed whole-number calculation is evaluated when CombatAssist moves it to the top","Without a native round counter, rounds advance only after an uninterrupted, unambiguous forward cycle returns to the encounter anchor","Unreadable, off-page, malformed, stale, or ambiguous tracker states retain the last accepted snapshot and expose guarded recovery","Explicit next, previous, restore, and authorized End My Turn requests use CORE:TURNTRACKERSERVICE revision guards","Verified encounter transitions publish immutable semantic events without granting consumers tracker-write authority","Optional turn reminders validate encounter, round, current identity, revision, and deadline before notifying and never advance initiative","Optional current-turn cues use non-centering native pings, restrict hidden turns to GMs, and never mutate token properties","Player End My Turn is available only in Whispers mode, is rebound at execution time, and confirms success before a newly controlled character receives the next-turn prompt","Player confirmations describe the next initiative neutrally and never reveal GM-layer, unlinked, or custom tracker identities","Standard confirmation wording appears exactly once in the warmer Varied rotation","The root guide stays compact while its purpose action writes a persistent GM manual handout and topic buttons reveal focused references","Status, guide, help, GM, menu, info, and audit navigation aliases remain case-insensitive","Baseline module operation remains independent; optional cross-module features must identify and locally enforce their prerequisites","CombatAssist does not replace Roll20's native Turn Tracker"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
     //   observability: { spans: ["[GAMEASSIST:MODULES:COMBATASSIST]"] },
-    //   last_updated_version: "v0.1.7.0",
-    //   independent_versions: { module_version: "1.0.5" }, lifecycle: "active" }
+    //   last_updated_version: "v2.0.0",
+    //   independent_versions: { module_version: "1.1.0", combat_event_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // CombatAssist begins only after a GM explicitly starts it against an open,
@@ -8900,7 +10094,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     let teardownCombatAssist = () => {};
     GameAssist.register('CombatAssist', function() {
         const MODULE_NAME = 'CombatAssist';
-        const MODULE_VERSION = '1.0.5';
+        const MODULE_VERSION = '1.1.0';
+        const COMBAT_EVENT_SCHEMA_VERSION = 1;
         const VALID_STATES = new Set(['active', 'paused', 'attention']);
         const VALID_ANNOUNCEMENTS = new Set(['off', 'gm', 'public', 'whispers']);
         const VALID_PLAYER_CONFIRMATIONS = new Set(['standard', 'varied']);
@@ -8920,6 +10115,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         let turnTimerGeneration = 0;
         let turnTimerHandles = [];
         let cueUnavailableReported = false;
+        let encounterSequence = 0;
         const modState = GameAssist.getState(MODULE_NAME);
         Object.assign(modState.config, {
             enabled: false,
@@ -9280,8 +10476,34 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     ? cloneData(current.entries)
                     : [];
             }
+            if (!value.id) {
+                value.id = `combat-${Date.now().toString(36)}-${(++encounterSequence).toString(36)}`;
+            }
+            if (!Number.isInteger(value.progression) || value.progression < 0) value.progression = 0;
             if (value.checkpoint && !checkpointIsUsable(value.checkpoint)) delete value.checkpoint;
             return value;
+        }
+
+        function publishCombatEvent(type, encounter, analysis, details = {}) {
+            if (!encounter) return { ok: false, code: 'NOT_FOUND', message: 'No CombatAssist encounter is available.' };
+            const current = analysis?.structures?.[0];
+            return GameAssist.SemanticEvents.publish(type, MODULE_NAME, {
+                combatEventSchemaVersion: COMBAT_EVENT_SCHEMA_VERSION,
+                encounterId: String(encounter.id || ''),
+                pageId: String(encounter.pageId || ''),
+                status: String(encounter.status || ''),
+                round: Number(encounter.round || 0),
+                turn: Number(encounter.turn || 0),
+                progression: Number(encounter.progression || 0),
+                current: {
+                    identity: String(analysis?.identities?.[0] || encounter.order?.[0] || ''),
+                    label: String(currentLabel(analysis)),
+                    tokenId: current?.kind === 'token' ? String(current.id || '') : null,
+                    kind: String(current?.kind || 'unknown')
+                },
+                trackerRevision: String(encounter.lastRevision || ''),
+                details: cloneData(details || {})
+            });
         }
 
         function currentLabel(analysis) {
@@ -9664,6 +10886,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ]);
                 whisperCurrentPlayerTurn(encounter, analysis);
             }
+            publishCombatEvent('combat.encounter.rebased', encounter, analysis, { reason: encounter.lastChangeReason });
             return encounter;
         }
 
@@ -9686,6 +10909,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     GameAssist.createButton('Restart at Round 1', '!Combat-Start --confirm')
                 ].filter(Boolean).join(' '));
             }
+            if (!wasAttention) publishCombatEvent('combat.encounter.attention', encounter, null, { reason: encounter.attention });
         }
 
         function processSnapshot(snapshot, { notify = true, directionHint = null } = {}) {
@@ -9773,6 +10997,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
 
             rememberAcceptedState(encounter);
+            const previous = {
+                round: encounter.round,
+                turn: encounter.turn,
+                identity: String(encounter.order?.[0] || '')
+            };
             encounter.order = analysis.identities.slice();
             acceptSnapshot(encounter, snapshot);
             encounter.lastTransitionAt = isoNow();
@@ -9781,12 +11010,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (backward) {
                 encounter.forwardStreak = 0;
                 encounter.lastDirection = 'backward';
+                publishCombatEvent('combat.turn.changed', encounter, analysis, { direction: 'backward', previous });
                 if (notify) announceBackward(encounter, analysis);
                 return encounter;
             }
 
             encounter.forwardStreak = Number(encounter.forwardStreak || 0) + 1;
             encounter.lastDirection = 'forward';
+            encounter.progression = Number(encounter.progression || 0) + 1;
             const trackerOwnsRound = useRoundCounter(encounter, analysis, {
                 syncValue: analysis.roundCounter?.index === 0
             });
@@ -9798,6 +11029,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 encounter.forwardStreak = 0;
                 encounter.lastRoundAt = encounter.lastTransitionAt;
             }
+            publishCombatEvent('combat.turn.changed', encounter, analysis, { direction: 'forward', previous });
             if (notify) announceForward(encounter, analysis);
             return encounter;
         }
@@ -9827,6 +11059,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
 
             modState.runtime.encounter = {
+                id: `combat-${Date.now().toString(36)}-${(++encounterSequence).toString(36)}`,
                 status: 'active',
                 pageId: snapshot.pageId,
                 round: analysis.roundCounter?.value || 1,
@@ -9835,6 +11068,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 order: analysis.identities.slice(),
                 baseOrder: analysis.identities.slice(),
                 acceptedEntries: cloneData(snapshot.entries),
+                progression: 0,
                 forwardStreak: 0,
                 lastDirection: null,
                 lastRevision: snapshot.revision,
@@ -9855,6 +11089,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             scheduleTurnTimers(modState.runtime.encounter, snapshot, analysis);
             sendCurrentTurnCue(analysis);
             whisperCurrentPlayerTurn(modState.runtime.encounter, analysis);
+            publishCombatEvent('combat.encounter.started', modState.runtime.encounter, analysis, { reason: 'gm-started' });
         }
 
         function pauseEncounter() {
@@ -9885,6 +11120,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             encounter.status = 'paused';
             encounter.pausedAt = isoNow();
             clearTurnTimers(encounter, { forget: true });
+            publishCombatEvent('combat.encounter.paused', encounter, null, { reason: 'gm-paused' });
             sendPanel('CombatAssist Paused', [
                 { label: 'Tracker', value: 'Roll20 remains unchanged. CombatAssist will not count tracker movement while paused.' },
                 { label: 'Use This For', value: 'Adding, removing, or reordering Turn Tracker rows.' },
@@ -9945,6 +11181,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             scheduleTurnTimers(encounter, snapshot, analysis);
             sendCurrentTurnCue(analysis);
             whisperCurrentPlayerTurn(encounter, analysis);
+            publishCombatEvent('combat.encounter.resumed', encounter, analysis, { reason: 'gm-resumed' });
         }
 
         function adoptCurrentTracker() {
@@ -10042,6 +11279,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             scheduleTurnTimers(encounter, result.after, restoredAnalysis);
             sendCurrentTurnCue(restoredAnalysis);
             whisperCurrentPlayerTurn(encounter, restoredAnalysis);
+            publishCombatEvent('combat.encounter.rebased', encounter, restoredAnalysis, { reason: 'tracker-restored' });
         }
 
         function endEncounter(confirmed) {
@@ -10062,6 +11300,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             const summary = `Ended on round ${encounter.round} while ${encounter.status}.`;
             clearTurnTimers(encounter, { forget: true });
+            const endingSnapshot = GameAssist.TurnTrackerService.snapshot();
+            const endingAnalysis = analyzeSnapshot(endingSnapshot);
+            publishCombatEvent('combat.encounter.ended', encounter, endingAnalysis.ok ? endingAnalysis : null, { reason: 'gm-ended' });
             delete modState.runtime.encounter;
             sendPanel('CombatAssist Encounter Ended', [
                 { label: 'Summary', value: _sanitize(summary) },
@@ -10672,10 +11913,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         GameAssist.CombatAssist = Object.freeze({
             version: MODULE_VERSION,
+            combatEventSchemaVersion: COMBAT_EVENT_SCHEMA_VERSION,
             getStatus: () => {
                 const encounter = getEncounter();
                 return encounter ? JSON.parse(JSON.stringify(encounter)) : null;
-            }
+            },
+            observe: (callback, { owner = 'CombatAssistConsumer' } = {}) => GameAssist.SemanticEvents.observe(callback, {
+                owner,
+                types: ['combat.encounter.started', 'combat.encounter.rebased', 'combat.encounter.attention', 'combat.encounter.paused', 'combat.encounter.resumed', 'combat.encounter.ended', 'combat.turn.changed']
+            }),
+            clearObservers: owner => GameAssist.SemanticEvents.clearObservers(owner)
         });
 
         teardownCombatAssist = function() {
@@ -10697,8 +11944,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         preserveRuntimeOnDisable: true
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.7.0): Advanced CombatAssist to 1.0.5; !Combat-GM and !Combat-DM are equal role aliases for the encounter control center, while the shared manual writer and all encounter, timer, ping, and tracker behavior remain unchanged.
+    // Changed (v2.0.0): Advanced CombatAssist to 1.1.0 with stable encounter identity, monotonic verified-forward progression, and immutable public semantic events for optional consumers; native tracker ownership and all established encounter controls remain unchanged.
     // Decision log:
+    //   CHOICE: Publish verified encounter observations without exposing a consumer write path - ALT: let EffectAssist parse Roll20 turnorder independently; REJECTED: duplicate tracker interpretation would drift from CombatAssist's accepted baseline and safety rules.
+    // Prior notes:
+    //   v0.1.7.0: Advanced CombatAssist to 1.0.5; !Combat-GM and !Combat-DM are equal role aliases for the encounter control center, while the shared manual writer and all encounter, timer, ping, and tracker behavior remained unchanged.
     //   CHOICE: Start disabled and require explicit GM encounter start - ALT: infer combat from an open tracker; REJECTED: Roll20 trackers are also used for setup, exploration, and non-combat ordering.
     //   CHOICE: Identify token rows by token id and custom rows by exact label - ALT: include initiative priority; REJECTED: priority edits do not change row ownership or identity.
     //   CHOICE: Refuse indistinguishable duplicate rows and require CombatAssist Next Turn for a two-row tracker - ALT: guess native arrow direction; REJECTED: forward and backward produce the same two-row order.
@@ -13518,16 +14768,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:NPCASSIST] END
     // =============================================================================
 
-    // ————— CONCENTRATIONASSIST MODULE v0.2.2 —————
+    // ————— CONCENTRATIONASSIST MODULE v0.4.0 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:CONCENTRATIONASSIST] BEGIN
     // Section Title: ConcentrationAssist module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONCENTRATIONASSIST", title: "ConcentrationAssist",
-    //   guarantees: ["Chat UI for concentration saves; exact configured-marker status reporting; marker mutations through CORE:MARKERSERVICE","Compact layered navigation, stable on-demand manual, read-only audit, and unknown-command recovery preserve !concentration and !cc"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
-    //   last_updated_version: "v1.8.0",
-    //   independent_versions: { module_version: "0.2.2" } }
+    //   guarantees: ["Chat UI for concentration saves; exact configured-marker status reporting; marker mutations through CORE:MARKERSERVICE","Stable public set/read/observe contracts let dependent modules react without scraping private state","Optional HealthService offers are private, deduplicated, bounded, and revalidated before a roll","Compact layered navigation, stable on-demand manual, read-only audit, and unknown-command recovery preserve !concentration and !cc"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
+    //   provides: ["GameAssist.ConcentrationAssist"],
+    //   last_updated_version: "v2.0.0",
+    //   independent_versions: { module_version: "0.4.0", health_offer_schema_version: 1 } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:CONCENTRATIONASSIST manages concentration save rolls, whispering outcomes,
@@ -13541,11 +14792,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         enabled:   true,
         marker:    'Concentrating',
         randomize: true,
+        healthPrompts: true,
         ...modState.config
     });
 
     const LAST_DAMAGE_LIMIT = POLICY.runtime.lastDamageLimit;
-    const MODULE_VERSION = '0.2.2';
+    const MODULE_VERSION = '0.4.0';
+    const HEALTH_OFFER_SCHEMA_VERSION = 1;
+    const HEALTH_OBSERVER_OWNER = 'ConcentrationAssist.HealthOffers';
+    const healthOffers = new Map();
+    const healthOfferByEvent = new Map();
+    let healthOfferSequence = 0;
 
     function getEntryTimestamp(entry) {
         const ts = Number(entry && entry.timestamp);
@@ -13670,7 +14927,186 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
      *   Merge default settings with stored config.
      */
     function getConfig() {
-        return Object.assign({ randomize: true }, modState.config);
+        return Object.assign({ randomize: true, healthPrompts: true }, modState.config);
+    }
+
+    function isTokenConcentrating(tokenOrId) {
+        const token = typeof tokenOrId === 'string' ? getObj('graphic', tokenOrId) : tokenOrId;
+        const resolution = getMarkerResolution();
+        return Boolean(token && resolution.ok && GameAssist.MarkerService.has(token, resolution.id));
+    }
+
+    function pruneHealthOffers() {
+        const cutoff = Date.now();
+        healthOffers.forEach((offer, offerId) => {
+            if (offer.expiresAt > cutoff) return;
+            healthOffers.delete(offerId);
+            healthOfferByEvent.delete(offer.eventId);
+        });
+        while (healthOffers.size > POLICY.concentration.healthOfferLimit) {
+            const oldestId = healthOffers.keys().next().value;
+            const oldest = healthOffers.get(oldestId);
+            healthOffers.delete(oldestId);
+            if (oldest) healthOfferByEvent.delete(oldest.eventId);
+        }
+    }
+
+    function clearHealthOffers() {
+        healthOffers.clear();
+        healthOfferByEvent.clear();
+    }
+
+    function nextHealthOfferId() {
+        healthOfferSequence++;
+        return `conc-${Date.now().toString(36)}-${healthOfferSequence.toString(36)}`;
+    }
+
+    function playerDisplayName(playerId) {
+        const player = getObj('player', playerId);
+        return String(player?.get('_displayname') || player?.get('displayname') || '')
+            .replace(/ \(GM\)$/, '')
+            .replace(/["\\]/g, '')
+            .trim();
+    }
+
+    function playerControllerIds(token, character) {
+        const raw = [token?.get('controlledby'), character?.get('controlledby')]
+            .flatMap(value => String(value || '').split(','))
+            .map(value => value.trim())
+            .filter(Boolean);
+        const candidates = raw.includes('all')
+            ? findObjs({ _type: 'player' }).map(player => String(player.id))
+            : raw;
+        return [...new Set(candidates)]
+            .filter(playerId => !playerIsGM(playerId) && Boolean(getObj('player', playerId)));
+    }
+
+    function playerVisiblePageId(playerId) {
+        const fallback = String(Campaign().get('playerpageid') || '');
+        const raw = Campaign().get('playerspecificpages');
+        if (!raw) return fallback;
+        try {
+            const pages = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            return String(pages?.[playerId] || fallback);
+        } catch {
+            return fallback;
+        }
+    }
+
+    function healthOfferTarget(event) {
+        const payload = event?.payload || {};
+        const characterId = String(payload.character?.id || '');
+        const character = characterId ? getObj('character', characterId) : null;
+        if (!character) return { ok: false, code: 'NOT_FOUND' };
+
+        const eventToken = payload.token?.id ? getObj('graphic', String(payload.token.id)) : null;
+        if (eventToken && isTokenConcentrating(eventToken)) {
+            return { ok: true, token: eventToken, character };
+        }
+
+        const marked = findObjs({ _type: 'graphic', represents: characterId })
+            .filter(token => ['objects', 'gmlayer'].includes(String(token.get('layer') || '')))
+            .filter(isTokenConcentrating);
+        if (marked.length === 1) return { ok: true, token: marked[0], character };
+
+        const eventPageId = String(payload.pageId || '');
+        const onEventPage = eventPageId
+            ? marked.filter(token => String(token.get('_pageid') || token.get('pageid') || '') === eventPageId)
+            : [];
+        if (onEventPage.length === 1) return { ok: true, token: onEventPage[0], character };
+
+        return { ok: false, code: marked.length ? 'AMBIGUOUS' : 'NOT_CONCENTRATING', character };
+    }
+
+    function healthOfferAmount(event) {
+        const payload = event?.payload || {};
+        const delta = Number(payload.delta);
+        if (payload.direction !== 'decrease' || !Number.isFinite(delta) || delta >= 0) return null;
+        const verifiedDamage = payload.classification === 'damage' && payload.confidence === 'declared-and-verified';
+        const unexplainedDecrease = payload.classification === 'unknown' && payload.confidence === 'unknown';
+        if (!verifiedDamage && !unexplainedDecrease) return null;
+        return { amount: Math.abs(delta), verifiedDamage };
+    }
+
+    function healthOfferPanel(offer) {
+        const amountLabel = offer.verifiedDamage ? 'Damage' : 'Observed HP Loss';
+        const explanation = offer.verifiedDamage
+            ? 'GameAssist verified this damage change.'
+            : 'HP decreased, but Roll20 did not identify the cause. Use a button only if this loss requires a concentration check.';
+        const buttons = [
+            GameAssist.createButton('Normal', `!Con-Check ${offer.id} normal`),
+            GameAssist.createButton('Advantage', `!Con-Check ${offer.id} adv`),
+            GameAssist.createButton('Disadvantage', `!Con-Check ${offer.id} dis`)
+        ].join(' ');
+        return `&{template:default} {{name=Concentration Check Available}}` +
+            ` {{Character=${_sanitize(offer.characterName)}}}` +
+            ` {{${amountLabel}=${offer.damage}}}` +
+            ` {{DC=${offer.dc}}}` +
+            ` {{Why You Are Seeing This=${_sanitize(explanation)}}}` +
+            ` {{Roll=${buttons}}}`;
+    }
+
+    function offerHealthCheck(event) {
+        if (modState.config.enabled === false || getConfig().healthPrompts === false) return;
+        if (!GameAssist.HealthService?.isEnabled?.() || event?.type !== 'health.transition') return;
+        const health = healthOfferAmount(event);
+        if (!health || healthOfferByEvent.has(event.eventId)) return;
+
+        const target = healthOfferTarget(event);
+        if (!target.ok) {
+            if (target.code === 'AMBIGUOUS') {
+                GameAssist.log(
+                    'ConcentrationAssist',
+                    `Observed HP loss for ${target.character?.get('name') || 'a character'}, but more than one concentrating token could match. No automatic check was offered.`,
+                    'WARN'
+                );
+            }
+            return;
+        }
+
+        pruneHealthOffers();
+        const payload = event.payload;
+        const offer = Object.freeze({
+            healthOfferSchemaVersion: HEALTH_OFFER_SCHEMA_VERSION,
+            id: nextHealthOfferId(),
+            eventId: String(event.eventId),
+            transitionId: String(payload.transitionId || ''),
+            canonicalKey: String(payload.after?.canonicalKey || payload.canonicalKey || ''),
+            tokenId: String(target.token.id),
+            characterId: String(target.character.id),
+            characterName: String(target.character.get('name') || target.token.get('name') || 'Unnamed character'),
+            afterCurrentRaw: String(payload.after?.current?.raw ?? ''),
+            damage: health.amount,
+            dc: Math.max(10, Math.floor(health.amount / 2)),
+            verifiedDamage: health.verifiedDamage,
+            createdAt: Date.now(),
+            expiresAt: Date.now() + POLICY.concentration.healthOfferMs
+        });
+        healthOffers.set(offer.id, offer);
+        healthOfferByEvent.set(offer.eventId, offer.id);
+        pruneHealthOffers();
+
+        const panel = healthOfferPanel(offer);
+        sendChat('ConcentrationAssist', `/w gm ${panel}`);
+        const tokenPageId = String(target.token.get('_pageid') || target.token.get('pageid') || '');
+        if (String(target.token.get('layer') || '') !== 'objects') return;
+        playerControllerIds(target.token, target.character).forEach(playerId => {
+            if (!tokenPageId || playerVisiblePageId(playerId) !== tokenPageId) return;
+            const name = playerDisplayName(playerId);
+            if (name) sendChat('ConcentrationAssist', `/w "${name}" ${panel}`);
+        });
+    }
+
+    function latestHealthEvent(canonicalKey) {
+        const matching = (GameAssist.HealthService?.getRecent?.(POLICY.health.recentTransitionLimit) || [])
+            .filter(event => String(event?.payload?.canonicalKey || '') === canonicalKey);
+        return matching.length ? matching[matching.length - 1] : null;
+    }
+
+    function healthOfferSnapshot(offer, token, character) {
+        return offer.canonicalKey.startsWith('character:')
+            ? GameAssist.HealthService?.readCharacter?.(character)
+            : GameAssist.HealthService?.readToken?.(token);
     }
 
     /**
@@ -13699,14 +15135,26 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
 
     /**
-     * toggleMarker(token, on)
-     *   Adds or removes the Concentrating status marker.
+     * setConcentrationMarker(tokenOrId, on, context)
+     *   Changes concentration through MarkerService and publishes one semantic result.
+     *   Context is bounded operational metadata; it never exposes private module state.
      */
-    function toggleMarker(token, on) {
+    function setConcentrationMarker(tokenOrId, on, context = {}) {
+        if (modState.config.enabled === false && context.allowDisabled !== true) {
+            return { ok: false, code: 'UNAVAILABLE', message: 'ConcentrationAssist is disabled.' };
+        }
+        const token = typeof tokenOrId === 'string' ? getObj('graphic', tokenOrId) : tokenOrId;
+        if (!token) return { ok: false, code: 'NOT_FOUND', message: 'The concentration token was not found.' };
+        if (!['objects', 'gmlayer'].includes(String(token.get('layer') || ''))) {
+            return { ok: false, code: 'UNPROCESSABLE', message: 'The concentration token must be on the Objects or GM layer.' };
+        }
+        const characterId = String(token.get('represents') || '');
+        const character = characterId ? getObj('character', characterId) : null;
+        if (!character) return { ok: false, code: 'UNPROCESSABLE', message: 'The concentration token must represent a character.' };
         const resolution = getMarkerResolution();
         if (!resolution.ok) {
             GameAssist.log('ConcentrationAssist', markerResolutionWarning(resolution), 'WARN');
-            return false;
+            return { ok: false, code: resolution.code || 'NOT_FOUND', message: markerResolutionWarning(resolution) };
         }
 
         if (resolution.ambiguous) {
@@ -13720,9 +15168,32 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const result = GameAssist.MarkerService.set(token, getMarker(), on, { owner: 'ConcentrationAssist' });
         if (!result.ok) {
             GameAssist.log('ConcentrationAssist', result.message || `Marker change failed (${result.code || 'INTERNAL'}).`, 'WARN');
-            return false;
+            return result;
         }
-        return true;
+        const reason = String(context.reason || (on ? 'established' : 'ended')).slice(0, POLICY.semanticEvents.typeLength);
+        const eventType = on
+            ? 'concentration.established'
+            : (reason === 'check-failed' ? 'concentration.failed' : 'concentration.ended');
+        if (result.changed || context.emitUnchanged === true || reason === 'check-failed') {
+            GameAssist.SemanticEvents.publish(eventType, 'ConcentrationAssist', {
+                tokenId: token.id,
+                tokenName: String(token.get('name') || character.get('name') || 'Unnamed token'),
+                characterId: character.id,
+                characterName: String(character.get('name') || token.get('name') || 'Unnamed character'),
+                active: on === true,
+                reason,
+                actor: String(context.actor || 'api').slice(0, POLICY.semanticEvents.ownerLength),
+                instanceId: context.instanceId ? String(context.instanceId).slice(0, POLICY.effects.requestIdLength) : null,
+                damage: Number.isFinite(Number(context.damage)) ? Number(context.damage) : null,
+                dc: Number.isFinite(Number(context.dc)) ? Number(context.dc) : null,
+                total: Number.isFinite(Number(context.total)) ? Number(context.total) : null
+            });
+        }
+        return { ...result, tokenId: token.id, characterId: character.id, marker: getMarker() };
+    }
+
+    function toggleMarker(token, on, context = {}) {
+        return setConcentrationMarker(token, on, context).ok === true;
     }
 
     /**
@@ -13848,16 +15319,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     function showConcentrationInfo(player) {
         const out = `&{template:default} {{name=What ConcentrationAssist Does}}` +
             ` {{Purpose=Builds normal, advantage, or disadvantage Constitution saves from damage, remembers each player's latest check, and manages the configured Concentrating marker.}}` +
-            ` {{At The Table=Select a linked character token, open the check buttons, enter damage, and choose the appropriate roll mode.}}` +
+            ` {{At The Table=Use the manual controls at any time. When Health Prompts are on, a supported HP decrease can also offer one private, rechecked save to the GM and the affected character's controllers.}}` +
             ` {{Learn More=${GameAssist.createButton('Create or Update Manual', '!concentration manual')} ${GameAssist.createButton('Back to Guide', '!concentration help')}}}`;
         sendChat('ConcentrationAssist', `/w "${player}" ${out}`);
     }
 
-    function showConcentrationSettings(player) {
-        const randomize = getConfig().randomize === true;
+    function showConcentrationSettings(player, { canConfigureHealth = false } = {}) {
+        const config = getConfig();
+        const randomize = config.randomize === true;
+        const healthPrompts = config.healthPrompts !== false;
+        const healthAvailable = GameAssist.HealthService?.isEnabled?.() === true;
         const out = `&{template:default} {{name=ConcentrationAssist Settings}}` +
             ` {{Result Messages=${randomize ? 'Varied' : 'Standard'}}}` +
             ` {{Choose=${GameAssist.createButton('Standard', '!concentration --config randomize off')} ${GameAssist.createButton('Varied', '!concentration --config randomize on')}}}` +
+            ` {{HP-Loss Check Offers=${healthPrompts ? 'On' : 'Off'}${healthPrompts && !healthAvailable ? ' (HealthService is disabled)' : ''}}}` +
+            ` {{Health Offer Choice=${canConfigureHealth ? GameAssist.createButton(healthPrompts ? 'Turn Off' : 'Turn On', `!concentration --config healthPrompts ${healthPrompts ? 'off' : 'on'}`) : 'Managed by the GM'}}}` +
             ` {{Marker=${_sanitize(getMarker())}}}` +
             ` {{Return=${GameAssist.createButton('Back to Guide', '!concentration help')}}}`;
         sendChat('ConcentrationAssist', `/w "${player}" ${out}`);
@@ -13872,10 +15348,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             '<ol><li>Select one linked character token on the Objects layer.</li><li>Run <code>!concentration</code> or <code>!cc</code>.</li><li>Choose normal, advantage, or disadvantage.</li><li>Enter the damage taken. The DC is the greater of 10 or half the damage, rounded down.</li></ol>',
             '<h2>Results And Marker Behavior</h2>',
             '<p>The player and GM receive the DC, every d20 result, final total, and full roll formula. A successful check applies the configured Concentrating marker; a failed check removes it. The public character emote can use one standard line or a varied set.</p>',
+            '<h2>Optional HP-Loss Offers</h2>',
+            '<p>When Health Prompts and HealthService are enabled, verified GameAssist damage or an otherwise unexplained numeric HP decrease can offer one private concentration check to the GM and eligible controllers of an already-concentrating character. Unexplained decreases are labeled observed HP loss because Roll20 does not identify their cause. Every button expires, belongs to that character, and is refused if HP changes again, concentration ends, or the clicking player is no longer authorized. Healing, initialization, synchronization, blank, invalid, and unrelated changes remain silent.</p>',
             '<h2>Status And Audit</h2>',
             '<p><code>!concentration status</code> or <code>!concentration --status</code> lists marked tokens on the current player page and always responds when the module is running. <code>!concentration audit</code> performs the same read-only marker inspection and states that no marker changed.</p>',
             '<h2>Command Reference</h2>',
-            '<ul><li><code>!Con-GM</code>, <code>!Con-DM</code>, <code>!Concentration-GM</code>, or <code>!Concentration-DM</code> - check controls.</li><li><code>!concentration help</code> / <code>guide</code> - compact guide.</li><li><code>!concentration</code> or <code>!cc</code> - check buttons.</li><li><code>!concentration --damage 12 --mode normal|adv|dis</code> or <code>!Con-Damage 12 --mode normal|adv|dis</code> - run a check.</li><li><code>!concentration --last</code> - repeat the player\'s previous check.</li><li><code>!concentration --off</code> - remove the configured marker from selected linked tokens.</li><li><code>!concentration status</code> / <code>audit</code> - current-page marker review.</li><li><code>!concentration settings</code> - result-message choice.</li><li><code>!ga-conc-status</code> - GM activity summary.</li></ul>',
+            '<ul><li><code>!Con-GM</code>, <code>!Con-DM</code>, <code>!Concentration-GM</code>, or <code>!Concentration-DM</code> - check controls.</li><li><code>!concentration help</code> / <code>guide</code> - compact guide.</li><li><code>!concentration</code> or <code>!cc</code> - check buttons.</li><li><code>!concentration --damage 12 --mode normal|adv|dis</code> or <code>!Con-Damage 12 --mode normal|adv|dis</code> - run a check.</li><li><code>!concentration --last</code> - repeat the player\'s previous check.</li><li><code>!concentration --off</code> - remove the configured marker from selected linked tokens.</li><li><code>!concentration status</code> / <code>audit</code> - current-page marker review.</li><li><code>!concentration settings</code> - result-message and HP-loss offer choices.</li><li><code>!ga-conc-status</code> - GM activity summary.</li></ul>',
             '<h2>Troubleshooting</h2>',
             '<p>If the configured marker cannot be recognized, use the marker name or exact stored custom marker tag shown by Roll20. Status reads token markers directly; marker changes require GameAssist MarkerService to be enabled.</p>'
         ].join('');
@@ -13897,48 +15375,41 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
 
     /**
-     * handleRoll(msg, damage, mode)
-     *   Executes the concentration roll workflow.
+     * executeConcentrationRoll(msg, token, character, damage, mode)
+     *   Executes the shared concentration roll after the caller has selected and
+     *   authorized a specific linked token.
      */
-    function handleRoll(msg, damage, mode) {
+    function executeConcentrationRoll(msg, token, character, damage, mode, { announcePublic = true } = {}) {
         const { lastDamage } = ensureConcentrationRuntime();
-        const player = msg.who.replace(/ \(GM\)$/, '');
-        if (!msg.selected?.length) {
-            return sendChat('ConcentrationAssist',
-                `/w "${player}" ⚠️ No token selected.`
-            );
+        const player = String(msg.who || 'GM').replace(/ \(GM\)$/, '');
+        const actorId = String(msg.playerid || 'API');
+        const normalizedDamage = Number(damage);
+        const normalizedMode = ['normal', 'adv', 'dis'].includes(mode) ? mode : 'normal';
+        if (!token || !character || !Number.isFinite(normalizedDamage) || normalizedDamage <= 0) {
+            return { ok: false, code: 'INVALID_ARGUMENT', message: 'A linked token and positive damage amount are required.' };
         }
-        const token = getObj('graphic', msg.selected[0]._id);
-        if (!token) {
-            return sendChat('ConcentrationAssist',
-                `/w "${player}" ⚠️ Token not found.`
-            );
+        if (
+            String(token.get('represents') || '') !== String(character.id) ||
+            !['objects', 'gmlayer'].includes(String(token.get('layer') || ''))
+        ) {
+            return { ok: false, code: 'UNPROCESSABLE', message: 'The token must represent that character on the Objects or GM layer.' };
         }
-
-        const linked = GameAssist.getLinkedCharacter(token);
-        if (!linked) {
-            return sendChat('ConcentrationAssist',
-                `/w "${player}" ⚠️ Token must be on the Objects layer and linked to a character.`
-            );
-        }
-
-        const { character } = linked;
 
         const bonus = getConBonus(character);
-        const dc    = Math.max(10, Math.floor(damage / 2));
+        const dc    = Math.max(10, Math.floor(normalizedDamage / 2));
         const name  = token.get('name') || character.get('name');
         const { success: S, failure: F } = getOutcomeLines(name);
         const { randomize } = getConfig();
 
         let expr = `1d20 + ${bonus}`;
-        if (mode === 'adv') expr = `2d20kh1 + ${bonus}`;
-        if (mode === 'dis') expr = `2d20kl1 + ${bonus}`;
+        if (normalizedMode === 'adv') expr = `2d20kh1 + ${bonus}`;
+        if (normalizedMode === 'dis') expr = `2d20kl1 + ${bonus}`;
 
-        lastDamage[msg.playerid] = {
-            damage,
+        lastDamage[actorId] = {
+            damage: normalizedDamage,
             dc,
             bonus,
-            mode,
+            mode: normalizedMode,
             tokenId: token.id,
             tokenName: name,
             characterId: character.id,
@@ -13959,7 +15430,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const total   = roll.results.total;
             const formula = roll.expression;
             const vals    = roll.results.rolls[0].results.map(r => r.v);
-            const rollsText = (mode === 'normal' ? vals[0] : vals.join(','));
+            const rollsText = (normalizedMode === 'normal' ? vals[0] : vals.join(','));
             const ok        = total >= dc;
 
             sendResult(player, dc, total, rollsText, formula);
@@ -13968,8 +15439,105 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const tail = randomize
                 ? pool[Math.floor(Math.random() * pool.length)]
                 : pool[0];
-            sendChat(`character|${character.id}`, `/em ${tail}`);
-            toggleMarker(token, ok);
+            if (announcePublic) sendChat(`character|${character.id}`, `/em ${tail}`);
+            toggleMarker(token, ok, {
+                actor: actorId,
+                reason: ok ? 'check-succeeded' : 'check-failed',
+                emitUnchanged: !ok,
+                damage: normalizedDamage,
+                dc,
+                total
+            });
+        });
+        return { ok: true, pending: true, tokenId: token.id, characterId: character.id, damage: normalizedDamage, dc, mode: normalizedMode };
+    }
+
+    /**
+     * handleRoll(msg, damage, mode)
+     *   Resolves the established selected-token command into the shared roll path.
+     */
+    function handleRoll(msg, damage, mode) {
+        const player = String(msg.who || 'GM').replace(/ \(GM\)$/, '');
+        if (!msg.selected?.length) {
+            return sendChat('ConcentrationAssist',
+                `/w "${player}" ⚠️ No token selected.`
+            );
+        }
+        const token = getObj('graphic', msg.selected[0]._id);
+        if (!token) {
+            return sendChat('ConcentrationAssist',
+                `/w "${player}" ⚠️ Token not found.`
+            );
+        }
+
+        const linked = GameAssist.getLinkedCharacter(token);
+        if (!linked) {
+            return sendChat('ConcentrationAssist',
+                `/w "${player}" ⚠️ Token must be on the Objects layer and linked to a character.`
+            );
+        }
+
+        const { character } = linked;
+        return executeConcentrationRoll(msg, token, character, damage, mode);
+    }
+
+    function healthOfferProblem(player, problem) {
+        sendChat(
+            'ConcentrationAssist',
+            `/w "${player}" &{template:default} {{name=Concentration Check}} {{Needs Attention=${_sanitize(problem)}}} {{Next Step=${GameAssist.createButton('Open Check Buttons', '!concentration menu')}}}`
+        );
+    }
+
+    function handleHealthOffer(msg, body) {
+        const player = String(msg.who || 'GM').replace(/ \(GM\)$/, '');
+        const [, offerId = '', requestedMode = ''] = String(body || '').trim().split(/\s+/);
+        const mode = requestedMode.toLowerCase();
+        if (!/^[A-Za-z0-9-]+$/.test(offerId) || !['normal', 'adv', 'dis'].includes(mode)) {
+            return healthOfferProblem(player, 'That concentration-check button is not valid.');
+        }
+
+        pruneHealthOffers();
+        const offer = healthOffers.get(offerId);
+        if (!offer) {
+            return healthOfferProblem(player, 'That concentration-check offer has expired or was already used.');
+        }
+        if (!GameAssist.HealthService?.isEnabled?.()) {
+            return healthOfferProblem(player, 'HealthService is currently disabled. Use the normal concentration check controls instead.');
+        }
+
+        const token = getObj('graphic', offer.tokenId);
+        const character = getObj('character', offer.characterId);
+        if (!token || !character || String(token.get('represents') || '') !== offer.characterId) {
+            return healthOfferProblem(player, 'The affected token or character is no longer available.');
+        }
+        if (!playerIsGM(msg.playerid)) {
+            const tokenPageId = String(token.get('_pageid') || token.get('pageid') || '');
+            const authorized = String(token.get('layer') || '') === 'objects'
+                && Boolean(tokenPageId)
+                && tokenPageId === playerVisiblePageId(String(msg.playerid))
+                && playerControllerIds(token, character).includes(String(msg.playerid));
+            if (!authorized) return healthOfferProblem(player, 'That private concentration check belongs to another character.');
+        }
+        if (!isTokenConcentrating(token)) {
+            healthOffers.delete(offer.id);
+            healthOfferByEvent.delete(offer.eventId);
+            return healthOfferProblem(player, `${offer.characterName} is no longer concentrating.`);
+        }
+
+        const latest = latestHealthEvent(offer.canonicalKey);
+        const snapshot = healthOfferSnapshot(offer, token, character);
+        if (!latest || latest.eventId !== offer.eventId || snapshot?.values?.current?.raw !== offer.afterCurrentRaw) {
+            healthOffers.delete(offer.id);
+            healthOfferByEvent.delete(offer.eventId);
+            return healthOfferProblem(player, 'HP changed again after this offer. Use the newest offer or the normal concentration controls.');
+        }
+
+        healthOffers.delete(offer.id);
+        healthOfferByEvent.delete(offer.eventId);
+        const visibleOnPlayerPage = String(token.get('layer') || '') === 'objects'
+            && String(token.get('_pageid') || token.get('pageid') || '') === String(Campaign().get('playerpageid') || '');
+        return executeConcentrationRoll(msg, token, character, offer.damage, mode, {
+            announcePublic: visibleOnPlayerPage
         });
     }
 
@@ -13999,7 +15567,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return;
             }
 
-            if (!toggleMarker(t, false)) {
+            if (!toggleMarker(t, false, { actor: msg.playerid, reason: 'manual-clear', emitUnchanged: true })) {
                 skipped.push(t.get('name') || '(Unnamed)');
             }
         });
@@ -14066,11 +15634,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         if (direct) {
             if (direct === 'help' || direct === 'guide') return showHelp(player);
             if (direct === 'menu' || direct === 'gm' || direct === 'dm') return postButtons(player);
+            if (direct === 'check') return handleHealthOffer(msg, body);
             if (direct === 'status' || direct === 'refresh') return showStatus(player);
             if (direct === 'audit') return showStatus(player, { audit: true });
             if (direct === 'info' || direct === 'about') return showConcentrationInfo(player);
             if (direct === 'manual') return writeConcentrationManual(msg, player);
-            if (direct === 'config' || direct === 'settings') return showConcentrationSettings(player);
+            if (direct === 'config' || direct === 'settings') return showConcentrationSettings(player, { canConfigureHealth: playerIsGM(msg.playerid) });
             return sendChat(
                 'ConcentrationAssist',
                 `/w "${player}" &{template:default} {{name=ConcentrationAssist}} {{Needs Attention=That ConcentrationAssist command was not recognized.}} {{Next Step=${GameAssist.createButton('Open Guide', '!concentration help')}}}`
@@ -14088,6 +15657,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return sendChat('ConcentrationAssist',
                     `/w "${player}" ✅ Randomize = ${modState.config.randomize}`
                 );
+            }
+            if (key === 'healthprompts') {
+                if (!playerIsGM(msg.playerid)) {
+                    return healthOfferProblem(player, 'Only the GM can change automatic HP-loss check offers.');
+                }
+                modState.config.healthPrompts = (val === 'on' || val === 'true');
+                if (!modState.config.healthPrompts) clearHealthOffers();
+                return showConcentrationSettings(player, { canConfigureHealth: true });
             }
             return sendChat('ConcentrationAssist',
                 `/w "${player}" ❌ Unknown config ${key}`
@@ -14126,6 +15703,43 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
     }
 
+    // ─── Public Integration Contract ───────────────────────────────────────────────
+    function observeConcentration(callback, { owner = 'ConcentrationAssistConsumer' } = {}) {
+        return GameAssist.SemanticEvents.observe(callback, {
+            owner,
+            types: ['concentration.established', 'concentration.failed', 'concentration.ended']
+        });
+    }
+
+    GameAssist.ConcentrationAssist = Object.freeze({
+        version: MODULE_VERSION,
+        healthOfferSchemaVersion: HEALTH_OFFER_SCHEMA_VERSION,
+        getMarker,
+        resolveMarker: getMarkerResolution,
+        isConcentrating: isTokenConcentrating,
+        set: (tokenOrId, active, context = {}) => setConcentrationMarker(tokenOrId, active === true, context),
+        roll: ({ msg, token, character, damage, mode = 'normal', announcePublic = true } = {}) => {
+            const tokenObject = typeof token === 'string' ? getObj('graphic', token) : token;
+            const characterObject = typeof character === 'string' ? getObj('character', character) : character;
+            return executeConcentrationRoll(msg || {}, tokenObject, characterObject, damage, mode, { announcePublic });
+        },
+        observe: observeConcentration,
+        clearObservers: owner => GameAssist.SemanticEvents.clearObservers(owner),
+        clearHealthOffers,
+        getHealthOfferStatus: () => Object.freeze({
+            enabled: getConfig().healthPrompts !== false,
+            healthServiceAvailable: GameAssist.HealthService?.isEnabled?.() === true,
+            pending: (pruneHealthOffers(), healthOffers.size)
+        }),
+        isAvailable: () => modState.config.enabled !== false && GameAssist.MarkerService.isEnabled()
+    });
+
+    GameAssist.SemanticEvents.clearObservers(HEALTH_OBSERVER_OWNER);
+    const healthObservation = GameAssist.HealthService?.observe?.(offerHealthCheck, { owner: HEALTH_OBSERVER_OWNER });
+    if (healthObservation && healthObservation.ok === false) {
+        GameAssist.log('ConcentrationAssist', `Optional HealthService prompts could not start: ${healthObservation.message}`, 'WARN');
+    }
+
     // ─── Wire It Up ────────────────────────────────────────────────────────────────
     GameAssist.onCommand('!ga-conc-status', () => {
         const tpl = buildStatusTemplate();
@@ -14149,6 +15763,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     prefixes: ['!Con','!Concentration','!ConcentrationAssist','!ConcentrationAssist-','!concentration','!concentration-','!con-','!cc','!ga-conc-status'],
     dependsOn: ['MarkerService'],
     teardown: () => {
+        GameAssist.ConcentrationAssist?.clearHealthOffers?.();
         const page = Campaign().get('playerpageid');
         const marker = (GameAssist.getState('ConcentrationAssist')?.config?.marker) || 'Concentrating';
         const resolution = GameAssist.MarkerService.resolve(marker);
@@ -14177,10 +15792,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
     });
     // --- Notes & Comments ---
-    // Changed (v1.8.0): Renamed the module to ConcentrationAssist while preserving saved concentration activity, !concentration, !con, !cc, and the complete prior option grammar.
+    // Changed (v2.0.0): Advanced ConcentrationAssist to 0.4.0 with optional private HealthService-driven HP-loss offers, bounded one-event deduplication, controller-aware delivery, and stale-button revalidation while preserving every manual check path.
     // Decision log:
-    //   CHOICE: Keep lowercase parsing and established aliases - ALT: introduce a new command grammar; REJECTED: unnecessary user retraining.
+    //   CHOICE: Offer checks for verified damage and unexplained numeric decreases - ALT: treat every decrease as proven damage or ignore direct Roll20 edits; REJECTED: the former invents cause while the latter omits the principal supported manual workflow.
+    //   CHOICE: Recheck the latest health event, HP value, concentration marker, token identity, and player control before rolling - ALT: trust a previously rendered button; REJECTED: chat buttons can outlive the state that authorized them.
+    //   CHOICE: Keep HealthService optional rather than a module dependency - ALT: disable all concentration commands with HealthService; REJECTED: manual concentration checks remain independently useful.
+    //   CHOICE: Publish semantic concentration transitions after verified marker requests - ALT: let consumers scrape lastDamage or marker state; REJECTED: private caches do not prove lifecycle and create order-dependent coupling.
     // Prior notes:
+    //   v1.8.0: Renamed the module to ConcentrationAssist while preserving saved concentration activity, !concentration, !con, !cc, and the complete prior option grammar.
+    //   Decision: Keep lowercase parsing and established aliases instead of introducing a new command grammar.
     //   v0.1.4.7: Advanced to 0.1.0.6 and used verified TokenMod --api-as marker requests while preserving standalone StatusInfo observation.
     //   v0.1.4.3: Resolved custom marker names to stored tags and reported unrecognized configuration.
     //   v0.1.4.1: Routed lastDamage limits and timestamps through POLICY/shared time seams.
@@ -14191,15 +15811,7985 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:CONCENTRATIONASSIST] END
     // =============================================================================
 
+    // ————— EFFECTASSIST MODULE v2.3.0 —————
+    // =============================================================================
+    // [GAMEASSIST:MODULES:EFFECTASSIST] BEGIN
+    // Section Title: Catalog-driven semantic effects and 2014 sheet projections
+    // -----------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:EFFECTASSIST", title: "EffectAssist",
+    //   guarantees: ["Effect instances, not markers or sheet fields, are the durable source of truth","Definitions may coordinate multiple source and target projections through one versioned adapter pipeline","Verified 2014 repeating modifier rows are ownership-safe and never overwrite unrelated sheet data","ConcentrationAssist owns concentration state while EffectAssist owns dependent cleanup","Optional duration providers create reviewable GM candidates but never end effects automatically","Combat duration evidence comes only from accepted CombatAssist progression and world-time evidence comes only from committed AlmanacAssist changes","Provider absence, tracker rebases, backward movement, restarts, and large time jumps are handled without guessed or unbounded replay","Official 2014 Bless spell cards create bounded GM proposals only when template, spell, character, page, token, and controller evidence are unambiguous","Cast recognition never infers recipients or bypasses the normal preview and confirmation pipeline","Audit is read-only; application and repair require bounded confirmation","Player casting uses short-lived opaque choices, rechecks source control, uses visible native target selection, and may be locked by the GM","GM-assisted player requests are retained briefly, preserve source authorization, and expose no full GM controls","Successful player-originated applications announce the source, effect, and public target names","The built-in catalog distinguishes automated mechanics from tracked rules"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]","[GAMEASSIST:MODULES:CONDITIONASSIST]","[GAMEASSIST:MODULES:CONCENTRATIONASSIST]"],
+    //   provides: ["GameAssist.EffectAssist"],
+    //   last_updated_version: "v2.0.0",
+    //   independent_versions: { module_version: "2.3.0", effect_state_schema_version: 3, cast_proposal_schema_version: 1, player_cast_flow_schema_version: 1 }, lifecycle: "active" }
+    // -----------------------------------------------------------------------------
+    // Narrative
+    // EffectAssist is a catalog-driven rules coordinator. It records the source,
+    // targets, stacking, duration, dependencies, and every visible or mechanical
+    // projection of an effect. MarkerService, ConditionAssist, ConcentrationAssist,
+    // and verified sheet adapters retain authority over their own mechanics.
+    // The v2.0.0 adapter supports the D&D 5E by Roll20 2014 sheet. Mechanics that
+    // cannot be represented safely remain explicit assisted steps instead of
+    // pretending that a token marker is complete automation.
+    // -----------------------------------------------------------------------------
+    GameAssist.register('EffectAssist', function() {
+        const MODULE_NAME = 'EffectAssist';
+        const MODULE_VERSION = '2.3.0';
+        const STATE_SCHEMA_VERSION = 3;
+        const CAST_PROPOSAL_SCHEMA_VERSION = 1;
+        const PLAYER_CAST_FLOW_SCHEMA_VERSION = 1;
+        const modState = GameAssist.getState(MODULE_NAME);
+        const repairGrants = new Map();
+        const applyGrants = new Map();
+        const playerCastFlows = new Map();
+        const playerRequests = new Map();
+        const projectionAdapters = new Map();
+        const suppressedConcentrationTokens = new Map();
+        const castProposals = new Map();
+        const recentCastEvidence = new Map();
+
+        const OGL_SECTIONS = Object.freeze({
+            attack: Object.freeze({
+                section: 'tohitmod',
+                enableFlag: 'global_attack_mod_flag',
+                activeField: 'global_attack_active_flag',
+                nameField: 'global_attack_name',
+                valueField: 'global_attack_roll'
+            }),
+            save: Object.freeze({
+                section: 'savemod',
+                enableFlag: 'global_save_mod_flag',
+                activeField: 'global_save_active_flag',
+                nameField: 'global_save_name',
+                valueField: 'global_save_roll'
+            }),
+            skill: Object.freeze({
+                section: 'skillmod',
+                enableFlag: 'global_skill_mod_flag',
+                activeField: 'global_skill_active_flag',
+                nameField: 'global_skill_name',
+                valueField: 'global_skill_roll'
+            }),
+            ac: Object.freeze({
+                section: 'acmod',
+                enableFlag: 'global_ac_mod_flag',
+                activeField: 'global_ac_active_flag',
+                nameField: 'global_ac_name',
+                valueField: 'global_ac_val'
+            })
+        });
+
+        const BUILTIN_DEFINITIONS = Object.freeze({
+            bless: Object.freeze({
+                id: 'bless',
+                definitionVersion: 2,
+                name: 'Bless',
+                description: 'Blessed targets add 1d4 to attack rolls and saving throws.',
+                concentration: true,
+                duration: 'Up to 1 minute',
+                durationRules: Object.freeze({ encounterRounds: 10, worldMinutes: 1, ending: Object.freeze(['manual', 'concentration']) }),
+                targets: 'Up to three creatures at base level; higher slots may affect more.',
+                catalogGroup: 'automated',
+                stacking: Object.freeze({ group: 'bless', mode: 'nonstacking' }),
+                projections: Object.freeze([
+                    Object.freeze({ id: 'blessed-marker', adapter: 'marker', subject: 'target-token', marker: 'angel-outfit', label: 'Blessed marker' }),
+                    Object.freeze({ id: 'attack-bonus', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'attack', label: 'Bless (GameAssist)', value: '1d4', optional: true }),
+                    Object.freeze({ id: 'save-bonus', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'save', label: 'Bless (GameAssist)', value: '1d4', optional: true })
+                ]),
+                automatic: Object.freeze(['Blessed marker', '2014-sheet 1d4 global attack modifier', '2014-sheet 1d4 global saving-throw modifier', 'source concentration and cleanup']),
+                assisted: Object.freeze(['Choose the targets and end the effect early when a rule outside concentration requires it.']),
+                informational: Object.freeze([])
+            }),
+            guidance: Object.freeze({
+                id: 'guidance',
+                definitionVersion: 2,
+                name: 'Guidance',
+                description: 'The target may add 1d4 to one ability check before the spell ends.',
+                concentration: true,
+                duration: 'Up to 1 minute or until the bonus is used',
+                durationRules: Object.freeze({ encounterRounds: 10, worldMinutes: 1, ending: Object.freeze(['manual', 'concentration', 'bonus-used']) }),
+                targets: 'One willing creature',
+                catalogGroup: 'automated',
+                stacking: Object.freeze({ group: 'guidance', mode: 'nonstacking' }),
+                projections: Object.freeze([
+                    Object.freeze({ id: 'guidance-marker', adapter: 'marker', subject: 'target-token', marker: 'aura', label: 'Guidance marker' }),
+                    Object.freeze({ id: 'guidance-skill', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'skill', label: 'Guidance (GameAssist)', value: '1d4', optional: true })
+                ]),
+                automatic: Object.freeze(['Guidance marker', '2014-sheet 1d4 global skill modifier', 'source concentration and cleanup']),
+                assisted: Object.freeze(['For an ability check that is not represented by a sheet skill, roll the Guidance d4 manually; end Guidance after its one bonus is used.']),
+                informational: Object.freeze(['The 2014 sheet global skill modifier covers sheet skill checks but not every possible ability check.'])
+            }),
+            'warding-bond': Object.freeze({
+                id: 'warding-bond',
+                definitionVersion: 1,
+                name: 'Warding Bond',
+                description: 'The target gains +1 AC, +1 to saving throws, resistance to damage, and shares damage with the source.',
+                concentration: false,
+                duration: '1 hour',
+                durationRules: Object.freeze({ encounterRounds: 600, worldMinutes: 60, ending: Object.freeze(['manual', 'source-or-target-rule']) }),
+                targets: 'One willing creature',
+                catalogGroup: 'automated',
+                stacking: Object.freeze({ group: 'warding-bond', mode: 'nonstacking' }),
+                projections: Object.freeze([
+                    Object.freeze({ id: 'bond-marker', adapter: 'marker', subject: 'target-token', marker: 'chained-heart', label: 'Warding Bond marker' }),
+                    Object.freeze({ id: 'bond-ac', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'ac', label: 'Warding Bond (GameAssist)', value: '1', optional: true }),
+                    Object.freeze({ id: 'bond-save', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'save', label: 'Warding Bond (GameAssist)', value: '1', optional: true })
+                ]),
+                automatic: Object.freeze(['Warding Bond marker', '2014-sheet +1 AC modifier', '2014-sheet +1 saving-throw modifier']),
+                assisted: Object.freeze(['Apply resistance and mirrored damage according to the spell.']),
+                informational: Object.freeze(['GameAssist does not alter damage because it cannot safely identify every damage source or resistance interaction.'])
+            }),
+            'holy-weapon': Object.freeze({
+                id: 'holy-weapon',
+                definitionVersion: 1,
+                name: 'Holy Weapon',
+                description: 'One weapon deals extra radiant damage and can be dismissed in a burst of radiance.',
+                concentration: true,
+                duration: 'Up to 1 hour',
+                durationRules: Object.freeze({ encounterRounds: 600, worldMinutes: 60, ending: Object.freeze(['manual', 'concentration', 'dismissed-for-burst']) }),
+                targets: 'One weapon carried by a creature',
+                catalogGroup: 'tracked',
+                stacking: Object.freeze({ group: 'holy-weapon', mode: 'nonstacking' }),
+                projections: Object.freeze([
+                    Object.freeze({ id: 'holy-weapon-marker', adapter: 'marker', subject: 'target-token', marker: 'angel-outfit', label: 'Holy Weapon marker' })
+                ]),
+                automatic: Object.freeze(['Holy Weapon marker', 'source concentration and cleanup']),
+                assisted: Object.freeze(['Add 2d8 radiant damage only to the affected weapon and resolve the optional burst manually.']),
+                informational: Object.freeze(['A global damage row would incorrectly modify every weapon attack.'])
+            }),
+            haste: Object.freeze({
+                id: 'haste',
+                definitionVersion: 1,
+                name: 'Haste',
+                description: 'The target gains +2 AC and the other benefits and limits described by Haste.',
+                concentration: true,
+                duration: 'Up to 1 minute',
+                durationRules: Object.freeze({ encounterRounds: 10, worldMinutes: 1, ending: Object.freeze(['manual', 'concentration']) }),
+                targets: 'One willing creature',
+                catalogGroup: 'automated',
+                stacking: Object.freeze({ group: 'haste', mode: 'nonstacking' }),
+                projections: Object.freeze([
+                    Object.freeze({ id: 'haste-marker', adapter: 'marker', subject: 'target-token', marker: 'lightning-helix', label: 'Haste marker' }),
+                    Object.freeze({ id: 'haste-ac', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'ac', label: 'Haste (GameAssist)', value: '2', optional: true })
+                ]),
+                automatic: Object.freeze(['Haste marker', '2014-sheet +2 AC modifier', 'source concentration and cleanup']),
+                assisted: Object.freeze(['Apply doubled speed, Dexterity-save advantage, the restricted extra action, and ending lethargy at the table.']),
+                informational: Object.freeze(['The 2014 sheet has no isolated safe switch for all remaining Haste mechanics.'])
+            }),
+            'pass-without-a-trace': Object.freeze({
+                id: 'pass-without-a-trace',
+                definitionVersion: 1,
+                name: 'Pass Without a Trace',
+                description: 'Chosen creatures near the source gain +10 to Dexterity (Stealth) checks and cannot be tracked except by magic.',
+                concentration: true,
+                duration: 'Up to 1 hour',
+                durationRules: Object.freeze({ encounterRounds: 600, worldMinutes: 60, ending: Object.freeze(['manual', 'concentration', 'target-leaves-area']) }),
+                targets: 'Chosen creatures within 30 feet of the source',
+                catalogGroup: 'tracked',
+                stacking: Object.freeze({ group: 'pass-without-a-trace', mode: 'nonstacking' }),
+                projections: Object.freeze([
+                    Object.freeze({ id: 'pass-without-trace-marker', adapter: 'marker', subject: 'target-token', marker: 'ninja-mask', label: 'Pass Without a Trace marker' })
+                ]),
+                automatic: Object.freeze(['Pass Without a Trace marker', 'source concentration and cleanup']),
+                assisted: Object.freeze(['Add +10 to affected Dexterity (Stealth) checks and keep the target list current as creatures enter or leave the area.']),
+                informational: Object.freeze(['The 2014 sheet does not expose an isolated ownership-safe Stealth-only repeating modifier.'])
+            })
+        });
+
+        const PLAYER_TARGET_COUNTS = Object.freeze({
+            bless: Object.freeze([1, 2, 3]),
+            guidance: Object.freeze([1]),
+            'warding-bond': Object.freeze([1]),
+            'holy-weapon': Object.freeze([1]),
+            haste: Object.freeze([1]),
+            'pass-without-a-trace': Object.freeze([1, 2, 3])
+        });
+
+        Object.assign(modState.config, {
+            enabled: false,
+            allowPlayerCasting: true,
+            durationCandidates: true,
+            castRecognition: true,
+            markerOverrides: {},
+            customDefinitions: {},
+            ...modState.config
+        });
+
+        function isPlainObject(value) {
+            return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+        }
+
+        function clone(value) {
+            try {
+                return JSON.parse(JSON.stringify(value));
+            } catch {
+                return null;
+            }
+        }
+
+        function boundedText(value, maximum, label, { required = true } = {}) {
+            const text = String(value ?? '').trim();
+            if (required && !text) return { ok: false, code: 'INVALID_ARGUMENT', message: `${label} is required.` };
+            if (text.length > maximum) return { ok: false, code: 'INVALID_ARGUMENT', message: `${label} must be ${maximum} characters or fewer.` };
+            return { ok: true, value: text };
+        }
+
+        function normalizeDefinitionId(value) {
+            const normalized = String(value || '')
+                .trim()
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '')
+                .slice(0, POLICY.effects.nameLength);
+            return normalized && !POLICY.config.unsafeKeys.includes(normalized) ? normalized : '';
+        }
+
+        function normalizeDurationRules(value) {
+            if (!isPlainObject(value)) return null;
+            const encounterRounds = Math.floor(Number(value.encounterRounds));
+            const worldMinutes = Math.floor(Number(value.worldMinutes));
+            const ending = [...new Set((Array.isArray(value.ending) ? value.ending : [])
+                .map(item => String(item || '').trim().toLowerCase())
+                .filter(Boolean))].slice(0, 8);
+            const rules = {
+                encounterRounds: Number.isFinite(encounterRounds)
+                    && encounterRounds >= 1
+                    && encounterRounds <= POLICY.effects.maximumEncounterDurationRounds
+                    ? encounterRounds
+                    : null,
+                worldMinutes: Number.isFinite(worldMinutes)
+                    && worldMinutes >= 1
+                    && worldMinutes <= POLICY.effects.maximumWorldDurationMinutes
+                    ? worldMinutes
+                    : null,
+                ending
+            };
+            return rules.encounterRounds || rules.worldMinutes || rules.ending.length ? rules : null;
+        }
+
+        function normalizeDurationAnchor(value, provider) {
+            if (!isPlainObject(value)) return null;
+            if (provider === 'combat') {
+                const startRound = Math.floor(Number(value.startRound));
+                const targetRound = Math.floor(Number(value.targetRound));
+                if (!value.encounterId || startRound < 1 || targetRound <= startRound) return null;
+                return {
+                    encounterId: String(value.encounterId),
+                    pageId: String(value.pageId || ''),
+                    startRound,
+                    targetRound,
+                    startIdentity: String(value.startIdentity || ''),
+                    startProgression: Math.max(0, Math.floor(Number(value.startProgression) || 0)),
+                    anchoredAt: typeof value.anchoredAt === 'string' ? value.anchoredAt : null
+                };
+            }
+            const startWorldMinute = Math.floor(Number(value.startWorldMinute));
+            const targetWorldMinute = Math.floor(Number(value.targetWorldMinute));
+            if (startWorldMinute < 0 || targetWorldMinute <= startWorldMinute) return null;
+            return {
+                startWorldMinute,
+                targetWorldMinute,
+                startRevision: Math.max(0, Math.floor(Number(value.startRevision) || 0)),
+                anchoredAt: typeof value.anchoredAt === 'string' ? value.anchoredAt : null
+            };
+        }
+
+        function normalizeDurationCandidate(value) {
+            if (!isPlainObject(value) || !value.id || !value.dedupeKey) return null;
+            return {
+                id: String(value.id),
+                dedupeKey: String(value.dedupeKey),
+                provider: ['combat', 'world-time'].includes(value.provider) ? value.provider : 'manual',
+                kind: value.kind === 'reminder' ? 'reminder' : 'expiration-candidate',
+                status: value.status === 'dismissed' ? 'dismissed' : 'open',
+                reason: String(value.reason || 'Review this effect duration.'),
+                evidence: isPlainObject(value.evidence) ? clone(value.evidence) : {},
+                createdAt: typeof value.createdAt === 'string' ? value.createdAt : isoNow(),
+                dismissedAt: typeof value.dismissedAt === 'string' ? value.dismissedAt : null,
+                dismissedBy: value.dismissedBy ? String(value.dismissedBy) : null
+            };
+        }
+
+        function normalizeDurationRecord(instance) {
+            const definition = BUILTIN_DEFINITIONS[instance?.definitionId] || instance?.definitionSnapshot || {};
+            const current = isPlainObject(instance?.duration) ? instance.duration : {};
+            const rules = normalizeDurationRules(current.rules || instance?.definitionSnapshot?.durationRules || definition.durationRules);
+            const anchors = isPlainObject(current.anchors) ? current.anchors : {};
+            const candidates = (Array.isArray(current.candidates) ? current.candidates : [])
+                .map(normalizeDurationCandidate)
+                .filter(Boolean)
+                .slice(-POLICY.effects.durationCandidateLimit);
+            instance.duration = {
+                type: rules && (normalizeDurationAnchor(anchors.combat, 'combat') || normalizeDurationAnchor(anchors.world, 'world') || candidates.length)
+                    ? 'provider-candidates'
+                    : 'manual',
+                label: String(current.label || instance?.definitionSnapshot?.duration || definition.duration || '').slice(0, POLICY.effects.nameLength),
+                rules,
+                anchors: {
+                    combat: normalizeDurationAnchor(anchors.combat, 'combat'),
+                    world: normalizeDurationAnchor(anchors.world, 'world')
+                },
+                candidates
+            };
+            return instance.duration;
+        }
+
+        function stableValue(value) {
+            if (Array.isArray(value)) return value.map(stableValue);
+            if (!isPlainObject(value)) return value;
+            return Object.keys(value).sort().reduce((result, key) => {
+                result[key] = stableValue(value[key]);
+                return result;
+            }, {});
+        }
+
+        function fingerprint(value) {
+            return JSON.stringify(stableValue(value));
+        }
+
+        function requestIntent(request) {
+            return fingerprint({
+                definitionId: request.definitionId || null,
+                name: request.name || null,
+                marker: request.marker || null,
+                condition: request.condition || null,
+                none: request.none || null,
+                dependency: request.dependency || null,
+                sourceTokenId: String(request.sourceTokenId || ''),
+                targetTokenIds: [...new Set((request.targetTokenIds || []).map(String))].sort(),
+                duration: request.duration || null
+            });
+        }
+
+        function attribute(characterId, name) {
+            return findObjs({ _type: 'attribute', _characterid: String(characterId), name: String(name) })[0] || null;
+        }
+
+        function setAttribute(target, values) {
+            if (!target) return;
+            if (typeof target.setWithWorker === 'function') target.setWithWorker(values);
+            else target.set(values);
+        }
+
+        function characterSheetHint(character) {
+            const direct = String(character?.get('charactersheetname') || '').trim().toLowerCase();
+            if (direct) return direct;
+            return String(getAttrByName(character.id, 'charactersheetname') || '').trim().toLowerCase();
+        }
+
+        function is2014Pc(character) {
+            if (!character) return false;
+            const hint = characterSheetHint(character);
+            if (hint === 'dnd2024byroll20') return false;
+            if (String(getAttrByName(character.id, 'npc') || '').trim() === '1') return false;
+            return hint === 'ogl5e'
+                || Boolean(attribute(character.id, 'initiative_bonus'))
+                || Boolean(attribute(character.id, 'constitution_save_bonus'));
+        }
+
+        function newRowId() {
+            if (typeof generateRowID === 'function') return generateRowID();
+            return '-GA' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+        }
+
+        function ensureState() {
+            if (!isPlainObject(modState.config.customDefinitions)) modState.config.customDefinitions = {};
+            if (!isPlainObject(modState.config.markerOverrides)) modState.config.markerOverrides = {};
+            modState.config.durationCandidates = modState.config.durationCandidates !== false;
+            modState.config.castRecognition = modState.config.castRecognition !== false;
+            if (modState.config.defaultBlessMarker && !modState.config.markerOverrides.bless) {
+                modState.config.markerOverrides.bless = String(modState.config.defaultBlessMarker);
+            }
+            const runtime = ensureRuntimeObject(modState);
+            if (!isPlainObject(runtime.instances)) runtime.instances = {};
+            if (!Array.isArray(runtime.history)) runtime.history = [];
+            if (!isPlainObject(runtime.projectionLedgers)) runtime.projectionLedgers = {};
+            if (!isPlainObject(runtime.requestIds)) runtime.requestIds = {};
+            if (!isPlainObject(runtime.dependencyIndex)) runtime.dependencyIndex = {};
+            if (!isPlainObject(runtime.operations)) runtime.operations = {};
+            if (!Number.isInteger(runtime.nextInstanceNumber) || runtime.nextInstanceNumber < 1) runtime.nextInstanceNumber = 1;
+            if (!Number.isInteger(runtime.stateSchemaVersion) || runtime.stateSchemaVersion < 1) runtime.stateSchemaVersion = 1;
+
+            if (runtime.stateSchemaVersion < 2) migrateStateV1(runtime);
+            if (runtime.stateSchemaVersion < 3) migrateStateV2(runtime);
+            runtime.stateSchemaVersion = STATE_SCHEMA_VERSION;
+            Object.values(runtime.instances).filter(isPlainObject).forEach(normalizeDurationRecord);
+            runtime.history = runtime.history.slice(-POLICY.effects.endedHistoryLimit);
+
+            const requestEntries = Object.entries(runtime.requestIds);
+            if (requestEntries.length > POLICY.effects.requestIdLimit) {
+                requestEntries
+                    .sort(([, left], [, right]) => Number(left?.timestamp || 0) - Number(right?.timestamp || 0))
+                    .slice(0, requestEntries.length - POLICY.effects.requestIdLimit)
+                    .forEach(([key]) => delete runtime.requestIds[key]);
+            }
+            return runtime;
+        }
+
+        function migrateStateV1(runtime) {
+            if (!isPlainObject(runtime.projectionLedgers)) runtime.projectionLedgers = {};
+            Object.values(runtime.instances || {}).forEach(instance => {
+                if (!isPlainObject(instance) || Array.isArray(instance.bindings)) return;
+                const legacy = isPlainObject(instance.projection) ? clone(instance.projection) : null;
+                instance.definitionVersion = 1;
+                instance.definitionSnapshot = {
+                    id: instance.definitionId,
+                    name: instance.name,
+                    description: instance.description || '',
+                    concentration: instance.dependency?.type === 'concentration',
+                    duration: instance.duration?.label || '',
+                    stacking: clone(instance.stacking || { group: instance.definitionId, mode: 'nonstacking' }),
+                    projections: legacy ? [legacy] : []
+                };
+                instance.bindings = [];
+                instance.assistance = ['This effect was created by the pre-release schema. Review it before adding new sheet or concentration projections.'];
+                instance.migrationStatus = 'legacy-incomplete';
+                instance.status = instance.status === 'active' ? 'active' : 'needs-attention';
+            });
+            if (isPlainObject(runtime.projections)) {
+                runtime.legacyProjectionSnapshot = clone(runtime.projections);
+                delete runtime.projections;
+            }
+        }
+
+        function migrateStateV2(runtime) {
+            Object.values(runtime.instances || {}).forEach(instance => {
+                if (!isPlainObject(instance)) return;
+                const priorLabel = String(instance.duration?.label || instance.definitionSnapshot?.duration || '');
+                instance.duration = {
+                    type: 'manual',
+                    label: priorLabel,
+                    rules: normalizeDurationRules(instance.definitionSnapshot?.durationRules || BUILTIN_DEFINITIONS[instance.definitionId]?.durationRules),
+                    anchors: { combat: null, world: null },
+                    candidates: []
+                };
+                if (!Array.isArray(instance.assistance)) instance.assistance = [];
+                const note = 'This effect began before duration providers were recorded; keep its remaining duration manually.';
+                if (!instance.assistance.includes(note)) instance.assistance.push(note);
+            });
+        }
+
+        const runtime = ensureState();
+
+        function validInstance(instance) {
+            return isPlainObject(instance)
+                && typeof instance.id === 'string'
+                && typeof instance.definitionId === 'string'
+                && isPlainObject(instance.source)
+                && Array.isArray(instance.targets)
+                && Array.isArray(instance.bindings)
+                && ['active', 'ending', 'needs-attention'].includes(instance.status);
+        }
+
+        function activeInstances() {
+            return Object.values(runtime.instances).filter(validInstance);
+        }
+
+        function currentCombatDurationAnchor(rules, source) {
+            if (GameAssist.getState('CombatAssist')?.config?.enabled === false) return null;
+            const encounter = GameAssist.CombatAssist?.getStatus?.();
+            if (!rules?.encounterRounds || !encounter || encounter.status !== 'active') return null;
+            if (String(encounter.pageId || '') !== String(source?.pageId || '')) return null;
+            const startRound = Math.floor(Number(encounter.round));
+            const startIdentity = String(encounter.order?.[0] || '');
+            if (startRound < 1 || !startIdentity || !encounter.id) return null;
+            return {
+                encounterId: String(encounter.id),
+                pageId: String(encounter.pageId || ''),
+                startRound,
+                targetRound: startRound + rules.encounterRounds,
+                startIdentity,
+                startProgression: Math.max(0, Math.floor(Number(encounter.progression) || 0)),
+                anchoredAt: isoNow()
+            };
+        }
+
+        function currentWorldDurationAnchor(rules) {
+            const current = GameAssist.AlmanacAssist?.getTime?.();
+            const startWorldMinute = Math.floor(Number(current?.worldMinute));
+            if (!rules?.worldMinutes || !Number.isFinite(startWorldMinute) || startWorldMinute < 0) return null;
+            return {
+                startWorldMinute,
+                targetWorldMinute: startWorldMinute + rules.worldMinutes,
+                startRevision: Math.max(0, Math.floor(Number(current?.revision) || 0)),
+                anchoredAt: isoNow()
+            };
+        }
+
+        function createDurationRecord(definition, request, source) {
+            const label = String(request.duration || definition.duration || '').slice(0, POLICY.effects.nameLength);
+            const rules = request.duration ? null : normalizeDurationRules(definition.durationRules);
+            const record = {
+                type: 'manual',
+                label,
+                rules,
+                anchors: { combat: null, world: null },
+                candidates: []
+            };
+            const assistance = [];
+            if (!rules) {
+                if (request.duration) assistance.push('A custom duration was entered, so its remaining time stays manual.');
+                return { record, assistance };
+            }
+            if (modState.config.durationCandidates === false) {
+                assistance.push('Duration candidates are turned off; end this effect manually when its duration is reached.');
+                return { record, assistance };
+            }
+            record.anchors.combat = currentCombatDurationAnchor(rules, source);
+            record.anchors.world = currentWorldDurationAnchor(rules);
+            if (record.anchors.combat || record.anchors.world) {
+                record.type = 'provider-candidates';
+            } else {
+                assistance.push('No duration provider was active when this effect began, so its remaining time stays manual.');
+            }
+            return { record, assistance };
+        }
+
+        function durationRuleSummary(instance) {
+            const rules = instance?.duration?.rules;
+            if (!rules) return instance?.duration?.label || 'Manual duration';
+            const units = [];
+            if (rules.encounterRounds) units.push(`${rules.encounterRounds} encounter round${rules.encounterRounds === 1 ? '' : 's'}`);
+            if (rules.worldMinutes) units.push(`${rules.worldMinutes} world minute${rules.worldMinutes === 1 ? '' : 's'}`);
+            return units.length ? units.join(' or ') : (instance.duration.label || 'Manual duration');
+        }
+
+        function durationProviderSummary(instance, provider) {
+            const rules = instance?.duration?.rules;
+            if (provider === 'combat' && rules?.encounterRounds) {
+                return `${rules.encounterRounds}-round`;
+            }
+            if (provider === 'world-time' && rules?.worldMinutes) {
+                return `${rules.worldMinutes}-world-minute`;
+            }
+            return durationRuleSummary(instance);
+        }
+
+        function openDurationCandidates(instance) {
+            return (instance?.duration?.candidates || []).filter(candidate => candidate.status === 'open');
+        }
+
+        function addDurationCandidate(instance, candidate) {
+            if (!validInstance(instance) || modState.config.durationCandidates === false) return null;
+            const duration = normalizeDurationRecord(instance);
+            if (candidate.kind === 'expiration-candidate'
+                && duration.candidates.some(item => item.kind === 'expiration-candidate')) return null;
+            if (duration.candidates.some(item => item.dedupeKey === candidate.dedupeKey)) return null;
+            const created = normalizeDurationCandidate({
+                ...candidate,
+                id: `DUR-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+                status: 'open',
+                createdAt: isoNow()
+            });
+            if (!created) return null;
+            duration.candidates.push(created);
+            if (duration.candidates.length > POLICY.effects.durationCandidateLimit) {
+                const dismissedIndex = duration.candidates.findIndex(item => item.status === 'dismissed');
+                if (dismissedIndex >= 0) duration.candidates.splice(dismissedIndex, 1);
+                while (duration.candidates.length > POLICY.effects.durationCandidateLimit) duration.candidates.shift();
+            }
+            notifyLifecycle('duration-candidate-created', instance, { candidate: created });
+            return { instance, candidate: created };
+        }
+
+        function combatDurationReached(anchor, payload) {
+            if (!anchor || !payload || String(payload.encounterId || '') !== anchor.encounterId) return false;
+            if (anchor.pageId && String(payload.pageId || '') !== anchor.pageId) return false;
+            const round = Math.floor(Number(payload.round));
+            const identity = String(payload.current?.identity || payload.order?.[0] || '');
+            return round > anchor.targetRound || (round === anchor.targetRound && identity === anchor.startIdentity);
+        }
+
+        function worldDurationReached(anchor, payload) {
+            if (!anchor) return false;
+            const currentWorldMinute = Math.floor(Number(payload?.current?.worldMinute ?? payload?.worldMinute));
+            return Number.isFinite(currentWorldMinute) && currentWorldMinute >= anchor.targetWorldMinute;
+        }
+
+        function announceDurationCandidates(created) {
+            if (!created.length) return;
+            const rows = created.slice(0, POLICY.effects.chatListLimit).map(item =>
+                `<b>${_sanitize(item.instance.name)}</b>: ${_sanitize(item.candidate.reason)} `
+                + GameAssist.createButton('End Effect', '!Effect-End --id ' + item.instance.id) + ' '
+                + GameAssist.createButton('Keep Active', `!Effect-Duration-Dismiss --id ${item.instance.id} --candidate ${item.candidate.id}`)
+            ).join('<br>');
+            panel('Effect Duration Review', [
+                { label: 'GM Decision Needed', value: `${created.length} effect duration item(s) are ready for review. Nothing has ended automatically.` },
+                { label: 'Effects', value: rows },
+                { label: 'Actions', value: `${GameAssist.createButton('Review Durations', '!Effect-Duration')} ${GameAssist.createButton('Active Effects', '!Effect-Active')}` }
+            ], null, { gmOnly: true });
+        }
+
+        function observeDurationProvider(event) {
+            if (modState.config.enabled === false || modState.config.durationCandidates === false) return;
+            const payload = event?.payload || {};
+            const created = [];
+            if (event?.type.startsWith('combat.') && event?.producer !== 'CombatAssist') return;
+            if (event?.type === 'almanac.time.changed' && event?.producer !== 'AlmanacAssist') return;
+            if (event?.type === 'combat.turn.changed'
+                && payload.combatEventSchemaVersion === 1
+                && payload.details?.direction === 'forward') {
+                activeInstances().forEach(instance => {
+                    const anchor = instance.duration?.anchors?.combat;
+                    if (!combatDurationReached(anchor, payload)) return;
+                    const item = addDurationCandidate(instance, {
+                        dedupeKey: `combat-expired:${anchor.encounterId}:${anchor.targetRound}`,
+                        provider: 'combat',
+                        kind: 'expiration-candidate',
+                        reason: `${instance.name} reached its ${durationProviderSummary(instance, 'combat')} boundary in the verified encounter.`,
+                        evidence: { encounterId: anchor.encounterId, round: payload.round, progression: payload.progression, identity: payload.current?.identity || '' }
+                    });
+                    if (item) created.push(item);
+                });
+            } else if (event?.type === 'combat.encounter.ended') {
+                activeInstances().forEach(instance => {
+                    const anchor = instance.duration?.anchors?.combat;
+                    if (!anchor || anchor.encounterId !== String(payload.encounterId || '')) return;
+                    if ((instance.duration?.candidates || []).some(item => item.kind === 'expiration-candidate')) return;
+                    const item = addDurationCandidate(instance, {
+                        dedupeKey: `combat-ended:${anchor.encounterId}`,
+                        provider: 'combat',
+                        kind: 'reminder',
+                        reason: `The tracked encounter ended before ${instance.name}'s round boundary was verified. Keep it active or end it after reviewing the spell.`,
+                        evidence: { encounterId: anchor.encounterId, round: payload.round, progression: payload.progression }
+                    });
+                    if (item) created.push(item);
+                });
+            } else if (event?.type === 'almanac.time.changed') {
+                const previousMinute = Math.floor(Number(payload.previous?.worldMinute));
+                const currentMinute = Math.floor(Number(payload.current?.worldMinute));
+                if (!Number.isFinite(previousMinute) || !Number.isFinite(currentMinute) || currentMinute <= previousMinute) return;
+                activeInstances().forEach(instance => {
+                    const anchor = instance.duration?.anchors?.world;
+                    if (!worldDurationReached(anchor, payload)) return;
+                    const item = addDurationCandidate(instance, {
+                        dedupeKey: `world-expired:${anchor.targetWorldMinute}`,
+                        provider: 'world-time',
+                        kind: 'expiration-candidate',
+                        reason: `${instance.name} reached its ${durationProviderSummary(instance, 'world-time')} boundary in committed Almanac time.`,
+                        evidence: { previousWorldMinute: previousMinute, currentWorldMinute: currentMinute, revision: payload.revision || payload.current?.revision || 0 }
+                    });
+                    if (item) created.push(item);
+                });
+            }
+            announceDurationCandidates(created);
+        }
+
+        function reconcileDurationProviders(options = {}) {
+            if (modState.config.enabled === false || modState.config.durationCandidates === false) return [];
+            const created = [];
+            const encounter = GameAssist.CombatAssist?.getStatus?.();
+            const world = GameAssist.AlmanacAssist?.getTime?.();
+            activeInstances().forEach(instance => {
+                const combat = instance.duration?.anchors?.combat;
+                if (combat && encounter && ['active', 'paused'].includes(encounter.status)
+                    && combatDurationReached(combat, {
+                        encounterId: encounter.id,
+                        pageId: encounter.pageId,
+                        round: encounter.round,
+                        progression: encounter.progression,
+                        current: { identity: String(encounter.order?.[0] || '') }
+                    })) {
+                    const item = addDurationCandidate(instance, {
+                        dedupeKey: `combat-expired:${combat.encounterId}:${combat.targetRound}`,
+                        provider: 'combat',
+                        kind: 'expiration-candidate',
+                        reason: `${instance.name} has reached its ${durationProviderSummary(instance, 'combat')} boundary in the verified encounter.`,
+                        evidence: { encounterId: encounter.id, round: encounter.round, progression: encounter.progression, reconciled: true }
+                    });
+                    if (item) created.push(item);
+                }
+                const worldAnchor = instance.duration?.anchors?.world;
+                if (worldDurationReached(worldAnchor, world)) {
+                    const item = addDurationCandidate(instance, {
+                        dedupeKey: `world-expired:${worldAnchor.targetWorldMinute}`,
+                        provider: 'world-time',
+                        kind: 'expiration-candidate',
+                        reason: `${instance.name} has reached its ${durationProviderSummary(instance, 'world-time')} boundary in committed Almanac time.`,
+                        evidence: { currentWorldMinute: world.worldMinute, revision: world.revision || 0, reconciled: true }
+                    });
+                    if (item) created.push(item);
+                }
+            });
+            if (options.announce !== false) announceDurationCandidates(created);
+            return created;
+        }
+
+        function ledgerOwners(ledger) {
+            return [...new Set((Array.isArray(ledger?.instanceIds) ? ledger.instanceIds : [])
+                .filter(id => validInstance(runtime.instances[id])))];
+        }
+
+        function rebuildDependencyIndex() {
+            runtime.dependencyIndex = {};
+            activeInstances().forEach(instance => {
+                if (instance.dependency?.type !== 'concentration' || !instance.dependency?.established) return;
+                const key = String(instance.source.characterId || '');
+                if (!key) return;
+                if (!Array.isArray(runtime.dependencyIndex[key])) runtime.dependencyIndex[key] = [];
+                runtime.dependencyIndex[key].push(instance.id);
+            });
+        }
+
+        function warnAboutPreservedState() {
+            const knownConfig = new Set(['enabled', 'allowPlayerCasting', 'durationCandidates', 'castRecognition', 'markerOverrides', 'customDefinitions', 'defaultBlessMarker']);
+            const knownRuntime = new Set(['instances', 'history', 'projectionLedgers', 'requestIds', 'dependencyIndex', 'operations', 'nextInstanceNumber', 'stateSchemaVersion', 'legacyProjectionSnapshot']);
+            const unknownConfig = Object.keys(modState.config).filter(key => !knownConfig.has(key));
+            const unknownRuntime = Object.keys(runtime).filter(key => !knownRuntime.has(key));
+            const invalidInstances = Object.values(runtime.instances).filter(instance => !validInstance(instance)).length;
+            if (unknownConfig.length || unknownRuntime.length) {
+                GameAssist.log(MODULE_NAME, 'Unknown EffectAssist state branches were preserved for review: '
+                    + unknownConfig.map(key => 'config.' + key).concat(unknownRuntime.map(key => 'runtime.' + key)).join(', '), 'WARN');
+            }
+            if (invalidInstances) {
+                GameAssist.log(MODULE_NAME, `${invalidInstances} malformed effect instance record(s) were preserved for manual review.`, 'WARN');
+            }
+        }
+
+        function markerFor(definitionId, projection) {
+            const override = modState.config.markerOverrides[definitionId];
+            return String(override || projection.marker || '').trim();
+        }
+
+        function normalizeDefinition(definition) {
+            const copy = clone(definition);
+            if (!copy) return null;
+            copy.projections = Array.isArray(copy.projections)
+                ? copy.projections
+                : (isPlainObject(copy.projection) ? [copy.projection] : []);
+            copy.stacking = isPlainObject(copy.stacking)
+                ? copy.stacking
+                : { group: copy.stackingGroup || copy.id, mode: copy.stackingMode || 'nonstacking' };
+            copy.automatic = Array.isArray(copy.automatic) ? copy.automatic : [];
+            copy.assisted = Array.isArray(copy.assisted) ? copy.assisted : [];
+            copy.informational = Array.isArray(copy.informational) ? copy.informational : [];
+            copy.durationRules = normalizeDurationRules(copy.durationRules);
+            copy.catalogGroup = copy.catalogGroup === 'automated' ? 'automated' : 'tracked';
+            return copy;
+        }
+
+        function getCustomDefinitions() {
+            return Object.values(modState.config.customDefinitions)
+                .map(normalizeDefinition)
+                .filter(definition => definition && typeof definition.id === 'string' && typeof definition.name === 'string');
+        }
+
+        function getDefinitions() {
+            return Object.values(BUILTIN_DEFINITIONS).map(normalizeDefinition).concat(getCustomDefinitions());
+        }
+
+        function getDefinition(requested) {
+            const id = normalizeDefinitionId(requested);
+            if (!id) return null;
+            const definition = BUILTIN_DEFINITIONS[id] || modState.config.customDefinitions[id];
+            const normalized = normalizeDefinition(definition);
+            if (!normalized) return null;
+            normalized.projections.forEach(projection => {
+                if (projection.adapter === 'marker') projection.marker = markerFor(id, projection);
+            });
+            return normalized;
+        }
+
+        function parseOptions(content) {
+            const options = {};
+            const expression = /--([a-z][a-z0-9-]*)(?:\s+(?:"([^"]*)"|'([^']*)'|([^\s]+)))?/gi;
+            let match;
+            while ((match = expression.exec(String(content || '')))) {
+                options[match[1].toLowerCase()] = match[2] ?? match[3] ?? match[4] ?? true;
+            }
+            return options;
+        }
+
+        function commandAction(content) {
+            const text = String(content || '').trim();
+            const first = text.split(/\s+/)[0].toLowerCase();
+            if (first.startsWith('!effectassist-')) return first.slice('!effectassist-'.length);
+            if (first.startsWith('!effect-')) return first.slice('!effect-'.length);
+            const body = text.replace(/^!effect(?:\s+|$)/i, '').trim();
+            return (body.split(/\s+/)[0] || 'catalog').toLowerCase();
+        }
+
+        function controllerIds(entity) {
+            return String(entity?.get('controlledby') || '')
+                .split(',')
+                .map(value => value.trim())
+                .filter(Boolean);
+        }
+
+        function actorControlsSource(playerId, source) {
+            if (playerIsGM(playerId)) return true;
+            const ids = new Set(controllerIds(source?.token).concat(controllerIds(source?.character)));
+            return ids.has('all') || ids.has(String(playerId || ''));
+        }
+
+        function playerCastingAllowed(msg) {
+            return playerIsGM(msg?.playerid) || modState.config.allowPlayerCasting !== false;
+        }
+
+        function resolveLinkedToken(tokenId, label) {
+            const token = getObj('graphic', String(tokenId || ''));
+            if (!token) return { ok: false, code: 'NOT_FOUND', message: `${label} token was not found.` };
+            if (!['objects', 'gmlayer'].includes(String(token.get('layer') || ''))) {
+                return { ok: false, code: 'UNPROCESSABLE', message: `${label} must be on the Objects or GM layer.` };
+            }
+            const characterId = String(token.get('represents') || '');
+            const character = characterId ? getObj('character', characterId) : null;
+            if (!character) return { ok: false, code: 'UNPROCESSABLE', message: `${label} must represent a character.` };
+            return {
+                ok: true,
+                token,
+                character,
+                summary: {
+                    tokenId: token.id,
+                    tokenName: String(token.get('name') || character.get('name') || 'Unnamed token'),
+                    characterId: character.id,
+                    characterName: String(character.get('name') || token.get('name') || 'Unnamed character'),
+                    pageId: String(token.get('_pageid') || token.get('pageid') || ''),
+                    layer: String(token.get('layer') || '')
+                }
+            };
+        }
+
+        function selectedTargets(msg) {
+            const seen = new Set();
+            const targets = [];
+            let failure = null;
+            (Array.isArray(msg.selected) ? msg.selected : []).forEach(selection => {
+                const tokenId = String(selection?._id || '');
+                if (!tokenId || seen.has(tokenId) || failure) return;
+                seen.add(tokenId);
+                const resolved = resolveLinkedToken(tokenId, 'Each target');
+                if (!resolved.ok) failure = resolved;
+                else targets.push(resolved);
+            });
+            if (failure) return failure;
+            if (!targets.length) return { ok: false, code: 'INVALID_ARGUMENT', message: 'Select at least one linked character token before applying an effect.' };
+            if (targets.length > POLICY.effects.targetLimit) {
+                return { ok: false, code: 'RATE_LIMITED', message: `Select no more than ${POLICY.effects.targetLimit} targets at once.` };
+            }
+            return { ok: true, targets };
+        }
+
+        function effectPageId(playerId) {
+            const campaign = Campaign();
+            let overrides = campaign.get('playerspecificpages');
+            if (typeof overrides === 'string' && overrides) {
+                try { overrides = JSON.parse(overrides); } catch (_error) { overrides = null; }
+            }
+            if (overrides && typeof overrides === 'object' && overrides[playerId]) {
+                return String(overrides[playerId]);
+            }
+            return String(campaign.get('playerpageid') || '');
+        }
+
+        /**
+         * parseRollTemplateFields - Reads named fields from a Roll20 roll-template message.
+         * Context: recognition is a shortcut into GM review, never authority to apply an effect.
+         * Inputs: Roll20 chat content; malformed or unrelated content is accepted as empty evidence.
+         * Outputs: a lower-case-keyed field object containing bounded text values.
+         * Invariants: no field is evaluated and recipient prose is never interpreted as token identity.
+         */
+        function parseRollTemplateFields(content) {
+            const fields = {};
+            const expression = /{{\s*([a-z][a-z0-9_]*)\s*=([\s\S]*?)}}/gi;
+            let match;
+            while ((match = expression.exec(String(content || '')))) {
+                const key = String(match[1] || '').toLowerCase();
+                if (!Object.prototype.hasOwnProperty.call(fields, key)) {
+                    fields[key] = String(match[2] || '').trim().slice(0, POLICY.effects.descriptionLength);
+                }
+            }
+            return fields;
+        }
+
+        function normalizeTemplateValue(value) {
+            return String(value || '')
+                .replace(/<[^>]*>/g, ' ')
+                .replace(/&nbsp;|&#160;/gi, ' ')
+                .replace(/&amp;/gi, '&')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function recognitionPageId(playerId) {
+            const ribbonPage = effectPageId(playerId);
+            if (!playerIsGM(playerId)) return ribbonPage;
+            return String(getObj('player', playerId)?.get('_lastpage') || ribbonPage || '');
+        }
+
+        function pruneCastTracking(now = Date.now()) {
+            [...recentCastEvidence.entries()].forEach(([key, seenAt]) => {
+                if (now - Number(seenAt || 0) > POLICY.effects.castDedupeMs) recentCastEvidence.delete(key);
+            });
+            const evidenceLimit = POLICY.effects.castProposalLimit * 2;
+            if (recentCastEvidence.size > evidenceLimit) {
+                [...recentCastEvidence.keys()]
+                    .slice(0, recentCastEvidence.size - evidenceLimit)
+                    .forEach(key => recentCastEvidence.delete(key));
+            }
+            [...castProposals.entries()].forEach(([id, proposal]) => {
+                if (now - Number(proposal?.createdAt || 0) > POLICY.effects.castProposalMs) castProposals.delete(id);
+            });
+            if (castProposals.size > POLICY.effects.castProposalLimit) {
+                [...castProposals.values()]
+                    .sort((left, right) => Number(left.createdAt || 0) - Number(right.createdAt || 0))
+                    .slice(0, castProposals.size - POLICY.effects.castProposalLimit)
+                    .forEach(proposal => castProposals.delete(proposal.id));
+            }
+        }
+
+        function resolveRecognizedCaster(msg, characterName) {
+            const expectedName = normalizeTemplateValue(characterName).toLowerCase();
+            const characters = findObjs({ _type: 'character' }).filter(character =>
+                normalizeTemplateValue(character.get('name')).toLowerCase() === expectedName
+            );
+            if (characters.length !== 1) {
+                return {
+                    ok: false,
+                    message: characters.length
+                        ? `The Bless card named "${characterName}", but more than one character has that name. Use the Effect Catalog so the source is explicit.`
+                        : `The Bless card named "${characterName}", but no matching Roll20 character was found. Use the Effect Catalog so the source is explicit.`
+                };
+            }
+            const pageId = recognitionPageId(msg.playerid);
+            if (!pageId) return { ok: false, message: 'The Bless card was recognized, but its active Roll20 page could not be determined. Use the Effect Catalog.' };
+            const character = characters[0];
+            const sources = findObjs({ _type: 'graphic', _pageid: pageId })
+                .filter(token => String(token.get('represents') || '') === String(character.id))
+                .filter(token => ['objects', 'gmlayer'].includes(String(token.get('layer') || '')))
+                .map(token => resolveLinkedToken(token.id, 'The source'))
+                .filter(result => result.ok)
+                .filter(result => playerIsGM(msg.playerid)
+                    || (result.summary.layer === 'objects' && actorControlsSource(msg.playerid, result)));
+            if (sources.length !== 1) {
+                return {
+                    ok: false,
+                    message: sources.length
+                        ? `Bless was recognized for ${characterName}, but more than one eligible source token is on the active page. Use the Effect Catalog to choose the source.`
+                        : `Bless was recognized for ${characterName}, but no eligible linked source token is on the active page. Use the Effect Catalog after placing or linking the caster token.`
+                };
+            }
+            return { ok: true, source: sources[0] };
+        }
+
+        function castProposalSummary(proposal) {
+            const ageSeconds = Math.max(0, Math.floor((Date.now() - Number(proposal.createdAt || 0)) / 1000));
+            const requestedBy = getObj('player', proposal.playerId);
+            const requesterName = String(requestedBy?.get('_displayname') || requestedBy?.get('displayname') || proposal.who || 'Unknown player')
+                .replace(/\s*\(GM\)\s*$/i, '')
+                .trim();
+            return `<b>${_sanitize(proposal.effectName)}</b> from ${_sanitize(proposal.sourceName)} | ${_sanitize(requesterName)} | ${ageSeconds}s ago`;
+        }
+
+        function castProposalButtons(proposal) {
+            return `${GameAssist.createButton('Review Selected Recipients', `!Effect-Cast --proposal ${proposal.id} --replace ?{If this source is already concentrating, replace that effect?|Yes,yes|No,no}`)} ${GameAssist.createButton('Dismiss', `!Effect-Cast-Dismiss --proposal ${proposal.id}`)}`;
+        }
+
+        function showCastProposals(msg) {
+            pruneCastTracking();
+            const proposals = [...castProposals.values()].sort((left, right) => Number(right.createdAt || 0) - Number(left.createdAt || 0));
+            panel('Recognized Casts', [
+                { label: 'Pending', value: proposals.length
+                    ? proposals.slice(0, POLICY.effects.chatListLimit).map(proposal => `${castProposalSummary(proposal)}<br>${castProposalButtons(proposal)}`).join('<br><br>')
+                    : 'No supported spell cards are waiting for review.' },
+                { label: 'How To Apply', value: 'Select the actual recipient tokens on the map, then use that cast\'s Review Selected Recipients button. Spell-card target wording is never treated as token selection.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function handleCastRecognition(msg) {
+            if (modState.config.castRecognition === false || !msg || msg.type === 'api') return;
+            if (!getObj('player', String(msg.playerid || ''))) return;
+            if (!playerIsGM(msg.playerid) && !playerCastingAllowed(msg)) return;
+            if (String(msg.rolltemplate || '').trim().toLowerCase() !== 'spell') return;
+            const fields = parseRollTemplateFields(msg.content);
+            const spellName = normalizeTemplateValue(fields.name);
+            if (spellName.toLowerCase() !== 'bless') return;
+            const characterName = normalizeTemplateValue(fields.charname);
+            if (!characterName) return;
+
+            const now = Date.now();
+            pruneCastTracking(now);
+            const evidenceKey = fingerprint({
+                playerId: String(msg.playerid || ''),
+                rolltemplate: 'spell',
+                spellName: spellName.toLowerCase(),
+                characterName: characterName.toLowerCase(),
+                content: String(msg.content || '').slice(0, POLICY.effects.descriptionLength * 2)
+            });
+            if (recentCastEvidence.has(evidenceKey)) return;
+            recentCastEvidence.set(evidenceKey, now);
+
+            const caster = resolveRecognizedCaster(msg, characterName);
+            if (!caster.ok) {
+                panel('Bless Cast Recognized', [
+                    { label: 'Needs Attention', value: _sanitize(caster.message) },
+                    { label: 'No Changes Made', value: 'No effect record, marker, concentration, or sheet modifier was changed.' },
+                    { label: 'Next Step', value: GameAssist.createButton('Open Effect Catalog', '!Effect-Catalog') }
+                ], msg, { gmOnly: true });
+                return;
+            }
+
+            const proposal = {
+                id: `CAST-${now.toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+                schemaVersion: CAST_PROPOSAL_SCHEMA_VERSION,
+                definitionId: 'bless',
+                effectName: 'Bless',
+                sourceTokenId: caster.source.summary.tokenId,
+                sourceCharacterId: caster.source.summary.characterId,
+                sourceName: caster.source.summary.characterName,
+                playerId: String(msg.playerid || ''),
+                who: String(msg.who || ''),
+                targetText: normalizeTemplateValue(fields.target).slice(0, 240),
+                createdAt: now
+            };
+            castProposals.set(proposal.id, proposal);
+            pruneCastTracking(now);
+            panel('Bless Cast Recognized', [
+                { label: 'Source', value: _sanitize(proposal.sourceName) },
+                { label: 'Effect', value: 'Bless' },
+                { label: 'Choose Recipients', value: 'Select the actual recipient tokens on the map. GameAssist does not guess recipients from the spell-card text.' },
+                { label: 'Review', value: castProposalButtons(proposal) },
+                { label: 'Other Options', value: `${GameAssist.createButton('Pending Casts', '!Effect-Casts')} ${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function handleCastProposal(msg, options) {
+            pruneCastTracking();
+            const proposal = castProposals.get(String(options.proposal || ''));
+            if (!proposal) {
+                return panel('EffectAssist', [
+                    { label: 'Needs Attention', value: 'That recognized cast is no longer available. It may have expired, been dismissed, or already been reviewed.' },
+                    { label: 'Next Step', value: `${GameAssist.createButton('Pending Casts', '!Effect-Casts')} ${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')}` }
+                ], msg, { gmOnly: true });
+            }
+            const targets = selectedTargets(msg);
+            if (!targets.ok) {
+                return panel('EffectAssist', [
+                    { label: 'Needs Attention', value: 'Select the actual recipient token or tokens on the map, then click Review Selected Recipients again.' },
+                    { label: 'Cast', value: castProposalSummary(proposal) },
+                    { label: 'Try Again', value: castProposalButtons(proposal) }
+                ], msg, { gmOnly: true });
+            }
+            const source = resolveLinkedToken(proposal.sourceTokenId, 'The recognized source');
+            const sourceStillEligible = source.ok
+                && source.summary.characterId === proposal.sourceCharacterId
+                && source.summary.pageId === recognitionPageId(proposal.playerId)
+                && (playerIsGM(proposal.playerId)
+                    || (modState.config.allowPlayerCasting !== false
+                        && source.summary.layer === 'objects'
+                        && actorControlsSource(proposal.playerId, source)));
+            if (!sourceStillEligible) {
+                castProposals.delete(proposal.id);
+                return panel('EffectAssist', [
+                    { label: 'Needs Attention', value: 'The recognized source, page, layer, control, or player-casting permission changed. Open the Effect Catalog to choose the source again.' },
+                    { label: 'No Changes Made', value: 'No effect was applied.' }
+                ], msg, { gmOnly: true });
+            }
+            castProposals.delete(proposal.id);
+            handleApply(msg, {
+                effect: proposal.definitionId,
+                source: proposal.sourceTokenId,
+                replace: options.replace,
+                request: `recognized:${proposal.id}`,
+                'requested-by': playerIsGM(proposal.playerId) ? undefined : proposal.playerId,
+                announce: true
+            });
+        }
+
+        function handleCastProposalDismiss(msg, options) {
+            pruneCastTracking();
+            const proposalId = String(options.proposal || '');
+            const existed = castProposals.delete(proposalId);
+            panel('Recognized Casts', [
+                { label: 'Result', value: existed ? 'The cast proposal was dismissed. No effect changes were made.' : 'That cast proposal was already unavailable.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Pending Casts', '!Effect-Casts')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function handleRecognitionSetting(msg) {
+            const value = String(msg.content || '').trim().split(/\s+/)[1]?.toLowerCase();
+            if (!['on', 'off'].includes(value)) return showControl(msg);
+            modState.config.castRecognition = value === 'on';
+            panel('EffectAssist Cast Recognition', [
+                { label: 'Setting', value: modState.config.castRecognition
+                    ? 'On. Supported 2014 Bless spell cards may create a private GM proposal when their caster evidence is unambiguous.'
+                    : 'Off. Spell cards will not create proposals; the Effect Catalog remains fully available.' },
+                { label: 'Safety', value: 'Recognition never selects recipients or applies an effect automatically.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Pending Casts', '!Effect-Casts')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function explicitTargets(msg, rawIds) {
+            const ids = [...new Set(String(rawIds || '')
+                .split(',')
+                .map(value => value.trim())
+                .filter(Boolean))];
+            if (!ids.length) {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Choose at least one recipient token.' };
+            }
+            if (ids.length > POLICY.effects.targetLimit) {
+                return { ok: false, code: 'RATE_LIMITED', message: `Choose no more than ${POLICY.effects.targetLimit} recipients at once.` };
+            }
+            const currentPageId = effectPageId(msg?.playerid);
+            const targets = ids.map(tokenId => resolveLinkedToken(tokenId, 'Each recipient'));
+            const failure = targets.find(result => !result.ok);
+            if (failure) return failure;
+            if (!playerIsGM(msg?.playerid)) {
+                const hidden = targets.find(result =>
+                    result.summary.layer !== 'objects' || result.summary.pageId !== currentPageId
+                );
+                if (hidden) {
+                    return {
+                        ok: false,
+                        code: 'FORBIDDEN',
+                        message: 'Players may choose visible recipient tokens on their current Roll20 page. Ask the GM to handle hidden or off-page recipients.'
+                    };
+                }
+            }
+            return { ok: true, targets };
+        }
+
+        function requestedTargets(msg, options) {
+            return options.targets ? explicitTargets(msg, options.targets) : selectedTargets(msg);
+        }
+
+        function safeQueryText(value) {
+            return String(value || '').replace(/[|,}]/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+
+        function controlledSources(msg = null) {
+            const pageId = effectPageId(msg?.playerid);
+            if (!pageId) return [];
+            return findObjs({ _type: 'graphic', _pageid: pageId })
+                .filter(token => ['objects', 'gmlayer'].includes(String(token.get('layer') || '')))
+                .map(token => resolveLinkedToken(token.id, 'Source'))
+                .filter(result => result.ok)
+                .filter(result => playerIsGM(msg?.playerid) || result.summary.layer === 'objects')
+                .filter(result => !msg || actorControlsSource(msg.playerid, result))
+                .sort((left, right) => left.summary.tokenName.localeCompare(right.summary.tokenName))
+                .slice(0, POLICY.effects.sourcePickerLimit);
+        }
+
+        function sourceQuery(msg = null) {
+            const tokens = controlledSources(msg);
+            if (!tokens.length) return null;
+            return '?{Effect source|' + tokens.map(result =>
+                `${safeQueryText(result.summary.tokenName)},${result.summary.tokenId}`
+            ).join('|') + '}';
+        }
+
+        function conditionQuery() {
+            const conditions = GameAssist.ConditionAssist?.getConditions?.();
+            if (!isPlainObject(conditions)) return null;
+            const choices = Object.entries(conditions)
+                .slice(0, POLICY.effects.conditionPickerLimit)
+                .map(([key, definition]) => `${safeQueryText(definition?.name || key)},${safeQueryText(key)}`);
+            return choices.length ? '?{Condition|' + choices.join('|') + '}' : null;
+        }
+
+        function createCustomDefinition(options) {
+            const nameResult = boundedText(options.name, POLICY.effects.nameLength, 'Effect name');
+            if (!nameResult.ok) return nameResult;
+            const id = normalizeDefinitionId(nameResult.value);
+            if (!id) return { ok: false, code: 'INVALID_ARGUMENT', message: 'The effect name could not form a safe definition id.' };
+
+            let projection;
+            if (options.condition) {
+                const value = boundedText(options.condition, POLICY.effects.nameLength, 'Condition name');
+                if (!value.ok) return value;
+                projection = { id: 'condition', adapter: 'condition', subject: 'target-token', condition: value.value, label: value.value };
+            } else if (options.marker) {
+                const value = boundedText(options.marker, POLICY.effects.markerLength, 'Marker');
+                if (!value.ok) return value;
+                projection = { id: 'marker', adapter: 'marker', subject: 'target-token', marker: value.value, label: value.value };
+            } else if (options.none === true || String(options.none).toLowerCase() === 'true') {
+                projection = { id: 'record', adapter: 'record-only', subject: 'instance', label: 'Record only' };
+            } else {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Choose a marker, a ConditionAssist condition, or --none for the custom effect.' };
+            }
+
+            const dependency = ['none', 'manual', 'concentration'].includes(String(options.dependency || '').toLowerCase())
+                ? String(options.dependency).toLowerCase()
+                : 'manual';
+            const description = boundedText(options.description || '', POLICY.effects.descriptionLength, 'Description', { required: false });
+            if (!description.ok) return description;
+            const definition = {
+                id,
+                definitionVersion: 1,
+                name: nameResult.value,
+                description: description.value,
+                concentration: dependency === 'concentration',
+                duration: String(options.duration || 'Until the GM ends it').slice(0, POLICY.effects.nameLength),
+                targets: 'Selected linked character tokens',
+                stacking: { group: id, mode: 'nonstacking' },
+                projections: [projection],
+                automatic: projection.adapter === 'record-only' ? ['Effect record'] : ['Selected projection and effect record'],
+                assisted: dependency === 'manual' ? ['End the effect when its rule says it ends.'] : [],
+                informational: [],
+                builtin: false
+            };
+            const existing = getDefinition(id);
+            if (existing) {
+                return fingerprint(existing) === fingerprint(normalizeDefinition(definition))
+                    ? { ok: true, definition: existing, isNew: false }
+                    : { ok: false, code: 'CONFLICT', message: `An effect definition named "${existing.name}" already uses different settings.` };
+            }
+            if (getCustomDefinitions().length >= POLICY.effects.definitionLimit) {
+                return { ok: false, code: 'RATE_LIMITED', message: `EffectAssist already has the maximum of ${POLICY.effects.definitionLimit} custom definitions.` };
+            }
+            return { ok: true, definition, isNew: true };
+        }
+
+        function bindingKey(binding) {
+            let adapterIdentity = binding.adapter;
+            let intentIdentity = binding.intent;
+            if (binding.adapter === 'marker' || binding.adapter === 'condition') {
+                const condition = binding.adapter === 'condition'
+                    ? GameAssist.ConditionAssist?.getCondition?.(binding.intent.condition)
+                    : null;
+                const markerRef = condition?.marker || binding.intent.marker || `condition:${binding.intent.condition}`;
+                const resolution = GameAssist.MarkerService?.resolve?.(markerRef);
+                const markerId = resolution?.ok
+                    ? GameAssist.MarkerService.normalizeId(resolution.id)
+                    : String(markerRef || '').trim().toLowerCase();
+                adapterIdentity = 'token-marker';
+                intentIdentity = { markerId };
+            }
+            return [
+                adapterIdentity,
+                binding.subjectType,
+                binding.subjectId,
+                fingerprint(intentIdentity)
+            ].join('|');
+        }
+
+        function expandDefinition(definition, source, targets) {
+            const bindings = [];
+            const assistance = [...definition.assisted, ...definition.informational];
+            const seen = new Set();
+            definition.projections.forEach(projection => {
+                if (projection.adapter === 'record-only') return;
+                const subjects = projection.subject === 'source-token'
+                    ? [source]
+                    : projection.subject === 'source-character'
+                        ? [source]
+                        : targets;
+                subjects.forEach(subject => {
+                    if (projection.adapter === 'ogl-repeating' && !is2014Pc(subject.character)) {
+                        assistance.push(`${subject.summary.characterName}: ${projection.label} is not available as a verified 2014 PC-sheet projection; apply that rule manually.`);
+                        return;
+                    }
+                    const binding = {
+                        adapter: projection.adapter,
+                        projectionId: projection.id,
+                        label: projection.label || projection.id,
+                        subjectType: projection.subject.endsWith('character') ? 'character' : 'token',
+                        subjectId: projection.subject.endsWith('character') ? subject.character.id : subject.token.id,
+                        tokenId: subject.token.id,
+                        characterId: subject.character.id,
+                        expectedRepresents: subject.character.id,
+                        optional: projection.optional === true,
+                        intent: projection.adapter === 'marker'
+                            ? { marker: markerFor(definition.id, projection) }
+                            : projection.adapter === 'condition'
+                                ? { condition: projection.condition }
+                                : projection.adapter === 'ogl-repeating'
+                                    ? { modifier: projection.modifier, label: projection.label, value: String(projection.value) }
+                                    : {}
+                    };
+                    binding.key = bindingKey(binding);
+                    if (!seen.has(binding.key)) {
+                        seen.add(binding.key);
+                        bindings.push(binding);
+                    }
+                });
+            });
+            return { bindings, assistance: [...new Set(assistance)] };
+        }
+
+        function markerDescriptor(binding) {
+            if (!GameAssist.MarkerService?.isEnabled?.()) {
+                return { ok: false, code: 'UNAVAILABLE', message: 'MarkerService is unavailable.' };
+            }
+            const markerRef = binding.intent.marker;
+            const resolution = GameAssist.MarkerService.resolve(markerRef);
+            return resolution.ok
+                ? { ok: true, markerRef, markerId: resolution.id }
+                : { ...resolution, markerRef };
+        }
+
+        function conditionDescriptor(binding) {
+            const conditionApi = GameAssist.ConditionAssist;
+            const conditionConfigured = GameAssist.getState('ConditionAssist')?.config?.enabled !== false;
+            if (!conditionApi?.getCondition || !conditionConfigured) {
+                return { ok: false, code: 'UNAVAILABLE', message: 'ConditionAssist is unavailable.' };
+            }
+            const condition = conditionApi.getCondition(binding.intent.condition);
+            if (!condition?.marker) {
+                return { ok: false, code: 'NOT_FOUND', message: `ConditionAssist does not recognize "${binding.intent.condition}".` };
+            }
+            const marker = markerDescriptor({ intent: { marker: condition.marker } });
+            return marker.ok ? { ...marker, condition: binding.intent.condition } : marker;
+        }
+
+        function inspectMarker(binding) {
+            const descriptor = markerDescriptor(binding);
+            if (!descriptor.ok) return descriptor;
+            const token = getObj('graphic', binding.tokenId);
+            if (!token) return { ok: false, code: 'NOT_FOUND', state: 'missing-subject', message: `${binding.label}: token no longer exists.` };
+            if (String(token.get('represents') || '') !== String(binding.expectedRepresents || '')) {
+                return { ok: false, code: 'CONFLICT', state: 'identity-drift', message: `${binding.label}: token now represents another character.` };
+            }
+            return {
+                ok: true,
+                state: GameAssist.MarkerService.has(token, descriptor.markerId) ? 'present' : 'missing',
+                token,
+                descriptor
+            };
+        }
+
+        function applyMarker(binding) {
+            const inspected = inspectMarker(binding);
+            if (!inspected.ok) return inspected;
+            if (inspected.state === 'present') {
+                return { ok: true, changed: false, managed: false, baselinePresent: true, metadata: { markerId: inspected.descriptor.markerId, markerRef: inspected.descriptor.markerRef } };
+            }
+            const result = GameAssist.MarkerService.add(inspected.token, inspected.descriptor.markerId, { owner: MODULE_NAME });
+            if (!result.ok || !GameAssist.MarkerService.has(inspected.token, inspected.descriptor.markerId)) {
+                return { ok: false, code: result.code || 'CONFLICT', message: result.message || `${binding.label} could not be verified.` };
+            }
+            return { ok: true, changed: result.changed === true, managed: true, baselinePresent: false, metadata: { markerId: inspected.descriptor.markerId, markerRef: inspected.descriptor.markerRef } };
+        }
+
+        function removeMarker(binding, ledger) {
+            const inspected = inspectMarker(binding);
+            if (!inspected.ok) return inspected;
+            if (ledger.managed !== true || inspected.state === 'missing') return { ok: true, changed: false };
+            const result = GameAssist.MarkerService.remove(inspected.token, ledger.metadata?.markerId || inspected.descriptor.markerId, { owner: MODULE_NAME });
+            if (!result.ok || GameAssist.MarkerService.has(inspected.token, ledger.metadata?.markerId || inspected.descriptor.markerId)) {
+                return { ok: false, code: result.code || 'CONFLICT', message: result.message || `${binding.label} could not be removed safely.` };
+            }
+            return { ok: true, changed: result.changed === true };
+        }
+
+        function inspectCondition(binding) {
+            const descriptor = conditionDescriptor(binding);
+            if (!descriptor.ok) return descriptor;
+            return inspectMarker({ ...binding, intent: { marker: descriptor.markerRef } });
+        }
+
+        function applyCondition(binding) {
+            const descriptor = conditionDescriptor(binding);
+            if (!descriptor.ok) return descriptor;
+            const token = getObj('graphic', binding.tokenId);
+            if (!token) return { ok: false, code: 'NOT_FOUND', message: `${binding.label}: token no longer exists.` };
+            const markerBinding = { ...binding, intent: { marker: descriptor.markerRef } };
+            const before = inspectMarker(markerBinding);
+            if (!before.ok) return before;
+            if (before.state === 'present') {
+                return { ok: true, changed: false, managed: false, baselinePresent: true, metadata: { markerId: descriptor.markerId, markerRef: descriptor.markerRef, condition: binding.intent.condition } };
+            }
+            const result = GameAssist.ConditionAssist.apply([token], [binding.intent.condition], 'add');
+            const after = inspectMarker(markerBinding);
+            if (!result.ok || !after.ok || after.state !== 'present') {
+                return { ok: false, code: 'CONFLICT', message: `${binding.label} could not be applied and verified through ConditionAssist.` };
+            }
+            return { ok: true, changed: true, managed: true, baselinePresent: false, metadata: { markerId: descriptor.markerId, markerRef: descriptor.markerRef, condition: binding.intent.condition } };
+        }
+
+        function removeCondition(binding, ledger) {
+            const descriptor = conditionDescriptor(binding);
+            if (!descriptor.ok) return descriptor;
+            if (ledger.managed !== true) return { ok: true, changed: false };
+            const token = getObj('graphic', binding.tokenId);
+            if (!token) return { ok: false, code: 'NOT_FOUND', message: `${binding.label}: token no longer exists.` };
+            const markerBinding = { ...binding, intent: { marker: descriptor.markerRef } };
+            const before = inspectMarker(markerBinding);
+            if (!before.ok) return before;
+            if (before.state === 'missing') return { ok: true, changed: false };
+            const result = GameAssist.ConditionAssist.apply([token], [binding.intent.condition], 'remove');
+            const after = inspectMarker(markerBinding);
+            if (!result.ok || !after.ok || after.state !== 'missing') {
+                return { ok: false, code: 'CONFLICT', message: `${binding.label} could not be removed and verified through ConditionAssist.` };
+            }
+            return { ok: true, changed: true };
+        }
+
+        function rowAttributes(characterId, section, rowId) {
+            const prefix = `repeating_${section}_${rowId}_`;
+            return findObjs({ _type: 'attribute', _characterid: String(characterId) })
+                .filter(item => String(item.get('name') || '').startsWith(prefix));
+        }
+
+        function expectedRow(binding) {
+            const config = OGL_SECTIONS[binding.intent.modifier];
+            if (!config) return null;
+            return {
+                config,
+                expected: {
+                    [config.activeField]: '1',
+                    [config.nameField]: binding.intent.label,
+                    [config.valueField]: String(binding.intent.value),
+                    'options-flag': '0'
+                }
+            };
+        }
+
+        function findMatchingRow(binding) {
+            const row = expectedRow(binding);
+            if (!row) return null;
+            const attrs = findObjs({ _type: 'attribute', _characterid: String(binding.characterId) });
+            const suffix = '_' + row.config.nameField;
+            const candidates = attrs.filter(item => {
+                const name = String(item.get('name') || '');
+                return name.startsWith(`repeating_${row.config.section}_`) && name.endsWith(suffix)
+                    && String(item.get('current') || '') === String(binding.intent.label);
+            });
+            for (const candidate of candidates) {
+                const name = String(candidate.get('name') || '');
+                const rowId = name.slice(`repeating_${row.config.section}_`.length, -suffix.length);
+                const values = Object.fromEntries(rowAttributes(binding.characterId, row.config.section, rowId)
+                    .map(item => [String(item.get('name')).slice(`repeating_${row.config.section}_${rowId}_`.length), String(item.get('current') ?? '')]));
+                if (Object.entries(row.expected).every(([field, value]) => String(values[field] ?? '') === String(value))) {
+                    return { rowId, attributes: rowAttributes(binding.characterId, row.config.section, rowId), expected: row.expected, config: row.config };
+                }
+            }
+            return null;
+        }
+
+        function inspectOgl(binding, ledger) {
+            const character = getObj('character', binding.characterId);
+            if (!character) return { ok: false, code: 'NOT_FOUND', state: 'missing-subject', message: `${binding.label}: character no longer exists.` };
+            if (!is2014Pc(character)) {
+                return { ok: false, code: 'UNAVAILABLE', state: 'unsupported-sheet', message: `${binding.label}: a supported 2014 PC sheet could not be verified.` };
+            }
+            if (!ledger?.metadata?.rowId) {
+                const match = findMatchingRow(binding);
+                return { ok: true, state: match ? 'present-untracked' : 'missing', match };
+            }
+            const row = expectedRow(binding);
+            const attrs = rowAttributes(binding.characterId, row.config.section, ledger.metadata.rowId);
+            if (!attrs.length) return { ok: true, state: 'missing' };
+            const byName = Object.fromEntries(attrs.map(item => [
+                String(item.get('name')).slice(`repeating_${row.config.section}_${ledger.metadata.rowId}_`.length),
+                item
+            ]));
+            const drift = Object.entries(row.expected).filter(([field, value]) =>
+                !byName[field] || String(byName[field].get('current') ?? '') !== String(value)
+            );
+            if (ledger.metadata?.flagManaged === true) {
+                const flag = ledger.metadata.flagId
+                    ? getObj('attribute', ledger.metadata.flagId)
+                    : attribute(binding.characterId, ledger.metadata.enableFlag);
+                if (!flag || String(flag.get('current') || '') !== '1') drift.push([ledger.metadata.enableFlag || 'global modifier flag']);
+            }
+            return drift.length
+                ? { ok: true, state: 'drift', drift: drift.map(entry => Array.isArray(entry) ? entry[0] : entry) }
+                : { ok: true, state: 'present', attributes: attrs };
+        }
+
+        function applyOgl(binding) {
+            const inspected = inspectOgl(binding, null);
+            if (!inspected.ok) return inspected;
+            const row = expectedRow(binding);
+            if (!row) return { ok: false, code: 'INVALID_ARGUMENT', message: `Unknown 2014 modifier type "${binding.intent.modifier}".` };
+            const matched = inspected.state === 'present-untracked' ? inspected.match : null;
+            const rowId = matched?.rowId || newRowId();
+            const created = [];
+            let flag = null;
+            let flagCreatedNow = false;
+            let flagChangedNow = false;
+            let flagBaseline = '';
+            let flagCreated = false;
+            try {
+                if (!matched) {
+                    Object.entries(row.expected).forEach(([field, value]) => {
+                        const item = createObj('attribute', {
+                            characterid: binding.characterId,
+                            name: `repeating_${row.config.section}_${rowId}_${field}`,
+                            current: value,
+                            max: ''
+                        });
+                        if (!item) throw new Error(`Roll20 did not create ${field}.`);
+                        created.push(item);
+                        setAttribute(item, { current: value, max: '' });
+                    });
+                }
+
+                flag = attribute(binding.characterId, row.config.enableFlag);
+                const sharedFlagOwner = Object.values(runtime.projectionLedgers).find(ledger =>
+                    ledger?.adapter === 'ogl-repeating'
+                    && String(ledger.binding?.characterId || '') === String(binding.characterId)
+                    && ledger.metadata?.enableFlag === row.config.enableFlag
+                    && ledger.metadata?.flagId
+                );
+                flagCreated = sharedFlagOwner ? sharedFlagOwner.metadata.flagCreated === true : !flag;
+                flagBaseline = sharedFlagOwner
+                    ? String(sharedFlagOwner.metadata.flagBaseline ?? '')
+                    : flag ? String(flag.get('current') ?? '') : '';
+                if (!flag) {
+                    flag = createObj('attribute', {
+                        characterid: binding.characterId,
+                        name: row.config.enableFlag,
+                        current: '1',
+                        max: ''
+                    });
+                    if (!flag) throw new Error(`Roll20 did not create ${row.config.enableFlag}.`);
+                    flagCreatedNow = true;
+                }
+                if (String(flag.get('current') || '') !== '1') {
+                    setAttribute(flag, { current: '1' });
+                    flagChangedNow = true;
+                }
+                const verify = rowAttributes(binding.characterId, row.config.section, rowId);
+                if (verify.length < Object.keys(row.expected).length) throw new Error('Roll20 did not retain every modifier-row field.');
+                if (String(flag.get('current') || '') !== '1') throw new Error(`Roll20 did not enable ${row.config.enableFlag}.`);
+                return {
+                    ok: true,
+                    changed: !matched || flagChangedNow,
+                    managed: !matched || flagCreated || flagBaseline !== '1',
+                    baselinePresent: Boolean(matched),
+                    metadata: {
+                        rowId,
+                        attributeIds: (matched?.attributes || created).map(item => item.id),
+                        expected: row.expected,
+                        section: row.config.section,
+                        rowManaged: !matched,
+                        enableFlag: row.config.enableFlag,
+                        flagId: flag.id,
+                        flagCreated,
+                        flagBaseline,
+                        flagManaged: flagCreated || flagBaseline !== '1'
+                    }
+                };
+            } catch (error) {
+                created.reverse().forEach(item => {
+                    try { item.remove(); } catch { }
+                });
+                if (flagCreatedNow && flag) {
+                    try { flag.remove(); } catch { }
+                } else if (flagChangedNow && flag) {
+                    try { setAttribute(flag, { current: flagBaseline }); } catch { }
+                }
+                return { ok: false, code: 'UNAVAILABLE', message: `${binding.label} could not be created: ${error.message}` };
+            }
+        }
+
+        function removeOgl(binding, ledger) {
+            if (ledger.managed !== true) return { ok: true, changed: false };
+            const inspected = inspectOgl(binding, ledger);
+            if (!inspected.ok) return inspected;
+            if (inspected.state === 'drift') {
+                return { ok: false, code: 'CONFLICT', message: `${binding.label} was edited outside EffectAssist and was preserved.` };
+            }
+            const metadata = ledger.metadata || {};
+            const rowManaged = metadata.rowManaged === true
+                || (metadata.rowManaged === undefined && ledger.managed === true && ledger.baselinePresent !== true);
+            if (rowManaged && inspected.state !== 'missing') {
+                inspected.attributes.forEach(item => item.remove());
+            }
+            const flag = metadata.flagId ? getObj('attribute', metadata.flagId) : attribute(binding.characterId, metadata.enableFlag);
+            const flagManaged = metadata.flagManaged === true
+                || (metadata.flagManaged === undefined && (metadata.flagCreated === true || String(metadata.flagBaseline || '') !== '1'));
+            if (flagManaged && flag && String(flag.get('current') || '') === '1' && String(metadata.flagBaseline || '') !== '1') {
+                const section = metadata.section;
+                const activeSuffix = '_' + expectedRow(binding).config.activeField;
+                const currentPrefix = `repeating_${section}_${metadata.rowId}_`;
+                const anotherOwnedFlagUser = Object.values(runtime.projectionLedgers).some(other =>
+                    other !== ledger
+                    && other?.adapter === 'ogl-repeating'
+                    && String(other.binding?.characterId || '') === String(binding.characterId)
+                    && other.metadata?.enableFlag === metadata.enableFlag
+                    && ledgerOwners(other).some(id => validInstance(runtime.instances[id]))
+                );
+                const otherActiveRows = findObjs({ _type: 'attribute', _characterid: String(binding.characterId) })
+                    .some(item => String(item.get('name') || '').startsWith(`repeating_${section}_`)
+                        && !String(item.get('name') || '').startsWith(currentPrefix)
+                        && String(item.get('name') || '').endsWith(activeSuffix)
+                        && String(item.get('current') || '') === '1');
+                if (!anotherOwnedFlagUser && !otherActiveRows) {
+                    if (metadata.flagCreated) flag.remove();
+                    else setAttribute(flag, { current: metadata.flagBaseline });
+                }
+            }
+            return { ok: true, changed: true };
+        }
+
+        function registerProjectionAdapter(name, adapter) {
+            const id = normalizeDefinitionId(name);
+            if (!id || !isPlainObject(adapter)
+                || typeof adapter.inspect !== 'function'
+                || typeof adapter.apply !== 'function'
+                || typeof adapter.remove !== 'function') {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Projection adapters require inspect, apply, and remove functions.' };
+            }
+            if (projectionAdapters.has(id)) return { ok: false, code: 'CONFLICT', message: `Projection adapter "${id}" is already registered.` };
+            projectionAdapters.set(id, Object.freeze({ ...adapter }));
+            return { ok: true, id };
+        }
+
+        registerProjectionAdapter('marker', { inspect: inspectMarker, apply: applyMarker, remove: removeMarker });
+        registerProjectionAdapter('condition', { inspect: inspectCondition, apply: applyCondition, remove: removeCondition });
+        registerProjectionAdapter('ogl-repeating', { inspect: inspectOgl, apply: applyOgl, remove: removeOgl });
+
+        function nextInstanceId() {
+            let id;
+            do {
+                id = 'EA-' + String(runtime.nextInstanceNumber++).padStart(6, '0');
+            } while (runtime.instances[id]);
+            return id;
+        }
+
+        function requestKey(requestId) {
+            const raw = String(requestId || '').trim();
+            return raw ? 'request:' + raw : '';
+        }
+
+        function findRequest(requestId) {
+            const remembered = runtime.requestIds[requestKey(requestId)];
+            if (!remembered) return null;
+            const instance = runtime.instances[remembered.instanceId]
+                || runtime.history.find(entry => entry.id === remembered.instanceId);
+            return instance ? { remembered, instance } : null;
+        }
+
+        function rememberRequest(requestId, instanceId, intent) {
+            const key = requestKey(requestId);
+            if (!key) return;
+            runtime.requestIds[key] = { instanceId, intent, timestamp: Date.now() };
+            ensureState();
+        }
+
+        function buildPlan(request) {
+            ensureState();
+            ensureMarkerObservation();
+            if (modState.config.enabled === false) return { ok: false, code: 'UNAVAILABLE', message: 'EffectAssist is disabled.' };
+            const rawRequestId = String(request.requestId || '').trim();
+            if (rawRequestId.length > POLICY.effects.requestIdLength) {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'The effect request identifier is too long.' };
+            }
+            const intent = requestIntent(request);
+            const existing = findRequest(rawRequestId);
+            if (existing) {
+                return existing.remembered.intent === intent
+                    ? { ok: true, duplicate: true, instance: clone(existing.instance), message: 'That identical effect request was already applied.' }
+                    : { ok: false, code: 'CONFLICT', message: 'That request identifier was already used for a different effect request.' };
+            }
+            if (activeInstances().length >= POLICY.effects.activeInstanceLimit) {
+                return { ok: false, code: 'RATE_LIMITED', message: `EffectAssist already has the maximum of ${POLICY.effects.activeInstanceLimit} active instances.` };
+            }
+
+            const source = resolveLinkedToken(request.sourceTokenId, 'The source');
+            if (!source.ok) return source;
+            const targetIds = [...new Set((request.targetTokenIds || []).map(String).filter(Boolean))];
+            if (!targetIds.length) return { ok: false, code: 'INVALID_ARGUMENT', message: 'At least one target token is required.' };
+            if (targetIds.length > POLICY.effects.targetLimit) {
+                return { ok: false, code: 'RATE_LIMITED', message: `No more than ${POLICY.effects.targetLimit} targets may be applied at once.` };
+            }
+            const targets = targetIds.map(tokenId => resolveLinkedToken(tokenId, 'Each target'));
+            const targetFailure = targets.find(result => !result.ok);
+            if (targetFailure) return targetFailure;
+
+            let definitionResult;
+            if (request.definitionId) {
+                const definition = getDefinition(request.definitionId);
+                definitionResult = definition
+                    ? { ok: true, definition, isNew: false }
+                    : { ok: false, code: 'NOT_FOUND', message: `Effect definition "${request.definitionId}" was not found.` };
+            } else {
+                definitionResult = createCustomDefinition(request);
+            }
+            if (!definitionResult.ok) return definitionResult;
+            const definition = definitionResult.definition;
+            const expanded = expandDefinition(definition, source, targets);
+
+            const concentrationConflicts = definition.concentration
+                ? activeInstances().filter(instance =>
+                    instance.dependency?.type === 'concentration'
+                    && instance.dependency?.established
+                    && String(instance.source.characterId) === String(source.summary.characterId)
+                )
+                : [];
+            const replace = ['yes', 'true', 'on', '1'].includes(String(request.replaceConcentration || '').toLowerCase());
+            if (concentrationConflicts.length && !replace) {
+                return {
+                    ok: false,
+                    code: 'CONFLICT',
+                    message: `${source.summary.characterName} is already concentrating on ${concentrationConflicts.map(item => item.name).join(', ')}. Choose replacement deliberately.`,
+                    concentrationConflicts: concentrationConflicts.map(item => item.id)
+                };
+            }
+
+            const hardFailures = [];
+            expanded.bindings.forEach(binding => {
+                const adapter = projectionAdapters.get(binding.adapter);
+                if (!adapter) {
+                    if (!binding.optional) hardFailures.push(`${binding.label}: projection adapter is unavailable.`);
+                    return;
+                }
+                const inspected = adapter.inspect(binding, runtime.projectionLedgers[binding.key]);
+                if (!inspected.ok && !binding.optional) hardFailures.push(inspected.message || `${binding.label} is unavailable.`);
+            });
+            if (definition.concentration) {
+                const api = GameAssist.ConcentrationAssist;
+                if (!api?.set || !api?.getMarker || GameAssist.getState('ConcentrationAssist')?.config?.enabled === false) {
+                    hardFailures.push('ConcentrationAssist must be enabled before applying a concentration effect.');
+                }
+            }
+            if (hardFailures.length) return { ok: false, code: 'UNAVAILABLE', message: hardFailures.join(' ') };
+
+            return {
+                ok: true,
+                request: clone(request),
+                intent,
+                rawRequestId,
+                source,
+                targets,
+                definition,
+                definitionResult,
+                bindings: expanded.bindings,
+                assistance: expanded.assistance,
+                concentrationConflicts,
+                replace
+            };
+        }
+
+        function previewPlan(plan) {
+            const changes = [];
+            plan.bindings.forEach(binding => {
+                const ledger = runtime.projectionLedgers[binding.key];
+                const adapter = projectionAdapters.get(binding.adapter);
+                const inspected = adapter?.inspect(binding, ledger);
+                if (!adapter) changes.push(`${binding.label}: assisted only`);
+                else if (!inspected?.ok) changes.push(`${binding.label}: unavailable`);
+                else if (inspected.state === 'present' || inspected.state === 'present-untracked') changes.push(`${binding.label}: already present and will be shared`);
+                else if (inspected.state === 'drift') changes.push(`${binding.label}: edited value will be preserved for review`);
+                else changes.push(`${binding.label}: will be added`);
+            });
+            if (plan.definition.concentration) {
+                changes.push(`Concentration: ${plan.source.summary.characterName} will be marked Concentrating`);
+                if (plan.concentrationConflicts.length) changes.push(`Replacement: ${plan.concentrationConflicts.length} existing concentration effect(s) will end`);
+            }
+            return changes;
+        }
+
+        function createApplyGrant(plan, playerId) {
+            const id = 'EP-' + Math.random().toString(36).slice(2, 10);
+            applyGrants.set(id, {
+                playerId: String(playerId || ''),
+                expiresAt: Date.now() + POLICY.effects.repairGrantMs,
+                request: clone(plan.request),
+                signature: fingerprint({
+                    source: plan.source.summary,
+                    targets: plan.targets.map(target => target.summary),
+                    definition: plan.definition,
+                    bindings: plan.bindings.map(binding => binding.key),
+                    conflicts: plan.concentrationConflicts.map(item => item.id)
+                })
+            });
+            if (applyGrants.size > POLICY.effects.repairGrantLimit) {
+                applyGrants.delete(applyGrants.keys().next().value);
+            }
+            return id;
+        }
+
+        function verifyApplyGrant(grantId, playerId) {
+            const grant = applyGrants.get(String(grantId || ''));
+            applyGrants.delete(String(grantId || ''));
+            if (!grant || grant.expiresAt < Date.now() || grant.playerId !== String(playerId || '')) {
+                return { ok: false, code: 'UNAUTHORIZED', message: 'That effect confirmation expired. Open the catalog and preview it again.' };
+            }
+            const plan = buildPlan(grant.request);
+            if (!plan.ok) return plan;
+            const signature = fingerprint({
+                source: plan.source.summary,
+                targets: plan.targets.map(target => target.summary),
+                definition: plan.definition,
+                bindings: plan.bindings.map(binding => binding.key),
+                conflicts: plan.concentrationConflicts.map(item => item.id)
+            });
+            return signature === grant.signature
+                ? plan
+                : { ok: false, code: 'CONFLICT', message: 'The source, targets, definition, or concentration state changed after preview. Preview the effect again.' };
+        }
+
+        function notifyLifecycle(transition, instance, context = {}) {
+            return GameAssist.SemanticEvents.publish('effect.lifecycle.changed', MODULE_NAME, {
+                transition,
+                instance: clone(instance),
+                context: clone(context)
+            });
+        }
+
+        function setConcentration(sourceTokenId, active, context = {}) {
+            const api = GameAssist.ConcentrationAssist;
+            if (!api?.set) return { ok: false, code: 'UNAVAILABLE', message: 'ConcentrationAssist is unavailable.' };
+            if (active === false) suppressedConcentrationTokens.set(String(sourceTokenId), Date.now() + 1500);
+            else suppressedConcentrationTokens.delete(String(sourceTokenId));
+            const result = api.set(sourceTokenId, active, {
+                actor: MODULE_NAME,
+                reason: context.reason || (active ? 'effect-established' : 'effect-ended'),
+                instanceId: context.instanceId || null
+            });
+            return result?.ok === true
+                ? result
+                : { ok: false, code: result?.code || 'UNAVAILABLE', message: result?.message || 'ConcentrationAssist could not change concentration.' };
+        }
+
+        function rollbackBindings(applied, instanceId) {
+            const failures = [];
+            [...applied].reverse().forEach(entry => {
+                const ledger = runtime.projectionLedgers[entry.binding.key];
+                if (!ledger) return;
+                ledger.instanceIds = (ledger.instanceIds || []).filter(id => id !== instanceId);
+                if (ledger.instanceIds.length) return;
+                const adapter = projectionAdapters.get(entry.binding.adapter);
+                const result = adapter?.remove(entry.binding, ledger) || { ok: false, message: 'Projection adapter unavailable during rollback.' };
+                if (result.ok) delete runtime.projectionLedgers[entry.binding.key];
+                else failures.push(result.message || entry.binding.label);
+            });
+            return failures;
+        }
+
+        function applyPlan(plan) {
+            if (plan.duplicate) return plan;
+            const durationSetup = createDurationRecord(plan.definition, plan.request, plan.source.summary);
+            const instance = {
+                id: nextInstanceId(),
+                definitionId: plan.definition.id,
+                definitionVersion: plan.definition.definitionVersion || 1,
+                name: plan.definition.name,
+                description: plan.definition.description || '',
+                definitionSnapshot: clone(plan.definition),
+                source: plan.source.summary,
+                targets: plan.targets.map(target => target.summary),
+                dependency: {
+                    type: plan.definition.concentration ? 'concentration' : 'manual',
+                    status: plan.definition.concentration ? 'establishing' : 'not-required',
+                    established: false,
+                    marker: plan.definition.concentration ? String(GameAssist.ConcentrationAssist?.getMarker?.() || '') : null
+                },
+                stacking: clone(plan.definition.stacking),
+                bindings: plan.bindings.map(binding => clone(binding)),
+                assistance: clone(plan.assistance.concat(durationSetup.assistance)),
+                duration: durationSetup.record,
+                status: 'applying',
+                createdAt: isoNow(),
+                createdBy: String(plan.request.createdBy || 'api'),
+                approvedBy: plan.request.approvedBy ? String(plan.request.approvedBy) : null
+            };
+
+            runtime.operations[instance.id] = {
+                type: 'apply',
+                status: 'running',
+                startedAt: isoNow(),
+                bindingKeys: instance.bindings.map(binding => binding.key)
+            };
+
+            const applied = [];
+            const appliedBindingKeys = new Set();
+            for (const binding of plan.bindings) {
+                const adapter = projectionAdapters.get(binding.adapter);
+                if (!adapter) {
+                    if (binding.optional) {
+                        instance.assistance.push(`${binding.label}: adapter unavailable; apply manually.`);
+                        continue;
+                    }
+                    const rollbackFailures = rollbackBindings(applied, instance.id);
+                    delete runtime.operations[instance.id];
+                    return { ok: false, code: 'UNAVAILABLE', message: `${binding.label}: adapter unavailable.`, rollbackFailures };
+                }
+                let ledger = runtime.projectionLedgers[binding.key];
+                if (ledger) {
+                    const inspection = adapter.inspect(binding, ledger);
+                    if (!inspection.ok || !['present', 'present-untracked'].includes(inspection.state)) {
+                        if (binding.optional) {
+                            instance.assistance.push(`${binding.label}: unavailable or changed; apply manually.`);
+                            continue;
+                        }
+                        const rollbackFailures = rollbackBindings(applied, instance.id);
+                        delete runtime.operations[instance.id];
+                        return { ok: false, code: inspection.code || 'CONFLICT', message: inspection.message || `${binding.label} could not be verified.`, rollbackFailures };
+                    }
+                    ledger.instanceIds = [...new Set((ledger.instanceIds || []).concat(instance.id))];
+                    ledger.lastVerifiedAt = isoNow();
+                    applied.push({ binding, shared: true });
+                    appliedBindingKeys.add(binding.key);
+                    continue;
+                }
+
+                const result = adapter.apply(binding);
+                if (!result.ok) {
+                    if (binding.optional) {
+                        instance.assistance.push(`${binding.label}: ${result.message || 'apply manually.'}`);
+                        continue;
+                    }
+                    const rollbackFailures = rollbackBindings(applied, instance.id);
+                    delete runtime.operations[instance.id];
+                    return { ok: false, code: result.code || 'UNAVAILABLE', message: result.message || `${binding.label} could not be applied.`, rollbackFailures };
+                }
+                ledger = {
+                    key: binding.key,
+                    adapter: binding.adapter,
+                    adapterVersion: 1,
+                    binding: clone(binding),
+                    instanceIds: [instance.id],
+                    managed: result.managed === true,
+                    baselinePresent: result.baselinePresent === true,
+                    metadata: clone(result.metadata || {}),
+                    createdAt: isoNow(),
+                    lastVerifiedAt: isoNow()
+                };
+                runtime.projectionLedgers[binding.key] = ledger;
+                applied.push({ binding, shared: false });
+                appliedBindingKeys.add(binding.key);
+            }
+
+            instance.bindings = instance.bindings.filter(binding => appliedBindingKeys.has(binding.key));
+
+            if (plan.definition.concentration) {
+                const concentration = setConcentration(plan.source.token.id, true, { instanceId: instance.id, reason: 'effect-established' });
+                if (!concentration.ok) {
+                    const rollbackFailures = rollbackBindings(applied, instance.id);
+                    delete runtime.operations[instance.id];
+                    return { ok: false, code: concentration.code, message: concentration.message, rollbackFailures };
+                }
+                instance.dependency.status = 'active';
+                instance.dependency.established = true;
+                instance.dependency.marker = String(GameAssist.ConcentrationAssist?.getMarker?.() || instance.dependency.marker || '');
+            }
+
+            instance.status = 'active';
+            runtime.instances[instance.id] = instance;
+            if (plan.definitionResult.isNew) modState.config.customDefinitions[plan.definition.id] = clone(plan.definition);
+            rememberRequest(plan.rawRequestId, instance.id, plan.intent);
+            rebuildDependencyIndex();
+            runtime.operations[instance.id] = { ...runtime.operations[instance.id], status: 'complete', completedAt: isoNow() };
+
+            const replacementFailures = [];
+            plan.concentrationConflicts.forEach(conflict => {
+                const ended = endEffect(conflict.id, plan.request.createdBy || 'api', {
+                    skipConcentration: true,
+                    reason: `replaced-by:${instance.id}`
+                });
+                if (!ended.ok) replacementFailures.push(ended.message);
+            });
+            notifyLifecycle('created', instance, { replacementFailures });
+            return {
+                ok: replacementFailures.length === 0,
+                instance: clone(instance),
+                warnings: [...new Set(instance.assistance.concat(replacementFailures))],
+                message: replacementFailures.length
+                    ? `${instance.name} was applied, but an earlier concentration effect needs cleanup attention.`
+                    : `${instance.name} was applied to ${instance.targets.length} target(s).`
+            };
+        }
+
+        function applyEffectRequest(request) {
+            const plan = buildPlan(request || {});
+            return plan.ok ? applyPlan(plan) : plan;
+        }
+
+        function remainingConcentrationOwners(instance) {
+            return activeInstances().filter(other =>
+                other.id !== instance.id
+                && other.dependency?.type === 'concentration'
+                && other.dependency?.established
+                && String(other.source.characterId) === String(instance.source.characterId)
+                && other.status === 'active'
+            );
+        }
+
+        function endEffect(instanceId, actor = 'api', options = {}) {
+            ensureState();
+            if (modState.config.enabled === false && options.allowDisabled !== true) {
+                return { ok: false, code: 'UNAVAILABLE', message: 'EffectAssist is disabled.' };
+            }
+            const instance = runtime.instances[String(instanceId || '')];
+            if (!validInstance(instance)) {
+                const ended = runtime.history.find(entry => entry?.id === String(instanceId || '') && entry?.status === 'ended');
+                return ended
+                    ? { ok: true, unchanged: true, instance: clone(ended), failures: [], message: 'That effect had already ended.' }
+                    : { ok: false, code: 'NOT_FOUND', message: 'That active effect instance was not found.' };
+            }
+
+            instance.status = 'ending';
+            instance.endRequestedAt = isoNow();
+            instance.endRequestedBy = String(actor || 'api');
+            const failures = [];
+            instance.bindings.forEach(binding => {
+                const ledger = runtime.projectionLedgers[binding.key];
+                if (!ledger || !(ledger.instanceIds || []).includes(instance.id)) return;
+                const otherOwners = (ledger.instanceIds || []).filter(id => id !== instance.id && validInstance(runtime.instances[id]));
+                if (otherOwners.length) {
+                    ledger.instanceIds = [...new Set(otherOwners)];
+                    return;
+                }
+                const adapter = projectionAdapters.get(binding.adapter);
+                if (!adapter) {
+                    failures.push(`${binding.label}: projection adapter is unavailable.`);
+                    return;
+                }
+                const result = adapter.remove(binding, ledger);
+                if (!result.ok) {
+                    failures.push(result.message || `${binding.label} could not be removed.`);
+                    return;
+                }
+                delete runtime.projectionLedgers[binding.key];
+            });
+
+            if (!failures.length && instance.dependency?.type === 'concentration' && instance.dependency?.established
+                && options.skipConcentration !== true && !remainingConcentrationOwners(instance).length) {
+                const result = setConcentration(instance.source.tokenId, false, { instanceId: instance.id, reason: options.reason || 'effect-ended' });
+                if (!result.ok) failures.push(result.message || 'Concentration could not be cleared.');
+            }
+
+            if (failures.length) {
+                instance.status = 'needs-attention';
+                instance.cleanup = { status: 'needs-attention', failures, lastAttemptAt: isoNow() };
+                rebuildDependencyIndex();
+                notifyLifecycle('cleanup-needs-attention', instance, { failures, reason: options.reason || 'manual' });
+                return {
+                    ok: false,
+                    code: 'CONFLICT',
+                    instance: clone(instance),
+                    failures,
+                    message: `${instance.name} is ending, but ${failures.length} projection(s) need attention.`
+                };
+            }
+
+            delete runtime.instances[instance.id];
+            delete runtime.operations[instance.id];
+            const ended = {
+                ...clone(instance),
+                status: 'ended',
+                endedAt: isoNow(),
+                endedBy: String(actor || 'api'),
+                endReason: String(options.reason || 'manual'),
+                cleanup: { status: 'complete', failures: [] }
+            };
+            runtime.history.push(ended);
+            runtime.history = runtime.history.slice(-POLICY.effects.endedHistoryLimit);
+            rebuildDependencyIndex();
+            notifyLifecycle('ended', ended, { reason: options.reason || 'manual' });
+            return { ok: true, instance: clone(ended), failures: [], message: `${ended.name} ended and its unneeded projections were removed.` };
+        }
+
+        function endConcentrationForToken(token, reason) {
+            const characterId = String(token?.get('represents') || '');
+            if (!characterId) return;
+            const ids = [...(runtime.dependencyIndex[characterId] || [])];
+            ids.forEach(id => endEffect(id, 'ConcentrationAssist', {
+                skipConcentration: true,
+                allowDisabled: true,
+                reason
+            }));
+        }
+
+        function concentrationMarkerId(markerOverride = null) {
+            const marker = String(markerOverride
+                || GameAssist.ConcentrationAssist?.getMarker?.()
+                || GameAssist.getState('ConcentrationAssist')?.config?.marker
+                || 'Concentrating');
+            const resolution = GameAssist.MarkerService.resolve(marker);
+            return resolution.ok ? GameAssist.MarkerService.normalizeId(resolution.id) : null;
+        }
+
+        function observeMarkerChanges(event) {
+            if (modState.config.enabled === false) return;
+            const removed = new Set((event?.removed || []).map(item =>
+                GameAssist.MarkerService.normalizeId(item.id || item.tag || item)
+            ));
+            const tokenId = String(event.tokenId || event.token?.id || '');
+            const characterId = String(event.token?.get('represents') || '');
+            const affected = activeInstances().filter(instance =>
+                instance.dependency?.type === 'concentration'
+                && instance.dependency?.established
+                && String(instance.source.characterId || '') === characterId
+                && removed.has(concentrationMarkerId(instance.dependency.marker))
+            );
+            if (!affected.length) return;
+            const suppressedUntil = Number(suppressedConcentrationTokens.get(tokenId) || 0);
+            if (suppressedUntil >= Date.now()) {
+                return;
+            }
+            affected.forEach(instance => endEffect(instance.id, 'MarkerService', {
+                skipConcentration: true,
+                allowDisabled: true,
+                reason: 'concentration-marker-removed'
+            }));
+        }
+
+        function ensureMarkerObservation() {
+            if (!GameAssist.MarkerService?.isEnabled?.()) {
+                return { ok: false, code: 'UNAVAILABLE', message: 'MarkerService is disabled.' };
+            }
+            GameAssist.MarkerService.clearObservers(MODULE_NAME);
+            return GameAssist.MarkerService.observe(observeMarkerChanges, { owner: MODULE_NAME });
+        }
+
+        function observeConcentration(event) {
+            if (modState.config.enabled === false) return;
+            const payload = event?.payload || {};
+            if (!['concentration.ended', 'concentration.failed'].includes(event?.type)) return;
+            const tokenId = String(payload.tokenId || '');
+            const suppressedUntil = Number(suppressedConcentrationTokens.get(tokenId) || 0);
+            if (tokenId && suppressedUntil >= Date.now()) {
+                suppressedConcentrationTokens.delete(tokenId);
+                return;
+            }
+            const token = payload.tokenId ? getObj('graphic', payload.tokenId) : null;
+            if (token) endConcentrationForToken(token, payload.reason || event.type);
+            else if (payload.characterId) {
+                [...(runtime.dependencyIndex[String(payload.characterId)] || [])].forEach(id =>
+                    endEffect(id, 'ConcentrationAssist', { skipConcentration: true, allowDisabled: true, reason: payload.reason || event.type })
+                );
+            }
+        }
+
+        function auditEffects() {
+            ensureState();
+            const mismatches = [];
+            const checkedLedgers = new Set();
+            activeInstances().forEach(instance => {
+                if (instance.migrationStatus === 'legacy-incomplete') {
+                    mismatches.push({
+                        key: `legacy:${instance.id}`,
+                        type: 'legacy-incomplete',
+                        instanceId: instance.id,
+                        message: `${instance.name} uses the pre-release schema and needs a reviewed reapplication.`
+                    });
+                }
+                instance.bindings.forEach(binding => {
+                    const ledger = runtime.projectionLedgers[binding.key];
+                    checkedLedgers.add(binding.key);
+                    if (!ledger || !ledgerOwners(ledger).includes(instance.id)) {
+                        mismatches.push({
+                            key: `untracked:${instance.id}:${binding.key}`,
+                            type: 'untracked-projection',
+                            instanceId: instance.id,
+                            binding: clone(binding),
+                            message: `${instance.name}: ${binding.label} has no ownership record.`
+                        });
+                        return;
+                    }
+                    const adapter = projectionAdapters.get(binding.adapter);
+                    if (!adapter) {
+                        mismatches.push({
+                            key: `adapter:${binding.key}`,
+                            type: 'projection-unavailable',
+                            instanceId: instance.id,
+                            binding: clone(binding),
+                            message: `${instance.name}: ${binding.label} adapter is unavailable.`
+                        });
+                        return;
+                    }
+                    const inspected = adapter.inspect(binding, ledger);
+                    if (!inspected.ok) {
+                        mismatches.push({
+                            key: `inspect:${binding.key}`,
+                            type: inspected.state || 'projection-unavailable',
+                            instanceId: instance.id,
+                            binding: clone(binding),
+                            message: inspected.message || `${instance.name}: ${binding.label} could not be inspected.`
+                        });
+                    } else if (inspected.state === 'missing') {
+                        mismatches.push({
+                            key: `missing:${binding.key}`,
+                            type: 'missing-projection',
+                            instanceId: instance.id,
+                            binding: clone(binding),
+                            message: `${instance.name}: ${binding.label} is missing.`
+                        });
+                    } else if (inspected.state === 'drift') {
+                        mismatches.push({
+                            key: `drift:${binding.key}`,
+                            type: 'projection-drift',
+                            instanceId: instance.id,
+                            binding: clone(binding),
+                            message: `${instance.name}: ${binding.label} was edited outside EffectAssist and was preserved.`
+                        });
+                    }
+                });
+                if (instance.dependency?.type === 'concentration' && instance.dependency?.established) {
+                    const token = getObj('graphic', instance.source.tokenId);
+                    const markerId = concentrationMarkerId(instance.dependency.marker);
+                    if (!token || !markerId || !GameAssist.MarkerService.has(token, markerId)) {
+                        mismatches.push({
+                            key: `concentration:${instance.id}`,
+                            type: 'concentration-lost',
+                            instanceId: instance.id,
+                            message: `${instance.name}: ${instance.source.characterName} is no longer marked Concentrating.`
+                        });
+                    }
+                }
+                if (instance.status === 'needs-attention') {
+                    mismatches.push({
+                        key: `cleanup:${instance.id}`,
+                        type: 'cleanup-pending',
+                        instanceId: instance.id,
+                        message: `${instance.name}: cleanup is incomplete.`
+                    });
+                }
+            });
+
+            Object.entries(runtime.projectionLedgers).forEach(([key, ledger]) => {
+                if (!isPlainObject(ledger)) {
+                    mismatches.push({ key, type: 'invalid-ledger', message: 'A malformed projection ledger needs manual review.' });
+                    return;
+                }
+                const owners = ledgerOwners(ledger);
+                if (owners.length || checkedLedgers.has(key)) return;
+                mismatches.push({
+                    key: `orphan:${key}`,
+                    type: 'orphan-projection',
+                    binding: clone(ledger.binding),
+                    message: `${ledger.binding?.label || 'A projection'} remains without an active effect owner.`
+                });
+            });
+
+            const invalid = Object.values(runtime.instances).filter(instance => !validInstance(instance)).length;
+            if (invalid) mismatches.push({ key: 'invalid-instances', type: 'invalid-state', message: `${invalid} malformed effect instance record(s) were preserved for manual review.` });
+            return {
+                ok: mismatches.length === 0,
+                active: activeInstances().length,
+                ended: runtime.history.length,
+                definitions: getDefinitions().length,
+                invalid,
+                mismatches,
+                auditedAt: isoNow()
+            };
+        }
+
+        function mismatchSignature(mismatches) {
+            return mismatches.map(item => `${item.type}:${item.key}`).sort().join('|');
+        }
+
+        function createRepairGrant(audit, playerId) {
+            const id = 'ER-' + Math.random().toString(36).slice(2, 10);
+            repairGrants.set(id, {
+                signature: mismatchSignature(audit.mismatches),
+                playerId: String(playerId || ''),
+                expiresAt: Date.now() + POLICY.effects.repairGrantMs
+            });
+            if (repairGrants.size > POLICY.effects.repairGrantLimit) repairGrants.delete(repairGrants.keys().next().value);
+            return id;
+        }
+
+        function repairEffects(grantId, playerId) {
+            const grant = repairGrants.get(String(grantId || ''));
+            if (!grant || grant.expiresAt < Date.now() || grant.playerId !== String(playerId || '')) {
+                repairGrants.delete(String(grantId || ''));
+                return { ok: false, code: 'UNAUTHORIZED', message: 'That repair confirmation expired. Run the audit again.' };
+            }
+            const audit = auditEffects();
+            if (mismatchSignature(audit.mismatches) !== grant.signature) {
+                repairGrants.delete(String(grantId || ''));
+                return { ok: false, code: 'CONFLICT', message: 'Effect state changed after the preview. Run the audit again.' };
+            }
+            repairGrants.delete(String(grantId || ''));
+
+            const results = [];
+            audit.mismatches.forEach(item => {
+                if (item.type === 'concentration-lost') {
+                    const ended = endEffect(item.instanceId, playerId, { skipConcentration: true, reason: 'confirmed-concentration-loss' });
+                    results.push({ ok: ended.ok, item, message: ended.message });
+                    return;
+                }
+                if (item.type === 'cleanup-pending') {
+                    const ended = endEffect(item.instanceId, playerId, { reason: 'cleanup-retry' });
+                    results.push({ ok: ended.ok, item, message: ended.message });
+                    return;
+                }
+                if (item.type === 'orphan-projection') {
+                    const ledgerKey = String(item.key).replace(/^orphan:/, '');
+                    const ledger = runtime.projectionLedgers[ledgerKey];
+                    const adapter = ledger && projectionAdapters.get(ledger.adapter);
+                    const result = adapter?.remove(ledger.binding, ledger) || { ok: false, message: 'The orphaned projection adapter is unavailable.' };
+                    if (result.ok) delete runtime.projectionLedgers[ledgerKey];
+                    results.push({ ok: result.ok, item, message: result.message });
+                    return;
+                }
+                if (!['missing-projection', 'untracked-projection'].includes(item.type)) return;
+                const instance = runtime.instances[item.instanceId];
+                const binding = item.binding;
+                const adapter = binding && projectionAdapters.get(binding.adapter);
+                if (!validInstance(instance) || !adapter) {
+                    results.push({ ok: false, item, message: 'The active effect or projection adapter is unavailable.' });
+                    return;
+                }
+                let ledger = runtime.projectionLedgers[binding.key];
+                if (ledger) {
+                    const applied = adapter.apply(binding);
+                    if (!applied.ok) {
+                        results.push({ ok: false, item, message: applied.message });
+                        return;
+                    }
+                    ledger.managed = ledger.managed || applied.managed === true;
+                    ledger.metadata = clone(applied.metadata || ledger.metadata || {});
+                    ledger.instanceIds = [...new Set((ledger.instanceIds || []).concat(instance.id))];
+                    ledger.lastVerifiedAt = isoNow();
+                    results.push({ ok: true, item });
+                    return;
+                }
+                const applied = adapter.apply(binding);
+                if (!applied.ok) {
+                    results.push({ ok: false, item, message: applied.message });
+                    return;
+                }
+                runtime.projectionLedgers[binding.key] = {
+                    key: binding.key,
+                    adapter: binding.adapter,
+                    adapterVersion: 1,
+                    binding: clone(binding),
+                    instanceIds: [instance.id],
+                    managed: applied.managed === true,
+                    baselinePresent: applied.baselinePresent === true,
+                    metadata: clone(applied.metadata || {}),
+                    createdAt: isoNow(),
+                    lastVerifiedAt: isoNow()
+                };
+                results.push({ ok: true, item });
+            });
+            const failed = results.filter(result => !result.ok);
+            return {
+                ok: failed.length === 0,
+                attempted: results.length,
+                repaired: results.length - failed.length,
+                failed,
+                audit: auditEffects()
+            };
+        }
+
+        function reconcileMissedConcentrationLoss() {
+            activeInstances().forEach(instance => {
+                if (instance.migrationStatus === 'legacy-incomplete'
+                    || instance.dependency?.type !== 'concentration'
+                    || !instance.dependency?.established) return;
+                const token = getObj('graphic', instance.source.tokenId);
+                const markerId = concentrationMarkerId(instance.dependency.marker);
+                if (token && markerId && !GameAssist.MarkerService.has(token, markerId)) {
+                    endEffect(instance.id, 'EffectAssist startup', {
+                        skipConcentration: true,
+                        allowDisabled: true,
+                        reason: 'concentration-missing-on-enable'
+                    });
+                }
+            });
+        }
+
+        function panel(title, fields, msg = null, { gmOnly = false } = {}) {
+            const body = fields.map(field => `{{${_sanitize(field.label)}=${field.value}}}`).join(' ');
+            const player = msg?.playerid ? getObj('player', msg.playerid) : null;
+            const displayName = String(player?.get('_displayname') || player?.get('displayname') || msg?.who || '')
+                .replace(/["\\]/g, '')
+                .replace(/\s*\(GM\)\s*$/i, '')
+                .trim();
+            const destination = gmOnly || !msg || playerIsGM(msg.playerid) || !displayName
+                ? '/w gm '
+                : `/w "${displayName}" `;
+            sendChat(MODULE_NAME, `${destination}&{template:default} {{name=${_sanitize(title)}}} ${body}`);
+        }
+
+        function listText(values) {
+            return (Array.isArray(values) && values.length)
+                ? values.map(value => `• ${_sanitize(value)}`).join('<br>')
+                : 'None.';
+        }
+
+        function readableList(values) {
+            const items = (Array.isArray(values) ? values : []).filter(Boolean);
+            if (!items.length) return '';
+            if (items.length === 1) return items[0];
+            if (items.length === 2) return `${items[0]} and ${items[1]}`;
+            return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
+        }
+
+        function announcePlayerCast(instance) {
+            if (!validInstance(instance)) return;
+            const sourceName = _sanitize(instance.source.characterName || instance.source.tokenName || 'A character');
+            const publicTargets = (instance.targets || [])
+                .filter(target => target.layer === 'objects')
+                .map(target => _sanitize(target.characterName || target.tokenName || 'a recipient'));
+            const targetText = publicTargets.length === (instance.targets || []).length
+                ? ` on ${readableList(publicTargets)}`
+                : '';
+            sendChat(MODULE_NAME, `/em ${sourceName} has cast ${_sanitize(instance.name)}${targetText}.`);
+        }
+
+        /**
+         * prunePlayerCasting - Bounds sandbox-local casting choices and GM requests.
+         * Context: Roll20 chat buttons can remain visible after their authority expires.
+         * Invariants: no durable effect state is stored here; stale interactions fail with recovery controls.
+         */
+        function prunePlayerCasting(now = Date.now()) {
+            [...playerCastFlows.entries()].forEach(([id, flow]) => {
+                if (Number(flow?.expiresAt || 0) <= now) playerCastFlows.delete(id);
+            });
+            [...playerRequests.entries()].forEach(([id, request]) => {
+                if (Number(request?.expiresAt || 0) <= now) playerRequests.delete(id);
+            });
+        }
+
+        function createInteractionId(prefix, collection) {
+            let id;
+            do {
+                id = prefix + '-' + Math.random().toString(36).slice(2, 10);
+            } while (collection.has(id));
+            return id;
+        }
+
+        function rememberPlayerCastFlow(msg, definition, source, stage) {
+            prunePlayerCasting();
+            const id = createInteractionId('EF', playerCastFlows);
+            playerCastFlows.set(id, Object.freeze({
+                schemaVersion: PLAYER_CAST_FLOW_SCHEMA_VERSION,
+                id,
+                playerId: String(msg?.playerid || ''),
+                definitionId: definition.id,
+                sourceTokenId: source.summary.tokenId,
+                stage,
+                createdAt: Date.now(),
+                expiresAt: Date.now() + POLICY.effects.playerCastFlowMs
+            }));
+            while (playerCastFlows.size > POLICY.effects.playerCastFlowLimit) {
+                playerCastFlows.delete(playerCastFlows.keys().next().value);
+            }
+            return id;
+        }
+
+        function castingRecovery(msg, message = 'That casting choice is no longer available.') {
+            panel('EffectAssist', [
+                { label: 'Needs Attention', value: _sanitize(message) },
+                { label: 'Next Step', value: `${GameAssist.createButton('Start Again', '!effect')} ${GameAssist.createButton('Quick Guide', '!Effect-Guide')}` }
+            ], msg);
+        }
+
+        function resolvePlayerCastFlow(msg, flowId, expectedStage) {
+            prunePlayerCasting();
+            const id = String(flowId || '');
+            const flow = playerCastFlows.get(id);
+            if (!flow || flow.playerId !== String(msg?.playerid || '') || flow.stage !== expectedStage) {
+                return { ok: false, code: 'UNAUTHORIZED', message: 'That casting choice expired or belongs to another player. Start again from the Effect Catalog.' };
+            }
+            const definition = BUILTIN_DEFINITIONS[flow.definitionId] ? getDefinition(flow.definitionId) : null;
+            const source = resolveLinkedToken(flow.sourceTokenId, 'The source');
+            const authorization = definition && source.ok
+                ? authorizeCast(msg, source, definition.id)
+                : (source.ok ? { ok: false, code: 'NOT_FOUND', message: 'That effect is no longer available.' } : source);
+            if (!authorization.ok) return authorization;
+            return { ok: true, id, flow, definition, source };
+        }
+
+        function rememberPlayerRequest(msg, definition, source) {
+            prunePlayerCasting();
+            const player = getObj('player', msg?.playerid);
+            const requesterName = String(player?.get('_displayname') || player?.get('displayname') || msg?.who || 'A player')
+                .replace(/\s*\(GM\)\s*$/i, '')
+                .trim();
+            const id = createInteractionId('ER', playerRequests);
+            const request = Object.freeze({
+                schemaVersion: PLAYER_CAST_FLOW_SCHEMA_VERSION,
+                id,
+                playerId: String(msg?.playerid || ''),
+                requesterName,
+                definitionId: definition.id,
+                sourceTokenId: source.summary.tokenId,
+                sourceName: source.summary.characterName,
+                createdAt: Date.now(),
+                expiresAt: Date.now() + POLICY.effects.playerRequestMs
+            });
+            playerRequests.set(id, request);
+            while (playerRequests.size > POLICY.effects.playerRequestLimit) {
+                playerRequests.delete(playerRequests.keys().next().value);
+            }
+            return request;
+        }
+
+        function resolvePlayerRequest(requestId) {
+            prunePlayerCasting();
+            const request = playerRequests.get(String(requestId || ''));
+            if (!request) {
+                return { ok: false, code: 'NOT_FOUND', message: 'That player request expired or was already completed. Ask the player to send it again.' };
+            }
+            const requester = getObj('player', request.playerId);
+            const definition = BUILTIN_DEFINITIONS[request.definitionId] ? getDefinition(request.definitionId) : null;
+            const source = resolveLinkedToken(request.sourceTokenId, 'The requested source');
+            const authorization = requester && definition && source.ok
+                ? authorizeCast({ playerid: request.playerId }, source, definition.id)
+                : (source.ok ? { ok: false, code: 'UNAVAILABLE', message: 'That player request can no longer be verified.' } : source);
+            if (!authorization.ok) return authorization;
+            return { ok: true, request, definition, source };
+        }
+
+        function playerRequestTargetButtons(request, definition) {
+            const counts = PLAYER_TARGET_COUNTS[definition.id] || [1];
+            const replacement = definition.concentration
+                ? ' --replace ?{If this source is already concentrating, replace that effect?|Yes,yes|No,no}'
+                : '';
+            return counts.map(count => {
+                const label = counts.length === 1
+                    ? 'Choose Recipient'
+                    : `Choose ${count} Recipient${count === 1 ? '' : 's'}`;
+                return GameAssist.createButton(
+                    label,
+                    `!Effect-Apply --player-request ${request.id} --targets ${nativeTargetIds(definition, count)}${replacement}`
+                );
+            }).join(' ');
+        }
+
+        function playerRequestFields(requestResult) {
+            if (!requestResult.ok) return [];
+            const { request, definition } = requestResult;
+            return [
+                { label: 'Request', value: `${_sanitize(request.requesterName)} would like ${_sanitize(request.sourceName)} to cast ${_sanitize(definition.name)}.` },
+                { label: 'Use Selected Tokens', value: GameAssist.createButton('Review My Selection', `!Effect-Apply --player-request ${request.id}`) },
+                { label: 'Choose On The Map', value: playerRequestTargetButtons(request, definition) },
+                { label: 'Request Controls', value: GameAssist.createButton('Dismiss', `!Effect-Request-Dismiss --request ${request.id}`) }
+            ];
+        }
+
+        function showPlayerRequests(msg, notice = '') {
+            prunePlayerCasting();
+            const pending = [...playerRequests.values()].sort((left, right) => right.createdAt - left.createdAt);
+            const rows = pending.slice(0, POLICY.effects.chatListLimit).map(request => {
+                const resolved = resolvePlayerRequest(request.id);
+                if (!resolved.ok) {
+                    return `<b>Request Needs Attention</b><br>${_sanitize(resolved.message)}<br>`
+                        + GameAssist.createButton('Dismiss', `!Effect-Request-Dismiss --request ${request.id}`);
+                }
+                return `<b>${_sanitize(request.sourceName)}: ${_sanitize(resolved.definition.name)}</b><br>`
+                    + `Requested by ${_sanitize(request.requesterName)}<br>`
+                    + `${GameAssist.createButton('Use Selected Tokens', `!Effect-Apply --player-request ${request.id}`)} `
+                    + `${playerRequestTargetButtons(request, resolved.definition)} `
+                    + `${GameAssist.createButton('Dismiss', `!Effect-Request-Dismiss --request ${request.id}`)}`;
+            }).filter(Boolean).join('<hr>');
+            panel('Player Effect Requests', [
+                ...(notice ? [{ label: 'Updated', value: _sanitize(notice) }] : []),
+                { label: 'Pending', value: rows || 'No player requests are waiting.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function nativeTargetIds(definition, count) {
+            return Array.from({ length: count }, (_value, index) =>
+                `@{target|${safeQueryText(definition.name)} recipient ${index + 1}|token_id}`
+            ).join(',');
+        }
+
+        function targetPickerButtons(definition, source, { requestedBy = '', flowId = '' } = {}) {
+            const counts = PLAYER_TARGET_COUNTS[definition.id] || [1];
+            const replacement = definition.concentration
+                ? ' --replace ?{If this source is already concentrating, replace that effect?|Yes,yes|No,no}'
+                : '';
+            const requestOptions = requestedBy
+                ? ` --requested-by ${requestedBy} --announce true`
+                : '';
+            return counts.map(count => {
+                const label = counts.length === 1
+                    ? 'Choose Recipient'
+                    : `Choose ${count} Recipient${count === 1 ? '' : 's'}`;
+                const command = flowId
+                    ? `!Effect-Apply --flow ${flowId} --targets ${nativeTargetIds(definition, count)}${replacement}`
+                    : `!Effect-Apply --effect ${definition.id} --source ${source.summary.tokenId} --targets ${nativeTargetIds(definition, count)}${replacement}${requestOptions}`;
+                return GameAssist.createButton(label, command);
+            }).join(' ');
+        }
+
+        function showRecipientPicker(msg, definition, source) {
+            const flowId = !playerIsGM(msg?.playerid)
+                ? rememberPlayerCastFlow(msg, definition, source, 'recipients')
+                : '';
+            const askGm = !playerIsGM(msg?.playerid)
+                ? GameAssist.createButton('Ask the GM', `!Effect-Request --flow ${flowId}`)
+                : '';
+            panel(`${definition.name}: Choose Recipients`, [
+                { label: 'Casting As', value: _sanitize(source.summary.characterName) },
+                { label: 'Choose On The Map', value: targetPickerButtons(definition, source, { flowId }) },
+                ...(askGm ? [{ label: 'Need More Or Hidden Recipients?', value: askGm }] : []),
+                { label: 'Next', value: 'Click a recipient button, then click the requested token or tokens on the map. You do not need to control those tokens.' },
+                { label: 'Return', value: GameAssist.createButton('Effect Catalog', '!effect') }
+            ], msg);
+        }
+
+        function showSourcePicker(msg, definition) {
+            const sources = controlledSources(msg);
+            if (!sources.length) {
+                return panel('EffectAssist', [
+                    { label: 'Needs Attention', value: 'No linked character token you control is available on your current Roll20 page.' },
+                    { label: 'Next Step', value: GameAssist.createButton('Effect Catalog', '!effect') }
+                ], msg);
+            }
+            if (sources.length === 1) return showRecipientPicker(msg, definition, sources[0]);
+            panel(`${definition.name}: Who Is Casting?`, [
+                {
+                    label: 'Choose Your Character',
+                    value: sources.map(source => GameAssist.createButton(
+                        source.summary.characterName,
+                        `!Effect-Targets --flow ${rememberPlayerCastFlow(msg, definition, source, 'source')}`
+                    )).join(' ')
+                },
+                { label: 'Return', value: GameAssist.createButton('Effect Catalog', '!effect') }
+            ], msg);
+        }
+
+        function handleTargetStep(msg, options) {
+            if (options.flow) {
+                const flow = resolvePlayerCastFlow(msg, options.flow, 'source');
+                if (!flow.ok) return castingRecovery(msg, flow.message);
+                playerCastFlows.delete(flow.id);
+                return showRecipientPicker(msg, flow.definition, flow.source);
+            }
+            const definitionId = normalizeDefinitionId(options.effect);
+            const definition = getDefinition(definitionId);
+            if (!definition || (!playerIsGM(msg.playerid) && !BUILTIN_DEFINITIONS[definitionId])) {
+                return panel('EffectAssist', [
+                    { label: 'Needs Attention', value: 'That built-in effect is unavailable.' },
+                    { label: 'Next Step', value: GameAssist.createButton('Effect Catalog', '!effect') }
+                ], msg);
+            }
+            if (!options.source) return showSourcePicker(msg, definition);
+            const source = resolveLinkedToken(options.source, 'The source');
+            const authorization = source.ok ? authorizeCast(msg, source, definition.id) : source;
+            if (!authorization.ok) {
+                return panel('EffectAssist', [
+                    { label: 'Needs Attention', value: _sanitize(authorization.message) },
+                    { label: 'Next Step', value: GameAssist.createButton('Effect Catalog', '!effect') }
+                ], msg);
+            }
+            showRecipientPicker(msg, definition, source);
+        }
+
+        function handlePlayerRequest(msg, options) {
+            if (playerIsGM(msg.playerid)) return handleTargetStep(msg, options);
+            const flow = options.flow ? resolvePlayerCastFlow(msg, options.flow, 'recipients') : null;
+            const definitionId = flow?.ok ? flow.definition.id : normalizeDefinitionId(options.effect);
+            const definition = flow?.ok
+                ? flow.definition
+                : (BUILTIN_DEFINITIONS[definitionId] ? getDefinition(definitionId) : null);
+            const source = flow?.ok ? flow.source : resolveLinkedToken(options.source, 'The source');
+            const authorization = definition && source.ok
+                ? authorizeCast(msg, source, definition.id)
+                : (flow && !flow.ok ? flow : (source.ok ? { ok: false, message: 'That built-in effect is unavailable.' } : source));
+            if (!authorization.ok) {
+                return castingRecovery(msg, authorization.message);
+            }
+            if (flow?.ok) playerCastFlows.delete(flow.id);
+            const request = rememberPlayerRequest(msg, definition, source);
+            panel('Player Effect Request', [
+                ...playerRequestFields({ ok: true, request, definition, source }),
+                { label: 'Safety', value: 'The normal review and confirmation still occur before anything changes.' }
+            ], null, { gmOnly: true });
+            panel('Request Sent', [
+                { label: 'Result', value: `The GM received a streamlined request for ${_sanitize(source.summary.characterName)} to cast ${_sanitize(definition.name)}.` },
+                { label: 'Return', value: GameAssist.createButton('Effect Catalog', '!effect') }
+            ], msg);
+        }
+
+        function handlePlayerRequestDismiss(msg, options) {
+            prunePlayerCasting();
+            const existed = playerRequests.delete(String(options.request || ''));
+            showPlayerRequests(msg, existed ? 'The player request was dismissed. No effect changes were made.' : 'That player request was already unavailable.');
+        }
+
+        function activeSummary() {
+            const effects = activeInstances().slice(0, POLICY.effects.chatListLimit);
+            if (!effects.length) return 'No active effects.';
+            return effects.map(instance => {
+                const targets = instance.targets.map(target => _sanitize(target.tokenName)).join(', ');
+                const state = instance.status === 'active' ? '' : ` | ${_sanitize(instance.status)}`;
+                const duration = openDurationCandidates(instance).length
+                    ? ` | <b>duration review needed</b> ${GameAssist.createButton('Review', '!Effect-Duration --id ' + instance.id)}`
+                    : '';
+                return `<b>${_sanitize(instance.name)}</b> from ${_sanitize(instance.source.tokenName)} to ${targets}${state}${duration} ${GameAssist.createButton('End', '!Effect-End --id ' + instance.id)}`;
+            }).join('<br>');
+        }
+
+        function durationProviderSummary(instance) {
+            const duration = instance?.duration;
+            if (!duration?.rules) return 'Manual';
+            const providers = [];
+            if (duration.anchors?.combat) providers.push('CombatAssist rounds');
+            if (duration.anchors?.world) providers.push('Almanac time');
+            return providers.length ? providers.join(' + ') : 'Manual; no provider was active when applied';
+        }
+
+        function showDurationReview(msg, options = {}) {
+            reconcileDurationProviders({ announce: false });
+            const requestedId = String(options.id || '');
+            const effects = activeInstances().filter(instance => !requestedId || instance.id === requestedId);
+            const rows = effects.slice(0, POLICY.effects.chatListLimit).map(instance => {
+                const candidates = instance.duration?.candidates || [];
+                const candidateRows = candidates.map(candidate => {
+                    const action = candidate.status === 'dismissed'
+                        ? GameAssist.createButton('Reopen', `!Effect-Duration-Restore --id ${instance.id} --candidate ${candidate.id}`)
+                        : `${GameAssist.createButton('End Effect', '!Effect-End --id ' + instance.id)} ${GameAssist.createButton('Keep Active', `!Effect-Duration-Dismiss --id ${instance.id} --candidate ${candidate.id}`)}`;
+                    return `${candidate.status === 'dismissed' ? 'Kept active' : 'Review'}: ${_sanitize(candidate.reason)} ${action}`;
+                }).join('<br>');
+                return `<b>${_sanitize(instance.name)}</b> | ${_sanitize(durationRuleSummary(instance))}<br>`
+                    + `Provider: ${_sanitize(durationProviderSummary(instance))}<br>`
+                    + (candidateRows || 'No duration candidate has been raised.');
+            }).join('<hr>');
+            panel('Effect Duration Review', [
+                ...(options.notice ? [{ label: 'Updated', value: _sanitize(options.notice) }] : []),
+                { label: 'How This Works', value: 'Provider evidence creates a GM review item. EffectAssist never ends an effect from elapsed time alone.' },
+                { label: 'Active Durations', value: rows || 'No matching active effects.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function updateDurationCandidate(msg, options, status) {
+            const instance = runtime.instances[String(options.id || '')];
+            const candidate = validInstance(instance)
+                ? (instance.duration?.candidates || []).find(item => item.id === String(options.candidate || ''))
+                : null;
+            if (!candidate) {
+                return showDurationReview(msg, { notice: 'That duration item is no longer available.' });
+            }
+            candidate.status = status;
+            if (status === 'dismissed') {
+                candidate.dismissedAt = isoNow();
+                candidate.dismissedBy = String(msg.playerid || 'gm');
+            } else {
+                candidate.dismissedAt = null;
+                candidate.dismissedBy = null;
+            }
+            notifyLifecycle(status === 'dismissed' ? 'duration-candidate-dismissed' : 'duration-candidate-restored', instance, { candidate });
+            showDurationReview(msg, {
+                id: instance.id,
+                notice: status === 'dismissed'
+                    ? `${instance.name} remains active. The duration item can be reopened here.`
+                    : `${instance.name}'s duration item is open for review again.`
+            });
+        }
+
+        function catalogButtons(msg, group) {
+            if (!playerIsGM(msg?.playerid)) {
+                return getDefinitions().filter(definition =>
+                    BUILTIN_DEFINITIONS[definition.id] && definition.catalogGroup === group
+                ).map(definition => GameAssist.createButton(
+                    definition.name,
+                    `!Effect-Targets --effect ${definition.id}`
+                )).join(' ') || 'None.';
+            }
+            const source = sourceQuery(msg);
+            if (!source) return playerIsGM(msg?.playerid)
+                ? 'Place at least one linked character token on the current player page so EffectAssist can offer a source picker.'
+                : 'No linked character token you control is available on the current player page.';
+            return getDefinitions().filter(definition =>
+                BUILTIN_DEFINITIONS[definition.id] && definition.catalogGroup === group
+            ).map(definition => {
+                const replacement = definition.concentration
+                    ? ' --replace ?{If this source is already concentrating, replace that effect?|Yes,yes|No,no}'
+                    : '';
+                return GameAssist.createButton(definition.name, `!Effect-Apply --effect ${definition.id} --source ${source}${replacement}`);
+            }).join(' ') || 'None.';
+        }
+
+        function showGuide(msg) {
+            panel('EffectAssist Quick Guide', [
+                { label: 'Apply An Effect', value: playerIsGM(msg?.playerid) ? 'Select the affected tokens, open the catalog, choose the effect and source, review the changes, then confirm.' : 'Open the catalog, choose the effect and your casting character, then choose visible recipients directly on the map.' },
+                { label: 'End An Effect', value: playerIsGM(msg?.playerid) ? 'Open Active Effects and end the specific source. Shared markers and bonuses remain while another source still owns them.' : 'Use the End Effect button on your successful casting message.' },
+                ...(playerIsGM(msg?.playerid) ? [{ label: 'Review Duration', value: 'Duration providers can flag an effect for review, but only the GM decides whether it ends.' }] : []),
+                ...(playerIsGM(msg?.playerid) ? [{ label: 'Recognized Casts', value: 'A supported 2014 Bless spell card may offer a private shortcut. You still select the recipients and review every change.' }] : []),
+                { label: 'Actions', value: `${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Control Center', '!Effect-GM') + ' ' + GameAssist.createButton('Active Effects', '!Effect-Active') + ' ' + GameAssist.createButton('Pending Casts', '!Effect-Casts') + ' ' + GameAssist.createButton('Duration Review', '!Effect-Duration') : ''}` }
+            ], msg);
+        }
+
+        function showControl(msg) {
+            pruneCastTracking();
+            prunePlayerCasting();
+            panel('EffectAssist Control Center', [
+                { label: 'Apply To Selected Tokens', value: `<b>Marker And Sheet Automation</b><br>${catalogButtons(msg, 'automated')}<br><b>Tracked; Rules Stay Manual</b><br>${catalogButtons(msg, 'tracked')}` },
+                { label: 'Browse', value: `${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Catalog Details', '!Effect-Definitions')}` },
+                { label: 'Manage', value: `${GameAssist.createButton(`Player Requests (${playerRequests.size})`, '!Effect-Requests')} ${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Recognized Casts', '!Effect-Casts')} ${GameAssist.createButton('Duration Review', '!Effect-Duration')} ${GameAssist.createButton('Status', '!Effect-Status')}` },
+                { label: 'Check', value: `${GameAssist.createButton('Audit and Repair', '!Effect-Audit')} ${GameAssist.createButton('Guide', '!Effect-Guide')}` },
+                { label: 'Player Casting', value: `${modState.config.allowPlayerCasting !== false ? 'Allowed' : 'Locked'} | ${GameAssist.createButton('Allow', '!Effect-Players on')} ${GameAssist.createButton('Lock', '!Effect-Players off')}` },
+                { label: '2014 Cast Recognition', value: `${modState.config.castRecognition !== false ? 'On' : 'Off'} | ${castProposals.size} pending | ${GameAssist.createButton('Turn On', '!Effect-Recognition on')} ${GameAssist.createButton('Turn Off', '!Effect-Recognition off')}` },
+                { label: 'Duration Candidates', value: `${modState.config.durationCandidates !== false ? 'On' : 'Off'} | ${GameAssist.createButton('Turn On', '!Effect-Durations on')} ${GameAssist.createButton('Turn Off', '!Effect-Durations off')}` },
+                { label: 'Learn', value: `${GameAssist.createButton('What does EffectAssist do?', '!Effect-Info')} ${GameAssist.createButton('Create or Update Manual', '!Effect-Manual')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function showInfo(msg) {
+            panel('What EffectAssist Does', [
+                { label: 'Purpose', value: 'Applies and tracks spells, features, and custom effects as source-aware records with markers, supported 2014 sheet modifiers, concentration, and safe cleanup.' },
+                { label: 'Why It Is Not TokenAssist', value: 'TokenAssist performs an immediate token edit. EffectAssist remembers the rule relationship over time and removes only what that relationship owns.' },
+                { label: 'Safety', value: 'Unsupported mechanics are clearly labeled as manual. Existing or edited sheet values are preserved and reported instead of overwritten. Recognized spell cards and elapsed duration create GM decisions, never automatic changes.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Open Catalog', '!Effect-Catalog')} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Open Manual', '!Effect-Manual') + ' ' + GameAssist.createButton('Control Center', '!Effect-GM') : ''}` }
+            ], msg);
+        }
+
+        function showCatalog(msg) {
+            if (!playerCastingAllowed(msg)) {
+                return panel('EffectAssist', [
+                    { label: 'Player Casting Is Locked', value: 'The GM has temporarily limited EffectAssist casting controls.' }
+                ], msg);
+            }
+            const source = sourceQuery(msg) || '';
+            const condition = conditionQuery();
+            const customButtons = playerIsGM(msg?.playerid) && source ? [
+                GameAssist.createButton('Marker Effect', '!Effect-Apply --name "?{Effect name|Custom Effect}" --marker "?{Marker id or custom name|aura}" --dependency "?{Dependency|Manual,manual|Concentration,concentration}" --source ' + source + ' --replace "?{Replace current concentration if needed?|Yes,yes|No,no}"'),
+                condition ? GameAssist.createButton('Condition Effect', '!Effect-Apply --name "?{Effect name|Custom Effect}" --condition ' + condition + ' --dependency "?{Dependency|Manual,manual|Concentration,concentration}" --source ' + source + ' --replace "?{Replace current concentration if needed?|Yes,yes|No,no}"') : '',
+                GameAssist.createButton('Record Only', '!Effect-Apply --name "?{Effect name|Custom Effect}" --none true --source ' + source)
+            ].filter(Boolean).join(' ') : '';
+            panel('EffectAssist Catalog', [
+                { label: 'Before You Choose', value: playerIsGM(msg?.playerid) ? 'Select every affected linked token. The next prompt asks who created the effect.' : 'Choose an effect, choose your casting character, then point at the visible recipient tokens on the map. No recipient selection is required beforehand.' },
+                { label: 'Marker And Sheet Automation', value: catalogButtons(msg, 'automated') },
+                { label: 'Tracked; Rules Stay Manual', value: catalogButtons(msg, 'tracked') },
+                ...(customButtons ? [{ label: 'Custom', value: customButtons }] : []),
+                { label: 'Learn Before Applying', value: `${GameAssist.createButton('Catalog Details', '!Effect-Definitions')} ${GameAssist.createButton('Quick Guide', '!Effect-Guide')}` }
+            ], msg);
+        }
+
+        function showDefinitions(msg) {
+            const visibleDefinitions = playerIsGM(msg?.playerid)
+                ? getDefinitions()
+                : getDefinitions().filter(definition => BUILTIN_DEFINITIONS[definition.id]);
+            const rows = visibleDefinitions.slice(0, POLICY.effects.chatListLimit)
+                .map(definition => `<b>${_sanitize(definition.name)}</b> | ${definition.catalogGroup === 'tracked' ? 'Tracked; mechanics manual' : 'Marker and sheet automation'} | ${definition.concentration ? 'Concentration' : 'No concentration'} | ${_sanitize(definition.duration)}`)
+                .join('<br>') || 'No definitions.';
+            panel('Effect Catalog Details', [
+                { label: 'Catalog', value: rows },
+                { label: 'How To Read It', value: 'Automated entries change supported marker and 2014-sheet fields. Tracked entries manage the source, marker, concentration, and cleanup while their rule mechanics remain manual.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Apply An Effect', '!Effect-Catalog')} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Open Manual', '!Effect-Manual') : ''}` }
+            ], msg);
+        }
+
+        function endedSummary() {
+            const ended = runtime.history.slice(-POLICY.effects.chatListLimit).reverse();
+            if (!ended.length) return 'No ended effects recorded.';
+            return ended.map(instance => {
+                const targets = (instance.targets || []).map(target => _sanitize(target.tokenName)).join(', ') || 'unknown targets';
+                return `<b>${_sanitize(instance.name)}</b> from ${_sanitize(instance.source?.tokenName || 'unknown source')} to ${targets} | ended ${_sanitize(instance.endedAt || 'unknown time')}`;
+            }).join('<br>');
+        }
+
+        function showActive(msg) {
+            panel('Active Effects', [
+                { label: 'Current Effects', value: activeSummary() },
+                { label: 'Actions', value: `${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function showStatus(msg) {
+            pruneCastTracking();
+            prunePlayerCasting();
+            const audit = auditEffects();
+            const durationCandidates = activeInstances().reduce((sum, instance) => sum + openDurationCandidates(instance).length, 0);
+            panel('EffectAssist Status', [
+                { label: 'Module', value: `${MODULE_VERSION} | 2014 sheet adapter | state schema ${STATE_SCHEMA_VERSION}` },
+                { label: 'Records', value: `${audit.active} active | ${audit.ended} ended | ${audit.definitions} definitions` },
+                { label: 'Health', value: audit.ok ? 'No mismatches found.' : `${audit.mismatches.length} item(s) need review.` },
+                { label: 'Player Casting', value: modState.config.allowPlayerCasting !== false ? 'Allowed' : 'Locked' },
+                { label: 'Player Requests', value: `${playerRequests.size} pending request(s)` },
+                { label: '2014 Cast Recognition', value: `${modState.config.castRecognition !== false ? 'On' : 'Off'} | ${castProposals.size} pending Bless proposal(s)` },
+                { label: 'Duration Review', value: `${modState.config.durationCandidates !== false ? 'On' : 'Off'} | ${durationCandidates} open candidate(s)` },
+                { label: 'Actions', value: `${GameAssist.createButton('Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Player Requests', '!Effect-Requests')} ${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Recognized Casts', '!Effect-Casts')} ${GameAssist.createButton('Durations', '!Effect-Duration')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function showAudit(msg) {
+            const audit = auditEffects();
+            const details = audit.mismatches.slice(0, POLICY.effects.chatListLimit)
+                .map(item => `• ${_sanitize(item.message)}`).join('<br>');
+            const fields = [
+                { label: 'Summary', value: `${audit.active} active effects | ${audit.mismatches.length} item(s) need attention` },
+                { label: 'Changes', value: 'None. This audit is read-only.' },
+                { label: 'Details', value: details || 'Effect records, concentration, markers, and supported 2014 sheet modifiers agree.' }
+            ];
+            const repairable = audit.mismatches.some(item =>
+                ['missing-projection', 'untracked-projection', 'orphan-projection', 'concentration-lost', 'cleanup-pending'].includes(item.type)
+            );
+            if (repairable) {
+                const grant = createRepairGrant(audit, msg?.playerid);
+                fields.push({ label: 'Repair', value: GameAssist.createButton('Confirm Current Repairs', '!Effect-Repair --grant ' + grant + ' --confirm') });
+            }
+            fields.push({ label: 'Return', value: GameAssist.createButton('Control Center', '!Effect-GM') });
+            panel('EffectAssist Audit', fields, msg, { gmOnly: true });
+        }
+
+        function manualHtml() {
+            const catalog = getDefinitions().map(definition => [
+                `<h3>${_sanitize(definition.name)}</h3>`,
+                `<p>${_sanitize(definition.description)}</p>`,
+                `<ul><li><strong>Concentration:</strong> ${definition.concentration ? 'Yes' : 'No'}</li>`,
+                `<li><strong>Automation level:</strong> ${definition.catalogGroup === 'tracked' ? 'Tracked; rule mechanics remain manual' : 'Marker and supported sheet automation'}</li>`,
+                `<li><strong>Duration:</strong> ${_sanitize(definition.duration)}</li>`,
+                `<li><strong>Targets:</strong> ${_sanitize(definition.targets)}</li></ul>`,
+                `<p><strong>GameAssist will handle</strong><br>${listText(definition.automatic)}</p>`,
+                `<p><strong>The GM still handles</strong><br>${listText(definition.assisted)}</p>`,
+                definition.informational.length ? `<p><strong>Why some parts stay manual</strong><br>${listText(definition.informational)}</p>` : ''
+            ].join('')).join('');
+            return [
+                '<h1>EffectAssist User Manual</h1>',
+                `<p><strong>GameAssist v${_sanitize(VERSION)} | EffectAssist ${MODULE_VERSION}</strong></p>`,
+                '<p>EffectAssist applies and tracks spells, features, and custom effects. Each active record remembers its source, targets, concentration, markers, supported D&amp;D 5E by Roll20 (2014) sheet modifiers, and cleanup responsibilities.</p>',
+                '<h2>GM Quick Start</h2>',
+                '<ol><li>Select every affected linked token.</li><li>Run <code>!effect</code> to open the Effect Catalog directly.</li><li>Choose the effect and source.</li><li>Review exactly what GameAssist will change.</li><li>Confirm.</li><li>Use the immediate End Effect button or Active Effects to end a specific source.</li></ol>',
+                '<h2>Player Casting</h2>',
+                '<p>Players may open <code>!effect</code> or use a spell shortcut when the GM allows player casting. Caster buttons use short-lived private choices instead of placing character or token identifiers in the chat link. After choosing a controlled caster, Roll20 asks the player to point at visible recipient tokens on the map; the player does not need to control those recipients or preselect them. Every application shows a review and rechecks the source, recipients, page, visibility, and control before confirmation.</p>',
+                '<p>For hidden recipients, unusually large groups, or any cast the GM should place, the player may use <strong>Ask the GM</strong>. The request remains available briefly under <strong>Player Requests</strong> in the GM Control Center and offers selected-token and map-target choices. The normal review and confirmation still occur. A successful player-originated cast is announced publicly with the source, effect, and visible recipient names. Direct GM applications remain private unless deliberately announced.</p>',
+                '<p>Player menus expose only the built-in casting path and the player\'s own End Effect control. Status, audit, repair, custom effects, and configuration remain private to the GM.</p>',
+                '<h2>Recognized 2014 Spell Cards</h2>',
+                '<p>When cast recognition is on, an official D&amp;D 5E by Roll20 (2014) Bless spell card can create one short-lived private proposal for the GM. GameAssist accepts it only when the spell, character, active page, linked source token, and player control are unambiguous. The GM selects the actual recipients and uses the proposal button to enter the same review and confirmation path as the catalog.</p>',
+                '<p>Spell-card target wording is descriptive and is never used as token identity. Unsupported spells, ambiguous sources, and 2024-sheet cards do not create effect instances. Use <code>!Effect-Casts</code> to review pending proposals and <code>!Effect-Recognition on|off</code> to control this shortcut. The manual catalog remains available whether recognition is on or off.</p>',
+                '<h2>Concentration</h2>',
+                '<p>ConcentrationAssist owns concentration checks and the Concentrating marker. EffectAssist connects dependent effects to that source. A failed check, deliberate concentration clear, or manual removal of the source marker ends the dependent effect and removes its owned target projections. Removing only a target effect marker creates an audit mismatch so an accidental edit can be repaired; it does not silently end the source or every target.</p>',
+                '<h2>Overlapping Sources</h2>',
+                '<p>Separate sources remain separate records. A non-stacking marker or modifier remains while any valid source still owns it.</p>',
+                '<h2>Duration Review</h2>',
+                '<p>Built-in definitions carry formal round and world-time duration rules. If CombatAssist is actively following the same page when an effect begins, EffectAssist records its current round and initiative point. If AlmanacAssist fictional time is active, it also records the current world minute. Reaching either verified boundary creates a private GM review item; it never ends the effect automatically.</p>',
+                '<p>Use <code>!Effect-Duration</code> to end an effect, keep it active, or reopen a dismissed review item. Pauses, backward movement, tracker rebases, provider absence, and effects created before duration tracking are not guessed through. The original manual End Effect control always remains available. Use <code>!Effect-Durations on|off</code> to enable or disable new candidate processing.</p>',
+                '<h2>Audit And Repair</h2>',
+                '<p>Audit never changes anything. Repair requires a current confirmation, rechecks the state, preserves edited or ambiguous values, and reports anything that still needs attention.</p>',
+                '<h2>Effect Catalog</h2>',
+                catalog,
+                '<h2>Commands</h2>',
+                '<p><code>!effect</code> opens the player catalog directly, while <code>!Effect-GM</code> opens the GM casting and management screen. Player shortcuts are <code>!Bless</code>, <code>!Guidance</code> or <code>!Guide</code>, <code>!Haste</code>, <code>!Warding-Bond</code>, <code>!Holy-Weapon</code>, and <code>!PwoaT</code>. Generated targeting and request buttons use bounded private identifiers; players do not need to memorize them. GM controls include <code>!Effect-GM</code>, <code>!Effect-DM</code>, <code>!Effect-Requests</code>, <code>!Effect-Active</code>, <code>!Effect-Casts</code>, <code>!Effect-Recognition on|off</code>, <code>!Effect-Duration</code>, <code>!Effect-Durations on|off</code>, <code>!Effect-Status</code>, <code>!Effect-Audit</code>, <code>!Effect-Players on|off</code>, <code>!Effect-Manual</code>, and generated Apply, Confirm, End, and Repair buttons.</p>'
+            ].join('');
+        }
+
+        function showManual(msg) {
+            const result = GameAssist.writeModuleManual(MODULE_NAME, manualHtml());
+            panel('EffectAssist Manual', [
+                { label: 'Result', value: result.ok ? 'The manual was created or updated.' : _sanitize(result.message) },
+                ...(result.ok ? [{ label: 'Handout', value: result.link }] : []),
+                { label: 'Actions', value: `${GameAssist.createButton('Control Center', '!Effect-GM')} ${GameAssist.createButton('Short Guide', '!Effect-Guide')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function authorizeCast(msg, source, definitionId) {
+            if (!playerCastingAllowed(msg)) {
+                return { ok: false, code: 'FORBIDDEN', message: 'The GM has temporarily locked player casting through EffectAssist.' };
+            }
+            if (!playerIsGM(msg.playerid) && (!definitionId || !BUILTIN_DEFINITIONS[definitionId])) {
+                return { ok: false, code: 'FORBIDDEN', message: 'Players may use the built-in catalog; custom effects remain GM-only.' };
+            }
+            if (!playerIsGM(msg.playerid)
+                && (source.summary.layer !== 'objects' || source.summary.pageId !== effectPageId(msg.playerid))) {
+                return { ok: false, code: 'FORBIDDEN', message: 'Choose a visible source token on your current Roll20 page.' };
+            }
+            if (!actorControlsSource(msg.playerid, source)) {
+                return { ok: false, code: 'FORBIDDEN', message: 'Choose a source token controlled by your Roll20 player account.' };
+            }
+            return { ok: true };
+        }
+
+        function canEndInstance(msg, instance) {
+            if (playerIsGM(msg.playerid)) return true;
+            if (String(instance?.createdBy || '') === String(msg.playerid || '')) return true;
+            const source = resolveLinkedToken(instance?.source?.tokenId, 'The source');
+            return source.ok && actorControlsSource(msg.playerid, source);
+        }
+
+        function handleApply(msg, options) {
+            const flow = options.flow ? resolvePlayerCastFlow(msg, options.flow, 'recipients') : null;
+            const pending = playerIsGM(msg.playerid) && options['player-request']
+                ? resolvePlayerRequest(options['player-request'])
+                : null;
+            if ((flow && !flow.ok) || (pending && !pending.ok)) {
+                const failure = flow && !flow.ok ? flow : pending;
+                return castingRecovery(msg, failure.message);
+            }
+            const selected = requestedTargets(msg, options);
+            if (!selected.ok) {
+                panel('EffectAssist', [
+                    { label: 'Needs Attention', value: _sanitize(selected.message) },
+                    { label: 'Next Step', value: pending?.ok
+                        ? `${GameAssist.createButton('Pending Requests', '!Effect-Requests')} ${GameAssist.createButton('Open Guide', '!Effect-Guide')}`
+                        : `${GameAssist.createButton('Start Again', '!effect')} ${GameAssist.createButton('Open Guide', '!Effect-Guide')}` }
+                ], msg);
+                return;
+            }
+            const sourceTokenId = flow?.ok
+                ? flow.source.summary.tokenId
+                : (pending?.ok ? pending.source.summary.tokenId : String(options.source || ''));
+            const source = flow?.ok ? flow.source : (pending?.ok ? pending.source : resolveLinkedToken(sourceTokenId, 'The source'));
+            const definitionId = flow?.ok
+                ? flow.definition.id
+                : (pending?.ok ? pending.definition.id : (options.effect ? normalizeDefinitionId(options.effect) : null));
+            const requestedBy = pending?.ok
+                ? pending.request.playerId
+                : (playerIsGM(msg.playerid) && options['requested-by'] ? String(options['requested-by']) : '');
+            let authorization = source.ok
+                ? authorizeCast(msg, source, definitionId)
+                : source;
+            if (source.ok && requestedBy) {
+                const requester = getObj('player', requestedBy);
+                authorization = requester
+                    && modState.config.allowPlayerCasting !== false
+                    && BUILTIN_DEFINITIONS[definitionId]
+                    && actorControlsSource(requestedBy, source)
+                    ? { ok: true }
+                    : { ok: false, code: 'FORBIDDEN', message: 'That player request is no longer authorized. Ask the player to open a fresh casting request.' };
+            }
+            if (!authorization.ok) {
+                panel('EffectAssist', [
+                    { label: 'Needs Attention', value: _sanitize(authorization.message) },
+                    { label: 'Next Step', value: GameAssist.createButton('Open Catalog', '!Effect-Catalog') }
+                ], msg);
+                return;
+            }
+            if (flow?.ok) playerCastFlows.delete(flow.id);
+            const playerOriginated = !playerIsGM(msg.playerid) || Boolean(requestedBy);
+            const request = {
+                definitionId,
+                name: options.name,
+                marker: options.marker,
+                condition: options.condition,
+                none: options.none,
+                dependency: options.dependency,
+                description: options.description,
+                duration: options.duration,
+                replaceConcentration: options.replace,
+                sourceTokenId,
+                targetTokenIds: selected.targets.map(target => target.summary.tokenId),
+                createdBy: requestedBy || msg.playerid,
+                approvedBy: requestedBy ? msg.playerid : null,
+                announcePublic: playerOriginated || ['true', 'yes', 'on', '1'].includes(String(options.announce || '').toLowerCase()),
+                requestId: options.request,
+                playerRequestId: pending?.ok ? pending.request.id : null
+            };
+            const plan = buildPlan(request);
+            if (!plan.ok) {
+                panel('EffectAssist', [
+                    { label: 'Needs Attention', value: _sanitize(plan.message || plan.code) },
+                    { label: 'Next Step', value: `${GameAssist.createButton('Open Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Active Effects', '!Effect-Active')}` }
+                ], msg);
+                return;
+            }
+            if (plan.duplicate) {
+                if (pending?.ok) playerRequests.delete(pending.request.id);
+                panel('Effect Already Applied', [
+                    { label: 'Result', value: _sanitize(plan.message) },
+                    { label: 'Actions', value: `${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+                ], msg);
+                return;
+            }
+            const grant = createApplyGrant(plan, msg.playerid);
+            panel('Review Effect Application', [
+                { label: 'Effect', value: _sanitize(plan.definition.name) },
+                { label: 'Source', value: _sanitize(plan.source.summary.characterName) },
+                { label: 'Targets', value: plan.targets.map(target => _sanitize(target.summary.tokenName)).join(', ') },
+                { label: 'GameAssist Will Do', value: previewPlan(plan).map(item => `• ${_sanitize(item)}`).join('<br>') || 'Record the effect.' },
+                { label: 'Still Handled At The Table', value: listText(plan.assistance) },
+                { label: 'Confirm', value: `${GameAssist.createButton('Apply This Effect', '!Effect-Confirm --grant ' + grant)} ${GameAssist.createButton('Cancel', '!Effect-Catalog')}` }
+            ], msg);
+        }
+
+        function handleConfirm(msg, options) {
+            const plan = verifyApplyGrant(options.grant, msg.playerid);
+            if (!plan.ok) {
+                panel('EffectAssist', [
+                    { label: 'Needs Attention', value: _sanitize(plan.message || plan.code) },
+                    { label: 'Next Step', value: GameAssist.createButton('Open Catalog', '!Effect-Catalog') }
+                ], msg);
+                return;
+            }
+            if (plan.request.playerRequestId) {
+                const pending = resolvePlayerRequest(plan.request.playerRequestId);
+                const sameRequest = pending.ok
+                    && pending.request.playerId === String(plan.request.createdBy || '')
+                    && pending.request.sourceTokenId === plan.source.summary.tokenId
+                    && pending.request.definitionId === plan.definition.id;
+                if (!sameRequest) {
+                    return panel('EffectAssist', [
+                        { label: 'Needs Attention', value: _sanitize(pending.message || 'That player request changed after review. Ask the player to send it again.') },
+                        { label: 'Next Step', value: GameAssist.createButton('Pending Requests', '!Effect-Requests') }
+                    ], msg, { gmOnly: true });
+                }
+            }
+            const authorization = authorizeCast(msg, plan.source, plan.definition.id);
+            if (!authorization.ok) {
+                panel('EffectAssist', [
+                    { label: 'Needs Attention', value: _sanitize(authorization.message) },
+                    { label: 'Next Step', value: GameAssist.createButton('Open Catalog', '!Effect-Catalog') }
+                ], msg);
+                return;
+            }
+            const result = applyPlan(plan);
+            if (result.ok && plan.request.playerRequestId) {
+                playerRequests.delete(plan.request.playerRequestId);
+            }
+            if (result.ok && result.instance && plan.request.announcePublic) {
+                announcePlayerCast(result.instance);
+            }
+            const endButton = result.instance && canEndInstance(msg, result.instance)
+                ? GameAssist.createButton('End Effect', '!Effect-End --id ' + result.instance.id)
+                : '';
+            const navigation = playerIsGM(msg.playerid)
+                ? `${endButton} ${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}`
+                : `${endButton} ${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')}`;
+            panel(result.ok ? 'Effect Applied' : 'EffectAssist Needs Attention', [
+                { label: result.ok ? 'Result' : 'Needs Attention', value: _sanitize(result.message || result.code) },
+                ...(result.instance ? [{ label: 'Effect', value: `${_sanitize(result.instance.name)} | ${_sanitize(result.instance.id)}` }] : []),
+                ...(result.warnings?.length ? [{ label: 'Still Handled At The Table', value: listText(result.warnings) }] : []),
+                ...(result.rollbackFailures?.length ? [{ label: 'Rollback Attention', value: listText(result.rollbackFailures) }] : []),
+                { label: 'Actions', value: navigation }
+            ], msg);
+        }
+
+        function handleEnd(msg, options) {
+            const instance = runtime.instances[String(options.id || '')];
+            if (validInstance(instance) && !canEndInstance(msg, instance)) {
+                return panel('EffectAssist', [
+                    { label: 'Needs Attention', value: 'Only the GM, the effect creator, or a controller of its source can end this effect.' }
+                ], msg);
+            }
+            const result = endEffect(options.id, msg.playerid);
+            const navigation = playerIsGM(msg.playerid)
+                ? `${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}`
+                : GameAssist.createButton('Effect Catalog', '!Effect-Catalog');
+            panel(result.ok ? 'Effect Ended' : 'Effect Cleanup Needs Attention', [
+                { label: result.ok ? 'Result' : 'Needs Attention', value: _sanitize(result.message) },
+                ...(result.failures?.length ? [{ label: 'Cleanup', value: listText(result.failures) }] : []),
+                { label: 'Actions', value: navigation }
+            ], msg);
+        }
+
+        function handleRepair(msg, options) {
+            if (!options.confirm || !options.grant) return showAudit(msg);
+            const result = repairEffects(options.grant, msg.playerid);
+            panel(result.ok ? 'Effect Repair Complete' : 'Effect Repair Needs Attention', [
+                { label: 'Result', value: result.ok ? `${result.repaired} item(s) repaired.` : 'Some items could not be repaired safely.' },
+                ...(result.failed?.length ? [{ label: 'Needs Attention', value: listText(result.failed.map(entry => entry.message || entry.item?.message)) }] : []),
+                { label: 'Actions', value: `${GameAssist.createButton('Run Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function handlePlayerCastingSetting(msg) {
+            if (!playerIsGM(msg.playerid)) return showCatalog(msg);
+            const value = String(msg.content || '').trim().split(/\s+/)[1]?.toLowerCase();
+            if (!['on', 'off'].includes(value)) return showControl(msg);
+            modState.config.allowPlayerCasting = value === 'on';
+            panel('EffectAssist Player Casting', [
+                { label: 'Setting', value: modState.config.allowPlayerCasting ? 'Players may apply built-in effects from sources they control.' : 'Player casting controls are locked. GM controls remain available.' },
+                { label: 'Return', value: GameAssist.createButton('Control Center', '!Effect-GM') }
+            ], msg, { gmOnly: true });
+        }
+
+        function handleDurationSetting(msg) {
+            const value = String(msg.content || '').trim().split(/\s+/)[1]?.toLowerCase();
+            if (!['on', 'off'].includes(value)) return showControl(msg);
+            modState.config.durationCandidates = value === 'on';
+            const reconciled = modState.config.durationCandidates ? reconcileDurationProviders({ announce: false }) : [];
+            panel('EffectAssist Duration Review', [
+                { label: 'Setting', value: modState.config.durationCandidates
+                    ? 'Duration providers may create private GM review candidates. Effects still end only by an explicit effect or concentration action.'
+                    : 'Duration provider processing is off. Active effects and their saved duration evidence remain available for manual review.' },
+                ...(reconciled.length ? [{ label: 'Review', value: `${reconciled.length} existing duration item(s) are now ready for review.` }] : []),
+                { label: 'Actions', value: `${GameAssist.createButton('Review Durations', '!Effect-Duration')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function handleShortcut(msg, definitionId) {
+            if (!playerCastingAllowed(msg)) return showCatalog(msg);
+            handleTargetStep(msg, { effect: definitionId });
+        }
+
+        function handleCommand(msg) {
+            const action = commandAction(msg.content);
+            const options = parseOptions(msg.content);
+            if (action === 'apply') return handleApply(msg, options);
+            if (action === 'confirm') return handleConfirm(msg, options);
+            if (action === 'end') return handleEnd(msg, options);
+            if (action === 'targets') return handleTargetStep(msg, options);
+            if (action === 'request') return handlePlayerRequest(msg, options);
+            if (['definitions', 'catalog'].includes(action)) return action === 'catalog' ? showCatalog(msg) : showDefinitions(msg);
+            if (['guide', 'help'].includes(action)) return showGuide(msg);
+            if (['info', 'about'].includes(action)) return showInfo(msg);
+            if (!playerIsGM(msg.playerid)) return showCatalog(msg);
+            if (['gm', 'dm', 'menu'].includes(action)) return showControl(msg);
+            if (['status', 'list', 'refresh'].includes(action)) return showStatus(msg);
+            if (action === 'requests') return showPlayerRequests(msg);
+            if (action === 'request-dismiss') return handlePlayerRequestDismiss(msg, options);
+            if (action === 'active') return showActive(msg);
+            if (action === 'cast') return handleCastProposal(msg, options);
+            if (action === 'casts') return showCastProposals(msg);
+            if (action === 'cast-dismiss') return handleCastProposalDismiss(msg, options);
+            if (action === 'recognition') return handleRecognitionSetting(msg);
+            if (['duration', 'durations-review'].includes(action)) return showDurationReview(msg, options);
+            if (action === 'duration-dismiss') return updateDurationCandidate(msg, options, 'dismissed');
+            if (action === 'duration-restore') return updateDurationCandidate(msg, options, 'open');
+            if (action === 'durations') return handleDurationSetting(msg);
+            if (action === 'audit') return showAudit(msg);
+            if (action === 'manual') return showManual(msg);
+            if (action === 'repair') return handleRepair(msg, options);
+            if (action === 'players') return handlePlayerCastingSetting(msg);
+            panel('EffectAssist', [
+                { label: 'Needs Attention', value: 'That EffectAssist command was not recognized.' },
+                { label: 'Next Step', value: `${GameAssist.createButton('Control Center', '!Effect-GM')} ${GameAssist.createButton('Open Guide', '!Effect-Guide')}` }
+            ], msg);
+        }
+
+        GameAssist.onCommand('!effect', handleCommand, MODULE_NAME);
+        GameAssist.onCommand('!Effect-', handleCommand, MODULE_NAME, {
+            match: { caseInsensitive: true, mode: 'prefix' }
+        });
+        GameAssist.onCommand('!EffectAssist-', handleCommand, MODULE_NAME, {
+            match: { caseInsensitive: true, mode: 'prefix' }
+        });
+        [
+            ['!Bless', 'bless'],
+            ['!Guidance', 'guidance'],
+            ['!Guide', 'guidance'],
+            ['!Haste', 'haste'],
+            ['!Warding-Bond', 'warding-bond'],
+            ['!WardingBond', 'warding-bond'],
+            ['!Holy-Weapon', 'holy-weapon'],
+            ['!HolyWeapon', 'holy-weapon'],
+            ['!PwoaT', 'pass-without-a-trace']
+        ].forEach(([prefix, definitionId]) => {
+            GameAssist.onCommand(prefix, msg => handleShortcut(msg, definitionId), MODULE_NAME);
+        });
+
+        GameAssist.onEvent('chat:message', handleCastRecognition, MODULE_NAME);
+        ensureMarkerObservation();
+        const concentrationObservation = GameAssist.SemanticEvents.observe(observeConcentration, {
+            owner: MODULE_NAME,
+            types: ['concentration.ended', 'concentration.failed']
+        });
+        if (!concentrationObservation.ok) throw new Error(concentrationObservation.message || 'EffectAssist could not observe concentration events.');
+        const durationObservation = GameAssist.SemanticEvents.observe(observeDurationProvider, {
+            owner: MODULE_NAME,
+            types: ['combat.turn.changed', 'combat.encounter.ended', 'almanac.time.changed']
+        });
+        if (!durationObservation.ok) throw new Error(durationObservation.message || 'EffectAssist could not observe duration-provider events.');
+
+        rebuildDependencyIndex();
+        reconcileMissedConcentrationLoss();
+        warnAboutPreservedState();
+        setTimeout(reconcileDurationProviders, 0);
+
+        function registerLifecycleObserver(callback, { owner = 'EffectAssistConsumer' } = {}) {
+            return GameAssist.SemanticEvents.observe(callback, { owner, types: ['effect.lifecycle.changed'] });
+        }
+
+        GameAssist.EffectAssist = Object.freeze({
+            version: MODULE_VERSION,
+            stateSchemaVersion: STATE_SCHEMA_VERSION,
+            castProposalSchemaVersion: CAST_PROPOSAL_SCHEMA_VERSION,
+            playerCastFlowSchemaVersion: PLAYER_CAST_FLOW_SCHEMA_VERSION,
+            getDefinitions: () => clone(getDefinitions()),
+            getActiveInstances: () => clone(activeInstances()),
+            getHistory: () => clone(runtime.history),
+            getCastProposals: () => {
+                pruneCastTracking();
+                return clone([...castProposals.values()]);
+            },
+            getPlayerRequests: () => {
+                prunePlayerCasting();
+                return clone([...playerRequests.values()]);
+            },
+            getDurationCandidates: () => clone(activeInstances().flatMap(instance =>
+                (instance.duration?.candidates || []).map(candidate => ({ instanceId: instance.id, effect: instance.name, ...candidate }))
+            )),
+            preview: request => {
+                const plan = buildPlan(request || {});
+                return plan.ok ? { ok: true, definition: clone(plan.definition), source: clone(plan.source.summary), targets: clone(plan.targets.map(item => item.summary)), changes: previewPlan(plan), assistance: clone(plan.assistance) } : plan;
+            },
+            apply: request => applyEffectRequest(request || {}),
+            end: (instanceId, actor) => endEffect(instanceId, actor),
+            reconcileDurations: () => clone(reconcileDurationProviders()),
+            audit: () => clone(auditEffects()),
+            isAvailable: () => modState.config.enabled !== false,
+            observe: registerLifecycleObserver,
+            clearObservers: owner => GameAssist.SemanticEvents.clearObservers(owner),
+            registerProjectionAdapter
+        });
+
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: direct GM casting, opaque player flows, retained player requests, bounded Bless proposals, and optional duration review are available; the module starts disabled.`, 'INFO', { startup: true });
+    }, {
+        enabled: false,
+        events: ['chat:message'],
+        prefixes: ['!Effect-', '!effect', '!EffectAssist-','!Bless','!Guidance','!Guide','!Haste','!Warding-Bond','!WardingBond','!Holy-Weapon','!HolyWeapon','!PwoaT'],
+        preserveRuntimeOnDisable: true,
+        protectedConfigKeys: ['customDefinitions', 'markerOverrides'],
+        teardown: () => {
+            // Observers remain registered across ordinary module toggles and self-gate on saved enablement.
+            // CHOICE: retain one registration - ALT: re-register during enable; REJECTED: module initializers are intentionally wired once.
+        }
+    });
+    // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced EffectAssist to 2.3.0 with opaque short-lived player casting choices, retained and revalidated GM requests, stale-button recovery, and direct built-in effect actions on the GM Control Center while preserving the existing effect engine and confirmation boundary.
+    // Decision log:
+    //   CHOICE: Put opaque sandbox-local flow ids in player buttons - ALT: continue embedding source token and effect identifiers; REJECTED: Roll20-rendered links must not depend on raw identifier transport to preserve a casting choice.
+    //   CHOICE: Retain player requests briefly for the GM - ALT: rely on one transient whisper; REJECTED: a missed chat panel should not erase an otherwise valid request.
+    // Prior notes:
+    //   v2.0.0 / EffectAssist 2.2.0: Added bounded, deduplicated proposals for unambiguous official 2014 Bless spell cards; the GM selects recipients and the existing review/confirmation path remains the only route to effect application.
+    //   CHOICE: Recognize only exact Bless cards with one character and one eligible active-page source token - ALT: infer likely sources or recipients from descriptive card text; REJECTED: ambiguous automation could modify the wrong characters.
+    //   CHOICE: Keep proposals sandbox-local, short-lived, and single-use - ALT: persist cast traffic in campaign state; REJECTED: proposals are transient review work, not campaign records.
+    //   v2.0.0 / EffectAssist 2.1.0: Added state schema 3, formal built-in duration rules, optional CombatAssist and AlmanacAssist provider anchors, bounded evidence-backed GM expiration candidates and encounter-end reminders, reversible candidate dismissal, restart/re-enable reconciliation, and inert disabled-state observers; no elapsed-time observation ends an effect automatically.
+    //   CHOICE: Present elapsed duration as a GM review candidate - ALT: remove projections automatically at the first observed boundary; REJECTED: provider gaps, table rulings, and interrupted encounters require a human decision.
+    //   CHOICE: Consume accepted CombatAssist progression and committed Almanac time events - ALT: parse turnorder and replay elapsed minutes independently; REJECTED: duplicate clocks would disagree with their authoritative owners and large jumps could become unbounded.
+    //   CHOICE: Migrate existing schema-v2 effects without retrospective anchors - ALT: infer their start from current provider state; REJECTED: that would silently grant a false start time.
+    //   CHOICE: Treat Bless as the complete acceptance example rather than the module boundary - ALT: ship a Bless-only marker ledger; REJECTED: EffectAssist must coordinate many effects and many projection kinds.
+    //   CHOICE: Automate only verified 2014 sheet fields - ALT: write generated totals, free-text speed, global damage, or ambiguous 2024 fields; REJECTED: those writes could change unrelated rolls or campaign-owned text.
+    //   CHOICE: Keep Holy Weapon and Pass Without a Trace as clearly labeled tracked effects while removing built-ins that offered no useful launch behavior - ALT: present every researched spell equally; REJECTED: a catalog entry should either automate meaningful work or make its limited tracking value unmistakable.
+    //   CHOICE: Treat target-marker removal as auditable projection drift - ALT: end the source's concentration when any target marker disappears; REJECTED: an accidental marker edit should be repairable and one missing target projection must not silently end every target's effect.
+    //   CHOICE: Preserve edited and pre-existing projections - ALT: force the definition back onto the sheet; REJECTED: external edits may be deliberate and must remain visible for review.
+    //   CHOICE: Share and restore 2014 global-modifier flags independently from their rows - ALT: leave every enabled flag behind; REJECTED: cleanup should restore the prior sheet setting without disabling another active row.
+    //   CHOICE: Normalize marker and ConditionAssist bindings to the same stored marker identity - ALT: keep adapter-specific ledgers; REJECTED: two adapters may legitimately share one physical marker.
+    //   CHOICE: Let record-only effects remain available without MarkerService - ALT: make EffectAssist a hard marker dependency; REJECTED: the semantic record is useful even when marker automation is deliberately disabled.
+    //   CHOICE: Retain needs-attention instances until cleanup succeeds - ALT: archive them immediately; REJECTED: history must not falsely report incomplete cleanup as complete.
+    //   CHOICE: Observe both ConcentrationAssist events and source-marker removal - ALT: trust only one signal; REJECTED: a GM may deliberately remove the marker outside the concentration command.
+    //   CHOICE: Suppress both lifecycle signals during EffectAssist-owned concentration cleanup - ALT: suppress only the marker event; REJECTED: synchronous semantic delivery could archive the same effect twice.
+    //   CHOICE: Use Roll20 native target references for visible player recipients - ALT: require players to control or preselect every target; REJECTED: support and healing effects commonly target another player's character.
+    //   CHOICE: Offer a compact GM request for hidden or unusually broad targeting - ALT: expose complete GM EffectAssist controls to players; REJECTED: player casting should remain a narrow application workflow.
+    //   CHOICE: Announce successful player-originated casts after verified application - ALT: announce the request or preview; REJECTED: public chat should describe completed state, not an unconfirmed intention.
+    // Prior notes:
+    //   v2.0.0: Replaced the single-projection prototype with a catalog-driven schema-v2 engine, six useful built-in effects, ownership-safe 2014 repeating modifier adapters and shared master-flag restoration, concentration-linked lifecycle cleanup, player-safe casting with native visible-recipient targeting, a bounded GM-request fallback, public player-originated cast announcements, GM lockout, apply preview/confirmation, custom condition guidance, durable incomplete-cleanup state, generalized audit/repair, and conflict-aware idempotency.
+    //   v2.0.0 prototype: Introduced source-aware effect records, baseline marker ownership, bounded history, SemanticEvents lifecycle publication, and confirmed repair grants.
+    // [GAMEASSIST:MODULES:EFFECTASSIST] END
+    // =============================================================================
+
+    // =============================================================================
+    // [GAMEASSIST:MODULES:HEALASSIST] BEGIN
+    // Section Title: Guided healing and verified HP application
+    // -------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:HEALASSIST", title: "HealAssist",
+    //   guarantees: ["Official 2014-sheet healing uses short-lived source, target, roll, review, and one-use confirmation boundaries","Every accepted HP change uses HealthService provenance and verification; multi-target failures attempt verified rollback","Players may target visible supported PCs they do not control while NPC, hidden, and off-page placement remains GM-reviewed","Spell slots, class resources, temporary HP, damage causes, resistance, and unsupported sheet fields are never inferred or consumed"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
+    //   provides: ["GameAssist.HealAssist"], last_updated_version: "v2.0.0",
+    //   independent_versions: { module_version: "1.0.0", interaction_schema_version: 1 }, lifecycle: "active" }
+    // -------------------------------------------------------------------------
+    // Narrative
+    // HealAssist is a disabled-by-default HealthService client. It guides an authorized
+    // healer through a bounded 2014 action or validated formula, visible recipients,
+    // one Roll20 roll, a complete HP preview, and an expiring confirmation. It owns no
+    // HP listener and leaves every unrelated module and native sheet healing independent.
+    // -------------------------------------------------------------------------
+    GameAssist.register('HealAssist', function() {
+        const MODULE_NAME = 'HealAssist';
+        const MODULE_VERSION = '1.0.0';
+        const INTERACTION_SCHEMA_VERSION = 1;
+        const modState = GameAssist.getState(MODULE_NAME);
+        modState.config = {
+            enabled: false,
+            allowPlayerHealing: true,
+            resultAudience: 'public',
+            ...modState.config
+        };
+        if (!['public', 'private'].includes(String(modState.config.resultAudience || '').toLowerCase())) {
+            modState.config.resultAudience = 'public';
+        }
+        if (typeof modState.config.allowPlayerHealing !== 'boolean') modState.config.allowPlayerHealing = true;
+
+        const ACTIONS = Object.freeze({
+            'cure-wounds': Object.freeze({ id: 'cure-wounds', name: 'Cure Wounds', group: 'magic', minimumSlot: 1, maximumSlot: 9, die: 8, diceForSlot: slot => slot, ability: true, targetCounts: [1], tableStep: 'Mark off the spell slot on the character sheet after the heal is confirmed.' }),
+            'healing-word': Object.freeze({ id: 'healing-word', name: 'Healing Word', group: 'magic', minimumSlot: 1, maximumSlot: 9, die: 4, diceForSlot: slot => slot, ability: true, targetCounts: [1], tableStep: 'Mark off the spell slot on the character sheet after the heal is confirmed.' }),
+            'prayer-of-healing': Object.freeze({ id: 'prayer-of-healing', name: 'Prayer of Healing', group: 'magic', minimumSlot: 2, maximumSlot: 9, die: 8, diceForSlot: slot => slot, ability: true, targetCounts: [1, 2, 3, 4, 5, 6], tableStep: 'Prayer of Healing takes 10 minutes to cast. Mark off the spell slot after confirmation.' }),
+            'mass-healing-word': Object.freeze({ id: 'mass-healing-word', name: 'Mass Healing Word', group: 'magic', minimumSlot: 3, maximumSlot: 9, die: 4, diceForSlot: slot => slot - 2, ability: true, targetCounts: [1, 2, 3, 4, 5, 6], tableStep: 'Mark off the spell slot on the character sheet after the heal is confirmed.' }),
+            'mass-cure-wounds': Object.freeze({ id: 'mass-cure-wounds', name: 'Mass Cure Wounds', group: 'magic', minimumSlot: 5, maximumSlot: 9, die: 8, diceForSlot: slot => slot - 2, ability: true, targetCounts: [1, 2, 3, 4, 5, 6], tableStep: 'Mark off the spell slot on the character sheet after the heal is confirmed.' }),
+            heal: Object.freeze({ id: 'heal', name: 'Heal', group: 'magic', minimumSlot: 6, maximumSlot: 9, flatForSlot: slot => 70 + ((slot - 6) * 10), ability: false, targetCounts: [1], tableStep: 'Mark off the spell slot on the character sheet after the heal is confirmed. Heal does not restore temporary hit points.' }),
+            'potion-healing': Object.freeze({ id: 'potion-healing', name: 'Potion of Healing', group: 'items', formula: '2d4+2', targetCounts: [1], tableStep: 'Remove one Potion of Healing from the appropriate inventory after confirmation.' }),
+            'potion-greater': Object.freeze({ id: 'potion-greater', name: 'Potion of Greater Healing', group: 'items', formula: '4d4+4', targetCounts: [1], tableStep: 'Remove one Potion of Greater Healing from the appropriate inventory after confirmation.' }),
+            'potion-superior': Object.freeze({ id: 'potion-superior', name: 'Potion of Superior Healing', group: 'items', formula: '8d4+8', targetCounts: [1], tableStep: 'Remove one Potion of Superior Healing from the appropriate inventory after confirmation.' }),
+            'potion-supreme': Object.freeze({ id: 'potion-supreme', name: 'Potion of Supreme Healing', group: 'items', formula: '10d4+20', targetCounts: [1], tableStep: 'Remove one Potion of Supreme Healing from the appropriate inventory after confirmation.' }),
+            manual: Object.freeze({ id: 'manual', name: 'Manual Healing Formula', group: 'manual', manual: true, targetCounts: [1, 2, 3, 4, 5, 6], tableStep: 'Resolve any spell slot, item, feature, or class-resource use manually after confirmation.' })
+        });
+        const flows = new Map();
+        const requests = new Map();
+        const proposals = new Map();
+        let interactionSequence = 0;
+
+        function clone(value) {
+            try { return JSON.parse(JSON.stringify(value)); } catch (_error) { return null; }
+        }
+
+        function playerIsGm(playerId) {
+            return typeof playerIsGM === 'function' && playerIsGM(playerId);
+        }
+
+        function playerName(playerId, fallback = 'Player') {
+            return String(getObj('player', playerId)?.get('_displayname') || fallback)
+                .replace(/\s*\(GM\)\s*$/i, '')
+                .replace(/"/g, "'")
+                .trim() || fallback;
+        }
+
+        function whisperPrefix(msg, gmOnly = false) {
+            if (gmOnly || playerIsGm(msg?.playerid)) return '/w gm';
+            return `/w "${playerName(msg?.playerid, msg?.who || 'Player')}"`;
+        }
+
+        function panel(title, fields, msg, { gmOnly = false } = {}) {
+            const body = (fields || []).map(field => `{{${_sanitize(field.label)}=${field.value}}}`).join(' ');
+            sendChat(MODULE_NAME, `${whisperPrefix(msg, gmOnly)} &{template:default} {{name=${_sanitize(title)}}} ${body}`);
+        }
+
+        function privateNotice(playerId, title, message, actions = '') {
+            const who = playerIsGm(playerId) ? 'gm' : `"${playerName(playerId)}"`;
+            sendChat(MODULE_NAME, `/w ${who} &{template:default} {{name=${_sanitize(title)}}} {{Result=${_sanitize(message)}}}${actions ? ` {{Actions=${actions}}}` : ''}`);
+        }
+
+        function playerPageId(playerId) {
+            const campaign = Campaign();
+            let overrides = campaign.get('playerspecificpages');
+            if (typeof overrides === 'string' && overrides) {
+                try { overrides = JSON.parse(overrides); } catch (_error) { overrides = null; }
+            }
+            if (overrides && typeof overrides === 'object' && overrides[playerId]) return String(overrides[playerId]);
+            if (playerIsGm(playerId)) {
+                const lastPage = getObj('player', playerId)?.get('_lastpage');
+                if (lastPage) return String(lastPage);
+            }
+            return String(campaign.get('playerpageid') || '');
+        }
+
+        function tokenPageId(token) {
+            return String(token?.get('_pageid') || token?.get('pageid') || '');
+        }
+
+        function linkedCharacter(token) {
+            const characterId = String(token?.get('represents') || '');
+            return characterId ? getObj('character', characterId) : null;
+        }
+
+        function controllers(value) {
+            return String(value || '').split(',').map(item => item.trim()).filter(Boolean);
+        }
+
+        function controlsToken(playerId, token, character) {
+            if (playerIsGm(playerId)) return true;
+            const allowed = new Set([...controllers(token?.get('controlledby')), ...controllers(character?.get('controlledby'))]);
+            return allowed.has('all') || allowed.has(String(playerId || ''));
+        }
+
+        function isNpc(character) {
+            return String(getAttrByName(character?.id, 'npc') || '').trim() === '1';
+        }
+
+        function supportedSource(token) {
+            if (!token || !['objects', 'gmlayer'].includes(String(token.get('layer') || ''))) {
+                return { ok: false, message: 'The healer token is not available on a supported map layer.' };
+            }
+            const character = linkedCharacter(token);
+            if (!character) return { ok: false, message: 'The healer must be linked to a character.' };
+            if (String(character.get('charactersheetname') || '').trim().toLowerCase() === 'dnd2024byroll20') {
+                return { ok: false, message: 'HealAssist 1.0.0 supports the official 2014 sheet only.' };
+            }
+            const snapshot = isNpc(character)
+                ? GameAssist.HealthService.readToken(token)
+                : GameAssist.HealthService.readCharacter(character);
+            if (!snapshot) return { ok: false, message: 'The healer is not a supported official 2014 character.' };
+            return { ok: true, token, character, snapshot, name: String(character.get('name') || token.get('name') || 'Healer') };
+        }
+
+        function resolveSource(tokenId) {
+            return supportedSource(getObj('graphic', String(tokenId || '')));
+        }
+
+        function sourceAuthorized(msg, source) {
+            if (!source?.ok) return source || { ok: false, message: 'The healer is unavailable.' };
+            if (!playerIsGm(msg?.playerid)) {
+                if (modState.config.allowPlayerHealing === false) return { ok: false, message: 'The GM has temporarily locked player healing.' };
+                if (String(source.token.get('layer') || '') !== 'objects' || tokenPageId(source.token) !== playerPageId(msg.playerid)) {
+                    return { ok: false, message: 'Choose a visible healer token on your current Roll20 page.' };
+                }
+            }
+            return controlsToken(msg?.playerid, source.token, source.character)
+                ? { ok: true }
+                : { ok: false, message: 'Choose a healer controlled by your Roll20 player account.' };
+        }
+
+        function selectedTokenIds(msg) {
+            return [...new Set((msg?.selected || []).map(item => String(item?._id || '')).filter(Boolean))];
+        }
+
+        function pageTokens(pageId, includeGmLayer) {
+            let tokens = findObjs({ _type: 'graphic', _pageid: String(pageId || '') });
+            if (!tokens.length) tokens = findObjs({ _type: 'graphic' });
+            return tokens.filter(token => tokenPageId(token) === String(pageId || '')
+                && (String(token.get('layer') || '') === 'objects' || (includeGmLayer && String(token.get('layer') || '') === 'gmlayer')));
+        }
+
+        function sourceCandidates(msg) {
+            const selected = selectedTokenIds(msg)
+                .map(id => supportedSource(getObj('graphic', id)))
+                .filter(source => source.ok && sourceAuthorized(msg, source).ok);
+            if (selected.length) return selected.slice(0, POLICY.healing.sourceListLimit);
+            return pageTokens(playerPageId(msg?.playerid), playerIsGm(msg?.playerid))
+                .map(supportedSource)
+                .filter(source => source.ok && sourceAuthorized(msg, source).ok)
+                .slice(0, POLICY.healing.sourceListLimit);
+        }
+
+        function interactionId(prefix) {
+            interactionSequence++;
+            return `${prefix}-${Date.now().toString(36)}-${interactionSequence.toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+        }
+
+        function pruneInteractions(now = Date.now()) {
+            [flows, requests, proposals].forEach(collection => {
+                [...collection.entries()].forEach(([id, value]) => {
+                    if (Number(value?.expiresAt || 0) <= now) collection.delete(id);
+                });
+            });
+            [[flows, POLICY.healing.flowLimit], [requests, POLICY.healing.requestLimit], [proposals, POLICY.healing.proposalLimit]]
+                .forEach(([collection, limit]) => {
+                    while (collection.size > limit) collection.delete(collection.keys().next().value);
+                });
+        }
+
+        function rememberFlow(msg, action, source) {
+            pruneInteractions();
+            const id = interactionId('HLF');
+            flows.set(id, Object.freeze({
+                schemaVersion: INTERACTION_SCHEMA_VERSION,
+                id,
+                playerId: String(msg?.playerid || ''),
+                actionId: action.id,
+                sourceTokenId: String(source.token.id),
+                expiresAt: Date.now() + POLICY.healing.interactionMs
+            }));
+            pruneInteractions();
+            return id;
+        }
+
+        function resolveFlow(msg, flowId) {
+            pruneInteractions();
+            const flow = flows.get(String(flowId || ''));
+            if (!flow || flow.playerId !== String(msg?.playerid || '')) {
+                return { ok: false, message: 'That healing choice expired or belongs to another player. Start again.' };
+            }
+            const action = ACTIONS[flow.actionId];
+            const source = resolveSource(flow.sourceTokenId);
+            const authorization = action && source.ok ? sourceAuthorized(msg, source) : (source.ok ? { ok: false, message: 'That healing action is unavailable.' } : source);
+            return authorization.ok ? { ok: true, flow, action, source } : authorization;
+        }
+
+        function parseOptions(content) {
+            const options = {};
+            const expression = /--([a-z0-9-]+)(?:\s+(?:"([^"]*)"|'([^']*)'|([^\s]+)))?/gi;
+            let match;
+            while ((match = expression.exec(String(content || '')))) {
+                options[String(match[1] || '').toLowerCase()] = match[2] ?? match[3] ?? match[4] ?? true;
+            }
+            return options;
+        }
+
+        function actionQuery(action) {
+            if (action.manual) return ' --formula ?{Healing formula - examples 2d8+5 or 15|1d8}';
+            const pieces = [];
+            if (action.minimumSlot) {
+                const levels = [];
+                for (let level = action.minimumSlot; level <= action.maximumSlot; level++) levels.push(`${level},${level}`);
+                pieces.push(`--slot ?{Spell slot level|${levels.join('|')}}`);
+            }
+            if (action.ability) pieces.push('--ability ?{Healing ability|Wisdom,wisdom|Charisma,charisma|Intelligence,intelligence}');
+            return pieces.length ? ` ${pieces.join(' ')}` : '';
+        }
+
+        function simpleFormula(raw) {
+            const text = String(raw || '').toLowerCase().replace(/\s+/g, '');
+            if (/^\d{1,4}$/.test(text)) {
+                const flat = Number(text);
+                return flat >= 0 && flat <= POLICY.healing.maximumFlat ? { ok: true, formula: String(flat) } : { ok: false, message: 'That flat healing value is outside the supported range.' };
+            }
+            const match = text.match(/^(\d{1,2})d(\d{1,4})([+-]\d{1,4})?$/);
+            if (!match) return { ok: false, message: 'Use one simple healing formula such as 2d8+5 or 15.' };
+            const dice = Number(match[1]);
+            const sides = Number(match[2]);
+            const flat = Number(match[3] || 0);
+            if (dice < 1 || dice > POLICY.healing.maximumDice || sides < 2 || sides > POLICY.healing.maximumSides || Math.abs(flat) > POLICY.healing.maximumFlat) {
+                return { ok: false, message: 'That healing formula is outside the supported dice or modifier limits.' };
+            }
+            return { ok: true, formula: `${dice}d${sides}${flat ? `${flat > 0 ? '+' : ''}${flat}` : ''}` };
+        }
+
+        function formulaPlan(action, source, options) {
+            if (action.manual) {
+                const parsed = simpleFormula(options.formula);
+                return parsed.ok ? { ok: true, actionId: action.id, actionName: action.name, formula: parsed.formula, tableStep: action.tableStep } : parsed;
+            }
+            if (action.formula) return { ok: true, actionId: action.id, actionName: action.name, formula: action.formula, tableStep: action.tableStep };
+            const slot = Number(options.slot);
+            if (!Number.isInteger(slot) || slot < action.minimumSlot || slot > action.maximumSlot) {
+                return { ok: false, message: `${action.name} requires a spell-slot level from ${action.minimumSlot} to ${action.maximumSlot}.` };
+            }
+            let modifier = 0;
+            let ability = null;
+            if (action.ability) {
+                ability = String(options.ability || '').toLowerCase();
+                if (!['wisdom', 'charisma', 'intelligence'].includes(ability)) return { ok: false, message: 'Choose Wisdom, Charisma, or Intelligence as the healing ability.' };
+                modifier = Number(getAttrByName(source.character.id, `${ability}_mod`));
+                if (!Number.isFinite(modifier) || modifier < -20 || modifier > 30) return { ok: false, message: `${source.name} does not expose a usable ${ability} modifier on the supported 2014 sheet.` };
+            }
+            const formula = action.flatForSlot
+                ? String(action.flatForSlot(slot))
+                : `${action.diceForSlot(slot)}d${action.die}${modifier ? `${modifier > 0 ? '+' : ''}${modifier}` : ''}`;
+            return { ok: true, actionId: action.id, actionName: action.name, formula, slot, ability, modifier, tableStep: action.tableStep };
+        }
+
+        function safeQueryText(value) {
+            return String(value || '').replace(/[|{},]/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+
+        function targetReferences(action, count) {
+            return Array.from({ length: count }, (_unused, index) => `@{target|${safeQueryText(action.name)} recipient ${index + 1}|token_id}`).join(',');
+        }
+
+        function recipientButtons(action, flowId) {
+            const query = actionQuery(action);
+            return action.targetCounts.map(count => GameAssist.createButton(
+                `Choose ${count} Recipient${count === 1 ? '' : 's'}`,
+                `!Heal-Review --flow ${flowId}${query} --targets ${targetReferences(action, count)}`
+            )).join(' ');
+        }
+
+        function showRecipientPicker(msg, action, source) {
+            const flowId = rememberFlow(msg, action, source);
+            panel(`${action.name}: Choose Recipients`, [
+                { label: 'Healing As', value: _sanitize(source.name) },
+                { label: 'Choose On The Map', value: recipientButtons(action, flowId) },
+                ...(!playerIsGm(msg.playerid) ? [{ label: 'Hidden Or Off-Page Recipient', value: GameAssist.createButton('Ask the GM', `!Heal-Request --flow ${flowId}${actionQuery(action)}`) }] : []),
+                { label: 'Next', value: 'Click a recipient button, answer any short Roll20 prompts, then click the requested visible token or tokens. Players do not need to control another player character to heal it.' },
+                { label: 'Return', value: GameAssist.createButton('Healing Actions', '!Heal-Menu') }
+            ], msg);
+        }
+
+        function showSourcePicker(msg, action) {
+            const sources = sourceCandidates(msg);
+            if (!sources.length) {
+                return panel(MODULE_NAME, [
+                    { label: 'Needs Attention', value: 'No supported linked 2014 healer controlled by you is available on this page.' },
+                    { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!Heal-Guide') }
+                ], msg);
+            }
+            if (sources.length === 1) return showRecipientPicker(msg, action, sources[0]);
+            panel(`${action.name}: Choose The Healer`, [
+                { label: 'Healers', value: sources.map(source => GameAssist.createButton(source.name, `!Heal-Recipients --flow ${rememberFlow(msg, action, source)}`)).join(' ') },
+                { label: 'Tip', value: 'Selecting the healer token before opening this screen keeps the list short.' },
+                { label: 'Return', value: GameAssist.createButton('Healing Actions', '!Heal-Menu') }
+            ], msg);
+        }
+
+        function resolveTarget(tokenId, msg, { allowNpc = false } = {}) {
+            const token = getObj('graphic', String(tokenId || ''));
+            if (!token || !['objects', 'gmlayer'].includes(String(token.get('layer') || ''))) return { ok: false, message: 'A recipient token is no longer available.' };
+            const character = linkedCharacter(token);
+            if (!character) return { ok: false, message: `${token.get('name') || 'A recipient'} is not linked to a character.` };
+            const npc = isNpc(character);
+            if (npc && !allowNpc) return { ok: false, npcRequiresGm: true, token, character, message: 'NPC healing requires GM review.' };
+            if (!playerIsGm(msg?.playerid) && (String(token.get('layer') || '') !== 'objects' || tokenPageId(token) !== playerPageId(msg.playerid))) {
+                return { ok: false, message: 'Players may heal only visible recipients on their current Roll20 page.' };
+            }
+            const snapshot = npc ? GameAssist.HealthService.readToken(token) : GameAssist.HealthService.readCharacter(character);
+            const current = snapshot?.values?.current;
+            const maximum = snapshot?.values?.maximum;
+            if (!snapshot || current?.state !== 'valid' || maximum?.state !== 'valid' || Number(maximum.value) <= 0) {
+                return { ok: false, message: `${character.get('name') || token.get('name') || 'That recipient'} does not expose valid current and maximum HP through the supported 2014 health surface.` };
+            }
+            return {
+                ok: true,
+                token,
+                character,
+                snapshot,
+                npc,
+                writer: npc ? 'token' : 'character',
+                name: String(character.get('name') || token.get('name') || 'Recipient'),
+                current: Number(current.value),
+                maximum: Number(maximum.value)
+            };
+        }
+
+        function targetIdsFrom(msg, options, fallback = []) {
+            const explicit = String(options.targets || '').split(',').map(item => item.trim()).filter(Boolean);
+            const ids = explicit.length ? explicit : (selectedTokenIds(msg).length ? selectedTokenIds(msg) : fallback);
+            return [...new Set(ids)].slice(0, POLICY.healing.targetLimit + 1);
+        }
+
+        function resolveTargets(msg, options, { allowNpc = false, fallback = [] } = {}) {
+            const ids = targetIdsFrom(msg, options, fallback);
+            if (!ids.length) return { ok: false, message: 'Choose at least one recipient token.' };
+            if (ids.length > POLICY.healing.targetLimit) return { ok: false, message: `Choose no more than ${POLICY.healing.targetLimit} recipients at once.` };
+            const targets = [];
+            for (const id of ids) {
+                const target = resolveTarget(id, msg, { allowNpc });
+                if (!target.ok) return target;
+                targets.push(target);
+            }
+            return { ok: true, targets };
+        }
+
+        function rememberRequest(msg, flowResult, plan, suggestedTargetIds = []) {
+            pruneInteractions();
+            const id = interactionId('HLR');
+            requests.set(id, Object.freeze({
+                schemaVersion: INTERACTION_SCHEMA_VERSION,
+                id,
+                playerId: String(msg.playerid || ''),
+                requesterName: playerName(msg.playerid, msg.who || 'Player'),
+                sourceTokenId: String(flowResult.source.token.id),
+                sourceName: flowResult.source.name,
+                actionId: flowResult.action.id,
+                plan: Object.freeze({ ...plan }),
+                suggestedTargetIds: Object.freeze([...suggestedTargetIds]),
+                expiresAt: Date.now() + POLICY.healing.interactionMs
+            }));
+            pruneInteractions();
+            return requests.get(id);
+        }
+
+        function resolveRequest(requestId) {
+            pruneInteractions();
+            const request = requests.get(String(requestId || ''));
+            if (!request) return { ok: false, message: 'That healing request expired or was already reviewed.' };
+            const source = resolveSource(request.sourceTokenId);
+            const requester = getObj('player', request.playerId);
+            const authorization = requester && source.ok
+                ? sourceAuthorized({ playerid: request.playerId }, source)
+                : { ok: false, message: 'The original healer or requesting player is no longer available.' };
+            return authorization.ok ? { ok: true, request, source, action: ACTIONS[request.actionId], plan: request.plan } : authorization;
+        }
+
+        function requestTargetButtons(request, action) {
+            return action.targetCounts.map(count => GameAssist.createButton(
+                `Choose ${count} Recipient${count === 1 ? '' : 's'}`,
+                `!Heal-Review --request ${request.id} --targets ${targetReferences(action, count)}`
+            )).join(' ');
+        }
+
+        function showRequests(msg, notice = '') {
+            pruneInteractions();
+            const rows = [...requests.values()].map(request => {
+                const resolved = resolveRequest(request.id);
+                if (!resolved.ok) return `<b>Request Needs Attention</b><br>${_sanitize(resolved.message)} ${GameAssist.createButton('Dismiss', `!Heal-Request-Dismiss --request ${request.id}`)}`;
+                const suggested = request.suggestedTargetIds.length
+                    ? `${GameAssist.createButton('Review Suggested Recipients', `!Heal-Review --request ${request.id} --suggested true`)} `
+                    : '';
+                return `<b>${_sanitize(request.sourceName)}: ${_sanitize(resolved.action.name)}</b><br>Requested by ${_sanitize(request.requesterName)}<br>${suggested}${GameAssist.createButton('Use Selected Tokens', `!Heal-Review --request ${request.id}`)} ${requestTargetButtons(request, resolved.action)} ${GameAssist.createButton('Dismiss', `!Heal-Request-Dismiss --request ${request.id}`)}`;
+            }).join('<hr>') || 'No healing requests are waiting.';
+            panel('Player Healing Requests', [
+                ...(notice ? [{ label: 'Updated', value: _sanitize(notice) }] : []),
+                { label: 'Pending', value: rows },
+                { label: 'Return', value: GameAssist.createButton('HealAssist Controls', '!Heal-GM') }
+            ], msg, { gmOnly: true });
+        }
+
+        function handleRequest(msg, options) {
+            const flowResult = resolveFlow(msg, options.flow);
+            if (!flowResult.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(flowResult.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            const plan = formulaPlan(flowResult.action, flowResult.source, options);
+            if (!plan.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(plan.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            flows.delete(flowResult.flow.id);
+            rememberRequest(msg, flowResult, plan);
+            panel('Healing Request Sent', [
+                { label: 'Request', value: `${_sanitize(flowResult.source.name)} is ready to use ${_sanitize(flowResult.action.name)}. The GM can choose the hidden or off-page recipient privately.` },
+                { label: 'Next', value: GameAssist.createButton('Healing Actions', '!Heal-Menu') }
+            ], msg);
+            showRequests({ playerid: msg.playerid, who: msg.who }, 'A player sent a new healing request.');
+        }
+
+        function collectDice(value, found = []) {
+            if (Array.isArray(value)) {
+                value.forEach(item => collectDice(item, found));
+                return found;
+            }
+            if (!value || typeof value !== 'object') return found;
+            if (value.type === 'R' && Array.isArray(value.results)) {
+                value.results.forEach(result => {
+                    const number = Number(result?.v);
+                    if (Number.isFinite(number)) found.push(number);
+                });
+                return found;
+            }
+            Object.values(value).forEach(item => collectDice(item, found));
+            return found;
+        }
+
+        function rollAndReview(msg, source, action, plan, targets, { request = null } = {}) {
+            sendChat(MODULE_NAME, `/w gm [[${plan.formula}]]`, operations => {
+                const inline = operations?.[0]?.inlinerolls?.[0];
+                const total = Number(inline?.results?.total);
+                if (!Number.isFinite(total) || total <= 0) {
+                    return panel(MODULE_NAME, [
+                        { label: 'Needs Attention', value: 'Roll20 did not return a positive healing result. No HP was changed.' },
+                        { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }
+                    ], msg);
+                }
+                const healing = Math.floor(total);
+                const targetPlans = targets.map(target => {
+                    const proposed = target.current >= target.maximum
+                        ? target.current
+                        : Math.min(target.maximum, target.current + healing);
+                    return Object.freeze({
+                        tokenId: String(target.token.id),
+                        characterId: String(target.character.id),
+                        canonicalKey: String(target.snapshot.canonicalKey),
+                        writer: target.writer,
+                        npc: target.npc,
+                        name: target.name,
+                        layer: String(target.token.get('layer') || ''),
+                        pageId: tokenPageId(target.token),
+                        before: target.current,
+                        maximum: target.maximum,
+                        proposed,
+                        gained: Math.max(0, proposed - target.current)
+                    });
+                });
+                const id = interactionId('HLP');
+                const proposal = Object.freeze({
+                    schemaVersion: INTERACTION_SCHEMA_VERSION,
+                    id,
+                    confirmPlayerId: String(msg.playerid || ''),
+                    requestedBy: request ? String(request.playerId || '') : '',
+                    sourceTokenId: String(source.token.id),
+                    sourceName: source.name,
+                    actionId: action.id,
+                    actionName: action.name,
+                    plan: Object.freeze({ ...plan }),
+                    formula: String(inline?.expression || plan.formula),
+                    total: healing,
+                    rolls: Object.freeze(collectDice(inline?.results?.rolls)),
+                    targets: Object.freeze(targetPlans),
+                    expiresAt: Date.now() + POLICY.healing.interactionMs
+                });
+                proposals.set(id, proposal);
+                pruneInteractions();
+                if (request) requests.delete(request.id);
+                const targetLines = targetPlans.map(target => `${_sanitize(target.name)}: ${target.before} &rarr; ${target.proposed} of ${target.maximum} (+${target.gained})`);
+                panel(`${action.name}: Review Healing`, [
+                    { label: 'Healer', value: _sanitize(source.name) },
+                    { label: 'Roll', value: `Roll(s) ${proposal.rolls.length ? _sanitize(proposal.rolls.join(', ')) : 'not exposed by Roll20'} &rarr; <strong>${healing}</strong> (from ${_sanitize(proposal.formula)})` },
+                    { label: 'Recipients', value: targetLines.join('<br>') },
+                    { label: 'Manual Table Step', value: _sanitize(plan.tableStep) },
+                    { label: 'Changes', value: 'None yet. Current and maximum HP will be rechecked before one verified HealthService transaction.' },
+                    { label: 'Confirm', value: GameAssist.createButton('Apply This Healing', `!Heal-Confirm --proposal ${id}`) },
+                    { label: 'Cancel', value: GameAssist.createButton('Discard And Return', '!Heal-Menu') }
+                ], msg);
+            }, { noarchive: true });
+        }
+
+        function handleReview(msg, options) {
+            if (options.request) {
+                if (!playerIsGm(msg.playerid)) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: 'Only the GM can review a retained healing request.' }], msg);
+                const resolved = resolveRequest(options.request);
+                if (!resolved.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(resolved.message) }, { label: 'Next Step', value: GameAssist.createButton('Pending Requests', '!Heal-Requests') }], msg, { gmOnly: true });
+                const fallback = options.suggested ? resolved.request.suggestedTargetIds : [];
+                const targets = resolveTargets(msg, options, { allowNpc: true, fallback });
+                if (!targets.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(targets.message) }, { label: 'Next Step', value: GameAssist.createButton('Pending Requests', '!Heal-Requests') }], msg, { gmOnly: true });
+                return rollAndReview(msg, resolved.source, resolved.action, resolved.plan, targets.targets, { request: resolved.request });
+            }
+
+            const flowResult = resolveFlow(msg, options.flow);
+            if (!flowResult.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(flowResult.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            const plan = formulaPlan(flowResult.action, flowResult.source, options);
+            if (!plan.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(plan.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            const ids = targetIdsFrom(msg, options);
+            const direct = resolveTargets(msg, options, { allowNpc: playerIsGm(msg.playerid) });
+            if (!direct.ok && direct.npcRequiresGm && !playerIsGm(msg.playerid)) {
+                flows.delete(flowResult.flow.id);
+                rememberRequest(msg, flowResult, plan, ids);
+                panel('GM Review Requested', [
+                    { label: 'Result', value: 'NPC HP remains private. The GM received this healing action and the suggested recipient for review.' },
+                    { label: 'Return', value: GameAssist.createButton('Healing Actions', '!Heal-Menu') }
+                ], msg);
+                return showRequests(msg, 'A player selected an NPC recipient. Review is required before any HP change.');
+            }
+            if (!direct.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(direct.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            flows.delete(flowResult.flow.id);
+            rollAndReview(msg, flowResult.source, flowResult.action, plan, direct.targets);
+        }
+
+        function currentTarget(targetPlan) {
+            const token = getObj('graphic', targetPlan.tokenId);
+            const character = getObj('character', targetPlan.characterId);
+            if (!token || !character) return { ok: false, message: `${targetPlan.name} is no longer available.` };
+            const snapshot = targetPlan.writer === 'token'
+                ? GameAssist.HealthService.readToken(token)
+                : GameAssist.HealthService.readCharacter(character);
+            const current = snapshot?.values?.current;
+            const maximum = snapshot?.values?.maximum;
+            if (!snapshot || snapshot.canonicalKey !== targetPlan.canonicalKey || current?.state !== 'valid' || maximum?.state !== 'valid') {
+                return { ok: false, message: `${targetPlan.name}'s supported HP surface changed or became unavailable.` };
+            }
+            if (Number(current.value) !== targetPlan.before || Number(maximum.value) !== targetPlan.maximum) {
+                return { ok: false, message: `${targetPlan.name}'s HP changed after the review. Start a fresh healing action.` };
+            }
+            return { ok: true, token, character, snapshot };
+        }
+
+        function writeTarget(proposal, targetPlan, index, current) {
+            const request = {
+                producer: MODULE_NAME,
+                operationId: `${proposal.id}.apply.${index}`,
+                classification: 'healing',
+                current: targetPlan.proposed
+            };
+            return targetPlan.writer === 'token'
+                ? GameAssist.HealthService.writeToken({ ...request, token: current.token })
+                : GameAssist.HealthService.writeCharacter({ ...request, character: current.character });
+        }
+
+        function rollbackTarget(proposal, targetPlan, index) {
+            const token = getObj('graphic', targetPlan.tokenId);
+            const character = getObj('character', targetPlan.characterId);
+            const request = {
+                producer: MODULE_NAME,
+                operationId: `${proposal.id}.rollback.${index}`,
+                classification: 'synchronization',
+                current: targetPlan.before
+            };
+            return targetPlan.writer === 'token'
+                ? GameAssist.HealthService.writeToken({ ...request, token })
+                : GameAssist.HealthService.writeCharacter({ ...request, character });
+        }
+
+        function completionSummary(proposal) {
+            return proposal.targets.map(target => `${target.name} +${target.gained}`).join(', ');
+        }
+
+        function announceCompletion(msg, proposal) {
+            const allPublicPc = proposal.targets.every(target => !target.npc && target.layer === 'objects');
+            if (modState.config.resultAudience === 'public' && allPublicPc) {
+                const results = proposal.targets.map(target => `${target.name} regains ${target.gained} HP`).join('; ');
+                sendChat(`character|${getObj('graphic', proposal.sourceTokenId)?.get('represents') || ''}`, `/em uses ${proposal.actionName}. ${results}.`);
+            }
+            const summary = `${proposal.actionName} completed: ${completionSummary(proposal)}.`;
+            panel('Healing Applied', [
+                { label: 'Result', value: _sanitize(summary) },
+                { label: 'Verification', value: 'HealthService verified every supported HP write.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Heal Again', '!Heal-Menu')} ${playerIsGm(msg.playerid) ? GameAssist.createButton('Control Center', '!Heal-GM') : GameAssist.createButton('Guide', '!Heal-Guide')}` }
+            ], msg);
+            if (!playerIsGm(msg.playerid)) {
+                sendChat(MODULE_NAME, `/w gm ${_sanitize(proposal.sourceName)} completed ${_sanitize(summary)}`);
+            }
+            if (proposal.requestedBy && proposal.requestedBy !== String(msg.playerid || '')) {
+                privateNotice(proposal.requestedBy, 'Healing Request Completed', `${proposal.sourceName}'s ${proposal.actionName} was reviewed and applied by the GM.`, GameAssist.createButton('Healing Actions', '!Heal-Menu'));
+            }
+        }
+
+        function handleConfirm(msg, options) {
+            pruneInteractions();
+            const proposal = proposals.get(String(options.proposal || ''));
+            if (!proposal || proposal.confirmPlayerId !== String(msg.playerid || '')) {
+                return panel(MODULE_NAME, [{ label: 'Needs Attention', value: 'That healing review expired, was already used, or belongs to another player.' }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            }
+            if (!GameAssist.HealthService.isEnabled()) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: 'HealthService is disabled. No HP was changed.' }], msg);
+            const source = resolveSource(proposal.sourceTokenId);
+            const authorization = source.ok
+                ? (proposal.requestedBy
+                    ? sourceAuthorized({ playerid: proposal.requestedBy }, source)
+                    : sourceAuthorized(msg, source))
+                : source;
+            if (!authorization.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(authorization.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            const current = [];
+            for (const target of proposal.targets) {
+                const checked = currentTarget(target);
+                if (!checked.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(checked.message) }, { label: 'Changes', value: 'None. The complete proposal was refused before writing.' }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+                current.push(checked);
+            }
+            proposals.delete(proposal.id);
+            const applied = [];
+            for (let index = 0; index < proposal.targets.length; index++) {
+                const result = writeTarget(proposal, proposal.targets[index], index, current[index]);
+                if (!result.ok) {
+                    const rollbackFailures = applied
+                        .map(appliedIndex => ({ index: appliedIndex, result: rollbackTarget(proposal, proposal.targets[appliedIndex], appliedIndex) }))
+                        .filter(item => !item.result.ok);
+                    return panel('Healing Needs Attention', [
+                        { label: 'Result', value: _sanitize(result.message || 'A verified HP write failed.') },
+                        { label: 'Rollback', value: rollbackFailures.length ? `${rollbackFailures.length} earlier recipient(s) could not be restored automatically. Review them now.` : 'Every earlier recipient was restored to the reviewed value.' },
+                        { label: 'Next Step', value: `${GameAssist.createButton('Health Evidence', '!ga-health recent')} ${GameAssist.createButton('Start Again', '!Heal')}` }
+                    ], msg, { gmOnly: rollbackFailures.length > 0 });
+                }
+                applied.push(index);
+            }
+            announceCompletion(msg, proposal);
+        }
+
+        function actionButtons(group) {
+            return Object.values(ACTIONS).filter(action => action.group === group)
+                .map(action => GameAssist.createButton(action.name, `!Heal-Start --action ${action.id}`)).join(' ');
+        }
+
+        function showCatalog(msg) {
+            panel('HealAssist: Healing Actions', [
+                { label: 'Magic', value: actionButtons('magic') },
+                { label: 'Potions', value: actionButtons('items') },
+                { label: 'Other Healing', value: actionButtons('manual') },
+                { label: 'How It Works', value: 'Choose an action, choose a controlled healer, point at visible recipients, review the roll and HP changes, then confirm once.' },
+                { label: 'Learn Or Review', value: `${GameAssist.createButton('Quick Guide', '!Heal-Guide')} ${playerIsGm(msg.playerid) ? `${GameAssist.createButton('Pending Requests', '!Heal-Requests')} ${GameAssist.createButton('GM Controls', '!Heal-GM')}` : ''}` }
+            ], msg);
+        }
+
+        function showGuide(msg) {
+            const moreHelp = playerIsGm(msg.playerid)
+                ? `${GameAssist.createButton('What Does HealAssist Do?', '!Heal-Info')} ${GameAssist.createButton('Create Manual', '!Heal-Manual')} ${GameAssist.createButton('Status', '!Heal-Status')}`
+                : `${GameAssist.createButton('What Does HealAssist Do?', '!Heal-Info')} ${GameAssist.createButton('Status', '!Heal-Status')}`;
+            panel('HealAssist Quick Guide', [
+                { label: 'Start Healing', value: GameAssist.createButton('Open Healing Actions', '!Heal-Menu') },
+                { label: 'At The Table', value: 'HealAssist rolls and verifies supported HP. It does not spend spell slots, potions, class resources, or temporary HP for you.' },
+                { label: 'Hidden Or NPC Recipients', value: 'Players send these to a compact GM review. No hidden NPC HP is revealed.' },
+                { label: 'More Help', value: moreHelp }
+            ], msg);
+        }
+
+        function showInfo(msg) {
+            panel('What HealAssist Does', [
+                { label: 'Purpose', value: 'Provides deliberate 2014-sheet healing rolls and verified HP application without replacing native sheet healing.' },
+                { label: 'Safety', value: 'Every recipient is rechecked immediately before one-use confirmation. Multi-target writes stop on failure and attempt to restore earlier recipients.' },
+                { label: 'Boundaries', value: 'No automatic spell-card interpretation, slot use, inventory use, damage reversal, resistance, temporary HP, 2024 write adapter, or causal guesswork.' },
+                { label: 'Return', value: `${GameAssist.createButton('Healing Actions', '!Heal-Menu')} ${GameAssist.createButton('Quick Guide', '!Heal-Guide')}` }
+            ], msg);
+        }
+
+        function showStatus(msg) {
+            pruneInteractions();
+            panel('HealAssist Status', [
+                { label: 'Module', value: `v${MODULE_VERSION} | ${modState.config.enabled === false ? 'Disabled' : 'Running'} | HealthService ${GameAssist.HealthService.isEnabled() ? 'available' : 'unavailable'}` },
+                { label: 'Player Healing', value: modState.config.allowPlayerHealing === false ? 'Locked' : 'Allowed for controlled 2014 healers and visible supported PCs' },
+                { label: 'Result Messages', value: modState.config.resultAudience === 'public' ? 'Public for visible PC-only healing; private for NPC or hidden work' : 'Private' },
+                { label: 'Waiting', value: `${flows.size} guided choice(s) | ${requests.size} GM request(s) | ${proposals.size} confirmation(s)` },
+                { label: 'Actions', value: `${GameAssist.createButton('Healing Actions', '!Heal-Menu')} ${playerIsGm(msg.playerid) ? `${GameAssist.createButton('Pending Requests', '!Heal-Requests')} ${GameAssist.createButton('GM Controls', '!Heal-GM')}` : GameAssist.createButton('Quick Guide', '!Heal-Guide')}` }
+            ], msg, { gmOnly: playerIsGm(msg.playerid) });
+        }
+
+        function showAudit(msg) {
+            const pageId = playerPageId(msg.playerid);
+            const supported = pageTokens(pageId, true).map(token => resolveTarget(token.id, { playerid: msg.playerid }, { allowNpc: true })).filter(item => item.ok);
+            panel('HealAssist Audit', [
+                { label: 'Current Page', value: `${supported.length} supported recipient token(s): ${supported.filter(item => !item.npc).length} PC and ${supported.filter(item => item.npc).length} NPC.` },
+                { label: 'HealthService', value: GameAssist.HealthService.isEnabled() ? 'Available for verified reads and writes.' : 'Disabled; HealAssist cannot apply HP.' },
+                { label: 'Changes', value: 'None. This audit is read-only.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Status', '!Heal-Status')} ${GameAssist.createButton('Control Center', '!Heal-GM')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function manualHtml() {
+            return [
+                '<h1>HealAssist User Manual</h1>',
+                `<p><strong>GameAssist v${_sanitize(VERSION)} | HealAssist ${MODULE_VERSION}</strong></p>`,
+                '<p>HealAssist provides a short healing workflow for supported official D&amp;D 5E by Roll20 (2014) characters. It uses HealthService for canonical HP reads, provenance, writes, events, and verification; it does not install another HP watcher.</p>',
+                '<h2>Quick Start</h2>',
+                '<ol><li>Run <code>!Heal</code>.</li><li>Choose a supported spell, potion, or simple manual formula.</li><li>Choose a linked 2014 healer you control.</li><li>Point at the visible recipient token or tokens.</li><li>Review the dice, current HP, proposed HP, maximum HP, and manual resource reminder.</li><li>Confirm once.</li></ol>',
+                '<h2>Player And GM Roles</h2>',
+                '<p>Players may heal visible supported PCs without controlling the recipient token. NPC, GM-layer, hidden, and off-page placement remains a private GM review so NPC health is not exposed. The GM may lock player healing without disabling HealAssist.</p>',
+                '<h2>Supported Actions</h2>',
+                `<p>${Object.values(ACTIONS).map(action => `<strong>${_sanitize(action.name)}</strong>`).join(', ')}</p>`,
+                '<p>Spell actions ask for a verified slot level and, when needed, Wisdom, Charisma, or Intelligence. HealAssist reads that ability modifier from the selected 2014 source. Manual formulas accept one bounded form such as <code>2d8+5</code> or <code>15</code>.</p>',
+                '<h2>What Remains Manual</h2>',
+                '<p>HealAssist never spends a spell slot, removes a potion, consumes a class feature, applies temporary HP, interprets arbitrary spell cards, reverses damage, or adjudicates resistance. The review names the manual table step before HP changes.</p>',
+                '<h2>Transaction Safety</h2>',
+                '<p>Every recipient is re-read before confirmation. Stale and reused buttons make no change. Healing never raises a supported recipient above its maximum. If a later write in a multi-target action fails, HealAssist stops and attempts a verified rollback of earlier recipients.</p>',
+                '<h2>Commands</h2>',
+                '<p><code>!Heal</code> or <code>!Heal-Menu</code> opens healing actions. <code>!Heal-GM</code> and <code>!Heal-DM</code> open private controls. Standard references are <code>!Heal-Guide</code>, <code>!Heal-Help</code>, <code>!Heal-Info</code>, <code>!Heal-Status</code>, <code>!Heal-Audit</code>, and <code>!Heal-Manual</code>. GM settings are <code>!Heal-Players on|off</code> and <code>!Heal-Results public|private</code>.</p>'
+            ].join('');
+        }
+
+        function showManual(msg) {
+            const result = GameAssist.writeModuleManual(MODULE_NAME, manualHtml());
+            panel('HealAssist Manual', [
+                { label: 'Result', value: result.ok ? 'The manual was created or updated.' : _sanitize(result.message) },
+                ...(result.ok ? [{ label: 'Handout', value: result.link }] : []),
+                { label: 'Actions', value: `${GameAssist.createButton('Control Center', '!Heal-GM')} ${GameAssist.createButton('Quick Guide', '!Heal-Guide')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function showControl(msg, notice = '') {
+            pruneInteractions();
+            panel('HealAssist GM Controls', [
+                ...(notice ? [{ label: 'Updated', value: _sanitize(notice) }] : []),
+                { label: 'Start', value: GameAssist.createButton('Healing Actions', '!Heal-Menu') },
+                { label: 'Player Healing', value: `${modState.config.allowPlayerHealing === false ? 'Locked' : 'Allowed'} ${GameAssist.createButton(modState.config.allowPlayerHealing === false ? 'Allow Players' : 'Lock Players', `!Heal-Players ${modState.config.allowPlayerHealing === false ? 'on' : 'off'}`)}` },
+                { label: 'Result Messages', value: `${modState.config.resultAudience === 'public' ? 'Public when safe' : 'Private'} ${GameAssist.createButton(modState.config.resultAudience === 'public' ? 'Make Private' : 'Allow Public PC Results', `!Heal-Results ${modState.config.resultAudience === 'public' ? 'private' : 'public'}`)}` },
+                { label: 'Review', value: `${GameAssist.createButton(`Pending Requests (${requests.size})`, '!Heal-Requests')} ${GameAssist.createButton('Status', '!Heal-Status')} ${GameAssist.createButton('Audit', '!Heal-Audit')}` },
+                { label: 'Help', value: `${GameAssist.createButton('Quick Guide', '!Heal-Guide')} ${GameAssist.createButton('Manual', '!Heal-Manual')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function commandAction(content) {
+            const text = String(content || '').trim();
+            let match = text.match(/^!healassist-([^\s]+)/i) || text.match(/^!heal-([^\s]+)/i);
+            if (match) return String(match[1] || '').toLowerCase();
+            match = text.match(/^!heal(?:assist)?(?:\s+([^\s]+))?/i);
+            return String(match?.[1] || 'menu').toLowerCase();
+        }
+
+        function handleCommand(msg) {
+            const action = commandAction(msg.content);
+            const options = parseOptions(msg.content);
+            if (['menu', 'catalog', 'start-here'].includes(action)) return showCatalog(msg);
+            if (['guide', 'help'].includes(action)) return showGuide(msg);
+            if (['info', 'about'].includes(action)) return showInfo(msg);
+            if (action === 'status') return showStatus(msg);
+            if (action === 'start') {
+                const definition = ACTIONS[String(options.action || '').toLowerCase()];
+                return definition ? showSourcePicker(msg, definition) : showCatalog(msg);
+            }
+            if (action === 'recipients') {
+                const flowResult = resolveFlow(msg, options.flow);
+                return flowResult.ok
+                    ? showRecipientPicker(msg, flowResult.action, flowResult.source)
+                    : panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(flowResult.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            }
+            if (action === 'review') return handleReview(msg, options);
+            if (action === 'confirm') return handleConfirm(msg, options);
+            if (action === 'request') return handleRequest(msg, options);
+            if (!playerIsGm(msg.playerid)) return showCatalog(msg);
+            if (['gm', 'dm', 'control', 'controls'].includes(action)) return showControl(msg);
+            if (action === 'requests') return showRequests(msg);
+            if (action === 'request-dismiss') {
+                requests.delete(String(options.request || ''));
+                return showRequests(msg, 'The selected request was dismissed.');
+            }
+            if (action === 'players') {
+                const value = String(msg.content || '').trim().split(/\s+/).pop().toLowerCase();
+                if (!['on', 'off'].includes(value)) return showControl(msg, 'Choose whether player healing is on or off.');
+                modState.config.allowPlayerHealing = value === 'on';
+                if (!modState.config.allowPlayerHealing) {
+                    flows.clear();
+                    [...requests.entries()].filter(([, request]) => !playerIsGm(request.playerId)).forEach(([id]) => requests.delete(id));
+                }
+                return showControl(msg, `Player healing turned ${value}.`);
+            }
+            if (action === 'results') {
+                const value = String(msg.content || '').trim().split(/\s+/).pop().toLowerCase();
+                if (!['public', 'private'].includes(value)) return showControl(msg, 'Choose public or private result messages.');
+                modState.config.resultAudience = value;
+                return showControl(msg, `Safe healing results are now ${value}.`);
+            }
+            if (action === 'audit') return showAudit(msg);
+            if (action === 'manual') return showManual(msg);
+            panel(MODULE_NAME, [
+                { label: 'Needs Attention', value: 'That HealAssist command was not recognized.' },
+                { label: 'Next Step', value: `${GameAssist.createButton('Control Center', '!Heal-GM')} ${GameAssist.createButton('Open Guide', '!Heal-Guide')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        GameAssist.onCommand('!Heal', handleCommand, MODULE_NAME, { match: { caseInsensitive: true, mode: 'token' } });
+        GameAssist.onCommand('!Heal-', handleCommand, MODULE_NAME, { match: { caseInsensitive: true, mode: 'prefix' } });
+        GameAssist.onCommand('!HealAssist-', handleCommand, MODULE_NAME, { match: { caseInsensitive: true, mode: 'prefix' } });
+
+        GameAssist.HealAssist = Object.freeze({
+            version: MODULE_VERSION,
+            interactionSchemaVersion: INTERACTION_SCHEMA_VERSION,
+            getStatus: () => Object.freeze({
+                enabled: modState.config.enabled !== false,
+                healthServiceAvailable: GameAssist.HealthService.isEnabled(),
+                allowPlayerHealing: modState.config.allowPlayerHealing !== false,
+                resultAudience: modState.config.resultAudience,
+                pendingFlows: (pruneInteractions(), flows.size),
+                pendingRequests: requests.size,
+                pendingProposals: proposals.size
+            }),
+            getActions: () => clone(Object.values(ACTIONS).map(action => ({ id: action.id, name: action.name, group: action.group, targetCounts: action.targetCounts }))),
+            _clearTransient: () => {
+                flows.clear();
+                requests.clear();
+                proposals.clear();
+            }
+        });
+
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} ready: guided 2014 healing, GM requests, and verified HealthService application; the module starts disabled.`, 'INFO', { startup: true });
+    }, {
+        enabled: false,
+        prefixes: ['!Heal', '!Heal-', '!HealAssist-'],
+        dependsOn: ['HealthService'],
+        protectedConfigKeys: ['resultAudience'],
+        teardown: () => GameAssist.HealAssist?._clearTransient?.()
+    });
+    // --- Notes & Comments ---
+    // Changed (v2.0.0): Added HealAssist 1.0.0 with guided official-2014 healing actions, bounded manual formulas, native visible-recipient targeting, private GM placement requests, complete roll/HP review, expiring one-use confirmations, HealthService provenance and verification, over-healing prevention, and multi-target rollback attempts.
+    // Decision log:
+    //   CHOICE: Use HealthService as the only HP read/write authority - ALT: add module-specific HP listeners and setters; REJECTED: duplicate engines would disagree and emit duplicate evidence.
+    //   CHOICE: Permit players to target visible supported PCs they do not control while routing NPC and hidden work to the GM - ALT: grant direct player writes to every pointed token; REJECTED: NPC identity and HP must remain private and GM-authorized.
+    //   CHOICE: Ask for slot level and healing ability, then read the selected 2014 ability modifier - ALT: infer class, prepared spell, slot use, or casting ability; REJECTED: multiclass and campaign rules make those guesses unsafe.
+    //   CHOICE: Roll before the mutation review and consume confirmation once - ALT: roll again during apply; REJECTED: the GM and player must confirm the exact evidence that will be used.
+    //   CHOICE: Revalidate every target before any write and roll back earlier recipients if a later write fails - ALT: accept partial multi-target healing silently; REJECTED: one reviewed action should not leave an unexplained half-applied result.
+    //   CHOICE: Keep resource consumption and temporary HP manual - ALT: modify spell slots, inventory, features, or temporary HP automatically; REJECTED: the initial verified adapter does not own those sheet contracts.
+    // [GAMEASSIST:MODULES:HEALASSIST] END
+    // =============================================================================
+
+    // =============================================================================
+    // [GAMEASSIST:MODULES:ATTACKASSIST] BEGIN
+    // Section Title: Guided official-2014 repeating attacks
+    // -------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:ATTACKASSIST", title: "AttackAssist",
+    //   guarantees: ["Only authorized official-2014 linked sources and verified repeating-attack row identities enter a guided roll","Visible targets use Roll20's native map prompt without requiring target control; hidden or off-page placement remains GM-reviewed","One-use roll submissions preserve the sheet-generated attack formula and supported official template fields without rewriting character roll settings","AttackAssist never applies damage or changes HP, conditions, effects, initiative, turns, or encounter state"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:OBJECT]"],
+    //   provides: ["GameAssist.AttackAssist"], last_updated_version: "v2.0.0",
+    //   independent_versions: { module_version: "1.0.0", interaction_schema_version: 1 }, lifecycle: "active" }
+    // -------------------------------------------------------------------------
+    // Narrative
+    // AttackAssist is a disabled-by-default convenience layer for the official 2014
+    // sheet. It verifies one repeating attack, binds every choice to the requesting
+    // player and current source, uses a native target query, then submits one familiar
+    // 2014 attack roll as the character. Native sheet buttons remain fully independent.
+    // -------------------------------------------------------------------------
+    GameAssist.register('AttackAssist', function() {
+        const MODULE_NAME = 'AttackAssist';
+        const MODULE_VERSION = '1.0.0';
+        const INTERACTION_SCHEMA_VERSION = 1;
+        const modState = GameAssist.getState(MODULE_NAME);
+        modState.config = {
+            enabled: false,
+            allowPlayerAttacks: true,
+            ...modState.config
+        };
+        if (typeof modState.config.allowPlayerAttacks !== 'boolean') modState.config.allowPlayerAttacks = true;
+
+        const MODE_FRAGMENTS = Object.freeze({
+            normal: '{{query=1}} {{normal=1}} {{r2=[[0d20',
+            advantage: '{{query=1}} {{advantage=1}} {{r2=[[@{d20}',
+            disadvantage: '{{query=1}} {{disadvantage=1}} {{r2=[[@{d20}'
+        });
+        const flows = new Map();
+        const requests = new Map();
+        const submissions = new Map();
+        let interactionSequence = 0;
+
+        function clone(value) {
+            try { return JSON.parse(JSON.stringify(value)); } catch (_error) { return null; }
+        }
+
+        function playerIsGm(playerId) {
+            return typeof playerIsGM === 'function' && playerIsGM(playerId);
+        }
+
+        function playerName(playerId, fallback = 'Player') {
+            return String(getObj('player', playerId)?.get('_displayname') || fallback)
+                .replace(/\s*\(GM\)\s*$/i, '')
+                .replace(/"/g, "'")
+                .trim() || fallback;
+        }
+
+        function whisperPrefix(msg, gmOnly = false) {
+            if (gmOnly || playerIsGm(msg?.playerid)) return '/w gm';
+            return `/w "${playerName(msg?.playerid, msg?.who || 'Player')}"`;
+        }
+
+        function panel(title, fields, msg, { gmOnly = false } = {}) {
+            const body = (fields || []).map(field => `{{${_sanitize(field.label)}=${field.value}}}`).join(' ');
+            sendChat(MODULE_NAME, `${whisperPrefix(msg, gmOnly)} &{template:default} {{name=${_sanitize(title)}}} ${body}`);
+        }
+
+        function privateNotice(playerId, title, message, actions = '') {
+            const who = playerIsGm(playerId) ? 'gm' : `"${playerName(playerId)}"`;
+            sendChat(MODULE_NAME, `/w ${who} &{template:default} {{name=${_sanitize(title)}}} {{Result=${_sanitize(message)}}}${actions ? ` {{Actions=${actions}}}` : ''}`);
+        }
+
+        function playerPageId(playerId) {
+            const campaign = Campaign();
+            let overrides = campaign.get('playerspecificpages');
+            if (typeof overrides === 'string' && overrides) {
+                try { overrides = JSON.parse(overrides); } catch (_error) { overrides = null; }
+            }
+            if (overrides && typeof overrides === 'object' && overrides[playerId]) return String(overrides[playerId]);
+            if (playerIsGm(playerId)) {
+                const lastPage = getObj('player', playerId)?.get('_lastpage');
+                if (lastPage) return String(lastPage);
+            }
+            return String(campaign.get('playerpageid') || '');
+        }
+
+        function ribbonPageId() {
+            return String(Campaign().get('playerpageid') || '');
+        }
+
+        function tokenPageId(token) {
+            return String(token?.get('_pageid') || token?.get('pageid') || '');
+        }
+
+        function linkedCharacter(token) {
+            const characterId = String(token?.get('represents') || '');
+            return characterId ? getObj('character', characterId) : null;
+        }
+
+        function controllers(value) {
+            return String(value || '').split(',').map(item => item.trim()).filter(Boolean);
+        }
+
+        function controlsToken(playerId, token, character) {
+            if (playerIsGm(playerId)) return true;
+            const allowed = new Set([...controllers(token?.get('controlledby')), ...controllers(character?.get('controlledby'))]);
+            return allowed.has('all') || allowed.has(String(playerId || ''));
+        }
+
+        function attributesFor(characterId) {
+            let attributes = findObjs({ _type: 'attribute', _characterid: String(characterId || '') });
+            if (!attributes.length) {
+                attributes = findObjs({ _type: 'attribute' }).filter(attribute => String(attribute.get('_characterid') || '') === String(characterId || ''));
+            }
+            return attributes;
+        }
+
+        function attributeMap(characterId) {
+            return new Map(attributesFor(characterId).map(attribute => [String(attribute.get('name') || ''), attribute]));
+        }
+
+        function characterSheetHint(character) {
+            const direct = String(character?.get('charactersheetname') || '').trim().toLowerCase();
+            if (direct) return direct;
+            return String(getAttrByName(character?.id, 'charactersheetname') || '').trim().toLowerCase();
+        }
+
+        function is2014Pc(character, attributes = null) {
+            if (!character || String(getAttrByName(character.id, 'npc') || '').trim() === '1') return false;
+            const hint = characterSheetHint(character);
+            if (hint === 'dnd2024byroll20') return false;
+            const values = attributes || attributeMap(character.id);
+            return hint === 'ogl5e'
+                || values.has('initiative_bonus')
+                || values.has('constitution_save_bonus')
+                || [...values.keys()].some(name => /^repeating_attack_[^_]+_rollbase$/i.test(name));
+        }
+
+        function verifiedRollbase(value) {
+            const rollbase = String(value || '').trim();
+            if (!rollbase || rollbase.length > POLICY.attacks.rollBaseLength || /[\r\n]/.test(rollbase)) return false;
+            if (!/^@\{wtype\}&\{template:(?:atk|atkdmg)\}\s/i.test(rollbase)) return false;
+            return rollbase.includes('{{r1=[[') && rollbase.includes('@{rtype}');
+        }
+
+        function attackRows(character) {
+            if (!character) return [];
+            const attributes = attributeMap(character.id);
+            if (!is2014Pc(character, attributes)) return [];
+            const rows = [];
+            attributes.forEach((nameAttribute, name) => {
+                const match = name.match(/^repeating_attack_([^_]+)_atkname$/i);
+                if (!match || match[1].length > POLICY.attacks.rowIdLength) return;
+                const rowId = match[1];
+                const prefix = `repeating_attack_${rowId}`;
+                const attackName = String(nameAttribute.get('current') || '').trim().slice(0, POLICY.attacks.nameLength);
+                const rollbase = String(attributes.get(`${prefix}_rollbase`)?.get('current') || '').trim();
+                const attackFlag = String(attributes.get(`${prefix}_atkflag`)?.get('current') || '').trim();
+                if (!attackName || attackFlag === '0' || !verifiedRollbase(rollbase)) return;
+                rows.push({
+                    rowId,
+                    prefix,
+                    name: attackName,
+                    range: String(attributes.get(`${prefix}_atkrange`)?.get('current') || '').trim().slice(0, POLICY.attacks.nameLength),
+                    bonus: String(attributes.get(`${prefix}_atkbonus`)?.get('current') || '').trim().slice(0, POLICY.attacks.nameLength),
+                    rollbase,
+                    attributes
+                });
+            });
+            const reporder = String(attributes.get('_reporder_repeating_attack')?.get('current') || '')
+                .split(',').map(value => value.trim()).filter(Boolean);
+            const positions = new Map(reporder.map((rowId, index) => [rowId, index]));
+            rows.sort((left, right) => {
+                const leftOrder = positions.has(left.rowId) ? positions.get(left.rowId) : Number.MAX_SAFE_INTEGER;
+                const rightOrder = positions.has(right.rowId) ? positions.get(right.rowId) : Number.MAX_SAFE_INTEGER;
+                return leftOrder - rightOrder || left.name.localeCompare(right.name) || left.rowId.localeCompare(right.rowId);
+            });
+            const totals = rows.reduce((result, row) => {
+                const key = row.name.toLowerCase();
+                result[key] = (result[key] || 0) + 1;
+                return result;
+            }, {});
+            const seen = {};
+            rows.forEach(row => {
+                const key = row.name.toLowerCase();
+                seen[key] = (seen[key] || 0) + 1;
+                row.label = totals[key] > 1 ? `${row.name} (${seen[key]})` : row.name;
+            });
+            return rows.slice(0, POLICY.attacks.attackListLimit);
+        }
+
+        function attackRow(character, rowId) {
+            return attackRows(character).find(row => row.rowId === String(rowId || '')) || null;
+        }
+
+        function supportedSource(token) {
+            if (!token || !['objects', 'gmlayer'].includes(String(token.get('layer') || ''))) {
+                return { ok: false, message: 'The attacking token is not available on a supported map layer.' };
+            }
+            const character = linkedCharacter(token);
+            if (!character) return { ok: false, message: 'The attacker must be linked to a character.' };
+            if (characterSheetHint(character) === 'dnd2024byroll20') {
+                return { ok: false, message: 'AttackAssist 1.0.0 supports official 2014 repeating attacks only. Native 2024 attack buttons remain available.' };
+            }
+            if (!is2014Pc(character)) {
+                return { ok: false, message: 'The attacker is not a supported official 2014 player character.' };
+            }
+            return {
+                ok: true,
+                token,
+                character,
+                name: String(character.get('name') || token.get('name') || 'Attacker').slice(0, POLICY.attacks.nameLength)
+            };
+        }
+
+        function resolveSource(tokenId) {
+            return supportedSource(getObj('graphic', String(tokenId || '')));
+        }
+
+        function sourceAuthorized(msg, source) {
+            if (!source?.ok) return source || { ok: false, message: 'The attacker is unavailable.' };
+            if (!playerIsGm(msg?.playerid)) {
+                if (modState.config.allowPlayerAttacks === false) return { ok: false, message: 'The GM has temporarily locked player-guided attacks.' };
+                if (String(source.token.get('layer') || '') !== 'objects' || tokenPageId(source.token) !== playerPageId(msg.playerid)) {
+                    return { ok: false, message: 'Choose a visible attacking token on your current Roll20 page.' };
+                }
+            }
+            return controlsToken(msg?.playerid, source.token, source.character)
+                ? { ok: true }
+                : { ok: false, message: 'Choose an attacker controlled by your Roll20 player account.' };
+        }
+
+        function selectedTokenIds(msg) {
+            return [...new Set((msg?.selected || []).map(item => String(item?._id || '')).filter(Boolean))];
+        }
+
+        function pageTokens(pageId, includeGmLayer) {
+            let tokens = findObjs({ _type: 'graphic', _pageid: String(pageId || '') });
+            if (!tokens.length) tokens = findObjs({ _type: 'graphic' });
+            return tokens.filter(token => tokenPageId(token) === String(pageId || '')
+                && (String(token.get('layer') || '') === 'objects' || (includeGmLayer && String(token.get('layer') || '') === 'gmlayer')));
+        }
+
+        function sourceCandidates(msg) {
+            const selectedIds = selectedTokenIds(msg);
+            const selected = selectedIds
+                .map(id => supportedSource(getObj('graphic', id)))
+                .filter(source => source.ok && sourceAuthorized(msg, source).ok);
+            // CHOICE: An explicit selection is authoritative even when unsupported - falling back to another page token would make the wrong character attack.
+            if (selectedIds.length) return selected.slice(0, POLICY.attacks.sourceListLimit);
+            return pageTokens(playerPageId(msg?.playerid), playerIsGm(msg?.playerid))
+                .map(supportedSource)
+                .filter(source => source.ok && sourceAuthorized(msg, source).ok)
+                .slice(0, POLICY.attacks.sourceListLimit);
+        }
+
+        function interactionId(prefix) {
+            interactionSequence++;
+            return `${prefix}-${Date.now().toString(36)}-${interactionSequence.toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+        }
+
+        function pruneInteractions(now = Date.now()) {
+            [flows, requests, submissions].forEach(collection => {
+                [...collection.entries()].forEach(([id, value]) => {
+                    if (Number(value?.expiresAt || 0) <= now) collection.delete(id);
+                });
+            });
+            [[flows, POLICY.attacks.flowLimit], [requests, POLICY.attacks.requestLimit], [submissions, POLICY.attacks.submissionLimit]]
+                .forEach(([collection, limit]) => {
+                    while (collection.size > limit) collection.delete(collection.keys().next().value);
+                });
+        }
+
+        function rememberFlow(msg, source, rowId = null) {
+            pruneInteractions();
+            const id = interactionId('ATF');
+            flows.set(id, Object.freeze({
+                schemaVersion: INTERACTION_SCHEMA_VERSION,
+                id,
+                playerId: String(msg?.playerid || ''),
+                sourceTokenId: String(source.token.id),
+                attackRowId: rowId ? String(rowId) : null,
+                expiresAt: Date.now() + POLICY.attacks.interactionMs
+            }));
+            pruneInteractions();
+            return id;
+        }
+
+        function resolveFlow(msg, flowId, requireAttack = false) {
+            pruneInteractions();
+            const flow = flows.get(String(flowId || ''));
+            if (!flow || flow.playerId !== String(msg?.playerid || '')) {
+                return { ok: false, message: 'That attack choice expired or belongs to another player. Start again.' };
+            }
+            const source = resolveSource(flow.sourceTokenId);
+            const authorization = source.ok ? sourceAuthorized(msg, source) : source;
+            if (!authorization.ok) return authorization;
+            const row = flow.attackRowId ? attackRow(source.character, flow.attackRowId) : null;
+            if (requireAttack && !row) return { ok: false, message: 'That repeating attack changed or is no longer supported. Choose it again.' };
+            return { ok: true, flow, source, row };
+        }
+
+        function parseOptions(content) {
+            const options = {};
+            const expression = /--([a-z0-9-]+)(?:\s+(?:"([^"]*)"|'([^']*)'|([^\s]+)))?/gi;
+            let match;
+            while ((match = expression.exec(String(content || '')))) {
+                options[String(match[1] || '').toLowerCase()] = match[2] ?? match[3] ?? match[4] ?? true;
+            }
+            return options;
+        }
+
+        function safeQueryText(value) {
+            return String(value || '').replace(/[|{},]/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+
+        function targetReference() {
+            return '@{target|Attack target|token_id}';
+        }
+
+        function showAttackPicker(msg, source) {
+            const rows = attackRows(source.character);
+            if (!rows.length) {
+                return panel(MODULE_NAME, [
+                    { label: 'Needs Attention', value: `${_sanitize(source.name)} has no verified official-2014 repeating attack available to AttackAssist.` },
+                    { label: 'Native Option', value: 'The attack buttons on the character sheet remain available.' },
+                    { label: 'Next Step', value: GameAssist.createButton('Choose Another Attacker', '!Attack-Menu') }
+                ], msg);
+            }
+            panel('AttackAssist: Choose An Attack', [
+                { label: 'Attacker', value: _sanitize(source.name) },
+                { label: 'Attacks', value: rows.map(row => GameAssist.createButton(row.label, `!Attack-Target --flow ${rememberFlow(msg, source, row.rowId)}`)).join(' ') },
+                { label: 'Duplicate Names', value: 'Numbered labels identify separate repeating rows; the saved row identity, not the display name, is used.' },
+                { label: 'Return', value: GameAssist.createButton('Choose Another Attacker', '!Attack-Menu') }
+            ], msg);
+        }
+
+        function showSourcePicker(msg) {
+            const sources = sourceCandidates(msg);
+            if (!sources.length) {
+                const selectedIds = selectedTokenIds(msg);
+                let message = 'No supported linked 2014 attacker controlled by you is available on this page.';
+                if (selectedIds.length) {
+                    const selectedSource = supportedSource(getObj('graphic', selectedIds[0]));
+                    const authorization = selectedSource.ok ? sourceAuthorized(msg, selectedSource) : selectedSource;
+                    if (authorization?.message) message = authorization.message;
+                }
+                return panel(MODULE_NAME, [
+                    { label: 'Needs Attention', value: message },
+                    { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!Attack-Guide') }
+                ], msg);
+            }
+            if (sources.length === 1) return showAttackPicker(msg, sources[0]);
+            panel('AttackAssist: Choose The Attacker', [
+                { label: 'Characters', value: sources.map(source => GameAssist.createButton(source.name, `!Attack-Attacks --flow ${rememberFlow(msg, source)}`)).join(' ') },
+                { label: 'Tip', value: 'Select one controlled attacker before opening AttackAssist to skip this choice.' },
+                { label: 'Return', value: GameAssist.createButton('Quick Guide', '!Attack-Guide') }
+            ], msg);
+        }
+
+        function showTargetPicker(msg, flowResult) {
+            panel(`${flowResult.row.name}: Choose A Target`, [
+                { label: 'Attacker', value: _sanitize(flowResult.source.name) },
+                { label: 'Visible Target', value: GameAssist.createButton('Choose On The Map', `!Attack-Review --flow ${flowResult.flow.id} --target ${targetReference()}`) },
+                ...(!playerIsGm(msg.playerid) ? [{ label: 'Hidden Or Off-Page Target', value: GameAssist.createButton('Ask The GM', `!Attack-Request --flow ${flowResult.flow.id}`) }] : []),
+                { label: 'How Targeting Works', value: 'Roll20 lets you point at a visible token even when you do not control it. No target property is changed.' },
+                { label: 'Return', value: GameAssist.createButton('Choose Another Attack', `!Attack-Attacks --flow ${rememberFlow(msg, flowResult.source)}`) }
+            ], msg);
+        }
+
+        function targetName(token) {
+            const character = linkedCharacter(token);
+            return String(character?.get('name') || token?.get('name') || 'Target').trim().slice(0, POLICY.attacks.nameLength) || 'Target';
+        }
+
+        function resolveTarget(tokenId, msg, { gmReview = false } = {}) {
+            const token = getObj('graphic', String(tokenId || ''));
+            if (!token || !['objects', 'gmlayer'].includes(String(token.get('layer') || ''))) {
+                return { ok: false, message: 'The target token is no longer available on a supported map layer.' };
+            }
+            const layer = String(token.get('layer') || '');
+            const pageId = tokenPageId(token);
+            if (!playerIsGm(msg?.playerid) && !gmReview && (layer !== 'objects' || pageId !== playerPageId(msg.playerid))) {
+                return { ok: false, requiresGm: true, token, message: 'Hidden or off-page targets require GM placement.' };
+            }
+            return {
+                ok: true,
+                token,
+                name: targetName(token),
+                layer,
+                pageId,
+                private: layer !== 'objects' || pageId !== ribbonPageId()
+            };
+        }
+
+        function selectedTargetId(msg) {
+            return selectedTokenIds(msg)[0] || '';
+        }
+
+        function rememberRequest(msg, flowResult, suggestedTargetId = '') {
+            pruneInteractions();
+            const id = interactionId('ATR');
+            requests.set(id, Object.freeze({
+                schemaVersion: INTERACTION_SCHEMA_VERSION,
+                id,
+                playerId: String(msg?.playerid || ''),
+                requesterName: playerName(msg?.playerid, msg?.who || 'Player'),
+                sourceTokenId: String(flowResult.source.token.id),
+                sourceName: flowResult.source.name,
+                attackRowId: flowResult.row.rowId,
+                attackName: flowResult.row.name,
+                suggestedTargetId: String(suggestedTargetId || ''),
+                expiresAt: Date.now() + POLICY.attacks.interactionMs
+            }));
+            pruneInteractions();
+            return requests.get(id);
+        }
+
+        function resolveRequest(requestId) {
+            pruneInteractions();
+            const request = requests.get(String(requestId || ''));
+            if (!request) return { ok: false, message: 'That attack request expired or was already reviewed.' };
+            const source = resolveSource(request.sourceTokenId);
+            const authorization = source.ok && getObj('player', request.playerId)
+                ? sourceAuthorized({ playerid: request.playerId }, source)
+                : { ok: false, message: 'The original attacker or requesting player is no longer available.' };
+            if (!authorization.ok) return authorization;
+            const row = attackRow(source.character, request.attackRowId);
+            return row ? { ok: true, request, source, row } : { ok: false, message: 'The requested repeating attack changed or is no longer supported.' };
+        }
+
+        function showRequests(msg, notice = '') {
+            pruneInteractions();
+            const rows = [...requests.values()].map(request => {
+                const resolved = resolveRequest(request.id);
+                if (!resolved.ok) return `<b>Request Needs Attention</b><br>${_sanitize(resolved.message)} ${GameAssist.createButton('Dismiss', `!Attack-Request-Dismiss --request ${request.id}`)}`;
+                const suggested = request.suggestedTargetId
+                    ? `${GameAssist.createButton('Review Suggested Target', `!Attack-Review --request ${request.id} --suggested true`)} `
+                    : '';
+                return `<b>${_sanitize(request.sourceName)}: ${_sanitize(request.attackName)}</b><br>Requested by ${_sanitize(request.requesterName)}<br>${suggested}${GameAssist.createButton('Use Selected Token', `!Attack-Review --request ${request.id}`)} ${GameAssist.createButton('Choose Target', `!Attack-Review --request ${request.id} --target ${targetReference()}`)} ${GameAssist.createButton('Dismiss', `!Attack-Request-Dismiss --request ${request.id}`)}`;
+            }).join('<hr>') || 'No attack requests are waiting.';
+            panel('Player Attack Requests', [
+                ...(notice ? [{ label: 'Updated', value: _sanitize(notice) }] : []),
+                { label: 'Pending', value: rows },
+                { label: 'Return', value: GameAssist.createButton('AttackAssist Controls', '!Attack-GM') }
+            ], msg, { gmOnly: true });
+        }
+
+        function handleRequest(msg, options) {
+            const flowResult = resolveFlow(msg, options.flow, true);
+            if (!flowResult.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(flowResult.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Attack') }], msg);
+            flows.delete(flowResult.flow.id);
+            rememberRequest(msg, flowResult);
+            panel('Attack Request Sent', [
+                { label: 'Request', value: `${_sanitize(flowResult.source.name)} is ready to use ${_sanitize(flowResult.row.name)}. The GM can place the hidden or off-page target privately.` },
+                { label: 'Next', value: GameAssist.createButton('Choose Another Attack', '!Attack') }
+            ], msg);
+            showRequests(msg, 'A player sent a new attack request.');
+        }
+
+        function rememberSubmission(msg, source, row, target, request = null) {
+            pruneInteractions();
+            const id = interactionId('ATS');
+            submissions.set(id, Object.freeze({
+                schemaVersion: INTERACTION_SCHEMA_VERSION,
+                id,
+                confirmPlayerId: String(msg?.playerid || ''),
+                requestedBy: request ? String(request.playerId || '') : '',
+                sourceTokenId: String(source.token.id),
+                sourceCharacterId: String(source.character.id),
+                sourceName: source.name,
+                attackRowId: row.rowId,
+                attackName: row.name,
+                rollbase: row.rollbase,
+                targetTokenId: String(target.token.id),
+                targetName: target.name,
+                targetLayer: target.layer,
+                targetPageId: target.pageId,
+                privateTarget: Boolean(target.private || request),
+                expiresAt: Date.now() + POLICY.attacks.interactionMs
+            }));
+            pruneInteractions();
+            return submissions.get(id);
+        }
+
+        function showRollChoices(msg, source, row, target, request = null) {
+            const submission = rememberSubmission(msg, source, row, target, request);
+            if (request) requests.delete(request.id);
+            panel(`${row.name}: Review Attack`, [
+                { label: 'Attacker', value: _sanitize(source.name) },
+                { label: 'Target', value: _sanitize(target.name) },
+                { label: 'Attack', value: `${_sanitize(row.name)}${row.bonus ? ` (${_sanitize(row.bonus)})` : ''}${row.range ? ` | ${_sanitize(row.range)}` : ''}` },
+                { label: 'Roll', value: `${GameAssist.createButton('Use Sheet Setting', `!Attack-Roll --submission ${submission.id} --mode sheet`)} ${GameAssist.createButton('Normal', `!Attack-Roll --submission ${submission.id} --mode normal`)} ${GameAssist.createButton('Advantage', `!Attack-Roll --submission ${submission.id} --mode advantage`)} ${GameAssist.createButton('Disadvantage', `!Attack-Roll --submission ${submission.id} --mode disadvantage`)}` },
+                { label: 'Changes', value: 'None. One button submits one attack roll; AttackAssist never applies damage or changes combat state.' },
+                { label: 'Cancel', value: GameAssist.createButton('Discard And Return', '!Attack-Menu') }
+            ], msg, { gmOnly: Boolean(request) });
+        }
+
+        function handleReview(msg, options) {
+            if (options.request) {
+                if (!playerIsGm(msg.playerid)) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: 'Only the GM can review a retained attack request.' }], msg);
+                const resolved = resolveRequest(options.request);
+                if (!resolved.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(resolved.message) }, { label: 'Next Step', value: GameAssist.createButton('Pending Requests', '!Attack-Requests') }], msg, { gmOnly: true });
+                const targetId = String(options.target || (options.suggested ? resolved.request.suggestedTargetId : '') || selectedTargetId(msg));
+                const target = resolveTarget(targetId, msg, { gmReview: true });
+                if (!target.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(target.message) }, { label: 'Next Step', value: GameAssist.createButton('Pending Requests', '!Attack-Requests') }], msg, { gmOnly: true });
+                return showRollChoices(msg, resolved.source, resolved.row, target, resolved.request);
+            }
+
+            const flowResult = resolveFlow(msg, options.flow, true);
+            if (!flowResult.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(flowResult.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Attack') }], msg);
+            const targetId = String(options.target || selectedTargetId(msg));
+            const target = resolveTarget(targetId, msg);
+            if (!target.ok && target.requiresGm && !playerIsGm(msg.playerid)) {
+                flows.delete(flowResult.flow.id);
+                rememberRequest(msg, flowResult, targetId);
+                panel('GM Review Requested', [
+                    { label: 'Result', value: 'That target is hidden or off-page. The GM received the attack and suggested target without exposing private token details.' },
+                    { label: 'Return', value: GameAssist.createButton('Choose Another Attack', '!Attack') }
+                ], msg);
+                return showRequests(msg, 'A player selected a target that requires private GM placement.');
+            }
+            if (!target.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(target.message) }, { label: 'Next Step', value: GameAssist.createButton('Choose Target Again', `!Attack-Target --flow ${flowResult.flow.id}`) }], msg);
+            flows.delete(flowResult.flow.id);
+            showRollChoices(msg, flowResult.source, flowResult.row, target);
+        }
+
+        function qualifyRollbase(source, row, mode, forceGmWhisper) {
+            let rollbase = String(row.rollbase || '').trim();
+            if (!verifiedRollbase(rollbase)) return { ok: false, message: 'The repeating attack roll formula is no longer supported.' };
+            if (!['sheet', 'normal', 'advantage', 'disadvantage'].includes(mode)) return { ok: false, message: 'Choose Sheet Setting, Normal, Advantage, or Disadvantage.' };
+            if (forceGmWhisper) rollbase = rollbase.replace(/^@\{wtype\}/i, '');
+            if (mode !== 'sheet') rollbase = rollbase.replace(/@\{rtype\}/g, MODE_FRAGMENTS[mode]);
+
+            rollbase = rollbase.replace(/~repeating_attack_(attack(?:_(?:dmg|crit))?)/gi,
+                (_match, button) => `~${source.character.id}|repeating_attack_${row.rowId}_${button}`);
+
+            const attributes = row.attributes || attributeMap(source.character.id);
+            rollbase = rollbase.replace(/@\{([^{}]+)\}/g, (match, inner) => {
+                const parts = String(inner || '').split('|');
+                if (parts.length > 2 || (parts.length === 2 && parts[1] !== 'max')) return match;
+                const name = parts[0];
+                if (!name || ['selected', 'target', 'tracker'].includes(name.toLowerCase())) return match;
+                const rowName = name.startsWith(`${row.prefix}_`) ? name : `${row.prefix}_${name}`;
+                const resolvedName = attributes.has(rowName) ? rowName : name;
+                return `@{${source.character.id}|${resolvedName}${parts[1] === 'max' ? '|max' : ''}}`;
+            });
+            return { ok: true, command: `${forceGmWhisper ? '/w gm ' : ''}${rollbase}` };
+        }
+
+        function safeAnnouncementText(value) {
+            return String(value || '').replace(/[\r\n\[\]{}@%]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, POLICY.attacks.nameLength);
+        }
+
+        function currentSubmission(msg, submissionId) {
+            pruneInteractions();
+            const submission = submissions.get(String(submissionId || ''));
+            if (!submission || submission.confirmPlayerId !== String(msg?.playerid || '')) {
+                return { ok: false, message: 'That attack review expired, was already used, or belongs to another player.' };
+            }
+            const source = resolveSource(submission.sourceTokenId);
+            if (!source.ok || String(source.character.id) !== submission.sourceCharacterId) return { ok: false, message: source.message || 'The attacker changed or is unavailable.' };
+            const authorization = submission.requestedBy
+                ? sourceAuthorized({ playerid: submission.requestedBy }, source)
+                : sourceAuthorized(msg, source);
+            if (!authorization.ok) return authorization;
+            const row = attackRow(source.character, submission.attackRowId);
+            if (!row || row.rollbase !== submission.rollbase) return { ok: false, message: 'The repeating attack changed after review. Choose it again.' };
+            const target = resolveTarget(submission.targetTokenId, msg, { gmReview: Boolean(submission.requestedBy) });
+            if (!target.ok || target.layer !== submission.targetLayer || target.pageId !== submission.targetPageId) {
+                return { ok: false, message: 'The target changed page or layer after review. Choose it again.' };
+            }
+            return { ok: true, submission, source, row, target };
+        }
+
+        function announceSubmittedAttack(msg, resolved) {
+            const { submission, source, row, target } = resolved;
+            if (!submission.privateTarget && source.token.get('layer') === 'objects' && tokenPageId(source.token) === ribbonPageId()) {
+                const attacker = safeAnnouncementText(source.name) || 'The attacker';
+                const targetText = safeAnnouncementText(target.name) || 'the target';
+                const attack = safeAnnouncementText(row.name) || 'an attack';
+                sendChat(`character|${source.character.id}`, `/em attacks ${targetText} with ${attack}.`);
+            } else {
+                sendChat(MODULE_NAME, `/w gm ${_sanitize(source.name)} submitted ${_sanitize(row.name)} against ${_sanitize(target.name)}.`);
+            }
+            panel('Attack Submitted', [
+                { label: 'Result', value: `${_sanitize(source.name)} rolled ${_sanitize(row.name)}${submission.privateTarget ? ' against a GM-reviewed target' : ` against ${_sanitize(target.name)}`}.` },
+                { label: 'Damage', value: 'No HP or damage was applied by AttackAssist. Use the normal sheet result and your table rules.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Attack Again', '!Attack-Menu')} ${playerIsGm(msg.playerid) ? GameAssist.createButton('Control Center', '!Attack-GM') : GameAssist.createButton('Guide', '!Attack-Guide')}` }
+            ], msg);
+            if (submission.requestedBy && submission.requestedBy !== String(msg.playerid || '')) {
+                privateNotice(submission.requestedBy, 'Attack Request Completed', `${source.name}'s ${row.name} was reviewed and submitted by the GM.`, GameAssist.createButton('Attack Again', '!Attack-Menu'));
+            }
+        }
+
+        function handleRoll(msg, options) {
+            const resolved = currentSubmission(msg, options.submission);
+            if (!resolved.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(resolved.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Attack') }], msg);
+            const mode = String(options.mode || 'sheet').toLowerCase();
+            const command = qualifyRollbase(resolved.source, resolved.row, mode, resolved.submission.privateTarget);
+            if (!command.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(command.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Attack') }], msg);
+            submissions.delete(resolved.submission.id);
+            sendChat(`character|${resolved.source.character.id}`, command.command, operations => {
+                if (!Array.isArray(operations) || !operations.length) {
+                    return panel(MODULE_NAME, [
+                        { label: 'Needs Attention', value: 'Roll20 did not confirm an attack result. No target announcement was sent.' },
+                        { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Attack') }
+                    ], msg, { gmOnly: resolved.submission.privateTarget });
+                }
+                announceSubmittedAttack(msg, resolved);
+            });
+        }
+
+        function showGuide(msg) {
+            const moreHelp = playerIsGm(msg.playerid)
+                ? `${GameAssist.createButton('What Does AttackAssist Do?', '!Attack-Info')} ${GameAssist.createButton('Create Manual', '!Attack-Manual')} ${GameAssist.createButton('Status', '!Attack-Status')}`
+                : `${GameAssist.createButton('What Does AttackAssist Do?', '!Attack-Info')} ${GameAssist.createButton('Status', '!Attack-Status')}`;
+            panel('AttackAssist Quick Guide', [
+                { label: 'Start An Attack', value: GameAssist.createButton('Choose Attacker And Attack', '!Attack-Menu') },
+                { label: 'At The Table', value: 'Choose a controlled 2014 character, one verified repeating attack, a visible target, and the roll mode. The ordinary character-sheet buttons still work.' },
+                { label: 'What It Does Not Do', value: 'AttackAssist does not apply damage, spend resources, change conditions or effects, or move the Turn Tracker.' },
+                { label: 'More Help', value: moreHelp }
+            ], msg);
+        }
+
+        function showInfo(msg) {
+            panel('What AttackAssist Does', [
+                { label: 'Purpose', value: 'Adds a guided official-2014 attack path without replacing the character sheet or requiring control of the target.' },
+                { label: 'Roll Contract', value: 'The verified repeating row supplies the attack name, formula, critical range, modifiers, and official template fields. AttackAssist safely qualifies that row and submits it as the character.' },
+                { label: 'Privacy', value: 'Visible player-ribbon targets may be announced publicly after the roll. Hidden, GM-layer, and off-page placement stays in a private GM request.' },
+                { label: 'Boundaries', value: 'No 2024 adapter, NPC-action adapter, automatic damage, HP write, final-blow attribution, condition change, effect change, initiative change, or resource spending.' },
+                { label: 'Continue', value: `${GameAssist.createButton('Start An Attack', '!Attack-Menu')} ${GameAssist.createButton('Back To Guide', '!Attack-Guide')}` }
+            ], msg);
+        }
+
+        function showStatus(msg) {
+            const candidates = sourceCandidates(msg);
+            const verified = candidates.reduce((total, source) => total + attackRows(source.character).length, 0);
+            panel('AttackAssist Status', [
+                { label: 'Module', value: `AttackAssist ${MODULE_VERSION} is enabled and responding.` },
+                { label: 'Player-Guided Attacks', value: modState.config.allowPlayerAttacks === false ? 'Locked by the GM' : 'Allowed' },
+                { label: 'Available Here', value: `${candidates.length} authorized 2014 source(s) | ${verified} verified repeating attack(s)` },
+                { label: 'Pending', value: `${(pruneInteractions(), requests.size)} GM request(s) | ${submissions.size} reviewed roll(s)` },
+                { label: 'Actions', value: `${GameAssist.createButton('Start An Attack', '!Attack-Menu')} ${playerIsGm(msg.playerid) ? GameAssist.createButton('Control Center', '!Attack-GM') : ''}` }
+            ], msg);
+        }
+
+        function rawAttackRowCount(character) {
+            return attributesFor(character.id).filter(attribute => /^repeating_attack_[^_]+_atkname$/i.test(String(attribute.get('name') || ''))).length;
+        }
+
+        function showAudit(msg) {
+            const sources = pageTokens(playerPageId(msg?.playerid), true).map(supportedSource).filter(source => source.ok);
+            const verified = sources.reduce((total, source) => total + attackRows(source.character).length, 0);
+            const raw = sources.reduce((total, source) => total + rawAttackRowCount(source.character), 0);
+            panel('AttackAssist Audit', [
+                { label: 'Page Review', value: `${sources.length} supported 2014 source(s) | ${verified} verified repeating attack(s) | ${Math.max(0, raw - verified)} unsupported or incomplete row(s)` },
+                { label: 'Checks', value: 'Linked source, 2014 sheet evidence, stable row identity, attack flag, official attack template, stored first roll, and sheet roll-mode seam.' },
+                { label: 'Changes', value: 'None. This audit is read-only.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Start An Attack', '!Attack-Menu')} ${GameAssist.createButton('Control Center', '!Attack-GM')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function manualHtml() {
+            return [
+                '<h1>AttackAssist User Manual</h1>',
+                `<p><strong>GameAssist v${_sanitize(VERSION)} | AttackAssist ${MODULE_VERSION}</strong></p>`,
+                '<p>AttackAssist provides an optional guided path for official D&amp;D 5E by Roll20 2014 repeating attacks. Native character-sheet attack buttons remain available.</p>',
+                '<h2>Quick Start</h2>',
+                '<ol><li>Enable AttackAssist.</li><li>Select a controlled linked 2014 character token.</li><li>Run <code>!Attack</code>.</li><li>Choose a verified repeating attack and point at a visible target.</li><li>Choose the sheet setting, normal, advantage, or disadvantage.</li></ol>',
+                '<h2>Targeting And Privacy</h2>',
+                '<p>Visible targets do not need to be controlled by the attacker. Hidden, GM-layer, and off-page placement uses a private request in <code>!Attack-Requests</code>.</p>',
+                '<h2>Safety Boundary</h2>',
+                '<p>One reviewed choice submits one roll. AttackAssist does not apply damage, write HP, spend ammunition or spell slots, change conditions or effects, move initiative, or manage turns.</p>',
+                '<h2>Commands</h2>',
+                '<ul><li><code>!Attack</code> or <code>!Attack-Menu</code> - start.</li><li><code>!Attack-GM</code> / <code>!Attack-DM</code> - private GM controls.</li><li><code>!Attack-Status</code> - concise health.</li><li><code>!Attack-Audit</code> - read-only row audit.</li><li><code>!Attack-Requests</code> - retained private placement requests.</li><li><code>!Attack-Players on|off</code> - allow or lock player starts.</li></ul>',
+                '<h2>Unsupported Sheets Or Rows</h2>',
+                '<p>The first adapter does not interpret the 2024 sheet, NPC action rows, or incomplete/custom roll formulas. Use the native sheet button for anything AttackAssist refuses.</p>'
+            ].join('');
+        }
+
+        function showManual(msg) {
+            if (!playerIsGm(msg.playerid)) {
+                return panel('AttackAssist Manual', [
+                    { label: 'Needs Attention', value: 'The campaign manual is created or updated only by the GM.' },
+                    { label: 'Continue', value: GameAssist.createButton('Open Quick Guide', '!Attack-Guide') }
+                ], msg);
+            }
+            const result = GameAssist.writeModuleManual(MODULE_NAME, manualHtml());
+            if (!result.ok) {
+                return panel('AttackAssist Manual', [
+                    { label: 'Needs Attention', value: _sanitize(result.message) },
+                    { label: 'Continue', value: GameAssist.createButton('Whisper Short Version', '!Attack-Info') }
+                ], msg, { gmOnly: true });
+            }
+            panel('AttackAssist Manual Ready', [
+                { label: 'Handout', value: result.link },
+                { label: 'Result', value: `${_sanitize(result.name)} was ${result.created ? 'created' : 'updated'}.` },
+                { label: 'Continue', value: `${GameAssist.createButton('Whisper Short Version', '!Attack-Info')} ${GameAssist.createButton('Start An Attack', '!Attack-Menu')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function showControl(msg, notice = '') {
+            pruneInteractions();
+            panel('AttackAssist GM Controls', [
+                ...(notice ? [{ label: 'Updated', value: _sanitize(notice) }] : []),
+                { label: 'Start', value: GameAssist.createButton('Choose Attacker And Attack', '!Attack-Menu') },
+                { label: 'Player Attacks', value: `${modState.config.allowPlayerAttacks === false ? 'Locked' : 'Allowed'} ${GameAssist.createButton(modState.config.allowPlayerAttacks === false ? 'Allow Players' : 'Lock Players', `!Attack-Players ${modState.config.allowPlayerAttacks === false ? 'on' : 'off'}`)}` },
+                { label: 'Review', value: `${GameAssist.createButton(`Pending Requests (${requests.size})`, '!Attack-Requests')} ${GameAssist.createButton('Status', '!Attack-Status')} ${GameAssist.createButton('Audit', '!Attack-Audit')}` },
+                { label: 'Help', value: `${GameAssist.createButton('Quick Guide', '!Attack-Guide')} ${GameAssist.createButton('Manual', '!Attack-Manual')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function commandAction(content) {
+            const text = String(content || '').trim();
+            let match = text.match(/^!attackassist-([^\s]+)/i) || text.match(/^!attack-([^\s]+)/i);
+            if (match) return String(match[1] || '').toLowerCase();
+            match = text.match(/^!attack(?:assist)?(?:\s+([^\s]+))?/i);
+            return String(match?.[1] || 'menu').toLowerCase();
+        }
+
+        function handleCommand(msg) {
+            const action = commandAction(msg.content);
+            const options = parseOptions(msg.content);
+            if (['menu', 'start', 'start-here'].includes(action)) return showSourcePicker(msg);
+            if (['guide', 'help'].includes(action)) return showGuide(msg);
+            if (['info', 'about'].includes(action)) return showInfo(msg);
+            if (action === 'status') return showStatus(msg);
+            if (action === 'attacks') {
+                const flowResult = resolveFlow(msg, options.flow, false);
+                return flowResult.ok
+                    ? showAttackPicker(msg, flowResult.source)
+                    : panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(flowResult.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Attack') }], msg);
+            }
+            if (action === 'target') {
+                const flowResult = resolveFlow(msg, options.flow, true);
+                return flowResult.ok
+                    ? showTargetPicker(msg, flowResult)
+                    : panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(flowResult.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Attack') }], msg);
+            }
+            if (action === 'review') return handleReview(msg, options);
+            if (action === 'request') return handleRequest(msg, options);
+            if (action === 'roll') return handleRoll(msg, options);
+            if (!playerIsGm(msg.playerid)) return showGuide(msg);
+            if (['gm', 'dm', 'control', 'controls'].includes(action)) return showControl(msg);
+            if (action === 'requests') return showRequests(msg);
+            if (action === 'request-dismiss') {
+                requests.delete(String(options.request || ''));
+                return showRequests(msg, 'The selected request was dismissed.');
+            }
+            if (action === 'players') {
+                const value = String(msg.content || '').trim().split(/\s+/).pop().toLowerCase();
+                if (!['on', 'off'].includes(value)) return showControl(msg, 'Choose whether player-guided attacks are on or off.');
+                modState.config.allowPlayerAttacks = value === 'on';
+                if (!modState.config.allowPlayerAttacks) {
+                    flows.clear();
+                    [...requests.entries()].filter(([, request]) => !playerIsGm(request.playerId)).forEach(([id]) => requests.delete(id));
+                    [...submissions.entries()].filter(([, submission]) => submission.requestedBy).forEach(([id]) => submissions.delete(id));
+                }
+                return showControl(msg, `Player-guided attacks turned ${value}.`);
+            }
+            if (action === 'audit') return showAudit(msg);
+            if (action === 'manual') return showManual(msg);
+            panel(MODULE_NAME, [
+                { label: 'Needs Attention', value: 'That AttackAssist command was not recognized.' },
+                { label: 'Next Step', value: `${GameAssist.createButton('Control Center', '!Attack-GM')} ${GameAssist.createButton('Open Guide', '!Attack-Guide')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        GameAssist.onCommand('!Attack', handleCommand, MODULE_NAME, { match: { caseInsensitive: true, mode: 'token' } });
+        GameAssist.onCommand('!Attack-', handleCommand, MODULE_NAME, { match: { caseInsensitive: true, mode: 'prefix' } });
+        GameAssist.onCommand('!AttackAssist-', handleCommand, MODULE_NAME, { match: { caseInsensitive: true, mode: 'prefix' } });
+
+        GameAssist.AttackAssist = Object.freeze({
+            version: MODULE_VERSION,
+            interactionSchemaVersion: INTERACTION_SCHEMA_VERSION,
+            getStatus: () => Object.freeze({
+                enabled: modState.config.enabled !== false,
+                allowPlayerAttacks: modState.config.allowPlayerAttacks !== false,
+                pendingFlows: (pruneInteractions(), flows.size),
+                pendingRequests: requests.size,
+                pendingSubmissions: submissions.size
+            }),
+            listAttacks: characterId => {
+                const character = getObj('character', String(characterId || ''));
+                return Object.freeze(attackRows(character).map(row => Object.freeze({ rowId: row.rowId, name: row.name, label: row.label, range: row.range, bonus: row.bonus })));
+            },
+            _clearTransient: () => {
+                flows.clear();
+                requests.clear();
+                submissions.clear();
+            }
+        });
+
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} ready: verified 2014 repeating attacks, native targeting, and one-use roll submission; the module starts disabled.`, 'INFO', { startup: true });
+    }, {
+        enabled: false,
+        prefixes: ['!Attack', '!Attack-', '!AttackAssist-'],
+        teardown: () => GameAssist.AttackAssist?._clearTransient?.()
+    });
+    // --- Notes & Comments ---
+    // Changed (v2.0.0): Added AttackAssist 1.0.0 with authorized official-2014 source selection, stable repeating-row identity, native visible targeting, retained private GM placement requests, sheet-setting and explicit roll modes, one-use submission, familiar official templates, and post-submission attacker/target announcements.
+    // Decision log:
+    //   CHOICE: Qualify the sheet-generated repeating-row rollbase and substitute the official roll-mode fragment - ALT: temporarily rewrite the character's rtype setting; REJECTED: a temporary sheet mutation can race with ordinary sheet clicks and other Mods.
+    //   CHOICE: Submit the roll as character|id - ALT: submit as AttackAssist; REJECTED: familiar character attribution and CritAssist's supported natural-1 observation require the character sender.
+    //   CHOICE: Use Roll20's target prompt for visible tokens without target control and retain hidden/off-page requests for the GM - ALT: expose raw hidden token lists to players; REJECTED: hidden identity and placement are GM information.
+    //   CHOICE: Consume one reviewed submission before sendChat and announce only from its callback - ALT: leave buttons reusable or announce before the roll; REJECTED: either path can produce duplicate or false attack announcements.
+    //   CHOICE: Leave damage, HP, resources, effects, conditions, initiative, and turns untouched - ALT: infer a full attack-resolution engine; REJECTED: those mechanics have separate owners and unresolved table-specific decisions.
+    // [GAMEASSIST:MODULES:ATTACKASSIST] END
+    // =============================================================================
+
+    // =============================================================================
+    // [GAMEASSIST:MODULES:ALMANACASSIST] BEGIN
+    // Section Title: AlmanacAssist fictional calendar and world time
+    // -------------------------------------------------------------------------
+    // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:ALMANACASSIST", title: "AlmanacAssist",
+    //   guarantees: ["Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Optional Almanac integrations improve context without becoming hidden prerequisites","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation"],
+    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
+    //   provides: ["GameAssist.AlmanacAssist"], last_updated_version: "v2.0.0",
+    //   independent_versions: { module_version: "1.1.0", time_state_schema_version: 1, wayfarer_draft_schema_version: 1, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 1, rest_state_schema_version: 1 }, lifecycle: "active" }
+    // -------------------------------------------------------------------------
+    // Narrative
+    // AlmanacAssist contains six independently toggleable internal submodules behind
+    // one compact router. Each works with manual context when a related enhancement is
+    // unavailable. Time and world descriptions never mutate gameplay automatically;
+    // RestAlmanac is the only sheet-writing surface and requires a fresh preview and
+    // confirmation against verified D&D 5E by Roll20 2014 attributes.
+    // -------------------------------------------------------------------------
+    GameAssist.register('AlmanacAssist', function() {
+        const MODULE_NAME = 'AlmanacAssist';
+        const MODULE_VERSION = '1.1.0';
+        const TIME_STATE_SCHEMA_VERSION = 1;
+        const WAYFARER_DRAFT_SCHEMA_VERSION = 1;
+        const CLIMATE_STATE_SCHEMA_VERSION = 1;
+        const ASTRONOMY_STATE_SCHEMA_VERSION = 1;
+        const WEATHER_STATE_SCHEMA_VERSION = 1;
+        const ENVIRONMENT_STATE_SCHEMA_VERSION = 1;
+        const REST_STATE_SCHEMA_VERSION = 1;
+        const MINUTES_PER_DAY = 24 * 60;
+        const DEFAULT_WORLD_MINUTE = 8 * 60;
+        const modState = GameAssist.getState(MODULE_NAME);
+
+        const STANDARD_MONTHS = Object.freeze([
+            ['January', 31, 'Winter'], ['February', 28, 'Winter'], ['March', 31, 'Spring'],
+            ['April', 30, 'Spring'], ['May', 31, 'Spring'], ['June', 30, 'Summer'],
+            ['July', 31, 'Summer'], ['August', 31, 'Summer'], ['September', 30, 'Autumn'],
+            ['October', 31, 'Autumn'], ['November', 30, 'Autumn'], ['December', 31, 'Winter']
+        ].map(([name, days, season]) => Object.freeze({ name, days, season })));
+        const SOLAMNIC_MONTHS = Object.freeze([
+            'Newkolt', 'Deepkolt', 'Brookgreen', 'Yurthgreen', 'Fleurgreen', 'Holmswelt',
+            'Fierswelt', 'Paleswelt', 'Reapember', 'Gildember', 'Darkember', 'Frostkolt'
+        ].map((name, index) => Object.freeze({
+            name,
+            days: 28,
+            season: index < 2 || index === 11 ? 'Winter' : (index < 5 ? 'Spring' : (index < 8 ? 'Summer' : 'Autumn'))
+        })));
+        const HARPTOS_MONTHS = Object.freeze([
+            ['Hammer', 'Deepwinter', 'Winter'], ['Alturiak', 'The Claw of Winter', 'Winter'],
+            ['Ches', 'The Claw of Sunsets', 'Spring'], ['Tarsakh', 'The Claw of Storms', 'Spring'],
+            ['Mirtul', 'The Melting', 'Spring'], ['Kythorn', 'The Time of Flowers', 'Summer'],
+            ['Flamerule', 'Summertide', 'Summer'], ['Eleasis', 'Highsun', 'Summer'],
+            ['Eleint', 'The Fading', 'Autumn'], ['Marpenoth', 'Leaffall', 'Autumn'],
+            ['Uktar', 'The Rotting', 'Autumn'], ['Nightal', 'The Drawing Down', 'Winter']
+        ].map(([name, commonName, season]) => Object.freeze({ name, commonName, days: 30, season })));
+        const HARPTOS_FESTIVALS = Object.freeze([
+            Object.freeze({ name: 'Midwinter', afterMonth: 0, season: 'Winter' }),
+            Object.freeze({ name: 'Greengrass', afterMonth: 3, season: 'Spring' }),
+            Object.freeze({ name: 'Midsummer', afterMonth: 6, season: 'Summer' }),
+            Object.freeze({ name: 'Shieldmeet', afterMonth: 6, season: 'Summer', leapOnly: true }),
+            Object.freeze({ name: 'Highharvestide', afterMonth: 8, season: 'Autumn' }),
+            Object.freeze({ name: 'Feast of the Moon', afterMonth: 10, season: 'Autumn' })
+        ]);
+        const DEFAULT_WAYFARER = Object.freeze({
+            name: 'Wayfarer',
+            weekdays: Object.freeze(['Firstday', 'Secondday', 'Thirdday', 'Fourthday', 'Fifthday', 'Sixthday', 'Seventhday']),
+            months: Object.freeze(Array.from({ length: 12 }, (_, index) => Object.freeze({
+                name: `Month ${index + 1}`,
+                days: 30,
+                season: index < 3 ? 'Winter' : (index < 6 ? 'Spring' : (index < 9 ? 'Summer' : 'Autumn'))
+            }))),
+            intercalary: Object.freeze([]),
+            holidays: Object.freeze([]),
+            leapEvery: 0,
+            leapName: 'Leap Day',
+            leapAfterMonth: 11
+        });
+        const WAYFARER_STAGES = Object.freeze(['identity', 'weekdays', 'months', 'intercalary', 'leap', 'holidays']);
+
+        const SUBMODULE_DEFAULTS = Object.freeze({
+            time: true,
+            climate: true,
+            astronomy: true,
+            weather: true,
+            environment: true,
+            rest: true
+        });
+        const CLIMATE_PROFILES = Object.freeze({
+            temperate: Object.freeze({ name: 'Temperate', temperatureF: 58, humidity: 55, precipitationChance: 35, windMph: 8, tags: ['temperate'] }),
+            arctic: Object.freeze({ name: 'Arctic', temperatureF: 12, humidity: 45, precipitationChance: 30, windMph: 14, tags: ['cold', 'arctic'] }),
+            desert: Object.freeze({ name: 'Desert', temperatureF: 88, humidity: 15, precipitationChance: 8, windMph: 10, tags: ['dry', 'desert'] }),
+            tropical: Object.freeze({ name: 'Tropical', temperatureF: 82, humidity: 82, precipitationChance: 60, windMph: 7, tags: ['humid', 'tropical'] }),
+            coastal: Object.freeze({ name: 'Coastal', temperatureF: 64, humidity: 70, precipitationChance: 45, windMph: 15, tags: ['coastal'] }),
+            mountain: Object.freeze({ name: 'Mountain', temperatureF: 42, humidity: 48, precipitationChance: 38, windMph: 18, tags: ['mountain', 'high-altitude'] }),
+            swamp: Object.freeze({ name: 'Swamp', temperatureF: 72, humidity: 90, precipitationChance: 55, windMph: 4, tags: ['humid', 'swamp'] })
+        });
+        const DEFAULT_MOONS = Object.freeze([
+            Object.freeze({ id: 'wayfarer-moon', name: 'Wayfarer Moon', cycleDays: 28, offsetDays: 0, phases: Object.freeze(['New', 'Waxing Crescent', 'First Quarter', 'Waxing Gibbous', 'Full', 'Waning Gibbous', 'Last Quarter', 'Waning Crescent']) })
+        ]);
+        const DEFAULT_RARE_EVENTS = Object.freeze([
+            Object.freeze({ id: 'falling-star', name: 'Falling Star', weight: 8 }),
+            Object.freeze({ id: 'lunar-halo', name: 'Lunar Halo', weight: 6 }),
+            Object.freeze({ id: 'aurora', name: 'Aurora', weight: 4 }),
+            Object.freeze({ id: 'meteor-shower', name: 'Meteor Shower', weight: 2 }),
+            Object.freeze({ id: 'visible-comet', name: 'Visible Comet', weight: 1 })
+        ]);
+        const ENVIRONMENT_PRESETS = Object.freeze({
+            clear: Object.freeze({ name: 'Clear Ground', visibility: 'Clear', temperature: 'Mild', precipitation: 'None', wind: 'Light', ground: 'Firm', water: 'Normal', exposure: 'Low', severity: 0, tags: ['clear'] }),
+            blizzard: Object.freeze({ name: 'Blizzard', visibility: 'Heavily obscured', temperature: 'Extreme cold', precipitation: 'Heavy snow', wind: 'Severe', ground: 'Deep snow and ice', water: 'Freezing', exposure: 'Extreme', severity: 4, tags: ['cold', 'snow', 'wind', 'obscured'] }),
+            desert: Object.freeze({ name: 'Desert Heat', visibility: 'Clear', temperature: 'Extreme heat', precipitation: 'None', wind: 'Dry gusts', ground: 'Loose sand', water: 'Scarce', exposure: 'Extreme', severity: 3, tags: ['heat', 'dry', 'desert'] }),
+            swamp: Object.freeze({ name: 'Sodden Swamp', visibility: 'Partly obscured', temperature: 'Warm', precipitation: 'Damp', wind: 'Light', ground: 'Waterlogged', water: 'Stagnant', exposure: 'Moderate', severity: 2, tags: ['swamp', 'mud', 'humid'] }),
+            underwater: Object.freeze({ name: 'Underwater', visibility: 'Limited', temperature: 'Cold', precipitation: 'Submerged', wind: 'None', ground: 'Submerged', water: 'Surrounding', exposure: 'Extreme', severity: 4, tags: ['underwater', 'swimming', 'obscured'] })
+        });
+
+        Object.assign(modState.config, {
+            enabled: false,
+            timeAlmanacEnabled: true,
+            submodules: copy(SUBMODULE_DEFAULTS),
+            profileId: 'standard',
+            wayfarer: JSON.parse(JSON.stringify(DEFAULT_WAYFARER)),
+            wayfarerDraft: null,
+            climate: {
+                activeRegionId: 'home',
+                manualSeason: 'Spring',
+                profileOverrides: {},
+                customProfiles: [],
+                regions: [{ id: 'home', name: 'Home Region', parentId: null, profileId: 'temperate', overrides: {} }]
+            },
+            astronomy: { manualAbsoluteDay: 0, manualSeason: 'Spring', moons: copy(DEFAULT_MOONS), rareEvents: copy(DEFAULT_RARE_EVENTS) },
+            weather: { defaultForecastDays: 3 },
+            environment: {},
+            rest: { advanceTime: true, extendedEnabled: false, customTypes: [] },
+            ...modState.config
+        });
+
+        function copy(value) {
+            return JSON.parse(JSON.stringify(value));
+        }
+
+        function boundedName(raw, fallback = '') {
+            const name = String(raw || '').trim().replace(/[|{}\[\],:]/g, ' ')
+                .replace(/\s+/g, ' ').slice(0, POLICY.almanac.maximumNameLength).trim();
+            return name || fallback;
+        }
+
+        function normalizeWayfarer(raw) {
+            const source = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+            const weekdaySource = Array.isArray(source.weekdays) ? source.weekdays : DEFAULT_WAYFARER.weekdays;
+            const weekdays = weekdaySource
+                .slice(0, POLICY.almanac.maximumWeekdays)
+                .map((name, index) => boundedName(name, `Day ${index + 1}`))
+                .filter(Boolean);
+            const monthSource = Array.isArray(source.months) ? source.months : DEFAULT_WAYFARER.months;
+            const months = monthSource.slice(0, POLICY.almanac.maximumMonths).map((month, index) => {
+                const item = month && typeof month === 'object' && !Array.isArray(month) ? month : {};
+                const days = Math.floor(Number(item.days));
+                return {
+                    name: boundedName(item.name, `Month ${index + 1}`),
+                    days: Number.isFinite(days) && days >= 1 && days <= POLICY.almanac.maximumDaysPerMonth ? days : 30,
+                    season: boundedName(item.season, 'Unspecified')
+                };
+            });
+            const intercalarySource = Array.isArray(source.intercalary) ? source.intercalary : [];
+            const intercalary = intercalarySource.slice(0, POLICY.almanac.maximumIntercalaryDays)
+                .map((day, index) => {
+                    const item = day && typeof day === 'object' && !Array.isArray(day) ? day : {};
+                    const afterMonth = Math.floor(Number(item.afterMonth));
+                    return {
+                        name: boundedName(item.name, `Festival ${index + 1}`),
+                        afterMonth: Number.isFinite(afterMonth) && afterMonth >= 0 && afterMonth < months.length
+                            ? afterMonth
+                            : Math.max(0, months.length - 1),
+                        season: boundedName(item.season, 'Unspecified')
+                    };
+                });
+            const holidaySource = Array.isArray(source.holidays) ? source.holidays : [];
+            const holidays = holidaySource.slice(0, POLICY.almanac.maximumHolidays).map((holiday, index) => {
+                const item = holiday && typeof holiday === 'object' && !Array.isArray(holiday) ? holiday : {};
+                const monthIndex = Math.floor(Number(item.monthIndex));
+                const safeMonthIndex = Number.isFinite(monthIndex) && monthIndex >= 0 && monthIndex < months.length ? monthIndex : 0;
+                const day = Math.floor(Number(item.day));
+                return {
+                    name: boundedName(item.name, `Holiday ${index + 1}`),
+                    monthIndex: safeMonthIndex,
+                    day: Number.isFinite(day) && day >= 1 && day <= months[safeMonthIndex].days ? day : 1
+                };
+            });
+            const leapEvery = Math.floor(Number(source.leapEvery));
+            const leapAfterMonth = Math.floor(Number(source.leapAfterMonth));
+            const normalized = {
+                name: boundedName(source.name, DEFAULT_WAYFARER.name),
+                weekdays: weekdays.length ? weekdays : copy(DEFAULT_WAYFARER.weekdays),
+                months: months.length ? months : copy(DEFAULT_WAYFARER.months),
+                intercalary,
+                holidays,
+                leapEvery: Number.isFinite(leapEvery) && leapEvery >= 2 && leapEvery <= 100 ? leapEvery : 0,
+                leapName: boundedName(source.leapName, DEFAULT_WAYFARER.leapName),
+                leapAfterMonth: Number.isFinite(leapAfterMonth) && leapAfterMonth >= 0 && leapAfterMonth < months.length
+                    ? leapAfterMonth
+                    : Math.max(0, months.length - 1)
+            };
+            const ordinaryDays = normalized.months.reduce((sum, month) => sum + month.days, 0);
+            const totalDays = ordinaryDays + normalized.intercalary.length + (normalized.leapEvery ? 1 : 0);
+            if (totalDays > POLICY.almanac.maximumDaysPerYear) return copy(DEFAULT_WAYFARER);
+            return normalized;
+        }
+
+        function wayfarerProfile(definition) {
+            const normalized = normalizeWayfarer(definition);
+            return {
+                id: 'wayfarer',
+                name: normalized.name,
+                weekdays: copy(normalized.weekdays),
+                months: copy(normalized.months),
+                intercalary: copy(normalized.intercalary),
+                holidays: copy(normalized.holidays),
+                leapEvery: normalized.leapEvery,
+                leapName: normalized.leapName,
+                leapAfterMonth: normalized.leapAfterMonth
+            };
+        }
+
+        /**
+         * inspectWayfarerDefinition -- Validate a draft without silently replacing it.
+         * Context: activation is atomic, so malformed draft work remains visible and the active calendar stays untouched.
+         * Inputs: one persisted or newly edited Wayfarer definition.
+         * Outputs: normalized definition plus plain-language errors.
+         * Invariants: this function never mutates configuration or fictional time.
+         */
+        function inspectWayfarerDefinition(raw) {
+            const source = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+            const errors = [];
+            const name = boundedName(source.name);
+            if (!name) errors.push('The calendar needs a name.');
+            if (!Array.isArray(source.weekdays) || !source.weekdays.length || source.weekdays.length > POLICY.almanac.maximumWeekdays) {
+                errors.push(`Choose 1-${POLICY.almanac.maximumWeekdays} weekday names.`);
+            }
+            if (!Array.isArray(source.months) || !source.months.length || source.months.length > POLICY.almanac.maximumMonths) {
+                errors.push(`Choose 1-${POLICY.almanac.maximumMonths} months.`);
+            }
+            const normalized = normalizeWayfarer(source);
+            const weekdayKeys = normalized.weekdays.map(value => value.toLowerCase());
+            if (new Set(weekdayKeys).size !== weekdayKeys.length) errors.push('Weekday names must be unique.');
+            const monthKeys = normalized.months.map(value => value.name.toLowerCase());
+            if (new Set(monthKeys).size !== monthKeys.length) errors.push('Month names must be unique.');
+            if ((Array.isArray(source.months) ? source.months : []).some(month => !month || !Number.isFinite(Number(month.days)) || Number(month.days) < 1 || Number(month.days) > POLICY.almanac.maximumDaysPerMonth)) {
+                errors.push(`Each month must contain 1-${POLICY.almanac.maximumDaysPerMonth} days.`);
+            }
+            if ((Array.isArray(source.intercalary) ? source.intercalary : []).some(day => !day || !Number.isInteger(Number(day.afterMonth)) || Number(day.afterMonth) < 0 || Number(day.afterMonth) >= normalized.months.length)) {
+                errors.push('Every festival day must follow one existing month.');
+            }
+            if ((Array.isArray(source.holidays) ? source.holidays : []).some(holiday => {
+                if (!holiday || !Number.isInteger(Number(holiday.monthIndex)) || !Number.isInteger(Number(holiday.day))) return true;
+                const month = normalized.months[Number(holiday.monthIndex)];
+                return !month || Number(holiday.day) < 1 || Number(holiday.day) > month.days;
+            })) errors.push('Every holiday must fall on a valid day in an existing month.');
+            const leapEvery = Number(source.leapEvery || 0);
+            if (leapEvery !== 0 && (!Number.isInteger(leapEvery) || leapEvery < 2 || leapEvery > 100)) errors.push('Leap frequency must be off or every 2-100 years.');
+            const rawOrdinaryDays = (Array.isArray(source.months) ? source.months : []).reduce((sum, month) => sum + (Number.isFinite(Number(month?.days)) ? Number(month.days) : 0), 0);
+            const rawTotalDays = rawOrdinaryDays + (Array.isArray(source.intercalary) ? source.intercalary.length : 0) + (leapEvery ? 1 : 0);
+            if (rawTotalDays > POLICY.almanac.maximumDaysPerYear) errors.push(`A leap year may not exceed ${POLICY.almanac.maximumDaysPerYear} days.`);
+            const totalDays = normalized.months.reduce((sum, month) => sum + month.days, 0)
+                + normalized.intercalary.length + (normalized.leapEvery ? 1 : 0);
+            return { ok: errors.length === 0, errors, definition: normalized, totalDays };
+        }
+
+        function normalizeWayfarerStart(raw, definition) {
+            const source = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+            const start = {
+                year: Math.floor(Number(source.year)),
+                period: String(source.period || '').trim(),
+                day: Math.floor(Number(source.day)),
+                hour: Math.floor(Number(source.hour)),
+                minute: Math.floor(Number(source.minute))
+            };
+            const profile = wayfarerProfile(definition);
+            if (minuteForDate(profile, start).ok) return start;
+            return { year: POLICY.almanac.minimumYear, period: profile.months[0].name, day: 1, hour: 8, minute: 0 };
+        }
+
+        function normalizeWayfarerDraft(raw) {
+            if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+            const definition = normalizeWayfarer(raw.definition);
+            const reviewedSource = raw.reviewed && typeof raw.reviewed === 'object' && !Array.isArray(raw.reviewed) ? raw.reviewed : {};
+            return {
+                schemaVersion: WAYFARER_DRAFT_SCHEMA_VERSION,
+                definition,
+                startDate: normalizeWayfarerStart(raw.startDate, definition),
+                reviewed: WAYFARER_STAGES.reduce((result, stage) => ({ ...result, [stage]: reviewedSource[stage] === true }), {}),
+                sourceProfileId: ['standard', 'solamnic', 'harptos', 'wayfarer'].includes(String(raw.sourceProfileId || '').toLowerCase())
+                    ? String(raw.sourceProfileId).toLowerCase()
+                    : 'wayfarer',
+                updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : null
+            };
+        }
+
+        function normalizeWayfarerBackup(raw) {
+            if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+            const profileId = String(raw.profileId || '').toLowerCase();
+            const worldMinute = Math.floor(Number(raw.worldMinute));
+            if (!['standard', 'solamnic', 'harptos', 'wayfarer'].includes(profileId) || !Number.isFinite(worldMinute) || worldMinute < 0) return null;
+            return {
+                definition: normalizeWayfarer(raw.definition),
+                profileId,
+                worldMinute,
+                createdAt: typeof raw.createdAt === 'string' ? raw.createdAt : null
+            };
+        }
+
+        modState.config.wayfarer = normalizeWayfarer(modState.config.wayfarer);
+        modState.config.wayfarerDraft = normalizeWayfarerDraft(modState.config.wayfarerDraft);
+        if (!['standard', 'solamnic', 'harptos', 'wayfarer'].includes(String(modState.config.profileId || '').toLowerCase())) {
+            modState.config.profileId = 'standard';
+        } else {
+            modState.config.profileId = String(modState.config.profileId).toLowerCase();
+        }
+        modState.config.timeAlmanacEnabled = modState.config.timeAlmanacEnabled !== false;
+        modState.config.submodules = {
+            ...copy(SUBMODULE_DEFAULTS),
+            ...(modState.config.submodules && typeof modState.config.submodules === 'object' && !Array.isArray(modState.config.submodules)
+                ? modState.config.submodules
+                : {})
+        };
+        modState.config.submodules.time = modState.config.timeAlmanacEnabled;
+        modState.config.climate = modState.config.climate && typeof modState.config.climate === 'object' && !Array.isArray(modState.config.climate)
+            ? modState.config.climate
+            : {};
+        modState.config.astronomy = modState.config.astronomy && typeof modState.config.astronomy === 'object' && !Array.isArray(modState.config.astronomy)
+            ? modState.config.astronomy
+            : {};
+        modState.config.weather = modState.config.weather && typeof modState.config.weather === 'object' && !Array.isArray(modState.config.weather)
+            ? modState.config.weather
+            : {};
+        modState.config.environment = modState.config.environment && typeof modState.config.environment === 'object' && !Array.isArray(modState.config.environment)
+            ? modState.config.environment
+            : {};
+        modState.config.rest = modState.config.rest && typeof modState.config.rest === 'object' && !Array.isArray(modState.config.rest)
+            ? modState.config.rest
+            : {};
+
+        function ensureAlmanacRuntime() {
+            const runtime = ensureRuntimeObject(modState);
+            if (!runtime.time || typeof runtime.time !== 'object' || Array.isArray(runtime.time)) runtime.time = {};
+            const worldMinute = Math.floor(Number(runtime.time.worldMinute));
+            runtime.time.worldMinute = Number.isFinite(worldMinute) && worldMinute >= 0 ? worldMinute : DEFAULT_WORLD_MINUTE;
+            const revision = Math.floor(Number(runtime.time.revision));
+            runtime.time.revision = Number.isFinite(revision) && revision >= 0 ? revision : 0;
+            runtime.time.schemaVersion = TIME_STATE_SCHEMA_VERSION;
+            runtime.time.updatedAt = typeof runtime.time.updatedAt === 'string' ? runtime.time.updatedAt : null;
+            runtime.time.wayfarerBackup = normalizeWayfarerBackup(runtime.time.wayfarerBackup);
+            runtime.history = Array.isArray(runtime.history) ? runtime.history.slice(-POLICY.almanac.historyLimit) : [];
+            if (!runtime.climate || typeof runtime.climate !== 'object' || Array.isArray(runtime.climate)) runtime.climate = {};
+            runtime.climate.schemaVersion = CLIMATE_STATE_SCHEMA_VERSION;
+            runtime.climate.revision = Math.max(0, Math.floor(Number(runtime.climate.revision) || 0));
+            if (!runtime.astronomy || typeof runtime.astronomy !== 'object' || Array.isArray(runtime.astronomy)) runtime.astronomy = {};
+            runtime.astronomy.schemaVersion = ASTRONOMY_STATE_SCHEMA_VERSION;
+            runtime.astronomy.rareHistory = Array.isArray(runtime.astronomy.rareHistory)
+                ? runtime.astronomy.rareHistory.slice(-POLICY.almanac.astronomyHistoryLimit)
+                : [];
+            if (!runtime.weather || typeof runtime.weather !== 'object' || Array.isArray(runtime.weather)) runtime.weather = {};
+            runtime.weather.schemaVersion = WEATHER_STATE_SCHEMA_VERSION;
+            runtime.weather.current = runtime.weather.current && typeof runtime.weather.current === 'object' && !Array.isArray(runtime.weather.current)
+                ? runtime.weather.current
+                : null;
+            runtime.weather.forecast = Array.isArray(runtime.weather.forecast)
+                ? runtime.weather.forecast.slice(0, POLICY.almanac.weatherForecastLimit)
+                : [];
+            runtime.weather.history = Array.isArray(runtime.weather.history)
+                ? runtime.weather.history.slice(-POLICY.almanac.weatherHistoryLimit)
+                : [];
+            runtime.weather.locked = runtime.weather.locked === true;
+            if (!runtime.environment || typeof runtime.environment !== 'object' || Array.isArray(runtime.environment)) runtime.environment = {};
+            runtime.environment.schemaVersion = ENVIRONMENT_STATE_SCHEMA_VERSION;
+            runtime.environment.override = runtime.environment.override && typeof runtime.environment.override === 'object' && !Array.isArray(runtime.environment.override)
+                ? runtime.environment.override
+                : null;
+            runtime.environment.current = runtime.environment.current && typeof runtime.environment.current === 'object' && !Array.isArray(runtime.environment.current)
+                ? runtime.environment.current
+                : null;
+            runtime.environment.history = Array.isArray(runtime.environment.history)
+                ? runtime.environment.history.slice(-POLICY.almanac.environmentHistoryLimit)
+                : [];
+            if (!runtime.rest || typeof runtime.rest !== 'object' || Array.isArray(runtime.rest)) runtime.rest = {};
+            runtime.rest.schemaVersion = REST_STATE_SCHEMA_VERSION;
+            runtime.rest.history = Array.isArray(runtime.rest.history)
+                ? runtime.rest.history.slice(-POLICY.almanac.restHistoryLimit)
+                : [];
+            runtime.rest.grants = runtime.rest.grants && typeof runtime.rest.grants === 'object' && !Array.isArray(runtime.rest.grants)
+                ? runtime.rest.grants
+                : {};
+            return runtime;
+        }
+
+        function submoduleEnabled(name) {
+            return modState.config.submodules?.[name] !== false;
+        }
+
+        function isLeapYear(profile, year) {
+            if (profile.id === 'standard') return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+            if (profile.id === 'harptos') return year % 4 === 0;
+            return Boolean(profile.leapEvery && year % profile.leapEvery === 0);
+        }
+
+        function profileFor(id = modState.config.profileId) {
+            const requested = String(id || '').toLowerCase();
+            if (requested === 'standard') {
+                return {
+                    id: 'standard', name: 'Standard', weekdays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+                    months: copy(STANDARD_MONTHS), intercalary: [], holidays: [], leapMonthIndex: 1
+                };
+            }
+            if (requested === 'solamnic') {
+                return {
+                    id: 'solamnic', name: 'Solamnic', weekdays: ['Linaras', 'Palast', 'Majetag', 'Kirinor', 'Misham', 'Bakukal', 'Bracha'],
+                    months: copy(SOLAMNIC_MONTHS), intercalary: [], holidays: []
+                };
+            }
+            if (requested === 'harptos') {
+                return {
+                    id: 'harptos', name: 'Harptos',
+                    weekdays: ['First Day', 'Second Day', 'Third Day', 'Fourth Day', 'Fifth Day', 'Sixth Day', 'Seventh Day', 'Eighth Day', 'Ninth Day', 'Tenday'],
+                    months: copy(HARPTOS_MONTHS), intercalary: copy(HARPTOS_FESTIVALS), holidays: [], leapEvery: 4
+                };
+            }
+            const wayfarer = normalizeWayfarer(modState.config.wayfarer);
+            return {
+                id: 'wayfarer', name: wayfarer.name, weekdays: copy(wayfarer.weekdays),
+                months: copy(wayfarer.months), intercalary: copy(wayfarer.intercalary),
+                holidays: copy(wayfarer.holidays),
+                leapEvery: wayfarer.leapEvery, leapName: wayfarer.leapName,
+                leapAfterMonth: wayfarer.leapAfterMonth
+            };
+        }
+
+        function definitionFromProfile(profileId) {
+            const profile = profileFor(profileId);
+            const annualIntercalary = (profile.intercalary || []).filter(day => day.leapOnly !== true).map(day => ({
+                name: day.name,
+                afterMonth: day.afterMonth,
+                season: day.season || 'Unspecified'
+            }));
+            let leapEvery = Number(profile.leapEvery || 0);
+            let leapName = profile.leapName || 'Leap Day';
+            let leapAfterMonth = Number.isInteger(profile.leapAfterMonth) ? profile.leapAfterMonth : Math.max(0, profile.months.length - 1);
+            if (profile.id === 'standard') {
+                leapEvery = 4;
+                leapName = 'Leap Day';
+                leapAfterMonth = 1;
+            } else if (profile.id === 'harptos') {
+                const leapFestival = (profile.intercalary || []).find(day => day.leapOnly === true);
+                leapName = leapFestival?.name || 'Shieldmeet';
+                leapAfterMonth = Number.isInteger(leapFestival?.afterMonth) ? leapFestival.afterMonth : 6;
+            }
+            return normalizeWayfarer({
+                name: profile.id === 'wayfarer' ? profile.name : `${profile.name} Copy`,
+                weekdays: profile.weekdays,
+                months: profile.months.map(month => ({ name: month.name, days: month.days, season: month.season || 'Unspecified' })),
+                intercalary: annualIntercalary,
+                holidays: profile.holidays || [],
+                leapEvery,
+                leapName,
+                leapAfterMonth
+            });
+        }
+
+        function startingDateForDefinition(definition) {
+            const current = resolveWorldMinute(wayfarerProfile(definition), ensureAlmanacRuntime().time.worldMinute);
+            return current
+                ? { year: current.year, period: current.periodName, day: current.day, hour: current.hour, minute: current.minute }
+                : { year: POLICY.almanac.minimumYear, period: definition.months[0].name, day: 1, hour: 8, minute: 0 };
+        }
+
+        function createWayfarerDraft(profileId = 'wayfarer', reviewed = false) {
+            const definition = definitionFromProfile(profileId);
+            return {
+                schemaVersion: WAYFARER_DRAFT_SCHEMA_VERSION,
+                definition,
+                startDate: startingDateForDefinition(definition),
+                reviewed: WAYFARER_STAGES.reduce((result, stage) => ({ ...result, [stage]: reviewed }), {}),
+                sourceProfileId: profileId,
+                updatedAt: isoNow()
+            };
+        }
+
+        function ensureWayfarerDraft() {
+            const existing = normalizeWayfarerDraft(modState.config.wayfarerDraft);
+            if (existing) {
+                modState.config.wayfarerDraft = existing;
+                return existing;
+            }
+            const created = createWayfarerDraft('wayfarer', false);
+            modState.config.wayfarerDraft = created;
+            return created;
+        }
+
+        function wayfarerDraftStatus(draft = ensureWayfarerDraft()) {
+            const inspection = inspectWayfarerDefinition(draft.definition);
+            const startResult = minuteForDate(wayfarerProfile(inspection.definition), draft.startDate);
+            const reviewedCount = WAYFARER_STAGES.filter(stage => draft.reviewed?.[stage] === true).length;
+            const errors = inspection.errors.slice();
+            if (!startResult.ok) errors.push(`Starting date: ${startResult.message}`);
+            return {
+                ...inspection,
+                ok: errors.length === 0,
+                errors,
+                startResult,
+                reviewedCount,
+                complete: errors.length === 0 && reviewedCount === WAYFARER_STAGES.length
+            };
+        }
+
+        function draftMatchesActive(draft = ensureWayfarerDraft()) {
+            return JSON.stringify(normalizeWayfarer(draft.definition)) === JSON.stringify(normalizeWayfarer(modState.config.wayfarer));
+        }
+
+        function periodsForYear(profile, year) {
+            const leap = isLeapYear(profile, year);
+            const intercalary = copy(profile.intercalary || []);
+            if (profile.id === 'wayfarer' && leap && profile.leapEvery) {
+                intercalary.push({
+                    name: profile.leapName,
+                    afterMonth: profile.leapAfterMonth,
+                    season: 'Unspecified',
+                    generatedLeap: true
+                });
+            }
+            const periods = [];
+            profile.months.forEach((month, index) => {
+                const days = month.days + (profile.leapMonthIndex === index && leap ? 1 : 0);
+                periods.push({ kind: 'month', monthIndex: index, name: month.name, commonName: month.commonName || '', days, season: month.season || 'Unspecified' });
+                intercalary.filter(day => day.afterMonth === index && (!day.leapOnly || leap)).forEach(day => {
+                    periods.push({ kind: 'intercalary', monthIndex: index, name: day.name, commonName: '', days: 1, season: day.season || month.season || 'Unspecified' });
+                });
+            });
+            return periods;
+        }
+
+        function daysInYear(profile, year) {
+            return periodsForYear(profile, year).reduce((sum, period) => sum + period.days, 0);
+        }
+
+        function daysBeforeYear(profile, year) {
+            let total = 0;
+            for (let current = POLICY.almanac.minimumYear; current < year; current++) total += daysInYear(profile, current);
+            return total;
+        }
+
+        function maximumWorldMinute(profile) {
+            return daysBeforeYear(profile, POLICY.almanac.maximumYear + 1) * MINUTES_PER_DAY - 1;
+        }
+
+        function resolveWorldMinute(profile, worldMinute) {
+            const minute = Math.floor(Number(worldMinute));
+            if (!Number.isFinite(minute) || minute < 0 || minute > maximumWorldMinute(profile)) return null;
+            const absoluteDay = Math.floor(minute / MINUTES_PER_DAY);
+            const minuteOfDay = minute % MINUTES_PER_DAY;
+            let remaining = absoluteDay;
+            let year = POLICY.almanac.minimumYear;
+            while (year <= POLICY.almanac.maximumYear) {
+                const yearDays = daysInYear(profile, year);
+                if (remaining < yearDays) break;
+                remaining -= yearDays;
+                year++;
+            }
+            if (year > POLICY.almanac.maximumYear) return null;
+            const periods = periodsForYear(profile, year);
+            let period = periods[0];
+            let periodIndex = 0;
+            for (let index = 0; index < periods.length; index++) {
+                if (remaining < periods[index].days) {
+                    period = periods[index];
+                    periodIndex = index;
+                    break;
+                }
+                remaining -= periods[index].days;
+            }
+            const day = remaining + 1;
+            const weekdayIndex = profile.id === 'harptos' && period.kind === 'month'
+                ? (day - 1) % profile.weekdays.length
+                : absoluteDay % profile.weekdays.length;
+            const weekday = period.kind === 'intercalary' ? 'Festival Day' : profile.weekdays[weekdayIndex];
+            const holidays = period.kind === 'month'
+                ? (profile.holidays || []).filter(holiday => holiday.monthIndex === period.monthIndex && holiday.day === day).map(holiday => holiday.name)
+                : [];
+            return {
+                profileId: profile.id,
+                calendarName: profile.name,
+                worldMinute: minute,
+                absoluteDay,
+                year,
+                periodIndex,
+                periodKind: period.kind,
+                periodName: period.name,
+                commonName: period.commonName,
+                day,
+                weekday,
+                holidays,
+                season: period.season,
+                hour: Math.floor(minuteOfDay / 60),
+                minute: minuteOfDay % 60,
+                leapYear: isLeapYear(profile, year)
+            };
+        }
+
+        function minuteForDate(profile, request) {
+            const year = Math.floor(Number(request.year));
+            const day = Math.floor(Number(request.day));
+            const hour = Math.floor(Number(request.hour));
+            const minute = Math.floor(Number(request.minute));
+            if (!Number.isFinite(year) || year < POLICY.almanac.minimumYear || year > POLICY.almanac.maximumYear) {
+                return { ok: false, message: `Year must be ${POLICY.almanac.minimumYear}-${POLICY.almanac.maximumYear}.` };
+            }
+            if (!Number.isFinite(hour) || hour < 0 || hour > 23 || !Number.isFinite(minute) || minute < 0 || minute > 59) {
+                return { ok: false, message: 'Hour must be 0-23 and minute must be 0-59.' };
+            }
+            const periods = periodsForYear(profile, year);
+            const requestedPeriod = String(request.period || '').trim();
+            let periodIndex = /^\d+$/.test(requestedPeriod) ? Number(requestedPeriod) - 1 : -1;
+            if (periodIndex < 0 || periodIndex >= periods.length) {
+                periodIndex = periods.findIndex(period => period.name.toLowerCase() === requestedPeriod.toLowerCase());
+            }
+            if (periodIndex < 0) return { ok: false, message: `Period "${requestedPeriod || '(blank)'}" is not in ${profile.name}.` };
+            const period = periods[periodIndex];
+            if (!Number.isFinite(day) || day < 1 || day > period.days) {
+                return { ok: false, message: `${period.name} accepts day 1-${period.days}.` };
+            }
+            const priorPeriodDays = periods.slice(0, periodIndex).reduce((sum, item) => sum + item.days, 0);
+            const absoluteDay = daysBeforeYear(profile, year) + priorPeriodDays + day - 1;
+            return { ok: true, worldMinute: absoluteDay * MINUTES_PER_DAY + hour * 60 + minute };
+        }
+
+        function displayTime(value) {
+            const hour = value.hour % 12 || 12;
+            return `${hour}:${String(value.minute).padStart(2, '0')} ${value.hour >= 12 ? 'PM' : 'AM'}`;
+        }
+
+        function displayDate(value) {
+            if (value.periodKind === 'intercalary') return `${value.periodName}, Year ${value.year}`;
+            const common = value.commonName ? ` (${value.commonName})` : '';
+            return `${value.weekday}, ${value.day} ${value.periodName}${common}, Year ${value.year}`;
+        }
+
+        function displayMoment(value) {
+            return `${displayDate(value)} at ${displayTime(value)}`;
+        }
+
+        function currentMoment() {
+            const runtime = ensureAlmanacRuntime();
+            return resolveWorldMinute(profileFor(), runtime.time.worldMinute);
+        }
+
+        function safeWho(msg) {
+            const player = getObj('player', msg?.playerid);
+            return String(player?.get('_displayname') || msg?.who || 'gm').replace(/["\\]/g, '').trim() || 'gm';
+        }
+
+        function whisperPrefix(msg) {
+            return playerIsGM(msg?.playerid) ? '/w gm ' : `/w "${safeWho(msg)}" `;
+        }
+
+        function sendPanel(msg, title, fields, { publicMessage = false } = {}) {
+            const rows = fields.map(field => `{{${_sanitize(field.label)}=${field.value}}}`).join(' ');
+            sendChat(MODULE_NAME, `${publicMessage ? '' : whisperPrefix(msg)}&{template:default} {{name=${_sanitize(title)}}} ${rows}`);
+        }
+
+        function requireGm(msg) {
+            if (playerIsGM(msg?.playerid)) return true;
+            sendPanel(msg, 'AlmanacAssist', [
+                { label: 'Game Master Action', value: 'Only the GM can change fictional world time or calendar configuration.' },
+                { label: 'Available', value: `${GameAssist.createButton('Current Date', '!date')} ${GameAssist.createButton('Current Time', '!time')}` }
+            ]);
+            return false;
+        }
+
+        function timeAvailable() {
+            return modState.config.enabled !== false
+                && modState.config.timeAlmanacEnabled !== false
+                && submoduleEnabled('time');
+        }
+
+        function publishChange(type, previous, current, details, msg) {
+            return GameAssist.SemanticEvents.publish(type, MODULE_NAME, {
+                timeStateSchemaVersion: TIME_STATE_SCHEMA_VERSION,
+                revision: ensureAlmanacRuntime().time.revision,
+                actorId: String(msg?.playerid || 'api'),
+                previous: previous ? copy(previous) : null,
+                current: current ? copy(current) : null,
+                details: copy(details || {})
+            });
+        }
+
+        function commitWorldMinute(nextMinute, reason, msg) {
+            const runtime = ensureAlmanacRuntime();
+            const profile = profileFor();
+            const previous = resolveWorldMinute(profile, runtime.time.worldMinute);
+            const current = resolveWorldMinute(profile, nextMinute);
+            if (!current) return { ok: false, message: 'That change falls outside the supported fictional calendar range.' };
+            if (previous && previous.worldMinute === current.worldMinute) return { ok: false, message: 'The requested time is already current.' };
+            runtime.time.worldMinute = current.worldMinute;
+            runtime.time.revision += 1;
+            runtime.time.updatedAt = isoNow();
+            runtime.history.push({
+                revision: runtime.time.revision,
+                committedAt: runtime.time.updatedAt,
+                actorId: String(msg?.playerid || 'api'),
+                reason: String(reason || 'World time changed').slice(0, 120),
+                previousWorldMinute: previous?.worldMinute ?? null,
+                currentWorldMinute: current.worldMinute,
+                profileId: profile.id
+            });
+            if (runtime.history.length > POLICY.almanac.historyLimit) {
+                runtime.history.splice(0, runtime.history.length - POLICY.almanac.historyLimit);
+            }
+            publishChange('almanac.time.changed', previous, current, {
+                reason,
+                deltaMinutes: previous ? current.worldMinute - previous.worldMinute : null
+            }, msg);
+            GameAssist.recordMetric('almanac_time_change', { mod: MODULE_NAME, note: reason });
+            return { ok: true, previous, current, revision: runtime.time.revision };
+        }
+
+        function showCurrent(msg, focus = 'both') {
+            if (!timeAvailable()) {
+                sendPanel(msg, 'AlmanacAssist', [
+                    { label: 'TimeAlmanac', value: 'Currently turned off. Stored fictional time has been preserved.' },
+                    { label: 'Next Step', value: playerIsGM(msg?.playerid) ? GameAssist.createButton('Open Almanac', '!Almanac-GM') : 'Ask the GM to enable TimeAlmanac.' }
+                ]);
+                return;
+            }
+            const moment = currentMoment();
+            const fields = [];
+            if (focus !== 'time') fields.push({ label: 'Date', value: _sanitize(displayDate(moment)) });
+            if (focus !== 'date') fields.push({ label: 'Time', value: _sanitize(displayTime(moment)) });
+            fields.push({ label: 'Season', value: _sanitize(moment.season) });
+            if (moment.holidays?.length) fields.push({ label: 'Holiday', value: moment.holidays.map(_sanitize).join(', ') });
+            fields.push({ label: 'Calendar', value: _sanitize(moment.calendarName) });
+            if (playerIsGM(msg?.playerid)) fields.push({ label: 'Actions', value: `${GameAssist.createButton('Advance Time', '!aa-time menu')} ${GameAssist.createButton('Open Almanac', '!Almanac-GM')}` });
+            sendPanel(msg, 'Campaign Date and Time', fields);
+        }
+
+        function showMaster(msg) {
+            if (!playerIsGM(msg?.playerid)) return showCurrent(msg);
+            const moment = currentMoment();
+            sendPanel(msg, 'AlmanacAssist', [
+                { label: 'Current World Time', value: timeAvailable() ? _sanitize(displayMoment(moment)) : 'TimeAlmanac is turned off; chronology is preserved.' },
+                { label: 'World Clock', value: `${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('Wayfarer Setup', '!aa-wayfarer')} ${GameAssist.createButton('Advance Time', '!aa-time menu')} ${GameAssist.createButton('Set Date and Time', `!aa-time set --year ?{Year|${moment.year}} --period ?{Period name or number|${moment.periodName}} --day ?{Day|${moment.day}} --hour ?{Hour 0-23|${moment.hour}} --minute ?{Minute 0-59|${moment.minute}} --confirm ?{Set this fictional date and time?|No,no|Yes,yes}`)}` },
+                { label: 'World Context', value: `${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Astronomy', '!astro')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Environment', '!enviro')}` },
+                { label: 'Recovery', value: GameAssist.createButton('Rest', '!rest') },
+                { label: 'TimeAlmanac', value: `${modState.config.timeAlmanacEnabled ? 'On' : 'Off'} ${GameAssist.createButton(modState.config.timeAlmanacEnabled ? 'Turn Off' : 'Turn On', `!aa-time ${modState.config.timeAlmanacEnabled ? 'off' : 'on'}`)}` },
+                { label: 'Review and Setup', value: `${GameAssist.createButton('Systems', '!Almanac-Systems')} ${GameAssist.createButton('Status', '!Almanac-Status')} ${GameAssist.createButton('Audit', '!Almanac-Audit')} ${GameAssist.createButton('Guide', '!Almanac-Guide')} ${GameAssist.createButton('Manual', '!Almanac-Manual')}` }
+            ]);
+        }
+
+        function showSystems(msg) {
+            if (!requireGm(msg)) return;
+            const systems = [
+                ['Time', 'time', modState.config.timeAlmanacEnabled !== false],
+                ['Climate', 'climate', submoduleEnabled('climate')],
+                ['Astronomy', 'astro', submoduleEnabled('astronomy')],
+                ['Weather', 'weather', submoduleEnabled('weather')],
+                ['Environment', 'enviro', submoduleEnabled('environment')],
+                ['Rest', 'rest', submoduleEnabled('rest')]
+            ];
+            sendPanel(msg, 'Almanac Systems', [
+                ...systems.map(([name, route, enabled]) => ({
+                    label: name,
+                    value: `${enabled ? 'On' : 'Off'} ${GameAssist.createButton(enabled ? 'Turn Off' : 'Turn On', `!aa-${route} ${enabled ? 'off' : 'on'}`)}`
+                })),
+                { label: 'How This Works', value: 'Each system keeps its valid settings and history when turned off. Other Almanac systems continue independently.' },
+                { label: 'Return', value: GameAssist.createButton('Almanac', '!Almanac-GM') }
+            ]);
+        }
+
+        function showTimeMenu(msg) {
+            if (!requireGm(msg)) return;
+            const moment = currentMoment();
+            sendPanel(msg, 'Advance Fictional Time', [
+                { label: 'Current', value: _sanitize(displayMoment(moment)) },
+                { label: 'Quick Advance', value: `${GameAssist.createButton('+10 Minutes', '!aa-time advance --minutes 10')} ${GameAssist.createButton('+1 Hour', '!aa-time advance --hours 1')} ${GameAssist.createButton('+8 Hours', '!aa-time advance --hours 8')} ${GameAssist.createButton('+1 Day', '!aa-time advance --days 1')}` },
+                { label: 'Custom Advance', value: GameAssist.createButton('Choose Amount', '!aa-time advance --days ?{Days|0} --hours ?{Hours|0} --minutes ?{Minutes|0}') },
+                { label: 'Move Backward', value: GameAssist.createButton('Choose Amount', '!aa-time retreat --days ?{Days|0} --hours ?{Hours|0} --minutes ?{Minutes|0} --confirm ?{Moving time backward never reverses rests, effects, combat, or history. Continue?|No,no|Yes,yes}') },
+                { label: 'Set Exact Moment', value: GameAssist.createButton('Set Date and Time', `!aa-time set --year ?{Year|${moment.year}} --period ?{Period name or number|${moment.periodName}} --day ?{Day|${moment.day}} --hour ?{Hour 0-23|${moment.hour}} --minute ?{Minute 0-59|${moment.minute}} --confirm ?{Set this fictional date and time?|No,no|Yes,yes}`) },
+                { label: 'Return', value: GameAssist.createButton('Almanac', '!Almanac-GM') }
+            ]);
+        }
+
+        function showCalendarMenu(msg) {
+            const current = profileFor();
+            const profiles = ['standard', 'solamnic', 'harptos', 'wayfarer'];
+            const buttons = profiles.map(id => {
+                const profile = profileFor(id);
+                if (id === current.id) return `<strong>${_sanitize(profile.name)}</strong>`;
+                if (!playerIsGM(msg?.playerid)) return _sanitize(profile.name);
+                return GameAssist.createButton(profile.name, `!aa-time profile ${id} --confirm ?{Change the calendar display to ${profile.name}? Elapsed fictional time is preserved.|No,no|Yes,yes}`);
+            }).join(' ');
+            const moment = currentMoment();
+            const fields = [
+                { label: 'Current Calendar', value: _sanitize(current.name) },
+                { label: 'Current Date', value: _sanitize(displayDate(moment)) },
+                { label: 'Available Calendars', value: buttons }
+            ];
+            if (playerIsGM(msg?.playerid)) fields.push({ label: 'Custom Calendar', value: GameAssist.createButton('Open Wayfarer Setup', '!aa-wayfarer') });
+            fields.push({ label: 'Return', value: GameAssist.createButton(playerIsGM(msg?.playerid) ? 'Almanac' : 'Current Date', playerIsGM(msg?.playerid) ? '!Almanac-GM' : '!date') });
+            sendPanel(msg, 'Campaign Calendar', fields);
+        }
+
+        function formatWayfarerStart(startDate) {
+            return `${_sanitize(startDate.period)} ${startDate.day}, Year ${startDate.year} at ${String(startDate.hour).padStart(2, '0')}:${String(startDate.minute).padStart(2, '0')}`;
+        }
+
+        function wayfarerOverview(draft) {
+            const definition = draft.definition;
+            const ordinaryDays = definition.months.reduce((sum, month) => sum + month.days, 0);
+            const leapSuffix = definition.leapEvery ? `; leap day every ${definition.leapEvery} years` : '; no leap day';
+            return `${_sanitize(definition.name)} | ${definition.weekdays.length}-day week | ${definition.months.length} months | ${ordinaryDays + definition.intercalary.length} ordinary-year days${leapSuffix}`;
+        }
+
+        function wayfarerStageControls(stage) {
+            const index = WAYFARER_STAGES.indexOf(stage);
+            const previous = index > 0 ? WAYFARER_STAGES[index - 1] : null;
+            const next = index < WAYFARER_STAGES.length - 1 ? WAYFARER_STAGES[index + 1] : 'review';
+            return `${previous ? GameAssist.createButton('Back', `!aa-wayfarer stage ${previous}`) : GameAssist.createButton('Setup Home', '!aa-wayfarer')} ${GameAssist.createButton('Cancel Draft', '!aa-wayfarer cancel --confirm ?{Discard this saved draft?|No,no|Yes,yes}')} ${GameAssist.createButton('Save Draft', '!aa-wayfarer save')} ${GameAssist.createButton(next === 'review' ? 'Review Draft' : 'Continue', `!aa-wayfarer stage ${next} --review ${stage}`)}`;
+        }
+
+        function showWayfarer(msg) {
+            if (!requireGm(msg)) return;
+            const draft = ensureWayfarerDraft();
+            const status = wayfarerDraftStatus(draft);
+            const active = profileFor();
+            const current = currentMoment();
+            const nextStage = WAYFARER_STAGES.find(stage => draft.reviewed?.[stage] !== true) || 'review';
+            const backup = normalizeWayfarerBackup(ensureAlmanacRuntime().time.wayfarerBackup);
+            sendPanel(msg, 'Wayfarer Setup', [
+                { label: 'Active Calendar', value: `${_sanitize(active.name)}${active.id === 'wayfarer' ? ' (Wayfarer)' : ''}` },
+                { label: 'Current Fictional Date', value: current ? _sanitize(displayMoment(current)) : 'Unavailable' },
+                { label: 'Saved Draft', value: `${wayfarerOverview(draft)}<br>${status.reviewedCount}/${WAYFARER_STAGES.length} setup stages reviewed | ${draftMatchesActive(draft) ? 'matches the saved Wayfarer definition' : 'kept separate from the active calendar'}` },
+                { label: 'Build Or Continue', value: `${GameAssist.createButton(status.reviewedCount ? 'Continue Setup' : 'Begin Setup', `!aa-wayfarer stage ${nextStage}`)} ${GameAssist.createButton('Preview Draft', '!aa-wayfarer preview')} ${GameAssist.createButton('Review and Activate', '!aa-wayfarer stage review')}` },
+                { label: 'Start From A Copy', value: `${GameAssist.createButton('Standard', '!aa-wayfarer duplicate --profile standard --confirm ?{Replace the saved draft with a Standard calendar copy? The active calendar will not change.|No,no|Yes,yes}')} ${GameAssist.createButton('Solamnic', '!aa-wayfarer duplicate --profile solamnic --confirm ?{Replace the saved draft with a Solamnic calendar copy? The active calendar will not change.|No,no|Yes,yes}')} ${GameAssist.createButton('Harptos', '!aa-wayfarer duplicate --profile harptos --confirm ?{Replace the saved draft with a Harptos calendar copy? The active calendar will not change.|No,no|Yes,yes}')} ${GameAssist.createButton(active.id === 'wayfarer' ? 'Active Wayfarer' : 'Saved Wayfarer', '!aa-wayfarer duplicate --profile wayfarer --confirm ?{Replace the saved draft with the saved Wayfarer definition? The active calendar will not change.|No,no|Yes,yes}')}` },
+                { label: 'Draft Controls', value: `${GameAssist.createButton('Cancel Draft', '!aa-wayfarer cancel --confirm ?{Discard the saved draft and begin again from the saved Wayfarer definition?|No,no|Yes,yes}')} ${backup ? GameAssist.createButton('Restore Previous Activation', '!aa-wayfarer restore --confirm ?{Restore the calendar and fictional time saved before the latest Wayfarer activation?|No,no|Yes,yes}') : ''}` },
+                { label: 'Learn', value: `${GameAssist.createButton('Wayfarer Instructions', '!Almanac-Manual')} ${GameAssist.createButton('Calendar Menu', '!cal')}` }
+            ]);
+        }
+
+        function showWayfarerStage(msg, requestedStage) {
+            if (!requireGm(msg)) return;
+            const stage = requestedStage === 'review' ? 'review' : (WAYFARER_STAGES.includes(requestedStage) ? requestedStage : 'identity');
+            const draft = ensureWayfarerDraft();
+            const definition = draft.definition;
+            if (stage === 'review') return showWayfarerPreview(msg, true);
+            const fields = [
+                { label: 'Setup Progress', value: `${wayfarerDraftStatus(draft).reviewedCount}/${WAYFARER_STAGES.length} stages reviewed` },
+                { label: 'Draft Preview', value: wayfarerOverview(draft) }
+            ];
+            if (stage === 'identity') {
+                fields.push(
+                    { label: '1. Calendar Name', value: `${_sanitize(definition.name)} ${GameAssist.createButton('Change Name', `!aa-wayfarer name --value "?{Calendar name|${definition.name}}"`)}` },
+                    { label: 'Starting Date', value: `${formatWayfarerStart(draft.startDate)}<br>${GameAssist.createButton('Change Starting Date', `!aa-wayfarer start --year ?{Starting year|${draft.startDate.year}} --period "?{Starting month or festival|${draft.startDate.period}}" --day ?{Starting day|${draft.startDate.day}} --hour ?{Starting hour 0-23|${draft.startDate.hour}} --minute ?{Starting minute 0-59|${draft.startDate.minute}}`)}` },
+                    { label: 'What This Means', value: modState.config.profileId === 'wayfarer' ? 'Editing the active Wayfarer calendar preserves the current elapsed fictional time. This starting date is used only when a new activation must deliberately reset time.' : 'The first activation begins at this fictional date. The currently active calendar is unchanged while you edit.' }
+                );
+            } else if (stage === 'weekdays') {
+                fields.push(
+                    { label: '2. Weekdays', value: _sanitize(definition.weekdays.map((name, index) => `${index + 1}. ${name}`).join(' | ')) },
+                    { label: 'Change The Week', value: GameAssist.createButton('Replace Weekday Names', `!aa-wayfarer weekdays --value "?{Weekday names separated by commas|${definition.weekdays.join(',')}}"`) },
+                    { label: 'Example', value: 'Moonday, Towerday, Marketday, Hearthday, Starday' }
+                );
+            } else if (stage === 'months') {
+                fields.push(
+                    { label: '3. Months', value: definition.months.map((month, index) => `${index + 1}. ${_sanitize(month.name)} (${month.days} days)`).join('<br>') },
+                    { label: 'Change The Year', value: GameAssist.createButton('Replace Months', `!aa-wayfarer months --value "?{Use Name:Days entries separated by commas|${definition.months.map(month => `${month.name}:${month.days}`).join(',')}}"`) },
+                    { label: 'Example', value: 'Deepwinter:31, Thawrise:27, Highsun:35' }
+                );
+            } else if (stage === 'intercalary') {
+                fields.push(
+                    { label: '4. Festival Days', value: definition.intercalary.length ? definition.intercalary.map(day => `${_sanitize(day.name)} after ${_sanitize(definition.months[day.afterMonth]?.name || `month ${day.afterMonth + 1}`)}`).join('<br>') : 'None' },
+                    { label: 'Change Festival Days', value: GameAssist.createButton('Replace Festival Days', `!aa-wayfarer intercalary --value "?{Use Name:AfterMonthNumber entries separated by commas; leave blank for none|${definition.intercalary.map(day => `${day.name}:${day.afterMonth + 1}`).join(',')}}"`) },
+                    { label: 'What They Are', value: 'Festival days sit between months and do not use an ordinary weekday name.' }
+                );
+            } else if (stage === 'leap') {
+                fields.push(
+                    { label: '5. Leap Rule', value: definition.leapEvery ? `${_sanitize(definition.leapName)} follows ${_sanitize(definition.months[definition.leapAfterMonth]?.name)} every ${definition.leapEvery} years.` : 'Off' },
+                    { label: 'Change Leap Rule', value: GameAssist.createButton('Configure Leap Day', `!aa-wayfarer leap --every ?{Every how many years? Use 0 for off|${definition.leapEvery}} --name "?{Leap day name|${definition.leapName}}" --after ?{After month number|${definition.leapAfterMonth + 1}}`) },
+                    { label: 'Example', value: 'Every 4 years adds one named day after the chosen month.' }
+                );
+            } else if (stage === 'holidays') {
+                fields.push(
+                    { label: '6. Holidays', value: definition.holidays.length ? definition.holidays.map(holiday => `${_sanitize(holiday.name)}: ${_sanitize(definition.months[holiday.monthIndex]?.name)} ${holiday.day}`).join('<br>') : 'None' },
+                    { label: 'Change Holidays', value: GameAssist.createButton('Replace Holidays', `!aa-wayfarer holidays --value "?{Use Name:MonthNumber:Day entries separated by commas; leave blank for none|${definition.holidays.map(holiday => `${holiday.name}:${holiday.monthIndex + 1}:${holiday.day}`).join(',')}}"`) },
+                    { label: 'What They Are', value: 'Holidays name an ordinary date. They do not add an extra day to the year.' }
+                );
+            }
+            fields.push({ label: 'Navigation', value: wayfarerStageControls(stage) });
+            sendPanel(msg, `Wayfarer Setup: ${stage === 'identity' ? 'Name and Starting Date' : stage[0].toUpperCase() + stage.slice(1)}`, fields);
+        }
+
+        function showWayfarerPreview(msg, activationReview = false) {
+            if (!requireGm(msg)) return;
+            const draft = ensureWayfarerDraft();
+            const status = wayfarerDraftStatus(draft);
+            const definition = status.definition;
+            const sample = status.startResult.ok ? resolveWorldMinute(wayfarerProfile(definition), status.startResult.worldMinute) : null;
+            const incomplete = WAYFARER_STAGES.filter(stage => draft.reviewed?.[stage] !== true);
+            const activeEdit = modState.config.profileId === 'wayfarer';
+            const action = status.complete
+                ? GameAssist.createButton(activeEdit ? 'Activate and Preserve Elapsed Time' : 'Activate at Starting Date', `!aa-wayfarer activate --confirm ?{Activate this Wayfarer calendar? ${activeEdit ? 'Elapsed fictional time will be preserved.' : 'Fictional time will move to the draft starting date.'}|No,no|Yes,yes}`)
+                : GameAssist.createButton('Continue Setup', `!aa-wayfarer stage ${incomplete[0] || 'identity'}`);
+            sendPanel(msg, activationReview ? 'Review Wayfarer Draft' : 'Wayfarer Draft Preview', [
+                { label: 'Draft', value: wayfarerOverview(draft) },
+                { label: 'Starting Date Preview', value: sample ? _sanitize(displayMoment(sample)) : 'Invalid starting date' },
+                { label: 'Months', value: definition.months.map((month, index) => `${index + 1}. ${_sanitize(month.name)} (${month.days})`).join('<br>') },
+                { label: 'Festival and Leap Days', value: `${definition.intercalary.length ? definition.intercalary.map(day => _sanitize(day.name)).join(', ') : 'No annual festival days'}; ${definition.leapEvery ? `${_sanitize(definition.leapName)} every ${definition.leapEvery} years` : 'no leap day'}` },
+                { label: 'Holidays', value: definition.holidays.length ? definition.holidays.map(holiday => `${_sanitize(holiday.name)} (${_sanitize(definition.months[holiday.monthIndex]?.name)} ${holiday.day})`).join('<br>') : 'None' },
+                { label: 'Setup Check', value: status.errors.length ? _sanitize(status.errors.join(' ')) : (incomplete.length ? `Review these stages before activation: ${_sanitize(incomplete.join(', '))}.` : 'Ready to activate. The active calendar has not changed yet.') },
+                { label: 'Actions', value: `${action} ${GameAssist.createButton('Edit A Stage', '!aa-wayfarer')} ${GameAssist.createButton('Save Draft', '!aa-wayfarer save')}` }
+            ]);
+        }
+
+        function parseAmount(content) {
+            const parsed = _parseArgs(content).args;
+            const days = Number(parsed.days || 0);
+            const hours = Number(parsed.hours || 0);
+            const minutes = Number(parsed.minutes || 0);
+            if (![days, hours, minutes].every(Number.isFinite) || [days, hours, minutes].some(value => value < 0)) {
+                return { ok: false, message: 'Days, hours, and minutes must be zero or positive numbers.' };
+            }
+            const totalMinutes = Math.floor(days * MINUTES_PER_DAY + hours * 60 + minutes);
+            if (totalMinutes <= 0) return { ok: false, message: 'Choose an amount greater than zero.' };
+            if (totalMinutes > POLICY.almanac.maximumAdvanceDays * MINUTES_PER_DAY) {
+                return { ok: false, message: `One change may not exceed ${POLICY.almanac.maximumAdvanceDays} days.` };
+            }
+            return { ok: true, totalMinutes };
+        }
+
+        function handleAdvance(msg, content, direction) {
+            if (!requireGm(msg) || !timeAvailable()) return;
+            const amount = parseAmount(content);
+            if (!amount.ok) return sendPanel(msg, 'TimeAlmanac Needs Attention', [{ label: 'Problem', value: _sanitize(amount.message) }, { label: 'Next Step', value: GameAssist.createButton('Advance Time', '!aa-time menu') }]);
+            const args = _parseArgs(content).args;
+            if (direction < 0 && String(args.confirm || '').toLowerCase() !== 'yes') {
+                return sendPanel(msg, 'Move Fictional Time Backward', [
+                    { label: 'Important', value: 'This changes the calendar only. It does not reverse rests, effects, combat, NPC history, character resources, or other campaign state.' },
+                    { label: 'Next Step', value: GameAssist.createButton('Choose Backward Amount', '!aa-time menu') }
+                ]);
+            }
+            const runtime = ensureAlmanacRuntime();
+            const next = runtime.time.worldMinute + direction * amount.totalMinutes;
+            const result = commitWorldMinute(next, direction > 0 ? 'Fictional time advanced' : 'Fictional time moved backward', msg);
+            sendPanel(msg, result.ok ? 'World Time Updated' : 'TimeAlmanac Needs Attention', result.ok ? [
+                { label: 'Previous', value: _sanitize(displayMoment(result.previous)) },
+                { label: 'Current', value: _sanitize(displayMoment(result.current)) },
+                { label: 'Elapsed Change', value: `${direction > 0 ? '+' : '-'}${amount.totalMinutes} minutes` },
+                { label: 'Actions', value: `${GameAssist.createButton('Announce Current Time', '!aa-time announce')} ${GameAssist.createButton('Continue', '!aa-time menu')}` }
+            ] : [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: GameAssist.createButton('Advance Time', '!aa-time menu') }]);
+        }
+
+        function handleSet(msg, content) {
+            if (!requireGm(msg) || !timeAvailable()) return;
+            const args = _parseArgs(content).args;
+            if (String(args.confirm || '').toLowerCase() !== 'yes') {
+                return sendPanel(msg, 'Set Fictional Date and Time', [
+                    { label: 'No Change Made', value: 'Setting an exact date requires confirmation.' },
+                    { label: 'Next Step', value: GameAssist.createButton('Open Time Controls', '!aa-time menu') }
+                ]);
+            }
+            const result = minuteForDate(profileFor(), {
+                year: args.year,
+                period: args.period,
+                day: args.day,
+                hour: args.hour,
+                minute: args.minute
+            });
+            if (!result.ok) return sendPanel(msg, 'TimeAlmanac Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: GameAssist.createButton('Open Time Controls', '!aa-time menu') }]);
+            const committed = commitWorldMinute(result.worldMinute, 'Fictional date and time set', msg);
+            sendPanel(msg, committed.ok ? 'World Time Updated' : 'TimeAlmanac Needs Attention', committed.ok ? [
+                { label: 'Previous', value: _sanitize(displayMoment(committed.previous)) },
+                { label: 'Current', value: _sanitize(displayMoment(committed.current)) },
+                { label: 'Actions', value: `${GameAssist.createButton('Announce Current Time', '!aa-time announce')} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` }
+            ] : [{ label: 'Problem', value: _sanitize(committed.message) }]);
+        }
+
+        function handleProfile(msg, content) {
+            if (!requireGm(msg)) return;
+            const match = content.match(/profile\s+([a-z0-9_-]+)/i);
+            const requested = String(match?.[1] || '').toLowerCase();
+            if (!['standard', 'solamnic', 'harptos', 'wayfarer'].includes(requested)) {
+                return sendPanel(msg, 'AlmanacAssist', [{ label: 'Needs Attention', value: 'Choose Standard, Solamnic, Harptos, or Wayfarer.' }, { label: 'Next Step', value: GameAssist.createButton('Calendar', '!cal') }]);
+            }
+            const args = _parseArgs(content).args;
+            if (String(args.confirm || '').toLowerCase() !== 'yes') return showCalendarMenu(msg);
+            const runtime = ensureAlmanacRuntime();
+            const previousProfile = profileFor();
+            const previous = resolveWorldMinute(previousProfile, runtime.time.worldMinute);
+            const nextProfile = profileFor(requested);
+            const current = resolveWorldMinute(nextProfile, runtime.time.worldMinute);
+            if (!current) return sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: 'The stored elapsed time falls outside that calendar profile.' }]);
+            modState.config.profileId = requested;
+            runtime.time.revision += 1;
+            runtime.time.updatedAt = isoNow();
+            runtime.history.push({ revision: runtime.time.revision, committedAt: runtime.time.updatedAt, actorId: String(msg.playerid), reason: `Calendar changed from ${previousProfile.id} to ${requested}`, previousWorldMinute: runtime.time.worldMinute, currentWorldMinute: runtime.time.worldMinute, profileId: requested });
+            if (runtime.history.length > POLICY.almanac.historyLimit) runtime.history.splice(0, runtime.history.length - POLICY.almanac.historyLimit);
+            publishChange('almanac.calendar.changed', previous, current, { previousProfileId: previousProfile.id, currentProfileId: requested }, msg);
+            sendPanel(msg, 'Calendar Updated', [
+                { label: 'Calendar', value: `${_sanitize(previousProfile.name)} to ${_sanitize(nextProfile.name)}` },
+                { label: 'Elapsed Time', value: 'Preserved' },
+                { label: 'Current Date', value: _sanitize(displayDate(current)) },
+                { label: 'Next Step', value: GameAssist.createButton('Calendar', '!cal') }
+            ]);
+        }
+
+        function parseWeekdays(raw) {
+            const values = String(raw || '').split(',').map(value => boundedName(value)).filter(Boolean);
+            if (!values.length || values.length > POLICY.almanac.maximumWeekdays) return null;
+            return values;
+        }
+
+        function parseMonths(raw) {
+            const entries = String(raw || '').split(',').map(value => value.trim()).filter(Boolean);
+            if (!entries.length || entries.length > POLICY.almanac.maximumMonths) return null;
+            const months = entries.map((entry, index) => {
+                const match = entry.match(/^([^:]+):(\d+)$/);
+                if (!match) return null;
+                const days = Number(match[2]);
+                if (days < 1 || days > POLICY.almanac.maximumDaysPerMonth) return null;
+                return { name: boundedName(match[1], `Month ${index + 1}`), days, season: 'Unspecified' };
+            });
+            if (months.some(month => !month)) return null;
+            if (months.reduce((sum, month) => sum + month.days, 0) > POLICY.almanac.maximumDaysPerYear) return null;
+            return months;
+        }
+
+        function parseIntercalary(raw, monthCount) {
+            if (!String(raw || '').trim()) return [];
+            const entries = String(raw).split(',').map(value => value.trim()).filter(Boolean);
+            if (entries.length > POLICY.almanac.maximumIntercalaryDays) return null;
+            const days = entries.map((entry, index) => {
+                const match = entry.match(/^([^:]+):(\d+)$/);
+                if (!match) return null;
+                const after = Number(match[2]);
+                if (after < 1 || after > monthCount) return null;
+                return { name: boundedName(match[1], `Festival ${index + 1}`), afterMonth: after - 1, season: 'Unspecified' };
+            });
+            return days.some(day => !day) ? null : days;
+        }
+
+        function parseHolidays(raw, months) {
+            if (!String(raw || '').trim()) return [];
+            const entries = String(raw).split(',').map(value => value.trim()).filter(Boolean);
+            if (entries.length > POLICY.almanac.maximumHolidays) return null;
+            const holidays = entries.map((entry, index) => {
+                const match = entry.match(/^([^:]+):(\d+):(\d+)$/);
+                if (!match) return null;
+                const month = Number(match[2]);
+                const day = Number(match[3]);
+                if (month < 1 || month > months.length || day < 1 || day > months[month - 1].days) return null;
+                return { name: boundedName(match[1], `Holiday ${index + 1}`), monthIndex: month - 1, day };
+            });
+            return holidays.some(holiday => !holiday) ? null : holidays;
+        }
+
+        function handleWayfarer(msg, content) {
+            if (!requireGm(msg)) return;
+            const body = content.replace(/^wayfarer\s*/i, '').trim();
+            if (!body || body === 'menu') return showWayfarer(msg);
+            const action = body.split(/\s+/)[0].toLowerCase();
+            const args = _parseArgs(body).args;
+            if (action === 'stage') {
+                const reviewed = String(args.review || '').toLowerCase();
+                const draft = ensureWayfarerDraft();
+                if (WAYFARER_STAGES.includes(reviewed)) {
+                    draft.reviewed[reviewed] = true;
+                    draft.updatedAt = isoNow();
+                    modState.config.wayfarerDraft = draft;
+                }
+                const requested = body.match(/^stage\s+([a-z]+)/i)?.[1]?.toLowerCase() || 'identity';
+                return showWayfarerStage(msg, requested);
+            }
+            if (action === 'preview' || action === 'review') return showWayfarerPreview(msg, action === 'review');
+            if (action === 'save') {
+                const draft = ensureWayfarerDraft();
+                draft.updatedAt = isoNow();
+                modState.config.wayfarerDraft = normalizeWayfarerDraft(draft);
+                return sendPanel(msg, 'Wayfarer Draft Saved', [
+                    { label: 'Saved Draft', value: wayfarerOverview(draft) },
+                    { label: 'Active Calendar', value: 'Unchanged' },
+                    { label: 'Continue', value: `${GameAssist.createButton('Setup Home', '!aa-wayfarer')} ${GameAssist.createButton('Preview Draft', '!aa-wayfarer preview')}` }
+                ]);
+            }
+            if (action === 'cancel') {
+                if (String(args.confirm || '').toLowerCase() !== 'yes') return showWayfarer(msg);
+                modState.config.wayfarerDraft = createWayfarerDraft('wayfarer', false);
+                return sendPanel(msg, 'Wayfarer Draft Discarded', [
+                    { label: 'Active Calendar', value: 'Unchanged' },
+                    { label: 'New Draft', value: 'A fresh draft now matches the saved Wayfarer definition.' },
+                    { label: 'Continue', value: GameAssist.createButton('Open Setup', '!aa-wayfarer') }
+                ]);
+            }
+            if (action === 'duplicate') {
+                const source = String(args.profile || '').toLowerCase();
+                if (!['standard', 'solamnic', 'harptos', 'wayfarer'].includes(source)) {
+                    return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'Choose Standard, Solamnic, Harptos, or the active Wayfarer definition.' }, { label: 'Next Step', value: GameAssist.createButton('Setup Home', '!aa-wayfarer') }]);
+                }
+                if (String(args.confirm || '').toLowerCase() !== 'yes') return showWayfarer(msg);
+                modState.config.wayfarerDraft = createWayfarerDraft(source, true);
+                const copyNote = source === 'standard'
+                    ? 'Wayfarer supports one repeating leap interval. The Standard copy uses a four-year leap day and does not reproduce Gregorian century exceptions.'
+                    : 'The copied structure remains inactive until you confirm activation.';
+                return sendPanel(msg, 'Wayfarer Draft Created', [
+                    { label: 'Starting Point', value: `${_sanitize(profileFor(source).name)} was copied into the saved draft.` },
+                    { label: 'Copy Note', value: copyNote },
+                    { label: 'Active Calendar', value: 'Unchanged' },
+                    { label: 'Continue', value: `${GameAssist.createButton('Edit Draft', '!aa-wayfarer stage identity')} ${GameAssist.createButton('Review Draft', '!aa-wayfarer stage review')}` }
+                ]);
+            }
+            if (action === 'activate') {
+                if (String(args.confirm || '').toLowerCase() !== 'yes') return showWayfarerPreview(msg, true);
+                const draft = ensureWayfarerDraft();
+                const status = wayfarerDraftStatus(draft);
+                if (!status.complete) {
+                    const incomplete = WAYFARER_STAGES.filter(stage => draft.reviewed?.[stage] !== true);
+                    return sendPanel(msg, 'Wayfarer Needs Attention', [
+                        { label: 'Draft Not Ready', value: _sanitize(status.errors.join(' ') || `Review these setup stages: ${incomplete.join(', ')}.`) },
+                        { label: 'Active Calendar', value: 'Unchanged; the saved draft was preserved.' },
+                        { label: 'Next Step', value: GameAssist.createButton('Continue Setup', `!aa-wayfarer stage ${incomplete[0] || 'identity'}`) }
+                    ]);
+                }
+                const runtime = ensureAlmanacRuntime();
+                const previousProfile = profileFor();
+                const previousMoment = resolveWorldMinute(previousProfile, runtime.time.worldMinute);
+                const candidateProfile = wayfarerProfile(status.definition);
+                const preserving = previousProfile.id === 'wayfarer' && String(args.reset || '').toLowerCase() !== 'yes';
+                let nextWorldMinute = preserving ? runtime.time.worldMinute : status.startResult.worldMinute;
+                let nextMoment = resolveWorldMinute(candidateProfile, nextWorldMinute);
+                if (!nextMoment && preserving) {
+                    return sendPanel(msg, 'Wayfarer Needs Attention', [
+                        { label: 'Elapsed Time Cannot Be Preserved', value: 'The current elapsed fictional time falls outside the supported range of this draft calendar.' },
+                        { label: 'No Change Made', value: 'The active calendar, fictional date, and saved draft were preserved.' },
+                        { label: 'Choices', value: `${GameAssist.createButton('Return To Draft', '!aa-wayfarer stage review')} ${GameAssist.createButton('Activate At Draft Start', '!aa-wayfarer activate --confirm yes --reset yes')}` }
+                    ]);
+                }
+                if (!nextMoment) {
+                    return sendPanel(msg, 'Wayfarer Needs Attention', [
+                        { label: 'Starting Date', value: _sanitize(status.startResult.message || 'The starting date could not be represented by this calendar.') },
+                        { label: 'No Change Made', value: 'The active calendar, fictional date, and saved draft were preserved.' },
+                        { label: 'Next Step', value: GameAssist.createButton('Edit Starting Date', '!aa-wayfarer stage identity') }
+                    ]);
+                }
+                // CHOICE: save one complete pre-activation checkpoint - ALT: retain an unbounded calendar history; REJECTED: rollback must be useful without duplicating the bounded chronology ledger.
+                runtime.time.wayfarerBackup = {
+                    definition: normalizeWayfarer(modState.config.wayfarer),
+                    profileId: previousProfile.id,
+                    worldMinute: runtime.time.worldMinute,
+                    createdAt: isoNow()
+                };
+                modState.config.wayfarer = status.definition;
+                modState.config.profileId = 'wayfarer';
+                runtime.time.worldMinute = nextWorldMinute;
+                runtime.time.revision += 1;
+                runtime.time.updatedAt = isoNow();
+                runtime.history.push({
+                    revision: runtime.time.revision,
+                    committedAt: runtime.time.updatedAt,
+                    actorId: String(msg.playerid),
+                    reason: preserving ? 'Wayfarer draft activated; elapsed time preserved' : 'Wayfarer draft activated at its starting date',
+                    previousWorldMinute: previousMoment?.worldMinute ?? null,
+                    currentWorldMinute: nextMoment.worldMinute,
+                    profileId: 'wayfarer'
+                });
+                if (runtime.history.length > POLICY.almanac.historyLimit) runtime.history.splice(0, runtime.history.length - POLICY.almanac.historyLimit);
+                modState.config.wayfarerDraft = {
+                    ...draft,
+                    definition: copy(status.definition),
+                    startDate: { year: nextMoment.year, period: nextMoment.periodName, day: nextMoment.day, hour: nextMoment.hour, minute: nextMoment.minute },
+                    reviewed: WAYFARER_STAGES.reduce((result, stage) => ({ ...result, [stage]: true }), {}),
+                    sourceProfileId: 'wayfarer',
+                    updatedAt: isoNow()
+                };
+                publishChange('almanac.calendar.changed', previousMoment, nextMoment, {
+                    previousProfileId: previousProfile.id,
+                    currentProfileId: 'wayfarer',
+                    activation: true,
+                    elapsedTimePreserved: preserving
+                }, msg);
+                return sendPanel(msg, 'Wayfarer Calendar Activated', [
+                    { label: 'Calendar', value: _sanitize(status.definition.name) },
+                    { label: 'Current Date', value: _sanitize(displayMoment(nextMoment)) },
+                    { label: 'Elapsed Time', value: preserving ? 'Preserved' : 'Moved to the reviewed starting date' },
+                    { label: 'Rollback', value: 'The previous calendar and fictional time are available from Wayfarer Setup until the next activation.' },
+                    { label: 'Continue', value: `${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('Wayfarer Setup', '!aa-wayfarer')}` }
+                ]);
+            }
+            if (action === 'restore') {
+                const runtime = ensureAlmanacRuntime();
+                const backup = normalizeWayfarerBackup(runtime.time.wayfarerBackup);
+                if (!backup) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'No previous Wayfarer activation is available to restore.' }, { label: 'Next Step', value: GameAssist.createButton('Setup Home', '!aa-wayfarer') }]);
+                if (String(args.confirm || '').toLowerCase() !== 'yes') return showWayfarer(msg);
+                const previous = currentMoment();
+                const restoredProfile = backup.profileId === 'wayfarer' ? wayfarerProfile(backup.definition) : profileFor(backup.profileId);
+                const restoredMoment = resolveWorldMinute(restoredProfile, backup.worldMinute);
+                if (!restoredMoment) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'The saved rollback point is no longer valid. No calendar or time was changed.' }, { label: 'Next Step', value: GameAssist.createButton('Setup Home', '!aa-wayfarer') }]);
+                modState.config.wayfarer = backup.definition;
+                modState.config.profileId = backup.profileId;
+                runtime.time.worldMinute = backup.worldMinute;
+                runtime.time.revision += 1;
+                runtime.time.updatedAt = isoNow();
+                runtime.history.push({ revision: runtime.time.revision, committedAt: runtime.time.updatedAt, actorId: String(msg.playerid), reason: 'Previous calendar activation restored', previousWorldMinute: previous?.worldMinute ?? null, currentWorldMinute: restoredMoment.worldMinute, profileId: backup.profileId });
+                if (runtime.history.length > POLICY.almanac.historyLimit) runtime.history.splice(0, runtime.history.length - POLICY.almanac.historyLimit);
+                runtime.time.wayfarerBackup = null;
+                modState.config.wayfarerDraft = createWayfarerDraft('wayfarer', true);
+                publishChange('almanac.calendar.changed', previous, restoredMoment, { restored: true, currentProfileId: backup.profileId }, msg);
+                return sendPanel(msg, 'Previous Calendar Restored', [
+                    { label: 'Calendar', value: _sanitize(restoredProfile.name) },
+                    { label: 'Fictional Date', value: _sanitize(displayMoment(restoredMoment)) },
+                    { label: 'Continue', value: `${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('Wayfarer Setup', '!aa-wayfarer')}` }
+                ]);
+            }
+            const draft = copy(ensureWayfarerDraft());
+            const wayfarer = copy(draft.definition);
+            let editedStage = null;
+            if (action === 'name') {
+                const name = boundedName(args.value);
+                if (!name) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'Enter a calendar name.' }]);
+                wayfarer.name = name;
+                editedStage = 'identity';
+            } else if (action === 'start') {
+                const requested = { year: args.year, period: args.period, day: args.day, hour: args.hour, minute: args.minute };
+                const result = minuteForDate(wayfarerProfile(wayfarer), requested);
+                if (!result.ok) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Saved Draft', value: 'Preserved without partial changes.' }, { label: 'Next Step', value: GameAssist.createButton('Name and Starting Date', '!aa-wayfarer stage identity') }]);
+                draft.startDate = { year: Math.floor(Number(args.year)), period: String(args.period).trim(), day: Math.floor(Number(args.day)), hour: Math.floor(Number(args.hour)), minute: Math.floor(Number(args.minute)) };
+                editedStage = 'identity';
+            } else if (action === 'weekdays') {
+                const weekdays = parseWeekdays(args.value);
+                if (!weekdays) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: `Enter 1-${POLICY.almanac.maximumWeekdays} comma-separated weekday names.` }]);
+                if (new Set(weekdays.map(value => value.toLowerCase())).size !== weekdays.length) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'Weekday names must be unique.' }, { label: 'Saved Draft', value: 'Preserved without partial changes.' }]);
+                wayfarer.weekdays = weekdays;
+                editedStage = 'weekdays';
+            } else if (action === 'months') {
+                const months = parseMonths(args.value);
+                if (!months) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'Use comma-separated Name:Days entries within the calendar limits.' }]);
+                if (new Set(months.map(month => month.name.toLowerCase())).size !== months.length) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'Month names must be unique.' }, { label: 'Saved Draft', value: 'Preserved without partial changes.' }]);
+                const startingMonthIndex = wayfarer.months.findIndex(month => month.name.toLowerCase() === String(draft.startDate.period || '').toLowerCase());
+                wayfarer.months = months;
+                if (startingMonthIndex >= 0 && months[startingMonthIndex]) draft.startDate.period = months[startingMonthIndex].name;
+                editedStage = 'months';
+            } else if (action === 'intercalary') {
+                const days = parseIntercalary(args.value, wayfarer.months.length);
+                if (!days) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'Use comma-separated Name:AfterMonth entries, or leave the list blank.' }]);
+                wayfarer.intercalary = days;
+                editedStage = 'intercalary';
+            } else if (action === 'holidays') {
+                const holidays = parseHolidays(args.value, wayfarer.months);
+                if (!holidays) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'Use comma-separated Name:Month:Day entries within the current month lengths, or leave the list blank.' }]);
+                wayfarer.holidays = holidays;
+                editedStage = 'holidays';
+            } else if (action === 'leap') {
+                const every = Math.floor(Number(args.every || 0));
+                const after = Math.floor(Number(args.after || wayfarer.months.length));
+                if (every !== 0 && (every < 2 || every > 100)) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'Leap frequency must be 0 or 2-100 years.' }]);
+                if (after < 1 || after > wayfarer.months.length) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: `Leap day placement must be month 1-${wayfarer.months.length}.` }]);
+                wayfarer.leapEvery = every;
+                wayfarer.leapName = boundedName(args.name, 'Leap Day');
+                wayfarer.leapAfterMonth = after - 1;
+                editedStage = 'leap';
+            } else {
+                return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'That Wayfarer setting was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Edit Wayfarer', '!aa-wayfarer') }]);
+            }
+            const inspection = inspectWayfarerDefinition(wayfarer);
+            if (!inspection.ok) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: _sanitize(inspection.errors.join(' ')) }, { label: 'Saved Draft', value: 'Preserved without partial changes.' }]);
+            const startInspection = minuteForDate(wayfarerProfile(inspection.definition), draft.startDate);
+            if (!startInspection.ok) return sendPanel(msg, 'Wayfarer Needs Attention', [
+                { label: 'Starting Date Conflict', value: _sanitize(startInspection.message) },
+                { label: 'Saved Draft', value: 'Preserved without partial changes. Adjust the starting date or dependent calendar stage first.' },
+                { label: 'Next Step', value: GameAssist.createButton('Name and Starting Date', '!aa-wayfarer stage identity') }
+            ]);
+            draft.definition = inspection.definition;
+            draft.reviewed[editedStage] = true;
+            draft.updatedAt = isoNow();
+            modState.config.wayfarerDraft = normalizeWayfarerDraft(draft);
+            showWayfarerStage(msg, editedStage);
+        }
+
+        function clampNumber(value, minimum, maximum, fallback) {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric)) return fallback;
+            return Math.min(maximum, Math.max(minimum, numeric));
+        }
+
+        function normalizeSeason(value, fallback = 'Spring') {
+            const requested = String(value || '').trim().toLowerCase();
+            const match = ['winter', 'spring', 'summer', 'autumn'].find(season => season === requested);
+            return match ? match[0].toUpperCase() + match.slice(1) : fallback;
+        }
+
+        function normalizeClimateTags(raw, fallback = []) {
+            if (!Array.isArray(raw)) return copy(fallback);
+            return [...new Set(raw.slice(0, POLICY.almanac.maximumClimateTags).map(tag => boundedName(tag)).filter(Boolean))];
+        }
+
+        function normalizeClimateProfile(raw, index) {
+            const source = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+            const fallback = CLIMATE_PROFILES.temperate;
+            const id = String(source.id || `profile-${index + 1}`).trim().toLowerCase()
+                .replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, POLICY.almanac.maximumNameLength)
+                || `profile-${index + 1}`;
+            return {
+                id,
+                name: boundedName(source.name, `Climate Profile ${index + 1}`),
+                temperatureF: clampNumber(source.temperatureF, POLICY.almanac.minimumClimateTemperatureF, POLICY.almanac.maximumClimateTemperatureF, fallback.temperatureF),
+                humidity: clampNumber(source.humidity, 0, 100, fallback.humidity),
+                precipitationChance: clampNumber(source.precipitationChance, 0, 100, fallback.precipitationChance),
+                windMph: clampNumber(source.windMph, 0, POLICY.almanac.maximumClimateWindMph, fallback.windMph),
+                tags: normalizeClimateTags(source.tags, fallback.tags)
+            };
+        }
+
+        function normalizeBuiltInProfileOverrides(raw) {
+            const source = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+            const result = {};
+            Object.keys(CLIMATE_PROFILES).forEach(id => {
+                const input = source[id];
+                if (!input || typeof input !== 'object' || Array.isArray(input)) return;
+                const next = {};
+                if (Number.isFinite(Number(input.temperatureF))) next.temperatureF = clampNumber(input.temperatureF, POLICY.almanac.minimumClimateTemperatureF, POLICY.almanac.maximumClimateTemperatureF, CLIMATE_PROFILES[id].temperatureF);
+                if (Number.isFinite(Number(input.humidity))) next.humidity = clampNumber(input.humidity, 0, 100, CLIMATE_PROFILES[id].humidity);
+                if (Number.isFinite(Number(input.precipitationChance))) next.precipitationChance = clampNumber(input.precipitationChance, 0, 100, CLIMATE_PROFILES[id].precipitationChance);
+                if (Number.isFinite(Number(input.windMph))) next.windMph = clampNumber(input.windMph, 0, POLICY.almanac.maximumClimateWindMph, CLIMATE_PROFILES[id].windMph);
+                if (Array.isArray(input.tags)) next.tags = normalizeClimateTags(input.tags, CLIMATE_PROFILES[id].tags);
+                if (Object.keys(next).length) result[id] = next;
+            });
+            return result;
+        }
+
+        function climateProfileMap(config) {
+            const profiles = {};
+            Object.entries(CLIMATE_PROFILES).forEach(([id, profile]) => {
+                const override = config.profileOverrides?.[id] || {};
+                profiles[id] = { id, builtIn: true, ...copy(profile), ...copy(override) };
+            });
+            (config.customProfiles || []).forEach(profile => {
+                profiles[profile.id] = { builtIn: false, ...copy(profile) };
+            });
+            return profiles;
+        }
+
+        function normalizeRegion(raw, index, profileIds) {
+            const source = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+            const id = String(source.id || `region-${index + 1}`).trim().toLowerCase()
+                .replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, POLICY.almanac.maximumNameLength)
+                || `region-${index + 1}`;
+            const profileId = profileIds.has(String(source.profileId || '').toLowerCase())
+                ? String(source.profileId).toLowerCase()
+                : null;
+            const overrides = source.overrides && typeof source.overrides === 'object' && !Array.isArray(source.overrides)
+                ? source.overrides
+                : {};
+            const normalizedOverrides = {};
+            if (Number.isFinite(Number(overrides.temperatureBias))) normalizedOverrides.temperatureBias = clampNumber(overrides.temperatureBias, POLICY.almanac.minimumClimateTemperatureBias, POLICY.almanac.maximumClimateTemperatureBias, 0);
+            if (Number.isFinite(Number(overrides.humidity))) normalizedOverrides.humidity = clampNumber(overrides.humidity, 0, 100, 50);
+            if (Number.isFinite(Number(overrides.precipitationChance))) normalizedOverrides.precipitationChance = clampNumber(overrides.precipitationChance, 0, 100, 30);
+            if (Number.isFinite(Number(overrides.windMph))) normalizedOverrides.windMph = clampNumber(overrides.windMph, 0, POLICY.almanac.maximumClimateWindMph, 5);
+            if (Array.isArray(overrides.tags)) normalizedOverrides.tags = normalizeClimateTags(overrides.tags);
+            return {
+                id,
+                name: boundedName(source.name, `Region ${index + 1}`),
+                parentId: source.parentId ? String(source.parentId).trim().toLowerCase() : null,
+                profileId,
+                overrides: normalizedOverrides
+            };
+        }
+
+        function normalizeClimateConfig() {
+            const source = modState.config.climate;
+            const profileOverrides = normalizeBuiltInProfileOverrides(source.profileOverrides);
+            const customProfiles = [];
+            const profileIds = new Set(Object.keys(CLIMATE_PROFILES));
+            const profileNames = new Set(Object.values(CLIMATE_PROFILES).map(profile => profile.name.toLowerCase()));
+            const customInput = Array.isArray(source.customProfiles) ? source.customProfiles : [];
+            customInput.slice(0, POLICY.almanac.maximumClimateProfiles).forEach((item, index) => {
+                const profile = normalizeClimateProfile(item, index);
+                if (profileIds.has(profile.id) || profileNames.has(profile.name.toLowerCase())) return;
+                profileIds.add(profile.id);
+                profileNames.add(profile.name.toLowerCase());
+                customProfiles.push(profile);
+            });
+            const input = Array.isArray(source.regions) ? source.regions : [];
+            const regions = [];
+            const ids = new Set();
+            input.slice(0, POLICY.almanac.maximumRegions).forEach((item, index) => {
+                const region = normalizeRegion(item, index, profileIds);
+                if (ids.has(region.id)) return;
+                ids.add(region.id);
+                regions.push(region);
+            });
+            if (!regions.length) regions.push({ id: 'home', name: 'Home Region', parentId: null, profileId: 'temperate', overrides: {} });
+            regions.forEach(region => {
+                if (!region.parentId || !ids.has(region.parentId) || region.parentId === region.id) region.parentId = null;
+                if (!region.parentId && !region.profileId) region.profileId = 'temperate';
+            });
+            const byId = Object.fromEntries(regions.map(region => [region.id, region]));
+            regions.forEach(region => {
+                const seen = new Set([region.id]);
+                let current = region;
+                let depth = 0;
+                while (current.parentId && byId[current.parentId]) {
+                    depth++;
+                    if (seen.has(current.parentId) || depth > POLICY.almanac.maximumRegionDepth) {
+                        region.parentId = null;
+                        break;
+                    }
+                    seen.add(current.parentId);
+                    current = byId[current.parentId];
+                }
+            });
+            const activeRegionId = byId[String(source.activeRegionId || '').toLowerCase()]
+                ? String(source.activeRegionId).toLowerCase()
+                : regions[0].id;
+            modState.config.climate = {
+                activeRegionId,
+                manualSeason: normalizeSeason(source.manualSeason, 'Spring'),
+                profileOverrides,
+                customProfiles,
+                regions
+            };
+            return modState.config.climate;
+        }
+
+        function climateRegion(requested) {
+            const config = normalizeClimateConfig();
+            const key = String(requested || config.activeRegionId).trim().toLowerCase();
+            const byId = config.regions.find(region => region.id === key);
+            if (byId) return byId;
+            const byName = config.regions.filter(region => region.name.toLowerCase() === key);
+            return byName.length === 1 ? byName[0] : null;
+        }
+
+        function climateProfile(requested, config = normalizeClimateConfig()) {
+            const profiles = Object.values(climateProfileMap(config));
+            const key = String(requested || '').trim().toLowerCase();
+            const byId = profiles.find(profile => profile.id === key);
+            if (byId) return byId;
+            const byName = profiles.filter(profile => profile.name.toLowerCase() === key);
+            return byName.length === 1 ? byName[0] : null;
+        }
+
+        function regionDepth(region, regions) {
+            let depth = 0;
+            let current = region;
+            const seen = new Set([region.id]);
+            while (current?.parentId) {
+                if (seen.has(current.parentId)) return Infinity;
+                seen.add(current.parentId);
+                current = regions.find(candidate => candidate.id === current.parentId);
+                if (!current) break;
+                depth++;
+            }
+            return depth;
+        }
+
+        function currentSeason() {
+            return timeAvailable() ? currentMoment().season : normalizeClimateConfig().manualSeason;
+        }
+
+        function resolvedClimate(requestedRegion = null) {
+            const config = normalizeClimateConfig();
+            const region = climateRegion(requestedRegion);
+            if (!region) return null;
+            const profiles = climateProfileMap(config);
+            const chain = [];
+            let current = region;
+            const seen = new Set();
+            while (current && !seen.has(current.id) && chain.length <= POLICY.almanac.maximumRegionDepth) {
+                chain.unshift(current);
+                seen.add(current.id);
+                current = current.parentId ? config.regions.find(candidate => candidate.id === current.parentId) : null;
+            }
+            let profile = copy(CLIMATE_PROFILES.temperate);
+            const tags = new Set();
+            chain.forEach(item => {
+                if (item.profileId && profiles[item.profileId]) {
+                    profile = { ...profile, ...copy(profiles[item.profileId]) };
+                    tags.clear();
+                    (profiles[item.profileId].tags || []).forEach(tag => tags.add(tag));
+                }
+                const overrides = item.overrides || {};
+                if (Number.isFinite(overrides.temperatureBias)) profile.temperatureF += overrides.temperatureBias;
+                ['humidity', 'precipitationChance', 'windMph'].forEach(key => {
+                    if (Number.isFinite(overrides[key])) profile[key] = overrides[key];
+                });
+                (overrides.tags || []).forEach(tag => tags.add(tag));
+            });
+            if (!tags.size) (profile.tags || []).forEach(tag => tags.add(tag));
+            const season = currentSeason();
+            const seasonalOffset = { Winter: -18, Spring: 0, Summer: 18, Autumn: 0 }[season] || 0;
+            return Object.freeze({
+                stateSchemaVersion: CLIMATE_STATE_SCHEMA_VERSION,
+                regionId: region.id,
+                regionName: region.name,
+                ancestry: chain.map(item => item.name),
+                profileName: profile.name,
+                season,
+                seasonAuthority: timeAvailable() ? 'TimeAlmanac' : 'ClimateAlmanac manual setting',
+                temperatureF: Math.round(profile.temperatureF + seasonalOffset),
+                humidity: Math.round(profile.humidity),
+                precipitationChance: Math.round(profile.precipitationChance),
+                windMph: Math.round(profile.windMph),
+                tags: [...tags]
+            });
+        }
+
+        function climateProfileChanges(args, { allowName = false } = {}) {
+            const changes = {};
+            const numericFields = [
+                ['temp', 'temperatureF', POLICY.almanac.minimumClimateTemperatureF, POLICY.almanac.maximumClimateTemperatureF],
+                ['humidity', 'humidity', 0, 100],
+                ['precip', 'precipitationChance', 0, 100],
+                ['wind', 'windMph', 0, POLICY.almanac.maximumClimateWindMph]
+            ];
+            for (const [argument, field, minimum, maximum] of numericFields) {
+                if (args[argument] === undefined) continue;
+                const value = Number(args[argument]);
+                if (!Number.isFinite(value) || value < minimum || value > maximum) {
+                    return { ok: false, message: `${argument} must be a number from ${minimum} to ${maximum}.` };
+                }
+                changes[field] = value;
+            }
+            if (args.tags !== undefined) {
+                const rawTags = String(args.tags).split(',').map(tag => tag.trim()).filter(Boolean);
+                if (rawTags.length > POLICY.almanac.maximumClimateTags) return { ok: false, message: `A climate profile may have at most ${POLICY.almanac.maximumClimateTags} tags.` };
+                changes.tags = normalizeClimateTags(rawTags);
+            }
+            if (allowName && args.name !== undefined) {
+                const name = boundedName(args.name);
+                if (!name) return { ok: false, message: 'Enter a profile name.' };
+                changes.name = name;
+            }
+            return { ok: true, changes };
+        }
+
+        function showClimateProfiles(msg) {
+            if (!requireGm(msg)) return;
+            const config = normalizeClimateConfig();
+            const profiles = Object.values(climateProfileMap(config));
+            const rows = profiles.map(profile => `${_sanitize(profile.name)} [${_sanitize(profile.id)}] - ${profile.temperatureF} F, ${profile.humidity}% humidity, ${profile.precipitationChance}% precipitation, ${profile.windMph} mph wind${profile.builtIn ? ' (built-in)' : ' (custom)'}`).join('<br>');
+            sendPanel(msg, 'Climate Profiles', [
+                { label: 'Profiles', value: rows },
+                { label: 'Add', value: GameAssist.createButton('Add Custom Profile', '!aa-climate profile add --name "?{Profile name}" --temp ?{Typical temperature F|58} --humidity ?{Humidity percent|55} --precip ?{Precipitation percent|35} --wind ?{Wind mph|8} --tags "?{Comma-separated tags|temperate}"') },
+                { label: 'Edit', value: GameAssist.createButton('Edit Profile', '!aa-climate profile set --id "?{Profile id}" --temp ?{Typical temperature F} --humidity ?{Humidity percent} --precip ?{Precipitation percent} --wind ?{Wind mph} --tags "?{Comma-separated tags}"') },
+                { label: 'Restore or Remove', value: `${GameAssist.createButton('Reset Built-In', '!aa-climate profile reset --id "?{Built-in profile id}" --confirm ?{Restore its original values?|No,no|Yes,yes}')} ${GameAssist.createButton('Remove Custom', '!aa-climate profile remove --id "?{Custom profile id}" --confirm ?{Remove this unused profile?|No,no|Yes,yes}')}` },
+                { label: 'Return', value: GameAssist.createButton('Climate', '!clim') }
+            ]);
+        }
+
+        function showClimate(msg) {
+            if (!submoduleEnabled('climate')) return sendPanel(msg, 'ClimateAlmanac', [{ label: 'Status', value: 'Turned off; regions and settings are preserved.' }]);
+            const climate = resolvedClimate();
+            const config = normalizeClimateConfig();
+            const profileOptions = Object.values(climateProfileMap(config)).map(profile => `${profile.name},${profile.id}`).join('|');
+            sendPanel(msg, 'ClimateAlmanac', [
+                { label: 'Active Region', value: `${_sanitize(climate.regionName)} (${_sanitize(climate.profileName)})` },
+                { label: 'Season', value: `${_sanitize(climate.season)} via ${_sanitize(climate.seasonAuthority)}` },
+                { label: 'Typical Conditions', value: `${climate.temperatureF} F | ${climate.humidity}% humidity | ${climate.precipitationChance}% precipitation | ${climate.windMph} mph wind` },
+                { label: 'Regions', value: config.regions.map(region => region.id === climate.regionId ? `<strong>${_sanitize(region.name)}</strong>` : (playerIsGM(msg?.playerid) ? GameAssist.createButton(region.name, `!aa-climate region use --id ${region.id}`) : _sanitize(region.name))).join(' ') },
+                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Add Region', `!aa-climate region add --name "?{Region name}" --profile ?{Climate|Inherit Parent,inherit|${profileOptions}} --parent "?{Parent region id; blank for none|}"`)} ${GameAssist.createButton('Profiles', '!aa-climate profiles')} ${GameAssist.createButton('Manual Season', '!aa-climate season ?{Season|Spring|Summer|Autumn|Winter}')} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` : GameAssist.createButton('Almanac', '!Almanac') }
+            ]);
+        }
+
+        function handleClimate(msg, content) {
+            const body = content.replace(/^climate\s*/i, '').trim();
+            if (!body || /^(menu|status)$/i.test(body)) return showClimate(msg);
+            if (!requireGm(msg)) return;
+            const lower = body.toLowerCase();
+            if (lower === 'audit') return showFocusedAudit(msg, 'climate');
+            if (lower === 'manual' || lower === 'help') return showManual(msg);
+            if (lower === 'setup') return showClimateProfiles(msg);
+            if (lower === 'on' || lower === 'off') {
+                modState.config.submodules.climate = lower === 'on';
+                return showClimate(msg);
+            }
+            if (lower === 'profiles' || lower === 'profile') return showClimateProfiles(msg);
+            const seasonMatch = body.match(/^season\s+(.+)$/i);
+            if (seasonMatch) {
+                const season = normalizeSeason(seasonMatch[1], '');
+                if (!season) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'Choose Winter, Spring, Summer, or Autumn.' }]);
+                normalizeClimateConfig().manualSeason = season;
+                ensureAlmanacRuntime().climate.revision++;
+                publishChange('almanac.climate.changed', null, resolvedClimate(), { action: 'manual-season' }, msg);
+                return showClimate(msg);
+            }
+            const config = normalizeClimateConfig();
+            const findConfiguredRegion = requested => {
+                const key = String(requested || config.activeRegionId).trim().toLowerCase();
+                const byId = config.regions.find(region => region.id === key);
+                if (byId) return byId;
+                const byName = config.regions.filter(region => region.name.toLowerCase() === key);
+                return byName.length === 1 ? byName[0] : null;
+            };
+            if (/^profile\s+add\b/i.test(body)) {
+                if (config.customProfiles.length >= POLICY.almanac.maximumClimateProfiles) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'The custom climate-profile limit has been reached.' }]);
+                const args = _parseArgs(body).args;
+                const name = boundedName(args.name);
+                if (!name) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'Enter a custom profile name.' }]);
+                if (climateProfile(name, config)) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'Climate profile names must be unique.' }, { label: 'Changes', value: 'None.' }]);
+                const parsed = climateProfileChanges(args);
+                if (!parsed.ok) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: _sanitize(parsed.message) }, { label: 'Changes', value: 'None.' }]);
+                let id = name.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30) || 'profile';
+                const baseId = id;
+                let suffix = 2;
+                while (climateProfile(id, config)) id = `${baseId}-${suffix++}`;
+                config.customProfiles.push({ id, ...copy(CLIMATE_PROFILES.temperate), ...parsed.changes, name });
+                ensureAlmanacRuntime().climate.revision++;
+                publishChange('almanac.climate.changed', null, null, { action: 'profile-added', profileId: id }, msg);
+                return showClimateProfiles(msg);
+            }
+            if (/^profile\s+set\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                const profile = climateProfile(args.id || args.name, config);
+                if (!profile) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'That climate profile was not found or its name is ambiguous.' }, { label: 'Changes', value: 'None.' }]);
+                const parsed = climateProfileChanges(args, { allowName: !profile.builtIn });
+                if (!parsed.ok || !Object.keys(parsed.changes).length) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: _sanitize(parsed.message || 'Provide at least one profile value to change.') }, { label: 'Changes', value: 'None.' }]);
+                if (parsed.changes.name && Object.values(climateProfileMap(config)).some(candidate => candidate.id !== profile.id && candidate.name.toLowerCase() === parsed.changes.name.toLowerCase())) {
+                    return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'Climate profile names must be unique.' }, { label: 'Changes', value: 'None.' }]);
+                }
+                if (profile.builtIn) config.profileOverrides[profile.id] = { ...(config.profileOverrides[profile.id] || {}), ...parsed.changes };
+                else {
+                    const index = config.customProfiles.findIndex(candidate => candidate.id === profile.id);
+                    config.customProfiles[index] = { ...config.customProfiles[index], ...parsed.changes };
+                }
+                ensureAlmanacRuntime().climate.revision++;
+                publishChange('almanac.climate.changed', null, resolvedClimate(), { action: 'profile-updated', profileId: profile.id }, msg);
+                return showClimateProfiles(msg);
+            }
+            if (/^profile\s+reset\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                if (String(args.confirm || '').toLowerCase() !== 'yes') return sendPanel(msg, 'ClimateAlmanac', [{ label: 'No Change Made', value: 'Restoring a built-in profile requires --confirm yes.' }]);
+                const profile = climateProfile(args.id || args.name, config);
+                if (!profile?.builtIn) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'Choose a built-in climate profile to restore.' }]);
+                delete config.profileOverrides[profile.id];
+                ensureAlmanacRuntime().climate.revision++;
+                publishChange('almanac.climate.changed', null, resolvedClimate(), { action: 'profile-reset', profileId: profile.id }, msg);
+                return showClimateProfiles(msg);
+            }
+            if (/^profile\s+remove\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                if (String(args.confirm || '').toLowerCase() !== 'yes') return sendPanel(msg, 'ClimateAlmanac', [{ label: 'No Change Made', value: 'Removing a custom profile requires --confirm yes.' }]);
+                const profile = climateProfile(args.id || args.name, config);
+                if (!profile || profile.builtIn) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'Only a custom climate profile can be removed.' }]);
+                if (config.regions.some(region => region.profileId === profile.id)) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'That profile is still assigned to a region. Reassign the region before removing it.' }, { label: 'Changes', value: 'None.' }]);
+                config.customProfiles = config.customProfiles.filter(candidate => candidate.id !== profile.id);
+                ensureAlmanacRuntime().climate.revision++;
+                publishChange('almanac.climate.changed', null, resolvedClimate(), { action: 'profile-removed', profileId: profile.id }, msg);
+                return showClimateProfiles(msg);
+            }
+            if (/^region\s+add\b/i.test(body)) {
+                if (config.regions.length >= POLICY.almanac.maximumRegions) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'The region limit has been reached.' }]);
+                const args = _parseArgs(body).args;
+                const name = boundedName(args.name);
+                const parent = args.parent ? findConfiguredRegion(args.parent) : null;
+                if (args.parent && !parent) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'The requested parent region was not found.' }]);
+                const profileRequest = String(args.profile || (parent ? 'inherit' : 'temperate')).toLowerCase();
+                const profileId = profileRequest === 'inherit' ? null : profileRequest;
+                if (!name || (profileId && !climateProfile(profileId, config))) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'Enter a name and a known climate profile, or choose inherit for a child region.' }]);
+                if (!parent && !profileId) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'A root region must choose a climate profile.' }]);
+                if (config.regions.some(region => region.name.toLowerCase() === name.toLowerCase())) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'Region names must be unique so buttons and commands remain unambiguous.' }, { label: 'Changes', value: 'None.' }]);
+                if (parent && regionDepth(parent, config.regions) + 1 > POLICY.almanac.maximumRegionDepth) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'That parent would exceed the supported region depth.' }]);
+                let id = name.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30) || 'region';
+                const baseId = id;
+                let suffix = 2;
+                while (config.regions.some(region => region.id === id)) id = `${baseId}-${suffix++}`;
+                config.regions.push({ id, name, parentId: parent?.id || null, profileId, overrides: {} });
+                config.activeRegionId = id;
+                ensureAlmanacRuntime().climate.revision++;
+                publishChange('almanac.climate.changed', null, resolvedClimate(id), { action: 'region-added', regionId: id }, msg);
+                return showClimate(msg);
+            }
+            if (/^region\s+use\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                const requested = args.id || args.name || body.replace(/^region\s+use\s*/i, '').trim();
+                const region = findConfiguredRegion(requested);
+                if (!region) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'That region was not found.' }]);
+                config.activeRegionId = region.id;
+                ensureAlmanacRuntime().climate.revision++;
+                publishChange('almanac.climate.changed', null, resolvedClimate(region.id), { action: 'active-region', regionId: region.id }, msg);
+                return showClimate(msg);
+            }
+            if (/^region\s+override\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                const region = findConfiguredRegion(args.id || args.name || config.activeRegionId);
+                if (!region) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'That region was not found.' }]);
+                if (String(args.clear || '').toLowerCase() === 'yes') region.overrides = {};
+                else {
+                    const next = { ...region.overrides };
+                    if (args.temp !== undefined) next.temperatureBias = clampNumber(args.temp, POLICY.almanac.minimumClimateTemperatureBias, POLICY.almanac.maximumClimateTemperatureBias, 0);
+                    if (args.humidity !== undefined) next.humidity = clampNumber(args.humidity, 0, 100, 50);
+                    if (args.precip !== undefined) next.precipitationChance = clampNumber(args.precip, 0, 100, 30);
+                    if (args.wind !== undefined) next.windMph = clampNumber(args.wind, 0, POLICY.almanac.maximumClimateWindMph, 5);
+                    region.overrides = next;
+                }
+                ensureAlmanacRuntime().climate.revision++;
+                publishChange('almanac.climate.changed', null, resolvedClimate(region.id), { action: 'region-override', regionId: region.id }, msg);
+                return showClimate(msg);
+            }
+            if (/^region\s+remove\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                if (String(args.confirm || '').toLowerCase() !== 'yes') return sendPanel(msg, 'ClimateAlmanac', [{ label: 'No Change Made', value: 'Removing a region requires --confirm yes.' }]);
+                const region = findConfiguredRegion(args.id || args.name);
+                if (!region || config.regions.length === 1) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'Keep at least one valid region.' }]);
+                config.regions = config.regions.filter(candidate => candidate.id !== region.id);
+                config.regions.forEach(candidate => { if (candidate.parentId === region.id) candidate.parentId = null; });
+                if (config.activeRegionId === region.id) config.activeRegionId = config.regions[0].id;
+                ensureAlmanacRuntime().climate.revision++;
+                publishChange('almanac.climate.changed', null, resolvedClimate(), { action: 'region-removed', regionId: region.id }, msg);
+                return showClimate(msg);
+            }
+            sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'That climate command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Climate', '!clim') }]);
+        }
+
+        function normalizeAstronomyConfig() {
+            const source = modState.config.astronomy;
+            const input = Array.isArray(source.moons) ? source.moons : DEFAULT_MOONS;
+            const moons = [];
+            const ids = new Set();
+            const names = new Set();
+            input.slice(0, POLICY.almanac.maximumMoons).forEach((raw, index) => {
+                const item = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+                let id = String(item.id || `moon-${index + 1}`).toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || `moon-${index + 1}`;
+                const name = boundedName(item.name, `Moon ${index + 1}`);
+                if (ids.has(id) || names.has(name.toLowerCase())) return;
+                ids.add(id);
+                names.add(name.toLowerCase());
+                const phases = Array.isArray(item.phases) ? item.phases.slice(0, POLICY.almanac.maximumMoonPhases).map(phase => boundedName(phase)).filter(Boolean) : [];
+                moons.push({
+                    id,
+                    name,
+                    cycleDays: Math.round(clampNumber(item.cycleDays, 2, POLICY.almanac.maximumMoonCycleDays, 28)),
+                    offsetDays: Math.floor(clampNumber(item.offsetDays, -POLICY.almanac.maximumMoonCycleDays, POLICY.almanac.maximumMoonCycleDays, 0)),
+                    phases: phases.length >= 2 ? phases : copy(DEFAULT_MOONS[0].phases)
+                });
+            });
+            if (!moons.length) moons.push(copy(DEFAULT_MOONS[0]));
+            const rareInput = Array.isArray(source.rareEvents) ? source.rareEvents : DEFAULT_RARE_EVENTS;
+            const rareEvents = [];
+            const rareIds = new Set();
+            const rareNames = new Set();
+            rareInput.slice(0, POLICY.almanac.maximumRareEvents).forEach((raw, index) => {
+                const item = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+                const name = boundedName(item.name, `Rare Event ${index + 1}`);
+                const id = String(item.id || name).toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || `rare-event-${index + 1}`;
+                const weight = Math.floor(Number(item.weight));
+                if (rareIds.has(id) || rareNames.has(name.toLowerCase()) || !Number.isFinite(weight) || weight < 1 || weight > POLICY.almanac.maximumRareEventWeight) return;
+                rareIds.add(id);
+                rareNames.add(name.toLowerCase());
+                rareEvents.push({ id, name, weight });
+            });
+            if (!rareEvents.length) rareEvents.push(...copy(DEFAULT_RARE_EVENTS));
+            modState.config.astronomy = {
+                manualAbsoluteDay: Math.max(0, Math.floor(Number(source.manualAbsoluteDay) || 0)),
+                manualSeason: normalizeSeason(source.manualSeason, 'Spring'),
+                moons,
+                rareEvents
+            };
+            return modState.config.astronomy;
+        }
+
+        function astronomyItem(items, requested) {
+            const key = String(requested || '').trim().toLowerCase();
+            const byId = items.find(item => item.id === key);
+            if (byId) return byId;
+            const byName = items.filter(item => item.name.toLowerCase() === key);
+            return byName.length === 1 ? byName[0] : null;
+        }
+
+        function parseMoonPhases(raw) {
+            if (raw === undefined) return { ok: true, phases: null };
+            const phases = String(raw).split(/[;|]/).map(name => boundedName(name)).filter(Boolean);
+            if (phases.length < 2 || phases.length > POLICY.almanac.maximumMoonPhases) {
+                return { ok: false, message: `Enter 2 to ${POLICY.almanac.maximumMoonPhases} phase names separated by semicolons.` };
+            }
+            if (new Set(phases.map(name => name.toLowerCase())).size !== phases.length) return { ok: false, message: 'Moon phase names must be unique.' };
+            return { ok: true, phases };
+        }
+
+        function moonChanges(args, { allowName = false } = {}) {
+            const changes = {};
+            if (allowName && args.name !== undefined) {
+                const name = boundedName(args.name);
+                if (!name) return { ok: false, message: 'Enter a moon name.' };
+                changes.name = name;
+            }
+            if (args.cycle !== undefined) {
+                const cycle = Number(args.cycle);
+                if (!Number.isInteger(cycle) || cycle < 2 || cycle > POLICY.almanac.maximumMoonCycleDays) return { ok: false, message: `Moon cycles must be whole numbers from 2 to ${POLICY.almanac.maximumMoonCycleDays}.` };
+                changes.cycleDays = cycle;
+            }
+            if (args.offset !== undefined) {
+                const offset = Number(args.offset);
+                if (!Number.isInteger(offset) || Math.abs(offset) > POLICY.almanac.maximumMoonCycleDays) return { ok: false, message: `Moon offsets must be whole numbers from -${POLICY.almanac.maximumMoonCycleDays} to ${POLICY.almanac.maximumMoonCycleDays}.` };
+                changes.offsetDays = offset;
+            }
+            const parsedPhases = parseMoonPhases(args.phases);
+            if (!parsedPhases.ok) return parsedPhases;
+            if (parsedPhases.phases) changes.phases = parsedPhases.phases;
+            return { ok: true, changes };
+        }
+
+        function rareEventChanges(args, { allowName = false } = {}) {
+            const changes = {};
+            if (allowName && args.name !== undefined) {
+                const name = boundedName(args.name);
+                if (!name) return { ok: false, message: 'Enter a celestial-event name.' };
+                changes.name = name;
+            }
+            if (args.weight !== undefined) {
+                const weight = Number(args.weight);
+                if (!Number.isInteger(weight) || weight < 1 || weight > POLICY.almanac.maximumRareEventWeight) return { ok: false, message: `Event weights must be whole numbers from 1 to ${POLICY.almanac.maximumRareEventWeight}.` };
+                changes.weight = weight;
+            }
+            return { ok: true, changes };
+        }
+
+        function astronomyContext(dayOffset = 0) {
+            const config = normalizeAstronomyConfig();
+            const baseMoment = timeAvailable() ? currentMoment() : null;
+            const moment = baseMoment ? resolveWorldMinute(profileFor(), baseMoment.worldMinute + Math.floor(Number(dayOffset) || 0) * MINUTES_PER_DAY) : null;
+            if (baseMoment && !moment) return null;
+            const absoluteDay = moment ? moment.absoluteDay : config.manualAbsoluteDay + Math.floor(Number(dayOffset) || 0);
+            const season = moment ? moment.season : config.manualSeason;
+            const daylightHours = { Winter: 9, Spring: 12, Summer: 15, Autumn: 12 }[season] || 12;
+            let seasonalEvent = null;
+            if (moment && moment.absoluteDay > 0) {
+                const previousMoment = resolveWorldMinute(profileFor(), moment.worldMinute - MINUTES_PER_DAY);
+                if (previousMoment && previousMoment.season !== moment.season) {
+                    seasonalEvent = {
+                        Spring: 'Vernal Equinox',
+                        Summer: 'Summer Solstice',
+                        Autumn: 'Autumn Equinox',
+                        Winter: 'Winter Solstice'
+                    }[moment.season] || `First day of ${moment.season}`;
+                }
+            }
+            const moons = config.moons.map(moon => {
+                const cyclePosition = ((absoluteDay + moon.offsetDays) % moon.cycleDays + moon.cycleDays) % moon.cycleDays;
+                const phaseIndex = Math.floor(cyclePosition / moon.cycleDays * moon.phases.length) % moon.phases.length;
+                const fullIndex = Math.floor(moon.phases.length / 2);
+                const fullStart = Math.ceil(fullIndex * moon.cycleDays / moon.phases.length);
+                const daysUntilFull = (fullStart - cyclePosition + moon.cycleDays) % moon.cycleDays;
+                return { ...copy(moon), phase: moon.phases[phaseIndex], cyclePosition, daysUntilFull };
+            });
+            return Object.freeze({
+                stateSchemaVersion: ASTRONOMY_STATE_SCHEMA_VERSION,
+                authority: moment ? 'TimeAlmanac' : 'AstronomyAlmanac manual setting',
+                absoluteDay,
+                season,
+                daylightHours,
+                sunriseHour: Math.round((12 - daylightHours / 2) * 10) / 10,
+                sunsetHour: Math.round((12 + daylightHours / 2) * 10) / 10,
+                seasonalEvent,
+                moons
+            });
+        }
+
+        function showAstronomy(msg) {
+            if (!submoduleEnabled('astronomy')) return sendPanel(msg, 'AstronomyAlmanac', [{ label: 'Status', value: 'Turned off; moons and settings are preserved.' }]);
+            const context = astronomyContext();
+            const moonRows = context.moons.map(moon => `${_sanitize(moon.name)}: ${_sanitize(moon.phase)}; full in ${moon.daysUntilFull} day(s)`).join('<br>');
+            sendPanel(msg, 'AstronomyAlmanac', [
+                { label: 'Authority', value: _sanitize(context.authority) },
+                { label: 'Season and Daylight', value: `${_sanitize(context.season)} | about ${context.daylightHours} hours | sunrise ${context.sunriseHour}, sunset ${context.sunsetHour}` },
+                { label: 'Deterministic Event', value: context.seasonalEvent ? _sanitize(context.seasonalEvent) : 'No season boundary today.' },
+                { label: 'Moons', value: moonRows || 'None configured.' },
+                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Forecast', '!aa-astro forecast --days ?{Days|7}')} ${GameAssist.createButton('Setup', '!aa-astro setup')} ${GameAssist.createButton('Generate Rare Event', '!aa-astro rare')} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` : GameAssist.createButton('Almanac', '!Almanac') }
+            ]);
+        }
+
+        function showAstronomyForecast(msg, requestedDays) {
+            const days = Math.floor(clampNumber(requestedDays, 1, POLICY.almanac.weatherForecastLimit, 7));
+            const rows = [];
+            for (let offset = 1; offset <= days; offset++) {
+                const context = astronomyContext(offset);
+                if (!context) break;
+                const moons = context.moons.map(moon => `${moon.name}: ${moon.phase}`).join(', ');
+                rows.push(`+${offset}: ${context.season}; ${context.daylightHours} daylight hours; ${moons}${context.seasonalEvent ? `; ${context.seasonalEvent}` : ''}`);
+            }
+            sendPanel(msg, 'Astronomy Forecast', [
+                { label: 'Authority', value: timeAvailable() ? 'TimeAlmanac future dates' : 'Manual astronomy day with the current manual season' },
+                { label: 'Forecast', value: rows.length ? rows.map(_sanitize).join('<br>') : 'The requested dates exceed the supported calendar range.' },
+                { label: 'Changes', value: 'None. Forecasting is read-only.' },
+                { label: 'Return', value: GameAssist.createButton('Astronomy', '!astro') }
+            ]);
+        }
+
+        function showAstronomySetup(msg) {
+            if (!requireGm(msg)) return;
+            const config = normalizeAstronomyConfig();
+            sendPanel(msg, 'Astronomy Setup', [
+                { label: 'Moons', value: config.moons.map(moon => `${_sanitize(moon.name)} [${_sanitize(moon.id)}] - ${moon.cycleDays} days; offset ${moon.offsetDays}; ${moon.phases.length} phases`).join('<br>') },
+                { label: 'Moon Controls', value: `${GameAssist.createButton('Add Moon', '!aa-astro moon add --name "?{Moon name}" --cycle ?{Cycle in days|28} --offset ?{Offset in days|0} --phases "?{Semicolon-separated phases|New;Waxing;Full;Waning}"')} ${GameAssist.createButton('Edit Moon', '!aa-astro moon set --id "?{Moon id}" --cycle ?{Cycle in days} --offset ?{Offset in days} --phases "?{Semicolon-separated phases}"')} ${GameAssist.createButton('Remove Moon', '!aa-astro moon remove --id "?{Moon id}" --confirm ?{Remove this moon?|No,no|Yes,yes}')}` },
+                { label: 'Rare Events', value: config.rareEvents.map(event => `${_sanitize(event.name)} [${_sanitize(event.id)}] - weight ${event.weight}`).join('<br>') },
+                { label: 'Event Controls', value: `${GameAssist.createButton('Add Event', '!aa-astro event add --name "?{Event name}" --weight ?{Relative weight|1}')} ${GameAssist.createButton('Edit Event', '!aa-astro event set --id "?{Event id}" --weight ?{Relative weight}')} ${GameAssist.createButton('Remove Event', '!aa-astro event remove --id "?{Event id}" --confirm ?{Remove this event?|No,no|Yes,yes}')}` },
+                { label: 'Return', value: GameAssist.createButton('Astronomy', '!astro') }
+            ]);
+        }
+
+        function handleAstronomy(msg, content) {
+            const body = content.replace(/^(astronomy|astro)\s*/i, '').trim();
+            if (!body || /^(menu|status)$/i.test(body)) return showAstronomy(msg);
+            if (!requireGm(msg)) return;
+            const lower = body.toLowerCase();
+            if (lower === 'audit') return showFocusedAudit(msg, 'astronomy');
+            if (lower === 'manual' || lower === 'help') return showManual(msg);
+            if (lower === 'on' || lower === 'off') {
+                modState.config.submodules.astronomy = lower === 'on';
+                return showAstronomy(msg);
+            }
+            const config = normalizeAstronomyConfig();
+            if (lower === 'setup' || lower === 'manage') return showAstronomySetup(msg);
+            if (/^forecast\b/i.test(body)) return submoduleEnabled('astronomy') ? showAstronomyForecast(msg, _parseArgs(body).args.days) : showAstronomy(msg);
+            if (/^manual\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                config.manualAbsoluteDay = Math.max(0, Math.floor(Number(args.day) || 0));
+                config.manualSeason = normalizeSeason(args.season, config.manualSeason);
+                publishChange('almanac.astronomy.changed', null, astronomyContext(), { action: 'manual-context' }, msg);
+                return showAstronomy(msg);
+            }
+            if (/^moon\s+add\b/i.test(body)) {
+                if (config.moons.length >= POLICY.almanac.maximumMoons) return sendPanel(msg, 'AstronomyAlmanac Needs Attention', [{ label: 'Problem', value: 'The moon limit has been reached.' }]);
+                const args = _parseArgs(body).args;
+                const name = boundedName(args.name);
+                if (!name || astronomyItem(config.moons, name)) return sendPanel(msg, 'AstronomyAlmanac Needs Attention', [{ label: 'Problem', value: name ? 'Moon names must be unique.' : 'Enter a moon name.' }, { label: 'Changes', value: 'None.' }]);
+                const parsed = moonChanges(args);
+                if (!parsed.ok || parsed.changes.cycleDays === undefined) return sendPanel(msg, 'AstronomyAlmanac Needs Attention', [{ label: 'Problem', value: _sanitize(parsed.message || 'Enter a valid moon cycle.') }, { label: 'Changes', value: 'None.' }]);
+                let id = name.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'moon';
+                const baseId = id;
+                let suffix = 2;
+                while (config.moons.some(moon => moon.id === id)) id = `${baseId}-${suffix++}`;
+                config.moons.push({ id, name, cycleDays: parsed.changes.cycleDays, offsetDays: parsed.changes.offsetDays ?? 0, phases: parsed.changes.phases || copy(DEFAULT_MOONS[0].phases) });
+                publishChange('almanac.astronomy.changed', null, astronomyContext(), { action: 'moon-added', moonId: id }, msg);
+                return showAstronomySetup(msg);
+            }
+            if (/^moon\s+set\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                const moon = astronomyItem(config.moons, args.id || args.name);
+                if (!moon) return sendPanel(msg, 'AstronomyAlmanac Needs Attention', [{ label: 'Problem', value: 'That moon was not found or its name is ambiguous.' }, { label: 'Changes', value: 'None.' }]);
+                const parsed = moonChanges(args, { allowName: false });
+                if (!parsed.ok || !Object.keys(parsed.changes).length) return sendPanel(msg, 'AstronomyAlmanac Needs Attention', [{ label: 'Problem', value: _sanitize(parsed.message || 'Provide at least one moon value to change.') }, { label: 'Changes', value: 'None.' }]);
+                Object.assign(moon, parsed.changes);
+                publishChange('almanac.astronomy.changed', null, astronomyContext(), { action: 'moon-updated', moonId: moon.id }, msg);
+                return showAstronomySetup(msg);
+            }
+            if (/^moon\s+remove\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                if (String(args.confirm || '').toLowerCase() !== 'yes') return sendPanel(msg, 'AstronomyAlmanac', [{ label: 'No Change Made', value: 'Removing a moon requires --confirm yes.' }]);
+                const moon = astronomyItem(config.moons, args.id || args.name);
+                if (!moon || config.moons.length === 1) return sendPanel(msg, 'AstronomyAlmanac Needs Attention', [{ label: 'Problem', value: 'Keep at least one valid moon.' }]);
+                config.moons = config.moons.filter(item => item.id !== moon.id);
+                publishChange('almanac.astronomy.changed', null, astronomyContext(), { action: 'moon-removed', moonId: moon.id }, msg);
+                return showAstronomySetup(msg);
+            }
+            if (/^event\s+add\b/i.test(body)) {
+                if (config.rareEvents.length >= POLICY.almanac.maximumRareEvents) return sendPanel(msg, 'AstronomyAlmanac Needs Attention', [{ label: 'Problem', value: 'The rare celestial-event limit has been reached.' }]);
+                const args = _parseArgs(body).args;
+                const name = boundedName(args.name);
+                if (!name || astronomyItem(config.rareEvents, name)) return sendPanel(msg, 'AstronomyAlmanac Needs Attention', [{ label: 'Problem', value: name ? 'Rare event names must be unique.' : 'Enter a rare event name.' }, { label: 'Changes', value: 'None.' }]);
+                const parsed = rareEventChanges(args);
+                if (!parsed.ok || parsed.changes.weight === undefined) return sendPanel(msg, 'AstronomyAlmanac Needs Attention', [{ label: 'Problem', value: _sanitize(parsed.message || 'Enter a valid event weight.') }, { label: 'Changes', value: 'None.' }]);
+                let id = name.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'event';
+                const baseId = id;
+                let suffix = 2;
+                while (config.rareEvents.some(event => event.id === id)) id = `${baseId}-${suffix++}`;
+                config.rareEvents.push({ id, name, weight: parsed.changes.weight });
+                publishChange('almanac.astronomy.changed', null, astronomyContext(), { action: 'rare-event-added', eventId: id }, msg);
+                return showAstronomySetup(msg);
+            }
+            if (/^event\s+set\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                const event = astronomyItem(config.rareEvents, args.id || args.name);
+                if (!event) return sendPanel(msg, 'AstronomyAlmanac Needs Attention', [{ label: 'Problem', value: 'That rare event was not found or its name is ambiguous.' }, { label: 'Changes', value: 'None.' }]);
+                const parsed = rareEventChanges(args);
+                if (!parsed.ok || !Object.keys(parsed.changes).length) return sendPanel(msg, 'AstronomyAlmanac Needs Attention', [{ label: 'Problem', value: _sanitize(parsed.message || 'Provide an event weight to change.') }, { label: 'Changes', value: 'None.' }]);
+                Object.assign(event, parsed.changes);
+                publishChange('almanac.astronomy.changed', null, astronomyContext(), { action: 'rare-event-updated', eventId: event.id }, msg);
+                return showAstronomySetup(msg);
+            }
+            if (/^event\s+remove\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                if (String(args.confirm || '').toLowerCase() !== 'yes') return sendPanel(msg, 'AstronomyAlmanac', [{ label: 'No Change Made', value: 'Removing a rare event requires --confirm yes.' }]);
+                const event = astronomyItem(config.rareEvents, args.id || args.name);
+                if (!event || config.rareEvents.length === 1) return sendPanel(msg, 'AstronomyAlmanac Needs Attention', [{ label: 'Problem', value: 'Keep at least one valid rare event.' }]);
+                config.rareEvents = config.rareEvents.filter(candidate => candidate.id !== event.id);
+                publishChange('almanac.astronomy.changed', null, astronomyContext(), { action: 'rare-event-removed', eventId: event.id }, msg);
+                return showAstronomySetup(msg);
+            }
+            if (lower === 'rare') {
+                if (!submoduleEnabled('astronomy')) return showAstronomy(msg);
+                const choices = config.rareEvents;
+                const total = choices.reduce((sum, choice) => sum + choice.weight, 0);
+                let roll = randomInteger(total);
+                const selected = choices.find(choice => (roll -= choice.weight) <= 0) || choices[0];
+                const entry = { name: selected.name, generatedAt: isoNow(), absoluteDay: astronomyContext().absoluteDay, source: 'Generated rare event' };
+                const runtime = ensureAlmanacRuntime();
+                runtime.astronomy.rareHistory.push(entry);
+                if (runtime.astronomy.rareHistory.length > POLICY.almanac.astronomyHistoryLimit) runtime.astronomy.rareHistory.shift();
+                publishChange('almanac.astronomy.changed', null, astronomyContext(), { action: 'rare-event-generated', event: entry }, msg);
+                return sendPanel(msg, 'Generated Celestial Event', [
+                    { label: 'Event', value: _sanitize(entry.name) },
+                    { label: 'Important', value: 'This is a generated rare event, not a deterministic calendar or moon result.' },
+                    { label: 'Return', value: GameAssist.createButton('Astronomy', '!astro') }
+                ]);
+            }
+            sendPanel(msg, 'AstronomyAlmanac Needs Attention', [{ label: 'Problem', value: 'That astronomy command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Astronomy', '!astro') }]);
+        }
+
+        function weatherClimateContext() {
+            if (submoduleEnabled('climate')) return resolvedClimate();
+            const season = timeAvailable() ? currentMoment().season : 'Spring';
+            return {
+                regionId: null,
+                regionName: 'Manual Weather Context',
+                profileName: 'Temperate fallback',
+                season,
+                seasonAuthority: timeAvailable() ? 'TimeAlmanac' : 'WeatherAlmanac fallback',
+                temperatureF: { Winter: 40, Spring: 58, Summer: 76, Autumn: 58 }[season] || 58,
+                humidity: 55,
+                precipitationChance: 35,
+                windMph: 8,
+                tags: ['temperate']
+            };
+        }
+
+        function generateWeather(previous = null, forecastOffset = 0) {
+            const climate = weatherClimateContext();
+            const randomTemperature = climate.temperatureF + randomInteger(21) - 11;
+            const temperatureF = previous
+                ? Math.round((Number(previous.temperatureF) * 2 + randomTemperature) / 3)
+                : Math.round(randomTemperature);
+            const precipitationRoll = randomInteger(100);
+            const cloudRoll = randomInteger(100);
+            const windVariation = randomInteger(13) - 7;
+            const windMph = Math.max(0, Math.round((previous ? Number(previous.windMph) + climate.windMph : climate.windMph * 2) / 2 + windVariation));
+            const precipitation = precipitationRoll <= climate.precipitationChance;
+            const severe = precipitation && randomInteger(100) <= Math.max(5, Math.round(climate.precipitationChance / 5));
+            let kind = 'clear';
+            if (precipitation && temperatureF <= 32) kind = severe ? 'blizzard' : 'snow';
+            else if (precipitation) kind = severe ? 'storm' : 'rain';
+            else if (cloudRoll <= Math.min(85, climate.humidity)) kind = 'cloudy';
+            else if (climate.humidity >= 80 && randomInteger(100) <= 30) kind = 'fog';
+            else if (windMph >= 25) kind = 'windy';
+            else if (temperatureF >= 100) kind = 'heatwave';
+            else if (temperatureF <= 10) kind = 'cold-snap';
+            if (previous && randomInteger(100) <= 35 && ['clear', 'cloudy', 'rain', 'snow', 'fog', 'windy'].includes(previous.kind)) {
+                kind = previous.kind;
+            }
+            const descriptions = {
+                clear: ['Clear', 'None', 'Clear', 0, ['clear']],
+                cloudy: ['Cloudy', 'None', 'Overcast', 1, ['cloud']],
+                rain: ['Steady rain', 'Rain', 'Overcast', 2, ['rain', 'wet']],
+                storm: ['Thunderstorm', 'Heavy rain', 'Storm clouds', 4, ['rain', 'storm', 'lightning']],
+                snow: ['Snowfall', 'Snow', 'Overcast', 2, ['snow', 'cold']],
+                blizzard: ['Blizzard', 'Heavy snow', 'Whiteout', 4, ['snow', 'cold', 'wind', 'obscured']],
+                fog: ['Fog', 'Mist', 'Low cloud', 2, ['fog', 'obscured']],
+                windy: ['Strong winds', 'None', 'Scattered cloud', 2, ['wind']],
+                heatwave: ['Heat wave', 'None', 'Clear', 3, ['heat']],
+                'cold-snap': ['Bitter cold', 'None', 'Clear', 3, ['cold']]
+            };
+            const [summary, precipitationText, cloud, severity, tags] = descriptions[kind];
+            const visibility = ['storm', 'snow'].includes(kind) ? 'Reduced' : (['blizzard', 'fog'].includes(kind) ? 'Heavily obscured' : 'Clear');
+            return {
+                stateSchemaVersion: WEATHER_STATE_SCHEMA_VERSION,
+                id: `weather-${Date.now().toString(36)}-${randomInteger(9999)}`,
+                kind,
+                summary,
+                temperatureF,
+                windMph,
+                precipitation: precipitationText,
+                cloud,
+                visibility,
+                severity,
+                durationHours: Math.max(1, randomInteger(12) + (severity * 2)),
+                tags: [...new Set([...(climate.tags || []), ...tags])],
+                regionId: climate.regionId,
+                regionName: climate.regionName,
+                season: climate.season,
+                context: submoduleEnabled('climate') ? 'ClimateAlmanac' : (timeAvailable() ? 'TimeAlmanac plus fallback climate' : 'WeatherAlmanac fallback'),
+                forecastOffset,
+                generatedAt: isoNow(),
+                worldMinute: timeAvailable() ? ensureAlmanacRuntime().time.worldMinute : null,
+                source: forecastOffset ? 'Forecast' : 'Generated'
+            };
+        }
+
+        function deriveEnvironment(weather, source = 'WeatherAlmanac') {
+            const value = weather || generateWeather(null, 0);
+            const temperature = value.temperatureF <= 0 ? 'Extreme cold'
+                : value.temperatureF <= 32 ? 'Freezing'
+                    : value.temperatureF <= 50 ? 'Cold'
+                        : value.temperatureF < 80 ? 'Mild'
+                            : value.temperatureF < 100 ? 'Hot' : 'Extreme heat';
+            const ground = ['rain', 'storm'].includes(value.kind) ? 'Wet or muddy'
+                : ['snow', 'blizzard'].includes(value.kind) ? 'Snow-covered or icy'
+                    : value.kind === 'fog' ? 'Damp' : 'Firm';
+            const exposure = value.severity >= 4 || ['Extreme cold', 'Extreme heat'].includes(temperature) ? 'Extreme'
+                : value.severity >= 2 ? 'Moderate' : 'Low';
+            return {
+                stateSchemaVersion: ENVIRONMENT_STATE_SCHEMA_VERSION,
+                name: `${value.summary} Environment`,
+                visibility: value.visibility,
+                temperature,
+                precipitation: value.precipitation,
+                wind: value.windMph >= 40 ? 'Severe' : value.windMph >= 20 ? 'Strong' : value.windMph >= 8 ? 'Moderate' : 'Light',
+                ground,
+                water: ['rain', 'storm', 'snow', 'blizzard'].includes(value.kind) ? 'Conditions may affect exposed water' : 'Normal',
+                exposure,
+                severity: Math.max(value.severity, exposure === 'Extreme' ? 3 : 0),
+                tags: [...new Set([...(value.tags || []), ground.includes('muddy') ? 'mud' : '', ground.includes('icy') ? 'ice' : ''].filter(Boolean))],
+                source,
+                updatedAt: isoNow(),
+                weatherId: value.id || null
+            };
+        }
+
+        function refreshEnvironment(weather, msg) {
+            const runtime = ensureAlmanacRuntime();
+            if (!submoduleEnabled('environment') || runtime.environment.override) return null;
+            const previous = runtime.environment.current ? copy(runtime.environment.current) : null;
+            const current = deriveEnvironment(weather);
+            runtime.environment.current = current;
+            runtime.environment.history.push(current);
+            if (runtime.environment.history.length > POLICY.almanac.environmentHistoryLimit) runtime.environment.history.shift();
+            publishChange('almanac.environment.changed', previous, current, { action: 'weather-interpretation' }, msg);
+            return current;
+        }
+
+        function commitWeather(weather, msg, reason = 'Weather generated') {
+            const runtime = ensureAlmanacRuntime();
+            const previous = runtime.weather.current ? copy(runtime.weather.current) : null;
+            runtime.weather.current = copy(weather);
+            runtime.weather.history.push({ ...copy(weather), committedReason: reason });
+            if (runtime.weather.history.length > POLICY.almanac.weatherHistoryLimit) runtime.weather.history.shift();
+            runtime.weather.forecast = [];
+            publishChange('almanac.weather.changed', previous, weather, { reason }, msg);
+            refreshEnvironment(weather, msg);
+            return weather;
+        }
+
+        function currentWeather() {
+            return ensureAlmanacRuntime().weather.current;
+        }
+
+        function showWeather(msg) {
+            if (!submoduleEnabled('weather')) return sendPanel(msg, 'WeatherAlmanac', [{ label: 'Status', value: 'Turned off; current weather, forecast, and history are preserved.' }]);
+            const runtime = ensureAlmanacRuntime();
+            const weather = runtime.weather.current;
+            const forecast = runtime.weather.forecast.length
+                ? runtime.weather.forecast.map((item, index) => `+${index + 1}: ${_sanitize(item.summary)}, ${item.temperatureF} F`).join('<br>')
+                : 'No forecast prepared.';
+            sendPanel(msg, 'WeatherAlmanac', [
+                { label: 'Current', value: weather ? `${_sanitize(weather.summary)} | ${weather.temperatureF} F | ${weather.windMph} mph wind | ${_sanitize(weather.visibility)}` : 'No weather has been committed yet.' },
+                { label: 'Context', value: weather ? `${_sanitize(weather.regionName)} | ${_sanitize(weather.season)} | ${_sanitize(weather.context)}` : _sanitize(weatherClimateContext().context || weatherClimateContext().regionName) },
+                { label: 'Forecast', value: forecast },
+                { label: 'Lock', value: `${runtime.weather.locked ? 'On' : 'Off'} ${playerIsGM(msg?.playerid) ? GameAssist.createButton(runtime.weather.locked ? 'Unlock' : 'Lock', `!aa-weather ${runtime.weather.locked ? 'unlock' : 'lock'}`) : ''}` },
+                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Generate', '!aa-weather generate')} ${GameAssist.createButton('Forecast', '!aa-weather forecast --days ?{Days|3}')} ${GameAssist.createButton('Announce', '!aa-weather announce')} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` : GameAssist.createButton('Almanac', '!Almanac') }
+            ]);
+        }
+
+        function handleWeather(msg, content) {
+            const body = content.replace(/^weather\s*/i, '').trim();
+            if (!body || /^(menu|status)$/i.test(body)) return showWeather(msg);
+            if (!requireGm(msg)) return;
+            const lower = body.toLowerCase();
+            if (lower === 'audit') return showFocusedAudit(msg, 'weather');
+            if (lower === 'manual' || lower === 'help') return showManual(msg);
+            if (lower === 'setup') return showWeather(msg);
+            if (lower === 'on' || lower === 'off') {
+                modState.config.submodules.weather = lower === 'on';
+                return showWeather(msg);
+            }
+            if (!submoduleEnabled('weather')) return showWeather(msg);
+            const runtime = ensureAlmanacRuntime();
+            if (lower === 'lock' || lower === 'unlock') {
+                runtime.weather.locked = lower === 'lock';
+                return showWeather(msg);
+            }
+            if (/^generate\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                if (runtime.weather.locked && String(args.force || '').toLowerCase() !== 'yes') return sendPanel(msg, 'WeatherAlmanac', [{ label: 'Locked', value: 'Current weather expresses GM intent and was not replaced.' }, { label: 'Next Step', value: GameAssist.createButton('Weather', '!weather') }]);
+                commitWeather(generateWeather(runtime.weather.current), msg, 'Weather generated');
+                return showWeather(msg);
+            }
+            if (/^forecast\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                const days = Math.floor(clampNumber(args.days, 1, POLICY.almanac.weatherForecastLimit, modState.config.weather.defaultForecastDays || 3));
+                let previous = runtime.weather.current || generateWeather(null);
+                const forecast = [];
+                for (let index = 1; index <= days; index++) {
+                    previous = generateWeather(previous, index);
+                    forecast.push(previous);
+                }
+                runtime.weather.forecast = forecast;
+                return showWeather(msg);
+            }
+            if (/^manual\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                if (runtime.weather.locked && String(args.force || '').toLowerCase() !== 'yes') return sendPanel(msg, 'WeatherAlmanac', [{ label: 'Locked', value: 'Unlock current weather before replacing it.' }]);
+                const summary = boundedName(args.summary, 'Custom Weather').slice(0, POLICY.almanac.maximumSummaryLength);
+                const temperatureF = Math.round(clampNumber(args.temp, -150, 160, 60));
+                const windMph = Math.round(clampNumber(args.wind, 0, 200, 5));
+                const severity = Math.round(clampNumber(args.severity, 0, 5, 1));
+                const weather = {
+                    stateSchemaVersion: WEATHER_STATE_SCHEMA_VERSION,
+                    id: `weather-${Date.now().toString(36)}-${randomInteger(9999)}`,
+                    kind: 'manual', summary, temperatureF, windMph,
+                    precipitation: boundedName(args.precipitation, 'As described by the GM'),
+                    cloud: boundedName(args.cloud, 'As described by the GM'),
+                    visibility: boundedName(args.visibility, 'As described by the GM'),
+                    severity,
+                    durationHours: Math.max(1, Math.round(clampNumber(args.duration, 1, 720, 8))),
+                    tags: ['manual'],
+                    regionId: submoduleEnabled('climate') ? resolvedClimate()?.regionId : null,
+                    regionName: submoduleEnabled('climate') ? resolvedClimate()?.regionName : 'Manual Weather Context',
+                    season: weatherClimateContext().season,
+                    context: 'GM manual weather', forecastOffset: 0, generatedAt: isoNow(),
+                    worldMinute: timeAvailable() ? runtime.time.worldMinute : null, source: 'Manual'
+                };
+                commitWeather(weather, msg, 'GM manual weather');
+                return showWeather(msg);
+            }
+            if (lower === 'announce') {
+                const weather = runtime.weather.current;
+                if (!weather) return sendPanel(msg, 'WeatherAlmanac Needs Attention', [{ label: 'Problem', value: 'Generate or choose current weather first.' }]);
+                return sendPanel(msg, 'Current Weather', [
+                    { label: 'Conditions', value: `${_sanitize(weather.summary)} | ${weather.temperatureF} F | ${weather.windMph} mph wind` },
+                    { label: 'Visibility', value: _sanitize(weather.visibility) },
+                    { label: 'Region', value: _sanitize(weather.regionName) }
+                ], { publicMessage: true });
+            }
+            sendPanel(msg, 'WeatherAlmanac Needs Attention', [{ label: 'Problem', value: 'That weather command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Weather', '!weather') }]);
+        }
+
+        function environmentContext() {
+            const runtime = ensureAlmanacRuntime();
+            if (runtime.environment.override) return Object.freeze(copy(runtime.environment.override));
+            if (runtime.environment.current) return Object.freeze(copy(runtime.environment.current));
+            if (runtime.weather.current) return Object.freeze(deriveEnvironment(runtime.weather.current));
+            return Object.freeze({ ...copy(ENVIRONMENT_PRESETS.clear), stateSchemaVersion: ENVIRONMENT_STATE_SCHEMA_VERSION, source: 'EnviroAlmanac fallback', updatedAt: isoNow(), weatherId: null });
+        }
+
+        function commitEnvironmentOverride(next, msg, reason) {
+            const runtime = ensureAlmanacRuntime();
+            const previous = environmentContext();
+            runtime.environment.override = next ? { ...copy(next), stateSchemaVersion: ENVIRONMENT_STATE_SCHEMA_VERSION, source: 'GM override', updatedAt: isoNow(), weatherId: null } : null;
+            if (!next) runtime.environment.current = runtime.weather.current ? deriveEnvironment(runtime.weather.current) : null;
+            const current = environmentContext();
+            runtime.environment.history.push(copy(current));
+            if (runtime.environment.history.length > POLICY.almanac.environmentHistoryLimit) runtime.environment.history.shift();
+            publishChange('almanac.environment.changed', previous, current, { reason }, msg);
+            return current;
+        }
+
+        function showEnvironment(msg) {
+            if (!submoduleEnabled('environment')) return sendPanel(msg, 'EnviroAlmanac', [{ label: 'Status', value: 'Turned off; manual override and history are preserved.' }]);
+            const environment = environmentContext();
+            const overridden = Boolean(ensureAlmanacRuntime().environment.override);
+            sendPanel(msg, 'EnviroAlmanac', [
+                { label: 'Authority', value: overridden ? 'GM manual override' : _sanitize(environment.source) },
+                { label: 'Visibility and Ground', value: `${_sanitize(environment.visibility)} | ${_sanitize(environment.ground)}` },
+                { label: 'Exposure', value: `${_sanitize(environment.temperature)} | ${_sanitize(environment.wind)} wind | ${_sanitize(environment.exposure)} exposure` },
+                { label: 'Precipitation and Water', value: `${_sanitize(environment.precipitation)} | ${_sanitize(environment.water)}` },
+                { label: 'Tags', value: (environment.tags || []).map(_sanitize).join(', ') || 'None' },
+                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Choose Preset', '!aa-enviro preset ?{Preset|Clear,clear|Blizzard,blizzard|Desert Heat,desert|Swamp,swamp|Underwater,underwater}')} ${overridden ? GameAssist.createButton('Clear Override', '!aa-enviro clear --confirm yes') : ''} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` : GameAssist.createButton('Almanac', '!Almanac') }
+            ]);
+        }
+
+        function handleEnvironment(msg, content) {
+            const body = content.replace(/^(environment|enviro)\s*/i, '').trim();
+            if (!body || /^(menu|status)$/i.test(body)) return showEnvironment(msg);
+            if (!requireGm(msg)) return;
+            const lower = body.toLowerCase();
+            if (lower === 'audit') return showFocusedAudit(msg, 'environment');
+            if (lower === 'manual' || lower === 'help') return showManual(msg);
+            if (lower === 'setup') return showEnvironment(msg);
+            if (lower === 'on' || lower === 'off') {
+                modState.config.submodules.environment = lower === 'on';
+                return showEnvironment(msg);
+            }
+            if (!submoduleEnabled('environment')) return showEnvironment(msg);
+            if (/^preset\b/i.test(body)) {
+                const requested = body.replace(/^preset\s*/i, '').trim().toLowerCase();
+                const preset = ENVIRONMENT_PRESETS[requested];
+                if (!preset) return sendPanel(msg, 'EnviroAlmanac Needs Attention', [{ label: 'Problem', value: 'Choose clear, blizzard, desert, swamp, or underwater.' }]);
+                commitEnvironmentOverride(preset, msg, `Preset selected: ${requested}`);
+                return showEnvironment(msg);
+            }
+            if (/^custom\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                const requestedSeverity = args.severity === undefined ? 1 : Number(args.severity);
+                const requestedTags = String(args.tags || 'manual').split(',').map(tag => tag.trim()).filter(Boolean);
+                if (!Number.isFinite(requestedSeverity) || requestedSeverity < 0 || requestedSeverity > 5) {
+                    return sendPanel(msg, 'EnviroAlmanac Needs Attention', [{ label: 'Problem', value: 'Environment severity must be a number from 0 to 5.' }, { label: 'Changes', value: 'None.' }]);
+                }
+                if (requestedTags.length > POLICY.almanac.maximumClimateTags) {
+                    return sendPanel(msg, 'EnviroAlmanac Needs Attention', [{ label: 'Problem', value: `Use no more than ${POLICY.almanac.maximumClimateTags} environment tags.` }, { label: 'Changes', value: 'None.' }]);
+                }
+                const next = {
+                    name: boundedName(args.name, 'Custom Environment'),
+                    visibility: boundedName(args.visibility, 'As described by the GM'),
+                    temperature: boundedName(args.temperature, 'As described by the GM'),
+                    precipitation: boundedName(args.precipitation, 'As described by the GM'),
+                    wind: boundedName(args.wind, 'As described by the GM'),
+                    ground: boundedName(args.ground, 'As described by the GM'),
+                    water: boundedName(args.water, 'As described by the GM'),
+                    exposure: boundedName(args.exposure, 'As described by the GM'),
+                    severity: Math.round(requestedSeverity),
+                    tags: requestedTags.map(tag => boundedName(tag)).filter(Boolean)
+                };
+                commitEnvironmentOverride(next, msg, 'Custom environment selected');
+                return showEnvironment(msg);
+            }
+            if (/^clear\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                if (String(args.confirm || '').toLowerCase() !== 'yes') return sendPanel(msg, 'EnviroAlmanac', [{ label: 'No Change Made', value: 'Clearing the GM override requires --confirm yes.' }]);
+                commitEnvironmentOverride(null, msg, 'GM override cleared');
+                return showEnvironment(msg);
+            }
+            sendPanel(msg, 'EnviroAlmanac Needs Attention', [{ label: 'Problem', value: 'That environment command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Environment', '!enviro') }]);
+        }
+
+        function normalizeRestConfig() {
+            const source = modState.config.rest;
+            const customInput = Array.isArray(source.customTypes) ? source.customTypes : [];
+            const customTypes = [];
+            const ids = new Set(['short', 'long', 'extended']);
+            customInput.slice(0, POLICY.almanac.customRestLimit).forEach((raw, index) => {
+                const item = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+                let id = String(item.id || `custom-${index + 1}`).toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || `custom-${index + 1}`;
+                if (ids.has(id)) return;
+                ids.add(id);
+                const base = ['short', 'long', 'extended', 'record'].includes(String(item.base || '').toLowerCase())
+                    ? String(item.base).toLowerCase()
+                    : 'record';
+                customTypes.push({
+                    id,
+                    name: boundedName(item.name, `Custom Rest ${index + 1}`),
+                    hours: clampNumber(item.hours, 0, POLICY.almanac.maximumRestHours, 8),
+                    base
+                });
+            });
+            modState.config.rest = {
+                advanceTime: source.advanceTime !== false,
+                extendedEnabled: source.extendedEnabled === true,
+                customTypes
+            };
+            return modState.config.rest;
+        }
+
+        function restDefinition(requested) {
+            const config = normalizeRestConfig();
+            const builtins = {
+                short: { id: 'short', name: 'Short Rest', hours: 1, base: 'short' },
+                long: { id: 'long', name: 'Long Rest', hours: 8, base: 'long' },
+                extended: { id: 'extended', name: 'Extended Rest', hours: 24, base: 'extended' }
+            };
+            const key = String(requested || '').trim().toLowerCase();
+            if (key === 'extended' && !config.extendedEnabled) return null;
+            return builtins[key] || config.customTypes.find(item => item.id === key || item.name.toLowerCase() === key) || null;
+        }
+
+        function characterSheetHint(character) {
+            const direct = String(character?.get('charactersheetname') || '').trim().toLowerCase();
+            if (direct) return direct;
+            return String(getAttrByName(character?.id, 'charactersheetname') || '').trim().toLowerCase();
+        }
+
+        function is2014RestCharacter(character) {
+            if (!character || String(getAttrByName(character.id, 'npc') || '0') === '1') return false;
+            const hint = characterSheetHint(character);
+            return hint === 'ogl5e' || (hint === '' && Boolean(findObjs({ _type: 'attribute', _characterid: character.id, name: 'hit_dice' })[0]));
+        }
+
+        function controlsRestCharacter(msg, token, character) {
+            if (playerIsGM(msg?.playerid)) return true;
+            if (token.get('layer') !== 'objects') return false;
+            const controllers = `${token.get('controlledby') || ''},${character.get('controlledby') || ''}`
+                .split(',').map(value => value.trim()).filter(Boolean);
+            return controllers.includes('all') || controllers.includes(String(msg?.playerid));
+        }
+
+        function selectedRestSubjects(msg) {
+            const subjects = [];
+            const seen = new Set();
+            (msg?.selected || []).slice(0, 20).forEach(selection => {
+                const token = getObj('graphic', selection._id);
+                if (!token || !token.get('represents')) return;
+                const character = getObj('character', token.get('represents'));
+                if (!character || seen.has(character.id) || !controlsRestCharacter(msg, token, character)) return;
+                seen.add(character.id);
+                subjects.push({ token, character, name: character.get('name') || token.get('name') || 'Character' });
+            });
+            return subjects;
+        }
+
+        function attributeFor(characterId, name) {
+            return findObjs({ _type: 'attribute', _characterid: characterId, name })[0] || null;
+        }
+
+        function numericAttributePlan(attribute, next, label, options = {}) {
+            if (!attribute) return null;
+            const before = Number(attribute.get('current'));
+            if (!Number.isFinite(before) || !Number.isFinite(next) || before === next) return null;
+            const sourceAttribute = options.sourceAttribute || null;
+            return {
+                attributeId: attribute.id,
+                before: String(attribute.get('current')),
+                beforeMax: String(attribute.get('max') ?? ''),
+                sourceAttributeId: sourceAttribute?.id || null,
+                sourceBefore: sourceAttribute ? String(sourceAttribute.get('current')) : null,
+                next: String(next),
+                label
+            };
+        }
+
+        function planRestForCharacter(subject, definition) {
+            if (!is2014RestCharacter(subject.character)) {
+                return { ok: false, message: `${subject.name}: a D&D 5E by Roll20 2014 PC sheet could not be verified.` };
+            }
+            const writes = [];
+            const notes = [];
+            const mode = definition.base;
+            if (mode === 'short' || mode === 'record') {
+                notes.push(mode === 'short'
+                    ? 'Hit Dice spending remains on the character sheet so the player chooses dice and healing.'
+                    : 'This custom rest records completion without changing sheet resources.');
+            }
+            if (mode === 'long' || mode === 'extended') {
+                const hp = attributeFor(subject.character.id, 'hp');
+                if (hp) {
+                    const maximum = Number(hp.get('max'));
+                    const plan = numericAttributePlan(hp, maximum, 'Hit Points');
+                    if (Number.isFinite(maximum) && maximum >= 0 && plan) writes.push(plan);
+                }
+                const hitDice = attributeFor(subject.character.id, 'hit_dice');
+                if (hitDice) {
+                    const current = Number(hitDice.get('current'));
+                    const maximum = Number(hitDice.get('max'));
+                    if (Number.isFinite(current) && Number.isFinite(maximum) && maximum >= 0) {
+                        const recovery = mode === 'extended' ? maximum : Math.max(1, Math.floor(maximum / 2));
+                        const plan = numericAttributePlan(hitDice, Math.min(maximum, current + recovery), 'Hit Dice');
+                        if (plan) writes.push(plan);
+                    }
+                }
+                for (let level = 1; level <= 9; level++) {
+                    const total = attributeFor(subject.character.id, `lvl${level}_slots_total`);
+                    const remaining = attributeFor(subject.character.id, `lvl${level}_slots_expended`);
+                    if (!total || !remaining) continue;
+                    const maximum = Number(total.get('current'));
+                    const plan = numericAttributePlan(remaining, maximum, `Level ${level} Spell Slots`, { sourceAttribute: total });
+                    if (Number.isFinite(maximum) && maximum >= 0 && plan) writes.push(plan);
+                }
+                notes.push('Only verified HP, Hit Dice, and remaining spell-slot fields are included. Other class resources remain unchanged.');
+            }
+            return { ok: true, characterId: subject.character.id, tokenId: subject.token.id, name: subject.name, writes, notes };
+        }
+
+        function pruneRestGrants() {
+            const runtime = ensureAlmanacRuntime();
+            const nowMs = Date.now();
+            Object.keys(runtime.rest.grants).forEach(id => {
+                if (!runtime.rest.grants[id] || Number(runtime.rest.grants[id].expiresAt) <= nowMs) delete runtime.rest.grants[id];
+            });
+            const entries = Object.entries(runtime.rest.grants).sort((left, right) => Number(left[1].createdAt) - Number(right[1].createdAt));
+            entries.slice(0, Math.max(0, entries.length - POLICY.almanac.restGrantLimit)).forEach(([id]) => delete runtime.rest.grants[id]);
+        }
+
+        function createRestPreview(msg, requestedType) {
+            if (!submoduleEnabled('rest')) return sendPanel(msg, 'RestAlmanac', [{ label: 'Status', value: 'Turned off; rest definitions and history are preserved.' }]);
+            const definition = restDefinition(requestedType);
+            if (!definition) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'That rest type is unavailable.' }, { label: 'Next Step', value: GameAssist.createButton('Rest', '!rest') }]);
+            const subjects = selectedRestSubjects(msg);
+            if (!subjects.length) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'Select at least one linked 2014 PC token you control.' }, { label: 'Next Step', value: GameAssist.createButton('Rest', '!rest') }]);
+            const plans = subjects.map(subject => planRestForCharacter(subject, definition));
+            const failure = plans.find(plan => !plan.ok);
+            if (failure) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: _sanitize(failure.message) }, { label: 'Changes', value: 'None. Every selected character must validate before a rest can be confirmed.' }]);
+            const advanceTime = normalizeRestConfig().advanceTime && timeAvailable() && Number(definition.hours) > 0;
+            pruneRestGrants();
+            const runtime = ensureAlmanacRuntime();
+            const id = `rest-${Date.now().toString(36)}-${randomInteger(999999)}`;
+            runtime.rest.grants[id] = {
+                id,
+                actorId: String(msg.playerid),
+                createdAt: Date.now(),
+                expiresAt: Date.now() + POLICY.almanac.restGrantMs,
+                definition: copy(definition),
+                advanceTime,
+                plans: copy(plans)
+            };
+            const totalWrites = plans.reduce((sum, plan) => sum + plan.writes.length, 0);
+            const summary = plans.map(plan => `${_sanitize(plan.name)}: ${plan.writes.length ? plan.writes.map(write => `${_sanitize(write.label)} ${_sanitize(write.before)} to ${_sanitize(write.next)}`).join(', ') : 'record only'}`).join('<br>');
+            sendPanel(msg, `${definition.name} Preview`, [
+                { label: 'Characters', value: summary },
+                { label: 'Sheet Changes', value: `${totalWrites} verified change(s). No change has been made yet.` },
+                { label: 'World Time', value: advanceTime ? `Advance ${definition.hours} hour(s) after successful sheet changes.` : 'No automatic fictional-time change.' },
+                { label: 'Confirm', value: GameAssist.createButton('Complete Rest', `!aa-rest confirm --grant ${id}`) },
+                { label: 'Cancel', value: GameAssist.createButton('Rest Menu', '!rest') }
+            ]);
+        }
+
+        function setAttributeCurrent(attribute, value) {
+            if (typeof attribute.setWithWorker === 'function') attribute.setWithWorker({ current: value });
+            else attribute.set('current', value);
+        }
+
+        function setRestWrite(write, value, grantId, phase) {
+            if (
+                String(write.attribute?.get('name') || '').toLowerCase() === 'hp' &&
+                GameAssist.HealthService?.isEnabled()
+            ) {
+                const before = Number(write.attribute.get('current'));
+                const after = Number(value);
+                const classification = phase === 'apply' && Number.isFinite(before) && Number.isFinite(after) && after > before
+                    ? 'healing'
+                    : 'synchronization';
+                const result = GameAssist.HealthService.writeCharacter({
+                    character: write.characterId,
+                    current: value,
+                    producer: 'AlmanacAssist',
+                    operationId: `${grantId}:${write.characterId}:hp:${phase}`,
+                    classification
+                });
+                if (!result.ok) throw new Error(result.message || 'HealthService could not verify the rest HP write.');
+                return;
+            }
+            setAttributeCurrent(write.attribute, value);
+        }
+
+        function confirmRest(msg, grantId) {
+            if (!submoduleEnabled('rest')) return sendPanel(msg, 'RestAlmanac', [{ label: 'Status', value: 'Turned off. No character or fictional-time changes were made.' }]);
+            pruneRestGrants();
+            const runtime = ensureAlmanacRuntime();
+            const grant = runtime.rest.grants[String(grantId || '')];
+            if (!grant) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'That rest preview expired or was already used.' }, { label: 'Next Step', value: GameAssist.createButton('Prepare New Preview', '!rest') }]);
+            if (!playerIsGM(msg?.playerid) && String(msg?.playerid) !== grant.actorId) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'That rest preview belongs to another player.' }]);
+            const writes = [];
+            for (const plan of grant.plans) {
+                const character = getObj('character', plan.characterId);
+                const token = getObj('graphic', plan.tokenId);
+                if (!character || !token || (!playerIsGM(msg?.playerid) && !controlsRestCharacter(msg, token, character))) {
+                    delete runtime.rest.grants[grant.id];
+                    return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: `${_sanitize(plan.name)} is no longer available or controlled by you.` }, { label: 'Changes', value: 'None.' }]);
+                }
+                for (const write of plan.writes) {
+                    const attribute = getObj('attribute', write.attributeId);
+                    const sourceAttribute = write.sourceAttributeId ? getObj('attribute', write.sourceAttributeId) : null;
+                    const targetChanged = !attribute
+                        || String(attribute.get('current')) !== String(write.before)
+                        || String(attribute.get('max') ?? '') !== String(write.beforeMax ?? '');
+                    const sourceChanged = Boolean(write.sourceAttributeId)
+                        && (!sourceAttribute || String(sourceAttribute.get('current')) !== String(write.sourceBefore));
+                    if (targetChanged || sourceChanged) {
+                        delete runtime.rest.grants[grant.id];
+                        return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: `${_sanitize(plan.name)} changed after the preview. Prepare a new preview.` }, { label: 'Changes', value: 'None.' }]);
+                    }
+                    writes.push({ ...write, attribute, characterId: plan.characterId, characterName: plan.name });
+                }
+            }
+            const shouldAdvance = grant.advanceTime === true;
+            if (shouldAdvance && !timeAvailable()) {
+                delete runtime.rest.grants[grant.id];
+                return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'TimeAlmanac was turned off after this preview. Prepare a new preview so the rest and fictional-time result are explicit.' }, { label: 'Changes', value: 'None.' }]);
+            }
+            const nextMinute = shouldAdvance ? runtime.time.worldMinute + Math.round(Number(grant.definition.hours) * 60) : null;
+            if (shouldAdvance && !resolveWorldMinute(profileFor(), nextMinute)) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'The optional time advance would exceed the supported calendar range.' }, { label: 'Changes', value: 'None.' }]);
+            const completed = [];
+            try {
+                writes.forEach(write => {
+                    setRestWrite(write, write.next, grant.id, 'apply');
+                    completed.push(write);
+                });
+            } catch (error) {
+                completed.reverse().forEach(write => {
+                    try { setRestWrite(write, write.before, grant.id, 'rollback'); } catch { /* Best-effort rollback; audit will expose remaining drift. */ }
+                });
+                return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'Roll20 did not accept every sheet change. Completed writes were rolled back where possible.' }]);
+            }
+            let timeResult = null;
+            if (shouldAdvance) {
+                timeResult = commitWorldMinute(nextMinute, `${grant.definition.name} completed`, msg);
+                if (!timeResult.ok) {
+                    completed.reverse().forEach(write => {
+                        try { setRestWrite(write, write.before, grant.id, 'time-rollback'); } catch { /* Best-effort rollback; audit will expose remaining drift. */ }
+                    });
+                    return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'Fictional time could not be advanced, so sheet changes were rolled back.' }]);
+                }
+            }
+            const record = {
+                id: grant.id,
+                typeId: grant.definition.id,
+                typeName: grant.definition.name,
+                actorId: String(msg.playerid),
+                completedAt: isoNow(),
+                characterIds: grant.plans.map(plan => plan.characterId),
+                characterNames: grant.plans.map(plan => plan.name),
+                writes: writes.length,
+                advancedMinutes: timeResult ? Math.round(Number(grant.definition.hours) * 60) : 0
+            };
+            runtime.rest.history.push(record);
+            if (runtime.rest.history.length > POLICY.almanac.restHistoryLimit) runtime.rest.history.shift();
+            delete runtime.rest.grants[grant.id];
+            publishChange('almanac.rest.completed', null, record, { action: 'rest-completed' }, msg);
+            sendPanel(msg, `${grant.definition.name} Complete`, [
+                { label: 'Characters', value: record.characterNames.map(_sanitize).join(', ') },
+                { label: 'Sheet Changes', value: `${record.writes} verified change(s) completed.` },
+                { label: 'World Time', value: record.advancedMinutes ? `Advanced ${record.advancedMinutes} fictional minute(s).` : 'Not changed.' },
+                { label: 'Continue', value: `${GameAssist.createButton('Rest', '!rest')} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` }
+            ]);
+        }
+
+        function showRest(msg) {
+            if (!submoduleEnabled('rest')) return sendPanel(msg, 'RestAlmanac', [{ label: 'Status', value: 'Turned off; rest definitions and history are preserved.' }]);
+            const config = normalizeRestConfig();
+            const runtime = ensureAlmanacRuntime();
+            const custom = config.customTypes.length ? config.customTypes.map(type => GameAssist.createButton(type.name, `!aa-rest preview --type ${type.id}`)).join(' ') : 'None';
+            sendPanel(msg, 'RestAlmanac', [
+                { label: 'How To Use', value: 'Select linked 2014 PC token(s), then prepare a preview. Nothing changes until confirmation.' },
+                { label: 'Rest Types', value: `${GameAssist.createButton('Short Rest', '!aa-rest preview --type short')} ${GameAssist.createButton('Long Rest', '!aa-rest preview --type long')} ${config.extendedEnabled ? GameAssist.createButton('Extended Rest', '!aa-rest preview --type extended') : ''}` },
+                { label: 'Custom Rest Types', value: custom },
+                { label: 'Time Advancement', value: config.advanceTime ? 'On when TimeAlmanac is available' : 'Off' },
+                { label: 'Recent Completions', value: String(runtime.rest.history.length) },
+                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton(config.advanceTime ? 'Do Not Advance Time' : 'Advance Time', `!aa-rest time ${config.advanceTime ? 'off' : 'on'}`)} ${GameAssist.createButton(config.extendedEnabled ? 'Disable Extended Rest' : 'Enable Extended Rest', `!aa-rest extended ${config.extendedEnabled ? 'off' : 'on'}`)} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` : GameAssist.createButton('Almanac', '!Almanac') }
+            ]);
+        }
+
+        function handleRest(msg, content) {
+            const body = content.replace(/^rest\s*/i, '').trim();
+            if (!body || /^(menu|status)$/i.test(body)) return showRest(msg);
+            const lower = body.toLowerCase();
+            if (/^preview\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                return createRestPreview(msg, args.type || body.replace(/^preview\s*/i, '').trim());
+            }
+            if (/^confirm\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                return confirmRest(msg, args.grant);
+            }
+            if (!requireGm(msg)) return;
+            if (lower === 'audit') return showFocusedAudit(msg, 'rest');
+            if (lower === 'manual' || lower === 'help' || lower === 'setup') return lower === 'setup' ? showRest(msg) : showManual(msg);
+            if (lower === 'on' || lower === 'off') {
+                modState.config.submodules.rest = lower === 'on';
+                return showRest(msg);
+            }
+            const timeMatch = lower.match(/^time\s+(on|off)$/);
+            if (timeMatch) {
+                normalizeRestConfig().advanceTime = timeMatch[1] === 'on';
+                return showRest(msg);
+            }
+            const extendedMatch = lower.match(/^extended\s+(on|off)$/);
+            if (extendedMatch) {
+                normalizeRestConfig().extendedEnabled = extendedMatch[1] === 'on';
+                return showRest(msg);
+            }
+            if (/^custom\s+add\b/i.test(body)) {
+                const config = normalizeRestConfig();
+                if (config.customTypes.length >= POLICY.almanac.customRestLimit) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'The custom rest-type limit has been reached.' }]);
+                const args = _parseArgs(body).args;
+                const name = boundedName(args.name);
+                const hours = clampNumber(args.hours, 0, POLICY.almanac.maximumRestHours, NaN);
+                const base = String(args.base || 'record').toLowerCase();
+                if (!name || !Number.isFinite(hours) || !['short', 'long', 'extended', 'record'].includes(base)) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'Enter a name, bounded hours, and base short, long, extended, or record.' }]);
+                let id = name.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'custom-rest';
+                const baseId = id;
+                let suffix = 2;
+                while (['short', 'long', 'extended'].includes(id) || config.customTypes.some(type => type.id === id)) {
+                    id = `${baseId}-${suffix++}`;
+                }
+                config.customTypes.push({ id, name, hours, base });
+                return showRest(msg);
+            }
+            if (/^custom\s+remove\b/i.test(body)) {
+                const config = normalizeRestConfig();
+                const args = _parseArgs(body).args;
+                if (String(args.confirm || '').toLowerCase() !== 'yes') return sendPanel(msg, 'RestAlmanac', [{ label: 'No Change Made', value: 'Removing a custom rest requires --confirm yes.' }]);
+                const requested = String(args.id || args.name || '').toLowerCase();
+                const before = config.customTypes.length;
+                config.customTypes = config.customTypes.filter(type => type.id !== requested && type.name.toLowerCase() !== requested);
+                if (config.customTypes.length === before) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'That custom rest type was not found.' }]);
+                return showRest(msg);
+            }
+            sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'That rest command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Rest', '!rest') }]);
+        }
+
+        function showFocusedAudit(msg, system) {
+            if (!requireGm(msg)) return;
+            const runtime = ensureAlmanacRuntime();
+            const rows = [];
+            if (system === 'time') {
+                const moment = currentMoment();
+                rows.push({ label: 'Chronology', value: moment ? _sanitize(displayMoment(moment)) : 'Unavailable' });
+                rows.push({ label: 'History', value: `${runtime.history.length}/${POLICY.almanac.historyLimit} retained changes` });
+            } else if (system === 'climate') {
+                const config = normalizeClimateConfig();
+                rows.push({ label: 'Regions', value: `${config.regions.length}/${POLICY.almanac.maximumRegions}; active: ${_sanitize(resolvedClimate()?.regionName || 'Unavailable')}` });
+                rows.push({ label: 'Profiles', value: `${Object.keys(CLIMATE_PROFILES).length} built-in; ${config.customProfiles.length}/${POLICY.almanac.maximumClimateProfiles} custom` });
+            } else if (system === 'astronomy') {
+                const config = normalizeAstronomyConfig();
+                rows.push({ label: 'Moons', value: `${config.moons.length}/${POLICY.almanac.maximumMoons}` });
+                rows.push({ label: 'Rare Events', value: `${config.rareEvents.length}/${POLICY.almanac.maximumRareEvents}; ${runtime.astronomy.rareHistory.length}/${POLICY.almanac.astronomyHistoryLimit} generated results retained` });
+            } else if (system === 'weather') {
+                rows.push({ label: 'Current', value: runtime.weather.current ? _sanitize(runtime.weather.current.summary) : 'No committed weather' });
+                rows.push({ label: 'Forecast and History', value: `${runtime.weather.forecast.length}/${POLICY.almanac.weatherForecastLimit} forecast days; ${runtime.weather.history.length}/${POLICY.almanac.weatherHistoryLimit} history entries; lock ${runtime.weather.locked ? 'on' : 'off'}` });
+            } else if (system === 'environment') {
+                const current = environmentContext();
+                rows.push({ label: 'Current', value: `${_sanitize(current.name)} via ${_sanitize(runtime.environment.override ? 'GM override' : current.source)}` });
+                rows.push({ label: 'History', value: `${runtime.environment.history.length}/${POLICY.almanac.environmentHistoryLimit} retained changes` });
+            } else if (system === 'rest') {
+                const config = normalizeRestConfig();
+                const validGrants = Object.values(runtime.rest.grants).filter(grant => Number(grant?.expiresAt) > Date.now()).length;
+                rows.push({ label: 'Rest Types', value: `Short and Long; Extended ${config.extendedEnabled ? 'on' : 'off'}; ${config.customTypes.length}/${POLICY.almanac.customRestLimit} custom` });
+                rows.push({ label: 'Evidence', value: `${runtime.rest.history.length}/${POLICY.almanac.restHistoryLimit} completed rests; ${validGrants} active preview(s)` });
+            }
+            const title = { time: 'TimeAlmanac', climate: 'ClimateAlmanac', astronomy: 'AstronomyAlmanac', weather: 'WeatherAlmanac', environment: 'EnviroAlmanac', rest: 'RestAlmanac' }[system] || 'AlmanacAssist';
+            sendPanel(msg, `${title} Audit`, [
+                ...rows,
+                { label: 'Audit Result', value: 'No known bounded-state or configuration problem was found.' },
+                { label: 'Changes', value: 'None. Audit is read-only.' },
+                { label: 'Return', value: GameAssist.createButton('Almanac', '!Almanac-GM') }
+            ]);
+        }
+
+        function showStatus(msg, audit = false) {
+            const runtime = ensureAlmanacRuntime();
+            const profile = profileFor();
+            const moment = resolveWorldMinute(profile, runtime.time.worldMinute);
+            const problems = [];
+            if (!moment) problems.push('Stored fictional time is outside the active calendar range.');
+            const wayfarer = normalizeWayfarer(modState.config.wayfarer);
+            const wayfarerDays = wayfarer.months.reduce((sum, month) => sum + month.days, 0) + wayfarer.intercalary.length + (wayfarer.leapEvery ? 1 : 0);
+            if (wayfarerDays > POLICY.almanac.maximumDaysPerYear) problems.push('Wayfarer exceeds the supported year length.');
+            const draft = normalizeWayfarerDraft(modState.config.wayfarerDraft);
+            const draftStatus = draft ? wayfarerDraftStatus(draft) : null;
+            if (draftStatus && !draftStatus.ok) problems.push(`Wayfarer draft: ${draftStatus.errors.join(' ')}`);
+            const climate = normalizeClimateConfig();
+            if (!climate.regions.length || !climateRegion(climate.activeRegionId)) problems.push('ClimateAlmanac has no valid active region.');
+            const astronomy = normalizeAstronomyConfig();
+            if (!astronomy.moons.length) problems.push('AstronomyAlmanac has no valid moon.');
+            if (runtime.weather.forecast.length > POLICY.almanac.weatherForecastLimit) problems.push('Weather forecast exceeds policy bounds.');
+            if (runtime.environment.override && !runtime.environment.override.name) problems.push('Environment override is malformed.');
+            if (!audit) pruneRestGrants();
+            const submoduleRows = Object.entries({
+                Time: timeAvailable(),
+                Climate: submoduleEnabled('climate'),
+                Astronomy: submoduleEnabled('astronomy'),
+                Weather: submoduleEnabled('weather'),
+                Environment: submoduleEnabled('environment'),
+                Rest: submoduleEnabled('rest')
+            }).map(([name, enabled]) => `${name}: ${enabled ? 'On' : 'Off'}`).join(' | ');
+            sendPanel(msg, audit ? 'AlmanacAssist Audit' : 'AlmanacAssist Status', [
+                { label: 'AlmanacAssist', value: `${modState.config.enabled !== false ? 'Enabled' : 'Disabled'} | v${MODULE_VERSION}` },
+                { label: 'Submodules', value: submoduleRows },
+                { label: 'Current', value: moment ? _sanitize(displayMoment(moment)) : 'Unavailable' },
+                { label: 'Wayfarer Draft', value: draftStatus ? `${draftStatus.reviewedCount}/${WAYFARER_STAGES.length} stages reviewed | ${draftStatus.complete ? 'ready to activate' : 'saved for continued setup'}` : 'No saved draft yet' },
+                { label: 'Current Context', value: `${_sanitize(resolvedClimate()?.regionName || 'No region')} | ${_sanitize(runtime.weather.current?.summary || 'No committed weather')} | ${_sanitize(environmentContext().name)}` },
+                { label: 'Retained History', value: `Time ${runtime.history.length}/${POLICY.almanac.historyLimit} | Weather ${runtime.weather.history.length}/${POLICY.almanac.weatherHistoryLimit} | Rest ${runtime.rest.history.length}/${POLICY.almanac.restHistoryLimit}` },
+                { label: audit ? 'Audit Result' : 'Health', value: problems.length ? _sanitize(problems.join(' ')) : 'No known Almanac configuration, chronology, or retained-state problems.' },
+                { label: audit ? 'Changes' : 'Actions', value: audit ? 'None. Audit is read-only.' : `${GameAssist.createButton('Almanac', '!Almanac-GM')} ${GameAssist.createButton('Audit', '!Almanac-Audit')}` }
+            ]);
+        }
+
+        function manualHtml() {
+            return [
+                '<h1>AlmanacAssist User Manual</h1>',
+                `<p><strong>GameAssist v${_sanitize(VERSION)} | AlmanacAssist ${MODULE_VERSION}</strong></p>`,
+                '<h2>Purpose</h2>',
+                '<p>AlmanacAssist combines fictional time, regional climate, astronomy, weather, environmental context, and deliberate rest workflows. Each internal system can be turned off without erasing its valid settings or disabling unrelated Almanac features.</p>',
+                '<h2>Everyday Use</h2>',
+                '<p><code>!Almanac</code> or <code>!aa</code> opens the GM controls. <code>!date</code>, <code>!time</code>, <code>!cal</code>, <code>!clim</code>, <code>!astro</code>, <code>!weather</code>, <code>!enviro</code>, and <code>!rest</code> open focused views.</p>',
+                '<h2>Calendars</h2>',
+                '<p>Standard provides familiar months and Gregorian leap years. Solamnic provides the current twelve 28-day Solamnic months and seven named weekdays. Harptos provides twelve 30-day months, five annual festival days, and Shieldmeet every four years. Wayfarer is campaign-editable through chat controls, including weekdays, months, festival days, dated holidays, and leap rules.</p>',
+                '<h2>Building a Wayfarer Calendar</h2>',
+                '<p>Open <code>!aa-wayfarer</code>. Wayfarer keeps a saved draft separate from the active campaign calendar, so setup work can be stopped and resumed without changing the date seen by players.</p>',
+                '<ol><li>Name the calendar and choose the date that a first activation should begin on.</li><li>Enter weekday names in their repeating order.</li><li>Enter months as <code>Name:Days</code>, separated by commas.</li><li>Add optional festival days as <code>Name:AfterMonthNumber</code>. A festival day sits between months and does not use an ordinary weekday.</li><li>Choose whether a named leap day appears every 2-100 years.</li><li>Add optional holidays as <code>Name:MonthNumber:Day</code>. A holiday names a normal date; it does not add a day.</li><li>Review the preview, then activate deliberately.</li></ol>',
+                '<p>Every setup screen shows the saved choices, current progress, a preview, and Back, Save Draft, and Continue controls. Invalid entries leave both the active calendar and the prior valid draft unchanged.</p>',
+                '<h3>Worked Example</h3>',
+                '<p>Create a calendar named <strong>River Kingdom Calendar</strong>. Use weekdays <code>Moonday,Towerday,Marketday,Hearthday,Starday</code>; months <code>Deepwinter:31,Thawrise:27,Highsun:35,Harvestfall:29</code>; festival day <code>Founding Feast:2</code>; leap day <code>Starwake</code> every 4 years after month 4; and holidays <code>Oath Day:1:1,River Fair:3:12</code>. Review all six stages, preview the starting date, and activate.</p>',
+                '<h3>Editing, Rollback, and Recovery</h3>',
+                '<p>Edit any one setup stage without rebuilding the others. When Wayfarer is already active, activation preserves elapsed fictional time and shows the reinterpreted date. If the revised calendar cannot represent that elapsed time, activation is refused and offers a separate, clearly labeled reset-to-draft-start choice. The latest activation keeps one rollback point containing the previous calendar and fictional time. Cancel Draft abandons only unactivated work; Restore Previous Activation rolls back the most recent activation.</p>',
+                '<p>Use Start From A Copy to duplicate Standard, Solamnic, Harptos, or the saved Wayfarer definition. Copies are ordinary editable drafts; no campaign setting is forced as a default. Wayfarer supports one repeating leap interval, so a Standard copy uses a four-year leap day and does not reproduce Gregorian century exceptions.</p>',
+                '<h2>Climate and Astronomy</h2>',
+                '<p>ClimateAlmanac manages bounded regions, parent inheritance, editable built-in starting profiles, custom profiles, overrides, and a manual season fallback. AstronomyAlmanac calculates reproducible configurable moon phases, future phase/daylight forecasts, and deterministic season boundaries from TimeAlmanac when available or explicit manual context when it is not. Its bounded weighted rare-event catalog remains separate from deterministic results.</p>',
+                '<h2>Weather and Environment</h2>',
+                '<p>WeatherAlmanac can generate continuity-aware conditions without other submodules. Climate and Time improve its context when enabled. Locked or manually chosen weather is never silently replaced. EnviroAlmanac translates committed weather into readable visibility, temperature, wind, ground, water, exposure, severity, and tags; a GM override remains authoritative until cleared.</p>',
+                '<h2>Rest</h2>',
+                '<p>RestAlmanac uses selected linked D&amp;D 5E by Roll20 2014 PC tokens. Every rest is previewed and revalidated before confirmation. Long Rest restores only verified HP, Hit Dice, and remaining spell-slot fields. Short Rest leaves Hit Dice spending on the character sheet. Other class resources remain unchanged unless a later verified adapter explicitly owns them.</p>',
+                '<h2>Safety</h2>',
+                '<p>Large advances produce one committed change. Moving backward changes only the fictional calendar and requires explicit confirmation. It never reverses rests, effects, combat, NPC history, HP, resources, or other campaign state.</p>',
+                '<h2>Commands</h2>',
+                '<p><code>!aa-wayfarer</code> opens the guided custom-calendar home; its generated buttons cover ordinary setup, preview, activation, cancellation, duplication, and rollback. <code>!aa-time</code>, <code>!aa-climate</code>, <code>!aa-astro</code>, <code>!aa-weather</code>, <code>!aa-enviro</code>, and <code>!aa-rest</code> open or control their focused systems. Use the buttons in each panel for ordinary play.</p>'
+            ].join('');
+        }
+
+        function showGuide(msg) {
+            sendPanel(msg, 'AlmanacAssist Quick Guide', [
+                { label: 'Check The World', value: `${GameAssist.createButton('Date', '!date')} ${GameAssist.createButton('Time', '!time')} ${GameAssist.createButton('Calendar', '!cal')}` },
+                { label: 'Custom Calendar', value: playerIsGM(msg?.playerid) ? GameAssist.createButton('Open Wayfarer Setup', '!aa-wayfarer') : 'The GM manages custom calendar setup.' },
+                { label: 'Describe The World', value: `${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Astronomy', '!astro')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Environment', '!enviro')}` },
+                { label: 'Rest', value: GameAssist.createButton('Open RestAlmanac', '!rest') },
+                { label: 'Change The World', value: playerIsGM(msg?.playerid) ? GameAssist.createButton('Open GM Controls', '!Almanac-GM') : 'The GM controls persistent world changes.' },
+                { label: 'Learn More', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Create or Update Manual', '!Almanac-Manual')} ${GameAssist.createButton('Open Almanac', '!Almanac-GM')}` : GameAssist.createButton('Current Date', '!date') }
+            ]);
+        }
+
+        function showManual(msg) {
+            if (!requireGm(msg)) return;
+            const result = GameAssist.writeModuleManual(MODULE_NAME, manualHtml());
+            sendPanel(msg, result.ok ? 'AlmanacAssist Manual' : 'AlmanacAssist Needs Attention', result.ok ? [
+                { label: 'Handout', value: result.link },
+                { label: 'Result', value: `${_sanitize(result.name)} was ${result.created ? 'created' : 'updated'}.` },
+                { label: 'Continue', value: `${GameAssist.createButton('Open Almanac', '!Almanac-GM')} ${GameAssist.createButton('Whisper Quick Guide', '!Almanac-Guide')}` }
+            ] : [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: GameAssist.createButton('Quick Guide', '!Almanac-Guide') }]);
+        }
+
+        function normalizedInput(content) {
+            const raw = String(content || '').trim();
+            if (/^!date(?:\s|$)/i.test(raw)) return 'current-date';
+            if (/^!time(?:\s|$)/i.test(raw)) return 'current-time';
+            if (/^!cal(?:\s|$)/i.test(raw)) return 'calendar';
+            if (/^!clim(?:\s|$)/i.test(raw)) return `climate ${raw.replace(/^!clim\s*/i, '')}`.trim();
+            if (/^!weather(?:\s|$)/i.test(raw)) return `weather ${raw.replace(/^!weather\s*/i, '')}`.trim();
+            if (/^!enviro(?:\s|$)/i.test(raw)) return `environment ${raw.replace(/^!enviro\s*/i, '')}`.trim();
+            if (/^!astro(?:\s|$)/i.test(raw)) return `astronomy ${raw.replace(/^!astro\s*/i, '')}`.trim();
+            if (/^!rest(?:\s|$)/i.test(raw)) return `rest ${raw.replace(/^!rest\s*/i, '')}`.trim();
+            if (/^!aa-wayfarer(?:\s|$)/i.test(raw)) return `wayfarer ${raw.replace(/^!aa-wayfarer\s*/i, '')}`.trim();
+            if (/^!aa-time(?:\s|$)/i.test(raw)) return `time ${raw.replace(/^!aa-time\s*/i, '')}`.trim();
+            if (/^!aa-(?:gm|dm|menu)(?:\s|$)/i.test(raw)) return 'menu';
+            if (/^!aa-/i.test(raw)) return raw.replace(/^!aa-/i, '').trim();
+            if (/^!aa(?:\s|$)/i.test(raw)) return raw.replace(/^!aa\s*/i, '').trim() || 'menu';
+            if (/^!almanacassist-/i.test(raw)) return raw.replace(/^!almanacassist-/i, '').trim();
+            if (/^!almanac-/i.test(raw)) return raw.replace(/^!almanac-/i, '').trim();
+            if (/^!almanac(?:\s|$)/i.test(raw)) return raw.replace(/^!almanac\s*/i, '').trim() || 'menu';
+            return '';
+        }
+
+        function handleCommand(msg) {
+            const input = normalizedInput(msg.content);
+            const lower = input.toLowerCase();
+            if (!input || lower === 'menu' || lower === 'gm' || lower === 'dm') return showMaster(msg);
+            if (lower === 'guide' || lower === 'help') return showGuide(msg);
+            if (lower === 'manual' || lower === 'info') return lower === 'manual' ? showManual(msg) : showGuide(msg);
+            if (lower === 'status') return showStatus(msg, false);
+            if (lower === 'audit') return showStatus(msg, true);
+            if (lower === 'systems' || lower === 'settings' || lower === 'setup') return showSystems(msg);
+            if (lower === 'current-date' || lower === 'date') return showCurrent(msg, 'date');
+            if (lower === 'current-time') return showCurrent(msg, 'time');
+            if (lower === 'calendar' || lower === 'cal') return showCalendarMenu(msg);
+            if (lower.startsWith('wayfarer')) return handleWayfarer(msg, input);
+            if (lower === 'climate' || lower.startsWith('climate ')) return handleClimate(msg, input);
+            if (lower === 'astronomy' || lower.startsWith('astronomy ') || lower === 'astro' || lower.startsWith('astro ')) return handleAstronomy(msg, input);
+            if (lower === 'weather' || lower.startsWith('weather ')) return handleWeather(msg, input);
+            if (lower === 'environment' || lower.startsWith('environment ') || lower === 'enviro' || lower.startsWith('enviro ')) return handleEnvironment(msg, input);
+            if (lower === 'rest' || lower.startsWith('rest ')) return handleRest(msg, input);
+            if (lower === 'time audit') return showFocusedAudit(msg, 'time');
+            if (lower === 'time status') return showCurrent(msg);
+            if (lower === 'time help' || lower === 'time manual') return showManual(msg);
+            if (lower === 'time setup') return showCalendarMenu(msg);
+            if (lower === 'time' || lower === 'time menu') return showTimeMenu(msg);
+            if (lower === 'time on' || lower === 'time off') {
+                if (!requireGm(msg)) return;
+                modState.config.timeAlmanacEnabled = lower.endsWith('on');
+                modState.config.submodules.time = modState.config.timeAlmanacEnabled;
+                return showMaster(msg);
+            }
+            if (lower.startsWith('time advance')) return handleAdvance(msg, input, 1);
+            if (lower.startsWith('time retreat')) return handleAdvance(msg, input, -1);
+            if (lower.startsWith('time set')) return handleSet(msg, input);
+            if (lower.startsWith('time profile')) return handleProfile(msg, input);
+            if (lower === 'time announce' || lower === 'announce') {
+                if (!requireGm(msg) || !timeAvailable()) return;
+                const moment = currentMoment();
+                return sendPanel(msg, 'Campaign Date and Time', [
+                    { label: 'Date', value: _sanitize(displayDate(moment)) },
+                    { label: 'Time', value: _sanitize(displayTime(moment)) },
+                    { label: 'Season', value: _sanitize(moment.season) }
+                ], { publicMessage: true });
+            }
+            sendPanel(msg, 'AlmanacAssist', [
+                { label: 'Needs Attention', value: 'That AlmanacAssist command was not recognized.' },
+                { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!Almanac-Guide') }
+            ]);
+        }
+
+        ['!Almanac', '!Almanac-', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!date', '!time', '!clim', '!weather', '!enviro', '!astro', '!rest'].forEach(prefix => {
+            GameAssist.onCommand(prefix, handleCommand, MODULE_NAME, {
+                match: { caseInsensitive: true, mode: prefix.endsWith('-') ? 'prefix' : 'token' }
+            });
+        });
+
+        const runtime = ensureAlmanacRuntime();
+        normalizeClimateConfig();
+        normalizeAstronomyConfig();
+        normalizeRestConfig();
+        const activeProfile = profileFor();
+        if (!resolveWorldMinute(activeProfile, runtime.time.worldMinute)) runtime.time.worldMinute = DEFAULT_WORLD_MINUTE;
+
+        GameAssist.AlmanacAssist = Object.freeze({
+            version: MODULE_VERSION,
+            timeStateSchemaVersion: TIME_STATE_SCHEMA_VERSION,
+            wayfarerDraftSchemaVersion: WAYFARER_DRAFT_SCHEMA_VERSION,
+            climateStateSchemaVersion: CLIMATE_STATE_SCHEMA_VERSION,
+            astronomyStateSchemaVersion: ASTRONOMY_STATE_SCHEMA_VERSION,
+            weatherStateSchemaVersion: WEATHER_STATE_SCHEMA_VERSION,
+            environmentStateSchemaVersion: ENVIRONMENT_STATE_SCHEMA_VERSION,
+            restStateSchemaVersion: REST_STATE_SCHEMA_VERSION,
+            isAvailable: () => modState.config.enabled !== false,
+            isTimeAvailable: timeAvailable,
+            getSubmoduleStatus: () => Object.freeze(copy({ ...modState.config.submodules, time: timeAvailable() })),
+            getTime: () => {
+                if (!timeAvailable()) return null;
+                const current = currentMoment();
+                return current ? Object.freeze(copy(current)) : null;
+            },
+            getClimate: region => {
+                if (!submoduleEnabled('climate')) return null;
+                const current = resolvedClimate(region);
+                return current ? Object.freeze(copy(current)) : null;
+            },
+            getAstronomy: () => submoduleEnabled('astronomy') ? Object.freeze(copy(astronomyContext())) : null,
+            getWeather: () => {
+                if (!submoduleEnabled('weather')) return null;
+                const current = currentWeather();
+                return current ? Object.freeze(copy(current)) : null;
+            },
+            getEnvironment: () => submoduleEnabled('environment') ? Object.freeze(copy(environmentContext())) : null,
+            getRestHistory: () => Object.freeze(copy(ensureAlmanacRuntime().rest.history)),
+            observe: (callback, { owner = 'AlmanacAssistConsumer' } = {}) => GameAssist.SemanticEvents.observe(callback, {
+                owner,
+                types: ['almanac.time.changed', 'almanac.calendar.changed', 'almanac.climate.changed', 'almanac.astronomy.changed', 'almanac.weather.changed', 'almanac.environment.changed', 'almanac.rest.completed']
+            }),
+            clearObservers: owner => GameAssist.SemanticEvents.clearObservers(owner)
+        });
+
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: guided Wayfarer drafts plus Time, Climate, Astronomy, Weather, Environment, and Rest are available through !Almanac; the module starts disabled.`, 'INFO', { startup: true });
+    }, {
+        enabled: false,
+        prefixes: ['!Almanac', '!Almanac-', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!date', '!time', '!clim', '!weather', '!enviro', '!astro', '!rest'],
+        preserveRuntimeOnDisable: true,
+        protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'environment', 'rest']
+    });
+    // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced AlmanacAssist to 1.1.0 with persistent Wayfarer drafts, staged setup and previews, safe profile duplication, atomic activation, elapsed-time preservation, explicit reset fallback, one activation rollback point, and a complete custom-calendar manual.
+    // Decision log:
+    //   CHOICE: Keep a saved draft separate from the active Wayfarer definition - ALT: continue editing the live definition one field at a time; REJECTED: a partially configured calendar must not change the date players see.
+    //   CHOICE: Preserve elapsed fictional minutes while editing an active Wayfarer calendar - ALT: silently apply the draft starting date; REJECTED: calendar-definition maintenance must not unexpectedly move campaign chronology.
+    //   CHOICE: Retain one complete pre-activation rollback point - ALT: persist every calendar body indefinitely; REJECTED: one recovery point is understandable and bounded while chronology history retains the durable event trail.
+    // Prior notes:
+    //   v2.0.0 / AlmanacAssist 1.0.0: Routed supported RestAlmanac HP restoration and rollback through HealthService with producer/operation identity and verified healing/synchronization evidence while preserving the complete preview and transaction rollback contract.
+    //   CHOICE: Store elapsed fictional minutes and derive calendar labels - ALT: store one profile-specific month/day tuple; REJECTED: a tuple would become ambiguous or destructive when the GM changes calendar profiles.
+    //   CHOICE: Publish one semantic event for a large jump - ALT: replay every elapsed minute or day; REJECTED: large advances must remain bounded and consumers need committed state, not simulated history spam.
+    //   CHOICE: Require explicit confirmation for backward movement - ALT: make retreat symmetric with advance; REJECTED: other campaign systems cannot be automatically reversed with the calendar.
+    //   CHOICE: Keep AlmanacAssist disabled by default - ALT: seed an active fictional date into every upgraded campaign; REJECTED: fictional chronology should begin only when the GM deliberately enables it.
+    //   CHOICE: Model the current Solamnic calendar as twelve 28-day months with seven named weekdays - ALT: mix legacy 30-day Ansalonian sources into one profile; REJECTED: one profile must have deterministic boundaries, while Wayfarer remains available for campaign variants.
+    //   CHOICE: Keep optional context integrations local - ALT: disable Weather without Climate or Rest without Time; REJECTED: each Almanac submodule must remain useful independently.
+    //   CHOICE: Keep built-in climate profiles editable and allow bounded custom profiles with unique names - ALT: hard-code every climate or accept ambiguous duplicate labels; REJECTED: campaign worlds need controlled variation and generated buttons require unambiguous targets.
+    //   CHOICE: Separate deterministic moon/daylight results from weighted rare celestial suggestions - ALT: blend every possible omen into the calendar calculation; REJECTED: adding campaign flavor must not change reproducible astronomy.
+    //   CHOICE: Make RestAlmanac the only initial Almanac sheet writer - ALT: automatically apply environmental penalties or weather effects; REJECTED: descriptive world state must not silently change gameplay state.
+    //   CHOICE: Restore only verified 2014 HP, Hit Dice, and remaining spell-slot fields after preview - ALT: guess at class and custom resources; REJECTED: ambiguous recovery can corrupt campaign-owned sheet data.
+    //   CHOICE: Bind optional TimeAlmanac advancement to the accepted rest preview - ALT: decide whether to advance time only after sheet writes begin; REJECTED: the player and GM must see the complete transaction before confirmation.
+    //   v2.0.0: Completed disabled-by-default AlmanacAssist 1.0.0 with independently toggleable Time, Climate, Astronomy, Weather, Environment, and Rest submodules; bounded state and history; manual fallbacks; optional context integrations; concise shared navigation; a stable manual; immutable semantic events; and preview/revalidation safeguards around verified 2014-sheet rest writes.
+    // [GAMEASSIST:MODULES:ALMANACASSIST] END
+    // =============================================================================
+
+    // =============================================================================
+
+    // =============================================================================
+
+
+
     // ————— HPASSIST MODULE v0.1.1.3 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:HPASSIST] BEGIN
     // Section Title: HPAssist module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:HPASSIST", title: "HPAssist",
-    //   guarantees: ["Parse NdM±K and set bar1 to rolled HP","Case-insensitive !HP-<command> and !hp <command> routes own every public HPAssist action; older HP command families remain compatibility-only aliases"],
-    //   last_updated_version: "v1.8.2",
-    //   independent_versions: { module_version: "0.1.1.3" } }
+    //   guarantees: ["Parse NdM±K and set bar1 to rolled HP","Use HealthService for verified producer-identified initialization or synchronization writes when available; preserve direct HP rolling when the optional service is disabled","Case-insensitive !HP-<command> and !hp <command> routes own every public HPAssist action; older HP command families remain compatibility-only aliases"],
+    //   last_updated_version: "v2.0.0",
+    //   independent_versions: { module_version: "0.2.0" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:HPASSIST parses `npc_hpformula`, rolls HP, and writes to bar1 value/max
@@ -14208,7 +23798,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('HPAssist', function() {
         const modState = GameAssist.getState('HPAssist');
-        const MODULE_VERSION = '0.1.1.3';
+        const MODULE_VERSION = '0.2.0';
 
     Object.assign(modState.config, {
         enabled: true,
@@ -14307,8 +23897,28 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
             const hp = rollHP(context.diceData);
 
-            token.set('bar1_value', hp);
-            token.set('bar1_max', hp);
+            if (GameAssist.HealthService?.isEnabled()) {
+                const before = GameAssist.HealthService.readToken(token);
+                const classification = before?.values?.current?.state === 'valid'
+                    ? 'synchronization'
+                    : 'initialization';
+                const result = GameAssist.HealthService.writeToken({
+                    token,
+                    current: hp,
+                    maximum: hp,
+                    producer: 'HPAssist',
+                    operationId: `hp-roll:${Date.now().toString(36)}:${randomInteger(999999)}`,
+                    classification
+                });
+                if (!result.ok) {
+                    if (logWarnings) GameAssist.log('HPAssist', `${context.displayName} HP could not be verified: ${result.message}`, 'WARN');
+                    return false;
+                }
+            } else {
+                // CHOICE: HPAssist remains independently usable when HealthService is deliberately disabled; only provenance-aware integration is unavailable.
+                token.set('bar1_value', hp);
+                token.set('bar1_max', hp);
+            }
 
             const suffix = reason === 'auto' ? ' (auto-roll on add)' : '';
             GameAssist.log('HPAssist', `${context.displayName} HP set to ${hp} using [${context.formula}]${suffix}`);
@@ -14540,11 +24150,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         prefixes: ['!HP-', '!hp', '!HPAssist-', '!npc-hp-', '!NPCHP-', '!NPCHPRoller-']
 });
     // --- Notes & Comments ---
-    // Changed (v1.8.2): Made case-insensitive !HP-<command> and !hp <command> the generated and documented HPAssist interface; retained older !HPAssist-*, !npc-hp-*, !NPCHP-*, and !NPCHPRoller-* forms only as compatibility aliases, and prevented NPCAssist from intercepting the !npc-hp-* family.
+    // Changed (v2.0.0): Routed supported HP rolls through HealthService with producer, operation, initialization/synchronization, deduplication, and verification evidence while retaining direct writes when the optional service is deliberately disabled.
     // Decision log:
     //   CHOICE: Keep the complete short guide in chat - ALT: create a persistent manual handout; REJECTED: the module's ordinary workflow fits in a compact panel and another handout would add campaign clutter.
     //   CHOICE: Use Math.random for simplicity; acceptable for non-critical HP rolls.
     // Prior notes:
+    //   v1.8.2: Made case-insensitive !HP-<command> and !hp <command> the generated and documented HPAssist interface; retained older !HPAssist-*, !npc-hp-*, !NPCHP-*, and !NPCHPRoller-* forms only as compatibility aliases, and prevented NPCAssist from intercepting the !npc-hp-* family.
     //   v1.8.0: Renamed the module to HPAssist, added concise !HP controls, and preserved all !npc-hp, !NPCHP, and !NPCHPRoller compatibility commands and settings.
     //   Maintenance (v0.1.3, no semantic change): Added module narrative and aligned version metadata; HP rolling behavior unchanged.
     //   Maintenance (v0.1.1.2, no semantic change): MECHSUITS metadata updated for compliance.
@@ -14552,16 +24163,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:HPASSIST] END
     // =============================================================================
 
-    // ————— DEBUG TOOLS MODULE v0.2.2 —————
+    // ————— DEBUG TOOLS MODULE v0.3.0 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:DEBUGTOOLS] BEGIN
     // Section Title: DebugTools module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:DEBUGTOOLS", title: "DebugTools",
-    //   guarantees: ["Dry-run friendly debugging helpers","Compact guide, status, read-only audit, settings explanation, and unknown-command recovery use !ga-debug","Applied marker diagnostics use CORE:MARKERSERVICE"],
-    //   depends_on: ["[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
-    //   last_updated_version: "v0.1.7.0",
-    //   independent_versions: { module_version: "0.2.2" } }
+    //   guarantees: ["Dry-run friendly debugging helpers","Compact guide, status, read-only audit, settings explanation, and unknown-command recovery use !ga-debug","Applied marker diagnostics use CORE:MARKERSERVICE","Applied damage uses verified HealthService provenance on supported HP surfaces and preserves the established direct fallback elsewhere"],
+    //   depends_on: ["[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
+    //   last_updated_version: "v2.0.0",
+    //   independent_versions: { module_version: "0.3.0" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:DEBUGTOOLS offers optional GM-only diagnostics for damage, markers, and
@@ -14570,7 +24181,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('DebugTools', function() {
         const modState = GameAssist.getState('DebugTools');
-        const MODULE_VERSION = '0.2.2';
+        const MODULE_VERSION = '0.3.0';
+        let damageOperationSequence = 0;
         Object.assign(modState.config, {
             enabled: false,
             ...modState.config
@@ -14636,9 +24248,28 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return;
             }
 
-            token.set('bar1_value', next);
-            GameAssist.log('DebugTools', `Applied ${summary}.`);
-            ensureDebugRuntime().lastAction = { type: 'damage', token: token.id, amount, previous: current };
+            let verified = false;
+            if (GameAssist.HealthService?.isEnabled?.()) {
+                const result = GameAssist.HealthService.writeToken({
+                    token,
+                    current: next,
+                    producer: 'DebugTools',
+                    operationId: `debug-damage-${Date.now().toString(36)}-${++damageOperationSequence}`,
+                    classification: 'damage'
+                });
+                if (result.ok) {
+                    verified = result.verified === true;
+                } else if (result.code !== 'UNPROCESSABLE') {
+                    GameAssist.log('DebugTools', result.message || `HealthService damage write failed (${result.code || 'INTERNAL'}).`, 'WARN');
+                    return;
+                } else {
+                    token.set('bar1_value', next);
+                }
+            } else {
+                token.set('bar1_value', next);
+            }
+            GameAssist.log('DebugTools', `Applied ${summary}${verified ? ' through verified HealthService evidence' : ''}.`);
+            ensureDebugRuntime().lastAction = { type: 'damage', token: token.id, amount, previous: current, verified };
         }
 
         function handleMarker(msg, args) {
@@ -14861,10 +24492,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         dependsOn: ['MarkerService']
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.7.0): Advanced DebugTools to 0.2.2; Menu, GM, and DM open an action-focused diagnostic screen through the established and module-name role aliases while Guide/Help remains instructional and diagnostics remain dry-run by default.
+    // Changed (v2.0.0): Advanced DebugTools to 0.3.0; applied damage uses HealthService's declared-and-verified damage contract on supported HP surfaces and retains direct mutation when HealthService is disabled or the selected token is unsupported.
     // Decision log:
+    //   CHOICE: Preserve direct fallback for unsupported tokens - ALT: require HealthService for every diagnostic; REJECTED: DebugTools historically supports broader token bar experiments and HealthService intentionally recognizes only canonical surfaces.
     //   CHOICE: Keep helpers dry-run by default and require --apply for mutation.
     // Prior notes:
+    //   v0.1.7.0: Advanced DebugTools to 0.2.2; Menu, GM, and DM open an action-focused diagnostic screen through the established and module-name role aliases while Guide/Help remains instructional and diagnostics remain dry-run by default.
     //   v0.1.4.1: Marker diagnostics used exact shared marker normalization, including counted markers.
     //   v0.1.3: Runtime self-healed before recording lastAction; dry-run and disabled-by-default posture remained.
     //   v0.1.1.2: Refreshed MECHSUITS metadata.
@@ -14872,8 +24505,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // --- Notes & Comments ---
-    // Changed (v1.8.0): Replaced the remaining inherited module identities with CritAssist, NPCAssist, ConcentrationAssist, and HPAssist while retaining compatibility aliases and independent lifecycle management.
+    // Changed (v2.0.0): Added disabled-by-default AttackAssist for guided official-2014 repeating attacks while preserving native sheet buttons and every unrelated module's state and ownership boundaries.
     // Prior notes:
+    //   v2.0.0: Added disabled-by-default HealAssist as a HealthService-only verified healing client while retaining disabled-by-default AlmanacAssist and preserving every unrelated module's state and ownership boundaries.
+    //   v2.0.0: Added disabled-by-default AlmanacAssist with independently controlled Time, Climate, Astronomy, Weather, Environment, and Rest systems while preserving every unrelated module's state and ownership boundaries.
+    //   v2.0.0: Added disabled-by-default EffectAssist as the single owner of source-aware semantic effect instances, projection ownership, audit, repair confirmation, and future adapter contracts.
     //   v0.1.7.0: Added disabled-by-default CombatAssist to the bundled module contract and assigned encounter-flow ownership without changing InitiativeAssist initiative rules.
     //   v0.1.5.0: Advanced DebugTools to 0.2.0; marker previews and applied changes resolve and mutate through CORE:MARKERSERVICE.
     //   v0.1.5.0: Advanced ConcentrationTracker to 0.2.0; status, toggle, and teardown marker behavior uses CORE:MARKERSERVICE without standalone TokenMod. Writes preserve configured numbered overlays such as Concentrating@2.
@@ -14893,9 +24529,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Sandbox ready bootstrap
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "BOOTSTRAP", title: "Bootstrap",
-    //   guarantees: ["Repair known state, seed defaults, diagnose dependencies, preserve configured intent when dependencies prevent startup, init enabled modules","MarkerService and TurnTrackerService initialize before their consumers and may be disabled without disabling unrelated modules","An active WelcomeAssist receives one post-bootstrap completion signal after every configured module has been attempted"],
+    //   guarantees: ["Repair known state, seed defaults, diagnose dependencies, preserve configured intent when dependencies prevent startup, init enabled modules","MarkerService, TurnTrackerService, and HealthService initialize before their consumers and may be disabled without disabling unrelated modules","An active WelcomeAssist receives one post-bootstrap completion signal after every configured module has been attempted"],
     //   depends_on: ["[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE]","[GAMEASSIST:MODULES]"],
-    //   last_updated_version: "v0.1.6.1", lifecycle: "active" }
+    //   last_updated_version: "v2.0.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // BOOTSTRAP runs at sandbox ready: repairs known state containers, seeds defaults,
@@ -14990,7 +24626,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
     });
     // --- Notes & Comments ---
-    // Changed (v0.1.6.1): Added one guarded post-bootstrap WelcomeAssist completion signal after all configured component initialization attempts and final bootstrap metrics.
+    // Changed (v2.0.0): Initialized HealthService with the other registered core services before feature-module consumers while preserving the existing guarded module loop.
     // Decision log:
     //   CHOICE: Signal WelcomeAssist only after the complete module loop - ALT: schedule during module init; REJECTED: the health gate could observe modules that had not yet been attempted.
     //   CHOICE: Keep the core ready log visible while QUIET_STARTUP suppresses module-ready noise.
@@ -14998,6 +24634,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Preserve configured intent for dependency-skipped modules - ALT: force-disable config; REJECTED: hid startup failures and erased DM intent.
     //   CHOICE: Treat an explicitly disabled GameAssist service differently from an unavailable external dependency because the DM selected that lifecycle outcome.
     // Prior notes:
+    //   v0.1.6.1: Added one guarded post-bootstrap WelcomeAssist completion signal after all configured component initialization attempts and final bootstrap metrics.
     //   v0.1.6.0: Startup initialized TurnTrackerService before InitiativeAssist and applied the existing service-disable cascade without changing unrelated modules.
     //   v0.1.5.0: Startup migrated known unreleased component names before auditing state, initialized MarkerService before its consumers, cascaded deliberate service shutdown, and removed standalone TokenMod gating.
     //   v0.1.4.7: Startup reported the standalone-interoperability release; lifecycle order was unchanged.
