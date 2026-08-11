@@ -3,7 +3,7 @@
 GameAssist - Roll20 API Script
 Version: 2.0.0
 Last Updated: 2026-08-11 (America/New_York)
-Release scope: EffectAssist 2.4.0, suite-level GM/help/navigation controls, HealAssist 1.0.0, AttackAssist 1.0.0, complete AlmanacAssist 1.1.0, HealthService 1.0.0, and verified CombatAssist duration events on one GameAssist v2.0.0 development line.
+Release scope: EffectAssist 2.4.0, separator-flexible suite commands, consistent Roll20-template controls, HealAssist 1.0.0, AttackAssist 1.0.0, complete AlmanacAssist 1.1.0, HealthService 1.0.0, and verified CombatAssist duration events on one GameAssist v2.0.0 development line.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -15,13 +15,13 @@ service plus a shared health-observation and verified-write contract. Optional
 PC health-band alerts use that shared evidence and remain private to the GM.
 Normal event handlers execute directly unless a module deliberately
 calls GameAssist.enqueue(). This development package contains fifteen configurable modules:
-- ConfigUI 0.2.3 - GM-only chat controls for toggling modules, common options, and PC health alerts.
+- ConfigUI 0.2.4 - GM-only chat controls for toggling modules, common options, and PC health alerts.
 - CritAssist 0.2.5.1 - Detects natural-1 attacks and offers fumble/confirm menus.
-- ConditionAssist 1.0.3 - Provides condition wording, artwork, announcements, and marker controls.
-- TokenAssist 1.0.4 - Provides general token controls through !token-assist and !ta commands.
+- ConditionAssist 1.0.4 - Provides condition wording, artwork, announcements, and marker controls.
+- TokenAssist 1.0.5 - Provides general token controls through !token-assist and !ta commands.
 - InitiativeAssist 1.0.4 - Uses Roll20's native Turn Tracker for mixed-sheet initiative workflows and compact topic guidance.
 - CombatAssist 1.1.0 - Tracks encounters, native round counters, guarded turns, optional timers, private-safe pings, recoverable tracker changes, and verified semantic progression events.
-- WelcomeAssist 0.1.4 - Optionally greets the table after a healthy GameAssist startup through short !Welcome commands.
+- WelcomeAssist 0.1.5 - Optionally greets the table after a healthy GameAssist startup through short !Welcome commands.
 - ConcentrationAssist 0.4.0 - Runs manual and private HP-loss-offered concentration checks, manages its configured marker, and exposes concentration lifecycle events.
 - NPCAssist 1.4.0 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, and Arc rosters.
 - EffectAssist 2.4.0 - Coordinates catalog-driven effects, direct GM casting, opaque player flows, retained GM requests, 2014-sheet modifiers, concentration, ownership-safe cleanup, duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
@@ -38,6 +38,7 @@ INSTALL / USAGE
   GameAssist modules that do not use marker behavior.
 
 CORE COMMANDS (GM)
+- Command letters are case-insensitive, and command-word separators may be spaces or hyphens.
 - !GA-GM / !GA-DM
 - !ga-help
 - !ga-nav [module] [section]
@@ -529,8 +530,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Utilities (arg parsing, state helpers, audit, sanitize)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "APP:UTILS", title: "Utilities",
-    //   guarantees: ["Shared non-marker helpers; known module state branches self-heal without deleting valid config","Absolute timestamps remain unchanged while human displays and date keys use one validated DM timezone","Standalone-script evidence remains diagnostic rather than a marker dependency","Explicit module-manual requests create or update one stable GameAssist-owned handout without touching other handouts"],
-    //   depends_on: ["[GAMEASSIST:POLICY]"], last_updated_version: "v1.8.0", lifecycle: "active" }
+    //   guarantees: ["Shared non-marker helpers; known module state branches self-heal without deleting valid config","Absolute timestamps remain unchanged while human displays and date keys use one validated DM timezone","Standalone-script evidence remains diagnostic rather than a marker dependency","Explicit module-manual requests create or update one stable GameAssist-owned handout without touching other handouts","GameAssist command paths match case-insensitively and accept spaces or hyphens between command words while preserving arguments"],
+    //   depends_on: ["[GAMEASSIST:POLICY]"], last_updated_version: "v2.0.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // APP:UTILS collects helpers for metrics/state initialization, conservative state
@@ -902,17 +903,55 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         ensureStateBranch(root, canonicalComponentName(mod));
     }
 
-    function commandMatches(content, prefix, { caseInsensitive = false, mode = 'token' } = {}) {
-        const raw = (content || '').trim();
-        const pfx = caseInsensitive ? prefix.toLowerCase() : prefix;
-        const txt = caseInsensitive ? raw.toLowerCase() : raw;
+    /**
+     * commandMatchDetails - Match one GameAssist command without forcing exact casing or one separator style.
+     * Inputs: raw API chat content, a registered literal prefix, and exact/token/prefix mode.
+     * Outputs: null or the canonical command content expected by the owning handler.
+     * Invariants: only the command path is normalized; arguments and --option flags retain their spelling and values.
+     * Failure: malformed or unrelated chat returns null and is left available to other Roll20 Mods.
+     * Design: normalize at the GameAssist command edge so module parsers keep one stable internal command language.
+     */
+    function commandMatchDetails(content, prefix, { caseInsensitive = true, mode = 'token' } = {}) {
+        const raw = String(content || '').trim();
+        const registered = String(prefix || '').trim();
+        if (!raw || !registered) return null;
 
-        if (mode === 'prefix') return txt.startsWith(pfx);
-        if (txt === pfx) return true;
+        const escapeRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const segments = registered.split(/[-\s]+/).filter(Boolean);
+        if (!segments.length) return null;
 
-        const escaped = pfx.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const boundary = new RegExp(`^${escaped}(\\s|$)`);
-        return boundary.test(txt);
+        const flexibleSeparator = '(?:-|\\s)+';
+        let source = segments.map(escapeRegex).join(flexibleSeparator);
+        if (/[-\s]$/.test(registered)) {
+            // DANGER: a space before --option belongs to the base command, not a trailing subcommand family.
+            source += `${flexibleSeparator}(?=[^-\\s])`;
+        }
+
+        const suffix = mode === 'exact'
+            ? '$'
+            : (mode === 'token' ? '(?=$|[-\\s])' : '');
+        const expression = new RegExp(`^${source}${suffix}`, caseInsensitive ? 'i' : '');
+        const matched = raw.match(expression);
+        if (!matched) return null;
+
+        let remainder = raw.slice(matched[0].length);
+        if (mode === 'token' && remainder.startsWith('-')) {
+            // CHOICE: a doubled hyphen remains an option flag; a single separator introduces a subcommand.
+            remainder = remainder.startsWith('--')
+                ? ` ${remainder}`
+                : ` ${remainder.replace(/^-+/, '')}`;
+        }
+
+        return {
+            content: registered + remainder,
+            consumed: matched[0].length,
+            literalLength: registered.replace(/[-\s]/g, '').length,
+            modeRank: mode === 'exact' ? 3 : (mode === 'token' ? 2 : 1)
+        };
+    }
+
+    function commandMatches(content, prefix, options = {}) {
+        return Boolean(commandMatchDetails(content, prefix, options));
     }
 
     /**
@@ -1193,6 +1232,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
     // --- Notes & Comments ---
     // NOTE: State auditor warns about unexpected branches; no automatic deletion occurs.
+    // Changed (v2.0.0): Added canonical command-path matching so registered GameAssist commands accept mixed case and either spaces or hyphens without rewriting option flags or unrelated chat.
     // Changed (v1.8.0): Added explicit legacy guide-name adoption so renamed modules reuse and rename one existing owned handout instead of creating a duplicate.
     // Changed (v0.1.5.1): Added validated IANA timezone resolution, bounded formatter reuse, DST-aware human formatting, date-key generation, and legacy-display fallback while preserving stored absolute timestamps.
     // Decision log:
@@ -3381,7 +3421,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: GameAssist kernel object
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:OBJECT", title: "Kernel",
-    //   guarantees: ["Logging, explicit enqueue, dependency diagnostics, register/enable/disable, listener management", "MarkerService, TurnTrackerService, SemanticEvents, HealthService, the validated time seam, and the stable module-manual writer are exposed through the GameAssist object", "Module registration may explicitly retain durable runtime state and protect validated configuration maps", "Failed dependency enable checks preserve the module's existing configured intent"],
+    //   guarantees: ["Logging, explicit enqueue, dependency diagnostics, register/enable/disable, listener management", "MarkerService, TurnTrackerService, SemanticEvents, HealthService, the validated time seam, and the stable module-manual writer are exposed through the GameAssist object", "Module registration may explicitly retain durable runtime state and protect validated configuration maps", "Failed dependency enable checks preserve the module's existing configured intent", "One most-specific active GameAssist command route handles each API message after command-path normalization"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:QUEUE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:HEALTHSERVICE]"],
     //   last_updated_version: "v2.0.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
@@ -3404,6 +3444,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         _plannedChatPrefixes: [],
         _listeners: {},
         _commandHandlers: {},
+        _commandRoutes: [],
+        _commandRouteSequence: 0,
         _eventHandlers: {},
         _transitioning,
         config: {},
@@ -3481,16 +3523,44 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             this._plannedChatPrefixes.push(...prefixes);
         },
 
+        _resolveCommandRoute(content) {
+            const candidates = this._commandRoutes
+                .filter(route => MODULES[route.mod]?.initialized && MODULES[route.mod]?.active)
+                .map(route => ({ route, details: commandMatchDetails(content, route.prefix, route.match) }))
+                .filter(candidate => candidate.details)
+                .sort((left, right) =>
+                    right.details.consumed - left.details.consumed ||
+                    right.details.literalLength - left.details.literalLength ||
+                    right.details.modeRank - left.details.modeRank ||
+                    left.route.order - right.route.order
+                );
+            return candidates[0] || null;
+        },
+
         onCommand(prefix, fn, mod, { gmOnly = false, acl = [], match = { caseInsensitive: true, mode: 'token' } } = {}) {
+            const route = {
+                id: ++this._commandRouteSequence,
+                order: this._commandRouteSequence,
+                prefix,
+                mod,
+                // GameAssist commands are deliberately case-insensitive across every module.
+                match: { ...match, caseInsensitive: true }
+            };
+            this._commandRoutes.push(route);
             const wrapped = msg => {
                 if (!MODULES[mod]?.initialized || !MODULES[mod]?.active) return;
-                if (msg.type !== 'api' || !commandMatches(msg.content, prefix, match)) return;
+                if (msg.type !== 'api') return;
+                const resolved = this._resolveCommandRoute(msg.content);
+                if (!resolved || resolved.route.id !== route.id) return;
                 if (gmOnly && !playerIsGM(msg.playerid)) return;
                 if (acl.length && !acl.includes(msg.playerid)) return;
                 this._metrics.commands++;
                 this._metrics.lastUpdate = isoNow();
                 recordMetric('command', { mod, note: prefix, noHistory: true });
-                try { fn(msg); }
+                const routedMessage = resolved.details.content === msg.content
+                    ? msg
+                    : { ...msg, content: resolved.details.content, gameAssistOriginalContent: msg.content };
+                try { fn(routedMessage); }
                 catch(e) { this.handleError(mod, e); }
             };
             R20_ON('chat:message', wrapped);
@@ -3855,6 +3925,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => HealthService._setEnabled(false)
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added a most-specific command router that canonicalizes case and command-word separators once, prevents overlapping aliases from double-firing, and leaves non-GameAssist chat untouched.
     // Changed (v2.0.0): Protected HealthService's validated PC-alert settings from generic config writes while retaining the shared toggleable HP evidence and verified-write lifecycle.
     // Decision log:
     //   CHOICE: Expose globally under the existing GameAssist name - ALT: add another global; REJECTED: unnecessary global pollution.
@@ -3921,15 +3992,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Roll20 handler registry (non-invasive)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "INTERFACES:EVENTS", title: "Handlers",
-    //   guarantees: ["Track listeners for safe enable/disable"], last_updated_version: "v0.1.4" }
+    //   guarantees: ["Track listeners for safe enable/disable","Keep GameAssist command routes internal and dispatch one most-specific active route without overriding Roll20 globals"], last_updated_version: "v2.0.0" }
     // -------------------------------------------------------------------------
     // Narrative
     // INTERFACES:EVENTS tracks handlers registered through GameAssist.onEvent and
     // GameAssist.onCommand without overriding Roll20 globals. Registries live in
-    // GameAssist._listeners and GameAssist._commandHandlers; Roll20's native `on`
+    // GameAssist._listeners, GameAssist._commandHandlers, and GameAssist._commandRoutes; Roll20's native `on`
     // is captured once (R20_ON) and reused to avoid polluting the global scope.
     // -------------------------------------------------------------------------
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added internal most-specific route selection for separator-flexible commands while preserving captured Roll20 event registration.
     // CHOICE: Use captured Roll20 `on` without overriding globals; registries remain internal.
     // Changed (v0.1.4): Removed global on/off overrides to prevent cross-script collisions; rely on R20_ON and internal tracking.
     // Prior notes: Maintenance (v0.1.1.2, no semantic change): MECHSUITS metadata refreshed for v1.5.1.
@@ -3939,7 +4011,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Admin/config commands (!ga-*)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "INTERFACES:COMMANDS", title: "Commands",
-    //   guarantees: ["GM-gated admin commands; unsafe and component-protected config keys refused; versioned config-only export; validated timezone menu; plain-language system and HealthService diagnostics with opt-in shared-service, tracker-consumer, and standalone-integration details","Optional supported-PC health-band alerts are GM-private, threshold-configurable, downward-crossing only, and never duplicate NPCAssist NPC policy","!GA-GM/!GA-DM, !ga-help, and !ga-nav provide bounded suite, help, and layered module navigation without taking ownership of module commands"],
+    //   guarantees: ["GM-gated admin commands; unsafe and component-protected config keys refused; versioned config-only export; validated timezone menu; plain-language system and HealthService diagnostics with opt-in shared-service, tracker-consumer, and standalone-integration details","Optional supported-PC health-band alerts are GM-private, threshold-configurable, downward-crossing only, and never duplicate NPCAssist NPC policy","!GA-GM/!GA-DM, !ga-help, and !ga-nav provide bounded suite, help, and layered module navigation without taking ownership of module commands","Suite navigation uses the same Roll20 default-template presentation as module control panels"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:CORE:STATE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   last_updated_version: "v2.0.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
@@ -3947,6 +4019,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // INTERFACES:COMMANDS contains GM/admin chat commands for listing modules, toggling
     // config, exporting versioned configuration-only snapshots, inspecting health,
     // and moving between module-owned Game Master and help screens.
+    // Command words are case-insensitive and may be separated by spaces or hyphens;
+    // displayed buttons retain one canonical spelling so menus remain predictable.
     // The default status view prioritizes a DM's next action; --details preserves
     // session counters, queue state, timestamps, event-hook counts, dependency evidence,
     // shared-service and tracker-consumer lifecycle state, plus separately detected
@@ -4408,13 +4482,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
 
     function sendNavigationPanel(title, intro, sections, actions = '') {
-        const sectionHtml = sections.map(section =>
-            `<div style="margin-top:8px;"><strong>${_sanitize(section.label)}</strong><br>${section.value}</div>`
-        ).join('');
-        const footer = actions
-            ? `<div style="margin-top:10px;padding-top:6px;border-top:1px solid #bbb;">${actions}</div>`
-            : '';
-        sendChat('GameAssist', `/w gm <div style="border:1px solid #444;background:#fff;padding:8px;border-radius:5px"><strong>${_sanitize(title)}</strong><div style="margin-top:5px;">${_sanitize(intro)}</div>${sectionHtml}${footer}</div>`);
+        const fields = [
+            `{{Overview=${_sanitize(intro)}}}`,
+            ...sections.map(section => `{{${_sanitize(section.label)}=${section.value}}}`),
+            ...(actions ? [`{{Navigation=${actions}}}`] : [])
+        ].join(' ');
+        sendChat('GameAssist', `/w gm &{template:default} {{name=${_sanitize(title)}}} ${fields}`);
     }
 
     function showGameAssistGmHome() {
@@ -5133,6 +5206,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.log('Metrics', summary.join('\n'));
     }, 'Core', { gmOnly: true });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Standardized suite navigation on Roll20's default-template panels and documented case-insensitive space-or-hyphen command paths.
     // Changed (v2.0.0): Added !GA-GM/!GA-DM, !ga-help, and layered !ga-nav dashboards with disabled-module recovery and stable module-owned destinations.
     // Changed (v2.0.0): Added protected, optional GM-private PC health alerts with independently selectable 50%, 25%, and 10% downward-crossing thresholds, combined notices, optional exact HP, safe preview, status controls, and HealthService-only observation without changing NPCAssist NPC policy.
     // Decision log:
@@ -5181,16 +5255,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // sequencing while child sections own their observable behavior.
     // -------------------------------------------------------------------------
 
-    // ————— CONFIG UI MODULE v0.2.3 —————
+    // ————— CONFIG UI MODULE v0.2.4 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:CONFIGUI] BEGIN
     // Section Title: Config UI module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONFIGUI", title: "Config UI",
-    //   guarantees: ["GM chat menu for module and core-service toggles, timezone access, quick config, and direct access to protected HealthService PC-alert controls","Compact guide, status, info, read-only audit, and unknown-command recovery use the established !ga-config-ui prefix"],
+    //   guarantees: ["GM chat menu for module and core-service toggles, timezone access, quick config, and direct access to protected HealthService PC-alert controls","Compact guide, status, info, read-only audit, and unknown-command recovery use the established !ga-config-ui prefix","Paged controls use the shared Roll20 default-template presentation"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:INTERFACES:COMMANDS]"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "0.2.3" } }
+    //   independent_versions: { module_version: "0.2.4" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:CONFIGUI provides GM-facing chat controls to page through modules,
@@ -5316,7 +5390,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (summary) {
                 rows.push(summary);
             }
-            return `<div style="margin-top:4px;">${rows.join('<br>')}</div>`;
+            return { label: name, value: rows.join('<br>') };
         }
 
         function renderInternal(playerId, { page: explicitPage, rawArgs = '' } = {}) {
@@ -5333,23 +5407,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (page > totalPages - 1) page = totalPages - 1;
 
             const slice = modules.slice(page * pageSize, page * pageSize + pageSize);
-            const blocks = slice.map(([name, mod]) => renderModuleBlock(name, mod)).join('');
+            const moduleFields = slice.map(([name, mod]) => renderModuleBlock(name, mod));
             const nav = buildNav(page, totalPages);
 
             const timezone = getTimeZoneInfo();
-            const header = `<div><strong>🛠️ GameAssist Config UI</strong> <span style="font-size:smaller;">Page ${page + 1}/${totalPages}</span></div>`;
-            const timezoneRow = [
-                '<div style="margin-top:5px;padding-bottom:5px;border-bottom:1px solid #ddd;">',
-                `<strong>Table timezone:</strong> ${_sanitize(timezone.label)}<br>`,
-                `${GameAssist.createButton('Manage Timezone', '!ga-timezone')} `,
-                `<span style="font-size:smaller;">Session date ${_sanitize(localDateKey())}</span>`,
-                '</div>'
-            ].join('');
-            const footer = `<div style="margin-top:7px;">${gameAssistHomeButton()}</div><div style="margin-top:4px; font-size:smaller;">Use !ga-config set &lt;Module&gt; key=value for advanced settings.</div>`;
-            const navLine = nav ? `<div style="margin-top:4px;">${nav}</div>` : '';
-
-            const message = `${header}${timezoneRow}${blocks}${navLine}${footer}`;
-            sendChat('GameAssist', `/w gm ${message}`);
+            const fields = [
+                {
+                    label: 'Table Timezone',
+                    value: `${_sanitize(timezone.label)} | Session date ${_sanitize(localDateKey())}<br>${GameAssist.createButton('Manage Timezone', '!ga-timezone')}`
+                },
+                ...moduleFields,
+                ...(nav ? [{ label: 'Pages', value: nav }] : []),
+                { label: 'GameAssist', value: gameAssistHomeButton() },
+                { label: 'Advanced Settings', value: 'Use <code>!ga-config set &lt;Module&gt; key=value</code>.' }
+            ];
+            sendConfigPanel(`GameAssist Config UI - Page ${page + 1}/${totalPages}`, fields);
         }
 
         function sendConfigPanel(title, fields) {
@@ -5443,6 +5515,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         prefixes: ['!ga-config-ui', '!ga-config ui', '!ConfigUI-GM', '!ConfigUI-DM', '!Config-GM', '!Config-DM']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced ConfigUI to 0.2.4 and moved its paged settings screen into the same Roll20 default-template presentation used by HPAssist and CombatAssist.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the ConfigUI GM screen.
     // Changed (v2.0.0): Advanced ConfigUI to 0.2.3 with a direct HealthService PC-alert settings button and a readable alert summary instead of raw protected configuration JSON.
     // Decision log:
@@ -5918,17 +5991,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:CRITASSIST] END
     // =============================================================================
 
-    // ————— CONDITION ASSIST MODULE v1.0.3 —————
+    // ————— CONDITION ASSIST MODULE v1.0.4 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:CONDITIONASSIST] BEGIN
     // Section Title: GameAssist condition descriptions and controls
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONDITIONASSIST", title: "ConditionAssist",
-    //   guarantees: ["2014 SRD condition wording is the default, with selectable 2024 SRD and campaign-custom wording","!condition and case-insensitive !cond-[condition] provide condition-reference workflows for official and campaign conditions","Selected-token menus and current-page status report configured conditions from actual marker state and distinguish other active markers","Built-in and registered custom marker artwork may accompany readable condition text","GM announcements toggle and verify selected token markers before reporting character-first is/is-no-longer results through explicit public/private delivery","Compact layered navigation, a stable on-demand manual, read-only audit wording, and recovery responses preserve player/GM permissions","All condition marker reads, writes, and observations use CORE:MARKERSERVICE","Legacy state.STATUSINFO may be copied through a validated migration and is never silently deleted"],
+    //   guarantees: ["2014 SRD condition wording is the default, with selectable 2024 SRD and campaign-custom wording","!condition and case-insensitive !cond-[condition] provide condition-reference workflows for official and campaign conditions","Selected-token menus and current-page status report configured conditions from actual marker state and distinguish other active markers","Built-in and registered custom marker artwork may accompany readable condition text","GM announcements toggle and verify selected token markers before reporting character-first is/is-no-longer results through explicit public/private delivery","Compact layered navigation, a stable on-demand manual, read-only audit wording, and recovery responses preserve player/GM permissions","Condition panels use the shared Roll20 default-template presentation","All condition marker reads, writes, and observations use CORE:MARKERSERVICE","Legacy state.STATUSINFO may be copied through a validated migration and is never silently deleted"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.ConditionAssist"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.0.3", condition_config_schema_version: 2 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.0.4", condition_config_schema_version: 2 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // ConditionAssist is GameAssist's condition-information module. It preserves the
@@ -5940,7 +6013,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('ConditionAssist', function() {
         const MODULE_NAME = 'ConditionAssist';
-        const MODULE_VERSION = '1.0.3';
+        const MODULE_VERSION = '1.0.4';
         const CONFIG_SCHEMA_VERSION = 2;
         const PRIMARY_COMMAND = 'condition';
         const STATUS_HANDOUT_NAME = 'GameAssist Condition Status';
@@ -6325,12 +6398,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 : (whisperTo
                     ? `/w "${safeWho({ who: whisperTo })}" `
                     : (gmOnly || !msg ? '/w gm ' : requesterWhisper(msg)));
-            const panel = [
-                '<div style="border:1px solid #555;background:#fff;padding:8px;border-radius:5px;">',
-                `<div style="font-size:1.15em;font-weight:bold;margin-bottom:6px;">${_sanitize(title)}</div>`,
-                body,
-                '</div>'
-            ].join('');
+            const panel = `&{template:default} {{name=${_sanitize(title)}}} {{Details=${String(body || '')}}}`;
             sendChat(MODULE_NAME, destination + panel, null, { noarchive: true });
         }
 
@@ -7552,6 +7620,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['conditions', 'rulesProfile', 'legacyStatusInfoMigration']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced ConditionAssist to 1.0.4 and standardized its condition, status, settings, and announcement panels on Roll20's default template.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the ConditionAssist GM control screen without exposing it in player-only menus.
     // Changed (v0.1.7.0): Advanced ConditionAssist to 1.0.3; GM and DM role aliases open the selected-token condition controls, while compact Guide/Help, Info, Status, read-only Audit, Settings, Manual, and condition behavior remain intact.
     // Decision log:
@@ -7579,17 +7648,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:CONDITIONASSIST] END
     // =============================================================================
 
-    // ————— TOKEN ASSIST MODULE v1.0.3 —————
+    // ————— TOKEN ASSIST MODULE v1.0.5 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:TOKENASSIST] BEGIN
     // Section Title: GameAssist general token controls and TokenMod compatibility
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:TOKENASSIST", title: "TokenAssist",
-    //   guarantees: ["General token controls use !token-assist and !ta/!ta-* commands; older !token-mod syntax remains a compatibility alias until a separately announced migration release","Selected tokens are available to their users while explicit --ids targeting remains GM-only unless the DM opts in","Compact layered navigation, stable on-demand manual, read-only audit, and unknown-command recovery preserve the established command families","Every status-marker command uses CORE:MARKERSERVICE","Valid legacy state.TokenMod playersCanUse_ids configuration is copied once without deleting the source state","A detected standalone TokenMod suspends only overlapping !token-mod handling and produces an actionable warning rather than double-applying token changes"],
+    //   guarantees: ["General token controls use !token-assist and !ta/!ta-* commands; older !token-mod syntax remains a compatibility alias until a separately announced migration release","Selected tokens are available to their users while explicit --ids targeting remains GM-only unless the DM opts in","Compact layered navigation, stable on-demand manual, read-only audit, and unknown-command recovery preserve the established command families","TokenAssist control, guide, status, and information panels use the shared Roll20 default-template presentation","Every status-marker command uses CORE:MARKERSERVICE","Valid legacy state.TokenMod playersCanUse_ids configuration is copied once without deleting the source state","A detected standalone TokenMod suspends only overlapping !token-mod handling and produces an actionable warning rather than double-applying token changes"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.TokenAssist"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.0.4", token_config_schema_version: 1, tokenmod_reference_version: "0.8.88" }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.0.5", token_config_schema_version: 1, tokenmod_reference_version: "0.8.88" }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // TokenAssist provides GameAssist's general token controls through a verified,
@@ -7599,7 +7668,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     const TokenAssist = (() => {
         const MODULE_NAME = 'TokenAssist';
-        const MODULE_VERSION = '1.0.4';
+        const MODULE_VERSION = '1.0.5';
         const CONFIG_SCHEMA_VERSION = 1;
         const TOKENMOD_REFERENCE = Object.freeze({
             version: '0.8.88',
@@ -7765,6 +7834,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const fallback = String(msg?.who || 'gm').replace(/\s+\(GM\)$/i, '').replace(/"/g, '');
             const who = getDisplayName(msg?.playerid, fallback);
             sendChat('GameAssist TokenAssist', `/w "${who}" ${body}`);
+        }
+
+        function sendTokenPanel(msg, title, fields) {
+            const body = (fields || []).map(field => `{{${_sanitize(field.label)}=${field.value}}}`).join(' ');
+            whisper(msg, `&{template:default} {{name=${_sanitize(title)}}} ${body}`);
         }
 
         function truthy(value) {
@@ -8463,13 +8537,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function showMarkerHelp(msg) {
-            whisper(msg, [
-                '<b>TokenAssist Marker Commands</b><br>',
-                '<code>!ta-set statusmarkers|red</code> adds a marker.<br>',
-                '<code>|-red</code> removes, <code>|!red</code> toggles, and <code>|=dead</code> replaces all markers.<br>',
-                'Use <code>red:3</code> for a number, a custom display name, or an exact <code>Name::id</code> tag.<br>',
-                `Duplicate-index and conditional-count expressions remain unsupported in TokenAssist ${MODULE_VERSION}.`
-            ].join(''));
+            sendTokenPanel(msg, 'TokenAssist Marker Commands', [
+                { label: 'Add', value: '<code>!ta-set statusmarkers|red</code>' },
+                { label: 'Remove, Toggle, Replace', value: '<code>|-red</code> removes, <code>|!red</code> toggles, and <code>|=dead</code> replaces all markers.' },
+                { label: 'Names And Numbers', value: 'Use <code>red:3</code> for a number, a custom display name, or an exact <code>Name::id</code> tag.' },
+                { label: 'Compatibility Limit', value: `Duplicate-index and conditional-count expressions remain unsupported in TokenAssist ${MODULE_VERSION}.` },
+                { label: 'Continue', value: GameAssist.createButton('Back to Guide', '!token-assist help') }
+            ]);
         }
 
         function showHelp(msg) {
@@ -8478,55 +8552,43 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 `Players --ids: ${config.playersCanUseIds ? 'On' : 'Off'}`,
                 `!token-assist --config players-can-ids|${config.playersCanUseIds ? 'off' : 'on'}`
             );
-            whisper(msg, [
-                '<div style="border:1px solid #444;background:#fff;padding:8px;border-radius:5px">',
-                '<b style="font-size:1.15em">TokenAssist Quick Guide</b><br>',
-                `<div style="margin-top:6px;"><b>Actions</b><br>${GameAssist.createButton('Selected Token Examples', '!token-assist info')} ${GameAssist.createButton('Marker Help', '!token-assist --help-statusmarkers')} ${GameAssist.createButton('Current Status', '!token-assist status')}</div>`,
-                `<div style="margin-top:8px;"><b>Learn Or Review</b><br>${GameAssist.createButton('Create or Update Manual', '!token-assist manual')} ${GameAssist.createButton('Read-Only Audit', '!token-assist audit')} ${configButton}</div>`,
-                '</div>'
-            ].join(''));
+            sendTokenPanel(msg, 'TokenAssist Quick Guide', [
+                { label: 'Actions', value: `${GameAssist.createButton('Selected Token Examples', '!token-assist info')} ${GameAssist.createButton('Marker Help', '!token-assist --help-statusmarkers')} ${GameAssist.createButton('Current Status', '!token-assist status')}` },
+                { label: 'Learn Or Review', value: `${GameAssist.createButton('Create or Update Manual', '!token-assist manual')} ${GameAssist.createButton('Read-Only Audit', '!token-assist audit')} ${configButton}` }
+            ]);
         }
 
         function showTokenControl(msg) {
             const state = getModuleState();
             const selected = (msg.selected || []).map(selection => getObj('graphic', selection._id)).filter(Boolean);
-            whisper(msg, [
-                '<div style="border:1px solid #444;background:#fff;padding:8px;border-radius:5px">',
-                '<b style="font-size:1.15em">TokenAssist GM Controls</b><br>',
-                `<div style="margin-top:6px;"><b>Current Selection</b><br>${selected.length} token${selected.length === 1 ? '' : 's'} selected.</div>`,
-                `<div style="margin-top:8px;"><b>Common Actions</b><br>${GameAssist.createButton('Show Names', '!ta-on showname')} ${GameAssist.createButton('Hide Names', '!ta-off showname')} ${GameAssist.createButton('Set Bar 1', '!ta-set bar1_value|?{Bar 1 value|0}')} ${GameAssist.createButton('Toggle Marker', '!ta-set statusmarkers|!?{Marker name|red}')}</div>`,
-                `<div style="margin-top:8px;"><b>Review And Setup</b><br>${GameAssist.createButton('Status', '!token-assist status')} ${GameAssist.createButton('Marker Help', '!token-assist --help-statusmarkers')} ${GameAssist.createButton(`Players --ids: ${state.config.playersCanUseIds ? 'On' : 'Off'}`, `!token-assist --config players-can-ids|${state.config.playersCanUseIds ? 'off' : 'on'}`)} ${GameAssist.createButton('Guide', '!token-assist help')}</div>`,
-                `<div style="margin-top:8px;">${gameAssistHomeButton()}</div>`,
-                '</div>'
-            ].join(''));
+            sendTokenPanel(msg, 'TokenAssist GM Controls', [
+                { label: 'Current Selection', value: `${selected.length} token${selected.length === 1 ? '' : 's'} selected.` },
+                { label: 'Common Actions', value: `${GameAssist.createButton('Show Names', '!ta-on showname')} ${GameAssist.createButton('Hide Names', '!ta-off showname')} ${GameAssist.createButton('Set Bar 1', '!ta-set bar1_value|?{Bar 1 value|0}')} ${GameAssist.createButton('Toggle Marker', '!ta-set statusmarkers|!?{Marker name|red}')}` },
+                { label: 'Review And Setup', value: `${GameAssist.createButton('Status', '!token-assist status')} ${GameAssist.createButton('Marker Help', '!token-assist --help-statusmarkers')} ${GameAssist.createButton(`Players --ids: ${state.config.playersCanUseIds ? 'On' : 'Off'}`, `!token-assist --config players-can-ids|${state.config.playersCanUseIds ? 'off' : 'on'}`)} ${GameAssist.createButton('Guide', '!token-assist help')}` },
+                { label: 'GameAssist', value: gameAssistHomeButton() }
+            ]);
         }
 
         function showAbout(msg) {
-            whisper(msg, [
-                '<div style="border:1px solid #444;background:#fff;padding:8px;border-radius:5px">',
-                '<b style="font-size:1.15em">What TokenAssist Does</b><br>',
-                `TokenAssist v${MODULE_VERSION} changes selected tokens through concise <code>!ta-*</code> commands. It supports visibility, values, movement, layers, order, auras, lighting, reports, authorized ID targeting, and MarkerService-backed status changes.<br><br>`,
-                '<b>Examples</b><br><code>!ta-on showname</code><br><code>!ta-set bar1_value|25</code><br><code>!ta-move 3g</code><br><code>!ta-set statusmarkers|red</code><br><br>',
-                `${GameAssist.createButton('Create or Update Manual', '!token-assist manual')} ${GameAssist.createButton('Back to Guide', '!token-assist help')}`,
-                '</div>'
-            ].join(''));
+            sendTokenPanel(msg, 'What TokenAssist Does', [
+                { label: 'Purpose', value: `TokenAssist v${MODULE_VERSION} changes selected tokens through concise <code>!ta-*</code> commands. It supports visibility, values, movement, layers, order, auras, lighting, reports, authorized ID targeting, and MarkerService-backed status changes.` },
+                { label: 'Examples', value: '<code>!ta-on showname</code><br><code>!ta-set bar1_value|25</code><br><code>!ta-move 3g</code><br><code>!ta-set statusmarkers|red</code>' },
+                { label: 'Continue', value: `${GameAssist.createButton('Create or Update Manual', '!token-assist manual')} ${GameAssist.createButton('Back to Guide', '!token-assist help')}` }
+            ]);
         }
 
         function showTokenStatus(msg, audit = false) {
             const state = getModuleState();
             const selected = (msg.selected || []).map(selection => getObj('graphic', selection._id)).filter(Boolean);
             const markerReady = Boolean(GameAssist.MarkerService?.isEnabled?.());
-            whisper(msg, [
-                '<div style="border:1px solid #444;background:#fff;padding:8px;border-radius:5px">',
-                `<b style="font-size:1.15em">TokenAssist ${audit ? 'Audit' : 'Status'}</b><br>`,
-                `<b>Module:</b> ${MODULE_VERSION} | enabled and responding<br>`,
-                `<b>MarkerService:</b> ${markerReady ? 'available' : 'unavailable'}<br>`,
-                `<b>Selected tokens:</b> ${selected.length}<br>`,
-                `<b>Player ID targeting:</b> ${state.config.playersCanUseIds ? 'allowed by the GM' : 'GM only'}<br>`,
-                audit ? '<b>Changes:</b> None. This audit reads module settings and the current selection without changing tokens.<br>' : '',
-                `<div style="margin-top:8px;">${GameAssist.createButton('Open Guide', '!token-assist help')} ${GameAssist.createButton('Marker Help', '!token-assist --help-statusmarkers')}</div>`,
-                '</div>'
-            ].join(''));
+            sendTokenPanel(msg, `TokenAssist ${audit ? 'Audit' : 'Status'}`, [
+                { label: 'Module', value: `${MODULE_VERSION} | enabled and responding` },
+                { label: 'MarkerService', value: markerReady ? 'available' : 'unavailable' },
+                { label: 'Selected Tokens', value: selected.length },
+                { label: 'Player ID Targeting', value: state.config.playersCanUseIds ? 'allowed by the GM' : 'GM only' },
+                ...(audit ? [{ label: 'Changes', value: 'None. This audit reads module settings and the current selection without changing tokens.' }] : []),
+                { label: 'Actions', value: `${GameAssist.createButton('Open Guide', '!token-assist help')} ${GameAssist.createButton('Marker Help', '!token-assist --help-statusmarkers')}` }
+            ]);
         }
 
         function tokenAssistManualHtml() {
@@ -8772,6 +8834,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['configSchemaVersion']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced TokenAssist to 1.0.5 and replaced its custom white/pink panels with the shared Roll20 default-template presentation.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the TokenAssist GM control screen.
     // Changed (v2.0.0): Advanced TokenAssist to 1.0.4 and replaced the expired v2.0.0 command-removal deadline with an explicit migration-release promise; token behavior and compatibility aliases are unchanged.
     // TokenMod provenance:
@@ -12336,17 +12399,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:COMBATASSIST] END
     // =============================================================================
 
-    // ————— WELCOMEASSIST MODULE v0.1.4 —————
+    // ————— WELCOMEASSIST MODULE v0.1.5 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:WELCOMEASSIST] BEGIN
     // Section Title: Optional table welcome and startup greeting
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:WELCOMEASSIST", title: "WelcomeAssist",
-    //   guarantees: ["Disabled-by-default public startup greeting","At most one automatic greeting per sandbox lifecycle","Automatic output begins only after completed GameAssist bootstrap and a bounded health check","Custom greetings are bounded, deduplicated, and neutralized against Roll20 chat directives","Configuration, status, and previews remain GM-only while explicit and automatic announcements are public","Short case-insensitive !Welcome and !Welcome- commands are primary while the legacy !welcome-assist surface remains accepted once","The root guide stays compact while topic buttons and a stable on-demand manual reveal detailed guidance","Unknown commands explain the problem and provide a direct guide button"],
+    //   guarantees: ["Disabled-by-default public startup greeting","At most one automatic greeting per sandbox lifecycle","Automatic output begins only after completed GameAssist bootstrap and a bounded health check","Custom greetings are bounded, deduplicated, and neutralized against Roll20 chat directives","Configuration, status, and previews remain GM-only while explicit and automatic announcements are public","Short case-insensitive !Welcome and !Welcome- commands are primary while the legacy !welcome-assist surface remains accepted once","The root guide stays compact while topic buttons and a stable on-demand manual reveal detailed guidance","Private control panels use the shared Roll20 default-template presentation while the public greeting remains visibly distinct","Unknown commands explain the problem and provide a direct guide button"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:STATE]","[GAMEASSIST:CORE:OBJECT]"],
     //   observability: { spans: ["[GAMEASSIST:MODULES:WELCOMEASSIST]"] },
     //   last_updated_version: "v2.0.0", lifecycle: "active",
-    //   independent_versions: { module_version: "0.1.4" } }
+    //   independent_versions: { module_version: "0.1.5" } }
     // -------------------------------------------------------------------------
     // Narrative
     // WelcomeAssist optionally posts one public greeting after GameAssist completes
@@ -12356,7 +12419,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // campaign greetings, or a mixed pool where each campaign greeting has double
     // the individual weight of a built-in line.
     // -------------------------------------------------------------------------
-    const WELCOMEASSIST_MODULE_VERSION = '0.1.4';
+    const WELCOMEASSIST_MODULE_VERSION = '0.1.5';
     const WELCOMEASSIST_MODES = Object.freeze(['default', 'builtin', 'custom', 'mixed']);
     const WELCOMEASSIST_DEFAULTS = Object.freeze({
         enabled: false,
@@ -12579,12 +12642,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
 
     function welcomeAssistPanel(title, content) {
-        whisperWelcomeAssist([
-            '<div style="border:1px solid #6d5ca5;background:#f7f5ff;padding:8px;border-radius:6px;">',
-            `<div style="font-weight:bold;font-size:1.1em;color:#3f2f72;">${sanitizeWelcomeForChat(title)}</div>`,
-            content,
-            '</div>'
-        ].join(''));
+        whisperWelcomeAssist(`&{template:default} {{name=${sanitizeWelcomeForChat(title)}}} {{Details=${content}}}`);
     }
 
     function welcomeModeButtons() {
@@ -12935,6 +12993,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['customGreetings']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced WelcomeAssist to 0.1.5 and standardized its private guide, settings, status, and preview controls while retaining the intentionally distinct public greeting card.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the WelcomeAssist GM status and settings screen.
     // Changed (v0.1.7.0): Advanced WelcomeAssist to 0.1.4; !Welcome-GM and !Welcome-DM are equal role aliases for the private status and settings screen, with Guide/Help, Info, Audit, Manual, and short !Welcome navigation preserved.
     // Decision log:

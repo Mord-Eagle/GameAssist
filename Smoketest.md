@@ -36,6 +36,16 @@ Run:
 !ga-nav effect
 !ga-nav effect apply
 !ga-nav hp
+!gA gM
+!GA dM
+!Ga HeLp
+!GA NaV effect apply
+!GA STATUS --details
+!ToKeN AsSiSt Gm
+!condition-gm
+!HP gm
+!ConfigUI gm
+!Welcome gm
 ```
 
 **Pass when:**
@@ -46,7 +56,10 @@ Run:
 - `!ga-help` lists all fifteen help destinations; an enabled module opens its own help, while a disabled module still opens a concise purpose-and-enable screen instead of a dead command;
 - `!ga-nav` lists all modules, `!ga-nav hp` shows HPAssist's destinations directly, and `!ga-nav effect` first shows EffectAssist sections before `!ga-nav effect apply` shows that section's controls;
 - a disabled module offers **Enable** rather than a dead feature button, and an enabled module that failed to start offers **Check Status**;
-- mixed capitalization such as `!Ga-NaV EfFeCt ApPlY` behaves the same way;
+- mixed capitalization and space/hyphen variants such as `!gA gM`, `!GA dM`, `!Ga HeLp`, and `!GA NaV effect apply` behave like their canonical button forms and trigger exactly once;
+- `!GA STATUS --details` preserves the option and opens detailed status, while `!ToKeN AsSiSt Gm`, `!condition-gm`, and `!HP gm` reach their intended module screens;
+- the suite navigator, ConfigUI, ConditionAssist, TokenAssist, and WelcomeAssist's private controls use the same readable Roll20 default-template presentation as HPAssist and CombatAssist rather than separate white, pink, or purple control-panel styles;
+- WelcomeAssist's public greeting card may remain visually distinct because it is table content rather than a private control interface;
 - none of these commands posts publicly or exposes another module's protected controls to players.
 
 ---
@@ -2180,7 +2193,7 @@ Select a disposable token whose name visibility is off, then run:
 !token-assist --set imgsrc|ignored --on showname
 ```
 
-Pass when TokenAssist refuses the unsupported image-side property, explains that this feature is outside TokenAssist 1.0.4, and leaves name visibility unchanged. TokenAssist also does not claim default-token writes, computed or name-resolved attributes, advanced controller-list editing, advanced color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, exact TokenMod report-recipient distinctions, duplicate-index marker editing, conditional marker counts, or TokenMod help-handout rebuilding.
+Pass when TokenAssist refuses the unsupported image-side property, explains that this feature is outside TokenAssist 1.0.5, and leaves name visibility unchanged. TokenAssist also does not claim default-token writes, computed or name-resolved attributes, advanced controller-list editing, advanced color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, exact TokenMod report-recipient distinctions, duplicate-index marker editing, conditional marker counts, or TokenMod help-handout rebuilding.
 
 #### T12. Restore Campaign Settings
 

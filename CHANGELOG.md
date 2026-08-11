@@ -59,6 +59,14 @@ EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so exis
 - Adds one **GameAssist Home** return to every module's primary Game Master screen while leaving module behavior, state, permissions, and specialized menus under that module's ownership.
 - Replaces dead controls for disabled modules with an Enable action and routes enabled-but-inactive modules to troubleshooting details.
 
+### Consistent command entry and control-panel presentation
+
+- Makes command letters case-insensitive across the GameAssist command router and treats spaces or hyphens between command words as equivalent. Forms such as `!GA STATUS`, `!ga-status`, `!gA gM`, and `!GA-GM` therefore reach the same destination.
+- Preserves quoted values, arguments, and documented `--options` while normalizing only the GameAssist command path.
+- Selects the single most-specific active GameAssist route for each API message so overlapping compatibility aliases do not trigger two module handlers. The original Roll20 message remains unchanged for unrelated Mods.
+- Standardizes suite navigation, ConfigUI 0.2.4, ConditionAssist 1.0.4, TokenAssist 1.0.5, and WelcomeAssist 0.1.5 private controls on Roll20's default-template presentation already used by HPAssist and CombatAssist. WelcomeAssist's public greeting card remains intentionally distinct from its controls.
+- Removes TokenAssist's separate white-and-pink panel treatment and the remaining pale custom frames from these shared interfaces. One suite presentation was chosen instead of a configurable theme so new controls inherit a predictable, readable default without multiplying styling work across every module.
+
 ### Guarded Guidance consumption
 
 - Advances EffectAssist from 2.3.0 to 2.4.0 without changing durable effect-state schema 3, cast-proposal schema 1, or player-cast-flow schema 1.
@@ -445,7 +453,7 @@ EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so exis
 ### Verification and release gate
 
 - JavaScript syntax parsing passes for the complete v2.0.0 executable.
-- MECHSUITS structural validation finds 31 correctly nested and paired sections, exact file-scoped canonical-tree agreement, matching section metadata, and required footers. This structural check does not by itself claim complete v1.5.2 compliance.
+- MECHSUITS structural validation finds 32 correctly nested and paired sections, exact file-scoped canonical-tree agreement, matching section metadata, and required footers. This structural check does not by itself claim complete v1.5.2 compliance.
 - Seventy focused HealthService semantic transitions pass for supported 2014 PC and linked-NPC snapshots, linked event deduplication, legitimate repeated-transition preservation, explicit damage/healing/initialization provenance, unknown external changes, blank/invalid handling, immutable payloads, observer isolation, idempotent operation identity, bounded evidence, and disabled-service refusal.
 - Thirty-four focused ConcentrationAssist/HealthService checks pass for default configuration, GM-only setting control, linked-event deduplication, GM/controller privacy, unrelated-player refusal, unknown-versus-verified wording, DC calculation, advantage roll evidence, last-damage compatibility, single use, stale HP, ended concentration, silent healing/synchronization, module opt-out, disabled-service fallback, verified DebugTools damage, hidden NPC privacy, and unchanged manual checks.
 - One hundred nine focused EffectAssist regression checks pass for the launch catalog, complete Bless automation, Guidance's global skill row, concentration cleanup and replacement, overlapping ownership, cross-adapter sharing, idempotency, preserved baseline state, edited-row preservation, NPC fallback, player authorization and lockout, audit/repair, and lifecycle handling.
@@ -454,6 +462,7 @@ EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so exis
 - Sixty-four focused HealAssist checks pass for the supported 2014 action catalog, exact formulas and roll evidence, source authorization, visible non-controlled PC targeting, no mutation before review, HealthService provenance, duplicate and stale refusal, maximum-HP capping, bounded manual formulas, NPC privacy and retained GM review, result settings, player lockout, read-only audit, and verified multi-target rollback attempts.
 - One hundred seven focused AlmanacAssist checks pass for all six systems, calendar/profile boundaries, Wayfarer configuration, climate inheritance, astronomy configuration and forecasting, weather continuity and locks, environment overrides, rest preview/revalidation/rollback, independent toggles, preserved state, public availability, and focused audits.
 - Thirty-six focused Wayfarer setup checks pass for draft/live separation, guided progress, invalid-input preservation, unequal month lengths, festival days, leap rules, holidays, starting-date activation, elapsed-time-preserving edits, profile duplication, draft cancellation, one-step rollback, and generated manual content.
+- The maintained v2.0.0 regression sweep passes 454 functional checks across cast recognition and Guidance evidence, concentration/health integration, effect durations, HealthService, HealAssist, PC health alerts, AttackAssist, player-casting and suite navigation, and Wayfarer setup. The suite-navigation group includes mixed-case and space/hyphen command variants, single-route dispatch, preserved `--options`, and shared private-control presentation checks.
 - `script.json` parses with the expanded v2.0.0 command and description additions.
 - Release acceptance includes the clean-install and v1.8.2 upgrade tracks in `Smoketest.md`, focused HealthService, EffectAssist, and HealAssist checks, and the complete six-system AlmanacAssist track in the live Roll20 Mod sandbox.
 
