@@ -2,7 +2,7 @@
 
 Use this guide after installing or updating GameAssist, before an important session, or while troubleshooting a feature.
 
-> This guide tests GameAssist v2.0.0. It covers the accepted 2014-sheet EffectAssist foundation, guided HealAssist and AttackAssist workflows, the complete AlmanacAssist release track, the shared HealthService foundation, optional GM-private PC health alerts, and private ConcentrationAssist HP-loss offers while retaining the established component checks and the v1.8.2 NPCAssist naming and Bloodied regressions.
+> This guide tests GameAssist v2.0.0. It covers suite-level GM/help navigation, the accepted 2014-sheet EffectAssist foundation and guarded Guidance candidate, guided HealAssist and AttackAssist workflows, the complete AlmanacAssist release track, the shared HealthService foundation, optional GM-private PC health alerts, and private ConcentrationAssist HP-loss offers while retaining the established component checks and the v1.8.2 NPCAssist naming and Bloodied regressions.
 
 The tests are organized by component. Each section explains:
 
@@ -15,6 +15,39 @@ The tests are organized by component. Each section explains:
 Run commands one at a time. A multi-line command block is a checklist, not a single block to paste into Roll20 chat.
 
 > Use a disposable page and test tokens for anything that changes HP, markers, handouts, saved history, or module state.
+
+---
+
+## Focused v2.0.0 Suite Navigation Acceptance
+
+**What this proves:** GameAssist has one predictable starting point for Game Masters, one help directory, and one progressive module navigator without replacing the modules' own controls.
+
+**Why test it:** These buttons connect every feature. One incorrect destination can make a healthy module appear broken.
+
+**Skip when:** Do not skip for v2.0.0 release acceptance or after changing command routing, module names, GM screens, or help screens. During ordinary troubleshooting, repeat only the affected destination.
+
+Run:
+
+```roll20chat
+!GA-GM
+!GA-DM
+!ga-help
+!ga-nav
+!ga-nav effect
+!ga-nav effect apply
+!ga-nav hp
+```
+
+**Pass when:**
+
+- `!GA-GM` and `!GA-DM` open the same private control center with all fifteen feature modules organized into readable groups;
+- an enabled module button opens that module's own primary GM screen exactly once;
+- every primary module GM screen includes **GameAssist Home**, and that button returns to the suite control center;
+- `!ga-help` lists all fifteen help destinations; an enabled module opens its own help, while a disabled module still opens a concise purpose-and-enable screen instead of a dead command;
+- `!ga-nav` lists all modules, `!ga-nav hp` shows HPAssist's destinations directly, and `!ga-nav effect` first shows EffectAssist sections before `!ga-nav effect apply` shows that section's controls;
+- a disabled module offers **Enable** rather than a dead feature button, and an enabled module that failed to start offers **Check Status**;
+- mixed capitalization such as `!Ga-NaV EfFeCt ApPlY` behaves the same way;
+- none of these commands posts publicly or exposes another module's protected controls to players.
 
 ---
 
@@ -468,7 +501,7 @@ Apply each remaining catalog effect once to disposable tokens through `!Effect-C
 
 | Effect | Confirm before ending it |
 | --- | --- |
-| Guidance | Target marker, source concentration, and one active `Guidance (GameAssist)` `1d4` global skill row exist; the preview explains that non-skill ability checks still need a manual d4. |
+| Guidance | Target marker, source concentration, and one active `Guidance (GameAssist)` `1d4[GameAssist Guidance]` global skill row exist; the preview explains that unsupported or non-skill checks retain the manual **Use Guidance** path. |
 | Warding Bond | Target marker plus `Warding Bond (GameAssist)` `+1` AC and save rows exist; no concentration marker is added. |
 | Holy Weapon | Target marker and source concentration are active; no global damage row changes every weapon. |
 | Haste | Target marker, `Haste (GameAssist)` `+2` AC row, and source concentration are active. |
@@ -477,6 +510,21 @@ Apply each remaining catalog effect once to disposable tokens through `!Effect-C
 End each effect from its **Effect Applied** panel or `!Effect-Active`. Pass when every owned marker and unedited sheet row clears, concentration clears only when it belongs to that effect, and the assisted instructions remain readable.
 
 Confirm the catalog visibly separates Bless, Guidance, Warding Bond, and Haste under **Marker And Sheet Automation** from Holy Weapon and Pass Without a Trace under **Tracked; Rules Stay Manual**. Gift of Alacrity, Longstrider, and Beacon of Hope should not appear as built-in launch buttons.
+
+### Guidance Consumption — Issue #85
+
+Use a disposable official D&D 5E by Roll20 2014 PC target and a separate source. Apply Guidance, then confirm the target sheet contains one active `Guidance (GameAssist)` global skill row whose value is exactly `1d4[GameAssist Guidance]`.
+
+1. Roll an ordinary skill from that target's sheet while controlled by the GM or the character's player.
+2. Reapply Guidance and roll a supported skill with advantage.
+3. Reapply Guidance and roll a supported skill with disadvantage.
+4. Roll an unrelated check containing another d4 while Guidance is active.
+5. Use a non-skill ability check or another unsupported roll template while Guidance is active.
+6. Create ambiguity with two eligible active Guidance records for the same target only if the ordinary UI permits it; otherwise inspect the manual fallback through **Active Effects**.
+7. Edit the owned Guidance row before rolling, then repeat the check.
+8. Click an old **Use Guidance** button after the matching instance has already ended.
+
+**Pass when:** each supported normal, advantage, and disadvantage skill check ends exactly one matching Guidance instance and removes only its owned marker, unedited row, and source concentration. The unrelated d4, unsupported check, ambiguous state, edited row, and stale button do not end or alter anything automatically. Those cases retain a clear **Use Guidance** or audit path. A newly reapplied Guidance can be consumed immediately even when the character repeats the same skill check.
 
 ### Player Casting, GM Requests, and Lockout
 
@@ -1180,6 +1228,7 @@ For each enabled module below:
 4. Enter the listed bad command and confirm it explains the problem and offers **Open Guide**.
 5. Where **Manual** is listed, run it twice. The second run must update the same handout rather than create a duplicate.
 6. Run both role aliases and confirm **GM** and **DM** open the same module-specific Game Master interaction screen.
+7. Confirm the module's Game Master screen includes **GameAssist Home** and that it returns to `!GA-GM`.
 
 | Module | GM / DM screen | Guide | Status | Audit | Manual | Deliberate bad command |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1192,6 +1241,10 @@ For each enabled module below:
 | WelcomeAssist | `!Welcome-GM` / `!Welcome-DM` | `!Welcome-Guide` | `!Welcome-Status` | `!Welcome-Audit` | `!Welcome-Manual` | `!Welcome-Impossible` |
 | NPCAssist | `!NPCAssist-GM` / `!NPCAssist-DM` | `!NPCAssist-Guide` | `!NPCAssist-Status` | `!NPCAssist-Audit` | `!NPCAssist-Manual` | `!NPCAssist-Impossible` |
 | ConcentrationAssist | `!ConcentrationAssist-GM` / `!ConcentrationAssist-DM` | `!ConcentrationAssist-Guide` | `!ConcentrationAssist-Status` | `!ConcentrationAssist-Audit` | `!ConcentrationAssist-Manual` | `!ConcentrationAssist-Impossible` |
+| EffectAssist | `!Effect-GM` / `!Effect-DM` | `!Effect-Guide` | `!Effect-Status` | `!Effect-Audit` | `!Effect-Manual` | `!Effect-Impossible` |
+| HealAssist | `!Heal-GM` / `!Heal-DM` | `!Heal-Guide` | `!Heal-Status` | `!Heal-Audit` | `!Heal-Manual` | `!Heal-Impossible` |
+| AttackAssist | `!Attack-GM` / `!Attack-DM` | `!Attack-Guide` | `!Attack-Status` | `!Attack-Audit` | `!Attack-Manual` | `!Attack-Impossible` |
+| AlmanacAssist | `!Almanac-GM` / `!Almanac-DM` | `!Almanac-Guide` | `!Almanac-Status` | `!Almanac-Audit` | `!Almanac-Manual` | `!Almanac-Impossible` |
 | HPAssist | `!HP-GM` / `!HP-DM` | `!HP-Guide` | `!HP-Status` | `!HP-Audit` | `!HP-Manual` | `!HP-Impossible` |
 | DebugTools | `!Debug-GM` / `!Debug-DM` | `!ga-debug guide` | `!ga-debug status` | `!ga-debug audit` | `!ga-debug manual` | `!ga-debug impossible` |
 

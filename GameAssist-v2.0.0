@@ -2,8 +2,8 @@
 ========================================
 GameAssist - Roll20 API Script
 Version: 2.0.0
-Last Updated: 2026-08-04 (America/New_York)
-Release scope: EffectAssist 2.3.0, HealAssist 1.0.0, AttackAssist 1.0.0, complete AlmanacAssist 1.1.0, HealthService 1.0.0, and verified CombatAssist duration events on one GameAssist v2.0.0 development line.
+Last Updated: 2026-08-11 (America/New_York)
+Release scope: EffectAssist 2.4.0, suite-level GM/help/navigation controls, HealAssist 1.0.0, AttackAssist 1.0.0, complete AlmanacAssist 1.1.0, HealthService 1.0.0, and verified CombatAssist duration events on one GameAssist v2.0.0 development line.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -24,7 +24,7 @@ calls GameAssist.enqueue(). This development package contains fifteen configurab
 - WelcomeAssist 0.1.4 - Optionally greets the table after a healthy GameAssist startup through short !Welcome commands.
 - ConcentrationAssist 0.4.0 - Runs manual and private HP-loss-offered concentration checks, manages its configured marker, and exposes concentration lifecycle events.
 - NPCAssist 1.4.0 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, and Arc rosters.
-- EffectAssist 2.3.0 - Coordinates catalog-driven effects, direct GM casting, opaque player flows, retained GM requests, 2014-sheet modifiers, concentration, ownership-safe cleanup, duration candidates, and bounded 2014 Bless proposals.
+- EffectAssist 2.4.0 - Coordinates catalog-driven effects, direct GM casting, opaque player flows, retained GM requests, 2014-sheet modifiers, concentration, ownership-safe cleanup, duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
 - HealAssist 1.0.0 - Guides verified 2014 healing rolls, visible PC targeting, private GM requests, complete HP review, and one-use HealthService application.
 - AttackAssist 1.0.0 - Guides authorized 2014 repeating attacks, visible targeting, private GM placement, and one-use native-template rolls without applying damage.
 - AlmanacAssist 1.1.0 - Adds guided Wayfarer drafts to fictional time, climate, astronomy, weather, environments, and verified 2014-sheet rests across six independently controlled internal systems.
@@ -38,6 +38,9 @@ INSTALL / USAGE
   GameAssist modules that do not use marker behavior.
 
 CORE COMMANDS (GM)
+- !GA-GM / !GA-DM
+- !ga-help
+- !ga-nav [module] [section]
 - !ga-config list
 - !ga-config modules
 - !ga-config set <ModuleOrService> key=value
@@ -105,8 +108,9 @@ V2.0.0 FOUNDATION
   Haste, and Pass Without a Trace, separated by automation level.
 - Bless automatically manages its target marker, 2014-sheet 1d4 global attack
   and saving-throw modifiers, source concentration, and dependent cleanup.
-- Guidance manages its marker, 2014-sheet 1d4 global skill modifier, source
-  concentration, and cleanup while calling out non-skill checks as a manual d4.
+- Guidance manages its marker, uniquely labeled 2014-sheet 1d4 global skill
+  modifier, source concentration, and cleanup. One unambiguous supported skill
+  check may consume that owned instance; unsupported checks keep the manual path.
 - Players may apply built-in effects from controlled sources unless the GM uses
   the EffectAssist control center to lock player casting.
 - Player casting buttons use short-lived opaque choices, and Ask the GM requests
@@ -3935,13 +3939,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Admin/config commands (!ga-*)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "INTERFACES:COMMANDS", title: "Commands",
-    //   guarantees: ["GM-gated admin commands; unsafe and component-protected config keys refused; versioned config-only export; validated timezone menu; plain-language system and HealthService diagnostics with opt-in shared-service, tracker-consumer, and standalone-integration details","Optional supported-PC health-band alerts are GM-private, threshold-configurable, downward-crossing only, and never duplicate NPCAssist NPC policy"],
+    //   guarantees: ["GM-gated admin commands; unsafe and component-protected config keys refused; versioned config-only export; validated timezone menu; plain-language system and HealthService diagnostics with opt-in shared-service, tracker-consumer, and standalone-integration details","Optional supported-PC health-band alerts are GM-private, threshold-configurable, downward-crossing only, and never duplicate NPCAssist NPC policy","!GA-GM/!GA-DM, !ga-help, and !ga-nav provide bounded suite, help, and layered module navigation without taking ownership of module commands"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:CORE:STATE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   last_updated_version: "v2.0.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // INTERFACES:COMMANDS contains GM/admin chat commands for listing modules, toggling
-    // config, exporting versioned configuration-only snapshots, and inspecting health.
+    // config, exporting versioned configuration-only snapshots, inspecting health,
+    // and moving between module-owned Game Master and help screens.
     // The default status view prioritizes a DM's next action; --details preserves
     // session counters, queue state, timestamps, event-hook counts, dependency evidence,
     // shared-service and tracker-consumer lifecycle state, plus separately detected
@@ -4212,6 +4217,348 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         // CHOICE: Use a normal whisper for navigation; the live sandbox dropped button-only rows from the default template.
         sendChat('GameAssist', `/w gm ${actionRow}`);
     }
+
+    /**
+     * gameAssistHomeButton — Standard return path from a module's GM screen.
+     * Inputs: an optional short button label.
+     * Outputs: one Roll20 chat button targeting the suite-level GM control center.
+     * Invariants: module screens never need to know the other modules or their routes.
+     * Failure: GameAssist.createButton retains its existing bounded command behavior.
+     * Design: keep suite navigation in the command interface while modules add one stable exit.
+     */
+    function gameAssistHomeButton(label = 'GameAssist Home') {
+        return GameAssist.createButton(label, '!GA-GM');
+    }
+
+    const GAMEASSIST_NAVIGATION = Object.freeze([
+        {
+            name: 'ConfigUI', key: 'config', label: 'Configuration', category: 'Setup & System',
+            summary: 'Enable or disable features, review shared services, and change common GameAssist settings.',
+            aliases: ['configui', 'settings'], gm: '!ConfigUI-GM', help: '!ga-config-ui help',
+            groups: [
+                { key: 'controls', label: 'Controls', actions: [['Control Center', '!ConfigUI-GM'], ['Modules & Services', '!ga-config modules'], ['Timezone', '!ga-timezone'], ['Health Evidence', '!ga-health']] },
+                { key: 'reference', label: 'Reference', actions: [['Help', '!ga-config-ui help'], ['Status', '!ga-config-ui status'], ['Audit', '!ga-config-ui audit'], ['Info', '!ga-config-ui info']] }
+            ]
+        },
+        {
+            name: 'WelcomeAssist', key: 'welcome', label: 'WelcomeAssist', category: 'Setup & System',
+            summary: 'Preview and manage an optional campaign greeting after GameAssist starts.',
+            aliases: ['welcomeassist'], gm: '!Welcome-GM', help: '!Welcome-Help',
+            groups: [
+                { key: 'controls', label: 'Controls', actions: [['GM Controls', '!Welcome-GM'], ['Preview', '!Welcome-Preview'], ['Announce Now', '!Welcome-Announce']] },
+                { key: 'reference', label: 'Reference', actions: [['Help', '!Welcome-Help'], ['Status', '!Welcome-Status'], ['Audit', '!Welcome-Audit'], ['Manual', '!Welcome-Manual']] }
+            ]
+        },
+        {
+            name: 'AlmanacAssist', key: 'almanac', label: 'AlmanacAssist', category: 'Setup & System', layered: true,
+            summary: 'Manage fictional calendars, time, climates, astronomy, weather, environments, and deliberate rests.',
+            aliases: ['almanacassist', 'aa'], gm: '!Almanac-GM', help: '!Almanac-Guide',
+            groups: [
+                { key: 'time', label: 'Calendar & Time', actions: [['GM Controls', '!Almanac-GM'], ['Current Date', '!date'], ['Calendar', '!cal'], ['Advance Time', '!aa-time menu'], ['Wayfarer Setup', '!aa-wayfarer']] },
+                { key: 'world', label: 'World Context', actions: [['Climate', '!clim'], ['Astronomy', '!astro'], ['Weather', '!weather'], ['Environment', '!enviro']] },
+                { key: 'recovery', label: 'Rest & Systems', actions: [['Rest', '!rest'], ['Systems', '!Almanac-Systems']] },
+                { key: 'reference', label: 'Reference', actions: [['Guide', '!Almanac-Guide'], ['Status', '!Almanac-Status'], ['Audit', '!Almanac-Audit'], ['Manual', '!Almanac-Manual']] }
+            ]
+        },
+        {
+            name: 'CritAssist', key: 'crit', label: 'CritAssist', category: 'Characters & Rules',
+            summary: 'Recognize natural 1 attacks and use campaign-owned fumble and confirmation tables.',
+            aliases: ['critassist', 'critfumble'], gm: '!CritAssist-GM', help: '!crit help',
+            groups: [
+                { key: 'actions', label: 'Actions', actions: [['Player Picker', '!CritAssist-GM'], ['Natural 1 Menu', '!crit menu'], ['Setup Status', '!crit status']] },
+                { key: 'reference', label: 'Reference', actions: [['Help', '!crit help'], ['Table Audit', '!crit audit'], ['Manual', '!crit manual']] }
+            ]
+        },
+        {
+            name: 'ConditionAssist', key: 'condition', label: 'ConditionAssist', category: 'Characters & Rules',
+            summary: 'Read condition rules and manage supported condition markers and announcements.',
+            aliases: ['conditionassist', 'cond'], gm: '!Condition-GM', help: '!condition help',
+            groups: [
+                { key: 'actions', label: 'Actions', actions: [['Condition Controls', '!Condition-GM'], ['Announce', '!condition announce'], ['Current Conditions', '!condition status']] },
+                { key: 'reference', label: 'Setup & Reference', actions: [['Settings', '!condition config'], ['Help', '!condition help'], ['Audit', '!condition audit'], ['Manual', '!condition manual']] }
+            ]
+        },
+        {
+            name: 'ConcentrationAssist', key: 'con', label: 'ConcentrationAssist', category: 'Characters & Rules',
+            summary: 'Run concentration checks, manage the Concentrating marker, and review current concentration.',
+            aliases: ['concentration', 'concentrationassist'], gm: '!Con-GM', help: '!concentration help',
+            groups: [
+                { key: 'actions', label: 'Actions', actions: [['Check Controls', '!Con-GM'], ['Current Status', '!concentration status'], ['Settings', '!concentration settings']] },
+                { key: 'reference', label: 'Reference', actions: [['Help', '!concentration help'], ['Audit', '!concentration audit'], ['Manual', '!concentration manual'], ['Activity Summary', '!ga-conc-status']] }
+            ]
+        },
+        {
+            name: 'EffectAssist', key: 'effect', label: 'EffectAssist', category: 'Characters & Rules', layered: true,
+            summary: 'Apply and track source-aware 2014-sheet effects with ownership-safe cleanup.',
+            aliases: ['effectassist'], gm: '!Effect-GM', help: '!Effect-Guide',
+            groups: [
+                { key: 'apply', label: 'Apply Effects', actions: [['GM Controls', '!Effect-GM'], ['Effect Catalog', '!Effect-Catalog'], ['Player Requests', '!Effect-Requests'], ['Recognized Casts', '!Effect-Casts']] },
+                { key: 'manage', label: 'Manage Effects', actions: [['Active Effects', '!Effect-Active'], ['Duration Review', '!Effect-Duration'], ['Catalog Details', '!Effect-Definitions']] },
+                { key: 'review', label: 'Review', actions: [['Status', '!Effect-Status'], ['Audit', '!Effect-Audit']] },
+                { key: 'reference', label: 'Reference', actions: [['Guide', '!Effect-Guide'], ['Info', '!Effect-Info'], ['Manual', '!Effect-Manual']] }
+            ]
+        },
+        {
+            name: 'HealAssist', key: 'heal', label: 'HealAssist', category: 'Characters & Rules',
+            summary: 'Guide supported 2014-sheet healing through roll, review, and confirmed HP application.',
+            aliases: ['healassist'], gm: '!Heal-GM', help: '!Heal-Guide',
+            groups: [
+                { key: 'actions', label: 'Actions', actions: [['GM Controls', '!Heal-GM'], ['Healing Actions', '!Heal-Menu'], ['Pending Requests', '!Heal-Requests']] },
+                { key: 'reference', label: 'Reference', actions: [['Guide', '!Heal-Guide'], ['Status', '!Heal-Status'], ['Audit', '!Heal-Audit'], ['Manual', '!Heal-Manual']] }
+            ]
+        },
+        {
+            name: 'AttackAssist', key: 'attack', label: 'AttackAssist', category: 'Characters & Rules',
+            summary: 'Guide an authorized 2014-sheet repeating attack without applying damage or spending resources.',
+            aliases: ['attackassist'], gm: '!Attack-GM', help: '!Attack-Guide',
+            groups: [
+                { key: 'actions', label: 'Actions', actions: [['GM Controls', '!Attack-GM'], ['Start Attack', '!Attack-Menu'], ['Pending Requests', '!Attack-Requests']] },
+                { key: 'reference', label: 'Reference', actions: [['Guide', '!Attack-Guide'], ['Status', '!Attack-Status'], ['Audit', '!Attack-Audit'], ['Manual', '!Attack-Manual']] }
+            ]
+        },
+        {
+            name: 'TokenAssist', key: 'token', label: 'TokenAssist', category: 'Tokens & NPCs', layered: true,
+            summary: 'Inspect and change supported properties on selected or authorized Roll20 tokens.',
+            aliases: ['tokenassist', 'ta'], gm: '!TokenAssist-GM', help: '!token-assist help',
+            groups: [
+                { key: 'actions', label: 'Token Actions', actions: [['GM Controls', '!TokenAssist-GM'], ['Selected Token Examples', '!token-assist info']] },
+                { key: 'markers', label: 'Markers & Setup', actions: [['Marker Help', '!token-assist --help-statusmarkers'], ['Configuration', '!token-assist config']] },
+                { key: 'reference', label: 'Reference', actions: [['Help', '!token-assist help'], ['Status', '!token-assist status'], ['Audit', '!token-assist audit'], ['Manual', '!token-assist manual']] }
+            ]
+        },
+        {
+            name: 'NPCAssist', key: 'npc', label: 'NPCAssist', category: 'Tokens & NPCs', layered: true,
+            summary: 'Manage NPC death markers, history, reports, Arc rosters, Bloodied alerts, and automatic names.',
+            aliases: ['npcassist', 'npcmanager'], gm: '!NPC-GM', help: '!npc-death-help',
+            groups: [
+                { key: 'history', label: 'History & Reports', actions: [['GM Controls', '!NPC-GM'], ['Session Report', '!npc-death-report --scope session'], ['Write Reports', '!npc-wr'], ['Buckets', '!npc-death-buckets']] },
+                { key: 'arcs', label: 'Arcs & Clearing', actions: [['Arc Buckets', '!npc-death-arc'], ['Clear History', '!npc-death-clear --scope session']] },
+                { key: 'markers', label: 'Markers & Review', actions: [['Status', '!npc-death-status'], ['Audit', '!npc-death-audit'], ['Repair', '!npc-death-repair']] },
+                { key: 'reference', label: 'Setup & Reference', actions: [['Bloodied Alerts', '!npc-bloodied'], ['Automatic Names', '!npc-numbering'], ['Help', '!npc-death-help'], ['Manual', '!npc-death-manual']] }
+            ]
+        },
+        {
+            name: 'HPAssist', key: 'hp', label: 'HPAssist', category: 'Tokens & NPCs',
+            summary: 'Roll NPC hit-point formulas for selected tokens or qualifying NPCs on the Player Ribbon page.',
+            aliases: ['hpassist'], gm: '!HP-GM', help: '!HP-Guide',
+            groups: [
+                { key: 'actions', label: 'Actions', actions: [['GM Controls', '!HP-GM'], ['Roll Selected NPCs', '!HP-Selected'], ['Roll Page NPCs', '!HP-All']] },
+                { key: 'reference', label: 'Setup & Reference', actions: [['Status', '!HP-Status'], ['Audit', '!HP-Audit'], ['Settings', '!HP-Settings'], ['Guide', '!HP-Guide']] }
+            ]
+        },
+        {
+            name: 'InitiativeAssist', key: 'init', label: 'InitiativeAssist', category: 'Encounters & Tools', layered: true,
+            summary: 'Roll and reroll 2014/2024 initiative while preserving Roll20\'s native Turn Tracker.',
+            aliases: ['initiative', 'initiativeassist'], gm: '!Init-GM', help: '!Init-Help',
+            groups: [
+                { key: 'start', label: 'Start Initiative', actions: [['GM Start', '!Init-GM'], ['Control Center', '!Init-Menu'], ['Invite Players', '!Init-Go'], ['Playful Invitation', '!Init-Go!']] },
+                { key: 'reroll', label: 'Rerolls & Groups', actions: [['Reroll Everyone', '!Init-RR'], ['Reroll Choices', '!Init-RR-Menu'], ['Saved Groups', '!Init-Group']] },
+                { key: 'reference', label: 'Review & Reference', actions: [['Status', '!Init-Status'], ['Audit', '!Init-Audit'], ['Guide', '!Init-Help'], ['Manual', '!Init-Manual']] }
+            ]
+        },
+        {
+            name: 'CombatAssist', key: 'combat', label: 'CombatAssist', category: 'Encounters & Tools', layered: true,
+            summary: 'Add guarded turns, rounds, reminders, recovery, and optional pings to the native Turn Tracker.',
+            aliases: ['combatassist'], gm: '!Combat-GM', help: '!Combat-Help',
+            groups: [
+                { key: 'encounter', label: 'Encounter', actions: [['GM Controls', '!Combat-GM'], ['Start', '!Combat-Start'], ['Next Turn', '!Combat-Next'], ['Previous Turn', '!Combat-Prev']] },
+                { key: 'awareness', label: 'Timers & Turn Cues', actions: [['Timer Settings', '!Combat-Timer'], ['Turn Cue Settings', '!Combat-Cue']] },
+                { key: 'reference', label: 'Review & Reference', actions: [['Status', '!Combat-Status'], ['Audit', '!Combat-Audit'], ['Help', '!Combat-Help'], ['Manual', '!Combat-Manual']] }
+            ]
+        },
+        {
+            name: 'DebugTools', key: 'debug', label: 'DebugTools', category: 'Encounters & Tools',
+            summary: 'Preview GM-only damage, marker, and saving-throw diagnostics before applying a test change.',
+            aliases: ['debugtools'], gm: '!Debug-GM', help: '!ga-debug help',
+            groups: [
+                { key: 'actions', label: 'Diagnostics', actions: [['GM Controls', '!Debug-GM'], ['Damage Preview', '!ga-debug damage --amount ?{Damage|1}'], ['Marker Preview', '!ga-debug marker --marker ?{Marker|red}'], ['Save Preview', '!ga-debug save --dc ?{DC|10}']] },
+                { key: 'reference', label: 'Setup & Reference', actions: [['Status', '!ga-debug status'], ['Audit', '!ga-debug audit'], ['Settings', '!ga-debug settings'], ['Help', '!ga-debug help']] }
+            ]
+        }
+    ]);
+
+    function navigationModule(rawKey) {
+        const key = String(rawKey || '').trim().toLowerCase();
+        return GAMEASSIST_NAVIGATION.find(entry =>
+            entry.key === key
+            || entry.name.toLowerCase() === key
+            || (entry.aliases || []).includes(key)
+        ) || null;
+    }
+
+    function navigationState(entry) {
+        const mod = MODULES[entry.name];
+        const configured = Boolean(mod) && GameAssist.getState(entry.name).config.enabled !== false;
+        return {
+            configured,
+            running: configured && Boolean(mod?.initialized && mod?.active)
+        };
+    }
+
+    function navigationActionButton(entry, label, command) {
+        const state = navigationState(entry);
+        if (!state.configured) return GameAssist.createButton(`Enable ${entry.label}`, `!ga-enable ${entry.name}`);
+        if (!state.running) return GameAssist.createButton(`${entry.label}: Check Status`, '!ga-status --details');
+        return GameAssist.createButton(label, command);
+    }
+
+    function navigationHelpButton(entry) {
+        const state = navigationState(entry);
+        return GameAssist.createButton(entry.label, state.running ? entry.help : `!ga-help ${entry.key}`);
+    }
+
+    function sendNavigationPanel(title, intro, sections, actions = '') {
+        const sectionHtml = sections.map(section =>
+            `<div style="margin-top:8px;"><strong>${_sanitize(section.label)}</strong><br>${section.value}</div>`
+        ).join('');
+        const footer = actions
+            ? `<div style="margin-top:10px;padding-top:6px;border-top:1px solid #bbb;">${actions}</div>`
+            : '';
+        sendChat('GameAssist', `/w gm <div style="border:1px solid #444;background:#fff;padding:8px;border-radius:5px"><strong>${_sanitize(title)}</strong><div style="margin-top:5px;">${_sanitize(intro)}</div>${sectionHtml}${footer}</div>`);
+    }
+
+    function showGameAssistGmHome() {
+        const categories = [...new Set(GAMEASSIST_NAVIGATION.map(entry => entry.category))];
+        const sections = categories.map(category => ({
+            label: category,
+            value: GAMEASSIST_NAVIGATION
+                .filter(entry => entry.category === category)
+                .map(entry => navigationActionButton(entry, entry.label, entry.gm))
+                .join(' ')
+        }));
+        sendNavigationPanel(
+            'GameAssist GM Control Center',
+            'Open a module\'s main Game Master screen. Disabled modules offer an Enable button instead of a dead control.',
+            sections,
+            `${GameAssist.createButton('All Help', '!ga-help')} ${GameAssist.createButton('Module Navigator', '!ga-nav')} ${GameAssist.createButton('System Status', '!ga-status')} ${GameAssist.createButton('Settings', '!ga-config ui')}`
+        );
+    }
+
+    function showGameAssistHelpHome(rawModule = '') {
+        const requested = String(rawModule || '').trim();
+        if (requested) {
+            const entry = navigationModule(requested);
+            if (!entry) {
+                return sendNavigationPanel(
+                    'GameAssist Help Center',
+                    `"${requested.slice(0, 40)}" is not a GameAssist module. Choose one from the help directory.`,
+                    [{ label: 'Next Step', value: GameAssist.createButton('All Module Help', '!ga-help') }],
+                    `${gameAssistHomeButton()} ${GameAssist.createButton('Module Navigator', '!ga-nav')}`
+                );
+            }
+            const state = navigationState(entry);
+            if (state.running) {
+                return sendNavigationPanel(
+                    `${entry.label} Help`,
+                    entry.summary,
+                    [{ label: 'Open Help', value: GameAssist.createButton(`Open ${entry.label} Help`, entry.help) }],
+                    `${GameAssist.createButton('All Module Help', '!ga-help')} ${gameAssistHomeButton()}`
+                );
+            }
+            return sendNavigationPanel(
+                `${entry.label} Help`,
+                entry.summary,
+                [{
+                    label: 'Availability',
+                    value: state.configured
+                        ? `This module is enabled but is not currently running. ${GameAssist.createButton('Troubleshooting Details', '!ga-status --details')}`
+                        : `This module is currently off. ${GameAssist.createButton(`Enable ${entry.label}`, `!ga-enable ${entry.name}`)}`
+                }],
+                `${GameAssist.createButton('All Module Help', '!ga-help')} ${GameAssist.createButton('Module Navigator', '!ga-nav')} ${gameAssistHomeButton()}`
+            );
+        }
+        const categories = [...new Set(GAMEASSIST_NAVIGATION.map(entry => entry.category))];
+        const sections = categories.map(category => ({
+            label: category,
+            value: GAMEASSIST_NAVIGATION
+                .filter(entry => entry.category === category)
+                .map(navigationHelpButton)
+                .join(' ')
+        }));
+        sendNavigationPanel(
+            'GameAssist Help Center',
+            'Choose the feature you want explained. Help remains module-specific, so you only see the guidance you asked for.',
+            sections,
+            `${gameAssistHomeButton()} ${GameAssist.createButton('Module Navigator', '!ga-nav')} ${GameAssist.createButton('System Status', '!ga-status')}`
+        );
+    }
+
+    function showGameAssistNavigator(rawModule = '', rawGroup = '') {
+        const entry = navigationModule(rawModule);
+        if (!entry) {
+            const categories = [...new Set(GAMEASSIST_NAVIGATION.map(item => item.category))];
+            const sections = categories.map(category => ({
+                label: category,
+                value: GAMEASSIST_NAVIGATION
+                    .filter(item => item.category === category)
+                    .map(item => GameAssist.createButton(item.label, `!ga-nav ${item.key}`))
+                    .join(' ')
+            }));
+            sendNavigationPanel(
+                'GameAssist Module Navigator',
+                rawModule
+                    ? `"${String(rawModule).slice(0, 40)}" is not a GameAssist module. Choose one below.`
+                    : 'Choose a module to see its available screens and controls.',
+                sections,
+                `${gameAssistHomeButton()} ${GameAssist.createButton('All Help', '!ga-help')}`
+            );
+            return;
+        }
+
+        const state = navigationState(entry);
+        if (!state.configured || !state.running) {
+            const problem = !state.configured
+                ? `${entry.label} is currently turned off.`
+                : `${entry.label} is enabled but is not currently running.`;
+            sendNavigationPanel(`${entry.label} Navigation`, problem, [{
+                label: 'Next Step',
+                value: !state.configured
+                    ? GameAssist.createButton(`Enable ${entry.label}`, `!ga-enable ${entry.name}`)
+                    : GameAssist.createButton('Troubleshooting Details', '!ga-status --details')
+            }], `${GameAssist.createButton('All Modules', '!ga-nav')} ${gameAssistHomeButton()}`);
+            return;
+        }
+
+        const groupKey = String(rawGroup || '').trim().toLowerCase();
+        const group = entry.groups.find(item => item.key === groupKey);
+        if (entry.layered && !group) {
+            sendNavigationPanel(
+                `${entry.label} Navigation`,
+                groupKey ? `That ${entry.label} section was not recognized. Choose one below.` : 'Choose the part of this module you want to use.',
+                [{
+                    label: 'Sections',
+                    value: entry.groups.map(item => GameAssist.createButton(item.label, `!ga-nav ${entry.key} ${item.key}`)).join(' ')
+                }],
+                `${navigationActionButton(entry, 'GM Controls', entry.gm)} ${navigationActionButton(entry, 'Help', entry.help)} ${GameAssist.createButton('All Modules', '!ga-nav')} ${gameAssistHomeButton()}`
+            );
+            return;
+        }
+
+        const groups = group ? [group] : entry.groups;
+        sendNavigationPanel(
+            `${entry.label} Navigation`,
+            'Choose the screen or action you need.',
+            groups.map(item => ({
+                label: item.label,
+                value: item.actions.map(([label, command]) => navigationActionButton(entry, label, command)).join(' ')
+            })),
+            `${entry.layered ? GameAssist.createButton(`${entry.label} Sections`, `!ga-nav ${entry.key}`) : ''} ${GameAssist.createButton('All Modules', '!ga-nav')} ${gameAssistHomeButton()}`
+        );
+    }
+
+    ['!GA-GM', '!GA-DM'].forEach(prefix => {
+        GameAssist.onCommand(prefix, showGameAssistGmHome, 'Core', { gmOnly: true });
+    });
+
+    GameAssist.onCommand('!ga-help', msg => {
+        const parts = String(msg.content || '').trim().split(/\s+/);
+        showGameAssistHelpHome(parts[1] || '');
+    }, 'Core', { gmOnly: true });
+
+    GameAssist.onCommand('!ga-nav', msg => {
+        const parts = String(msg.content || '').trim().split(/\s+/);
+        showGameAssistNavigator(parts[1] || '', parts[2] || '');
+    }, 'Core', { gmOnly: true });
 
     GameAssist.onCommand('!ga-config', msg => {
         const parts = msg.content.trim().split(/\s+/);
@@ -4786,6 +5133,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.log('Metrics', summary.join('\n'));
     }, 'Core', { gmOnly: true });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added !GA-GM/!GA-DM, !ga-help, and layered !ga-nav dashboards with disabled-module recovery and stable module-owned destinations.
     // Changed (v2.0.0): Added protected, optional GM-private PC health alerts with independently selectable 50%, 25%, and 10% downward-crossing thresholds, combined notices, optional exact HP, safe preview, status controls, and HealthService-only observation without changing NPCAssist NPC policy.
     // Decision log:
     //   CHOICE: Keep command syntax identical to legacy for drop-in replacement.
@@ -4824,7 +5172,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Modules wrapper (bundled features)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES", title: "Modules wrapper",
-    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Condition, token, effect, and gameplay marker consumers share CORE:MARKERSERVICE","EffectAssist owns semantic effect instances and ownership-safe projections without hard-coupling unrelated modules","HealAssist consumes CORE:HEALTHSERVICE for deliberate verified healing without becoming an HP observer or prerequisite for unrelated modules","AttackAssist guides verified 2014 repeating attacks without owning damage, HP, effects, initiative, or encounter flow","AlmanacAssist owns fictional chronology without changing real-world timestamps or unrelated module state","TokenAssist owns the documented GameAssist token-command surface without assuming the TokenMod brand","InitiativeAssist owns initiative rules while CombatAssist owns deliberate preservation-first encounter flow through CORE:TURNTRACKERSERVICE","WelcomeAssist remains disabled by default and announces automatically only after completed bootstrap"],
+    //   guarantees: ["Bundled feature modules remain grouped and independently lifecycle-managed","Every module GM screen offers one stable return to the suite-level GameAssist control center","Condition, token, effect, and gameplay marker consumers share CORE:MARKERSERVICE","EffectAssist owns semantic effect instances and ownership-safe projections without hard-coupling unrelated modules","HealAssist consumes CORE:HEALTHSERVICE for deliberate verified healing without becoming an HP observer or prerequisite for unrelated modules","AttackAssist guides verified 2014 repeating attacks without owning damage, HP, effects, initiative, or encounter flow","AlmanacAssist owns fictional chronology without changing real-world timestamps or unrelated module state","TokenAssist owns the documented GameAssist token-command surface without assuming the TokenMod brand","InitiativeAssist owns initiative rules while CombatAssist owns deliberate preservation-first encounter flow through CORE:TURNTRACKERSERVICE","WelcomeAssist remains disabled by default and announces automatically only after completed bootstrap"],
     //   depends_on: ["[GAMEASSIST:CORE]","[GAMEASSIST:INTERFACES]"], last_updated_version: "v2.0.0" }
     // -------------------------------------------------------------------------
     // Narrative
@@ -4997,7 +5345,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 `<span style="font-size:smaller;">Session date ${_sanitize(localDateKey())}</span>`,
                 '</div>'
             ].join('');
-            const footer = '<div style="margin-top:4px; font-size:smaller;">Use !ga-config set &lt;Module&gt; key=value for advanced settings.</div>';
+            const footer = `<div style="margin-top:7px;">${gameAssistHomeButton()}</div><div style="margin-top:4px; font-size:smaller;">Use !ga-config set &lt;Module&gt; key=value for advanced settings.</div>`;
             const navLine = nav ? `<div style="margin-top:4px;">${nav}</div>` : '';
 
             const message = `${header}${timezoneRow}${blocks}${navLine}${footer}`;
@@ -5095,6 +5443,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         prefixes: ['!ga-config-ui', '!ga-config ui', '!ConfigUI-GM', '!ConfigUI-DM', '!Config-GM', '!Config-DM']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added the standard GameAssist Home return to the ConfigUI GM screen.
     // Changed (v2.0.0): Advanced ConfigUI to 0.2.3 with a direct HealthService PC-alert settings button and a readable alert summary instead of raw protected configuration JSON.
     // Decision log:
     //   CHOICE: Button helper reused; nav uses the same command path for refresh/paging.
@@ -5115,7 +5464,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CRITASSIST", title: "CritAssist",
     //   guarantees: ["Compact layered navigation, table-readiness status/audit, stable on-demand manual, and unknown-command recovery","Natural-1 detection bugfix retained"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]"],
-    //   last_updated_version: "v1.8.0",
+    //   last_updated_version: "v2.0.0",
     //   independent_versions: { module_version: "0.2.5.1" } }
     // -------------------------------------------------------------------------
     // Narrative
@@ -5331,7 +5680,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const entries = Object.entries(rt.activePlayers || {});
             if (!entries.length) {
                 sendTemplateMessage('gm', "⚠️ No Players Detected", [
-                    { label:"Note", value:"No players have been active yet this session." }
+                    { label:"Note", value:"No players have been active yet this session." },
+                    { label:"Navigation", value:`${GameAssist.createButton('Open Guide', '!crit help')} ${gameAssistHomeButton()}` }
                 ]);
                 return;
             }
@@ -5340,7 +5690,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return GameAssist.createButton(label, `!critfumblemenu --pid ${pid}`);
             }).join(' ');
             sendTemplateMessage('gm',"Manually Trigger Fumble Menu",[
-                { label:"Select Player", value:buttons }
+                { label:"Select Player", value:buttons },
+                { label:"Navigation", value:`${GameAssist.createButton('Open Guide', '!crit help')} ${gameAssistHomeButton()}` }
             ]);
         }
 
@@ -5553,6 +5904,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         prefixes: ['!crit','!crit-','!CritAssist','!CritAssist-','!critfail','!critfumble','!critfumble-','!CritFumble-GM','!CritFumble-DM']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added the standard GameAssist Home return to the CritAssist GM player picker, including its empty-session state.
     // Changed (v1.8.0): Renamed the module to CritAssist while preserving the established !critfumble command family, campaign state, rollable-table names, and legacy controls.
     // Prior notes:
     //   v1.8.0: Replaced the remaining inherited module identities with CritAssist, NPCAssist, ConcentrationAssist, and HPAssist while retaining compatibility aliases and independent lifecycle management.
@@ -5575,7 +5927,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   guarantees: ["2014 SRD condition wording is the default, with selectable 2024 SRD and campaign-custom wording","!condition and case-insensitive !cond-[condition] provide condition-reference workflows for official and campaign conditions","Selected-token menus and current-page status report configured conditions from actual marker state and distinguish other active markers","Built-in and registered custom marker artwork may accompany readable condition text","GM announcements toggle and verify selected token markers before reporting character-first is/is-no-longer results through explicit public/private delivery","Compact layered navigation, a stable on-demand manual, read-only audit wording, and recovery responses preserve player/GM permissions","All condition marker reads, writes, and observations use CORE:MARKERSERVICE","Legacy state.STATUSINFO may be copied through a validated migration and is never silently deleted"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.ConditionAssist"],
-    //   last_updated_version: "v0.1.7.0",
+    //   last_updated_version: "v2.0.0",
     //   independent_versions: { module_version: "1.0.3", condition_config_schema_version: 2 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
@@ -6571,6 +6923,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 playerIsGM(msg.playerid) ? `${GameAssist.createButton('Condition Status', '!condition status')} ` : '',
                 GameAssist.createButton('Help', '!condition help'),
                 playerIsGM(msg.playerid) ? ` ${GameAssist.createButton('Settings', '!condition config')}` : '',
+                playerIsGM(msg.playerid) ? ` ${gameAssistHomeButton()}` : '',
                 '</div>'
             ].join('');
             sendPanel('ConditionAssist Menu', body, { msg });
@@ -7199,6 +7552,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['conditions', 'rulesProfile', 'legacyStatusInfoMigration']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added the standard GameAssist Home return to the ConditionAssist GM control screen without exposing it in player-only menus.
     // Changed (v0.1.7.0): Advanced ConditionAssist to 1.0.3; GM and DM role aliases open the selected-token condition controls, while compact Guide/Help, Info, Status, read-only Audit, Settings, Manual, and condition behavior remain intact.
     // Decision log:
     //   CHOICE: Name the GameAssist module ConditionAssist - ALT: retain StatusInfo branding; REJECTED: this is an independently maintained adaptation with a different lifecycle and marker architecture.
@@ -8142,6 +8496,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 `<div style="margin-top:6px;"><b>Current Selection</b><br>${selected.length} token${selected.length === 1 ? '' : 's'} selected.</div>`,
                 `<div style="margin-top:8px;"><b>Common Actions</b><br>${GameAssist.createButton('Show Names', '!ta-on showname')} ${GameAssist.createButton('Hide Names', '!ta-off showname')} ${GameAssist.createButton('Set Bar 1', '!ta-set bar1_value|?{Bar 1 value|0}')} ${GameAssist.createButton('Toggle Marker', '!ta-set statusmarkers|!?{Marker name|red}')}</div>`,
                 `<div style="margin-top:8px;"><b>Review And Setup</b><br>${GameAssist.createButton('Status', '!token-assist status')} ${GameAssist.createButton('Marker Help', '!token-assist --help-statusmarkers')} ${GameAssist.createButton(`Players --ids: ${state.config.playersCanUseIds ? 'On' : 'Off'}`, `!token-assist --config players-can-ids|${state.config.playersCanUseIds ? 'off' : 'on'}`)} ${GameAssist.createButton('Guide', '!token-assist help')}</div>`,
+                `<div style="margin-top:8px;">${gameAssistHomeButton()}</div>`,
                 '</div>'
             ].join(''));
         }
@@ -8417,6 +8772,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['configSchemaVersion']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added the standard GameAssist Home return to the TokenAssist GM control screen.
     // Changed (v2.0.0): Advanced TokenAssist to 1.0.4 and replaced the expired v2.0.0 command-removal deadline with an explicit migration-release promise; token behavior and compatibility aliases are unchanged.
     // TokenMod provenance:
     //   Original project: TokenMod by The Aaron, Arcane Scriptomancer.
@@ -8444,7 +8800,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   guarantees: ["Case-insensitive !Init- commands provide mixed 2014/2024 initiative without owning rounds or combat flow","Initiative results show both d20s for advantage or disadvantage, the total, and the complete formula before announcing a visible page-owned tracker row","D20 mode, bounded flat adjustment, and up to two bounded bonus dice compose in one guided roll","Optional creative results use bounded score bands while direct initiative calls remain neutral","NPC roll details can remain GM-only, and GM-layer NPC rolls are always private","GMs can batch-roll living NPCs on the objects layer, GM layer, or both while players can batch-roll their selected controlled characters","!Init-RR rerolls each unique PC and living NPC once, whispers its result summary to the GM, and preserves non-target tracker rows and fields","Player buttons revalidate token control and the normalized tracker page at execution time","Public initiative calls and the equal !Init-GM/!Init-DM role aliases provide the GM a current-page PC/NPC roster with individual and bounded batch controls","The root guide stays compact while topic buttons reveal detailed reference panels and a stable on-demand manual","Control Center, Status Summary, and detailed chat Review each have one distinct user-facing purpose","Encounter groups remain page-scoped and can be renamed without changing tracker rows","Missing Beacon data, ambiguous character type, death-state disagreement, and stale tracker targets are skipped rather than guessed"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   observability: { spans: ["[GAMEASSIST:MODULES:INITIATIVEASSIST]"] },
-    //   last_updated_version: "v0.1.7.0",
+    //   last_updated_version: "v2.0.0",
     //   independent_versions: { module_version: "1.0.4" }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
@@ -9544,7 +9900,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: `GM-Layer NPCs (${gmNpcs.length})`, value: rosterControlList(gmNpcs, suffix) },
                 { label: 'Quick Actions', value: `${GameAssist.createButton(`Everyone (${ready.length})`, `!Init-Start --scope all${suffix}`)} ${GameAssist.createButton(`Object NPCs (${readyNpcs.length})`, `!Init-Start --scope npc${suffix}`)} ${GameAssist.createButton(`GM-Layer NPCs (${readyGmNpcs.length})`, `!Init-Start --scope gm-npc${suffix}`)} ${GameAssist.createButton(`All NPCs (${readyNpcs.length + readyGmNpcs.length})`, `!Init-Start --scope all-npc${suffix}`)}` },
                 { label: 'NPC Privacy', value: `${npcRollsHidden() ? 'Object-layer NPC details are hidden.' : 'Object-layer NPC details are public.'} GM-layer NPC details always stay private. ${GameAssist.createButton(npcRollsHidden() ? 'Make Object NPCs Public' : 'Hide Object NPCs', `!Init-NPC-Rolls ${npcRollsHidden() ? 'public' : 'hidden'}`)}` },
-                { label: 'What These Do', value: 'Individual and batch buttons add missing living characters to Turn Order or update their existing initiative. Dead NPCs and items needing attention are left unchanged.' }
+                { label: 'What These Do', value: 'Individual and batch buttons add missing living characters to Turn Order or update their existing initiative. Dead NPCs and items needing attention are left unchanged.' },
+                { label: 'GameAssist', value: gameAssistHomeButton() }
             ], { msg, gmOnly: true });
         }
 
@@ -10045,6 +10402,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => GameAssist.TurnTrackerService.clearObservers('InitiativeAssist')
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added the standard GameAssist Home return to the private InitiativeAssist GM/DM start roster.
     // Changed (v0.1.7.0): Advanced InitiativeAssist to 1.0.4; !Init-GM and !Init-DM are equal role aliases for the private initiative-start roster, with Guide/Help, Info, Manual, and complete layered navigation preserved.
     // Decision log:
     //   CHOICE: Reuse the ordinary neutral invitation and roster path for !Init-GM - ALT: maintain a second GM dashboard implementation; REJECTED: duplicated controls would drift from !Init-Go.
@@ -11544,6 +11902,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 label: 'Review',
                 value: `${GameAssist.createButton('Status', '!Combat-Status')} ${GameAssist.createButton('Guide', '!Combat-Help')}`
             });
+            fields.push({ label: 'GameAssist', value: gameAssistHomeButton() });
             sendPanel('CombatAssist Control Center', fields);
         }
 
@@ -11944,6 +12303,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         preserveRuntimeOnDisable: true
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added the standard GameAssist Home return to the CombatAssist GM control screen.
     // Changed (v2.0.0): Advanced CombatAssist to 1.1.0 with stable encounter identity, monotonic verified-forward progression, and immutable public semantic events for optional consumers; native tracker ownership and all established encounter controls remain unchanged.
     // Decision log:
     //   CHOICE: Publish verified encounter observations without exposing a consumer write path - ALT: let EffectAssist parse Roll20 turnorder independently; REJECTED: duplicate tracker interpretation would drift from CombatAssist's accepted baseline and safety rules.
@@ -11985,7 +12345,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   guarantees: ["Disabled-by-default public startup greeting","At most one automatic greeting per sandbox lifecycle","Automatic output begins only after completed GameAssist bootstrap and a bounded health check","Custom greetings are bounded, deduplicated, and neutralized against Roll20 chat directives","Configuration, status, and previews remain GM-only while explicit and automatic announcements are public","Short case-insensitive !Welcome and !Welcome- commands are primary while the legacy !welcome-assist surface remains accepted once","The root guide stays compact while topic buttons and a stable on-demand manual reveal detailed guidance","Unknown commands explain the problem and provide a direct guide button"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:STATE]","[GAMEASSIST:CORE:OBJECT]"],
     //   observability: { spans: ["[GAMEASSIST:MODULES:WELCOMEASSIST]"] },
-    //   last_updated_version: "v0.1.7.0", lifecycle: "active",
+    //   last_updated_version: "v2.0.0", lifecycle: "active",
     //   independent_versions: { module_version: "0.1.4" } }
     // -------------------------------------------------------------------------
     // Narrative
@@ -12288,7 +12648,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             `<div style="margin-top:6px;"><strong>Last This Sandbox</strong><br>${last}</div>`,
             audit ? '<div style="margin-top:6px;"><strong>Changes</strong>: None. This audit reads WelcomeAssist configuration and current-sandbox activity without announcing or changing settings.</div>' : '',
             `<div style="margin-top:8px;">${GameAssist.createButton('Preview', '!Welcome-Preview')} ${GameAssist.createButton('Announce Now', '!Welcome-Announce')} ${GameAssist.createButton('Custom List', '!Welcome-Custom list')} ${GameAssist.createButton('Guide', '!Welcome-Help')}</div>`,
-            `<div style="margin-top:6px;">${welcomeModeButtons()}</div>`
+            `<div style="margin-top:6px;">${welcomeModeButtons()}</div>`,
+            `<div style="margin-top:8px;">${gameAssistHomeButton()}</div>`
         ].join(''));
     }
 
@@ -12574,6 +12935,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['customGreetings']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added the standard GameAssist Home return to the WelcomeAssist GM status and settings screen.
     // Changed (v0.1.7.0): Advanced WelcomeAssist to 0.1.4; !Welcome-GM and !Welcome-DM are equal role aliases for the private status and settings screen, with Guide/Help, Info, Audit, Manual, and short !Welcome navigation preserved.
     // Decision log:
     //   CHOICE: Trigger automatic output only through the post-bootstrap seam - ALT: schedule from module init; REJECTED: live enablement could surprise the table before the GM finishes configuration.
@@ -12596,7 +12958,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:NPCASSIST", title: "NPCAssist",
     //   guarantees: ["Auto toggle resolved configured dead marker based on known HP transitions; maintain hierarchical death-history handouts and curated arc rosters", "Assign page-local unique names to newly added linked NPC tokens without renaming existing tokens or storing sequence counters", "Optionally whisper the GM once when an eligible living object-layer NPC crosses from above half HP to half HP or below", "Date-based Session rollover and timestamp rendering use the validated GameAssist timezone while stored instants remain absolute", "Compact layered navigation and a stable on-demand manual keep ordinary chat readable", "Audits are read-only; separately confirmed repair commands re-scan current HP and change only the configured death marker", "HPAssist auto-roll initialization is not recorded as death/revival history or a Bloodied alert", "Death-marker reads and writes use CORE:MARKERSERVICE"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
-    //   last_updated_version: "v1.8.2",
+    //   last_updated_version: "v2.0.0",
     //   independent_versions: { module_version: "1.4.0" } }
     // -------------------------------------------------------------------------
     // Narrative
@@ -13370,6 +13732,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         GameAssist.createButton('What does NPCAssist do?', '!npc-death-info'),
                         GameAssist.createButton('Create or Update Manual', '!npc-death-manual')
                     ]
+                },
+                {
+                    label: 'GameAssist',
+                    value: gameAssistHomeButton()
                 }
             ]);
         }
@@ -14740,6 +15106,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added the standard GameAssist Home return to the NPCAssist GM control center.
     // Changed (v1.8.2): Added optional page-local progressive names for newly added linked NPC tokens on the Objects or GM layer; current eligible token names are the source of truth, the lowest available suffix is deterministic, existing tokens are never renamed, and the broad !npc-* recovery listener yields deprecated !npc-hp-* aliases to HPAssist.
     // Decision log:
     //   CHOICE: Derive every assignment from current eligible names on the token's page - ALT: persist campaign or page counters; REJECTED: saved counters drift after deletion, manual edits, copy/paste, and sandbox restarts.
@@ -15200,7 +15567,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
      * postButtons(recipient)
      *   Sends the three-button UI for a new concentration check.
      */
-    function postButtons(recipient) {
+    function postButtons(recipient, { includeHome = false } = {}) {
         const dmg = '?{Damage taken?|0}';
         const buttons = [
             GameAssist.createButton('🎯 Maintain Control', `!concentration --damage ${dmg} --mode normal`),
@@ -15208,7 +15575,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             GameAssist.createButton('😣 Struggling to Focus', `!concentration --damage ${dmg} --mode dis`)
         ].join(' ');
         sendChat('ConcentrationAssist',
-            `/w "${recipient}" ${buttons}<br>⚠️ Select your token before clicking.`
+            `/w "${recipient}" ${buttons}<br>⚠️ Select your token before clicking.${includeHome ? `<br>${gameAssistHomeButton()}` : ''}`
         );
     }
 
@@ -15633,7 +16000,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         if (direct) {
             if (direct === 'help' || direct === 'guide') return showHelp(player);
-            if (direct === 'menu' || direct === 'gm' || direct === 'dm') return postButtons(player);
+            if (direct === 'menu' || direct === 'gm' || direct === 'dm') {
+                return postButtons(player, { includeHome: (direct === 'gm' || direct === 'dm') && playerIsGM(msg.playerid) });
+            }
             if (direct === 'check') return handleHealthOffer(msg, body);
             if (direct === 'status' || direct === 'refresh') return showStatus(player);
             if (direct === 'audit') return showStatus(player, { audit: true });
@@ -15792,6 +16161,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added the standard GameAssist Home return when ConcentrationAssist is opened through a GM/DM role command.
     // Changed (v2.0.0): Advanced ConcentrationAssist to 0.4.0 with optional private HealthService-driven HP-loss offers, bounded one-event deduplication, controller-aware delivery, and stale-button revalidation while preserving every manual check path.
     // Decision log:
     //   CHOICE: Offer checks for verified damage and unexplained numeric decreases - ALT: treat every decrease as proven damage or ignore direct Roll20 edits; REJECTED: the former invents cause while the latter omits the principal supported manual workflow.
@@ -15811,17 +16181,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:CONCENTRATIONASSIST] END
     // =============================================================================
 
-    // ————— EFFECTASSIST MODULE v2.3.0 —————
+    // ————— EFFECTASSIST MODULE v2.4.0 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:EFFECTASSIST] BEGIN
     // Section Title: Catalog-driven semantic effects and 2014 sheet projections
     // -----------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:EFFECTASSIST", title: "EffectAssist",
-    //   guarantees: ["Effect instances, not markers or sheet fields, are the durable source of truth","Definitions may coordinate multiple source and target projections through one versioned adapter pipeline","Verified 2014 repeating modifier rows are ownership-safe and never overwrite unrelated sheet data","ConcentrationAssist owns concentration state while EffectAssist owns dependent cleanup","Optional duration providers create reviewable GM candidates but never end effects automatically","Combat duration evidence comes only from accepted CombatAssist progression and world-time evidence comes only from committed AlmanacAssist changes","Provider absence, tracker rebases, backward movement, restarts, and large time jumps are handled without guessed or unbounded replay","Official 2014 Bless spell cards create bounded GM proposals only when template, spell, character, page, token, and controller evidence are unambiguous","Cast recognition never infers recipients or bypasses the normal preview and confirmation pipeline","Audit is read-only; application and repair require bounded confirmation","Player casting uses short-lived opaque choices, rechecks source control, uses visible native target selection, and may be locked by the GM","GM-assisted player requests are retained briefly, preserve source authorization, and expose no full GM controls","Successful player-originated applications announce the source, effect, and public target names","The built-in catalog distinguishes automated mechanics from tracked rules"],
+    //   guarantees: ["Effect instances, not markers or sheet fields, are the durable source of truth","Definitions may coordinate multiple source and target projections through one versioned adapter pipeline","Verified 2014 repeating modifier rows are ownership-safe and never overwrite unrelated sheet data","An exact EffectAssist-owned Guidance roll tag may consume one unambiguous supported 2014 skill-check instance; unsupported, edited, or ambiguous checks remain manual","ConcentrationAssist owns concentration state while EffectAssist owns dependent cleanup","Optional duration providers create reviewable GM candidates but never end effects automatically","Combat duration evidence comes only from accepted CombatAssist progression and world-time evidence comes only from committed AlmanacAssist changes","Provider absence, tracker rebases, backward movement, restarts, and large time jumps are handled without guessed or unbounded replay","Official 2014 Bless spell cards create bounded GM proposals only when template, spell, character, page, token, and controller evidence are unambiguous","Cast recognition never infers recipients or bypasses the normal preview and confirmation pipeline","Audit is read-only; application and repair require bounded confirmation","Player casting uses short-lived opaque choices, rechecks source control, uses visible native target selection, and may be locked by the GM","GM-assisted player requests are retained briefly, preserve source authorization, and expose no full GM controls","Successful player-originated applications announce the source, effect, and public target names","The built-in catalog distinguishes automated mechanics from tracked rules"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]","[GAMEASSIST:MODULES:CONDITIONASSIST]","[GAMEASSIST:MODULES:CONCENTRATIONASSIST]"],
     //   provides: ["GameAssist.EffectAssist"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "2.3.0", effect_state_schema_version: 3, cast_proposal_schema_version: 1, player_cast_flow_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "2.4.0", effect_state_schema_version: 3, cast_proposal_schema_version: 1, player_cast_flow_schema_version: 1 }, lifecycle: "active" }
     // -----------------------------------------------------------------------------
     // Narrative
     // EffectAssist is a catalog-driven rules coordinator. It records the source,
@@ -15834,10 +16204,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -----------------------------------------------------------------------------
     GameAssist.register('EffectAssist', function() {
         const MODULE_NAME = 'EffectAssist';
-        const MODULE_VERSION = '2.3.0';
+        const MODULE_VERSION = '2.4.0';
         const STATE_SCHEMA_VERSION = 3;
         const CAST_PROPOSAL_SCHEMA_VERSION = 1;
         const PLAYER_CAST_FLOW_SCHEMA_VERSION = 1;
+        const GUIDANCE_ROLL_TAG = 'GameAssist Guidance';
+        const GUIDANCE_ROLL_VALUE = `1d4[${GUIDANCE_ROLL_TAG}]`;
         const modState = GameAssist.getState(MODULE_NAME);
         const repairGrants = new Map();
         const applyGrants = new Map();
@@ -15902,7 +16274,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }),
             guidance: Object.freeze({
                 id: 'guidance',
-                definitionVersion: 2,
+                definitionVersion: 3,
                 name: 'Guidance',
                 description: 'The target may add 1d4 to one ability check before the spell ends.',
                 concentration: true,
@@ -15913,7 +16285,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 stacking: Object.freeze({ group: 'guidance', mode: 'nonstacking' }),
                 projections: Object.freeze([
                     Object.freeze({ id: 'guidance-marker', adapter: 'marker', subject: 'target-token', marker: 'aura', label: 'Guidance marker' }),
-                    Object.freeze({ id: 'guidance-skill', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'skill', label: 'Guidance (GameAssist)', value: '1d4', optional: true })
+                    Object.freeze({ id: 'guidance-skill', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'skill', label: 'Guidance (GameAssist)', value: GUIDANCE_ROLL_VALUE, optional: true })
                 ]),
                 automatic: Object.freeze(['Guidance marker', '2014-sheet 1d4 global skill modifier', 'source concentration and cleanup']),
                 assisted: Object.freeze(['For an ability check that is not represented by a sheet skill, roll the Guidance d4 manually; end Guidance after its one bonus is used.']),
@@ -16852,6 +17224,96 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Review', value: castProposalButtons(proposal) },
                 { label: 'Other Options', value: `${GameAssist.createButton('Pending Casts', '!Effect-Casts')} ${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')}` }
             ], msg, { gmOnly: true });
+        }
+
+        /**
+         * handleGuidanceConsumption — End one owned Guidance after its sheet bonus is used.
+         * Inputs: a non-API 2014 simple-template roll containing the exact owned roll tag.
+         * Outputs: one normal EffectAssist end transition, or no action when evidence is incomplete.
+         * Invariants: arbitrary d4s, unsupported checks, ambiguous characters, shared instances, and edited rows never consume Guidance.
+         * Failure: cleanup conflicts use the existing needs-attention lifecycle and preserve external edits.
+         * Design: label the owned sheet expression so Roll20 evidence identifies this projection, not merely a die size.
+         */
+        function handleGuidanceConsumption(msg) {
+            if (!msg || msg.type === 'api' || String(msg.rolltemplate || '').toLowerCase() !== 'simple') return;
+            if (!getObj('player', String(msg.playerid || ''))) return;
+            const expressions = (Array.isArray(msg.inlinerolls) ? msg.inlinerolls : [])
+                .map(roll => String(roll?.expression || ''))
+                .filter(expression => /\[\s*GameAssist Guidance\s*\]/i.test(expression));
+            if (!expressions.length) return;
+
+            const now = Date.now();
+            pruneCastTracking(now);
+
+            const entries = [];
+            activeInstances().filter(instance => instance.definitionId === 'guidance').forEach(instance => {
+                const binding = instance.bindings.find(item =>
+                    item.adapter === 'ogl-repeating'
+                    && item.projectionId === 'guidance-skill'
+                    && item.intent?.modifier === 'skill'
+                    && item.intent?.label === 'Guidance (GameAssist)'
+                    && String(item.intent?.value || '') === GUIDANCE_ROLL_VALUE
+                );
+                if (!binding) return;
+                const ledger = runtime.projectionLedgers[binding.key];
+                if (!ledger
+                    || ledger.managed !== true
+                    || ledger.baselinePresent === true
+                    || !(ledger.instanceIds || []).includes(instance.id)) return;
+                const inspected = inspectOgl(binding, ledger);
+                if (!inspected.ok || inspected.state !== 'present') return;
+                const target = instance.targets.find(item => String(item.characterId || '') === String(binding.characterId || ''));
+                const token = target?.tokenId ? getObj('graphic', String(target.tokenId)) : null;
+                const character = getObj('character', String(binding.characterId || ''));
+                if (!token || !character || String(token.get('represents') || '') !== String(character.id)) return;
+                if (!actorControlsSource(msg.playerid, { token, character })) return;
+                entries.push({ instance, binding, token, character });
+            });
+            if (!entries.length) return;
+
+            const speakingMatch = String(msg.speakingas || '').match(/^character\|(.+)$/i);
+            let characterId = speakingMatch ? String(speakingMatch[1] || '') : '';
+            if (!characterId) {
+                const fields = parseRollTemplateFields(msg.content);
+                const characterName = normalizeTemplateValue(fields.charname).toLowerCase();
+                if (!characterName) return;
+                const matchingIds = [...new Set(entries
+                    .filter(entry => normalizeTemplateValue(entry.character.get('name')).toLowerCase() === characterName)
+                    .map(entry => String(entry.character.id)))];
+                if (matchingIds.length !== 1) return;
+                characterId = matchingIds[0];
+            }
+
+            const matching = entries.filter(entry => String(entry.character.id) === characterId);
+            if (matching.length !== 1) return;
+            const entry = matching[0];
+            const evidenceKey = 'guidance-use:' + fingerprint({
+                instanceId: entry.instance.id,
+                playerId: String(msg.playerid || ''),
+                speakingAs: String(msg.speakingas || ''),
+                content: String(msg.content || '').slice(0, POLICY.effects.descriptionLength * 2),
+                expressions
+            });
+            if (recentCastEvidence.has(evidenceKey)) return;
+            recentCastEvidence.set(evidenceKey, now);
+            const result = endEffect(entry.instance.id, msg.playerid, { reason: 'guidance-used' });
+            const fields = result.ok ? [
+                { label: 'Character', value: _sanitize(entry.character.get('name') || entry.token.get('name') || 'Character') },
+                { label: 'Result', value: 'The verified Guidance bonus was used. Its owned marker, sheet row, and source concentration were cleaned up through the normal effect lifecycle.' },
+                { label: 'Actions', value: playerIsGM(msg.playerid) ? `${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` : GameAssist.createButton('Effect Catalog', '!effect') }
+            ] : [
+                { label: 'Needs Attention', value: _sanitize(result.message || 'Guidance was used, but its cleanup needs review.') },
+                { label: 'Actions', value: `${GameAssist.createButton('Effect Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+            ];
+            panel(result.ok ? 'Guidance Used' : 'Guidance Cleanup Needs Attention', fields, msg);
+            if (!playerIsGM(msg.playerid)) {
+                panel(result.ok ? 'Guidance Used' : 'Guidance Cleanup Needs Attention', fields, null, { gmOnly: true });
+            }
+        }
+
+        function handleEffectChat(msg) {
+            handleCastRecognition(msg);
+            handleGuidanceConsumption(msg);
         }
 
         function handleCastProposal(msg, options) {
@@ -18502,7 +18964,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const duration = openDurationCandidates(instance).length
                     ? ` | <b>duration review needed</b> ${GameAssist.createButton('Review', '!Effect-Duration --id ' + instance.id)}`
                     : '';
-                return `<b>${_sanitize(instance.name)}</b> from ${_sanitize(instance.source.tokenName)} to ${targets}${state}${duration} ${GameAssist.createButton('End', '!Effect-End --id ' + instance.id)}`;
+                const actionLabel = instance.definitionId === 'guidance' ? 'Use Guidance' : 'End';
+                return `<b>${_sanitize(instance.name)}</b> from ${_sanitize(instance.source.tokenName)} to ${targets}${state}${duration} ${GameAssist.createButton(actionLabel, '!Effect-End --id ' + instance.id)}`;
             }).join('<br>');
         }
 
@@ -18608,7 +19071,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Player Casting', value: `${modState.config.allowPlayerCasting !== false ? 'Allowed' : 'Locked'} | ${GameAssist.createButton('Allow', '!Effect-Players on')} ${GameAssist.createButton('Lock', '!Effect-Players off')}` },
                 { label: '2014 Cast Recognition', value: `${modState.config.castRecognition !== false ? 'On' : 'Off'} | ${castProposals.size} pending | ${GameAssist.createButton('Turn On', '!Effect-Recognition on')} ${GameAssist.createButton('Turn Off', '!Effect-Recognition off')}` },
                 { label: 'Duration Candidates', value: `${modState.config.durationCandidates !== false ? 'On' : 'Off'} | ${GameAssist.createButton('Turn On', '!Effect-Durations on')} ${GameAssist.createButton('Turn Off', '!Effect-Durations off')}` },
-                { label: 'Learn', value: `${GameAssist.createButton('What does EffectAssist do?', '!Effect-Info')} ${GameAssist.createButton('Create or Update Manual', '!Effect-Manual')}` }
+                { label: 'Learn', value: `${GameAssist.createButton('What does EffectAssist do?', '!Effect-Info')} ${GameAssist.createButton('Create or Update Manual', '!Effect-Manual')}` },
+                { label: 'GameAssist', value: gameAssistHomeButton() }
             ], msg, { gmOnly: true });
         }
 
@@ -18917,7 +19381,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 announcePlayerCast(result.instance);
             }
             const endButton = result.instance && canEndInstance(msg, result.instance)
-                ? GameAssist.createButton('End Effect', '!Effect-End --id ' + result.instance.id)
+                ? GameAssist.createButton(result.instance.definitionId === 'guidance' ? 'Use Guidance' : 'End Effect', '!Effect-End --id ' + result.instance.id)
                 : '';
             const navigation = playerIsGM(msg.playerid)
                 ? `${endButton} ${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}`
@@ -19045,7 +19509,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             GameAssist.onCommand(prefix, msg => handleShortcut(msg, definitionId), MODULE_NAME);
         });
 
-        GameAssist.onEvent('chat:message', handleCastRecognition, MODULE_NAME);
+        GameAssist.onEvent('chat:message', handleEffectChat, MODULE_NAME);
         ensureMarkerObservation();
         const concentrationObservation = GameAssist.SemanticEvents.observe(observeConcentration, {
             owner: MODULE_NAME,
@@ -19113,6 +19577,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced EffectAssist to 2.4.0 with a standard GameAssist Home return and exact owned Guidance roll labeling; one unambiguous supported 2014 skill check may consume one matching Guidance through normal cleanup, while unsupported or ambiguous checks retain the explicit Use Guidance path.
     // Changed (v2.0.0): Advanced EffectAssist to 2.3.0 with opaque short-lived player casting choices, retained and revalidated GM requests, stale-button recovery, and direct built-in effect actions on the GM Control Center while preserving the existing effect engine and confirmation boundary.
     // Decision log:
     //   CHOICE: Put opaque sandbox-local flow ids in player buttons - ALT: continue embedding source token and effect identifiers; REJECTED: Roll20-rendered links must not depend on raw identifier transport to preserve a casting choice.
@@ -19898,7 +20363,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Player Healing', value: `${modState.config.allowPlayerHealing === false ? 'Locked' : 'Allowed'} ${GameAssist.createButton(modState.config.allowPlayerHealing === false ? 'Allow Players' : 'Lock Players', `!Heal-Players ${modState.config.allowPlayerHealing === false ? 'on' : 'off'}`)}` },
                 { label: 'Result Messages', value: `${modState.config.resultAudience === 'public' ? 'Public when safe' : 'Private'} ${GameAssist.createButton(modState.config.resultAudience === 'public' ? 'Make Private' : 'Allow Public PC Results', `!Heal-Results ${modState.config.resultAudience === 'public' ? 'private' : 'public'}`)}` },
                 { label: 'Review', value: `${GameAssist.createButton(`Pending Requests (${requests.size})`, '!Heal-Requests')} ${GameAssist.createButton('Status', '!Heal-Status')} ${GameAssist.createButton('Audit', '!Heal-Audit')}` },
-                { label: 'Help', value: `${GameAssist.createButton('Quick Guide', '!Heal-Guide')} ${GameAssist.createButton('Manual', '!Heal-Manual')}` }
+                { label: 'Help', value: `${GameAssist.createButton('Quick Guide', '!Heal-Guide')} ${GameAssist.createButton('Manual', '!Heal-Manual')}` },
+                { label: 'GameAssist', value: gameAssistHomeButton() }
             ], msg, { gmOnly: true });
         }
 
@@ -19994,6 +20460,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => GameAssist.HealAssist?._clearTransient?.()
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added the standard GameAssist Home return to the HealAssist GM control screen.
     // Changed (v2.0.0): Added HealAssist 1.0.0 with guided official-2014 healing actions, bounded manual formulas, native visible-recipient targeting, private GM placement requests, complete roll/HP review, expiring one-use confirmations, HealthService provenance and verification, over-healing prevention, and multi-target rollback attempts.
     // Decision log:
     //   CHOICE: Use HealthService as the only HP read/write authority - ALT: add module-specific HP listeners and setters; REJECTED: duplicate engines would disagree and emit duplicate evidence.
@@ -20710,7 +21177,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Start', value: GameAssist.createButton('Choose Attacker And Attack', '!Attack-Menu') },
                 { label: 'Player Attacks', value: `${modState.config.allowPlayerAttacks === false ? 'Locked' : 'Allowed'} ${GameAssist.createButton(modState.config.allowPlayerAttacks === false ? 'Allow Players' : 'Lock Players', `!Attack-Players ${modState.config.allowPlayerAttacks === false ? 'on' : 'off'}`)}` },
                 { label: 'Review', value: `${GameAssist.createButton(`Pending Requests (${requests.size})`, '!Attack-Requests')} ${GameAssist.createButton('Status', '!Attack-Status')} ${GameAssist.createButton('Audit', '!Attack-Audit')}` },
-                { label: 'Help', value: `${GameAssist.createButton('Quick Guide', '!Attack-Guide')} ${GameAssist.createButton('Manual', '!Attack-Manual')}` }
+                { label: 'Help', value: `${GameAssist.createButton('Quick Guide', '!Attack-Guide')} ${GameAssist.createButton('Manual', '!Attack-Manual')}` },
+                { label: 'GameAssist', value: gameAssistHomeButton() }
             ], msg, { gmOnly: true });
         }
 
@@ -20802,6 +21270,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => GameAssist.AttackAssist?._clearTransient?.()
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added the standard GameAssist Home return to the AttackAssist GM control screen.
     // Changed (v2.0.0): Added AttackAssist 1.0.0 with authorized official-2014 source selection, stable repeating-row identity, native visible targeting, retained private GM placement requests, sheet-setting and explicit roll modes, one-use submission, familiar official templates, and post-submission attacker/target announcements.
     // Decision log:
     //   CHOICE: Qualify the sheet-generated repeating-row rollbase and substitute the official roll-mode fragment - ALT: temporarily rewrite the character's rtype setting; REJECTED: a temporary sheet mutation can race with ordinary sheet clicks and other Mods.
@@ -21559,7 +22028,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'World Context', value: `${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Astronomy', '!astro')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Environment', '!enviro')}` },
                 { label: 'Recovery', value: GameAssist.createButton('Rest', '!rest') },
                 { label: 'TimeAlmanac', value: `${modState.config.timeAlmanacEnabled ? 'On' : 'Off'} ${GameAssist.createButton(modState.config.timeAlmanacEnabled ? 'Turn Off' : 'Turn On', `!aa-time ${modState.config.timeAlmanacEnabled ? 'off' : 'on'}`)}` },
-                { label: 'Review and Setup', value: `${GameAssist.createButton('Systems', '!Almanac-Systems')} ${GameAssist.createButton('Status', '!Almanac-Status')} ${GameAssist.createButton('Audit', '!Almanac-Audit')} ${GameAssist.createButton('Guide', '!Almanac-Guide')} ${GameAssist.createButton('Manual', '!Almanac-Manual')}` }
+                { label: 'Review and Setup', value: `${GameAssist.createButton('Systems', '!Almanac-Systems')} ${GameAssist.createButton('Status', '!Almanac-Status')} ${GameAssist.createButton('Audit', '!Almanac-Audit')} ${GameAssist.createButton('Guide', '!Almanac-Guide')} ${GameAssist.createButton('Manual', '!Almanac-Manual')}` },
+                { label: 'GameAssist', value: gameAssistHomeButton() }
             ]);
         }
 
@@ -23753,6 +24223,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'environment', 'rest']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added the standard GameAssist Home return to the AlmanacAssist GM control screen.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.1.0 with persistent Wayfarer drafts, staged setup and previews, safe profile duplication, atomic activation, elapsed-time preservation, explicit reset fallback, one activation rollback point, and a complete custom-calendar manual.
     // Decision log:
     //   CHOICE: Keep a saved draft separate from the active Wayfarer definition - ALT: continue editing the live definition one field at a time; REJECTED: a partially configured calendar must not change the date players see.
@@ -23942,7 +24413,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendNpcHpPanel('HPAssist GM Controls', [
                 { label: 'Current Page', value: `${counts.eligible} eligible NPCs | ${counts.invalid} need an HP formula` },
                 { label: 'Roll HP', value: `${GameAssist.createButton('Selected NPCs', '!HP-Selected')} ${GameAssist.createButton('All Page NPCs', '!HP-All')}` },
-                { label: 'Review And Setup', value: `${GameAssist.createButton('Status', '!HP-Status')} ${GameAssist.createButton('Read-Only Audit', '!HP-Audit')} ${GameAssist.createButton('Settings', '!HP-Settings')} ${GameAssist.createButton('Guide', '!HP-Guide')}` }
+                { label: 'Review And Setup', value: `${GameAssist.createButton('Status', '!HP-Status')} ${GameAssist.createButton('Read-Only Audit', '!HP-Audit')} ${GameAssist.createButton('Settings', '!HP-Settings')} ${GameAssist.createButton('Guide', '!HP-Guide')}` },
+                { label: 'GameAssist', value: gameAssistHomeButton() }
             ]);
         }
 
@@ -24150,6 +24622,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         prefixes: ['!HP-', '!hp', '!HPAssist-', '!npc-hp-', '!NPCHP-', '!NPCHPRoller-']
 });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added the standard GameAssist Home return to the HPAssist GM control screen.
     // Changed (v2.0.0): Routed supported HP rolls through HealthService with producer, operation, initialization/synchronization, deduplication, and verification evidence while retaining direct writes when the optional service is deliberately disabled.
     // Decision log:
     //   CHOICE: Keep the complete short guide in chat - ALT: create a persistent manual handout; REJECTED: the module's ordinary workflow fits in a compact panel and another handout would add campaign clutter.
@@ -24386,7 +24859,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendDebugPanel('DebugTools GM Controls', [
                 { label: 'Preview Diagnostics', value: `${GameAssist.createButton('Damage', '!ga-debug damage --amount ?{Damage|1}')} ${GameAssist.createButton('Marker', '!ga-debug marker --marker ?{Marker|red}')} ${GameAssist.createButton('Saving Throw', '!ga-debug save --dc ?{DC|10}')}` },
                 { label: 'Review And Setup', value: `${GameAssist.createButton('Status', '!ga-debug status')} ${GameAssist.createButton('Read-Only Audit', '!ga-debug audit')} ${GameAssist.createButton('Settings', '!ga-debug settings')} ${GameAssist.createButton('Guide', '!ga-debug help')}` },
-                { label: 'Safety', value: 'Every diagnostic is a preview until the GM deliberately adds <code>--apply</code>.' }
+                { label: 'Safety', value: 'Every diagnostic is a preview until the GM deliberately adds <code>--apply</code>.' },
+                { label: 'GameAssist', value: gameAssistHomeButton() }
             ]);
         }
 
@@ -24492,6 +24966,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         dependsOn: ['MarkerService']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added the standard GameAssist Home return to the DebugTools GM control screen.
     // Changed (v2.0.0): Advanced DebugTools to 0.3.0; applied damage uses HealthService's declared-and-verified damage contract on supported HP surfaces and retains direct mutation when HealthService is disabled or the selected token is unsupported.
     // Decision log:
     //   CHOICE: Preserve direct fallback for unsupported tokens - ALT: require HealthService for every diagnostic; REJECTED: DebugTools historically supports broader token bar experiments and HealthService intentionally recognizes only canonical surfaces.
@@ -24505,6 +24980,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // =============================================================================
 
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added one suite-level return path to every module GM screen while preserving module-local commands, permissions, state, and lifecycle ownership.
     // Changed (v2.0.0): Added disabled-by-default AttackAssist for guided official-2014 repeating attacks while preserving native sheet buttons and every unrelated module's state and ownership boundaries.
     // Prior notes:
     //   v2.0.0: Added disabled-by-default HealAssist as a HealthService-only verified healing client while retaining disabled-by-default AlmanacAssist and preserving every unrelated module's state and ownership boundaries.

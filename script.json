@@ -170,6 +170,11 @@
     "Other scripts or macros that guide or automatically submit the same repeating attack rolls or announce the same attacker and target"
   ],
   "commands": [
+    "!GA-GM",
+    "!GA-DM",
+    "!ga-help",
+    "!ga-help [module]",
+    "!ga-nav [module] [section]",
     "!ga-status",
     "!ga-status --details",
     "!ga-health",

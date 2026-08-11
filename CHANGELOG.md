@@ -10,7 +10,7 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 | Revision | Status | Role |
 | --- | --- | --- |
-| **v2.0.0** | Active development in PR #81; focused EffectAssist, HealAssist, AttackAssist, player-casting, cast-recognition, duration, AlmanacAssist, HealthService, PC health-alert, and concentration-offer checks passed; Roll20 acceptance pending | Source-aware effects, guided verified healing and attacks, secure player workflows and retained GM requests, bounded 2014 Bless proposals, complete campaign-world systems, canonical HP evidence, GM-private PC health bands, and private HP-loss check offers |
+| **v2.0.0** | Active development in PR #81; focused EffectAssist, HealAssist, AttackAssist, player-casting, cast-recognition, duration, AlmanacAssist, HealthService, PC health-alert, concentration-offer, and suite-navigation checks are included; Roll20 acceptance pending | Source-aware effects, guarded Guidance consumption, guided verified healing and attacks, secure player workflows and retained GM requests, bounded 2014 Bless proposals, complete campaign-world systems, canonical HP evidence, GM-private PC health bands, private HP-loss check offers, and unified GM/help navigation |
 | **v1.8.2** | Merged through PR #74; Issue #65 closed | Page-local progressive NPC token naming |
 | **v1.8.1** | Merged through PR #73 | GM-private NPCAssist Bloodied threshold alerts and Control Center toggle |
 | **v1.8.0** | Merged through PR #63; 712 automated checks passed | Canonical module identities and migration-safe project version transition |
@@ -47,9 +47,27 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ### Release definition
 
-GameAssist v2.0.0 remains one active development line in PR #81. EffectAssist 2.3.0 is a catalog-driven effect coordinator for the official D&D 5E by Roll20 2014 character sheet with controlled player casting, retained GM placement requests, bounded GM-reviewed Bless cast proposals, and optional GM-reviewed duration candidates. HealAssist 1.0.0 adds guided official-2014 healing with authorized sources, native visible-PC targeting, retained private GM placement requests, exact roll and HP review, and verified HealthService application. AttackAssist 1.0.0 adds guided official-2014 repeating attacks with stable row identity, native visible targeting, retained private GM placement requests, explicit roll-mode choices, one-use character-attributed rolls, and no automatic attack consequences. AlmanacAssist 1.1.0 combines guided Wayfarer calendar setup, fictional Time, regional Climate, Astronomy, continuity-aware Weather, descriptive Environment, and deliberate Rest as six independently controlled internal systems. HealthService 1.0.0 adds one canonical supported HP-observation and verified-write boundary plus an optional GM-private PC threshold consumer. ConcentrationAssist 0.4.0 uses the same evidence for optional private, revalidated concentration-check offers after supported HP loss. CombatAssist 1.1.0 supplies immutable accepted encounter-progression events without exposing tracker-write authority. The shared SemanticEvents service provides immutable in-sandbox lifecycle notifications without coupling module state.
+GameAssist v2.0.0 remains one active development line in PR #81. EffectAssist 2.4.0 is a catalog-driven effect coordinator for the official D&D 5E by Roll20 2014 character sheet with controlled player casting, retained GM placement requests, bounded GM-reviewed Bless cast proposals, guarded exact-evidence Guidance consumption, and optional GM-reviewed duration candidates. HealAssist 1.0.0 adds guided official-2014 healing with authorized sources, native visible-PC targeting, retained private GM placement requests, exact roll and HP review, and verified HealthService application. AttackAssist 1.0.0 adds guided official-2014 repeating attacks with stable row identity, native visible targeting, retained private GM placement requests, explicit roll-mode choices, one-use character-attributed rolls, and no automatic attack consequences. AlmanacAssist 1.1.0 combines guided Wayfarer calendar setup, fictional Time, regional Climate, Astronomy, continuity-aware Weather, descriptive Environment, and deliberate Rest as six independently controlled internal systems. HealthService 1.0.0 adds one canonical supported HP-observation and verified-write boundary plus an optional GM-private PC threshold consumer. ConcentrationAssist 0.4.0 uses the same evidence for optional private, revalidated concentration-check offers after supported HP loss. CombatAssist 1.1.0 supplies immutable accepted encounter-progression events without exposing tracker-write authority. The shared SemanticEvents service provides immutable in-sandbox lifecycle notifications without coupling module state.
 
 EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so existing campaigns upgrade without receiving new markers, conditions, HP writes, other sheet writes, attack rolls, fictional chronology, weather, or chat output until the GM deliberately enables them.
+
+### Suite navigation and module return paths
+
+- Adds `!GA-GM` and the equivalent `!GA-DM` as the private suite-level Game Master control center for all fifteen feature modules.
+- Adds `!ga-help` as a private directory of module-owned help screens.
+- Adds `!ga-nav`, `!ga-nav <module>`, and `!ga-nav <module> <section>` as a progressive navigator. Modules with compact command surfaces show their destinations directly; EffectAssist, TokenAssist, NPCAssist, InitiativeAssist, CombatAssist, and AlmanacAssist use one organized section step before their detailed destinations.
+- Adds one **GameAssist Home** return to every module's primary Game Master screen while leaving module behavior, state, permissions, and specialized menus under that module's ownership.
+- Replaces dead controls for disabled modules with an Enable action and routes enabled-but-inactive modules to troubleshooting details.
+
+### Guarded Guidance consumption
+
+- Advances EffectAssist from 2.3.0 to 2.4.0 without changing durable effect-state schema 3, cast-proposal schema 1, or player-cast-flow schema 1.
+- Labels the EffectAssist-created official-2014 global skill modifier as `1d4[GameAssist Guidance]`, allowing a supported sheet roll to carry evidence of the exact owned projection instead of relying on the presence of an arbitrary d4.
+- Ends at most one active Guidance instance when the target character, controlling roller, current owned row, projection ledger, stored token identity, roll template, and owned expression are all present and unambiguous.
+- Uses the ordinary EffectAssist end lifecycle so the marker, unedited sheet row, source concentration, history, and lifecycle event follow the same cleanup and ownership rules as a deliberate **Use Guidance** action.
+- Keeps unrelated d4 modifiers, unsupported templates, non-skill ability checks, pre-existing rows, edited rows, ambiguous characters, ambiguous active instances, and stale or duplicate evidence unchanged.
+- Includes the active effect instance in duplicate-event evidence so a new Guidance cast is not suppressed merely because the same character repeats a similar skill check shortly afterward.
+- Keeps Issue #85 open until the official 2014 sheet's normal, advantage, and disadvantage skill-check paths pass in the live Roll20 Mod sandbox.
 
 ### Launch effect catalog
 
