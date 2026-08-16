@@ -101,7 +101,7 @@ Pass when the private status identifies HealthService 1.0.0 as enabled and the r
 !ga-health recent
 ```
 
-Pass when exactly one new entry describes the PC's old and new HP, labels the classification **unknown**, and identifies the source as a Roll20 observation. One direct sheet edit must not appear as separate sheet and token events. Unknown is the correct result: the edit proves that HP decreased, but not why.
+Pass when exactly one new entry describes the PC's old and new HP, labels the classification **unknown**, and identifies it as **Observed in Roll20; source not identified**. One direct sheet edit must not appear as separate sheet and token events. HealthService may still drive supported threshold alerts and concentration offers from the decrease; it does not invent an attacker, damage type, resistance result, or temporary-HP history.
 
 ### Verified HPAssist Write
 
@@ -209,6 +209,8 @@ Pass when the GM and controlling player each receive one private **Concentration
 The unrelated test player must receive nothing, and the linked attribute/bar update must not create a second logical offer for either recipient.
 
 Click **Advantage** as the controlling player. Pass when the result shows both d20 values, the kept result, the Constitution save bonus, and the complete formula. Click the same offer again; pass when it says the offer expired or was already used and does not roll twice.
+
+**Duplicate-token regression:** Leave one stale or off-page token for the same character marked as Concentrating, while the current encounter-page token is also marked. Lower HP on the current-page token. Pass when ConcentrationAssist selects the current-page representation and offers one check instead of reporting multiple possible tokens. Then remove concentration from the current-page token and lower that character's HP again. Pass when no concentration offer or ambiguity warning appears.
 
 ### Verified GameAssist Damage
 
@@ -492,21 +494,22 @@ EffectAssist begins disabled. Confirm that before changing anything:
 2. Run `!effect`.
 3. Click **Bless**.
 4. Choose the first linked source in the source prompt.
-5. Review the preview and click **Apply This Effect**.
+5. With the default settings, confirm the effect applies immediately after choosing the source; no redundant review screen or concentration-replacement question appears.
 6. Open the target's 2014 sheet and inspect its global attack and saving-throw modifiers.
-7. Confirm the **Effect Applied** result includes **End Effect**, then run `!Effect-Status`.
+7. Roll one supported attack and one saving throw immediately, without opening the sheet and toggling either GameAssist row.
+8. Confirm the **Effect Applied** result includes **End Effect**, then run `!Effect-Status`.
 
 **Pass when:**
 
 - one active Bless instance names the chosen source and target;
 - the target has the configured Blessed marker;
-- the target sheet has one active `Bless (GameAssist)` attack row with `1d4` and one active `Bless (GameAssist)` saving-throw row with `1d4`;
+- the target sheet has one active `Bless (GameAssist)` attack row with `1d4` and one active `Bless (GameAssist)` saving-throw row with `1d4`, and both bonuses roll on the first supported check without manually toggling the sheet fields;
 - the source has the configured Concentrating marker and ConcentrationAssist reports it as concentrating;
 - unrelated markers, HP, bars, layer, controllers, character attributes, and Turn Tracker rows are unchanged;
 - the application result offers an End Effect button without requiring the GM to type the internal instance ID;
 - Status remains a compact summary rather than printing the complete active and ended history.
 
-Clear concentration from the source with ConcentrationAssist. Pass when the Bless instance ends, the target marker and both unedited GameAssist sheet rows are removed, and unrelated sheet rows remain.
+Clear concentration from the source with ConcentrationAssist. Pass when the Bless instance ends, the target marker and both unedited GameAssist sheet rows are removed, unrelated sheet rows remain, and the next attack/save rolls contain no Bless die. The removed GameAssist rows must not continue contributing until the user manually recreates or toggles anything.
 
 ### Launch Catalog Coverage
 
@@ -516,13 +519,13 @@ Apply each remaining catalog effect once to disposable tokens through `!Effect-C
 | --- | --- |
 | Guidance | Target marker, source concentration, and one active `Guidance (GameAssist)` `1d4[GameAssist Guidance]` global skill row exist; the preview explains that unsupported or non-skill checks retain the manual **Use Guidance** path. |
 | Warding Bond | Target marker plus `Warding Bond (GameAssist)` `+1` AC and save rows exist; no concentration marker is added. |
-| Holy Weapon | Target marker and source concentration are active; no global damage row changes every weapon. |
+| Holy Weapon | Its distinct target marker and source concentration are active; it must not reuse Bless's marker, and no global damage row changes every weapon. |
 | Haste | Target marker, `Haste (GameAssist)` `+2` AC row, and source concentration are active. |
 | Pass Without a Trace | Target marker and source concentration are active; the preview identifies the `+10` Stealth step. |
 
 End each effect from its **Effect Applied** panel or `!Effect-Active`. Pass when every owned marker and unedited sheet row clears, concentration clears only when it belongs to that effect, and the assisted instructions remain readable.
 
-Confirm the catalog visibly separates Bless, Guidance, Warding Bond, and Haste under **Marker And Sheet Automation** from Holy Weapon and Pass Without a Trace under **Tracked; Rules Stay Manual**. Gift of Alacrity, Longstrider, and Beacon of Hope should not appear as built-in launch buttons.
+Confirm the catalog visibly separates Bless, Guidance, Warding Bond, and Haste under **Marker + Supported Sheet Automation** from Holy Weapon and Pass Without a Trace under **Tracked Marker; Rules Stay Manual**. Gift of Alacrity, Longstrider, and Beacon of Hope should not appear as built-in launch buttons.
 
 ### Guidance Consumption — Issue #85
 
@@ -545,7 +548,7 @@ Use a separate non-GM player login with two linked character tokens that player 
 
 1. As the player, run `!Bless` without selecting a recipient first.
 2. Click one caster button, then click **Choose 1 Recipient** and point at the visible linked recipient on the map.
-3. Confirm the review is whispered only to that player, then apply it.
+3. Confirm the default path applies after the source and recipient choices without an extra review click.
 4. Confirm the public announcement appears only after application and the private result includes **End Effect**.
 5. Click the old caster button or recipient button again.
 6. Start another effect, choose a caster, and click **Ask the GM** instead of choosing a visible recipient.
@@ -561,7 +564,7 @@ Use a separate non-GM player login with two linked character tokens that player 
 - a player can target a visible linked recipient they do not control;
 - used, stale, fabricated, or wrong-player casting buttons produce a private **Start Again** recovery panel and never apply twice;
 - **Ask the GM** remains available under Player Requests instead of disappearing with one chat whisper;
-- the GM may place a hidden or off-page recipient through the ordinary preview and confirmation;
+- the GM may place a hidden or off-page recipient through the retained request path; optional Application Review may add a separate confirmation;
 - hidden recipient names are not included in the public completion announcement;
 - the player cannot see custom, audit, repair, request-management, or configuration controls;
 - a later lock invalidates an unconfirmed player request without changing an effect;
@@ -608,18 +611,18 @@ With the target selected, open `!Effect-GM` and test:
 
 **Pass when:** EffectAssist refuses the complete request, creates no instance, and changes neither token. It must not partially apply to the eligible selection.
 
-### Read-Only Audit and Confirmed Repair
+### Marker Removal, Read-Only Audit, and Confirmed Repair
 
-1. Apply Bless to the linked target.
-2. Remove its visible Bless marker manually.
+1. Apply Bless to two linked targets from one source.
+2. Remove the Bless marker from only one target.
 3. Run `!Effect-Audit`.
-4. Confirm the audit identifies the target and missing projection and says it changed nothing.
+4. Confirm the audit identifies that target and missing projection and says it changed nothing.
 5. Click **Confirm Current Repairs**.
 6. Run `!Effect-Audit` again.
 
-**Pass when:** the first audit does not restore the marker or end the source's concentration, the generated confirmation restores and verifies the target marker, and the second audit is clean. Removing only a target projection is repairable drift, not an instruction to end every target's effect.
+**Pass when:** removing only one target marker from a multi-target effect remains repairable drift, the first audit changes nothing, the generated confirmation restores and verifies that marker, and the second audit is clean.
 
-Then remove the source's Concentrating marker. Pass when the dependent Bless record ends and its unneeded target marker and sheet rows are cleaned up.
+Remove the Bless marker from both targets. Pass when the final managed target-marker removal ends the dependent Bless record, clears the source's owned concentration, removes the unneeded sheet rows, and preserves unrelated state. Reapply Bless, then remove the source's Concentrating marker. Pass when the dependent record ends through the same ownership-safe cleanup.
 
 Repeat with one GameAssist-created Bless row changed from `1d4` to another value. End Bless. Pass when EffectAssist preserves the edited row and reports that cleanup needs attention instead of deleting the GM's edit.
 
@@ -673,6 +676,12 @@ For the stale-confirmation check:
 !Effect-Status
 !Effect-Catalog
 !Effect-Active
+!Effect-Settings
+!Effect-Review on
+!Effect-Review off
+!Effect-Advanced
+!Effect-Multiple-Concentration on
+!Effect-Multiple-Concentration off
 !Effect-Requests
 !Effect-Definitions
 !Effect-Audit
@@ -681,7 +690,9 @@ For the stale-confirmation check:
 !effect status
 ```
 
-**Pass when:** commands are case-insensitive, GM/DM/Menu open the same primary controls, the stable manual is created or updated once, the unknown route offers useful recovery buttons, and the spaced command family reaches the same module exactly once.
+**Pass when:** commands are case-insensitive; GM/DM/Menu open the same primary controls; Settings shows Application Review off by default; Advanced shows multiple concentration off by default; each toggle changes only its named behavior; the stable manual is created or updated once; the unknown route offers useful recovery buttons; and the spaced command family reaches the same module exactly once.
+
+**Disabled-module recovery:** Disable AttackAssist, then run `!attack`. Pass when the GM receives one clear unavailable-module panel with an **Enable AttackAssist** action, **Modules & Services**, and **GameAssist Home** instead of silence. Re-enable it afterward. Active module commands must still be handled only by their normal route.
 
 ---
 
@@ -729,22 +740,24 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 
 **Skip when:** Skip during troubleshooting only when the campaign deliberately uses Standard, Solamnic, or Harptos. Do not skip for Issue #89 or v2.0.0 release acceptance.
 
-1. Run `!aa-wayfarer`. Note the separately labeled **Active Calendar**, **Current Fictional Date**, and **Saved Draft**.
-2. Click **Begin Setup** and build this disposable example through the six screens:
+1. Run `!aa-wayfarer`. Note the separately labeled **Active Calendar**, **Current Fictional Date**, and **Saved Draft**. On a fresh state, confirm the draft is the Solamnic Calendar with a 20-hour day, 75-minute hour, Soladain through Stellara weekdays, its named periods, feast days, holidays, and seasonal ranges.
+2. Click **Change Name**, cancel the Roll20 query without entering a value, and reopen `!aa-wayfarer`. Pass when the name is unchanged and is never set to `true`.
+3. Click **Begin Setup** and build this disposable example through the guided screens:
    - Name: `River Kingdom Calendar`
    - Starting date: Year `12`, `Deepwinter`, day `7`, hour `9`, minute `30`
+   - Clock: `20` hours per day and `75` minutes per hour
    - Weekdays: `Moonday,Towerday,Marketday,Hearthday,Starday`
-   - Months: `Deepwinter:31,Thawrise:27,Highsun:35,Harvestfall:29`
-   - Festival days: `Founding Feast:2`
+   - Periods: `Deepwinter:31,Founding Feast:2:Feast,Thawrise:27,Highsun:35,Harvestfall:29`
+   - Additional festival days: none
    - Leap rule: `Starwake`, every `4` years, after month `4`
    - Holidays: `Oath Day:1:1,River Fair:3:12`
-3. Between two stages, close the panel and run `!aa-wayfarer` again. Confirm the draft and progress return unchanged.
-4. Use **Preview Draft**. Read the unequal month lengths, festival day, leap rule, both holidays, and starting-date preview.
-5. Before activation, enter an invalid month such as `Broken Month:0`. Confirm the prior valid draft remains and the active calendar/date do not change.
-6. Review every stage, then activate. Confirm the calendar becomes active at the reviewed starting date and the prior calendar is offered as one rollback point.
-7. Change one month length in the draft and activate again. Confirm the result says elapsed fictional time was preserved rather than moving to the draft starting date.
-8. Use **Start From A Copy** with Harptos. Confirm only the saved draft changes. Use **Cancel Draft** and confirm the active calendar remains unchanged.
-9. Create or update `!Almanac-Manual`. Confirm its **Building a Wayfarer Calendar** section explains every calendar concept, the worked example, editing, rollback, and recovery.
+4. Between two stages, close the panel and run `!aa-wayfarer` again. Confirm the draft and progress return unchanged.
+5. Use **Preview Draft**. Read the unequal month lengths, festival day, leap rule, both holidays, and starting-date preview.
+6. Before activation, enter an invalid month such as `Broken Month:0`. Confirm the prior valid draft remains and the active calendar/date do not change.
+7. Review every stage, then activate. Confirm the calendar becomes active at the reviewed starting date and the prior calendar is offered as one rollback point.
+8. Change one period length in the draft and activate again. Confirm the result says elapsed fictional time was preserved rather than moving to the draft starting date.
+9. Use **Start From A Copy** with Harptos. Confirm only the saved draft changes. Use **Cancel Draft** and confirm the active calendar remains unchanged.
+10. Create or update `!Almanac-Manual`. Confirm its **Building a Wayfarer Calendar** section explains every calendar concept, the worked example, editing, rollback, and recovery.
 
 **Pass when:** no setup edit changes the live calendar before activation; progress survives closing the menu and a sandbox restart; invalid input causes no partial change; preview is readable; first activation uses the chosen starting date; active-definition edits preserve elapsed fictional time or stop with a clear reset warning; duplication affects only the draft; and discard/rollback controls restore exactly the state they describe.
 

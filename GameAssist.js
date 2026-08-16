@@ -2,8 +2,8 @@
 ========================================
 GameAssist - Roll20 API Script
 Version: 2.0.0
-Last Updated: 2026-08-11 (America/New_York)
-Release scope: EffectAssist 2.4.0, separator-flexible suite commands, consistent Roll20-template controls, HealAssist 1.0.0, AttackAssist 1.0.0, complete AlmanacAssist 1.1.0, HealthService 1.0.0, and verified CombatAssist duration events on one GameAssist v2.0.0 development line.
+Last Updated: 2026-08-16 (America/New_York)
+Release scope: EffectAssist 2.4.1 sheet-worker and lifecycle repairs, ConcentrationAssist 0.4.1 page-safe HP matching, AlmanacAssist 1.1.1 Wayfarer clock/calendar repairs, disabled-module recovery, and the existing v2.0.0 module suite.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -22,12 +22,12 @@ calls GameAssist.enqueue(). This development package contains fifteen configurab
 - InitiativeAssist 1.0.4 - Uses Roll20's native Turn Tracker for mixed-sheet initiative workflows and compact topic guidance.
 - CombatAssist 1.1.0 - Tracks encounters, native round counters, guarded turns, optional timers, private-safe pings, recoverable tracker changes, and verified semantic progression events.
 - WelcomeAssist 0.1.5 - Optionally greets the table after a healthy GameAssist startup through short !Welcome commands.
-- ConcentrationAssist 0.4.0 - Runs manual and private HP-loss-offered concentration checks, manages its configured marker, and exposes concentration lifecycle events.
+- ConcentrationAssist 0.4.1 - Runs manual and private HP-loss-offered concentration checks, manages its configured marker, and exposes concentration lifecycle events.
 - NPCAssist 1.4.0 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, and Arc rosters.
-- EffectAssist 2.4.0 - Coordinates catalog-driven effects, direct GM casting, opaque player flows, retained GM requests, 2014-sheet modifiers, concentration, ownership-safe cleanup, duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
+- EffectAssist 2.4.1 - Coordinates catalog-driven effects, direct GM casting, opaque player flows, retained GM requests, 2014-sheet modifiers, concentration, ownership-safe cleanup, duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
 - HealAssist 1.0.0 - Guides verified 2014 healing rolls, visible PC targeting, private GM requests, complete HP review, and one-use HealthService application.
 - AttackAssist 1.0.0 - Guides authorized 2014 repeating attacks, visible targeting, private GM placement, and one-use native-template rolls without applying damage.
-- AlmanacAssist 1.1.0 - Adds guided Wayfarer drafts to fictional time, climate, astronomy, weather, environments, and verified 2014-sheet rests across six independently controlled internal systems.
+- AlmanacAssist 1.1.1 - Adds guided Wayfarer drafts to fictional time, climate, astronomy, weather, environments, and verified 2014-sheet rests across six independently controlled internal systems.
 - HPAssist 0.2.0 - Rolls npc_hpformula and uses HealthService for verified token bar 1 writes when available.
 - DebugTools 0.3.0 - Optional dry-run-first GM diagnostics with verified supported HP damage writes.
 
@@ -3537,6 +3537,47 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return candidates[0] || null;
         },
 
+        _resolveUnavailableCommand(content) {
+            if (this._resolveCommandRoute(content)) return null;
+            const candidates = Object.entries(MODULES)
+                .filter(([, mod]) => !mod.internal && !mod.active)
+                .flatMap(([name, mod]) => (mod.prefixes || [])
+                    .filter(prefix => typeof prefix === 'string' && prefix.startsWith('!') && !prefix.includes('<'))
+                    .map(prefix => {
+                        const mode = prefix.endsWith('-') ? 'prefix' : 'token';
+                        return { name, mod, prefix, details: commandMatchDetails(content, prefix, { caseInsensitive: true, mode }) };
+                    }))
+                .filter(candidate => candidate.details)
+                .sort((left, right) =>
+                    right.details.consumed - left.details.consumed
+                    || right.details.literalLength - left.details.literalLength
+                    || left.name.localeCompare(right.name)
+                );
+            return candidates[0] || null;
+        },
+
+        handleUnavailableCommand(msg) {
+            if (msg?.type !== 'api') return;
+            const candidate = this._resolveUnavailableCommand(msg.content);
+            if (!candidate) return;
+            const configured = getState(candidate.name).config.enabled !== false;
+            const isGm = playerIsGM(msg.playerid);
+            const reason = configured
+                ? `${candidate.name} is enabled in configuration but is not currently running.`
+                : `${candidate.name} is currently disabled.`;
+            if (isGm) {
+                const enable = configured ? '' : this.createButton(`Enable ${candidate.name}`, `!ga-enable ${candidate.name}`);
+                const actions = [enable, this.createButton('Modules & Services', '!ga-config modules'), this.createButton('GameAssist Home', '!ga-gm')]
+                    .filter(Boolean).join(' ');
+                sendChat('GameAssist', `/w gm &{template:default} {{name=${_sanitize(candidate.name)} Is Unavailable}} {{Needs Attention=${_sanitize(reason)}}} {{Next Step=${actions}}}`);
+                return;
+            }
+            const player = getObj('player', msg.playerid);
+            const displayName = String(player?.get('_displayname') || player?.get('displayname') || '').trim();
+            if (!displayName) return;
+            sendChat('GameAssist', `/w "${displayName}" &{template:default} {{name=${_sanitize(candidate.name)} Is Unavailable}} {{Needs Attention=That GameAssist feature is not currently available. Ask the GM to review Modules & Services.}}`);
+        },
+
         onCommand(prefix, fn, mod, { gmOnly = false, acl = [], match = { caseInsensitive: true, mode: 'token' } } = {}) {
             const route = {
                 id: ++this._commandRouteSequence,
@@ -3895,6 +3936,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     GameAssist.writeModuleManual = writeModuleManual;
 
     globalThis.GameAssist = GameAssist;
+    R20_ON('chat:message', msg => GameAssist.handleUnavailableCommand(msg));
     GameAssist.register('MarkerService', () => {
         setMarkerServiceEnabled(true);
     }, {
@@ -3925,6 +3967,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => HealthService._setEnabled(false)
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added one bounded unavailable-command responder so disabled or inactive feature commands produce a clear recovery panel instead of failing silently; active command routes still take precedence.
     // Changed (v2.0.0): Added a most-specific command router that canonicalizes case and command-word separators once, prevents overlapping aliases from double-firing, and leaves non-GameAssist chat untouched.
     // Changed (v2.0.0): Protected HealthService's validated PC-alert settings from generic config writes while retaining the shared toggleable HP evidence and verified-write lifecycle.
     // Decision log:
@@ -4827,7 +4870,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const after = payload.after?.current?.raw === '' ? 'blank' : (payload.after?.current?.raw ?? 'unknown');
         const source = payload.provenance?.kind === 'gameassist-write'
             ? `${payload.provenance.producer || 'GameAssist'} verified write`
-            : 'Roll20 observation';
+            : 'Observed in Roll20; source not identified';
         return `${name}: ${before} to ${after} | ${payload.classification || 'unknown'} | ${source}`;
     }
 
@@ -5093,7 +5136,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 statusField('Recent Evidence', recent.length
                     ? recent.slice().reverse().map(healthEvidenceLabel)
                     : 'No supported HP transition has been observed during this sandbox session.'),
-                statusField('Reading The Result', 'Declared and verified means a GameAssist writer identified and verified its own operation. Roll20 observation means the cause is not known to HealthService.')
+                statusField('How To Read This', 'GameAssist can react to a supported HP decrease even when Roll20 cannot identify what caused it. A verified write names the GameAssist feature that made the change; an observed change simply means HP changed in Roll20.')
             );
         } else {
             const declared = recent.filter(event => event.payload?.provenance?.kind === 'gameassist-write').length;
@@ -5101,9 +5144,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             fields.push(
                 statusField('Service', `HealthService v${status.version} is ${status.enabled ? 'enabled' : 'disabled'}.`),
                 statusField('Supported HP', 'Official 2014 PC hp attributes and linked NPC token bar 1.'),
-                statusField('This Sandbox Session', `${status.recentTransitions} recent transition${status.recentTransitions === 1 ? '' : 's'} retained | ${declared} declared and verified | ${unknown} unknown.`),
+                statusField('This Sandbox Session', `${status.recentTransitions} recent HP change${status.recentTransitions === 1 ? '' : 's'} retained | ${declared} made by GameAssist | ${unknown} observed in Roll20.`),
                 statusField('PC Health Alerts', pcHealthAlertSettingsNotice(ensurePcHealthAlertConfig())),
-                statusField('Important Limit', 'An unexplained decrease shows that HP went down. It does not prove damage, an attacker, a damage type, resistance, temporary HP, or a concentration trigger.')
+                statusField('How Observed Loss Is Used', 'A supported HP decrease can still power threshold alerts and offer a concentration check. GameAssist does not guess the attacker, damage type, resistance, or temporary-HP details Roll20 did not provide.')
             );
         }
 
@@ -5206,6 +5249,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.log('Metrics', summary.join('\n'));
     }, 'Core', { gmOnly: true });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Reworded HealthService evidence panels around observable GM outcomes while preserving unknown provenance and all existing health-transition behavior.
     // Changed (v2.0.0): Standardized suite navigation on Roll20's default-template panels and documented case-insensitive space-or-hyphen command paths.
     // Changed (v2.0.0): Added !GA-GM/!GA-DM, !ga-help, and layered !ga-nav dashboards with disabled-module recovery and stable module-owned destinations.
     // Changed (v2.0.0): Added protected, optional GM-private PC health alerts with independently selectable 50%, 25%, and 10% downward-crossing thresholds, combined notices, optional exact HP, safe preview, status controls, and HealthService-only observation without changing NPCAssist NPC policy.
@@ -10515,7 +10559,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     let teardownCombatAssist = () => {};
     GameAssist.register('CombatAssist', function() {
         const MODULE_NAME = 'CombatAssist';
-        const MODULE_VERSION = '1.1.0';
+        const MODULE_VERSION = '1.1.1';
         const COMBAT_EVENT_SCHEMA_VERSION = 1;
         const VALID_STATES = new Set(['active', 'paused', 'attention']);
         const VALID_ANNOUNCEMENTS = new Set(['off', 'gm', 'public', 'whispers']);
@@ -15204,7 +15248,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.ConcentrationAssist"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "0.4.0", health_offer_schema_version: 1 } }
+    //   independent_versions: { module_version: "0.4.1", health_offer_schema_version: 1 } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:CONCENTRATIONASSIST manages concentration save rolls, whispering outcomes,
@@ -15223,7 +15267,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     });
 
     const LAST_DAMAGE_LIMIT = POLICY.runtime.lastDamageLimit;
-    const MODULE_VERSION = '0.4.0';
+    const MODULE_VERSION = '0.4.1';
     const HEALTH_OFFER_SCHEMA_VERSION = 1;
     const HEALTH_OBSERVER_OWNER = 'ConcentrationAssist.HealthOffers';
     const healthOffers = new Map();
@@ -15433,15 +15477,29 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const marked = findObjs({ _type: 'graphic', represents: characterId })
             .filter(token => ['objects', 'gmlayer'].includes(String(token.get('layer') || '')))
             .filter(isTokenConcentrating);
-        if (marked.length === 1) return { ok: true, token: marked[0], character };
+        if (!marked.length) return { ok: false, code: 'NOT_CONCENTRATING', character };
 
-        const eventPageId = String(payload.pageId || '');
-        const onEventPage = eventPageId
-            ? marked.filter(token => String(token.get('_pageid') || token.get('pageid') || '') === eventPageId)
-            : [];
-        if (onEventPage.length === 1) return { ok: true, token: onEventPage[0], character };
+        const eventPageId = String(
+            payload.pageId
+            || eventToken?.get('_pageid')
+            || eventToken?.get('pageid')
+            || ''
+        );
+        const playerPageId = String(Campaign().get('playerpageid') || '');
+        const preferredPages = [...new Set([eventPageId, playerPageId].filter(Boolean))];
+        for (const pageId of preferredPages) {
+            const candidates = marked
+                .filter(token => String(token.get('_pageid') || token.get('pageid') || '') === pageId)
+                .sort((left, right) => {
+                    const layerRank = token => String(token.get('layer') || '') === 'objects' ? 0 : 1;
+                    return layerRank(left) - layerRank(right) || String(left.id).localeCompare(String(right.id));
+                });
+            if (candidates.length) return { ok: true, token: candidates[0], character };
+        }
 
-        return { ok: false, code: marked.length ? 'AMBIGUOUS' : 'NOT_CONCENTRATING', character };
+        // CHOICE: Ignore stale/off-page concentration markers for character-sheet HP changes.
+        // The current player page is the only unambiguous gameplay context Roll20 exposes here.
+        return { ok: false, code: 'NOT_CONCENTRATING', character };
     }
 
     function healthOfferAmount(event) {
@@ -15479,16 +15537,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         if (!health || healthOfferByEvent.has(event.eventId)) return;
 
         const target = healthOfferTarget(event);
-        if (!target.ok) {
-            if (target.code === 'AMBIGUOUS') {
-                GameAssist.log(
-                    'ConcentrationAssist',
-                    `Observed HP loss for ${target.character?.get('name') || 'a character'}, but more than one concentrating token could match. No automatic check was offered.`,
-                    'WARN'
-                );
-            }
-            return;
-        }
+        if (!target.ok) return;
 
         pruneHealthOffers();
         const payload = event.payload;
@@ -16220,6 +16269,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced ConcentrationAssist to 0.4.1; character-sheet HP losses now prefer the event page and Player Ribbon page, ignore stale off-page markers, and choose one deterministic current-page token when duplicate representations exist.
     // Changed (v2.0.0): Added the standard GameAssist Home return when ConcentrationAssist is opened through a GM/DM role command.
     // Changed (v2.0.0): Advanced ConcentrationAssist to 0.4.0 with optional private HealthService-driven HP-loss offers, bounded one-event deduplication, controller-aware delivery, and stale-button revalidation while preserving every manual check path.
     // Decision log:
@@ -16240,7 +16290,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:CONCENTRATIONASSIST] END
     // =============================================================================
 
-    // ————— EFFECTASSIST MODULE v2.4.0 —————
+    // ————— EFFECTASSIST MODULE v2.4.1 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:EFFECTASSIST] BEGIN
     // Section Title: Catalog-driven semantic effects and 2014 sheet projections
@@ -16250,7 +16300,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]","[GAMEASSIST:MODULES:CONDITIONASSIST]","[GAMEASSIST:MODULES:CONCENTRATIONASSIST]"],
     //   provides: ["GameAssist.EffectAssist"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "2.4.0", effect_state_schema_version: 3, cast_proposal_schema_version: 1, player_cast_flow_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "2.4.1", effect_state_schema_version: 3, cast_proposal_schema_version: 1, player_cast_flow_schema_version: 1 }, lifecycle: "active" }
     // -----------------------------------------------------------------------------
     // Narrative
     // EffectAssist is a catalog-driven rules coordinator. It records the source,
@@ -16263,7 +16313,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -----------------------------------------------------------------------------
     GameAssist.register('EffectAssist', function() {
         const MODULE_NAME = 'EffectAssist';
-        const MODULE_VERSION = '2.4.0';
+        const MODULE_VERSION = '2.4.1';
         const STATE_SCHEMA_VERSION = 3;
         const CAST_PROPOSAL_SCHEMA_VERSION = 1;
         const PLAYER_CAST_FLOW_SCHEMA_VERSION = 1;
@@ -16382,7 +16432,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 catalogGroup: 'tracked',
                 stacking: Object.freeze({ group: 'holy-weapon', mode: 'nonstacking' }),
                 projections: Object.freeze([
-                    Object.freeze({ id: 'holy-weapon-marker', adapter: 'marker', subject: 'target-token', marker: 'angel-outfit', label: 'Holy Weapon marker' })
+                    Object.freeze({ id: 'holy-weapon-marker', adapter: 'marker', subject: 'target-token', marker: 'fluffy-wing', label: 'Holy Weapon marker' })
                 ]),
                 automatic: Object.freeze(['Holy Weapon marker', 'source concentration and cleanup']),
                 assisted: Object.freeze(['Add 2d8 radiant damage only to the affected weapon and resolve the optional burst manually.']),
@@ -16439,6 +16489,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         Object.assign(modState.config, {
             enabled: false,
             allowPlayerCasting: true,
+            reviewApplications: false,
+            allowMultipleConcentration: false,
             durationCandidates: true,
             castRecognition: true,
             markerOverrides: {},
@@ -16626,6 +16678,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function ensureState() {
             if (!isPlainObject(modState.config.customDefinitions)) modState.config.customDefinitions = {};
             if (!isPlainObject(modState.config.markerOverrides)) modState.config.markerOverrides = {};
+            modState.config.reviewApplications = modState.config.reviewApplications === true;
+            modState.config.allowMultipleConcentration = modState.config.allowMultipleConcentration === true;
             modState.config.durationCandidates = modState.config.durationCandidates !== false;
             modState.config.castRecognition = modState.config.castRecognition !== false;
             if (modState.config.defaultBlessMarker && !modState.config.markerOverrides.bless) {
@@ -16963,7 +17017,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function warnAboutPreservedState() {
-            const knownConfig = new Set(['enabled', 'allowPlayerCasting', 'durationCandidates', 'castRecognition', 'markerOverrides', 'customDefinitions', 'defaultBlessMarker']);
+            const knownConfig = new Set(['enabled', 'allowPlayerCasting', 'reviewApplications', 'allowMultipleConcentration', 'durationCandidates', 'castRecognition', 'markerOverrides', 'customDefinitions', 'defaultBlessMarker']);
             const knownRuntime = new Set(['instances', 'history', 'projectionLedgers', 'requestIds', 'dependencyIndex', 'operations', 'nextInstanceNumber', 'stateSchemaVersion', 'legacyProjectionSnapshot']);
             const unknownConfig = Object.keys(modState.config).filter(key => !knownConfig.has(key));
             const unknownRuntime = Object.keys(runtime).filter(key => !knownRuntime.has(key));
@@ -17213,7 +17267,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function castProposalButtons(proposal) {
-            return `${GameAssist.createButton('Review Selected Recipients', `!Effect-Cast --proposal ${proposal.id} --replace ?{If this source is already concentrating, replace that effect?|Yes,yes|No,no}`)} ${GameAssist.createButton('Dismiss', `!Effect-Cast-Dismiss --proposal ${proposal.id}`)}`;
+            return `${GameAssist.createButton('Review Selected Recipients', `!Effect-Cast --proposal ${proposal.id}`)} ${GameAssist.createButton('Dismiss', `!Effect-Cast-Dismiss --proposal ${proposal.id}`)}`;
         }
 
         function showCastProposals(msg) {
@@ -17829,12 +17883,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         const item = createObj('attribute', {
                             characterid: binding.characterId,
                             name: `repeating_${row.config.section}_${rowId}_${field}`,
-                            current: value,
+                            current: field === row.config.activeField ? '0' : value,
                             max: ''
                         });
                         if (!item) throw new Error(`Roll20 did not create ${field}.`);
                         created.push(item);
-                        setAttribute(item, { current: value, max: '' });
                     });
                 }
 
@@ -17853,7 +17906,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     flag = createObj('attribute', {
                         characterid: binding.characterId,
                         name: row.config.enableFlag,
-                        current: '1',
+                        current: '0',
                         max: ''
                     });
                     if (!flag) throw new Error(`Roll20 did not create ${row.config.enableFlag}.`);
@@ -17862,6 +17915,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (String(flag.get('current') || '') !== '1') {
                     setAttribute(flag, { current: '1' });
                     flagChangedNow = true;
+                }
+                if (!matched) {
+                    const activeAttribute = created.find(item =>
+                        String(item.get('name') || '').endsWith('_' + row.config.activeField)
+                    );
+                    if (!activeAttribute) throw new Error(`Roll20 did not create ${row.config.activeField}.`);
+                    // DANGER: the active value must transition through setWithWorker; creating it at 1 displays a checked box without recalculating the 2014 sheet.
+                    setAttribute(activeAttribute, { current: '1' });
                 }
                 const verify = rowAttributes(binding.characterId, row.config.section, rowId);
                 if (verify.length < Object.keys(row.expected).length) throw new Error('Roll20 did not retain every modifier-row field.');
@@ -17907,12 +17968,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const metadata = ledger.metadata || {};
             const rowManaged = metadata.rowManaged === true
                 || (metadata.rowManaged === undefined && ledger.managed === true && ledger.baselinePresent !== true);
-            if (rowManaged && inspected.state !== 'missing') {
-                inspected.attributes.forEach(item => item.remove());
-            }
             const flag = metadata.flagId ? getObj('attribute', metadata.flagId) : attribute(binding.characterId, metadata.enableFlag);
             const flagManaged = metadata.flagManaged === true
                 || (metadata.flagManaged === undefined && (metadata.flagCreated === true || String(metadata.flagBaseline || '') !== '1'));
+            let restoreFlag = false;
             if (flagManaged && flag && String(flag.get('current') || '') === '1' && String(metadata.flagBaseline || '') !== '1') {
                 const section = metadata.section;
                 const activeSuffix = '_' + expectedRow(binding).config.activeField;
@@ -17929,14 +17988,52 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         && !String(item.get('name') || '').startsWith(currentPrefix)
                         && String(item.get('name') || '').endsWith(activeSuffix)
                         && String(item.get('current') || '') === '1');
-                if (!anotherOwnedFlagUser && !otherActiveRows) {
-                    if (metadata.flagCreated) flag.remove();
-                    else setAttribute(flag, { current: metadata.flagBaseline });
+                restoreFlag = !anotherOwnedFlagUser && !otherActiveRows;
+            }
+
+            const rowAttributesToRemove = rowManaged && inspected.state !== 'missing'
+                ? inspected.attributes.slice()
+                : [];
+            const activeField = expectedRow(binding).config.activeField;
+            const activeAttribute = rowAttributesToRemove.find(item =>
+                String(item.get('name') || '').endsWith('_' + activeField)
+            );
+            const needsWorkerPass = Boolean(
+                (activeAttribute && String(activeAttribute.get('current') || '') === '1')
+                || (restoreFlag && flag && String(flag.get('current') || '') === '1')
+            );
+
+            const finishRemoval = () => {
+                try {
+                    rowAttributesToRemove.forEach(item => {
+                        if (getObj('attribute', item.id)) item.remove();
+                    });
+                    if (restoreFlag && flag && metadata.flagCreated === true && getObj('attribute', flag.id)) {
+                        flag.remove();
+                    }
+                } catch (error) {
+                    GameAssist.log(MODULE_NAME, `${binding.label} sheet-worker cleanup needs attention: ${error.message || error}`, 'WARN');
+                }
+            };
+
+            if (needsWorkerPass) {
+                // DANGER: disable owned rows before removing them so the 2014 sheet can recalculate derived attack, save, skill, and AC values.
+                if (typeof onSheetWorkerCompleted === 'function') onSheetWorkerCompleted(finishRemoval);
+                else setTimeout(finishRemoval, 0);
+                if (activeAttribute && String(activeAttribute.get('current') || '') === '1') {
+                    setAttribute(activeAttribute, { current: '0' });
+                }
+                if (restoreFlag && flag && String(flag.get('current') || '') === '1') {
+                    setAttribute(flag, { current: metadata.flagCreated === true ? '0' : metadata.flagBaseline });
+                }
+            } else {
+                finishRemoval();
+                if (restoreFlag && flag && metadata.flagCreated !== true) {
+                    setAttribute(flag, { current: metadata.flagBaseline });
                 }
             }
-            return { ok: true, changed: true };
+            return { ok: true, changed: rowAttributesToRemove.length > 0 || restoreFlag, pendingSheetWorkers: needsWorkerPass };
         }
-
         function registerProjectionAdapter(name, adapter) {
             const id = normalizeDefinitionId(name);
             if (!id || !isPlainObject(adapter)
@@ -18032,12 +18129,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     && String(instance.source.characterId) === String(source.summary.characterId)
                 )
                 : [];
-            const replace = ['yes', 'true', 'on', '1'].includes(String(request.replaceConcentration || '').toLowerCase());
-            if (concentrationConflicts.length && !replace) {
+            const replacementValue = request.replaceConcentration;
+            const replacementWasSpecified = replacementValue !== undefined
+                && replacementValue !== null
+                && String(replacementValue).trim() !== '';
+            const replace = replacementWasSpecified
+                ? ['yes', 'true', 'on', '1'].includes(String(replacementValue).toLowerCase())
+                : modState.config.allowMultipleConcentration !== true;
+            const allowMultiple = modState.config.allowMultipleConcentration === true && !replacementWasSpecified;
+            if (concentrationConflicts.length && !replace && !allowMultiple) {
                 return {
                     ok: false,
                     code: 'CONFLICT',
-                    message: `${source.summary.characterName} is already concentrating on ${concentrationConflicts.map(item => item.name).join(', ')}. Choose replacement deliberately.`,
+                    message: `${source.summary.characterName} is already concentrating on ${concentrationConflicts.map(item => item.name).join(', ')}. Replace that effect or enable the advanced multiple-concentration option.`,
                     concentrationConflicts: concentrationConflicts.map(item => item.id)
                 };
             }
@@ -18417,29 +18521,68 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return resolution.ok ? GameAssist.MarkerService.normalizeId(resolution.id) : null;
         }
 
+        function bindingMarkerId(binding) {
+            if (binding.adapter === 'marker') {
+                const descriptor = markerDescriptor(binding);
+                return descriptor.ok ? GameAssist.MarkerService.normalizeId(descriptor.markerId) : null;
+            }
+            if (binding.adapter === 'condition') {
+                const descriptor = conditionDescriptor(binding);
+                return descriptor.ok ? GameAssist.MarkerService.normalizeId(descriptor.markerId) : null;
+            }
+            return null;
+        }
+
         function observeMarkerChanges(event) {
             if (modState.config.enabled === false) return;
             const removed = new Set((event?.removed || []).map(item =>
                 GameAssist.MarkerService.normalizeId(item.id || item.tag || item)
             ));
+            if (!removed.size) return;
             const tokenId = String(event.tokenId || event.token?.id || '');
             const characterId = String(event.token?.get('represents') || '');
-            const affected = activeInstances().filter(instance =>
+
+            const concentrationEffects = activeInstances().filter(instance =>
                 instance.dependency?.type === 'concentration'
                 && instance.dependency?.established
                 && String(instance.source.characterId || '') === characterId
                 && removed.has(concentrationMarkerId(instance.dependency.marker))
             );
-            if (!affected.length) return;
             const suppressedUntil = Number(suppressedConcentrationTokens.get(tokenId) || 0);
-            if (suppressedUntil >= Date.now()) {
-                return;
+            if (suppressedUntil < Date.now()) {
+                concentrationEffects.forEach(instance => endEffect(instance.id, 'MarkerService', {
+                    skipConcentration: true,
+                    allowDisabled: true,
+                    reason: 'concentration-marker-removed'
+                }));
             }
-            affected.forEach(instance => endEffect(instance.id, 'MarkerService', {
-                skipConcentration: true,
-                allowDisabled: true,
-                reason: 'concentration-marker-removed'
-            }));
+
+            const targetEffects = activeInstances().filter(instance =>
+                (instance.bindings || []).some(binding =>
+                    binding.subjectType === 'token'
+                    && String(binding.tokenId || '') === tokenId
+                    && ['marker', 'condition'].includes(binding.adapter)
+                    && removed.has(bindingMarkerId(binding))
+                )
+            );
+            targetEffects.forEach(instance => {
+                const managedTargetMarkers = (instance.bindings || []).filter(binding =>
+                    binding.subjectType === 'token' && ['marker', 'condition'].includes(binding.adapter)
+                );
+                const markerStillPresent = managedTargetMarkers.some(binding => {
+                    const adapter = projectionAdapters.get(binding.adapter);
+                    const ledger = runtime.projectionLedgers[binding.key];
+                    if (!adapter || !ledger) return false;
+                    const inspected = adapter.inspect(binding, ledger);
+                    return inspected.ok && inspected.state === 'present';
+                });
+                if (!markerStillPresent) {
+                    endEffect(instance.id, 'MarkerService', {
+                        allowDisabled: true,
+                        reason: 'all-effect-markers-removed'
+                    });
+                }
+            });
         }
 
         function ensureMarkerObservation() {
@@ -18846,16 +18989,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function playerRequestTargetButtons(request, definition) {
             const counts = PLAYER_TARGET_COUNTS[definition.id] || [1];
-            const replacement = definition.concentration
-                ? ' --replace ?{If this source is already concentrating, replace that effect?|Yes,yes|No,no}'
-                : '';
             return counts.map(count => {
                 const label = counts.length === 1
                     ? 'Choose Recipient'
                     : `Choose ${count} Recipient${count === 1 ? '' : 's'}`;
                 return GameAssist.createButton(
                     label,
-                    `!Effect-Apply --player-request ${request.id} --targets ${nativeTargetIds(definition, count)}${replacement}`
+                    `!Effect-Apply --player-request ${request.id} --targets ${nativeTargetIds(definition, count)}`
                 );
             }).join(' ');
         }
@@ -18901,9 +19041,6 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function targetPickerButtons(definition, source, { requestedBy = '', flowId = '' } = {}) {
             const counts = PLAYER_TARGET_COUNTS[definition.id] || [1];
-            const replacement = definition.concentration
-                ? ' --replace ?{If this source is already concentrating, replace that effect?|Yes,yes|No,no}'
-                : '';
             const requestOptions = requestedBy
                 ? ` --requested-by ${requestedBy} --announce true`
                 : '';
@@ -18912,8 +19049,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     ? 'Choose Recipient'
                     : `Choose ${count} Recipient${count === 1 ? '' : 's'}`;
                 const command = flowId
-                    ? `!Effect-Apply --flow ${flowId} --targets ${nativeTargetIds(definition, count)}${replacement}`
-                    : `!Effect-Apply --effect ${definition.id} --source ${source.summary.tokenId} --targets ${nativeTargetIds(definition, count)}${replacement}${requestOptions}`;
+                    ? `!Effect-Apply --flow ${flowId} --targets ${nativeTargetIds(definition, count)}`
+                    : `!Effect-Apply --effect ${definition.id} --source ${source.summary.tokenId} --targets ${nativeTargetIds(definition, count)}${requestOptions}`;
                 return GameAssist.createButton(label, command);
             }).join(' ');
         }
@@ -18948,7 +19085,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     label: 'Choose Your Character',
                     value: sources.map(source => GameAssist.createButton(
                         source.summary.characterName,
-                        `!Effect-Targets --flow ${rememberPlayerCastFlow(msg, definition, source, 'source')}`
+                        `!Effect-Targets --effect ${definition.id} --source ${source.summary.tokenId}`
                     )).join(' ')
                 },
                 { label: 'Return', value: GameAssist.createButton('Effect Catalog', '!effect') }
@@ -19049,7 +19186,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         : `${GameAssist.createButton('End Effect', '!Effect-End --id ' + instance.id)} ${GameAssist.createButton('Keep Active', `!Effect-Duration-Dismiss --id ${instance.id} --candidate ${candidate.id}`)}`;
                     return `${candidate.status === 'dismissed' ? 'Kept active' : 'Review'}: ${_sanitize(candidate.reason)} ${action}`;
                 }).join('<br>');
-                return `<b>${_sanitize(instance.name)}</b> | ${_sanitize(durationRuleSummary(instance))}<br>`
+                const targetNames = (instance.targets || []).map(target => target.tokenName || target.characterName).filter(Boolean).join(', ');
+                return `<b>${_sanitize(instance.name)}</b> | ${_sanitize(instance.id)}<br>`
+                    + `Source: ${_sanitize(instance.source?.tokenName || instance.source?.characterName || 'Unknown')}<br>`
+                    + `Recipients: ${_sanitize(targetNames || 'None')}<br>`
+                    + `Duration: ${_sanitize(durationRuleSummary(instance))}<br>`
                     + `Provider: ${_sanitize(durationProviderSummary(instance))}<br>`
                     + (candidateRows || 'No duration candidate has been raised.');
             }).join('<hr>');
@@ -19096,17 +19237,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 )).join(' ') || 'None.';
             }
             const source = sourceQuery(msg);
-            if (!source) return playerIsGM(msg?.playerid)
-                ? 'Place at least one linked character token on the current player page so EffectAssist can offer a source picker.'
-                : 'No linked character token you control is available on the current player page.';
+            if (!source) return 'Place at least one linked character token on the current player page so EffectAssist can offer a source picker.';
             return getDefinitions().filter(definition =>
                 BUILTIN_DEFINITIONS[definition.id] && definition.catalogGroup === group
-            ).map(definition => {
-                const replacement = definition.concentration
-                    ? ' --replace ?{If this source is already concentrating, replace that effect?|Yes,yes|No,no}'
-                    : '';
-                return GameAssist.createButton(definition.name, `!Effect-Apply --effect ${definition.id} --source ${source}${replacement}`);
-            }).join(' ') || 'None.';
+            ).map(definition =>
+                GameAssist.createButton(definition.name, `!Effect-Apply --effect ${definition.id} --source ${source}`)
+            ).join(' ') || 'None.';
         }
 
         function showGuide(msg) {
@@ -19123,10 +19259,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             pruneCastTracking();
             prunePlayerCasting();
             panel('EffectAssist Control Center', [
-                { label: 'Apply To Selected Tokens', value: `<b>Marker And Sheet Automation</b><br>${catalogButtons(msg, 'automated')}<br><b>Tracked; Rules Stay Manual</b><br>${catalogButtons(msg, 'tracked')}` },
+                { label: 'Apply To Selected Tokens', value: `<b>Marker + Supported Sheet Automation</b><br>${catalogButtons(msg, 'automated')}<br><b>Tracked Marker; Rules Stay Manual</b><br>${catalogButtons(msg, 'tracked')}` },
                 { label: 'Browse', value: `${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Catalog Details', '!Effect-Definitions')}` },
                 { label: 'Manage', value: `${GameAssist.createButton(`Player Requests (${playerRequests.size})`, '!Effect-Requests')} ${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Recognized Casts', '!Effect-Casts')} ${GameAssist.createButton('Duration Review', '!Effect-Duration')} ${GameAssist.createButton('Status', '!Effect-Status')}` },
-                { label: 'Check', value: `${GameAssist.createButton('Audit and Repair', '!Effect-Audit')} ${GameAssist.createButton('Guide', '!Effect-Guide')}` },
+                { label: 'Check', value: `${GameAssist.createButton('Audit and Repair', '!Effect-Audit')} ${GameAssist.createButton('Settings', '!Effect-Settings')} ${GameAssist.createButton('Guide', '!Effect-Guide')}` },
                 { label: 'Player Casting', value: `${modState.config.allowPlayerCasting !== false ? 'Allowed' : 'Locked'} | ${GameAssist.createButton('Allow', '!Effect-Players on')} ${GameAssist.createButton('Lock', '!Effect-Players off')}` },
                 { label: '2014 Cast Recognition', value: `${modState.config.castRecognition !== false ? 'On' : 'Off'} | ${castProposals.size} pending | ${GameAssist.createButton('Turn On', '!Effect-Recognition on')} ${GameAssist.createButton('Turn Off', '!Effect-Recognition off')}` },
                 { label: 'Duration Candidates', value: `${modState.config.durationCandidates !== false ? 'On' : 'Off'} | ${GameAssist.createButton('Turn On', '!Effect-Durations on')} ${GameAssist.createButton('Turn Off', '!Effect-Durations off')}` },
@@ -19153,8 +19289,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const source = sourceQuery(msg) || '';
             const condition = conditionQuery();
             const customButtons = playerIsGM(msg?.playerid) && source ? [
-                GameAssist.createButton('Marker Effect', '!Effect-Apply --name "?{Effect name|Custom Effect}" --marker "?{Marker id or custom name|aura}" --dependency "?{Dependency|Manual,manual|Concentration,concentration}" --source ' + source + ' --replace "?{Replace current concentration if needed?|Yes,yes|No,no}"'),
-                condition ? GameAssist.createButton('Condition Effect', '!Effect-Apply --name "?{Effect name|Custom Effect}" --condition ' + condition + ' --dependency "?{Dependency|Manual,manual|Concentration,concentration}" --source ' + source + ' --replace "?{Replace current concentration if needed?|Yes,yes|No,no}"') : '',
+                GameAssist.createButton('Marker Effect', '!Effect-Apply --name "?{Effect name|Custom Effect}" --marker "?{Marker id or custom name|aura}" --dependency "?{Dependency|Manual,manual|Concentration,concentration}" --source ' + source),
+                condition ? GameAssist.createButton('Condition Effect', '!Effect-Apply --name "?{Effect name|Custom Effect}" --condition ' + condition + ' --dependency "?{Dependency|Manual,manual|Concentration,concentration}" --source ' + source) : '',
                 GameAssist.createButton('Record Only', '!Effect-Apply --name "?{Effect name|Custom Effect}" --none true --source ' + source)
             ].filter(Boolean).join(' ') : '';
             panel('EffectAssist Catalog', [
@@ -19206,6 +19342,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Records', value: `${audit.active} active | ${audit.ended} ended | ${audit.definitions} definitions` },
                 { label: 'Health', value: audit.ok ? 'No mismatches found.' : `${audit.mismatches.length} item(s) need review.` },
                 { label: 'Player Casting', value: modState.config.allowPlayerCasting !== false ? 'Allowed' : 'Locked' },
+                { label: 'Application Review', value: modState.config.reviewApplications === true ? 'On' : 'Off' },
+                { label: 'Concentration Rule', value: modState.config.allowMultipleConcentration === true ? 'Multiple effects allowed' : 'New effect replaces existing concentration' },
                 { label: 'Player Requests', value: `${playerRequests.size} pending request(s)` },
                 { label: '2014 Cast Recognition', value: `${modState.config.castRecognition !== false ? 'On' : 'Off'} | ${castProposals.size} pending Bless proposal(s)` },
                 { label: 'Duration Review', value: `${modState.config.durationCandidates !== false ? 'On' : 'Off'} | ${durationCandidates} open candidate(s)` },
@@ -19391,6 +19529,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ], msg);
                 return;
             }
+            if (modState.config.reviewApplications !== true) {
+                return completeApplication(msg, plan);
+            }
             const grant = createApplyGrant(plan, msg.playerid);
             panel('Review Effect Application', [
                 { label: 'Effect', value: _sanitize(plan.definition.name) },
@@ -19402,15 +19543,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ], msg);
         }
 
-        function handleConfirm(msg, options) {
-            const plan = verifyApplyGrant(options.grant, msg.playerid);
-            if (!plan.ok) {
-                panel('EffectAssist', [
-                    { label: 'Needs Attention', value: _sanitize(plan.message || plan.code) },
-                    { label: 'Next Step', value: GameAssist.createButton('Open Catalog', '!Effect-Catalog') }
-                ], msg);
-                return;
-            }
+        function completeApplication(msg, plan) {
             if (plan.request.playerRequestId) {
                 const pending = resolvePlayerRequest(plan.request.playerRequestId);
                 const sameRequest = pending.ok
@@ -19419,26 +19552,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     && pending.request.definitionId === plan.definition.id;
                 if (!sameRequest) {
                     return panel('EffectAssist', [
-                        { label: 'Needs Attention', value: _sanitize(pending.message || 'That player request changed after review. Ask the player to send it again.') },
+                        { label: 'Needs Attention', value: _sanitize(pending.message || 'That player request changed. Ask the player to send it again.') },
                         { label: 'Next Step', value: GameAssist.createButton('Pending Requests', '!Effect-Requests') }
                     ], msg, { gmOnly: true });
                 }
             }
             const authorization = authorizeCast(msg, plan.source, plan.definition.id);
             if (!authorization.ok) {
-                panel('EffectAssist', [
+                return panel('EffectAssist', [
                     { label: 'Needs Attention', value: _sanitize(authorization.message) },
                     { label: 'Next Step', value: GameAssist.createButton('Open Catalog', '!Effect-Catalog') }
                 ], msg);
-                return;
             }
             const result = applyPlan(plan);
-            if (result.ok && plan.request.playerRequestId) {
-                playerRequests.delete(plan.request.playerRequestId);
-            }
-            if (result.ok && result.instance && plan.request.announcePublic) {
-                announcePlayerCast(result.instance);
-            }
+            if (result.ok && plan.request.playerRequestId) playerRequests.delete(plan.request.playerRequestId);
+            if (result.ok && result.instance && plan.request.announcePublic) announcePlayerCast(result.instance);
             const endButton = result.instance && canEndInstance(msg, result.instance)
                 ? GameAssist.createButton(result.instance.definitionId === 'guidance' ? 'Use Guidance' : 'End Effect', '!Effect-End --id ' + result.instance.id)
                 : '';
@@ -19452,6 +19580,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ...(result.rollbackFailures?.length ? [{ label: 'Rollback Attention', value: listText(result.rollbackFailures) }] : []),
                 { label: 'Actions', value: navigation }
             ], msg);
+        }
+
+        function handleConfirm(msg, options) {
+            const plan = verifyApplyGrant(options.grant, msg.playerid);
+            if (!plan.ok) {
+                return panel('EffectAssist', [
+                    { label: 'Needs Attention', value: _sanitize(plan.message || plan.code) },
+                    { label: 'Next Step', value: GameAssist.createButton('Open Catalog', '!Effect-Catalog') }
+                ], msg);
+            }
+            return completeApplication(msg, plan);
         }
 
         function handleEnd(msg, options) {
@@ -19479,6 +19618,51 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Result', value: result.ok ? `${result.repaired} item(s) repaired.` : 'Some items could not be repaired safely.' },
                 ...(result.failed?.length ? [{ label: 'Needs Attention', value: listText(result.failed.map(entry => entry.message || entry.item?.message)) }] : []),
                 { label: 'Actions', value: `${GameAssist.createButton('Run Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function showEffectSettings(msg) {
+            panel('EffectAssist Settings', [
+                { label: 'Application Review', value: `${modState.config.reviewApplications === true ? 'On' : 'Off'} | ${GameAssist.createButton('Turn On', '!Effect-Review on')} ${GameAssist.createButton('Turn Off', '!Effect-Review off')}` },
+                { label: 'Player Casting', value: `${modState.config.allowPlayerCasting !== false ? 'Allowed' : 'Locked'} | ${GameAssist.createButton('Allow', '!Effect-Players on')} ${GameAssist.createButton('Lock', '!Effect-Players off')}` },
+                { label: 'Advanced', value: GameAssist.createButton('Concentration Options', '!Effect-Advanced') },
+                { label: 'Return', value: GameAssist.createButton('Control Center', '!Effect-GM') }
+            ], msg, { gmOnly: true });
+        }
+
+        function showAdvancedSettings(msg) {
+            panel('EffectAssist Advanced Settings', [
+                { label: 'Multiple Concentration Effects', value: `${modState.config.allowMultipleConcentration === true ? 'Allowed' : 'Off'} | ${GameAssist.createButton('Allow', '!Effect-Multiple-Concentration on')} ${GameAssist.createButton('Turn Off', '!Effect-Multiple-Concentration off')}` },
+                { label: 'Important', value: 'D&D 5E normally permits only one concentration effect. Leave this off unless your campaign intentionally changes that rule.' },
+                { label: 'Return', value: `${GameAssist.createButton('Effect Settings', '!Effect-Settings')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
+            ], msg, { gmOnly: true });
+        }
+
+        function effectSettingValue(msg) {
+            return String(msg.content || '').trim().split(/\s+/)[1]?.toLowerCase();
+        }
+
+        function handleReviewSetting(msg) {
+            const value = effectSettingValue(msg);
+            if (!['on', 'off'].includes(value)) return showEffectSettings(msg);
+            modState.config.reviewApplications = value === 'on';
+            panel('EffectAssist Application Review', [
+                { label: 'Setting', value: modState.config.reviewApplications
+                    ? 'On. The GM reviews each complete effect plan before it is applied.'
+                    : 'Off. Valid effect choices are applied immediately after the source and recipients are chosen.' },
+                { label: 'Return', value: GameAssist.createButton('Effect Settings', '!Effect-Settings') }
+            ], msg, { gmOnly: true });
+        }
+
+        function handleMultipleConcentrationSetting(msg) {
+            const value = effectSettingValue(msg);
+            if (!['on', 'off'].includes(value)) return showAdvancedSettings(msg);
+            modState.config.allowMultipleConcentration = value === 'on';
+            panel('EffectAssist Concentration Options', [
+                { label: 'Setting', value: modState.config.allowMultipleConcentration
+                    ? 'Multiple concentration effects are allowed for this campaign.'
+                    : 'Normal 5E behavior is active: a new concentration effect replaces the source character’s existing concentration effect.' },
+                { label: 'Return', value: GameAssist.createButton('Concentration Options', '!Effect-Advanced') }
             ], msg, { gmOnly: true });
         }
 
@@ -19525,6 +19709,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (['info', 'about'].includes(action)) return showInfo(msg);
             if (!playerIsGM(msg.playerid)) return showCatalog(msg);
             if (['gm', 'dm', 'menu'].includes(action)) return showControl(msg);
+            if (action === 'settings') return showEffectSettings(msg);
+            if (action === 'advanced') return showAdvancedSettings(msg);
             if (['status', 'list', 'refresh'].includes(action)) return showStatus(msg);
             if (action === 'requests') return showPlayerRequests(msg);
             if (action === 'request-dismiss') return handlePlayerRequestDismiss(msg, options);
@@ -19541,6 +19727,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (action === 'manual') return showManual(msg);
             if (action === 'repair') return handleRepair(msg, options);
             if (action === 'players') return handlePlayerCastingSetting(msg);
+            if (action === 'review') return handleReviewSetting(msg);
+            if (action === 'multiple-concentration') return handleMultipleConcentrationSetting(msg);
             panel('EffectAssist', [
                 { label: 'Needs Attention', value: 'That EffectAssist command was not recognized.' },
                 { label: 'Next Step', value: `${GameAssist.createButton('Control Center', '!Effect-GM')} ${GameAssist.createButton('Open Guide', '!Effect-Guide')}` }
@@ -19636,6 +19824,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced EffectAssist to 2.4.1; repaired 2014-sheet worker activation and cleanup, made application review optional and off by default, made normal single-concentration replacement automatic, repaired source-selection buttons, distinguished Holy Weapon's marker, identified duration rows, and ends an effect after all of its managed target markers are removed.
     // Changed (v2.0.0): Advanced EffectAssist to 2.4.0 with a standard GameAssist Home return and exact owned Guidance roll labeling; one unambiguous supported 2014 skill check may consume one matching Guidance through normal cleanup, while unsupported or ambiguous checks retain the explicit Use Guidance path.
     // Changed (v2.0.0): Advanced EffectAssist to 2.3.0 with opaque short-lived player casting choices, retained and revalidated GM requests, stale-button recovery, and direct built-in effect actions on the GM Control Center while preserving the existing effect engine and confirmation boundary.
     // Decision log:
@@ -21348,7 +21537,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   guarantees: ["Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Optional Almanac integrations improve context without becoming hidden prerequisites","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AlmanacAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.1.0", time_state_schema_version: 1, wayfarer_draft_schema_version: 1, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 1, rest_state_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.1.1", time_state_schema_version: 2, wayfarer_draft_schema_version: 2, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 1, rest_state_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // AlmanacAssist contains six independently toggleable internal submodules behind
@@ -21360,14 +21549,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     GameAssist.register('AlmanacAssist', function() {
         const MODULE_NAME = 'AlmanacAssist';
         const MODULE_VERSION = '1.1.0';
-        const TIME_STATE_SCHEMA_VERSION = 1;
-        const WAYFARER_DRAFT_SCHEMA_VERSION = 1;
+        const TIME_STATE_SCHEMA_VERSION = 2;
+        const WAYFARER_DRAFT_SCHEMA_VERSION = 2;
         const CLIMATE_STATE_SCHEMA_VERSION = 1;
         const ASTRONOMY_STATE_SCHEMA_VERSION = 1;
         const WEATHER_STATE_SCHEMA_VERSION = 1;
         const ENVIRONMENT_STATE_SCHEMA_VERSION = 1;
         const REST_STATE_SCHEMA_VERSION = 1;
-        const MINUTES_PER_DAY = 24 * 60;
         const DEFAULT_WORLD_MINUTE = 8 * 60;
         const modState = GameAssist.getState(MODULE_NAME);
 
@@ -21402,18 +21590,54 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             Object.freeze({ name: 'Feast of the Moon', afterMonth: 10, season: 'Autumn' })
         ]);
         const DEFAULT_WAYFARER = Object.freeze({
-            name: 'Wayfarer',
-            weekdays: Object.freeze(['Firstday', 'Secondday', 'Thirdday', 'Fourthday', 'Fifthday', 'Sixthday', 'Seventhday']),
-            months: Object.freeze(Array.from({ length: 12 }, (_, index) => Object.freeze({
-                name: `Month ${index + 1}`,
-                days: 30,
-                season: index < 3 ? 'Winter' : (index < 6 ? 'Spring' : (index < 9 ? 'Summer' : 'Autumn'))
+            name: 'Solamnic Calendar',
+            hoursPerDay: 20,
+            minutesPerHour: 75,
+            weekdays: Object.freeze([
+                'Soladain', 'Lunisdain', 'Verdantis', 'Celestain', 'Gelidus',
+                'Hearthend', 'Wilderday', 'Vespern', 'Aurday', 'Stellara'
+            ]),
+            months: Object.freeze([
+                ['Celestia\'s Embrace', 15, true],
+                ['Newkolt', 30, false],
+                ['Deepkolt', 40, false],
+                ['Meltwater\'s Merriment', 5, true],
+                ['Brookgreen', 30, false],
+                ['Verdant Rebirth', 5, true],
+                ['Yurthgreen', 40, false],
+                ['Fleurgreen', 30, false],
+                ['Starwatch', 10, true],
+                ['Holmswelt', 40, false],
+                ['Fierswelt', 40, false],
+                ['Paleswelt', 30, false],
+                ['Reapember', 30, false],
+                ['Glowfest', 5, true],
+                ['Gildember', 40, false],
+                ['Darkember', 30, false],
+                ['Frostkolt', 40, false]
+            ].map(([name, days, skipWeekday]) => Object.freeze({
+                name,
+                days,
+                season: 'Unspecified',
+                skipWeekday
             }))),
             intercalary: Object.freeze([]),
-            holidays: Object.freeze([]),
+            holidays: Object.freeze([
+                Object.freeze({ name: 'Vernal Equinox', monthIndex: 4, day: 12 }),
+                Object.freeze({ name: 'Summer Solstice', monthIndex: 8, day: 6 }),
+                Object.freeze({ name: 'Autumnal Equinox', monthIndex: 12, day: 1 }),
+                Object.freeze({ name: 'Winter Solstice', monthIndex: 16, day: 11 })
+            ]),
+            seasonRanges: Object.freeze([
+                Object.freeze({ name: 'Vernalrise', start: 85, end: 199 }),
+                Object.freeze({ name: 'Summertide', start: 200, end: 314 }),
+                Object.freeze({ name: 'Leafturn', start: 315, end: 429 }),
+                Object.freeze({ name: 'Frosthold', start: 430, end: 459 }),
+                Object.freeze({ name: 'Frosthold', start: 0, end: 84 })
+            ]),
             leapEvery: 0,
             leapName: 'Leap Day',
-            leapAfterMonth: 11
+            leapAfterMonth: 16
         });
         const WAYFARER_STAGES = Object.freeze(['identity', 'weekdays', 'months', 'intercalary', 'leap', 'holidays']);
 
@@ -21478,6 +21702,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function boundedName(raw, fallback = '') {
+            if (!['string', 'number'].includes(typeof raw)) return fallback;
             const name = String(raw || '').trim().replace(/[|{}\[\],:]/g, ' ')
                 .replace(/\s+/g, ' ').slice(0, POLICY.almanac.maximumNameLength).trim();
             return name || fallback;
@@ -21495,9 +21720,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const item = month && typeof month === 'object' && !Array.isArray(month) ? month : {};
                 const days = Math.floor(Number(item.days));
                 return {
-                    name: boundedName(item.name, `Month ${index + 1}`),
+                    name: boundedName(item.name, `Period ${index + 1}`),
                     days: Number.isFinite(days) && days >= 1 && days <= POLICY.almanac.maximumDaysPerMonth ? days : 30,
-                    season: boundedName(item.season, 'Unspecified')
+                    season: boundedName(item.season, 'Unspecified'),
+                    skipWeekday: item.skipWeekday === true
                 };
             });
             const intercalarySource = Array.isArray(source.intercalary) ? source.intercalary : [];
@@ -21525,14 +21751,25 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     day: Number.isFinite(day) && day >= 1 && day <= months[safeMonthIndex].days ? day : 1
                 };
             });
+            const rawRanges = Array.isArray(source.seasonRanges) ? source.seasonRanges : [];
+            const seasonRanges = rawRanges.slice(0, 12).map(range => ({
+                name: boundedName(range?.name, 'Unspecified'),
+                start: Math.floor(Number(range?.start)),
+                end: Math.floor(Number(range?.end))
+            })).filter(range => Number.isFinite(range.start) && Number.isFinite(range.end) && range.start >= 0 && range.end >= range.start);
             const leapEvery = Math.floor(Number(source.leapEvery));
             const leapAfterMonth = Math.floor(Number(source.leapAfterMonth));
+            const hoursPerDay = Math.floor(Number(source.hoursPerDay));
+            const minutesPerHour = Math.floor(Number(source.minutesPerHour));
             const normalized = {
                 name: boundedName(source.name, DEFAULT_WAYFARER.name),
+                hoursPerDay: Number.isFinite(hoursPerDay) && hoursPerDay >= 1 && hoursPerDay <= 48 ? hoursPerDay : DEFAULT_WAYFARER.hoursPerDay,
+                minutesPerHour: Number.isFinite(minutesPerHour) && minutesPerHour >= 1 && minutesPerHour <= 120 ? minutesPerHour : DEFAULT_WAYFARER.minutesPerHour,
                 weekdays: weekdays.length ? weekdays : copy(DEFAULT_WAYFARER.weekdays),
                 months: months.length ? months : copy(DEFAULT_WAYFARER.months),
                 intercalary,
                 holidays,
+                seasonRanges,
                 leapEvery: Number.isFinite(leapEvery) && leapEvery >= 2 && leapEvery <= 100 ? leapEvery : 0,
                 leapName: boundedName(source.leapName, DEFAULT_WAYFARER.leapName),
                 leapAfterMonth: Number.isFinite(leapAfterMonth) && leapAfterMonth >= 0 && leapAfterMonth < months.length
@@ -21542,6 +21779,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const ordinaryDays = normalized.months.reduce((sum, month) => sum + month.days, 0);
             const totalDays = ordinaryDays + normalized.intercalary.length + (normalized.leapEvery ? 1 : 0);
             if (totalDays > POLICY.almanac.maximumDaysPerYear) return copy(DEFAULT_WAYFARER);
+            normalized.seasonRanges = normalized.seasonRanges.filter(range => range.end < totalDays);
             return normalized;
         }
 
@@ -21550,10 +21788,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return {
                 id: 'wayfarer',
                 name: normalized.name,
+                hoursPerDay: normalized.hoursPerDay,
+                minutesPerHour: normalized.minutesPerHour,
                 weekdays: copy(normalized.weekdays),
                 months: copy(normalized.months),
                 intercalary: copy(normalized.intercalary),
                 holidays: copy(normalized.holidays),
+                seasonRanges: copy(normalized.seasonRanges),
                 leapEvery: normalized.leapEvery,
                 leapName: normalized.leapName,
                 leapAfterMonth: normalized.leapAfterMonth
@@ -21579,6 +21820,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 errors.push(`Choose 1-${POLICY.almanac.maximumMonths} months.`);
             }
             const normalized = normalizeWayfarer(source);
+            if (!Number.isInteger(Number(source.hoursPerDay)) || Number(source.hoursPerDay) < 1 || Number(source.hoursPerDay) > 48) {
+                errors.push('Hours per day must be 1-48.');
+            }
+            if (!Number.isInteger(Number(source.minutesPerHour)) || Number(source.minutesPerHour) < 1 || Number(source.minutesPerHour) > 120) {
+                errors.push('Minutes per hour must be 1-120.');
+            }
             const weekdayKeys = normalized.weekdays.map(value => value.toLowerCase());
             if (new Set(weekdayKeys).size !== weekdayKeys.length) errors.push('Weekday names must be unique.');
             const monthKeys = normalized.months.map(value => value.name.toLowerCase());
@@ -21647,7 +21894,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             };
         }
 
-        modState.config.wayfarer = normalizeWayfarer(modState.config.wayfarer);
+        const savedWayfarer = modState.config.wayfarer;
+        const legacyPlaceholder = savedWayfarer
+            && savedWayfarer.name === 'Wayfarer'
+            && Array.isArray(savedWayfarer.weekdays)
+            && savedWayfarer.weekdays.join('|') === 'Firstday|Secondday|Thirdday|Fourthday|Fifthday|Sixthday|Seventhday'
+            && Array.isArray(savedWayfarer.months)
+            && savedWayfarer.months.length === 12
+            && savedWayfarer.months.every((month, index) => month?.name === `Month ${index + 1}` && Number(month?.days) === 30);
+        modState.config.wayfarer = normalizeWayfarer(legacyPlaceholder ? copy(DEFAULT_WAYFARER) : savedWayfarer);
+        if (legacyPlaceholder) modState.config.wayfarerDraft = null;
         modState.config.wayfarerDraft = normalizeWayfarerDraft(modState.config.wayfarerDraft);
         if (!['standard', 'solamnic', 'harptos', 'wayfarer'].includes(String(modState.config.profileId || '').toLowerCase())) {
             modState.config.profileId = 'standard';
@@ -21735,6 +21991,20 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return modState.config.submodules?.[name] !== false;
         }
 
+        function calendarHoursPerDay(profile) {
+            const value = Math.floor(Number(profile?.hoursPerDay));
+            return Number.isFinite(value) && value >= 1 && value <= 48 ? value : 24;
+        }
+
+        function calendarMinutesPerHour(profile) {
+            const value = Math.floor(Number(profile?.minutesPerHour));
+            return Number.isFinite(value) && value >= 1 && value <= 120 ? value : 60;
+        }
+
+        function calendarMinutesPerDay(profile) {
+            return calendarHoursPerDay(profile) * calendarMinutesPerHour(profile);
+        }
+
         function isLeapYear(profile, year) {
             if (profile.id === 'standard') return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
             if (profile.id === 'harptos') return year % 4 === 0;
@@ -21764,9 +22034,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             const wayfarer = normalizeWayfarer(modState.config.wayfarer);
             return {
-                id: 'wayfarer', name: wayfarer.name, weekdays: copy(wayfarer.weekdays),
+                id: 'wayfarer', name: wayfarer.name,
+                hoursPerDay: wayfarer.hoursPerDay, minutesPerHour: wayfarer.minutesPerHour,
+                weekdays: copy(wayfarer.weekdays),
                 months: copy(wayfarer.months), intercalary: copy(wayfarer.intercalary),
-                holidays: copy(wayfarer.holidays),
+                holidays: copy(wayfarer.holidays), seasonRanges: copy(wayfarer.seasonRanges),
                 leapEvery: wayfarer.leapEvery, leapName: wayfarer.leapName,
                 leapAfterMonth: wayfarer.leapAfterMonth
             };
@@ -21793,10 +22065,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             return normalizeWayfarer({
                 name: profile.id === 'wayfarer' ? profile.name : `${profile.name} Copy`,
+                hoursPerDay: calendarHoursPerDay(profile),
+                minutesPerHour: calendarMinutesPerHour(profile),
                 weekdays: profile.weekdays,
-                months: profile.months.map(month => ({ name: month.name, days: month.days, season: month.season || 'Unspecified' })),
+                months: profile.months.map(month => ({
+                    name: month.name,
+                    days: month.days,
+                    season: month.season || 'Unspecified',
+                    skipWeekday: month.skipWeekday === true
+                })),
                 intercalary: annualIntercalary,
                 holidays: profile.holidays || [],
+                seasonRanges: profile.seasonRanges || [],
                 leapEvery,
                 leapName,
                 leapAfterMonth
@@ -21867,7 +22147,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const periods = [];
             profile.months.forEach((month, index) => {
                 const days = month.days + (profile.leapMonthIndex === index && leap ? 1 : 0);
-                periods.push({ kind: 'month', monthIndex: index, name: month.name, commonName: month.commonName || '', days, season: month.season || 'Unspecified' });
+                periods.push({ kind: 'month', monthIndex: index, name: month.name, commonName: month.commonName || '', days, season: month.season || 'Unspecified', skipWeekday: month.skipWeekday === true });
                 intercalary.filter(day => day.afterMonth === index && (!day.leapOnly || leap)).forEach(day => {
                     periods.push({ kind: 'intercalary', monthIndex: index, name: day.name, commonName: '', days: 1, season: day.season || month.season || 'Unspecified' });
                 });
@@ -21886,14 +22166,33 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function maximumWorldMinute(profile) {
-            return daysBeforeYear(profile, POLICY.almanac.maximumYear + 1) * MINUTES_PER_DAY - 1;
+            return daysBeforeYear(profile, POLICY.almanac.maximumYear + 1) * calendarMinutesPerDay(profile) - 1;
+        }
+
+        function weekdayDaysBefore(profile, year, periodIndex, day) {
+            let total = 0;
+            for (let current = POLICY.almanac.minimumYear; current < year; current++) {
+                total += periodsForYear(profile, current)
+                    .filter(period => period.skipWeekday !== true && period.kind !== 'intercalary')
+                    .reduce((sum, period) => sum + period.days, 0);
+            }
+            const periods = periodsForYear(profile, year);
+            total += periods.slice(0, periodIndex)
+                .filter(period => period.skipWeekday !== true && period.kind !== 'intercalary')
+                .reduce((sum, period) => sum + period.days, 0);
+            if (periods[periodIndex]?.skipWeekday !== true && periods[periodIndex]?.kind !== 'intercalary') {
+                total += Math.max(0, day - 1);
+            }
+            return total;
         }
 
         function resolveWorldMinute(profile, worldMinute) {
             const minute = Math.floor(Number(worldMinute));
+            const minutesPerDay = calendarMinutesPerDay(profile);
+            const minutesPerHour = calendarMinutesPerHour(profile);
             if (!Number.isFinite(minute) || minute < 0 || minute > maximumWorldMinute(profile)) return null;
-            const absoluteDay = Math.floor(minute / MINUTES_PER_DAY);
-            const minuteOfDay = minute % MINUTES_PER_DAY;
+            const absoluteDay = Math.floor(minute / minutesPerDay);
+            const minuteOfDay = minute % minutesPerDay;
             let remaining = absoluteDay;
             let year = POLICY.almanac.minimumYear;
             while (year <= POLICY.almanac.maximumYear) {
@@ -21903,6 +22202,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 year++;
             }
             if (year > POLICY.almanac.maximumYear) return null;
+            const dayOfYear = remaining;
             const periods = periodsForYear(profile, year);
             let period = periods[0];
             let periodIndex = 0;
@@ -21917,16 +22217,20 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const day = remaining + 1;
             const weekdayIndex = profile.id === 'harptos' && period.kind === 'month'
                 ? (day - 1) % profile.weekdays.length
-                : absoluteDay % profile.weekdays.length;
-            const weekday = period.kind === 'intercalary' ? 'Festival Day' : profile.weekdays[weekdayIndex];
+                : weekdayDaysBefore(profile, year, periodIndex, day) % profile.weekdays.length;
+            const weekday = period.kind === 'intercalary'
+                ? 'Festival Day'
+                : period.skipWeekday === true ? 'Feast Day' : profile.weekdays[weekdayIndex];
             const holidays = period.kind === 'month'
                 ? (profile.holidays || []).filter(holiday => holiday.monthIndex === period.monthIndex && holiday.day === day).map(holiday => holiday.name)
                 : [];
+            const rangeSeason = (profile.seasonRanges || []).find(range => dayOfYear >= range.start && dayOfYear <= range.end);
             return {
                 profileId: profile.id,
                 calendarName: profile.name,
                 worldMinute: minute,
                 absoluteDay,
+                dayOfYear,
                 year,
                 periodIndex,
                 periodKind: period.kind,
@@ -21935,9 +22239,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 day,
                 weekday,
                 holidays,
-                season: period.season,
-                hour: Math.floor(minuteOfDay / 60),
-                minute: minuteOfDay % 60,
+                season: rangeSeason?.name || period.season,
+                hour: Math.floor(minuteOfDay / minutesPerHour),
+                minute: minuteOfDay % minutesPerHour,
                 leapYear: isLeapYear(profile, year)
             };
         }
@@ -21947,11 +22251,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const day = Math.floor(Number(request.day));
             const hour = Math.floor(Number(request.hour));
             const minute = Math.floor(Number(request.minute));
+            const hoursPerDay = calendarHoursPerDay(profile);
+            const minutesPerHour = calendarMinutesPerHour(profile);
             if (!Number.isFinite(year) || year < POLICY.almanac.minimumYear || year > POLICY.almanac.maximumYear) {
                 return { ok: false, message: `Year must be ${POLICY.almanac.minimumYear}-${POLICY.almanac.maximumYear}.` };
             }
-            if (!Number.isFinite(hour) || hour < 0 || hour > 23 || !Number.isFinite(minute) || minute < 0 || minute > 59) {
-                return { ok: false, message: 'Hour must be 0-23 and minute must be 0-59.' };
+            if (!Number.isFinite(hour) || hour < 0 || hour >= hoursPerDay || !Number.isFinite(minute) || minute < 0 || minute >= minutesPerHour) {
+                return { ok: false, message: `Hour must be 0-${hoursPerDay - 1} and minute must be 0-${minutesPerHour - 1}.` };
             }
             const periods = periodsForYear(profile, year);
             const requestedPeriod = String(request.period || '').trim();
@@ -21966,7 +22272,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             const priorPeriodDays = periods.slice(0, periodIndex).reduce((sum, item) => sum + item.days, 0);
             const absoluteDay = daysBeforeYear(profile, year) + priorPeriodDays + day - 1;
-            return { ok: true, worldMinute: absoluteDay * MINUTES_PER_DAY + hour * 60 + minute };
+            return {
+                ok: true,
+                worldMinute: absoluteDay * calendarMinutesPerDay(profile) + hour * minutesPerHour + minute
+            };
         }
 
         function displayTime(value) {
@@ -22153,7 +22462,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const definition = draft.definition;
             const ordinaryDays = definition.months.reduce((sum, month) => sum + month.days, 0);
             const leapSuffix = definition.leapEvery ? `; leap day every ${definition.leapEvery} years` : '; no leap day';
-            return `${_sanitize(definition.name)} | ${definition.weekdays.length}-day week | ${definition.months.length} months | ${ordinaryDays + definition.intercalary.length} ordinary-year days${leapSuffix}`;
+            const feastPeriods = definition.months.filter(month => month.skipWeekday === true).length;
+            return `${_sanitize(definition.name)} | ${definition.weekdays.length}-day week | ${definition.months.length} periods (${feastPeriods} feast) | ${ordinaryDays + definition.intercalary.length} ordinary-year days | ${definition.hoursPerDay}-hour days, ${definition.minutesPerHour}-minute hours${leapSuffix}`;
         }
 
         function wayfarerStageControls(stage) {
@@ -22195,7 +22505,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (stage === 'identity') {
                 fields.push(
                     { label: '1. Calendar Name', value: `${_sanitize(definition.name)} ${GameAssist.createButton('Change Name', `!aa-wayfarer name --value "?{Calendar name|${definition.name}}"`)}` },
-                    { label: 'Starting Date', value: `${formatWayfarerStart(draft.startDate)}<br>${GameAssist.createButton('Change Starting Date', `!aa-wayfarer start --year ?{Starting year|${draft.startDate.year}} --period "?{Starting month or festival|${draft.startDate.period}}" --day ?{Starting day|${draft.startDate.day}} --hour ?{Starting hour 0-23|${draft.startDate.hour}} --minute ?{Starting minute 0-59|${draft.startDate.minute}}`)}` },
+                    { label: 'Clock', value: `${definition.hoursPerDay} hours per day; ${definition.minutesPerHour} minutes per hour<br>${GameAssist.createButton('Change Clock', `!aa-wayfarer clock --hours ?{Hours per day 1-48|${definition.hoursPerDay}} --minutes ?{Minutes per hour 1-120|${definition.minutesPerHour}}`)}` },
+                    { label: 'Starting Date', value: `${formatWayfarerStart(draft.startDate)}<br>${GameAssist.createButton('Change Starting Date', `!aa-wayfarer start --year ?{Starting year|${draft.startDate.year}} --period "?{Starting period|${draft.startDate.period}}" --day ?{Starting day|${draft.startDate.day}} --hour ?{Starting hour 0-${definition.hoursPerDay - 1}|${draft.startDate.hour}} --minute ?{Starting minute 0-${definition.minutesPerHour - 1}|${draft.startDate.minute}}`)}` },
                     { label: 'What This Means', value: modState.config.profileId === 'wayfarer' ? 'Editing the active Wayfarer calendar preserves the current elapsed fictional time. This starting date is used only when a new activation must deliberately reset time.' : 'The first activation begins at this fictional date. The currently active calendar is unchanged while you edit.' }
                 );
             } else if (stage === 'weekdays') {
@@ -22206,9 +22517,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 );
             } else if (stage === 'months') {
                 fields.push(
-                    { label: '3. Months', value: definition.months.map((month, index) => `${index + 1}. ${_sanitize(month.name)} (${month.days} days)`).join('<br>') },
-                    { label: 'Change The Year', value: GameAssist.createButton('Replace Months', `!aa-wayfarer months --value "?{Use Name:Days entries separated by commas|${definition.months.map(month => `${month.name}:${month.days}`).join(',')}}"`) },
-                    { label: 'Example', value: 'Deepwinter:31, Thawrise:27, Highsun:35' }
+                    { label: '3. Calendar Periods', value: definition.months.map((month, index) => `${index + 1}. ${_sanitize(month.name)} (${month.days} days${month.skipWeekday ? '; feast days do not advance the weekday' : ''})`).join('<br>') },
+                    { label: 'Change The Year', value: GameAssist.createButton('Replace Periods', `!aa-wayfarer months --value "?{Use Name:Days or Name:Days:Feast entries separated by commas|${definition.months.map(month => `${month.name}:${month.days}${month.skipWeekday ? ':Feast' : ''}`).join(',')}}"`) },
+                    { label: 'Example', value: 'Deepwinter:31, Midwinter Feast:5:Feast, Thawrise:27' }
                 );
             } else if (stage === 'intercalary') {
                 fields.push(
@@ -22247,7 +22558,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel(msg, activationReview ? 'Review Wayfarer Draft' : 'Wayfarer Draft Preview', [
                 { label: 'Draft', value: wayfarerOverview(draft) },
                 { label: 'Starting Date Preview', value: sample ? _sanitize(displayMoment(sample)) : 'Invalid starting date' },
-                { label: 'Months', value: definition.months.map((month, index) => `${index + 1}. ${_sanitize(month.name)} (${month.days})`).join('<br>') },
+                { label: 'Calendar Periods', value: definition.months.map((month, index) => `${index + 1}. ${_sanitize(month.name)} (${month.days}${month.skipWeekday ? ', Feast' : ''})`).join('<br>') },
                 { label: 'Festival and Leap Days', value: `${definition.intercalary.length ? definition.intercalary.map(day => _sanitize(day.name)).join(', ') : 'No annual festival days'}; ${definition.leapEvery ? `${_sanitize(definition.leapName)} every ${definition.leapEvery} years` : 'no leap day'}` },
                 { label: 'Holidays', value: definition.holidays.length ? definition.holidays.map(holiday => `${_sanitize(holiday.name)} (${_sanitize(definition.months[holiday.monthIndex]?.name)} ${holiday.day})`).join('<br>') : 'None' },
                 { label: 'Setup Check', value: status.errors.length ? _sanitize(status.errors.join(' ')) : (incomplete.length ? `Review these stages before activation: ${_sanitize(incomplete.join(', '))}.` : 'Ready to activate. The active calendar has not changed yet.') },
@@ -22263,9 +22574,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (![days, hours, minutes].every(Number.isFinite) || [days, hours, minutes].some(value => value < 0)) {
                 return { ok: false, message: 'Days, hours, and minutes must be zero or positive numbers.' };
             }
-            const totalMinutes = Math.floor(days * MINUTES_PER_DAY + hours * 60 + minutes);
+            const profile = profileFor();
+            const totalMinutes = Math.floor(days * calendarMinutesPerDay(profile) + hours * calendarMinutesPerHour(profile) + minutes);
             if (totalMinutes <= 0) return { ok: false, message: 'Choose an amount greater than zero.' };
-            if (totalMinutes > POLICY.almanac.maximumAdvanceDays * MINUTES_PER_DAY) {
+            if (totalMinutes > POLICY.almanac.maximumAdvanceDays * calendarMinutesPerDay(profile)) {
                 return { ok: false, message: `One change may not exceed ${POLICY.almanac.maximumAdvanceDays} days.` };
             }
             return { ok: true, totalMinutes };
@@ -22357,11 +22669,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const entries = String(raw || '').split(',').map(value => value.trim()).filter(Boolean);
             if (!entries.length || entries.length > POLICY.almanac.maximumMonths) return null;
             const months = entries.map((entry, index) => {
-                const match = entry.match(/^([^:]+):(\d+)$/);
+                const match = entry.match(/^([^:]+):(\d+)(?::(feast))?$/i);
                 if (!match) return null;
                 const days = Number(match[2]);
                 if (days < 1 || days > POLICY.almanac.maximumDaysPerMonth) return null;
-                return { name: boundedName(match[1], `Month ${index + 1}`), days, season: 'Unspecified' };
+                return {
+                    name: boundedName(match[1], `Period ${index + 1}`),
+                    days,
+                    season: 'Unspecified',
+                    skipWeekday: Boolean(match[3])
+                };
             });
             if (months.some(month => !month)) return null;
             if (months.reduce((sum, month) => sum + month.days, 0) > POLICY.almanac.maximumDaysPerYear) return null;
@@ -22558,8 +22875,20 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             let editedStage = null;
             if (action === 'name') {
                 const name = boundedName(args.value);
-                if (!name) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'Enter a calendar name.' }]);
+                if (!name) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'Enter a calendar name. The saved draft was not changed.' }]);
                 wayfarer.name = name;
+                editedStage = 'identity';
+            } else if (action === 'clock') {
+                const hoursPerDay = Math.floor(Number(args.hours));
+                const minutesPerHour = Math.floor(Number(args.minutes));
+                if (!Number.isFinite(hoursPerDay) || hoursPerDay < 1 || hoursPerDay > 48
+                    || !Number.isFinite(minutesPerHour) || minutesPerHour < 1 || minutesPerHour > 120) {
+                    return sendPanel(msg, 'Wayfarer Needs Attention', [
+                        { label: 'Problem', value: 'Hours per day must be 1-48 and minutes per hour must be 1-120. The saved draft was not changed.' }
+                    ]);
+                }
+                wayfarer.hoursPerDay = hoursPerDay;
+                wayfarer.minutesPerHour = minutesPerHour;
                 editedStage = 'identity';
             } else if (action === 'start') {
                 const requested = { year: args.year, period: args.period, day: args.day, hour: args.hour, minute: args.minute };
@@ -23159,14 +23488,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function astronomyContext(dayOffset = 0) {
             const config = normalizeAstronomyConfig();
             const baseMoment = timeAvailable() ? currentMoment() : null;
-            const moment = baseMoment ? resolveWorldMinute(profileFor(), baseMoment.worldMinute + Math.floor(Number(dayOffset) || 0) * MINUTES_PER_DAY) : null;
+            const moment = baseMoment ? resolveWorldMinute(profileFor(), baseMoment.worldMinute + Math.floor(Number(dayOffset) || 0) * calendarMinutesPerDay(profileFor())) : null;
             if (baseMoment && !moment) return null;
             const absoluteDay = moment ? moment.absoluteDay : config.manualAbsoluteDay + Math.floor(Number(dayOffset) || 0);
             const season = moment ? moment.season : config.manualSeason;
             const daylightHours = { Winter: 9, Spring: 12, Summer: 15, Autumn: 12 }[season] || 12;
             let seasonalEvent = null;
             if (moment && moment.absoluteDay > 0) {
-                const previousMoment = resolveWorldMinute(profileFor(), moment.worldMinute - MINUTES_PER_DAY);
+                const previousMoment = resolveWorldMinute(profileFor(), moment.worldMinute - calendarMinutesPerDay(profileFor()));
                 if (previousMoment && previousMoment.season !== moment.season) {
                     seasonalEvent = {
                         Spring: 'Vernal Equinox',
@@ -23904,7 +24233,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 delete runtime.rest.grants[grant.id];
                 return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'TimeAlmanac was turned off after this preview. Prepare a new preview so the rest and fictional-time result are explicit.' }, { label: 'Changes', value: 'None.' }]);
             }
-            const nextMinute = shouldAdvance ? runtime.time.worldMinute + Math.round(Number(grant.definition.hours) * 60) : null;
+            const nextMinute = shouldAdvance ? runtime.time.worldMinute + Math.round(Number(grant.definition.hours) * calendarMinutesPerHour(profileFor())) : null;
             if (shouldAdvance && !resolveWorldMinute(profileFor(), nextMinute)) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'The optional time advance would exceed the supported calendar range.' }, { label: 'Changes', value: 'None.' }]);
             const completed = [];
             try {
@@ -23937,7 +24266,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 characterIds: grant.plans.map(plan => plan.characterId),
                 characterNames: grant.plans.map(plan => plan.name),
                 writes: writes.length,
-                advancedMinutes: timeResult ? Math.round(Number(grant.definition.hours) * 60) : 0
+                advancedMinutes: timeResult ? Math.round(Number(grant.definition.hours) * calendarMinutesPerHour(profileFor())) : 0
             };
             runtime.rest.history.push(record);
             if (runtime.rest.history.length > POLICY.almanac.restHistoryLimit) runtime.rest.history.shift();
@@ -24282,6 +24611,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'environment', 'rest']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced AlmanacAssist to 1.1.1; rejected cancelled query values, restored the Solamnic Wayfarer starter calendar, and added profile-specific clocks, feast periods that do not advance weekdays, range-based seasons, and exact holiday dates.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the AlmanacAssist GM control screen.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.1.0 with persistent Wayfarer drafts, staged setup and previews, safe profile duplication, atomic activation, elapsed-time preservation, explicit reset fallback, one activation rollback point, and a complete custom-calendar manual.
     // Decision log:

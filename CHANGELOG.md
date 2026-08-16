@@ -51,6 +51,56 @@ GameAssist v2.0.0 remains one active development line in PR #81. EffectAssist 2.
 
 EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so existing campaigns upgrade without receiving new markers, conditions, HP writes, other sheet writes, attack rolls, fictional chronology, weather, or chat output until the GM deliberately enables them.
 
+### Post-smoke repair pass — 2026-08-16
+
+This pre-release repair pass advances EffectAssist to 2.4.1, ConcentrationAssist to 0.4.1, and AlmanacAssist to 1.1.1 without changing the GameAssist v2.0.0 release number or adding section tags. It addresses failures observed during the focused Roll20 acceptance pass while preserving the established module boundaries and v2.0.0 state contracts.
+
+#### EffectAssist application and 2014-sheet projection lifecycle
+
+- Makes **Application Review** optional and disabled by default. After the target and source are chosen, supported effects now apply immediately; the GM can restore the separate review screen through `!Effect-Settings` or `!Effect-Review on`.
+- Removes the routine concentration-replacement question. A new concentration effect from the same source now ends that source's prior concentration effect by default.
+- Adds a separately labeled advanced **Allow Multiple Concentration** option, disabled by default, for campaigns that intentionally use an exceptional rule.
+- Creates official-2014 repeating modifier rows and their activation fields in sheet-worker order. Newly applied Bless, Guidance, Warding Bond, and Haste projections no longer require a user to toggle the generated sheet checkbox before the first supported roll or AC calculation.
+- Deactivates generated modifier rows through sheet workers before removing their attributes. Ending an effect no longer leaves the character sheet's generated totals or roll queries using a removed GameAssist bonus.
+- Keeps Guidance's supported global skill projection because it functions through the same worker-safe path. Its explicit manual-use fallback remains for ability checks not represented by a supported sheet skill.
+- Gives Holy Weapon a marker distinct from Bless so two different active effects are not presented as the same token state.
+- Keeps Holy Weapon and Pass Without a Trace in the **Tracked Marker; Rules Stay Manual** catalog group, while Bless, Guidance, Warding Bond, and Haste appear under **Marker + Supported Sheet Automation**.
+- Ends an effect when every managed target marker or condition for that effect has been manually removed. That ending clears EffectAssist-owned source concentration and sheet projections. Removing only one marker from a multi-target effect remains repairable drift rather than ending the whole cast.
+- Keeps the **Effect Applied** result's direct **End Effect** action and shortens the default route by omitting an unnecessary intermediate confirmation.
+- Replaces the expiring player source-flow button used between source choice and target choice with a stateless, revalidated target command. A legitimate target button no longer becomes inert solely because its preceding source-choice capability was consumed.
+- Expands EffectAssist settings, status, documentation, and acceptance checks for the new defaults and advanced option.
+
+#### ConcentrationAssist HP-loss matching
+
+- Limits HealthService-driven concentration matching to the HP event token, the event page, and the Player Ribbon page instead of treating every stored representation of a character as an equal candidate.
+- Prefers the exact event token when it is concentrating, then uses a deterministic current-page Objects-layer or GM-layer representation.
+- Ignores stale and off-page concentration markers when resolving the supported HP-loss offer.
+- Stops emitting the multiple-token ambiguity warning for a character whose current-page representation is unambiguous.
+- Produces no concentration offer when the affected character has no concentrating representation on the relevant page.
+
+#### HealthService-facing language and disabled-module recovery
+
+- Replaces repeated raw `unknown` explanations with the reader-facing phrase **Observed in Roll20; source not identified**.
+- Explains that a supported observed decrease can still drive configured health-band notices or concentration offers without claiming an attacker, damage type, resistance result, or temporary-HP history.
+- Adds a guarded suite-level recovery response for a command owned by a disabled or inactive module. For example, `!attack` now offers an Enable action and routes back to module and suite controls instead of appearing to do nothing.
+- Leaves active command routes authoritative, so the recovery listener does not duplicate normal module responses.
+
+#### AlmanacAssist Wayfarer calendar repair
+
+- Replaces the generic Wayfarer starter draft with the campaign's Solamnic Calendar definition, including its 20-hour day, 75-minute hours, Soladain-through-Stellara weekday cycle, named periods, feast periods, holidays, and seasonal ranges.
+- Adds custom hours-per-day and minutes-per-hour fields and uses those values consistently for date conversion, advancement, astronomy offsets, duration evidence, and RestAlmanac time changes.
+- Adds feast-period support through the `Name:Days:Feast` period syntax. Feast days are displayed as feast days and do not advance the ordinary weekday cycle.
+- Adds bounded custom seasonal ranges and applies them when the active Wayfarer calendar defines them.
+- Rejects missing or cancelled text-query values instead of normalizing Roll20's flag-like placeholder to the string `true`. Cancelling **Change Name** therefore preserves the existing draft.
+- Migrates only the exact earlier generic placeholder draft to the new starter definition. Existing valid campaign-edited Wayfarer calendars remain authoritative.
+- Advances the Wayfarer draft and fictional-time state schemas to version 2 while preserving valid existing configuration.
+
+#### Verification and release gate
+
+- Keeps `GameAssist`, `GameAssist.js`, and `GameAssist-v2.0.0` as identical release artifacts.
+- Adds focused Roll20 checks for first-roll sheet activation, post-cleanup roll behavior, default and advanced concentration policy, target-marker cleanup, duplicate-token concentration matching, disabled-module recovery, cancelled Wayfarer queries, custom clocks, feast periods, and the Solamnic starter calendar.
+- JavaScript syntax and MECHSUITS framing are verified before the branch update. The focused Roll20 acceptance checks remain the release gate for these sandbox-specific sheet-worker and marker behaviors.
+
 ### Suite navigation and module return paths
 
 - Adds `!GA-GM` and the equivalent `!GA-DM` as the private suite-level Game Master control center for all fifteen feature modules.
