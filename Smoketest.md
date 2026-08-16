@@ -749,6 +749,7 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
    - Weekdays: `Moonday,Towerday,Marketday,Hearthday,Starday`
    - Periods: `Deepwinter:31,Founding Feast:2:Feast,Thawrise:27,Highsun:35,Harvestfall:29`
    - Additional festival days: none
+   - Confirm the period replacement notice explains that prior festival days, leap rules, holidays, and seasonal ranges were cleared rather than silently remapped.
    - Leap rule: `Starwake`, every `4` years, after month `4`
    - Holidays: `Oath Day:1:1,River Fair:3:12`
 4. Between two stages, close the panel and run `!aa-wayfarer` again. Confirm the draft and progress return unchanged.

@@ -90,6 +90,7 @@ This pre-release repair pass advances EffectAssist to 2.4.1, ConcentrationAssist
 - Replaces the generic Wayfarer starter draft with the campaign's Solamnic Calendar definition, including its 20-hour day, 75-minute hours, Soladain-through-Stellara weekday cycle, named periods, feast periods, holidays, and seasonal ranges.
 - Adds custom hours-per-day and minutes-per-hour fields and uses those values consistently for date conversion, advancement, astronomy offsets, duration evidence, and RestAlmanac time changes.
 - Adds feast-period support through the `Name:Days:Feast` period syntax. Feast days are displayed as feast days and do not advance the ordinary weekday cycle.
+- Makes complete period replacement clear index-based festival days, leap placement, holidays, and seasonal ranges, marks those stages for review, and explains the reset in the setup panel instead of silently remapping dates.
 - Adds bounded custom seasonal ranges and applies them when the active Wayfarer calendar defines them.
 - Rejects missing or cancelled text-query values instead of normalizing Roll20's flag-like placeholder to the string `true`. Cancelling **Change Name** therefore preserves the existing draft.
 - Migrates only the exact earlier generic placeholder draft to the new starter definition. Existing valid campaign-edited Wayfarer calendars remain authoritative.

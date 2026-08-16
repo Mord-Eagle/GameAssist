@@ -1037,6 +1037,8 @@ Each screen shows the current draft, setup progress, and clear **Back**, **Save 
 
 **Starting from an existing calendar:** A fresh Wayfarer draft begins with the complete Solamnic campaign calendar: its 20-hour clock, 75-minute hours, named weekdays, feast periods, holidays, and seasonal ranges. The setup home can also copy Standard, Solamnic, Harptos, or the saved Wayfarer definition into the draft. The copy is fully editable and does not become active until you confirm it. Wayfarer supports one repeating leap interval, so a Standard copy uses a four-year leap day and does not reproduce Gregorian century exceptions.
 
+**Replacing the complete period list:** Calendar dates depend on period positions. To prevent an old holiday or leap day from silently moving to an unrelated new period, replacing the full list clears the draft's previous festival days, leap rule, holidays, and seasonal ranges and marks those stages for review. The setup screen explains what was cleared; re-enter only the dates that belong to the new year.
+
 **Editing an active Wayfarer calendar:** GameAssist preserves elapsed fictional time and shows how the revised calendar interprets that moment. If the draft cannot represent the current elapsed time, activation stops without changing anything and offers a separately labeled option to restart at the draft's chosen starting date.
 
 **Undo and recovery:** **Cancel Draft** removes only unactivated edits. Every successful activation also keeps one previous calendar-and-time checkpoint, available through **Restore Previous Activation** until another activation replaces it.

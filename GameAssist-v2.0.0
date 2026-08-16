@@ -21548,7 +21548,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('AlmanacAssist', function() {
         const MODULE_NAME = 'AlmanacAssist';
-        const MODULE_VERSION = '1.1.0';
+        const MODULE_VERSION = '1.1.1';
         const TIME_STATE_SCHEMA_VERSION = 2;
         const WAYFARER_DRAFT_SCHEMA_VERSION = 2;
         const CLIMATE_STATE_SCHEMA_VERSION = 1;
@@ -22492,7 +22492,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
-        function showWayfarerStage(msg, requestedStage) {
+        function showWayfarerStage(msg, requestedStage, notice = '') {
             if (!requireGm(msg)) return;
             const stage = requestedStage === 'review' ? 'review' : (WAYFARER_STAGES.includes(requestedStage) ? requestedStage : 'identity');
             const draft = ensureWayfarerDraft();
@@ -22502,6 +22502,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Setup Progress', value: `${wayfarerDraftStatus(draft).reviewedCount}/${WAYFARER_STAGES.length} stages reviewed` },
                 { label: 'Draft Preview', value: wayfarerOverview(draft) }
             ];
+            if (notice) fields.unshift({ label: 'Updated', value: _sanitize(notice) });
             if (stage === 'identity') {
                 fields.push(
                     { label: '1. Calendar Name', value: `${_sanitize(definition.name)} ${GameAssist.createButton('Change Name', `!aa-wayfarer name --value "?{Calendar name|${definition.name}}"`)}` },
@@ -22873,6 +22874,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const draft = copy(ensureWayfarerDraft());
             const wayfarer = copy(draft.definition);
             let editedStage = null;
+            let editNotice = '';
             if (action === 'name') {
                 const name = boundedName(args.value);
                 if (!name) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'Enter a calendar name. The saved draft was not changed.' }]);
@@ -22909,6 +22911,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const startingMonthIndex = wayfarer.months.findIndex(month => month.name.toLowerCase() === String(draft.startDate.period || '').toLowerCase());
                 wayfarer.months = months;
                 if (startingMonthIndex >= 0 && months[startingMonthIndex]) draft.startDate.period = months[startingMonthIndex].name;
+                // CHOICE: replacing the complete year clears index-based dependents - ALT: silently remap by position; REJECTED: dates could move to unrelated periods.
+                wayfarer.intercalary = [];
+                wayfarer.holidays = [];
+                wayfarer.seasonRanges = [];
+                wayfarer.leapEvery = 0;
+                wayfarer.leapName = 'Leap Day';
+                wayfarer.leapAfterMonth = Math.max(0, months.length - 1);
+                draft.reviewed.intercalary = false;
+                draft.reviewed.leap = false;
+                draft.reviewed.holidays = false;
+                editNotice = 'Replacing the calendar periods cleared the previous festival days, leap rule, holidays, and seasonal ranges so dates were not silently moved. Re-enter any that belong to the new year.';
                 editedStage = 'months';
             } else if (action === 'intercalary') {
                 const days = parseIntercalary(args.value, wayfarer.months.length);
@@ -22944,7 +22957,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             draft.reviewed[editedStage] = true;
             draft.updatedAt = isoNow();
             modState.config.wayfarerDraft = normalizeWayfarerDraft(draft);
-            showWayfarerStage(msg, editedStage);
+            showWayfarerStage(msg, editedStage, editNotice);
         }
 
         function clampNumber(value, minimum, maximum, fallback) {
@@ -24440,16 +24453,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h2>Everyday Use</h2>',
                 '<p><code>!Almanac</code> or <code>!aa</code> opens the GM controls. <code>!date</code>, <code>!time</code>, <code>!cal</code>, <code>!clim</code>, <code>!astro</code>, <code>!weather</code>, <code>!enviro</code>, and <code>!rest</code> open focused views.</p>',
                 '<h2>Calendars</h2>',
-                '<p>Standard provides familiar months and Gregorian leap years. Solamnic provides the current twelve 28-day Solamnic months and seven named weekdays. Harptos provides twelve 30-day months, five annual festival days, and Shieldmeet every four years. Wayfarer is campaign-editable through chat controls, including weekdays, months, festival days, dated holidays, and leap rules.</p>',
+                '<p>Standard provides familiar months and Gregorian leap years. Solamnic provides the built-in twelve 28-day profile and seven named weekdays. Harptos provides twelve 30-day months, five annual festival days, and Shieldmeet every four years. Wayfarer is campaign-editable through chat controls, including its clock, weekdays, calendar periods, feast periods, festival days, dated holidays, seasonal ranges, and leap rules.</p>',
                 '<h2>Building a Wayfarer Calendar</h2>',
                 '<p>Open <code>!aa-wayfarer</code>. Wayfarer keeps a saved draft separate from the active campaign calendar, so setup work can be stopped and resumed without changing the date seen by players.</p>',
-                '<ol><li>Name the calendar and choose the date that a first activation should begin on.</li><li>Enter weekday names in their repeating order.</li><li>Enter months as <code>Name:Days</code>, separated by commas.</li><li>Add optional festival days as <code>Name:AfterMonthNumber</code>. A festival day sits between months and does not use an ordinary weekday.</li><li>Choose whether a named leap day appears every 2-100 years.</li><li>Add optional holidays as <code>Name:MonthNumber:Day</code>. A holiday names a normal date; it does not add a day.</li><li>Review the preview, then activate deliberately.</li></ol>',
+                '<ol><li>Name the calendar, choose the first activation date, and set the hours per day and minutes per hour.</li><li>Enter weekday names in their repeating order.</li><li>Enter calendar periods as <code>Name:Days</code>, separated by commas. Use <code>Name:Days:Feast</code> when those days should not advance the ordinary weekday cycle.</li><li>Add optional festival days as <code>Name:AfterPeriodNumber</code>. A festival day sits between periods and does not use an ordinary weekday.</li><li>Choose whether a named leap day appears every 2-100 years.</li><li>Add optional holidays as <code>Name:PeriodNumber:Day</code>. A holiday names a normal date; it does not add a day.</li><li>Review the preview, then activate deliberately.</li></ol>',
                 '<p>Every setup screen shows the saved choices, current progress, a preview, and Back, Save Draft, and Continue controls. Invalid entries leave both the active calendar and the prior valid draft unchanged.</p>',
                 '<h3>Worked Example</h3>',
-                '<p>Create a calendar named <strong>River Kingdom Calendar</strong>. Use weekdays <code>Moonday,Towerday,Marketday,Hearthday,Starday</code>; months <code>Deepwinter:31,Thawrise:27,Highsun:35,Harvestfall:29</code>; festival day <code>Founding Feast:2</code>; leap day <code>Starwake</code> every 4 years after month 4; and holidays <code>Oath Day:1:1,River Fair:3:12</code>. Review all six stages, preview the starting date, and activate.</p>',
+                '<p>Create a calendar named <strong>River Kingdom Calendar</strong> with 20 hours per day and 75 minutes per hour. Use weekdays <code>Moonday,Towerday,Marketday,Hearthday,Starday</code>; periods <code>Deepwinter:31,Founding Feast:2:Feast,Thawrise:27,Highsun:35,Harvestfall:29</code>; leap day <code>Starwake</code> every 4 years after period 4; and holidays <code>Oath Day:1:1,River Fair:3:12</code>. Review every stage, preview the starting date, and activate.</p>',
                 '<h3>Editing, Rollback, and Recovery</h3>',
-                '<p>Edit any one setup stage without rebuilding the others. When Wayfarer is already active, activation preserves elapsed fictional time and shows the reinterpreted date. If the revised calendar cannot represent that elapsed time, activation is refused and offers a separate, clearly labeled reset-to-draft-start choice. The latest activation keeps one rollback point containing the previous calendar and fictional time. Cancel Draft abandons only unactivated work; Restore Previous Activation rolls back the most recent activation.</p>',
-                '<p>Use Start From A Copy to duplicate Standard, Solamnic, Harptos, or the saved Wayfarer definition. Copies are ordinary editable drafts; no campaign setting is forced as a default. Wayfarer supports one repeating leap interval, so a Standard copy uses a four-year leap day and does not reproduce Gregorian century exceptions.</p>',
+                '<p>Most setup stages can be edited independently. Replacing the complete period list deliberately clears index-based festival days, leap placement, holidays, and seasonal ranges so they are not silently moved to unrelated dates; the setup screen identifies the cleared stages for re-entry. When Wayfarer is already active, activation preserves elapsed fictional time and shows the reinterpreted date. If the revised calendar cannot represent that elapsed time, activation is refused and offers a separate, clearly labeled reset-to-draft-start choice. The latest activation keeps one rollback point containing the previous calendar and fictional time. Cancel Draft abandons only unactivated work; Restore Previous Activation rolls back the most recent activation.</p>',
+                '<p>A fresh Wayfarer draft starts with the campaign Solamnic Calendar, including its 20-hour clock, 75-minute hours, named weekdays, feast periods, holidays, and seasonal ranges. Use Start From A Copy to replace the draft with Standard, built-in Solamnic, Harptos, or the saved Wayfarer definition. Wayfarer supports one repeating leap interval, so a Standard copy uses a four-year leap day and does not reproduce Gregorian century exceptions.</p>',
                 '<h2>Climate and Astronomy</h2>',
                 '<p>ClimateAlmanac manages bounded regions, parent inheritance, editable built-in starting profiles, custom profiles, overrides, and a manual season fallback. AstronomyAlmanac calculates reproducible configurable moon phases, future phase/daylight forecasts, and deterministic season boundaries from TimeAlmanac when available or explicit manual context when it is not. Its bounded weighted rare-event catalog remains separate from deterministic results.</p>',
                 '<h2>Weather and Environment</h2>',
@@ -24611,7 +24624,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'environment', 'rest']
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Advanced AlmanacAssist to 1.1.1; rejected cancelled query values, restored the Solamnic Wayfarer starter calendar, and added profile-specific clocks, feast periods that do not advance weekdays, range-based seasons, and exact holiday dates.
+    // Changed (v2.0.0): Advanced AlmanacAssist to 1.1.1; rejected cancelled query values, restored the Solamnic Wayfarer starter calendar, added profile-specific clocks, feast periods that do not advance weekdays, range-based seasons, and exact holiday dates, and made complete period replacement visibly clear index-based dependent dates instead of silently remapping them.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the AlmanacAssist GM control screen.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.1.0 with persistent Wayfarer drafts, staged setup and previews, safe profile duplication, atomic activation, elapsed-time preservation, explicit reset fallback, one activation rollback point, and a complete custom-calendar manual.
     // Decision log:
