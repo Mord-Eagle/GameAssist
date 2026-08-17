@@ -21537,7 +21537,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   guarantees: ["Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Optional Almanac integrations improve context without becoming hidden prerequisites","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AlmanacAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.1.1", time_state_schema_version: 2, wayfarer_draft_schema_version: 2, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 1, rest_state_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.1.2", time_state_schema_version: 2, wayfarer_draft_schema_version: 2, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 1, rest_state_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // AlmanacAssist contains six independently toggleable internal submodules behind
@@ -21548,7 +21548,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('AlmanacAssist', function() {
         const MODULE_NAME = 'AlmanacAssist';
-        const MODULE_VERSION = '1.1.1';
+        const MODULE_VERSION = '1.1.2';
         const TIME_STATE_SCHEMA_VERSION = 2;
         const WAYFARER_DRAFT_SCHEMA_VERSION = 2;
         const CLIMATE_STATE_SCHEMA_VERSION = 1;
@@ -21590,7 +21590,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             Object.freeze({ name: 'Feast of the Moon', afterMonth: 10, season: 'Autumn' })
         ]);
         const DEFAULT_WAYFARER = Object.freeze({
-            name: 'Solamnic Calendar',
+            name: 'Wayfarer Calendar',
             hoursPerDay: 20,
             minutesPerHour: 75,
             weekdays: Object.freeze([
@@ -21894,6 +21894,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             };
         }
 
+        /**
+         * isPriorWayfarerStarter -- Recognize only the untouched pre-briefing starter.
+         * Context: the earlier v2.0.0 draft used the correct calendar math under the
+         * misleading name "Solamnic Calendar".
+         * Inputs: one saved Wayfarer definition.
+         * Outputs: true only when every normalized starter field still matches.
+         * Invariants: valid campaign-edited calendars are never selected by name alone.
+         */
+        function isPriorWayfarerStarter(raw) {
+            if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return false;
+            const prior = copy(DEFAULT_WAYFARER);
+            prior.name = 'Solamnic Calendar';
+            return JSON.stringify(normalizeWayfarer(raw)) === JSON.stringify(normalizeWayfarer(prior));
+        }
+
         const savedWayfarer = modState.config.wayfarer;
         const legacyPlaceholder = savedWayfarer
             && savedWayfarer.name === 'Wayfarer'
@@ -21902,8 +21917,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             && Array.isArray(savedWayfarer.months)
             && savedWayfarer.months.length === 12
             && savedWayfarer.months.every((month, index) => month?.name === `Month ${index + 1}` && Number(month?.days) === 30);
-        modState.config.wayfarer = normalizeWayfarer(legacyPlaceholder ? copy(DEFAULT_WAYFARER) : savedWayfarer);
+        const priorWayfarerStarter = isPriorWayfarerStarter(savedWayfarer);
+        modState.config.wayfarer = normalizeWayfarer(
+            legacyPlaceholder || priorWayfarerStarter ? copy(DEFAULT_WAYFARER) : savedWayfarer
+        );
         if (legacyPlaceholder) modState.config.wayfarerDraft = null;
+        if (isPriorWayfarerStarter(modState.config.wayfarerDraft?.definition)) {
+            const migratedDraft = copy(modState.config.wayfarerDraft);
+            migratedDraft.definition = copy(DEFAULT_WAYFARER);
+            modState.config.wayfarerDraft = migratedDraft;
+        }
         modState.config.wayfarerDraft = normalizeWayfarerDraft(modState.config.wayfarerDraft);
         if (!['standard', 'solamnic', 'harptos', 'wayfarer'].includes(String(modState.config.profileId || '').toLowerCase())) {
             modState.config.profileId = 'standard';
@@ -22463,7 +22486,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const ordinaryDays = definition.months.reduce((sum, month) => sum + month.days, 0);
             const leapSuffix = definition.leapEvery ? `; leap day every ${definition.leapEvery} years` : '; no leap day';
             const feastPeriods = definition.months.filter(month => month.skipWeekday === true).length;
-            return `${_sanitize(definition.name)} | ${definition.weekdays.length}-day week | ${definition.months.length} periods (${feastPeriods} feast) | ${ordinaryDays + definition.intercalary.length} ordinary-year days | ${definition.hoursPerDay}-hour days, ${definition.minutesPerHour}-minute hours${leapSuffix}`;
+            const namedMonths = definition.months.length - feastPeriods;
+            return `${_sanitize(definition.name)} | ${definition.weekdays.length}-day week | ${definition.months.length} periods (${namedMonths} months + ${feastPeriods} festivals) | ${ordinaryDays + definition.intercalary.length} ordinary-year days | ${definition.hoursPerDay}-hour days, ${definition.minutesPerHour}-minute hours${leapSuffix}`;
         }
 
         function wayfarerStageControls(stage) {
@@ -24454,6 +24478,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<p><code>!Almanac</code> or <code>!aa</code> opens the GM controls. <code>!date</code>, <code>!time</code>, <code>!cal</code>, <code>!clim</code>, <code>!astro</code>, <code>!weather</code>, <code>!enviro</code>, and <code>!rest</code> open focused views.</p>',
                 '<h2>Calendars</h2>',
                 '<p>Standard provides familiar months and Gregorian leap years. Solamnic provides the built-in twelve 28-day profile and seven named weekdays. Harptos provides twelve 30-day months, five annual festival days, and Shieldmeet every four years. Wayfarer is campaign-editable through chat controls, including its clock, weekdays, calendar periods, feast periods, festival days, dated holidays, seasonal ranges, and leap rules.</p>',
+                '<h3>Default Wayfarer Calendar</h3>',
+                '<p>The campaign starter follows a 460-day year with a ten-day week, twenty hours per day, and seventy-five minutes per hour. Its twelve months are Newkolt (30 days), Deepkolt (40), Brookgreen (30), Yurthgreen (40), Fleurgreen (30), Holmswelt (40), Fierswelt (40), Paleswelt (30), Reapember (30), Gildember (40), Darkember (30), and Frostkolt (40).</p>',
+                '<p>Five festival periods stand between those months and do not advance the ordinary weekday cycle: Celestia\'s Embrace (15 days at the transition between years), Meltwater\'s Merriment (5 days after Deepkolt), Verdant Rebirth (5 days after Brookgreen), Starwatch (10 days after Fleurgreen), and Glowfest (5 days after Reapember).</p>',
+                '<p>Vernalrise runs from Meltwater\'s Merriment 1 through Starwatch 5; Summertide from Starwatch 6 through Paleswelt 30; Leafturn from Reapember 1 through Frostkolt 10; and Frosthold from Frostkolt 11 through Deepkolt 40 across the year boundary. The dated observances are the Vernal Equinox on Brookgreen 12, Summer Solstice on Starwatch 6, Autumnal Equinox on Reapember 1, and Winter Solstice on Frostkolt 11.</p>',
+                '<p>The customary flow of the day is First Light (1st-2nd Hour), Morningtide (3rd-4th), Highsun (5th-8th), Waning Hours (9th-11th), Evening\'s Crest (12th-14th), Nightfall (15th-16th), and Deep Night (17th-20th). Dawn falls around the 2nd Hour, midday around the 7th, dusk around the 12th, and midnight around the 17th.</p>',
                 '<h2>Building a Wayfarer Calendar</h2>',
                 '<p>Open <code>!aa-wayfarer</code>. Wayfarer keeps a saved draft separate from the active campaign calendar, so setup work can be stopped and resumed without changing the date seen by players.</p>',
                 '<ol><li>Name the calendar, choose the first activation date, and set the hours per day and minutes per hour.</li><li>Enter weekday names in their repeating order.</li><li>Enter calendar periods as <code>Name:Days</code>, separated by commas. Use <code>Name:Days:Feast</code> when those days should not advance the ordinary weekday cycle.</li><li>Add optional festival days as <code>Name:AfterPeriodNumber</code>. A festival day sits between periods and does not use an ordinary weekday.</li><li>Choose whether a named leap day appears every 2-100 years.</li><li>Add optional holidays as <code>Name:PeriodNumber:Day</code>. A holiday names a normal date; it does not add a day.</li><li>Review the preview, then activate deliberately.</li></ol>',
@@ -24462,7 +24491,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<p>Create a calendar named <strong>River Kingdom Calendar</strong> with 20 hours per day and 75 minutes per hour. Use weekdays <code>Moonday,Towerday,Marketday,Hearthday,Starday</code>; periods <code>Deepwinter:31,Founding Feast:2:Feast,Thawrise:27,Highsun:35,Harvestfall:29</code>; leap day <code>Starwake</code> every 4 years after period 4; and holidays <code>Oath Day:1:1,River Fair:3:12</code>. Review every stage, preview the starting date, and activate.</p>',
                 '<h3>Editing, Rollback, and Recovery</h3>',
                 '<p>Most setup stages can be edited independently. Replacing the complete period list deliberately clears index-based festival days, leap placement, holidays, and seasonal ranges so they are not silently moved to unrelated dates; the setup screen identifies the cleared stages for re-entry. When Wayfarer is already active, activation preserves elapsed fictional time and shows the reinterpreted date. If the revised calendar cannot represent that elapsed time, activation is refused and offers a separate, clearly labeled reset-to-draft-start choice. The latest activation keeps one rollback point containing the previous calendar and fictional time. Cancel Draft abandons only unactivated work; Restore Previous Activation rolls back the most recent activation.</p>',
-                '<p>A fresh Wayfarer draft starts with the campaign Solamnic Calendar, including its 20-hour clock, 75-minute hours, named weekdays, feast periods, holidays, and seasonal ranges. Use Start From A Copy to replace the draft with Standard, built-in Solamnic, Harptos, or the saved Wayfarer definition. Wayfarer supports one repeating leap interval, so a Standard copy uses a four-year leap day and does not reproduce Gregorian century exceptions.</p>',
+                '<p>A fresh Wayfarer draft starts with the campaign Wayfarer Calendar, including its 20-hour clock, 75-minute hours, named weekdays, twelve months, five festival periods, holidays, seasonal ranges, and documented daily rhythm. Use Start From A Copy to replace the draft with Standard, built-in Solamnic, Harptos, or the saved Wayfarer definition. Wayfarer supports one repeating leap interval, so a Standard copy uses a four-year leap day and does not reproduce Gregorian century exceptions.</p>',
                 '<h2>Climate and Astronomy</h2>',
                 '<p>ClimateAlmanac manages bounded regions, parent inheritance, editable built-in starting profiles, custom profiles, overrides, and a manual season fallback. AstronomyAlmanac calculates reproducible configurable moon phases, future phase/daylight forecasts, and deterministic season boundaries from TimeAlmanac when available or explicit manual context when it is not. Its bounded weighted rare-event catalog remains separate from deterministic results.</p>',
                 '<h2>Weather and Environment</h2>',
@@ -24624,7 +24653,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'environment', 'rest']
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Advanced AlmanacAssist to 1.1.1; rejected cancelled query values, restored the Solamnic Wayfarer starter calendar, added profile-specific clocks, feast periods that do not advance weekdays, range-based seasons, and exact holiday dates, and made complete period replacement visibly clear index-based dependent dates instead of silently remapping them.
+    // Changed (v2.0.0): Advanced AlmanacAssist to 1.1.2; aligned the untouched starter and saved draft with the campaign's Wayfarer Calendar briefing, retained its exact 460-day calculations, clarified the twelve-month and five-festival structure, documented the daily rhythm, and preserved campaign-edited definitions through exact-match migration.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the AlmanacAssist GM control screen.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.1.0 with persistent Wayfarer drafts, staged setup and previews, safe profile duplication, atomic activation, elapsed-time preservation, explicit reset fallback, one activation rollback point, and a complete custom-calendar manual.
     // Decision log:
@@ -24632,6 +24661,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Preserve elapsed fictional minutes while editing an active Wayfarer calendar - ALT: silently apply the draft starting date; REJECTED: calendar-definition maintenance must not unexpectedly move campaign chronology.
     //   CHOICE: Retain one complete pre-activation rollback point - ALT: persist every calendar body indefinitely; REJECTED: one recovery point is understandable and bounded while chronology history retains the durable event trail.
     // Prior notes:
+    //   v2.0.0 / AlmanacAssist 1.1.1: Rejected cancelled query values, restored the campaign calendar data, added profile-specific clocks, feast periods that do not advance weekdays, range-based seasons, and exact holiday dates, and made complete period replacement visibly clear index-based dependent dates instead of silently remapping them.
     //   v2.0.0 / AlmanacAssist 1.0.0: Routed supported RestAlmanac HP restoration and rollback through HealthService with producer/operation identity and verified healing/synchronization evidence while preserving the complete preview and transaction rollback contract.
     //   CHOICE: Store elapsed fictional minutes and derive calendar labels - ALT: store one profile-specific month/day tuple; REJECTED: a tuple would become ambiguous or destructive when the GM changes calendar profiles.
     //   CHOICE: Publish one semantic event for a large jump - ALT: replay every elapsed minute or day; REJECTED: large advances must remain bounded and consumers need committed state, not simulated history spam.

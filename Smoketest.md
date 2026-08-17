@@ -740,7 +740,7 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 
 **Skip when:** Skip during troubleshooting only when the campaign deliberately uses Standard, Solamnic, or Harptos. Do not skip for Issue #89 or v2.0.0 release acceptance.
 
-1. Run `!aa-wayfarer`. Note the separately labeled **Active Calendar**, **Current Fictional Date**, and **Saved Draft**. On a fresh state, confirm the draft is the Solamnic Calendar with a 20-hour day, 75-minute hour, Soladain through Stellara weekdays, its named periods, feast days, holidays, and seasonal ranges.
+1. Run `!aa-wayfarer`. Note the separately labeled **Active Calendar**, **Current Fictional Date**, and **Saved Draft**. On a fresh state, confirm the draft is named **Wayfarer Calendar** and reports a 10-day week, 17 periods (**12 months + 5 festivals**), 460 ordinary-year days, a 20-hour day, and 75-minute hours. Confirm the weekday list runs from Soladain through Stellara and the periods begin with Celestia's Embrace, Newkolt, and Deepkolt.
 2. Click **Change Name**, cancel the Roll20 query without entering a value, and reopen `!aa-wayfarer`. Pass when the name is unchanged and is never set to `true`.
 3. Click **Begin Setup** and build this disposable example through the guided screens:
    - Name: `River Kingdom Calendar`
@@ -758,9 +758,9 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 7. Review every stage, then activate. Confirm the calendar becomes active at the reviewed starting date and the prior calendar is offered as one rollback point.
 8. Change one period length in the draft and activate again. Confirm the result says elapsed fictional time was preserved rather than moving to the draft starting date.
 9. Use **Start From A Copy** with Harptos. Confirm only the saved draft changes. Use **Cancel Draft** and confirm the active calendar remains unchanged.
-10. Create or update `!Almanac-Manual`. Confirm its **Building a Wayfarer Calendar** section explains every calendar concept, the worked example, editing, rollback, and recovery.
+10. Create or update `!Almanac-Manual`. Confirm its **Default Wayfarer Calendar** section lists the twelve months, five festivals, exact season and equinox/solstice boundaries, and the seven daily periods from First Light through Deep Night. Confirm **Building a Wayfarer Calendar** still explains every calendar concept, the worked example, editing, rollback, and recovery.
 
-**Pass when:** no setup edit changes the live calendar before activation; progress survives closing the menu and a sandbox restart; invalid input causes no partial change; preview is readable; first activation uses the chosen starting date; active-definition edits preserve elapsed fictional time or stop with a clear reset warning; duplication affects only the draft; and discard/rollback controls restore exactly the state they describe.
+**Pass when:** the fresh starter matches the Wayfarer briefing; no setup edit changes the live calendar before activation; progress survives closing the menu and a sandbox restart; invalid input causes no partial change; preview is readable; first activation uses the chosen starting date; active-definition edits preserve elapsed fictional time or stop with a clear reset warning; duplication affects only the draft; and discard/rollback controls restore exactly the state they describe.
 
 ### ClimateAlmanac
 
