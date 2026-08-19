@@ -462,6 +462,16 @@ This pre-release repair pass advances EffectAssist to 2.4.1, ConcentrationAssist
 - Changes calendar-profile confirmation to ask explicitly for confirmation and state that elapsed calendar time is preserved.
 - Keeps invalid calendar edits atomic and preserves the separate draft, explicit activation, elapsed-time behavior, and one rollback point established by AlmanacAssist 1.1.x.
 
+### Almanac documentation and MECHSUITS consistency repair
+
+- Corrects the executable's current-release banner and module inventory to identify AlmanacAssist 1.2.0 and ConfigUI 0.2.5 instead of the superseded 1.1.1 and 0.2.4 checkpoints.
+- Corrects the README's current module table, release gate, and embedded v2.0.0 history, and updates the roadmap's Issue #89 checkpoint to describe the direct Wayfarer Calendar Manager.
+- Preserves AlmanacAssist 1.0.0, 1.1.0, 1.1.1, and 1.1.2 notes as labeled historical context rather than erasing or relabeling earlier implementation decisions.
+- Adds inline contracts for calendar-date offset conversion, seasonal-range reconstruction and validation, current moon summaries, and focused command normalization.
+- Expands AlmanacAssist's MECHSUITS decision log to record direct-versus-guided editing, cross-year seasonal storage, Astronomy ownership of moon data, command-only draft recovery, and alias reuse of existing handlers.
+- Records the related ConfigUI, command-interface, and shared-utility decisions for service-first alphabetical grouping and bounded chat summaries while retaining complete snapshot evidence.
+- Keeps `GameAssist`, `GameAssist-v2.0.0`, and `GameAssist.js` byte-identical after the correction.
+
 ### ClimateAlmanac
 
 - Adds bounded built-in temperate, arctic, desert, tropical, coastal, mountain, and swamp climate profiles.
