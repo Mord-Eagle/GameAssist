@@ -530,7 +530,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Utilities (arg parsing, state helpers, audit, sanitize)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "APP:UTILS", title: "Utilities",
-    //   guarantees: ["Shared non-marker helpers; known module state branches self-heal without deleting valid config","Absolute timestamps remain unchanged while human displays and date keys use one validated DM timezone","Standalone-script evidence remains diagnostic rather than a marker dependency","Explicit module-manual requests create or update one stable GameAssist-owned handout without touching other handouts","GameAssist command paths match case-insensitively and accept spaces or hyphens between command words while preserving arguments"],
+    //   guarantees: ["Shared non-marker helpers; known module state branches self-heal without deleting valid config","Absolute timestamps remain unchanged while human displays and date keys use one validated DM timezone","Standalone-script evidence remains diagnostic rather than a marker dependency","Explicit module-manual requests create or update one stable GameAssist-owned handout without touching other handouts","GameAssist command paths match case-insensitively and accept spaces or hyphens between command words while preserving arguments","Nested configuration values are summarized for chat without replacing the complete snapshot format"],
     //   depends_on: ["[GAMEASSIST:POLICY]"], last_updated_version: "v2.0.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
@@ -1169,6 +1169,89 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
      * Failure: ambiguous duplicate reserved names are refused instead of choosing one.
      * Design: full guidance persists in the Journal while ordinary chat menus stay compact.
      */
+    function humanizeConfigKey(key) {
+        return String(key || '')
+            .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+            .replace(/[_-]+/g, ' ')
+            .replace(/^./, value => value.toUpperCase());
+    }
+
+    /**
+     * summarizeConfigValue - Keep ordinary chat configuration readable.
+     * Context: Roll20 default-template cells cannot safely display large nested JSON.
+     * Inputs: one saved configuration key and value.
+     * Outputs: a bounded human summary; full configuration remains available through the snapshot handout.
+     * Invariants: no nested object is serialized into a chat panel.
+     */
+    function summarizeConfigValue(key, value) {
+        const plural = (count, singular, many = `${singular}s`) => `${count} ${count === 1 ? singular : many}`;
+        if (value === null || value === undefined) return 'Not set';
+        if (typeof value === 'boolean') return value ? 'On' : 'Off';
+        if (typeof value === 'number') return Number.isFinite(value) ? String(value) : 'Invalid number';
+        if (typeof value === 'string') {
+            const clean = value.replace(/\s+/g, ' ').trim();
+            return clean.length > 120 ? `${clean.slice(0, 117)}...` : (clean || 'Blank');
+        }
+        if (Array.isArray(value)) {
+            if (key === 'timerReminders') {
+                const reminders = value.slice(0, 5).map(item => {
+                    const seconds = Number(item?.remainingSeconds);
+                    const audience = String(item?.audience || 'GM').toUpperCase();
+                    return Number.isFinite(seconds) ? `${seconds}s to ${audience}` : null;
+                }).filter(Boolean);
+                return reminders.length ? `${plural(value.length, 'reminder')}: ${reminders.join(', ')}` : 'No reminders';
+            }
+            return plural(value.length, 'saved item');
+        }
+        if (typeof value !== 'object') return String(value);
+
+        if (key === 'conditions') return plural(Object.keys(value).length, 'condition definition');
+        if (key === 'legacyStatusInfoMigration') return 'Completed';
+        if (key === 'pcAlerts') {
+            const thresholds = Object.entries(value.thresholds || {})
+                .filter(([, enabled]) => enabled === true)
+                .map(([threshold]) => `${threshold}%`)
+                .join(', ') || 'none';
+            return `${value.enabled === true ? 'On' : 'Off'}; thresholds ${thresholds}; exact HP ${value.showExactHp === true ? 'shown' : 'hidden'}`;
+        }
+        if (key === 'submodules') {
+            const entries = Object.entries(value);
+            const enabled = entries.filter(([, on]) => on === true).map(([name]) => humanizeConfigKey(name));
+            const disabled = entries.filter(([, on]) => on !== true).map(([name]) => humanizeConfigKey(name));
+            return `${enabled.length ? `On: ${enabled.join(', ')}` : 'All off'}${disabled.length ? `; Off: ${disabled.join(', ')}` : ''}`;
+        }
+        if (key === 'wayfarer') {
+            return `${value.name || 'Wayfarer'}; ${plural(Array.isArray(value.months) ? value.months.length : 0, 'period')}; ${plural(Array.isArray(value.weekdays) ? value.weekdays.length : 0, 'weekday')}`;
+        }
+        if (key === 'wayfarerDraft') {
+            return value.definition
+                ? `Saved draft: ${value.definition.name || 'Wayfarer'}`
+                : 'No saved draft';
+        }
+        if (key === 'climate') {
+            return `${plural(Array.isArray(value.regions) ? value.regions.length : 0, 'region')}; active ${value.activeRegionId || 'not set'}; ${plural(Array.isArray(value.customProfiles) ? value.customProfiles.length : 0, 'custom profile')}`;
+        }
+        if (key === 'astronomy') {
+            return `${plural(Array.isArray(value.moons) ? value.moons.length : 0, 'moon')}; ${plural(Array.isArray(value.rareEvents) ? value.rareEvents.length : 0, 'rare event')}`;
+        }
+        if (key === 'weather') return `${Number(value.defaultForecastDays) || 0}-day default forecast`;
+        if (key === 'environment') return Object.keys(value).length ? `${plural(Object.keys(value).length, 'managed setting')}` : 'No saved override';
+        if (key === 'rest') {
+            return `Advance time ${value.advanceTime === true ? 'on' : 'off'}; extended rests ${value.extendedEnabled === true ? 'on' : 'off'}; ${plural(Array.isArray(value.customTypes) ? value.customTypes.length : 0, 'custom rest')}`;
+        }
+        return plural(Object.keys(value).length, 'managed setting');
+    }
+
+    function configSummaryLines(config, { includeBooleans = true } = {}) {
+        return Object.entries(config || {})
+            .filter(([key, value]) => key !== 'enabled' && (includeBooleans || typeof value !== 'boolean'))
+            .map(([key, value]) => ({
+                key,
+                label: humanizeConfigKey(key),
+                value: summarizeConfigValue(key, value)
+            }));
+    }
+
     function writeModuleManual(moduleName, html, { legacyModuleNames = [] } = {}) {
         const name = String(moduleName || '').trim();
         if (!/^[A-Za-z0-9_]+$/.test(name)) {
@@ -1232,6 +1315,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
     // --- Notes & Comments ---
     // NOTE: State auditor warns about unexpected branches; no automatic deletion occurs.
+    // Changed (v2.0.0): Added bounded human configuration summaries so Roll20 chat panels never serialize nested saved-state objects; full configuration remains available in the versioned snapshot handout.
     // Changed (v2.0.0): Added canonical command-path matching so registered GameAssist commands accept mixed case and either spaces or hyphens without rewriting option flags or unrelated chat.
     // Changed (v1.8.0): Added explicit legacy guide-name adoption so renamed modules reuse and rename one existing owned handout instead of creating a duplicate.
     // Changed (v0.1.5.1): Added validated IANA timezone resolution, bounded formatter reuse, DST-aware human formatting, date-key generation, and legacy-display fallback while preserving stored absolute timestamps.
@@ -4054,7 +4138,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Admin/config commands (!ga-*)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "INTERFACES:COMMANDS", title: "Commands",
-    //   guarantees: ["GM-gated admin commands; unsafe and component-protected config keys refused; versioned config-only export; validated timezone menu; plain-language system and HealthService diagnostics with opt-in shared-service, tracker-consumer, and standalone-integration details","Optional supported-PC health-band alerts are GM-private, threshold-configurable, downward-crossing only, and never duplicate NPCAssist NPC policy","!GA-GM/!GA-DM, !ga-help, and !ga-nav provide bounded suite, help, and layered module navigation without taking ownership of module commands","Suite navigation uses the same Roll20 default-template presentation as module control panels"],
+    //   guarantees: ["GM-gated admin commands; unsafe and component-protected config keys refused; versioned config-only export; validated timezone menu; plain-language system and HealthService diagnostics with opt-in shared-service, tracker-consumer, and standalone-integration details","Optional supported-PC health-band alerts are GM-private, threshold-configurable, downward-crossing only, and never duplicate NPCAssist NPC policy","!GA-GM/!GA-DM, !ga-help, and !ga-nav provide bounded suite, help, and layered module navigation without taking ownership of module commands","Suite navigation uses the same Roll20 default-template presentation as module control panels","Central component listings group alphabetized services before alphabetized modules and summarize nested settings for chat"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:CORE:STATE]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   last_updated_version: "v2.0.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
@@ -4074,6 +4158,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     function getModuleHealth() {
         return Object.entries(MODULES)
             .filter(([, mod]) => !mod.internal)
+            .sort(([nameA, modA], [nameB, modB]) => {
+                if (Boolean(modA.service) !== Boolean(modB.service)) return modA.service ? -1 : 1;
+                return nameA.localeCompare(nameB, 'en', { sensitivity: 'base' });
+            })
             .map(([name, mod]) => {
                 const cfg = GameAssist.getState(name).config;
                 const dependencies = GameAssist._checkDependencies(name);
@@ -4738,7 +4826,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return;
             }
             GameAssist.getState(mod).config[k] = parsed;
-            GameAssist.log('Config', `Set ${mod}.${k} = ${JSON.stringify(parsed)}`);
+            GameAssist.log('Config', `Set ${mod}.${k} = ${summarizeConfigValue(k, parsed)}`);
         }
         else if (sub === 'get') {
             if (parts.length < 3) {
@@ -4753,14 +4841,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             const modState = GameAssist.getState(mod);
             if (parts.length >= 4) {
-                // Get specific key
                 const key = parts[3];
                 const val = modState.config[key];
-                GameAssist.log('Config', `${mod}.${key} = ${JSON.stringify(val)}`);
+                GameAssist.log('Config', `${mod}.${key}: ${summarizeConfigValue(key, val)}${val && typeof val === 'object' ? ' (Use !ga-config list for the complete snapshot.)' : ''}`);
             } else {
-                // Get all config for module
-                const cfg = JSON.stringify(modState.config, null, 2);
-                GameAssist.log('Config', `${mod} config:\n${cfg}`);
+                const rows = configSummaryLines(modState.config)
+                    .map(row => `${row.label}: ${row.value}`)
+                    .join('\n');
+                GameAssist.log('Config', `${mod} configuration:\n${rows || 'No configurable settings.'}\nUse !ga-config list for the complete configuration snapshot.`);
             }
         }
         else if (sub === 'ui') {
@@ -4775,16 +4863,22 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendTimeZoneMenu();
         }
         else if (sub === 'modules') {
-            const moduleList = Object.entries(MODULES)
+            const entries = Object.entries(MODULES)
                 .filter(([, mod]) => !mod.internal)
-                .map(([name, mod]) => {
-                    const cfg = GameAssist.getState(name).config;
-                    const depInfo = GameAssist._checkDependencies(name);
-                    const configured = cfg.enabled ? '✅' : '❌';
-                    const running = mod.initialized && mod.active ? '🟢' : '⏸️';
-                    return `${name}: config ${configured} | runtime ${running} | deps ${formatDependencyStatus(depInfo)}`;
-                }).join('\n');
-            GameAssist.log('Config', `Modules and Core Services:\n${moduleList}`);
+                .sort(([nameA, modA], [nameB, modB]) => {
+                    if (Boolean(modA.service) !== Boolean(modB.service)) return modA.service ? -1 : 1;
+                    return nameA.localeCompare(nameB, 'en', { sensitivity: 'base' });
+                });
+            const lineFor = ([name, mod]) => {
+                const cfg = GameAssist.getState(name).config;
+                const depInfo = GameAssist._checkDependencies(name);
+                const configured = cfg.enabled !== false ? '✅' : '❌';
+                const running = mod.initialized && mod.active ? '🟢' : '⏸️';
+                return `${name}: config ${configured} | runtime ${running} | deps ${formatDependencyStatus(depInfo)}`;
+            };
+            const services = entries.filter(([, mod]) => mod.service).map(lineFor);
+            const modules = entries.filter(([, mod]) => !mod.service).map(lineFor);
+            GameAssist.log('Config', `Services (alphabetical):\n${services.join('\n') || 'None'}\n\nModules (alphabetical):\n${modules.join('\n') || 'None'}`);
         }
         else if (sub === 'cleanup') {
             const root = ensureStateRoot();
@@ -5305,15 +5399,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Config UI module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONFIGUI", title: "Config UI",
-    //   guarantees: ["GM chat menu for module and core-service toggles, timezone access, quick config, and direct access to protected HealthService PC-alert controls","Compact guide, status, info, read-only audit, and unknown-command recovery use the established !ga-config-ui prefix","Paged controls use the shared Roll20 default-template presentation"],
+    //   guarantees: ["GM chat menu for module and core-service toggles, timezone access, quick config, and direct access to protected HealthService PC-alert controls","Compact guide, status, info, read-only audit, and unknown-command recovery use the established !ga-config-ui prefix","Paged controls use the shared Roll20 default-template presentation","Services appear alphabetically before modules; nested saved settings remain readable and wrap within Roll20 chat"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:INTERFACES:COMMANDS]"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "0.2.4" } }
+    //   independent_versions: { module_version: "0.2.5" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:CONFIGUI provides GM-facing chat controls to page through modules,
-    // toggle enablement, identify core services, and write configs without changing legacy defaults. It reuses
-    // shared button helpers for consistency across modules.
+    // toggle enablement, identify core services, and write configs without changing legacy defaults.
+    // Services and modules are grouped separately and sorted alphabetically. Nested saved
+    // configuration is summarized into readable rows so Roll20 chat never receives raw JSON.
+    // It reuses shared button helpers for consistency across modules.
     // -------------------------------------------------------------------------
     GameAssist.register('ConfigUI', function() {
         const modState = GameAssist.getState('ConfigUI');
@@ -5330,45 +5426,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : POLICY.configUi.pageSize;
         }
 
-        function formatValue(value) {
-            if (value === null || value === undefined) return '—';
-            if (typeof value === 'object') {
-                try { return JSON.stringify(value); }
-                catch { return '[object]'; }
-            }
-            return String(value);
-        }
-
         function formatConfigSummary(cfg) {
-            const entries = Object.entries(cfg || {})
-                .filter(([key]) => key !== 'enabled')
-                .map(([key, val]) => {
-                    let display = formatValue(val);
-                    if (key === 'conditions' && val && typeof val === 'object' && !Array.isArray(val)) {
-                        display = `${Object.keys(val).length} definitions`;
-                    } else if (key === 'legacyStatusInfoMigration' && val && typeof val === 'object') {
-                        display = 'completed';
-                    } else if (key === 'pcAlerts' && val && typeof val === 'object') {
-                        const thresholds = Object.entries(val.thresholds || {})
-                            .filter(([, enabled]) => enabled === true)
-                            .map(([threshold]) => `${threshold}%`)
-                            .join(', ') || 'none';
-                        display = `${val.enabled === true ? 'on' : 'off'}; thresholds ${thresholds}; exact HP ${val.showExactHp === true ? 'shown' : 'hidden'}`;
-                    }
-                    return `<span><strong>${_sanitize(key)}</strong>: ${_sanitize(display)}</span>`;
-                });
-            return entries.length ? entries.join(' • ') : '';
+            const rows = configSummaryLines(cfg, { includeBooleans: false })
+                .map(row => `<div style="white-space:normal;overflow-wrap:anywhere;word-break:break-word;margin-top:2px;"><strong>${_sanitize(row.label)}</strong>: ${_sanitize(row.value)}</div>`);
+            return rows.length ? rows.join('') : '';
         }
 
         function buildConfigButtons(name, cfg) {
             return Object.entries(cfg || {})
                 .filter(([key, val]) => key !== 'enabled' && typeof val === 'boolean')
                 .map(([key, val]) => {
-                    const label = `${key}: ${val ? 'ON' : 'OFF'}`;
+                    const label = `${humanizeConfigKey(key)}: ${val ? 'ON' : 'OFF'}`;
                     const next  = (!val).toString();
-                    return GameAssist.createButton(label, `!ga-config set ${name} ${key}=${next}`);
+                    return `<span style="display:inline-block;margin:1px 2px 1px 0;">${GameAssist.createButton(label, `!ga-config set ${name} ${key}=${next}`)}</span>`;
                 })
-                .join(' ');
+                .join('');
         }
 
         function parsePage(rawArgs) {
@@ -5391,7 +5463,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function getModuleEntries() {
             return Object.entries(MODULES)
                 .filter(([, mod]) => !mod.internal)
-                .sort((a, b) => a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }));
+                .sort(([nameA, modA], [nameB, modB]) => {
+                    if (Boolean(modA.service) !== Boolean(modB.service)) return modA.service ? -1 : 1;
+                    return nameA.localeCompare(nameB, 'en', { sensitivity: 'base' });
+                });
         }
 
         function buildNav(page, total) {
@@ -5414,7 +5489,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const active  = !!(mod.initialized && mod.active);
             const statusIcon = enabled ? (active ? '🟢' : '⏸️') : '⛔';
             const statusText = enabled ? (active ? 'Enabled' : 'Disabled (inactive)') : 'Disabled';
-            const typeLabel = mod.service ? ' <span style="font-size:smaller;">(core service)</span>' : '';
+            const typeLabel = mod.service ? ' <span style="font-size:smaller;">(service)</span>' : '';
             const toggleCmd  = enabled ? `!ga-disable ${name}` : `!ga-enable ${name}`;
             const toggleBtn  = GameAssist.createButton(`${enabled ? 'Disable' : 'Enable'} ${name}`, toggleCmd);
             const configButtons = buildConfigButtons(name, cfg);
@@ -5432,7 +5507,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             if (settingsButton) rows.push(`Settings: ${settingsButton}`);
             if (summary) {
-                rows.push(summary);
+                rows.push(`<div style="margin-top:4px;"><strong>Saved settings</strong>${summary}</div>`);
             }
             return { label: name, value: rows.join('<br>') };
         }
@@ -5451,7 +5526,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (page > totalPages - 1) page = totalPages - 1;
 
             const slice = modules.slice(page * pageSize, page * pageSize + pageSize);
-            const moduleFields = slice.map(([name, mod]) => renderModuleBlock(name, mod));
+            const moduleFields = [];
+            let displayedGroup = null;
+            slice.forEach(([name, mod]) => {
+                const group = mod.service ? 'Services' : 'Modules';
+                if (group !== displayedGroup) {
+                    moduleFields.push({
+                        label: group,
+                        value: mod.service
+                            ? 'Shared GameAssist foundations, listed alphabetically.'
+                            : 'Optional gameplay and administration features, listed alphabetically.'
+                    });
+                    displayedGroup = group;
+                }
+                moduleFields.push(renderModuleBlock(name, mod));
+            });
             const nav = buildNav(page, totalPages);
 
             const timezone = getTimeZoneInfo();
@@ -5463,7 +5552,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ...moduleFields,
                 ...(nav ? [{ label: 'Pages', value: nav }] : []),
                 { label: 'GameAssist', value: gameAssistHomeButton() },
-                { label: 'Advanced Settings', value: 'Use <code>!ga-config set &lt;Module&gt; key=value</code>.' }
+                { label: 'Advanced Settings', value: 'Use <code>!ga-config set &lt;Component&gt; key=value</code>. Use <code>!ga-config list</code> for the complete configuration snapshot.' }
             ];
             sendConfigPanel(`GameAssist Config UI - Page ${page + 1}/${totalPages}`, fields);
         }
@@ -5491,11 +5580,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function showConfigStatus(audit = false) {
             const entries = getModuleEntries();
+            const services = entries.filter(([, mod]) => mod.service);
+            const modules = entries.filter(([, mod]) => !mod.service);
             const enabled = entries.filter(([name]) => GameAssist.getState(name).config.enabled !== false);
             const running = enabled.filter(([, mod]) => mod.initialized && mod.active);
             const fields = [
                 { label: 'ConfigUI', value: 'Enabled and responding.' },
-                { label: 'Components', value: `${entries.length} visible | ${enabled.length} enabled | ${running.length} running` },
+                { label: 'Components', value: `${services.length} services + ${modules.length} modules | ${enabled.length} enabled | ${running.length} running` },
                 { label: 'Page Size', value: `${getPageSize()} components per settings page` },
                 { label: 'Actions', value: `${GameAssist.createButton('Open Settings', '!ga-config-ui menu')} ${GameAssist.createButton('Open Guide', '!ga-config-ui help')}` }
             ];
@@ -5559,6 +5650,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         prefixes: ['!ga-config-ui', '!ga-config ui', '!ConfigUI-GM', '!ConfigUI-DM', '!Config-GM', '!Config-DM']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced ConfigUI to 0.2.5; grouped services before modules with alphabetical ordering, replaced raw nested JSON with bounded human summaries, and allowed boolean controls and saved settings to wrap inside Roll20 chat.
     // Changed (v2.0.0): Advanced ConfigUI to 0.2.4 and moved its paged settings screen into the same Roll20 default-template presentation used by HPAssist and CombatAssist.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the ConfigUI GM screen.
     // Changed (v2.0.0): Advanced ConfigUI to 0.2.3 with a direct HealthService PC-alert settings button and a readable alert summary instead of raw protected configuration JSON.
@@ -21534,10 +21626,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: AlmanacAssist fictional calendar and world time
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:ALMANACASSIST", title: "AlmanacAssist",
-    //   guarantees: ["Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Optional Almanac integrations improve context without becoming hidden prerequisites","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation"],
+    //   guarantees: ["Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Optional Almanac integrations improve context without becoming hidden prerequisites","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation","Wayfarer exposes direct validated editors for every stored calendar component while moon phases remain visible Astronomy-owned context","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AlmanacAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.1.2", time_state_schema_version: 2, wayfarer_draft_schema_version: 2, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 1, rest_state_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.2.0", time_state_schema_version: 2, wayfarer_draft_schema_version: 3, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 1, rest_state_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // AlmanacAssist contains six independently toggleable internal submodules behind
@@ -21548,9 +21640,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('AlmanacAssist', function() {
         const MODULE_NAME = 'AlmanacAssist';
-        const MODULE_VERSION = '1.1.2';
+        const MODULE_VERSION = '1.2.0';
         const TIME_STATE_SCHEMA_VERSION = 2;
-        const WAYFARER_DRAFT_SCHEMA_VERSION = 2;
+        const WAYFARER_DRAFT_SCHEMA_VERSION = 3;
         const CLIMATE_STATE_SCHEMA_VERSION = 1;
         const ASTRONOMY_STATE_SCHEMA_VERSION = 1;
         const WEATHER_STATE_SCHEMA_VERSION = 1;
@@ -21639,7 +21731,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             leapName: 'Leap Day',
             leapAfterMonth: 16
         });
-        const WAYFARER_STAGES = Object.freeze(['identity', 'weekdays', 'months', 'intercalary', 'leap', 'holidays']);
+        const WAYFARER_STAGES = Object.freeze(['identity', 'weekdays', 'months', 'intercalary', 'leap', 'holidays', 'seasons']);
 
         const SUBMODULE_DEFAULTS = Object.freeze({
             time: true,
@@ -21779,7 +21871,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const ordinaryDays = normalized.months.reduce((sum, month) => sum + month.days, 0);
             const totalDays = ordinaryDays + normalized.intercalary.length + (normalized.leapEvery ? 1 : 0);
             if (totalDays > POLICY.almanac.maximumDaysPerYear) return copy(DEFAULT_WAYFARER);
-            normalized.seasonRanges = normalized.seasonRanges.filter(range => range.end < totalDays);
+            const ordinaryYearDays = ordinaryDays + normalized.intercalary.length;
+            normalized.seasonRanges = normalized.seasonRanges.filter(range => range.end < ordinaryYearDays);
             return normalized;
         }
 
@@ -21841,6 +21934,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const month = normalized.months[Number(holiday.monthIndex)];
                 return !month || Number(holiday.day) < 1 || Number(holiday.day) > month.days;
             })) errors.push('Every holiday must fall on a valid day in an existing month.');
+            const ordinaryYearDays = normalized.months.reduce((sum, month) => sum + month.days, 0) + normalized.intercalary.length;
+            const rawSeasonRanges = Array.isArray(source.seasonRanges) ? source.seasonRanges : [];
+            const invalidSeasonRange = rawSeasonRanges.length > 12 || rawSeasonRanges.some(range =>
+                !range || !boundedName(range.name) || !Number.isInteger(Number(range.start)) || !Number.isInteger(Number(range.end))
+                || Number(range.start) < 0 || Number(range.end) < Number(range.start) || Number(range.end) >= ordinaryYearDays
+            );
+            if (invalidSeasonRange) errors.push('Every seasonal range must use valid calendar-day boundaries.');
+            const sortedSeasonRanges = normalized.seasonRanges.slice().sort((a, b) => a.start - b.start);
+            if (sortedSeasonRanges.some((range, index) => index > 0 && range.start <= sortedSeasonRanges[index - 1].end)) {
+                errors.push('Seasonal ranges may not overlap.');
+            }
             const leapEvery = Number(source.leapEvery || 0);
             if (leapEvery !== 0 && (!Number.isInteger(leapEvery) || leapEvery < 2 || leapEvery > 100)) errors.push('Leap frequency must be off or every 2-100 years.');
             const rawOrdinaryDays = (Array.isArray(source.months) ? source.months : []).reduce((sum, month) => sum + (Number.isFinite(Number(month?.days)) ? Number(month.days) : 0), 0);
@@ -22404,6 +22508,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (focus !== 'time') fields.push({ label: 'Date', value: _sanitize(displayDate(moment)) });
             if (focus !== 'date') fields.push({ label: 'Time', value: _sanitize(displayTime(moment)) });
             fields.push({ label: 'Season', value: _sanitize(moment.season) });
+            if (submoduleEnabled('astronomy')) fields.push({ label: 'Moon Phases', value: _sanitize(currentMoonSummary()) });
             if (moment.holidays?.length) fields.push({ label: 'Holiday', value: moment.holidays.map(_sanitize).join(', ') });
             fields.push({ label: 'Calendar', value: _sanitize(moment.calendarName) });
             if (playerIsGM(msg?.playerid)) fields.push({ label: 'Actions', value: `${GameAssist.createButton('Advance Time', '!aa-time menu')} ${GameAssist.createButton('Open Almanac', '!Almanac-GM')}` });
@@ -22417,6 +22522,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Current World Time', value: timeAvailable() ? _sanitize(displayMoment(moment)) : 'TimeAlmanac is turned off; chronology is preserved.' },
                 { label: 'World Clock', value: `${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('Wayfarer Setup', '!aa-wayfarer')} ${GameAssist.createButton('Advance Time', '!aa-time menu')} ${GameAssist.createButton('Set Date and Time', `!aa-time set --year ?{Year|${moment.year}} --period ?{Period name or number|${moment.periodName}} --day ?{Day|${moment.day}} --hour ?{Hour 0-23|${moment.hour}} --minute ?{Minute 0-59|${moment.minute}} --confirm ?{Set this fictional date and time?|No,no|Yes,yes}`)}` },
                 { label: 'World Context', value: `${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Astronomy', '!astro')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Environment', '!enviro')}` },
+                { label: 'Moon Phases', value: `${_sanitize(currentMoonSummary())}<br>${GameAssist.createButton('Open Astronomy', '!astro')}` },
                 { label: 'Recovery', value: GameAssist.createButton('Rest', '!rest') },
                 { label: 'TimeAlmanac', value: `${modState.config.timeAlmanacEnabled ? 'On' : 'Off'} ${GameAssist.createButton(modState.config.timeAlmanacEnabled ? 'Turn Off' : 'Turn On', `!aa-time ${modState.config.timeAlmanacEnabled ? 'off' : 'on'}`)}` },
                 { label: 'Review and Setup', value: `${GameAssist.createButton('Systems', '!Almanac-Systems')} ${GameAssist.createButton('Status', '!Almanac-Status')} ${GameAssist.createButton('Audit', '!Almanac-Audit')} ${GameAssist.createButton('Guide', '!Almanac-Guide')} ${GameAssist.createButton('Manual', '!Almanac-Manual')}` },
@@ -22464,7 +22570,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const profile = profileFor(id);
                 if (id === current.id) return `<strong>${_sanitize(profile.name)}</strong>`;
                 if (!playerIsGM(msg?.playerid)) return _sanitize(profile.name);
-                return GameAssist.createButton(profile.name, `!aa-time profile ${id} --confirm ?{Change the calendar display to ${profile.name}? Elapsed fictional time is preserved.|No,no|Yes,yes}`);
+                return GameAssist.createButton(profile.name, `!aa-time profile ${id} --confirm ?{Please confirm the change of the calendar display to ${profile.name}? Elapsed calendar time is preserved.|No,no|Yes,yes}`);
             }).join(' ');
             const moment = currentMoment();
             const fields = [
@@ -22494,7 +22600,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const index = WAYFARER_STAGES.indexOf(stage);
             const previous = index > 0 ? WAYFARER_STAGES[index - 1] : null;
             const next = index < WAYFARER_STAGES.length - 1 ? WAYFARER_STAGES[index + 1] : 'review';
-            return `${previous ? GameAssist.createButton('Back', `!aa-wayfarer stage ${previous}`) : GameAssist.createButton('Setup Home', '!aa-wayfarer')} ${GameAssist.createButton('Cancel Draft', '!aa-wayfarer cancel --confirm ?{Discard this saved draft?|No,no|Yes,yes}')} ${GameAssist.createButton('Save Draft', '!aa-wayfarer save')} ${GameAssist.createButton(next === 'review' ? 'Review Draft' : 'Continue', `!aa-wayfarer stage ${next} --review ${stage}`)}`;
+            return [
+                GameAssist.createButton('Wayfarer Manager', '!aa-wayfarer'),
+                previous ? GameAssist.createButton('Previous', `!aa-wayfarer stage ${previous}`) : '',
+                GameAssist.createButton('Save Draft', '!aa-wayfarer save'),
+                GameAssist.createButton(next === 'review' ? 'Review Draft' : 'Continue', `!aa-wayfarer stage ${next} --review ${stage}`)
+            ].filter(Boolean).join(' ');
         }
 
         function showWayfarer(msg) {
@@ -22505,14 +22616,27 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const current = currentMoment();
             const nextStage = WAYFARER_STAGES.find(stage => draft.reviewed?.[stage] !== true) || 'review';
             const backup = normalizeWayfarerBackup(ensureAlmanacRuntime().time.wayfarerBackup);
-            sendPanel(msg, 'Wayfarer Setup', [
-                { label: 'Active Calendar', value: `${_sanitize(active.name)}${active.id === 'wayfarer' ? ' (Wayfarer)' : ''}` },
-                { label: 'Current Fictional Date', value: current ? _sanitize(displayMoment(current)) : 'Unavailable' },
-                { label: 'Saved Draft', value: `${wayfarerOverview(draft)}<br>${status.reviewedCount}/${WAYFARER_STAGES.length} setup stages reviewed | ${draftMatchesActive(draft) ? 'matches the saved Wayfarer definition' : 'kept separate from the active calendar'}` },
-                { label: 'Build Or Continue', value: `${GameAssist.createButton(status.reviewedCount ? 'Continue Setup' : 'Begin Setup', `!aa-wayfarer stage ${nextStage}`)} ${GameAssist.createButton('Preview Draft', '!aa-wayfarer preview')} ${GameAssist.createButton('Review and Activate', '!aa-wayfarer stage review')}` },
+            sendPanel(msg, 'Wayfarer Calendar Manager', [
+                { label: 'Active Calendar', value: `${_sanitize(active.name)}${active.id === 'wayfarer' ? ' (Wayfarer)' : ''}<br>${current ? _sanitize(displayMoment(current)) : 'Fictional date unavailable'}` },
+                { label: 'Saved Draft', value: `${wayfarerOverview(draft)}<br>${status.reviewedCount}/${WAYFARER_STAGES.length} areas reviewed | ${draftMatchesActive(draft) ? 'matches the saved Wayfarer definition' : 'not yet active'}` },
+                { label: 'Calendar Basics', value: `${GameAssist.createButton('Name, Clock & Start', '!aa-wayfarer stage identity')} ${GameAssist.createButton('Weekdays', '!aa-wayfarer stage weekdays')} ${GameAssist.createButton('Periods', '!aa-wayfarer stage months')}` },
+                { label: 'Special Dates', value: `${GameAssist.createButton('Festival Days', '!aa-wayfarer stage intercalary')} ${GameAssist.createButton('Leap Rule', '!aa-wayfarer stage leap')} ${GameAssist.createButton('Holidays', '!aa-wayfarer stage holidays')} ${GameAssist.createButton('Seasons', '!aa-wayfarer stage seasons')}` },
+                { label: 'Moon Phases', value: `${_sanitize(currentMoonSummary())}<br>${GameAssist.createButton('Open Astronomy', '!astro')} <span style="font-size:smaller;">Moons are shared world astronomy, so they are managed separately from the calendar draft.</span>` },
+                { label: 'Review and Activate', value: `${GameAssist.createButton('Preview Draft', '!aa-wayfarer preview')} ${GameAssist.createButton('Review and Activate', '!aa-wayfarer stage review')} ${GameAssist.createButton('Continue Guided Review', `!aa-wayfarer stage ${nextStage}`)}` },
                 { label: 'Start From A Copy', value: `${GameAssist.createButton('Standard', '!aa-wayfarer duplicate --profile standard --confirm ?{Replace the saved draft with a Standard calendar copy? The active calendar will not change.|No,no|Yes,yes}')} ${GameAssist.createButton('Solamnic', '!aa-wayfarer duplicate --profile solamnic --confirm ?{Replace the saved draft with a Solamnic calendar copy? The active calendar will not change.|No,no|Yes,yes}')} ${GameAssist.createButton('Harptos', '!aa-wayfarer duplicate --profile harptos --confirm ?{Replace the saved draft with a Harptos calendar copy? The active calendar will not change.|No,no|Yes,yes}')} ${GameAssist.createButton(active.id === 'wayfarer' ? 'Active Wayfarer' : 'Saved Wayfarer', '!aa-wayfarer duplicate --profile wayfarer --confirm ?{Replace the saved draft with the saved Wayfarer definition? The active calendar will not change.|No,no|Yes,yes}')}` },
-                { label: 'Draft Controls', value: `${GameAssist.createButton('Cancel Draft', '!aa-wayfarer cancel --confirm ?{Discard the saved draft and begin again from the saved Wayfarer definition?|No,no|Yes,yes}')} ${backup ? GameAssist.createButton('Restore Previous Activation', '!aa-wayfarer restore --confirm ?{Restore the calendar and fictional time saved before the latest Wayfarer activation?|No,no|Yes,yes}') : ''}` },
-                { label: 'Learn', value: `${GameAssist.createButton('Wayfarer Instructions', '!Almanac-Manual')} ${GameAssist.createButton('Calendar Menu', '!cal')}` }
+                { label: 'Draft and Recovery', value: `${GameAssist.createButton('Save Draft', '!aa-wayfarer save')} ${GameAssist.createButton('Discard Draft', '!aa-wayfarer cancel --confirm ?{Discard the saved draft and begin again from the saved Wayfarer definition?|No,no|Yes,yes}')} ${backup ? GameAssist.createButton('Restore Previous Activation', '!aa-wayfarer restore --confirm ?{Restore the calendar and fictional time saved before the latest Wayfarer activation?|No,no|Yes,yes}') : ''}` },
+                { label: 'Help', value: `${GameAssist.createButton('Quick Help', '!Wayfarer-Help')} ${GameAssist.createButton('Full Almanac Manual', '!Almanac-Manual')} ${GameAssist.createButton('Calendar Menu', '!cal')}` }
+            ]);
+        }
+
+        function showWayfarerHelp(msg) {
+            if (!requireGm(msg)) return;
+            sendPanel(msg, 'Wayfarer Calendar Help', [
+                { label: 'Purpose', value: 'Build or revise a campaign calendar without changing the calendar players see until the complete draft is reviewed and activated.' },
+                { label: 'Normal Use', value: 'Open the manager, edit only the calendar component you need, preview the complete draft, then activate it.' },
+                { label: 'Moons', value: 'Moon cycles and phase names are managed in Astronomy because they continue across calendar-display changes.' },
+                { label: 'Default Recovery', value: 'The command <code>!aa-wayfarer reset-default --confirm yes</code> replaces only the saved draft with the campaign default. It is intentionally not a button, and it does not change the active calendar.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Wayfarer Manager', '!aa-wayfarer')} ${GameAssist.createButton('Full Almanac Manual', '!Almanac-Manual')}` }
             ]);
         }
 
@@ -22523,50 +22647,64 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const definition = draft.definition;
             if (stage === 'review') return showWayfarerPreview(msg, true);
             const fields = [
-                { label: 'Setup Progress', value: `${wayfarerDraftStatus(draft).reviewedCount}/${WAYFARER_STAGES.length} stages reviewed` },
+                { label: 'Setup Progress', value: `${wayfarerDraftStatus(draft).reviewedCount}/${WAYFARER_STAGES.length} areas reviewed` },
                 { label: 'Draft Preview', value: wayfarerOverview(draft) }
             ];
             if (notice) fields.unshift({ label: 'Updated', value: _sanitize(notice) });
             if (stage === 'identity') {
                 fields.push(
-                    { label: '1. Calendar Name', value: `${_sanitize(definition.name)} ${GameAssist.createButton('Change Name', `!aa-wayfarer name --value "?{Calendar name|${definition.name}}"`)}` },
+                    { label: 'Calendar Name', value: `${_sanitize(definition.name)} ${GameAssist.createButton('Change Name', `!aa-wayfarer name --value "?{Calendar name|${definition.name}}"`)}` },
                     { label: 'Clock', value: `${definition.hoursPerDay} hours per day; ${definition.minutesPerHour} minutes per hour<br>${GameAssist.createButton('Change Clock', `!aa-wayfarer clock --hours ?{Hours per day 1-48|${definition.hoursPerDay}} --minutes ?{Minutes per hour 1-120|${definition.minutesPerHour}}`)}` },
                     { label: 'Starting Date', value: `${formatWayfarerStart(draft.startDate)}<br>${GameAssist.createButton('Change Starting Date', `!aa-wayfarer start --year ?{Starting year|${draft.startDate.year}} --period "?{Starting period|${draft.startDate.period}}" --day ?{Starting day|${draft.startDate.day}} --hour ?{Starting hour 0-${definition.hoursPerDay - 1}|${draft.startDate.hour}} --minute ?{Starting minute 0-${definition.minutesPerHour - 1}|${draft.startDate.minute}}`)}` },
-                    { label: 'What This Means', value: modState.config.profileId === 'wayfarer' ? 'Editing the active Wayfarer calendar preserves the current elapsed fictional time. This starting date is used only when a new activation must deliberately reset time.' : 'The first activation begins at this fictional date. The currently active calendar is unchanged while you edit.' }
+                    { label: 'Activation Rule', value: modState.config.profileId === 'wayfarer' ? 'Revising the active Wayfarer calendar normally preserves elapsed fictional time.' : 'The first activation begins at this reviewed fictional date.' }
                 );
             } else if (stage === 'weekdays') {
                 fields.push(
-                    { label: '2. Weekdays', value: _sanitize(definition.weekdays.map((name, index) => `${index + 1}. ${name}`).join(' | ')) },
-                    { label: 'Change The Week', value: GameAssist.createButton('Replace Weekday Names', `!aa-wayfarer weekdays --value "?{Weekday names separated by commas|${definition.weekdays.join(',')}}"`) },
+                    { label: 'Weekdays', value: _sanitize(definition.weekdays.map((name, index) => `${index + 1}. ${name}`).join(' | ')) },
+                    { label: 'Edit', value: GameAssist.createButton('Replace Weekday Names', `!aa-wayfarer weekdays --value "?{Weekday names separated by commas|${definition.weekdays.join(',')}}"`) },
                     { label: 'Example', value: 'Moonday, Towerday, Marketday, Hearthday, Starday' }
                 );
             } else if (stage === 'months') {
                 fields.push(
-                    { label: '3. Calendar Periods', value: definition.months.map((month, index) => `${index + 1}. ${_sanitize(month.name)} (${month.days} days${month.skipWeekday ? '; feast days do not advance the weekday' : ''})`).join('<br>') },
-                    { label: 'Change The Year', value: GameAssist.createButton('Replace Periods', `!aa-wayfarer months --value "?{Use Name:Days or Name:Days:Feast entries separated by commas|${definition.months.map(month => `${month.name}:${month.days}${month.skipWeekday ? ':Feast' : ''}`).join(',')}}"`) },
+                    { label: 'Calendar Periods', value: definition.months.map((month, index) => `${index + 1}. ${_sanitize(month.name)} (${month.days} days${month.skipWeekday ? '; feast days do not advance the weekday' : ''})`).join('<br>') },
+                    { label: 'Edit', value: GameAssist.createButton('Replace Periods', `!aa-wayfarer months --value "?{Use Name:Days or Name:Days:Feast entries separated by commas|${definition.months.map(month => `${month.name}:${month.days}${month.skipWeekday ? ':Feast' : ''}`).join(',')}}"`) },
                     { label: 'Example', value: 'Deepwinter:31, Midwinter Feast:5:Feast, Thawrise:27' }
                 );
             } else if (stage === 'intercalary') {
                 fields.push(
-                    { label: '4. Festival Days', value: definition.intercalary.length ? definition.intercalary.map(day => `${_sanitize(day.name)} after ${_sanitize(definition.months[day.afterMonth]?.name || `month ${day.afterMonth + 1}`)}`).join('<br>') : 'None' },
-                    { label: 'Change Festival Days', value: GameAssist.createButton('Replace Festival Days', `!aa-wayfarer intercalary --value "?{Use Name:AfterMonthNumber entries separated by commas; leave blank for none|${definition.intercalary.map(day => `${day.name}:${day.afterMonth + 1}`).join(',')}}"`) },
-                    { label: 'What They Are', value: 'Festival days sit between months and do not use an ordinary weekday name.' }
+                    { label: 'Festival Days', value: definition.intercalary.length ? definition.intercalary.map(day => `${_sanitize(day.name)} after ${_sanitize(definition.months[day.afterMonth]?.name || `period ${day.afterMonth + 1}`)}`).join('<br>') : 'None' },
+                    { label: 'Edit', value: GameAssist.createButton('Replace Festival Days', `!aa-wayfarer intercalary --value "?{Use Name:AfterPeriodNumber entries separated by commas; leave blank for none|${definition.intercalary.map(day => `${day.name}:${day.afterMonth + 1}`).join(',')}}"`) },
+                    { label: 'Meaning', value: 'These are one-day observances between periods. Feast periods with several days belong in Calendar Periods instead.' }
                 );
             } else if (stage === 'leap') {
                 fields.push(
-                    { label: '5. Leap Rule', value: definition.leapEvery ? `${_sanitize(definition.leapName)} follows ${_sanitize(definition.months[definition.leapAfterMonth]?.name)} every ${definition.leapEvery} years.` : 'Off' },
-                    { label: 'Change Leap Rule', value: GameAssist.createButton('Configure Leap Day', `!aa-wayfarer leap --every ?{Every how many years? Use 0 for off|${definition.leapEvery}} --name "?{Leap day name|${definition.leapName}}" --after ?{After month number|${definition.leapAfterMonth + 1}}`) },
-                    { label: 'Example', value: 'Every 4 years adds one named day after the chosen month.' }
+                    { label: 'Leap Rule', value: definition.leapEvery ? `${_sanitize(definition.leapName)} follows ${_sanitize(definition.months[definition.leapAfterMonth]?.name)} every ${definition.leapEvery} years.` : 'Off' },
+                    { label: 'Edit', value: GameAssist.createButton('Configure Leap Day', `!aa-wayfarer leap --every ?{Every how many years? Use 0 for off|${definition.leapEvery}} --name "?{Leap day name|${definition.leapName}}" --after ?{After period number|${definition.leapAfterMonth + 1}}`) }
                 );
             } else if (stage === 'holidays') {
                 fields.push(
-                    { label: '6. Holidays', value: definition.holidays.length ? definition.holidays.map(holiday => `${_sanitize(holiday.name)}: ${_sanitize(definition.months[holiday.monthIndex]?.name)} ${holiday.day}`).join('<br>') : 'None' },
-                    { label: 'Change Holidays', value: GameAssist.createButton('Replace Holidays', `!aa-wayfarer holidays --value "?{Use Name:MonthNumber:Day entries separated by commas; leave blank for none|${definition.holidays.map(holiday => `${holiday.name}:${holiday.monthIndex + 1}:${holiday.day}`).join(',')}}"`) },
-                    { label: 'What They Are', value: 'Holidays name an ordinary date. They do not add an extra day to the year.' }
+                    { label: 'Holidays', value: definition.holidays.length ? definition.holidays.map(holiday => `${_sanitize(holiday.name)}: ${_sanitize(definition.months[holiday.monthIndex]?.name)} ${holiday.day}`).join('<br>') : 'None' },
+                    { label: 'Edit', value: GameAssist.createButton('Replace Holidays', `!aa-wayfarer holidays --value "?{Use Name:PeriodNumber:Day entries separated by commas; leave blank for none|${definition.holidays.map(holiday => `${holiday.name}:${holiday.monthIndex + 1}:${holiday.day}`).join(',')}}"`) },
+                    { label: 'Meaning', value: 'A holiday names an existing date; it does not add a day to the year.' }
+                );
+            } else if (stage === 'seasons') {
+                fields.push(
+                    { label: 'Seasonal Ranges', value: seasonRangeDescription(definition) },
+                    { label: 'Edit', value: GameAssist.createButton('Replace Seasonal Ranges', `!aa-wayfarer seasons --value "?{Use Name:StartPeriod:StartDay:EndPeriod:EndDay entries separated by commas; leave blank to use period labels|${seasonRangeInput(definition)}}"`) },
+                    { label: 'Example', value: 'Winter:12:15:3:8 may cross the end of the year. Seasonal ranges may not overlap.' }
                 );
             }
             fields.push({ label: 'Navigation', value: wayfarerStageControls(stage) });
-            sendPanel(msg, `Wayfarer Setup: ${stage === 'identity' ? 'Name and Starting Date' : stage[0].toUpperCase() + stage.slice(1)}`, fields);
+            const titles = {
+                identity: 'Name, Clock and Starting Date',
+                weekdays: 'Weekdays',
+                months: 'Calendar Periods',
+                intercalary: 'Festival Days',
+                leap: 'Leap Rule',
+                holidays: 'Holidays',
+                seasons: 'Seasons'
+            };
+            sendPanel(msg, `Wayfarer: ${titles[stage] || 'Calendar Setup'}`, fields);
         }
 
         function showWayfarerPreview(msg, activationReview = false) {
@@ -22584,10 +22722,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Draft', value: wayfarerOverview(draft) },
                 { label: 'Starting Date Preview', value: sample ? _sanitize(displayMoment(sample)) : 'Invalid starting date' },
                 { label: 'Calendar Periods', value: definition.months.map((month, index) => `${index + 1}. ${_sanitize(month.name)} (${month.days}${month.skipWeekday ? ', Feast' : ''})`).join('<br>') },
-                { label: 'Festival and Leap Days', value: `${definition.intercalary.length ? definition.intercalary.map(day => _sanitize(day.name)).join(', ') : 'No annual festival days'}; ${definition.leapEvery ? `${_sanitize(definition.leapName)} every ${definition.leapEvery} years` : 'no leap day'}` },
+                { label: 'Festival and Leap Days', value: `${definition.intercalary.length ? definition.intercalary.map(day => _sanitize(day.name)).join(', ') : 'No one-day festivals'}; ${definition.leapEvery ? `${_sanitize(definition.leapName)} every ${definition.leapEvery} years` : 'no leap day'}` },
                 { label: 'Holidays', value: definition.holidays.length ? definition.holidays.map(holiday => `${_sanitize(holiday.name)} (${_sanitize(definition.months[holiday.monthIndex]?.name)} ${holiday.day})`).join('<br>') : 'None' },
-                { label: 'Setup Check', value: status.errors.length ? _sanitize(status.errors.join(' ')) : (incomplete.length ? `Review these stages before activation: ${_sanitize(incomplete.join(', '))}.` : 'Ready to activate. The active calendar has not changed yet.') },
-                { label: 'Actions', value: `${action} ${GameAssist.createButton('Edit A Stage', '!aa-wayfarer')} ${GameAssist.createButton('Save Draft', '!aa-wayfarer save')}` }
+                { label: 'Seasons', value: seasonRangeDescription(definition) },
+                { label: 'Moon Phases', value: `${_sanitize(currentMoonSummary())} Moon configuration is managed in Astronomy and is not changed by activating this draft.` },
+                { label: 'Setup Check', value: status.errors.length ? _sanitize(status.errors.join(' ')) : (incomplete.length ? `Review these areas before activation: ${_sanitize(incomplete.join(', '))}.` : 'Ready to activate. The active calendar has not changed yet.') },
+                { label: 'Actions', value: `${action} ${GameAssist.createButton('Wayfarer Manager', '!aa-wayfarer')} ${GameAssist.createButton('Save Draft', '!aa-wayfarer save')}` }
             ]);
         }
 
@@ -22739,12 +22879,121 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return holidays.some(holiday => !holiday) ? null : holidays;
         }
 
+        function dayIndexForPeriodDate(definition, periodNumber, day) {
+            const monthIndex = Number(periodNumber) - 1;
+            const period = definition.months[monthIndex];
+            if (!period || !Number.isInteger(Number(day)) || Number(day) < 1 || Number(day) > period.days) return null;
+            let offset = 0;
+            definition.months.forEach((month, index) => {
+                if (index < monthIndex) {
+                    offset += month.days;
+                    offset += definition.intercalary.filter(item => item.afterMonth === index).length;
+                }
+            });
+            return offset + Number(day) - 1;
+        }
+
+        function periodDateForDayIndex(definition, requestedIndex) {
+            let remaining = Number(requestedIndex);
+            for (let monthIndex = 0; monthIndex < definition.months.length; monthIndex++) {
+                const month = definition.months[monthIndex];
+                if (remaining < month.days) return { period: monthIndex + 1, day: remaining + 1 };
+                remaining -= month.days;
+                const festivalDays = definition.intercalary.filter(item => item.afterMonth === monthIndex).length;
+                if (remaining < festivalDays) return null;
+                remaining -= festivalDays;
+            }
+            return null;
+        }
+
+        function seasonRangeEditorEntries(definition) {
+            const totalDays = definition.months.reduce((sum, month) => sum + month.days, 0) + definition.intercalary.length;
+            const sorted = definition.seasonRanges.slice().sort((a, b) => a.start - b.start);
+            const entries = [];
+            let first = sorted[0] || null;
+            let last = sorted[sorted.length - 1] || null;
+            if (first && last && first !== last && first.start === 0 && last.end === totalDays - 1 && first.name === last.name) {
+                const start = periodDateForDayIndex(definition, last.start);
+                const end = periodDateForDayIndex(definition, first.end);
+                if (start && end) entries.push({ name: first.name, start, end });
+                first = null;
+                last = null;
+            }
+            sorted.forEach(range => {
+                if ((!first && range.start === 0) || (!last && range.end === totalDays - 1)) return;
+                const start = periodDateForDayIndex(definition, range.start);
+                const end = periodDateForDayIndex(definition, range.end);
+                if (start && end) entries.push({ name: range.name, start, end });
+            });
+            return entries;
+        }
+
+        function seasonRangeInput(definition) {
+            return seasonRangeEditorEntries(definition)
+                .map(entry => `${entry.name}:${entry.start.period}:${entry.start.day}:${entry.end.period}:${entry.end.day}`)
+                .join(',');
+        }
+
+        function seasonRangeDescription(definition) {
+            const entries = seasonRangeEditorEntries(definition);
+            return entries.length
+                ? entries.map(entry => `${_sanitize(entry.name)}: ${_sanitize(definition.months[entry.start.period - 1]?.name)} ${entry.start.day} to ${_sanitize(definition.months[entry.end.period - 1]?.name)} ${entry.end.day}`).join('<br>')
+                : 'No date ranges configured; each period uses its own saved season label.';
+        }
+
+        function parseSeasonRanges(raw, definition) {
+            if (!String(raw || '').trim()) return [];
+            const entries = String(raw).split(',').map(value => value.trim()).filter(Boolean);
+            if (!entries.length || entries.length > 12) return null;
+            const totalDays = definition.months.reduce((sum, month) => sum + month.days, 0) + definition.intercalary.length;
+            const ranges = [];
+            for (const entry of entries) {
+                const match = entry.match(/^([^:]+):(\d+):(\d+):(\d+):(\d+)$/);
+                if (!match) return null;
+                const name = boundedName(match[1]);
+                const start = dayIndexForPeriodDate(definition, Number(match[2]), Number(match[3]));
+                const end = dayIndexForPeriodDate(definition, Number(match[4]), Number(match[5]));
+                if (!name || start === null || end === null) return null;
+                if (start <= end) ranges.push({ name, start, end });
+                else ranges.push({ name, start, end: totalDays - 1 }, { name, start: 0, end });
+            }
+            if (ranges.length > 12) return null;
+            const sorted = ranges.slice().sort((a, b) => a.start - b.start);
+            if (sorted.some((range, index) => index > 0 && range.start <= sorted[index - 1].end)) return null;
+            return ranges;
+        }
+
         function handleWayfarer(msg, content) {
             if (!requireGm(msg)) return;
             const body = content.replace(/^wayfarer\s*/i, '').trim();
-            if (!body || body === 'menu') return showWayfarer(msg);
+            if (!body || /^(?:menu|gm|dm|status)$/i.test(body)) return showWayfarer(msg);
+            if (/^(?:help|guide|info|manual)$/i.test(body)) return showWayfarerHelp(msg);
+            if (/^audit$/i.test(body)) return showWayfarerPreview(msg, false);
             const action = body.split(/\s+/)[0].toLowerCase();
             const args = _parseArgs(body).args;
+            if (action === 'reset-default') {
+                if (String(args.confirm || '').toLowerCase() !== 'yes') {
+                    return sendPanel(msg, 'Reset Wayfarer Draft', [
+                        { label: 'No Change Made', value: 'Resetting the saved draft requires the exact command <code>!aa-wayfarer reset-default --confirm yes</code>.' },
+                        { label: 'Important', value: 'This command resets only the saved draft to the campaign Wayfarer default. The active calendar and fictional time remain unchanged.' },
+                        { label: 'Return', value: GameAssist.createButton('Wayfarer Manager', '!aa-wayfarer') }
+                    ]);
+                }
+                const definition = normalizeWayfarer(copy(DEFAULT_WAYFARER));
+                modState.config.wayfarerDraft = {
+                    schemaVersion: WAYFARER_DRAFT_SCHEMA_VERSION,
+                    definition,
+                    startDate: { year: POLICY.almanac.minimumYear, period: definition.months[0].name, day: 1, hour: 8, minute: 0 },
+                    reviewed: WAYFARER_STAGES.reduce((result, stage) => ({ ...result, [stage]: false }), {}),
+                    sourceProfileId: 'wayfarer',
+                    updatedAt: isoNow()
+                };
+                return sendPanel(msg, 'Wayfarer Draft Reset', [
+                    { label: 'Saved Draft', value: 'Restored to the campaign Wayfarer Calendar default.' },
+                    { label: 'Active Calendar', value: 'Unchanged.' },
+                    { label: 'Next Step', value: GameAssist.createButton('Open Wayfarer Manager', '!aa-wayfarer') }
+                ]);
+            }
             if (action === 'stage') {
                 const reviewed = String(args.review || '').toLowerCase();
                 const draft = ensureWayfarerDraft();
@@ -22945,6 +23194,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 draft.reviewed.intercalary = false;
                 draft.reviewed.leap = false;
                 draft.reviewed.holidays = false;
+                draft.reviewed.seasons = false;
                 editNotice = 'Replacing the calendar periods cleared the previous festival days, leap rule, holidays, and seasonal ranges so dates were not silently moved. Re-enter any that belong to the new year.';
                 editedStage = 'months';
             } else if (action === 'intercalary') {
@@ -22957,6 +23207,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (!holidays) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'Use comma-separated Name:Month:Day entries within the current month lengths, or leave the list blank.' }]);
                 wayfarer.holidays = holidays;
                 editedStage = 'holidays';
+            } else if (action === 'seasons') {
+                const ranges = parseSeasonRanges(args.value, wayfarer);
+                if (!ranges) return sendPanel(msg, 'Wayfarer Needs Attention', [
+                    { label: 'Problem', value: 'Use comma-separated Name:StartPeriod:StartDay:EndPeriod:EndDay entries with valid, non-overlapping dates; or leave the list blank.' },
+                    { label: 'Saved Draft', value: 'Preserved without partial changes.' }
+                ]);
+                wayfarer.seasonRanges = ranges;
+                editedStage = 'seasons';
             } else if (action === 'leap') {
                 const every = Math.floor(Number(args.every || 0));
                 const after = Math.floor(Number(args.after || wayfarer.months.length));
@@ -23561,6 +23819,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 seasonalEvent,
                 moons
             });
+        }
+
+        function currentMoonSummary() {
+            if (!submoduleEnabled('astronomy')) return 'Astronomy is turned off; saved moon settings are preserved.';
+            const context = astronomyContext();
+            if (!context?.moons?.length) return 'No moons are configured.';
+            return context.moons.map(moon => `${moon.name}: ${moon.phase}`).join(' | ');
         }
 
         function showAstronomy(msg) {
@@ -24490,8 +24755,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h3>Worked Example</h3>',
                 '<p>Create a calendar named <strong>River Kingdom Calendar</strong> with 20 hours per day and 75 minutes per hour. Use weekdays <code>Moonday,Towerday,Marketday,Hearthday,Starday</code>; periods <code>Deepwinter:31,Founding Feast:2:Feast,Thawrise:27,Highsun:35,Harvestfall:29</code>; leap day <code>Starwake</code> every 4 years after period 4; and holidays <code>Oath Day:1:1,River Fair:3:12</code>. Review every stage, preview the starting date, and activate.</p>',
                 '<h3>Editing, Rollback, and Recovery</h3>',
-                '<p>Most setup stages can be edited independently. Replacing the complete period list deliberately clears index-based festival days, leap placement, holidays, and seasonal ranges so they are not silently moved to unrelated dates; the setup screen identifies the cleared stages for re-entry. When Wayfarer is already active, activation preserves elapsed fictional time and shows the reinterpreted date. If the revised calendar cannot represent that elapsed time, activation is refused and offers a separate, clearly labeled reset-to-draft-start choice. The latest activation keeps one rollback point containing the previous calendar and fictional time. Cancel Draft abandons only unactivated work; Restore Previous Activation rolls back the most recent activation.</p>',
-                '<p>A fresh Wayfarer draft starts with the campaign Wayfarer Calendar, including its 20-hour clock, 75-minute hours, named weekdays, twelve months, five festival periods, holidays, seasonal ranges, and documented daily rhythm. Use Start From A Copy to replace the draft with Standard, built-in Solamnic, Harptos, or the saved Wayfarer definition. Wayfarer supports one repeating leap interval, so a Standard copy uses a four-year leap day and does not reproduce Gregorian century exceptions.</p>',
+                '<p>The Wayfarer Calendar Manager offers direct controls for its name, clock, starting date, weekdays, periods, festival days, leap rule, holidays, and seasonal ranges. Replacing the complete period list deliberately clears index-based festival days, leap placement, holidays, and seasonal ranges so they are not silently moved to unrelated dates; the manager identifies the cleared areas for re-entry. When Wayfarer is already active, activation preserves elapsed fictional time and shows the reinterpreted date. If the revised calendar cannot represent that elapsed time, activation is refused and offers a separate, clearly labeled reset-to-draft-start choice. The latest activation keeps one rollback point containing the previous calendar and fictional time. Discard Draft abandons only unactivated work; Restore Previous Activation rolls back the most recent activation.</p>',
+                '<p>A fresh Wayfarer draft starts with the campaign Wayfarer Calendar, including its 20-hour clock, 75-minute hours, named weekdays, twelve months, five festival periods, holidays, seasonal ranges, and documented daily rhythm. Use Start From A Copy to replace the draft with Standard, built-in Solamnic, Harptos, or the saved Wayfarer definition. The command <code>!aa-wayfarer reset-default --confirm yes</code> restores only the saved draft to this campaign default; it never changes the active calendar or fictional time. Wayfarer supports one repeating leap interval, so a Standard copy uses a four-year leap day and does not reproduce Gregorian century exceptions.</p>',
                 '<h2>Climate and Astronomy</h2>',
                 '<p>ClimateAlmanac manages bounded regions, parent inheritance, editable built-in starting profiles, custom profiles, overrides, and a manual season fallback. AstronomyAlmanac calculates reproducible configurable moon phases, future phase/daylight forecasts, and deterministic season boundaries from TimeAlmanac when available or explicit manual context when it is not. Its bounded weighted rare-event catalog remains separate from deterministic results.</p>',
                 '<h2>Weather and Environment</h2>',
@@ -24501,7 +24766,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h2>Safety</h2>',
                 '<p>Large advances produce one committed change. Moving backward changes only the fictional calendar and requires explicit confirmation. It never reverses rests, effects, combat, NPC history, HP, resources, or other campaign state.</p>',
                 '<h2>Commands</h2>',
-                '<p><code>!aa-wayfarer</code> opens the guided custom-calendar home; its generated buttons cover ordinary setup, preview, activation, cancellation, duplication, and rollback. <code>!aa-time</code>, <code>!aa-climate</code>, <code>!aa-astro</code>, <code>!aa-weather</code>, <code>!aa-enviro</code>, and <code>!aa-rest</code> open or control their focused systems. Use the buttons in each panel for ordinary play.</p>'
+                '<p><code>!aa-wayfarer</code> opens the direct custom-calendar manager; its generated buttons cover component editing, guided review, preview, activation, draft recovery, duplication, and rollback. Moon cycles and phase names are managed through Astronomy because they remain world context when a calendar display changes. <code>!aa-time</code>, <code>!aa-climate</code>, <code>!aa-astro</code>, <code>!aa-weather</code>, <code>!aa-enviro</code>, and <code>!aa-rest</code> open their focused systems. Standard role routes such as <code>!Weather-GM</code>, <code>!Weather-DM</code>, <code>!Weather-Help</code>, <code>!Weather-Status</code>, and <code>!Weather-Audit</code> are case-insensitive and also accept spaces in place of the hyphen.</p>'
             ].join('');
         }
 
@@ -24528,13 +24793,28 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function normalizedInput(content) {
             const raw = String(content || '').trim();
+            const focused = raw.match(/^!(time|calendar|cal|wayfarer|climate|clim|astronomy|astro|weather|environment|enviro|rest)(?:-|\s)+(gm|dm|menu|guide|help|info|manual|status|audit)(?:\s|$)/i);
+            if (focused) {
+                const system = {
+                    cal: 'calendar',
+                    clim: 'climate',
+                    astro: 'astronomy',
+                    enviro: 'environment'
+                }[focused[1].toLowerCase()] || focused[1].toLowerCase();
+                const action = focused[2].toLowerCase();
+                if (system === 'calendar') return ['gm', 'dm', 'menu', 'status'].includes(action) ? 'calendar' : (action === 'audit' ? 'audit' : 'guide');
+                if (['gm', 'dm', 'menu'].includes(action)) return `${system} menu`;
+                if (['guide', 'help', 'info', 'manual'].includes(action)) return `${system} help`;
+                return `${system} ${action}`;
+            }
             if (/^!date(?:\s|$)/i.test(raw)) return 'current-date';
             if (/^!time(?:\s|$)/i.test(raw)) return 'current-time';
-            if (/^!cal(?:\s|$)/i.test(raw)) return 'calendar';
-            if (/^!clim(?:\s|$)/i.test(raw)) return `climate ${raw.replace(/^!clim\s*/i, '')}`.trim();
+            if (/^!(?:calendar|cal)(?:\s|$)/i.test(raw)) return 'calendar';
+            if (/^!wayfarer(?:\s|$)/i.test(raw)) return `wayfarer ${raw.replace(/^!wayfarer\s*/i, '')}`.trim();
+            if (/^!(?:climate|clim)(?:\s|$)/i.test(raw)) return `climate ${raw.replace(/^!(?:climate|clim)\s*/i, '')}`.trim();
             if (/^!weather(?:\s|$)/i.test(raw)) return `weather ${raw.replace(/^!weather\s*/i, '')}`.trim();
-            if (/^!enviro(?:\s|$)/i.test(raw)) return `environment ${raw.replace(/^!enviro\s*/i, '')}`.trim();
-            if (/^!astro(?:\s|$)/i.test(raw)) return `astronomy ${raw.replace(/^!astro\s*/i, '')}`.trim();
+            if (/^!(?:environment|enviro)(?:\s|$)/i.test(raw)) return `environment ${raw.replace(/^!(?:environment|enviro)\s*/i, '')}`.trim();
+            if (/^!(?:astronomy|astro)(?:\s|$)/i.test(raw)) return `astronomy ${raw.replace(/^!(?:astronomy|astro)\s*/i, '')}`.trim();
             if (/^!rest(?:\s|$)/i.test(raw)) return `rest ${raw.replace(/^!rest\s*/i, '')}`.trim();
             if (/^!aa-wayfarer(?:\s|$)/i.test(raw)) return `wayfarer ${raw.replace(/^!aa-wayfarer\s*/i, '')}`.trim();
             if (/^!aa-time(?:\s|$)/i.test(raw)) return `time ${raw.replace(/^!aa-time\s*/i, '')}`.trim();
@@ -24595,7 +24875,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
-        ['!Almanac', '!Almanac-', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!date', '!time', '!clim', '!weather', '!enviro', '!astro', '!rest'].forEach(prefix => {
+        ['!Almanac', '!Almanac-', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-'].forEach(prefix => {
             GameAssist.onCommand(prefix, handleCommand, MODULE_NAME, {
                 match: { caseInsensitive: true, mode: prefix.endsWith('-') ? 'prefix' : 'token' }
             });
@@ -24648,11 +24928,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: guided Wayfarer drafts plus Time, Climate, Astronomy, Weather, Environment, and Rest are available through !Almanac; the module starts disabled.`, 'INFO', { startup: true });
     }, {
         enabled: false,
-        prefixes: ['!Almanac', '!Almanac-', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!date', '!time', '!clim', '!weather', '!enviro', '!astro', '!rest'],
+        prefixes: ['!Almanac', '!Almanac-', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-'],
         preserveRuntimeOnDisable: true,
         protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'environment', 'rest']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced AlmanacAssist to 1.2.0 with a direct Wayfarer Calendar Manager, editable seasonal ranges, visible moon phases, standardized focused-system role/help/status/audit routes, a command-only campaign-default draft reset, and clearer calendar-display confirmation.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.1.2; aligned the untouched starter and saved draft with the campaign's Wayfarer Calendar briefing, retained its exact 460-day calculations, clarified the twelve-month and five-festival structure, documented the daily rhythm, and preserved campaign-edited definitions through exact-match migration.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the AlmanacAssist GM control screen.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.1.0 with persistent Wayfarer drafts, staged setup and previews, safe profile duplication, atomic activation, elapsed-time preservation, explicit reset fallback, one activation rollback point, and a complete custom-calendar manual.

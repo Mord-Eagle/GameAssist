@@ -737,13 +737,13 @@ Config key: `autoRollOnAdd`.
 
 ### 6.9 Config UI
 
-> **Module version:** `0.2.3`
+> **Module version:** `0.2.5`
 
-`!ga-config ui` or `!ga-config-ui` whispers a GM-only chat control panel. Each module card can show:
+`!ga-config ui` or `!ga-config-ui` whispers a GM-only chat control panel. Shared services appear first in alphabetical order, followed by feature modules in alphabetical order. Each component card can show:
 
 * Current enabled/disabled status with a one-click toggle.
 * Boolean configuration keys as chat buttons.
-* A brief configuration summary.
+* A brief, wrapping configuration summary that never dumps nested JSON into chat.
 * A direct **Manage PC Health Alerts** button on the HealthService card.
 * Previous, refresh, and next pagination controls.
 
@@ -986,7 +986,7 @@ Config keys: `enabled` and `allowPlayerAttacks`. Source choices, retained reques
 
 ### 6.15 AlmanacAssist *(optional, GM-managed world context and deliberate rests)*
 
-> **Module version:** `1.1.0`<br>
+> **Module version:** `1.2.0`<br>
 > **Default:** Disabled<br>
 > **Launch sheet for RestAlmanac:** Official D&D 5E by Roll20 2014 PC sheet. Time, Climate, Astronomy, Weather, and Environment do not require a character sheet.
 
@@ -1017,23 +1017,25 @@ Main commands:
 * `!Almanac-Audit` → Run a read-only health review across all six systems.
 * `!Almanac-Guide` or `!Almanac-Help` → Open the compact navigation guide.
 * `!Almanac-Manual` → Create or update one stable AlmanacAssist user-manual handout.
-* `!aa-wayfarer` → Open the guided Wayfarer custom-calendar setup.
+* `!aa-wayfarer` → Open the direct Wayfarer Calendar Manager.
+* Focused systems also accept standard, case-insensitive role and reference routes with a hyphen or space, such as `!Weather-GM`, `!weather dm`, `!Weather-Help`, `!Weather-Status`, and `!Weather-Audit`. The same pattern applies to Time, Calendar, Wayfarer, Climate, Astronomy, Environment, and Rest.
 
 ### Build A Custom Wayfarer Calendar
 
 Wayfarer is for campaign worlds whose calendar does not match Standard, Solamnic, or Harptos. Setup uses a saved draft, so you can stop, check your notes, and return later without changing the calendar or date currently shown to players.
 
-Open `!aa-wayfarer`, then follow the guided setup stages:
+Open `!aa-wayfarer` to reach the **Wayfarer Calendar Manager**. The manager gives direct access to every calendar component, so changing one holiday or season does not require stepping through unrelated screens:
 
-1. Name the calendar, choose its starting date, and set its hours per day and minutes per hour.
-2. Enter the weekday names in order.
-3. Enter each period as `Name:Days`; append `:Feast` when that period should not advance the ordinary weekday cycle.
-4. Add any additional festival or intercalary days that sit between periods.
-5. Configure an optional named leap day.
-6. Add holidays that name dates without adding extra days.
-7. Review the draft and activate it only when every field is correct.
+1. **Name, Clock & Start** manages the calendar name, fictional clock, and first-activation date.
+2. **Weekdays** stores the repeating weekday names in order.
+3. **Periods** accepts `Name:Days`; append `:Feast` when a multi-day festival period should not advance the ordinary weekday cycle.
+4. **Festival Days** adds one-day observances between periods.
+5. **Leap Rule** manages the optional recurring leap day.
+6. **Holidays** names existing dates without adding days.
+7. **Seasons** accepts `Name:StartPeriod:StartDay:EndPeriod:EndDay`; a range may cross the year boundary, but ranges may not overlap.
+8. **Preview Draft** and **Review and Activate** show the complete result before it can replace the active display.
 
-Each screen shows the current draft, setup progress, and clear **Back**, **Save Draft**, and **Continue** controls. The final review previews the calendar before activation. Invalid edits leave the prior valid draft and active calendar unchanged.
+A **Continue Guided Review** button remains available for a first-time build. Every editor returns directly to the manager, and invalid edits leave the prior valid draft and active calendar unchanged.
 
 **Starting from an existing calendar:** A fresh Wayfarer draft begins with the campaign's complete **Wayfarer Calendar**: its 20-hour clock, 75-minute hours, ten named weekdays, twelve months, five festival periods, four dated seasonal observances, and four season ranges. The setup home can also copy Standard, built-in Solamnic, Harptos, or the saved Wayfarer definition into the draft. The copy is fully editable and does not become active until you confirm it. Wayfarer supports one repeating leap interval, so a Standard copy uses a four-year leap day and does not reproduce Gregorian century exceptions.
 
@@ -1045,11 +1047,13 @@ Each screen shows the current draft, setup progress, and clear **Back**, **Save 
 
 **Editing an active Wayfarer calendar:** GameAssist preserves elapsed fictional time and shows how the revised calendar interprets that moment. If the draft cannot represent the current elapsed time, activation stops without changing anything and offers a separately labeled option to restart at the draft's chosen starting date.
 
-**Undo and recovery:** **Cancel Draft** removes only unactivated edits. Every successful activation also keeps one previous calendar-and-time checkpoint, available through **Restore Previous Activation** until another activation replaces it.
+**Undo and recovery:** **Discard Draft** removes only unactivated edits. Every successful activation also keeps one previous calendar-and-time checkpoint, available through **Restore Previous Activation** until another activation replaces it. The command-only recovery path `!aa-wayfarer reset-default --confirm yes` replaces the saved draft with the campaign Wayfarer default without changing the active calendar or fictional time; it is intentionally not exposed as a chat button.
 
-The AlmanacAssist manual created by `!Almanac-Manual` explains weekdays, months, festival days, leap rules, holidays, activation, rollback, and recovery, and includes a complete worked example.
+The AlmanacAssist manual created by `!Almanac-Manual` explains weekdays, periods, festival days, leap rules, holidays, seasonal ranges, activation, rollback, and recovery, and includes a complete worked example.
 
 TimeAlmanac never changes GameAssist's real-world table timezone, log timestamps, or NPCAssist Session dates. Moving fictional time backward or setting an exact date requires explicit confirmation and records the change; it does not attempt to reverse weather, effects, rests, or other past events.
+
+Current moon phases are visible from the Almanac control center, the current date/time panel, and the Wayfarer manager. Moon cycles, offsets, and phase names are managed through Astronomy because they are world context that continues when the GM changes only the calendar display.
 
 Weather forecasts do not silently replace current weather. A locked or manually chosen condition remains authoritative until the GM unlocks or replaces it. Astronomy keeps deterministic moon/daylight calculations separate from weighted rare-event suggestions, so adding a comet or omen never changes the underlying calendar result.
 

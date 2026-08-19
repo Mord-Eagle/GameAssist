@@ -736,31 +736,35 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 
 #### Wayfarer Custom Calendar
 
-**What this proves:** A GM can build a nontrivial custom calendar through guided screens, stop and resume safely, preview it before use, and recover from a mistaken activation without editing Roll20 state directly.
+**What this proves:** A GM can directly edit every supported calendar component, preview and activate the complete draft safely, see moon phases, and recover without editing Roll20 state.
 
-**Skip when:** Skip during troubleshooting only when the campaign deliberately uses Standard, Solamnic, or Harptos. Do not skip for Issue #89 or v2.0.0 release acceptance.
+**Skip when:** Skip during ordinary troubleshooting only when the campaign deliberately uses Standard, Solamnic, or Harptos. Do not skip for the v2.0.0 release acceptance.
 
-1. Run `!aa-wayfarer`. Note the separately labeled **Active Calendar**, **Current Fictional Date**, and **Saved Draft**. On a fresh state, confirm the draft is named **Wayfarer Calendar** and reports a 10-day week, 17 periods (**12 months + 5 festivals**), 460 ordinary-year days, a 20-hour day, and 75-minute hours. Confirm the weekday list runs from Soladain through Stellara and the periods begin with Celestia's Embrace, Newkolt, and Deepkolt.
-2. Click **Change Name**, cancel the Roll20 query without entering a value, and reopen `!aa-wayfarer`. Pass when the name is unchanged and is never set to `true`.
-3. Click **Begin Setup** and build this disposable example through the guided screens:
+1. Run `!aa-wayfarer`. Confirm the **Wayfarer Calendar Manager** shows direct buttons for **Name, Clock & Start**, **Weekdays**, **Periods**, **Festival Days**, **Leap Rule**, **Holidays**, and **Seasons**. It should also show current moon phases and an **Open Astronomy** button.
+2. On fresh state, confirm the draft is named **Wayfarer Calendar** and reports a 10-day week, 17 periods (**12 months + 5 festivals**), 460 ordinary-year days, a 20-hour day, and 75-minute hours.
+3. Open **Name, Clock & Start**, click **Change Name**, cancel the Roll20 query, and reopen the manager. Pass when the name is unchanged and is never set to `true`.
+4. Build this disposable example by opening only the needed component editors:
    - Name: `River Kingdom Calendar`
    - Starting date: Year `12`, `Deepwinter`, day `7`, hour `9`, minute `30`
    - Clock: `20` hours per day and `75` minutes per hour
    - Weekdays: `Moonday,Towerday,Marketday,Hearthday,Starday`
    - Periods: `Deepwinter:31,Founding Feast:2:Feast,Thawrise:27,Highsun:35,Harvestfall:29`
    - Additional festival days: none
-   - Confirm the period replacement notice explains that prior festival days, leap rules, holidays, and seasonal ranges were cleared rather than silently remapped.
-   - Leap rule: `Starwake`, every `4` years, after month `4`
+   - Leap rule: `Starwake`, every `4` years, after period `4`
    - Holidays: `Oath Day:1:1,River Fair:3:12`
-4. Between two stages, close the panel and run `!aa-wayfarer` again. Confirm the draft and progress return unchanged.
-5. Use **Preview Draft**. Read the unequal month lengths, festival day, leap rule, both holidays, and starting-date preview.
-6. Before activation, enter an invalid month such as `Broken Month:0`. Confirm the prior valid draft remains and the active calendar/date do not change.
-7. Review every stage, then activate. Confirm the calendar becomes active at the reviewed starting date and the prior calendar is offered as one rollback point.
-8. Change one period length in the draft and activate again. Confirm the result says elapsed fictional time was preserved rather than moving to the draft starting date.
-9. Use **Start From A Copy** with Harptos. Confirm only the saved draft changes. Use **Cancel Draft** and confirm the active calendar remains unchanged.
-10. Create or update `!Almanac-Manual`. Confirm its **Default Wayfarer Calendar** section lists the twelve months, five festivals, exact season and equinox/solstice boundaries, and the seven daily periods from First Light through Deep Night. Confirm **Building a Wayfarer Calendar** still explains every calendar concept, the worked example, editing, rollback, and recovery.
+   - Seasons: `Winter:5:1:1:31,Spring:2:1:3:27,Summer:4:1:4:35,Autumn:5:1:5:29`
+5. Confirm replacing the period list explains that dependent festival days, leap rules, holidays, and seasonal ranges were cleared instead of silently moved.
+6. Close the panel between edits and run `!aa-wayfarer` again. Confirm the draft and review progress return unchanged.
+7. Use **Preview Draft**. Confirm the unequal period lengths, feast period, leap rule, holidays, seasonal ranges, starting-date preview, and moon-phase note are readable.
+8. Submit an invalid period such as `Broken Month:0` or overlapping seasons. Confirm the prior valid draft and active calendar remain unchanged.
+9. Review every area, then activate. Confirm the calendar becomes active at the reviewed starting date and the prior calendar is retained as one rollback point.
+10. Change one period length and activate again. Confirm elapsed fictional time is preserved rather than replaced by the draft starting date.
+11. Use **Start From A Copy** with Harptos. Confirm only the saved draft changes. Use **Discard Draft** and confirm the active calendar remains unchanged.
+12. Run `!Weather-GM`, `!weather dm`, `!Weather-Status`, `!Weather-Help`, and `!Weather-Audit`. Confirm each opens the appropriate private Weather screen exactly once. Repeat one route with mixed capitalization.
+13. Run `!aa-wayfarer reset-default` without confirmation. Confirm no change is made and no reset button is offered. Then run `!aa-wayfarer reset-default --confirm yes`; confirm the draft returns to **Wayfarer Calendar** while the active calendar and fictional time remain unchanged.
+14. Create or update `!Almanac-Manual`. Confirm it explains the direct manager, seasonal ranges, moon ownership, command-only draft reset, activation, rollback, and recovery.
 
-**Pass when:** the fresh starter matches the Wayfarer briefing; no setup edit changes the live calendar before activation; progress survives closing the menu and a sandbox restart; invalid input causes no partial change; preview is readable; first activation uses the chosen starting date; active-definition edits preserve elapsed fictional time or stop with a clear reset warning; duplication affects only the draft; and discard/rollback controls restore exactly the state they describe.
+**Pass when:** all calendar components are directly reachable; the default matches the Wayfarer briefing; moon phases are visible and link to Astronomy; standardized Weather aliases work with either case and either a space or hyphen; draft edits survive closing the menu and a sandbox restart; invalid input causes no partial change; activation and rollback preserve the described state; and the command-only default reset changes only the draft.
 
 ### ClimateAlmanac
 
@@ -1771,18 +1775,21 @@ HealthService does not currently claim support for 2024 HP attributes, temporary
 
 ### Basic Check
 
-Run either command:
+Run:
 
 ```roll20chat
+!ga-config modules
 !ga-config ui
 !ga-config-ui
 ```
 
-Pass when one Config UI panel appears for each command, module cards show their current states, and **Refresh** redraws the panel once.
+Pass when `!ga-config modules` lists **Services** first in alphabetical order and **Modules** second in alphabetical order. Each ConfigUI command should produce one panel; the paged panels should use the same grouping and ordering. Saved settings must appear as short human summaries rather than raw JSON, long values must remain inside the Roll20 chat column, and **Refresh** must redraw the panel once.
 
 ### Expanded ConfigUI Checks
 
-- [ ] Boolean settings appear as understandable buttons.
+- [ ] Boolean settings appear as understandable, wrapping buttons.
+- [ ] Nested settings such as Almanac submodules, Wayfarer, climate, astronomy, and CombatAssist reminders appear as bounded summaries rather than braces, quoted keys, or serialized arrays.
+- [ ] At Roll20's normal chat width, no ConfigUI value forces the panel beyond the visible chat column.
 - [ ] Module enable/disable buttons change the intended module.
 - [ ] Pagination works when more settings exist than fit on one page.
 - [ ] `!ga-config ui` and `!ga-config-ui` do not double-trigger.
