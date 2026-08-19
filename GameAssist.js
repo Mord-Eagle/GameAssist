@@ -2,8 +2,8 @@
 ========================================
 GameAssist - Roll20 API Script
 Version: 2.0.0
-Last Updated: 2026-08-16 (America/New_York)
-Release scope: EffectAssist 2.4.1 sheet-worker and lifecycle repairs, ConcentrationAssist 0.4.1 page-safe HP matching, AlmanacAssist 1.1.1 Wayfarer clock/calendar repairs, disabled-module recovery, and the existing v2.0.0 module suite.
+Last Updated: 2026-08-19 (America/New_York)
+Release scope: EffectAssist 2.4.1 sheet-worker and lifecycle repairs, ConcentrationAssist 0.4.1 page-safe HP matching, AlmanacAssist 1.2.0 direct Wayfarer calendar management, ConfigUI 0.2.5 readable grouped configuration, disabled-module recovery, and the existing v2.0.0 module suite.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -15,7 +15,7 @@ service plus a shared health-observation and verified-write contract. Optional
 PC health-band alerts use that shared evidence and remain private to the GM.
 Normal event handlers execute directly unless a module deliberately
 calls GameAssist.enqueue(). This development package contains fifteen configurable modules:
-- ConfigUI 0.2.4 - GM-only chat controls for toggling modules, common options, and PC health alerts.
+- ConfigUI 0.2.5 - GM-only chat controls with service-first grouping, compact readable configuration summaries, module toggles, common options, and PC health alerts.
 - CritAssist 0.2.5.1 - Detects natural-1 attacks and offers fumble/confirm menus.
 - ConditionAssist 1.0.4 - Provides condition wording, artwork, announcements, and marker controls.
 - TokenAssist 1.0.5 - Provides general token controls through !token-assist and !ta commands.
@@ -27,7 +27,7 @@ calls GameAssist.enqueue(). This development package contains fifteen configurab
 - EffectAssist 2.4.1 - Coordinates catalog-driven effects, direct GM casting, opaque player flows, retained GM requests, 2014-sheet modifiers, concentration, ownership-safe cleanup, duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
 - HealAssist 1.0.0 - Guides verified 2014 healing rolls, visible PC targeting, private GM requests, complete HP review, and one-use HealthService application.
 - AttackAssist 1.0.0 - Guides authorized 2014 repeating attacks, visible targeting, private GM placement, and one-use native-template rolls without applying damage.
-- AlmanacAssist 1.1.1 - Adds guided Wayfarer drafts to fictional time, climate, astronomy, weather, environments, and verified 2014-sheet rests across six independently controlled internal systems.
+- AlmanacAssist 1.2.0 - Adds direct Wayfarer calendar management, editable seasonal ranges, visible moon phases, and retained guided review to fictional time, climate, astronomy, weather, environments, and verified 2014-sheet rests across six independently controlled internal systems.
 - HPAssist 0.2.0 - Rolls npc_hpformula and uses HealthService for verified token bar 1 writes when available.
 - DebugTools 0.3.0 - Optional dry-run-first GM diagnostics with verified supported HP damage writes.
 
@@ -93,8 +93,9 @@ MODULE COMMANDS
   !Attack-Status, !Attack-Audit, !Attack-Requests, and !Attack-Players
 - AlmanacAssist: !Almanac, !aa, !cal, !date, !time, !clim, !astro,
   !weather, !enviro, !rest, !aa-time, !aa-climate, !aa-astro,
-  !aa-weather, !aa-enviro, !aa-rest, !aa-wayfarer, !Almanac-GM,
-  !Almanac-DM, !Almanac-Status, !Almanac-Audit
+  !aa-weather, !aa-enviro, !aa-rest, !aa-wayfarer, focused role/help/status/audit aliases,
+  !aa-wayfarer reset-default --confirm yes, !Almanac-GM, !Almanac-DM,
+  !Almanac-Status, !Almanac-Audit
 - HPAssist: !HP-GM, !HP-Selected, !HP-All, !hp <command>
 - DebugTools: !ga-debug damage|marker|save
 
@@ -124,9 +125,10 @@ V2.0.0 FOUNDATION
 - AlmanacAssist remains disabled until the GM enables it and provides all six
   independently controlled Time, Climate, Astronomy, Weather, Environment,
   and Rest systems as one complete v2.0.0 module.
-- Wayfarer setup keeps persistent draft work separate from the active calendar,
-  validates before atomic activation, preserves elapsed time for active-calendar
-  edits when possible, and retains one deliberate rollback point.
+- The direct Wayfarer Calendar Manager keeps persistent draft work separate from
+  the active calendar, retains guided review, validates before atomic activation,
+  preserves elapsed time for active-calendar edits when possible, and retains one
+  deliberate rollback point.
 - Almanac systems exchange optional context without hidden prerequisites;
   disabling one preserves its valid state and leaves unrelated systems usable
   through explicit manual or bounded fallback context.
@@ -1320,6 +1322,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Changed (v1.8.0): Added explicit legacy guide-name adoption so renamed modules reuse and rename one existing owned handout instead of creating a duplicate.
     // Changed (v0.1.5.1): Added validated IANA timezone resolution, bounded formatter reuse, DST-aware human formatting, date-key generation, and legacy-display fallback while preserving stored absolute timestamps.
     // Decision log:
+    //   CHOICE: Summarize nested configuration for chat and reserve full serialization for the snapshot handout - ALT: share one raw formatter across both surfaces; REJECTED: compact chat and complete export have different readability and evidence requirements.
     //   CHOICE: Reserve one exact `GameAssist Guide - <Module>` handout name and refuse duplicate-name ambiguity - ALT: create numbered copies; REJECTED: duplicate manuals become stale and can overwrite unrelated notes unpredictably.
     //   CHOICE: Keep standalone detection as diagnostics only - ALT: use it for marker dependency gating; REJECTED: MarkerService owns GameAssist marker behavior.
     //   CHOICE: Unknown branches remain warning-only; explicit cleanup is required before deletion.
@@ -5343,11 +5346,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.log('Metrics', summary.join('\n'));
     }, 'Core', { gmOnly: true });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Grouped central component listings as alphabetized services followed by alphabetized modules and replaced raw nested configuration values with bounded readable summaries while preserving the complete snapshot handout.
     // Changed (v2.0.0): Reworded HealthService evidence panels around observable GM outcomes while preserving unknown provenance and all existing health-transition behavior.
     // Changed (v2.0.0): Standardized suite navigation on Roll20's default-template panels and documented case-insensitive space-or-hyphen command paths.
     // Changed (v2.0.0): Added !GA-GM/!GA-DM, !ga-help, and layered !ga-nav dashboards with disabled-module recovery and stable module-owned destinations.
     // Changed (v2.0.0): Added protected, optional GM-private PC health alerts with independently selectable 50%, 25%, and 10% downward-crossing thresholds, combined notices, optional exact HP, safe preview, status controls, and HealthService-only observation without changing NPCAssist NPC policy.
     // Decision log:
+    //   CHOICE: Use service-first alphabetical grouping in central listings - ALT: expose internal registration order; REJECTED: registration order is an implementation detail and makes component lookup inconsistent.
+    //   CHOICE: Keep complete configuration evidence in the snapshot handout while chat shows bounded summaries - ALT: force raw nested objects into Roll20 chat; REJECTED: unbroken JSON produces unreadable, over-wide panels.
     //   CHOICE: Keep command syntax identical to legacy for drop-in replacement.
     //   CHOICE: Keep the default status action-oriented and volatile counters behind --details - ALT: one exhaustive panel; REJECTED: obscured the health signal.
     //   CHOICE: Send status navigation as a separate normal whisper - ALT: button-only template row; REJECTED: Roll20 omitted that row in live testing.
@@ -5655,6 +5661,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Changed (v2.0.0): Added the standard GameAssist Home return to the ConfigUI GM screen.
     // Changed (v2.0.0): Advanced ConfigUI to 0.2.3 with a direct HealthService PC-alert settings button and a readable alert summary instead of raw protected configuration JSON.
     // Decision log:
+    //   CHOICE: List core services before feature modules and alphabetize within each group - ALT: preserve registration order; REJECTED: operational categories and stable alphabetical scanning are easier for GMs to navigate.
+    //   CHOICE: Render bounded nested summaries in chat while retaining the complete versioned snapshot handout - ALT: print raw JSON in the settings panel; REJECTED: long unbroken structures overflow Roll20 chat and obscure common controls.
     //   CHOICE: Button helper reused; nav uses the same command path for refresh/paging.
     // Prior notes:
     //   v0.1.7.0: Advanced ConfigUI to 0.2.2; GM and DM role aliases open the actual settings screen while compact Guide/Help, Info, Status, read-only Audit, and unknown-command recovery remain available under the established prefix.
@@ -22879,6 +22887,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return holidays.some(holiday => !holiday) ? null : holidays;
         }
 
+        /**
+         * dayIndexForPeriodDate - Convert a GM-facing period/day pair into the
+         * zero-based day offset used by saved seasonal ranges.
+         * Inputs: a normalized Wayfarer definition and integer period/day values.
+         * Output: a bounded day offset, or null when the date is not representable.
+         * Invariant: intercalary days after earlier periods count toward the offset.
+         * Design: validation stays at the editor edge so the active calendar consumes
+         * only canonical offsets.
+         */
         function dayIndexForPeriodDate(definition, periodNumber, day) {
             const monthIndex = Number(periodNumber) - 1;
             const period = definition.months[monthIndex];
@@ -22906,6 +22923,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return null;
         }
 
+        /**
+         * seasonRangeEditorEntries - Reconstruct readable seasonal date ranges
+         * from canonical day offsets for the Wayfarer editor.
+         * Inputs: a normalized definition whose ranges are non-overlapping.
+         * Output: ordered display entries with period/day boundaries.
+         * Edge case: a season crossing year-end is stored as two ranges and joined
+         * back into one editor entry when both boundary fragments share a name.
+         */
         function seasonRangeEditorEntries(definition) {
             const totalDays = definition.months.reduce((sum, month) => sum + month.days, 0) + definition.intercalary.length;
             const sorted = definition.seasonRanges.slice().sort((a, b) => a.start - b.start);
@@ -22941,6 +22966,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 : 'No date ranges configured; each period uses its own saved season label.';
         }
 
+        /**
+         * parseSeasonRanges - Validate and normalize GM-entered seasonal ranges.
+         * Inputs: comma-separated Name:startPeriod:startDay:endPeriod:endDay entries.
+         * Output: non-overlapping canonical offset ranges, [] for an intentional
+         * empty value, or null for malformed, out-of-bounds, or overlapping input.
+         * Failure: no saved draft is changed when this validator returns null.
+         */
         function parseSeasonRanges(raw, definition) {
             if (!String(raw || '').trim()) return [];
             const entries = String(raw).split(',').map(value => value.trim()).filter(Boolean);
@@ -22971,6 +23003,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (/^audit$/i.test(body)) return showWayfarerPreview(msg, false);
             const action = body.split(/\s+/)[0].toLowerCase();
             const args = _parseArgs(body).args;
+            // CHOICE: recovery is command-only and draft-only - ALT: expose a
+            // prominent reset button or replace the active calendar; REJECTED:
+            // accidental clicks must not erase draft work or move fictional time.
             if (action === 'reset-default') {
                 if (String(args.confirm || '').toLowerCase() !== 'yes') {
                     return sendPanel(msg, 'Reset Wayfarer Draft', [
@@ -23821,6 +23856,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             });
         }
 
+        /**
+         * currentMoonSummary - Present Astronomy's current phase evidence inside
+         * calendar views without moving moon ownership into TimeAlmanac.
+         * Output: a compact phase list, or a clear disabled/unconfigured state.
+         * Design: calendars display celestial context while Astronomy remains the
+         * single authority for moon cycles and phase names.
+         */
         function currentMoonSummary() {
             if (!submoduleEnabled('astronomy')) return 'Astronomy is turned off; saved moon settings are preserved.';
             const context = astronomyContext();
@@ -24791,8 +24833,20 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ] : [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: GameAssist.createButton('Quick Guide', '!Almanac-Guide') }]);
         }
 
+        /**
+         * normalizedInput - Normalize Almanac and focused-system aliases into the
+         * established internal command language.
+         * Inputs: untrusted Roll20 API chat content with case-insensitive space or
+         * hyphen separators.
+         * Output: one canonical action string; unknown input becomes an empty string.
+         * Design: aliases reuse existing handlers so they cannot create a second
+         * permission, mutation, or help-path implementation.
+         */
         function normalizedInput(content) {
             const raw = String(content || '').trim();
+            // CHOICE: normalize focused role/help/status/audit aliases here - ALT:
+            // register parallel handlers per alias; REJECTED: duplicated routing
+            // would drift from the established GM guards and Almanac behavior.
             const focused = raw.match(/^!(time|calendar|cal|wayfarer|climate|clim|astronomy|astro|weather|environment|enviro|rest)(?:-|\s)+(gm|dm|menu|guide|help|info|manual|status|audit)(?:\s|$)/i);
             if (focused) {
                 const system = {
@@ -24925,7 +24979,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             clearObservers: owner => GameAssist.SemanticEvents.clearObservers(owner)
         });
 
-        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: guided Wayfarer drafts plus Time, Climate, Astronomy, Weather, Environment, and Rest are available through !Almanac; the module starts disabled.`, 'INFO', { startup: true });
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: direct Wayfarer calendar management plus Time, Climate, Astronomy, Weather, Environment, and Rest are available through !Almanac; the module starts disabled.`, 'INFO', { startup: true });
     }, {
         enabled: false,
         prefixes: ['!Almanac', '!Almanac-', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-'],
@@ -24938,6 +24992,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Changed (v2.0.0): Added the standard GameAssist Home return to the AlmanacAssist GM control screen.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.1.0 with persistent Wayfarer drafts, staged setup and previews, safe profile duplication, atomic activation, elapsed-time preservation, explicit reset fallback, one activation rollback point, and a complete custom-calendar manual.
     // Decision log:
+    //   CHOICE: Make the direct component manager the primary Wayfarer workflow while retaining guided review - ALT: require the staged wizard for every edit; REJECTED: routine calendar maintenance should not force the GM through unrelated steps.
+    //   CHOICE: Store seasonal ranges as bounded day offsets and split cross-year ranges at the year boundary - ALT: store only display month/day strings; REJECTED: canonical offsets keep season lookup deterministic while the editor reconstructs readable dates.
+    //   CHOICE: Show current moon phases in calendar views while leaving moon cycles and phase names under Astronomy - ALT: duplicate moon state in TimeAlmanac; REJECTED: two authorities would drift.
+    //   CHOICE: Keep the campaign-default reset command-only and draft-only - ALT: put reset beside ordinary editor buttons or replace the active calendar; REJECTED: recovery must not be easy to trigger accidentally and must never move fictional time.
+    //   CHOICE: Normalize focused Almanac aliases into existing handlers - ALT: implement separate command paths; REJECTED: aliases must share the same authorization and mutation behavior.
     //   CHOICE: Keep a saved draft separate from the active Wayfarer definition - ALT: continue editing the live definition one field at a time; REJECTED: a partially configured calendar must not change the date players see.
     //   CHOICE: Preserve elapsed fictional minutes while editing an active Wayfarer calendar - ALT: silently apply the draft starting date; REJECTED: calendar-definition maintenance must not unexpectedly move campaign chronology.
     //   CHOICE: Retain one complete pre-activation rollback point - ALT: persist every calendar body indefinitely; REJECTED: one recovery point is understandable and bounded while chronology history retains the durable event trail.
