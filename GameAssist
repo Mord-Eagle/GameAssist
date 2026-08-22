@@ -2,8 +2,8 @@
 ========================================
 GameAssist - Roll20 API Script
 Version: 2.0.0
-Last Updated: 2026-08-19 (America/New_York)
-Release scope: EffectAssist 2.4.1 sheet-worker and lifecycle repairs, ConcentrationAssist 0.4.1 page-safe HP matching, AlmanacAssist 1.2.0 direct Wayfarer calendar management, ConfigUI 0.2.5 readable grouped configuration, disabled-module recovery, and the existing v2.0.0 module suite.
+Last Updated: 2026-08-20 (America/New_York)
+Release scope: EffectAssist 2.5.0 guided high-level recipient selection and compact sheet labels, AttackAssist 1.0.2 executable direct targeting, ConcentrationAssist 0.4.2 linked-HP offer revalidation, AlmanacAssist 1.6.0 per-field world announcements and repaired calendar, climate, weather, and environment controls, ConfigUI 0.2.5 readable grouped configuration, disabled-module recovery, and the existing v2.0.0 module suite.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -24,10 +24,10 @@ calls GameAssist.enqueue(). This development package contains fifteen configurab
 - WelcomeAssist 0.1.5 - Optionally greets the table after a healthy GameAssist startup through short !Welcome commands.
 - ConcentrationAssist 0.4.1 - Runs manual and private HP-loss-offered concentration checks, manages its configured marker, and exposes concentration lifecycle events.
 - NPCAssist 1.4.0 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, and Arc rosters.
-- EffectAssist 2.4.1 - Coordinates catalog-driven effects, direct GM casting, opaque player flows, retained GM requests, 2014-sheet modifiers, concentration, ownership-safe cleanup, duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
+- EffectAssist 2.4.3 - Coordinates catalog-driven effects, deferred direct caster-and-recipient prompts, retained GM requests, compact GameAssist-owned 2014-sheet modifiers, concentration, ownership-safe cleanup, duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
 - HealAssist 1.0.0 - Guides verified 2014 healing rolls, visible PC targeting, private GM requests, complete HP review, and one-use HealthService application.
-- AttackAssist 1.0.0 - Guides authorized 2014 repeating attacks, visible targeting, private GM placement, and one-use native-template rolls without applying damage.
-- AlmanacAssist 1.2.0 - Adds direct Wayfarer calendar management, editable seasonal ranges, visible moon phases, and retained guided review to fictional time, climate, astronomy, weather, environments, and verified 2014-sheet rests across six independently controlled internal systems.
+- AttackAssist 1.0.1 - Guides authorized 2014 repeating attacks through direct visible targeting, private GM placement, and one-use native-template rolls without applying damage.
+- AlmanacAssist 1.6.0 - Adds Wayfarer's ordinal 20-hour clock, independently styled world-announcement details, coherent climate/weather/environment presentation, direct Wayfarer and moon editors, configurable rest rules, editable seasonal ranges, and visible moon phases across six independently controlled internal systems.
 - HPAssist 0.2.0 - Rolls npc_hpformula and uses HealthService for verified token bar 1 writes when available.
 - DebugTools 0.3.0 - Optional dry-run-first GM diagnostics with verified supported HP damage writes.
 
@@ -93,7 +93,8 @@ MODULE COMMANDS
   !Attack-Status, !Attack-Audit, !Attack-Requests, and !Attack-Players
 - AlmanacAssist: !Almanac, !aa, !cal, !date, !time, !clim, !astro,
   !weather, !enviro, !rest, !aa-time, !aa-climate, !aa-astro,
-  !aa-weather, !aa-enviro, !aa-rest, !aa-wayfarer, focused role/help/status/audit aliases,
+  !aa-weather, !aa-enviro, !aa-rest, !aa-wayfarer, !aa-preview, !aa-announce,
+  !aa-announcement-settings, focused role/help/status/audit aliases,
   !aa-wayfarer reset-default --confirm yes, !Almanac-GM, !Almanac-DM,
   !Almanac-Status, !Almanac-Audit
 - HPAssist: !HP-GM, !HP-Selected, !HP-All, !hp <command>
@@ -125,10 +126,12 @@ V2.0.0 FOUNDATION
 - AlmanacAssist remains disabled until the GM enables it and provides all six
   independently controlled Time, Climate, Astronomy, Weather, Environment,
   and Rest systems as one complete v2.0.0 module.
-- The direct Wayfarer Calendar Manager keeps persistent draft work separate from
-  the active calendar, retains guided review, validates before atomic activation,
-  preserves elapsed time for active-calendar edits when possible, and retains one
-  deliberate rollback point.
+- AlmanacAssist's GM dashboard prioritizes current time, advancement, calendar
+  selection, announcement preview/delivery, and current-world controls; setup,
+  diagnostics, and technical reference remain available through focused screens.
+- The Wayfarer Calendar Manager lets the GM use the last saved Wayfarer calendar
+  directly while keeping draft edits separate until reviewed and activated; it
+  preserves elapsed time for active-calendar edits and one rollback point.
 - Almanac systems exchange optional context without hidden prerequisites;
   disabling one preserves its valid state and leaves unrelated systems usable
   through explicit manual or bounded fallback context.
@@ -4000,7 +4003,20 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return '';
             }
             const final = trimmed.startsWith('!') ? trimmed : `!${trimmed}`;
-            return `[${safeLabel}](${final})`;
+            // DANGER: Roll20's chat parser expands raw attributes and roll queries while
+            // rendering an API-generated button. Defer them with Roll20's documented
+            // entities so the player who clicks the button receives the prompt.
+            const deferred = final
+                .replace(/%/g, '&#37;')
+                .replace(/\)/g, '&#41;')
+                .replace(/\?/g, '&#63;')
+                .replace(/@/g, '&#64;')
+                .replace(/\{/g, '&#123;')
+                .replace(/\|/g, '&#124;')
+                .replace(/\}/g, '&#125;')
+                .replace(/\[/g, '&#91;')
+                .replace(/\]/g, '&#93;');
+            return `[${safeLabel}](${deferred})`;
         },
 
         rollTable(tableName) {
@@ -4054,6 +4070,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => HealthService._setEnabled(false)
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Protected complete Roll20 query and attribute expressions inside template-rendered Mod-command buttons by deferring braces and pipe delimiters alongside their introducers; live prompts now survive until the click instead of collapsing to blank or boolean command values.
+    // Changed (v2.0.0): Deferred Roll20 target references, roll queries, ability calls, and bracketed rolls in generated Mod-command buttons using Roll20's documented HTML entities so prompts run when clicked instead of being consumed while the API renders the panel.
     // Changed (v2.0.0): Added one bounded unavailable-command responder so disabled or inactive feature commands produce a clear recovery panel instead of failing silently; active command routes still take precedence.
     // Changed (v2.0.0): Added a most-specific command router that canonicalizes case and command-word separators once, prevents overlapping aliases from double-firing, and leaves non-GameAssist chat untouched.
     // Changed (v2.0.0): Protected HealthService's validated PC-alert settings from generic config writes while retaining the shared toggleable HP evidence and verified-write lifecycle.
@@ -10659,7 +10677,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     let teardownCombatAssist = () => {};
     GameAssist.register('CombatAssist', function() {
         const MODULE_NAME = 'CombatAssist';
-        const MODULE_VERSION = '1.1.1';
+        const MODULE_VERSION = '1.1.0';
         const COMBAT_EVENT_SCHEMA_VERSION = 1;
         const VALID_STATES = new Set(['active', 'paused', 'attention']);
         const VALID_ANNOUNCEMENTS = new Set(['off', 'gm', 'public', 'whispers']);
@@ -12510,6 +12528,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         preserveRuntimeOnDisable: true
     });
     // --- Notes & Comments ---
+    // Maintenance (v2.0.0, no semantic change): Corrected the runtime version display to the owner-authoritative CombatAssist 1.1.0 recorded by this section, the release inventory, and the changelog; encounter behavior is unchanged.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the CombatAssist GM control screen.
     // Changed (v2.0.0): Advanced CombatAssist to 1.1.0 with stable encounter identity, monotonic verified-forward progression, and immutable public semantic events for optional consumers; native tracker ownership and all established encounter controls remain unchanged.
     // Decision log:
@@ -15338,7 +15357,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:NPCASSIST] END
     // =============================================================================
 
-    // ————— CONCENTRATIONASSIST MODULE v0.4.0 —————
+    // ————— CONCENTRATIONASSIST MODULE v0.4.2 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:CONCENTRATIONASSIST] BEGIN
     // Section Title: ConcentrationAssist module
@@ -15348,7 +15367,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.ConcentrationAssist"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "0.4.1", health_offer_schema_version: 1 } }
+    //   independent_versions: { module_version: "0.4.2", health_offer_schema_version: 1 } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:CONCENTRATIONASSIST manages concentration save rolls, whispering outcomes,
@@ -15367,7 +15386,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     });
 
     const LAST_DAMAGE_LIMIT = POLICY.runtime.lastDamageLimit;
-    const MODULE_VERSION = '0.4.1';
+    const MODULE_VERSION = '0.4.2';
     const HEALTH_OFFER_SCHEMA_VERSION = 1;
     const HEALTH_OBSERVER_OWNER = 'ConcentrationAssist.HealthOffers';
     const healthOffers = new Map();
@@ -16101,7 +16120,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         const latest = latestHealthEvent(offer.canonicalKey);
         const snapshot = healthOfferSnapshot(offer, token, character);
-        if (!latest || latest.eventId !== offer.eventId || snapshot?.values?.current?.raw !== offer.afterCurrentRaw) {
+        const latestCurrentRaw = String(latest?.payload?.after?.current?.raw ?? '');
+        // CHOICE: Revalidate the resulting HP value, not the exact event id. Roll20
+        // can mirror one linked sheet/token change as later equivalent evidence even
+        // though the player has not changed HP a second time.
+        if (!latest || latestCurrentRaw !== offer.afterCurrentRaw || String(snapshot?.values?.current?.raw ?? '') !== offer.afterCurrentRaw) {
             healthOffers.delete(offer.id);
             healthOfferByEvent.delete(offer.eventId);
             return healthOfferProblem(player, 'HP changed again after this offer. Use the newest offer or the normal concentration controls.');
@@ -16369,6 +16392,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced ConcentrationAssist to 0.4.2; HP-loss offers now remain valid across Roll20's equivalent linked sheet/token evidence while still expiring whenever the canonical current HP value actually changes.
     // Changed (v2.0.0): Advanced ConcentrationAssist to 0.4.1; character-sheet HP losses now prefer the event page and Player Ribbon page, ignore stale off-page markers, and choose one deterministic current-page token when duplicate representations exist.
     // Changed (v2.0.0): Added the standard GameAssist Home return when ConcentrationAssist is opened through a GM/DM role command.
     // Changed (v2.0.0): Advanced ConcentrationAssist to 0.4.0 with optional private HealthService-driven HP-loss offers, bounded one-event deduplication, controller-aware delivery, and stale-button revalidation while preserving every manual check path.
@@ -16390,7 +16414,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:CONCENTRATIONASSIST] END
     // =============================================================================
 
-    // ————— EFFECTASSIST MODULE v2.4.1 —————
+    // ————— EFFECTASSIST MODULE v2.5.0 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:EFFECTASSIST] BEGIN
     // Section Title: Catalog-driven semantic effects and 2014 sheet projections
@@ -16400,7 +16424,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]","[GAMEASSIST:MODULES:CONDITIONASSIST]","[GAMEASSIST:MODULES:CONCENTRATIONASSIST]"],
     //   provides: ["GameAssist.EffectAssist"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "2.4.1", effect_state_schema_version: 3, cast_proposal_schema_version: 1, player_cast_flow_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "2.5.0", effect_state_schema_version: 3, cast_proposal_schema_version: 1, player_cast_flow_schema_version: 1 }, lifecycle: "active" }
     // -----------------------------------------------------------------------------
     // Narrative
     // EffectAssist is a catalog-driven rules coordinator. It records the source,
@@ -16413,7 +16437,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -----------------------------------------------------------------------------
     GameAssist.register('EffectAssist', function() {
         const MODULE_NAME = 'EffectAssist';
-        const MODULE_VERSION = '2.4.1';
+        const MODULE_VERSION = '2.5.0';
         const STATE_SCHEMA_VERSION = 3;
         const CAST_PROPOSAL_SCHEMA_VERSION = 1;
         const PLAYER_CAST_FLOW_SCHEMA_VERSION = 1;
@@ -16474,8 +16498,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 stacking: Object.freeze({ group: 'bless', mode: 'nonstacking' }),
                 projections: Object.freeze([
                     Object.freeze({ id: 'blessed-marker', adapter: 'marker', subject: 'target-token', marker: 'angel-outfit', label: 'Blessed marker' }),
-                    Object.freeze({ id: 'attack-bonus', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'attack', label: 'Bless (GameAssist)', value: '1d4', optional: true }),
-                    Object.freeze({ id: 'save-bonus', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'save', label: 'Bless (GameAssist)', value: '1d4', optional: true })
+                    Object.freeze({ id: 'attack-bonus', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'attack', label: 'Bless (GA)', value: '1d4', optional: true }),
+                    Object.freeze({ id: 'save-bonus', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'save', label: 'Bless (GA)', value: '1d4', optional: true })
                 ]),
                 automatic: Object.freeze(['Blessed marker', '2014-sheet 1d4 global attack modifier', '2014-sheet 1d4 global saving-throw modifier', 'source concentration and cleanup']),
                 assisted: Object.freeze(['Choose the targets and end the effect early when a rule outside concentration requires it.']),
@@ -16494,7 +16518,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 stacking: Object.freeze({ group: 'guidance', mode: 'nonstacking' }),
                 projections: Object.freeze([
                     Object.freeze({ id: 'guidance-marker', adapter: 'marker', subject: 'target-token', marker: 'aura', label: 'Guidance marker' }),
-                    Object.freeze({ id: 'guidance-skill', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'skill', label: 'Guidance (GameAssist)', value: GUIDANCE_ROLL_VALUE, optional: true })
+                    Object.freeze({ id: 'guidance-skill', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'skill', label: 'Guidance (GA)', value: GUIDANCE_ROLL_VALUE, optional: true })
                 ]),
                 automatic: Object.freeze(['Guidance marker', '2014-sheet 1d4 global skill modifier', 'source concentration and cleanup']),
                 assisted: Object.freeze(['For an ability check that is not represented by a sheet skill, roll the Guidance d4 manually; end Guidance after its one bonus is used.']),
@@ -16513,8 +16537,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 stacking: Object.freeze({ group: 'warding-bond', mode: 'nonstacking' }),
                 projections: Object.freeze([
                     Object.freeze({ id: 'bond-marker', adapter: 'marker', subject: 'target-token', marker: 'chained-heart', label: 'Warding Bond marker' }),
-                    Object.freeze({ id: 'bond-ac', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'ac', label: 'Warding Bond (GameAssist)', value: '1', optional: true }),
-                    Object.freeze({ id: 'bond-save', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'save', label: 'Warding Bond (GameAssist)', value: '1', optional: true })
+                    Object.freeze({ id: 'bond-ac', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'ac', label: 'Warding Bond (GA)', value: '1', optional: true }),
+                    Object.freeze({ id: 'bond-save', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'save', label: 'Warding Bond (GA)', value: '1', optional: true })
                 ]),
                 automatic: Object.freeze(['Warding Bond marker', '2014-sheet +1 AC modifier', '2014-sheet +1 saving-throw modifier']),
                 assisted: Object.freeze(['Apply resistance and mirrored damage according to the spell.']),
@@ -16551,7 +16575,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 stacking: Object.freeze({ group: 'haste', mode: 'nonstacking' }),
                 projections: Object.freeze([
                     Object.freeze({ id: 'haste-marker', adapter: 'marker', subject: 'target-token', marker: 'lightning-helix', label: 'Haste marker' }),
-                    Object.freeze({ id: 'haste-ac', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'ac', label: 'Haste (GameAssist)', value: '2', optional: true })
+                    Object.freeze({ id: 'haste-ac', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'ac', label: 'Haste (GA)', value: '2', optional: true })
                 ]),
                 automatic: Object.freeze(['Haste marker', '2014-sheet +2 AC modifier', 'source concentration and cleanup']),
                 assisted: Object.freeze(['Apply doubled speed, Dexterity-save advantage, the restricted extra action, and ending lethargy at the table.']),
@@ -16867,7 +16891,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function activeInstances() {
-            return Object.values(runtime.instances).filter(validInstance);
+            // CHOICE: an instance already being cleaned up is not active evidence for
+            // marker or concentration observers; including it permits synchronous
+            // EffectAssist-owned marker removal to re-enter endEffect().
+            return Object.values(runtime.instances).filter(instance =>
+                validInstance(instance) && instance.status !== 'ending'
+            );
         }
 
         function currentCombatDurationAnchor(rules, source) {
@@ -17464,7 +17493,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     item.adapter === 'ogl-repeating'
                     && item.projectionId === 'guidance-skill'
                     && item.intent?.modifier === 'skill'
-                    && item.intent?.label === 'Guidance (GameAssist)'
+                    && item.intent?.label === 'Guidance (GA)'
                     && String(item.intent?.value || '') === GUIDANCE_ROLL_VALUE
                 );
                 if (!binding) return;
@@ -19139,35 +19168,51 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ).join(',');
         }
 
-        function targetPickerButtons(definition, source, { requestedBy = '', flowId = '' } = {}) {
-            const counts = PLAYER_TARGET_COUNTS[definition.id] || [1];
+        function targetPickerButtons(definition, source, { requestedBy = '', flowId = '', counts = null } = {}) {
+            const targetCounts = Array.isArray(counts) && counts.length
+                ? counts
+                : (PLAYER_TARGET_COUNTS[definition.id] || [1]);
             const requestOptions = requestedBy
                 ? ` --requested-by ${requestedBy} --announce true`
                 : '';
-            return counts.map(count => {
-                const label = counts.length === 1
+            return targetCounts.map(count => {
+                const label = targetCounts.length === 1
                     ? 'Choose Recipient'
                     : `Choose ${count} Recipient${count === 1 ? '' : 's'}`;
                 const command = flowId
-                    ? `!Effect-Apply --flow ${flowId} --targets ${nativeTargetIds(definition, count)}`
-                    : `!Effect-Apply --effect ${definition.id} --source ${source.summary.tokenId} --targets ${nativeTargetIds(definition, count)}${requestOptions}`;
+                    ? `!Effect Apply --flow ${flowId} --targets ${nativeTargetIds(definition, count)}`
+                    : `!Effect Apply --effect ${definition.id} --source ${source.summary.tokenId} --targets ${nativeTargetIds(definition, count)}${requestOptions}`;
                 return GameAssist.createButton(label, command);
             }).join(' ');
         }
 
         function showRecipientPicker(msg, definition, source) {
-            const flowId = !playerIsGM(msg?.playerid)
-                ? rememberPlayerCastFlow(msg, definition, source, 'recipients')
+            const flowId = rememberPlayerCastFlow(msg, definition, source, 'recipients');
+            const recipientButtons = targetPickerButtons(definition, source, { flowId });
+            const higherLevel = definition.id === 'bless'
+                ? GameAssist.createButton('Higher Level Casting', `!Effect Higher --flow ${flowId}`)
                 : '';
             const askGm = !playerIsGM(msg?.playerid)
-                ? GameAssist.createButton('Ask the GM', `!Effect-Request --flow ${flowId}`)
+                ? GameAssist.createButton('Ask the GM', `!Effect Request --flow ${flowId}`)
                 : '';
             panel(`${definition.name}: Choose Recipients`, [
                 { label: 'Casting As', value: _sanitize(source.summary.characterName) },
-                { label: 'Choose On The Map', value: targetPickerButtons(definition, source, { flowId }) },
-                ...(askGm ? [{ label: 'Need More Or Hidden Recipients?', value: askGm }] : []),
+                { label: 'Number of Recipients', value: `${recipientButtons}${higherLevel ? ` ${higherLevel}` : ''}` },
+                ...(askGm ? [{ label: 'Hidden or Off-Page', value: askGm }] : []),
                 { label: 'Next', value: 'Click a recipient button, then click the requested token or tokens on the map. You do not need to control those tokens.' },
                 { label: 'Return', value: GameAssist.createButton('Effect Catalog', '!effect') }
+            ], msg);
+        }
+
+        function showHigherLevelRecipients(msg, options) {
+            const flow = resolvePlayerCastFlow(msg, options.flow, 'recipients');
+            if (!flow.ok) return castingRecovery(msg, flow.message);
+            if (flow.definition.id !== 'bless') return castingRecovery(msg, 'That effect does not use the Bless higher-level recipient menu.');
+            panel('Bless: Higher Level Casting', [
+                { label: 'Casting As', value: _sanitize(flow.source.summary.characterName) },
+                { label: 'Choose Recipients', value: targetPickerButtons(flow.definition, flow.source, { flowId: flow.id, counts: [4, 5, 6, 7, 8, 9, 10, 11] }) },
+                { label: 'Next', value: 'Choose the total number of recipients, then point at each token on the map.' },
+                { label: 'Return', value: GameAssist.createButton('Base-Level Choices', `!Effect Targets --flow ${rememberPlayerCastFlow(msg, flow.definition, flow.source, 'source')}`) }
             ], msg);
         }
 
@@ -19179,15 +19224,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     { label: 'Next Step', value: GameAssist.createButton('Effect Catalog', '!effect') }
                 ], msg);
             }
-            if (sources.length === 1) return showRecipientPicker(msg, definition, sources[0]);
-            panel(`${definition.name}: Who Is Casting?`, [
-                {
-                    label: 'Choose Your Character',
-                    value: sources.map(source => GameAssist.createButton(
-                        source.summary.characterName,
-                        `!Effect-Targets --effect ${definition.id} --source ${source.summary.tokenId}`
-                    )).join(' ')
-                },
+            const sourceButtons = sources.map(source => GameAssist.createButton(
+                source.summary.characterName,
+                `!Effect Targets --flow ${rememberPlayerCastFlow(msg, definition, source, 'source')}`
+            )).join(' ');
+            panel(`${definition.name}: Choose Caster`, [
+                { label: 'Who Is Casting?', value: sourceButtons },
+                { label: 'Next', value: 'After choosing the caster, choose how many recipients the effect has.' },
                 { label: 'Return', value: GameAssist.createButton('Effect Catalog', '!effect') }
             ], msg);
         }
@@ -19803,6 +19846,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (action === 'confirm') return handleConfirm(msg, options);
             if (action === 'end') return handleEnd(msg, options);
             if (action === 'targets') return handleTargetStep(msg, options);
+            if (action === 'higher') return showHigherLevelRecipients(msg, options);
             if (action === 'request') return handlePlayerRequest(msg, options);
             if (['definitions', 'catalog'].includes(action)) return action === 'catalog' ? showCatalog(msg) : showDefinitions(msg);
             if (['guide', 'help'].includes(action)) return showGuide(msg);
@@ -19924,6 +19968,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced EffectAssist to 2.5.0; player casting now separates caster selection from recipient count, Bless exposes compact base-level choices plus a 4-11 recipient higher-level menu, and every new EffectAssist-owned 2014 sheet row uses the compact "(GA)" label convention.
+    // Changed (v2.0.0): Advanced EffectAssist to 2.4.3; shared Roll20 buttons now defer native target prompts until clicked, restoring direct !Bless recipient selection; new owned Bless sheet rows use the compact "Bless (GA)" label; and ending instances are excluded from synchronous marker observations so one cleanup creates one history record.
+    // Changed (v2.0.0): Advanced EffectAssist to 2.4.2; caster rows now invoke Roll20 recipient selection directly through opaque source-bound flows, removing the unnecessary inert source-selection hop while preserving authorization and GM-request controls.
     // Changed (v2.0.0): Advanced EffectAssist to 2.4.1; repaired 2014-sheet worker activation and cleanup, made application review optional and off by default, made normal single-concentration replacement automatic, repaired source-selection buttons, distinguished Holy Weapon's marker, identified duration rows, and ends an effect after all of its managed target markers are removed.
     // Changed (v2.0.0): Advanced EffectAssist to 2.4.0 with a standard GameAssist Home return and exact owned Guidance roll labeling; one unambiguous supported 2014 skill check may consume one matching Guidance through normal cleanup, while unsupported or ambiguous checks retain the explicit Use Guidance path.
     // Changed (v2.0.0): Advanced EffectAssist to 2.3.0 with opaque short-lived player casting choices, retained and revalidated GM requests, stale-button recovery, and direct built-in effect actions on the GM Control Center while preserving the existing effect engine and confirmation boundary.
@@ -19966,7 +20013,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   guarantees: ["Official 2014-sheet healing uses short-lived source, target, roll, review, and one-use confirmation boundaries","Every accepted HP change uses HealthService provenance and verification; multi-target failures attempt verified rollback","Players may target visible supported PCs they do not control while NPC, hidden, and off-page placement remains GM-reviewed","Spell slots, class resources, temporary HP, damage causes, resistance, and unsupported sheet fields are never inferred or consumed"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.HealAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.0.0", interaction_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.0.1", interaction_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // HealAssist is a disabled-by-default HealthService client. It guides an authorized
@@ -19976,7 +20023,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('HealAssist', function() {
         const MODULE_NAME = 'HealAssist';
-        const MODULE_VERSION = '1.0.0';
+        const MODULE_VERSION = '1.0.1';
         const INTERACTION_SCHEMA_VERSION = 1;
         const modState = GameAssist.getState(MODULE_NAME);
         modState.config = {
@@ -20828,7 +20875,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   guarantees: ["Only authorized official-2014 linked sources and verified repeating-attack row identities enter a guided roll","Visible targets use Roll20's native map prompt without requiring target control; hidden or off-page placement remains GM-reviewed","One-use roll submissions preserve the sheet-generated attack formula and supported official template fields without rewriting character roll settings","AttackAssist never applies damage or changes HP, conditions, effects, initiative, turns, or encounter state"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AttackAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.0.0", interaction_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.0.2", interaction_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // AttackAssist is a disabled-by-default convenience layer for the official 2014
@@ -20838,7 +20885,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('AttackAssist', function() {
         const MODULE_NAME = 'AttackAssist';
-        const MODULE_VERSION = '1.0.0';
+        const MODULE_VERSION = '1.0.2';
         const INTERACTION_SCHEMA_VERSION = 1;
         const modState = GameAssist.getState(MODULE_NAME);
         modState.config = {
@@ -21018,7 +21065,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const character = linkedCharacter(token);
             if (!character) return { ok: false, message: 'The attacker must be linked to a character.' };
             if (characterSheetHint(character) === 'dnd2024byroll20') {
-                return { ok: false, message: 'AttackAssist 1.0.0 supports official 2014 repeating attacks only. Native 2024 attack buttons remain available.' };
+                return { ok: false, message: `AttackAssist ${MODULE_VERSION} supports official 2014 repeating attacks only. Native 2024 attack buttons remain available.` };
             }
             if (!is2014Pc(character)) {
                 return { ok: false, message: 'The attacker is not a supported official 2014 player character.' };
@@ -21145,10 +21192,23 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     { label: 'Next Step', value: GameAssist.createButton('Choose Another Attacker', '!Attack-Menu') }
                 ], msg);
             }
+            const attackChoices = rows.map(row => {
+                const flowId = rememberFlow(msg, source, row.rowId);
+                const details = [row.bonus, row.range].filter(Boolean).join(' | ');
+                const label = `${row.label}${details ? ` (${details})` : ''}`;
+                return GameAssist.createButton(label, `!Attack Review --flow ${flowId} --target ${targetReference()}`);
+            }).join(' ');
+            const gmChoices = !playerIsGm(msg.playerid)
+                ? rows.map(row => GameAssist.createButton(
+                    row.label,
+                    `!Attack Request --flow ${rememberFlow(msg, source, row.rowId)}`
+                )).join(' ')
+                : '';
             panel('AttackAssist: Choose An Attack', [
                 { label: 'Attacker', value: _sanitize(source.name) },
-                { label: 'Attacks', value: rows.map(row => GameAssist.createButton(row.label, `!Attack-Target --flow ${rememberFlow(msg, source, row.rowId)}`)).join(' ') },
-                { label: 'Duplicate Names', value: 'Numbered labels identify separate repeating rows; the saved row identity, not the display name, is used.' },
+                { label: 'Choose Attack', value: attackChoices },
+                ...(gmChoices ? [{ label: 'Hidden or Off-Page Target', value: `Ask the GM to place: ${gmChoices}` }] : []),
+                { label: 'Next', value: 'Choose an attack, then point at its visible target on the map.' },
                 { label: 'Return', value: GameAssist.createButton('Choose Another Attacker', '!Attack-Menu') }
             ], msg);
         }
@@ -21170,7 +21230,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             if (sources.length === 1) return showAttackPicker(msg, sources[0]);
             panel('AttackAssist: Choose The Attacker', [
-                { label: 'Characters', value: sources.map(source => GameAssist.createButton(source.name, `!Attack-Attacks --flow ${rememberFlow(msg, source)}`)).join(' ') },
+                { label: 'Characters', value: sources.map(source => GameAssist.createButton(source.name, `!Attack Attacks --flow ${rememberFlow(msg, source)}`)).join(' ') },
                 { label: 'Tip', value: 'Select one controlled attacker before opening AttackAssist to skip this choice.' },
                 { label: 'Return', value: GameAssist.createButton('Quick Guide', '!Attack-Guide') }
             ], msg);
@@ -21179,8 +21239,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function showTargetPicker(msg, flowResult) {
             panel(`${flowResult.row.name}: Choose A Target`, [
                 { label: 'Attacker', value: _sanitize(flowResult.source.name) },
-                { label: 'Visible Target', value: GameAssist.createButton('Choose On The Map', `!Attack-Review --flow ${flowResult.flow.id} --target ${targetReference()}`) },
-                ...(!playerIsGm(msg.playerid) ? [{ label: 'Hidden Or Off-Page Target', value: GameAssist.createButton('Ask The GM', `!Attack-Request --flow ${flowResult.flow.id}`) }] : []),
+                { label: 'Visible Target', value: GameAssist.createButton('Choose On The Map', `!Attack Review --flow ${flowResult.flow.id} --target ${targetReference()}`) },
+                ...(!playerIsGm(msg.playerid) ? [{ label: 'Hidden Or Off-Page Target', value: GameAssist.createButton('Ask The GM', `!Attack Request --flow ${flowResult.flow.id}`) }] : []),
                 { label: 'How Targeting Works', value: 'Roll20 lets you point at a visible token even when you do not control it. No target property is changed.' },
                 { label: 'Return', value: GameAssist.createButton('Choose Another Attack', `!Attack-Attacks --flow ${rememberFlow(msg, flowResult.source)}`) }
             ], msg);
@@ -21349,6 +21409,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!['sheet', 'normal', 'advantage', 'disadvantage'].includes(mode)) return { ok: false, message: 'Choose Sheet Setting, Normal, Advantage, or Disadvantage.' };
             if (forceGmWhisper) rollbase = rollbase.replace(/^@\{wtype\}/i, '');
             if (mode !== 'sheet') rollbase = rollbase.replace(/@\{rtype\}/g, MODE_FRAGMENTS[mode]);
+
+            // CHOICE: materialize the sheet's d20 placeholder before API submission.
+            // ALT: require every character to persist a hidden d20 attribute; REJECTED:
+            // official 2014 repeating rows can reference the placeholder without such an attribute.
+            rollbase = rollbase.replace(/@\{d20\}/gi, '1d20');
 
             rollbase = rollbase.replace(/~repeating_attack_(attack(?:_(?:dmg|crit))?)/gi,
                 (_match, button) => `~${source.character.id}|repeating_attack_${row.rowId}_${button}`);
@@ -21618,6 +21683,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => GameAssist.AttackAssist?._clearTransient?.()
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced AttackAssist to 1.0.2; the attack picker now uses compact attack buttons, and API-submitted official-2014 roll formulas materialize the sheet d20 placeholder so normal, advantage, and disadvantage rolls do not depend on a nonexistent persisted d20 attribute.
+    // Changed (v2.0.0): Advanced AttackAssist to 1.0.1; each verified attack row now opens Roll20's target prompt directly, removing the unnecessary inert target-screen hop while retaining opaque flow authorization and GM placement requests.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the AttackAssist GM control screen.
     // Changed (v2.0.0): Added AttackAssist 1.0.0 with authorized official-2014 source selection, stable repeating-row identity, native visible targeting, retained private GM placement requests, sheet-setting and explicit roll modes, one-use submission, familiar official templates, and post-submission attacker/target announcements.
     // Decision log:
@@ -21634,28 +21701,31 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: AlmanacAssist fictional calendar and world time
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:ALMANACASSIST", title: "AlmanacAssist",
-    //   guarantees: ["Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Optional Almanac integrations improve context without becoming hidden prerequisites","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation","Wayfarer exposes direct validated editors for every stored calendar component while moon phases remain visible Astronomy-owned context","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
+    //   guarantees: ["Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Optional Almanac integrations improve context without becoming hidden prerequisites","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer exposes direct validated editors for every stored calendar component while moon phases remain visible Astronomy-owned context","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","The GM dashboard prioritizes daily calendar actions and moves setup, diagnostics, and technical reference behind focused controls","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Descriptive announcements report player-perceivable time, weather, visibility, and moon visibility without presenting climate baselines as simultaneous current measurements","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AlmanacAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.2.0", time_state_schema_version: 2, wayfarer_draft_schema_version: 3, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 1, rest_state_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.6.0", time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // AlmanacAssist contains six independently toggleable internal submodules behind
-    // one compact router. Each works with manual context when a related enhancement is
-    // unavailable. Time and world descriptions never mutate gameplay automatically;
+    // one action-first GM dashboard and compact router. Daily time, calendar, and
+    // announcement actions stay prominent while setup and technical detail remain
+    // available through focused screens. Each system works with manual context when a
+    // related enhancement is unavailable. Time and world descriptions never mutate gameplay automatically;
     // RestAlmanac is the only sheet-writing surface and requires a fresh preview and
     // confirmation against verified D&D 5E by Roll20 2014 attributes.
     // -------------------------------------------------------------------------
     GameAssist.register('AlmanacAssist', function() {
         const MODULE_NAME = 'AlmanacAssist';
-        const MODULE_VERSION = '1.2.0';
+        const MODULE_VERSION = '1.6.0';
         const TIME_STATE_SCHEMA_VERSION = 2;
         const WAYFARER_DRAFT_SCHEMA_VERSION = 3;
+        const ANNOUNCEMENT_SCHEMA_VERSION = 4;
         const CLIMATE_STATE_SCHEMA_VERSION = 1;
         const ASTRONOMY_STATE_SCHEMA_VERSION = 1;
         const WEATHER_STATE_SCHEMA_VERSION = 1;
-        const ENVIRONMENT_STATE_SCHEMA_VERSION = 1;
-        const REST_STATE_SCHEMA_VERSION = 1;
+        const ENVIRONMENT_STATE_SCHEMA_VERSION = 2;
+        const REST_STATE_SCHEMA_VERSION = 2;
         const DEFAULT_WORLD_MINUTE = 8 * 60;
         const modState = GameAssist.getState(MODULE_NAME);
 
@@ -21771,9 +21841,25 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const ENVIRONMENT_PRESETS = Object.freeze({
             clear: Object.freeze({ name: 'Clear Ground', visibility: 'Clear', temperature: 'Mild', precipitation: 'None', wind: 'Light', ground: 'Firm', water: 'Normal', exposure: 'Low', severity: 0, tags: ['clear'] }),
             blizzard: Object.freeze({ name: 'Blizzard', visibility: 'Heavily obscured', temperature: 'Extreme cold', precipitation: 'Heavy snow', wind: 'Severe', ground: 'Deep snow and ice', water: 'Freezing', exposure: 'Extreme', severity: 4, tags: ['cold', 'snow', 'wind', 'obscured'] }),
-            desert: Object.freeze({ name: 'Desert Heat', visibility: 'Clear', temperature: 'Extreme heat', precipitation: 'None', wind: 'Dry gusts', ground: 'Loose sand', water: 'Scarce', exposure: 'Extreme', severity: 3, tags: ['heat', 'dry', 'desert'] }),
+            desert: Object.freeze({ name: 'Desert Terrain', visibility: 'Clear', temperature: 'Extreme heat', precipitation: 'None', wind: 'Dry gusts', ground: 'Loose sand', water: 'Scarce', exposure: 'Extreme', severity: 3, tags: ['heat', 'dry', 'desert'] }),
             swamp: Object.freeze({ name: 'Sodden Swamp', visibility: 'Partly obscured', temperature: 'Warm', precipitation: 'Damp', wind: 'Light', ground: 'Waterlogged', water: 'Stagnant', exposure: 'Moderate', severity: 2, tags: ['swamp', 'mud', 'humid'] }),
             underwater: Object.freeze({ name: 'Underwater', visibility: 'Limited', temperature: 'Cold', precipitation: 'Submerged', wind: 'None', ground: 'Submerged', water: 'Surrounding', exposure: 'Extreme', severity: 4, tags: ['underwater', 'swimming', 'obscured'] })
+        });
+        const ANNOUNCEMENT_PRESETS = Object.freeze({
+            quick: Object.freeze({ date: true, time: true, season: true, observances: false, moons: false, weather: false, climate: false, environment: false }),
+            calendar: Object.freeze({ date: true, time: true, season: true, observances: true, moons: true, weather: false, climate: false, environment: false }),
+            travel: Object.freeze({ date: true, time: true, season: true, observances: false, moons: false, weather: true, climate: true, environment: true }),
+            full: Object.freeze({ date: true, time: true, season: true, observances: true, moons: true, weather: true, climate: true, environment: true })
+        });
+        const ANNOUNCEMENT_FIELD_LABELS = Object.freeze({
+            date: 'Date', time: 'Time', season: 'Season', observances: 'Observances',
+            moons: 'Moon Phases', weather: 'Weather', climate: 'Climate', environment: 'Environment'
+        });
+        const ANNOUNCEMENT_STYLES = Object.freeze(['descriptive', 'detailed', 'technical']);
+        const REST_PACES = Object.freeze({
+            standard: Object.freeze({ name: 'Standard', shortHours: 1, longHours: 8 }),
+            heroic: Object.freeze({ name: 'Heroic', shortHours: 5 / 60, longHours: 1 }),
+            gritty: Object.freeze({ name: 'Gritty', shortHours: 8, longHours: 168 })
         });
 
         Object.assign(modState.config, {
@@ -21788,12 +21874,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 manualSeason: 'Spring',
                 profileOverrides: {},
                 customProfiles: [],
-                regions: [{ id: 'home', name: 'Home Region', parentId: null, profileId: 'temperate', overrides: {} }]
+                regions: [{ id: 'home', name: 'Temperate Lowlands', parentId: null, profileId: 'temperate', overrides: {} }]
             },
             astronomy: { manualAbsoluteDay: 0, manualSeason: 'Spring', moons: copy(DEFAULT_MOONS), rareEvents: copy(DEFAULT_RARE_EVENTS) },
             weather: { defaultForecastDays: 3 },
+            announcement: { schemaVersion: ANNOUNCEMENT_SCHEMA_VERSION, enabled: true, audience: 'public', style: 'descriptive', preset: 'quick', header: 'Campaign Date and Time', fields: copy(ANNOUNCEMENT_PRESETS.quick) },
             environment: {},
-            rest: { advanceTime: true, extendedEnabled: false, customTypes: [] },
+            rest: { advanceTime: true, extendedEnabled: false, pace: 'standard', shortHours: 1, longHours: 8, extendedHours: 24, customTypes: [] },
             ...modState.config
         });
 
@@ -22413,7 +22500,32 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             };
         }
 
+        function ordinalNumber(value) {
+            const number = Math.max(1, Math.floor(Number(value) || 1));
+            const remainder100 = number % 100;
+            const suffix = remainder100 >= 11 && remainder100 <= 13
+                ? 'th'
+                : ({ 1: 'st', 2: 'nd', 3: 'rd' }[number % 10] || 'th');
+            return `${number}${suffix}`;
+        }
+
+        function wayfarerDayPeriod(zeroBasedHour) {
+            const hour = Math.floor(Number(zeroBasedHour)) + 1;
+            if (hour <= 2) return { name: 'First Light', landmark: hour === 2 ? 'Dawn' : '' };
+            if (hour <= 4) return { name: 'Morningtide', landmark: '' };
+            if (hour <= 8) return { name: 'Highsun', landmark: hour === 7 ? 'Midday' : '' };
+            if (hour <= 11) return { name: 'Waning Hours', landmark: '' };
+            if (hour <= 14) return { name: "Evening's Crest", landmark: hour === 12 ? 'Dusk' : '' };
+            if (hour <= 16) return { name: 'Nightfall', landmark: '' };
+            return { name: 'Deep Night', landmark: hour === 17 ? 'Midnight' : '' };
+        }
+
         function displayTime(value) {
+            if (value.profileId === 'wayfarer') {
+                const period = wayfarerDayPeriod(value.hour);
+                const landmark = period.landmark ? ` (${period.landmark})` : '';
+                return `${ordinalNumber(value.hour + 1)} Hour, ${value.minute} ${value.minute === 1 ? 'minute' : 'minutes'} - ${period.name}${landmark}`;
+            }
             const hour = value.hour % 12 || 12;
             return `${hour}:${String(value.minute).padStart(2, '0')} ${value.hour >= 12 ? 'PM' : 'AM'}`;
         }
@@ -22523,18 +22635,288 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel(msg, 'Campaign Date and Time', fields);
         }
 
+        /**
+         * normalizedAnnouncementConfig - Self-heal the bounded announcement layout.
+         * Inputs: saved configuration from either the audience/detail format or the
+         * current preset/field format.
+         * Output: one audience, heading, preset, and complete per-field style map.
+         * Invariant: valid saved choices survive upgrades; malformed branches return
+         * to the compact public calendar summary without touching other Almanac state.
+         */
+        function normalizedAnnouncementConfig() {
+            const raw = modState.config.announcement && typeof modState.config.announcement === 'object'
+                && !Array.isArray(modState.config.announcement)
+                ? modState.config.announcement
+                : {};
+            const requestedPreset = String(raw.preset || '').toLowerCase();
+            const preset = requestedPreset === 'custom'
+                ? 'custom'
+                : Object.prototype.hasOwnProperty.call(ANNOUNCEMENT_PRESETS, requestedPreset)
+                ? requestedPreset
+                : (raw.detail === 'full' ? 'full' : 'quick');
+            const savedFields = raw.fields && typeof raw.fields === 'object' && !Array.isArray(raw.fields)
+                ? raw.fields
+                : {};
+            const style = ANNOUNCEMENT_STYLES.includes(String(raw.style || '').toLowerCase())
+                ? String(raw.style).toLowerCase()
+                : 'descriptive';
+            const baseFields = ANNOUNCEMENT_PRESETS[preset] || ANNOUNCEMENT_PRESETS.quick;
+            const fields = Object.fromEntries(Object.keys(ANNOUNCEMENT_FIELD_LABELS).map(key => [
+                key,
+                ['off', ...ANNOUNCEMENT_STYLES].includes(String(savedFields[key] || '').toLowerCase())
+                    ? String(savedFields[key]).toLowerCase()
+                    : typeof savedFields[key] === 'boolean'
+                        ? (savedFields[key] ? style : 'off')
+                        : (baseFields[key] === true ? style : 'off')
+            ]));
+            const normalized = {
+                schemaVersion: ANNOUNCEMENT_SCHEMA_VERSION,
+                enabled: raw.enabled !== false && String(raw.style || '').toLowerCase() !== 'off',
+                audience: raw.audience === 'gm' ? 'gm' : 'public',
+                style,
+                preset,
+                header: boundedName(raw.header, 'Campaign Date and Time'),
+                fields
+            };
+            modState.config.announcement = normalized;
+            return normalized;
+        }
+
+        function exactMomentButton(moment = currentMoment(), label = 'Set Date & Time') {
+            const profile = profileFor();
+            const maximumHour = Math.max(0, calendarHoursPerDay(profile) - 1);
+            const maximumMinute = Math.max(0, calendarMinutesPerHour(profile) - 1);
+            const wayfarerClock = profile.id === 'wayfarer';
+            const hourPrompt = wayfarerClock
+                ? `?{Hour of day 1-${maximumHour + 1}|${moment.hour + 1}}`
+                : `?{Hour 0-${maximumHour}|${moment.hour}}`;
+            return GameAssist.createButton(label, `!aa-time set --year ?{Year|${moment.year}} --period ?{Period name or number|${moment.periodName}} --day ?{Day|${moment.day}} --hour ${hourPrompt} --minute ?{Minute 0-${maximumMinute}|${moment.minute}}${wayfarerClock ? ' --one-based-hour yes' : ''} --confirm ?{Set this fictional date and time?|No,no|Yes,yes}`);
+        }
+
+        function descriptiveTime(moment) {
+            if (moment.profileId === 'wayfarer') return wayfarerDayPeriod(moment.hour).name;
+            if (moment.hour < 5) return 'Deep night';
+            if (moment.hour < 8) return 'Dawn';
+            if (moment.hour < 12) return 'Morning';
+            if (moment.hour < 15) return 'Midday';
+            if (moment.hour < 18) return 'Afternoon';
+            if (moment.hour < 21) return 'Evening';
+            return 'Night';
+        }
+
+        function descriptiveTemperature(value) {
+            const temperature = Number(value);
+            if (temperature <= 0) return 'Extreme cold';
+            if (temperature <= 20) return 'Bitterly cold';
+            if (temperature <= 40) return 'Cold';
+            if (temperature <= 60) return 'Cool';
+            if (temperature <= 75) return 'Mild';
+            if (temperature <= 90) return 'Warm';
+            if (temperature <= 105) return 'Hot';
+            return 'Extreme heat';
+        }
+
+        function descriptiveWind(value) {
+            const speed = Number(value);
+            if (speed < 2) return 'Still air';
+            if (speed < 8) return 'Gentle breeze';
+            if (speed < 16) return 'Steady breeze';
+            if (speed < 25) return 'Strong breeze';
+            if (speed < 40) return 'Strong wind';
+            return 'Gale-force wind';
+        }
+
+        function descriptiveVisibility(value) {
+            const visibility = String(value || '').toLowerCase();
+            if (visibility.includes('heavily') || visibility.includes('whiteout')) return 'Visibility is very poor';
+            if (visibility.includes('reduced') || visibility.includes('limited') || visibility.includes('partly')) return 'Visibility is limited';
+            return 'Visibility remains good';
+        }
+
+        function moonVisibility(moment, weather) {
+            const displayedHour = Number(moment.hour) + 1;
+            const daylight = moment.profileId === 'wayfarer'
+                ? displayedHour >= 2 && displayedHour <= 14
+                : Number(moment.hour) >= 6 && Number(moment.hour) < 18;
+            const cloudCover = Boolean(weather) && (
+                String(weather.precipitation || '').toLowerCase() !== 'none'
+                || ['overcast', 'storm clouds', 'low cloud', 'whiteout'].includes(String(weather.cloud || '').toLowerCase())
+            );
+            const reasons = [];
+            if (daylight) reasons.push('daylight');
+            if (cloudCover) reasons.push('cloud cover');
+            return { visible: reasons.length === 0, reasons };
+        }
+
+        function announcementMoonSummary(style, moment, weather) {
+            const context = astronomyContext();
+            if (!context?.moons?.length) return 'No moons are configured.';
+            const visibility = moonVisibility(moment, weather);
+            return context.moons.map(moon => {
+                const hidden = visibility.visible ? '' : `Not Visible (${visibility.reasons.join(' and ')})`;
+                if (style === 'descriptive') return `${moon.name}: ${hidden || moon.phase}`;
+                if (style === 'technical') {
+                    return `${moon.name}: ${moon.phase} | cycle day ${moon.cyclePosition + 1} of ${moon.cycleDays}${hidden ? ` | ${hidden}` : ' | Visible'}`;
+                }
+                return `${moon.name}: ${moon.phase}${hidden ? ` - ${hidden}` : ''}`;
+            }).join(' | ');
+        }
+
+        function announcementFields(config = normalizedAnnouncementConfig()) {
+            const moment = currentMoment();
+            const fields = [];
+            const fieldStyle = key => ANNOUNCEMENT_STYLES.includes(config.fields[key]) ? config.fields[key] : 'off';
+            const dateStyle = fieldStyle('date');
+            const timeStyle = fieldStyle('time');
+            const seasonStyle = fieldStyle('season');
+            const observanceStyle = fieldStyle('observances');
+            if (dateStyle !== 'off') fields.push({ label: 'Date', value: _sanitize(displayDate(moment)) });
+            if (timeStyle !== 'off') fields.push({ label: 'Time', value: _sanitize(timeStyle === 'descriptive' ? descriptiveTime(moment) : displayTime(moment)) });
+            if (seasonStyle !== 'off') fields.push({ label: 'Season', value: _sanitize(moment.season) });
+            if (observanceStyle !== 'off' && moment.holidays?.length) fields.push({ label: 'Observances', value: moment.holidays.map(_sanitize).join(', ') });
+            const weatherStyle = fieldStyle('weather');
+            const sceneOverride = submoduleEnabled('environment') ? ensureAlmanacRuntime().environment.override : null;
+            const weather = weatherStyle !== 'off' && submoduleEnabled('weather') && !sceneOverride ? currentWeather() : null;
+            const moonStyle = fieldStyle('moons');
+            if (moonStyle !== 'off' && submoduleEnabled('astronomy')) fields.push({ label: 'Moon Phases', value: _sanitize(announcementMoonSummary(moonStyle, moment, currentWeather())) });
+            if (weather) {
+                const weatherValue = weatherStyle === 'descriptive'
+                    ? `${weather.summary} | ${descriptiveTemperature(weather.temperatureF)} | ${descriptiveWind(weather.windMph)} | ${descriptiveVisibility(weather.visibility)}`
+                    : weatherStyle === 'technical'
+                        ? `${weather.summary} | ${weather.temperatureF} F | ${weather.windMph} mph wind | ${weather.precipitation} | ${weather.cloud} | Visibility: ${weather.visibility} | Source: ${weather.context}`
+                        : `${weather.summary} | ${weather.temperatureF} F | ${weather.windMph} mph wind | Visibility: ${weather.visibility}`;
+                fields.push({ label: weatherStyle === 'technical' ? 'Weather (Technical)' : 'Weather', value: _sanitize(weatherValue) });
+            }
+            if (weatherStyle !== 'off' && sceneOverride) {
+                const sceneValue = weatherStyle === 'descriptive'
+                    ? `${sceneOverride.name} | ${sceneOverride.temperature} | ${sceneOverride.wind} | ${descriptiveVisibility(sceneOverride.visibility)}`
+                    : weatherStyle === 'technical'
+                        ? `${sceneOverride.name} | Temperature: ${sceneOverride.temperature} | Wind: ${sceneOverride.wind} | Precipitation: ${sceneOverride.precipitation} | Visibility: ${sceneOverride.visibility} | Source: GM scene override`
+                        : `${sceneOverride.name} | ${sceneOverride.temperature} | ${sceneOverride.wind} wind | Visibility: ${sceneOverride.visibility}`;
+                fields.push({ label: weatherStyle === 'technical' ? 'Scene Conditions (Technical)' : 'Scene Conditions', value: _sanitize(sceneValue) });
+            }
+            const climateStyle = fieldStyle('climate');
+            const climate = climateStyle !== 'off' && submoduleEnabled('climate') ? resolvedClimate() : null;
+            if (climate) {
+                const climateValue = climateStyle === 'descriptive'
+                    ? `${climate.regionName} | ${climate.profileName}`
+                    : climateStyle === 'technical'
+                    ? `${climate.profileName} baseline | ${climate.humidity}% typical humidity | ${climate.precipitationChance}% precipitation chance | ${climate.windMph} mph typical wind${climate.regionId === 'home' ? '' : ` | Region: ${climate.regionName}`}`
+                    : `${climate.profileName} climate | ${climate.humidity}% typical humidity | ${climate.precipitationChance}% precipitation chance${climate.regionId === 'home' ? '' : ` | ${climate.regionName}`}`;
+                fields.push({ label: climateStyle === 'technical' ? 'Climate Baseline' : 'Climate', value: _sanitize(climateValue) });
+            }
+            const environmentStyle = fieldStyle('environment');
+            const environment = environmentStyle !== 'off' && submoduleEnabled('environment') ? environmentContext() : null;
+            if (environment) {
+                const environmentValue = environmentStyle === 'descriptive'
+                    ? `${environment.name} | ${descriptiveVisibility(environment.visibility)} | ${environment.ground}`
+                    : environmentStyle === 'technical'
+                        ? `${environment.name} | Visibility: ${environment.visibility} | Temperature: ${environment.temperature} | Wind: ${environment.wind} | Ground: ${environment.ground} | Water: ${environment.water} | Exposure: ${environment.exposure} | Severity: ${environment.severity}`
+                        : `${environment.name} | Visibility: ${environment.visibility} | ${environment.temperature} | Ground: ${environment.ground}`;
+                fields.push({ label: environmentStyle === 'technical' ? 'Environment (Technical)' : 'Environment', value: _sanitize(environmentValue) });
+            }
+            return fields;
+        }
+
+        function showAnnouncement(msg, preview = false) {
+            if (!requireGm(msg) || !timeAvailable()) return;
+            const config = normalizedAnnouncementConfig();
+            if (!config.enabled) {
+                return sendPanel(msg, preview ? 'Almanac Announcement Preview' : 'Announcement Not Sent', [
+                    { label: 'Announcements', value: 'Off. No public or GM announcement was sent.' },
+                    { label: 'Actions', value: `${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')} ${GameAssist.createButton('Almanac', '!aa-gm')}` }
+                ]);
+            }
+            const fields = announcementFields(config);
+            if (!fields.length) {
+                return sendPanel(msg, preview ? 'Almanac Announcement Preview' : 'Announcement Not Sent', [
+                    { label: 'Information', value: 'Every announcement detail is off. Choose at least one detail or restore the announcement defaults.' },
+                    { label: 'Actions', value: `${GameAssist.createButton('Choose Information', '!aa-announcement-fields')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` }
+                ]);
+            }
+            if (preview) {
+                fields.unshift({
+                    label: 'Delivery',
+                    value: `${config.audience === 'public' ? 'Public Chat' : 'GM Only'} | ${config.style.charAt(0).toUpperCase()}${config.style.slice(1)} | ${config.preset === 'custom' ? 'Custom Information' : `${config.preset.charAt(0).toUpperCase()}${config.preset.slice(1)} Preset`}`
+                });
+                fields.push({
+                    label: 'Actions',
+                    value: `${GameAssist.createButton('Announce Now', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')} ${GameAssist.createButton('Almanac', '!aa-gm')}`
+                });
+                return sendPanel(msg, `${config.header} - Preview`, fields);
+            }
+            return sendPanel(msg, config.header, fields, { publicMessage: config.audience === 'public' });
+        }
+
+        function showAnnouncementFields(msg) {
+            if (!requireGm(msg)) return;
+            const config = normalizedAnnouncementConfig();
+            const choice = (label, active, command) => active ? `<strong>${label}</strong>` : GameAssist.createButton(label, command);
+            const fieldButtons = Object.entries(ANNOUNCEMENT_FIELD_LABELS).map(([key, label]) => ({
+                label,
+                value: [
+                    choice('Off', config.fields[key] === 'off', `!aa-announcement field ${key} off`),
+                    choice('Descriptive', config.fields[key] === 'descriptive', `!aa-announcement field ${key} descriptive`),
+                    choice('Detailed', config.fields[key] === 'detailed', `!aa-announcement field ${key} detailed`),
+                    choice('Technical', config.fields[key] === 'technical', `!aa-announcement field ${key} technical`)
+                ].join(' ')
+            }));
+            sendPanel(msg, 'Choose Announcement Information', [
+                ...fieldButtons,
+                { label: 'How This Works', value: 'Each detail may be hidden or shown at its own descriptive, detailed, or technical level. Unavailable systems are quietly omitted.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')} ${GameAssist.createButton('Almanac', '!aa-gm')}` }
+            ]);
+        }
+
+        function showAnnouncementSettings(msg) {
+            if (!requireGm(msg)) return;
+            const config = normalizedAnnouncementConfig();
+            const queryHeader = String(config.header).replace(/["|{}?]/g, ' ').replace(/\s+/g, ' ').trim();
+            const choice = (label, active, command) => active ? `<strong>${_sanitize(label)}</strong>` : GameAssist.createButton(label, command);
+            sendPanel(msg, 'Almanac Announcement Settings', [
+                {
+                    label: 'Presentation',
+                    value: `${choice('Off', !config.enabled, '!aa-announcement style off')} ${choice('Descriptive', config.enabled && config.style === 'descriptive', '!aa-announcement style descriptive')} ${choice('Detailed', config.enabled && config.style === 'detailed', '!aa-announcement style detailed')} ${choice('Technical', config.enabled && config.style === 'technical', '!aa-announcement style technical')}`
+                },
+                {
+                    label: 'Audience',
+                    value: `${choice('Public Chat', config.audience === 'public', '!aa-announcement audience public')} ${choice('GM Only', config.audience === 'gm', '!aa-announcement audience gm')}`
+                },
+                { label: 'What The Styles Mean', value: 'Descriptive shares what characters can readily perceive. Detailed includes exact current values. Technical adds baselines, sources, and diagnostic context. Off sends nothing.' },
+                {
+                    label: 'Information Preset',
+                    value: `${choice('Quick', config.preset === 'quick', '!aa-announcement preset quick')} ${choice('Calendar', config.preset === 'calendar', '!aa-announcement preset calendar')} ${choice('Travel', config.preset === 'travel', '!aa-announcement preset travel')} ${choice('Everything', config.preset === 'full', '!aa-announcement preset full')}`
+                },
+                { label: 'Custom Information', value: `${config.preset === 'custom' ? '<strong>Custom selection active</strong> ' : ''}${GameAssist.createButton('Choose Announcement Information', '!aa-announcement-fields')}` },
+                { label: 'Heading', value: `${_sanitize(config.header)} ${GameAssist.createButton('Change Heading', `!aa-announcement header --value "?{Announcement heading|${queryHeader}}"`)}` },
+                { label: 'Actions', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce Now', '!aa-announce')} ${GameAssist.createButton('Restore Defaults', '!aa-announcement reset --confirm ?{Restore the default descriptive Quick announcement?|No,no|Yes,yes}')} ${GameAssist.createButton('Almanac', '!aa-gm')}` }
+            ]);
+        }
+
         function showMaster(msg) {
             if (!playerIsGM(msg?.playerid)) return showCurrent(msg);
             const moment = currentMoment();
+            const timeButtons = timeAvailable()
+                ? `${GameAssist.createButton('+10 Minutes', '!aa-time advance --minutes 10')} ${GameAssist.createButton('+1 Hour', '!aa-time advance --hours 1')} ${GameAssist.createButton('+1 Day', '!aa-time advance --days 1')} ${GameAssist.createButton('Choose Advance', '!aa-time advance --days ?{Days|0} --hours ?{Hours|0} --minutes ?{Minutes|0}')}`
+                : GameAssist.createButton('Turn On TimeAlmanac', '!aa-time on');
             sendPanel(msg, 'AlmanacAssist', [
-                { label: 'Current World Time', value: timeAvailable() ? _sanitize(displayMoment(moment)) : 'TimeAlmanac is turned off; chronology is preserved.' },
-                { label: 'World Clock', value: `${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('Wayfarer Setup', '!aa-wayfarer')} ${GameAssist.createButton('Advance Time', '!aa-time menu')} ${GameAssist.createButton('Set Date and Time', `!aa-time set --year ?{Year|${moment.year}} --period ?{Period name or number|${moment.periodName}} --day ?{Day|${moment.day}} --hour ?{Hour 0-23|${moment.hour}} --minute ?{Minute 0-59|${moment.minute}} --confirm ?{Set this fictional date and time?|No,no|Yes,yes}`)}` },
-                { label: 'World Context', value: `${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Astronomy', '!astro')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Environment', '!enviro')}` },
-                { label: 'Moon Phases', value: `${_sanitize(currentMoonSummary())}<br>${GameAssist.createButton('Open Astronomy', '!astro')}` },
-                { label: 'Recovery', value: GameAssist.createButton('Rest', '!rest') },
-                { label: 'TimeAlmanac', value: `${modState.config.timeAlmanacEnabled ? 'On' : 'Off'} ${GameAssist.createButton(modState.config.timeAlmanacEnabled ? 'Turn Off' : 'Turn On', `!aa-time ${modState.config.timeAlmanacEnabled ? 'off' : 'on'}`)}` },
-                { label: 'Review and Setup', value: `${GameAssist.createButton('Systems', '!Almanac-Systems')} ${GameAssist.createButton('Status', '!Almanac-Status')} ${GameAssist.createButton('Audit', '!Almanac-Audit')} ${GameAssist.createButton('Guide', '!Almanac-Guide')} ${GameAssist.createButton('Manual', '!Almanac-Manual')}` },
+                { label: 'Now', value: timeAvailable() ? _sanitize(displayMoment(moment)) : 'TimeAlmanac is turned off; chronology is preserved.' },
+                { label: 'Advance Date & Time', value: timeButtons },
+                { label: 'Set or Change Calendar', value: timeAvailable() ? `${exactMomentButton(moment)} ${GameAssist.createButton('Choose Calendar', '!cal')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')}` : GameAssist.createButton('Choose Calendar', '!cal') },
+                { label: 'Share', value: `${GameAssist.createButton('Preview Announcement', '!aa-preview')} ${GameAssist.createButton('Announce Now', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
+                { label: 'World Today', value: `${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Environment', '!enviro')}` },
+                { label: 'More', value: `${GameAssist.createButton('Rest', '!rest')} ${GameAssist.createButton('More Almanac Tools', '!aa-more')} ${GameAssist.createButton('Guide', '!Almanac-Guide')}` },
                 { label: 'GameAssist', value: gameAssistHomeButton() }
+            ]);
+        }
+
+        function showMoreMenu(msg) {
+            if (!requireGm(msg)) return;
+            sendPanel(msg, 'More Almanac Tools', [
+                { label: 'Calendar', value: `${GameAssist.createButton('Time Controls', '!aa-time menu')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')} ${GameAssist.createButton('Choose Calendar', '!cal')}` },
+                { label: 'Systems', value: `${GameAssist.createButton('Turn Systems On or Off', '!Almanac-Systems')} ${GameAssist.createButton('Status', '!Almanac-Status')} ${GameAssist.createButton('Audit', '!Almanac-Audit')}` },
+                { label: 'Reference', value: `${GameAssist.createButton('Quick Guide', '!Almanac-Guide')} ${GameAssist.createButton('Full Manual', '!Almanac-Manual')}` },
+                { label: 'Return', value: `${GameAssist.createButton('Almanac', '!aa-gm')} ${gameAssistHomeButton()}` }
             ]);
         }
 
@@ -22553,46 +22935,65 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     label: name,
                     value: `${enabled ? 'On' : 'Off'} ${GameAssist.createButton(enabled ? 'Turn Off' : 'Turn On', `!aa-${route} ${enabled ? 'off' : 'on'}`)}`
                 })),
-                { label: 'How This Works', value: 'Each system keeps its valid settings and history when turned off. Other Almanac systems continue independently.' },
-                { label: 'Return', value: GameAssist.createButton('Almanac', '!Almanac-GM') }
+                { label: 'Saved Settings', value: 'Turning a system off preserves its settings and history. Other Almanac systems remain available.' },
+                { label: 'Return', value: `${GameAssist.createButton('More Almanac Tools', '!aa-more')} ${GameAssist.createButton('Almanac', '!aa-gm')}` }
             ]);
         }
 
         function showTimeMenu(msg) {
             if (!requireGm(msg)) return;
             const moment = currentMoment();
-            sendPanel(msg, 'Advance Fictional Time', [
-                { label: 'Current', value: _sanitize(displayMoment(moment)) },
+            sendPanel(msg, 'Date and Time Controls', [
+                { label: 'Now', value: _sanitize(displayMoment(moment)) },
                 { label: 'Quick Advance', value: `${GameAssist.createButton('+10 Minutes', '!aa-time advance --minutes 10')} ${GameAssist.createButton('+1 Hour', '!aa-time advance --hours 1')} ${GameAssist.createButton('+8 Hours', '!aa-time advance --hours 8')} ${GameAssist.createButton('+1 Day', '!aa-time advance --days 1')}` },
-                { label: 'Custom Advance', value: GameAssist.createButton('Choose Amount', '!aa-time advance --days ?{Days|0} --hours ?{Hours|0} --minutes ?{Minutes|0}') },
-                { label: 'Move Backward', value: GameAssist.createButton('Choose Amount', '!aa-time retreat --days ?{Days|0} --hours ?{Hours|0} --minutes ?{Minutes|0} --confirm ?{Moving time backward never reverses rests, effects, combat, or history. Continue?|No,no|Yes,yes}') },
-                { label: 'Set Exact Moment', value: GameAssist.createButton('Set Date and Time', `!aa-time set --year ?{Year|${moment.year}} --period ?{Period name or number|${moment.periodName}} --day ?{Day|${moment.day}} --hour ?{Hour 0-23|${moment.hour}} --minute ?{Minute 0-59|${moment.minute}} --confirm ?{Set this fictional date and time?|No,no|Yes,yes}`) },
-                { label: 'Return', value: GameAssist.createButton('Almanac', '!Almanac-GM') }
+                { label: 'Choose Advance', value: `${GameAssist.createButton('Advance Date', '!aa-time advance --days ?{Days|1}')} ${GameAssist.createButton('Advance Date & Time', '!aa-time advance --days ?{Days|0} --hours ?{Hours|0} --minutes ?{Minutes|0}')}` },
+                { label: 'Set Exact Moment', value: exactMomentButton(moment) },
+                { label: 'Share', value: `${GameAssist.createButton('Preview Announcement', '!aa-preview')} ${GameAssist.createButton('Announce Now', '!aa-announce')} ${GameAssist.createButton('Settings', '!aa-announcement-settings')}` },
+                { label: 'Advanced', value: GameAssist.createButton('Move Time Backward', '!aa-time retreat --days ?{Days|0} --hours ?{Hours|0} --minutes ?{Minutes|0} --confirm ?{Moving time backward never reverses rests, effects, combat, or history. Continue?|No,no|Yes,yes}') },
+                { label: 'Return', value: GameAssist.createButton('Almanac', '!aa-gm') }
             ]);
         }
 
         function showCalendarMenu(msg) {
             const current = profileFor();
+            const moment = currentMoment();
+            const isGm = playerIsGM(msg?.playerid);
             const profiles = ['standard', 'solamnic', 'harptos', 'wayfarer'];
             const buttons = profiles.map(id => {
                 const profile = profileFor(id);
-                if (id === current.id) return `<strong>${_sanitize(profile.name)}</strong>`;
-                if (!playerIsGM(msg?.playerid)) return _sanitize(profile.name);
-                return GameAssist.createButton(profile.name, `!aa-time profile ${id} --confirm ?{Please confirm the change of the calendar display to ${profile.name}? Elapsed calendar time is preserved.|No,no|Yes,yes}`);
+                if (id === current.id) return `<strong>Current: ${_sanitize(profile.name)}</strong>`;
+                if (!isGm) return _sanitize(profile.name);
+                return GameAssist.createButton(`Use ${profile.name}`, `!aa-time profile ${id} --confirm ?{Please confirm the change of the calendar display to ${profile.name}? Elapsed calendar time is preserved.|No,no|Yes,yes}`);
             }).join(' ');
-            const moment = currentMoment();
             const fields = [
-                { label: 'Current Calendar', value: _sanitize(current.name) },
-                { label: 'Current Date', value: _sanitize(displayDate(moment)) },
-                { label: 'Available Calendars', value: buttons }
+                { label: 'Current Calendar', value: `${_sanitize(current.name)}<br>${_sanitize(displayDate(moment))}` },
+                { label: 'Switch Calendar', value: buttons }
             ];
-            if (playerIsGM(msg?.playerid)) fields.push({ label: 'Custom Calendar', value: GameAssist.createButton('Open Wayfarer Setup', '!aa-wayfarer') });
-            fields.push({ label: 'Return', value: GameAssist.createButton(playerIsGM(msg?.playerid) ? 'Almanac' : 'Current Date', playerIsGM(msg?.playerid) ? '!Almanac-GM' : '!date') });
-            sendPanel(msg, 'Campaign Calendar', fields);
+            if (isGm) {
+                fields.push({
+                    label: 'Wayfarer',
+                    value: `${GameAssist.createButton('Manage Wayfarer Calendar', '!aa-wayfarer')} <span style="font-size:smaller;">The Wayfarer button above uses the last saved Wayfarer calendar immediately; draft edits remain separate until activated.</span>`
+                });
+            }
+            fields.push({ label: 'Return', value: GameAssist.createButton(isGm ? 'Almanac' : 'Current Date', isGm ? '!aa-gm' : '!date') });
+            sendPanel(msg, 'Choose Campaign Calendar', fields);
         }
 
         function formatWayfarerStart(startDate) {
-            return `${_sanitize(startDate.period)} ${startDate.day}, Year ${startDate.year} at ${String(startDate.hour).padStart(2, '0')}:${String(startDate.minute).padStart(2, '0')}`;
+            const period = wayfarerDayPeriod(startDate.hour);
+            return `${_sanitize(startDate.period)} ${startDate.day}, Year ${startDate.year} at ${ordinalNumber(startDate.hour + 1)} Hour, ${startDate.minute} ${startDate.minute === 1 ? 'minute' : 'minutes'} - ${period.name}`;
+        }
+
+        function wayfarerNameCommand(definition) {
+            return `!aa-wayfarer name --value "?{Calendar name|${definition.name}}"`;
+        }
+
+        function wayfarerStartCommand(draft, definition) {
+            return `!aa-wayfarer start --year ?{Starting year|${draft.startDate.year}} --period "?{Starting period|${draft.startDate.period}}" --day ?{Starting day|${draft.startDate.day}} --hour ?{Starting Hour 1-${definition.hoursPerDay}|${Math.min(definition.hoursPerDay, draft.startDate.hour + 1)}} --minute ?{Starting minute 0-${definition.minutesPerHour - 1}|${Math.min(definition.minutesPerHour - 1, draft.startDate.minute)}} --one-based-hour yes`;
+        }
+
+        function wayfarerIdentityCommand(draft, definition) {
+            return `!aa-wayfarer identity --name "?{Calendar name|${definition.name}}" --year ?{Starting year|${draft.startDate.year}} --period "?{Starting period|${draft.startDate.period}}" --day ?{Starting day|${draft.startDate.day}} --hour ?{Starting Hour 1-${definition.hoursPerDay}|${Math.min(definition.hoursPerDay, draft.startDate.hour + 1)}} --minute ?{Starting minute 0-${definition.minutesPerHour - 1}|${Math.min(definition.minutesPerHour - 1, draft.startDate.minute)}} --one-based-hour yes`;
         }
 
         function wayfarerOverview(draft) {
@@ -22606,14 +23007,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function wayfarerStageControls(stage) {
             const index = WAYFARER_STAGES.indexOf(stage);
-            const previous = index > 0 ? WAYFARER_STAGES[index - 1] : null;
             const next = index < WAYFARER_STAGES.length - 1 ? WAYFARER_STAGES[index + 1] : 'review';
             return [
-                GameAssist.createButton('Wayfarer Manager', '!aa-wayfarer'),
-                previous ? GameAssist.createButton('Previous', `!aa-wayfarer stage ${previous}`) : '',
-                GameAssist.createButton('Save Draft', '!aa-wayfarer save'),
-                GameAssist.createButton(next === 'review' ? 'Review Draft' : 'Continue', `!aa-wayfarer stage ${next} --review ${stage}`)
-            ].filter(Boolean).join(' ');
+                GameAssist.createButton('Edit Calendar', '!aa-wayfarer edit'),
+                GameAssist.createButton('Preview Draft', '!aa-wayfarer preview'),
+                GameAssist.createButton('Explain This', `!aa-wayfarer explain ${stage}`),
+                GameAssist.createButton(next === 'review' ? 'Review & Activate' : 'Next Area', `!aa-wayfarer stage ${next} --review ${stage}`)
+            ].join(' ');
         }
 
         function showWayfarer(msg) {
@@ -22623,17 +23023,66 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const active = profileFor();
             const current = currentMoment();
             const nextStage = WAYFARER_STAGES.find(stage => draft.reviewed?.[stage] !== true) || 'review';
-            const backup = normalizeWayfarerBackup(ensureAlmanacRuntime().time.wayfarerBackup);
-            sendPanel(msg, 'Wayfarer Calendar Manager', [
-                { label: 'Active Calendar', value: `${_sanitize(active.name)}${active.id === 'wayfarer' ? ' (Wayfarer)' : ''}<br>${current ? _sanitize(displayMoment(current)) : 'Fictional date unavailable'}` },
-                { label: 'Saved Draft', value: `${wayfarerOverview(draft)}<br>${status.reviewedCount}/${WAYFARER_STAGES.length} areas reviewed | ${draftMatchesActive(draft) ? 'matches the saved Wayfarer definition' : 'not yet active'}` },
+            const savedWayfarer = profileFor('wayfarer');
+            const useSaved = active.id === 'wayfarer'
+                ? `<strong>${_sanitize(active.name)} is active</strong>`
+                : GameAssist.createButton(`Use ${savedWayfarer.name}`, `!aa-time profile wayfarer --confirm ?{Please confirm the change of the calendar display to ${savedWayfarer.name}? Elapsed calendar time is preserved.|No,no|Yes,yes}`);
+            sendPanel(msg, 'Wayfarer Calendar', [
+                { label: 'Active Calendar', value: `${_sanitize(active.name)}<br>${current ? _sanitize(displayMoment(current)) : 'Fictional date unavailable'}` },
+                { label: 'Use Wayfarer', value: `${useSaved} ${GameAssist.createButton('Choose Another Calendar', '!cal')}` },
+                { label: 'Draft', value: `${_sanitize(draft.definition.name)} | ${draftMatchesActive(draft) ? 'matches the saved Wayfarer calendar' : 'has changes not yet activated'}` },
+                { label: 'Edit or Activate', value: `${GameAssist.createButton('Edit Calendar', '!aa-wayfarer edit')} ${GameAssist.createButton('Preview Draft', '!aa-wayfarer preview')} ${GameAssist.createButton('Review & Activate', '!aa-wayfarer review')}` },
+                { label: 'Optional Setup', value: `${GameAssist.createButton('Continue Guided Review', `!aa-wayfarer stage ${nextStage}`)} ${GameAssist.createButton('Start From a Copy', '!aa-wayfarer copies')}` },
+                { label: 'More', value: `${GameAssist.createButton('Calendar Details', '!aa-wayfarer details')} ${GameAssist.createButton('Recovery Options', '!aa-wayfarer recovery')} ${GameAssist.createButton('Help', '!aa-wayfarer help')}` },
+                { label: 'Return', value: GameAssist.createButton('Almanac', '!aa-gm') }
+            ]);
+        }
+
+        function showWayfarerEditMenu(msg) {
+            if (!requireGm(msg)) return;
+            const draft = ensureWayfarerDraft();
+            sendPanel(msg, 'Edit Wayfarer Calendar', [
+                { label: 'Draft', value: _sanitize(draft.definition.name) },
                 { label: 'Calendar Basics', value: `${GameAssist.createButton('Name, Clock & Start', '!aa-wayfarer stage identity')} ${GameAssist.createButton('Weekdays', '!aa-wayfarer stage weekdays')} ${GameAssist.createButton('Periods', '!aa-wayfarer stage months')}` },
                 { label: 'Special Dates', value: `${GameAssist.createButton('Festival Days', '!aa-wayfarer stage intercalary')} ${GameAssist.createButton('Leap Rule', '!aa-wayfarer stage leap')} ${GameAssist.createButton('Holidays', '!aa-wayfarer stage holidays')} ${GameAssist.createButton('Seasons', '!aa-wayfarer stage seasons')}` },
-                { label: 'Moon Phases', value: `${_sanitize(currentMoonSummary())}<br>${GameAssist.createButton('Open Astronomy', '!astro')} <span style="font-size:smaller;">Moons are shared world astronomy, so they are managed separately from the calendar draft.</span>` },
-                { label: 'Review and Activate', value: `${GameAssist.createButton('Preview Draft', '!aa-wayfarer preview')} ${GameAssist.createButton('Review and Activate', '!aa-wayfarer stage review')} ${GameAssist.createButton('Continue Guided Review', `!aa-wayfarer stage ${nextStage}`)}` },
-                { label: 'Start From A Copy', value: `${GameAssist.createButton('Standard', '!aa-wayfarer duplicate --profile standard --confirm ?{Replace the saved draft with a Standard calendar copy? The active calendar will not change.|No,no|Yes,yes}')} ${GameAssist.createButton('Solamnic', '!aa-wayfarer duplicate --profile solamnic --confirm ?{Replace the saved draft with a Solamnic calendar copy? The active calendar will not change.|No,no|Yes,yes}')} ${GameAssist.createButton('Harptos', '!aa-wayfarer duplicate --profile harptos --confirm ?{Replace the saved draft with a Harptos calendar copy? The active calendar will not change.|No,no|Yes,yes}')} ${GameAssist.createButton(active.id === 'wayfarer' ? 'Active Wayfarer' : 'Saved Wayfarer', '!aa-wayfarer duplicate --profile wayfarer --confirm ?{Replace the saved draft with the saved Wayfarer definition? The active calendar will not change.|No,no|Yes,yes}')}` },
-                { label: 'Draft and Recovery', value: `${GameAssist.createButton('Save Draft', '!aa-wayfarer save')} ${GameAssist.createButton('Discard Draft', '!aa-wayfarer cancel --confirm ?{Discard the saved draft and begin again from the saved Wayfarer definition?|No,no|Yes,yes}')} ${backup ? GameAssist.createButton('Restore Previous Activation', '!aa-wayfarer restore --confirm ?{Restore the calendar and fictional time saved before the latest Wayfarer activation?|No,no|Yes,yes}') : ''}` },
-                { label: 'Help', value: `${GameAssist.createButton('Quick Help', '!Wayfarer-Help')} ${GameAssist.createButton('Full Almanac Manual', '!Almanac-Manual')} ${GameAssist.createButton('Calendar Menu', '!cal')}` }
+                { label: 'Review', value: `${GameAssist.createButton('Preview Draft', '!aa-wayfarer preview')} ${GameAssist.createButton('Review & Activate', '!aa-wayfarer review')}` },
+                { label: 'Return', value: GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer') }
+            ]);
+        }
+
+        function showWayfarerCopyMenu(msg) {
+            if (!requireGm(msg)) return;
+            const active = profileFor();
+            sendPanel(msg, 'Choose a Wayfarer Starting Point', [
+                { label: 'Copy a Calendar', value: `${GameAssist.createButton('Standard', '!aa-wayfarer duplicate --profile standard --confirm ?{Replace the saved draft with a Standard calendar copy? The active calendar will not change.|No,no|Yes,yes}')} ${GameAssist.createButton('Solamnic', '!aa-wayfarer duplicate --profile solamnic --confirm ?{Replace the saved draft with a Solamnic calendar copy? The active calendar will not change.|No,no|Yes,yes}')} ${GameAssist.createButton('Harptos', '!aa-wayfarer duplicate --profile harptos --confirm ?{Replace the saved draft with a Harptos calendar copy? The active calendar will not change.|No,no|Yes,yes}')} ${GameAssist.createButton(active.id === 'wayfarer' ? 'Active Wayfarer' : 'Saved Wayfarer', '!aa-wayfarer duplicate --profile wayfarer --confirm ?{Replace the saved draft with the saved Wayfarer definition? The active calendar will not change.|No,no|Yes,yes}')}` },
+                { label: 'What Changes', value: 'Only the editable draft is replaced. The calendar in use and the current fictional date remain unchanged until activation.' },
+                { label: 'Return', value: `${GameAssist.createButton('Edit Calendar', '!aa-wayfarer edit')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')}` }
+            ]);
+        }
+
+        function showWayfarerDetails(msg) {
+            if (!requireGm(msg)) return;
+            const draft = ensureWayfarerDraft();
+            const status = wayfarerDraftStatus(draft);
+            const backup = normalizeWayfarerBackup(ensureAlmanacRuntime().time.wayfarerBackup);
+            sendPanel(msg, 'Wayfarer Calendar Details', [
+                { label: 'Draft Structure', value: wayfarerOverview(draft) },
+                { label: 'Starting Date', value: formatWayfarerStart(draft.startDate) },
+                { label: 'Review Progress', value: `${status.reviewedCount}/${WAYFARER_STAGES.length} areas reviewed | ${status.errors.length ? _sanitize(status.errors.join(' ')) : 'No validation errors found'}` },
+                { label: 'Moon Phases', value: `${_sanitize(currentMoonSummary())}<br>${GameAssist.createButton('Open Astronomy', '!astro')}` },
+                { label: 'Rollback', value: backup ? 'One previous Wayfarer activation is available in Recovery Options.' : 'No previous Wayfarer activation is stored.' },
+                { label: 'Return', value: `${GameAssist.createButton('Edit Calendar', '!aa-wayfarer edit')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')}` }
+            ]);
+        }
+
+        function showWayfarerRecovery(msg) {
+            if (!requireGm(msg)) return;
+            const backup = normalizeWayfarerBackup(ensureAlmanacRuntime().time.wayfarerBackup);
+            sendPanel(msg, 'Wayfarer Recovery Options', [
+                { label: 'Draft', value: `${GameAssist.createButton('Save Draft', '!aa-wayfarer save')} ${GameAssist.createButton('Discard Draft Changes', '!aa-wayfarer cancel --confirm ?{Discard the saved draft and begin again from the saved Wayfarer definition?|No,no|Yes,yes}')}` },
+                { label: 'Previous Activation', value: backup ? GameAssist.createButton('Restore Previous Activation', '!aa-wayfarer restore --confirm ?{Restore the calendar and fictional time saved before the latest Wayfarer activation?|No,no|Yes,yes}') : 'No previous activation is available.' },
+                { label: 'Campaign Default', value: 'To replace only the draft with the campaign default, use <code>!aa-wayfarer reset-default --confirm yes</code>. The active calendar and fictional time will not change.' },
+                { label: 'Return', value: GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer') }
             ]);
         }
 
@@ -22648,41 +23097,83 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
+        function showWayfarerTopicHelp(msg, requestedTopic) {
+            if (!requireGm(msg)) return;
+            const topic = WAYFARER_STAGES.includes(requestedTopic) ? requestedTopic : 'identity';
+            const topics = {
+                identity: {
+                    title: 'Name, Clock, and Starting Date',
+                    purpose: 'Sets the calendar name, the number of hours in a day, the number of minutes in an hour, and the fictional date used for the first activation.',
+                    format: 'The starting date must name a period that exists in this draft. Revising an already active Wayfarer calendar normally preserves elapsed fictional time.'
+                },
+                weekdays: {
+                    title: 'Weekdays',
+                    purpose: 'Defines the repeating weekday names and their order.',
+                    format: 'Enter names separated by commas, such as Moonday, Towerday, Marketday, Hearthday, Starday.'
+                },
+                months: {
+                    title: 'Calendar Periods',
+                    purpose: 'Defines the named periods that make up the year. A multi-day festival that does not advance weekdays belongs here as a Feast period.',
+                    format: 'Use Name:Days entries separated by commas. Add :Feast when those days do not advance the weekday, such as Midwinter:5:Feast.'
+                },
+                intercalary: {
+                    title: 'Festival Days',
+                    purpose: 'Adds individual named days between calendar periods. These are different from multi-day Feast periods.',
+                    format: 'Use Name:AfterPeriodNumber entries separated by commas, such as Founding Day:3.'
+                },
+                leap: {
+                    title: 'Leap Rule',
+                    purpose: 'Adds one named leap day at a repeating year interval.',
+                    format: 'Choose the interval, name, and period after which the leap day appears. Use an interval of 0 to turn the leap rule off.'
+                },
+                holidays: {
+                    title: 'Holidays',
+                    purpose: 'Names dates that already exist. A holiday does not add another day to the year.',
+                    format: 'Use Name:PeriodNumber:Day entries separated by commas, such as Heroes Day:2:20.'
+                },
+                seasons: {
+                    title: 'Seasons',
+                    purpose: 'Assigns named seasons to date ranges. A range may cross the end of the year, but ranges may not overlap.',
+                    format: 'Use Name:StartPeriod:StartDay:EndPeriod:EndDay, such as Winter:12:15:3:8.'
+                }
+            };
+            const info = topics[topic];
+            sendPanel(msg, `Wayfarer Help: ${info.title}`, [
+                { label: 'What This Controls', value: info.purpose },
+                { label: 'How to Enter It', value: info.format },
+                { label: 'Return', value: `${GameAssist.createButton(`Back to ${info.title}`, `!aa-wayfarer stage ${topic}`)} ${GameAssist.createButton('Edit Calendar', '!aa-wayfarer edit')}` }
+            ]);
+        }
+
         function showWayfarerStage(msg, requestedStage, notice = '') {
             if (!requireGm(msg)) return;
             const stage = requestedStage === 'review' ? 'review' : (WAYFARER_STAGES.includes(requestedStage) ? requestedStage : 'identity');
             const draft = ensureWayfarerDraft();
             const definition = draft.definition;
             if (stage === 'review') return showWayfarerPreview(msg, true);
-            const fields = [
-                { label: 'Setup Progress', value: `${wayfarerDraftStatus(draft).reviewedCount}/${WAYFARER_STAGES.length} areas reviewed` },
-                { label: 'Draft Preview', value: wayfarerOverview(draft) }
-            ];
+            const fields = [];
             if (notice) fields.unshift({ label: 'Updated', value: _sanitize(notice) });
             if (stage === 'identity') {
                 fields.push(
-                    { label: 'Calendar Name', value: `${_sanitize(definition.name)} ${GameAssist.createButton('Change Name', `!aa-wayfarer name --value "?{Calendar name|${definition.name}}"`)}` },
+                    { label: 'Calendar Name', value: `${_sanitize(definition.name)} ${GameAssist.createButton('Change Name', wayfarerNameCommand(definition))}` },
                     { label: 'Clock', value: `${definition.hoursPerDay} hours per day; ${definition.minutesPerHour} minutes per hour<br>${GameAssist.createButton('Change Clock', `!aa-wayfarer clock --hours ?{Hours per day 1-48|${definition.hoursPerDay}} --minutes ?{Minutes per hour 1-120|${definition.minutesPerHour}}`)}` },
-                    { label: 'Starting Date', value: `${formatWayfarerStart(draft.startDate)}<br>${GameAssist.createButton('Change Starting Date', `!aa-wayfarer start --year ?{Starting year|${draft.startDate.year}} --period "?{Starting period|${draft.startDate.period}}" --day ?{Starting day|${draft.startDate.day}} --hour ?{Starting hour 0-${definition.hoursPerDay - 1}|${draft.startDate.hour}} --minute ?{Starting minute 0-${definition.minutesPerHour - 1}|${draft.startDate.minute}}`)}` },
-                    { label: 'Activation Rule', value: modState.config.profileId === 'wayfarer' ? 'Revising the active Wayfarer calendar normally preserves elapsed fictional time.' : 'The first activation begins at this reviewed fictional date.' }
+                    { label: 'Starting Date', value: `${formatWayfarerStart(draft.startDate)}<br>${GameAssist.createButton('Change Starting Date', wayfarerStartCommand(draft, definition))}` },
+                    { label: 'Change Both', value: GameAssist.createButton('Change Name and Starting Date', wayfarerIdentityCommand(draft, definition)) }
                 );
             } else if (stage === 'weekdays') {
                 fields.push(
                     { label: 'Weekdays', value: _sanitize(definition.weekdays.map((name, index) => `${index + 1}. ${name}`).join(' | ')) },
-                    { label: 'Edit', value: GameAssist.createButton('Replace Weekday Names', `!aa-wayfarer weekdays --value "?{Weekday names separated by commas|${definition.weekdays.join(',')}}"`) },
-                    { label: 'Example', value: 'Moonday, Towerday, Marketday, Hearthday, Starday' }
+                    { label: 'Edit', value: GameAssist.createButton('Replace Weekday Names', `!aa-wayfarer weekdays --value "?{Weekday names separated by commas|${definition.weekdays.join(',')}}"`) }
                 );
             } else if (stage === 'months') {
                 fields.push(
                     { label: 'Calendar Periods', value: definition.months.map((month, index) => `${index + 1}. ${_sanitize(month.name)} (${month.days} days${month.skipWeekday ? '; feast days do not advance the weekday' : ''})`).join('<br>') },
-                    { label: 'Edit', value: GameAssist.createButton('Replace Periods', `!aa-wayfarer months --value "?{Use Name:Days or Name:Days:Feast entries separated by commas|${definition.months.map(month => `${month.name}:${month.days}${month.skipWeekday ? ':Feast' : ''}`).join(',')}}"`) },
-                    { label: 'Example', value: 'Deepwinter:31, Midwinter Feast:5:Feast, Thawrise:27' }
+                    { label: 'Edit', value: GameAssist.createButton('Replace Periods', `!aa-wayfarer months --value "?{Use Name:Days or Name:Days:Feast entries separated by commas|${definition.months.map(month => `${month.name}:${month.days}${month.skipWeekday ? ':Feast' : ''}`).join(',')}}"`) }
                 );
             } else if (stage === 'intercalary') {
                 fields.push(
                     { label: 'Festival Days', value: definition.intercalary.length ? definition.intercalary.map(day => `${_sanitize(day.name)} after ${_sanitize(definition.months[day.afterMonth]?.name || `period ${day.afterMonth + 1}`)}`).join('<br>') : 'None' },
-                    { label: 'Edit', value: GameAssist.createButton('Replace Festival Days', `!aa-wayfarer intercalary --value "?{Use Name:AfterPeriodNumber entries separated by commas; leave blank for none|${definition.intercalary.map(day => `${day.name}:${day.afterMonth + 1}`).join(',')}}"`) },
-                    { label: 'Meaning', value: 'These are one-day observances between periods. Feast periods with several days belong in Calendar Periods instead.' }
+                    { label: 'Edit', value: GameAssist.createButton('Replace Festival Days', `!aa-wayfarer intercalary --value "?{Use Name:AfterPeriodNumber entries separated by commas; leave blank for none|${definition.intercalary.map(day => `${day.name}:${day.afterMonth + 1}`).join(',')}}"`) }
                 );
             } else if (stage === 'leap') {
                 fields.push(
@@ -22692,14 +23183,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             } else if (stage === 'holidays') {
                 fields.push(
                     { label: 'Holidays', value: definition.holidays.length ? definition.holidays.map(holiday => `${_sanitize(holiday.name)}: ${_sanitize(definition.months[holiday.monthIndex]?.name)} ${holiday.day}`).join('<br>') : 'None' },
-                    { label: 'Edit', value: GameAssist.createButton('Replace Holidays', `!aa-wayfarer holidays --value "?{Use Name:PeriodNumber:Day entries separated by commas; leave blank for none|${definition.holidays.map(holiday => `${holiday.name}:${holiday.monthIndex + 1}:${holiday.day}`).join(',')}}"`) },
-                    { label: 'Meaning', value: 'A holiday names an existing date; it does not add a day to the year.' }
+                    { label: 'Edit', value: GameAssist.createButton('Replace Holidays', `!aa-wayfarer holidays --value "?{Use Name:PeriodNumber:Day entries separated by commas; leave blank for none|${definition.holidays.map(holiday => `${holiday.name}:${holiday.monthIndex + 1}:${holiday.day}`).join(',')}}"`) }
                 );
             } else if (stage === 'seasons') {
                 fields.push(
                     { label: 'Seasonal Ranges', value: seasonRangeDescription(definition) },
-                    { label: 'Edit', value: GameAssist.createButton('Replace Seasonal Ranges', `!aa-wayfarer seasons --value "?{Use Name:StartPeriod:StartDay:EndPeriod:EndDay entries separated by commas; leave blank to use period labels|${seasonRangeInput(definition)}}"`) },
-                    { label: 'Example', value: 'Winter:12:15:3:8 may cross the end of the year. Seasonal ranges may not overlap.' }
+                    { label: 'Edit', value: GameAssist.createButton('Replace Seasonal Ranges', `!aa-wayfarer seasons --value "?{Use Name:StartPeriod:StartDay:EndPeriod:EndDay entries separated by commas; leave blank to use period labels|${seasonRangeInput(definition)}}"`) }
                 );
             }
             fields.push({ label: 'Navigation', value: wayfarerStageControls(stage) });
@@ -22787,11 +23276,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     { label: 'Next Step', value: GameAssist.createButton('Open Time Controls', '!aa-time menu') }
                 ]);
             }
-            const result = minuteForDate(profileFor(), {
+            const profile = profileFor();
+            const requestedHour = profile.id === 'wayfarer' && String(args['one-based-hour'] || '').toLowerCase() === 'yes'
+                ? Number(args.hour) - 1
+                : args.hour;
+            const result = minuteForDate(profile, {
                 year: args.year,
                 period: args.period,
                 day: args.day,
-                hour: args.hour,
+                hour: requestedHour,
                 minute: args.minute
             });
             if (!result.ok) return sendPanel(msg, 'TimeAlmanac Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: GameAssist.createButton('Open Time Controls', '!aa-time menu') }]);
@@ -23001,6 +23494,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!body || /^(?:menu|gm|dm|status)$/i.test(body)) return showWayfarer(msg);
             if (/^(?:help|guide|info|manual)$/i.test(body)) return showWayfarerHelp(msg);
             if (/^audit$/i.test(body)) return showWayfarerPreview(msg, false);
+            if (/^(?:edit|configure)$/i.test(body)) return showWayfarerEditMenu(msg);
+            if (/^(?:copies|copy|starting-point)$/i.test(body)) return showWayfarerCopyMenu(msg);
+            if (/^(?:details|detail)$/i.test(body)) return showWayfarerDetails(msg);
+            if (/^(?:recovery|recover)$/i.test(body)) return showWayfarerRecovery(msg);
+            if (/^explain\b/i.test(body)) return showWayfarerTopicHelp(msg, body.split(/\s+/)[1]?.toLowerCase());
             const action = body.split(/\s+/)[0].toLowerCase();
             const args = _parseArgs(body).args;
             // CHOICE: recovery is command-only and draft-only - ALT: expose a
@@ -23188,6 +23686,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (!name) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'Enter a calendar name. The saved draft was not changed.' }]);
                 wayfarer.name = name;
                 editedStage = 'identity';
+            } else if (action === 'identity') {
+                const name = boundedName(args.name);
+                const requestedHour = String(args['one-based-hour'] || '').toLowerCase() === 'yes'
+                    ? Number(args.hour) - 1
+                    : args.hour;
+                const requested = { year: args.year, period: args.period, day: args.day, hour: requestedHour, minute: args.minute };
+                const result = minuteForDate(wayfarerProfile(wayfarer), requested);
+                if (!name || !result.ok) return sendPanel(msg, 'Wayfarer Needs Attention', [
+                    { label: 'Problem', value: _sanitize(!name ? 'Enter a calendar name.' : result.message) },
+                    { label: 'Saved Draft', value: 'Preserved without partial changes.' },
+                    { label: 'Try Again', value: GameAssist.createButton('Change Name and Starting Date', wayfarerIdentityCommand(draft, wayfarer)) }
+                ]);
+                wayfarer.name = name;
+                draft.startDate = { year: Math.floor(Number(args.year)), period: String(args.period).trim(), day: Math.floor(Number(args.day)), hour: Math.floor(Number(requestedHour)), minute: Math.floor(Number(args.minute)) };
+                editedStage = 'identity';
             } else if (action === 'clock') {
                 const hoursPerDay = Math.floor(Number(args.hours));
                 const minutesPerHour = Math.floor(Number(args.minutes));
@@ -23199,12 +23712,22 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 }
                 wayfarer.hoursPerDay = hoursPerDay;
                 wayfarer.minutesPerHour = minutesPerHour;
+                const priorHour = draft.startDate.hour;
+                const priorMinute = draft.startDate.minute;
+                draft.startDate.hour = Math.min(draft.startDate.hour, hoursPerDay - 1);
+                draft.startDate.minute = Math.min(draft.startDate.minute, minutesPerHour - 1);
+                if (draft.startDate.hour !== priorHour || draft.startDate.minute !== priorMinute) {
+                    editNotice = `The clock changed successfully. Its starting time was adjusted to ${ordinalNumber(draft.startDate.hour + 1)} Hour, ${draft.startDate.minute} minutes so it remains valid in the new clock.`;
+                }
                 editedStage = 'identity';
             } else if (action === 'start') {
-                const requested = { year: args.year, period: args.period, day: args.day, hour: args.hour, minute: args.minute };
+                const requestedHour = String(args['one-based-hour'] || '').toLowerCase() === 'yes'
+                    ? Number(args.hour) - 1
+                    : args.hour;
+                const requested = { year: args.year, period: args.period, day: args.day, hour: requestedHour, minute: args.minute };
                 const result = minuteForDate(wayfarerProfile(wayfarer), requested);
                 if (!result.ok) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Saved Draft', value: 'Preserved without partial changes.' }, { label: 'Next Step', value: GameAssist.createButton('Name and Starting Date', '!aa-wayfarer stage identity') }]);
-                draft.startDate = { year: Math.floor(Number(args.year)), period: String(args.period).trim(), day: Math.floor(Number(args.day)), hour: Math.floor(Number(args.hour)), minute: Math.floor(Number(args.minute)) };
+                draft.startDate = { year: Math.floor(Number(args.year)), period: String(args.period).trim(), day: Math.floor(Number(args.day)), hour: Math.floor(Number(requestedHour)), minute: Math.floor(Number(args.minute)) };
                 editedStage = 'identity';
             } else if (action === 'weekdays') {
                 const weekdays = parseWeekdays(args.value);
@@ -23218,7 +23741,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (new Set(months.map(month => month.name.toLowerCase())).size !== months.length) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'Month names must be unique.' }, { label: 'Saved Draft', value: 'Preserved without partial changes.' }]);
                 const startingMonthIndex = wayfarer.months.findIndex(month => month.name.toLowerCase() === String(draft.startDate.period || '').toLowerCase());
                 wayfarer.months = months;
-                if (startingMonthIndex >= 0 && months[startingMonthIndex]) draft.startDate.period = months[startingMonthIndex].name;
+                const replacementStartPeriod = startingMonthIndex >= 0 && months[startingMonthIndex]
+                    ? months[startingMonthIndex]
+                    : months[0];
+                draft.startDate.period = replacementStartPeriod.name;
+                draft.startDate.day = Math.min(draft.startDate.day, replacementStartPeriod.days);
                 // CHOICE: replacing the complete year clears index-based dependents - ALT: silently remap by position; REJECTED: dates could move to unrelated periods.
                 wayfarer.intercalary = [];
                 wayfarer.holidays = [];
@@ -23268,7 +23795,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!startInspection.ok) return sendPanel(msg, 'Wayfarer Needs Attention', [
                 { label: 'Starting Date Conflict', value: _sanitize(startInspection.message) },
                 { label: 'Saved Draft', value: 'Preserved without partial changes. Adjust the starting date or dependent calendar stage first.' },
-                { label: 'Next Step', value: GameAssist.createButton('Name and Starting Date', '!aa-wayfarer stage identity') }
+                { label: 'Next Step', value: `${GameAssist.createButton('Change Name and Starting Date', wayfarerIdentityCommand(draft, inspection.definition))} ${GameAssist.createButton('Open Editor', '!aa-wayfarer stage identity')}` }
             ]);
             draft.definition = inspection.definition;
             draft.reviewed[editedStage] = true;
@@ -23389,7 +23916,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ids.add(region.id);
                 regions.push(region);
             });
-            if (!regions.length) regions.push({ id: 'home', name: 'Home Region', parentId: null, profileId: 'temperate', overrides: {} });
+            if (!regions.length) regions.push({ id: 'home', name: 'Temperate Lowlands', parentId: null, profileId: 'temperate', overrides: {} });
+            regions.forEach(region => {
+                if (region.id === 'home'
+                    && region.profileId === 'temperate'
+                    && ['Home Region', 'Campaign Default'].includes(region.name)) {
+                    region.name = 'Temperate Lowlands';
+                }
+            });
             regions.forEach(region => {
                 if (!region.parentId || !ids.has(region.parentId) || region.parentId === region.id) region.parentId = null;
                 if (!region.parentId && !region.profileId) region.profileId = 'temperate';
@@ -23548,17 +24082,44 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
+        function showClimateRegions(msg) {
+            if (!requireGm(msg)) return;
+            const config = normalizeClimateConfig();
+            const profiles = climateProfileMap(config);
+            const profileOptions = Object.values(profiles).map(profile => `${profile.name},${profile.id}`).join('|');
+            const rows = config.regions.map(region => {
+                const parent = region.parentId ? config.regions.find(candidate => candidate.id === region.parentId) : null;
+                const climateType = region.profileId && profiles[region.profileId]
+                    ? profiles[region.profileId].name
+                    : (parent ? `Follows ${parent.name}` : 'Temperate');
+                const current = region.id === config.activeRegionId ? ' <strong>(current)</strong>' : '';
+                const use = region.id === config.activeRegionId ? '' : ` ${GameAssist.createButton('Use', `!aa-climate region use --id ${region.id}`)}`;
+                const adjust = ` ${GameAssist.createButton('Fine Tune', `!aa-climate region override --id ${region.id} --temp ?{Temperature adjustment in degrees; 0 keeps the climate type|0} --humidity ?{Humidity percent|50} --precip ?{Precipitation chance percent|30} --wind ?{Typical wind mph|5}`)}`;
+                const remove = config.regions.length > 1
+                    ? ` ${GameAssist.createButton('Remove', `!aa-climate region remove --id ${region.id} --confirm ?{Remove ${region.name}? Child regions become top-level regions.|No,no|Yes,yes}`)}`
+                    : '';
+                return `<b>${_sanitize(region.name)}</b>${current}<br>${_sanitize(climateType)}${use}${adjust}${remove}`;
+            }).join('<hr>');
+            sendPanel(msg, 'Manage Climate Regions', [
+                { label: 'Regions', value: rows },
+                { label: 'Add A Region', value: GameAssist.createButton('Add Region', `!aa-climate region add --name "?{Region name}" --profile ?{Climate type|${profileOptions}} --parent "?{Parent region id; leave blank for none|}"`) },
+                { label: 'Climate Types', value: GameAssist.createButton('Manage Climate Types', '!aa-climate profiles') },
+                { label: 'Return', value: `${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Almanac', '!aa-gm')}` }
+            ]);
+        }
+
         function showClimate(msg) {
             if (!submoduleEnabled('climate')) return sendPanel(msg, 'ClimateAlmanac', [{ label: 'Status', value: 'Turned off; regions and settings are preserved.' }]);
             const climate = resolvedClimate();
             const config = normalizeClimateConfig();
-            const profileOptions = Object.values(climateProfileMap(config)).map(profile => `${profile.name},${profile.id}`).join('|');
             sendPanel(msg, 'ClimateAlmanac', [
-                { label: 'Active Region', value: `${_sanitize(climate.regionName)} (${_sanitize(climate.profileName)})` },
-                { label: 'Season', value: `${_sanitize(climate.season)} via ${_sanitize(climate.seasonAuthority)}` },
-                { label: 'Typical Conditions', value: `${climate.temperatureF} F | ${climate.humidity}% humidity | ${climate.precipitationChance}% precipitation | ${climate.windMph} mph wind` },
-                { label: 'Regions', value: config.regions.map(region => region.id === climate.regionId ? `<strong>${_sanitize(region.name)}</strong>` : (playerIsGM(msg?.playerid) ? GameAssist.createButton(region.name, `!aa-climate region use --id ${region.id}`) : _sanitize(region.name))).join(' ') },
-                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Add Region', `!aa-climate region add --name "?{Region name}" --profile ?{Climate|Inherit Parent,inherit|${profileOptions}} --parent "?{Parent region id; blank for none|}"`)} ${GameAssist.createButton('Profiles', '!aa-climate profiles')} ${GameAssist.createButton('Manual Season', '!aa-climate season ?{Season|Spring|Summer|Autumn|Winter}')} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` : GameAssist.createButton('Almanac', '!Almanac') }
+                { label: 'Current Region', value: `${_sanitize(climate.regionName)} - ${_sanitize(climate.profileName)}` },
+                { label: 'At A Glance', value: `${_sanitize(climate.season)} | ${climate.temperatureF} F | ${climate.humidity}% humidity | ${climate.precipitationChance}% precipitation | ${climate.windMph} mph wind` },
+                { label: 'Choose Region', value: config.regions.map(region => region.id === climate.regionId ? `<strong>${_sanitize(region.name)}</strong>` : (playerIsGM(msg?.playerid) ? GameAssist.createButton(region.name, `!aa-climate region use --id ${region.id}`) : _sanitize(region.name))).join(' ') },
+                ...(playerIsGM(msg?.playerid) ? [{ label: 'Season', value: timeAvailable()
+                    ? `Following the active calendar: <strong>${_sanitize(climate.season)}</strong>`
+                    : `${_sanitize(climate.season)} ${GameAssist.createButton('Change Season', '!aa-climate season ?{Season|Spring|Summer|Autumn|Winter}')}` }] : []),
+                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Manage Regions', '!aa-climate regions')} ${GameAssist.createButton('Climate Types', '!aa-climate profiles')} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` : GameAssist.createButton('Almanac', '!Almanac') }
             ]);
         }
 
@@ -23575,6 +24136,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return showClimate(msg);
             }
             if (lower === 'profiles' || lower === 'profile') return showClimateProfiles(msg);
+            if (lower === 'regions' || lower === 'region') return showClimateRegions(msg);
             const seasonMatch = body.match(/^season\s+(.+)$/i);
             if (seasonMatch) {
                 const season = normalizeSeason(seasonMatch[1], '');
@@ -23903,11 +24465,20 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function showAstronomySetup(msg) {
             if (!requireGm(msg)) return;
             const config = normalizeAstronomyConfig();
+            const moonRows = config.moons.map(moon => {
+                const phases = moon.phases.join(';');
+                const edit = GameAssist.createButton('Edit', `!aa-astro moon set --id ${moon.id} --name "?{Moon name|${moon.name}}" --cycle ?{Cycle in days|${moon.cycleDays}} --offset ?{Offset in days|${moon.offsetDays}} --phases "?{Semicolon-separated phases|${phases}}"`);
+                const remove = config.moons.length > 1
+                    ? GameAssist.createButton('Remove', `!aa-astro moon remove --id ${moon.id} --confirm ?{Remove ${moon.name}?|No,no|Yes,yes}`)
+                    : '';
+                return `<strong>${_sanitize(moon.name)}</strong> - ${moon.cycleDays} days; offset ${moon.offsetDays}; ${moon.phases.length} phases<br>${edit}${remove ? ` ${remove}` : ''}`;
+            }).join('<hr>');
+            const eventRows = config.rareEvents.map(event => `${_sanitize(event.name)} - weight ${event.weight}<br>${GameAssist.createButton('Edit', `!aa-astro event set --id ${event.id} --name "?{Event name|${event.name}}" --weight ?{Relative weight|${event.weight}}`)} ${config.rareEvents.length > 1 ? GameAssist.createButton('Remove', `!aa-astro event remove --id ${event.id} --confirm ?{Remove ${event.name}?|No,no|Yes,yes}`) : ''}`).join('<hr>');
             sendPanel(msg, 'Astronomy Setup', [
-                { label: 'Moons', value: config.moons.map(moon => `${_sanitize(moon.name)} [${_sanitize(moon.id)}] - ${moon.cycleDays} days; offset ${moon.offsetDays}; ${moon.phases.length} phases`).join('<br>') },
-                { label: 'Moon Controls', value: `${GameAssist.createButton('Add Moon', '!aa-astro moon add --name "?{Moon name}" --cycle ?{Cycle in days|28} --offset ?{Offset in days|0} --phases "?{Semicolon-separated phases|New;Waxing;Full;Waning}"')} ${GameAssist.createButton('Edit Moon', '!aa-astro moon set --id "?{Moon id}" --cycle ?{Cycle in days} --offset ?{Offset in days} --phases "?{Semicolon-separated phases}"')} ${GameAssist.createButton('Remove Moon', '!aa-astro moon remove --id "?{Moon id}" --confirm ?{Remove this moon?|No,no|Yes,yes}')}` },
-                { label: 'Rare Events', value: config.rareEvents.map(event => `${_sanitize(event.name)} [${_sanitize(event.id)}] - weight ${event.weight}`).join('<br>') },
-                { label: 'Event Controls', value: `${GameAssist.createButton('Add Event', '!aa-astro event add --name "?{Event name}" --weight ?{Relative weight|1}')} ${GameAssist.createButton('Edit Event', '!aa-astro event set --id "?{Event id}" --weight ?{Relative weight}')} ${GameAssist.createButton('Remove Event', '!aa-astro event remove --id "?{Event id}" --confirm ?{Remove this event?|No,no|Yes,yes}')}` },
+                { label: 'Moons', value: moonRows || 'None configured.' },
+                { label: 'Add A Moon', value: GameAssist.createButton('Add Moon', '!aa-astro moon add --name "?{Moon name|New Moon}" --cycle ?{Cycle in days|28} --offset ?{Offset in days|0} --phases "?{Semicolon-separated phases|New;Waxing;Full;Waning}"') },
+                { label: 'Rare Events', value: eventRows || 'None configured.' },
+                { label: 'Add A Rare Event', value: GameAssist.createButton('Add Event', '!aa-astro event add --name "?{Event name|Celestial Event}" --weight ?{Relative weight|1}') },
                 { label: 'Return', value: GameAssist.createButton('Astronomy', '!astro') }
             ]);
         }
@@ -23952,8 +24523,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const args = _parseArgs(body).args;
                 const moon = astronomyItem(config.moons, args.id || args.name);
                 if (!moon) return sendPanel(msg, 'AstronomyAlmanac Needs Attention', [{ label: 'Problem', value: 'That moon was not found or its name is ambiguous.' }, { label: 'Changes', value: 'None.' }]);
-                const parsed = moonChanges(args, { allowName: false });
+                const parsed = moonChanges(args, { allowName: true });
                 if (!parsed.ok || !Object.keys(parsed.changes).length) return sendPanel(msg, 'AstronomyAlmanac Needs Attention', [{ label: 'Problem', value: _sanitize(parsed.message || 'Provide at least one moon value to change.') }, { label: 'Changes', value: 'None.' }]);
+                if (parsed.changes.name && config.moons.some(candidate => candidate.id !== moon.id && candidate.name.toLowerCase() === parsed.changes.name.toLowerCase())) {
+                    return sendPanel(msg, 'AstronomyAlmanac Needs Attention', [{ label: 'Problem', value: 'Moon names must be unique.' }, { label: 'Changes', value: 'None.' }]);
+                }
                 Object.assign(moon, parsed.changes);
                 publishChange('almanac.astronomy.changed', null, astronomyContext(), { action: 'moon-updated', moonId: moon.id }, msg);
                 return showAstronomySetup(msg);
@@ -24161,11 +24735,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!submoduleEnabled('weather')) return sendPanel(msg, 'WeatherAlmanac', [{ label: 'Status', value: 'Turned off; current weather, forecast, and history are preserved.' }]);
             const runtime = ensureAlmanacRuntime();
             const weather = runtime.weather.current;
+            const sceneOverride = runtime.environment.override;
             const forecast = runtime.weather.forecast.length
                 ? runtime.weather.forecast.map((item, index) => `+${index + 1}: ${_sanitize(item.summary)}, ${item.temperatureF} F`).join('<br>')
                 : 'No forecast prepared.';
             sendPanel(msg, 'WeatherAlmanac', [
-                { label: 'Current', value: weather ? `${_sanitize(weather.summary)} | ${weather.temperatureF} F | ${weather.windMph} mph wind | ${_sanitize(weather.visibility)}` : 'No weather has been committed yet.' },
+                ...(sceneOverride ? [{ label: 'Current Scene', value: `${_sanitize(sceneOverride.name)} | ${_sanitize(sceneOverride.temperature)} | ${_sanitize(sceneOverride.wind)} wind | ${_sanitize(sceneOverride.visibility)}` }] : []),
+                { label: sceneOverride ? 'Stored Weather' : 'Current', value: weather ? `${_sanitize(weather.summary)} | ${weather.temperatureF} F | ${weather.windMph} mph wind | ${_sanitize(weather.visibility)}` : 'No weather has been committed yet.' },
+                ...(sceneOverride ? [{ label: 'Relationship', value: 'The GM scene override is currently authoritative. Stored WeatherAlmanac conditions resume when Follow Weather Again is chosen in EnviroAlmanac.' }] : []),
                 { label: 'Context', value: weather ? `${_sanitize(weather.regionName)} | ${_sanitize(weather.season)} | ${_sanitize(weather.context)}` : _sanitize(weatherClimateContext().context || weatherClimateContext().regionName) },
                 { label: 'Forecast', value: forecast },
                 { label: 'Lock', value: `${runtime.weather.locked ? 'On' : 'Off'} ${playerIsGM(msg?.playerid) ? GameAssist.createButton(runtime.weather.locked ? 'Unlock' : 'Lock', `!aa-weather ${runtime.weather.locked ? 'unlock' : 'lock'}`) : ''}` },
@@ -24272,23 +24849,48 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const environment = environmentContext();
             const overridden = Boolean(ensureAlmanacRuntime().environment.override);
             sendPanel(msg, 'EnviroAlmanac', [
-                { label: 'Authority', value: overridden ? 'GM manual override' : _sanitize(environment.source) },
+                { label: 'Current Environment', value: `<strong>${_sanitize(environment.name)}</strong><br>${_sanitize(environment.visibility)} | ${_sanitize(environment.ground)} | ${_sanitize(environment.temperature)}` },
+                { label: 'Source', value: overridden ? 'Chosen by the GM' : (environment.source === 'WeatherAlmanac' ? 'Following current weather' : 'Using the current Almanac context') },
+                { label: 'Scene Overrides', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Clear Ground', '!aa-enviro preset clear')} ${GameAssist.createButton('Blizzard', '!aa-enviro preset blizzard')} ${GameAssist.createButton('Desert Terrain', '!aa-enviro preset desert')} ${GameAssist.createButton('Swamp', '!aa-enviro preset swamp')} ${GameAssist.createButton('Underwater', '!aa-enviro preset underwater')}` : 'The GM manages environmental context.' },
+                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Customize', '!aa-enviro edit')} ${GameAssist.createButton('View Details', '!aa-enviro details')} ${overridden ? GameAssist.createButton('Follow Weather Again', '!aa-enviro clear --confirm yes') : ''} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` : `${GameAssist.createButton('View Details', '!aa-enviro details')} ${GameAssist.createButton('Almanac', '!Almanac')}` }
+            ]);
+        }
+
+        function showEnvironmentDetails(msg) {
+            const environment = environmentContext();
+            sendPanel(msg, 'Environment Details', [
                 { label: 'Visibility and Ground', value: `${_sanitize(environment.visibility)} | ${_sanitize(environment.ground)}` },
                 { label: 'Exposure', value: `${_sanitize(environment.temperature)} | ${_sanitize(environment.wind)} wind | ${_sanitize(environment.exposure)} exposure` },
                 { label: 'Precipitation and Water', value: `${_sanitize(environment.precipitation)} | ${_sanitize(environment.water)}` },
+                { label: 'Severity', value: String(environment.severity) },
                 { label: 'Tags', value: (environment.tags || []).map(_sanitize).join(', ') || 'None' },
-                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Choose Preset', '!aa-enviro preset ?{Preset|Clear,clear|Blizzard,blizzard|Desert Heat,desert|Swamp,swamp|Underwater,underwater}')} ${overridden ? GameAssist.createButton('Clear Override', '!aa-enviro clear --confirm yes') : ''} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` : GameAssist.createButton('Almanac', '!Almanac') }
+                { label: 'Return', value: `${GameAssist.createButton('Environment', '!enviro')} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Customize', '!aa-enviro edit') : ''}` }
+            ]);
+        }
+
+        function showEnvironmentEditor(msg) {
+            if (!requireGm(msg)) return;
+            const environment = environmentContext();
+            const editButton = (label, field, value) => GameAssist.createButton(label, `!aa-enviro set --field ${field} --value "?{${label}|${value}}"`);
+            sendPanel(msg, 'Customize Environment', [
+                { label: 'Description', value: `${editButton('Name', 'name', environment.name)} ${editButton('Visibility', 'visibility', environment.visibility)} ${editButton('Ground', 'ground', environment.ground)}` },
+                { label: 'Conditions', value: `${editButton('Temperature', 'temperature', environment.temperature)} ${editButton('Precipitation', 'precipitation', environment.precipitation)} ${editButton('Wind', 'wind', environment.wind)}` },
+                { label: 'Exposure', value: `${editButton('Water', 'water', environment.water)} ${editButton('Exposure', 'exposure', environment.exposure)} ${GameAssist.createButton('Severity', `!aa-enviro set --field severity --value ?{Severity 0-5|${environment.severity}}`)}` },
+                { label: 'Tags', value: GameAssist.createButton('Change Tags', `!aa-enviro set --field tags --value "?{Comma-separated tags|${(environment.tags || []).join(',')}}"`) },
+                { label: 'Return', value: `${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('Almanac', '!aa-gm')}` }
             ]);
         }
 
         function handleEnvironment(msg, content) {
             const body = content.replace(/^(environment|enviro)\s*/i, '').trim();
             if (!body || /^(menu|status)$/i.test(body)) return showEnvironment(msg);
-            if (!requireGm(msg)) return;
             const lower = body.toLowerCase();
+            if (lower === 'details') return showEnvironmentDetails(msg);
+            if (!requireGm(msg)) return;
             if (lower === 'audit') return showFocusedAudit(msg, 'environment');
             if (lower === 'manual' || lower === 'help') return showManual(msg);
             if (lower === 'setup') return showEnvironment(msg);
+            if (lower === 'edit' || lower === 'customize') return showEnvironmentEditor(msg);
             if (lower === 'on' || lower === 'off') {
                 modState.config.submodules.environment = lower === 'on';
                 return showEnvironment(msg);
@@ -24326,6 +24928,29 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 commitEnvironmentOverride(next, msg, 'Custom environment selected');
                 return showEnvironment(msg);
             }
+            if (/^set\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                const field = String(args.field || '').toLowerCase();
+                const allowedTextFields = ['name', 'visibility', 'temperature', 'precipitation', 'wind', 'ground', 'water', 'exposure'];
+                const next = copy(environmentContext());
+                if (allowedTextFields.includes(field)) {
+                    const value = boundedName(args.value);
+                    if (!value) return sendPanel(msg, 'EnviroAlmanac Needs Attention', [{ label: 'Problem', value: 'Enter a value before saving that environment detail.' }, { label: 'Changes', value: 'None.' }]);
+                    next[field] = value;
+                } else if (field === 'severity') {
+                    const severity = Number(args.value);
+                    if (!Number.isFinite(severity) || severity < 0 || severity > 5) return sendPanel(msg, 'EnviroAlmanac Needs Attention', [{ label: 'Problem', value: 'Environment severity must be a number from 0 to 5.' }, { label: 'Changes', value: 'None.' }]);
+                    next.severity = Math.round(severity);
+                } else if (field === 'tags') {
+                    const tags = String(args.value || '').split(',').map(tag => boundedName(tag)).filter(Boolean);
+                    if (tags.length > POLICY.almanac.maximumClimateTags) return sendPanel(msg, 'EnviroAlmanac Needs Attention', [{ label: 'Problem', value: `Use no more than ${POLICY.almanac.maximumClimateTags} environment tags.` }, { label: 'Changes', value: 'None.' }]);
+                    next.tags = tags;
+                } else {
+                    return sendPanel(msg, 'EnviroAlmanac Needs Attention', [{ label: 'Problem', value: 'That environment detail was not recognized.' }, { label: 'Changes', value: 'None.' }]);
+                }
+                commitEnvironmentOverride(next, msg, `Environment ${field} updated`);
+                return showEnvironmentEditor(msg);
+            }
             if (/^clear\b/i.test(body)) {
                 const args = _parseArgs(body).args;
                 if (String(args.confirm || '').toLowerCase() !== 'yes') return sendPanel(msg, 'EnviroAlmanac', [{ label: 'No Change Made', value: 'Clearing the GM override requires --confirm yes.' }]);
@@ -24355,20 +24980,37 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     base
                 });
             });
+            const requestedPace = String(source.pace || 'standard').toLowerCase();
+            const pace = Object.prototype.hasOwnProperty.call(REST_PACES, requestedPace) || requestedPace === 'custom'
+                ? requestedPace
+                : 'standard';
+            const paceDefaults = REST_PACES[pace] || REST_PACES.standard;
             modState.config.rest = {
                 advanceTime: source.advanceTime !== false,
                 extendedEnabled: source.extendedEnabled === true,
+                pace,
+                shortHours: clampNumber(source.shortHours, 0, POLICY.almanac.maximumRestHours, paceDefaults.shortHours),
+                longHours: clampNumber(source.longHours, 0, POLICY.almanac.maximumRestHours, paceDefaults.longHours),
+                extendedHours: clampNumber(source.extendedHours, 0, POLICY.almanac.maximumRestHours, 24),
                 customTypes
             };
             return modState.config.rest;
         }
 
+        function restDuration(hours) {
+            const value = Number(hours);
+            if (value < 1) return `${Math.round(value * 60)} minutes`;
+            if (value === 1) return '1 hour';
+            if (value % 24 === 0) return `${value / 24} days`;
+            return `${value} hours`;
+        }
+
         function restDefinition(requested) {
             const config = normalizeRestConfig();
             const builtins = {
-                short: { id: 'short', name: 'Short Rest', hours: 1, base: 'short' },
-                long: { id: 'long', name: 'Long Rest', hours: 8, base: 'long' },
-                extended: { id: 'extended', name: 'Extended Rest', hours: 24, base: 'extended' }
+                short: { id: 'short', name: 'Short Rest', hours: config.shortHours, base: 'short' },
+                long: { id: 'long', name: 'Long Rest', hours: config.longHours, base: 'long' },
+                extended: { id: 'extended', name: 'Extended Rest', hours: config.extendedHours, base: 'extended' }
             };
             const key = String(requested || '').trim().toLowerCase();
             if (key === 'extended' && !config.extendedEnabled) return null;
@@ -24628,14 +25270,29 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!submoduleEnabled('rest')) return sendPanel(msg, 'RestAlmanac', [{ label: 'Status', value: 'Turned off; rest definitions and history are preserved.' }]);
             const config = normalizeRestConfig();
             const runtime = ensureAlmanacRuntime();
-            const custom = config.customTypes.length ? config.customTypes.map(type => GameAssist.createButton(type.name, `!aa-rest preview --type ${type.id}`)).join(' ') : 'None';
+            const custom = config.customTypes.length ? config.customTypes.map(type => `${GameAssist.createButton(type.name, `!aa-rest preview --type ${type.id}`)} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Remove', `!aa-rest custom remove --id ${type.id} --confirm ?{Remove ${type.name}?|No,no|Yes,yes}`) : ''}`).join('<br>') : 'None';
             sendPanel(msg, 'RestAlmanac', [
                 { label: 'How To Use', value: 'Select linked 2014 PC token(s), then prepare a preview. Nothing changes until confirmation.' },
-                { label: 'Rest Types', value: `${GameAssist.createButton('Short Rest', '!aa-rest preview --type short')} ${GameAssist.createButton('Long Rest', '!aa-rest preview --type long')} ${config.extendedEnabled ? GameAssist.createButton('Extended Rest', '!aa-rest preview --type extended') : ''}` },
+                { label: 'Rest Types', value: `${GameAssist.createButton(`Short Rest (${restDuration(config.shortHours)})`, '!aa-rest preview --type short')} ${GameAssist.createButton(`Long Rest (${restDuration(config.longHours)})`, '!aa-rest preview --type long')} ${config.extendedEnabled ? GameAssist.createButton(`Extended Rest (${restDuration(config.extendedHours)})`, '!aa-rest preview --type extended') : ''}` },
+                { label: 'Rest Pace', value: `${config.pace === 'heroic' ? 'Heroic (Epic Heroism)' : config.pace.charAt(0).toUpperCase() + config.pace.slice(1)} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Change Rest Rules', '!aa-rest rules') : ''}` },
                 { label: 'Custom Rest Types', value: custom },
                 { label: 'Time Advancement', value: config.advanceTime ? 'On when TimeAlmanac is available' : 'Off' },
                 { label: 'Recent Completions', value: String(runtime.rest.history.length) },
-                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton(config.advanceTime ? 'Do Not Advance Time' : 'Advance Time', `!aa-rest time ${config.advanceTime ? 'off' : 'on'}`)} ${GameAssist.createButton(config.extendedEnabled ? 'Disable Extended Rest' : 'Enable Extended Rest', `!aa-rest extended ${config.extendedEnabled ? 'off' : 'on'}`)} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` : GameAssist.createButton('Almanac', '!Almanac') }
+                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Add House-Rule Rest', '!aa-rest custom add --name "?{Rest name|Breather}" --hours ?{Duration in hours|2} --base ?{Recovery behavior|Record only,record|Short Rest,short|Long Rest,long|Extended Rest,extended}')} ${GameAssist.createButton(config.advanceTime ? 'Do Not Advance Time' : 'Advance Time', `!aa-rest time ${config.advanceTime ? 'off' : 'on'}`)} ${GameAssist.createButton(config.extendedEnabled ? 'Disable Extended Rest' : 'Enable Extended Rest', `!aa-rest extended ${config.extendedEnabled ? 'off' : 'on'}`)} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` : GameAssist.createButton('Almanac', '!Almanac') }
+            ]);
+        }
+
+        function showRestRules(msg) {
+            if (!requireGm(msg)) return;
+            const config = normalizeRestConfig();
+            sendPanel(msg, 'Rest Rules', [
+                { label: 'Current Pace', value: `${config.pace === 'heroic' ? 'Heroic (Epic Heroism)' : config.pace.charAt(0).toUpperCase() + config.pace.slice(1)} | Short ${restDuration(config.shortHours)} | Long ${restDuration(config.longHours)}` },
+                { label: 'Choose A Pace', value: `${GameAssist.createButton('Standard', '!aa-rest pace standard')} ${GameAssist.createButton('Heroic', '!aa-rest pace heroic')} ${GameAssist.createButton('Gritty', '!aa-rest pace gritty')} ${GameAssist.createButton('Custom', `!aa-rest pace custom --short ?{Short Rest hours|${config.shortHours}} --long ?{Long Rest hours|${config.longHours}} --extended ?{Extended Rest hours|${config.extendedHours}}`)}` },
+                { label: 'Standard', value: 'Short Rest: 1 hour. Long Rest: 8 hours.' },
+                { label: 'Heroic', value: 'Short Rest: 5 minutes. Long Rest: 1 hour.' },
+                { label: 'Gritty', value: 'Short Rest: 8 hours. Long Rest: 7 days.' },
+                { label: 'Important', value: 'The pace changes fictional duration. Recovery remains based on the selected Short, Long, Extended, or record-only rest behavior.' },
+                { label: 'Return', value: `${GameAssist.createButton('Rest', '!rest')} ${GameAssist.createButton('Almanac', '!aa-gm')}` }
             ]);
         }
 
@@ -24654,6 +25311,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!requireGm(msg)) return;
             if (lower === 'audit') return showFocusedAudit(msg, 'rest');
             if (lower === 'manual' || lower === 'help' || lower === 'setup') return lower === 'setup' ? showRest(msg) : showManual(msg);
+            if (lower === 'rules' || lower === 'pace') return showRestRules(msg);
             if (lower === 'on' || lower === 'off') {
                 modState.config.submodules.rest = lower === 'on';
                 return showRest(msg);
@@ -24667,6 +25325,31 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (extendedMatch) {
                 normalizeRestConfig().extendedEnabled = extendedMatch[1] === 'on';
                 return showRest(msg);
+            }
+            if (/^pace\s+/i.test(body)) {
+                const config = normalizeRestConfig();
+                const args = _parseArgs(body).args;
+                const requested = String(body.replace(/^pace\s+/i, '').trim().split(/\s+/)[0] || '').toLowerCase();
+                if (Object.prototype.hasOwnProperty.call(REST_PACES, requested)) {
+                    const pace = REST_PACES[requested];
+                    config.pace = requested;
+                    config.shortHours = pace.shortHours;
+                    config.longHours = pace.longHours;
+                    return showRestRules(msg);
+                }
+                if (requested === 'custom') {
+                    const shortHours = Number(args.short);
+                    const longHours = Number(args.long);
+                    const extendedHours = Number(args.extended);
+                    const valid = [shortHours, longHours, extendedHours].every(value => Number.isFinite(value) && value >= 0 && value <= POLICY.almanac.maximumRestHours);
+                    if (!valid) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: `Custom rest durations must be between 0 and ${POLICY.almanac.maximumRestHours} hours.` }, { label: 'Changes', value: 'None.' }, { label: 'Next Step', value: GameAssist.createButton('Rest Rules', '!aa-rest rules') }]);
+                    config.pace = 'custom';
+                    config.shortHours = shortHours;
+                    config.longHours = longHours;
+                    config.extendedHours = extendedHours;
+                    return showRestRules(msg);
+                }
+                return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'Choose Standard, Heroic, Gritty, or Custom rest rules.' }, { label: 'Changes', value: 'None.' }]);
             }
             if (/^custom\s+add\b/i.test(body)) {
                 const config = normalizeRestConfig();
@@ -24782,7 +25465,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h2>Purpose</h2>',
                 '<p>AlmanacAssist combines fictional time, regional climate, astronomy, weather, environmental context, and deliberate rest workflows. Each internal system can be turned off without erasing its valid settings or disabling unrelated Almanac features.</p>',
                 '<h2>Everyday Use</h2>',
-                '<p><code>!Almanac</code> or <code>!aa</code> opens the GM controls. <code>!date</code>, <code>!time</code>, <code>!cal</code>, <code>!clim</code>, <code>!astro</code>, <code>!weather</code>, <code>!enviro</code>, and <code>!rest</code> open focused views.</p>',
+                '<p><code>!aa-gm</code>, <code>!aa-dm</code>, <code>!Almanac</code>, or <code>!aa</code> opens the action-first GM dashboard. It keeps the current date, common advances, exact date/time changes, calendar selection, announcement controls, and today\'s world context together. <code>!date</code>, <code>!time</code>, <code>!cal</code>, <code>!clim</code>, <code>!astro</code>, <code>!weather</code>, <code>!enviro</code>, and <code>!rest</code> open focused views.</p>',
                 '<h2>Calendars</h2>',
                 '<p>Standard provides familiar months and Gregorian leap years. Solamnic provides the built-in twelve 28-day profile and seven named weekdays. Harptos provides twelve 30-day months, five annual festival days, and Shieldmeet every four years. Wayfarer is campaign-editable through chat controls, including its clock, weekdays, calendar periods, feast periods, festival days, dated holidays, seasonal ranges, and leap rules.</p>',
                 '<h3>Default Wayfarer Calendar</h3>',
@@ -24791,9 +25474,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<p>Vernalrise runs from Meltwater\'s Merriment 1 through Starwatch 5; Summertide from Starwatch 6 through Paleswelt 30; Leafturn from Reapember 1 through Frostkolt 10; and Frosthold from Frostkolt 11 through Deepkolt 40 across the year boundary. The dated observances are the Vernal Equinox on Brookgreen 12, Summer Solstice on Starwatch 6, Autumnal Equinox on Reapember 1, and Winter Solstice on Frostkolt 11.</p>',
                 '<p>The customary flow of the day is First Light (1st-2nd Hour), Morningtide (3rd-4th), Highsun (5th-8th), Waning Hours (9th-11th), Evening\'s Crest (12th-14th), Nightfall (15th-16th), and Deep Night (17th-20th). Dawn falls around the 2nd Hour, midday around the 7th, dusk around the 12th, and midnight around the 17th.</p>',
                 '<h2>Building a Wayfarer Calendar</h2>',
-                '<p>Open <code>!aa-wayfarer</code>. Wayfarer keeps a saved draft separate from the active campaign calendar, so setup work can be stopped and resumed without changing the date seen by players.</p>',
+                '<p>Open <code>!aa-wayfarer</code>. The compact home screen separates using the saved Wayfarer calendar from editing its draft. Choosing <strong>Use Wayfarer Calendar</strong> activates the last saved complete definition after confirmation; <strong>Edit Calendar</strong> opens focused controls for only the component you want to change. Draft work remains separate from the calendar players see until review and activation.</p>',
                 '<ol><li>Name the calendar, choose the first activation date, and set the hours per day and minutes per hour.</li><li>Enter weekday names in their repeating order.</li><li>Enter calendar periods as <code>Name:Days</code>, separated by commas. Use <code>Name:Days:Feast</code> when those days should not advance the ordinary weekday cycle.</li><li>Add optional festival days as <code>Name:AfterPeriodNumber</code>. A festival day sits between periods and does not use an ordinary weekday.</li><li>Choose whether a named leap day appears every 2-100 years.</li><li>Add optional holidays as <code>Name:PeriodNumber:Day</code>. A holiday names a normal date; it does not add a day.</li><li>Review the preview, then activate deliberately.</li></ol>',
-                '<p>Every setup screen shows the saved choices, current progress, a preview, and Back, Save Draft, and Continue controls. Invalid entries leave both the active calendar and the prior valid draft unchanged.</p>',
+                '<p>Routine edit screens show the current value, the relevant edit buttons, and a short route back. Read-once explanations and examples live behind <strong>Explain This</strong>; structural evidence lives under <strong>Details</strong>; rollback and draft recovery live under <strong>Recovery</strong>. Invalid entries leave both the active calendar and the prior valid draft unchanged.</p>',
                 '<h3>Worked Example</h3>',
                 '<p>Create a calendar named <strong>River Kingdom Calendar</strong> with 20 hours per day and 75 minutes per hour. Use weekdays <code>Moonday,Towerday,Marketday,Hearthday,Starday</code>; periods <code>Deepwinter:31,Founding Feast:2:Feast,Thawrise:27,Highsun:35,Harvestfall:29</code>; leap day <code>Starwake</code> every 4 years after period 4; and holidays <code>Oath Day:1:1,River Fair:3:12</code>. Review every stage, preview the starting date, and activate.</p>',
                 '<h3>Editing, Rollback, and Recovery</h3>',
@@ -24808,18 +25491,23 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h2>Safety</h2>',
                 '<p>Large advances produce one committed change. Moving backward changes only the fictional calendar and requires explicit confirmation. It never reverses rests, effects, combat, NPC history, HP, resources, or other campaign state.</p>',
                 '<h2>Commands</h2>',
-                '<p><code>!aa-wayfarer</code> opens the direct custom-calendar manager; its generated buttons cover component editing, guided review, preview, activation, draft recovery, duplication, and rollback. Moon cycles and phase names are managed through Astronomy because they remain world context when a calendar display changes. <code>!aa-time</code>, <code>!aa-climate</code>, <code>!aa-astro</code>, <code>!aa-weather</code>, <code>!aa-enviro</code>, and <code>!aa-rest</code> open their focused systems. Standard role routes such as <code>!Weather-GM</code>, <code>!Weather-DM</code>, <code>!Weather-Help</code>, <code>!Weather-Status</code>, and <code>!Weather-Audit</code> are case-insensitive and also accept spaces in place of the hyphen.</p>'
+                '<p><code>!aa-wayfarer</code> opens the compact custom-calendar manager; its generated buttons cover direct saved-calendar selection, focused component editing, guided review, preview, activation, draft recovery, duplication, and rollback. <code>!aa-preview</code> privately previews the configured calendar announcement, <code>!aa-announce</code> delivers it to the configured audience, and <code>!aa-announcement-settings</code> chooses public or GM-only delivery, a Quick, Calendar, Travel, or Everything preset, a campaign heading, or custom included fields. Wayfarer presents its 20-hour day as ordinal Hours and named daily periods rather than AM/PM. Moon cycles and phase names are managed through Astronomy because they remain world context when a calendar display changes. <code>!aa-time</code>, <code>!aa-climate</code>, <code>!aa-astro</code>, <code>!aa-weather</code>, <code>!aa-enviro</code>, and <code>!aa-rest</code> open their focused systems. Standard role routes such as <code>!Weather-GM</code>, <code>!Weather-DM</code>, <code>!Weather-Help</code>, <code>!Weather-Status</code>, and <code>!Weather-Audit</code> are case-insensitive and also accept spaces in place of the hyphen.</p>'
             ].join('');
         }
 
         function showGuide(msg) {
-            sendPanel(msg, 'AlmanacAssist Quick Guide', [
-                { label: 'Check The World', value: `${GameAssist.createButton('Date', '!date')} ${GameAssist.createButton('Time', '!time')} ${GameAssist.createButton('Calendar', '!cal')}` },
-                { label: 'Custom Calendar', value: playerIsGM(msg?.playerid) ? GameAssist.createButton('Open Wayfarer Setup', '!aa-wayfarer') : 'The GM manages custom calendar setup.' },
-                { label: 'Describe The World', value: `${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Astronomy', '!astro')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Environment', '!enviro')}` },
-                { label: 'Rest', value: GameAssist.createButton('Open RestAlmanac', '!rest') },
-                { label: 'Change The World', value: playerIsGM(msg?.playerid) ? GameAssist.createButton('Open GM Controls', '!Almanac-GM') : 'The GM controls persistent world changes.' },
-                { label: 'Learn More', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Create or Update Manual', '!Almanac-Manual')} ${GameAssist.createButton('Open Almanac', '!Almanac-GM')}` : GameAssist.createButton('Current Date', '!date') }
+            const isGm = playerIsGM(msg?.playerid);
+            sendPanel(msg, 'AlmanacAssist Quick Guide', isGm ? [
+                { label: 'Start Here', value: GameAssist.createButton('Open Almanac Controls', '!aa-gm') },
+                { label: 'Date and Time', value: `${GameAssist.createButton('Current Date', '!date')} ${GameAssist.createButton('Advance or Set Time', '!aa-time menu')} ${GameAssist.createButton('Choose Calendar', '!cal')}` },
+                { label: 'Share With The Table', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
+                { label: 'World Today', value: `${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Environment', '!enviro')}` },
+                { label: 'Calendar Setup', value: GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer') },
+                { label: 'Full Reference', value: GameAssist.createButton('Create or Update Manual', '!Almanac-Manual') }
+            ] : [
+                { label: 'Campaign World', value: `${GameAssist.createButton('Current Date', '!date')} ${GameAssist.createButton('Current Time', '!time')} ${GameAssist.createButton('Calendar', '!cal')}` },
+                { label: 'Current Conditions', value: `${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Environment', '!enviro')}` },
+                { label: 'Changes', value: 'The GM controls persistent calendar and world changes.' }
             ]);
         }
 
@@ -24890,6 +25578,63 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (lower === 'status') return showStatus(msg, false);
             if (lower === 'audit') return showStatus(msg, true);
             if (lower === 'systems' || lower === 'settings' || lower === 'setup') return showSystems(msg);
+            if (lower === 'more' || lower === 'tools') return showMoreMenu(msg);
+            if (lower === 'preview' || lower === 'time preview') return showAnnouncement(msg, true);
+            if (lower === 'announce' || lower === 'time announce') return showAnnouncement(msg, false);
+            if (lower === 'announcement-settings' || lower === 'announcements') return showAnnouncementSettings(msg);
+            if (lower === 'announcement-fields') return showAnnouncementFields(msg);
+            if (lower.startsWith('announcement ')) {
+                if (!requireGm(msg)) return;
+                const [, setting, key, value] = lower.split(/\s+/);
+                const config = normalizedAnnouncementConfig();
+                if (setting === 'audience' && ['public', 'gm'].includes(key)) config.audience = key;
+                if (setting === 'style' && (key === 'off' || ANNOUNCEMENT_STYLES.includes(key))) {
+                    config.enabled = key !== 'off';
+                    if (key !== 'off') {
+                        config.style = key;
+                        Object.keys(config.fields).forEach(field => {
+                            if (config.fields[field] !== 'off') config.fields[field] = key;
+                        });
+                    }
+                }
+                if (setting === 'preset' && Object.prototype.hasOwnProperty.call(ANNOUNCEMENT_PRESETS, key)) {
+                    config.preset = key;
+                    config.fields = Object.fromEntries(Object.entries(ANNOUNCEMENT_PRESETS[key])
+                        .map(([field, included]) => [field, included ? config.style : 'off']));
+                }
+                if (setting === 'detail' && ['summary', 'full'].includes(key)) {
+                    config.preset = key === 'full' ? 'full' : 'quick';
+                    config.fields = Object.fromEntries(Object.entries(ANNOUNCEMENT_PRESETS[config.preset])
+                        .map(([field, included]) => [field, included ? config.style : 'off']));
+                }
+                if (setting === 'field' && Object.prototype.hasOwnProperty.call(ANNOUNCEMENT_FIELD_LABELS, key)
+                    && (value === 'on' || value === 'off' || ANNOUNCEMENT_STYLES.includes(value))) {
+                    config.preset = 'custom';
+                    config.fields[key] = value === 'on' ? config.style : value;
+                }
+                if (setting === 'reset') {
+                    const args = _parseArgs(input).args;
+                    if (String(args.confirm || '').toLowerCase() === 'yes') {
+                        modState.config.announcement = {
+                            schemaVersion: ANNOUNCEMENT_SCHEMA_VERSION,
+                            enabled: true,
+                            audience: 'public',
+                            style: 'descriptive',
+                            preset: 'quick',
+                            header: 'Campaign Date and Time',
+                            fields: Object.fromEntries(Object.entries(ANNOUNCEMENT_PRESETS.quick)
+                                .map(([field, included]) => [field, included ? 'descriptive' : 'off']))
+                        };
+                        return showAnnouncementSettings(msg);
+                    }
+                }
+                if (setting === 'header') {
+                    const args = _parseArgs(input).args;
+                    config.header = boundedName(args.value, config.header);
+                }
+                modState.config.announcement = config;
+                return setting === 'field' ? showAnnouncementFields(msg) : showAnnouncementSettings(msg);
+            }
             if (lower === 'current-date' || lower === 'date') return showCurrent(msg, 'date');
             if (lower === 'current-time') return showCurrent(msg, 'time');
             if (lower === 'calendar' || lower === 'cal') return showCalendarMenu(msg);
@@ -24914,15 +25659,6 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (lower.startsWith('time retreat')) return handleAdvance(msg, input, -1);
             if (lower.startsWith('time set')) return handleSet(msg, input);
             if (lower.startsWith('time profile')) return handleProfile(msg, input);
-            if (lower === 'time announce' || lower === 'announce') {
-                if (!requireGm(msg) || !timeAvailable()) return;
-                const moment = currentMoment();
-                return sendPanel(msg, 'Campaign Date and Time', [
-                    { label: 'Date', value: _sanitize(displayDate(moment)) },
-                    { label: 'Time', value: _sanitize(displayTime(moment)) },
-                    { label: 'Season', value: _sanitize(moment.season) }
-                ], { publicMessage: true });
-            }
             sendPanel(msg, 'AlmanacAssist', [
                 { label: 'Needs Attention', value: 'That AlmanacAssist command was not recognized.' },
                 { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!Almanac-Guide') }
@@ -24939,6 +25675,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         normalizeClimateConfig();
         normalizeAstronomyConfig();
         normalizeRestConfig();
+        normalizedAnnouncementConfig();
         const activeProfile = profileFor();
         if (!resolveWorldMinute(activeProfile, runtime.time.worldMinute)) runtime.time.worldMinute = DEFAULT_WORLD_MINUTE;
 
@@ -24979,19 +25716,32 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             clearObservers: owner => GameAssist.SemanticEvents.clearObservers(owner)
         });
 
-        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: direct Wayfarer calendar management plus Time, Climate, Astronomy, Weather, Environment, and Rest are available through !Almanac; the module starts disabled.`, 'INFO', { startup: true });
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: Wayfarer-aware time, configurable world announcements, compact climate and environment controls, and all six Almanac systems are available through !Almanac; the module starts disabled.`, 'INFO', { startup: true });
     }, {
         enabled: false,
         prefixes: ['!Almanac', '!Almanac-', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-'],
         preserveRuntimeOnDisable: true,
-        protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'environment', 'rest']
+        protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'announcement', 'environment', 'rest']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced AlmanacAssist to 1.6.0; announcement schema 4 gives every information field independent Off, Descriptive, Detailed, and Technical control while preserving the Quick, Calendar, Travel, and Everything presets; the generic climate seed is now Temperate Lowlands; scene overrides are distinguished from stored weather; and complete Roll20 queries preserve direct Wayfarer, astronomy, environment, and rest edits until clicked.
+    // Changed (v2.0.0): Advanced AlmanacAssist to 1.5.0; announcements now support Off, Descriptive, Detailed, and Technical presentation, descriptive moon visibility respects daylight and cloud cover, weather owns the displayed current temperature, and ambiguous visibility values are labeled in plain language.
+    // Changed (v2.0.0): Repaired deferred Roll20 prompts throughout AlmanacAssist; Wayfarer name/start changes are atomic, clock and period-list changes preserve a valid starting time, Astronomy supplies direct add/edit/remove controls, and RestAlmanac supplies standard, heroic, gritty, and bounded custom rule controls.
+    // Changed (v2.0.0): Advanced AlmanacAssist to 1.4.0; Wayfarer now presents ordinal Hours, named daily periods, and landmark times instead of AM/PM; announcements support audience, heading, useful presets, and per-field inclusion; Climate and Environment prioritize current state and common actions while moving detailed setup behind focused screens.
+    // Changed (v2.0.0): Advanced AlmanacAssist to 1.3.0 with an action-first GM dashboard; direct date/time advancement; exact calendar-aware time prompts; preview, announcement, audience, and detail controls; one-step saved-Wayfarer selection; focused Wayfarer edit/copy/detail/recovery screens; and technical examples moved behind explicit help controls.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.2.0 with a direct Wayfarer Calendar Manager, editable seasonal ranges, visible moon phases, standardized focused-system role/help/status/audit routes, a command-only campaign-default draft reset, and clearer calendar-display confirmation.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.1.2; aligned the untouched starter and saved draft with the campaign's Wayfarer Calendar briefing, retained its exact 460-day calculations, clarified the twelve-month and five-festival structure, documented the daily rhythm, and preserved campaign-edited definitions through exact-match migration.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the AlmanacAssist GM control screen.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.1.0 with persistent Wayfarer drafts, staged setup and previews, safe profile duplication, atomic activation, elapsed-time preservation, explicit reset fallback, one activation rollback point, and a complete custom-calendar manual.
     // Decision log:
+    //   CHOICE: Treat WeatherAlmanac as the current observed temperature and ClimateAlmanac as background likelihood/context - ALT: display two unlabeled exact temperatures; REJECTED: two exact values presented as current conditions are misleading.
+    //   CHOICE: Keep Descriptive, Detailed, and Technical as explicit announcement presentations - ALT: label the player-facing mode only as cinematic; REJECTED: descriptive states what information is being transformed without implying invented narration.
+    //   CHOICE: Clamp a saved draft's starting clock when the GM deliberately shrinks the clock definition - ALT: reject every clock edit until the starting date is changed first; REJECTED: that created a circular, unintuitive setup workflow.
+    //   CHOICE: Put current time and common table actions on the primary GM screen while moving setup, diagnostics, and reference into focused screens - ALT: keep every Almanac capability visible at once; REJECTED: equal visual weight made ordinary session operation difficult to scan.
+    //   CHOICE: Let the calendar chooser activate the last saved Wayfarer definition directly while keeping unactivated draft edits separate - ALT: force every Wayfarer selection through draft review; REJECTED: choosing an already saved calendar should not require calendar-construction steps.
+    //   CHOICE: Offer four understandable announcement presets plus a bounded custom field screen - ALT: expose one giant formatting form or only quick/full; REJECTED: presets keep routine use fast while field choices support campaign-specific presentation.
+    //   CHOICE: Keep Climate and Environment summaries compact and move technical values into explicit management/detail screens - ALT: show every stored field on first open; REJECTED: routine table use should answer what is current and what the GM can do next.
+    //   CHOICE: Keep examples and terminology behind Explain This controls on dedicated Wayfarer editors - ALT: repeat instructional rows on every edit screen; REJECTED: read-once teaching material should remain available without crowding routine maintenance.
     //   CHOICE: Make the direct component manager the primary Wayfarer workflow while retaining guided review - ALT: require the staged wizard for every edit; REJECTED: routine calendar maintenance should not force the GM through unrelated steps.
     //   CHOICE: Store seasonal ranges as bounded day offsets and split cross-year ranges at the year boundary - ALT: store only display month/day strings; REJECTED: canonical offsets keep season lookup deterministic while the editor reconstructs readable dates.
     //   CHOICE: Show current moon phases in calendar views while leaving moon cycles and phase names under Astronomy - ALT: duplicate moon state in TimeAlmanac; REJECTED: two authorities would drift.
@@ -25001,6 +25751,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Preserve elapsed fictional minutes while editing an active Wayfarer calendar - ALT: silently apply the draft starting date; REJECTED: calendar-definition maintenance must not unexpectedly move campaign chronology.
     //   CHOICE: Retain one complete pre-activation rollback point - ALT: persist every calendar body indefinitely; REJECTED: one recovery point is understandable and bounded while chronology history retains the durable event trail.
     // Prior notes:
+    //   v2.0.0 / AlmanacAssist 1.3.0: Announcement settings were initially limited to audience and quick/full detail. AlmanacAssist 1.4.0 superseded that boundary after campaign testing showed that calendar, travel, and custom world announcements need different information.
     //   v2.0.0 / AlmanacAssist 1.1.1: Rejected cancelled query values, restored the campaign calendar data, added profile-specific clocks, feast periods that do not advance weekdays, range-based seasons, and exact holiday dates, and made complete period replacement visibly clear index-based dependent dates instead of silently remapping them.
     //   v2.0.0 / AlmanacAssist 1.0.0: Routed supported RestAlmanac HP restoration and rollback through HealthService with producer/operation identity and verified healing/synchronization evidence while preserving the complete preview and transaction rollback contract.
     //   CHOICE: Store elapsed fictional minutes and derive calendar labels - ALT: store one profile-specific month/day tuple; REJECTED: a tuple would become ambiguous or destructive when the GM changes calendar profiles.

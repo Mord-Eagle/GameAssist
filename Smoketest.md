@@ -225,6 +225,8 @@ The first command must remain a dry run. The applied command should create one p
 
 ### Stale and Ended Offers
 
+Create a fresh offer by lowering linked PC HP once through the character sheet. Allow Roll20's linked bar update to finish, but make no second HP change, then use the original offer. Pass when the check rolls normally; equivalent sheet and linked-token evidence for the same resulting HP must not invalidate it.
+
 Create a new offer, but change HP again before clicking it. Pass when the older button says HP changed again and does not roll.
 
 Create another offer, remove the Concentrating marker, then click. Pass when the private response says the character is no longer concentrating and does not restore the marker or roll.
@@ -390,12 +392,12 @@ Pass when the Control Center is private, the Guide gives the short player path, 
 
 ### Visible Target and Stable Attack Row
 
-1. As the non-GM player, select the controlled 2014 PC and run `!Attack`.
-2. Choose one repeating attack. When two rows share a name, choose one of the numbered labels.
-3. Click **Choose On The Map** and point at the visible target the player does not control.
-4. Choose **Normal**.
+1. As the non-GM player, select the controlled 2014 PC and run `!Attack`. Repeat once with `!attack-menu`.
+2. Find the intended repeating attack. When two rows share a name, use the numbered labels to distinguish them.
+3. Click **Choose Target** beside that attack and point at the visible target the player does not control.
+4. Choose **Normal** from the review screen.
 
-Pass when Roll20 accepts the target without granting control, the familiar official attack card appears once as the attacking character, and the attacker/target announcement follows the roll. Confirm the chosen row's bonus, range, and damage links match the numbered attack selected. The target's HP, markers, position, effects, conditions, and Roll20 Turn Tracker must remain unchanged.
+Pass when both starting commands open the same compact source/attack path, neither produces a bare `{}`, Roll20 opens its native target prompt only after **Choose Target** is clicked, and the target is accepted without granting control. The familiar official attack card should appear once as the attacking character, followed by the attacker/target announcement. The Roll20 API log must not report `Unable to find attribute with the name d20`. Confirm the chosen row's bonus, range, and damage links match the numbered attack selected. The target's HP, markers, position, effects, conditions, and Roll20 Turn Tracker must remain unchanged.
 
 Click the same roll button again. Pass when AttackAssist refuses it without a second roll or announcement.
 
@@ -407,6 +409,7 @@ Repeat the same disposable attack through **Use Sheet Setting**, **Advantage**, 
 - Normal rolls one d20;
 - Advantage shows two d20s and keeps the higher result;
 - Disadvantage shows two d20s and keeps the lower result;
+- none of the four choices reports a missing `d20` character attribute;
 - the character's saved roll-mode setting is unchanged after every test.
 
 ### CritAssist Natural 1 Delivery
@@ -427,7 +430,7 @@ As the GM, open `!Attack-Requests`, choose the retained request, select the hidd
 
 ### Unsupported Source, Lockout, and Lifecycle
 
-Select the supported 2024 test token and run `!Attack`. Pass when AttackAssist explains that 1.0.0 supports official-2014 repeating attacks and that the native 2024 attack buttons remain available.
+Select the supported 2024 test token and run `!Attack`. Pass when AttackAssist explains that 1.0.2 supports official-2014 repeating attacks and that the native 2024 attack buttons remain available.
 
 Run `!Attack-Players off`. Pass when the player can still read guidance but cannot begin or complete a guided attack; GM attacks remain available. Restore `!Attack-Players on` afterward.
 
@@ -503,7 +506,7 @@ EffectAssist begins disabled. Confirm that before changing anything:
 
 - one active Bless instance names the chosen source and target;
 - the target has the configured Blessed marker;
-- the target sheet has one active `Bless (GameAssist)` attack row with `1d4` and one active `Bless (GameAssist)` saving-throw row with `1d4`, and both bonuses roll on the first supported check without manually toggling the sheet fields;
+- the target sheet has one active `Bless (GA)` attack row with `1d4` and one active `Bless (GA)` saving-throw row with `1d4`, and both bonuses roll on the first supported check without manually toggling the sheet fields;
 - the source has the configured Concentrating marker and ConcentrationAssist reports it as concentrating;
 - unrelated markers, HP, bars, layer, controllers, character attributes, and Turn Tracker rows are unchanged;
 - the application result offers an End Effect button without requiring the GM to type the internal instance ID;
@@ -517,10 +520,10 @@ Apply each remaining catalog effect once to disposable tokens through `!Effect-C
 
 | Effect | Confirm before ending it |
 | --- | --- |
-| Guidance | Target marker, source concentration, and one active `Guidance (GameAssist)` `1d4[GameAssist Guidance]` global skill row exist; the preview explains that unsupported or non-skill checks retain the manual **Use Guidance** path. |
-| Warding Bond | Target marker plus `Warding Bond (GameAssist)` `+1` AC and save rows exist; no concentration marker is added. |
+| Guidance | Target marker, source concentration, and one active `Guidance (GA)` `1d4[GameAssist Guidance]` global skill row exist; the preview explains that unsupported or non-skill checks retain the manual **Use Guidance** path. |
+| Warding Bond | Target marker plus `Warding Bond (GA)` `+1` AC and save rows exist; no concentration marker is added. |
 | Holy Weapon | Its distinct target marker and source concentration are active; it must not reuse Bless's marker, and no global damage row changes every weapon. |
-| Haste | Target marker, `Haste (GameAssist)` `+2` AC row, and source concentration are active. |
+| Haste | Target marker, `Haste (GA)` `+2` AC row, and source concentration are active. |
 | Pass Without a Trace | Target marker and source concentration are active; the preview identifies the `+10` Stealth step. |
 
 End each effect from its **Effect Applied** panel or `!Effect-Active`. Pass when every owned marker and unedited sheet row clears, concentration clears only when it belongs to that effect, and the assisted instructions remain readable.
@@ -529,7 +532,7 @@ Confirm the catalog visibly separates Bless, Guidance, Warding Bond, and Haste u
 
 ### Guidance Consumption — Issue #85
 
-Use a disposable official D&D 5E by Roll20 2014 PC target and a separate source. Apply Guidance, then confirm the target sheet contains one active `Guidance (GameAssist)` global skill row whose value is exactly `1d4[GameAssist Guidance]`.
+Use a disposable official D&D 5E by Roll20 2014 PC target and a separate source. Apply Guidance, then confirm the target sheet contains one active `Guidance (GA)` global skill row whose value is exactly `1d4[GameAssist Guidance]`.
 
 1. Roll an ordinary skill from that target's sheet while controlled by the GM or the character's player.
 2. Reapply Guidance and roll a supported skill with advantage.
@@ -546,21 +549,24 @@ Use a disposable official D&D 5E by Roll20 2014 PC target and a separate source.
 
 Use a separate non-GM player login with two linked character tokens that player controls. Keep one visible linked recipient controlled by someone else and one disposable linked recipient on the GM layer.
 
-1. As the player, run `!Bless` without selecting a recipient first.
-2. Click one caster button, then click **Choose 1 Recipient** and point at the visible linked recipient on the map.
-3. Confirm the default path applies after the source and recipient choices without an extra review click.
-4. Confirm the public announcement appears only after application and the private result includes **End Effect**.
-5. Click the old caster button or recipient button again.
-6. Start another effect, choose a caster, and click **Ask the GM** instead of choosing a visible recipient.
-7. As GM, open `!Effect-GM`, confirm **Player Requests (1)** appears, then open `!Effect-Requests`.
-8. Select the GM-layer recipient, click **Use Selected Tokens**, review the request, and confirm it.
-9. Confirm the public announcement does not name the hidden recipient.
-10. Create one more player request, preview it as the GM, then lock Player Casting before clicking the old confirmation.
-11. Restore **Allow** from the GM control center.
+1. As the player, run `!Bless` without selecting a recipient first. Confirm the first compact screen asks only for the caster and never produces a bare `{}`.
+2. Choose the intended caster. Confirm the second compact screen offers **1 Recipient**, **2 Recipients**, **3 Recipients**, and **Higher Level Casting**.
+3. Click **1 Recipient**. Confirm Roll20 opens its native target prompt only after the button is clicked, then point at the visible linked recipient on the map.
+4. Start again, choose **Higher Level Casting**, and confirm a separate screen offers every recipient total from 4 through 11. Use one disposable higher-level total and complete every target prompt.
+5. Confirm the default path applies after the source and recipient choices without an extra review click.
+6. Confirm the public announcement appears only after application and the private result includes **End Effect**.
+7. Click a used recipient button again.
+8. Start another effect, choose a caster, and click **Ask the GM** instead of choosing a visible recipient.
+9. As GM, open `!Effect-GM`, confirm **Player Requests (1)** appears, then open `!Effect-Requests`.
+10. Select the GM-layer recipient, click **Use Selected Tokens**, review the request, and confirm it.
+11. Confirm the public announcement does not name the hidden recipient.
+12. Create one more player request, preview it as the GM, then lock Player Casting before clicking the old confirmation.
+13. Restore **Allow** from the GM control center.
 
 **Pass when:**
 
-- caster buttons reach recipient selection and contain no visible raw token or character identifier;
+- caster choice and recipient count are separate, compact steps containing no visible raw token or character identifier;
+- Bless offers one to three recipients directly and four through eleven only behind **Higher Level Casting**;
 - a player can target a visible linked recipient they do not control;
 - used, stale, fabricated, or wrong-player casting buttons produce a private **Start Again** recovery panel and never apply twice;
 - **Ask the GM** remains available under Player Requests instead of disappearing with one chat whisper;
@@ -586,7 +592,7 @@ Use a separate non-GM player login with two linked character tokens that player 
 
 ### Pre-Existing Marker Preservation
 
-1. Add the configured Bless marker and matching `Bless (GameAssist)` attack/save rows to the target manually before creating an EffectAssist record.
+1. Add the configured Bless marker and matching `Bless (GA)` attack/save rows to the target manually before creating an EffectAssist record.
 2. Apply one Bless instance.
 3. End that instance.
 
@@ -698,7 +704,7 @@ For the stale-confirmation check:
 
 ## Focused v2.0.0 Complete AlmanacAssist Acceptance
 
-**What this proves:** AlmanacAssist ships as one complete module whose Time, Climate, Astronomy, Weather, Environment, and Rest systems are independently usable, preserve valid state while disabled, and exchange optional context without turning one system into a hidden prerequisite for another.
+**What this proves:** AlmanacAssist 1.6.0 ships as one complete module whose action-first daily controls and Time, Climate, Astronomy, Weather, Environment, and Rest systems are independently usable, preserve valid state while disabled, and exchange optional context without turning one system into a hidden prerequisite for another.
 
 **Why test it:** v2.0.0 must not publish a calendar shell while describing a world-management suite. This track proves the six systems, their boundaries, their shared navigation, and RestAlmanac's deliberate 2014-sheet writes inside the real Roll20 sandbox.
 
@@ -711,7 +717,7 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 ```roll20chat
 !ga-config modules
 !ga-enable AlmanacAssist
-!Almanac-GM
+!aa-gm
 !Almanac-Systems
 !Almanac-Status
 !Almanac-Audit
@@ -719,31 +725,45 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 !Almanac-Impossible
 ```
 
-**Pass when:** AlmanacAssist begins disabled on a clean v2.0.0 state; enabling it starts all six saved-on systems; GM and Systems provide clear private navigation; Status identifies every system; Audit explicitly changes nothing; Manual creates or updates one stable handout; and the bad command offers a useful route back.
+**Pass when:** AlmanacAssist begins disabled on a clean v2.0.0 state; enabling it starts all six saved-on systems; `!aa-gm` opens one private, action-first dashboard with **Now**, **Advance Date & Time**, **Set or Change Calendar**, **Share**, **World Today**, and **More**; routine controls do not dump module health, audit evidence, moon-cycle configuration, or full calendar structure; Systems provides independent toggles; Status identifies every system; Audit explicitly changes nothing; Manual creates or updates one stable handout; and the bad command offers a useful route back.
 
-### TimeAlmanac
+### TimeAlmanac and Calendar Announcements
 
-**Why:** Every optional time consumer must receive one stable fictional-minute authority without changing real-world GameAssist timestamps.
+**Why:** Every optional time consumer must receive one stable fictional-minute authority, while the GM can manage and share the current world state without changing GameAssist's real-world timestamps.
 
-1. Open `!cal` and note the current fictional date and time.
-2. Advance one hour, one day, and across one month boundary through the generated controls.
-3. Switch among Standard, Solamnic, and Harptos; confirm the underlying elapsed moment is preserved.
-4. Complete the focused Wayfarer draft test below.
-5. Try to reverse time or set an exact date without confirmation, then use the generated confirmation.
-6. From a player account, run `!date` and `!time`.
+1. Open `!aa-gm`. Use **+10 Minutes**, **+1 Hour**, and **+1 Day**. Then use **Choose Advance** with days, hours, and minutes together.
+2. Open **Set Date & Time**, cancel once, and confirm nothing changes. Submit a valid exact moment and confirm it changes only after the generated confirmation.
+3. Open `!cal`. Switch among Standard, Solamnic, and Harptos; confirm the displayed date changes but the underlying elapsed fictional moment is preserved.
+4. Run `!aa-announcement-settings`. Choose **Off**, then run `!aa-announce`. Confirm no public announcement is sent and the GM receives a private **Announcement Not Sent** result.
+5. Open **Choose Announcement Information**. Set Time to Descriptive, Weather to Detailed, Climate to Technical, and at least one other field to Off. Preview and confirm each field independently follows its selected level. Then use **Restore Defaults** and confirm the saved campaign defaults return without changing fictional time or world state.
+6. Prepare manual weather with rain, an exact temperature, a wind speed, cloud cover, and visibility. Choose **Descriptive** and **Everything**, then preview. Confirm Wayfarer time is a named period rather than AM/PM; temperature and wind are words rather than measurements; visibility is explicitly labeled; the moon reports **Not Visible** when daylight or cloud cover blocks it; and no placeholder **Home Region** or **Campaign Default** region or second exact temperature appears. A clean state should identify the starter region as **Temperate Lowlands**.
+7. Choose **Detailed** and preview. Confirm the current Weather row may show its exact temperature and wind, while Climate is background regional context and does not claim a simultaneous second current temperature.
+8. Choose **Technical** and preview. Confirm the deeper precipitation, cloud, climate-likelihood, and environment context appears without relabeling climate expectations as current measured weather.
+9. Choose **GM Only** and **Calendar**, preview again, then run `!aa-announce`. Confirm both messages remain private and include only the selected available fields.
+10. Choose **Travel**, then **Everything**, and preview each. Confirm Travel prioritizes weather, climate, and environment while Everything includes every currently available field.
+11. Open **Choose Announcement Information**, turn one field Off, select another level for a second field, and change the announcement heading. Preview and confirm the settings report **Custom**, the selected field levels match the buttons, and the new heading is used.
+12. Restore **Public Chat**, campaign defaults, and **Quick**. Preview once and confirm it is still private; announce once and confirm only the announcement is public.
+13. From a player account, run `!date` and `!time`. Confirm the player receives read-only output and no mutation controls.
+14. Complete the focused Wayfarer test below.
 
-**Pass when:** forward changes are recorded; profile changes reinterpret rather than reset elapsed time; reversal/exact setting requires confirmation; the Wayfarer holiday appears on its date; players receive read-only output; and the table timezone, log timestamps, and NPCAssist Session date do not change.
+**Pass when:** quick and chosen advances work; exact setting and reversal require confirmation; all profile changes preserve elapsed time; preview is always GM-private; Off suppresses delivery; Descriptive, Detailed, and Technical produce their intended information levels; current Weather and climate background are not presented as two simultaneous measured temperatures; missing details are omitted rather than guessed; players remain read-only; and the table timezone, log timestamps, and NPCAssist Session date do not change.
 
 #### Wayfarer Custom Calendar
 
-**What this proves:** A GM can directly edit every supported calendar component, preview and activate the complete draft safely, see moon phases, and recover without editing Roll20 state.
+**What this proves:** A GM can use an already saved Wayfarer calendar directly, edit only the component that needs attention, reach teaching or technical detail deliberately, preview and activate a complete draft safely, see moon phases where requested, and recover without editing Roll20 state.
 
 **Skip when:** Skip during ordinary troubleshooting only when the campaign deliberately uses Standard, Solamnic, or Harptos. Do not skip for the v2.0.0 release acceptance.
 
-1. Run `!aa-wayfarer`. Confirm the **Wayfarer Calendar Manager** shows direct buttons for **Name, Clock & Start**, **Weekdays**, **Periods**, **Festival Days**, **Leap Rule**, **Holidays**, and **Seasons**. It should also show current moon phases and an **Open Astronomy** button.
-2. On fresh state, confirm the draft is named **Wayfarer Calendar** and reports a 10-day week, 17 periods (**12 months + 5 festivals**), 460 ordinary-year days, a 20-hour day, and 75-minute hours.
-3. Open **Name, Clock & Start**, click **Change Name**, cancel the Roll20 query, and reopen the manager. Pass when the name is unchanged and is never set to `true`.
-4. Build this disposable example by opening only the needed component editors:
+1. Run `!aa-wayfarer`. Confirm the compact home clearly separates **Use Wayfarer Calendar**, **Choose Another Calendar**, **Edit Calendar**, **Preview Draft**, **Review & Activate**, **Guided Review**, **Start From a Copy**, **Details**, **Recovery**, and **Help**.
+2. Confirm the home does **not** display the full period list, complete setup-progress evidence, moon-cycle configuration, rollback explanation, or worked examples.
+3. Note the current fictional moment. Click **Use Wayfarer Calendar**, decline confirmation once, then accept it. Confirm the saved Wayfarer definition becomes active without entering draft-review screens and the elapsed fictional moment is preserved.
+4. Open **Set Date & Time** while Wayfarer is active. Confirm the Roll20 prompts accept hours `1-20` and minutes `0-74`, matching its 20-hour day and 75-minute hour.
+5. Set the time to the 2nd, 7th, 12th, and 17th Hours in turn. Confirm Wayfarer uses ordinal Hours and named periods rather than AM/PM: **First Light (Dawn)**, **Highsun (Midday)**, **Evening's Crest (Dusk)**, and **Deep Night (Midnight)**.
+6. Open **Edit Calendar**. Confirm it groups **Name, Clock & Start**, **Weekdays**, **Periods**, **Festival Days**, **Leap Rule**, **Holidays**, and **Seasons**, with Preview/Review and a clear return route.
+7. Open **Name, Clock & Start**. Confirm the page shows only the current values and relevant edit controls. Click **Explain This** and confirm the terminology, input boundaries, and example are available there instead of crowding the editor.
+8. Click **Change Name**, cancel the Roll20 query, and reopen the editor. Pass when the context prompt appears, the name is unchanged, and it is never set to `true`. Then use **Change Name and Starting Date** once and confirm the complete change is applied together or not at all.
+9. On a fresh default draft, open **Details** and confirm it reports **Wayfarer Calendar**, a 10-day week, 17 periods (**12 months + 5 festivals**), 460 ordinary-year days, a 20-hour day, 75-minute hours, current moon phases, validation progress, and rollback availability.
+10. Build this disposable example through the focused component editors:
    - Name: `River Kingdom Calendar`
    - Starting date: Year `12`, `Deepwinter`, day `7`, hour `9`, minute `30`
    - Clock: `20` hours per day and `75` minutes per hour
@@ -753,29 +773,31 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
    - Leap rule: `Starwake`, every `4` years, after period `4`
    - Holidays: `Oath Day:1:1,River Fair:3:12`
    - Seasons: `Winter:5:1:1:31,Spring:2:1:3:27,Summer:4:1:4:35,Autumn:5:1:5:29`
-5. Confirm replacing the period list explains that dependent festival days, leap rules, holidays, and seasonal ranges were cleared instead of silently moved.
-6. Close the panel between edits and run `!aa-wayfarer` again. Confirm the draft and review progress return unchanged.
-7. Use **Preview Draft**. Confirm the unequal period lengths, feast period, leap rule, holidays, seasonal ranges, starting-date preview, and moon-phase note are readable.
-8. Submit an invalid period such as `Broken Month:0` or overlapping seasons. Confirm the prior valid draft and active calendar remain unchanged.
-9. Review every area, then activate. Confirm the calendar becomes active at the reviewed starting date and the prior calendar is retained as one rollback point.
-10. Change one period length and activate again. Confirm elapsed fictional time is preserved rather than replaced by the draft starting date.
-11. Use **Start From A Copy** with Harptos. Confirm only the saved draft changes. Use **Discard Draft** and confirm the active calendar remains unchanged.
-12. Run `!Weather-GM`, `!weather dm`, `!Weather-Status`, `!Weather-Help`, and `!Weather-Audit`. Confirm each opens the appropriate private Weather screen exactly once. Repeat one route with mixed capitalization.
-13. Run `!aa-wayfarer reset-default` without confirmation. Confirm no change is made and no reset button is offered. Then run `!aa-wayfarer reset-default --confirm yes`; confirm the draft returns to **Wayfarer Calendar** while the active calendar and fictional time remain unchanged.
-14. Create or update `!Almanac-Manual`. Confirm it explains the direct manager, seasonal ranges, moon ownership, command-only draft reset, activation, rollback, and recovery.
+11. Confirm replacing the period list explains that dependent festival days, leap rules, holidays, and seasonal ranges were cleared instead of silently moved.
+12. Close the panel between edits and run `!aa-wayfarer` again. Confirm the draft returns unchanged. Restart the sandbox once and confirm it remains available.
+13. Use **Preview Draft**. Confirm the unequal period lengths, feast period, leap rule, holidays, seasonal ranges, starting-date preview, and moon-phase note are readable.
+14. Submit an invalid period such as `Broken Month:0` or overlapping seasons. Confirm the prior valid draft and active calendar remain unchanged.
+15. Review every area, then activate. Confirm the calendar becomes active at the reviewed starting date and the prior calendar is retained as one rollback point.
+16. Change one period length and activate again. Confirm elapsed fictional time is preserved rather than replaced by the draft starting date.
+17. Use **Start From a Copy** with Harptos. Confirm only the saved draft changes. Open **Recovery**, use **Discard Draft**, and confirm the active calendar remains unchanged.
+18. Change the draft clock to fewer hours and fewer minutes than the saved starting time. Confirm the edit succeeds, the starting hour/minute are adjusted into the new valid bounds, and the result explains that adjustment instead of trapping the GM in a starting-date conflict loop.
+19. Run `!Weather-GM`, `!weather dm`, `!Weather-Status`, `!Weather-Help`, and `!Weather-Audit`. Confirm each opens the appropriate private Weather screen exactly once. Repeat one route with mixed capitalization.
+20. Run `!aa-wayfarer reset-default` without confirmation. Confirm no change is made and no reset button is offered. Then run `!aa-wayfarer reset-default --confirm yes`; confirm the draft returns to **Wayfarer Calendar** while the active calendar and fictional time remain unchanged.
+21. Create or update `!Almanac-Manual`. Confirm it explains the action-first dashboard, focused Wayfarer manager, Wayfarer Hour language, announcement controls, seasonal ranges, moon ownership, command-only draft reset, activation, rollback, and recovery.
 
-**Pass when:** all calendar components are directly reachable; the default matches the Wayfarer briefing; moon phases are visible and link to Astronomy; standardized Weather aliases work with either case and either a space or hyphen; draft edits survive closing the menu and a sandbox restart; invalid input causes no partial change; activation and rollback preserve the described state; and the command-only default reset changes only the draft.
+**Pass when:** the common dashboard actions are direct; saved Wayfarer selection does not force draft setup; all calendar components are directly reachable; routine pages remain compact; explanations/details/recovery are available on demand; exact-time prompts follow the active calendar; the default matches the Wayfarer briefing; moon phases remain available through requested detail and Astronomy views; standardized Weather aliases work with either case and either a space or hyphen; draft edits survive navigation and restart; invalid input causes no partial change; activation and rollback preserve the described state; and the command-only default reset changes only the draft.
 
 ### ClimateAlmanac
 
 **Why:** Weather needs optional regional context, but climate settings must also remain useful and understandable by themselves.
 
-1. Open `!clim` and its Profiles and Setup screens.
-2. Create one custom profile with a unique name.
-3. Create a parent region and one child that inherits its profile.
-4. Change the parent profile and confirm the inheriting child follows it.
-5. Add a child override and confirm only that value differs.
-6. Try a duplicate name and an invalid parent/depth.
+1. Open `!clim`. Confirm the first screen names the current region and presents its useful climate at a glance without showing inheritance keys or raw configuration.
+2. Switch directly to another existing region, then return to the original region.
+3. Open **Manage Regions**, then **Climate Types**, and create one custom profile with a unique name.
+4. Create a parent region and one child that inherits its profile.
+5. Change the parent profile and confirm the inheriting child follows it.
+6. Add a child override and confirm only that value differs.
+7. Try a duplicate name and an invalid parent/depth.
 
 **Pass when:** built-in and custom profiles remain distinguishable; inheritance follows the current parent; an explicit override wins; invalid or ambiguous requests write nothing; and the focused audit identifies the active region and profile without changing them.
 
@@ -784,7 +806,7 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 **Why:** Moon phases and daylight should be reproducible calendar results, while rare omens remain optional weighted suggestions.
 
 1. Open `!astro` and note the current moon phases and daylight.
-2. Add or edit a disposable moon cycle, offset, and phase-name list.
+2. Open Astronomy setup. Confirm each existing moon has its own **Edit** and **Remove** controls, and **Add Moon** opens name, cycle, offset, and phase prompts without asking for an internal ID. Add or edit a disposable moon cycle, offset, and phase-name list.
 3. Generate a short future forecast and verify it does not advance current TimeAlmanac time.
 4. Add or edit one bounded rare event and request a suggestion.
 5. Turn TimeAlmanac off and set the Astronomy manual day/season fallback.
@@ -807,11 +829,14 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 
 **Why:** Other tools and the GM need structured environmental context without automatic penalties or surprise token/sheet changes.
 
-1. With current weather available, run `!enviro` and compare the derived result.
-2. Apply one built-in environment preset.
-3. Apply a custom override, generate new weather, and confirm the override remains authoritative.
-4. Clear the override through confirmation.
-5. Turn Weather off and apply a manual preset again.
+1. With current weather available, run `!enviro`. Confirm the first screen shows the current environment, where it came from, and the common actions without dumping every technical field or raw tag list.
+2. Apply one built-in option from **Quick Choices**.
+3. Open **Customize**, change one field, return to the main screen, and confirm only that field changed.
+4. Open **View Details** and confirm the complete visibility, temperature, precipitation, wind, ground, water, exposure, severity, and tags are available there.
+5. Generate new weather and confirm the custom override remains authoritative.
+6. While the override is active, reopen `!weather`. Confirm it shows the Environment override as **Current Scene**, the generated result as **Stored Weather**, and explains that stored weather resumes only after **Follow Weather Again**. A desert scene must not be presented as simultaneously having the stored rainy temperature.
+7. Choose **Follow Weather Again** through confirmation and confirm the derived result resumes.
+8. Turn Weather off and apply a manual preset again.
 
 **Pass when:** output identifies visibility, temperature, precipitation, wind, ground, water, exposure, severity, and tags; no token, marker, character, roll, or Turn Tracker state changes; the override persists until cleared; and manual Environment still works without Weather.
 
@@ -819,11 +844,11 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 
 **Why:** Rest is the only initial Almanac system that writes to character sheets, so preview, permissions, stale-state checks, and rollback behavior must work in Roll20.
 
-1. Select the disposable linked 2014 PC and open `!rest`.
+1. Select the disposable linked 2014 PC and open `!rest`. Open **Change Rest Rules** and test Standard, Heroic, and Gritty; confirm the visible Short and Long Rest durations change to the chosen profile.
 2. Preview a Short Rest. Confirm its subjects and optional time advance before accepting it.
 3. Spend a Hit Die through the native sheet if desired; confirm Short Rest does not spend it automatically.
 4. Lower HP, Hit Dice, and one remaining spell-slot field, then preview and confirm a Long Rest.
-5. Create and use one bounded custom rest type.
+5. Set bounded Custom rest durations, then create and use one bounded custom rest type. Confirm the rule profile and the named house-rule rest remain distinct controls.
 6. Prepare another preview, change HP or turn TimeAlmanac off, then click the old confirmation.
 7. Select a linked NPC or unlinked token and try again.
 

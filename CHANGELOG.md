@@ -47,9 +47,151 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ### Release definition
 
-GameAssist v2.0.0 remains one active development line in PR #81. EffectAssist 2.4.0 is a catalog-driven effect coordinator for the official D&D 5E by Roll20 2014 character sheet with controlled player casting, retained GM placement requests, bounded GM-reviewed Bless cast proposals, guarded exact-evidence Guidance consumption, and optional GM-reviewed duration candidates. HealAssist 1.0.0 adds guided official-2014 healing with authorized sources, native visible-PC targeting, retained private GM placement requests, exact roll and HP review, and verified HealthService application. AttackAssist 1.0.0 adds guided official-2014 repeating attacks with stable row identity, native visible targeting, retained private GM placement requests, explicit roll-mode choices, one-use character-attributed rolls, and no automatic attack consequences. AlmanacAssist 1.2.0 combines a direct Wayfarer Calendar Manager, fictional Time, regional Climate, visible moon phases and Astronomy, continuity-aware Weather, descriptive Environment, and deliberate Rest as six independently controlled internal systems. HealthService 1.0.0 adds one canonical supported HP-observation and verified-write boundary plus an optional GM-private PC threshold consumer. ConcentrationAssist 0.4.0 uses the same evidence for optional private, revalidated concentration-check offers after supported HP loss. CombatAssist 1.1.0 supplies immutable accepted encounter-progression events without exposing tracker-write authority. The shared SemanticEvents service provides immutable in-sandbox lifecycle notifications without coupling module state.
+GameAssist v2.0.0 remains one active development line in PR #81. EffectAssist 2.5.0 coordinates the focused official-2014 effect catalog with separate caster and recipient-count steps, Bless totals from one through eleven, consistent compact `(GA)` sheet labels, concentration-linked cleanup, retained GM placement requests, bounded Bless proposals, guarded Guidance consumption, worker-safe projection cleanup, and optional duration review. HealAssist 1.0.0 adds guided official-2014 healing with authorized sources, native visible-PC targeting, retained private GM placement requests, exact roll and HP review, and verified HealthService application. AttackAssist 1.0.2 adds compact official-2014 repeating-attack selection, stable row identity, native visible targeting, retained private placement requests, executable sheet/normal/advantage/disadvantage modes, one-use character-attributed rolls, and no automatic attack consequences. AlmanacAssist 1.6.0 combines Wayfarer-native time presentation, independent Off/Descriptive/Detailed/Technical choices for every announcement field, coherent current-scene, stored-weather, and regional-climate ownership, direct Wayfarer and Astronomy editing, configurable rest rules, compact Climate and Environment controls, and the focused Wayfarer Calendar Manager across six independently controlled internal systems. HealthService 1.0.0 adds one canonical supported HP-observation and verified-write boundary plus an optional GM-private PC threshold consumer. ConcentrationAssist 0.4.2 uses the same evidence for optional private, page-safe check offers after supported HP loss and accepts equivalent linked sheet/token evidence without accepting a genuinely stale offer. CombatAssist 1.1.0 supplies immutable accepted encounter-progression events without exposing tracker-write authority. The shared SemanticEvents service provides immutable in-sandbox lifecycle notifications without coupling module state.
 
 EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so existing campaigns upgrade without receiving new markers, conditions, HP writes, other sheet writes, attack rolls, fictional chronology, weather, or chat output until the GM deliberately enables them.
+
+### Roll20 acceptance repair — 2026-08-22
+
+This pre-release checkpoint advances EffectAssist to 2.5.0, AttackAssist to 1.0.2, ConcentrationAssist to 0.4.2, and AlmanacAssist to 1.6.0 while retaining GameAssist v2.0.0 and PR #81 as the single development line.
+
+#### Shared Roll20 command transport
+
+- Protects complete Roll20 query, target, attribute, and inline-roll expressions while GameAssist places commands inside chat-template buttons.
+- Prevents context prompts from collapsing into blank values or `true`, including Wayfarer name, starting-date, weekday, period, moon, and weather controls.
+- Keeps the correction at the shared command-button boundary so each affected module receives the same parser-safe behavior.
+
+#### AttackAssist 1.0.2
+
+- Rebuilds the attack picker as a compact list of saved attacks and target actions instead of giving each attack a large framed block.
+- Replaces the official sheet's hidden `@{d20}` placeholder with an explicit `1d20` before submitting a Normal, Advantage, or Disadvantage roll.
+- Preserves the character's saved sheet mode, stable repeating-row identity, one-use submission, target privacy, CritAssist observation, and no-damage boundary.
+
+#### EffectAssist 2.5.0
+
+- Separates player casting into a compact caster step followed by recipient count.
+- Gives Bless direct choices for one, two, or three recipients and a separate Higher Level Casting screen for four through eleven recipients.
+- Standardizes every EffectAssist-owned official-2014 modifier label as `Bless (GA)`, `Guidance (GA)`, `Warding Bond (GA)`, or `Haste (GA)`.
+- Retains the established application, ownership, cleanup, overlap, GM-request, audit, cast-proposal, and duration boundaries.
+
+#### ConcentrationAssist 0.4.2
+
+- Revalidates a private HP-loss offer against the latest canonical resulting HP and current snapshot rather than requiring one exact event identifier.
+- Accepts equivalent linked sheet and token-bar evidence for the same HP transition while still refusing an offer after a genuine second HP change or ended concentration.
+
+#### AlmanacAssist 1.6.0
+
+- Advances announcement schema 4 so Date, Time, Season, Observances, Moon Phases, Weather, Climate, and Environment each independently use Off, Descriptive, Detailed, or Technical presentation.
+- Retains the Quick, Calendar, Travel, and Everything presets and adds one explicit campaign-default restoration path without changing fictional time or world state.
+- Replaces the placeholder region name with the generic **Temperate Lowlands** starter while preserving valid campaign-defined regions.
+- Treats an Environment override as the current scene and generated Weather as stored background state; the Weather screen identifies both and explains when stored weather resumes.
+- Repairs default Wayfarer draft recovery so malformed weekday state is replaced by the complete campaign Wayfarer definition rather than surviving the reset.
+
+#### Verification
+
+- JavaScript syntax parsing passes for the complete source.
+- The focused EffectAssist lifecycle and ownership harness passes 110 checks.
+- The focused Roll20 interaction and Almanac control harness passes 35 checks, including complete encoded queries, executable attack d20 modes, two-stage Bless targeting through eleven recipients, independent announcement fields, current-scene weather ownership, and Wayfarer default repair.
+- The complete AlmanacAssist time, climate, astronomy, weather, environment, rest, persistence, and boundary harness passes 107 checks.
+- The MECHSUITS structural audit and release-artifact identity checks pass.
+
+Live Roll20 acceptance remains the release gate for the native target prompts, official 2014 sheet rolls and workers, linked HP evidence, and chat-template rendering covered by this checkpoint.
+
+### Roll20 command-button and Almanac control repair — 2026-08-20
+
+This pre-release repair advances EffectAssist to 2.4.3 and AlmanacAssist to 1.5.0 while retaining AttackAssist 1.0.1 and GameAssist v2.0.0. It repairs Roll20-native target and query prompts at the shared button boundary, then applies the resulting controls to the effect, attack, calendar, astronomy, announcement, and rest workflows.
+
+#### Roll20 target and query buttons
+
+- Defers Roll20 target references, roll queries, ability calls, and bracketed rolls with the platform's documented HTML entities when GameAssist generates a command button.
+- Prevents `@{target|...}` from being evaluated while the Mod script renders a chat panel, which previously reduced `!attack`, `!attack-menu`, and `!bless` interactions to the visible output `{}`.
+- Restores the direct AttackAssist target picker, the direct Bless recipient picker, and AlmanacAssist context prompts without changing their existing authorization or one-use flow checks.
+- Keeps the correction in the shared `GameAssist.createButton()` boundary so later modules do not need separate escaping rules for the same Roll20 behavior.
+
+#### EffectAssist sheet labeling
+
+- Advances EffectAssist to 2.4.3.
+- Uses the compact label `Bless (GA)` for newly created GameAssist-owned Bless attack and saving-throw modifier rows.
+- Leaves unrelated and pre-existing campaign rows untouched; EffectAssist cleanup continues to rely on owned-row evidence rather than display-name deletion.
+- Excludes an effect already in its `ending` state from synchronous marker observations, preventing one EffectAssist-owned cleanup from entering the same effect twice or creating duplicate history records.
+
+#### Announcement presentation
+
+- Advances AlmanacAssist to 1.5.0 and announcement schema 3.
+- Adds four explicit presentation choices: **Off**, **Descriptive**, **Detailed**, and **Technical**.
+- **Off** suppresses delivery and provides a private GM confirmation or preview instead of posting a world announcement.
+- **Descriptive** translates the Wayfarer clock, exact temperature, wind speed, and visibility into player-perceivable language such as Highsun, Cool, Gentle breeze, and Visibility remains good.
+- Descriptive moon output identifies when configured moons are not visible because of daylight, cloud cover, or both.
+- **Detailed** keeps useful exact current-weather measurements without presenting a climate baseline as a second simultaneous temperature.
+- **Technical** retains the deeper weather, climate-likelihood, and environment context for GM reference while clearly separating current conditions from background context.
+- Renames the untouched placeholder climate region from `Home Region` to `Campaign Default`; valid campaign-renamed regions remain unchanged.
+
+#### Wayfarer calendar editing
+
+- Repairs Change Name, Change Starting Date, Change Clock, and combined name/date controls so each button opens the intended Roll20 context prompts.
+- Adds one atomic **Change Name and Starting Date** action. Invalid input preserves the complete prior draft rather than applying a partial identity change.
+- Keeps the starting hour and minute valid when the GM deliberately shrinks the calendar's hours-per-day or minutes-per-hour, and reports the adjustment in the resulting editor.
+- Keeps the draft starting period and day valid when the GM replaces the complete period list, selecting the corresponding new period when possible and otherwise using the first new period without silently moving dated dependents.
+- Replaces circular recovery buttons with direct retry prompts plus a separate route back to the focused editor.
+- Preserves the command-only campaign-default draft reset and leaves active fictional time unchanged during draft recovery.
+
+#### Astronomy and Rest controls
+
+- Adds direct per-moon Edit and Remove controls carrying the moon's internal identifier, plus an Add Moon prompt that does not ask the GM to discover or type an internal ID.
+- Adds equivalent direct controls for bounded rare celestial events.
+- Advances RestAlmanac state schema 2 with **Standard**, **Heroic**, **Gritty**, and bounded **Custom** duration profiles.
+- Shows the active Short, Long, and Extended Rest durations in the ordinary Rest screen.
+- Adds direct controls for custom house-rule rest types while retaining the existing preview, revalidation, and confirmed-write boundary.
+
+#### Verification
+
+- JavaScript syntax parsing passes for the complete source.
+- The focused Roll20-style interaction harness passes 28 checks covering direct `!bless`, `!attack`, and `!attack-menu` target paths, deferred native prompts, Off/Descriptive/Detailed/Technical announcements, daylight/cloud moon visibility, Wayfarer identity and clock edits, direct moon controls, rest-rule profiles, Climate navigation, and Environment editing.
+- The complete focused harnesses also pass 108 EffectAssist lifecycle/ownership checks and 107 AlmanacAssist time, climate, astronomy, weather, environment, rest, persistence, and boundary checks.
+- Live Roll20 acceptance remains required because native target and query prompts are expanded by Roll20's chat parser rather than the local harness.
+
+An editable Almanac import handout is not included in this repair. Importing nested calendar, moon, climate, weather, environment, and rest data requires a versioned schema, validation preview, and explicit confirmation so a handout typo cannot partially replace campaign chronology.
+
+### Focused interaction and Almanac usability repair — 2026-08-19
+
+This pre-release repair advances EffectAssist to 2.4.2, AttackAssist to 1.0.1, and AlmanacAssist to 1.4.0 without changing GameAssist's v2.0.0 release number or adding MECHSUITS section tags.
+
+#### EffectAssist direct caster targeting
+
+- Replaces the generated `!Effect-Targets --effect ... --source ...` caster hop with source-bound recipient buttons on the caster-selection screen.
+- Places each valid controlled caster beside the recipient counts supported by the selected effect. One click now chooses that caster and invokes Roll20's native target prompt.
+- Keeps source and effect authority in a short-lived opaque flow instead of placing raw source identifiers in the generated recipient command.
+- Preserves the separate **Ask the GM** path for hidden, off-page, or unusually broad player targeting.
+- Retains the older `!Effect-Targets` route for compatibility and recovery, but no ordinary EffectAssist screen depends on it.
+
+#### AttackAssist direct target selection
+
+- Replaces the generated `!Attack-Target --flow ...` intermediate screen with a **Choose Target** button beside each verified repeating attack.
+- The attack button now invokes Roll20's native target prompt directly and continues into the established attack review and one-use roll choices.
+- Keeps duplicate-name numbering, stable repeating-row identity, player-bound flow validation, and private **Ask The GM** requests unchanged.
+- Retains `!Attack-Target` as a compatible route without making the normal attack workflow depend on it.
+
+#### Wayfarer time presentation
+
+- Removes AM/PM from the active Wayfarer display.
+- Presents the campaign clock as the 1st through 20th Hour and identifies First Light, Morningtide, Highsun, Waning Hours, Evening's Crest, Nightfall, and Deep Night.
+- Identifies Dawn near the 2nd Hour, Midday near the 7th, Dusk near the 12th, and Midnight near the 17th.
+- Generated Wayfarer exact-time and starting-time prompts accept the human-facing 1st-through-20th Hour while preserving the existing zero-based stored chronology and command compatibility.
+
+#### Announcement, Climate, and Environment controls
+
+- Expands announcements from a quick/full switch to **Quick**, **Calendar**, **Travel**, and **Everything** presets.
+- Adds a custom announcement heading and individual inclusion controls for date, time, season, observances, moon phases, weather, climate, and environment.
+- Keeps previews private and quietly omits a requested field when its owning Almanac system has no current value.
+- Rebuilds the Climate opening screen around the current region, readable conditions, direct region switching, and focused **Manage Regions** and **Climate Types** destinations.
+- Rebuilds the Environment opening screen around current context, individual quick presets, a focused one-field custom editor, and a separate technical-detail screen.
+
+#### Focused verification
+
+- JavaScript syntax passes.
+- MECHSUITS validation passes for all 32 framed sections with an exact canonical tree.
+- Fourteen Roll20-style harness checks pass for multi-caster Bless targeting, direct attack targeting, Wayfarer clock language, announcement configuration, Climate navigation, and focused Environment editing.
+- Live Roll20 acceptance remains required for the native target prompts and final chat presentation.
 
 ### Post-smoke repair pass — 2026-08-16
 
@@ -471,6 +613,27 @@ This pre-release repair pass advances EffectAssist to 2.4.1, ConcentrationAssist
 - Expands AlmanacAssist's MECHSUITS decision log to record direct-versus-guided editing, cross-year seasonal storage, Astronomy ownership of moon data, command-only draft recovery, and alias reuse of existing handlers.
 - Records the related ConfigUI, command-interface, and shared-utility decisions for service-first alphabetical grouping and bounded chat summaries while retaining complete snapshot evidence.
 - Keeps `GameAssist`, `GameAssist-v2.0.0`, and `GameAssist.js` byte-identical after the correction.
+
+### AlmanacAssist 1.3.0 action-first controls and focused Wayfarer navigation
+
+- Advances AlmanacAssist from 1.2.0 to 1.3.0 without changing its calendar-state schema or Wayfarer draft schema.
+- Rebuilds `!aa-gm` around the actions used during play: the current fictional moment; quick and chosen date/time advances; exact date/time setting; calendar selection; Wayfarer access; announcement preview and delivery; weather, moons, climate, environment, and rest.
+- Moves system toggles, status, audit, and long-form reference material behind **More Almanac Tools** so routine use no longer gives technical evidence the same visual priority as table actions.
+- Makes exact-time prompts derive their valid hour and minute ranges from the active calendar. The campaign Wayfarer Calendar therefore offers hours 0-19 and minutes 0-74 instead of Gregorian clock bounds.
+- Adds bounded announcement settings for public or GM-only delivery and quick or full world detail. `!aa-preview` always remains private, while `!aa-announce` follows the saved audience setting.
+- Preserves the earlier public-summary behavior as the fallback for missing or malformed announcement configuration and self-heals that known configuration branch during module initialization.
+- Lets the calendar chooser activate the last saved complete Wayfarer calendar directly after confirmation, without requiring the GM to revisit draft-construction screens.
+- Rebuilds the Wayfarer home around **Use**, **Edit Calendar**, **Start From a Copy**, **Details**, **Recovery**, and **Help**. Focused component editors show only their current value and relevant controls.
+- Moves teaching examples and terminology behind **Explain This**, structural evidence behind **Details**, and rollback/reset guidance behind **Recovery**. The complete worked calendar example remains available in the generated AlmanacAssist manual.
+- Retains draft/live separation, atomic validation, explicit activation, elapsed-fictional-time preservation, one rollback point, command-only default-draft recovery, Astronomy ownership of moon cycles, and all six independently controlled Almanac systems.
+- Adapts the useful owner-versus-presentation and focused-editor principles from the standalone campaign-calendar proof of concept and Fantasy Calendar's documented interface model to Roll20 chat controls; no external calendar service or runtime dependency is introduced.
+
+### MECHSUITS version-evidence verification
+
+- Rechecks all 32 framed sections for paired tags, proper physical nesting, present parents, canonical-tree agreement, owner-authoritative codename and area metadata, `last_updated_version`, and required **Notes & Comments** footers.
+- Confirms the current AlmanacAssist banner inventory, section metadata, runtime constant, startup message, generated manual, README, roadmap, smoke test, and package description identify the 1.3.0 checkpoint; older 1.0.0-1.2.0 references remain only where they document historical changes.
+- Corrects CombatAssist's isolated runtime version display from 1.1.1 to the owner-authoritative 1.1.0 already recorded by its section metadata, release inventory, and changelog. This maintenance correction changes no encounter behavior.
+- Keeps the canonical tree and section-tag inventory unchanged because no section was added, removed, moved, or renamed.
 
 ### ClimateAlmanac
 

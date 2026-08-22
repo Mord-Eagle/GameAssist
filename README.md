@@ -74,10 +74,10 @@ GameAssist’s kernel and bundled modules expose:
 * **InitiativeAssist** – provides the case-insensitive `!Init-` command family for D&D 5E 2014 and 2024 characters, public player invitations, composable roll options, detailed dice/formula results, score-aware optional narration, selective rerolls, encounter groups, audits, and preservation-first `!Init-RR`. It does not advance turns or own encounter rounds.
 * **CombatAssist** – provides the case-insensitive `!Combat-` command family as an optional layer over Roll20's native Turn Tracker. Native arrows remain available; a recognized native round-counter row can own the round number, while guarded movement, stale-safe timers, native pings, private player prompts, preserved-round maintenance, and one-step recovery add convenience. TurnTrackerService is required for tracker access; timers never advance initiative and pings never alter tokens.
 * **WelcomeAssist** – optionally posts one delayed table greeting after GameAssist completes a healthy startup. It starts disabled, offers professional, built-in table-humor, campaign-custom, and mixed greeting modes, keeps configuration and previews private to the GM, and uses the short case-insensitive `!Welcome` / `!Welcome-Action` command family.
-* **EffectAssist** – starts disabled and coordinates a focused catalog of source-aware effects for the official 2014 sheet. Bless, Guidance, Warding Bond, and Haste receive supported marker and sheet automation; Holy Weapon and Pass Without a Trace are explicitly labeled tracked/manual effects. A uniquely labeled EffectAssist-owned Guidance row may end exactly one unambiguous active Guidance after a supported 2014 sheet skill check; unsupported checks, ambiguous evidence, pre-existing rows, and edited rows retain the explicit **Use Guidance** action. Players may cast built-ins from controlled sources unless the GM locks that path. An unambiguous official 2014 Bless card can create a private GM proposal without choosing recipients or applying anything automatically. Overlapping sources remain independently removable, pre-existing state remains campaign-owned, and audit never writes without fresh confirmation.
+* **EffectAssist** – starts disabled and coordinates a focused catalog of source-aware effects for the official 2014 sheet. Bless, Guidance, Warding Bond, and Haste receive supported marker and sheet automation; Holy Weapon and Pass Without a Trace are explicitly labeled tracked/manual effects. Every EffectAssist-owned 2014 modifier uses the compact `(GA)` label convention. A uniquely labeled Guidance row may end exactly one unambiguous active Guidance after a supported 2014 sheet skill check; unsupported checks, ambiguous evidence, pre-existing rows, and edited rows retain the explicit **Use Guidance** action. Players may cast built-ins from controlled sources unless the GM locks that path. The player chooses a caster first and then a recipient count; Bless offers one to three recipients directly and a separate Higher Level Casting choice for four to eleven. An unambiguous official 2014 Bless card can create a private GM proposal without choosing recipients or applying anything automatically. Overlapping sources remain independently removable, pre-existing state remains campaign-owned, and audit never writes without fresh confirmation.
 * **HealAssist** – starts disabled and guides an authorized 2014 healer through supported spells, potions, or a bounded manual formula. It rolls once, shows the exact current, proposed, and maximum HP for every recipient, waits for a one-use confirmation, and applies verified HealthService writes. Visible PCs can be selected without granting token control; NPC, GM-layer, and off-page healing is reviewed privately by the GM.
-* **AttackAssist** – starts disabled and guides an authorized official-2014 character through a verified repeating attack, a native visible-target choice, optional sheet/normal/advantage/disadvantage mode, and one-use familiar roll. Hidden or off-page placement stays with the GM, and the module never applies damage or changes combat state.
-* **AlmanacAssist** – starts disabled and combines six independently controlled internal systems: Time, Climate, Astronomy, Weather, Environment, and Rest. Common actions use short commands such as `!date`, `!weather`, and `!rest`; deeper setup stays behind focused screens and one stable manual handout.
+* **AttackAssist** – starts disabled and guides an authorized official-2014 character through a verified repeating attack, a compact native visible-target choice, optional sheet/normal/advantage/disadvantage mode, and one-use familiar roll. Explicit modes materialize their own d20 expressions instead of depending on a hidden character attribute named `d20`. Hidden or off-page placement stays with the GM, and the module never applies damage or changes combat state.
+* **AlmanacAssist** – starts disabled and combines six independently controlled internal systems: Time, Climate, Astronomy, Weather, Environment, and Rest. Wayfarer uses its own ordinal 20-hour clock and named daily periods rather than AM/PM. Each announcement field may independently be Off, Descriptive, Detailed, or Technical, while Quick, Calendar, Travel, Everything, and restored campaign defaults make common combinations fast. Weather distinguishes the current scene from stored generated weather whenever the GM applies an Environment override, and the generic starter region is **Temperate Lowlands** rather than a campaign placeholder. Direct calendar, moon, and rest-rule controls keep common changes prominent while deeper setup remains available on focused screens.
 * **MECHSUITS Structure** – the executable script uses the literal codename `GAMEASSIST`, framed sections, file-scoped canonical tree metadata, and per-section change notes.
 
 **Design goal:** useful, inspectable campaign automation that reports failures clearly and can be upgraded incrementally.
@@ -151,7 +151,7 @@ Run these commands after every update:
 !Attack-Status
 !Attack-Audit
 !ga-enable AlmanacAssist
-!Almanac-GM
+!aa-gm
 !Almanac-Status
 !Almanac-Audit
 ```
@@ -167,10 +167,10 @@ Then perform thirteen real actions:
 7. Put a PC, a living NPC, and a custom round/counter row in Roll20's Turn Tracker; run `!Init-RR` and verify only the two characters reroll.
 8. Start CombatAssist, move the native tracker through one complete forward cycle, move back once, remove or add one disposable combatant, and verify the round survives the native edit while row contents remain intact. Preview one restore before ending the test.
 9. If WelcomeAssist will be used, enable it, preview a greeting, reload the sandbox, and verify exactly one public greeting appears.
-10. With linked 2014 PC source and target tokens, test Bless and Guidance. Verify Bless's markers and global attack/save rows, then verify one ordinary sheet skill check using the uniquely labeled `Guidance (GameAssist)` row ends exactly that Guidance instance. Unsupported or ambiguous checks must retain the manual **Use Guidance** action. Clear concentration and verify all EffectAssist-owned projections are removed. Repeat the Bless overlap test with two sources before release approval.
+10. With linked 2014 PC source and target tokens, test Bless and Guidance. Verify Bless's markers and global attack/save rows, then verify one ordinary sheet skill check using the uniquely labeled `Guidance (GA)` row ends exactly that Guidance instance. Unsupported or ambiguous checks must retain the manual **Use Guidance** action. Clear concentration and verify all EffectAssist-owned projections are removed. Repeat the Bless overlap test with two sources before release approval.
 11. Enable HealAssist, damage a disposable 2014 PC, run `!Heal`, complete one supported healing review, and confirm that HP changes only after the one-use confirmation. Repeat with an NPC and verify that its HP and result remain GM-private.
 12. Enable AttackAssist, select a controlled 2014 PC with two repeating attacks, run `!Attack`, choose a visible target the player does not control, and submit one Normal or Advantage roll. Confirm the familiar roll appears once, CritAssist reacts once to a natural 1, and no target HP or combat state changes.
-13. Enable AlmanacAssist, open `!Almanac-GM`, advance one fictional day, generate weather, choose an environment preset, and preview a Short Rest on a disposable linked 2014 PC. Confirm the six internal systems can be turned off independently without erasing their saved settings.
+13. Enable AlmanacAssist, open `!aa-gm`, test one quick advance, one private announcement preview, and direct saved-Wayfarer selection, then generate weather, choose an environment preset, and preview a Short Rest on a disposable linked 2014 PC. Confirm the six internal systems can be turned off independently without erasing their saved settings.
 
 ---
 
@@ -986,17 +986,17 @@ Config keys: `enabled` and `allowPlayerAttacks`. Source choices, retained reques
 
 ### 6.15 AlmanacAssist *(optional, GM-managed world context and deliberate rests)*
 
-> **Module version:** `1.2.0`<br>
+> **Module version:** `1.3.0`<br>
 > **Default:** Disabled<br>
 > **Launch sheet for RestAlmanac:** Official D&D 5E by Roll20 2014 PC sheet. Time, Climate, Astronomy, Weather, and Environment do not require a character sheet.
 
-AlmanacAssist is one GameAssist module containing six independently controlled systems. They share useful context when available, but none is a hidden prerequisite for another: Weather can operate from its own fallbacks, Environment can use a manual override without Weather, Astronomy can use a manual day and season without Time, and Rest can operate without advancing fictional time.
+AlmanacAssist is one GameAssist module containing six independently controlled systems. Its GM control center is organized for play: current world time, common advances, exact date setting, calendar selection, announcement controls, and current-world tools appear first; setup, diagnostics, and technical reference are available through focused screens. The systems share useful context when available, but none is a hidden prerequisite for another: Weather can operate from its own fallbacks, Environment can use a manual override without Weather, Astronomy can use a manual day and season without Time, and Rest can operate without advancing fictional time.
 
 Start here:
 
 ```roll20chat
 !ga-enable AlmanacAssist
-!Almanac-GM
+!aa-gm
 !Almanac-Systems
 ```
 
@@ -1011,20 +1011,25 @@ Start here:
 
 Main commands:
 
-* `!Almanac`, `!aa`, `!Almanac-GM`, `!Almanac-DM`, or `!Almanac-Menu` → Open the private AlmanacAssist control center.
+* `!Almanac`, `!aa`, `!aa-gm`, `!aa-dm`, `!Almanac-GM`, `!Almanac-DM`, or `!Almanac-Menu` → Open the private, action-first AlmanacAssist control center.
+* `!aa-preview` → Privately preview the date/time announcement exactly as configured.
+* `!aa-announce` → Send the configured announcement to public chat or the GM.
+* `!aa-announcement-settings` → Choose Off, Descriptive, Detailed, or Technical presentation, public or GM-only delivery, an information preset, and a custom heading.
+* `!aa-announcement-fields` → Give date, time, season, observances, moon phases, weather, climate, and environment their own Off, Descriptive, Detailed, or Technical presentation.
+* `!aa-more` → Open system toggles, status, audit, and reference tools that are intentionally kept off the daily-use screen.
 * `!Almanac-Systems` → Turn any of the six internal systems on or off without deleting its valid settings or history.
 * `!Almanac-Status` → Review current system availability and compact world context.
 * `!Almanac-Audit` → Run a read-only health review across all six systems.
 * `!Almanac-Guide` or `!Almanac-Help` → Open the compact navigation guide.
 * `!Almanac-Manual` → Create or update one stable AlmanacAssist user-manual handout.
-* `!aa-wayfarer` → Open the direct Wayfarer Calendar Manager.
+* `!aa-wayfarer` → Open the compact Wayfarer home for using the saved calendar, editing a draft, previewing, activating, copying, or recovering.
 * Focused systems also accept standard, case-insensitive role and reference routes with a hyphen or space, such as `!Weather-GM`, `!weather dm`, `!Weather-Help`, `!Weather-Status`, and `!Weather-Audit`. The same pattern applies to Time, Calendar, Wayfarer, Climate, Astronomy, Environment, and Rest.
 
 ### Build A Custom Wayfarer Calendar
 
 Wayfarer is for campaign worlds whose calendar does not match Standard, Solamnic, or Harptos. Setup uses a saved draft, so you can stop, check your notes, and return later without changing the calendar or date currently shown to players.
 
-Open `!aa-wayfarer` to reach the **Wayfarer Calendar Manager**. The manager gives direct access to every calendar component, so changing one holiday or season does not require stepping through unrelated screens:
+Open `!aa-wayfarer` to reach the compact **Wayfarer Calendar** home. **Use Wayfarer** switches directly to the last saved Wayfarer definition with one confirmation; it does not force an already usable calendar through draft construction. Choose **Edit Calendar** only when changing the draft. The focused edit menu gives direct access to every calendar component, so changing one holiday or season does not require stepping through unrelated screens:
 
 1. **Name, Clock & Start** manages the calendar name, fictional clock, and first-activation date.
 2. **Weekdays** stores the repeating weekday names in order.
@@ -1035,9 +1040,9 @@ Open `!aa-wayfarer` to reach the **Wayfarer Calendar Manager**. The manager give
 7. **Seasons** accepts `Name:StartPeriod:StartDay:EndPeriod:EndDay`; a range may cross the year boundary, but ranges may not overlap.
 8. **Preview Draft** and **Review and Activate** show the complete result before it can replace the active display.
 
-A **Continue Guided Review** button remains available for a first-time build. Every editor returns directly to the manager, and invalid edits leave the prior valid draft and active calendar unchanged.
+A **Continue Guided Review** button remains available for a first-time build. Routine editors return to the focused **Edit Calendar** menu. Examples and terminology are available through each editor's **Explain This** button instead of occupying space during every change. Invalid edits leave the prior valid draft and active calendar unchanged.
 
-**Starting from an existing calendar:** A fresh Wayfarer draft begins with the campaign's complete **Wayfarer Calendar**: its 20-hour clock, 75-minute hours, ten named weekdays, twelve months, five festival periods, four dated seasonal observances, and four season ranges. The setup home can also copy Standard, built-in Solamnic, Harptos, or the saved Wayfarer definition into the draft. The copy is fully editable and does not become active until you confirm it. Wayfarer supports one repeating leap interval, so a Standard copy uses a four-year leap day and does not reproduce Gregorian century exceptions.
+**Starting from an existing calendar:** A fresh Wayfarer draft begins with the campaign's complete **Wayfarer Calendar**: its 20-hour clock, 75-minute hours, ten named weekdays, twelve months, five festival periods, four dated seasonal observances, and four season ranges. The **Start From a Copy** screen can also copy Standard, built-in Solamnic, Harptos, or the saved Wayfarer definition into the draft. The copy is fully editable and does not become active until you confirm it. Wayfarer supports one repeating leap interval, so a Standard copy uses a four-year leap day and does not reproduce Gregorian century exceptions.
 
 **Default Wayfarer year:** The ordinary year contains 460 days. Celestia's Embrace opens the year transition before Newkolt; Meltwater's Merriment follows Deepkolt; Verdant Rebirth follows Brookgreen; Starwatch follows Fleurgreen; and Glowfest follows Reapember. These festival periods do not advance the ordinary weekday cycle. The default seasons and equinox/solstice dates follow the campaign briefing exactly, including Frosthold crossing the year boundary from Frostkolt 11 through Deepkolt 40.
 
@@ -1047,13 +1052,17 @@ A **Continue Guided Review** button remains available for a first-time build. Ev
 
 **Editing an active Wayfarer calendar:** GameAssist preserves elapsed fictional time and shows how the revised calendar interprets that moment. If the draft cannot represent the current elapsed time, activation stops without changing anything and offers a separately labeled option to restart at the draft's chosen starting date.
 
-**Undo and recovery:** **Discard Draft** removes only unactivated edits. Every successful activation also keeps one previous calendar-and-time checkpoint, available through **Restore Previous Activation** until another activation replaces it. The command-only recovery path `!aa-wayfarer reset-default --confirm yes` replaces the saved draft with the campaign Wayfarer default without changing the active calendar or fictional time; it is intentionally not exposed as a chat button.
+**Undo and recovery:** **Recovery Options** contains **Discard Draft Changes** for unactivated edits. Every successful activation also keeps one previous calendar-and-time checkpoint, available through **Restore Previous Activation** until another activation replaces it. The command-only recovery path `!aa-wayfarer reset-default --confirm yes` replaces the saved draft with the campaign Wayfarer default without changing the active calendar or fictional time; it is intentionally not exposed as a chat button.
 
 The AlmanacAssist manual created by `!Almanac-Manual` explains weekdays, periods, festival days, leap rules, holidays, seasonal ranges, activation, rollback, and recovery, and includes a complete worked example.
 
 TimeAlmanac never changes GameAssist's real-world table timezone, log timestamps, or NPCAssist Session dates. Moving fictional time backward or setting an exact date requires explicit confirmation and records the change; it does not attempt to reverse weather, effects, rests, or other past events.
 
-Current moon phases are visible from the Almanac control center, the current date/time panel, and the Wayfarer manager. Moon cycles, offsets, and phase names are managed through Astronomy because they are world context that continues when the GM changes only the calendar display.
+Current moon phases are visible from the current date/time panel, a full announcement preview, and **Wayfarer Calendar Details**. Descriptive announcements report when a moon is not visible because of daylight or cloud cover. Moon cycles, offsets, and phase names are managed through direct Astronomy add/edit controls because they are world context that continues when the GM changes only the calendar display.
+
+RestAlmanac supports Standard, Heroic, Gritty, and bounded Custom rest durations. Those settings change the fictional duration of a Short, Long, or Extended Rest; the selected recovery type still determines which verified 2014-sheet fields are restored.
+
+Announcement settings prioritize easy presets without forcing every campaign into the same report. **Quick** shares date, time, and season; **Calendar** adds observances and moon phases; **Travel** adds weather, climate, and environment; **Everything** includes every available field. The GM may also choose individual fields and a custom heading. Unavailable systems are quietly omitted, preview is always private, and preview changes no state.
 
 Weather forecasts do not silently replace current weather. A locked or manually chosen condition remains authoritative until the GM unlocks or replaces it. Astronomy keeps deterministic moon/daylight calculations separate from weighted rare-event suggestions, so adding a comet or omen never changes the underlying calendar result.
 
@@ -1061,7 +1070,7 @@ RestAlmanac is deliberately transactional. The preview identifies every selected
 
 Disabling AlmanacAssist stops every Almanac command and write while preserving valid settings and history. Disabling one internal system stops only that system. Re-enable it and use `!Almanac-Status` or `!Almanac-Audit` before continuing.
 
-Config keys: `enabled`; protected `submodules`, `wayfarer`, `wayfarerDraft`, `climate`, `astronomy`, `weather`, `environment`, and `rest` branches. Structured Almanac settings are changed through the guided Almanac screens so nested data is validated as a complete operation. The single activation rollback point stays in runtime history and is not included in configuration snapshots.
+Config keys: `enabled`; protected `submodules`, `wayfarer`, `wayfarerDraft`, `climate`, `astronomy`, `weather`, `announcement`, `environment`, and `rest` branches. Structured Almanac settings are changed through the guided Almanac screens so nested data is validated as a complete operation. The single activation rollback point stays in runtime history and is not included in configuration snapshots.
 
 ---
 
@@ -1212,7 +1221,8 @@ All GameAssist command paths are case-insensitive, and spaces or hyphens between
 |  | `!Attack-Requests` | GM only | Review retained player requests for hidden, GM-layer, or off-page targets without exposing their identities to the player. |
 |  | `!Attack-Players on\|off` | GM only | Allow or lock player-guided attacks without disabling GM use. |
 |  | `!AttackAssist-<command>` | case-insensitive compatibility family | Open the same guarded AttackAssist controls. Generated source, target, review, request, and roll commands are short-lived one-use UI capabilities. |
-| **Almanac** | `!Almanac` / `!aa` / `!Almanac-GM` / `!Almanac-DM` / `!Almanac-Menu` | GM only | Open the private master control center for all six AlmanacAssist systems. |
+| **Almanac** | `!Almanac` / `!aa` / `!aa-gm` / `!aa-dm` / `!Almanac-GM` / `!Almanac-DM` / `!Almanac-Menu` | GM only | Open the private, action-first campaign-world controls for all six AlmanacAssist systems. |
+|  | `!aa-preview` / `!aa-announce` / `!aa-announcement-settings` / `!aa-announcement-fields` / `!aa-more` | GM only | Preview privately, deliver the configured world announcement, choose its audience, heading, preset, or independent per-field presentation, or open setup and diagnostics. |
 |  | `!Almanac-Systems` / `!Almanac-Status` / `!Almanac-Audit` | GM only | Manage internal-system availability, review compact context, or run a read-only six-system audit. |
 |  | `!Almanac-Guide` / `!Almanac-Help` / `!Almanac-Info` / `!Almanac-Manual` | — | Open compact guidance, explain system boundaries, or create/update the stable manual handout. |
 |  | `!date` / `!time` / `!cal` / `!aa-time` | TimeAlmanac enabled | Read or deliberately manage the fictional calendar and clock. Players receive the read-only current date/time view. |
@@ -2420,7 +2430,7 @@ IV. **Enable and Prove EffectAssist Deliberately**
 !Effect-Audit
 ```
 
-Use disposable linked 2014 PC tokens for one complete Bless lifecycle, two overlapping Bless sources, one final cleanup, one pre-existing-marker preservation check, and one manual marker-removal audit/repair cycle. Confirm that Bless creates `Bless (GameAssist)` rows in the target's global attack and saving-throw modifiers, establishes concentration on the source, and removes only owned state when concentration ends. Other Mods that create, edit, or remove global attack, saving-throw, or AC modifier rows can overlap EffectAssist's Bless, Warding Bond, or Haste projections; let one tool own each effect row and audit after testing overlapping automation.
+Use disposable linked 2014 PC tokens for one complete Bless lifecycle, two overlapping Bless sources, one final cleanup, one pre-existing-marker preservation check, and one manual marker-removal audit/repair cycle. Confirm that Bless creates compact `Bless (GA)` rows in the target's global attack and saving-throw modifiers, establishes concentration on the source, and removes only owned state when concentration ends. Other Mods that create, edit, or remove global attack, saving-throw, or AC modifier rows can overlap EffectAssist's Bless, Warding Bond, or Haste projections; let one tool own each effect row and audit after testing overlapping automation.
 
 V. **Enable and Prove HealAssist Deliberately**
 
@@ -2448,12 +2458,12 @@ VII. **Enable and Prove the Complete Almanac Deliberately**
 
 ```roll20chat
 !ga-enable AlmanacAssist
-!Almanac-GM
+!aa-gm
 !Almanac-Status
 !Almanac-Audit
 ```
 
-Advance one fictional day, verify the active calendar, create or edit one climate region, review moon/daylight context, generate and lock weather, inspect the resulting environment, and preview a rest on a disposable linked 2014 PC. Turn each internal system off and back on once and confirm its valid settings remain. Complete the full AlmanacAssist smoke track before approving v2.0.0.
+Confirm the action-first dashboard exposes quick/exact chronology controls, calendar selection, private preview, configured announcement delivery, World Today, and More. Use the saved Wayfarer calendar directly, confirm its 20-hour/75-minute exact-time bounds, then create or edit one climate region, review moon/daylight context, generate and lock weather, inspect the resulting environment, and preview a rest on a disposable linked 2014 PC. Turn each internal system off and back on once and confirm its valid settings remain. Complete the full AlmanacAssist smoke track before approving v2.0.0.
 
 VIII. **Run the Release Smoke Test**
 
@@ -2550,17 +2560,17 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 | Item | Status in v2.0.0 | Notes |
 | --- | --- | --- |
 | MarkerService | **Implemented and accepted** | One toggleable service owns GameAssist marker resolution, mutation, preservation, and observation. Disabling it turns off dependent modules without disabling unrelated features. |
-| Bundled marker consumers | **Migrated** | NPCAssist 1.4.0, ConcentrationAssist 0.4.1, and DebugTools 0.3.0 no longer require standalone TokenMod. ConcentrationAssist exposes the lifecycle contract used by EffectAssist and optional private HealthService check offers; supported applied DebugTools damage supplies verified test evidence. |
+| Bundled marker consumers | **Migrated** | NPCAssist 1.4.0, ConcentrationAssist 0.4.2, and DebugTools 0.3.0 no longer require standalone TokenMod. ConcentrationAssist exposes the lifecycle contract used by EffectAssist and optional private HealthService check offers; equivalent linked sheet/token evidence no longer invalidates an otherwise current offer, while a real second HP change still does. Supported applied DebugTools damage supplies verified test evidence. |
 | ConditionAssist 1.0.4 | **Implemented and accepted** | Condition references with `!condition` and case-insensitive `!cond-<condition>` commands, accurate selected-token recognition, current-page condition/marker status, selectable 2014/2024 SRD wording, campaign edits, marker artwork, verified marker-toggling announcements, validated legacy import, MarkerService synchronization, compact navigation, GM/DM control aliases, and the shared Roll20 default-template presentation. |
 | TokenAssist 1.0.5 | **Implemented and accepted** | General token controls with `!token-assist` and `!ta`/`!ta-*` commands, temporary support for older `!token-mod` macros, MarkerService-backed markers, token-change observation, clear compatibility limits, duplicate-install protection, an action-focused GM/DM screen, a stable manual, and the shared Roll20 default-template presentation. |
 | Integrated architecture stabilization | **Complete** | Upgrade, migration, lifecycle, command, marker, documentation, and Roll20 sandbox checks passed under Issues #28 and #29. |
 | DM-configurable timezone | **Implemented; focused acceptance passed** | One validated table timezone controls readable timestamps and date-managed NPC Sessions while stored event instants remain absolute. The complete live module suite was not rerun for v0.1.5.1. |
 | TurnTrackerService 1.0.0 | **Implemented; live foundation passed** | Toggleable native-tracker snapshots, structural row classification, guarded lossless writes, observations, dependency cascading, and visible page-owned row creation passed the focused Roll20 checkpoint. |
 | SemanticEvents 1 | **Implemented; local contract checks passed** | Immutable, versioned, direct-delivery domain events let optional modules interoperate without hard dependencies, persistence, replay, or implicit queueing. |
-| EffectAssist 2.4.1 | **v2.0.0 sandbox candidate** | Applies supported 2014-sheet rows through sheet workers, removes them through the same worker-safe path, defaults to direct application and one concentration effect per source, offers optional review and advanced multiple-concentration settings, separates automated and tracked-only effects, links final target-marker removal to effect cleanup, and retains the established player, audit, repair, cast-proposal, and duration workflows. Live Roll20 acceptance remains required. |
+| EffectAssist 2.5.0 | **v2.0.0 sandbox candidate** | Applies supported 2014-sheet rows through sheet workers, separates player caster selection from recipient count, offers Bless totals of 1-3 plus a higher-level 4-11 menu, uses compact `(GA)` labels for every owned 2014 row, removes projections through the same worker-safe path, defaults to direct application and one concentration effect per source, and retains the established player, audit, repair, cast-proposal, and duration workflows. Live Roll20 acceptance remains required. |
 | HealAssist 1.0.0 | **v2.0.0 sandbox candidate** | Disabled-by-default guided official-2014 healing with authorized sources, visible-PC targeting, retained private placement requests, exact roll and HP review, one-use confirmation, and verified HealthService writes is ready for focused Roll20 testing. |
-| AttackAssist 1.0.0 | **v2.0.0 sandbox candidate** | Disabled-by-default official-2014 repeating-attack guidance with stable row identity, native visible targeting, retained private placement requests, sheet/normal/advantage/disadvantage modes, one-use rolls, and no damage or combat-state writes is ready for focused Roll20 testing. |
-| AlmanacAssist 1.2.0 | **v2.0.0 sandbox candidate** | Disabled-by-default Time, Climate, Astronomy, Weather, Environment, and Rest systems are implemented together with a direct Wayfarer Calendar Manager, retained guided review, editable seasonal ranges, visible moon phases, focused command aliases, standalone fallbacks, bounded state/history, a shared manual, read-only audits, semantic events, and transactional 2014-sheet rest safeguards. |
+| AttackAssist 1.0.2 | **v2.0.0 sandbox candidate** | Disabled-by-default official-2014 repeating-attack guidance with stable row identity, compact direct native visible targeting, retained private placement requests, executable sheet/normal/advantage/disadvantage modes that do not require a persisted `d20` attribute, one-use rolls, and no damage or combat-state writes is ready for focused Roll20 testing. |
+| AlmanacAssist 1.6.0 | **v2.0.0 sandbox candidate** | Disabled-by-default Time, Climate, Astronomy, Weather, Environment, and Rest systems are implemented together with a Wayfarer-native 20-hour display, independent Off/Descriptive/Detailed/Technical choices for every announcement field, player-perceivable moon visibility, a real generic Temperate Lowlands seed, explicit scene-override versus stored-weather presentation, repaired direct calendar queries and recovery, Standard/Heroic/Gritty/Custom rest controls, bounded state/history, read-only audits, semantic events, and transactional 2014-sheet rest safeguards. |
 | InitiativeAssist 1.0.4 | **Implemented and accepted** | Mixed 2014/2024 initiative, public and private GM/DM start pages, private NPC evidence, GM-layer NPC batches, selected-character batches, roll options, selective rerolls, encounter groups, status, audit, compact navigation, and a stable manual through the case-insensitive `!Init-` namespace. |
 | CombatAssist 1.1.0 | **v2.0.0 integration candidate** | The accepted optional native-tracker layer retains native round-counter authority, conservative fallback rounds, preserved-round roster/reroll adoption, recovery, guarded movement, timers, pings, and GM/DM controls while adding immutable accepted-progression events for optional duration consumers. TurnTrackerService remains its only baseline prerequisite. |
 | WelcomeAssist 0.1.5 | **Implemented and accepted** | Disabled-by-default post-bootstrap greeting with professional, built-in, campaign-custom, and mixed modes; private preview/configuration; bounded custom text; health-gated one-per-sandbox automatic output; shared Roll20-template controls; GM/DM status controls; a stable manual; short `!Welcome` commands; and retained `!welcome-assist` compatibility. The public greeting card remains intentionally distinct from private controls. |
@@ -2573,7 +2583,7 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 
 ### 17.2 Current Candidate: v2.0.0 Gameplay and Campaign Foundations
 
-The v2.0.0 candidate keeps four disabled-by-default modules on one development line. EffectAssist 2.4.1 supplies source-aware 2014-sheet effects, direct application with optional review, worker-safe projection cleanup, one-concentration-by-default behavior, bounded Bless proposals, guarded Guidance consumption, duration candidates, retained GM requests, and a direct GM casting surface. HealAssist 1.0.0 adds a guarded roll-review-confirm path for supported official-2014 healing. AttackAssist 1.0.0 adds stable official-2014 repeating-attack selection and native targeting without resolving damage. AlmanacAssist 1.2.0 must pass as a complete six-system module before v2.0.0 can ship, including the direct Wayfarer Calendar Manager, retained guided review, campaign-specific clock, feast periods, holidays, editable seasonal ranges, moon-phase visibility, focused aliases, and command-only draft recovery.
+The v2.0.0 candidate keeps four disabled-by-default modules on one development line. EffectAssist 2.5.0 supplies source-aware 2014-sheet effects, separate caster and recipient-count steps, Bless support through eleven recipients, compact `(GA)` owned rows, direct application with optional review, worker-safe projection cleanup, one-concentration-by-default behavior, bounded Bless proposals, guarded Guidance consumption, duration candidates, retained GM requests, and a direct GM casting surface. HealAssist 1.0.0 adds a guarded roll-review-confirm path for supported official-2014 healing. AttackAssist 1.0.2 adds stable official-2014 repeating-attack selection and executable direct native targeting without resolving damage. AlmanacAssist 1.6.0 must pass as a complete six-system module before v2.0.0 can ship, including Wayfarer-native time presentation, independent presentation levels for each announcement field, coherent climate/weather/environment output, direct saved-Wayfarer and moon controls, configurable rest rules, campaign-specific clock, feast periods, holidays, editable seasonal ranges, moon visibility, focused aliases, and command-only draft recovery.
 
 The six Almanac systems are independently toggleable and remain useful without hidden prerequisites. They exchange optional context through explicit APIs and semantic events, preserve valid settings while disabled, and keep fictional chronology separate from real-world GameAssist timestamps. RestAlmanac is the only initial Almanac sheet writer and supports verified official 2014 PC fields through preview, revalidation, confirmation, and rollback safeguards.
 
@@ -2622,14 +2632,14 @@ The public [development roadmap](ROADMAP.md) carries the detailed gates and issu
 
 ### v2.0.0 – Gameplay and Campaign Foundations
 
-* Advanced disabled-by-default EffectAssist to 2.4.0 with a focused six-effect launch catalog, direct GM casting, opaque short-lived player choices, retained GM requests, player lockout, source and target records, dependencies, stacking, lifecycle, bounded history, bounded official 2014 Bless proposals, optional GM-reviewed duration candidates, and exact-evidence Guidance consumption with a retained manual path.
+* Advanced disabled-by-default EffectAssist to 2.4.2 with a focused six-effect launch catalog, direct GM casting, opaque short-lived player choices, direct recipient choices beneath each controlled caster, retained GM requests, player lockout, source and target records, dependencies, stacking, lifecycle, bounded history, bounded official 2014 Bless proposals, optional GM-reviewed duration candidates, and exact-evidence Guidance consumption with a retained manual path.
 * Added `!GA-GM` / `!GA-DM`, `!ga-help`, and layered `!ga-nav` suite navigation; every module's primary Game Master screen now returns to the suite control center.
 * Bless now coordinates its target marker, 2014-sheet `1d4` attack and save modifier rows, source concentration, overlap, and dependent cleanup.
 * Warding Bond and Haste add their verified AC/save rows; all catalog entries distinguish automatic mechanics from assisted table steps.
 * Preserves non-stacking projections across overlapping sources and removes only final EffectAssist-owned markers, conditions, concentration, and unedited sheet rows.
 * Adds read-only audit, GM-bound one-use repair confirmation, identity-drift refusal, external-edit preservation, and post-write verification.
 * Added disabled-by-default HealAssist 1.0.0 for supported official-2014 healing with exact roll and HP review, one-use confirmation, retained private placement requests, and verified HealthService writes.
-* Added disabled-by-default AttackAssist 1.0.0 for authorized official-2014 repeating attacks with stable row identity, native visible targeting, private hidden-target requests, explicit roll modes, familiar character-attributed templates, and no automatic damage or combat-state changes.
+* Advanced disabled-by-default AttackAssist to 1.0.1 for authorized official-2014 repeating attacks with stable row identity, direct native target choices beside each attack, private hidden-target requests, explicit roll modes, familiar character-attributed templates, and no automatic damage or combat-state changes.
 * Added CORE:SEMANTICEVENTS for immutable versioned optional-integration contracts without persistence, replay, or implicit queueing.
 * Advanced CombatAssist to 1.1.0 with immutable accepted encounter and turn-progression events, and added formal EffectAssist duration rules that consume those events or committed Almanac time without ending effects automatically.
 * Added disabled-by-default AlmanacAssist 1.0.0 with independently controlled Time, Climate, Astronomy, Weather, Environment, and Rest systems in the same release candidate.
@@ -2638,6 +2648,9 @@ The public [development roadmap](ROADMAP.md) carries the detailed gates and issu
 * Advanced AlmanacAssist to 1.1.1 by rejecting cancelled Roll20 queries, repairing profile-specific clocks, supporting feast periods that do not advance weekdays, restoring exact holidays and range-based seasons, and invalidating dependent dates when complete period replacement makes their old indexes unsafe.
 * Advanced AlmanacAssist to 1.1.2 with the campaign's exact 460-day Wayfarer default: twelve named months, five intercalary festivals, the documented daily rhythm, and exact-match migration that preserves campaign-edited definitions.
 * Advanced AlmanacAssist to 1.2.0 with a direct component manager, editable seasonal ranges, visible moon phases, focused role/help/status/audit aliases, clearer display-change confirmation, and a command-only reset that restores the saved draft without changing the active calendar or fictional time.
+* Advanced AlmanacAssist to 1.3.0 with an action-first GM dashboard, direct advance and exact-date controls, announcement preview/audience/detail settings, one-step saved-Wayfarer selection, focused edit/copy/detail/recovery screens, and technical examples moved behind optional help.
+* Advanced AlmanacAssist to 1.4.0 with ordinal Wayfarer Hours and named daily periods instead of AM/PM, announcement audience/heading/preset/field controls, an at-a-glance Climate screen, and compact Environment quick choices with focused customization and on-demand details.
+* Advanced AlmanacAssist to 1.5.0 with Off/Descriptive/Detailed/Technical presentation, weather-owned current temperature, daylight/cloud-aware moon visibility, working deferred Wayfarer and Astronomy prompts, atomic calendar identity changes, valid clock resizing, and Standard/Heroic/Gritty/Custom rest-rule controls.
 * Advanced ConfigUI to 0.2.5 with alphabetized service/module groups, compact human-readable nested configuration summaries, and wrapping controls while preserving complete configuration evidence in the versioned snapshot handout.
 * Added optional GM-private PC health alerts that consume deduplicated HealthService events, combine enabled 50%, 25%, and 10% downward crossings, hide exact HP by default, and leave NPC policy with NPCAssist.
 * Keeps every Almanac system useful through explicit fallbacks, preserves valid state while disabled, and separates fictional world time from real-world table timestamps and NPCAssist Session dates.
