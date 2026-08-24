@@ -3,7 +3,7 @@
 GameAssist - Roll20 API Script
 Version: 2.0.0
 Last Updated: 2026-08-20 (America/New_York)
-Release scope: EffectAssist 2.5.0 guided high-level recipient selection and compact sheet labels, AttackAssist 1.0.2 executable direct targeting, ConcentrationAssist 0.4.2 linked-HP offer revalidation, AlmanacAssist 1.6.0 per-field world announcements and repaired calendar, climate, weather, and environment controls, ConfigUI 0.2.5 readable grouped configuration, disabled-module recovery, and the existing v2.0.0 module suite.
+Release scope: EffectAssist 2.5.1 guarded concentration and recipient validation, AttackAssist 1.0.3 complete official-2014 rollbase preflight, ConcentrationAssist 0.5.0 portable marker defaults and GM marker controls, AlmanacAssist 1.6.0 per-field world announcements and repaired calendar, climate, weather, and environment controls, ConfigUI 0.2.5 readable grouped configuration, disabled-module recovery, and the existing v2.0.0 module suite.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -22,9 +22,9 @@ calls GameAssist.enqueue(). This development package contains fifteen configurab
 - InitiativeAssist 1.0.4 - Uses Roll20's native Turn Tracker for mixed-sheet initiative workflows and compact topic guidance.
 - CombatAssist 1.1.0 - Tracks encounters, native round counters, guarded turns, optional timers, private-safe pings, recoverable tracker changes, and verified semantic progression events.
 - WelcomeAssist 0.1.5 - Optionally greets the table after a healthy GameAssist startup through short !Welcome commands.
-- ConcentrationAssist 0.4.1 - Runs manual and private HP-loss-offered concentration checks, manages its configured marker, and exposes concentration lifecycle events.
+- ConcentrationAssist 0.5.0 - Runs manual and private HP-loss-offered concentration checks, provides guided marker configuration, manages its configured marker, and exposes concentration lifecycle events.
 - NPCAssist 1.4.0 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, and Arc rosters.
-- EffectAssist 2.4.3 - Coordinates catalog-driven effects, deferred direct caster-and-recipient prompts, retained GM requests, compact GameAssist-owned 2014-sheet modifiers, concentration, ownership-safe cleanup, duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
+- EffectAssist 2.5.1 - Coordinates catalog-driven effects, deferred direct caster-and-recipient prompts, retained GM requests, compact GameAssist-owned 2014-sheet modifiers, verified concentration, ownership-safe cleanup, duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
 - HealAssist 1.0.0 - Guides verified 2014 healing rolls, visible PC targeting, private GM requests, complete HP review, and one-use HealthService application.
 - AttackAssist 1.0.1 - Guides authorized 2014 repeating attacks through direct visible targeting, private GM placement, and one-use native-template rolls without applying damage.
 - AlmanacAssist 1.6.0 - Adds Wayfarer's ordinal 20-hour clock, independently styled world-announcement details, coherent climate/weather/environment presentation, direct Wayfarer and moon editors, configurable rest rules, editable seasonal ranges, and visible moon phases across six independently controlled internal systems.
@@ -15357,17 +15357,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:NPCASSIST] END
     // =============================================================================
 
-    // ————— CONCENTRATIONASSIST MODULE v0.4.2 —————
+    // ————— CONCENTRATIONASSIST MODULE v0.5.0 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:CONCENTRATIONASSIST] BEGIN
     // Section Title: ConcentrationAssist module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONCENTRATIONASSIST", title: "ConcentrationAssist",
-    //   guarantees: ["Chat UI for concentration saves; exact configured-marker status reporting; marker mutations through CORE:MARKERSERVICE","Stable public set/read/observe contracts let dependent modules react without scraping private state","Optional HealthService offers are private, deduplicated, bounded, and revalidated before a roll","Compact layered navigation, stable on-demand manual, read-only audit, and unknown-command recovery preserve !concentration and !cc"],
+    //   guarantees: ["Chat UI for concentration saves; exact configured-marker status reporting; marker mutations through CORE:MARKERSERVICE","A portable built-in default and GM marker controls prevent campaign-specific marker names from becoming hidden prerequisites","Stable public set/read/observe contracts let dependent modules react without scraping private state","Optional HealthService offers are private, deduplicated, bounded, and revalidated before a roll","Compact layered navigation, stable on-demand manual, read-only audit, and unknown-command recovery preserve !concentration and !cc"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.ConcentrationAssist"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "0.4.2", health_offer_schema_version: 1 } }
+    //   independent_versions: { module_version: "0.5.0", health_offer_schema_version: 1 } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:CONCENTRATIONASSIST manages concentration save rolls, whispering outcomes,
@@ -15379,14 +15379,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     const modState = GameAssist.getState('ConcentrationAssist');
     Object.assign(modState.config, {
         enabled:   true,
-        marker:    'Concentrating',
+        marker:    'stopwatch',
         randomize: true,
         healthPrompts: true,
         ...modState.config
     });
 
     const LAST_DAMAGE_LIMIT = POLICY.runtime.lastDamageLimit;
-    const MODULE_VERSION = '0.4.2';
+    const MODULE_VERSION = '0.5.0';
     const HEALTH_OFFER_SCHEMA_VERSION = 1;
     const HEALTH_OBSERVER_OWNER = 'ConcentrationAssist.HealthOffers';
     const healthOffers = new Map();
@@ -15475,7 +15475,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
     // ─── Marker Helper ──────────────────────────────────────────────────────────────
     function getMarker() {
-        return modState.config.marker || 'Concentrating';
+        return modState.config.marker || 'stopwatch';
     }
 
     function getMarkerResolution() {
@@ -15488,8 +15488,28 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ? ` Roll20 marker registry problem: ${_sanitize(resolution.registryError)}.`
             : '';
         return `⚠️ Configured concentration marker "${marker}" could not be recognized.${detail}` +
-            ` Check the campaign marker library, then use !ga-config set ConcentrationAssist marker=<name-or-tag>.`;
+            ` Open ConcentrationAssist Settings to choose a built-in marker or an exact custom marker tag.`;
     }
+
+    /**
+     * repairLegacyMarkerDefault - Replace only the former unresolved stock default.
+     * Existing valid custom markers and registry failures are preserved for the GM.
+     */
+    function repairLegacyMarkerDefault() {
+        if (String(modState.config.marker || '') !== 'Concentrating') return false;
+        const resolution = getMarkerResolution();
+        if (resolution.ok || resolution.code !== 'NOT_FOUND') return false;
+        modState.config.marker = 'stopwatch';
+        GameAssist.log(
+            'ConcentrationAssist',
+            'The unavailable legacy default marker "Concentrating" was replaced with Roll20\'s built-in stopwatch marker. Use ConcentrationAssist Settings to choose another marker.',
+            'INFO',
+            { startup: true }
+        );
+        return true;
+    }
+
+    repairLegacyMarkerDefault();
 
     // ─── Default Emote Lines ────────────────────────────────────────────────────────
     const DEFAULT_LINES = {
@@ -15912,23 +15932,72 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
     function showConcentrationInfo(player) {
         const out = `&{template:default} {{name=What ConcentrationAssist Does}}` +
-            ` {{Purpose=Builds normal, advantage, or disadvantage Constitution saves from damage, remembers each player's latest check, and manages the configured Concentrating marker.}}` +
+            ` {{Purpose=Builds normal, advantage, or disadvantage Constitution saves from damage, remembers each player's latest check, and manages the configured concentration marker.}}` +
             ` {{At The Table=Use the manual controls at any time. When Health Prompts are on, a supported HP decrease can also offer one private, rechecked save to the GM and the affected character's controllers.}}` +
             ` {{Learn More=${GameAssist.createButton('Create or Update Manual', '!concentration manual')} ${GameAssist.createButton('Back to Guide', '!concentration help')}}}`;
         sendChat('ConcentrationAssist', `/w "${player}" ${out}`);
     }
 
-    function showConcentrationSettings(player, { canConfigureHealth = false } = {}) {
+    function showMarkerChoices(msg, player) {
+        if (!playerIsGM(msg.playerid)) {
+            return sendChat('ConcentrationAssist', `/w "${player}" Only the GM can change the campaign concentration marker.`);
+        }
+        const registry = GameAssist.MarkerService.getRegistry();
+        const common = ['stopwatch', 'stop', 'frozen-orb', 'lightning-helix', 'aura', 'all-for-one']
+            .map(marker => GameAssist.createButton(marker, `!concentration marker --value "${marker}"`))
+            .join(' ');
+        const custom = (registry.markers || []).slice(0, 20)
+            .map(entry => GameAssist.createButton(entry.name, `!concentration marker --value "${entry.tag}"`))
+            .join(' ');
+        const registryNote = registry.error
+            ? `Roll20's custom marker list could not be read: ${_sanitize(registry.error)}`
+            : (custom || 'No custom campaign markers are currently available.');
+        const out = `&{template:default} {{name=Choose Concentration Marker}}` +
+            ` {{Common Built-In Markers=${common}}}` +
+            ` {{Custom Campaign Markers=${registryNote}}}` +
+            ` {{Another Marker=${GameAssist.createButton('Enter Name Or Exact Tag', '!concentration marker --value "?{Marker name, built-in id, or exact custom tag|stopwatch}"')}}}` +
+            ` {{Return=${GameAssist.createButton('Back to Settings', '!concentration settings')}}}`;
+        sendChat('ConcentrationAssist', `/w "${player}" ${out}`);
+    }
+
+    function configureMarker(msg, player, body) {
+        if (!playerIsGM(msg.playerid)) {
+            return sendChat('ConcentrationAssist', `/w "${player}" Only the GM can change the campaign concentration marker.`);
+        }
+        const match = String(body || '').match(/^marker(?:\s+--value)?(?:\s+([\s\S]+))?$/i);
+        let requested = String(match?.[1] || '').trim();
+        if ((requested.startsWith('"') && requested.endsWith('"')) || (requested.startsWith("'") && requested.endsWith("'"))) {
+            requested = requested.slice(1, -1).trim();
+        }
+        if (!requested) return showMarkerChoices(msg, player);
+        const resolution = GameAssist.MarkerService.resolve(requested);
+        if (!resolution.ok) {
+            const out = `&{template:default} {{name=Concentration Marker Needs Attention}}` +
+                ` {{Problem=${_sanitize(markerResolutionWarning(resolution))}}}` +
+                ` {{Next Step=${GameAssist.createButton('Choose A Marker', '!concentration markers')} ${GameAssist.createButton('Back to Settings', '!concentration settings')}}}`;
+            return sendChat('ConcentrationAssist', `/w "${player}" ${out}`);
+        }
+        modState.config.marker = resolution.id;
+        return showConcentrationSettings(player, {
+            canConfigureHealth: true,
+            notice: `Concentration marker changed to ${resolution.source === 'built-in' ? resolution.id : (requested + ' (' + resolution.id + ')')}.`
+        });
+    }
+
+    function showConcentrationSettings(player, { canConfigureHealth = false, notice = '' } = {}) {
         const config = getConfig();
         const randomize = config.randomize === true;
         const healthPrompts = config.healthPrompts !== false;
         const healthAvailable = GameAssist.HealthService?.isEnabled?.() === true;
+        const markerResolution = getMarkerResolution();
         const out = `&{template:default} {{name=ConcentrationAssist Settings}}` +
+            (notice ? ` {{Updated=${_sanitize(notice)}}}` : '') +
             ` {{Result Messages=${randomize ? 'Varied' : 'Standard'}}}` +
             ` {{Choose=${GameAssist.createButton('Standard', '!concentration --config randomize off')} ${GameAssist.createButton('Varied', '!concentration --config randomize on')}}}` +
             ` {{HP-Loss Check Offers=${healthPrompts ? 'On' : 'Off'}${healthPrompts && !healthAvailable ? ' (HealthService is disabled)' : ''}}}` +
             ` {{Health Offer Choice=${canConfigureHealth ? GameAssist.createButton(healthPrompts ? 'Turn Off' : 'Turn On', `!concentration --config healthPrompts ${healthPrompts ? 'off' : 'on'}`) : 'Managed by the GM'}}}` +
-            ` {{Marker=${_sanitize(getMarker())}}}` +
+            ` {{Marker=${_sanitize(getMarker())} | ${markerResolution.ok ? 'Ready' : 'Needs attention'}}}` +
+            ` {{Marker Controls=${canConfigureHealth ? `${GameAssist.createButton('Use Stopwatch', '!concentration marker --value "stopwatch"')} ${GameAssist.createButton('Choose Marker', '!concentration markers')}` : 'Managed by the GM'}}}` +
             ` {{Return=${GameAssist.createButton('Back to Guide', '!concentration help')}}}`;
         sendChat('ConcentrationAssist', `/w "${player}" ${out}`);
     }
@@ -15941,13 +16010,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             '<h2>Quick Start</h2>',
             '<ol><li>Select one linked character token on the Objects layer.</li><li>Run <code>!concentration</code> or <code>!cc</code>.</li><li>Choose normal, advantage, or disadvantage.</li><li>Enter the damage taken. The DC is the greater of 10 or half the damage, rounded down.</li></ol>',
             '<h2>Results And Marker Behavior</h2>',
-            '<p>The player and GM receive the DC, every d20 result, final total, and full roll formula. A successful check applies the configured Concentrating marker; a failed check removes it. The public character emote can use one standard line or a varied set.</p>',
+            '<p>The player and GM receive the DC, every d20 result, final total, and full roll formula. A successful check applies the configured concentration marker; a failed check removes it. The public character emote can use one standard line or a varied set.</p>',
             '<h2>Optional HP-Loss Offers</h2>',
             '<p>When Health Prompts and HealthService are enabled, verified GameAssist damage or an otherwise unexplained numeric HP decrease can offer one private concentration check to the GM and eligible controllers of an already-concentrating character. Unexplained decreases are labeled observed HP loss because Roll20 does not identify their cause. Every button expires, belongs to that character, and is refused if HP changes again, concentration ends, or the clicking player is no longer authorized. Healing, initialization, synchronization, blank, invalid, and unrelated changes remain silent.</p>',
             '<h2>Status And Audit</h2>',
             '<p><code>!concentration status</code> or <code>!concentration --status</code> lists marked tokens on the current player page and always responds when the module is running. <code>!concentration audit</code> performs the same read-only marker inspection and states that no marker changed.</p>',
             '<h2>Command Reference</h2>',
-            '<ul><li><code>!Con-GM</code>, <code>!Con-DM</code>, <code>!Concentration-GM</code>, or <code>!Concentration-DM</code> - check controls.</li><li><code>!concentration help</code> / <code>guide</code> - compact guide.</li><li><code>!concentration</code> or <code>!cc</code> - check buttons.</li><li><code>!concentration --damage 12 --mode normal|adv|dis</code> or <code>!Con-Damage 12 --mode normal|adv|dis</code> - run a check.</li><li><code>!concentration --last</code> - repeat the player\'s previous check.</li><li><code>!concentration --off</code> - remove the configured marker from selected linked tokens.</li><li><code>!concentration status</code> / <code>audit</code> - current-page marker review.</li><li><code>!concentration settings</code> - result-message and HP-loss offer choices.</li><li><code>!ga-conc-status</code> - GM activity summary.</li></ul>',
+            '<ul><li><code>!Con-GM</code>, <code>!Con-DM</code>, <code>!Concentration-GM</code>, or <code>!Concentration-DM</code> - check controls.</li><li><code>!concentration help</code> / <code>guide</code> - compact guide.</li><li><code>!concentration</code> or <code>!cc</code> - check buttons.</li><li><code>!concentration --damage 12 --mode normal|adv|dis</code> or <code>!Con-Damage 12 --mode normal|adv|dis</code> - run a check.</li><li><code>!concentration --last</code> - repeat the player\'s previous check.</li><li><code>!concentration --off</code> - remove the configured marker from selected linked tokens.</li><li><code>!concentration status</code> / <code>audit</code> - current-page marker review.</li><li><code>!concentration settings</code> - result-message, HP-loss offer, and marker choices.</li><li><code>!concentration markers</code> - choose a built-in or custom campaign marker.</li><li><code>!ga-conc-status</code> - GM activity summary.</li></ul>',
             '<h2>Troubleshooting</h2>',
             '<p>If the configured marker cannot be recognized, use the marker name or exact stored custom marker tag shown by Roll20. Status reads token markers directly; marker changes require GameAssist MarkerService to be enabled.</p>'
         ].join('');
@@ -16239,6 +16308,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (direct === 'audit') return showStatus(player, { audit: true });
             if (direct === 'info' || direct === 'about') return showConcentrationInfo(player);
             if (direct === 'manual') return writeConcentrationManual(msg, player);
+            if (direct === 'marker') return configureMarker(msg, player, body);
+            if (direct === 'markers') return showMarkerChoices(msg, player);
             if (direct === 'config' || direct === 'settings') return showConcentrationSettings(player, { canConfigureHealth: playerIsGM(msg.playerid) });
             return sendChat(
                 'ConcentrationAssist',
@@ -16365,7 +16436,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     teardown: () => {
         GameAssist.ConcentrationAssist?.clearHealthOffers?.();
         const page = Campaign().get('playerpageid');
-        const marker = (GameAssist.getState('ConcentrationAssist')?.config?.marker) || 'Concentrating';
+        const marker = (GameAssist.getState('ConcentrationAssist')?.config?.marker) || 'stopwatch';
         const resolution = GameAssist.MarkerService.resolve(marker);
         if (!resolution.ok) {
             GameAssist.log(
@@ -16392,11 +16463,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced ConcentrationAssist to 0.5.0; fresh campaigns use Roll20's built-in stopwatch marker, the unresolved former stock "Concentrating" default self-migrates without overwriting valid custom configuration, and GM settings now provide guided built-in/custom marker selection.
     // Changed (v2.0.0): Advanced ConcentrationAssist to 0.4.2; HP-loss offers now remain valid across Roll20's equivalent linked sheet/token evidence while still expiring whenever the canonical current HP value actually changes.
     // Changed (v2.0.0): Advanced ConcentrationAssist to 0.4.1; character-sheet HP losses now prefer the event page and Player Ribbon page, ignore stale off-page markers, and choose one deterministic current-page token when duplicate representations exist.
     // Changed (v2.0.0): Added the standard GameAssist Home return when ConcentrationAssist is opened through a GM/DM role command.
     // Changed (v2.0.0): Advanced ConcentrationAssist to 0.4.0 with optional private HealthService-driven HP-loss offers, bounded one-event deduplication, controller-aware delivery, and stale-button revalidation while preserving every manual check path.
     // Decision log:
+    //   CHOICE: Migrate only the exact unresolved former stock default - ALT: replace every unknown marker or retain a campaign-specific default; REJECTED: the former destroys intentional configuration while the latter makes fresh installs fail outside the development campaign.
     //   CHOICE: Offer checks for verified damage and unexplained numeric decreases - ALT: treat every decrease as proven damage or ignore direct Roll20 edits; REJECTED: the former invents cause while the latter omits the principal supported manual workflow.
     //   CHOICE: Recheck the latest health event, HP value, concentration marker, token identity, and player control before rolling - ALT: trust a previously rendered button; REJECTED: chat buttons can outlive the state that authorized them.
     //   CHOICE: Keep HealthService optional rather than a module dependency - ALT: disable all concentration commands with HealthService; REJECTED: manual concentration checks remain independently useful.
@@ -16414,17 +16487,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:CONCENTRATIONASSIST] END
     // =============================================================================
 
-    // ————— EFFECTASSIST MODULE v2.5.0 —————
+    // ————— EFFECTASSIST MODULE v2.5.1 —————
     // =============================================================================
     // [GAMEASSIST:MODULES:EFFECTASSIST] BEGIN
     // Section Title: Catalog-driven semantic effects and 2014 sheet projections
     // -----------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:EFFECTASSIST", title: "EffectAssist",
-    //   guarantees: ["Effect instances, not markers or sheet fields, are the durable source of truth","Definitions may coordinate multiple source and target projections through one versioned adapter pipeline","Verified 2014 repeating modifier rows are ownership-safe and never overwrite unrelated sheet data","An exact EffectAssist-owned Guidance roll tag may consume one unambiguous supported 2014 skill-check instance; unsupported, edited, or ambiguous checks remain manual","ConcentrationAssist owns concentration state while EffectAssist owns dependent cleanup","Optional duration providers create reviewable GM candidates but never end effects automatically","Combat duration evidence comes only from accepted CombatAssist progression and world-time evidence comes only from committed AlmanacAssist changes","Provider absence, tracker rebases, backward movement, restarts, and large time jumps are handled without guessed or unbounded replay","Official 2014 Bless spell cards create bounded GM proposals only when template, spell, character, page, token, and controller evidence are unambiguous","Cast recognition never infers recipients or bypasses the normal preview and confirmation pipeline","Audit is read-only; application and repair require bounded confirmation","Player casting uses short-lived opaque choices, rechecks source control, uses visible native target selection, and may be locked by the GM","GM-assisted player requests are retained briefly, preserve source authorization, and expose no full GM controls","Successful player-originated applications announce the source, effect, and public target names","The built-in catalog distinguishes automated mechanics from tracked rules"],
+    //   guarantees: ["Effect instances, not markers or sheet fields, are the durable source of truth","Definitions may coordinate multiple source and target projections through one versioned adapter pipeline","Verified 2014 repeating modifier rows are ownership-safe and never overwrite unrelated sheet data","An exact EffectAssist-owned Guidance roll tag may consume one unambiguous supported 2014 skill-check instance; unsupported, edited, or ambiguous checks remain manual","ConcentrationAssist owns concentration state while EffectAssist preflights and reports the exact established dependency","Optional duration providers create reviewable GM candidates but never end effects automatically","Combat duration evidence comes only from accepted CombatAssist progression and world-time evidence comes only from committed AlmanacAssist changes","Provider absence, tracker rebases, backward movement, restarts, and large time jumps are handled without guessed or unbounded replay","Official 2014 Bless spell cards create bounded GM proposals only when template, spell, character, page, token, and controller evidence are unambiguous","Cast recognition never infers recipients or bypasses the normal preview and confirmation pipeline","Audit is read-only; application and repair require bounded confirmation","Player casting uses short-lived opaque choices, rechecks source control, uses visible native target selection, and may be locked by the GM","Unlinked recipient failures identify the affected token and the required Roll20 correction","GM-assisted player requests are retained briefly, preserve source authorization, and expose no full GM controls","Successful player-originated applications announce the source, effect, and public target names","The built-in catalog distinguishes automated mechanics from tracked rules"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]","[GAMEASSIST:MODULES:CONDITIONASSIST]","[GAMEASSIST:MODULES:CONCENTRATIONASSIST]"],
     //   provides: ["GameAssist.EffectAssist"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "2.5.0", effect_state_schema_version: 3, cast_proposal_schema_version: 1, player_cast_flow_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "2.5.1", effect_state_schema_version: 3, cast_proposal_schema_version: 1, player_cast_flow_schema_version: 1 }, lifecycle: "active" }
     // -----------------------------------------------------------------------------
     // Narrative
     // EffectAssist is a catalog-driven rules coordinator. It records the source,
@@ -16437,7 +16510,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -----------------------------------------------------------------------------
     GameAssist.register('EffectAssist', function() {
         const MODULE_NAME = 'EffectAssist';
-        const MODULE_VERSION = '2.5.0';
+        const MODULE_VERSION = '2.5.1';
         const STATE_SCHEMA_VERSION = 3;
         const CAST_PROPOSAL_SCHEMA_VERSION = 1;
         const PLAYER_CAST_FLOW_SCHEMA_VERSION = 1;
@@ -17243,12 +17316,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function resolveLinkedToken(tokenId, label) {
             const token = getObj('graphic', String(tokenId || ''));
             if (!token) return { ok: false, code: 'NOT_FOUND', message: `${label} token was not found.` };
+            const tokenName = String(token.get('name') || label || 'That token');
             if (!['objects', 'gmlayer'].includes(String(token.get('layer') || ''))) {
-                return { ok: false, code: 'UNPROCESSABLE', message: `${label} must be on the Objects or GM layer.` };
+                return { ok: false, code: 'UNPROCESSABLE', message: `${tokenName} must be on the Objects or GM layer.` };
             }
             const characterId = String(token.get('represents') || '');
             const character = characterId ? getObj('character', characterId) : null;
-            if (!character) return { ok: false, code: 'UNPROCESSABLE', message: `${label} must represent a character.` };
+            if (!character) {
+                return {
+                    ok: false,
+                    code: 'UNPROCESSABLE',
+                    message: `${tokenName} is not linked to a character. Open that token's settings, choose a character under Represents Character, then start the effect again.`
+                };
+            }
             return {
                 ok: true,
                 token,
@@ -18289,6 +18369,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const api = GameAssist.ConcentrationAssist;
                 if (!api?.set || !api?.getMarker || GameAssist.getState('ConcentrationAssist')?.config?.enabled === false) {
                     hardFailures.push('ConcentrationAssist must be enabled before applying a concentration effect.');
+                } else {
+                    const markerResolution = api.resolveMarker?.();
+                    if (!markerResolution?.ok) {
+                        hardFailures.push('The concentration marker is not ready. Open ConcentrationAssist Settings, choose a recognized marker, then apply the effect again.');
+                    }
                 }
             }
             if (hardFailures.length) return { ok: false, code: 'UNAVAILABLE', message: hardFailures.join(' ') };
@@ -18645,7 +18730,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const marker = String(markerOverride
                 || GameAssist.ConcentrationAssist?.getMarker?.()
                 || GameAssist.getState('ConcentrationAssist')?.config?.marker
-                || 'Concentrating');
+                || 'stopwatch');
             const resolution = GameAssist.MarkerService.resolve(marker);
             return resolution.ok ? GameAssist.MarkerService.normalizeId(resolution.id) : null;
         }
@@ -19540,7 +19625,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<p>When cast recognition is on, an official D&amp;D 5E by Roll20 (2014) Bless spell card can create one short-lived private proposal for the GM. GameAssist accepts it only when the spell, character, active page, linked source token, and player control are unambiguous. The GM selects the actual recipients and uses the proposal button to enter the same review and confirmation path as the catalog.</p>',
                 '<p>Spell-card target wording is descriptive and is never used as token identity. Unsupported spells, ambiguous sources, and 2024-sheet cards do not create effect instances. Use <code>!Effect-Casts</code> to review pending proposals and <code>!Effect-Recognition on|off</code> to control this shortcut. The manual catalog remains available whether recognition is on or off.</p>',
                 '<h2>Concentration</h2>',
-                '<p>ConcentrationAssist owns concentration checks and the Concentrating marker. EffectAssist connects dependent effects to that source. A failed check, deliberate concentration clear, or manual removal of the source marker ends the dependent effect and removes its owned target projections. Removing only a target effect marker creates an audit mismatch so an accidental edit can be repaired; it does not silently end the source or every target.</p>',
+                '<p>ConcentrationAssist owns concentration checks and the configured concentration marker. EffectAssist connects dependent effects to that source. A failed check, deliberate concentration clear, or manual removal of the source marker ends the dependent effect and removes its owned target projections. Removing only a target effect marker creates an audit mismatch so an accidental edit can be repaired; it does not silently end the source or every target.</p>',
                 '<h2>Overlapping Sources</h2>',
                 '<p>Separate sources remain separate records. A non-stacking marker or modifier remains while any valid source still owns it.</p>',
                 '<h2>Duration Review</h2>',
@@ -19719,6 +19804,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             panel(result.ok ? 'Effect Applied' : 'EffectAssist Needs Attention', [
                 { label: result.ok ? 'Result' : 'Needs Attention', value: _sanitize(result.message || result.code) },
                 ...(result.instance ? [{ label: 'Effect', value: `${_sanitize(result.instance.name)} | ${_sanitize(result.instance.id)}` }] : []),
+                ...(result.instance?.dependency?.established ? [{
+                    label: 'Concentration',
+                    value: `Active on ${_sanitize(result.instance.source.characterName)} using ${_sanitize(result.instance.dependency.marker || 'the configured marker')}.`
+                }] : []),
                 ...(result.warnings?.length ? [{ label: 'Still Handled At The Table', value: listText(result.warnings) }] : []),
                 ...(result.rollbackFailures?.length ? [{ label: 'Rollback Attention', value: listText(result.rollbackFailures) }] : []),
                 { label: 'Actions', value: navigation }
@@ -19968,6 +20057,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced EffectAssist to 2.5.1; concentration effects now refuse application before projection writes when the configured concentration marker is unavailable, successful results identify the established source dependency, and unlinked recipient failures name the affected token with a direct Roll20 correction.
     // Changed (v2.0.0): Advanced EffectAssist to 2.5.0; player casting now separates caster selection from recipient count, Bless exposes compact base-level choices plus a 4-11 recipient higher-level menu, and every new EffectAssist-owned 2014 sheet row uses the compact "(GA)" label convention.
     // Changed (v2.0.0): Advanced EffectAssist to 2.4.3; shared Roll20 buttons now defer native target prompts until clicked, restoring direct !Bless recipient selection; new owned Bless sheet rows use the compact "Bless (GA)" label; and ending instances are excluded from synchronous marker observations so one cleanup creates one history record.
     // Changed (v2.0.0): Advanced EffectAssist to 2.4.2; caster rows now invoke Roll20 recipient selection directly through opaque source-bound flows, removing the unnecessary inert source-selection hop while preserving authorization and GM-request controls.
@@ -19975,6 +20065,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Changed (v2.0.0): Advanced EffectAssist to 2.4.0 with a standard GameAssist Home return and exact owned Guidance roll labeling; one unambiguous supported 2014 skill check may consume one matching Guidance through normal cleanup, while unsupported or ambiguous checks retain the explicit Use Guidance path.
     // Changed (v2.0.0): Advanced EffectAssist to 2.3.0 with opaque short-lived player casting choices, retained and revalidated GM requests, stale-button recovery, and direct built-in effect actions on the GM Control Center while preserving the existing effect engine and confirmation boundary.
     // Decision log:
+    //   CHOICE: Require a resolvable concentration marker before applying any dependent target projection - ALT: apply targets and report concentration as a later repair item; REJECTED: that presents an incomplete spell as successful and obscures the source dependency.
     //   CHOICE: Put opaque sandbox-local flow ids in player buttons - ALT: continue embedding source token and effect identifiers; REJECTED: Roll20-rendered links must not depend on raw identifier transport to preserve a casting choice.
     //   CHOICE: Retain player requests briefly for the GM - ALT: rely on one transient whisper; REJECTED: a missed chat panel should not erase an otherwise valid request.
     // Prior notes:
@@ -20872,10 +20963,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Guided official-2014 repeating attacks
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:ATTACKASSIST", title: "AttackAssist",
-    //   guarantees: ["Only authorized official-2014 linked sources and verified repeating-attack row identities enter a guided roll","Visible targets use Roll20's native map prompt without requiring target control; hidden or off-page placement remains GM-reviewed","One-use roll submissions preserve the sheet-generated attack formula and supported official template fields without rewriting character roll settings","AttackAssist never applies damage or changes HP, conditions, effects, initiative, turns, or encounter state"],
+    //   guarantees: ["Only authorized official-2014 linked sources and verified repeating-attack row identities enter a guided roll","Visible targets use Roll20's native map prompt without requiring target control; hidden or off-page placement remains GM-reviewed","One-use roll submissions preserve the sheet-generated attack formula, materialize documented optional defaults, and refuse unknown missing fields before Roll20 receives the command","AttackAssist never applies damage or changes HP, conditions, effects, initiative, turns, or encounter state"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AttackAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.0.2", interaction_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.0.3", interaction_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // AttackAssist is a disabled-by-default convenience layer for the official 2014
@@ -20885,7 +20976,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('AttackAssist', function() {
         const MODULE_NAME = 'AttackAssist';
-        const MODULE_VERSION = '1.0.2';
+        const MODULE_VERSION = '1.0.3';
         const INTERACTION_SCHEMA_VERSION = 1;
         const modState = GameAssist.getState(MODULE_NAME);
         modState.config = {
@@ -20899,6 +20990,22 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             normal: '{{query=1}} {{normal=1}} {{r2=[[0d20',
             advantage: '{{query=1}} {{advantage=1}} {{r2=[[@{d20}',
             disadvantage: '{{query=1}} {{disadvantage=1}} {{r2=[[@{d20}'
+        });
+        const OPTIONAL_ROLLBASE_DEFAULTS = Object.freeze({
+            atkcritrange: '20',
+            atkrange: '',
+            atk_desc: '',
+            hldmg: '',
+            spelllevel: '',
+            spell_innate: '',
+            ammo: '',
+            global_attack_mod: '',
+            global_damage_mod: '',
+            global_damage_mod_crit: '0',
+            global_damage_mod_type: '',
+            global_damage_type: '',
+            licensedsheet: '',
+            wtype: ''
         });
         const flows = new Map();
         const requests = new Map();
@@ -21408,26 +21515,58 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!verifiedRollbase(rollbase)) return { ok: false, message: 'The repeating attack roll formula is no longer supported.' };
             if (!['sheet', 'normal', 'advantage', 'disadvantage'].includes(mode)) return { ok: false, message: 'Choose Sheet Setting, Normal, Advantage, or Disadvantage.' };
             if (forceGmWhisper) rollbase = rollbase.replace(/^@\{wtype\}/i, '');
-            if (mode !== 'sheet') rollbase = rollbase.replace(/@\{rtype\}/g, MODE_FRAGMENTS[mode]);
+            if (mode !== 'sheet') rollbase = rollbase.replace(/@\{rtype\}/gi, MODE_FRAGMENTS[mode]);
 
-            // CHOICE: materialize the sheet's d20 placeholder before API submission.
-            // ALT: require every character to persist a hidden d20 attribute; REJECTED:
-            // official 2014 repeating rows can reference the placeholder without such an attribute.
+            // CHOICE: materialize documented sheet-only defaults before API submission.
+            // ALT: create hidden attributes on the character; REJECTED: a guided roll must not
+            // mutate the sheet merely because Roll20 did not persist an HTML default value.
             rollbase = rollbase.replace(/@\{d20\}/gi, '1d20');
 
             rollbase = rollbase.replace(/~repeating_attack_(attack(?:_(?:dmg|crit))?)/gi,
                 (_match, button) => `~${source.character.id}|repeating_attack_${row.rowId}_${button}`);
 
             const attributes = row.attributes || attributeMap(source.character.id);
+            const missing = new Set();
+            const characterName = String(source.character.get('name') || source.name || 'Character')
+                .replace(/[{}@\r\n]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
             rollbase = rollbase.replace(/@\{([^{}]+)\}/g, (match, inner) => {
                 const parts = String(inner || '').split('|');
-                if (parts.length > 2 || (parts.length === 2 && parts[1] !== 'max')) return match;
+                if (parts.length > 2 || (parts.length === 2 && parts[1] !== 'max')) {
+                    if (parts[0] === String(source.character.id)) return match;
+                    missing.add(parts[0] || inner);
+                    return match;
+                }
                 const name = parts[0];
-                if (!name || ['selected', 'target', 'tracker'].includes(name.toLowerCase())) return match;
+                if (!name || ['selected', 'target', 'tracker'].includes(name.toLowerCase())) {
+                    missing.add(name || inner);
+                    return match;
+                }
                 const rowName = name.startsWith(`${row.prefix}_`) ? name : `${row.prefix}_${name}`;
-                const resolvedName = attributes.has(rowName) ? rowName : name;
-                return `@{${source.character.id}|${resolvedName}${parts[1] === 'max' ? '|max' : ''}}`;
+                const resolvedName = attributes.has(rowName) ? rowName : (attributes.has(name) ? name : null);
+                if (resolvedName) {
+                    return `@{${source.character.id}|${resolvedName}${parts[1] === 'max' ? '|max' : ''}}`;
+                }
+
+                const normalizedName = name.toLowerCase();
+                if (normalizedName === 'charname_output') return `{{charname=${characterName}}}`;
+                if (normalizedName === 'rtype') return MODE_FRAGMENTS.normal;
+                if (Object.prototype.hasOwnProperty.call(OPTIONAL_ROLLBASE_DEFAULTS, normalizedName)) {
+                    return OPTIONAL_ROLLBASE_DEFAULTS[normalizedName];
+                }
+                missing.add(name);
+                return match;
             });
+            rollbase = rollbase.replace(/@\{d20\}/gi, '1d20');
+
+            if (missing.size) {
+                const fields = [...missing].sort().join(', ');
+                return {
+                    ok: false,
+                    message: `This attack needs sheet fields Roll20 did not save (${fields}). Open and save that attack on the 2014 character sheet, then choose it again.`
+                };
+            }
             return { ok: true, command: `${forceGmWhisper ? '/w gm ' : ''}${rollbase}` };
         }
 
@@ -21683,11 +21822,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => GameAssist.AttackAssist?._clearTransient?.()
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced AttackAssist to 1.0.3; official-2014 roll submission now materializes documented optional sheet defaults such as atkcritrange, character output, whisper mode, and empty global modifiers, while unknown missing fields produce a guided preflight refusal instead of a Roll20 sandbox error.
     // Changed (v2.0.0): Advanced AttackAssist to 1.0.2; the attack picker now uses compact attack buttons, and API-submitted official-2014 roll formulas materialize the sheet d20 placeholder so normal, advantage, and disadvantage rolls do not depend on a nonexistent persisted d20 attribute.
     // Changed (v2.0.0): Advanced AttackAssist to 1.0.1; each verified attack row now opens Roll20's target prompt directly, removing the unnecessary inert target-screen hop while retaining opaque flow authorization and GM placement requests.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the AttackAssist GM control screen.
     // Changed (v2.0.0): Added AttackAssist 1.0.0 with authorized official-2014 source selection, stable repeating-row identity, native visible targeting, retained private GM placement requests, sheet-setting and explicit roll modes, one-use submission, familiar official templates, and post-submission attacker/target announcements.
     // Decision log:
+    //   CHOICE: Inline only documented optional 2014 defaults and reject every unknown missing field - ALT: create attributes or guess all absent values; REJECTED: hidden sheet mutation and guessed combat math are both unsafe.
     //   CHOICE: Qualify the sheet-generated repeating-row rollbase and substitute the official roll-mode fragment - ALT: temporarily rewrite the character's rtype setting; REJECTED: a temporary sheet mutation can race with ordinary sheet clicks and other Mods.
     //   CHOICE: Submit the roll as character|id - ALT: submit as AttackAssist; REJECTED: familiar character attribution and CritAssist's supported natural-1 observation require the character sender.
     //   CHOICE: Use Roll20's target prompt for visible tokens without target control and retain hidden/off-page requests for the GM - ALT: expose raw hidden token lists to players; REJECTED: hidden identity and placement are GM information.

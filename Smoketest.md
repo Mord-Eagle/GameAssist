@@ -189,14 +189,14 @@ Use a disposable page with:
 - one linked official 2014 PC whose bar 1 is linked to the sheet `hp` attribute and controlled by a separate non-GM test player;
 - one linked NPC on the Objects layer and one linked NPC on the GM layer;
 - valid positive HP and maximum HP;
-- the configured Concentrating marker available;
+- the configured concentration marker available; on a fresh campaign this is Roll20's built-in `stopwatch` marker;
 - MarkerService, HealthService, and ConcentrationAssist enabled.
 
 Open `!concentration settings`. Pass when **HP-Loss Check Offers** is **On** and the GM can turn it off without disabling ConcentrationAssist. From the non-GM test player, the same screen must identify the choice as GM-managed and a crafted config command must be refused.
 
 ### Direct PC HP Loss and Deduplication
 
-1. Put the configured Concentrating marker on the PC token.
+1. Put the configured concentration marker on the PC token.
 2. Note the PC's HP, then lower it once through the character sheet by `12`.
 3. Wait for the linked token bar to finish updating.
 
@@ -244,7 +244,7 @@ Restore valid HP after the check.
 
 ### Hidden NPC Privacy
 
-Put the configured Concentrating marker on the GM-layer NPC and lower its valid bar 1 HP once. Pass when only the GM receives the offer. After the GM clicks a roll mode, no public emote or hidden NPC name appears in player chat.
+Put the configured concentration marker on the GM-layer NPC and lower its valid bar 1 HP once. Pass when only the GM receives the offer. After the GM clicks a roll mode, no public emote or hidden NPC name appears in player chat.
 
 ### Optional Integration and Manual Fallback
 
@@ -397,7 +397,7 @@ Pass when the Control Center is private, the Guide gives the short player path, 
 3. Click **Choose Target** beside that attack and point at the visible target the player does not control.
 4. Choose **Normal** from the review screen.
 
-Pass when both starting commands open the same compact source/attack path, neither produces a bare `{}`, Roll20 opens its native target prompt only after **Choose Target** is clicked, and the target is accepted without granting control. The familiar official attack card should appear once as the attacking character, followed by the attacker/target announcement. The Roll20 API log must not report `Unable to find attribute with the name d20`. Confirm the chosen row's bonus, range, and damage links match the numbered attack selected. The target's HP, markers, position, effects, conditions, and Roll20 Turn Tracker must remain unchanged.
+Pass when both starting commands open the same compact source/attack path, neither produces a bare `{}`, Roll20 opens its native target prompt only after **Choose Target** is clicked, and the target is accepted without granting control. The familiar official attack card should appear once as the attacking character, followed by the attacker/target announcement. The Roll20 API log must not report a missing `d20`, `atkcritrange`, `charname_output`, roll-mode, or empty global-modifier attribute. Confirm the chosen row's bonus, range, and damage links match the numbered attack selected. The target's HP, markers, position, effects, conditions, and Roll20 Turn Tracker must remain unchanged.
 
 Click the same roll button again. Pass when AttackAssist refuses it without a second roll or announcement.
 
@@ -409,8 +409,10 @@ Repeat the same disposable attack through **Use Sheet Setting**, **Advantage**, 
 - Normal rolls one d20;
 - Advantage shows two d20s and keeps the higher result;
 - Disadvantage shows two d20s and keeps the lower result;
-- none of the four choices reports a missing `d20` character attribute;
+- none of the four choices reports a missing documented optional sheet field such as `d20` or `atkcritrange`;
 - the character's saved roll-mode setting is unchanged after every test.
+
+Use a normal 2014 attack whose critical range has never been edited or separately saved. Pass when AttackAssist uses the sheet's ordinary critical range of 20 and the attack rolls normally. If a custom or incomplete attack formula references an unknown missing field, pass when AttackAssist names that field in a **Needs Attention** panel before submission instead of allowing a sandbox exception.
 
 ### CritAssist Natural 1 Delivery
 
@@ -430,7 +432,7 @@ As the GM, open `!Attack-Requests`, choose the retained request, select the hidd
 
 ### Unsupported Source, Lockout, and Lifecycle
 
-Select the supported 2024 test token and run `!Attack`. Pass when AttackAssist explains that 1.0.2 supports official-2014 repeating attacks and that the native 2024 attack buttons remain available.
+Select the supported 2024 test token and run `!Attack`. Pass when AttackAssist explains that 1.0.3 supports official-2014 repeating attacks and that the native 2024 attack buttons remain available.
 
 Run `!Attack-Players off`. Pass when the player can still read guidance but cannot begin or complete a guided attack; GM attacks remain available. Restore `!Attack-Players on` afterward.
 
@@ -444,6 +446,7 @@ Disable and re-enable AttackAssist. Pass when unrelated modules remain active, o
 | Controlled 2014 PC and exact repeating row are verified, including duplicate display names | ☐ Pass ☐ Fail |
 | Visible non-controlled target is accepted without changing target or encounter state | ☐ Pass ☐ Fail |
 | Sheet, Normal, Advantage, and Disadvantage modes are correct without a saved-setting mutation | ☐ Pass ☐ Fail |
+| Unsaved documented optional fields use their safe sheet defaults; unknown missing fields refuse before submission | ☐ Pass ☐ Fail |
 | One accepted roll and one post-roll announcement occur; reused buttons cannot roll again | ☐ Pass ☐ Fail |
 | A natural 1 reaches CritAssist exactly once | ☐ Pass ☐ Fail |
 | Stale-row and wrong-player buttons refuse safely | ☐ Pass ☐ Fail |
@@ -507,7 +510,7 @@ EffectAssist begins disabled. Confirm that before changing anything:
 - one active Bless instance names the chosen source and target;
 - the target has the configured Blessed marker;
 - the target sheet has one active `Bless (GA)` attack row with `1d4` and one active `Bless (GA)` saving-throw row with `1d4`, and both bonuses roll on the first supported check without manually toggling the sheet fields;
-- the source has the configured Concentrating marker and ConcentrationAssist reports it as concentrating;
+- the source has the configured concentration marker and ConcentrationAssist reports it as concentrating;
 - unrelated markers, HP, bars, layer, controllers, character attributes, and Turn Tracker rows are unchanged;
 - the application result offers an End Effect button without requiring the GM to type the internal instance ID;
 - Status remains a compact summary rather than printing the complete active and ended history.
@@ -2800,7 +2803,11 @@ Pass when the configured marker is removed from selected linked tokens and statu
 
 Select an unlinked token and repeat a check. Pass when GameAssist explains that a linked character is required and does not change the token.
 
-Open `!concentration settings`. Pass when the result-message and HP-loss-offer choices are readable and each toggle changes only its named behavior. The complete privacy, deduplication, stale-button, verified-damage, and hidden-token checks live in [Focused v2.0.0 Concentration HP-Loss Offer Acceptance](#focused-v200-concentration-hp-loss-offer-acceptance).
+Open `!concentration settings`. Pass when the result-message and HP-loss-offer choices are readable, the marker row says **Ready**, and the GM sees **Use Stopwatch** and **Choose Marker**. Open **Choose Marker**, select a built-in marker, and confirm a successful check applies that exact marker. A registered custom campaign marker must also be selectable by name. Each control must change only its named behavior.
+
+On a fresh campaign with no custom marker library, pass when ConcentrationAssist starts with Roll20's built-in `stopwatch` marker and Bless can begin source concentration without raw configuration commands. On an upgraded campaign, a valid saved custom `Concentrating` marker must remain unchanged. Only the exact former stock value that cannot be resolved may self-migrate to `stopwatch`.
+
+The complete privacy, deduplication, stale-button, verified-damage, and hidden-token checks live in [Focused v2.0.0 Concentration HP-Loss Offer Acceptance](#focused-v200-concentration-hp-loss-offer-acceptance).
 
 ---
 
@@ -3319,6 +3326,7 @@ Then select one linked disposable 2014 PC target and apply Bless from another li
 
 - one active effect is recorded;
 - the configured Bless marker, the source concentration marker, and the target's `1d4` attack/save modifier rows appear;
+- the Effect Applied panel names the exact source whose concentration became active and the resolved marker used;
 - the Effect Applied panel offers **End Effect**, `!Effect-Active` identifies the source and target, and `!Effect-Status` stays compact;
 - `!Effect-Duration` shows the effect's formal duration and whichever verified providers were available when it began;
 - applying the same submitted request twice does not create a duplicate;
@@ -3341,6 +3349,8 @@ Use the focused section to prove:
 - edited EffectAssist-created sheet rows are preserved and reported for attention;
 - linked NPC targets receive marker/lifecycle behavior without inappropriate PC-only modifier rows;
 - mixed valid and invalid selections are rejected without partial application;
+- an unlinked recipient is named in the refusal and the message directs the GM to the token's **Represents Character** setting;
+- an unresolved concentration marker refuses a concentration-dependent effect before any recipient marker or sheet row is written;
 - marker, ConditionAssist, 2014-sheet, concentration, and record-only definitions follow their declared projection contracts;
 - audit is read-only and repair requires a fresh, one-use GM authorization;
 - changed token identity causes a refusal rather than a write to the wrong representation;
