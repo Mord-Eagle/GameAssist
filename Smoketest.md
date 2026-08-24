@@ -397,22 +397,23 @@ Pass when the Control Center is private, the Guide gives the short player path, 
 3. Click **Choose Target** beside that attack and point at the visible target the player does not control.
 4. Choose **Normal** from the review screen.
 
-Pass when both starting commands open the same compact source/attack path, neither produces a bare `{}`, Roll20 opens its native target prompt only after **Choose Target** is clicked, and the target is accepted without granting control. The familiar official attack card should appear once as the attacking character, followed by the attacker/target announcement. The Roll20 API log must not report a missing `d20`, `atkcritrange`, `atkflag`, `dmgflag`, `dmg2flag`, `saveflag`, `charname_output`, roll-mode, or empty global-modifier attribute. Confirm the chosen row's bonus, range, and damage links match the numbered attack selected. The target's HP, markers, position, effects, conditions, and Roll20 Turn Tracker must remain unchanged.
+Pass when both starting commands open the same compact source/attack path, neither produces a bare `{}`, Roll20 opens its native target prompt only after **Choose Target** is clicked, and the target is accepted without granting control. The familiar official attack card should appear once as the attacking character, followed by the attacker/target announcement. The Roll20 API log must not report a missing `d20`, `atkcritrange`, `atkflag`, `dmgflag`, `dmg2flag`, `saveflag`, `charname_output`, roll-mode, empty global-modifier attribute, or dice-parser `?` syntax error. Confirm the chosen row's bonus, range, and damage links match the numbered attack selected. The target's HP, markers, position, effects, conditions, and Roll20 Turn Tracker must remain unchanged.
 
 Click the same roll button again. Pass when AttackAssist refuses it without a second roll or announcement.
 
 ### Roll Modes and Sheet Preservation
 
-Repeat the same disposable attack through **Use Sheet Setting**, **Advantage**, and **Disadvantage**. Pass when:
+Set the Classic character sheet to **Query Whisper** and **Query Advantage**, then repeat the same disposable attack through **Use Sheet Setting**, **Normal**, **Advantage**, and **Disadvantage**. Pass when:
 
-- the sheet choice follows the character's saved 2014 roll mode;
+- **Use Sheet Setting** safely uses Public and Normal, the first choices documented by the Classic sheet, because API-authored chat cannot open those per-roll client prompts;
 - Normal rolls one d20;
 - Advantage shows two d20s and keeps the higher result;
 - Disadvantage shows two d20s and keeps the lower result;
 - none of the four choices reports a missing documented optional sheet field such as `d20` or `atkcritrange`;
+- no unresolved `?{...}` prompt or dice-parser syntax error appears and the Mod sandbox remains running;
 - the character's saved roll-mode setting is unchanged after every test.
 
-Use a normal 2014 attack whose critical range and attack-template checkboxes have never been edited or separately saved. Pass when AttackAssist uses the Classic sheet's ordinary defaults: critical range 20, attack and first damage enabled, second damage and save disabled. The attack must roll normally without asking the GM to open and save unchanged defaults. If a custom or incomplete attack formula references a genuinely unknown field, pass when AttackAssist names that field in a **Needs Attention** panel before submission instead of allowing a sandbox exception.
+Use a normal 2014 attack whose critical range and attack-template checkboxes have never been edited or separately saved. Pass when AttackAssist uses the Classic sheet's ordinary defaults: critical range 20, attack and first damage enabled, second damage and save disabled. The attack must roll normally without asking the GM to open and save unchanged defaults. If a custom attack contains another interactive query, or an incomplete formula references a genuinely unknown field, pass when AttackAssist names the prompt or field in a **Needs Attention** panel before submission instead of allowing a sandbox exception.
 
 ### 5th Edition OGL Companion Coexistence
 
@@ -3812,4 +3813,3 @@ Then run only the basic checks for features the session will use:
 - WelcomeAssist: when enabled, preview the greeting and confirm status before the session; do not use manual announce merely as a health check.
 
 Do not discover a marker, HP, or table problem for the first time during combat.
-

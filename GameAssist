@@ -3,7 +3,7 @@
 GameAssist - Roll20 API Script
 Version: 2.0.0
 Last Updated: 2026-08-24 (America/New_York)
-Release scope: EffectAssist 2.5.2 exact token identity and concentration ownership, AttackAssist 1.0.4 complete official-2014 rollbase preflight, ConcentrationAssist 0.6.0 explicit 2014 save qualification and portable marker controls, AlmanacAssist 1.6.0 per-field world announcements and repaired calendar, climate, weather, and environment controls, ConfigUI 0.2.5 readable grouped configuration, disabled-module recovery, and the existing v2.0.0 module suite.
+Release scope: EffectAssist 2.5.2 exact token identity and concentration ownership, AttackAssist 1.0.5 complete prompt-safe official-2014 rollbase materialization, ConcentrationAssist 0.6.0 explicit 2014 save qualification and portable marker controls, AlmanacAssist 1.6.0 per-field world announcements and repaired calendar, climate, weather, and environment controls, ConfigUI 0.2.5 readable grouped configuration, disabled-module recovery, and the existing v2.0.0 module suite.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -29,7 +29,7 @@ calls GameAssist.enqueue(). This development package contains fifteen configurab
 - NPCAssist 1.4.0 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, and Arc rosters.
 - EffectAssist 2.5.2 - Coordinates catalog-driven effects, exact caster-and-recipient identity, retained GM requests, compact GameAssist-owned 2014-sheet modifiers, verified token-specific concentration, ownership-safe cleanup, duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
 - HealAssist 1.0.0 - Guides verified 2014 healing rolls, visible PC targeting, private GM requests, complete HP review, and one-use HealthService application.
-- AttackAssist 1.0.4 - Guides authorized 2014 repeating attacks through direct visible targeting, documented Classic-sheet defaults, private GM placement, and one-use native-template rolls without applying damage.
+- AttackAssist 1.0.5 - Guides authorized 2014 repeating attacks through direct visible targeting, complete prompt-safe Classic-sheet expansion, private GM placement, and one-use native-template rolls without applying damage.
 - AlmanacAssist 1.6.0 - Adds Wayfarer's ordinal 20-hour clock, independently styled world-announcement details, coherent climate/weather/environment presentation, direct Wayfarer and moon editors, configurable rest rules, editable seasonal ranges, and visible moon phases across six independently controlled internal systems.
 - HPAssist 0.2.0 - Rolls npc_hpformula and uses HealthService for verified token bar 1 writes when available.
 - DebugTools 0.3.0 - Optional dry-run-first GM diagnostics with verified supported HP damage writes.
@@ -21094,10 +21094,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Guided official-2014 repeating attacks
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:ATTACKASSIST", title: "AttackAssist",
-    //   guarantees: ["Only authorized official-2014 linked sources and verified repeating-attack row identities enter a guided roll","Visible targets use Roll20's native map prompt without requiring target control; hidden or off-page placement remains GM-reviewed","One-use roll submissions preserve the sheet-generated attack formula, materialize documented Classic-sheet checkbox and optional defaults, and refuse unknown missing fields before Roll20 receives the command","AttackAssist never applies damage or changes HP, conditions, effects, initiative, turns, resources, or encounter state"],
+    //   guarantees: ["Only authorized official-2014 linked sources and verified repeating-attack row identities enter a guided roll","Visible targets use Roll20's native map prompt without requiring target control; hidden or off-page placement remains GM-reviewed","One-use roll submissions materialize the complete sheet-generated attack formula, apply documented Classic-sheet defaults, and refuse unresolved prompts or fields before Roll20 receives the command","AttackAssist never applies damage or changes HP, conditions, effects, initiative, turns, resources, or encounter state"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AttackAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.0.4", interaction_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.0.5", interaction_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // AttackAssist is a disabled-by-default convenience layer for the official 2014
@@ -21107,7 +21107,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('AttackAssist', function() {
         const MODULE_NAME = 'AttackAssist';
-        const MODULE_VERSION = '1.0.4';
+        const MODULE_VERSION = '1.0.5';
         const INTERACTION_SCHEMA_VERSION = 1;
         const modState = GameAssist.getState(MODULE_NAME);
         modState.config = {
@@ -21140,8 +21140,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             global_damage_mod_type: '',
             global_damage_type: '',
             licensedsheet: '',
+            advantagetoggle: '{{normal=1}} {{r2=[[0d20',
+            whispertoggle: '',
             wtype: ''
         });
+        const ATTRIBUTE_EXPANSION_DEPTH = 12;
         const flows = new Map();
         const requests = new Map();
         const submissions = new Map();
@@ -21645,6 +21648,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             showRollChoices(msg, flowResult.source, flowResult.row, target);
         }
 
+        /**
+         * qualifyRollbase - Materialize one verified Classic-sheet attack for API submission.
+         * Context: Roll20 expands character attributes for API-authored chat, but it cannot
+         * answer client-side ?{...} prompts there; an unresolved prompt can abort the sandbox.
+         * Inputs: authorized source, current repeating row, explicit roll mode, privacy flag.
+         * Outputs: a complete prompt-free command, or a refusal before sendChat is called.
+         * Invariants: no attribute, ability, target, or roll-query placeholder reaches Roll20.
+         * Failure: cyclic references, missing fields, and nonstandard prompts name the cause.
+         * Design: preserve the official roll template while moving macro expansion to this edge.
+         */
         function qualifyRollbase(source, row, mode, forceGmWhisper) {
             let rollbase = String(row.rollbase || '').trim();
             if (!verifiedRollbase(rollbase)) return { ok: false, message: 'The repeating attack roll formula is no longer supported.' };
@@ -21652,54 +21665,115 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (forceGmWhisper) rollbase = rollbase.replace(/^@\{wtype\}/i, '');
             if (mode !== 'sheet') rollbase = rollbase.replace(/@\{rtype\}/gi, MODE_FRAGMENTS[mode]);
 
-            // CHOICE: materialize documented sheet-only defaults before API submission.
-            // ALT: create hidden attributes on the character; REJECTED: a guided roll must not
-            // mutate the sheet merely because Roll20 did not persist an HTML default value.
-            rollbase = rollbase.replace(/@\{d20\}/gi, '1d20');
-
             rollbase = rollbase.replace(/~repeating_attack_(attack(?:_(?:dmg|crit))?)/gi,
                 (_match, button) => `~${source.character.id}|repeating_attack_${row.rowId}_${button}`);
 
             const attributes = row.attributes || attributeMap(source.character.id);
             const missing = new Set();
+            const prompts = new Set();
+            const cycles = new Set();
             const characterName = String(source.character.get('name') || source.name || 'Character')
                 .replace(/[{}@\r\n]/g, ' ')
                 .replace(/\s+/g, ' ')
                 .trim();
-            rollbase = rollbase.replace(/@\{([^{}]+)\}/g, (match, inner) => {
-                const parts = String(inner || '').split('|');
-                if (parts.length > 2 || (parts.length === 2 && parts[1] !== 'max')) {
-                    if (parts[0] === String(source.character.id)) return match;
-                    missing.add(parts[0] || inner);
-                    return match;
-                }
-                const name = parts[0];
-                if (!name || ['selected', 'target', 'tracker'].includes(name.toLowerCase())) {
-                    missing.add(name || inner);
-                    return match;
-                }
-                const rowName = name.startsWith(`${row.prefix}_`) ? name : `${row.prefix}_${name}`;
-                const resolvedName = attributes.has(rowName) ? rowName : (attributes.has(name) ? name : null);
-                if (resolvedName) {
-                    return `@{${source.character.id}|${resolvedName}${parts[1] === 'max' ? '|max' : ''}}`;
-                }
 
-                const normalizedName = name.toLowerCase();
-                if (normalizedName === 'charname_output') return `{{charname=${characterName}}}`;
-                if (normalizedName === 'rtype') return MODE_FRAGMENTS.normal;
-                if (Object.prototype.hasOwnProperty.call(OPTIONAL_ROLLBASE_DEFAULTS, normalizedName)) {
-                    return OPTIONAL_ROLLBASE_DEFAULTS[normalizedName];
+            function classicPromptDefault(attributeName, value) {
+                const normalizedName = String(attributeName || '').toLowerCase();
+                const text = String(value || '').trim();
+                // CHOICE: use the first options documented by the Classic sheet for its two
+                // standard per-roll queries. ALT: forward the prompts; REJECTED: API-authored
+                // sendChat calls cannot answer them and Roll20 may stop the entire sandbox.
+                if (normalizedName === 'wtype' && /^\?\{whisper\?/i.test(text)) return '';
+                if (normalizedName === 'rtype' && /\?\{advantage\?/i.test(text)) return MODE_FRAGMENTS.normal;
+                return null;
+            }
+
+            function parseReference(inner) {
+                const parts = String(inner || '').split('|');
+                if (parts.length === 1 || (parts.length === 2 && parts[1] === 'max')) {
+                    return { name: parts[0], field: parts[1] === 'max' ? 'max' : 'current' };
                 }
-                missing.add(name);
-                return match;
-            });
-            rollbase = rollbase.replace(/@\{d20\}/gi, '1d20');
+                if ((parts.length === 2 || (parts.length === 3 && parts[2] === 'max'))
+                    && parts[0] === String(source.character.id)) {
+                    return { name: parts[1], field: parts[2] === 'max' ? 'max' : 'current' };
+                }
+                return null;
+            }
+
+            function expand(value, stack = [], depth = 0) {
+                if (depth > ATTRIBUTE_EXPANSION_DEPTH) {
+                    cycles.add(stack.at(-1) || 'attribute chain');
+                    return '';
+                }
+                return String(value || '').replace(/@\{([^{}]+)\}/g, (_match, inner) => {
+                    const reference = parseReference(inner);
+                    if (!reference?.name || ['selected', 'target', 'tracker'].includes(reference.name.toLowerCase())) {
+                        missing.add(reference?.name || inner);
+                        return '';
+                    }
+
+                    const normalizedName = reference.name.toLowerCase();
+                    if (normalizedName === 'd20') return '1d20';
+                    const rowName = reference.name.startsWith(`${row.prefix}_`)
+                        ? reference.name
+                        : `${row.prefix}_${reference.name}`;
+                    const resolvedName = attributes.has(rowName)
+                        ? rowName
+                        : (attributes.has(reference.name) ? reference.name : null);
+                    if (resolvedName) {
+                        const key = `${resolvedName}|${reference.field}`;
+                        if (stack.includes(key)) {
+                            cycles.add(resolvedName);
+                            return '';
+                        }
+                        const rawValue = attributes.get(resolvedName)?.get(reference.field);
+                        const raw = String(rawValue === undefined || rawValue === null ? '' : rawValue);
+                        if (!raw && Object.prototype.hasOwnProperty.call(OPTIONAL_ROLLBASE_DEFAULTS, normalizedName)) {
+                            return OPTIONAL_ROLLBASE_DEFAULTS[normalizedName];
+                        }
+                        const promptDefault = classicPromptDefault(reference.name, raw);
+                        if (promptDefault !== null) return expand(promptDefault, [...stack, key], depth + 1);
+                        if (/\?\{/.test(raw)) prompts.add(resolvedName);
+                        return expand(raw, [...stack, key], depth + 1);
+                    }
+
+                    if (normalizedName === 'charname_output') return `{{charname=${characterName}}}`;
+                    if (normalizedName === 'character_name') return characterName;
+                    if (normalizedName === 'rtype') return MODE_FRAGMENTS.normal;
+                    if (Object.prototype.hasOwnProperty.call(OPTIONAL_ROLLBASE_DEFAULTS, normalizedName)) {
+                        return OPTIONAL_ROLLBASE_DEFAULTS[normalizedName];
+                    }
+                    missing.add(reference.name);
+                    return '';
+                });
+            }
+
+            rollbase = expand(rollbase);
 
             if (missing.size) {
                 const fields = [...missing].sort().join(', ');
                 return {
                     ok: false,
                     message: `This attack needs sheet fields Roll20 did not save (${fields}). Open and save that attack on the 2014 character sheet, then choose it again.`
+                };
+            }
+            if (cycles.size) {
+                return {
+                    ok: false,
+                    message: `This attack contains a circular sheet reference (${[...cycles].sort().join(', ')}). Open and save that attack on the 2014 character sheet, then choose it again.`
+                };
+            }
+            if (prompts.size || /\?\{/.test(rollbase)) {
+                const fields = prompts.size ? ` in ${[...prompts].sort().join(', ')}` : '';
+                return {
+                    ok: false,
+                    message: `This attack contains an interactive Roll20 prompt${fields} that a Mod-generated roll cannot safely open. Use the native character-sheet attack for this row.`
+                };
+            }
+            if (/@\{|%\{|\btarget\|/i.test(rollbase)) {
+                return {
+                    ok: false,
+                    message: 'This attack still contains an unresolved sheet, ability, or target reference. Use the native character-sheet attack for this row.'
                 };
             }
             return { ok: true, command: `${forceGmWhisper ? '/w gm ' : ''}${rollbase}` };
@@ -21957,7 +22031,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => GameAssist.AttackAssist?._clearTransient?.()
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Advanced AttackAssist to 1.0.4; Classic-sheet rollbases may now use the official default atkflag, dmgflag, dmg2flag, and saveflag values even when Roll20 did not persist those checkbox attributes, while every unknown missing field is still refused before submission.
+    // Changed (v2.0.0): Advanced AttackAssist to 1.0.5; API-authored attacks now materialize nested Classic-sheet attributes, translate the official per-roll whisper and advantage prompts to their documented first choices, and refuse every other unresolved prompt before sendChat so malformed dice input cannot stop the Roll20 sandbox.
+    // Prior notes:
+    //   v2.0.0 / AttackAssist 1.0.4: Classic-sheet rollbases may use the official default atkflag, dmgflag, dmg2flag, and saveflag values when Roll20 did not persist those checkbox attributes; unknown missing fields are refused before submission.
     // Changed (v2.0.0): Advanced AttackAssist to 1.0.3; official-2014 roll submission now materializes documented optional sheet defaults such as atkcritrange, character output, whisper mode, and empty global modifiers, while unknown missing fields produce a guided preflight refusal instead of a Roll20 sandbox error.
     // Changed (v2.0.0): Advanced AttackAssist to 1.0.2; the attack picker now uses compact attack buttons, and API-submitted official-2014 roll formulas materialize the sheet d20 placeholder so normal, advantage, and disadvantage rolls do not depend on a nonexistent persisted d20 attribute.
     // Changed (v2.0.0): Advanced AttackAssist to 1.0.1; each verified attack row now opens Roll20's target prompt directly, removing the unnecessary inert target-screen hop while retaining opaque flow authorization and GM placement requests.
