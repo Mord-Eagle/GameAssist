@@ -47,7 +47,7 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ### Release definition
 
-GameAssist v2.0.0 remains one active development line in PR #81. EffectAssist 2.5.1 coordinates the focused official-2014 effect catalog with separate caster and recipient-count steps, Bless totals from one through eleven, guarded recipient and concentration preflight, consistent compact `(GA)` sheet labels, concentration-linked cleanup, retained GM placement requests, bounded Bless proposals, guarded Guidance consumption, worker-safe projection cleanup, and optional duration review. HealAssist 1.0.0 adds guided official-2014 healing with authorized sources, native visible-PC targeting, retained private GM placement requests, exact roll and HP review, and verified HealthService application. AttackAssist 1.0.3 adds compact official-2014 repeating-attack selection, stable row identity, native visible targeting, retained private placement requests, safe translation of documented optional sheet defaults, executable sheet/normal/advantage/disadvantage modes, one-use character-attributed rolls, and no automatic attack consequences. AlmanacAssist 1.6.0 remains in development under Issue #90 for complete custom-calendar and world-context acceptance. HealthService 1.0.0 adds one canonical supported HP-observation and verified-write boundary plus an optional GM-private PC threshold consumer. ConcentrationAssist 0.5.0 uses portable built-in marker defaults, guided marker controls, and the same health evidence for optional private, page-safe check offers after supported HP loss. CombatAssist 1.1.0 supplies immutable accepted encounter-progression events without exposing tracker-write authority. The shared SemanticEvents service provides immutable in-sandbox lifecycle notifications without coupling module state.
+GameAssist v2.0.0 remains one active development line in PR #81. EffectAssist 2.5.2 coordinates the focused official-2014 effect catalog with separate caster and recipient-count steps, Bless totals from one through eleven, exact recipient diagnostics, duplicate-token source identity, token-specific concentration-linked cleanup, consistent compact `(GA)` sheet labels, retained GM placement requests, bounded Bless proposals, guarded Guidance consumption, worker-safe projection cleanup, and optional duration review. HealAssist 1.0.0 adds guided official-2014 healing with authorized sources, native visible-PC targeting, retained private GM placement requests, exact roll and HP review, and verified HealthService application. AttackAssist 1.0.4 adds compact official-2014 repeating-attack selection, stable row identity, native visible targeting, retained private placement requests, translation of documented Classic-sheet attack-template defaults, executable sheet/normal/advantage/disadvantage modes, one-use character-attributed rolls, and no automatic attack consequences. AlmanacAssist 1.6.0 remains in development under Issue #90 for complete custom-calendar and world-context acceptance. HealthService 1.0.0 adds one canonical supported HP-observation and verified-write boundary plus an optional GM-private PC threshold consumer. ConcentrationAssist 0.6.0 uses portable built-in marker defaults, guided marker controls, explicit official-2014 save qualification, and the same health evidence for optional private, page-safe check offers after supported HP loss. CombatAssist 1.1.0 supplies immutable accepted encounter-progression events without exposing tracker-write authority. The shared SemanticEvents service provides immutable in-sandbox lifecycle notifications without coupling module state.
 
 EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so existing campaigns upgrade without receiving new markers, conditions, HP writes, other sheet writes, attack rolls, fictional chronology, weather, or chat output until the GM deliberately enables them.
 
@@ -55,34 +55,52 @@ EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so exis
 
 This pre-release checkpoint repairs three failures observed in live Roll20 testing while retaining GameAssist v2.0.0 and PR #81 as the single development line. AlmanacAssist's remaining custom-calendar and world-context work is recorded separately in [Issue #90](https://github.com/Mord-Eagle/GameAssist/issues/90).
 
-#### AttackAssist 1.0.3
+#### AttackAssist 1.0.4
 
-- Translates documented official-2014 sheet placeholders that may exist only as HTML defaults, including the ordinary critical range of `20`, before submitting a repeating attack through the Mod sandbox.
+- Translates documented official-2014 Classic sheet placeholders that may exist only as HTML defaults, including the ordinary critical range of `20`, checked attack and first-damage flags, and unchecked second-damage and save flags, before submitting a repeating attack through the Mod sandbox.
 - Keeps explicit Normal, Advantage, and Disadvantage modes independent from unsaved `d20`, roll-mode, character-output, and empty global-modifier attributes.
 - Refuses an unknown missing field before `sendChat`, names the field, and asks the GM to open and save the attack instead of allowing Roll20 to emit an attribute-resolution exception.
 - Does not create or alter character-sheet attributes while preparing the roll.
 
-#### ConcentrationAssist 0.5.0
+#### ConcentrationAssist 0.6.0
 
 - Uses Roll20's built-in `stopwatch` marker for fresh campaigns so concentration works without a custom campaign marker library.
 - Preserves every valid saved concentration marker, including a valid custom `Concentrating` marker and exact custom tags.
 - Migrates only the exact former stock `Concentrating` value when the campaign registry confirms that it cannot be resolved; an unavailable registry does not overwrite saved configuration.
 - Adds GM-facing **Use Stopwatch**, **Choose Marker**, built-in marker, registered custom marker, and manual exact-tag controls to the existing settings screen.
+- Requires a finite persisted or Roll20-computed official-2014 Constitution save bonus before rolling; missing Classic data is refused instead of becoming `+0`.
+- Refuses recognized 2024 Beacon characters with a direct native-sheet next step until a separately verified adapter is available.
+- Publishes concentration lifecycle changes only after MarkerService verifies the requested marker's final state on the exact token.
 
-#### EffectAssist 2.5.1
+#### EffectAssist 2.5.2
 
 - Validates the configured concentration marker before applying any concentration-dependent target projection.
 - Refuses an invalid dependency before writing recipient markers or official-2014 modifier rows, preserving the all-or-nothing application boundary.
 - Names the exact source and resolved marker after concentration begins successfully.
-- Names an unlinked recipient token and directs the GM to its **Represents Character** setting instead of returning a generic character-linkage failure.
+- Names every invalid recipient token, distinguishes an empty **Represents Character** value from a stale character reference, and accepts Roll20's compatible `represents` and `_represents` evidence without hiding a broken link.
+- Distinguishes duplicate source tokens by token and layer, binds concentration ownership to the exact chosen source token, and does not end that effect when another token representing the same character loses its marker.
+- Reports matching marker or sheet state that existed before EffectAssist and was deliberately preserved during cleanup.
+
+#### Module controls
+
+- Adds a direct **Disable** control to every running module's `!ga-nav <module>` destination and an **Enable** control to disabled-module destinations.
+- Adds **Disable CritAssist** to CritAssist's private GM/DM interaction screens so the automatic Natural 1 workflow can be stopped without locating a raw configuration command.
+- Keeps all module settings and gameplay behavior inside their existing owners; the suite navigator only routes to controls and lifecycle actions.
+
+#### Compatibility boundary
+
+- Documents that **5th Edition OGL by Roll20 Companion** can overlap GameAssist through automatic NPC HP and token-bar ownership, so campaigns should choose one automatic NPC HP writer.
+- Records the Companion's supplied API-origin guard: normal Classic-sheet clicks may use its ammunition or spell-slot processing, while AttackAssist-generated API roll templates should not trigger that processing.
+- Tracks shared 2014/2024 capability classification and future verified adapters in Issue #91 without delaying explicit refusals in the current candidate.
 
 #### Verification
 
 - JavaScript syntax parsing passes for the complete source.
-- The focused lifecycle, ownership, AttackAssist, concentration-marker, and EffectAssist harness passes 115 checks with an existing valid custom marker.
-- The same 115-check harness passes in a fresh campaign with no custom marker registry and confirms the built-in `stopwatch` default.
-- The focused Roll20 interaction and Almanac regression harness passes 41 checks.
-- The three executable artifacts are byte-identical at SHA-256 `8064E25D4DFF8E1AFA6F731BF645CD6166488F7F3FEB1427D7F79F021785E22F`.
+- The focused lifecycle, identity, ownership, AttackAssist, concentration-marker, mixed-sheet refusal, module-control, and EffectAssist harness passes 134 checks with an existing valid custom marker.
+- The same 134-check harness passes in a fresh campaign with no custom marker registry and confirms the built-in `stopwatch` default.
+- The focused Roll20 interaction and Almanac regression harness passes 42 checks.
+- The complete Almanac boundary harness remains green at 107 checks; this repair does not alter AlmanacAssist runtime behavior tracked under Issue #90.
+- The three executable artifacts are byte-identical at SHA-256 `83714B951ED42443E489B0772CEE55BA70FDA538F783F82091A768FB4520B750`.
 - The MECHSUITS structural audit passes all 32 sections with an exact canonical tree, paired nesting, required metadata, and required footers.
 
 ### Roll20 acceptance repair — 2026-08-22
@@ -3707,3 +3725,4 @@ The eight automated behavior tracks pass 545 assertions in total. The structural
 ### Roll20 acceptance
 
 The dedicated live Roll20 pass completed successfully. It confirmed native round-counter `+1`, fallback round counting, backward safety, preserved-round tracker edits, stale timer cancellation, deadline non-advancement, ping audiences and hidden-turn privacy, recovery, GM/current-player controls, A-B-A delivery, privacy-safe confirmations, the persistent manual, unreadable-state attention, two-row behavior, disable/reload behavior, and unchanged InitiativeAssist operation. The same pass accepted compact module navigation, read-only audit wording, unknown-command recovery, stable non-duplicating manuals, equal `GM`/`DM` module screens, and the NPCManager and Concentration command aliases.
+

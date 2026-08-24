@@ -397,7 +397,7 @@ Pass when the Control Center is private, the Guide gives the short player path, 
 3. Click **Choose Target** beside that attack and point at the visible target the player does not control.
 4. Choose **Normal** from the review screen.
 
-Pass when both starting commands open the same compact source/attack path, neither produces a bare `{}`, Roll20 opens its native target prompt only after **Choose Target** is clicked, and the target is accepted without granting control. The familiar official attack card should appear once as the attacking character, followed by the attacker/target announcement. The Roll20 API log must not report a missing `d20`, `atkcritrange`, `charname_output`, roll-mode, or empty global-modifier attribute. Confirm the chosen row's bonus, range, and damage links match the numbered attack selected. The target's HP, markers, position, effects, conditions, and Roll20 Turn Tracker must remain unchanged.
+Pass when both starting commands open the same compact source/attack path, neither produces a bare `{}`, Roll20 opens its native target prompt only after **Choose Target** is clicked, and the target is accepted without granting control. The familiar official attack card should appear once as the attacking character, followed by the attacker/target announcement. The Roll20 API log must not report a missing `d20`, `atkcritrange`, `atkflag`, `dmgflag`, `dmg2flag`, `saveflag`, `charname_output`, roll-mode, or empty global-modifier attribute. Confirm the chosen row's bonus, range, and damage links match the numbered attack selected. The target's HP, markers, position, effects, conditions, and Roll20 Turn Tracker must remain unchanged.
 
 Click the same roll button again. Pass when AttackAssist refuses it without a second roll or announcement.
 
@@ -412,7 +412,13 @@ Repeat the same disposable attack through **Use Sheet Setting**, **Advantage**, 
 - none of the four choices reports a missing documented optional sheet field such as `d20` or `atkcritrange`;
 - the character's saved roll-mode setting is unchanged after every test.
 
-Use a normal 2014 attack whose critical range has never been edited or separately saved. Pass when AttackAssist uses the sheet's ordinary critical range of 20 and the attack rolls normally. If a custom or incomplete attack formula references an unknown missing field, pass when AttackAssist names that field in a **Needs Attention** panel before submission instead of allowing a sandbox exception.
+Use a normal 2014 attack whose critical range and attack-template checkboxes have never been edited or separately saved. Pass when AttackAssist uses the Classic sheet's ordinary defaults: critical range 20, attack and first damage enabled, second damage and save disabled. The attack must roll normally without asking the GM to open and save unchanged defaults. If a custom or incomplete attack formula references a genuinely unknown field, pass when AttackAssist names that field in a **Needs Attention** panel before submission instead of allowing a sandbox exception.
+
+### 5th Edition OGL Companion Coexistence
+
+**Skip when:** The campaign does not use **5th Edition OGL by Roll20 Companion**.
+
+With the Companion installed, make one disposable native Classic-sheet attack and one AttackAssist attack. Pass when the native sheet attack follows the Companion's configured ammunition or spell-slot behavior, while the API-originated AttackAssist roll appears once without a second Companion resource change. Then use only one automatic NPC HP owner: disable Companion automatic NPC HP behavior or disable the overlapping GameAssist HP feature before placing a disposable NPC. Any duplicate resource or HP processing is a failure.
 
 ### CritAssist Natural 1 Delivery
 
@@ -432,7 +438,7 @@ As the GM, open `!Attack-Requests`, choose the retained request, select the hidd
 
 ### Unsupported Source, Lockout, and Lifecycle
 
-Select the supported 2024 test token and run `!Attack`. Pass when AttackAssist explains that 1.0.3 supports official-2014 repeating attacks and that the native 2024 attack buttons remain available.
+Select the supported 2024 test token and run `!Attack`. Pass when AttackAssist explains that 1.0.4 supports official-2014 repeating attacks and that the native 2024 attack buttons remain available.
 
 Run `!Attack-Players off`. Pass when the player can still read guidance but cannot begin or complete a guided attack; GM attacks remain available. Restore `!Attack-Players on` afterward.
 
@@ -468,7 +474,8 @@ Disable and re-enable AttackAssist. Pass when unrelated modules remain active, o
 Use one disposable page with:
 
 - two linked source tokens representing different official D&D 5E by Roll20 2014 PC sheets;
-- one linked 2014 PC target token on the Objects layer;
+- a second token representing the first source character, placed on a different visible layer when practical;
+- three linked 2014 PC target tokens on the Objects layer;
 - one linked NPC target token for fallback behavior;
 - one unlinked token;
 - MarkerService enabled;
@@ -516,6 +523,16 @@ EffectAssist begins disabled. Confirm that before changing anything:
 - Status remains a compact summary rather than printing the complete active and ended history.
 
 Clear concentration from the source with ConcentrationAssist. Pass when the Bless instance ends, the target marker and both unedited GameAssist sheet rows are removed, unrelated sheet rows remain, and the next attack/save rolls contain no Bless die. The removed GameAssist rows must not continue contributing until the user manually recreates or toggles anything.
+
+### Three Recipients and Exact Source Token
+
+1. Run `!Bless`, choose **3 Recipients**, and select the three linked 2014 tokens.
+2. Confirm all three receive the Blessed marker and owned sheet rows.
+3. Repeat with one selected token deliberately left unlinked, then with a token whose saved character was deleted.
+4. When the source character has two tokens, verify the caster choices distinguish the exact token and layer. Choose one source token.
+5. Remove concentration from the other token representing that character, then from the chosen source token.
+
+**Pass when:** all three valid recipients apply atomically; an invalid request names every affected token and distinguishes an empty **Represents Character** setting from a stale character link; clearing the other source token does nothing; clearing the exact chosen source ends Bless and cleans only the final unneeded EffectAssist-owned projections.
 
 ### Launch Catalog Coverage
 
@@ -599,7 +616,7 @@ Use a separate non-GM player login with two linked character tokens that player 
 2. Apply one Bless instance.
 3. End that instance.
 
-**Pass when:** the marker and pre-existing rows remain. EffectAssist must record that matching state existed before its ownership began and must not claim or remove it.
+**Pass when:** the marker and pre-existing rows remain. EffectAssist must record that matching state existed before its ownership began, name that preserved state in the completion result, and must not claim or remove it.
 
 ### Generic Paths
 
@@ -618,7 +635,7 @@ With the target selected, open `!Effect-GM` and test:
 1. Select one linked target and one unlinked token together.
 2. Try to apply Bless.
 
-**Pass when:** EffectAssist refuses the complete request, creates no instance, and changes neither token. It must not partially apply to the eligible selection.
+**Pass when:** EffectAssist refuses the complete request, names the exact invalid token and its linkage problem, creates no instance, and changes neither token. It must not partially apply to the eligible selection.
 
 ### Marker Removal, Read-Only Audit, and Confirmed Repair
 
@@ -2807,6 +2824,12 @@ Open `!concentration settings`. Pass when the result-message and HP-loss-offer c
 
 On a fresh campaign with no custom marker library, pass when ConcentrationAssist starts with Roll20's built-in `stopwatch` marker and Bless can begin source concentration without raw configuration commands. On an upgraded campaign, a valid saved custom `Concentrating` marker must remain unchanged. Only the exact former stock value that cannot be resolved may self-migrate to `stopwatch`.
 
+### Mixed-Sheet Refusal Boundary
+
+**Skip when:** No D&D 2024 by Roll20 character is available in the test campaign.
+
+Select a linked 2024 character and request a concentration check. Pass when ConcentrationAssist identifies the unsupported 2024 save contract, recommends the native 2024 sheet roll, produces no GameAssist roll, and never substitutes a `+0` bonus. Repeat with a disposable Classic character whose Constitution save data is deliberately unavailable; the result must likewise refuse rather than guess. This does not affect InitiativeAssist's separately verified mixed-sheet support.
+
 The complete privacy, deduplication, stale-button, verified-damage, and hidden-token checks live in [Focused v2.0.0 Concentration HP-Loss Offer Acceptance](#focused-v200-concentration-hp-loss-offer-acceptance).
 
 ---
@@ -3789,3 +3812,4 @@ Then run only the basic checks for features the session will use:
 - WelcomeAssist: when enabled, preview the greeting and confirm status before the session; do not use manual announce merely as a health check.
 
 Do not discover a marker, HP, or table problem for the first time during combat.
+
