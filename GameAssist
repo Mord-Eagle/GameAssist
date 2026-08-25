@@ -21,9 +21,9 @@ calls GameAssist.enqueue(). This development package contains fifteen configurab
 - ConfigUI 0.2.5 - GM-only chat controls with service-first grouping, compact readable configuration summaries, module toggles, common options, and PC health alerts.
 - CritAssist 0.2.5.2 - Detects natural-1 attacks and offers fumble/confirm menus with direct module recovery controls.
 - ConditionAssist 1.0.5 - Provides condition wording, artwork, announcements, marker controls, and full-name command aliases.
-- TokenAssist 1.3.0 - Provides general token controls through !token, !tokenassist, !token-assist, and !ta commands with compact GM navigation, controller/report routing, computed-value reports, and TokenMod-compatible marker expressions.
+- TokenAssist 1.3.0 - Provides general token controls through !token, !tokenassist, !token-assist, and !ta commands with compact GM navigation, an organized action library, longest-name-first alias routing, controller/report routing, computed-value reports, and MarkerService-backed marker expressions. Legacy !token-mod syntax remains only as a temporary migration alias.
 - InitiativeAssist 1.0.5 - Uses Roll20's native Turn Tracker for mixed-sheet initiative workflows and compact topic guidance.
-- CombatAssist 1.2.0 - Tracks encounters, native round counters, guarded turns, optional timers, private-safe pings, recoverable tracker changes, bounded health evidence, and optional Ready/Delay signaling.
+- CombatAssist 1.2.0 - Tracks encounters, native round counters, guarded turns, optional timers, private-safe pings, recoverable tracker changes, verified semantic progression events, bounded health evidence, and optional Ready/Delay signaling.
 - WelcomeAssist 0.1.6 - Optionally greets the table after a healthy GameAssist startup through short or full-name commands.
 - ConcentrationAssist 0.6.0 - Runs supported 2014 manual and private HP-loss-offered concentration checks, refuses unavailable save data instead of guessing, provides guided marker configuration, manages its configured marker, and exposes concentration lifecycle events.
 - NPCAssist 1.5.0 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, Arc rosters, and optional CombatAssist encounter summaries on the shared NPC HP bar.
@@ -375,7 +375,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             minimumTurnDurationSeconds: 10,
             maximumTurnDurationSeconds: 3600,
             maximumTimerReminders: 5,
-            maximumHealthTimelineEntries: 200,
+            maximumHealthTimelineEntries: 500,
             maximumHeldActions: 50
         }),
         welcome: Object.freeze({
@@ -501,6 +501,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     });
     // --- Notes & Comments ---
     // Changed (v2.0.0): Added bounded AttackAssist source, row, request, submission, rollbase, and interaction limits alongside the existing HealAssist, HealthService, EffectAssist, AlmanacAssist, and concentration limits; rollback: disable the affected optional module while retaining native sheet workflows.
+    // Changed (v2.0.0): Raised CombatAssist health-evidence retention to 500 entries for the active or most recent encounter review; held-action records remain encounter-scoped and are discarded when the encounter ends.
     // Decision log:
     //   CHOICE: Bound CombatAssist's optional HealthService evidence and held-action records - ALT: retain an unlimited encounter ledger; REJECTED: long-running campaigns must not grow sandbox memory without limit.
     //   CHOICE: Offer common IANA zones plus validated custom input - ALT: fixed numeric offsets; REJECTED: fixed offsets do not follow daylight-saving changes.
@@ -9843,6 +9844,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     });
     // --- Notes & Comments ---
     // Changed (v2.0.0): Advanced TokenAssist to 1.3.0 with validated relative color arithmetic, night-vision dimming controls, and synchronized relative/random multi-sided-token selection.
+    // Changed (v2.0.0): Clarified TokenAssist's branded MarkerService ownership while retaining organized action-library coverage, longest-name-first alias routing, and legacy expression compatibility as documented migration surfaces.
     // Prior notes:
     //   v2.0.0 / TokenAssist 1.2.0: added exact saved/computed attribute reports, distinct token/character/control report routes, and safe add/remove/replace character-controller operations backed by SheetCapabilities.
     //   v2.0.0 / TokenAssist 1.1.0: the compact GM controls linked to an organized action library covering practical identity, bars, markers, auras, vision, lighting, placement, appearance, ordering, and movement controls without burdening the default screen.
@@ -13742,6 +13744,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     });
     // --- Notes & Comments ---
     // Changed (v2.0.0): Advanced CombatAssist to 1.2.0 with optional 5e Ready/legacy Delay records and !Now signaling, bounded HealthService evidence by turn boundary, and an explicit deduplicated NPCAssist encounter-summary handoff.
+    // Changed (v2.0.0): Restored verified semantic progression events to the release inventory; the 500-entry health bound is per active or most recent encounter review, while held actions remain encounter-scoped.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the CombatAssist GM control screen.
     // Changed (v2.0.0): Advanced CombatAssist to 1.1.0 with stable encounter identity, monotonic verified-forward progression, and immutable public semantic events for optional consumers; native tracker ownership and all established encounter controls remain unchanged.
     // Decision log:
