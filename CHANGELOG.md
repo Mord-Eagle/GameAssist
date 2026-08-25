@@ -38,12 +38,12 @@ This changelog is intentionally detailed. It records not only visible features, 
 - v0.1.4.2 requires Roll20 API sandbox smoke confirmation before it should be used as a confirmed table build.
 - v0.1.4.1 remains available as the rollback script during v0.1.4.2 confirmation.
 - The attempted v0.1.5 file was not imported wholesale. Its unsafe or structurally unreliable changes were rejected; only isolated reviewed ideas were ported.
-- Older supplied notes used "Unreleased" and "Staging" labels for v0.1.3-v0.1.5 work. Those records are retained below as historical development evidence rather than silently discarded.
+- Older supplied notes used “Unreleased” and “Staging” labels for v0.1.3–v0.1.5 work. Those records are retained below as historical development evidence rather than silently discarded.
 - Where the supplied historical record did not establish a release date, this changelog does not invent one.
 
 ---
 
-## [2.0.0] - 2026-07-28
+## [2.0.0] – 2026-07-28
 
 ### Release definition
 
@@ -103,7 +103,7 @@ This checkpoint addresses the latest focused Roll20 acceptance findings without 
 - The three executable release artifacts are byte-identical with SHA-256 `E99EE3A399DDE3EB31A0859FBBE87B516EDA9250D4A8D1BB7943378528CDDCB2`.
 - Live Roll20 acceptance remains the release gate for the behavior changed in this checkpoint.
 
-### Attack, concentration-marker, and effect dependency repair - 2026-08-24
+### Attack, concentration-marker, and effect dependency repair — 2026-08-24
 
 This pre-release checkpoint repairs three failures observed in live Roll20 testing while retaining GameAssist v2.0.0 and PR #81 as the single development line. AlmanacAssist's remaining custom-calendar and world-context work is recorded separately in [Issue #90](https://github.com/Mord-Eagle/GameAssist/issues/90).
 
@@ -158,7 +158,7 @@ This pre-release checkpoint repairs three failures observed in live Roll20 testi
 - The three executable artifacts are byte-identical at SHA-256 `85415BE2B90B495FCEAE999D5817A80F26FCB79D4DE6630A9CCD5D8510FF18D3`.
 - The MECHSUITS structural audit passes all 32 sections with an exact canonical tree, paired nesting, required metadata, and required footers.
 
-### Roll20 acceptance repair - 2026-08-22
+### Roll20 acceptance repair — 2026-08-22
 
 This pre-release checkpoint advances EffectAssist to 2.5.0, AttackAssist to 1.0.2, ConcentrationAssist to 0.4.2, and AlmanacAssist to 1.6.0 while retaining GameAssist v2.0.0 and PR #81 as the single development line.
 
@@ -204,7 +204,7 @@ This pre-release checkpoint advances EffectAssist to 2.5.0, AttackAssist to 1.0.
 
 Live Roll20 acceptance remains the release gate for the native target prompts, official 2014 sheet rolls and workers, linked HP evidence, and chat-template rendering covered by this checkpoint.
 
-### Roll20 command-button and Almanac control repair - 2026-08-20
+### Roll20 command-button and Almanac control repair — 2026-08-20
 
 This pre-release repair advances EffectAssist to 2.4.3 and AlmanacAssist to 1.5.0 while retaining AttackAssist 1.0.1 and GameAssist v2.0.0. It repairs Roll20-native target and query prompts at the shared button boundary, then applies the resulting controls to the effect, attack, calendar, astronomy, announcement, and rest workflows.
 
@@ -259,7 +259,7 @@ This pre-release repair advances EffectAssist to 2.4.3 and AlmanacAssist to 1.5.
 
 An editable Almanac import handout is not included in this repair. Importing nested calendar, moon, climate, weather, environment, and rest data requires a versioned schema, validation preview, and explicit confirmation so a handout typo cannot partially replace campaign chronology.
 
-### Focused interaction and Almanac usability repair - 2026-08-19
+### Focused interaction and Almanac usability repair — 2026-08-19
 
 This pre-release repair advances EffectAssist to 2.4.2, AttackAssist to 1.0.1, and AlmanacAssist to 1.4.0 without changing GameAssist's v2.0.0 release number or adding MECHSUITS section tags.
 
@@ -300,7 +300,7 @@ This pre-release repair advances EffectAssist to 2.4.2, AttackAssist to 1.0.1, a
 - Fourteen Roll20-style harness checks pass for multi-caster Bless targeting, direct attack targeting, Wayfarer clock language, announcement configuration, Climate navigation, and focused Environment editing.
 - Live Roll20 acceptance remains required for the native target prompts and final chat presentation.
 
-### Post-smoke repair pass - 2026-08-16
+### Post-smoke repair pass — 2026-08-16
 
 This pre-release repair pass advances EffectAssist to 2.4.1, ConcentrationAssist to 0.4.1, and AlmanacAssist to 1.1.2 without changing the GameAssist v2.0.0 release number or adding section tags. It addresses failures observed during the focused Roll20 acceptance pass while preserving the established module boundaries and v2.0.0 state contracts.
 
@@ -830,7 +830,7 @@ This pre-release repair pass advances EffectAssist to 2.4.1, ConcentrationAssist
 
 ---
 
-## [1.8.2] - 2026-07-28
+## [1.8.2] – 2026-07-28
 
 ### Release definition
 
@@ -891,7 +891,7 @@ The feature prevents accidental same-page NPC token-name collisions without intr
 
 ---
 
-## [1.8.1] - 2026-07-28
+## [1.8.1] – 2026-07-28
 
 ### Release definition
 
@@ -943,7 +943,7 @@ NPCAssist advances from `1.3.2` to `1.3.3`. No other module's independent versio
 
 ---
 
-## [1.8.0] - 2026-07-28
+## [1.8.0] – 2026-07-28
 
 ### Release definition
 
@@ -1029,7 +1029,7 @@ This release also begins three-part GameAssist project versioning. The transitio
 - Rollable-table import/export.
 - Expanded verbose-mode diagnostics.
 
-### Explicitly not planned as "fixes"
+### Explicitly not planned as “fixes”
 
 - Do not route every command and event through the queue.
 - Do not claim that a watchdog or timeout can terminate running JavaScript or Roll20 operations.
@@ -1038,7 +1038,7 @@ This release also begins three-part GameAssist project versioning. The transitio
 
 ---
 
-## [0.1.4.2] - 2026-06-09
+## [0.1.4.2] – 2026-06-09
 
 ### Release definition
 
@@ -1078,7 +1078,7 @@ The release was deliberately kept narrow:
 - Preserved prior section commentary under `Prior notes` and added `Changed (v0.1.4.2)` records to the changed sections.
 - Completed a structural audit for tag pairing, parent nesting, ancestor-only overlap, canonical-tree agreement, metadata presence, and required section footers.
 
-### Added - State self-healing and audit safety
+### Added – State self-healing and audit safety
 
 - Added conservative repair for known module state branches in `[GAMEASSIST:APP:UTILS]`.
   - `ensureStateRoot()` begins at line 276 and guarantees the core `state.GameAssist` containers exist.
@@ -1100,7 +1100,7 @@ The release was deliberately kept narrow:
   - Unknown branches may contain user data, abandoned module data, or future-extension data; deleting them automatically would be unsafe.
   - This state posture is important before character-sheet development because upgrades and new modules will increase persistent-state complexity.
 
-### Added - Explicit state cleanup command
+### Added – Explicit state cleanup command
 
 - Added GM-only `!ga-config cleanup` in `[GAMEASSIST:INTERFACES:COMMANDS]` at line 1448.
 - Cleanup behavior:
@@ -1111,7 +1111,7 @@ The release was deliberately kept narrow:
   - Cleanup is intentionally not executed during startup.
   - Documentation warns the GM to review state warnings before using cleanup.
 
-### Added - Public opt-in queue API
+### Added – Public opt-in queue API
 
 - Exposed `GameAssist.enqueue(task, options)` in `[GAMEASSIST:CORE:OBJECT]` at line 1096.
 - Public API behavior:
@@ -1135,7 +1135,7 @@ The release was deliberately kept narrow:
 - Rationale:
   - Future modules gain a supported serialization seam without imposing queue latency or coupling on every Roll20 event.
 
-### Changed - Queue and watchdog truthfulness
+### Changed – Queue and watchdog truthfulness
 
 - Updated `[GAMEASSIST:CORE:QUEUE]` narrative and footer to state the actual operational limit:
   - queue timeouts release the queue;
@@ -1148,7 +1148,7 @@ The release was deliberately kept narrow:
   - Roll20 offers no general cancellation primitive for a running callback or pending external operation.
   - Accurate documentation is part of operational safety.
 
-### Added - Three-state dependency diagnostics
+### Added – Three-state dependency diagnostics
 
 - Reworked dependency reporting in `[GAMEASSIST:CORE:OBJECT]` through `_checkDependencies(name)` at line 1033.
 - Dependency states:
@@ -1166,14 +1166,14 @@ The release was deliberately kept narrow:
   - Unverifiable dependencies produce a warning and allow the module to proceed.
   - Modules with no declared dependencies report confirmed.
 - Current declared external dependencies:
-  - NPCManager  TokenMod (`dependsOn: ['TokenMod']`, line 2300).
-  - ConcentrationTracker  TokenMod (`dependsOn: ['TokenMod']`, line 2817).
+  - NPCManager → TokenMod (`dependsOn: ['TokenMod']`, line 2300).
+  - ConcentrationTracker → TokenMod (`dependsOn: ['TokenMod']`, line 2817).
   - NPCHPRoller does not require TokenMod.
 - Rationale:
   - Earlier binary dependency reporting treated unavailable Roll20 metadata as proof of absence.
   - The tri-state model distinguishes evidence from uncertainty and avoids falsely disabling useful modules.
 
-### Added - Versioned configuration-only snapshots
+### Added – Versioned configuration-only snapshots
 
 - Added snapshot identifiers to `[GAMEASSIST:POLICY]`:
   - `configFormat: 'gameassist-config-snapshot'`
@@ -1207,7 +1207,7 @@ The release was deliberately kept narrow:
   - Versioning the export now creates a stable future validation boundary.
   - Import/restore is deferred because unsafe state import could be more damaging than a missing feature.
 
-### Added - Health reporting
+### Added – Health reporting
 
 - Added `getModuleHealth()` in `[GAMEASSIST:INTERFACES:COMMANDS]` at line 1323.
 - Added `formatDependencyStatus()` at line 1337.
@@ -1230,17 +1230,17 @@ The release was deliberately kept narrow:
   - current runtime state;
   - dependency status.
 - Rationale:
-  - "Configured" and "running" are not interchangeable.
+  - “Configured” and “running” are not interchangeable.
   - A module can be configured on but skipped, failed, or waiting on dependencies.
   - Health output should reveal that distinction without requiring state-console inspection.
 
-### Changed - Bootstrap order and startup diagnostics
+### Changed – Bootstrap order and startup diagnostics
 
 - Updated `[GAMEASSIST:BOOTSTRAP]`, beginning at line 3305.
 - Startup order now:
   1. establish core state;
   2. initialize metrics/session timestamp;
-  3. clear GameAssist's internal listener registries;
+  3. clear GameAssist’s internal listener registries;
   4. audit and repair known state;
   5. seed defaults;
   6. deduplicate planned metadata;
@@ -1248,14 +1248,14 @@ The release was deliberately kept narrow:
   8. report core ready;
   9. diagnose dependencies and initialize enabled modules.
 - Dependency behavior during startup:
-  - missing  warn, disable stored enabled state, leave module inactive;
-  - unverifiable  warn and proceed;
-  - confirmed  proceed normally.
+  - missing → warn, disable stored enabled state, leave module inactive;
+  - unverifiable → warn and proceed;
+  - confirmed → proceed normally.
 - Preserved `GameAssist.flags.QUIET_STARTUP = true` default:
   - individual module-ready messages remain suppressed by default;
   - the core-ready message remains visible.
 
-### Documented - Previously hidden commands and configuration
+### Documented – Previously hidden commands and configuration
 
 - Documented commands that existed in code but were absent or unclear in older README revisions:
   - `!npc-death-clear` at script line 2237;
@@ -1278,7 +1278,7 @@ The release was deliberately kept narrow:
   - selected DebugTools tokens are used by omitting `--token`; literal `--token select` is not implemented by the parser;
   - commands are generally case-insensitive; lowercase is not a universal requirement.
 
-### Documentation - Full README reconstruction
+### Documentation – Full README reconstruction
 
 - Rebuilt `README-GameAssist-v0.1.4.2.md` as a long-form handbook after the first accurate-but-overly-compact rewrite omitted the original layout and teaching material.
 - Restored:
@@ -1300,7 +1300,7 @@ The release was deliberately kept narrow:
   - changelog summary;
   - glossary.
 - Corrected old claims that described unsuitable, impossible, or unimplemented behavior:
-  - removed "zero silent failures" guarantee;
+  - removed “zero silent failures” guarantee;
   - removed claim that every event is queued;
   - removed claim that watchdog kills running tasks;
   - removed claim that state audit deletes and reseeds unknown branches;
@@ -1377,7 +1377,7 @@ The release was deliberately kept narrow:
 
 ---
 
-## [0.1.4.1] - 2026-06-08
+## [0.1.4.1] – 2026-06-08
 
 ### Release definition
 
@@ -1418,7 +1418,7 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
   - required Notes & Comments footers.
 - Did not claim that comment-only inherited sections were meaningfully changed.
 
-### Added - Centralized POLICY ownership
+### Added – Centralized POLICY ownership
 
 - Added/expanded `[GAMEASSIST:POLICY]` beginning at line 163.
 - Centralized existing values without changing defaults:
@@ -1436,7 +1436,7 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
   - Central policy ownership makes later changes reviewable and rollbackable.
   - Existing values were preserved to avoid changing runtime behavior during the stability release.
 
-### Added - Time seams and timestamp hardening
+### Added – Time seams and timestamp hardening
 
 - Added shared wall-clock helper `now()` at line 227.
 - Added monotonic duration helper `monotonic()` at line 231.
@@ -1449,7 +1449,7 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
   - Monotonic time is appropriate for durations and timeout measurement.
   - Sanitization prevents malformed/future timestamps from corrupting ordered runtime caches.
 
-### Added - Shared marker helpers
+### Added – Shared marker helpers
 
 - Added `normalizeMarkerId(marker)` at line 331.
 - Added `tokenHasMarker(token, marker)` at line 335.
@@ -1461,7 +1461,7 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
   - Substring-style matching can remove or misreport the wrong marker.
   - Shared top-level helpers are visible to module teardown functions and avoid the ConcentrationTracker scoping failure identified in the attempted upgrade.
 
-### Added - Shared runtime self-healing helpers
+### Added – Shared runtime self-healing helpers
 
 - Added `ensureRuntimeObject(modState)` at line 411.
 - Added `ensureRuntimeKey(runtime, key, kind)` at line 425.
@@ -1471,7 +1471,7 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
   - Runtime caches are operational and can be safely repaired to known container types.
   - Shared helpers reduce duplicated and inconsistent repair code.
 
-### Changed - Queue timing and stale-completion protection
+### Changed – Queue timing and stale-completion protection
 
 - Preserved `_enqueue(...)` in `[GAMEASSIST:CORE:QUEUE]`, beginning at line 564.
 - Preserved job-id guards at lines 581 and 593:
@@ -1492,7 +1492,7 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
   - A timed-out job may still finish later.
   - Without the job-id and timed-out guards, late completion could advance the queue twice or corrupt busy-state accounting.
 
-### Changed - Configuration safety and snapshot completeness
+### Changed – Configuration safety and snapshot completeness
 
 - Updated `!ga-config list` beginning at line 1211 to include:
   - runtime version;
@@ -1500,7 +1500,7 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
   - root/global configuration;
   - every bundled module configuration.
 - Clarified scope:
-  - "complete" means complete configuration snapshot;
+  - “complete” means complete configuration snapshot;
   - it does not mean full state, runtime cache, or metrics backup.
 - Preserved unsafe-key refusal:
   - `BAD_KEYS` sourced from POLICY at line 1242;
@@ -1511,7 +1511,7 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
   - Config export needed to be useful before versioned import could be considered.
   - Prototype-related keys remain unsafe and are explicitly rejected.
 
-### Changed - Shared linked-character validation
+### Changed – Shared linked-character validation
 
 - Preserved/exported `GameAssist.getLinkedCharacter` at line 1139.
 - Updated modules to use shared linked-token validation at lines including:
@@ -1522,7 +1522,7 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
   - Modules should not independently assume that tokens are linked, on the Objects layer, or backed by a valid character.
   - Shared validation keeps invalid/unlinked/PC token handling consistent.
 
-### Changed - NPCManager exact marker behavior
+### Changed – NPCManager exact marker behavior
 
 - Updated NPCManager to use exact shared marker matching.
 - Preserved:
@@ -1537,7 +1537,7 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
 - Rationale:
   - Disable/teardown should clean up the marker GameAssist owns without damaging unrelated status information.
 
-### Changed - ConcentrationTracker lifecycle and runtime safety
+### Changed – ConcentrationTracker lifecycle and runtime safety
 
 - Preserved configured-marker teardown beginning near line 2659.
 - Preserved shared marker matching and runtime self-healing.
@@ -1556,7 +1556,7 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
   - The attempted upgrade exposed a serious helper-scope risk in teardown.
   - Shared helpers ensure teardown can access the configured-marker logic safely.
 
-### Changed - DebugTools exact marker behavior
+### Changed – DebugTools exact marker behavior
 
 - Updated DebugTools marker diagnostics to use shared exact marker normalization.
 - Marker diagnostics now understand counted markers.
@@ -1566,7 +1566,7 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
   - `--apply` requirement for mutations.
 - Section change note appears near line 3116.
 
-### Changed - Captured Roll20 event hooks
+### Changed – Captured Roll20 event hooks
 
 - Preserved captured native Roll20 handler:
 
@@ -1594,7 +1594,7 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
 - Broader command matching.
   - Rejected because it could make neighboring command names accidentally trigger.
 - Wholesale bootstrap/dependency/interface restructuring.
-  - Rejected because the failed whole-file upgrade did not justify expanding the release's blast radius.
+  - Rejected because the failed whole-file upgrade did not justify expanding the release’s blast radius.
 
 ### Verification evidence
 
@@ -1619,12 +1619,12 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
 
 ---
 
-## [0.1.4] - Uploaded Stable-But-Limping Baseline
+## [0.1.4] – Uploaded Stable-But-Limping Baseline
 
 ### Baseline role
 
 - Served as the source baseline for v0.1.4.1.
-- Was treated as stable enough to preserve but not "known-good."
+- Was treated as stable enough to preserve but not “known-good.”
 - Included the six-module structure:
   - ConfigUI
   - CritFumble
@@ -1669,11 +1669,11 @@ v0.1.4.1 is a stability-first update built from the uploaded, stable-but-limping
 
 ---
 
-## [0.1.3] - Detailed Historical Development Record
+## [0.1.3] – Detailed Historical Development Record
 
 This section preserves the supplied granular v0.1.3-era development record, including implementation locations and replaced behavior. The referenced line numbers belong to the historical artifact described by those notes and are retained for audit value.
 
-### Added - Persisted session metrics
+### Added – Persisted session metrics
 
 - Added persisted session metrics with GM summary/reset command.
   - Added `GameAssist` lines 288-420 for the metrics store helpers:
@@ -1693,7 +1693,7 @@ This section preserves the supplied granular v0.1.3-era development record, incl
   - README TL;DR, Command Matrix, and Troubleshooting sections documented `!ga-metrics`.
   - `script.json` listed the new command and staged version bump.
 
-### Added - Shared token-to-character resolver
+### Added – Shared token-to-character resolver
 
 - Introduced a shared resolver so modules validate Roll20 objects before use.
   - Added `GameAssist` lines 343-353:
@@ -1714,7 +1714,7 @@ This section preserves the supplied granular v0.1.3-era development record, incl
     - pre-update line 1168: `const character = getObj('character', charId);`
     - pre-update line 1362: `const charId = token.get('represents');`
 
-### Added - NPCHPRoller auto-roll on token add
+### Added – NPCHPRoller auto-roll on token add
 
 - Added opt-in automatic HP rolling for newly created NPC tokens through `autoRollOnAdd`.
   - Added historical lines 1801-1869 to reuse a shared NPC context resolver.
@@ -1724,7 +1724,7 @@ This section preserves the supplied granular v0.1.3-era development record, incl
   - Updated README module/config documentation.
 - Default remained `false` to avoid event noise and unintended token mutation.
 
-### Changed - Guard-based module handler lifecycle
+### Changed – Guard-based module handler lifecycle
 
 - Core handler lifecycle moved from physical `off()` calls to module guard flags.
   - Added historical lines 609-620 to store:
@@ -1755,7 +1755,7 @@ This section preserves the supplied granular v0.1.3-era development record, incl
 
   - `offCommands` and `offEvents` became logical registry clearing rather than claims of Roll20 listener detachment.
 
-### Changed - Serialized module enable/disable with dependency guards
+### Changed – Serialized module enable/disable with dependency guards
 
 - Added `_transitioning` checks and queued lifecycle execution across historical lines 718-807.
 - Added rollback on initialization failure at historical lines 745-755.
@@ -1768,7 +1768,7 @@ This section preserves the supplied granular v0.1.3-era development record, incl
   - pre-update line 505: `getState(name).config.enabled = true;`
   - removed the analogous disable block at pre-update lines 520-524.
 
-### Changed - State audits became non-destructive
+### Changed – State audits became non-destructive
 
 - Added whitelist behavior across historical lines 305-321 so unexpected keys warn without destructive deletion.
 - Removed pre-update lines 294-301 that executed:
@@ -1782,7 +1782,7 @@ This section preserves the supplied granular v0.1.3-era development record, incl
   - known shapes may be repaired;
   - unknown branches are preserved unless explicitly cleaned.
 
-### Changed - State helpers exposed through public API
+### Changed – State helpers exposed through public API
 
 - Added historical lines 833-835:
   - `GameAssist.getState`
@@ -1795,14 +1795,14 @@ This section preserves the supplied granular v0.1.3-era development record, incl
   - pre-update line 996: `const modState = getState('ConcentrationTracker');`
   - pre-update line 1325: `const modState = getState('NPCHPRoller');`
 
-### Changed - Compatibility audit scoring
+### Changed – Compatibility audit scoring
 
 - Added signature catalog and scoring routine across historical lines 377-518.
 - Added summary rows and hints for known/unknown scripts.
 - Replaced earlier summary-only logging at pre-update lines 354-357, which reported only known/unknown lists and planned hooks.
 - Compatibility output remained gated by `GameAssist.flags.DEBUG_COMPAT`.
 
-### Changed - ConcentrationTracker structured runtime data
+### Changed – ConcentrationTracker structured runtime data
 
 - Added structured storage at historical lines 1559-1569.
 - Added skipped-token reporting in `handleClear` at historical lines 1600-1624.
@@ -1821,13 +1821,13 @@ This section preserves the supplied granular v0.1.3-era development record, incl
 
 - Structured metadata included damage, DC, mode, token/character IDs, bonus, player, and timestamp.
 
-### Changed - NPCManager configured-marker teardown
+### Changed – NPCManager configured-marker teardown
 
 - Added teardown across historical lines 1308-1331.
 - Teardown removes the configured marker through TokenMod and reports the number cleared.
 - Replaced behavior where disabling NPCManager could leave stale GameAssist-owned death markers on tokens.
 
-### Changed - Chat sanitization and planning utilities
+### Changed – Chat sanitization and planning utilities
 
 - Added quote escaping at historical line 340:
 
@@ -1846,7 +1846,7 @@ This section preserves the supplied granular v0.1.3-era development record, incl
   - quoted text should not break Roll20 whisper HTML;
   - planned metadata should not grow repeatedly across reload-like flows.
 
-### Changed - Bootstrap dependency and failure handling
+### Changed – Bootstrap dependency and failure handling
 
 - Added dependency checks and active-flag management at historical lines 1945-1973.
 - Set `initialized` and `active` based on actual startup success.
@@ -1858,7 +1858,7 @@ This section preserves the supplied granular v0.1.3-era development record, incl
 
 - Failed or dependency-blocked modules remain inert instead of appearing active.
 
-### Added - Staged v0.1.3 helper and dependency work
+### Added – Staged v0.1.3 helper and dependency work
 
 - Added compatibility audit scoring with signature-based hints for:
   - TokenMod
@@ -1886,7 +1886,7 @@ This section preserves the supplied granular v0.1.3-era development record, incl
 
 ---
 
-## [0.1.2] - 2025-09-16
+## [0.1.2] – 2025-09-16
 
 ### Packaging & Repository Compliance (Roll20 API Repo)
 
@@ -1925,7 +1925,7 @@ This section preserves the supplied granular v0.1.3-era development record, incl
 
 ---
 
-## [0.1.1.2] - 2025-06-10
+## [0.1.1.2] – 2025-06-10
 
 ### CritFumble Module
 
@@ -1937,12 +1937,12 @@ This section preserves the supplied granular v0.1.3-era development record, incl
 
 ---
 
-## [0.1.1.1] - 2025-05-30
+## [0.1.1.1] – 2025-05-30
 
 ### Core Framework
 
 - **Quiet Startup Option:**  
-  Added `flags.QUIET_STARTUP`, default `true`. Per-module "Ready" chat lines may be suppressed while the core summary remains visible.
+  Added `flags.QUIET_STARTUP`, default `true`. Per-module “Ready” chat lines may be suppressed while the core summary remains visible.
 
 - **Logging Improvements:**  
   - Re-implemented `GameAssist.log` for clearer output and log hygiene.
@@ -1967,7 +1967,7 @@ This section preserves the supplied granular v0.1.3-era development record, incl
 
 ---
 
-## [0.1.1.0] - 2025-05-29
+## [0.1.1.0] – 2025-05-29
 
 - Initial public release of GameAssist.
 - Bundled the core loader with four modules:
@@ -1995,7 +1995,7 @@ Those labels are no longer the current release-status statement, but their detai
 
 ---
 
-## Append-Only Maintenance Policy - Adopted 2026-06-10
+## Append-Only Maintenance Policy — Adopted 2026-06-10
 
 This section governs changelog entries added after v0.1.4.2.
 
@@ -2006,7 +2006,7 @@ This section governs changelog entries added after v0.1.4.2.
 - An older entry may receive an appended summary after it is at least three major-version releases behind the current release. The original detailed entry remains preserved.
 - Release status, verification results, and artifact names are stated as repository facts rather than internal work narration or editorial judgments.
 
-### Corrections to v0.1.3.x-v0.1.4.2 records
+### Corrections to v0.1.3.x–v0.1.4.2 records
 
 The following corrections supersede inaccurate or temporary wording in the preserved entries above:
 
@@ -2016,9 +2016,9 @@ The following corrections supersede inaccurate or temporary wording in the prese
 | `GameAssist-v0.1.4.1.js` | No v0.1.4.1 script is retained in the repository. Its historical checksum cannot be verified from the repository contents. |
 | `README-GameAssist-v0.1.4.2.md` | The tracked handbook is `README.md`. No version-named v0.1.4.2 README is retained. |
 | `GameAssist-v0.1.4.2-release-notes-and-smoke-test.md` | The tracked installation and troubleshooting checklist is `Smoketest.md`. The named release-specific file is not retained. |
-| "Mocked Roll20 sandbox" | These checks were simulated Roll20-environment checks, not executions inside the Roll20 API sandbox. |
-| "Release candidate," "stable-but-limping," "attempted upgrade," and similar labels | These phrases describe development context recorded at the time. They are not current release-status classifications. |
-| "Truthful" or "honest" reporting claims | The durable contract is the specific behavior documented by the corresponding entry, such as configured/running/dependency-skipped counts or three-state dependency reporting. |
+| “Mocked Roll20 sandbox” | These checks were simulated Roll20-environment checks, not executions inside the Roll20 API sandbox. |
+| “Release candidate,” “stable-but-limping,” “attempted upgrade,” and similar labels | These phrases describe development context recorded at the time. They are not current release-status classifications. |
+| “Truthful” or “honest” reporting claims | The durable contract is the specific behavior documented by the corresponding entry, such as configured/running/dependency-skipped counts or three-state dependency reporting. |
 | v0.1.4.2 Roll20 confirmation language | The recorded v0.1.4.2 sandbox pass exposed the custom concentration-marker recognition failure addressed by v0.1.4.3. No complete passing v0.1.4.2 sandbox result is recorded. |
 
 ### Current release index
@@ -2035,7 +2035,7 @@ The following corrections supersede inaccurate or temporary wording in the prese
 
 ---
 
-## [0.1.4.3] - 2026-06-10
+## [0.1.4.3] – 2026-06-10
 
 ### Release definition
 
@@ -2058,7 +2058,7 @@ MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
 - A token visibly carrying the configured custom marker could therefore be omitted from `!concentration --status`.
 - `deps unverifiable (TokenMod)` was not the cause of the status-read failure. Status reporting reads token markers directly; TokenMod is used when GameAssist requests marker mutation.
 
-### Changed - Shared marker identity resolution
+### Changed — Shared marker identity resolution
 
 - Added a cached reader for Roll20's campaign custom-marker registry in `[GAMEASSIST:APP:UTILS]`.
 - Added structured marker resolution for:
@@ -2074,7 +2074,7 @@ MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
 - Simple matching quote pairs are stripped before marker resolution, so chat-configured values such as `"red"` and `'red'` resolve as `red`.
 - Returned explicit resolution failures for unrecognized configured markers.
 
-### Changed - ConcentrationTracker status and lifecycle diagnostics
+### Changed — ConcentrationTracker status and lifecycle diagnostics
 
 - `!concentration --status` now:
   - lists current-page tokens carrying the resolved configured marker;
@@ -2086,7 +2086,7 @@ MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
 - `!concentration --off` reports that marker removal was requested rather than claiming the asynchronous TokenMod operation completed.
 - Teardown stops and logs a warning when the configured marker cannot be resolved.
 
-### Changed - NPCManager death-marker mutation
+### Changed — NPCManager death-marker mutation
 
 - NPCManager now resolves the configured death marker before TokenMod add, remove, and teardown requests.
 - The default built-in `dead` marker still emits `statusmarkers|+dead` and `statusmarkers|-dead`.
@@ -2101,7 +2101,7 @@ MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
 - Added focused concentration-marker checks to `Smoketest.md`.
 - Separated release records, roadmap plans, and installation/troubleshooting procedures.
 - Adopted the append-only changelog policy above.
-- Added appended corrections for inaccurate artifact names and temporary development terminology in preserved v0.1.3.x-v0.1.4.2 records.
+- Added appended corrections for inaccurate artifact names and temporary development terminology in preserved v0.1.3.x–v0.1.4.2 records.
 
 ### MECHSUITS changes
 
@@ -2153,7 +2153,7 @@ MarkerService and integrated TokenMod remain assigned to the v0.1.5.x roadmap.
 
 ---
 
-## [0.1.4.4] - 2026-07-17
+## [0.1.4.4] – 2026-07-17
 
 ### Release definition
 
@@ -2161,9 +2161,9 @@ v0.1.4.4 is a small DM-facing readability release. It preserves the v0.1.4.3 mar
 
 ### Issue addressed
 
-- [#21](https://github.com/Mord-Eagle/GameAssist/issues/21) - Make CritFumble help and NPC death-audit output human-readable.
+- [#21](https://github.com/Mord-Eagle/GameAssist/issues/21) — Make CritFumble help and NPC death-audit output human-readable.
 
-### Changed - DM-facing command output
+### Changed — DM-facing command output
 
 - Revised `!critfumble help` from a command list into a quick reference with an `Open Natural 1 Menu` button, common commands, attack types, and exact setup table names.
 - Added `!critfumble menu` as the public CritFumble-family command for opening the guided Natural 1 dialogue.
@@ -2229,7 +2229,7 @@ Roll20 API sandbox confirmation is still required for the final release gate.
 
 ---
 
-## [0.1.4.5] - 2026-07-17
+## [0.1.4.5] – 2026-07-17
 
 ### Release definition
 
@@ -2237,9 +2237,9 @@ v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It
 
 ### Issue addressed
 
-- [#22](https://github.com/Mord-Eagle/GameAssist/issues/22) - Add summarized and named NPC death-log pools.
+- [#22](https://github.com/Mord-Eagle/GameAssist/issues/22) — Add summarized and named NPC death-log pools.
 
-### Changed - scoped NPC death buckets
+### Changed — scoped NPC death buckets
 
 - Advanced `[GAMEASSIST:MODULES:NPCMANAGER]` independent `module_version` from `0.1.1.0` to `1.0.0` for the bucket-state redesign, then to `1.1.0` for report writing, hierarchical clearing, date rollover, and curated Arc management.
 - Added active death-history bucket names under NPCManager config:
@@ -2265,7 +2265,7 @@ v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It
 - Explicitly named Sessions remain active across date changes. `!npc-death-buckets --resetSession` restores the current UTC date and re-enables automatic date-managed rollover.
 - Tracked DM-configurable timezone formatting and date boundaries separately in [Issue #35](https://github.com/Mord-Eagle/GameAssist/issues/35). v0.1.4.5 does not reinterpret historical timestamps.
 
-### Changed - death recording and revival handling
+### Changed — death recording and revival handling
 
 - Death recording no longer depends on TokenMod marker-write success.
 - When a linked NPC drops below 1 HP:
@@ -2280,7 +2280,7 @@ v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It
 - Revival annotations are saved even when an invalid marker configuration or failed TokenMod request prevents visual marker removal.
 - Revival annotations preserve history instead of silently deleting the death entry.
 
-### Changed - death reports and handouts
+### Changed — death reports and handouts
 
 - `!npc-death-report` now opens the active Session bucket by default.
 - Added bucket scope selection:
@@ -2306,7 +2306,7 @@ v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It
 - Existing legacy `runtime.deathLog` entries are backfilled into active buckets when the bucket system first reads old state and no bucket entries exist.
 - The legacy `deathLog` array is retained for compatibility and duplicate/open-death detection.
 
-### Changed - audit output
+### Changed — audit output
 
 - `!npc-death-audit` remains the current-page HP/marker mismatch checker.
 - Chat output is now a short summary with:
@@ -2320,7 +2320,7 @@ v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It
 - Chat retains bounded, grouped token details under `Add Death Marker` and `Remove Death Marker`, including each affected token's HP, current markers, and token ID.
 - The audit continues to check linked NPC tokens only; player characters are intentionally excluded.
 
-### Added - manual arc handouts
+### Added — manual arc handouts
 
 - Added `!npc-death-arc` as the GM-facing arc help/list panel, keeping the command within NPCManager's `!npc-death-*` naming family.
 - Added manual selected-token capture:
@@ -2338,7 +2338,7 @@ v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It
 - Added one-entry Remove buttons, `--removeSelected` for selected-token cleanup, and `--undo` for the most recent Arc addition or merge.
 - Arc corrections change only the Arc roster and handout; they do not alter Campaign, Chapter, Section, or Session history.
 
-### Changed - review hardening
+### Changed — review hardening
 
 - Removed the unused init-time Session entry from `DEFAULT_BUCKET_NAMES`. Session defaults continue to call `currentSessionDateKey()` when needed, preserving date rollover while avoiding a misleading frozen-date fallback.
 - Added opt-in `preserveRuntimeOnDisable` module-registration metadata. Existing modules continue clearing disposable runtime caches by default.
@@ -2351,7 +2351,7 @@ v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It
 - Preserved an exact selected-token HP value of `0` in arc state instead of treating it as absent.
 - Limited arc revival annotations to entries imported from death history. Ordinary selected-token story notes remain unchanged during later positive-HP edits.
 
-### Added - NPCManager start-here help
+### Added — NPCManager start-here help
 
 - Added `!npc-death-help` as the top-level NPCManager help menu.
 - The help menu shows:
@@ -2363,7 +2363,7 @@ v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It
 - Rebuilt `!npc-death-report --help` as the central NPCManager guide and made `!npc-death-help` open the same guide.
 - The guide explains the four-level hierarchy, active names and counts, report writing, selected-only versus nested clearing, Arc management, and audit scope with direct action buttons.
 
-### Changed - safer bucket clearing
+### Changed — safer bucket clearing
 
 - The default clear target remains Session.
 - Every clear confirmation offers the selected bucket alone.
@@ -2379,7 +2379,7 @@ v0.1.4.5 is an NPCManager usability and campaign-notes release for Issue #22. It
 
 - Updated `README.md` with NPCManager `1.1.0`, bucket hierarchy, handout names, central help guide, report writer, nested clear choices, date rollover, Arc deduplication, and recovery controls.
 - Added a Roll20 API repository readiness checklist to `README.md` covering folder/script naming, `script.json`, header, file types, smoke-test language, license, post-merge wiki upkeep, and the extensionless `GameAssist` versus `.js` submission-artifact check.
-- Updated `Smoketest.md` so the in-depth NPCManager checks exercise Campaign, Chapter, Section, and Session naming, the report writer, "new Section from Session," selected-only and nested clearing, Arc deduplication/override/removal/undo, date-boundary expectations, audit output, and handout refreshes.
+- Updated `Smoketest.md` so the in-depth NPCManager checks exercise Campaign, Chapter, Section, and Session naming, the report writer, “new Section from Session,” selected-only and nested clearing, Arc deduplication/override/removal/undo, date-boundary expectations, audit output, and handout refreshes.
 - Updated `ROADMAP.md` to record Issue #22 as scoped death-history buckets and handouts rather than a summary-only report pass.
 - Updated `script.json` to version `0.1.4.5`, add `0.1.4.4` to `previousversions`, identify NPCManager `1.1.0`, and list the report-writer, nested-clear, and Arc-management command surface.
 
@@ -2427,7 +2427,7 @@ The Roll20 sandbox checklist remains the release acceptance test for live marker
 
 ---
 
-## [0.1.4.6] - 2026-07-17
+## [0.1.4.6] – 2026-07-17
 
 ### Release definition
 
@@ -2435,9 +2435,9 @@ v0.1.4.6 is a focused GameAssist status-readability release for Issue #23. It re
 
 ### Issue addressed
 
-- [#23](https://github.com/Mord-Eagle/GameAssist/issues/23) - Make `!ga-status` output easier for DMs to interpret.
+- [#23](https://github.com/Mord-Eagle/GameAssist/issues/23) — Make `!ga-status` output easier for DMs to interpret.
 
-### Changed - default system check
+### Changed — default system check
 
 - Rebuilt `!ga-status` as a Roll20 default-template panel titled `GameAssist 0.1.4.6 System Check`.
 - The first panel now presents four decisions in reading order:
@@ -2453,7 +2453,7 @@ v0.1.4.6 is a focused GameAssist status-readability release for Issue #23. It re
 - Dependency warnings from disabled modules are excluded from the active health decision.
 - Modules skipped during startup for a confirmed missing dependency remain configured, appear as needing attention, and contribute to the dependency-skipped count.
 
-### Added - troubleshooting details
+### Added — troubleshooting details
 
 - Added `!ga-status --details`; `!ga-status details` is accepted as an equivalent readable form.
 - The details panel preserves the prior diagnostic surface with clearer labels:
@@ -2467,7 +2467,7 @@ v0.1.4.6 is a focused GameAssist status-readability release for Issue #23. It re
 - Added buttons to refresh details, return to the simple view, open the module list, and view metrics.
 - Moved those detailed-view buttons into a separate `Troubleshooting Actions` whisper immediately below the details table.
 
-### Changed - health interpretation
+### Changed — health interpretation
 
 - `Ready - GameAssist is responding and every enabled module is running.` appears when enabled modules are active, no current-sandbox error is recorded, and enabled-module dependencies are confirmed.
 - `Ready - enabled modules are running. A marker check is recommended.` appears when Roll20 cannot confirm a dependency but enabled modules are otherwise active.
@@ -2479,7 +2479,7 @@ v0.1.4.6 is a focused GameAssist status-readability release for Issue #23. It re
 - Manual `!ga-enable <Module>` retries with confirmed missing dependencies now refuse activation without changing the module's existing configuration. Configured-and-skipped modules remain visible as needing attention, while deliberately disabled modules remain disabled.
 - `disableModule()` now considers both persistent configuration and runtime state before reporting that a module is already disabled. A configured-but-inactive dependency skip can therefore be turned off through `!ga-disable` or `!ga-config set <Module> enabled=false`, clearing the corresponding status warning.
 
-### Corrected - duration and terminology
+### Corrected — duration and terminology
 
 - Corrected a live Roll20 rendering failure in which button-only rows inside the default template were omitted. Status navigation now uses ordinary GM whispers while the health information remains in the default-template table.
 - Removed the malformed `Avg Task Duration: N/Ams` output.
@@ -2550,7 +2550,7 @@ The Roll20 API sandbox remains the final acceptance environment for default-temp
 
 ---
 
-## [0.1.4.7] - 2026-07-17
+## [0.1.4.7] – 2026-07-17
 
 ### Release definition
 
@@ -2560,7 +2560,7 @@ The release does not embed either upstream script, introduce the future MarkerSe
 
 ### Issue addressed
 
-- [#24](https://github.com/Mord-Eagle/GameAssist/issues/24) - Stabilize standalone TokenMod and StatusInfo interoperability across the `v0.1.4.x` release line.
+- [#24](https://github.com/Mord-Eagle/GameAssist/issues/24) — Stabilize standalone TokenMod and StatusInfo interoperability across the `v0.1.4.x` release line.
 
 ### Supported standalone baselines
 
@@ -2571,7 +2571,7 @@ The release does not embed either upstream script, introduce the future MarkerSe
 
 These versions remain independently authored and licensed upstream. GameAssist does not copy or modify their source in this release.
 
-### Diagnosed - script-originated TokenMod authorization
+### Diagnosed — script-originated TokenMod authorization
 
 - GameAssist previously generated commands in this form:
 
@@ -2586,7 +2586,7 @@ These versions remain independently authored and licensed upstream. GameAssist d
 - GameAssist now discovers a campaign GM player id and uses the documented `--api-as` path. Internal marker automation therefore no longer depends on enabling `players-can-ids` for players.
 - If no GM identity can be found, GameAssist falls back only when TokenMod explicitly reports `playersCanUse_ids=true`; otherwise it refuses the request and gives the GM an actionable warning.
 
-### Added - standalone contract evidence
+### Added — standalone contract evidence
 
 - Added shared TokenMod evidence collection in `[GAMEASSIST:APP:UTILS]`:
   - confirms the public `ObserveTokenChange` contract when visible;
@@ -2600,7 +2600,7 @@ These versions remain independently authored and licensed upstream. GameAssist d
 - Updated core dependency checks to use confirmed public TokenMod evidence before falling back to Roll20's sometimes-unavailable internal script list.
 - Preserved the three dependency states `confirmed`, `missing`, and `unverifiable`; absence of public evidence remains non-fatal when Roll20 cannot expose a definitive script list.
 
-### Added - marker-result verification
+### Added — marker-result verification
 
 - Added one shared standalone TokenMod request helper for NPCManager and ConcentrationTracker.
 - Each request:
@@ -2620,7 +2620,7 @@ These versions remain independently authored and licensed upstream. GameAssist d
 - Pending verification is keyed by token and marker. A newer request supersedes an older pending check so a rapid add/remove sequence does not report the stale request as a failure.
 - Verification is delayed with `POLICY.standaloneInterop.markerVerificationDelayMs`; normal Roll20 event execution and the explicit queue model are unchanged.
 
-### Changed - NPCManager 1.1.1
+### Changed — NPCManager 1.1.1
 
 - Advanced NPCManager's independent module version from `1.1.0` to `1.1.1`.
 - Routed death-marker add, revival-marker removal, and module-teardown removal through the shared verified TokenMod request helper.
@@ -2637,7 +2637,7 @@ These versions remain independently authored and licensed upstream. GameAssist d
 - Teardown no longer reports that markers were already cleared immediately after asynchronous TokenMod commands. It now reports how many removals were requested and states that results will be verified.
 - The default built-in death marker remains the literal `dead` id.
 
-### Changed - ConcentrationTracker 0.1.0.6
+### Changed — ConcentrationTracker 0.1.0.6
 
 - Advanced ConcentrationTracker's independent module version from `0.1.0.5` to `0.1.0.6`.
 - Routed concentration marker add, `--off` removal, failed-save removal, and module-teardown removal through the shared verified TokenMod request helper.
@@ -2648,7 +2648,7 @@ These versions remain independently authored and licensed upstream. GameAssist d
   - `!concentration --status` continues reading token markers directly rather than depending on TokenMod.
 - Teardown now reports requested removals without claiming completion before marker verification.
 
-### Preserved - StatusInfo observation path
+### Preserved — StatusInfo observation path
 
 - Token mutation remains inside standalone TokenMod.
 - TokenMod continues calling its registered `ObserveTokenChange` handlers after applying token changes.
@@ -2656,7 +2656,7 @@ These versions remain independently authored and licensed upstream. GameAssist d
 - GameAssist does not emit a second condition description or call StatusInfo internals directly.
 - `!ga-status --details` reports StatusInfo evidence, but live condition-description behavior remains a Roll20 smoke-test requirement because campaign condition definitions are user-configurable.
 
-### Changed - troubleshooting status
+### Changed — troubleshooting status
 
 - Added a `Standalone Integrations` row to `!ga-status --details`.
 - When evidence is available, the row reports:
@@ -2760,7 +2760,7 @@ The Roll20 API sandbox acceptance pass confirmed real `sendChat` routing, TokenM
 
 ---
 
-## [0.1.5.0] - 2026-07-18
+## [0.1.5.0] – 2026-07-18
 
 ### Release definition
 
@@ -2768,7 +2768,7 @@ GameAssist v0.1.5.0 is the integrated marker, token, and condition architecture 
 
 The completed checkpoints implement [Issue #25](https://github.com/Mord-Eagle/GameAssist/issues/25), MarkerService and migration of existing marker consumers; [Issue #26](https://github.com/Mord-Eagle/GameAssist/issues/26), ConditionAssist and supported `!condition` workflows; [Issue #27](https://github.com/Mord-Eagle/GameAssist/issues/27), TokenAssist and its initial branded token-control surface; [Issue #28](https://github.com/Mord-Eagle/GameAssist/issues/28), integrated stabilization; and [Issue #29](https://github.com/Mord-Eagle/GameAssist/issues/29), the final release audit. These were checkpoints within `v0.1.5.0`, not separate public versions.
 
-### Added - CORE:MARKERSERVICE
+### Added – CORE:MARKERSERVICE
 
 - Added the properly nested `[GAMEASSIST:CORE:MARKERSERVICE]` section.
 - Added `GameAssist.MarkerService` as toggleable core infrastructure with independent service version `1.0.0`.
@@ -2789,7 +2789,7 @@ The completed checkpoints implement [Issue #25](https://github.com/Mord-Eagle/Ga
 - Added explicit operation results containing success state, stable error code, diagnostic message, changed/verified state, resolved marker identity, and before/after entries.
 - Added one shared `change:graphic:statusmarkers` observation contract for integrated modules and future consumers.
 
-### Advanced - MarkerService 1.0.1
+### Advanced – MarkerService 1.0.1
 
 - Added `artwork(marker)` as a presentation-neutral metadata API.
 - Added Roll20 built-in color, `dead`, and status-sheet artwork metadata.
@@ -2811,7 +2811,7 @@ The completed checkpoints implement [Issue #25](https://github.com/Mord-Eagle/Ga
 - Lifecycle component names resolve case-insensitively, and unknown names are reported as missing GameAssist modules or services rather than treating every lifecycle target as a module.
 - Marker observer registrations pause while MarkerService is disabled and resume after re-enable, preserving once-wired dependent observers.
 
-### Added - ConditionAssist 1.0.0
+### Added – ConditionAssist 1.0.0
 
 - Added the properly nested `[GAMEASSIST:MODULES:CONDITIONASSIST]` section and exposed `GameAssist.ConditionAssist` version `1.0.0`.
 - Added the ConditionAssist module name, public API, state branch, and MECHSUITS section.
@@ -2842,7 +2842,7 @@ The completed checkpoints implement [Issue #25](https://github.com/Mord-Eagle/Ga
 - Pinned the published comparison to Roll20 repository snapshot `9d634d3149985dcf10333920b3f4c41f215f39fc` and file blob `d3054aa8660f1eda47c424c4984e1850760e5c1a`.
 - Preserved Robin Kuiper attribution, the Roll20 API Scripts MIT notice, upstream links, adapted concepts, and GameAssist implementation details in `ATTRIBUTIONS.md`.
 
-### Advanced - ConditionAssist 1.0.1
+### Advanced – ConditionAssist 1.0.1
 
 - Corrected selected-token active-condition reporting. `MarkerService.has()` returns a boolean; the menu had incorrectly treated that boolean as a structured inspection object, causing real markers to display as `No tracked conditions` even though add/remove/toggle behavior worked.
 - Added GM-only `!condition status` and `!condition --status` commands plus a **Condition Status** menu button.
@@ -2891,7 +2891,7 @@ The completed checkpoints implement [Issue #25](https://github.com/Mord-Eagle/Ga
 - Updated the public API to report component version `1.0.1`, schema version `2`, and expose the active profile through `rulesProfile()`.
 - Added the required SRD 5.1 and SRD 5.2.1 Creative Commons Attribution 4.0 notices to `ATTRIBUTIONS.md` and documented that non-SRD sourcebook condition text is not included.
 
-### Added - TokenAssist 1.0.1
+### Added – TokenAssist 1.0.1
 
 - Added the properly nested `[GAMEASSIST:MODULES:TOKENASSIST]` section and exposed `GameAssist.TokenAssist` version `1.0.1`.
 - Added TokenAssist, `GameAssist.TokenAssist`, and the MECHSUITS tag `[GAMEASSIST:MODULES:TOKENASSIST]`.
@@ -3025,7 +3025,7 @@ The completed checkpoints implement [Issue #25](https://github.com/Mord-Eagle/Ga
 - Unsupported actions, invalid tokens, unknown markers, unavailable registries, rejected token writes, and failed verification return explicit diagnostics instead of silent success.
 - Direct token writes remain synchronous; ordinary GameAssist event handlers are not routed through the explicit task queue.
 
-### Changed - NPCManager 1.2.1
+### Changed – NPCManager 1.2.1
 
 - Advanced NPCManager from module version `1.1.1` through `1.2.0` to `1.2.1`.
 - Routed death-marker resolution, presence checks, add/remove operations, audits, and teardown through MarkerService.
@@ -3040,7 +3040,7 @@ The completed checkpoints implement [Issue #25](https://github.com/Mord-Eagle/Ga
 - Repair changes neither HP nor NPC death history, Campaign/Chapter/Section/Session buckets, or Arc records. This preserves the DM's ability to treat a mismatch as HP housekeeping instead of automatically accepting marker state as authoritative.
 - Blank or non-numeric HP is reported separately and excluded from automatic marker repair rather than being coerced to zero.
 
-### Changed - ConcentrationTracker 0.2.0
+### Changed – ConcentrationTracker 0.2.0
 
 - Advanced ConcentrationTracker from module version `0.1.0.6` to `0.2.0`.
 - Routed configured-marker resolution, status scans, roll-result mutation, `--off`, and teardown through MarkerService.
@@ -3049,7 +3049,7 @@ The completed checkpoints implement [Issue #25](https://github.com/Mord-Eagle/Ga
 - Replaced TokenMod-specific repair wording with campaign marker-library and exact stored-tag guidance.
 - Preserved `!concentration`, `!cc`, `--damage`, `--mode`, `--last`, `--off`, `--status`, randomization configuration, and `!ga-conc-status`.
 
-### Changed - DebugTools 0.2.0
+### Changed – DebugTools 0.2.0
 
 - Advanced DebugTools from module version `0.1.0` to `0.2.0`.
 - Routed marker inspection, dry-run descriptions, and applied add/remove/toggle actions through MarkerService.
@@ -3155,7 +3155,7 @@ Issues #25 through #29 are complete. Publication remains the repository release/
 
 ---
 
-## [0.1.5.1] - 2026-07-19
+## [0.1.5.1] – 2026-07-19
 
 ### Release definition
 
@@ -3163,7 +3163,7 @@ GameAssist v0.1.5.1 is a focused table-time release. It adds one GM-selected IAN
 
 The release implements [Issue #35](https://github.com/Mord-Eagle/GameAssist/issues/35). NPCManager advances from `1.2.1` to `1.3.0`; ConfigUI advances from `0.1.0` to `0.2.0`. Other feature-module versions remain unchanged.
 
-### Added - Campaign timezone controls
+### Added – Campaign timezone controls
 
 - Added the GM-only `!ga-timezone` command family:
   - `!ga-timezone` and `!ga-timezone help` open the table-time menu;
@@ -3175,7 +3175,7 @@ The release implements [Issue #35](https://github.com/Mord-Eagle/GameAssist/issu
 - Added timezone access to both `!ga-status` views and every ConfigUI page.
 - Invalid names are refused before state changes. A malformed saved value produces an actionable warning and falls back to sandbox time without deleting the saved evidence.
 
-### Added - Shared time contract
+### Added – Shared time contract
 
 - Added validated timezone helpers in `[GAMEASSIST:APP:UTILS]` for:
   - IANA-name validation and canonicalization;
@@ -3196,7 +3196,7 @@ The release implements [Issue #35](https://github.com/Mord-Eagle/GameAssist/issu
 - Forced 24-hour offset calculations to use the `h23` hour cycle so midnight cannot be represented as hour `24` and produce a false one-day offset.
 - Reused timezone validation and display formatters through a 32-entry LRU cache. Repeated log and menu rendering no longer reconstructs `Intl.DateTimeFormat`, while arbitrary custom timezone input cannot grow sandbox memory without a bound.
 
-### Changed - Human-facing timestamps
+### Changed – Human-facing timestamps
 
 - Routed GameAssist log clocks through the selected timezone.
 - Routed simple and detailed status timestamps through the selected timezone.
@@ -3207,7 +3207,7 @@ The release implements [Issue #35](https://github.com/Mord-Eagle/GameAssist/issu
 - Historical NPC entries with a valid stored ISO timestamp are formatted dynamically. Changing timezone updates their presentation without changing the event's identity or instant.
 - Legacy entries that contain only a preformatted display string retain that string because no reliable absolute instant exists to reinterpret.
 
-### Changed - NPCManager 1.3.0
+### Changed – NPCManager 1.3.0
 
 - Date-managed Session names now follow the configured GameAssist timezone rather than an assumed sandbox/UTC date.
 - Setting or clearing the timezone asks a running NPCManager instance to refresh the active date-managed Session immediately.
@@ -3280,7 +3280,7 @@ The focused Roll20 v0.1.5.1 timezone smoke test passed on 2026-07-19. The owner 
 
 ---
 
-## [0.1.6.0] - 2026-07-19
+## [0.1.6.0] – 2026-07-19
 
 ### Release definition
 
@@ -3290,7 +3290,7 @@ This release implements [Issue #47](https://github.com/Mord-Eagle/GameAssist/iss
 
 Round counting, automatic turn advancement, status-duration countdowns, current-turn visuals, encounter lifecycle automation, and end-of-turn effects remain outside InitiativeAssist. Those combat-flow responsibilities are deferred to [Issue #48](https://github.com/Mord-Eagle/GameAssist/issues/48) for a future CombatAssist module.
 
-### Added - TurnTrackerService 1.0.0
+### Added – TurnTrackerService 1.0.0
 
 - Added `[GAMEASSIST:CORE:TURNTRACKERSERVICE]` as the single GameAssist owner of native Turn Tracker reads, observations, and guarded writes.
 - Added immutable tracker snapshots containing:
@@ -3306,7 +3306,7 @@ Round counting, automatic turn advancement, status-duration countdowns, current-
 - Added the frozen `GameAssist.TurnTrackerService` integration surface for snapshots, classification, guarded application, and observer registration.
 - Registered TurnTrackerService with the existing GameAssist lifecycle. Disabling it automatically disables InitiativeAssist while leaving unrelated modules available.
 
-### Added - InitiativeAssist 1.0.0
+### Added – InitiativeAssist 1.0.0
 
 - Added a case-insensitive `!Init-` namespace with a Guide, action-focused Control Center, quick Status Summary, detailed private chat Review, public initiative calls, player rolls, GM page-roster controls, rerolls, saved groups, and Manager/Observer modes.
 - Added `!Init-Go` for a concise public **Roll for initiative** invitation.
@@ -3329,18 +3329,18 @@ Round counting, automatic turn advancement, status-duration countdowns, current-
 - Added a detailed read-only `!Init-Audit` chat review with separate Turn Tracker and not-yet-in-tracker character details. The review is whispered to the GM, changes no tracker data, and creates no persistent handout. An empty tracker reports the characters available to roll instead of presenting a zero-row success with no context.
 - Added `GameAssist.InitiativeAssist.getRoster()` as a narrow read-only integration surface for future GameAssist features.
 
-### Changed - Live sandbox corrections
+### Changed – Live sandbox corrections
 
 - Synchronized Roll20's `initiativepage` with a newly saved Turn Order row when the sandbox exposes the open tracker as boolean `true`. This prevents a successful chat roll from being detached from the visible native tracker.
 - Added Roll20's `_pageid` field to every GameAssist-created or repaired character turn. Live testing showed that a row could be retained in campaign JSON yet remain absent from the visible Turn Order when this page-ownership field was omitted.
 - Changed TurnTrackerService to write `turnorder` as a dedicated campaign property, matching established Roll20 initiative implementations rather than bundling it with an optional page normalization update.
 - Added post-write verification for the complete `turnorder` value, resolved tracker page, target initiative value, and target-row `_pageid` before a player result is announced.
 - Replaced the mutually exclusive Roll Options paths with a short staged builder that combines d20 mode, flat adjustment, and up to two bonus dice.
-- Replaced the total-only result sentence with a concentration-style `Roll(s) .  total (from formula)` presentation.
+- Replaced the total-only result sentence with a concentration-style `Roll(s) … → total (from formula)` presentation.
 - Changed successful `!Init-RR` output from a public summary to a bounded GM whisper containing each updated character's roll evidence.
 - Changed the roll callback itself, not only the final panel, to use a GM whisper for hidden NPCs so concealed modifiers and bonus dice cannot leak through Roll20's inline-roll message.
 
-### Added - Mixed 2014/2024 sheet adapters
+### Added – Mixed 2014/2024 sheet adapters
 
 - Added D&D 5E by Roll20 (2014) initiative resolution using the represented character's `npc` and `initiative_bonus` attributes.
 - Added D&D 2024 by Roll20 initiative resolution through Roll20's asynchronous Computed/Beacon access when available.
@@ -3349,7 +3349,7 @@ Round counting, automatic turn advancement, status-duration countdowns, current-
 - Added conservative sheet-data probing when Roll20 omits or changes a character's `charactersheetname`: valid 2014 `npc`/`initiative_bonus` attributes or valid 2024 Beacon fields may establish the supported adapter without converting missing values to zero.
 - Added a conservative unavailable-data path. If the 2024 sheet interface cannot provide initiative data, InitiativeAssist retains the existing row and explains that it needs attention.
 
-### Changed - Safe reroll behavior
+### Changed – Safe reroll behavior
 
 - `!Init-RR` rolls once for each unique eligible token. If the same token appears more than once in the tracker, each duplicate receives the same new result.
 - Sorting is limited to tracker slots owned by the eligible reroll targets. InitiativeAssist does not globally reorder the tracker.
@@ -3361,7 +3361,7 @@ Round counting, automatic turn advancement, status-duration countdowns, current-
 - InitiativeAssist verifies the completed tracker write before announcing an individual result; a missing or rejected row produces an actionable retry message instead of a false success.
 - Batch sizes, group counts, group-name lengths, picker sizes, and custom die sizes use bounded policy values.
 
-### Added - Coexistence controls and diagnostics
+### Added – Coexistence controls and diagnostics
 
 - Added **Manager mode** for deliberate InitiativeAssist tracker writes.
 - Added **Observer mode** for menus, status, and audits without tracker mutation.
@@ -3430,7 +3430,7 @@ Automated verification is complete. The focused and established regression harne
 
 ---
 
-## [0.1.6.1] - 2026-07-20
+## [0.1.6.1] – 2026-07-20
 
 ### Release definition
 
@@ -3438,7 +3438,7 @@ GameAssist v0.1.6.1 adds a private GM entry point to the accepted InitiativeAssi
 
 InitiativeAssist advances to module version 1.0.1. WelcomeAssist launches at module version 0.1.0 and remains disabled by default. No CombatAssist responsibilities, automatic turn advancement, round ownership, duration countdowns, or end-of-turn effects are included.
 
-### Added - InitiativeAssist 1.0.1
+### Added – InitiativeAssist 1.0.1
 
 - Added the case-insensitive `!Init-GM` command.
 - `!Init-GM` opens the neutral Roll for Initiative panel and the complete GM Initiative Roster as GM whispers. No invitation or roster is posted to players.
@@ -3447,7 +3447,7 @@ InitiativeAssist advances to module version 1.0.1. WelcomeAssist launches at mod
 - Made a linked character's **Controlled By** setting authoritative for player initiative permission. A stale controller saved only on the represented token can no longer authorize a player whom the linked character does not name.
 - Preserved all v0.1.6.0 public invitation, player authorization, native tracker population, mixed 2014/2024 sheet, selected-character, GM-layer NPC, hidden-roll, saved-group, audit, and reroll behavior.
 
-### Added - WelcomeAssist 0.1.0
+### Added – WelcomeAssist 0.1.0
 
 - Added an independently configurable WelcomeAssist module that starts disabled and can be enabled through the normal GameAssist module controls.
 - Added four greeting modes:
@@ -3462,7 +3462,7 @@ InitiativeAssist advances to module version 1.0.1. WelcomeAssist launches at mod
 - Limited campaign greetings to ten entries of 240 characters each, removed duplicates case-insensitively, and required an exact list number for removal.
 - Included a curated library of original table humor.
 
-### Changed - Startup and health behavior
+### Changed – Startup and health behavior
 
 - Added a post-bootstrap WelcomeAssist hook after GameAssist has attempted to initialize every configured component and recorded final startup metrics.
 - Enabling WelcomeAssist during a live sandbox does not post a greeting. This lets the GM configure and preview the module before reloading.
@@ -3470,12 +3470,12 @@ InitiativeAssist advances to module version 1.0.1. WelcomeAssist launches at mod
 - If another configured component is still inactive, WelcomeAssist waits for a bounded additional health window. It then skips the public greeting and privately names the blocking component instead of announcing that the suite is ready.
 - Automatic output is limited to one greeting per sandbox lifecycle.
 
-### Added - Chat safety and configuration limits
+### Added – Chat safety and configuration limits
 
 - Custom and default greeting text is normalized at configuration and escaped again when rendered.
 - Roll20 inline-roll, attribute, ability, macro-query, and template directive characters are neutralized before user-authored text reaches public chat.
 - Header text is limited to 80 characters, custom greetings to 240 characters, and the saved custom library to ten entries.
-- Startup delay is clamped to the policy range of 1-60 seconds; the default is 3 seconds.
+- Startup delay is clamped to the policy range of 1–60 seconds; the default is 3 seconds.
 - Timer and current-sandbox announcement bookkeeping use the existing GameAssist clock and lifecycle seams.
 
 ### State and migration impact
@@ -3538,7 +3538,7 @@ The v0.1.6.0 native tracker population, reroll, invitation, detailed-roll, and G
 
 ---
 
-## [0.1.7.0] - 2026-07-25
+## [0.1.7.0] – 2026-07-25
 
 ### Release definition
 
@@ -3546,7 +3546,7 @@ GameAssist v0.1.7.0 introduces **CombatAssist 1.0.5**, a disabled-by-default enc
 
 This release implements the tracker-integrity and first turn-awareness stages of [Issue #48](https://github.com/Mord-Eagle/GameAssist/issues/48), [Issue #54](https://github.com/Mord-Eagle/GameAssist/issues/54), and [Issue #55](https://github.com/Mord-Eagle/GameAssist/issues/55), then completes the project-wide navigation and manual work in [Issue #58](https://github.com/Mord-Eagle/GameAssist/issues/58) and [Issue #59](https://github.com/Mord-Eagle/GameAssist/issues/59). It does not automatically end turns, alter conditions or markers, apply persistent token highlights, play music, or write NPC history. NPCManager handoff and music remain separately scoped because their cross-module and Jukebox ownership rules differ from tracker observation.
 
-### Added - CombatAssist 1.0.2
+### Added – CombatAssist 1.0.2
 
 - Added the complete `[GAMEASSIST:MODULES:COMBATASSIST]` section beneath the existing MODULES wrapper.
 - Added the literal, case-insensitive `!Combat-` command family:
@@ -3571,7 +3571,7 @@ This release implements the tracker-integrity and first turn-awareness stages of
   - `!Combat-Confirm standard|varied` selects one direct private player acknowledgement or a warmer rotation containing the Standard sentence exactly once.
 - Added `GameAssist.CombatAssist.version` and defensive `getStatus()` inspection for future integrations. The public object does not expose an unguarded tracker mutator.
 
-### Added - CombatAssist 1.0.3 native rounds, timers, and pings
+### Added – CombatAssist 1.0.3 native rounds, timers, and pings
 
 - Recognizes exactly one native custom round row when its complete normalized label is `Round`, `Rounds`, `Round Count`, `Round Counter`, `Round Number`, `Round Tracker`, `Combat Round`, or `Current Round`.
 - Uses the recognized row's positive whole-number initiative value as the encounter round and reports the native source in Start, Status, Audit, and Control Center panels.
@@ -3590,13 +3590,13 @@ This release implements the tracker-integrity and first turn-awareness stages of
 - Adds disabled-by-default native current-turn pings through `!Combat-Cue off|gm|players|both|public`.
 - Pings never recenter a map and never change token position, aura, tint, markers, or other token properties. Hidden or GM-layer turns are restricted to GM visibility regardless of the selected audience; custom rows receive no token ping.
 
-### Refined - WelcomeAssist 0.1.2 commands
+### Refined – WelcomeAssist 0.1.2 commands
 
 - Makes `!Welcome` and the case-insensitive `!Welcome-Help`, `!Welcome-Status`, `!Welcome-Preview`, `!Welcome-Announce`, `!Welcome-Mode`, `!Welcome-Delay`, `!Welcome-Header`, `!Welcome-Default`, and `!Welcome-Custom` commands the primary menu and documentation surface.
 - Retains the complete `!welcome-assist ...` command family for existing campaign macros.
 - Prevents the retained `!welcome-assist` command from being processed a second time by the broader `!Welcome-` prefix handler.
 
-### Refined - Project-wide navigation and manuals
+### Refined – Project-wide navigation and manuals
 
 - Advanced the affected module revisions without changing their established gameplay responsibilities:
   - ConfigUI 0.2.2;
@@ -3622,7 +3622,7 @@ This release implements the tracker-integrity and first turn-awareness stages of
 - Kept ConfigUI, NPCHPRoller, and DebugTools guidance in chat because their complete safe-use instructions fit in their compact panels; their Manual commands explain that choice rather than creating redundant handouts.
 - Added focused regression checks for every new guide, status, audit, manual, and unknown-command path, including repeated manual writes that must update rather than duplicate a handout.
 
-### Added - Exact tracker transition model
+### Added – Exact tracker transition model
 
 - CombatAssist assigns a stable identity to each tracker row:
   - token rows use the exact token id;
@@ -3636,7 +3636,7 @@ This release implements the tracker-integrity and first turn-awareness stages of
 - A valid combatant addition or removal, InitiativeAssist reroll, initiative-priority edit, or manual reorder preserves the recorded round and establishes a fresh counting anchor from Roll20's current first entry.
 - CombatAssist accepts those native edits without rewriting them. The GM receives a plain-language summary and an optional one-step undo control.
 
-### Added - Native tracker maintenance and guarded recovery
+### Added – Native tracker maintenance and guarded recovery
 
 - CombatAssist retains the current accepted tracker and one complete previous checkpoint, including every row object and unknown field.
 - Restore is previewed before mutation, requires the current TurnTrackerService revision, and restores through the guarded core service rather than writing `turnorder` directly.
@@ -3652,14 +3652,14 @@ This release implements the tracker-integrity and first turn-awareness stages of
 - Attention output explains what stopped counting and offers current-tracker adoption, saved-tracker restoration, status review, and a separately labeled round-1 restart.
 - Pause remains available for several quiet edits but is no longer required for ordinary additions, removals, rerolls, or reordering.
 
-### Added - Two-row direction safeguard
+### Added – Two-row direction safeguard
 
 - A two-row tracker is allowed, but Roll20's native forward and backward arrows produce the same resulting order.
 - CombatAssist refuses to infer native arrow direction for that ambiguous case.
 - `!Combat-Next` and `!Combat-Prev` carry explicit direction through TurnTrackerService, so two-row encounters can move safely when the GM uses CombatAssist controls.
 - The Quick Guide, start panel, README, and troubleshooting guidance all disclose this limitation and recovery path.
 
-### Added - Guarded turn controls
+### Added – Guarded turn controls
 
 - `!Combat-Next` and `!Combat-Prev` are GM-only.
 - Before rotating, CombatAssist re-reads the current tracker, verifies the page and exact expected order, and refuses an attention or stale state.
@@ -3668,7 +3668,7 @@ This release implements the tracker-integrity and first turn-awareness stages of
 - TurnTrackerService verifies the saved page and serialized rows before CombatAssist reports the new turn.
 - The Whispers-mode End My Turn button is bound to the exact current token. CombatAssist rechecks the clicking player's control through the linked character and refuses stale or unauthorized controls without changing the tracker.
 
-### Added - Encounter lifecycle and presentation
+### Added – Encounter lifecycle and presentation
 
 - CombatAssist starts disabled so an upgrade cannot adopt an already open tracker.
 - Start, status, setup, warning, confirmation, backward-movement, and end panels remain GM-only.
@@ -3715,7 +3715,7 @@ This release implements the tracker-integrity and first turn-awareness stages of
 - Advanced InitiativeAssist to 1.0.2 with a compact root guide and focused topic panels while preserving initiative calculation, permissions, privacy, and tracker behavior.
 - Added a complete CombatAssist section header, narrative, guarantees, dependencies, independent module version, teaching commentary, decision log, and Notes & Comments footer.
 
-### Refined - Help and command recovery
+### Refined – Help and command recovery
 
 - Rebuilt the InitiativeAssist root Guide as a compact action and navigation page. Detailed starting, roll-option, reroll, NPC-privacy, and troubleshooting guidance now appears only after the reader chooses that topic.
 - Rebuilt the CombatAssist Quick Guide as a compact Control Center/Status launcher with focused topics for encounter flow, tracker recovery, player messages, and attention states.
