@@ -2142,7 +2142,7 @@ Select a disposable token and try:
 !ta-set aura1_radius|5 aura1_color|336699 aura1_options|circle
 ```
 
-Values containing spaces must be quoted. Players may use selected-token commands, but `--ids` remains restricted unless the GM enables it through `!token-assist --config players-can-ids|on` or `!ta-config players-can-ids|on`. Commands involving unsupported advanced image, default-token, computed/name-resolved attribute, controller-list, color-math, multi-sided-token, duplicate marker index, conditional marker count, or TokenMod-style help-handout rebuilding are outside TokenAssist 1.1.0's compatibility boundary and should produce a clear warning rather than a partial mutation.
+Values containing spaces must be quoted. Players may use selected-token commands, but `--ids` remains restricted unless the GM enables it through `!token-assist --config players-can-ids|on` or `!ta-config players-can-ids|on`. TokenAssist 1.3.0 supports the selected-token marker-expression, controller/report, visual, dimming, side-selection, and exact saved/computed-value behaviors described above. Persistent token-image/default-token writes, TokenMod help-handout rebuilding, and a global `TokenMod` compatibility object remain outside this release and produce a clear refusal rather than a partial mutation.
 
 ### 14.5 ConditionAssist Does Not Respond, Shows the Wrong Wording, or Uses the Wrong Marker
 
