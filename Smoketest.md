@@ -73,7 +73,7 @@ Run:
 - `!GA STATUS --details` preserves the option and opens detailed status, while `!ToKeN AsSiSt Gm`, `!condition-gm`, and `!HP gm` reach their intended module screens;
 - each bare short or full module name reaches that module's established GM screen, player screen, or disabled-module recovery panel instead of remaining silent;
 - the suite navigator, ConfigUI, ConditionAssist, TokenAssist, and WelcomeAssist's private controls use the same readable Roll20 default-template presentation as HPAssist and CombatAssist rather than separate white, pink, or purple control-panel styles;
-- TokenAssist's ordinary GM screen includes **More Actions**, and that button or `!token-assist actions` opens one organized extended library with grouped token operations and a return to GM Controls;
+- TokenAssist's ordinary GM screen includes **More Actions**, and that button or `!token-assist actions` opens one organized extended library with grouped token operations and a return to GM Controls; `!ta-actions` reaches the same library, and full command aliases are resolved before shorter aliases;
 - WelcomeAssist's public greeting card may remain visually distinct because it is table content rather than a private control interface;
 - none of these commands posts publicly or exposes another module's protected controls to players.
 
@@ -1160,7 +1160,7 @@ These checks cover the directly implemented backlog work now included in PR #81.
 
 ### MarkerService and TokenAssist
 
-**What it tests:** Whether the shared marker authority preserves TokenMod-style marker behavior while keeping ordinary token actions safe.
+**What it tests:** Whether the shared marker authority preserves the supported legacy marker-expression behavior while keeping ordinary TokenAssist actions safe.
 
 **Run:** Select one disposable token and use:
 
@@ -1638,7 +1638,7 @@ Run each line only after the previous response. Pass when ConfigUI disables, re-
 
 **Why test it:** ConditionAssist, TokenAssist, NPCAssist, ConcentrationAssist, and marker diagnostics share MarkerService instead of maintaining competing marker implementations.
 
-**Skip when:** Skip only if MarkerService and every dependent GameAssist module are deliberately disabled. The **without TokenMod** portion is required for Issue #25 acceptance; use a disposable campaign when the active campaign cannot safely remove TokenMod yet.
+**Skip when:** Skip only if MarkerService and every dependent GameAssist module are deliberately disabled. Standalone TokenMod is not required for this test; run the no-TokenMod portion on a disposable campaign to verify that integrated marker ownership is independent of that script.
 
 ### Basic Check
 
@@ -1701,7 +1701,7 @@ Pass when:
 - MarkerService v1.0.1 is enabled;
 - ConditionAssist, TokenAssist, NPCAssist, and ConcentrationAssist are running;
 - all four show confirmed MarkerService dependencies;
-- none is skipped because TokenMod or StatusInfo is absent.
+- none is skipped because standalone TokenMod or StatusInfo is absent; those scripts are not runtime prerequisites for the integrated marker consumers.
 
 #### M2. Numbered Death Marker
 
