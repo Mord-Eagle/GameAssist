@@ -21,15 +21,15 @@ calls GameAssist.enqueue(). This development package contains fifteen configurab
 - ConfigUI 0.2.5 - GM-only chat controls with service-first grouping, compact readable configuration summaries, module toggles, common options, and PC health alerts.
 - CritAssist 0.2.5.2 - Detects natural-1 attacks and offers fumble/confirm menus with direct module recovery controls.
 - ConditionAssist 1.0.5 - Provides condition wording, artwork, announcements, marker controls, and full-name command aliases.
-- TokenAssist 1.0.7 - Provides general token controls through !token, !tokenassist, !token-assist, and !ta commands with longest-name-first alias routing.
+- TokenAssist 1.1.0 - Provides general token controls through !token, !tokenassist, !token-assist, and !ta commands with compact GM navigation, an organized action library, and longest-name-first alias routing.
 - InitiativeAssist 1.0.5 - Uses Roll20's native Turn Tracker for mixed-sheet initiative workflows and compact topic guidance.
 - CombatAssist 1.1.1 - Tracks encounters, native round counters, guarded turns, optional timers, private-safe pings, recoverable tracker changes, and verified semantic progression events.
 - WelcomeAssist 0.1.6 - Optionally greets the table after a healthy GameAssist startup through short or full-name commands.
 - ConcentrationAssist 0.6.0 - Runs supported 2014 manual and private HP-loss-offered concentration checks, refuses unavailable save data instead of guessing, provides guided marker configuration, manages its configured marker, and exposes concentration lifecycle events.
 - NPCAssist 1.4.1 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, and Arc rosters on the shared NPC HP bar.
 - EffectAssist 2.5.3 - Coordinates compact catalog-driven effects, exact caster-and-recipient identity, retained GM requests, GameAssist-owned 2014-sheet modifiers, verified token-specific concentration, ownership-safe cleanup, duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
-- HealAssist 1.1.0 - Guides verified 2014 normal or maximum healing with optional automatic application, visible PC targeting, private GM requests, and HealthService verification.
-- AttackAssist 1.0.7 - Guides authorized 2014 repeating attacks through direct visible targeting, complete prompt-safe Classic-sheet expansion, private GM placement, crash-safe inline-roll validation, and visible one-use native-template rolls without applying damage.
+- HealAssist 1.2.0 - Guides verified 2014 normal or maximum healing with direct single-recipient targeting, optional automatic application, visible PC targeting, private GM requests, and HealthService verification.
+- AttackAssist 1.1.0 - Guides authorized 2014 repeating attacks through direct visible targeting, default sheet-mode submission, optional GM-enabled roll review, complete prompt-safe Classic-sheet expansion, private GM placement, crash-safe inline-roll validation, and visible one-use native-template rolls without applying damage.
 - AlmanacAssist 1.6.1 - Adds Wayfarer's ordinal 20-hour clock, independently styled world-announcement details, coherent climate/weather/environment presentation, direct Wayfarer and moon editors, configurable rest rules, editable seasonal ranges, and visible moon phases across six independently controlled internal systems.
 - HPAssist 0.3.0 - Rolls npc_hpformula and uses HealthService for verified writes to the selected shared NPC HP bar when available.
 - DebugTools 0.3.1 - Optional dry-run-first GM diagnostics with verified supported HP damage writes on the selected shared NPC HP bar.
@@ -8026,7 +8026,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.TokenAssist"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.0.7", token_config_schema_version: 1, tokenmod_reference_version: "0.8.88" }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.1.0", token_config_schema_version: 1, tokenmod_reference_version: "0.8.88" }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // TokenAssist provides GameAssist's general token controls through a verified,
@@ -8036,7 +8036,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     const TokenAssist = (() => {
         const MODULE_NAME = 'TokenAssist';
-        const MODULE_VERSION = '1.0.7';
+        const MODULE_VERSION = '1.1.0';
         const CONFIG_SCHEMA_VERSION = 1;
         const TOKENMOD_REFERENCE = Object.freeze({
             version: '0.8.88',
@@ -8926,12 +8926,27 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
+        function showActionMenu(msg) {
+            if (msg.playerid !== 'API' && !playerIsGM(msg.playerid)) return showHelp(msg);
+            sendTokenPanel(msg, 'TokenAssist GM Action Library', [
+                { label: 'Names And Tooltips', value: `${GameAssist.createButton('Set Name', '!ta-set name|?{Token name|}')} ${GameAssist.createButton('Show Names', '!ta-on showname')} ${GameAssist.createButton('Hide Names', '!ta-off showname')} ${GameAssist.createButton('Set Tooltip', '!ta-set tooltip|?{Tooltip text|}')} ${GameAssist.createButton('Show Tooltip', '!ta-on show_tooltip')} ${GameAssist.createButton('Hide Tooltip', '!ta-off show_tooltip')}` },
+                { label: 'Token Bars', value: `${GameAssist.createButton('Set Bar 1', '!ta-set bar1|?{Bar 1 current and maximum|0}')} ${GameAssist.createButton('Adjust Bar 1', '!ta-set bar1_value|?{Bar 1 adjustment, such as -5 or +5|-5}')} ${GameAssist.createButton('Set Bar 2', '!ta-set bar2|?{Bar 2 current and maximum|0}')} ${GameAssist.createButton('Set Bar 3', '!ta-set bar3|?{Bar 3 current and maximum|0}')} ${GameAssist.createButton('Show Bar 1 To Players', '!ta-on showplayers_bar1')} ${GameAssist.createButton('Hide Bar 1 From Players', '!ta-off showplayers_bar1')}` },
+                { label: 'Status Markers', value: `${GameAssist.createButton('Add Marker', '!ta-set statusmarkers|?{Marker name|red}')} ${GameAssist.createButton('Remove Marker', '!ta-set statusmarkers|-?{Marker name|red}')} ${GameAssist.createButton('Toggle Marker', '!ta-set statusmarkers|!?{Marker name|red}')} ${GameAssist.createButton('Replace Markers', '!ta-set statusmarkers|=?{Only marker to keep|dead}')} ${GameAssist.createButton('Clear Markers', '!ta-set statusmarkers|=')}` },
+                { label: 'Auras', value: `${GameAssist.createButton('Set Aura 1', '!ta-set aura1_radius|?{Aura 1 radius|5} aura1_color|?{Aura 1 color|#ffff99}')} ${GameAssist.createButton('Set Aura 2', '!ta-set aura2_radius|?{Aura 2 radius|10} aura2_color|?{Aura 2 color|#99ccff}')} ${GameAssist.createButton('Show Aura 1 To Players', '!ta-on showplayers_aura1')} ${GameAssist.createButton('Hide Aura 1 From Players', '!ta-off showplayers_aura1')} ${GameAssist.createButton('Square Aura 1', '!ta-on aura1_square')} ${GameAssist.createButton('Round Aura 1', '!ta-off aura1_square')}` },
+                { label: 'Vision And Light', value: `${GameAssist.createButton('Night Vision On', '!ta-on has_night_vision --set night_vision_distance|?{Night vision distance|60}')} ${GameAssist.createButton('Night Vision Off', '!ta-off has_night_vision')} ${GameAssist.createButton('Bright Light', '!ta-on emits_bright_light --set bright_light_distance|?{Bright light distance|20}')} ${GameAssist.createButton('Low Light', '!ta-on emits_low_light --set low_light_distance|?{Low light distance|20}')} ${GameAssist.createButton('Lights Off', '!ta-off emits_bright_light emits_low_light')}` },
+                { label: 'Position And Size', value: `${GameAssist.createButton('Move', '!ta-move ?{Direction in degrees|0}|?{Distance in grid units|1}g')} ${GameAssist.createButton('Rotate', '!ta-set rotation|?{Rotation in degrees|0}')} ${GameAssist.createButton('Resize', '!ta-set scale|?{Token size in pixels|70}')} ${GameAssist.createButton('To Objects Layer', '!ta-set layer|objects')} ${GameAssist.createButton('To GM Layer', '!ta-set layer|gmlayer')} ${GameAssist.createButton('To Map Layer', '!ta-set layer|map')}` },
+                { label: 'Appearance And Order', value: `${GameAssist.createButton('Set Tint', '!ta-set tint_color|?{Tint color|transparent}')} ${GameAssist.createButton('Flip Horizontal', '!ta-flip fliph')} ${GameAssist.createButton('Flip Vertical', '!ta-flip flipv')} ${GameAssist.createButton('Bring To Front', '!ta-order tofront')} ${GameAssist.createButton('Send To Back', '!ta-order toback')} ${GameAssist.createButton('Lock Movement', '!ta-on lockMovement')} ${GameAssist.createButton('Unlock Movement', '!ta-off lockMovement')}` },
+                { label: 'Reference', value: `${GameAssist.createButton('Marker Help', '!token-assist --help-statusmarkers')} ${GameAssist.createButton('Full Manual', '!token-assist manual')} ${GameAssist.createButton('Read-Only Audit', '!token-assist audit')}` },
+                { label: 'Return', value: `${GameAssist.createButton('GM Controls', '!token-assist gm')} ${gameAssistHomeButton()}` }
+            ]);
+        }
+
         function showTokenControl(msg) {
             const state = getModuleState();
             const selected = (msg.selected || []).map(selection => getObj('graphic', selection._id)).filter(Boolean);
             sendTokenPanel(msg, 'TokenAssist GM Controls', [
                 { label: 'Current Selection', value: `${selected.length} token${selected.length === 1 ? '' : 's'} selected.` },
-                { label: 'Common Actions', value: `${GameAssist.createButton('Show Names', '!ta-on showname')} ${GameAssist.createButton('Hide Names', '!ta-off showname')} ${GameAssist.createButton('Set Bar 1', '!ta-set bar1_value|?{Bar 1 value|0}')} ${GameAssist.createButton('Toggle Marker', '!ta-set statusmarkers|!?{Marker name|red}')}` },
+                { label: 'Common Actions', value: `${GameAssist.createButton('Show Names', '!ta-on showname')} ${GameAssist.createButton('Hide Names', '!ta-off showname')} ${GameAssist.createButton('Set Bar 1', '!ta-set bar1_value|?{Bar 1 value|0}')} ${GameAssist.createButton('Toggle Marker', '!ta-set statusmarkers|!?{Marker name|red}')} ${GameAssist.createButton('More Actions', '!token-assist actions')}` },
                 { label: 'Review And Setup', value: `${GameAssist.createButton('Status', '!token-assist status')} ${GameAssist.createButton('Marker Help', '!token-assist --help-statusmarkers')} ${GameAssist.createButton(`Players --ids: ${state.config.playersCanUseIds ? 'On' : 'Off'}`, `!token-assist --config players-can-ids|${state.config.playersCanUseIds ? 'off' : 'on'}`)} ${GameAssist.createButton('Guide', '!token-assist help')}` },
                 { label: 'GameAssist', value: gameAssistHomeButton() }
             ]);
@@ -9095,6 +9110,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const direct = String(taFlag[1]).toLowerCase();
                 if (['help', 'guide'].includes(direct)) return showHelp(msg);
                 if (['menu', 'gm', 'dm'].includes(direct)) return showTokenControl(msg);
+                if (['action', 'actions', 'library'].includes(direct)) return showActionMenu(msg);
                 if (['about', 'info'].includes(direct)) return showAbout(msg);
                 if (['status', 'refresh'].includes(direct)) return showTokenStatus(msg, false);
                 if (direct === 'audit') return showTokenStatus(msg, true);
@@ -9113,6 +9129,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const command = String(words[0] || 'help').toLowerCase();
             if (['help', 'guide'].includes(command)) return showHelp(msg);
             if (['menu', 'gm', 'dm'].includes(command)) return showTokenControl(msg);
+            if (['action', 'actions', 'library'].includes(command)) return showActionMenu(msg);
             if (['about', 'info'].includes(command)) return showAbout(msg);
             if (['status', 'refresh'].includes(command)) return showTokenStatus(msg, false);
             if (command === 'audit') return showTokenStatus(msg, true);
@@ -9215,8 +9232,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['configSchemaVersion']
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Advanced TokenAssist to 1.0.7; longest-name-first alias parsing keeps !token-assist help, audit, settings, and related commands from being mistaken for !token followed by an "assist" action.
+    // Changed (v2.0.0): Advanced TokenAssist to 1.1.0; the compact GM controls now link to an organized action library covering practical identity, bars, markers, auras, vision, lighting, placement, appearance, ordering, and movement controls without burdening the default screen.
     // Prior notes:
+    //   v2.0.0 / TokenAssist 1.0.7: longest-name-first alias parsing kept !token-assist help, audit, settings, and related commands from being mistaken for !token followed by an "assist" action.
     //   v2.0.0 / TokenAssist 1.0.6: bare !token and !tokenassist open the role-appropriate TokenAssist screen, and both names accept the established case-insensitive space-or-hyphen command forms alongside !ta.
     //   v2.0.0 / TokenAssist 1.0.5: replaced custom white/pink panels with the shared Roll20 default-template presentation.
     //   v2.0.0: Added the standard GameAssist Home return to the TokenAssist GM control screen.
@@ -9233,7 +9251,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Copy only practical legacy configuration and preserve state.TokenMod - ALT: rename or delete upstream state; REJECTED: rollback and migration diagnosis require the source state.
     //   CHOICE: Expose GameAssist.TokenAssist.observeTokenChange - ALT: create a global TokenMod compatibility object; REJECTED: the global would blur branding, provenance, and standalone-conflict detection.
     //   CHOICE: Route all status-marker syntax through MarkerService - ALT: write statusmarkers independently; REJECTED: GameAssist must have one marker authority.
-    //   v0.1.7.0: Advanced TokenAssist to 1.0.3; added action-focused Menu/GM/DM navigation while retaining the established controls.\n    //   Earlier unreleased v0.1.5.0 checkpoints used the name TokenService, exposed !token-service, and treated !token-mod as the primary compatibility command. Saved test state is migrated to TokenAssist.
+    //   CHOICE: Put the broad button library behind More Actions - ALT: place every supported control on the default GM screen; REJECTED: the common workspace would become difficult to scan during play.
+    //   v0.1.7.0 / TokenAssist 1.0.3: added action-focused Menu/GM/DM navigation while retaining the established controls.
+    //   Earlier unreleased v0.1.5.0 checkpoints used the name TokenService, exposed !token-service, and treated !token-mod as the primary compatibility command. Saved test state is migrated to TokenAssist.
     // [GAMEASSIST:MODULES:TOKENASSIST] END
     // =============================================================================
 
@@ -20539,7 +20559,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   guarantees: ["Official 2014-sheet healing uses short-lived source, target, roll, review, and one-use confirmation boundaries","Every accepted HP change uses HealthService provenance and verification; multi-target failures attempt verified rollback","Players may target visible supported PCs they do not control while NPC, hidden, and off-page placement remains GM-reviewed","Spell slots, class resources, temporary HP, damage causes, resistance, and unsupported sheet fields are never inferred or consumed"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.HealAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.1.0", interaction_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.2.0", interaction_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // HealAssist is a disabled-by-default HealthService client. It guides an authorized
@@ -20549,7 +20569,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('HealAssist', function() {
         const MODULE_NAME = 'HealAssist';
-        const MODULE_VERSION = '1.1.0';
+        const MODULE_VERSION = '1.2.0';
         const INTERACTION_SCHEMA_VERSION = 1;
         const modState = GameAssist.getState(MODULE_NAME);
         modState.config = {
@@ -20829,6 +20849,27 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             )).join(' ');
         }
 
+        function isSingleRecipientAction(action) {
+            return action.targetCounts.length === 1 && action.targetCounts[0] === 1;
+        }
+
+        function preparedReviewArguments(options = {}) {
+            return ['slot', 'ability', 'formula', 'targets']
+                .filter(key => typeof options[key] === 'string' && options[key].trim())
+                .map(key => `--${key} ${String(options[key]).replace(/[\s"']/g, '')}`)
+                .join(' ');
+        }
+
+        function beginHealingWithSource(msg, action, source, { maximum = false, reviewOptions = {} } = {}) {
+            if (isSingleRecipientAction(action) && typeof reviewOptions.targets === 'string' && reviewOptions.targets.trim()) {
+                return handleReview(msg, {
+                    ...reviewOptions,
+                    flow: rememberFlow(msg, action, source, { maximum })
+                });
+            }
+            return showRecipientPicker(msg, action, source, { maximum });
+        }
+
         function showRecipientPicker(msg, action, source, { maximum = false } = {}) {
             const flowId = rememberFlow(msg, action, source, { maximum });
             panel(`${action.name}${maximum ? ': Maximum Healing' : ''}: Choose Recipients`, [
@@ -20841,7 +20882,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ], msg);
         }
 
-        function showSourcePicker(msg, action, { maximum = false } = {}) {
+        function showSourcePicker(msg, action, { maximum = false, reviewOptions = {} } = {}) {
             const sources = sourceCandidates(msg);
             if (!sources.length) {
                 return panel(MODULE_NAME, [
@@ -20849,9 +20890,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!Heal-Guide') }
                 ], msg);
             }
-            if (sources.length === 1) return showRecipientPicker(msg, action, sources[0], { maximum });
+            if (sources.length === 1) return beginHealingWithSource(msg, action, sources[0], { maximum, reviewOptions });
+            const prepared = isSingleRecipientAction(action) && typeof reviewOptions.targets === 'string' && reviewOptions.targets.trim();
+            const reviewArguments = preparedReviewArguments(reviewOptions);
             panel(`${action.name}${maximum ? ': Maximum Healing' : ''}: Choose The Healer`, [
-                { label: 'Healers', value: sources.map(source => GameAssist.createButton(source.name, `!Heal-Recipients --flow ${rememberFlow(msg, action, source, { maximum })}`)).join(' ') },
+                { label: 'Healers', value: sources.map(source => GameAssist.createButton(source.name, prepared
+                    ? `!Heal-Review --flow ${rememberFlow(msg, action, source, { maximum })}${reviewArguments ? ` ${reviewArguments}` : ''}`
+                    : `!Heal-Recipients --flow ${rememberFlow(msg, action, source, { maximum })}`)).join(' ') },
                 { label: 'Tip', value: 'Selecting the healer token before opening this screen keeps the list short.' },
                 { label: 'Return', value: GameAssist.createButton('Healing Actions', '!Heal-Menu') }
             ], msg);
@@ -21244,7 +21289,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function actionButtons(group, maximum = false) {
             return Object.values(ACTIONS).filter(action => action.group === group)
-                .map(action => GameAssist.createButton(action.name, `!Heal-Start --action ${action.id}${maximum ? ' --maximum yes' : ''}`)).join(' ');
+                .map(action => {
+                    const directRecipient = isSingleRecipientAction(action)
+                        ? `${actionQuery(action)} --targets ${targetReferences(action, 1)}`
+                        : '';
+                    return GameAssist.createButton(action.name, `!Heal-Start --action ${action.id}${maximum ? ' --maximum yes' : ''}${directRecipient}`);
+                }).join(' ');
         }
 
         function showCatalog(msg, { maximum = false } = {}) {
@@ -21370,7 +21420,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (action === 'start') {
                 const definition = ACTIONS[String(options.action || '').toLowerCase()];
                 const maximum = ['yes', 'true', 'on', 'maximum', 'max'].includes(String(options.maximum || '').toLowerCase());
-                return definition ? showSourcePicker(msg, definition, { maximum }) : showCatalog(msg, { maximum });
+                return definition ? showSourcePicker(msg, definition, { maximum, reviewOptions: options }) : showCatalog(msg, { maximum });
             }
             if (action === 'recipients') {
                 const flowResult = resolveFlow(msg, options.flow);
@@ -21453,14 +21503,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => GameAssist.HealAssist?._clearTransient?.()
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Advanced HealAssist to 1.1.0 with a maximum-result action catalog, a GM-controlled automatic-application path that retains stale checks and rollback, explicit GM failure notices, and a bare !healassist entry point.
-    // Changed (v2.0.0): Added the standard GameAssist Home return to the HealAssist GM control screen.
-    // Changed (v2.0.0): Added HealAssist 1.0.0 with guided official-2014 healing actions, bounded manual formulas, native visible-recipient targeting, private GM placement requests, complete roll/HP review, expiring one-use confirmations, HealthService provenance and verification, over-healing prevention, and multi-target rollback attempts.
+    // Changed (v2.0.0): Advanced HealAssist to 1.2.0; actions with exactly one legal recipient now carry their target prompt from the action catalog and bypass the redundant recipient-count screen while retaining source authorization, private placement, review, automatic application, and legacy command paths.
+    // Prior notes:
+    //   v2.0.0 / HealAssist 1.1.0: added a maximum-result action catalog, a GM-controlled automatic-application path that retained stale checks and rollback, explicit GM failure notices, and a bare !healassist entry point.
+    //   v2.0.0: added the standard GameAssist Home return to the HealAssist GM control screen.
+    //   v2.0.0 / HealAssist 1.0.0: added guided official-2014 healing actions, bounded manual formulas, native visible-recipient targeting, private GM placement requests, complete roll/HP review, expiring one-use confirmations, HealthService provenance and verification, over-healing prevention, and multi-target rollback attempts.
     // Decision log:
     //   CHOICE: Use HealthService as the only HP read/write authority - ALT: add module-specific HP listeners and setters; REJECTED: duplicate engines would disagree and emit duplicate evidence.
     //   CHOICE: Permit players to target visible supported PCs they do not control while routing NPC and hidden work to the GM - ALT: grant direct player writes to every pointed token; REJECTED: NPC identity and HP must remain private and GM-authorized.
     //   CHOICE: Ask for slot level and healing ability, then read the selected 2014 ability modifier - ALT: infer class, prepared spell, slot use, or casting ability; REJECTED: multiclass and campaign rules make those guesses unsafe.
     //   CHOICE: Roll before the mutation review and consume confirmation once - ALT: roll again during apply; REJECTED: the GM and player must confirm the exact evidence that will be used.
+    //   CHOICE: Put the one-recipient target query on the catalog action - ALT: show a count menu containing only Choose 1 Recipient; REJECTED: the extra screen cannot change a single-target action's legal scope.
     //   CHOICE: Revalidate every target before any write and roll back earlier recipients if a later write fails - ALT: accept partial multi-target healing silently; REJECTED: one reviewed action should not leave an unexplained half-applied result.
     //   CHOICE: Keep resource consumption and temporary HP manual - ALT: modify spell slots, inventory, features, or temporary HP automatically; REJECTED: the initial verified adapter does not own those sheet contracts.
     // [GAMEASSIST:MODULES:HEALASSIST] END
@@ -21471,10 +21524,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Guided official-2014 repeating attacks
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:ATTACKASSIST", title: "AttackAssist",
-    //   guarantees: ["Only authorized official-2014 linked sources and verified repeating-attack row identities enter a guided roll","Visible targets use Roll20's native map prompt without requiring target control; hidden or off-page placement remains GM-reviewed","One-use roll submissions materialize the complete sheet-generated attack formula, apply documented Classic-sheet defaults, and refuse unresolved prompts or fields before Roll20 receives the command","AttackAssist never applies damage or changes HP, conditions, effects, initiative, turns, resources, or encounter state"],
+    //   guarantees: ["Only authorized official-2014 linked sources and verified repeating-attack row identities enter a guided roll","Visible targets use Roll20's native map prompt without requiring target control; hidden or off-page placement remains GM-reviewed","The default path submits the verified sheet setting immediately; an explicit GM setting restores the roll-choice review screen","One-use roll submissions materialize the complete sheet-generated attack formula, apply documented Classic-sheet defaults, and refuse unresolved prompts or fields before Roll20 receives the command","AttackAssist never applies damage or changes HP, conditions, effects, initiative, turns, resources, or encounter state"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AttackAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.0.7", interaction_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.1.0", interaction_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // AttackAssist is a disabled-by-default convenience layer for the official 2014
@@ -21484,15 +21537,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('AttackAssist', function() {
         const MODULE_NAME = 'AttackAssist';
-        const MODULE_VERSION = '1.0.7';
+        const MODULE_VERSION = '1.1.0';
         const INTERACTION_SCHEMA_VERSION = 1;
         const modState = GameAssist.getState(MODULE_NAME);
         modState.config = {
             enabled: false,
             allowPlayerAttacks: true,
+            reviewBeforeRoll: false,
             ...modState.config
         };
         if (typeof modState.config.allowPlayerAttacks !== 'boolean') modState.config.allowPlayerAttacks = true;
+        if (typeof modState.config.reviewBeforeRoll !== 'boolean') modState.config.reviewBeforeRoll = false;
 
         const MODE_FRAGMENTS = Object.freeze({
             normal: '{{query=1}} {{normal=1}} {{r2=[[0d20',
@@ -21996,6 +22051,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ], msg, { gmOnly: Boolean(request) });
         }
 
+        function submitOrReviewAttack(msg, source, row, target, request = null) {
+            if (modState.config.reviewBeforeRoll) return showRollChoices(msg, source, row, target, request);
+            const submission = rememberSubmission(msg, source, row, target, request);
+            if (request) requests.delete(request.id);
+            return handleRoll(msg, { submission: submission.id, mode: 'sheet' });
+        }
+
         function handleReview(msg, options) {
             if (options.request) {
                 if (!playerIsGm(msg.playerid)) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: 'Only the GM can review a retained attack request.' }], msg);
@@ -22004,7 +22066,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const targetId = String(options.target || (options.suggested ? resolved.request.suggestedTargetId : '') || selectedTargetId(msg));
                 const target = resolveTarget(targetId, msg, { gmReview: true });
                 if (!target.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(target.message) }, { label: 'Next Step', value: GameAssist.createButton('Pending Requests', '!Attack-Requests') }], msg, { gmOnly: true });
-                return showRollChoices(msg, resolved.source, resolved.row, target, resolved.request);
+                return submitOrReviewAttack(msg, resolved.source, resolved.row, target, resolved.request);
             }
 
             const flowResult = resolveFlow(msg, options.flow, true);
@@ -22022,7 +22084,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             if (!target.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(target.message) }, { label: 'Next Step', value: GameAssist.createButton('Choose Target Again', `!Attack-Target --flow ${flowResult.flow.id}`) }], msg);
             flows.delete(flowResult.flow.id);
-            showRollChoices(msg, flowResult.source, flowResult.row, target);
+            submitOrReviewAttack(msg, flowResult.source, flowResult.row, target);
         }
 
         /**
@@ -22236,7 +22298,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 : `${GameAssist.createButton('What Does AttackAssist Do?', '!Attack-Info')} ${GameAssist.createButton('Status', '!Attack-Status')}`;
             panel('AttackAssist Quick Guide', [
                 { label: 'Start An Attack', value: GameAssist.createButton('Choose Attacker And Attack', '!Attack-Menu') },
-                { label: 'At The Table', value: 'Choose a controlled 2014 character, one verified repeating attack, a visible target, and the roll mode. The ordinary character-sheet buttons still work.' },
+                { label: 'At The Table', value: 'Choose a controlled 2014 character, one verified repeating attack, and a visible target. AttackAssist uses the sheet setting immediately unless the GM enables roll review.' },
                 { label: 'What It Does Not Do', value: 'AttackAssist does not apply damage, spend resources, change conditions or effects, or move the Turn Tracker.' },
                 { label: 'More Help', value: moreHelp }
             ], msg);
@@ -22258,6 +22320,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             panel('AttackAssist Status', [
                 { label: 'Module', value: `AttackAssist ${MODULE_VERSION} is enabled and responding.` },
                 { label: 'Player-Guided Attacks', value: modState.config.allowPlayerAttacks === false ? 'Locked by the GM' : 'Allowed' },
+                { label: 'Before Each Roll', value: modState.config.reviewBeforeRoll ? 'Ask for Sheet, Normal, Advantage, or Disadvantage' : 'Use the character sheet setting immediately' },
                 { label: 'Available Here', value: `${candidates.length} authorized 2014 source(s) | ${verified} verified repeating attack(s)` },
                 { label: 'Pending', value: `${(pruneInteractions(), requests.size)} GM request(s) | ${submissions.size} reviewed roll(s)` },
                 { label: 'Actions', value: `${GameAssist.createButton('Start An Attack', '!Attack-Menu')} ${playerIsGm(msg.playerid) ? GameAssist.createButton('Control Center', '!Attack-GM') : ''}` }
@@ -22286,13 +22349,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 `<p><strong>GameAssist v${_sanitize(VERSION)} | AttackAssist ${MODULE_VERSION}</strong></p>`,
                 '<p>AttackAssist provides an optional guided path for official D&amp;D 5E by Roll20 2014 repeating attacks. Native character-sheet attack buttons remain available.</p>',
                 '<h2>Quick Start</h2>',
-                '<ol><li>Enable AttackAssist.</li><li>Select a controlled linked 2014 character token.</li><li>Run <code>!Attack</code>.</li><li>Choose a verified repeating attack and point at a visible target.</li><li>Choose the sheet setting, normal, advantage, or disadvantage.</li></ol>',
+                '<ol><li>Enable AttackAssist.</li><li>Select a controlled linked 2014 character token.</li><li>Run <code>!Attack</code>.</li><li>Choose a verified repeating attack and point at a visible target.</li><li>AttackAssist submits with the sheet setting. The GM may enable roll review when the table needs a Sheet, Normal, Advantage, or Disadvantage choice before every roll.</li></ol>',
                 '<h2>Targeting And Privacy</h2>',
                 '<p>Visible targets do not need to be controlled by the attacker. Hidden, GM-layer, and off-page placement uses a private request in <code>!Attack-Requests</code>.</p>',
                 '<h2>Safety Boundary</h2>',
                 '<p>One reviewed choice submits one roll. AttackAssist does not apply damage, write HP, spend ammunition or spell slots, change conditions or effects, move initiative, or manage turns.</p>',
                 '<h2>Commands</h2>',
-                '<ul><li><code>!Attack</code> or <code>!Attack-Menu</code> - start.</li><li><code>!Attack-GM</code> / <code>!Attack-DM</code> - private GM controls.</li><li><code>!Attack-Status</code> - concise health.</li><li><code>!Attack-Audit</code> - read-only row audit.</li><li><code>!Attack-Requests</code> - retained private placement requests.</li><li><code>!Attack-Players on|off</code> - allow or lock player starts.</li></ul>',
+                '<ul><li><code>!Attack</code> or <code>!Attack-Menu</code> - start.</li><li><code>!Attack-GM</code> / <code>!Attack-DM</code> - private GM controls.</li><li><code>!Attack-Status</code> - concise health.</li><li><code>!Attack-Audit</code> - read-only row audit.</li><li><code>!Attack-Requests</code> - retained private placement requests.</li><li><code>!Attack-Players on|off</code> - allow or lock player starts.</li><li><code>!Attack-Review-Mode on|off</code> - ask for a roll mode before every attack or use the sheet setting immediately.</li></ul>',
                 '<h2>Unsupported Sheets Or Rows</h2>',
                 '<p>The first adapter does not interpret the 2024 sheet, NPC action rows, or incomplete/custom roll formulas. Use the native sheet button for anything AttackAssist refuses.</p>'
             ].join('');
@@ -22325,6 +22388,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ...(notice ? [{ label: 'Updated', value: _sanitize(notice) }] : []),
                 { label: 'Start', value: GameAssist.createButton('Choose Attacker And Attack', '!Attack-Menu') },
                 { label: 'Player Attacks', value: `${modState.config.allowPlayerAttacks === false ? 'Locked' : 'Allowed'} ${GameAssist.createButton(modState.config.allowPlayerAttacks === false ? 'Allow Players' : 'Lock Players', `!Attack-Players ${modState.config.allowPlayerAttacks === false ? 'on' : 'off'}`)}` },
+                { label: 'Roll Choice', value: `${modState.config.reviewBeforeRoll ? 'Ask before every roll' : 'Use sheet setting immediately'} ${GameAssist.createButton(modState.config.reviewBeforeRoll ? 'Use Sheet Setting By Default' : 'Ask Before Every Roll', `!Attack-Review-Mode ${modState.config.reviewBeforeRoll ? 'off' : 'on'}`)}` },
                 { label: 'Review', value: `${GameAssist.createButton(`Pending Requests (${requests.size})`, '!Attack-Requests')} ${GameAssist.createButton('Status', '!Attack-Status')} ${GameAssist.createButton('Audit', '!Attack-Audit')}` },
                 { label: 'Help', value: `${GameAssist.createButton('Quick Guide', '!Attack-Guide')} ${GameAssist.createButton('Manual', '!Attack-Manual')}` },
                 { label: 'GameAssist', value: gameAssistHomeButton() }
@@ -22379,6 +22443,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 }
                 return showControl(msg, `Player-guided attacks turned ${value}.`);
             }
+            if (action === 'review-mode') {
+                const value = String(msg.content || '').trim().split(/\s+/).pop().toLowerCase();
+                if (!['on', 'off'].includes(value)) return showControl(msg, 'Choose whether roll review is on or off.');
+                modState.config.reviewBeforeRoll = value === 'on';
+                submissions.clear();
+                return showControl(msg, `Roll review turned ${value}.`);
+            }
             if (action === 'audit') return showAudit(msg);
             if (action === 'manual') return showManual(msg);
             panel(MODULE_NAME, [
@@ -22398,6 +22469,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             getStatus: () => Object.freeze({
                 enabled: modState.config.enabled !== false,
                 allowPlayerAttacks: modState.config.allowPlayerAttacks !== false,
+                reviewBeforeRoll: modState.config.reviewBeforeRoll === true,
                 pendingFlows: (pruneInteractions(), flows.size),
                 pendingRequests: requests.size,
                 pendingSubmissions: submissions.size
@@ -22417,28 +22489,30 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }, {
         enabled: false,
         prefixes: ['!Attack', '!Attack-', '!AttackAssist', '!AttackAssist-'],
+        protectedConfigKeys: ['reviewBeforeRoll'],
         teardown: () => GameAssist.AttackAssist?._clearTransient?.()
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Advanced AttackAssist to 1.0.7; field-level and final inline-roll validation now refuse bare or encoded question marks and unresolved prompt syntax before sendChat, preventing incomplete Classic-sheet values from reaching Roll20's dice parser.
+    // Changed (v2.0.0): Advanced AttackAssist to 1.1.0; verified attacks now submit immediately with the character sheet's roll setting by default, while a retained GM toggle can restore the Sheet/Normal/Advantage/Disadvantage review screen.
     // Prior notes:
+    //   v2.0.0 / AttackAssist 1.0.7: field-level and final inline-roll validation refused bare or encoded question marks and unresolved prompt syntax before sendChat, preventing incomplete Classic-sheet values from reaching Roll20's dice parser.
     //   v2.0.0 / AttackAssist 1.0.6: verified attack commands are sent directly to chat without a consuming callback, so Roll20 displays the actual official-sheet roll card before the compact submission notice; bare !attackassist opens the ordinary workflow.
     //   v2.0.0 / AttackAssist 1.0.5: API-authored attacks materialize nested Classic-sheet attributes, translate the official per-roll whisper and advantage prompts to their documented first choices, and refuse other unresolved prompts before sendChat.
     //   v2.0.0 / AttackAssist 1.0.4: Classic-sheet rollbases may use the official default atkflag, dmgflag, dmg2flag, and saveflag values when Roll20 did not persist those checkbox attributes; unknown missing fields are refused before submission.
-    // Changed (v2.0.0): Advanced AttackAssist to 1.0.3; official-2014 roll submission now materializes documented optional sheet defaults such as atkcritrange, character output, whisper mode, and empty global modifiers, while unknown missing fields produce a guided preflight refusal instead of a Roll20 sandbox error.
-    // Changed (v2.0.0): Advanced AttackAssist to 1.0.2; the attack picker now uses compact attack buttons, and API-submitted official-2014 roll formulas materialize the sheet d20 placeholder so normal, advantage, and disadvantage rolls do not depend on a nonexistent persisted d20 attribute.
-    // Changed (v2.0.0): Advanced AttackAssist to 1.0.1; each verified attack row now opens Roll20's target prompt directly, removing the unnecessary inert target-screen hop while retaining opaque flow authorization and GM placement requests.
-    // Changed (v2.0.0): Added the standard GameAssist Home return to the AttackAssist GM control screen.
-    // Changed (v2.0.0): Added AttackAssist 1.0.0 with authorized official-2014 source selection, stable repeating-row identity, native visible targeting, retained private GM placement requests, sheet-setting and explicit roll modes, one-use submission, familiar official templates, and post-submission attacker/target announcements.
+    //   v2.0.0 / AttackAssist 1.0.3: official-2014 roll submission materialized documented optional sheet defaults such as atkcritrange, character output, whisper mode, and empty global modifiers, while unknown missing fields produced a guided preflight refusal instead of a Roll20 sandbox error.
+    //   v2.0.0 / AttackAssist 1.0.2: the attack picker used compact attack buttons, and API-submitted official-2014 roll formulas materialized the sheet d20 placeholder so normal, advantage, and disadvantage rolls did not depend on a nonexistent persisted d20 attribute.
+    //   v2.0.0 / AttackAssist 1.0.1: each verified attack row opened Roll20's target prompt directly, removing the unnecessary inert target-screen hop while retaining opaque flow authorization and GM placement requests.
+    //   v2.0.0: added the standard GameAssist Home return to the AttackAssist GM control screen.
+    //   v2.0.0 / AttackAssist 1.0.0: added authorized official-2014 source selection, stable repeating-row identity, native visible targeting, retained private GM placement requests, sheet-setting and explicit roll modes, one-use submission, familiar official templates, and post-submission attacker/target announcements.
     // Decision log:
     //   CHOICE: Materialize the Classic sheet's documented checked/unchecked flag values - ALT: require the GM to open and resave otherwise valid attacks; REJECTED: unsaved HTML defaults are normal Roll20 sheet state, not malformed campaign data.
     //   CHOICE: Inline only documented optional 2014 defaults and reject every unknown missing field - ALT: create attributes or guess all absent values; REJECTED: hidden sheet mutation and guessed combat math are both unsafe.
     //   CHOICE: Qualify the sheet-generated repeating-row rollbase and substitute the official roll-mode fragment - ALT: temporarily rewrite the character's rtype setting; REJECTED: a temporary sheet mutation can race with ordinary sheet clicks and other Mods.
     //   CHOICE: Submit the roll as character|id - ALT: submit as AttackAssist; REJECTED: familiar character attribution and CritAssist's supported natural-1 observation require the character sender.
     //   CHOICE: Use Roll20's target prompt for visible tokens without target control and retain hidden/off-page requests for the GM - ALT: expose raw hidden token lists to players; REJECTED: hidden identity and placement are GM information.
+    //   CHOICE: Submit with the verified sheet setting by default and make the roll-choice screen opt-in - ALT: require a second confirmation for every attack; REJECTED: the extra click adds no value for the ordinary sheet-driven path.
     //   CHOICE: Consume one reviewed submission before direct sendChat and render the sheet card - ALT: inspect callback operations; REJECTED: callback delivery consumed the roll card and left only a cosmetic success panel.
     //   CHOICE: Leave damage, HP, resources, effects, conditions, initiative, and turns untouched - ALT: infer a full attack-resolution engine; REJECTED: those mechanics have separate owners and unresolved table-specific decisions.
-    // Prior notes:
     //   AttackAssist 1.0.5 announced only after a sendChat callback; Roll20 returned operations to the callback but did not render the consumed attack card in chat.
     // [GAMEASSIST:MODULES:ATTACKASSIST] END
     // =============================================================================

@@ -58,6 +58,7 @@ Run:
 !AlmanacAssist
 !HPAssist
 !DebugTools
+!token-assist actions
 ```
 
 **Pass when:**
@@ -72,6 +73,7 @@ Run:
 - `!GA STATUS --details` preserves the option and opens detailed status, while `!ToKeN AsSiSt Gm`, `!condition-gm`, and `!HP gm` reach their intended module screens;
 - each bare short or full module name reaches that module's established GM screen, player screen, or disabled-module recovery panel instead of remaining silent;
 - the suite navigator, ConfigUI, ConditionAssist, TokenAssist, and WelcomeAssist's private controls use the same readable Roll20 default-template presentation as HPAssist and CombatAssist rather than separate white, pink, or purple control-panel styles;
+- TokenAssist's ordinary GM screen includes **More Actions**, and that button or `!token-assist actions` opens one organized extended library with grouped token operations and a return to GM Controls;
 - WelcomeAssist's public greeting card may remain visually distinct because it is table content rather than a private control interface;
 - none of these commands posts publicly or exposes another module's protected controls to players.
 
@@ -322,7 +324,7 @@ Run `!Heal-GM`, `!Heal-Guide`, `!Heal-Status`, and `!Heal-Audit`. Pass when the 
 3. Choose a slot level and the intended casting ability.
 4. Use Roll20's target prompt to choose the visible damaged PC that the player does not control.
 
-Pass when HealAssist accepts the visible PC without granting token control and produces one private review containing:
+Pass when Cure Wounds opens the native target prompt directly after its required choices, without showing a separate **Choose Recipients** or **Choose 1 Recipient** screen. HealAssist must accept the visible PC without granting token control and produce one private review containing:
 
 - every raw healing die and the complete formula;
 - the recipient's current HP, proposed HP, and maximum HP;
@@ -341,7 +343,7 @@ Run `!Heal-Results private` and repeat a small PC heal. Pass when no public comp
 
 1. Run `!Heal-Max` and choose a potion or spell whose dice maximum is easy to verify.
 2. Continue to one damaged supported recipient.
-3. Pass when the displayed formula is identified as maximum healing, every die contributes its maximum value, and the proposed HP still stops at the recipient's maximum.
+3. Pass when a potion or other one-recipient action goes directly to the target prompt, the displayed formula is identified as maximum healing, every die contributes its maximum value, and the proposed HP still stops at the recipient's maximum.
 4. Run `!Heal-Auto on`, damage the recipient again, and repeat one normal or maximum healing action.
 5. Pass when the verified HP change is applied immediately after recipient selection without an **Apply Healing** confirmation screen.
 6. Run `!ga-health recent` and confirm the newest entry identifies HealAssist as a verified healing writer.
@@ -386,7 +388,7 @@ Restart the sandbox. Pass when settings persist, pending requests and confirmati
 | Requirement | Result |
 | --- | --- |
 | GM controls, Guide, Status, Audit, and manual are readable and private where expected | ☐ Pass ☐ Fail |
-| Controlled player healer can target a visible non-controlled PC | ☐ Pass ☐ Fail |
+| One-recipient actions bypass the redundant count menu and a controlled player healer can target a visible non-controlled PC | ☐ Pass ☐ Fail |
 | Roll detail, formula, current/proposed/maximum HP, actual gain, and manual resource step are accurate | ☐ Pass ☐ Fail |
 | HP remains unchanged before confirmation and the accepted write has verified HealthService provenance | ☐ Pass ☐ Fail |
 | Maximum-HP cap and public/private result policy are correct | ☐ Pass ☐ Fail |
@@ -401,7 +403,7 @@ Restart the sandbox. Pass when settings persist, pending requests and confirmati
 
 ## Focused v2.0.0 AttackAssist Acceptance
 
-**What this proves:** AttackAssist guides an authorized official-2014 PC through one exact repeating attack, a native target choice, and a familiar character-attributed roll without applying damage or changing the encounter.
+**What this proves:** AttackAssist guides an authorized official-2014 PC through one exact repeating attack and a native target choice, then submits with the sheet setting by default or presents roll-mode choices when the GM enables review.
 
 **Why test it:** The workflow combines stable repeating-row identity, player control, Roll20 target prompts, hidden-token privacy, official roll-mode fragments, CritAssist observation, and expiring one-use buttons. A normal character-sheet click does not prove those boundaries.
 
@@ -428,22 +430,21 @@ Run:
 !Attack-Manual
 ```
 
-Pass when the Control Center is private, the Guide gives the short player path, Status reports player access and pending choices, Audit explicitly says it is read-only, and the manual creates or updates `GameAssist Guide - AttackAssist`.
+Pass when the Control Center is private, says **Before Each Roll: Immediate sheet setting**, and provides an **Enable Review** control. The Guide must give the short player path, Status must report player access and pending choices, Audit must explicitly say it is read-only, and the manual must create or update `GameAssist Guide - AttackAssist`.
 
 ### Visible Target and Stable Attack Row
 
 1. As the non-GM player, select the controlled 2014 PC and run `!Attack`. Repeat once with `!attack-menu`.
 2. Find the intended repeating attack. When two rows share a name, use the numbered labels to distinguish them.
 3. Click **Choose Target** beside that attack and point at the visible target the player does not control.
-4. Choose **Normal** from the review screen.
 
-Pass when both starting commands open the same compact source/attack path, neither produces a bare `{}`, Roll20 opens its native target prompt only after **Choose Target** is clicked, and the target is accepted without granting control. The familiar official attack card, including its actual attack roll, should appear once as the attacking character; AttackAssist may follow it with one compact submission notice. The Roll20 API log must not report a missing `d20`, `atkcritrange`, `atkflag`, `dmgflag`, `dmg2flag`, `saveflag`, `charname_output`, roll-mode, empty global-modifier attribute, or dice-parser `?` syntax error. Confirm the chosen row's bonus, range, and damage links match the numbered attack selected. The target's HP, markers, position, effects, conditions, and Roll20 Turn Tracker must remain unchanged.
+Pass when both starting commands open the same compact source/attack path, neither produces a bare `{}`, Roll20 opens its native target prompt only after **Choose Target** is clicked, and the target is accepted without granting control. With the default setting, no Review Attack screen should appear: the familiar official attack card, including its actual attack roll, should appear once as the attacking character using the sheet setting. AttackAssist may follow it with one compact submission notice. The Roll20 API log must not report a missing `d20`, `atkcritrange`, `atkflag`, `dmgflag`, `dmg2flag`, `saveflag`, `charname_output`, roll-mode, empty global-modifier attribute, or dice-parser `?` syntax error. Confirm the chosen row's bonus, range, and damage links match the numbered attack selected. The target's HP, markers, position, effects, conditions, and Roll20 Turn Tracker must remain unchanged.
 
-Click the same roll button again. Pass when AttackAssist refuses it without a second roll or announcement.
+Run `!Attack-Review-Mode on`, repeat the attack and target choice, and pass when the Review Attack screen now offers **Use Sheet Setting**, **Normal**, **Advantage**, and **Disadvantage**. Use one roll button, then click that same button again. Pass when the second click is refused without another roll or announcement.
 
 ### Roll Modes and Sheet Preservation
 
-Set the Classic character sheet to **Query Whisper** and **Query Advantage**, then repeat the same disposable attack through **Use Sheet Setting**, **Normal**, **Advantage**, and **Disadvantage**. Pass when:
+With review still enabled, set the Classic character sheet to **Query Whisper** and **Query Advantage**, then repeat the same disposable attack through **Use Sheet Setting**, **Normal**, **Advantage**, and **Disadvantage**. Pass when:
 
 - **Use Sheet Setting** safely uses Public and Normal, the first choices documented by the Classic sheet, because API-authored chat cannot open those per-roll client prompts;
 - Normal rolls one d20;
@@ -452,6 +453,8 @@ Set the Classic character sheet to **Query Whisper** and **Query Advantage**, th
 - none of the four choices reports a missing documented optional sheet field such as `d20` or `atkcritrange`;
 - no unresolved `?{...}` prompt or dice-parser syntax error appears and the Mod sandbox remains running;
 - the character's saved roll-mode setting is unchanged after every test.
+
+Run `!Attack-Review-Mode off` after the mode checks. Pass when `!Attack-GM` again reports **Immediate sheet setting** and the next disposable attack bypasses review.
 
 Use a normal 2014 attack whose critical range and attack-template checkboxes have never been edited or separately saved. Pass when AttackAssist uses the Classic sheet's ordinary defaults: critical range 20, attack and first damage enabled, second damage and save disabled. The attack must roll normally without asking the GM to open and save unchanged defaults. If a custom attack contains another interactive query, or an incomplete formula references a genuinely unknown field, pass when AttackAssist names the prompt or field in a **Needs Attention** panel before submission instead of allowing a sandbox exception.
 
@@ -469,7 +472,7 @@ With CritAssist enabled, use the disposable attack until its official first d20 
 
 Open an attack menu, then rename, remove, or structurally change that repeating row before using the older button. Pass when AttackAssist asks for a fresh choice and does not roll the previous formula.
 
-Open another valid review as the test player, then have a different player use its generated roll command. Pass when the second player is refused and the rightful player can still use a fresh review.
+Enable review again, open another valid review as the test player, then have a different player use its generated roll command. Pass when the second player is refused and the rightful player can still use a fresh review. Restore immediate sheet-setting mode afterward.
 
 ### Hidden or Off-Page Target Privacy
 
@@ -479,7 +482,7 @@ As the GM, open `!Attack-Requests`, choose the retained request, select the hidd
 
 ### Unsupported Source, Lockout, and Lifecycle
 
-Select the supported 2024 test token and run `!Attack`. Pass when AttackAssist explains that 1.0.7 supports official-2014 repeating attacks and that the native 2024 attack buttons remain available.
+Select the supported 2024 test token and run `!Attack`. Pass when AttackAssist explains that 1.1.0 supports official-2014 repeating attacks and that the native 2024 attack buttons remain available.
 
 Run `!Attack-Players off`. Pass when the player can still read guidance but cannot begin or complete a guided attack; GM attacks remain available. Restore `!Attack-Players on` afterward.
 
@@ -492,7 +495,7 @@ Disable and re-enable AttackAssist. Pass when unrelated modules remain active, o
 | GM controls, Guide, Status, Audit, and manual are readable and private where expected | ☐ Pass ☐ Fail |
 | Controlled 2014 PC and exact repeating row are verified, including duplicate display names | ☐ Pass ☐ Fail |
 | Visible non-controlled target is accepted without changing target or encounter state | ☐ Pass ☐ Fail |
-| Sheet, Normal, Advantage, and Disadvantage modes are correct without a saved-setting mutation | ☐ Pass ☐ Fail |
+| Default sheet-setting submission bypasses review; optional Sheet, Normal, Advantage, and Disadvantage review works without a saved-setting mutation | ☐ Pass ☐ Fail |
 | Unsaved documented optional fields use their safe sheet defaults; unknown missing fields refuse before submission | ☐ Pass ☐ Fail |
 | One accepted roll and one post-roll announcement occur; reused buttons cannot roll again | ☐ Pass ☐ Fail |
 | A natural 1 reaches CritAssist exactly once | ☐ Pass ☐ Fail |
@@ -2300,7 +2303,7 @@ Select a disposable token whose name visibility is off, then run:
 !token-assist --set imgsrc|ignored --on showname
 ```
 
-Pass when TokenAssist refuses the unsupported image-side property, explains that this feature is outside TokenAssist 1.0.7, and leaves name visibility unchanged. TokenAssist also does not claim default-token writes, computed or name-resolved attributes, advanced controller-list editing, advanced color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, exact TokenMod report-recipient distinctions, duplicate-index marker editing, conditional marker counts, or TokenMod help-handout rebuilding.
+Pass when TokenAssist refuses the unsupported image-side property, explains that this feature is outside TokenAssist 1.1.0, and leaves name visibility unchanged. TokenAssist also does not claim default-token writes, computed or name-resolved attributes, advanced controller-list editing, advanced color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, exact TokenMod report-recipient distinctions, duplicate-index marker editing, conditional marker counts, or TokenMod help-handout rebuilding.
 
 #### T12. Restore Campaign Settings
 

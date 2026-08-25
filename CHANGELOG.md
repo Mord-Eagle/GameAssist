@@ -47,9 +47,40 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ### Release definition
 
-GameAssist v2.0.0 remains one active development line in PR #81. EffectAssist 2.5.3 coordinates the focused official-2014 effect catalog with compact caster choices, duplicate-token disambiguation, Bless totals from one through eleven, exact recipient diagnostics, token-specific concentration-linked cleanup, consistent compact `(GA)` sheet labels, retained GM placement requests, bounded Bless proposals, guarded Guidance consumption, worker-safe projection cleanup, and optional duration review. HealAssist 1.1.0 adds guided official-2014 normal or maximum healing with review or optional automatic verified application. AttackAssist 1.0.7 adds compact official-2014 repeating-attack selection, stable row identity, native visible targeting, complete prompt-safe Classic-sheet formula materialization, crash-safe final dice-expression validation, visible one-use character-attributed sheet rolls, and no automatic attack consequences. AlmanacAssist 1.6.1 remains in development under Issue #90 for complete custom-calendar and world-context acceptance. HealthService 1.1.0 adds one canonical supported HP-observation and verified-write boundary, a shared selectable NPC HP bar, current-page setup controls, and an optional GM-private PC threshold consumer. ConcentrationAssist 0.6.0 uses portable built-in marker defaults, guided marker controls, explicit official-2014 save qualification, and the same health evidence for optional private, page-safe check offers after supported HP loss. CombatAssist 1.1.1 supplies immutable accepted encounter-progression events and a bare command route without exposing tracker-write authority. The shared SemanticEvents service provides immutable in-sandbox lifecycle notifications without coupling module state.
+GameAssist v2.0.0 remains one active development line in PR #81. EffectAssist 2.5.3 coordinates the focused official-2014 effect catalog with compact caster choices, duplicate-token disambiguation, Bless totals from one through eleven, exact recipient diagnostics, token-specific concentration-linked cleanup, consistent compact `(GA)` sheet labels, retained GM placement requests, bounded Bless proposals, guarded Guidance consumption, worker-safe projection cleanup, and optional duration review. HealAssist 1.2.0 adds guided official-2014 normal or maximum healing, direct target selection for one-recipient actions, review, and optional automatic verified application. AttackAssist 1.1.0 adds compact official-2014 repeating-attack selection, stable row identity, native visible targeting, immediate sheet-setting submission by default, optional roll-mode review, complete prompt-safe Classic-sheet formula materialization, crash-safe final dice-expression validation, visible one-use character-attributed sheet rolls, and no automatic attack consequences. TokenAssist 1.1.0 adds an organized extended action library behind the compact GM Controls screen. AlmanacAssist 1.6.1 remains in development under Issue #90 for complete custom-calendar and world-context acceptance. HealthService 1.1.0 adds one canonical supported HP-observation and verified-write boundary, a shared selectable NPC HP bar, current-page setup controls, and an optional GM-private PC threshold consumer. ConcentrationAssist 0.6.0 uses portable built-in marker defaults, guided marker controls, explicit official-2014 save qualification, and the same health evidence for optional private, page-safe check offers after supported HP loss. CombatAssist 1.1.1 supplies immutable accepted encounter-progression events and a bare command route without exposing tracker-write authority. The shared SemanticEvents service provides immutable in-sandbox lifecycle notifications without coupling module state.
 
 EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so existing campaigns upgrade without receiving new markers, conditions, HP writes, other sheet writes, attack rolls, fictional chronology, weather, or chat output until the GM deliberately enables them.
+
+### Focused table-flow refinement - 2026-08-24
+
+This checkpoint removes avoidable menu steps from the three table workflows identified during live use without changing their ownership boundaries.
+
+#### HealAssist 1.2.0
+
+- Sends Cure Wounds, Healing Word, Heal, potions, and every other exactly-one-recipient action directly to Roll20's native target prompt after its required action choices.
+- Retains the recipient-count screen for Prayer of Healing, Mass Healing Word, Mass Cure Wounds, and other actions that genuinely support multiple recipients.
+- Keeps older generated commands usable by falling back to the retained recipient picker when no target was supplied.
+- Preserves review/automatic application, HealthService verification, placement privacy, and manual resource responsibility.
+
+#### AttackAssist 1.1.0
+
+- Makes immediate submission with the character sheet's saved roll setting the default after attack and target selection.
+- Adds the protected GM setting `reviewBeforeRoll`, managed through AttackAssist controls or `!Attack-Review-Mode on|off`.
+- Restores the existing Sheet, Normal, Advantage, and Disadvantage review screen only when that setting is enabled.
+- Clears stale one-use submissions when the mode changes while preserving target privacy, formula preflight, visible native sheet cards, and the no-damage boundary.
+
+#### TokenAssist 1.1.0
+
+- Adds **More Actions** to the compact GM Controls screen.
+- Adds an organized, GM-only extended action library for names and tooltips, bars, markers, auras, vision and light, movement and size, appearance and order, and reference tools.
+- Exposes the same library through `!token-assist actions`, `!Token-Actions`, and `!ta-actions` without crowding the ordinary control center.
+
+#### Verification
+
+- JavaScript syntax parsing passes for the complete v2.0.0 source.
+- The focused cross-module interaction harness passes 81 checks, including direct single-recipient HealAssist targeting, default immediate AttackAssist sheet submission, opt-in attack review, unsafe-formula refusal, and the TokenAssist extended action menu.
+- The three executable release artifacts are byte-identical with SHA-256 `9395CBE6760377470D102E88B07022A9852447EC50AC227E2AE43F7BC8919053`.
+- Live Roll20 acceptance remains required for the changed chat-button and native-target-prompt paths.
 
 ### Shared HP, visible attack rolls, healing choices, and command consistency - 2026-08-24
 
