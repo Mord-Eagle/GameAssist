@@ -3,7 +3,7 @@
 GameAssist - Roll20 API Script
 Version: 2.0.0
 Last Updated: 2026-08-24 (America/New_York)
-Release scope: EffectAssist 2.5.2 exact token identity and concentration ownership, AttackAssist 1.0.5 complete prompt-safe official-2014 rollbase materialization, ConcentrationAssist 0.6.0 explicit 2014 save qualification and portable marker controls, AlmanacAssist 1.6.0 per-field world announcements and repaired calendar, climate, weather, and environment controls, ConfigUI 0.2.5 readable grouped configuration, disabled-module recovery, and the existing v2.0.0 module suite.
+Release scope: EffectAssist 2.5.3 compact identity-aware casting, AttackAssist 1.0.7 crash-safe visible official-2014 roll submission, HealAssist 1.1.0 automatic or reviewed normal/maximum healing, HealthService 1.1.0 shared NPC HP-bar setup, AlmanacAssist 1.6.1 command consistency, and regression repairs across the v2.0.0 module suite.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -20,19 +20,19 @@ Normal event handlers execute directly unless a module deliberately
 calls GameAssist.enqueue(). This development package contains fifteen configurable modules:
 - ConfigUI 0.2.5 - GM-only chat controls with service-first grouping, compact readable configuration summaries, module toggles, common options, and PC health alerts.
 - CritAssist 0.2.5.2 - Detects natural-1 attacks and offers fumble/confirm menus with direct module recovery controls.
-- ConditionAssist 1.0.4 - Provides condition wording, artwork, announcements, and marker controls.
-- TokenAssist 1.0.5 - Provides general token controls through !token-assist and !ta commands.
-- InitiativeAssist 1.0.4 - Uses Roll20's native Turn Tracker for mixed-sheet initiative workflows and compact topic guidance.
-- CombatAssist 1.1.0 - Tracks encounters, native round counters, guarded turns, optional timers, private-safe pings, recoverable tracker changes, and verified semantic progression events.
-- WelcomeAssist 0.1.5 - Optionally greets the table after a healthy GameAssist startup through short !Welcome commands.
+- ConditionAssist 1.0.5 - Provides condition wording, artwork, announcements, marker controls, and full-name command aliases.
+- TokenAssist 1.0.7 - Provides general token controls through !token, !tokenassist, !token-assist, and !ta commands with longest-name-first alias routing.
+- InitiativeAssist 1.0.5 - Uses Roll20's native Turn Tracker for mixed-sheet initiative workflows and compact topic guidance.
+- CombatAssist 1.1.1 - Tracks encounters, native round counters, guarded turns, optional timers, private-safe pings, recoverable tracker changes, and verified semantic progression events.
+- WelcomeAssist 0.1.6 - Optionally greets the table after a healthy GameAssist startup through short or full-name commands.
 - ConcentrationAssist 0.6.0 - Runs supported 2014 manual and private HP-loss-offered concentration checks, refuses unavailable save data instead of guessing, provides guided marker configuration, manages its configured marker, and exposes concentration lifecycle events.
-- NPCAssist 1.4.0 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, and Arc rosters.
-- EffectAssist 2.5.2 - Coordinates catalog-driven effects, exact caster-and-recipient identity, retained GM requests, compact GameAssist-owned 2014-sheet modifiers, verified token-specific concentration, ownership-safe cleanup, duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
-- HealAssist 1.0.0 - Guides verified 2014 healing rolls, visible PC targeting, private GM requests, complete HP review, and one-use HealthService application.
-- AttackAssist 1.0.5 - Guides authorized 2014 repeating attacks through direct visible targeting, complete prompt-safe Classic-sheet expansion, private GM placement, and one-use native-template rolls without applying damage.
-- AlmanacAssist 1.6.0 - Adds Wayfarer's ordinal 20-hour clock, independently styled world-announcement details, coherent climate/weather/environment presentation, direct Wayfarer and moon editors, configurable rest rules, editable seasonal ranges, and visible moon phases across six independently controlled internal systems.
-- HPAssist 0.2.0 - Rolls npc_hpformula and uses HealthService for verified token bar 1 writes when available.
-- DebugTools 0.3.0 - Optional dry-run-first GM diagnostics with verified supported HP damage writes.
+- NPCAssist 1.4.1 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, and Arc rosters on the shared NPC HP bar.
+- EffectAssist 2.5.3 - Coordinates compact catalog-driven effects, exact caster-and-recipient identity, retained GM requests, GameAssist-owned 2014-sheet modifiers, verified token-specific concentration, ownership-safe cleanup, duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
+- HealAssist 1.1.0 - Guides verified 2014 normal or maximum healing with optional automatic application, visible PC targeting, private GM requests, and HealthService verification.
+- AttackAssist 1.0.7 - Guides authorized 2014 repeating attacks through direct visible targeting, complete prompt-safe Classic-sheet expansion, private GM placement, crash-safe inline-roll validation, and visible one-use native-template rolls without applying damage.
+- AlmanacAssist 1.6.1 - Adds Wayfarer's ordinal 20-hour clock, independently styled world-announcement details, coherent climate/weather/environment presentation, direct Wayfarer and moon editors, configurable rest rules, editable seasonal ranges, and visible moon phases across six independently controlled internal systems.
+- HPAssist 0.3.0 - Rolls npc_hpformula and uses HealthService for verified writes to the selected shared NPC HP bar when available.
+- DebugTools 0.3.1 - Optional dry-run-first GM diagnostics with verified supported HP damage writes on the selected shared NPC HP bar.
 
 INSTALL / USAGE
 - One-Click: install GameAssist.
@@ -52,7 +52,7 @@ CORE COMMANDS (GM)
 - !ga-config ui / !ga-config-ui
 - !ga-enable <ModuleOrService> / !ga-disable <ModuleOrService>
 - !ga-status [--details]
-- !ga-health [recent|audit|alerts]
+- !ga-health [recent|audit|alerts|bars]
 - !ga-timezone [set <IANA timezone>|clear]
 - !ga-debug <action>
 
@@ -66,12 +66,12 @@ MODULE COMMANDS
   !confirm-crit-martial, !confirm-crit-magic
 - ConditionAssist: !condition, !condition status, !cond-<condition>, !condition announce, !c-a, !cond-!, !condition help, !condition config,
   !condition add|remove|toggle <condition...>
-- TokenAssist: !token-assist, !ta, !ta-<action>, !token-assist help|about|config;
+- TokenAssist: !token, !tokenassist, !token-assist, !ta, !ta-<action>, !token-assist help|about|config;
   older supported !token-mod macros remain compatibility aliases during the v1.x line.
 - InitiativeAssist: !Init-Menu, !Init-Help, !Init-Go, !Init-Go!, !Init-Roll,
   !Init-GM, !Init-DM, !Init-Roll-Selected, !Init-Options, !Init-Start, !Init-NPC-Rolls,
   !Init-RR, !Init-RR-Menu, !Init-Group, !Init-Audit
-- CombatAssist: !Combat-Menu, !Combat-Help, !Combat-Start, !Combat-Next,
+- CombatAssist: !Combat, !CombatAssist, !Combat-Menu, !Combat-Help, !Combat-Start, !Combat-Next,
   !Combat-Prev, !Combat-End-Turn, !Combat-Adopt, !Combat-Restore,
   !Combat-Pause, !Combat-Resume, !Combat-Status, !Combat-End,
   !Combat-Announce, !Combat-Confirm, !Combat-Timer, !Combat-Cue
@@ -90,9 +90,9 @@ MODULE COMMANDS
   !Effect-Apply, !Effect-End,
   !Effect-Audit, !Effect-Repair, !Effect-Players, !effect, !Bless, !Guidance, !Guide,
   !Haste, !Warding-Bond, !Holy-Weapon, and !PwoaT
-- HealAssist: !Heal, !Heal-GM, !Heal-Menu, !Heal-Guide, !Heal-Status,
-  !Heal-Audit, !Heal-Requests, !Heal-Players, and !Heal-Results
-- AttackAssist: !Attack, !Attack-GM, !Attack-Menu, !Attack-Guide,
+- HealAssist: !Heal, !HealAssist, !Heal-GM, !Heal-Menu, !Heal-Max, !Heal-Auto on|off,
+  !Heal-Guide, !Heal-Status, !Heal-Audit, !Heal-Requests, !Heal-Players, and !Heal-Results
+- AttackAssist: !Attack, !AttackAssist, !Attack-GM, !Attack-Menu, !Attack-Guide,
   !Attack-Status, !Attack-Audit, !Attack-Requests, and !Attack-Players
 - AlmanacAssist: !Almanac, !aa, !cal, !date, !time, !clim, !astro,
   !weather, !enviro, !rest, !aa-time, !aa-climate, !aa-astro,
@@ -100,8 +100,8 @@ MODULE COMMANDS
   !aa-announcement-settings, focused role/help/status/audit aliases,
   !aa-wayfarer reset-default --confirm yes, !Almanac-GM, !Almanac-DM,
   !Almanac-Status, !Almanac-Audit
-- HPAssist: !HP-GM, !HP-Selected, !HP-All, !hp <command>
-- DebugTools: !ga-debug damage|marker|save
+- HPAssist: !HP, !HPAssist, !HP-GM, !HP-Selected, !HP-All, !hp <command>
+- DebugTools: !Debug, !DebugTools, !ga-debug damage|marker|save
 
 V2.0.0 FOUNDATION
 - [GAMEASSIST:CORE:MARKERSERVICE] is the single GameAssist authority for marker
@@ -219,38 +219,38 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     chat: "Errors are whispered to GM; status/info are whispered as structured text"
 //   canonical_tree: |
 //     [GAMEASSIST]/
-//     ├─ [GAMEASSIST:POLICY]
-//     ├─ [GAMEASSIST:APP]
-//     │  └─ [GAMEASSIST:APP:UTILS]
-//     ├─ [GAMEASSIST:CORE]
-//     │  ├─ [GAMEASSIST:CORE:QUEUE]
-//     │  ├─ [GAMEASSIST:CORE:COMPAT]
-//     │  ├─ [GAMEASSIST:CORE:STATE]
-//     │  ├─ [GAMEASSIST:CORE:MARKERSERVICE]
-//     │  ├─ [GAMEASSIST:CORE:TURNTRACKERSERVICE]
-//     │  ├─ [GAMEASSIST:CORE:SEMANTICEVENTS]
-//     │  ├─ [GAMEASSIST:CORE:HEALTHSERVICE]
-//     │  └─ [GAMEASSIST:CORE:OBJECT]
-//     ├─ [GAMEASSIST:INTERFACES]
-//     │  ├─ [GAMEASSIST:INTERFACES:EVENTS]
-//     │  └─ [GAMEASSIST:INTERFACES:COMMANDS]
-//     ├─ [GAMEASSIST:MODULES]
-//     │  ├─ [GAMEASSIST:MODULES:CONFIGUI]
-//     │  ├─ [GAMEASSIST:MODULES:CRITASSIST]
-//     │  ├─ [GAMEASSIST:MODULES:CONDITIONASSIST]
-//     │  ├─ [GAMEASSIST:MODULES:TOKENASSIST]
-//     │  ├─ [GAMEASSIST:MODULES:INITIATIVEASSIST]
-//     │  ├─ [GAMEASSIST:MODULES:COMBATASSIST]
-//     │  ├─ [GAMEASSIST:MODULES:WELCOMEASSIST]
-//     │  ├─ [GAMEASSIST:MODULES:NPCASSIST]
-//     │  ├─ [GAMEASSIST:MODULES:CONCENTRATIONASSIST]
-//     │  ├─ [GAMEASSIST:MODULES:EFFECTASSIST]
-//     │  ├─ [GAMEASSIST:MODULES:HEALASSIST]
-//     │  ├─ [GAMEASSIST:MODULES:ATTACKASSIST]
-//     │  ├─ [GAMEASSIST:MODULES:ALMANACASSIST]
-//     │  ├─ [GAMEASSIST:MODULES:HPASSIST]
-//     │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
-//     └─ [GAMEASSIST:BOOTSTRAP]
+//     �� [GAMEASSIST:POLICY]
+//     �� [GAMEASSIST:APP]
+//     �  �� [GAMEASSIST:APP:UTILS]
+//     �� [GAMEASSIST:CORE]
+//     �  �� [GAMEASSIST:CORE:QUEUE]
+//     �  �� [GAMEASSIST:CORE:COMPAT]
+//     �  �� [GAMEASSIST:CORE:STATE]
+//     �  �� [GAMEASSIST:CORE:MARKERSERVICE]
+//     �  �� [GAMEASSIST:CORE:TURNTRACKERSERVICE]
+//     �  �� [GAMEASSIST:CORE:SEMANTICEVENTS]
+//     �  �� [GAMEASSIST:CORE:HEALTHSERVICE]
+//     �  �� [GAMEASSIST:CORE:OBJECT]
+//     �� [GAMEASSIST:INTERFACES]
+//     �  �� [GAMEASSIST:INTERFACES:EVENTS]
+//     �  �� [GAMEASSIST:INTERFACES:COMMANDS]
+//     �� [GAMEASSIST:MODULES]
+//     �  �� [GAMEASSIST:MODULES:CONFIGUI]
+//     �  �� [GAMEASSIST:MODULES:CRITASSIST]
+//     �  �� [GAMEASSIST:MODULES:CONDITIONASSIST]
+//     �  �� [GAMEASSIST:MODULES:TOKENASSIST]
+//     �  �� [GAMEASSIST:MODULES:INITIATIVEASSIST]
+//     �  �� [GAMEASSIST:MODULES:COMBATASSIST]
+//     �  �� [GAMEASSIST:MODULES:WELCOMEASSIST]
+//     �  �� [GAMEASSIST:MODULES:NPCASSIST]
+//     �  �� [GAMEASSIST:MODULES:CONCENTRATIONASSIST]
+//     �  �� [GAMEASSIST:MODULES:EFFECTASSIST]
+//     �  �� [GAMEASSIST:MODULES:HEALASSIST]
+//     �  �� [GAMEASSIST:MODULES:ATTACKASSIST]
+//     �  �� [GAMEASSIST:MODULES:ALMANACASSIST]
+//     �  �� [GAMEASSIST:MODULES:HPASSIST]
+//     �  �� [GAMEASSIST:MODULES:DEBUGTOOLS]
+//     �� [GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
 // Guarantee: GameAssist v2.0.0 runs policy, utilities, guarded core services including MarkerService, TurnTrackerService, SemanticEvents, and HealthService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/effect/healing/attack/almanac/gameplay modules, then bootstrap in the declared order. HealthService reports only verified supported HP transitions and refuses to guess damage causes, attackers, resistances, or temporary-HP interactions; its optional PC threshold consumer whispers only the GM. HealAssist guides an authorized 2014 healing roll through exact HP review and one-use verified application while refusing to infer or consume spell slots, items, features, or temporary HP. AttackAssist guides a verified 2014 repeating attack through authorized source selection, targeting, and one-use roll submission while refusing to apply damage or mutate combat state. EffectAssist may offer a bounded private GM proposal for an unambiguous official 2014 Bless card, but it refuses to infer recipients or apply an effect before ordinary review and confirmation; it may also turn accepted CombatAssist progression and committed AlmanacAssist time into private GM duration candidates, but it refuses to end effects from elapsed time alone. AlmanacAssist owns its fictional time, climate, astronomy, weather, environment, and rest records without changing GameAssist real-world timestamps, NPCAssist Session dates, or CombatAssist timing. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing real-world times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
 
@@ -532,7 +532,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // time, token-character linking, and standalone-script evidence.
     // -------------------------------------------------------------------------
 
-    // ————— UTILITIES —————
+    // ----- UTILITIES -----
     // =============================================================================
     // [GAMEASSIST:APP:UTILS] BEGIN
     // Section Title: Utilities (arg parsing, state helpers, audit, sanitize)
@@ -850,7 +850,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
 
     /**
-     * migrateKnownComponentState — Move known legacy component branches to their branded names.
+     * migrateKnownComponentState - Move known legacy component branches to their branded names.
      * Inputs: the validated GameAssist state root.
      * Outputs: migration records on the destination runtime branch.
      * Invariants: destination values win; missing valid values are copied; unrelated branches are untouched.
@@ -963,7 +963,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
 
     /**
-     * getStandaloneScriptEvidence — Inspect public contracts without assuming Roll20's script registry exists.
+     * getStandaloneScriptEvidence - Inspect public contracts without assuming Roll20's script registry exists.
      * Inputs: the literal upstream script name TokenMod or StatusInfo.
      * Outputs: detected contract/version/config evidence; absence is not automatically proof of missing installation.
      * Design: both supplied upstream scripts intentionally expose these globals for script interoperability.
@@ -1399,7 +1399,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         dependsOn:   []
     };
 
-    // ————— QUEUE + WATCHDOG —————
+    // ----- QUEUE + WATCHDOG -----
     // =============================================================================
     // [GAMEASSIST:CORE:QUEUE] BEGIN
     // Section Title: Serialized task queue + watchdog
@@ -1487,14 +1487,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:CORE:QUEUE] END
     // =============================================================================
 
-    // ————— HANDLER TRACKING —————
+    // ----- HANDLER TRACKING -----
     // =============================================================================
     // =============================================================================
 
     // =============================================================================
     // =============================================================================
 
-    // ————— COMPATIBILITY —————
+    // ----- COMPATIBILITY -----
     // =============================================================================
     // [GAMEASSIST:CORE:COMPAT] BEGIN
     // Section Title: Compatibility audit
@@ -1541,7 +1541,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 prefixes: ['!scriptcard', '!scriptcards'],
                 events: ['chat:message'],
                 hints: [
-                    'ScriptCards and GameAssist both watch chat:message—keep command prefixes distinct to prevent clashes.'
+                    'ScriptCards and GameAssist both watch chat:message-keep command prefixes distinct to prevent clashes.'
                 ]
             },
             {
@@ -1653,8 +1653,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         if (!scriptState || !Object.keys(scriptState).length) {
             GameAssist.log('Compat', 'Sandbox did not expose external scripts; compatibility scoring limited.');
-            GameAssist.log('Compat', '🔌 Events: '   + (plannedEvents.join(', ')   || 'none'));
-            GameAssist.log('Compat', '💬 Commands: ' + (plannedPrefixes.join(', ') || 'none'));
+            GameAssist.log('Compat', '?? Events: '   + (plannedEvents.join(', ')   || 'none'));
+            GameAssist.log('Compat', '?? Commands: ' + (plannedPrefixes.join(', ') || 'none'));
             return;
         }
 
@@ -1681,10 +1681,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
         });
 
-        GameAssist.log('Compat', '✅ Known: '  + (known.join(', ')   || 'none'));
-        GameAssist.log('Compat', '❓ Unknown: ' + (unknown.join(', ') || 'none'));
-        GameAssist.log('Compat', '🔌 Events: '   + (plannedEvents.join(', ')   || 'none'));
-        GameAssist.log('Compat', '💬 Commands: ' + (plannedPrefixes.join(', ') || 'none'));
+        GameAssist.log('Compat', '? Known: '  + (known.join(', ')   || 'none'));
+        GameAssist.log('Compat', '? Unknown: ' + (unknown.join(', ') || 'none'));
+        GameAssist.log('Compat', '?? Events: '   + (plannedEvents.join(', ')   || 'none'));
+        GameAssist.log('Compat', '?? Commands: ' + (plannedPrefixes.join(', ') || 'none'));
 
         const rows = [];
 
@@ -1724,7 +1724,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             '| Script | Score | Notes |',
             '| ------ | ----: | ----- |',
             ...rows.map(row => {
-                const noteText = row.notes.length ? row.notes.join(' · ') : 'No overlaps detected.';
+                const noteText = row.notes.length ? row.notes.join(' � ') : 'No overlaps detected.';
                 return `| ${row.raw} | ${row.score} | ${noteText} |`;
             })
         ].join('\n');
@@ -1741,7 +1741,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:CORE:COMPAT] END
     // =============================================================================
 
-    // ————— CONFIG PARSER —————
+    // ----- CONFIG PARSER -----
     // =============================================================================
     // [GAMEASSIST:CORE:STATE] BEGIN
     // Section Title: Config parser (aux to state management)
@@ -1776,7 +1776,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:CORE:STATE] END
     // =============================================================================
 
-    // ————— MARKER SERVICE —————
+    // ----- MARKER SERVICE -----
     // =============================================================================
     // [GAMEASSIST:CORE:MARKERSERVICE] BEGIN
     // Section Title: Roll20 token marker authority
@@ -2528,7 +2528,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:CORE:MARKERSERVICE] END
     // =============================================================================
 
-    // ————— TURN TRACKER SERVICE v1.0.0 —————
+    // ----- TURN TRACKER SERVICE v1.0.0 -----
     // =============================================================================
     // [GAMEASSIST:CORE:TURNTRACKERSERVICE] BEGIN
     // Section Title: Roll20 native Turn Tracker authority
@@ -2999,10 +2999,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Canonical health observation and verified writes
     // -----------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:HEALTHSERVICE", title: "HealthService",
-    //   guarantees: ["Supported 2014-PC HP attributes and linked-NPC bar 1 changes normalize into one immutable health.transition contract","GameAssist-owned HP writes require producer and operation identity, verify the resulting object, and deduplicate linked token/sheet events","Unknown Roll20 changes remain unknown; the service never guesses an attacker, damage type, resistance, temporary-HP interaction, concentration result, or combat cause","Observer failures remain isolated through SemanticEvents and retained evidence is bounded in memory"],
+    //   guarantees: ["Supported 2014-PC HP attributes and linked-NPC changes on the configured token bar normalize into one immutable health.transition contract","GameAssist-owned HP writes require producer and operation identity, verify the resulting object, and deduplicate linked token/sheet events","The GM may choose bar 1, 2, or 3 as the shared NPC HP surface and explicitly prepare or link qualifying current-page NPC tokens","Unknown Roll20 changes remain unknown; the service never guesses an attacker, damage type, resistance, temporary-HP interaction, concentration result, or combat cause","Observer failures remain isolated through SemanticEvents and retained evidence is bounded in memory"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]"],
     //   provides: ["HealthService"], last_updated_version: "v2.0.0",
-    //   independent_versions: { service_version: "1.0.0", health_event_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { service_version: "1.1.0", health_event_schema_version: 1 }, lifecycle: "active" }
     // -----------------------------------------------------------------------------
     // Narrative
     // HealthService is the shared HP boundary for GameAssist. It observes only
@@ -3012,7 +3012,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // record NPC deaths, advance combat, or persist a causal combat ledger.
     // -----------------------------------------------------------------------------
     const HealthService = (() => {
-        const SERVICE_VERSION = '1.0.0';
+        const SERVICE_VERSION = '1.1.0';
         const HEALTH_EVENT_SCHEMA_VERSION = 1;
         const EVENT_TYPE = 'health.transition';
         const CLASSIFICATIONS = new Set([
@@ -3025,6 +3025,38 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         let enabled = false;
         let listenersWired = false;
         let transitionSequence = 0;
+
+        const VALID_HP_BARS = new Set(['bar1', 'bar2', 'bar3']);
+
+        function hpBar() {
+            const branch = getState('HealthService');
+            const requested = String(branch.config.hpBar || '').toLowerCase();
+            if (!VALID_HP_BARS.has(requested)) branch.config.hpBar = 'bar1';
+            return branch.config.hpBar;
+        }
+
+        function hpFields() {
+            const bar = hpBar();
+            return Object.freeze({
+                bar,
+                label: `Bar ${bar.slice(-1)}`,
+                current: `${bar}_value`,
+                maximum: `${bar}_max`,
+                link: `${bar}_link`
+            });
+        }
+
+        function setHpBar(value) {
+            const requested = String(value || '').toLowerCase().replace(/^bar\s*/, 'bar');
+            if (!VALID_HP_BARS.has(requested)) {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Choose bar1, bar2, or bar3 for NPC HP.' };
+            }
+            const previous = hpBar();
+            getState('HealthService').config.hpBar = requested;
+            pendingWrites.clear();
+            recentSignatures.clear();
+            return { ok: true, changed: previous !== requested, previous, current: requested, fields: hpFields() };
+        }
 
         function cloneAndFreeze(value) {
             let copy;
@@ -3102,10 +3134,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function linkedHealthToken(character, hpAttribute) {
             if (!character || !hpAttribute) return null;
+            const fields = hpFields();
             const matches = findObjs({ _type: 'graphic', represents: String(character.id) })
                 .filter(token =>
                     ['objects', 'gmlayer'].includes(String(token.get('layer') || '')) &&
-                    String(token.get('bar1_link') || '') === String(hpAttribute.id)
+                    String(token.get(fields.link) || '') === String(hpAttribute.id)
                 )
                 .sort((left, right) => String(left.id).localeCompare(String(right.id)));
             return matches.length === 1 ? matches[0] : null;
@@ -3118,23 +3151,24 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const character = characterId ? getObj('character', characterId) : null;
             const type = actorType(character);
             if (!character || !type) return null;
+            const fields = hpFields();
 
             let canonicalKey;
             if (type === 'pc') {
                 const hpAttribute = attribute(character.id, 'hp');
-                if (!hpAttribute || String(token.get('bar1_link') || '') !== String(hpAttribute.id)) return null;
+                if (!hpAttribute || String(token.get(fields.link) || '') !== String(hpAttribute.id)) return null;
                 canonicalKey = `character:${character.id}:hp`;
             } else {
-                canonicalKey = `token:${token.id}:bar1`;
+                canonicalKey = `token:${token.id}:${fields.bar}`;
             }
 
             const source = previous && typeof previous === 'object' ? previous : null;
-            const current = source && Object.prototype.hasOwnProperty.call(source, 'bar1_value')
-                ? source.bar1_value
-                : token.get('bar1_value');
-            const maximum = source && Object.prototype.hasOwnProperty.call(source, 'bar1_max')
-                ? source.bar1_max
-                : token.get('bar1_max');
+            const current = source && Object.prototype.hasOwnProperty.call(source, fields.current)
+                ? source[fields.current]
+                : token.get(fields.current);
+            const maximum = source && Object.prototype.hasOwnProperty.call(source, fields.maximum)
+                ? source[fields.maximum]
+                : token.get(fields.maximum);
             return {
                 healthSchemaVersion: HEALTH_EVENT_SCHEMA_VERSION,
                 canonicalKey,
@@ -3142,10 +3176,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 token: tokenIdentity(token),
                 pageId: String(token.get('_pageid') || token.get('pageid') || ''),
                 surface: {
-                    kind: 'token-bar1',
+                    kind: `token-${fields.bar}`,
                     objectId: String(token.id),
-                    currentField: 'bar1_value',
-                    maximumField: 'bar1_max'
+                    currentField: fields.current,
+                    maximumField: fields.maximum
                 },
                 values: healthValues(current, maximum)
             };
@@ -3286,7 +3320,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const result = SemanticEvents.publish(EVENT_TYPE, 'HealthService', payload);
             if (!result.ok) return result;
             const response = Object.freeze({ ok: true, changed: true, deduplicated: false, event: result.event });
-            // CHOICE: retain only the latest signature per subject so linked echoes collapse while A→B, B→A, A→B remains three real transitions.
+            // CHOICE: retain only the latest signature per subject so linked echoes collapse while AB, BA, AB remains three real transitions.
             recentSignatures.set(after.canonicalKey, {
                 signature,
                 expiresAt: Date.now() + POLICY.health.dedupeMs,
@@ -3417,13 +3451,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function writeToken(request = {}) {
             const token = typeof request.token === 'string' ? getObj('graphic', request.token) : request.token;
             const before = tokenSnapshot(token);
+            const fields = hpFields();
             return performWrite(
                 before,
                 request,
                 expected => {
                     const updates = {};
-                    if (expected.current !== undefined) updates.bar1_value = expected.current;
-                    if (expected.maximum !== undefined) updates.bar1_max = expected.maximum;
+                    if (expected.current !== undefined) updates[fields.current] = expected.current;
+                    if (expected.maximum !== undefined) updates[fields.maximum] = expected.maximum;
                     token.set(updates);
                 },
                 () => tokenSnapshot(token)
@@ -3450,11 +3485,59 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             );
         }
 
+        function configureNpcToken(tokenOrId, { mode = 'copy' } = {}) {
+            if (!enabled) return { ok: false, code: 'UNAVAILABLE', message: 'HealthService is disabled.' };
+            const token = typeof tokenOrId === 'string' ? getObj('graphic', tokenOrId) : tokenOrId;
+            if (!token || !['objects', 'gmlayer'].includes(String(token.get('layer') || ''))) {
+                return { ok: false, code: 'NOT_FOUND', message: 'That token is not available on a supported map layer.' };
+            }
+            const characterId = String(token.get('represents') || '');
+            const character = characterId ? getObj('character', characterId) : null;
+            if (!character || actorType(character) !== 'npc') {
+                return { ok: false, code: 'UNPROCESSABLE', message: 'That token is not linked to a supported 2014 NPC character.' };
+            }
+            const hpAttribute = attribute(character.id, 'hp');
+            if (!hpAttribute) return { ok: false, code: 'UNPROCESSABLE', message: `${character.get('name') || 'That NPC'} has no hp attribute.` };
+            const current = parseHealthField(hpAttribute.get('current'));
+            const maximum = parseHealthField(hpAttribute.get('max'));
+            const fallbackMaximum = parseHealthField(getAttrByName(character.id, 'npc_hpbase'));
+            const currentRaw = current.state === 'valid'
+                ? current.raw
+                : (maximum.state === 'valid' ? maximum.raw : fallbackMaximum.raw);
+            const maximumRaw = maximum.state === 'valid'
+                ? maximum.raw
+                : (fallbackMaximum.state === 'valid' ? fallbackMaximum.raw : currentRaw);
+            if (parseHealthField(currentRaw).state !== 'valid' || parseHealthField(maximumRaw).state !== 'valid') {
+                return { ok: false, code: 'UNPROCESSABLE', message: `${character.get('name') || 'That NPC'} has no numeric HP value to place on the token.` };
+            }
+            const requestedMode = String(mode || 'copy').toLowerCase();
+            if (!['copy', 'link'].includes(requestedMode)) {
+                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Choose copy or link for NPC HP setup.' };
+            }
+            const fields = hpFields();
+            const updates = {
+                [fields.current]: currentRaw,
+                [fields.maximum]: maximumRaw,
+                [fields.link]: requestedMode === 'link' ? String(hpAttribute.id) : ''
+            };
+            token.set(updates);
+            const verified = Object.entries(updates).every(([key, value]) => String(token.get(key) || '') === String(value));
+            return verified
+                ? { ok: true, changed: true, mode: requestedMode, tokenId: String(token.id), fields }
+                : { ok: false, code: 'UNAVAILABLE', message: `Roll20 did not preserve ${fields.label} HP setup for ${token.get('name') || character.get('name') || 'that NPC'}.` };
+        }
+
         function wire(api) {
             if (listenersWired) return;
             listenersWired = true;
-            api.onEvent('change:graphic:bar1_value', observeTokenChange, 'HealthService');
-            api.onEvent('change:graphic:bar1_max', observeTokenChange, 'HealthService');
+            ['bar1', 'bar2', 'bar3'].forEach(bar => {
+                api.onEvent(`change:graphic:${bar}_value`, (token, previous) => {
+                    if (hpBar() === bar) observeTokenChange(token, previous);
+                }, 'HealthService');
+                api.onEvent(`change:graphic:${bar}_max`, (token, previous) => {
+                    if (hpBar() === bar) observeTokenChange(token, previous);
+                }, 'HealthService');
+            });
             api.onEvent('change:attribute:current', observeAttributeChange, 'HealthService');
             api.onEvent('change:attribute:max', observeAttributeChange, 'HealthService');
         }
@@ -3474,6 +3557,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             healthEventSchemaVersion: HEALTH_EVENT_SCHEMA_VERSION,
             eventType: EVENT_TYPE,
             isEnabled: () => enabled,
+            getHpBar: hpBar,
+            getHpFields: hpFields,
+            setHpBar,
+            configureNpcToken,
             readToken: token => cloneAndFreeze(tokenSnapshot(typeof token === 'string' ? getObj('graphic', token) : token)),
             readCharacter: character => cloneAndFreeze(characterSnapshot(character)),
             writeToken,
@@ -3489,6 +3576,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 version: SERVICE_VERSION,
                 healthEventSchemaVersion: HEALTH_EVENT_SCHEMA_VERSION,
                 enabled,
+                hpBar: hpBar(),
                 pendingWrites: pendingWrites.size,
                 completedOperations: completedOperations.size,
                 recentTransitions: recentEvents.length
@@ -3500,8 +3588,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         });
     })();
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Added HealthService 1.0.0 with canonical supported HP snapshots, immutable semantic transitions, bounded deduplication, and verified producer/operation-aware writes for linked NPC bar 1 and official 2014 PC HP attributes.
+    // Changed (v2.0.0): Advanced HealthService to 1.1.0; bar 1, 2, or 3 may be the shared NPC HP surface, verified token reads and writes follow that setting, and explicit current-page copy/link setup is available without changing the 2014 PC hp-attribute contract.
     // Decision log:
+    //   CHOICE: Make unlinked value-copy the recommended NPC setup and expose sheet linking separately - ALT: link every same-character NPC token automatically; REJECTED: linked duplicates share one HP pool and can make several creatures lose HP together.
+    // Changed (v2.0.0): Added HealthService 1.0.0 with canonical supported HP snapshots, immutable semantic transitions, bounded deduplication, and verified producer/operation-aware writes for linked NPC bar 1 and official 2014 PC HP attributes.
     //   CHOICE: Treat an unexplained numeric decrease or increase as unknown evidence - ALT: label it damage or healing from direction alone; REJECTED: Roll20 does not expose attack, resistance, temporary-HP, synchronization, or causal metadata reliably.
     //   CHOICE: Deduplicate by canonical subject plus before/after values - ALT: expose token and attribute events separately; REJECTED: linked bars can represent one logical write on two Roll20 surfaces.
     //   CHOICE: Retain only bounded in-memory recent evidence - ALT: persist a combat ledger; REJECTED: sandbox restarts and unknown external causes would make durable causal claims misleading.
@@ -3560,7 +3650,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (startup && GameAssist.flags.QUIET_STARTUP) return;
 
             const timestamp = localTime();
-            const levelIcon = { INFO: 'ℹ️', WARN: '⚠️', ERROR: '❌' }[level] || 'ℹ️';
+            const levelIcon = { INFO: '??', WARN: '??', ERROR: '?' }[level] || '??';
             const safeLines = _sanitize(String(msg ?? '')).split('\n');
             const body = safeLines.join('<br>');
 
@@ -3818,7 +3908,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         },
 
         /**
-         * enqueue — Explicitly submit work to the serialized queue.
+         * enqueue - Explicitly submit work to the serialized queue.
          * Async work must return a Promise that settles when the queued portion is done.
          * A timeout releases the queue; it cannot cancel underlying Roll20 operations.
          */
@@ -4066,10 +4156,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         events: [
             'change:graphic:bar1_value',
             'change:graphic:bar1_max',
+            'change:graphic:bar2_value',
+            'change:graphic:bar2_max',
+            'change:graphic:bar3_value',
+            'change:graphic:bar3_max',
             'change:attribute:current',
             'change:attribute:max'
         ],
-        protectedConfigKeys: ['pcAlerts'],
+        protectedConfigKeys: ['pcAlerts', 'hpBar'],
         teardown: () => HealthService._setEnabled(false)
     });
     // --- Notes & Comments ---
@@ -4121,7 +4215,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:CORE] END
     // =============================================================================
 
-    // ————— INTERFACES (EVENTS + COMMANDS) —————
+    // ----- INTERFACES (EVENTS + COMMANDS) -----
     // =============================================================================
     // [GAMEASSIST:INTERFACES] BEGIN
     // Section Title: Interfaces wrapper (events + commands)
@@ -4208,7 +4302,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
 
     /**
-     * statusPanelText — Sanitize dynamic text at the Roll20 template boundary.
+     * statusPanelText - Sanitize dynamic text at the Roll20 template boundary.
      * Inputs: module names, dependency names, counters, or fixed status guidance.
      * Outputs: chat-safe text with template-closing braces encoded.
      * Invariants: dynamic values cannot create a new default-template field.
@@ -4281,7 +4375,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
 
     /**
-     * buildStatusSnapshot — Convert runtime diagnostics into one status model.
+     * buildStatusSnapshot - Convert runtime diagnostics into one status model.
      * Inputs: current module lifecycle state, dependency evidence, metrics, and queue state.
      * Outputs: counts plus plain-language health and dependency guidance for both panels.
      * Invariants: disabled modules do not create active dependency warnings; unverifiable is not missing.
@@ -4304,7 +4398,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const missingGroups = groupDependencies(missing, 'missing');
         const unverifiableGroups = groupDependencies(unverifiable, 'unverifiable');
 
-        // CHOICE: Unverifiable remains ready-with-check — ALT: report failure; REJECTED: Roll20 metadata absence is not proof that the dependency is missing.
+        // CHOICE: Unverifiable remains ready-with-check - ALT: report failure; REJECTED: Roll20 metadata absence is not proof that the dependency is missing.
         let overall;
         if (errors || stopped.length || missing.length) {
             overall = 'Attention needed - review the items below.';
@@ -4448,7 +4542,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
 
     /**
-     * gameAssistHomeButton — Standard return path from a module's GM screen.
+     * gameAssistHomeButton - Standard return path from a module's GM screen.
      * Inputs: an optional short button label.
      * Outputs: one Roll20 chat button targeting the suite-level GM control center.
      * Invariants: module screens never need to know the other modules or their routes.
@@ -4903,8 +4997,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const lineFor = ([name, mod]) => {
                 const cfg = GameAssist.getState(name).config;
                 const depInfo = GameAssist._checkDependencies(name);
-                const configured = cfg.enabled !== false ? '✅' : '❌';
-                const running = mod.initialized && mod.active ? '🟢' : '⏸️';
+                const configured = cfg.enabled !== false ? '?' : '?';
+                const running = mod.initialized && mod.active ? '??' : '??';
                 return `${name}: config ${configured} | runtime ${running} | deps ${formatDependencyStatus(depInfo)}`;
             };
             const services = entries.filter(([, mod]) => mod.service).map(lineFor);
@@ -4964,7 +5058,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         sendTimeZoneMenu(`Timezone set to ${validation.value}.${rolled ? ' The active date-managed Session was updated.' : ''}`);
     }, 'Core', { gmOnly: true });
 
-    // ————— CONTROL COMMANDS —————
+    // ----- CONTROL COMMANDS -----
     GameAssist.onCommand('!ga-enable', msg => {
         const mod = msg.content.split(/\s+/)[1];
         if (!mod) {
@@ -5006,7 +5100,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     });
 
     /**
-     * ensurePcHealthAlertConfig — Repair the protected, configuration-only alert branch.
+     * ensurePcHealthAlertConfig - Repair the protected, configuration-only alert branch.
      * Inputs: saved HealthService configuration, which may be absent or malformed.
      * Outputs: one canonical object with enabled, showExactHp, and known threshold flags.
      * Invariants: valid booleans survive; unknown values never become executable policy.
@@ -5045,7 +5139,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
 
     /**
-     * evaluatePcHealthAlert — Convert one canonical transition into threshold evidence.
+     * evaluatePcHealthAlert - Convert one canonical transition into threshold evidence.
      * Inputs: an immutable HealthService health.transition event and validated config.
      * Outputs: crossed thresholds and display values, or null when no alert is warranted.
      * Invariants: only supported PCs, stable positive maximum HP, and numeric decreases qualify.
@@ -5218,8 +5312,96 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         sendPcHealthAlertSettings('That PC health-alert option was not recognized.');
     }
 
+    function currentHealthPageTokens() {
+        const pageId = String(Campaign().get('playerpageid') || '');
+        return pageId
+            ? findObjs({ _type: 'graphic', _pageid: pageId }).filter(token => ['objects', 'gmlayer'].includes(String(token.get('layer') || '')))
+            : [];
+    }
+
+    function npcHpBarAudit() {
+        const fields = GameAssist.HealthService.getHpFields();
+        const result = { fields, linkedNpcs: [], ready: [], needsSetup: [], unlinked: [] };
+        currentHealthPageTokens().forEach(token => {
+            const characterId = String(token.get('represents') || '');
+            const character = characterId ? getObj('character', characterId) : null;
+            if (!character) {
+                result.unlinked.push(String(token.get('name') || '(Unnamed token)'));
+                return;
+            }
+            if (String(getAttrByName(character.id, 'npc') || '') !== '1') return;
+            const name = String(token.get('name') || character.get('name') || '(Unnamed NPC)');
+            result.linkedNpcs.push(name);
+            const snapshot = GameAssist.HealthService.readToken(token);
+            if (snapshot?.values?.current?.state === 'valid' && snapshot?.values?.maximum?.state === 'valid') result.ready.push(name);
+            else result.needsSetup.push(name);
+        });
+        return result;
+    }
+
+    function boundedNames(names, limit = 8) {
+        if (!names.length) return 'None.';
+        const shown = names.slice(0, limit).map(_sanitize).join(', ');
+        return names.length > limit ? `${shown}, +${names.length - limit} more` : shown;
+    }
+
+    function sendNpcHpBarSettings(notice = '') {
+        const audit = npcHpBarAudit();
+        const fields = [
+            '&{template:default} {{name=NPC HP Bar Setup}}',
+            notice ? statusField('Update', notice) : '',
+            statusField('Current HP Bar', `${audit.fields.label} (${audit.fields.current} / ${audit.fields.maximum})`),
+            statusField('Current Page', `${audit.ready.length} ready | ${audit.needsSetup.length} linked NPCs need setup | ${audit.unlinked.length} unlinked token candidates`),
+            audit.needsSetup.length ? statusField('Needs Setup', boundedNames(audit.needsSetup)) : '',
+            audit.unlinked.length ? statusField('Not Representing A Character', boundedNames(audit.unlinked)) : '',
+            statusField('Safety', 'Prepare copies each NPC character\'s HP into an independent token bar. Link To Sheet is separate because tokens representing the same NPC character would share one HP pool.')
+        ].filter(Boolean);
+        const controls = [
+            `<strong>Choose The NPC HP Bar</strong>: ${['bar1', 'bar2', 'bar3'].map(bar => GameAssist.createButton(`Bar ${bar.slice(-1)}`, `!ga-health bars use ${bar}`)).join(' ')}`,
+            `<strong>Current Page</strong>: ${GameAssist.createButton('Audit', '!ga-health bars audit')} ${GameAssist.createButton('Prepare Linked NPCs', '!ga-health bars prepare')} ${GameAssist.createButton('Link To Sheet HP', '!ga-health bars link')}`,
+            `${GameAssist.createButton('Health Status', '!ga-health')} ${GameAssist.createButton('NPCAssist', '!NPC-GM')} ${GameAssist.createButton('HPAssist', '!HP-GM')}`
+        ];
+        sendChat('GameAssist', `/w gm ${fields.join(' ')}`);
+        sendChat('GameAssist', `/w gm <div>${controls.join('<br>')}</div>`);
+    }
+
+    function handleNpcHpBarCommand(parts, raw) {
+        const action = String(parts.shift() || 'menu').toLowerCase();
+        if (['menu', 'status', 'audit'].includes(action)) return sendNpcHpBarSettings();
+        if (action === 'use' || ['bar1', 'bar2', 'bar3'].includes(action)) {
+            const requested = action === 'use' ? parts.shift() : action;
+            const result = GameAssist.HealthService.setHpBar(requested);
+            return sendNpcHpBarSettings(result.ok
+                ? `${result.fields.label} is now the shared NPC HP bar. Existing token values were not moved automatically.`
+                : result.message);
+        }
+        if (action === 'prepare' || action === 'copy' || action === 'link') {
+            const mode = action === 'link' ? 'link' : 'copy';
+            const confirmed = /(?:^|\s)--confirm(?:\s|$)/i.test(raw);
+            const audit = npcHpBarAudit();
+            if (!confirmed) {
+                const warning = mode === 'link'
+                    ? 'Linking makes every token that represents the same NPC character share one HP pool.'
+                    : 'Preparing copies character HP into each token independently and clears that bar\'s sheet link.';
+                return sendNpcHpBarSettings(`${warning} ${GameAssist.createButton('Confirm Current Page', `!ga-health bars ${mode === 'link' ? 'link' : 'prepare'} --confirm`)}`);
+            }
+            let changed = 0;
+            const failures = [];
+            currentHealthPageTokens().forEach(token => {
+                const characterId = String(token.get('represents') || '');
+                if (!characterId || String(getAttrByName(characterId, 'npc') || '') !== '1') return;
+                const result = GameAssist.HealthService.configureNpcToken(token, { mode });
+                if (result.ok) changed++;
+                else failures.push(`${token.get('name') || '(Unnamed NPC)'}: ${result.message}`);
+            });
+            const summary = `${changed} linked NPC token${changed === 1 ? '' : 's'} ${mode === 'link' ? 'linked to sheet HP' : 'prepared with independent HP'}.${failures.length ? ` ${failures.length} need attention: ${boundedNames(failures, 4)}` : ''}`;
+            return sendNpcHpBarSettings(summary);
+        }
+        sendNpcHpBarSettings('That NPC HP-bar action was not recognized.');
+    }
+
     /**
-     * sendHealthDiagnostics — Present bounded HealthService evidence to the GM.
+     * sendHealthDiagnostics - Present bounded HealthService evidence to the GM.
      * Inputs: status, recent, or audit mode from the GM-only !ga-health command.
      * Outputs: a compact private panel; audit reads the Player Ribbon page without writes.
      * Invariants: unknown observations remain unknown and no retained evidence is mutated.
@@ -5233,6 +5415,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             GameAssist.createButton('Status', '!ga-health'),
             GameAssist.createButton('Recent Evidence', '!ga-health recent'),
             GameAssist.createButton('Page Audit', '!ga-health audit'),
+            GameAssist.createButton('NPC HP Bars', '!ga-health bars'),
             GameAssist.createButton('PC Alerts', '!ga-health alerts'),
             GameAssist.createButton('Modules & Services', '!ga-config modules')
         ].join(' ');
@@ -5268,7 +5451,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const unknown = recent.filter(event => event.payload?.classification === 'unknown').length;
             fields.push(
                 statusField('Service', `HealthService v${status.version} is ${status.enabled ? 'enabled' : 'disabled'}.`),
-                statusField('Supported HP', 'Official 2014 PC hp attributes and linked NPC token bar 1.'),
+                statusField('Supported HP', `Official 2014 PC hp attributes and linked NPC token ${GameAssist.HealthService.getHpBar().slice(-1)}.`),
                 statusField('This Sandbox Session', `${status.recentTransitions} recent HP change${status.recentTransitions === 1 ? '' : 's'} retained | ${declared} made by GameAssist | ${unknown} observed in Roll20.`),
                 statusField('PC Health Alerts', pcHealthAlertSettingsNotice(ensurePcHealthAlertConfig())),
                 statusField('How Observed Loss Is Used', 'A supported HP decrease can still power threshold alerts and offer a concentration check. GameAssist does not guess the attacker, damage type, resistance, or temporary-HP details Roll20 did not provide.')
@@ -5288,7 +5471,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         if (mode === 'recent') return sendHealthDiagnostics('recent');
         if (mode === 'audit') return sendHealthDiagnostics('audit');
         if (mode === 'alerts' || mode === 'alert') return setPcHealthAlertOption(parts);
-        GameAssist.log('HealthService', 'Use !ga-health, !ga-health recent, !ga-health audit, or !ga-health alerts.', 'WARN');
+        if (mode === 'bars' || mode === 'hp-bar' || mode === 'hpbar') return handleNpcHpBarCommand(parts, raw);
+        GameAssist.log('HealthService', 'Use !ga-health, !ga-health recent, !ga-health audit, !ga-health alerts, or !ga-health bars.', 'WARN');
     }, 'Core', { gmOnly: true });
 
     ensurePcHealthAlertConfig();
@@ -5364,8 +5548,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (entry.ts) segments.push(entry.ts);
                 segments.push(entry.type);
                 if (entry.mod) segments.push(`[${entry.mod}]`);
-                if (entry.note) segments.push(`— ${entry.note}`);
-                summary.push(`• ${segments.join(' ')}`.trim());
+                if (entry.note) segments.push(`- ${entry.note}`);
+                summary.push(` ${segments.join(' ')}`.trim());
             });
         } else {
             summary.push('Recent activity: none logged.');
@@ -5413,7 +5597,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:INTERFACES] END
     // =============================================================================
 
-    // ————— MODULES —————
+    // ----- MODULES -----
     // =============================================================================
     // [GAMEASSIST:MODULES] BEGIN
     // Section Title: Modules wrapper (bundled features)
@@ -5428,7 +5612,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // sequencing while child sections own their observable behavior.
     // -------------------------------------------------------------------------
 
-    // ————— CONFIG UI MODULE v0.2.4 —————
+    // ----- CONFIG UI MODULE v0.2.5 -----
     // =============================================================================
     // [GAMEASSIST:MODULES:CONFIGUI] BEGIN
     // Section Title: Config UI module
@@ -5508,11 +5692,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (total <= 1) return '';
             const buttons = [];
             if (page > 0) {
-                buttons.push(GameAssist.createButton('⬅ Prev', `!ga-config ui --page ${page - 1}`));
+                buttons.push(GameAssist.createButton('? Prev', `!ga-config ui --page ${page - 1}`));
             }
-            buttons.push(GameAssist.createButton('🔄 Refresh', `!ga-config ui --page ${page}`));
+            buttons.push(GameAssist.createButton('?? Refresh', `!ga-config ui --page ${page}`));
             if (page < total - 1) {
-                buttons.push(GameAssist.createButton('Next ➡', `!ga-config ui --page ${page + 1}`));
+                buttons.push(GameAssist.createButton('Next ?', `!ga-config ui --page ${page + 1}`));
             }
             return buttons.join(' ');
         }
@@ -5522,7 +5706,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const cfg    = branch.config || {};
             const enabled = cfg.enabled !== false;
             const active  = !!(mod.initialized && mod.active);
-            const statusIcon = enabled ? (active ? '🟢' : '⏸️') : '⛔';
+            const statusIcon = enabled ? (active ? '??' : '??') : '?';
             const statusText = enabled ? (active ? 'Enabled' : 'Disabled (inactive)') : 'Disabled';
             const typeLabel = mod.service ? ' <span style="font-size:smaller;">(service)</span>' : '';
             const toggleCmd  = enabled ? `!ga-disable ${name}` : `!ga-enable ${name}`;
@@ -5534,7 +5718,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const summary = modState.config.showSummaries ? formatConfigSummary(cfg) : '';
 
             const rows = [
-                `${statusIcon} <strong>${_sanitize(name)}</strong>${typeLabel} — ${_sanitize(statusText)}`,
+                `${statusIcon} <strong>${_sanitize(name)}</strong>${typeLabel} - ${_sanitize(statusText)}`,
                 toggleBtn
             ];
             if (configButtons) {
@@ -5702,7 +5886,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:CONFIGUI] END
     // =============================================================================
 
-    // ————— CRITASSIST MODULE v0.2.5.1 —————
+    // ----- CRITASSIST MODULE v0.2.5.2 -----
     // =============================================================================
     // [GAMEASSIST:MODULES:CRITASSIST] BEGIN
     // Section Title: CritAssist module
@@ -5719,7 +5903,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // inlineroll detection intact while relying on core helpers for logging and state.
     // -------------------------------------------------------------------------
     GameAssist.register('CritAssist', function() {
-        // ─── Module Setup ──────────────────────────────────────────────────────────────
+        // ��� Module Setup ��������������������������������������������������������������
         const modState = GameAssist.getState('CritAssist');
         Object.assign(modState.config, {
             enabled:   true,
@@ -5732,7 +5916,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         const ACTIVE_PLAYER_LIMIT = POLICY.runtime.activePlayerLimit;
 
-        // ─── Constants ─────────────────────────────────────────────────────────────────
+        // ��� Constants �����������������������������������������������������������������
         /** Roll20 rolltemplates monitored for natural-1s */
         const VALID_TEMPLATES = ['atk','atkdmg','npcatk','npcfullatk','npcaction','spell','simple','dmg','default'];
         const FUMBLE_TABLES = {
@@ -5795,7 +5979,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             pruneActivePlayers(rt);
         }
 
-        // ─── Helper Functions ──────────────────────────────────────────────────────────
+        // ��� Helper Functions ����������������������������������������������������������
         /**
          * debugLog(msg)
         *   Logs to the GM only when debug mode is on.
@@ -5837,11 +6021,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     ].join(' ');
 
     // Send to player
-    sendTemplateMessage(who, `${emoji('❓')} Confirm Critical Miss`, [
+    sendTemplateMessage(who, `${emoji('?')} Confirm Critical Miss`, [
         { label: "Choose Confirmation Type", value: confirmButtons }
     ]);
     // Also send to GM
-    sendTemplateMessage('gm', `${emoji('❓')} Confirm Critical Miss for ${who}!`, [
+    sendTemplateMessage('gm', `${emoji('?')} Confirm Critical Miss for ${who}!`, [
         { label: "Choose Confirmation Type", value: confirmButtons }
     ]);
 }
@@ -5849,23 +6033,23 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function sendFumbleMenu(who) {
             sendConfirmMenu(who);
             const buttons = [
-                GameAssist.createButton('⚔ Melee', '!critfumble-melee'),
-                GameAssist.createButton('🏹 Ranged', '!critfumble-ranged'),
-                GameAssist.createButton('🎯 Thrown', '!critfumble-thrown'),
-                GameAssist.createButton('🔥 Spell', '!critfumble-spell'),
-                GameAssist.createButton('👊 Natural/Unarmed', '!critfumble-natural')
+                GameAssist.createButton('? Melee', '!critfumble-melee'),
+                GameAssist.createButton('?? Ranged', '!critfumble-ranged'),
+                GameAssist.createButton('?? Thrown', '!critfumble-thrown'),
+                GameAssist.createButton('?? Spell', '!critfumble-spell'),
+                GameAssist.createButton('?? Natural/Unarmed', '!critfumble-natural')
             ].join(' ');
-            sendTemplateMessage(who, `${emoji('💥')} Critical Miss!`, [
+            sendTemplateMessage(who, `${emoji('??')} Critical Miss!`, [
                 { label: "What kind of attack was this?", value: buttons }
             ]);
             // also whisper to GM for awareness
-            sendTemplateMessage('gm', `${emoji('💥')} Critical Miss for ${who}!`, [
+            sendTemplateMessage('gm', `${emoji('??')} Critical Miss for ${who}!`, [
                 { label: "What kind of attack was this?", value: buttons }
             ]);
         }
 
         function announceTableRoll(tableName) {
-            sendTemplateMessage('gm', `${emoji('🎲')} Rolling Table`, [
+            sendTemplateMessage('gm', `${emoji('??')} Rolling Table`, [
                 { label: "Table", value: `**${tableName}**` }
             ]);
         }
@@ -5879,7 +6063,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function rollFumbleTable(who,type) {
             const table = getFumbleTableName(type);
             if (!table) {
-                sendTemplateMessage(who, "⚠️ Invalid Fumble Type", [
+                sendTemplateMessage(who, "?? Invalid Fumble Type", [
                     { label: "Requested",    value: `"${type}"` },
                     { label: "Valid Types",  value: FUMBLE_TYPE_ORDER.join(', ') },
                     { label: "Next Step", value: GameAssist.createButton('Open Guide', '!crit help') }
@@ -5894,7 +6078,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function rollConfirmTable(who,rawCommand) {
             const table = CONFIRM_TABLES[rawCommand.toLowerCase()];
             if (!table) {
-                sendTemplateMessage(who, "⚠️ Invalid Confirm Type", [
+                sendTemplateMessage(who, "?? Invalid Confirm Type", [
                     { label: "Requested",     value: `"${rawCommand}"` },
                     { label: "Valid Options", value: Object.values(CONFIRM_TABLES).join(', ') }
                 ]);
@@ -5925,7 +6109,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const rt = ensureCritFumbleRuntime();
             const entries = Object.entries(rt.activePlayers || {});
             if (!entries.length) {
-                sendTemplateMessage('gm', "⚠️ No Players Detected", [
+                sendTemplateMessage('gm', "?? No Players Detected", [
                     { label:"Note", value:"No players have been active yet this session." },
                     { label:"Navigation", value:`${GameAssist.createButton('Open Guide', '!crit help')} ${GameAssist.createButton('Disable CritAssist', '!ga-disable CritAssist')} ${gameAssistHomeButton()}` }
                 ]);
@@ -6058,7 +6242,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             // register active players
             if (msg.playerid) noteActivePlayer(rt, msg.playerid);
 
-            // API‐style commands
+            // API-style commands
             if (msg.type==='api') {
                 const rawCmd = (msg.content||'').trim();
                 const cmd = rawCmd.toLowerCase()
@@ -6165,7 +6349,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:CRITASSIST] END
     // =============================================================================
 
-    // ————— CONDITION ASSIST MODULE v1.0.4 —————
+    // ----- CONDITION ASSIST MODULE v1.0.5 -----
     // =============================================================================
     // [GAMEASSIST:MODULES:CONDITIONASSIST] BEGIN
     // Section Title: GameAssist condition descriptions and controls
@@ -6175,7 +6359,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.ConditionAssist"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.0.4", condition_config_schema_version: 2 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.0.5", condition_config_schema_version: 2 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // ConditionAssist is GameAssist's condition-information module. It preserves the
@@ -6187,7 +6371,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('ConditionAssist', function() {
         const MODULE_NAME = 'ConditionAssist';
-        const MODULE_VERSION = '1.0.4';
+        const MODULE_VERSION = '1.0.5';
         const CONFIG_SCHEMA_VERSION = 2;
         const PRIMARY_COMMAND = 'condition';
         const STATUS_HANDOUT_NAME = 'GameAssist Condition Status';
@@ -7740,6 +7924,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         GameAssist.onCommand('!condition', handleInput, MODULE_NAME);
+        GameAssist.onCommand('!ConditionAssist', handleInput, MODULE_NAME, {
+            match: { caseInsensitive: true, mode: 'token' }
+        });
+        GameAssist.onCommand('!ConditionAssist-', msg => {
+            const content = String(msg.content || '').replace(/^!conditionassist-/i, '!condition ');
+            handleInput({ ...msg, content });
+        }, MODULE_NAME, {
+            match: { caseInsensitive: true, mode: 'prefix' }
+        });
         ['!Condition-GM', '!Condition-DM'].forEach(prefix => {
             GameAssist.onCommand(prefix, msg => {
                 handleInput({ ...msg, content: '!condition gm' });
@@ -7789,12 +7982,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }, {
         enabled: true,
         events: ['change:graphic:statusmarkers'],
-        prefixes: ['!condition', '!cond-', '!c-a', '!Condition-GM', '!Condition-DM'],
+        prefixes: ['!condition', '!ConditionAssist', '!ConditionAssist-', '!cond-', '!c-a', '!Condition-GM', '!Condition-DM'],
         dependsOn: ['MarkerService'],
         protectedConfigKeys: ['conditions', 'rulesProfile', 'legacyStatusInfoMigration']
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Advanced ConditionAssist to 1.0.4 and standardized its condition, status, settings, and announcement panels on Roll20's default template.
+    // Changed (v2.0.0): Advanced ConditionAssist to 1.0.5; !ConditionAssist and !ConditionAssist-Action now normalize into the established case-insensitive condition command path.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the ConditionAssist GM control screen without exposing it in player-only menus.
     // Changed (v0.1.7.0): Advanced ConditionAssist to 1.0.3; GM and DM role aliases open the selected-token condition controls, while compact Guide/Help, Info, Status, read-only Audit, Settings, Manual, and condition behavior remain intact.
     // Decision log:
@@ -7816,23 +8009,24 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // SRD 5.2.1 attribution:
     //   This work includes material from the System Reference Document 5.2.1 ("SRD 5.2.1") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.
     // Prior notes:
+    //   v2.0.0 / ConditionAssist 1.0.4: Standardized condition, status, settings, and announcement panels on Roll20's default template.
     //   Earlier unreleased v0.1.5.0 checkpoints used the name ConditionService. Saved test configuration and runtime state are migrated to ConditionAssist before startup auditing.
     //   Earlier unreleased 1.0.1 checkpoints kept announcements communication-only; live sandbox testing showed the delivery action was expected to toggle the selected token markers.
     //   StatusInfo 0.3.11 by Robin Kuiper provided the supplied compatibility baseline; the Roll20 0.3.12 package changes only its character-sheet identification line and still declares internal version 0.3.11.
     // [GAMEASSIST:MODULES:CONDITIONASSIST] END
     // =============================================================================
 
-    // ————— TOKEN ASSIST MODULE v1.0.5 —————
+    // ----- TOKEN ASSIST MODULE v1.0.6 -----
     // =============================================================================
     // [GAMEASSIST:MODULES:TOKENASSIST] BEGIN
     // Section Title: GameAssist general token controls and TokenMod compatibility
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:TOKENASSIST", title: "TokenAssist",
-    //   guarantees: ["General token controls use !token-assist and !ta/!ta-* commands; older !token-mod syntax remains a compatibility alias until a separately announced migration release","Selected tokens are available to their users while explicit --ids targeting remains GM-only unless the DM opts in","Compact layered navigation, stable on-demand manual, read-only audit, and unknown-command recovery preserve the established command families","TokenAssist control, guide, status, and information panels use the shared Roll20 default-template presentation","Every status-marker command uses CORE:MARKERSERVICE","Valid legacy state.TokenMod playersCanUse_ids configuration is copied once without deleting the source state","A detected standalone TokenMod suspends only overlapping !token-mod handling and produces an actionable warning rather than double-applying token changes"],
+    //   guarantees: ["General token controls use !token, !token-assist, and !ta/!ta-* commands; older !token-mod syntax remains a compatibility alias until a separately announced migration release","Selected tokens are available to their users while explicit --ids targeting remains GM-only unless the DM opts in","Compact layered navigation, stable on-demand manual, read-only audit, and unknown-command recovery preserve the established command families","TokenAssist control, guide, status, and information panels use the shared Roll20 default-template presentation","Every status-marker command uses CORE:MARKERSERVICE","Valid legacy state.TokenMod playersCanUse_ids configuration is copied once without deleting the source state","A detected standalone TokenMod suspends only overlapping !token-mod handling and produces an actionable warning rather than double-applying token changes"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.TokenAssist"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.0.5", token_config_schema_version: 1, tokenmod_reference_version: "0.8.88" }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.0.7", token_config_schema_version: 1, tokenmod_reference_version: "0.8.88" }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // TokenAssist provides GameAssist's general token controls through a verified,
@@ -7842,7 +8036,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     const TokenAssist = (() => {
         const MODULE_NAME = 'TokenAssist';
-        const MODULE_VERSION = '1.0.5';
+        const MODULE_VERSION = '1.0.7';
         const CONFIG_SCHEMA_VERSION = 1;
         const TOKENMOD_REFERENCE = Object.freeze({
             version: '0.8.88',
@@ -8251,7 +8445,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         /**
-         * normalizeLiteralColor — Convert supported TokenAssist color literals to Roll20 hex storage.
+         * normalizeLiteralColor - Convert supported TokenAssist color literals to Roll20 hex storage.
          * Inputs: transparent, 3/4/6/8-digit hex, rgb/rgba, or hsv/hsva.
          * Outputs: transparent, #rrggbb, #rrggbbaa, or null for invalid input.
          * Invariants: components are bounded before conversion; no relative color arithmetic occurs here.
@@ -8893,7 +9087,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function handleBranded(msg) {
             const raw = String(msg.content || '').trim();
-            const taFlag = raw.match(/^!(?:ta|tokenassist)-([a-z][a-z-]*)\b/i);
+            const commandRoot = raw.match(/^!(?:token-assist|tokenassist|token|ta)(?=$|[-\s])/i);
+            const taFlag = commandRoot
+                ? raw.slice(commandRoot[0].length).match(/^-([a-z][a-z-]*)\b/i)
+                : null;
             if (taFlag) {
                 const direct = String(taFlag[1]).toLowerCase();
                 if (['help', 'guide'].includes(direct)) return showHelp(msg);
@@ -8909,7 +9106,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return handleTokenRequest(msg);
             }
 
-            const body = raw.replace(/^!(?:token-assist|ta)\b/i, '').trim();
+            const body = commandRoot ? raw.slice(commandRoot[0].length).trim() : '';
+            if (!body) return playerIsGM(msg.playerid) ? showTokenControl(msg) : showHelp(msg);
             if (body.startsWith('--')) return handleTokenRequest(msg);
             const words = tokenize(body);
             const command = String(words[0] || 'help').toLowerCase();
@@ -8963,6 +9161,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             GameAssist.onCommand('!token-assist', handleBranded, MODULE_NAME, {
                 match: { caseInsensitive: true, mode: 'token' }
             });
+            GameAssist.onCommand('!TokenAssist', handleBranded, MODULE_NAME, {
+                match: { caseInsensitive: true, mode: 'token' }
+            });
+            GameAssist.onCommand('!token', handleBranded, MODULE_NAME, {
+                match: { caseInsensitive: true, mode: 'token' }
+            });
+            GameAssist.onCommand('!token-', handleBranded, MODULE_NAME, {
+                match: { caseInsensitive: true, mode: 'prefix' }
+            });
             GameAssist.onCommand('!ta', handleBranded, MODULE_NAME, {
                 match: { caseInsensitive: true, mode: 'token' }
             });
@@ -9001,16 +9208,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     GameAssist.register('TokenAssist', TokenAssist.initialize, {
         enabled: true,
         events: ['chat:message'],
-        prefixes: ['!token-assist', '!ta', '!ta-', '!TokenAssist-', '!token-mod'],
+        prefixes: ['!token-assist', '!TokenAssist', '!TokenAssist-', '!token', '!token-', '!ta', '!ta-', '!token-mod'],
         teardown: TokenAssist.shutdown,
         dependsOn: ['MarkerService'],
         preserveRuntimeOnDisable: true,
         protectedConfigKeys: ['configSchemaVersion']
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Advanced TokenAssist to 1.0.5 and replaced its custom white/pink panels with the shared Roll20 default-template presentation.
-    // Changed (v2.0.0): Added the standard GameAssist Home return to the TokenAssist GM control screen.
-    // Changed (v2.0.0): Advanced TokenAssist to 1.0.4 and replaced the expired v2.0.0 command-removal deadline with an explicit migration-release promise; token behavior and compatibility aliases are unchanged.
+    // Changed (v2.0.0): Advanced TokenAssist to 1.0.7; longest-name-first alias parsing keeps !token-assist help, audit, settings, and related commands from being mistaken for !token followed by an "assist" action.
+    // Prior notes:
+    //   v2.0.0 / TokenAssist 1.0.6: bare !token and !tokenassist open the role-appropriate TokenAssist screen, and both names accept the established case-insensitive space-or-hyphen command forms alongside !ta.
+    //   v2.0.0 / TokenAssist 1.0.5: replaced custom white/pink panels with the shared Roll20 default-template presentation.
+    //   v2.0.0: Added the standard GameAssist Home return to the TokenAssist GM control screen.
+    //   v2.0.0 / TokenAssist 1.0.4: replaced the expired v2.0.0 command-removal deadline with an explicit migration-release promise; token behavior and compatibility aliases were unchanged.
     // TokenMod provenance:
     //   Original project: TokenMod by The Aaron, Arcane Scriptomancer.
     //   Pinned reference: Roll20/roll20-api-scripts commit 9d634d3149985dcf10333920b3f4c41f215f39fc, TokenMod/0.8.88/TokenMod.js blob fc6c9cb45ec2f2ee254a24f849e089507a0e610a.
@@ -9023,12 +9233,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Copy only practical legacy configuration and preserve state.TokenMod - ALT: rename or delete upstream state; REJECTED: rollback and migration diagnosis require the source state.
     //   CHOICE: Expose GameAssist.TokenAssist.observeTokenChange - ALT: create a global TokenMod compatibility object; REJECTED: the global would blur branding, provenance, and standalone-conflict detection.
     //   CHOICE: Route all status-marker syntax through MarkerService - ALT: write statusmarkers independently; REJECTED: GameAssist must have one marker authority.
-    // Prior notes:
     //   v0.1.7.0: Advanced TokenAssist to 1.0.3; added action-focused Menu/GM/DM navigation while retaining the established controls.\n    //   Earlier unreleased v0.1.5.0 checkpoints used the name TokenService, exposed !token-service, and treated !token-mod as the primary compatibility command. Saved test state is migrated to TokenAssist.
     // [GAMEASSIST:MODULES:TOKENASSIST] END
     // =============================================================================
 
-    // ————— INITIATIVE ASSIST MODULE v1.0.4 —————
+    // ----- INITIATIVE ASSIST MODULE v1.0.5 -----
     // =============================================================================
     // [GAMEASSIST:MODULES:INITIATIVEASSIST] BEGIN
     // Section Title: Native initiative workflow
@@ -9038,7 +9247,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   observability: { spans: ["[GAMEASSIST:MODULES:INITIATIVEASSIST]"] },
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.0.4" }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.0.5" }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // InitiativeAssist classifies D&D 5E 2014 and 2024 tracker actors, resolves
@@ -9048,7 +9257,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('InitiativeAssist', function() {
         const MODULE_NAME = 'InitiativeAssist';
-        const MODULE_VERSION = '1.0.4';
+        const MODULE_VERSION = '1.0.5';
         const modState = GameAssist.getState(MODULE_NAME);
         Object.assign(modState.config, {
             enabled: false,
@@ -9147,10703 +9356,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function requireManager(msg) {
             if (isManagerMode()) return true;
             sendPanel('InitiativeAssist', [
-                { label: 'Observer Mode', value: 'InitiativeAssist is watching the tracker but will not change it.' },
-                { label: 'Next Step', value: GameAssist.createButton('Open Control Center', '!Init-Menu') }
-            ], { msg });
-            return false;
-        }
-
-        function runAsync(task) {
-            Promise.resolve().then(task).catch(error => GameAssist.handleError(MODULE_NAME, error));
-        }
-
-        function trackerSnapshot(msg) {
-            const snapshot = GameAssist.TurnTrackerService.snapshot();
-            if (!snapshot.ok) {
-                warn(msg, snapshot.message || 'The Turn Tracker could not be read.');
-                return null;
-            }
-            if (!snapshot.open || !snapshot.pageId) {
-                warn(msg, snapshot.pageWarning || 'Open Roll20\'s Turn Tracker on the encounter page, then try again.');
-                return null;
-            }
-            return snapshot;
-        }
-
-        function controllerIds(token, character) {
-            // CHOICE: linked character control is authoritative; token control is only meaningful when no character exists.
-            const source = character ? character.get('controlledby') : token?.get('controlledby');
-            const values = String(source || '')
-                .split(',')
-                .map(value => value.trim())
-                .filter(Boolean);
-            return Array.from(new Set(values));
-        }
-
-        function playerControls(playerId, token, character) {
-            if (playerIsGM(playerId)) return true;
-            const ids = controllerIds(token, character);
-            return ids.includes('all') || ids.includes(playerId);
-        }
-
-        function hasPlayerController(token, character) {
-            return controllerIds(token, character).some(id => id === 'all' || (getObj('player', id) && !playerIsGM(id)));
-        }
-
-        function parseNpcFlag(value) {
-            if (value === true || value === 1) return 'npc';
-            if (value === false || value === 0) return 'pc';
-            const normalized = String(value ?? '').trim().toLowerCase();
-            if (['1', 'true', 'npc', 'nonplayer', 'non-player'].includes(normalized)) return 'npc';
-            if (['0', 'false', 'pc', 'character', 'player'].includes(normalized)) return 'pc';
-            return null;
-        }
-
-        function numeric(value) {
-            if (value === null || value === undefined || String(value).trim() === '') return null;
-            const parsed = Number(value);
-            return Number.isFinite(parsed) ? parsed : null;
-        }
-
-        async function readBeacon(characterId, property, { computedFirst = false } = {}) {
-            const attempts = computedFirst ? ['computed', 'sheet'] : ['sheet', 'computed'];
-            const errors = [];
-            for (const attempt of attempts) {
-                try {
-                    let value;
-                    if (attempt === 'computed' && typeof getComputed === 'function') {
-                        value = await getComputed({ characterId, property });
-                    } else if (attempt === 'sheet' && typeof getSheetItem === 'function') {
-                        value = await getSheetItem(characterId, property);
-                    } else {
-                        continue;
-                    }
-                    const emptyObject = value && typeof value === 'object' && !Array.isArray(value) && !Object.keys(value).length;
-                    if (!emptyObject && value !== undefined && value !== null && value !== '') {
-                        return { ok: true, value, source: attempt };
-                    }
-                } catch (error) {
-                    errors.push(error?.message || String(error));
-                }
-            }
-            return {
-                ok: false,
-                value: null,
-                unavailable: typeof getComputed !== 'function' && typeof getSheetItem !== 'function',
-                errors
-            };
-        }
-
-        async function resolve2024Type(character) {
-            for (const property of ['npc', 'character_type', 'sheet_type']) {
-                const result = await readBeacon(character.id, property);
-                if (!result.ok) continue;
-                const type = parseNpcFlag(result.value);
-                if (type) return { ok: true, type, property };
-            }
-            return { ok: false, type: null };
-        }
-
-        function characterSheetHint(character) {
-            const objectHint = String(character.get('charactersheetname') || '').trim();
-            if (objectHint) return objectHint.toLowerCase();
-            return String(getAttrByName(character.id, 'charactersheetname') || '').trim().toLowerCase();
-        }
-
-        function readLegacyActor(character) {
-            return {
-                type: parseNpcFlag(getAttrByName(character.id, 'npc')),
-                modifier: numeric(getAttrByName(character.id, 'initiative_bonus')),
-                tieBreaker: 0
-            };
-        }
-
-        async function readBeaconActor(character) {
-            const typeResult = await resolve2024Type(character);
-            const initiative = await readBeacon(character.id, 'initiative_bonus', { computedFirst: true });
-            const tie = await readBeacon(character.id, 'init_tiebreaker', { computedFirst: true });
-            return {
-                type: typeResult.type,
-                modifier: initiative.ok ? numeric(initiative.value) : null,
-                tieBreaker: tie.ok && numeric(tie.value) !== null ? numeric(tie.value) : 0,
-                unavailable: initiative.unavailable,
-                errors: initiative.errors || []
-            };
-        }
-
-        async function resolveActor(character, token) {
-            const sheet = characterSheetHint(character);
-            const attention = [];
-            let type = null;
-            let modifier = null;
-            let tieBreaker = 0;
-            let adapter = null;
-
-            if (sheet === 'dnd2024byroll20') {
-                const beacon = await readBeaconActor(character);
-                type = beacon.type;
-                modifier = beacon.modifier;
-                tieBreaker = beacon.tieBreaker;
-                adapter = '2024-beacon';
-                if (modifier === null) {
-                    attention.push(beacon.unavailable
-                        ? '2024 Beacon initiative access is unavailable; use Roll20\'s supported Experimental Mod API server.'
-                        : '2024 initiative_bonus could not be read as a number.');
-                }
-            } else {
-                const legacy = readLegacyActor(character);
-                const legacyLooksComplete = legacy.modifier !== null && (legacy.type || hasPlayerController(token, character));
-                if (sheet === 'ogl5e' || legacyLooksComplete) {
-                    type = legacy.type;
-                    modifier = legacy.modifier;
-                    tieBreaker = legacy.tieBreaker;
-                    adapter = sheet === 'ogl5e' ? '2014-ogl' : '2014-compatible';
-                    if (modifier === null) attention.push('2014 initiative_bonus is missing or not numeric.');
-                } else {
-                    const beacon = await readBeaconActor(character);
-                    if (beacon.modifier !== null || beacon.type) {
-                        type = beacon.type;
-                        modifier = beacon.modifier;
-                        tieBreaker = beacon.tieBreaker;
-                        adapter = '2024-beacon-compatible';
-                        if (modifier === null) attention.push('2024 initiative_bonus could not be read as a number.');
-                    } else {
-                        attention.push(`D&D 5E initiative data could not be recognized${sheet ? ` for sheet ${sheet}` : ''}.`);
-                    }
-                }
-            }
-
-            if (!type && hasPlayerController(token, character)) type = 'pc';
-            if (!type) attention.push('PC or NPC type could not be established safely.');
-            return {
-                sheet,
-                adapter,
-                type,
-                modifier,
-                tieBreaker,
-                initiativeModifier: modifier === null ? null : modifier + tieBreaker,
-                attention
-            };
-        }
-
-        function deathState(token, actorType) {
-            if (actorType !== 'npc') {
-                return { dead: false, hpKnown: false, hp: null, markerKnown: false, markerDead: false, mismatch: false };
-            }
-            const hpRaw = token.get('bar1_value');
-            const hp = numeric(hpRaw);
-            const hpKnown = hp !== null;
-            const hpDead = hpKnown && hp <= 0;
-            let markerKnown = false;
-            let markerDead = false;
-            if (GameAssist.MarkerService.isEnabled()) {
-                const marker = GameAssist.getState('NPCAssist').config.deadMarker || 'dead';
-                const resolution = GameAssist.MarkerService.resolve(marker);
-                markerKnown = resolution.ok;
-                markerDead = markerKnown && GameAssist.MarkerService.has(token, resolution.id);
-            }
-            return {
-                dead: hpDead || markerDead,
-                known: hpKnown || markerKnown,
-                hpKnown,
-                hp,
-                markerKnown,
-                markerDead,
-                mismatch: hpKnown && markerKnown && hpDead !== markerDead
-            };
-        }
-
-        async function classifyRoster(snapshot) {
-            const structures = snapshot.entries.map((entry, index) => GameAssist.TurnTrackerService.classifyEntry(entry, index, snapshot));
-            const occurrences = {};
-            structures.forEach(row => {
-                if (row.kind === 'token') occurrences[row.id] = (occurrences[row.id] || 0) + 1;
-            });
-            const actorCache = new Map();
-            const rows = await Promise.all(structures.map(async structure => {
-                const base = {
-                    ...structure,
-                    label: structure.kind === 'custom' ? (structure.custom || '(Custom entry)') : '(Unknown entry)',
-                    actorType: structure.kind,
-                    attention: [],
-                    eligible: false,
-                    duplicate: structure.kind === 'token' && occurrences[structure.id] > 1
-                };
-                if (structure.kind !== 'token') return base;
-                const token = structure.token;
-                const characterId = String(token.get('represents') || '');
-                const character = characterId ? getObj('character', characterId) : null;
-                base.label = String(token.get('name') || character?.get('name') || '(Unnamed token)');
-                base.layer = String(token.get('layer') || '');
-                if (structure.offPage) base.attention.push('Token is not on the active tracker page.');
-                if (!character) {
-                    base.actorType = 'object';
-                    return base;
-                }
-                if (!actorCache.has(character.id)) actorCache.set(character.id, resolveActor(character, token));
-                const actor = await actorCache.get(character.id);
-                const health = deathState(token, actor.type);
-                base.character = character;
-                base.characterId = character.id;
-                base.sheet = actor.sheet;
-                base.actorType = actor.type || 'character-attention';
-                base.modifier = actor.initiativeModifier;
-                base.health = health;
-                base.attention.push(...actor.attention);
-                if (actor.type === 'npc' && !health.known) {
-                    base.attention.push('Living or dead state could not be established from HP or the configured marker.');
-                }
-                if (health.mismatch) base.attention.push('HP and the configured death marker disagree.');
-                if (base.duplicate) base.attention.push('Token has more than one tracker occurrence.');
-                base.eligible = !structure.offPage && actor.initiativeModifier !== null && (
-                    actor.type === 'pc' || (actor.type === 'npc' && health.known && !health.dead && !health.mismatch)
-                );
-                return base;
-            }));
-            return { snapshot, rows };
-        }
-
-        async function classifyPageRoster(snapshot, { includeGmLayer = false } = {}) {
-            const trackerIds = new Set(snapshot.entries.map(entry => String(entry?.id || '')).filter(id => id && id !== '-1'));
-            const actorCache = new Map();
-            const rows = await Promise.all(pageTokens(snapshot.pageId, { includeGmLayer }).map(async token => {
-                const characterId = String(token.get('represents') || '');
-                const character = characterId ? getObj('character', characterId) : null;
-                const base = {
-                    id: token.id,
-                    token,
-                    label: String(token.get('name') || character?.get('name') || '(Unnamed token)'),
-                    character,
-                    layer: String(token.get('layer') || '').toLowerCase(),
-                    linked: Boolean(character),
-                    inTracker: trackerIds.has(token.id),
-                    actorType: character ? 'character-attention' : 'object',
-                    modifier: null,
-                    health: null,
-                    attention: [],
-                    eligible: false
-                };
-                if (!character) return base;
-                if (!actorCache.has(character.id)) actorCache.set(character.id, resolveActor(character, token));
-                const actor = await actorCache.get(character.id);
-                const health = deathState(token, actor.type);
-                base.actorType = actor.type || 'character-attention';
-                base.modifier = actor.initiativeModifier;
-                base.health = health;
-                base.sheet = actor.sheet;
-                base.adapter = actor.adapter;
-                base.attention.push(...actor.attention);
-                if (actor.type === 'npc' && !health.known) {
-                    base.attention.push('Living or dead state could not be established from HP or the configured marker.');
-                }
-                if (health.mismatch) base.attention.push('HP and the configured death marker disagree.');
-                base.eligible = actor.initiativeModifier !== null && (
-                    actor.type === 'pc' || (actor.type === 'npc' && health.known && !health.dead && !health.mismatch)
-                );
-                return base;
-            }));
-            return { snapshot, rows };
-        }
-
-        function rosterCounts(roster) {
-            const counts = { pc: 0, npc: 0, object: 0, custom: 0, missing: 0, attention: 0, dead: 0, eligible: 0 };
-            roster.rows.forEach(row => {
-                if (row.actorType === 'pc') counts.pc++;
-                else if (row.actorType === 'npc') counts.npc++;
-                else if (row.actorType === 'object') counts.object++;
-                if (row.kind === 'custom') counts.custom++;
-                if (row.kind === 'missing') counts.missing++;
-                if (row.health?.dead) counts.dead++;
-                if (row.eligible) counts.eligible++;
-                if (row.attention.length || ['missing', 'unknown', 'character-attention'].includes(row.actorType)) counts.attention++;
-            });
-            return counts;
-        }
-
-        function pageRosterCounts(roster) {
-            const counts = { tokens: roster.rows.length, linked: 0, pc: 0, npc: 0, objects: 0, ready: 0, attention: 0, inTracker: 0, gmLayer: 0, gmLayerReadyNpc: 0 };
-            roster.rows.forEach(row => {
-                if (row.linked) counts.linked++;
-                else counts.objects++;
-                if (row.actorType === 'pc') counts.pc++;
-                if (row.actorType === 'npc') counts.npc++;
-                if (row.eligible) counts.ready++;
-                if (row.inTracker) counts.inTracker++;
-                if (row.layer === 'gmlayer') counts.gmLayer++;
-                if (row.layer === 'gmlayer' && row.actorType === 'npc' && row.eligible) counts.gmLayerReadyNpc++;
-                if (row.linked && (!row.eligible || row.attention.length)) counts.attention++;
-            });
-            return counts;
-        }
-
-        async function showMenu(msg) {
-            const snapshot = GameAssist.TurnTrackerService.snapshot();
-            if (!snapshot.ok) {
-                warn(msg, snapshot.message);
-                return;
-            }
-            if (!snapshot.open || !snapshot.pageId) {
-                sendPanel('Initiative Control Center', [
-                    { label: 'Purpose', value: 'This screen contains the controls used during an encounter.' },
-                    { label: 'Turn Tracker', value: 'Closed. Open it on the encounter page before rolling.' },
-                    { label: 'Mode', value: _sanitize(isManagerMode() ? 'Manager' : 'Observer') },
-                    { label: 'Next Step', value: `${GameAssist.createButton('Read Guide', '!Init-Help')} ${GameAssist.createButton('Check Again', '!Init-Menu')}` }
-                ], { msg, gmOnly: true });
-                return;
-            }
-            const roster = await classifyRoster(snapshot);
-            const counts = rosterCounts(roster);
-            const pageRoster = await classifyPageRoster(snapshot, { includeGmLayer: true });
-            const pageCounts = pageRosterCounts(pageRoster);
-            sendPanel('Initiative Control Center', [
-                { label: 'Purpose', value: 'Choose what InitiativeAssist should do next.' },
-                { label: 'Current Encounter', value: `${_sanitize(pageName(snapshot.pageId))}: ${snapshot.entries.length ? `${snapshot.entries.length} tracker rows` : 'tracker empty'} | ${pageCounts.ready} page characters ready | ${Math.max(0, pageCounts.linked - pageCounts.inTracker)} not yet in tracker` },
-                { label: 'Start Initiative', value: `${GameAssist.createButton('Invite Players', '!Init-Go')} ${GameAssist.createButton('Playful Invitation', '!Init-Go!')} ${GameAssist.createButton('GM-Only Start', '!Init-GM')}` },
-                { label: 'NPC Roll Privacy', value: `${npcRollsHidden() ? 'Hidden from players' : 'Public'} ${GameAssist.createButton(npcRollsHidden() ? 'Make Public' : 'Hide NPC Rolls', `!Init-NPC-Rolls ${npcRollsHidden() ? 'public' : 'hidden'}`)}` },
-                { label: 'Reroll Initiative', value: `${GameAssist.createButton(`Everyone (${counts.eligible})`, '!Init-RR')} ${GameAssist.createButton('Choose Who', '!Init-RR-Menu')}` },
-                { label: 'Review Encounter', value: `${GameAssist.createButton('Status Summary', '!Init-Status')} ${GameAssist.createButton('Detailed Review', '!Init-Audit')}` },
-                { label: 'Saved Groups', value: GameAssist.createButton('Manage Groups', '!Init-Group') },
-                { label: 'Write Mode', value: `${_sanitize(isManagerMode() ? 'Manager: changes initiative' : 'Observer: read-only')} ${GameAssist.createButton(isManagerMode() ? 'Use Observer' : 'Use Manager', `!Init-Mode ${isManagerMode() ? 'observer' : 'manager'}`)}` },
-                { label: 'Instructions', value: GameAssist.createButton('Read Guide', '!Init-Help') }
-            ], { msg, gmOnly: true });
-        }
-
-        function showHelp(msg, rawTopic = '') {
-            const topic = String(rawTopic || '').trim().split(/\s+/)[0].toLowerCase();
-            const back = GameAssist.createButton('Back to Guide', '!Init-Help');
-            const gm = playerIsGM(msg.playerid);
-            const topics = {
-                overview: [
-                    { label: 'Purpose', value: 'InitiativeAssist helps characters roll into Roll20\'s native Turn Tracker and helps the GM reroll eligible combatants without moving preserved rows.' },
-                    { label: 'Keeps Separate', value: 'It does not count rounds, advance turns, run combat timers, or change conditions. CombatAssist can handle encounter flow after initiative is ready.' }
-                ],
-                start: [
-                    { label: 'Before Rolling', value: 'Move the Player Ribbon to the encounter page and open Roll20\'s Turn Tracker.' },
-                    { label: 'Invite the Table', value: `${GameAssist.createButton('Invite Players', '!Init-Go')} posts player roll buttons and gives the GM a private roster. ${GameAssist.createButton('GM-Only Start', '!Init-GM')} keeps the whole start panel private.` },
-                    { label: 'GM Batch Rolls', value: 'The private roster can roll object-layer characters, living NPCs, hidden GM-layer NPCs, or all NPCs. No macro is required.' }
-                ],
-                rolls: [
-                    { label: 'Build A Roll', value: 'Normal, advantage, or disadvantage can be combined with a flat adjustment and one or two bonus dice.' },
-                    { label: 'Multiple Characters', value: `Select controlled character tokens, then use ${GameAssist.createButton('Roll Selected', '!Init-Roll-Selected')}. Every token is rechecked before it rolls.` },
-                    { label: 'Readable Results', value: 'Advantage and disadvantage show both d20s. The result also shows bonus dice, the total, and the complete formula.' }
-                ],
-                rerolls: [
-                    { label: 'Everyone', value: `${GameAssist.createButton('Reroll Everyone', '!Init-RR')} rerolls each eligible PC and living NPC already in the tracker once.` },
-                    { label: 'Choose Who', value: `${GameAssist.createButton('Reroll Choices', '!Init-RR-Menu')} offers PCs, NPCs, selected tokens, individuals, and saved encounter groups.` },
-                    { label: 'Preserved Rows', value: 'Counters, custom entries, objects, dead NPCs, and rows needing attention stay unchanged.' }
-                ],
-                privacy: [
-                    { label: 'NPC Rolls', value: 'NPC roll details are private to the GM by default. Object-layer NPC results may be made public.' },
-                    { label: 'Hidden NPCs', value: 'GM-layer NPC names, modifiers, bonus dice, and results always remain private.' }
-                ],
-                troubleshooting: [
-                    { label: 'Supported Sheets', value: 'Roll20 D&D 5E 2014 and 2024 sheets are supported. The 2024 sheet may require Roll20\'s supported Experimental Mod API server.' },
-                    { label: 'Which Screen?', value: 'Control Center has actions. Status Summary is a quick check. Detailed Review explains every current tracker row without changing it.' },
-                    { label: 'Next Check', value: gm ? `${GameAssist.createButton('Status Summary', '!Init-Status')} ${GameAssist.createButton('Detailed Review', '!Init-Audit')}` : 'Ask the GM to open Initiative Status or Detailed Review.' }
-                ]
-            };
-            if (topics[topic]) {
-                sendPanel('InitiativeAssist Guide', [...topics[topic], { label: 'Guide', value: back }], { msg, gmOnly: gm });
-                return;
-            }
-            const actions = gm
-                ? `${GameAssist.createButton('Control Center', '!Init-Menu')} ${GameAssist.createButton('Status Summary', '!Init-Status')}`
-                : `${GameAssist.createButton('Roll Initiative', '!Init-Roll')} ${GameAssist.createButton('Roll Options', '!Init-Options')} ${GameAssist.createButton('Roll Selected', '!Init-Roll-Selected')}`;
-            sendPanel('InitiativeAssist Guide', [
-                { label: 'Start Here', value: actions },
-                { label: 'Learn Or Review', value: `${gm ? GameAssist.createButton('What does InitiativeAssist do?', '!Init-Manual') : GameAssist.createButton('What does InitiativeAssist do?', '!Init-Info')} ${GameAssist.createButton('Starting Initiative', '!Init-Help start')} ${GameAssist.createButton('Roll Options', '!Init-Help rolls')} ${GameAssist.createButton('Rerolls & Groups', '!Init-Help rerolls')} ${GameAssist.createButton('NPC Privacy', '!Init-Help privacy')} ${GameAssist.createButton('Help With A Problem', '!Init-Help troubleshooting')}` }
-            ], { msg, gmOnly: gm });
-        }
-
-        function showInitiativeInfo(msg) {
-            const gm = playerIsGM(msg.playerid);
-            sendPanel('What InitiativeAssist Does', [
-                { label: 'Purpose', value: 'Rolls D&D 5E 2014 and 2024 initiative into Roll20\'s native Turn Tracker, offers combined roll options, and lets the GM reroll eligible combatants while preserving counters and other rows.' },
-                { label: 'At The Table', value: 'Open the Turn Tracker on the encounter page, invite the table or use the GM start panel, then keep using Roll20\'s tracker normally.' },
-                { label: 'Learn More', value: `${gm ? GameAssist.createButton('Create or Update Manual', '!Init-Manual') : ''} ${GameAssist.createButton('Back to Guide', '!Init-Help')} ${gm ? GameAssist.createButton('Open Control Center', '!Init-Menu') : GameAssist.createButton('Roll Options', '!Init-Options')}` }
-            ], { msg, gmOnly: gm });
-        }
-
-        function initiativeManualHtml() {
-            return [
-                '<h1>InitiativeAssist User Manual</h1>',
-                `<p><strong>GameAssist v${_sanitize(VERSION)} | InitiativeAssist ${_sanitize(MODULE_VERSION)}</strong></p>`,
-                '<p>InitiativeAssist works with Roll20\'s native Turn Tracker. It helps D&amp;D 5E 2014 and 2024 characters roll initiative, gives the GM private NPC controls, and rerolls chosen combatants without replacing counters, objects, or other preserved rows.</p>',
-                '<h2>Quick Start</h2>',
-                '<ol><li>Move the Player Ribbon to the encounter page.</li><li>Open Roll20\'s Turn Tracker on that page.</li><li>Run <code>!Init-Go</code> for a public invitation, <code>!Init-Go!</code> for a playful invitation, or <code>!Init-GM</code>/<code>!Init-DM</code> for a private Game Master start panel.</li><li>Players use Roll Initiative or Roll Options; the Game Master may roll NPCs individually or in groups.</li></ol>',
-                '<h2>Player Roll Options</h2>',
-                '<p>Normal, advantage, or disadvantage can be combined with a bounded flat adjustment and one or two custom bonus dice. Advantage and disadvantage results show both d20s, the chosen result, bonus dice, total, and full formula.</p>',
-                '<p>A player controlling several linked characters can select those token objects and use <code>!Init-Roll-Selected</code>. Every token is rechecked for page ownership and player control before rolling.</p>',
-                '<h2>GM NPC Controls And Privacy</h2>',
-                '<p>NPC rolls are hidden from players by default. The GM may roll living object-layer NPCs, GM-layer NPCs, or both. GM-layer names, bonuses, dice, and results always remain private.</p>',
-                '<h2>Rerolls And Preserved Rows</h2>',
-                '<p><code>!Init-RR</code> rerolls every eligible PC and living NPC already in the tracker once. The reroll menu can limit this to PCs, NPCs, selected tokens, one token, or a saved page-scoped group. Custom entries, counters, objects, dead NPCs, and rows needing attention remain unchanged.</p>',
-                '<h2>Status And Audit</h2>',
-                '<p><code>!Init-Status</code> gives a concise encounter summary. <code>!Init-Audit</code> explains each current tracker row without changing it. InitiativeAssist does not count rounds or advance turns; CombatAssist owns that optional workflow.</p>',
-                '<h2>Command Reference</h2>',
-                '<ul><li><code>!Init-GM</code> or <code>!Init-DM</code> - private Game Master initiative-start roster.</li><li><code>!Init-Help</code> or <code>!Init-Guide</code> - compact guide.</li><li><code>!Init-Menu</code> - GM control center.</li><li><code>!Init-Info</code> - short purpose summary.</li><li><code>!Init-Status</code> / <code>!Init-Audit</code> - read-only review.</li><li><code>!Init-Go</code> / <code>!Init-Go!</code> - public initiative invitations.</li><li><code>!Init-RR</code> / <code>!Init-RR-Menu</code> - reroll controls.</li><li><code>!Init-Group</code> - saved encounter groups.</li></ul>',
-                '<h2>Troubleshooting</h2>',
-                '<p>If a roll cannot enter the tracker, confirm that the Turn Tracker is open on the Player Ribbon page and that the token is linked to a supported character. The 2024 sheet may require Roll20\'s supported Experimental Mod API server.</p>'
-            ].join('');
-        }
-
-        function writeInitiativeManual(msg) {
-            if (!playerIsGM(msg.playerid)) {
-                sendPanel('InitiativeAssist Manual', [
-                    { label: 'GM Action', value: 'The campaign manual is created or updated only by the GM.' },
-                    { label: 'Continue', value: `${GameAssist.createButton('Whisper Short Version', '!Init-Info')} ${GameAssist.createButton('Open Guide', '!Init-Help')}` }
-                ], { msg });
-                return;
-            }
-            const result = GameAssist.writeModuleManual(MODULE_NAME, initiativeManualHtml());
-            if (!result.ok) {
-                warn(msg, result.message, GameAssist.createButton('Whisper Short Version', '!Init-Info'));
-                return;
-            }
-            sendPanel('InitiativeAssist Manual Ready', [
-                { label: 'Handout', value: `${result.link}<br>${_sanitize(result.name)} was ${result.created ? 'created' : 'updated'}.` },
-                { label: 'Continue', value: `${GameAssist.createButton('Whisper Short Version', '!Init-Info')} ${GameAssist.createButton('Open Control Center', '!Init-Menu')}` }
-            ], { msg, gmOnly: true });
-        }
-
-        async function showStatus(msg) {
-            const snapshot = trackerSnapshot(msg);
-            if (!snapshot) return;
-            const roster = await classifyRoster(snapshot);
-            const counts = rosterCounts(roster);
-            const pageRoster = await classifyPageRoster(snapshot, { includeGmLayer: true });
-            const pageCounts = pageRosterCounts(pageRoster);
-            const attentionNames = roster.rows.filter(row => row.attention.length || row.kind === 'missing')
-                .slice(0, POLICY.initiative.statusChatLimit)
-                .map(row => _sanitize(row.label));
-            sendPanel('Initiative Status Summary', [
-                { label: 'Rows', value: `${snapshot.entries.length} total | ${counts.eligible} ready` },
-                { label: 'Tracker Page', value: `${_sanitize(pageName(snapshot.pageId))} | ${pageCounts.linked} linked characters | ${Math.max(0, pageCounts.linked - pageCounts.inTracker)} not yet in tracker` },
-                { label: 'GM Layer', value: `${pageCounts.gmLayerReadyNpc} living NPC${pageCounts.gmLayerReadyNpc === 1 ? '' : 's'} ready; their rolls always stay private` },
-                { label: 'Characters', value: `${counts.pc} PCs | ${counts.npc} NPCs | ${counts.dead} dead NPCs` },
-                { label: 'Preserved', value: `${counts.custom} custom | ${counts.object} objects | ${counts.missing} stale` },
-                { label: 'Attention', value: attentionNames.length ? attentionNames.join(', ') : 'None' },
-                { label: 'Next Step', value: `${GameAssist.createButton('Refresh Summary', '!Init-Status')} ${GameAssist.createButton('Detailed Review', '!Init-Audit')} ${GameAssist.createButton('Control Center', '!Init-Menu')}` }
-            ], { msg, gmOnly: true });
-        }
-
-        function reviewStatus(row) {
-            if (row.kind === 'custom') return 'Custom entry - preserved';
-            if (row.kind === 'missing') return 'Missing token - preserved';
-            if (row.actorType === 'object') return 'Object - preserved';
-            if (row.actorType === 'pc') return row.modifier === null ? 'PC - modifier unavailable' : `PC - modifier ${row.modifier}`;
-            if (row.actorType === 'npc') {
-                if (row.health?.mismatch) return 'NPC - HP/marker mismatch';
-                if (row.health?.dead) return 'NPC - dead, not rerolled';
-                return row.modifier === null ? 'NPC - modifier unavailable' : `NPC - modifier ${row.modifier}`;
-            }
-            return row.attention.join(' ') || 'Needs attention';
-        }
-
-        function pageReviewStatus(row) {
-            if (!row.linked) return 'Not linked - not an initiative character';
-            if (row.health?.mismatch) return 'Needs HP/death-marker review';
-            if (row.health?.dead) return 'Dead NPC - not eligible';
-            if (row.eligible) return row.inTracker ? 'Ready - already in tracker' : 'Ready - not yet in tracker';
-            return row.attention.join(' ') || 'Needs attention';
-        }
-
-        async function showReview(msg) {
-            const snapshot = trackerSnapshot(msg);
-            if (!snapshot) return;
-            const roster = await classifyRoster(snapshot);
-            const pageRoster = await classifyPageRoster(snapshot, { includeGmLayer: true });
-            const counts = rosterCounts(roster);
-            const pageCounts = pageRosterCounts(pageRoster);
-            const trackerLines = roster.rows.slice(0, POLICY.initiative.statusChatLimit).map((row, index) =>
-                `${index + 1}. <strong>${_sanitize(row.label)}</strong> | ${_sanitize(String(row.entry?.pr ?? 'no score'))} | ${_sanitize(reviewStatus(row))}`
-            );
-            if (roster.rows.length > trackerLines.length) trackerLines.push(`+${roster.rows.length - trackerLines.length} more tracker rows`);
-            const offTracker = pageRoster.rows.filter(row => row.linked && !row.inTracker);
-            const pageLines = offTracker.slice(0, POLICY.initiative.statusChatLimit).map(row =>
-                `<strong>${_sanitize(row.label)}</strong> | ${_sanitize(pageReviewStatus(row))}`
-            );
-            if (offTracker.length > pageLines.length) pageLines.push(`+${offTracker.length - pageLines.length} more page characters`);
-            sendPanel('Initiative Review', [
-                { label: 'Encounter', value: `${_sanitize(pageName(snapshot.pageId))} | ${roster.rows.length} tracker rows | ${pageCounts.linked} linked page characters` },
-                { label: 'Turn Tracker', value: trackerLines.length ? trackerLines.join('<br>') : 'The Turn Tracker is empty.' },
-                { label: 'Not Yet In Tracker', value: pageLines.length ? pageLines.join('<br>') : 'None' },
-                { label: 'Summary', value: `${counts.eligible} tracker characters ready | ${counts.attention} tracker rows need attention | ${pageCounts.attention} page characters need attention` },
-                { label: 'Changes', value: 'None. This review is read-only and does not create a handout.' },
-                { label: 'Next Step', value: `${GameAssist.createButton('Review Again', '!Init-Audit')} ${GameAssist.createButton('Control Center', '!Init-Menu')}` }
-            ], { msg, gmOnly: true });
-        }
-
-        function selectedTokenIds(msg) {
-            return Array.from(new Set((msg.selected || []).map(selection => String(selection._id || '')).filter(Boolean)));
-        }
-
-        function tokenPageId(token) {
-            return String(token?.get('pageid') || token?.get('_pageid') || '');
-        }
-
-        function isInitiativeToken(token, pageId, { includeGmLayer = false } = {}) {
-            if (!token || tokenPageId(token) !== String(pageId || '')) return false;
-            const subtype = String(token.get('subtype') || token.get('_subtype') || '').toLowerCase();
-            const layer = String(token.get('layer') || '').toLowerCase();
-            return (!subtype || subtype === 'token') && (layer === 'objects' || (includeGmLayer && layer === 'gmlayer'));
-        }
-
-        function pageTokens(pageId, { includeGmLayer = false } = {}) {
-            let graphics = findObjs({ _type: 'graphic', _pageid: pageId });
-            // DANGER: Some Roll20 engines do not return every token for compound findObjs filters.
-            if (!graphics.length) graphics = findObjs({ _type: 'graphic' });
-            return graphics.filter(token => isInitiativeToken(token, pageId, { includeGmLayer }));
-        }
-
-        function playerPageId(playerId) {
-            const campaign = Campaign();
-            let overrides = campaign.get('playerspecificpages');
-            if (typeof overrides === 'string' && overrides) {
-                try { overrides = JSON.parse(overrides); } catch (_error) { overrides = null; }
-            }
-            if (overrides && typeof overrides === 'object' && overrides[playerId]) return String(overrides[playerId]);
-            return String(campaign.get('playerpageid') || '');
-        }
-
-        function pageName(pageId) {
-            const page = getObj('page', pageId);
-            return String(page?.get('name') || pageId || 'the Turn Tracker page');
-        }
-
-        function candidateFailureMessage(msg, snapshot) {
-            const selected = selectedTokenIds(msg);
-            if (selected.length) {
-                return 'The selected token is not an available token linked to a character controlled by you on this Turn Tracker page.';
-            }
-            const actualPlayerPage = playerPageId(msg.playerid);
-            if (!playerIsGM(msg.playerid) && actualPlayerPage && actualPlayerPage !== snapshot.pageId) {
-                return `The Turn Tracker is open on ${pageName(snapshot.pageId)}, but you are viewing a different page. Ask the GM to open the tracker on the encounter page.`;
-            }
-            const tokens = pageTokens(snapshot.pageId);
-            if (!tokens.length) {
-                return `No object-layer tokens were found on ${pageName(snapshot.pageId)}. Tokens do not need to be in the Turn Tracker yet.`;
-            }
-            const linked = tokens.filter(token => getObj('character', String(token.get('represents') || '')));
-            if (!linked.length) {
-                return `Tokens were found on ${pageName(snapshot.pageId)}, but none are linked to character sheets.`;
-            }
-            const controlled = linked.filter(token => {
-                const character = getObj('character', String(token.get('represents') || ''));
-                return playerControls(msg.playerid, token, character);
-            });
-            if (!controlled.length) {
-                return `Linked character tokens were found on ${pageName(snapshot.pageId)}, but none are controlled by you. Ask the GM to check the character's Controlled By setting.`;
-            }
-            return 'No eligible controlled character token could be selected. Select your token and try again.';
-        }
-
-        function controlledCandidates(msg, snapshot) {
-            const selected = selectedTokenIds(msg)
-                .map(id => getObj('graphic', id))
-                .filter(Boolean);
-            const includeGmLayer = playerIsGM(msg.playerid);
-            const source = selected.length ? selected : pageTokens(snapshot.pageId);
-            return source.filter(token => {
-                const character = getObj('character', String(token.get('represents') || ''));
-                return isInitiativeToken(token, snapshot.pageId, { includeGmLayer }) && character && playerControls(msg.playerid, token, character);
-            });
-        }
-
-        function optionSuffix(args = {}, overrides = {}) {
-            const mode = rollMode(overrides.mode ?? args.mode);
-            const adjustmentInput = overrides.adjust ?? args.adjust;
-            const adjustment = validateAdjustment(adjustmentInput);
-            let suffix = ` --mode ${mode}`;
-            if (typeof adjustmentInput === 'string' && /^\?\{.+\}$/.test(adjustmentInput)) {
-                suffix += ` --adjust ${adjustmentInput}`;
-            } else if (adjustment !== null && adjustment !== 0) {
-                suffix += ` --adjust ${adjustment}`;
-            }
-            if (args.flair) suffix += ' --flair';
-            return suffix;
-        }
-
-        function chooseToken(msg, args, command) {
-            const snapshot = trackerSnapshot(msg);
-            if (!snapshot) return null;
-            if (args.token) {
-                const token = getObj('graphic', String(args.token));
-                const character = token && getObj('character', String(token.get('represents') || ''));
-                if (!token || !character || !isInitiativeToken(token, snapshot.pageId, { includeGmLayer: playerIsGM(msg.playerid) }) || !playerControls(msg.playerid, token, character)) {
-                    warn(msg, 'That token is no longer available for this player on the active initiative page.');
-                    return null;
-                }
-                return { token, character, snapshot };
-            }
-            const candidates = controlledCandidates(msg, snapshot);
-            if (!candidates.length) {
-                warn(msg, candidateFailureMessage(msg, snapshot));
-                return null;
-            }
-            if (candidates.length === 1) {
-                const token = candidates[0];
-                return { token, character: getObj('character', String(token.get('represents') || '')), snapshot };
-            }
-            const buttons = candidates.slice(0, POLICY.initiative.maxPickerTokens).map(token => {
-                const label = token.get('name') || getObj('character', String(token.get('represents') || ''))?.get('name') || '(Unnamed token)';
-                return GameAssist.createButton(label, `${command} --token ${token.id}${optionSuffix(args)}`);
-            });
-            sendPanel('Choose a Character', [
-                { label: 'Who is rolling?', value: buttons.join(' ') },
-                { label: 'Note', value: candidates.length > buttons.length ? `Showing the first ${buttons.length} controlled tokens.` : 'Choose one token.' }
-            ], { msg });
-            return null;
-        }
-
-        function dieButtons(command, args, extra = '') {
-            const suffix = optionSuffix(args);
-            const common = [4, 6, 8, 10, 12].map(sides => GameAssist.createButton(`d${sides}`, `${command} ${extra}${sides}${suffix}`));
-            common.push(GameAssist.createButton('Custom', `${command} ${extra}?{Die sides|8}${suffix}`));
-            return common.join(' ');
-        }
-
-        function showOptions(msg, args) {
-            const choice = chooseToken(msg, args, '!Init-Options');
-            if (!choice) return;
-            if (validateAdjustment(args.adjust) === null) {
-                warn(msg, `The flat adjustment must be a number from ${POLICY.initiative.minAdjustment} to ${POLICY.initiative.maxAdjustment}.`);
-                return;
-            }
-            const tokenArg = `--token ${choice.token.id}`;
-            sendPanel('Initiative Roll Options', [
-                { label: 'Character', value: _sanitize(choice.token.get('name') || choice.character.get('name')) },
-                { label: 'Step 1 - D20 Roll', value: `${GameAssist.createButton('Normal', `!Init-Bonus ${tokenArg}${optionSuffix(args, { mode: 'normal' })}`)} ${GameAssist.createButton('Advantage', `!Init-Bonus ${tokenArg}${optionSuffix(args, { mode: 'adv' })}`)} ${GameAssist.createButton('Disadvantage', `!Init-Bonus ${tokenArg}${optionSuffix(args, { mode: 'dis' })}`)}` },
-                { label: 'Next', value: 'Choose how the d20 is rolled. The next screen adds a flat adjustment and up to two bonus dice without losing this choice.' }
-            ], { msg });
-        }
-
-        function modeLabel(mode) {
-            if (mode === 'adv') return 'Advantage';
-            if (mode === 'dis') return 'Disadvantage';
-            return 'Normal';
-        }
-
-        function adjustmentLabel(adjustment) {
-            if (!adjustment) return 'None';
-            return adjustment > 0 ? `+${adjustment}` : String(adjustment);
-        }
-
-        function showBonusOptions(msg, args) {
-            const choice = chooseToken(msg, args, '!Init-Bonus');
-            if (!choice) return;
-            const adjustment = validateAdjustment(args.adjust);
-            if (adjustment === null) {
-                warn(msg, `The flat adjustment must be a number from ${POLICY.initiative.minAdjustment} to ${POLICY.initiative.maxAdjustment}.`);
-                return;
-            }
-            const tokenArg = `--token ${choice.token.id}`;
-            const suffix = optionSuffix({ ...args, adjust: adjustment });
-            const changeAdjustment = `!Init-Bonus ${tokenArg}${optionSuffix(args, { adjust: '?{Flat initiative adjustment|0}' })}`;
-            const resetAdjustment = adjustment === 0
-                ? ''
-                : ` ${GameAssist.createButton('Reset', `!Init-Bonus ${tokenArg}${optionSuffix(args, { adjust: 0 })}`)}`;
-            sendPanel('Initiative Roll Options', [
-                { label: 'Character', value: _sanitize(choice.token.get('name') || choice.character.get('name')) },
-                { label: 'D20 Roll', value: `<strong>${modeLabel(rollMode(args.mode))}</strong> ${GameAssist.createButton('Change', `!Init-Options ${tokenArg}${optionSuffix(args)}`)}` },
-                { label: 'Flat Adjustment', value: `<strong>${adjustmentLabel(adjustment)}</strong> ${GameAssist.createButton('Change', changeAdjustment)}${resetAdjustment}` },
-                { label: 'Bonus Dice', value: `${GameAssist.createButton('Roll Now', `!Init-Roll ${tokenArg}${suffix}`)} ${GameAssist.createButton('Add One Die', `!Init-Die1 ${tokenArg}${suffix}`)} ${GameAssist.createButton('Add Two Dice', `!Init-Die2A ${tokenArg}${suffix}`)}` },
-                { label: 'How It Works', value: 'Your d20 choice, flat adjustment, and bonus dice are combined into one initiative roll.' }
-            ], { msg });
-        }
-
-        function showDieOne(msg, args) {
-            const choice = chooseToken(msg, args, '!Init-Die1');
-            if (!choice) return;
-            sendPanel('Add One Initiative Die', [
-                { label: 'Character', value: _sanitize(choice.token.get('name') || choice.character.get('name')) },
-                { label: 'Choose Die', value: dieButtons(`!Init-Roll --token ${choice.token.id} --extra`, args) }
-            ], { msg });
-        }
-
-        function showDieTwoFirst(msg, args) {
-            const choice = chooseToken(msg, args, '!Init-Die2A');
-            if (!choice) return;
-            sendPanel('Add Two Initiative Dice', [
-                { label: 'Character', value: _sanitize(choice.token.get('name') || choice.character.get('name')) },
-                { label: 'First Die', value: dieButtons(`!Init-Die2B --token ${choice.token.id} --first`, args) }
-            ], { msg });
-        }
-
-        function showDieTwoSecond(msg, args) {
-            const choice = chooseToken(msg, args, '!Init-Die2B');
-            if (!choice) return;
-            const first = validateDie(args.first);
-            if (first === null) {
-                warn(msg, 'Choose a valid first bonus die.');
-                return;
-            }
-            sendPanel('Add Two Initiative Dice', [
-                { label: 'Character', value: _sanitize(choice.token.get('name') || choice.character.get('name')) },
-                { label: 'First Die', value: `d${first}` },
-                { label: 'Second Die', value: dieButtons(`!Init-Roll --token ${choice.token.id} --extra`, args, `${first},`) }
-            ], { msg });
-        }
-
-        function validateDie(value) {
-            const parsed = Number(value);
-            if (!Number.isInteger(parsed)) return null;
-            if (parsed < POLICY.initiative.minCustomDieSize || parsed > POLICY.initiative.maxCustomDieSize) return null;
-            return parsed;
-        }
-
-        function validateExtras(value) {
-            if (value === true || value === undefined || value === null || value === '') return [];
-            const values = Array.isArray(value) ? value : String(value).split(',');
-            if (values.length > 2) return null;
-            const dice = values.map(validateDie);
-            return dice.some(die => die === null) ? null : dice;
-        }
-
-        function validateAdjustment(value) {
-            if (value === true || value === undefined || value === null || value === '') return 0;
-            const parsed = numeric(value);
-            if (parsed === null || parsed < POLICY.initiative.minAdjustment || parsed > POLICY.initiative.maxAdjustment) return null;
-            return parsed;
-        }
-
-        function rollMode(value) {
-            const mode = String(value || 'normal').toLowerCase();
-            if (['adv', 'advantage'].includes(mode)) return 'adv';
-            if (['dis', 'disadvantage'].includes(mode)) return 'dis';
-            return 'normal';
-        }
-
-        function buildFormula(modifier, mode, extras, adjustment = 0) {
-            const base = mode === 'adv' ? '2d20kh1' : (mode === 'dis' ? '2d20kl1' : '1d20');
-            const terms = [base, ...extras.map(sides => `1d${sides}`)];
-            if (modifier !== 0) terms.push(modifier);
-            if (adjustment !== 0) terms.push(adjustment);
-            return terms.reduce((formula, term, index) => {
-                if (index === 0) return String(term);
-                const value = numeric(term);
-                if (value !== null) return `${formula}${value >= 0 ? '+' : ''}${value}`;
-                return `${formula}+${term}`;
-            }, '');
-        }
-
-        function collectDiceResults(value, collected = []) {
-            if (Array.isArray(value)) {
-                value.forEach(item => collectDiceResults(item, collected));
-                return collected;
-            }
-            if (!value || typeof value !== 'object') return collected;
-            if (value.type === 'R' && Array.isArray(value.results)) {
-                value.results.forEach(result => {
-                    const rolled = numeric(result?.v);
-                    if (rolled !== null) collected.push(rolled);
-                });
-                return collected;
-            }
-            Object.values(value).forEach(item => collectDiceResults(item, collected));
-            return collected;
-        }
-
-        function rollFormula(formula, { hidden = false } = {}) {
-            return new Promise((resolve, reject) => {
-                const rollCommand = `${hidden ? '/w gm ' : ''}[[${formula}]]`;
-                sendChat(MODULE_NAME, rollCommand, operations => {
-                    const inline = operations?.[0]?.inlinerolls?.[0];
-                    const total = numeric(inline?.results?.total);
-                    if (total === null) {
-                        reject(new Error('Roll20 did not return a numeric initiative result.'));
-                        return;
-                    }
-                    resolve({
-                        total,
-                        formula: String(inline?.expression || formula),
-                        rolls: collectDiceResults(inline?.results?.rolls)
-                    });
-                }, { noarchive: hidden });
-            });
-        }
-
-        function displayFormula(formula) {
-            return String(formula || '').replace(/([+-])/g, ' $1 ').replace(/\s+/g, ' ').trim();
-        }
-
-        function formatRollSummary(rolled) {
-            const values = rolled.rolls.length ? rolled.rolls.join(', ') : 'not exposed by Roll20';
-            return `Roll(s) ${_sanitize(values)} &rarr; <strong>${_sanitize(rolled.total)}</strong> (from ${_sanitize(displayFormula(rolled.formula))})`;
-        }
-
-        function priorityList(entries, tokenId) {
-            return entries.filter(entry => String(entry?.id || '') === tokenId)
-                .map(entry => String(entry.pr ?? ''))
-                .sort();
-        }
-
-        function rowOwnsPage(entry, pageId) {
-            return String(entry?._pageid || '') === String(pageId || '');
-        }
-
-        function completeTokenRow(entry, pageId) {
-            entry._pageid = String(pageId || '');
-            if (!Object.prototype.hasOwnProperty.call(entry, 'custom')) entry.custom = '';
-            return entry;
-        }
-
-        function sameList(left, right) {
-            return left.length === right.length && left.every((value, index) => value === right[index]);
-        }
-
-        function sortRowsInSlots(entries, indices) {
-            const numericIndices = indices.filter(index => numeric(entries[index]?.pr) !== null);
-            const sorted = numericIndices.map(index => entries[index]).sort((left, right) => {
-                const difference = numeric(right.pr) - numeric(left.pr);
-                return difference || String(left.id || '').localeCompare(String(right.id || ''));
-            });
-            numericIndices.forEach((index, position) => { entries[index] = sorted[position]; });
-            return entries;
-        }
-
-        function priorityFingerprint(entries, tokenIds) {
-            const fingerprint = new Map();
-            tokenIds.forEach(tokenId => fingerprint.set(tokenId, priorityList(entries, tokenId)));
-            return fingerprint;
-        }
-
-        function prioritiesMatch(entries, fingerprint) {
-            return Array.from(fingerprint.entries()).every(([tokenId, priorities]) =>
-                sameList(priorities, priorityList(entries, tokenId))
-            );
-        }
-
-        function flairLine(name, total) {
-            const band = POLICY.initiative.flairBandMaximums.findIndex(maximum => total <= maximum);
-            const choices = RESULT_LINES[band === -1 ? RESULT_LINES.length - 1 : band];
-            return choices[Math.floor(Math.random() * choices.length)](name);
-        }
-
-        function shouldHideRoll(token, actorType) {
-            return String(token?.get('layer') || '').toLowerCase() === 'gmlayer' || (actorType === 'npc' && npcRollsHidden());
-        }
-
-        function announceRoll(token, actorType, rolled, flair, msg) {
-            const rawName = token.get('name') || getObj('character', String(token.get('represents') || ''))?.get('name') || 'A character';
-            const name = _sanitize(rawName);
-            const hidden = shouldHideRoll(token, actorType);
-            const fields = [
-                { label: 'Character', value: name },
-                { label: 'Result', value: formatRollSummary(rolled) }
-            ];
-            if (flair) fields.push({ label: 'Moment', value: _sanitize(flairLine(rawName, rolled.total)) });
-            sendPanel('Initiative Roll', fields, { msg, publicMessage: !hidden, gmOnly: hidden });
-        }
-
-        async function rollToken(msg, args) {
-            const choice = chooseToken(msg, args, '!Init-Roll');
-            if (!choice) return;
-            const actor = await resolveActor(choice.character, choice.token);
-            if (actor.initiativeModifier === null) {
-                warn(msg, actor.attention.join(' ') || 'Initiative modifier could not be resolved.');
-                return;
-            }
-            const health = deathState(choice.token, actor.type);
-            if (actor.type === 'npc' && (health.dead || health.mismatch)) {
-                warn(msg, health.mismatch ? 'This NPC has an HP/death-marker mismatch. Resolve it before rolling.' : 'This NPC is marked or recorded as dead.');
-                return;
-            }
-            const extras = validateExtras(args.extra);
-            if (extras === null) {
-                warn(msg, `Bonus dice must be whole-number sizes from ${POLICY.initiative.minCustomDieSize} to ${POLICY.initiative.maxCustomDieSize}.`);
-                return;
-            }
-            const adjustment = validateAdjustment(args.adjust);
-            if (adjustment === null) {
-                warn(msg, `The flat adjustment must be a number from ${POLICY.initiative.minAdjustment} to ${POLICY.initiative.maxAdjustment}.`);
-                return;
-            }
-            const mode = rollMode(args.mode);
-            const formula = buildFormula(actor.initiativeModifier, mode, extras, adjustment);
-            const initialRoster = await classifyRoster(choice.snapshot);
-            const safeSortIds = new Set(initialRoster.rows.filter(row => row.eligible).map(row => row.id));
-            safeSortIds.add(choice.token.id);
-            const initialPriorities = priorityFingerprint(choice.snapshot.entries, safeSortIds);
-            const rolled = await rollFormula(formula, { hidden: shouldHideRoll(choice.token, actor.type) });
-            const result = GameAssist.TurnTrackerService.apply((entries, current) => {
-                if (current.pageId !== choice.snapshot.pageId) {
-                    throw new Error('The active initiative page changed while initiative was rolling. Please try again.');
-                }
-                if (!prioritiesMatch(entries, initialPriorities)) {
-                    throw new Error('An eligible character\'s tracker entry changed while initiative was rolling. Please try again.');
-                }
-                const indices = [];
-                entries.forEach((entry, index) => {
-                    if (String(entry?.id || '') !== choice.token.id) return;
-                    entry.pr = String(rolled.total);
-                    completeTokenRow(entry, choice.snapshot.pageId);
-                    indices.push(index);
-                });
-                if (!indices.length) {
-                    entries.push(completeTokenRow({ id: choice.token.id, pr: String(rolled.total), custom: '' }, choice.snapshot.pageId));
-                }
-                const sortIndices = entries.reduce((owned, entry, index) => {
-                    if (safeSortIds.has(String(entry?.id || '')) && numeric(entry?.pr) !== null) owned.push(index);
-                    return owned;
-                }, []);
-                sortRowsInSlots(entries, sortIndices);
-                return { entries, meta: { tokenId: choice.token.id, total: rolled.total } };
-            }, { label: 'Initiative roll' });
-            if (!result.ok) {
-                warn(msg, result.message || 'The tracker changed before the roll could be saved. Please try again.');
-                return;
-            }
-            const storedRows = result.after.entries.filter(entry => String(entry?.id || '') === choice.token.id);
-            if (!storedRows.length || storedRows.some(entry =>
-                String(entry.pr ?? '') !== String(rolled.total) || !rowOwnsPage(entry, choice.snapshot.pageId)
-            )) {
-                warn(msg, 'Roll20 returned an initiative result, but the Turn Tracker did not retain it. Reopen the tracker on the encounter page and try again.');
-                return;
-            }
-            announceRoll(choice.token, actor.type, rolled, Boolean(args.flair), msg);
-        }
-
-        function rosterControlList(rows, suffix) {
-            const shown = rows.slice(0, POLICY.initiative.maxPickerTokens).map(row => {
-                if (!row.eligible) return `${_sanitize(row.label)} <em>(needs attention)</em>`;
-                return GameAssist.createButton(row.label, `!Init-Roll --token ${row.id}${suffix}`);
-            });
-            if (rows.length > shown.length) shown.push(`+${rows.length - shown.length} more`);
-            return shown.length ? shown.join(' ') : 'None found';
-        }
-
-        async function callForInitiative(msg, flair, gmOnly = false) {
-            if (!requireGm(msg) || !requireManager(msg)) return;
-            const snapshot = trackerSnapshot(msg);
-            if (!snapshot) return;
-            const call = flair ? CALLS[Math.floor(Math.random() * CALLS.length)] : 'Roll for Initiative.';
-            const suffix = flair ? ' --flair' : '';
-            sendPanel(flair ? 'The Encounter Begins' : 'Roll for Initiative', [
-                { label: 'Call', value: _sanitize(call) },
-                { label: 'Players', value: `${GameAssist.createButton('Roll Initiative', `!Init-Roll${suffix}`)} ${GameAssist.createButton('Roll Selected', `!Init-Roll-Selected${suffix}`)} ${GameAssist.createButton('Roll Options', `!Init-Options${suffix}`)}` }
-            ], gmOnly ? { msg, gmOnly: true } : { publicMessage: true });
-            const pageRoster = await classifyPageRoster(snapshot, { includeGmLayer: true });
-            const pcs = pageRoster.rows.filter(row => row.layer === 'objects' && row.actorType === 'pc');
-            const npcs = pageRoster.rows.filter(row => row.layer === 'objects' && row.actorType === 'npc');
-            const gmNpcs = pageRoster.rows.filter(row => row.layer === 'gmlayer' && row.actorType === 'npc');
-            const ready = pageRoster.rows.filter(row => row.layer === 'objects' && row.eligible);
-            const readyNpcs = npcs.filter(row => row.eligible);
-            const readyGmNpcs = gmNpcs.filter(row => row.eligible);
-            sendPanel('GM Initiative Roster', [
-                { label: 'Encounter', value: _sanitize(pageName(snapshot.pageId)) },
-                { label: `Player Characters (${pcs.length})`, value: rosterControlList(pcs, suffix) },
-                { label: `Object-Layer NPCs (${npcs.length})`, value: rosterControlList(npcs, suffix) },
-                { label: `GM-Layer NPCs (${gmNpcs.length})`, value: rosterControlList(gmNpcs, suffix) },
-                { label: 'Quick Actions', value: `${GameAssist.createButton(`Everyone (${ready.length})`, `!Init-Start --scope all${suffix}`)} ${GameAssist.createButton(`Object NPCs (${readyNpcs.length})`, `!Init-Start --scope npc${suffix}`)} ${GameAssist.createButton(`GM-Layer NPCs (${readyGmNpcs.length})`, `!Init-Start --scope gm-npc${suffix}`)} ${GameAssist.createButton(`All NPCs (${readyNpcs.length + readyGmNpcs.length})`, `!Init-Start --scope all-npc${suffix}`)}` },
-                { label: 'NPC Privacy', value: `${npcRollsHidden() ? 'Object-layer NPC details are hidden.' : 'Object-layer NPC details are public.'} GM-layer NPC details always stay private. ${GameAssist.createButton(npcRollsHidden() ? 'Make Object NPCs Public' : 'Hide Object NPCs', `!Init-NPC-Rolls ${npcRollsHidden() ? 'public' : 'hidden'}`)}` },
-                { label: 'What These Do', value: 'Individual and batch buttons add missing living characters to Turn Order or update their existing initiative. Dead NPCs and items needing attention are left unchanged.' },
-                { label: 'GameAssist', value: gameAssistHomeButton() }
-            ], { msg, gmOnly: true });
-        }
-
-        async function rollPageRoster(msg, args) {
-            const snapshot = trackerSnapshot(msg);
-            if (!snapshot) return;
-            const scope = String(args.scope || 'all').toLowerCase();
-            const validScopes = new Set(['all', 'npc', 'gm-npc', 'all-npc', 'selected']);
-            if (!validScopes.has(scope)) {
-                warn(msg, 'Choose all, npc, gm-npc, all-npc, or selected for the initiative batch.');
-                return;
-            }
-            const gm = playerIsGM(msg.playerid);
-            if (!gm && scope !== 'selected') {
-                warn(msg, 'Only the GM can roll an encounter-wide initiative batch.');
-                return;
-            }
-            const includeGmLayer = gm && ['gm-npc', 'all-npc', 'selected'].includes(scope);
-            const pageRoster = await classifyPageRoster(snapshot, { includeGmLayer });
-            const selected = new Set(selectedTokenIds(msg));
-            const targets = pageRoster.rows.filter(row => {
-                if (!row.eligible) return false;
-                if (scope === 'selected') {
-                    return selected.has(row.id) && playerControls(msg.playerid, row.token, row.character);
-                }
-                if (scope === 'all') return row.layer === 'objects';
-                if (scope === 'npc') return row.layer === 'objects' && row.actorType === 'npc';
-                if (scope === 'gm-npc') return row.layer === 'gmlayer' && row.actorType === 'npc';
-                return row.actorType === 'npc';
-            });
-            const byToken = new Map();
-            targets.forEach(row => { if (!byToken.has(row.id)) byToken.set(row.id, row); });
-            if (!byToken.size) {
-                const messages = {
-                    npc: 'No eligible living object-layer NPCs were found on this encounter page.',
-                    'gm-npc': 'No eligible living NPCs were found on the GM layer of this encounter page.',
-                    'all-npc': 'No eligible living NPCs were found on the object or GM layer of this encounter page.',
-                    selected: selected.size
-                        ? 'None of the selected tokens are eligible linked characters controlled by you on this encounter page.'
-                        : 'Select one or more controlled character tokens, then choose Roll Selected.'
-                };
-                warn(msg, messages[scope] || 'No eligible PCs or living NPCs were found on this encounter page.');
-                return;
-            }
-            if (byToken.size > POLICY.initiative.maxBatchTokens) {
-                warn(msg, `This initiative batch contains ${byToken.size} characters; the safe limit is ${POLICY.initiative.maxBatchTokens}.`);
-                return;
-            }
-            const initialTracker = await classifyRoster(snapshot);
-            const safeSortIds = new Set(initialTracker.rows.filter(row => row.eligible).map(row => row.id));
-            byToken.forEach((_row, tokenId) => safeSortIds.add(tokenId));
-            const initialPriorities = new Map();
-            byToken.forEach((_row, tokenId) => initialPriorities.set(tokenId, priorityList(snapshot.entries, tokenId)));
-            const extras = validateExtras(args.extra);
-            const adjustment = validateAdjustment(args.adjust);
-            if (extras === null || adjustment === null) {
-                warn(msg, 'The selected batch contains an invalid flat adjustment or bonus die.');
-                return;
-            }
-            const mode = rollMode(args.mode);
-            const rolls = await Promise.all(Array.from(byToken.entries()).map(async ([tokenId, row]) => [
-                tokenId,
-                await rollFormula(buildFormula(row.modifier, mode, extras, adjustment), {
-                    hidden: shouldHideRoll(row.token, row.actorType)
-                })
-            ]));
-            const rolledByToken = new Map(rolls);
-            const result = GameAssist.TurnTrackerService.apply((entries, current) => {
-                if (current.pageId !== snapshot.pageId) {
-                    throw new Error('The active initiative page changed while the encounter roll was resolving. No results were saved; try again.');
-                }
-                byToken.forEach((_row, tokenId) => {
-                    if (!sameList(initialPriorities.get(tokenId), priorityList(entries, tokenId))) {
-                        throw new Error('One or more target initiatives changed while the encounter roll was resolving. No results were saved; try again.');
-                    }
-                });
-                const activeTargets = new Set();
-                byToken.forEach((row, tokenId) => {
-                    const token = getObj('graphic', tokenId);
-                    if (!isInitiativeToken(token, snapshot.pageId, { includeGmLayer: row.layer === 'gmlayer' })) return;
-                    const characterId = String(token.get('represents') || '');
-                    const character = characterId ? getObj('character', characterId) : null;
-                    if (!character || character.id !== row.character?.id || !playerControls(msg.playerid, token, character)) return;
-                    const health = deathState(token, row.actorType);
-                    if (row.actorType === 'npc' && (health.dead || health.mismatch)) return;
-                    activeTargets.add(tokenId);
-                    const matching = entries.filter(entry => String(entry?.id || '') === tokenId);
-                    if (matching.length) {
-                        matching.forEach(entry => {
-                            entry.pr = String(rolledByToken.get(tokenId).total);
-                            completeTokenRow(entry, snapshot.pageId);
-                        });
-                    } else {
-                        entries.push(completeTokenRow({
-                            id: tokenId,
-                            pr: String(rolledByToken.get(tokenId).total),
-                            custom: ''
-                        }, snapshot.pageId));
-                    }
-                });
-                const sortIndices = entries.reduce((owned, entry, index) => {
-                    if (safeSortIds.has(String(entry?.id || '')) && numeric(entry?.pr) !== null) owned.push(index);
-                    return owned;
-                }, []);
-                sortRowsInSlots(entries, sortIndices);
-                return { entries, meta: { tokenIds: Array.from(activeTargets) } };
-            }, { label: 'Encounter initiative roll' });
-            if (!result.ok) {
-                warn(msg, result.message || 'The Turn Tracker changed before the encounter rolls could be saved. Please try again.');
-                return;
-            }
-            const updatedIds = Array.isArray(result.meta?.tokenIds) ? result.meta.tokenIds : [];
-            const incomplete = updatedIds.filter(tokenId => {
-                const total = String(rolledByToken.get(tokenId)?.total ?? '');
-                const rows = result.after.entries.filter(entry => String(entry?.id || '') === tokenId);
-                return !rows.length || rows.some(entry => String(entry.pr ?? '') !== total || !rowOwnsPage(entry, snapshot.pageId));
-            });
-            if (incomplete.length) {
-                warn(msg, 'Roll20 returned initiative results, but one or more Turn Order rows were incomplete. Reopen the tracker on the encounter page and try again.');
-                return;
-            }
-            const resultLines = tokenIds => {
-                const lines = tokenIds.slice(0, POLICY.initiative.statusChatLimit).map(tokenId => {
-                    const row = byToken.get(tokenId);
-                    const rolled = rolledByToken.get(tokenId);
-                    const moment = args.flair ? `<br><em>${_sanitize(flairLine(row?.label || tokenId, rolled.total))}</em>` : '';
-                    return `<strong>${_sanitize(row?.label || tokenId)}</strong>: ${formatRollSummary(rolled)}${moment}`;
-                });
-                if (tokenIds.length > lines.length) lines.push(`+${tokenIds.length - lines.length} more`);
-                return lines;
-            };
-            const sendResults = (tokenIds, options) => sendPanel(scope === 'selected' ? 'Selected Initiative Rolled' : 'Encounter Initiative Rolled', [
-                { label: 'Added or Updated', value: `${tokenIds.length} character${tokenIds.length === 1 ? '' : 's'}` },
-                { label: 'Results', value: resultLines(tokenIds).join('<br>') },
-                { label: 'Preserved', value: 'Custom rows, counters, objects, dead NPCs, and attention items were not changed.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Status', '!Init-Status')} ${GameAssist.createButton('Reroll Choices', '!Init-RR-Menu')}` }
-            ], options);
-            if (gm || scope !== 'selected') {
-                sendResults(updatedIds, { msg, gmOnly: true });
-                return;
-            }
-            const publicIds = updatedIds.filter(tokenId => {
-                const row = byToken.get(tokenId);
-                return !shouldHideRoll(row?.token, row?.actorType);
-            });
-            const privateIds = updatedIds.filter(tokenId => !publicIds.includes(tokenId));
-            if (publicIds.length) sendResults(publicIds, { msg, publicMessage: true });
-            if (privateIds.length) {
-                sendResults(privateIds, { msg, gmOnly: true });
-                sendPanel('Selected Initiative Rolled', [
-                    { label: 'Private Results', value: `${privateIds.length} NPC result${privateIds.length === 1 ? ' was' : 's were'} sent only to the GM.` }
-                ], { msg });
-            }
-        }
-
-        function targetRows(roster, request) {
-            const selected = request.ids || new Set();
-            return roster.rows.filter(row => {
-                if (!row.eligible) return false;
-                if (request.scope === 'pc') return row.actorType === 'pc';
-                if (request.scope === 'npc') return row.actorType === 'npc';
-                if (request.scope === 'selected' || request.scope === 'group' || request.scope === 'token') return selected.has(row.id);
-                return true;
-            });
-        }
-
-        async function reroll(msg, request) {
-            const snapshot = trackerSnapshot(msg);
-            if (!snapshot) return;
-            const roster = await classifyRoster(snapshot);
-            const rows = targetRows(roster, request);
-            const byToken = new Map();
-            rows.forEach(row => { if (!byToken.has(row.id)) byToken.set(row.id, row); });
-            if (!byToken.size) {
-                warn(msg, 'No eligible PCs or living NPCs matched that reroll choice.');
-                return;
-            }
-            if (byToken.size > POLICY.initiative.maxBatchTokens) {
-                warn(msg, `This reroll contains ${byToken.size} characters; the safe limit is ${POLICY.initiative.maxBatchTokens}.`);
-                return;
-            }
-            const initialPriorities = new Map();
-            byToken.forEach((row, tokenId) => initialPriorities.set(tokenId, priorityList(snapshot.entries, tokenId)));
-            const rolls = await Promise.all(Array.from(byToken.entries()).map(async ([tokenId, row]) => {
-                const result = await rollFormula(buildFormula(row.modifier, 'normal', []), {
-                    hidden: shouldHideRoll(row.token, row.actorType)
-                });
-                return [tokenId, result];
-            }));
-            const rolledByToken = new Map(rolls);
-            const totals = new Map(rolls.map(([tokenId, rolled]) => [tokenId, rolled.total]));
-            const result = GameAssist.TurnTrackerService.apply((entries, current) => {
-                if (current.pageId !== snapshot.pageId) {
-                    throw new Error('The active initiative page changed while the reroll was resolving. No reroll was saved; try again.');
-                }
-                totals.forEach((total, tokenId) => {
-                    if (!sameList(initialPriorities.get(tokenId), priorityList(entries, tokenId))) {
-                        throw new Error('One or more target initiatives changed while the reroll was resolving. No reroll was saved; try again.');
-                    }
-                });
-                const activeTargets = new Set();
-                byToken.forEach((row, tokenId) => {
-                    const token = getObj('graphic', tokenId);
-                    if (!token) return;
-                    const health = deathState(token, row.actorType);
-                    if (row.actorType === 'npc' && (health.dead || health.mismatch)) return;
-                    activeTargets.add(tokenId);
-                });
-                const indices = [];
-                entries.forEach((entry, index) => {
-                    const tokenId = String(entry?.id || '');
-                    if (!activeTargets.has(tokenId)) return;
-                    entry.pr = String(totals.get(tokenId));
-                    indices.push(index);
-                });
-                sortRowsInSlots(entries, indices);
-                return { entries, meta: { count: activeTargets.size, tokenIds: Array.from(activeTargets) } };
-            }, { label: 'Initiative reroll' });
-            if (!result.ok) {
-                warn(msg, result.message || 'The tracker changed before the reroll could be saved. Please try again.');
-                return;
-            }
-            const reportedCount = Number(result.meta?.count);
-            const updated = Number.isFinite(reportedCount) ? reportedCount : byToken.size;
-            const updatedIds = Array.isArray(result.meta?.tokenIds) ? result.meta.tokenIds : Array.from(byToken.keys());
-            const resultLines = updatedIds.slice(0, POLICY.initiative.statusChatLimit).map(tokenId => {
-                const row = byToken.get(tokenId);
-                const rolled = rolledByToken.get(tokenId);
-                return `<strong>${_sanitize(row?.label || tokenId)}</strong>: ${formatRollSummary(rolled)}`;
-            });
-            if (updatedIds.length > resultLines.length) {
-                resultLines.push(`+${updatedIds.length - resultLines.length} more; open Initiative Status for the complete tracker.`);
-            }
-            sendPanel('Initiative Rerolled', [
-                { label: 'Updated', value: `${updated} character${updated === 1 ? '' : 's'}` },
-                { label: 'Results', value: resultLines.length ? resultLines.join('<br>') : 'No eligible rows remained when the rolls completed.' },
-                { label: 'Preserved', value: 'Custom rows, counters, objects, dead NPCs, and attention rows stayed in place.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Reroll Choices', '!Init-RR-Menu')} ${GameAssist.createButton('Status', '!Init-Status')}` }
-            ], { msg, gmOnly: true });
-            const skipped = roster.rows.filter(row => !row.eligible && (row.actorType === 'pc' || row.actorType === 'npc' || row.actorType === 'character-attention'));
-            if (skipped.length) {
-                sendPanel('Initiative Attention', [{
-                    label: 'Not Rerolled',
-                    value: skipped.slice(0, POLICY.initiative.statusChatLimit).map(row => _sanitize(row.label)).join(', ')
-                }], { msg, gmOnly: true });
-            }
-        }
-
-        function queueReroll(msg, request) {
-            if (!requireGm(msg) || !requireManager(msg)) return;
-            GameAssist.enqueue(() => reroll(msg, request), { timeout: POLICY.queue.defaultTimeoutMs });
-        }
-
-        async function showRerollMenu(msg) {
-            const snapshot = trackerSnapshot(msg);
-            if (!snapshot) return;
-            const roster = await classifyRoster(snapshot);
-            const counts = rosterCounts(roster);
-            const individual = roster.rows.filter(row => row.eligible).slice(0, POLICY.initiative.statusChatLimit)
-                .map(row => GameAssist.createButton(row.label, `!Init-RR-Token --token ${row.id}`));
-            const groupButtons = Object.values(groups)
-                .filter(group => !group.pageId || group.pageId === snapshot.pageId)
-                .map(group => GameAssist.createButton(group.name, `!Init-RR-Group --group ${group.id}`));
-            sendPanel('Initiative Reroll Choices', [
-                { label: 'Quick Choices', value: `${GameAssist.createButton(`All (${counts.eligible})`, '!Init-RR')} ${GameAssist.createButton(`PCs (${counts.pc})`, '!Init-RR-PCs')} ${GameAssist.createButton(`Living NPCs (${Math.max(0, counts.npc - counts.dead)})`, '!Init-RR-NPCs')} ${GameAssist.createButton('Selected', '!Init-RR-Selected')}` },
-                { label: 'Individuals', value: individual.length ? individual.join(' ') : 'No eligible characters.' },
-                { label: 'Groups', value: groupButtons.length ? groupButtons.join(' ') : `${GameAssist.createButton('Create a Group', '!Init-Group')}` },
-                { label: 'Next Step', value: `${GameAssist.createButton('Manage Groups', '!Init-Group')} ${GameAssist.createButton('Control Center', '!Init-Menu')}` }
-            ], { msg, gmOnly: true });
-        }
-
-        function groupId() {
-            return `group-${now().toString(36)}-${Math.floor(Math.random() * 0x10000).toString(36)}`;
-        }
-
-        function groupName(raw) {
-            const value = String(raw || '').trim();
-            if (!value || value.length > POLICY.initiative.maxGroupNameLength) return null;
-            return value;
-        }
-
-        function groupQueryText(raw) {
-            return String(raw || '').replace(/[|{}?"]/g, ' ').replace(/\s+/g, ' ').trim() || 'Group';
-        }
-
-        function showGroups(msg, sourceSnapshot = null) {
-            const snapshot = sourceSnapshot || trackerSnapshot(msg);
-            if (!snapshot) return;
-            const pageGroups = Object.values(groups).filter(group => !group.pageId || group.pageId === snapshot.pageId);
-            const rows = pageGroups.map(group => [
-                `<strong>${_sanitize(group.name)}</strong> (${group.tokenIds.length})`,
-                GameAssist.createButton('Reroll', `!Init-RR-Group --group ${group.id}`),
-                GameAssist.createButton('Rename', `!Init-Group --rename ${group.id} --name "?{New group name|${groupQueryText(group.name)}}"`),
-                GameAssist.createButton('Remove', `!Init-Group --remove ${group.id}`)
-            ].join(' '));
-            sendPanel('Initiative Groups', [
-                { label: 'Create', value: `${GameAssist.createButton('Create From Selected', '!Init-Group --create "?{Group name|Enemies}"')} Select tracker tokens first.` },
-                { label: 'This Encounter', value: rows.length ? rows.join('<br>') : 'No groups are saved for this Turn Tracker page.' },
-                { label: 'Next Step', value: `${GameAssist.createButton('Reroll Choices', '!Init-RR-Menu')} ${GameAssist.createButton('Control Center', '!Init-Menu')}` }
-            ], { msg, gmOnly: true });
-        }
-
-        function handleGroup(msg, args) {
-            if (!requireGm(msg)) return;
-            const snapshot = trackerSnapshot(msg);
-            if (!snapshot) return;
-            if (args.remove) {
-                const group = groups[String(args.remove)];
-                if (!group || (group.pageId && group.pageId !== snapshot.pageId)) {
-                    warn(msg, 'That group does not belong to the current Turn Tracker page.');
-                    return;
-                }
-                delete groups[group.id];
-                showGroups(msg, snapshot);
-                return;
-            }
-            if (args.rename) {
-                const group = groups[String(args.rename)];
-                if (!group || (group.pageId && group.pageId !== snapshot.pageId)) {
-                    warn(msg, 'That group does not belong to the current Turn Tracker page.');
-                    return;
-                }
-                const name = groupName(args.name);
-                if (!name) {
-                    warn(msg, `Group names must be 1-${POLICY.initiative.maxGroupNameLength} characters.`);
-                    return;
-                }
-                group.name = name;
-                group.pageId = snapshot.pageId;
-                showGroups(msg, snapshot);
-                return;
-            }
-            if (args.create) {
-                const name = groupName(args.create);
-                if (!name) {
-                    warn(msg, `Group names must be 1-${POLICY.initiative.maxGroupNameLength} characters.`);
-                    return;
-                }
-                if (Object.keys(groups).length >= POLICY.initiative.maxGroups) {
-                    warn(msg, `InitiativeAssist keeps at most ${POLICY.initiative.maxGroups} encounter groups.`);
-                    return;
-                }
-                const trackerIds = new Set(snapshot.entries.map(entry => String(entry?.id || '')));
-                const ids = selectedTokenIds(msg).filter(id => trackerIds.has(id));
-                const unique = Array.from(new Set(ids));
-                if (!unique.length) {
-                    warn(msg, 'Select one or more token entries already in the Turn Tracker, then create the group.');
-                    return;
-                }
-                const id = groupId();
-                groups[id] = { id, name, pageId: snapshot.pageId, tokenIds: unique, createdAt: isoNow() };
-            }
-            showGroups(msg, snapshot);
-        }
-
-        function setNpcRollVisibility(msg) {
-            if (!requireGm(msg)) return;
-            const requested = String(msg.content || '').trim().split(/\s+/)[1]?.toLowerCase();
-            if (!['hidden', 'public'].includes(requested)) {
-                warn(msg, 'Choose hidden or public for object-layer NPC initiative rolls. GM-layer NPC rolls always remain hidden.');
-                return;
-            }
-            modState.config.hideNpcRolls = requested === 'hidden';
-            runAsync(() => showMenu(msg));
-        }
-
-        function parseCommand(msg) {
-            const first = String(msg.content || '').trim().split(/\s+/)[0];
-            const rest = String(msg.content || '').trim().slice(first.length).trim();
-            return { command: first.toLowerCase(), rest, args: _parseArgs(rest).args || {} };
-        }
-
-        function handleCommand(msg) {
-            const { command, rest, args } = parseCommand(msg);
-            switch (command) {
-                case '!init-menu':
-                    if (requireGm(msg)) runAsync(() => showMenu(msg));
-                    return;
-                case '!init-guide':
-                case '!init-help':
-                    showHelp(msg, rest);
-                    return;
-                case '!init-info':
-                case '!init-about':
-                    showInitiativeInfo(msg);
-                    return;
-                case '!init-manual':
-                    writeInitiativeManual(msg);
-                    return;
-                case '!init-status':
-                    if (requireGm(msg)) runAsync(() => showStatus(msg));
-                    return;
-                case '!init-audit':
-                    if (requireGm(msg)) runAsync(() => showReview(msg));
-                    return;
-                case '!init-go':
-                    runAsync(() => callForInitiative(msg, false));
-                    return;
-                case '!init-go!':
-                    runAsync(() => callForInitiative(msg, true));
-                    return;
-                case '!init-gm':
-                case '!init-dm':
-                    runAsync(() => callForInitiative(msg, false, true));
-                    return;
-                case '!init-start':
-                    if (requireGm(msg) && requireManager(msg)) {
-                        GameAssist.enqueue(() => rollPageRoster(msg, args), { timeout: POLICY.queue.defaultTimeoutMs });
-                    }
-                    return;
-                case '!init-roll-selected':
-                    if (requireManager(msg)) {
-                        GameAssist.enqueue(() => rollPageRoster(msg, { ...args, scope: 'selected' }), { timeout: POLICY.queue.defaultTimeoutMs });
-                    }
-                    return;
-                case '!init-roll':
-                    if (requireManager(msg)) GameAssist.enqueue(() => rollToken(msg, args));
-                    return;
-                case '!init-options':
-                    if (requireManager(msg)) showOptions(msg, args);
-                    return;
-                case '!init-bonus':
-                    if (requireManager(msg)) showBonusOptions(msg, args);
-                    return;
-                case '!init-die1':
-                    if (requireManager(msg)) showDieOne(msg, args);
-                    return;
-                case '!init-die2a':
-                    if (requireManager(msg)) showDieTwoFirst(msg, args);
-                    return;
-                case '!init-die2b':
-                    if (requireManager(msg)) showDieTwoSecond(msg, args);
-                    return;
-                case '!init-rr':
-                    queueReroll(msg, { scope: 'all' });
-                    return;
-                case '!init-rr-pcs':
-                    queueReroll(msg, { scope: 'pc' });
-                    return;
-                case '!init-rr-npcs':
-                    queueReroll(msg, { scope: 'npc' });
-                    return;
-                case '!init-rr-selected':
-                    queueReroll(msg, { scope: 'selected', ids: new Set(selectedTokenIds(msg)) });
-                    return;
-                case '!init-rr-token':
-                    queueReroll(msg, { scope: 'token', ids: new Set(args.token ? [String(args.token)] : []) });
-                    return;
-                case '!init-rr-group': {
-                    const group = groups[String(args.group || '')];
-                    queueReroll(msg, { scope: 'group', ids: new Set(group?.tokenIds || []) });
-                    return;
-                }
-                case '!init-rr-menu':
-                    if (requireGm(msg) && requireManager(msg)) runAsync(() => showRerollMenu(msg));
-                    return;
-                case '!init-group':
-                    handleGroup(msg, args);
-                    return;
-                case '!init-mode':
-                    if (!requireGm(msg)) return;
-                    modState.config.mode = String(Object.keys(args)[0] || '').toLowerCase() === 'observer' || /observer/i.test(msg.content)
-                        ? 'observer'
-                        : 'manager';
-                    runAsync(() => showMenu(msg));
-                    return;
-                case '!init-npc-rolls':
-                    setNpcRollVisibility(msg);
-                    return;
-                default:
-                    warn(msg, `Unknown InitiativeAssist command. ${GameAssist.createButton('Open Help', '!Init-Help')}`);
-            }
-        }
-
-        GameAssist.TurnTrackerService.clearObservers(MODULE_NAME);
-        GameAssist.TurnTrackerService.observe(event => {
-            modState.runtime.lastTrackerRevision = event.current?.revision || null;
-            modState.runtime.lastTrackerUpdate = event.timestamp || isoNow();
-        }, { owner: MODULE_NAME });
-
-        GameAssist.InitiativeAssist = Object.freeze({
-            version: MODULE_VERSION,
-            getRoster: async () => {
-                const snapshot = GameAssist.TurnTrackerService.snapshot();
-                return snapshot.ok ? classifyRoster(snapshot) : snapshot;
-            }
-        });
-
-        GameAssist.onCommand('!Init-', handleCommand, MODULE_NAME, {
-            match: { caseInsensitive: true, mode: 'prefix' }
-        });
-        GameAssist.log(MODULE_NAME, 'Ready: !Init-Menu, !Init-Go, !Init-GM/DM, and !Init-RR.', 'INFO', { startup: true });
-    }, {
-        enabled: false,
-        prefixes: ['!Init-'],
-        dependsOn: ['TurnTrackerService'],
-        preserveRuntimeOnDisable: true,
-        teardown: () => GameAssist.TurnTrackerService.clearObservers('InitiativeAssist')
-    });
-    // --- Notes & Comments ---
-    // Changed (v2.0.0): Added the standard GameAssist Home return to the private InitiativeAssist GM/DM start roster.
-    // Changed (v0.1.7.0): Advanced InitiativeAssist to 1.0.4; !Init-GM and !Init-DM are equal role aliases for the private initiative-start roster, with Guide/Help, Info, Manual, and complete layered navigation preserved.
-    // Decision log:
-    //   CHOICE: Reuse the ordinary neutral invitation and roster path for !Init-GM - ALT: maintain a second GM dashboard implementation; REJECTED: duplicated controls would drift from !Init-Go.
-    //   CHOICE: Start disabled but default to Manager mode once deliberately enabled - ALT: require a second ownership toggle; REJECTED: unnecessary setup friction after explicit module enablement.
-    //   CHOICE: Roll once per unique token and update duplicate occurrences consistently - ALT: roll every duplicate separately; REJECTED: duplicate turns still represent one character unless a later feature explicitly says otherwise.
-    //   CHOICE: Sort only inside owned character slots - ALT: globally sort every tracker row; REJECTED: custom counters and external entries must not move.
-    //   CHOICE: Show both d20s for advantage/disadvantage plus Roll20's other exposed dice, total, and formula after verifying a page-owned tracker row - ALT: announce only the total or accept stored JSON without page ownership; REJECTED: a convincing chat result must not conceal a row the native tracker cannot display.
-    //   CHOICE: Keep rerolls manual in 1.0.0 - ALT: automatic round-boundary policies; REJECTED: round ownership belongs to deferred CombatAssist.
-    //   CHOICE: Stage d20 mode, flat adjustment, and generic extra-die controls while carrying every prior choice forward - ALT: make these mutually exclusive or encode named spell and feature rules; REJECTED: campaign effects can combine and their rules vary.
-    //   CHOICE: Select optional result prose from score bands - ALT: use one unrelated random pool; REJECTED: the narration should fit the actual degree of readiness.
-    //   CHOICE: Whisper the GM a current-page roster and bounded batch controls after the public call - ALT: require every participant to roll separately; REJECTED: the GM needs a quick way to fill mixed PC/NPC encounters without macros.
-    //   CHOICE: Hide NPC roll evidence by default and always hide GM-layer NPC rolls - ALT: expose every inline roll publicly; REJECTED: initiative should not reveal concealed modifiers, bonus dice, or hidden encounter actors.
-    //   CHOICE: Revalidate every selected token's page, linkage, control, and eligibility at execution time - ALT: trust selection identifiers captured by a chat button; REJECTED: players must never roll an uncontrolled or stale token through a batch command.
-    //   CHOICE: Keep the detailed review in private chat - ALT: create a persistent initiative handout; REJECTED: initiative state is short-lived and the handout added campaign clutter without preserving a useful historical record.
-    // Prior notes:
-    //   v0.1.7.0: Added CombatAssist lifecycle and active-encounter state to the expanded Turn Tracker health details.
-    //   v0.1.7.0 / InitiativeAssist 1.0.2: Replaced the long single-screen guide with a compact action panel whose topic buttons reveal the detailed reference only when requested.
-    //   v0.1.5.0: Advanced unreleased TokenAssist to 1.0.1; added canonical !token-assist, !ta, and !ta-* mutation commands, explicitly deprecated !token-mod for removal no later than v0.2.0, normalized aura option and literal color values, added number-blank aura toggles, and limited lastmove trails to the current command so movement does not reconnect to an old origin.
-    //   v0.1.5.0: Advanced unreleased ConditionAssist to 1.0.1 with accurate selected-token condition recognition, a bounded GM current-page condition/marker status view plus complete status handout, case-insensitive !cond-[condition] references for official/custom definitions, !c-a and !cond-! announcement aliases, complete 2014/2024/campaign wording, built-in/custom marker artwork, selected-character announcements that toggle and verify marker state, character-first is/is-no-longer reporting, Concentrating display-name repair, documented Roll20 player-name lookup for private delivery, bounded private-reference buttons, duplicate-marker warnings, schema-v2 import/export, and automatic repair of untouched 1.0.0 defaults.
-    //   v0.1.7.0: Clarified that CombatAssist owns explicit encounter and round observation while InitiativeAssist remains the initiative-rules owner; runtime behavior was unchanged.
-    //   v0.1.6.0: Added TurnTrackerService availability and InitiativeAssist mode/lifecycle details to the expanded health panel.
-    //   v0.1.6.1: Advanced InitiativeAssist to 1.0.1, added !Init-GM, restored the curated original initiative-call library, and made linked-character control authoritative over stale token-level assignments.
-    //   v0.1.6.0: Added mixed D&D 2014/2024 adapters, native page-owned tracker rows, player and GM roster controls, private NPC evidence, composable roll options, score-banded flair, selected and grouped rerolls, and preservation-first writes through TurnTrackerService.
-    // [GAMEASSIST:MODULES:INITIATIVEASSIST] END
-    // =============================================================================
-
-    // ————— COMBATASSIST MODULE v1.1.0 —————
-    // =============================================================================
-    // [GAMEASSIST:MODULES:COMBATASSIST] BEGIN
-    // Section Title: Preservation-first encounter flow
-    // -------------------------------------------------------------------------
-    // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:COMBATASSIST", title: "CombatAssist",
-    //   guarantees: ["Disabled-by-default, GM-configured encounter tracking through case-insensitive !Combat- commands","Exact one-row movement advances turns while valid roster, initiative, and manual-order changes preserve the round and establish a fresh counting baseline","A single clearly named native custom round counter is authoritative; its simple signed whole-number calculation is evaluated when CombatAssist moves it to the top","Without a native round counter, rounds advance only after an uninterrupted, unambiguous forward cycle returns to the encounter anchor","Unreadable, off-page, malformed, stale, or ambiguous tracker states retain the last accepted snapshot and expose guarded recovery","Explicit next, previous, restore, and authorized End My Turn requests use CORE:TURNTRACKERSERVICE revision guards","Verified encounter transitions publish immutable semantic events without granting consumers tracker-write authority","Optional turn reminders validate encounter, round, current identity, revision, and deadline before notifying and never advance initiative","Optional current-turn cues use non-centering native pings, restrict hidden turns to GMs, and never mutate token properties","Player End My Turn is available only in Whispers mode, is rebound at execution time, and confirms success before a newly controlled character receives the next-turn prompt","Player confirmations describe the next initiative neutrally and never reveal GM-layer, unlinked, or custom tracker identities","Standard confirmation wording appears exactly once in the warmer Varied rotation","The root guide stays compact while its purpose action writes a persistent GM manual handout and topic buttons reveal focused references","Status, guide, help, GM, menu, info, and audit navigation aliases remain case-insensitive","Baseline module operation remains independent; optional cross-module features must identify and locally enforce their prerequisites","CombatAssist does not replace Roll20's native Turn Tracker"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
-    //   observability: { spans: ["[GAMEASSIST:MODULES:COMBATASSIST]"] },
-    //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.1.0", combat_event_schema_version: 1 }, lifecycle: "active" }
-    // -------------------------------------------------------------------------
-    // Narrative
-    // CombatAssist begins only after a GM explicitly starts it against an open,
-    // structurally sound native Turn Tracker. Exact rotations count turns. Valid
-    // roster or initiative changes are accepted as native tracker edits without
-    // resetting the round, while unreadable states retain a recoverable snapshot.
-    // A clearly named native custom round row becomes the round authority. Optional
-    // timers and pings add turn awareness without moving tokens or ending turns.
-    // -------------------------------------------------------------------------
-    let teardownCombatAssist = () => {};
-    GameAssist.register('CombatAssist', function() {
-        const MODULE_NAME = 'CombatAssist';
-        const MODULE_VERSION = '1.1.0';
-        const COMBAT_EVENT_SCHEMA_VERSION = 1;
-        const VALID_STATES = new Set(['active', 'paused', 'attention']);
-        const VALID_ANNOUNCEMENTS = new Set(['off', 'gm', 'public', 'whispers']);
-        const VALID_PLAYER_CONFIRMATIONS = new Set(['standard', 'varied']);
-        const VALID_TIMER_AUDIENCES = new Set(['gm', 'player', 'both', 'public']);
-        const VALID_TURN_CUES = new Set(['off', 'gm', 'players', 'both', 'public']);
-        const VARIED_TURN_CONFIRMATIONS = Object.freeze([
-            'Your turn has ended. It is now {next}\'s turn.',
-            'All set. {next} takes the next turn.',
-            'Turn complete. The spotlight moves to {next}.',
-            'Your turn is in the books. {next} is next in the order.',
-            'Nicely handled. Combat continues with {next}.',
-            'That wraps your turn. The next move belongs to {next}.',
-            'Your part is done for now. {next} takes the field.',
-            'Turn complete. The action shifts to {next}.'
-        ]);
-        let pendingPlayerCompletion = null;
-        let turnTimerGeneration = 0;
-        let turnTimerHandles = [];
-        let cueUnavailableReported = false;
-        let encounterSequence = 0;
-        const modState = GameAssist.getState(MODULE_NAME);
-        Object.assign(modState.config, {
-            enabled: false,
-            announcements: 'gm',
-            playerConfirmations: 'standard',
-            timerEnabled: false,
-            timerDurationSeconds: 120,
-            timerDeadlineAudience: 'gm',
-            timerReminders: [],
-            turnCue: 'off',
-            ...modState.config
-        });
-        if (!VALID_ANNOUNCEMENTS.has(String(modState.config.announcements || '').toLowerCase())) {
-            modState.config.announcements = 'gm';
-        } else {
-            modState.config.announcements = String(modState.config.announcements).toLowerCase();
-        }
-        if (String(modState.config.playerConfirmations || '').toLowerCase() === 'fun') {
-            modState.config.playerConfirmations = 'varied';
-        } else if (!VALID_PLAYER_CONFIRMATIONS.has(String(modState.config.playerConfirmations || '').toLowerCase())) {
-            modState.config.playerConfirmations = 'standard';
-        } else {
-            modState.config.playerConfirmations = String(modState.config.playerConfirmations).toLowerCase();
-        }
-        modState.config.timerEnabled = modState.config.timerEnabled === true;
-        const savedDuration = Number(modState.config.timerDurationSeconds);
-        modState.config.timerDurationSeconds = Number.isInteger(savedDuration)
-            ? Math.max(POLICY.combat.minimumTurnDurationSeconds, Math.min(POLICY.combat.maximumTurnDurationSeconds, savedDuration))
-            : 120;
-        modState.config.timerDeadlineAudience = VALID_TIMER_AUDIENCES.has(String(modState.config.timerDeadlineAudience || '').toLowerCase())
-            ? String(modState.config.timerDeadlineAudience).toLowerCase()
-            : 'gm';
-        modState.config.timerReminders = (Array.isArray(modState.config.timerReminders) ? modState.config.timerReminders : [])
-            .map(reminder => ({
-                remainingSeconds: Number(reminder?.remainingSeconds),
-                audience: String(reminder?.audience || '').toLowerCase()
-            }))
-            .filter(reminder =>
-                Number.isInteger(reminder.remainingSeconds) &&
-                reminder.remainingSeconds > 0 &&
-                reminder.remainingSeconds < modState.config.timerDurationSeconds &&
-                VALID_TIMER_AUDIENCES.has(reminder.audience)
-            )
-            .sort((left, right) => right.remainingSeconds - left.remainingSeconds)
-            .filter((reminder, index, reminders) =>
-                index === reminders.findIndex(candidate => candidate.remainingSeconds === reminder.remainingSeconds)
-            )
-            .slice(0, POLICY.combat.maximumTimerReminders);
-        modState.config.turnCue = VALID_TURN_CUES.has(String(modState.config.turnCue || '').toLowerCase())
-            ? String(modState.config.turnCue).toLowerCase()
-            : 'off';
-
-        function sendPanel(title, fields, { publicMessage = false, whisperTo = '' } = {}) {
-            const content = (fields || []).map(field => `{{${_sanitize(field.label)}=${field.value}}}`).join(' ');
-            const safeRecipient = String(whisperTo || '').replace(/["\\]/g, '').trim();
-            const destination = publicMessage
-                ? ''
-                : (safeRecipient ? `/w "${safeRecipient}" ` : '/w gm ');
-            sendChat(MODULE_NAME, `${destination}&{template:default} {{name=${_sanitize(title)}}} ${content}`, null, {
-                noarchive: !publicMessage
-            });
-        }
-
-        function sendPlayerPanel(playerId, title, fields) {
-            const player = getObj('player', playerId);
-            const name = String(player?.get('_displayname') || player?.get('displayname') || '').trim();
-            if (!name || playerIsGM(playerId)) return false;
-            sendPanel(title, fields, { whisperTo: name });
-            return true;
-        }
-
-        function warning(message, actions = '') {
-            const fields = [{ label: 'Needs Attention', value: _sanitize(message) }];
-            if (actions) fields.push({ label: 'Next Step', value: actions });
-            sendPanel('CombatAssist', fields);
-        }
-
-        function requireGm(msg) {
-            if (playerIsGM(msg.playerid)) return true;
-            sendPlayerPanel(msg.playerid, 'CombatAssist', [{
-                label: 'GM Control',
-                value: 'Encounter controls are available only to the GM.'
-            }]);
-            return false;
-        }
-
-        function pageName(pageId) {
-            const page = pageId ? getObj('page', pageId) : null;
-            return String(page?.get('name') || pageId || 'Unknown page');
-        }
-
-        function identityFor(entry) {
-            if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
-            const id = String(entry.id ?? '').trim();
-            if (!id) return null;
-            if (id === '-1') {
-                const label = String(entry.custom || '').trim();
-                return label ? `custom:${label}` : null;
-            }
-            return `token:${id}`;
-        }
-
-        function labelFor(structure) {
-            if (structure.kind === 'custom') return structure.custom || '(Custom row)';
-            if (structure.kind !== 'token') return '(Unknown row)';
-            const characterId = String(structure.token.get('represents') || '');
-            const character = characterId ? getObj('character', characterId) : null;
-            return String(structure.token.get('name') || character?.get('name') || '(Unnamed token)');
-        }
-
-        function isRoundCounterLabel(value) {
-            const normalized = String(value || '')
-                .trim()
-                .toLowerCase()
-                .replace(/[_-]+/g, ' ')
-                .replace(/\s+/g, ' ');
-            return /^(?:(?:combat|current)\s+)?round(?:s|\s+(?:count|counter|number|tracker))?$/.test(normalized);
-        }
-
-        function roundCounterDetails(structures, identities) {
-            const matches = structures.map((structure, index) => ({ structure, index }))
-                .filter(candidate => candidate.structure.kind === 'custom' && isRoundCounterLabel(candidate.structure.custom));
-            if (!matches.length) return { ok: true, counter: null };
-            if (matches.length > 1) {
-                return {
-                    ok: false,
-                    reason: 'More than one custom Turn Tracker row looks like a round counter. Keep one round counter or rename the others so CombatAssist does not choose the wrong round.'
-                };
-            }
-            const match = matches[0];
-            const value = Number(String(match.structure.entry?.pr ?? '').trim());
-            if (!Number.isInteger(value) || value < 1) {
-                return {
-                    ok: false,
-                    reason: `${labelFor(match.structure)} looks like a round counter, but its current value is not a positive whole number. Give it the current round number before starting CombatAssist.`
-                };
-            }
-            return {
-                ok: true,
-                counter: {
-                    identity: identities[match.index],
-                    index: match.index,
-                    label: labelFor(match.structure),
-                    value,
-                    formula: String(match.structure.entry?.formula || '').trim()
-                }
-            };
-        }
-
-        function applyRoundCounterFormula(entry) {
-            if (!entry || String(entry.id || '') !== '-1' || !isRoundCounterLabel(entry.custom)) return false;
-            const formula = String(entry.formula || '').trim();
-            const match = formula.match(/^([+-])\s*(\d+)$/);
-            const current = Number(String(entry.pr ?? '').trim());
-            if (!match || !Number.isFinite(current)) return false;
-            const adjustment = Number(match[2]) * (match[1] === '-' ? -1 : 1);
-            const next = current + adjustment;
-            if (!Number.isFinite(next)) return false;
-            entry.pr = String(Number(next.toFixed(6)));
-            return true;
-        }
-
-        /**
-         * analyzeSnapshot - Validate the exact tracker shape CombatAssist can follow.
-         * Inputs: one immutable TurnTrackerService snapshot.
-         * Outputs: unique row identities and current display labels.
-         * Invariants: all token rows exist on one tracker page; custom rows remain valid.
-         * Failure: returns an actionable reason without changing Roll20 or saved encounter state.
-         * Design: ambiguous identities and stale rows are refused because a plausible guess
-         * could silently increment the wrong round.
-         */
-        function analyzeSnapshot(snapshot) {
-            if (!snapshot?.ok) {
-                return { ok: false, reason: snapshot?.message || 'The Turn Tracker could not be read.' };
-            }
-            if (!snapshot.open || !snapshot.pageId) {
-                return {
-                    ok: false,
-                    reason: snapshot.pageWarning || 'Open Roll20\'s Turn Tracker on the encounter page before using CombatAssist.'
-                };
-            }
-            if (snapshot.entries.length < POLICY.combat.minimumTrackedRows) {
-                return {
-                    ok: false,
-                    reason: `CombatAssist needs at least ${POLICY.combat.minimumTrackedRows} distinct Turn Tracker rows so a turn change can be observed safely.`
-                };
-            }
-            if (snapshot.entries.length > POLICY.combat.maximumTrackedRows) {
-                return {
-                    ok: false,
-                    reason: `This tracker has ${snapshot.entries.length} rows; CombatAssist supports at most ${POLICY.combat.maximumTrackedRows} in one encounter.`
-                };
-            }
-
-            const identities = [];
-            const labels = [];
-            const structures = [];
-            for (let index = 0; index < snapshot.entries.length; index++) {
-                const entry = snapshot.entries[index];
-                const identity = identityFor(entry);
-                if (!identity) {
-                    return { ok: false, reason: `Turn Tracker row ${index + 1} is malformed or has no usable id.` };
-                }
-                const structure = GameAssist.TurnTrackerService.classifyEntry(entry, index, snapshot);
-                if (structure.kind === 'token' && structure.offPage) {
-                    return {
-                        ok: false,
-                        reason: `${labelFor(structure)} is not on the active Turn Tracker page. Remove the off-page row or reopen the tracker on the encounter page.`
-                    };
-                }
-                if (!['token', 'custom'].includes(structure.kind)) {
-                    return {
-                        ok: false,
-                        reason: `Turn Tracker row ${index + 1} references a missing or unrecognized token. Remove or repair that row before starting CombatAssist.`
-                    };
-                }
-                identities.push(identity);
-                labels.push(labelFor(structure));
-                structures.push(structure);
-            }
-
-            const seen = new Set();
-            const duplicate = identities.find(identity => seen.has(identity) || !seen.add(identity));
-            if (duplicate) {
-                return {
-                    ok: false,
-                    reason: 'The Turn Tracker contains indistinguishable duplicate rows. CombatAssist will preserve them, but cannot count rounds safely until each row has a unique token or custom label.'
-                };
-            }
-            const roundCounter = roundCounterDetails(structures, identities);
-            if (!roundCounter.ok) return roundCounter;
-            return { ok: true, identities, labels, structures, roundCounter: roundCounter.counter };
-        }
-
-        function sameOrder(left, right) {
-            return Array.isArray(left) &&
-                Array.isArray(right) &&
-                left.length === right.length &&
-                left.every((value, index) => value === right[index]);
-        }
-
-        function useRoundCounter(encounter, analysis, { preserveWithoutCounter = true, syncValue = true } = {}) {
-            const counter = analysis?.roundCounter || null;
-            if (!counter) {
-                delete encounter.roundCounterIdentity;
-                delete encounter.roundCounterLabel;
-                encounter.roundSource = 'combatassist';
-                if (!preserveWithoutCounter) encounter.round = 1;
-                return false;
-            }
-            if (syncValue) encounter.round = counter.value;
-            encounter.roundCounterIdentity = counter.identity;
-            encounter.roundCounterLabel = counter.label;
-            encounter.roundSource = 'tracker';
-            return true;
-        }
-
-        function rotateForward(values) {
-            return values.length ? values.slice(1).concat(values[0]) : [];
-        }
-
-        function rotateBackward(values) {
-            return values.length ? [values[values.length - 1]].concat(values.slice(0, -1)) : [];
-        }
-
-        function cloneData(value) {
-            return JSON.parse(JSON.stringify(value));
-        }
-
-        function entriesEqual(left, right) {
-            try {
-                return JSON.stringify(left || []) === JSON.stringify(right || []);
-            } catch (_) {
-                return false;
-            }
-        }
-
-        function captureAcceptedState(encounter) {
-            if (!encounter || !Array.isArray(encounter.acceptedEntries) || !encounter.acceptedEntries.length) return null;
-            return {
-                pageId: encounter.pageId,
-                round: encounter.round,
-                turn: encounter.turn,
-                anchor: encounter.anchor,
-                order: encounter.order.slice(),
-                baseOrder: encounter.baseOrder.slice(),
-                forwardStreak: Number(encounter.forwardStreak || 0),
-                lastDirection: encounter.lastDirection || null,
-                entries: cloneData(encounter.acceptedEntries),
-                capturedAt: isoNow()
-            };
-        }
-
-        function checkpointIsUsable(checkpoint) {
-            return Boolean(
-                checkpoint &&
-                typeof checkpoint === 'object' &&
-                !Array.isArray(checkpoint) &&
-                checkpoint.pageId &&
-                Number.isInteger(checkpoint.round) &&
-                checkpoint.round >= 1 &&
-                Array.isArray(checkpoint.order) &&
-                Array.isArray(checkpoint.baseOrder) &&
-                Array.isArray(checkpoint.entries) &&
-                checkpoint.entries.length >= POLICY.combat.minimumTrackedRows
-            );
-        }
-
-        function rememberAcceptedState(encounter) {
-            const checkpoint = captureAcceptedState(encounter);
-            if (checkpoint) encounter.checkpoint = checkpoint;
-        }
-
-        function acceptSnapshot(encounter, snapshot) {
-            encounter.acceptedEntries = cloneData(snapshot.entries || []);
-            encounter.lastRevision = snapshot.revision;
-            encounter.lastObservedAt = isoNow();
-        }
-
-        function restoreEncounterState(encounter, checkpoint, snapshot) {
-            encounter.status = 'active';
-            encounter.pageId = checkpoint.pageId;
-            encounter.round = checkpoint.round;
-            encounter.turn = checkpoint.turn;
-            encounter.anchor = checkpoint.anchor;
-            encounter.order = checkpoint.order.slice();
-            encounter.baseOrder = checkpoint.baseOrder.slice();
-            encounter.forwardStreak = Number(checkpoint.forwardStreak || 0);
-            encounter.lastDirection = checkpoint.lastDirection || null;
-            acceptSnapshot(encounter, snapshot);
-            encounter.attention = null;
-            delete encounter.attentionAt;
-            delete encounter.previousStatus;
-            delete encounter.checkpoint;
-        }
-
-        function getEncounter() {
-            const value = modState.runtime?.encounter;
-            if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-            if (
-                !VALID_STATES.has(value.status) ||
-                !Array.isArray(value.order) ||
-                !Array.isArray(value.baseOrder) ||
-                !value.pageId ||
-                !value.anchor ||
-                !Number.isInteger(value.round) ||
-                value.round < 1
-            ) {
-                delete modState.runtime.encounter;
-                return null;
-            }
-            if (!Array.isArray(value.acceptedEntries)) {
-                const current = GameAssist.TurnTrackerService.snapshot();
-                const analysis = analyzeSnapshot(current);
-                value.acceptedEntries = analysis.ok &&
-                    current.pageId === value.pageId &&
-                    sameOrder(analysis.identities, value.order)
-                    ? cloneData(current.entries)
-                    : [];
-            }
-            if (!value.id) {
-                value.id = `combat-${Date.now().toString(36)}-${(++encounterSequence).toString(36)}`;
-            }
-            if (!Number.isInteger(value.progression) || value.progression < 0) value.progression = 0;
-            if (value.checkpoint && !checkpointIsUsable(value.checkpoint)) delete value.checkpoint;
-            return value;
-        }
-
-        function publishCombatEvent(type, encounter, analysis, details = {}) {
-            if (!encounter) return { ok: false, code: 'NOT_FOUND', message: 'No CombatAssist encounter is available.' };
-            const current = analysis?.structures?.[0];
-            return GameAssist.SemanticEvents.publish(type, MODULE_NAME, {
-                combatEventSchemaVersion: COMBAT_EVENT_SCHEMA_VERSION,
-                encounterId: String(encounter.id || ''),
-                pageId: String(encounter.pageId || ''),
-                status: String(encounter.status || ''),
-                round: Number(encounter.round || 0),
-                turn: Number(encounter.turn || 0),
-                progression: Number(encounter.progression || 0),
-                current: {
-                    identity: String(analysis?.identities?.[0] || encounter.order?.[0] || ''),
-                    label: String(currentLabel(analysis)),
-                    tokenId: current?.kind === 'token' ? String(current.id || '') : null,
-                    kind: String(current?.kind || 'unknown')
-                },
-                trackerRevision: String(encounter.lastRevision || ''),
-                details: cloneData(details || {})
-            });
-        }
-
-        function currentLabel(analysis) {
-            return analysis?.labels?.[0] || '(Unknown row)';
-        }
-
-        function gmTurnActions() {
-            return [
-                GameAssist.createButton('Next Turn', '!Combat-Next'),
-                GameAssist.createButton('Previous Turn', '!Combat-Prev'),
-                GameAssist.createButton('Open Menu', '!Combat-Menu')
-            ].join(' ');
-        }
-
-        function controllerIdsFor(structure) {
-            if (structure?.kind !== 'token') return [];
-            const token = structure.token;
-            const characterId = String(token.get('represents') || '').trim();
-            const character = characterId ? getObj('character', characterId) : null;
-            // CHOICE: A linked character's controller list is authoritative; token control is the fallback only for unlinked turns.
-            const source = character ? character.get('controlledby') : token.get('controlledby');
-            const ids = String(source || '')
-                .split(',')
-                .map(value => value.trim())
-                .filter(Boolean);
-            if (ids.includes('all')) {
-                return findObjs({ _type: 'player' })
-                    .map(player => player.id)
-                    .filter(id => !playerIsGM(id));
-            }
-            return Array.from(new Set(ids.filter(id => !playerIsGM(id) && getObj('player', id))));
-        }
-
-        function playerControlsStructure(playerId, structure) {
-            return controllerIdsFor(structure).includes(playerId);
-        }
-
-        function gmPlayerIds() {
-            return findObjs({ _type: 'player' })
-                .map(player => player.id)
-                .filter(id => playerIsGM(id));
-        }
-
-        function clearTurnTimers(encounter = null, { forget = false } = {}) {
-            turnTimerGeneration++;
-            turnTimerHandles.forEach(handle => clearTimeout(handle));
-            turnTimerHandles = [];
-            if (forget && encounter) delete encounter.turnTimer;
-        }
-
-        function timerReminderSummary() {
-            if (!modState.config.timerReminders.length) return 'No early reminders.';
-            return modState.config.timerReminders
-                .map(reminder => `${reminder.remainingSeconds}s remaining -> ${reminder.audience}`)
-                .join('<br>');
-        }
-
-        function validTimerContext(schedule) {
-            if (!schedule || schedule.generation !== turnTimerGeneration) return null;
-            const encounter = getEncounter();
-            if (
-                !encounter ||
-                encounter.status !== 'active' ||
-                encounter.startedAt !== schedule.encounterStartedAt ||
-                encounter.round !== schedule.round ||
-                encounter.order?.[0] !== schedule.identity ||
-                encounter.turnTimer?.deadlineAt !== schedule.deadlineAt
-            ) return null;
-            const snapshot = GameAssist.TurnTrackerService.snapshot();
-            if (!snapshot.ok || snapshot.revision !== schedule.revision) return null;
-            const analysis = analyzeSnapshot(snapshot);
-            if (!analysis.ok || analysis.identities[0] !== schedule.identity) return null;
-            return { encounter, snapshot, analysis };
-        }
-
-        function sendTurnTimerNotice(schedule, remainingSeconds, audience) {
-            const context = validTimerContext(schedule);
-            if (!context) return false;
-            const { encounter, analysis } = context;
-            const structure = analysis.structures[0];
-            const visibleName = playerVisibleTurnName(analysis);
-            const expired = remainingSeconds === 0;
-            const title = expired ? 'Turn Timer Complete' : 'Turn Reminder';
-            const status = expired
-                ? 'The configured turn time has elapsed. CombatAssist did not advance the Turn Tracker.'
-                : `${remainingSeconds} second${remainingSeconds === 1 ? '' : 's'} remain in this turn.`;
-            const gmFields = [
-                { label: 'Round', value: _sanitize(String(encounter.round)) },
-                { label: 'Current Turn', value: _sanitize(currentLabel(analysis)) },
-                { label: expired ? 'Time' : 'Remaining', value: _sanitize(status) },
-                { label: 'Controls', value: gmTurnActions() }
-            ];
-            const playerFields = [
-                { label: 'Character', value: _sanitize(visibleName) },
-                { label: expired ? 'Time' : 'Remaining', value: _sanitize(status) }
-            ];
-            // DANGER: token control does not make a hidden or unlinked tracker identity safe to reveal.
-            const recipients = visibleName ? controllerIdsFor(structure) : [];
-            if (audience === 'public') {
-                if (visibleName) {
-                    sendPanel(title, [
-                        { label: 'Current Turn', value: _sanitize(visibleName) },
-                        { label: expired ? 'Time' : 'Remaining', value: _sanitize(status) }
-                    ], { publicMessage: true });
-                } else {
-                    sendPanel(title, [...gmFields, {
-                        label: 'Privacy',
-                        value: 'This reminder stayed with the GM because the current tracker entry is hidden or is not a linked character.'
-                    }]);
-                }
-                return true;
-            }
-            if (audience === 'gm' || audience === 'both') sendPanel(title, gmFields);
-            if (audience === 'player' || audience === 'both') {
-                if (recipients.length) recipients.forEach(playerId => sendPlayerPanel(playerId, title, playerFields));
-                else if (audience === 'player') {
-                    sendPanel(title, [...gmFields, {
-                        label: 'Recipient',
-                        value: 'This turn is hidden or has no visible linked non-GM controller, so the reminder stayed with the GM.'
-                    }]);
-                }
-            }
-            return true;
-        }
-
-        function scheduleTurnTimers(encounter, snapshot, analysis, { resume = false } = {}) {
-            clearTurnTimers();
-            if (!modState.config.timerEnabled || encounter?.status !== 'active') {
-                if (encounter) delete encounter.turnTimer;
-                return false;
-            }
-            const structure = analysis?.structures?.[0];
-            if (structure?.kind !== 'token') {
-                delete encounter.turnTimer;
-                return false;
-            }
-            const currentTime = now();
-            const saved = encounter.turnTimer;
-            const canResume = resume &&
-                saved &&
-                saved.identity === analysis.identities[0] &&
-                saved.round === encounter.round &&
-                saved.revision === snapshot.revision &&
-                Number.isFinite(Number(saved.deadlineAt));
-            const deadlineAt = canResume
-                ? Number(saved.deadlineAt)
-                : currentTime + (modState.config.timerDurationSeconds * 1000);
-            encounter.turnTimer = {
-                identity: analysis.identities[0],
-                round: encounter.round,
-                revision: snapshot.revision,
-                startedAt: canResume ? Number(saved.startedAt || currentTime) : currentTime,
-                deadlineAt
-            };
-            const generation = turnTimerGeneration;
-            const base = {
-                generation,
-                encounterStartedAt: encounter.startedAt,
-                identity: analysis.identities[0],
-                round: encounter.round,
-                revision: snapshot.revision,
-                deadlineAt
-            };
-            modState.config.timerReminders.forEach(reminder => {
-                const delay = deadlineAt - currentTime - (reminder.remainingSeconds * 1000);
-                if (delay <= 0) return;
-                turnTimerHandles.push(setTimeout(() => {
-                    sendTurnTimerNotice(base, reminder.remainingSeconds, reminder.audience);
-                }, delay));
-            });
-            const deadlineDelay = deadlineAt - currentTime;
-            if (deadlineDelay > 0) {
-                turnTimerHandles.push(setTimeout(() => {
-                    sendTurnTimerNotice(base, 0, modState.config.timerDeadlineAudience);
-                }, deadlineDelay));
-                return true;
-            }
-            if (resume) {
-                sendPanel('CombatAssist Timer', [
-                    { label: 'Reload Notice', value: 'The saved deadline for the current turn passed while the Mod sandbox was unavailable. No late player reminder was sent.' },
-                    { label: 'Next Turn', value: 'A fresh timer will begin when initiative advances.' }
-                ]);
-            }
-            return false;
-        }
-
-        function sendCurrentTurnCue(analysis) {
-            let mode = String(modState.config.turnCue || 'off').toLowerCase();
-            if (mode === 'off') return false;
-            const structure = analysis?.structures?.[0];
-            if (structure?.kind !== 'token' || !structure.token) return false;
-            if (typeof sendPing !== 'function') {
-                if (!cueUnavailableReported) {
-                    cueUnavailableReported = true;
-                    warning('Roll20 did not expose its native ping function. Turn messages still work, but no visual cue was sent.');
-                }
-                return false;
-            }
-            const token = structure.token;
-            const pageId = String(token.get('pageid') || token.get('_pageid') || '');
-            const left = Number(token.get('left'));
-            const top = Number(token.get('top'));
-            if (!pageId || !Number.isFinite(left) || !Number.isFinite(top)) return false;
-            const hidden = String(token.get('layer') || '') !== 'objects';
-            if (hidden && mode !== 'gm') mode = 'gm';
-            let visibleTo = null;
-            if (mode === 'gm') visibleTo = gmPlayerIds();
-            if (mode === 'players') visibleTo = controllerIdsFor(structure);
-            if (mode === 'both') visibleTo = Array.from(new Set([...gmPlayerIds(), ...controllerIdsFor(structure)]));
-            if (Array.isArray(visibleTo) && !visibleTo.length) return false;
-            // CHOICE: native pings do not alter token properties and never recenter a player's map.
-            if (mode === 'public') sendPing(left, top, pageId, null, false);
-            else sendPing(left, top, pageId, null, false, visibleTo);
-            return true;
-        }
-
-        function whisperCurrentPlayerTurn(encounter, analysis) {
-            if (announcementMode() !== 'whispers') return 0;
-            const structure = analysis?.structures?.[0];
-            if (structure?.kind !== 'token') return 0;
-            const recipients = controllerIdsFor(structure);
-            recipients.forEach(playerId => sendPlayerPanel(playerId, 'Your Turn', [
-                { label: 'Round', value: _sanitize(String(encounter.round)) },
-                { label: 'Character', value: _sanitize(currentLabel(analysis)) },
-                { label: 'When Finished', value: GameAssist.createButton('End My Turn', `!Combat-End-Turn --token ${structure.id}`) }
-            ]));
-            return recipients.length;
-        }
-
-        function playerConfirmationMode() {
-            const value = String(modState.config.playerConfirmations || '').toLowerCase();
-            if (VALID_PLAYER_CONFIRMATIONS.has(value)) return value;
-            modState.config.playerConfirmations = 'standard';
-            return 'standard';
-        }
-
-        function playerConfirmationLabel() {
-            return playerConfirmationMode() === 'varied' ? 'Varied' : 'Standard';
-        }
-
-        function playerVisibleTurnName(analysis) {
-            const structure = analysis?.structures?.[0];
-            if (structure?.kind !== 'token' || !structure.token) return '';
-            if (String(structure.token.get('layer') || '') !== 'objects') return '';
-            const characterId = String(structure.token.get('represents') || '').trim();
-            if (!characterId || !getObj('character', characterId)) return '';
-            return currentLabel(analysis);
-        }
-
-        function turnCompletionText(analysis) {
-            const nextName = playerVisibleTurnName(analysis);
-            if (!nextName) {
-                return 'Your turn has ended. Combat has continued with the next initiative.';
-            }
-            if (playerConfirmationMode() !== 'varied') {
-                return `Your turn has ended. It is now ${nextName}'s turn.`;
-            }
-            const template = VARIED_TURN_CONFIRMATIONS[randomInteger(VARIED_TURN_CONFIRMATIONS.length) - 1];
-            return template.replace(/\{next\}/g, nextName);
-        }
-
-        function confirmPlayerTurnEnded(playerId, analysis) {
-            sendPlayerPanel(playerId, 'Turn Complete', [{
-                label: 'Next Up',
-                value: _sanitize(turnCompletionText(analysis))
-            }]);
-        }
-
-        function flushPendingPlayerCompletion(analysis) {
-            const pending = pendingPlayerCompletion;
-            if (
-                !pending ||
-                pending.delivered ||
-                analysis?.identities?.[0] !== pending.expectedNextIdentity
-            ) return false;
-            pending.delivered = true;
-            confirmPlayerTurnEnded(pending.playerId, analysis);
-            return true;
-        }
-
-        function explainAlreadyAdvanced(playerId, analysis) {
-            const current = playerVisibleTurnName(analysis);
-            sendPlayerPanel(playerId, 'Turn Already Advanced', [{
-                label: 'All Set',
-                value: _sanitize(current
-                    ? `The Turn Tracker has already moved on. It is now ${current}'s turn. Nothing else changed when you clicked the older button.`
-                    : 'The Turn Tracker has already moved on. Combat has continued with the next initiative, and nothing else changed when you clicked the older button.')
-            }]);
-        }
-
-        function announcementMode() {
-            const value = String(modState.config.announcements || '').toLowerCase();
-            if (VALID_ANNOUNCEMENTS.has(value)) return value;
-            modState.config.announcements = 'gm';
-            return 'gm';
-        }
-
-        function announcementLabel() {
-            const mode = announcementMode();
-            if (mode === 'gm') return 'GM only';
-            if (mode === 'whispers') return 'GM and current-player whispers';
-            return mode === 'public' ? 'Public' : 'Off';
-        }
-
-        function announceTurn(encounter, analysis, direction) {
-            // CHOICE: complete the outgoing player's A-B-A message sequence before any next-character whisper.
-            flushPendingPlayerCompletion(analysis);
-            const currentSnapshot = GameAssist.TurnTrackerService.snapshot();
-            scheduleTurnTimers(encounter, currentSnapshot, analysis);
-            sendCurrentTurnCue(analysis);
-            const mode = announcementMode();
-            if (mode === 'off') return;
-            const backward = direction === 'backward';
-            const fields = [
-                { label: 'Round', value: _sanitize(String(encounter.round)) },
-                { label: 'Current Turn', value: _sanitize(currentLabel(analysis)) }
-            ];
-            if (backward) {
-                fields.push({ label: 'Round Count', value: 'Unchanged. Backward movement never advances a round.' });
-            }
-            if (mode === 'public') {
-                sendPanel(backward ? 'Combat Turn Moved Back' : 'Combat Turn', fields, { publicMessage: true });
-                return;
-            }
-            fields.push({ label: 'Controls', value: gmTurnActions() });
-            sendPanel(backward ? 'Combat Turn Moved Back' : 'Combat Turn', fields);
-            if (mode === 'whispers') whisperCurrentPlayerTurn(encounter, analysis);
-        }
-
-        function announceForward(encounter, analysis) {
-            announceTurn(encounter, analysis, 'forward');
-        }
-
-        function announceBackward(encounter, analysis) {
-            announceTurn(encounter, analysis, 'backward');
-        }
-
-        function recoveryButton(encounter) {
-            const canRestoreAttention = encounter?.status === 'attention' &&
-                Array.isArray(encounter.acceptedEntries) &&
-                encounter.acceptedEntries.length >= POLICY.combat.minimumTrackedRows;
-            if (canRestoreAttention) {
-                return GameAssist.createButton('Restore Last Safe Tracker', '!Combat-Restore');
-            }
-            if (checkpointIsUsable(encounter?.checkpoint)) {
-                return GameAssist.createButton('Undo Last Tracker Change', '!Combat-Restore');
-            }
-            return '';
-        }
-
-        function rebaseToSnapshot(encounter, snapshot, analysis, reason, { notify = true } = {}) {
-            rememberAcceptedState(encounter);
-            encounter.status = 'active';
-            encounter.order = analysis.identities.slice();
-            encounter.baseOrder = analysis.identities.slice();
-            encounter.anchor = analysis.identities[0];
-            encounter.turn = 1;
-            encounter.forwardStreak = 0;
-            encounter.lastDirection = 'rebase';
-            encounter.lastTransitionAt = isoNow();
-            encounter.lastChangeReason = String(reason || 'The native Turn Tracker order changed.');
-            useRoundCounter(encounter, analysis);
-            encounter.anchor = analysis.roundCounter?.identity || analysis.identities[0];
-            acceptSnapshot(encounter, snapshot);
-            encounter.attention = null;
-            delete encounter.attentionAt;
-            delete encounter.previousStatus;
-            scheduleTurnTimers(encounter, snapshot, analysis);
-            sendCurrentTurnCue(analysis);
-            if (notify) {
-                const restore = recoveryButton(encounter);
-                sendPanel('Turn Tracker Updated', [
-                    { label: analysis.roundCounter ? 'Round From Tracker' : 'Round Preserved', value: _sanitize(String(encounter.round)) },
-                    { label: 'Current Turn', value: _sanitize(currentLabel(analysis)) },
-                    { label: 'What Happened', value: _sanitize(encounter.lastChangeReason) },
-                    { label: 'What CombatAssist Did', value: analysis.roundCounter
-                        ? `Used ${_sanitize(analysis.roundCounter.label)} as the round authority and continued from the current native tracker entry.`
-                        : 'Kept the current round and began a fresh full-cycle count from the current native tracker entry.' },
-                    { label: 'Actions', value: [restore, GameAssist.createButton('Open Menu', '!Combat-Menu')].filter(Boolean).join(' ') }
-                ]);
-                whisperCurrentPlayerTurn(encounter, analysis);
-            }
-            publishCombatEvent('combat.encounter.rebased', encounter, analysis, { reason: encounter.lastChangeReason });
-            return encounter;
-        }
-
-        function enterAttention(encounter, reason, snapshot = null, { notify = true } = {}) {
-            if (!encounter) return;
-            clearTurnTimers(encounter, { forget: true });
-            const wasAttention = encounter.status === 'attention' && encounter.attention === reason;
-            encounter.previousStatus = encounter.status === 'attention'
-                ? (encounter.previousStatus || 'active')
-                : encounter.status;
-            encounter.status = 'attention';
-            encounter.attention = String(reason || 'The Turn Tracker changed in a way CombatAssist could not verify.');
-            encounter.attentionAt = isoNow();
-            encounter.lastRevision = snapshot?.revision || encounter.lastRevision || null;
-            if (notify && !wasAttention) {
-                warning(encounter.attention, [
-                    GameAssist.createButton('Use Current Tracker', '!Combat-Adopt'),
-                    recoveryButton(encounter),
-                    GameAssist.createButton('Review Status', '!Combat-Status'),
-                    GameAssist.createButton('Restart at Round 1', '!Combat-Start --confirm')
-                ].filter(Boolean).join(' '));
-            }
-            if (!wasAttention) publishCombatEvent('combat.encounter.attention', encounter, null, { reason: encounter.attention });
-        }
-
-        function processSnapshot(snapshot, { notify = true, directionHint = null } = {}) {
-            const encounter = getEncounter();
-            if (!encounter || encounter.status === 'paused') return encounter;
-            if (snapshot?.ok && snapshot.open && snapshot.pageId && snapshot.pageId !== encounter.pageId) {
-                enterAttention(
-                    encounter,
-                    `The Turn Tracker moved from ${pageName(encounter.pageId)} to ${pageName(snapshot.pageId)}. Restart tracking on the intended encounter page.`,
-                    snapshot,
-                    { notify }
-                );
-                return encounter;
-            }
-            const analysis = analyzeSnapshot(snapshot);
-            if (!analysis.ok) {
-                enterAttention(encounter, analysis.reason, snapshot, { notify });
-                return encounter;
-            }
-            if (directionHint === 'rebase') {
-                return rebaseToSnapshot(
-                    encounter,
-                    snapshot,
-                    analysis,
-                    'Initiative values or tracker order were updated through GameAssist.',
-                    { notify }
-                );
-            }
-            if (sameOrder(analysis.identities, encounter.order)) {
-                if (encounter.status === 'attention') {
-                    return rebaseToSnapshot(
-                        encounter,
-                        snapshot,
-                        analysis,
-                        'The native Turn Tracker is readable again. CombatAssist kept the recorded round and continued from its current entry.',
-                        { notify }
-                    );
-                }
-                if (!entriesEqual(encounter.acceptedEntries, snapshot.entries)) {
-                    return rebaseToSnapshot(
-                        encounter,
-                        snapshot,
-                        analysis,
-                        'Initiative values or tracker row data changed in Roll20.',
-                        { notify }
-                    );
-                }
-                acceptSnapshot(encounter, snapshot);
-                return encounter;
-            }
-
-            if (analysis.identities.length !== encounter.order.length) {
-                return rebaseToSnapshot(
-                    encounter,
-                    snapshot,
-                    analysis,
-                    'A combatant or tracker entry was added or removed in Roll20.',
-                    { notify }
-                );
-            }
-
-            let forward = sameOrder(analysis.identities, rotateForward(encounter.order));
-            let backward = sameOrder(analysis.identities, rotateBackward(encounter.order));
-            if (forward && backward) {
-                if (directionHint === 'forward') backward = false;
-                else if (directionHint === 'backward') forward = false;
-                else {
-                    enterAttention(
-                        encounter,
-                        'A two-entry Turn Tracker moved, but Roll20 does not reveal whether the native arrow went forward or backward. Use the CombatAssist direction buttons, accept the current tracker without changing the round, or restore the last accepted tracker.',
-                        snapshot,
-                        { notify }
-                    );
-                    return encounter;
-                }
-            }
-            if (!forward && !backward) {
-                return rebaseToSnapshot(
-                    encounter,
-                    snapshot,
-                    analysis,
-                    'Initiative values or the native tracker order changed. CombatAssist treated the current Roll20 order as authoritative.',
-                    { notify }
-                );
-            }
-
-            rememberAcceptedState(encounter);
-            const previous = {
-                round: encounter.round,
-                turn: encounter.turn,
-                identity: String(encounter.order?.[0] || '')
-            };
-            encounter.order = analysis.identities.slice();
-            acceptSnapshot(encounter, snapshot);
-            encounter.lastTransitionAt = isoNow();
-            encounter.turn = encounter.baseOrder.indexOf(encounter.order[0]) + 1;
-
-            if (backward) {
-                encounter.forwardStreak = 0;
-                encounter.lastDirection = 'backward';
-                publishCombatEvent('combat.turn.changed', encounter, analysis, { direction: 'backward', previous });
-                if (notify) announceBackward(encounter, analysis);
-                return encounter;
-            }
-
-            encounter.forwardStreak = Number(encounter.forwardStreak || 0) + 1;
-            encounter.lastDirection = 'forward';
-            encounter.progression = Number(encounter.progression || 0) + 1;
-            const trackerOwnsRound = useRoundCounter(encounter, analysis, {
-                syncValue: analysis.roundCounter?.index === 0
-            });
-            if (!trackerOwnsRound &&
-                encounter.order[0] === encounter.anchor &&
-                encounter.forwardStreak >= encounter.order.length
-            ) {
-                encounter.round++;
-                encounter.forwardStreak = 0;
-                encounter.lastRoundAt = encounter.lastTransitionAt;
-            }
-            publishCombatEvent('combat.turn.changed', encounter, analysis, { direction: 'forward', previous });
-            if (notify) announceForward(encounter, analysis);
-            return encounter;
-        }
-
-        function synchronize({ notify = true } = {}) {
-            const encounter = getEncounter();
-            if (!encounter || encounter.status !== 'active') return encounter;
-            return processSnapshot(GameAssist.TurnTrackerService.snapshot(), { notify });
-        }
-
-        function startEncounter(msg, confirmed) {
-            const existing = getEncounter();
-            if (existing && !confirmed) {
-                sendPanel('CombatAssist Already Has an Encounter', [
-                    { label: 'Current State', value: _sanitize(existing.status) },
-                    { label: 'Round', value: _sanitize(String(existing.round)) },
-                    { label: 'Choose', value: `${GameAssist.createButton('Keep Current Encounter', '!Combat-Menu')} ${GameAssist.createButton('Restart From Current Tracker', '!Combat-Start --confirm')}` }
-                ]);
-                return;
-            }
-
-            const snapshot = GameAssist.TurnTrackerService.snapshot();
-            const analysis = analyzeSnapshot(snapshot);
-            if (!analysis.ok) {
-                warning(analysis.reason, GameAssist.createButton('Check Again', '!Combat-Start'));
-                return;
-            }
-
-            modState.runtime.encounter = {
-                id: `combat-${Date.now().toString(36)}-${(++encounterSequence).toString(36)}`,
-                status: 'active',
-                pageId: snapshot.pageId,
-                round: analysis.roundCounter?.value || 1,
-                turn: 1,
-                anchor: analysis.roundCounter?.identity || analysis.identities[0],
-                order: analysis.identities.slice(),
-                baseOrder: analysis.identities.slice(),
-                acceptedEntries: cloneData(snapshot.entries),
-                progression: 0,
-                forwardStreak: 0,
-                lastDirection: null,
-                lastRevision: snapshot.revision,
-                startedAt: isoNow(),
-                lastObservedAt: isoNow(),
-                attention: null
-            };
-            useRoundCounter(modState.runtime.encounter, analysis);
-            sendPanel('CombatAssist Started', [
-                { label: 'Encounter Page', value: _sanitize(pageName(snapshot.pageId)) },
-                { label: 'Starting Point', value: `Round ${_sanitize(String(modState.runtime.encounter.round))} | ${_sanitize(currentLabel(analysis))}` },
-                { label: 'Round Source', value: analysis.roundCounter
-                    ? `${_sanitize(analysis.roundCounter.label)} in Roll20's Turn Tracker`
-                    : 'CombatAssist internal count' },
-                { label: 'Tracking', value: `Following ${analysis.identities.length} distinct native tracker entries. Valid additions, removals, rerolls, and manual reordering preserve the round and begin a fresh cycle from the current entry.${analysis.identities.length === 2 ? ' With two entries, use CombatAssist Next Turn or Previous Turn because Roll20 does not expose native arrow direction.' : ''}` },
-                { label: 'Turn Controls', value: gmTurnActions() }
-            ]);
-            scheduleTurnTimers(modState.runtime.encounter, snapshot, analysis);
-            sendCurrentTurnCue(analysis);
-            whisperCurrentPlayerTurn(modState.runtime.encounter, analysis);
-            publishCombatEvent('combat.encounter.started', modState.runtime.encounter, analysis, { reason: 'gm-started' });
-        }
-
-        function pauseEncounter() {
-            const encounter = getEncounter();
-            if (!encounter) {
-                warning('No CombatAssist encounter is active.', GameAssist.createButton('Start Encounter', '!Combat-Start'));
-                return;
-            }
-            if (encounter.status === 'attention') {
-                warning(
-                    encounter.attention || 'This encounter needs attention before it can be paused.',
-                    [
-                        GameAssist.createButton('Use Current Tracker', '!Combat-Adopt'),
-                        recoveryButton(encounter),
-                        GameAssist.createButton('Review Status', '!Combat-Status')
-                    ].filter(Boolean).join(' ')
-                );
-                return;
-            }
-            if (encounter.status === 'paused') {
-                sendPanel('CombatAssist Paused', [{
-                    label: 'Next Step',
-                    value: `${GameAssist.createButton('Resume', '!Combat-Resume')} ${GameAssist.createButton('Open Control Center', '!Combat-Menu')}`
-                }]);
-                return;
-            }
-            encounter.previousStatus = encounter.status;
-            encounter.status = 'paused';
-            encounter.pausedAt = isoNow();
-            clearTurnTimers(encounter, { forget: true });
-            publishCombatEvent('combat.encounter.paused', encounter, null, { reason: 'gm-paused' });
-            sendPanel('CombatAssist Paused', [
-                { label: 'Tracker', value: 'Roll20 remains unchanged. CombatAssist will not count tracker movement while paused.' },
-                { label: 'Use This For', value: 'Adding, removing, or reordering Turn Tracker rows.' },
-                { label: 'Next Step', value: `${GameAssist.createButton('Resume With Current Order', '!Combat-Resume')} ${GameAssist.createButton('End Encounter', '!Combat-End')}` }
-            ]);
-        }
-
-        function resumeEncounter() {
-            const encounter = getEncounter();
-            if (!encounter) {
-                warning('No CombatAssist encounter is available to resume.', GameAssist.createButton('Start Encounter', '!Combat-Start'));
-                return;
-            }
-            if (encounter.status !== 'paused') {
-                if (encounter.status === 'attention') {
-                    adoptCurrentTracker();
-                    return;
-                }
-                warning('This encounter is already active.', GameAssist.createButton('Open Control Center', '!Combat-Menu'));
-                return;
-            }
-
-            const snapshot = GameAssist.TurnTrackerService.snapshot();
-            if (snapshot?.ok && snapshot.open && snapshot.pageId && snapshot.pageId !== encounter.pageId) {
-                enterAttention(
-                    encounter,
-                    `The Turn Tracker is now on ${pageName(snapshot.pageId)}, not the encounter page ${pageName(encounter.pageId)}. Restart tracking on the intended page.`,
-                    snapshot
-                );
-                return;
-            }
-            const analysis = analyzeSnapshot(snapshot);
-            if (!analysis.ok) {
-                enterAttention(encounter, analysis.reason, snapshot);
-                return;
-            }
-
-            // CHOICE: An explicit resume accepts the current order as a fresh cycle baseline while preserving the GM's round count.
-            rememberAcceptedState(encounter);
-            encounter.status = 'active';
-            encounter.order = analysis.identities.slice();
-            encounter.baseOrder = analysis.identities.slice();
-            encounter.anchor = analysis.identities[0];
-            encounter.turn = 1;
-            encounter.forwardStreak = 0;
-            encounter.lastDirection = null;
-            acceptSnapshot(encounter, snapshot);
-            useRoundCounter(encounter, analysis);
-            encounter.anchor = analysis.roundCounter?.identity || analysis.identities[0];
-            encounter.attention = null;
-            delete encounter.attentionAt;
-            sendPanel('CombatAssist Resumed', [
-                { label: 'Round', value: _sanitize(String(encounter.round)) },
-                { label: 'Current Turn', value: _sanitize(currentLabel(analysis)) },
-                { label: 'Tracking', value: 'The current tracker order is the new counting starting point.' },
-                { label: 'Turn Controls', value: gmTurnActions() }
-            ]);
-            scheduleTurnTimers(encounter, snapshot, analysis);
-            sendCurrentTurnCue(analysis);
-            whisperCurrentPlayerTurn(encounter, analysis);
-            publishCombatEvent('combat.encounter.resumed', encounter, analysis, { reason: 'gm-resumed' });
-        }
-
-        function adoptCurrentTracker() {
-            const encounter = getEncounter();
-            if (!encounter) {
-                warning('No CombatAssist encounter is available to continue.', GameAssist.createButton('Start Encounter', '!Combat-Start'));
-                return;
-            }
-            const snapshot = GameAssist.TurnTrackerService.snapshot();
-            if (snapshot?.ok && snapshot.open && snapshot.pageId && snapshot.pageId !== encounter.pageId) {
-                enterAttention(
-                    encounter,
-                    `The Turn Tracker is on ${pageName(snapshot.pageId)}, not the recorded encounter page ${pageName(encounter.pageId)}.`,
-                    snapshot
-                );
-                return;
-            }
-            const analysis = analyzeSnapshot(snapshot);
-            if (!analysis.ok) {
-                enterAttention(encounter, analysis.reason, snapshot);
-                return;
-            }
-            rebaseToSnapshot(
-                encounter,
-                snapshot,
-                analysis,
-                'The GM chose the current native Turn Tracker order. The existing round was preserved.',
-                { notify: true }
-            );
-        }
-
-        function recoveryTarget(encounter) {
-            if (!encounter) return null;
-            if (encounter.status === 'attention') return captureAcceptedState(encounter);
-            return checkpointIsUsable(encounter.checkpoint) ? cloneData(encounter.checkpoint) : null;
-        }
-
-        function restoreTracker(args = {}) {
-            const encounter = getEncounter();
-            const target = recoveryTarget(encounter);
-            if (!encounter || !target) {
-                warning('CombatAssist does not have an earlier accepted tracker state to restore.', GameAssist.createButton('Open Control Center', '!Combat-Menu'));
-                return;
-            }
-            const current = GameAssist.TurnTrackerService.snapshot();
-            if (!current.ok || !current.open || !current.pageId) {
-                warning(current.message || current.pageWarning || 'The current Turn Tracker could not be read, so no restoration was attempted.');
-                return;
-            }
-            if (current.pageId !== target.pageId) {
-                warning(`The saved tracker belongs to ${pageName(target.pageId)}, but Roll20 is showing ${pageName(current.pageId)}. No restoration was attempted.`);
-                return;
-            }
-            const targetSnapshot = {
-                ...current,
-                entries: cloneData(target.entries),
-                raw: JSON.stringify(target.entries),
-                pageId: target.pageId
-            };
-            const targetAnalysis = analyzeSnapshot(targetSnapshot);
-            if (!targetAnalysis.ok) {
-                warning(`The saved tracker can no longer be restored: ${targetAnalysis.reason}`);
-                return;
-            }
-            if (args.confirm !== true) {
-                sendPanel(encounter.status === 'attention' ? 'Restore Last Safe Tracker?' : 'Undo Last Tracker Change?', [
-                    { label: 'Saved Point', value: `Round ${_sanitize(String(target.round))} | ${_sanitize(currentLabel(targetAnalysis))}` },
-                    { label: 'What Changes', value: `Roll20's current ${current.entries.length}-entry Turn Order will be replaced by the saved ${target.entries.length}-entry order. Every saved row and field is restored exactly.` },
-                    { label: 'Confirm', value: `${GameAssist.createButton('Restore Saved Tracker', `!Combat-Restore --confirm --revision ${current.revision}`)} ${GameAssist.createButton('Keep Current Tracker', '!Combat-Adopt')}` }
-                ]);
-                return;
-            }
-            const expectedRevision = String(args.revision || '');
-            if (!expectedRevision || expectedRevision !== current.revision) {
-                warning('The Turn Tracker changed after the restore preview. Review the current tracker before trying again.', GameAssist.createButton('Review Again', '!Combat-Restore'));
-                return;
-            }
-            const result = GameAssist.TurnTrackerService.apply(() => ({ entries: cloneData(target.entries) }), {
-                expectedRevision,
-                label: 'CombatAssist restore tracker'
-            });
-            if (!result.ok) {
-                warning(result.message || 'Roll20 did not restore the saved Turn Tracker.', GameAssist.createButton('Review Again', '!Combat-Restore'));
-                return;
-            }
-            restoreEncounterState(encounter, target, result.after);
-            const restoredAnalysis = analyzeSnapshot(result.after);
-            useRoundCounter(encounter, restoredAnalysis);
-            sendPanel('Turn Tracker Restored', [
-                { label: 'Round', value: _sanitize(String(encounter.round)) },
-                { label: 'Current Turn', value: _sanitize(currentLabel(restoredAnalysis)) },
-                { label: 'Restored', value: `${target.entries.length} saved entries and their complete Turn Tracker fields.` },
-                { label: 'Actions', value: gmTurnActions() }
-            ]);
-            scheduleTurnTimers(encounter, result.after, restoredAnalysis);
-            sendCurrentTurnCue(restoredAnalysis);
-            whisperCurrentPlayerTurn(encounter, restoredAnalysis);
-            publishCombatEvent('combat.encounter.rebased', encounter, restoredAnalysis, { reason: 'tracker-restored' });
-        }
-
-        function endEncounter(confirmed) {
-            const encounter = getEncounter();
-            if (!encounter) {
-                sendPanel('CombatAssist', [
-                    { label: 'Encounter', value: 'No CombatAssist encounter is currently recorded.' },
-                    { label: 'Next Step', value: GameAssist.createButton('Start Encounter', '!Combat-Start') }
-                ]);
-                return;
-            }
-            if (!confirmed) {
-                sendPanel('End CombatAssist Encounter?', [
-                    { label: 'What Changes', value: 'Only CombatAssist tracking is cleared. Roll20 Turn Tracker rows remain exactly as they are.' },
-                    { label: 'Confirm', value: `${GameAssist.createButton('End Encounter', '!Combat-End --confirm')} ${GameAssist.createButton('Keep Encounter', '!Combat-Menu')}` }
-                ]);
-                return;
-            }
-            const summary = `Ended on round ${encounter.round} while ${encounter.status}.`;
-            clearTurnTimers(encounter, { forget: true });
-            const endingSnapshot = GameAssist.TurnTrackerService.snapshot();
-            const endingAnalysis = analyzeSnapshot(endingSnapshot);
-            publishCombatEvent('combat.encounter.ended', encounter, endingAnalysis.ok ? endingAnalysis : null, { reason: 'gm-ended' });
-            delete modState.runtime.encounter;
-            sendPanel('CombatAssist Encounter Ended', [
-                { label: 'Summary', value: _sanitize(summary) },
-                { label: 'Turn Tracker', value: 'Unchanged.' },
-                { label: 'Next Step', value: GameAssist.createButton('Start Another Encounter', '!Combat-Start') }
-            ]);
-        }
-
-        function moveTurn(direction) {
-            const movingBackward = direction === 'backward';
-            let encounter = synchronize({ notify: false });
-            if (!encounter || encounter.status !== 'active') {
-                warning(
-                    encounter?.attention || `Start or resume a healthy CombatAssist encounter before moving ${movingBackward ? 'back' : 'forward'}.`,
-                    `${GameAssist.createButton('Open Control Center', '!Combat-Menu')} ${GameAssist.createButton('Review Status', '!Combat-Status')}`
-                );
-                return { ok: false, encounter };
-            }
-            const before = GameAssist.TurnTrackerService.snapshot();
-            const analysis = analyzeSnapshot(before);
-            if (!analysis.ok || !sameOrder(analysis.identities, encounter.order)) {
-                enterAttention(encounter, analysis.reason || 'The Turn Tracker changed before the next-turn request could be applied.', before);
-                return { ok: false, encounter };
-            }
-            const result = GameAssist.TurnTrackerService.apply(entries => {
-                if (entries.length < POLICY.combat.minimumTrackedRows) {
-                    throw new Error('The Turn Tracker no longer has enough rows to move safely.');
-                }
-                if (movingBackward) entries.unshift(entries.pop());
-                else {
-                    entries.push(entries.shift());
-                    applyRoundCounterFormula(entries[0]);
-                }
-                return { entries };
-            }, {
-                expectedRevision: before.revision,
-                label: movingBackward ? 'CombatAssist previous turn' : 'CombatAssist next turn'
-            });
-            if (!result.ok || !result.changed) {
-                warning(result.message || `Roll20 did not move the Turn Tracker ${movingBackward ? 'back' : 'forward'}.`, GameAssist.createButton('Review Status', '!Combat-Status'));
-                return { ok: false, encounter, result };
-            }
-            encounter = getEncounter();
-            const afterAnalysis = analyzeSnapshot(result.after);
-            if (announcementMode() === 'off' && encounter?.status === 'active') {
-                sendPanel(movingBackward ? 'Combat Turn Moved Back' : 'Combat Turn Advanced', [
-                    { label: 'Round', value: _sanitize(String(encounter.round)) },
-                    { label: 'Current Turn', value: _sanitize(currentLabel(afterAnalysis)) },
-                    { label: 'Controls', value: gmTurnActions() }
-                ]);
-            }
-            return { ok: true, encounter, result, analysis: afterAnalysis };
-        }
-
-        function advanceTurn() {
-            return moveTurn('forward');
-        }
-
-        function previousTurn() {
-            return moveTurn('backward');
-        }
-
-        function endPlayerTurn(msg, args) {
-            if (playerIsGM(msg.playerid)) {
-                advanceTurn();
-                return;
-            }
-            if (announcementMode() !== 'whispers') {
-                sendPlayerPanel(msg.playerid, 'CombatAssist', [{
-                    label: 'End My Turn',
-                    value: 'Player turn controls are available only while the GM has selected Whispers announcements.'
-                }]);
-                return;
-            }
-
-            const encounter = synchronize({ notify: false });
-            if (!encounter || encounter.status !== 'active') {
-                sendPlayerPanel(msg.playerid, 'CombatAssist', [{
-                    label: 'End My Turn',
-                    value: _sanitize(encounter?.attention
-                        ? 'The Turn Tracker changed and the GM is reviewing it. Your click did not make another change.'
-                        : 'This encounter is not currently waiting for a player turn button. Your click did not change anything.')
-                }]);
-                return;
-            }
-            const snapshot = GameAssist.TurnTrackerService.snapshot();
-            const analysis = analyzeSnapshot(snapshot);
-            const structure = analysis?.structures?.[0];
-            const requestedTokenId = String(args.token || '').trim();
-            if (!analysis.ok || structure?.kind !== 'token') {
-                sendPlayerPanel(msg.playerid, 'CombatAssist', [{
-                    label: 'End My Turn',
-                    value: 'The current Turn Tracker entry cannot use a player turn button. Your click did not change anything.'
-                }]);
-                return;
-            }
-            if (!requestedTokenId || structure.id !== requestedTokenId) {
-                explainAlreadyAdvanced(msg.playerid, analysis);
-                return;
-            }
-            if (!playerControlsStructure(msg.playerid, structure)) {
-                sendPlayerPanel(msg.playerid, 'CombatAssist', [{
-                    label: 'End My Turn',
-                    value: 'You do not control the character whose turn is currently active.'
-                }]);
-                return;
-            }
-            const pending = {
-                playerId: msg.playerid,
-                expectedNextIdentity: analysis.identities[1],
-                delivered: false
-            };
-            pendingPlayerCompletion = pending;
-            const outcome = advanceTurn();
-            if (!outcome?.ok) {
-                if (pendingPlayerCompletion === pending) pendingPlayerCompletion = null;
-                sendPlayerPanel(msg.playerid, 'CombatAssist', [{
-                    label: 'End My Turn',
-                    value: 'The tracker changed before your turn could be advanced. Nothing extra was changed; the GM has been notified.'
-                }]);
-                return;
-            }
-            // DANGER: some Roll20 engines deliver the tracker observer after apply() returns.
-            // The fallback preserves the same confirmation-before-next-prompt contract without duplicating it.
-            if (!pending.delivered) {
-                pending.delivered = true;
-                confirmPlayerTurnEnded(msg.playerid, outcome.analysis);
-            }
-            if (pendingPlayerCompletion === pending) pendingPlayerCompletion = null;
-        }
-
-        function encounterFields(encounter, snapshot, analysis) {
-            if (!encounter) {
-                return [
-                    { label: 'State', value: 'Not tracking an encounter.' },
-                    { label: 'Turn Tracker', value: snapshot?.open && snapshot?.pageId ? `${_sanitize(pageName(snapshot.pageId))} | ${snapshot.entries.length} rows` : 'Closed or unavailable.' }
-                ];
-            }
-            const fields = [
-                { label: 'State', value: _sanitize(encounter.status) },
-                { label: 'Encounter Page', value: _sanitize(pageName(encounter.pageId)) },
-                { label: 'Round', value: _sanitize(String(encounter.round)) },
-                { label: 'Round Source', value: encounter.roundSource === 'tracker'
-                    ? _sanitize(`${encounter.roundCounterLabel || 'Native round counter'} in Roll20's Turn Tracker`)
-                    : 'CombatAssist internal count' },
-                { label: 'Current Turn', value: _sanitize(analysis?.ok ? currentLabel(analysis) : '(Unavailable)') },
-                { label: 'Announcements', value: _sanitize(announcementLabel()) },
-                { label: 'Turn Timer', value: modState.config.timerEnabled
-                    ? `${modState.config.timerDurationSeconds}s | deadline -> ${_sanitize(modState.config.timerDeadlineAudience)}`
-                    : 'Off' },
-                { label: 'Turn Cue', value: _sanitize(String(modState.config.turnCue || 'off')) }
-            ];
-            if (encounter.attention) fields.push({ label: 'Needs Attention', value: _sanitize(encounter.attention) });
-            return fields;
-        }
-
-        function showStatus({ audit = false } = {}) {
-            synchronize({ notify: false });
-            const encounter = getEncounter();
-            const snapshot = GameAssist.TurnTrackerService.snapshot();
-            const analysis = analyzeSnapshot(snapshot);
-            const fields = encounterFields(encounter, snapshot, analysis);
-            fields.push({
-                label: 'Tracker Check',
-                value: analysis.ok
-                    ? (encounter
-                        ? `Ready. Round ${encounter.round} is recorded, ${currentLabel(analysis)} is current, and ${analysis.identities.length} distinct tracker entries are readable.`
-                        : `${analysis.identities.length} distinct tracker entries are readable. Start CombatAssist when round tracking is needed.`)
-                    : _sanitize(analysis.reason)
-            });
-            fields.push({
-                label: 'Actions',
-                value: [
-                    recoveryButton(encounter),
-                    GameAssist.createButton('Control Center', '!Combat-Menu'),
-                    GameAssist.createButton('Refresh Status', '!Combat-Status')
-                ].filter(Boolean).join(' ')
-            });
-            if (audit) {
-                fields.push({
-                    label: 'Changes',
-                    value: 'None. This audit reads the current tracker and CombatAssist record without changing either one.'
-                });
-            }
-            sendPanel(audit ? 'CombatAssist Tracker Audit' : 'CombatAssist Status', fields);
-        }
-
-        function controlButtons(encounter) {
-            if (!encounter) {
-                return `${GameAssist.createButton('Start Encounter', '!Combat-Start')} ${GameAssist.createButton('Read Guide', '!Combat-Help')}`;
-            }
-            if (encounter.status === 'active') {
-                return [
-                    GameAssist.createButton('Next Turn', '!Combat-Next'),
-                    GameAssist.createButton('Previous Turn', '!Combat-Prev'),
-                    GameAssist.createButton('Pause for Tracker Edits', '!Combat-Pause'),
-                    GameAssist.createButton('End Encounter', '!Combat-End')
-                ].join(' ');
-            }
-            if (encounter.status === 'paused') {
-                return `${GameAssist.createButton('Resume With Current Order', '!Combat-Resume')} ${GameAssist.createButton('End Encounter', '!Combat-End')}`;
-            }
-            return [
-                GameAssist.createButton('Use Current Tracker', '!Combat-Adopt'),
-                recoveryButton(encounter),
-                GameAssist.createButton('Restart at Round 1', '!Combat-Start --confirm'),
-                GameAssist.createButton('End Encounter', '!Combat-End')
-            ].filter(Boolean).join(' ');
-        }
-
-        function showMenu() {
-            synchronize({ notify: false });
-            const encounter = getEncounter();
-            const snapshot = GameAssist.TurnTrackerService.snapshot();
-            const analysis = analyzeSnapshot(snapshot);
-            const fields = encounterFields(encounter, snapshot, analysis);
-            fields.unshift({
-                label: 'Purpose',
-                value: 'Track a deliberate encounter through Roll20\'s native Turn Tracker without moving or rewriting unrelated rows.'
-            });
-            fields.push({ label: 'Encounter Controls', value: controlButtons(encounter) });
-            fields.push({
-                label: 'Turn Announcements',
-                value: `${GameAssist.createButton('GM Only', '!Combat-Announce gm')} ${GameAssist.createButton('Public', '!Combat-Announce public')} ${GameAssist.createButton('Whispers', '!Combat-Announce whispers')} ${GameAssist.createButton('Off', '!Combat-Announce off')}`
-            });
-            fields.push({
-                label: 'Player Turn Message',
-                value: `${_sanitize(playerConfirmationLabel())}: ${GameAssist.createButton('Standard', '!Combat-Confirm standard')} ${GameAssist.createButton('Varied', '!Combat-Confirm varied')}`
-            });
-            fields.push({
-                label: 'Turn Timer',
-                value: `${modState.config.timerEnabled ? 'On' : 'Off'} | ${modState.config.timerDurationSeconds}s<br>${GameAssist.createButton('Timer Settings', '!Combat-Timer')} ${GameAssist.createButton(modState.config.timerEnabled ? 'Turn Off' : 'Turn On', `!Combat-Timer ${modState.config.timerEnabled ? 'off' : 'on'}`)}`
-            });
-            fields.push({
-                label: 'Current-Turn Ping',
-                value: `${_sanitize(String(modState.config.turnCue || 'off'))}: ${GameAssist.createButton('Off', '!Combat-Cue off')} ${GameAssist.createButton('GM', '!Combat-Cue gm')} ${GameAssist.createButton('Players', '!Combat-Cue players')} ${GameAssist.createButton('Both', '!Combat-Cue both')} ${GameAssist.createButton('Public', '!Combat-Cue public')}`
-            });
-            fields.push({
-                label: 'Review',
-                value: `${GameAssist.createButton('Status', '!Combat-Status')} ${GameAssist.createButton('Guide', '!Combat-Help')}`
-            });
-            fields.push({ label: 'GameAssist', value: gameAssistHomeButton() });
-            sendPanel('CombatAssist Control Center', fields);
-        }
-
-        function combatManualHtml() {
-            return [
-                '<h1>CombatAssist User Manual</h1>',
-                `<p><strong>GameAssist v${_sanitize(VERSION)} | CombatAssist ${_sanitize(MODULE_VERSION)}</strong></p>`,
-                '<p>CombatAssist adds deliberate encounter flow to Roll20\'s native Turn Tracker. Roll20 continues to own the visible tracker; CombatAssist follows it, counts reliable turns and rounds, provides permission-checked player turn controls, and helps the GM recover from uncertain tracker changes.</p>',
-                '<h2>Quick Start</h2>',
-                '<ol><li>Place at least two distinct entries in Roll20\'s Turn Tracker.</li><li>Run <code>!ga-enable CombatAssist</code>.</li><li>Run <code>!Combat-Start</code>.</li><li>Advance with Roll20\'s tracker arrows or the CombatAssist Next Turn button.</li><li>Run <code>!Combat-End</code> when the encounter is finished, then confirm the choice.</li></ol>',
-                '<h2>What CombatAssist Adds</h2>',
-                '<ul><li>A clearly named native Round Counter row can own the round number and keep its +1 calculation when CombatAssist advances it.</li><li>Conservative internal round counting when no native counter exists.</li><li>GM Next Turn, Previous Turn, Pause, Resume, status, and recovery controls.</li><li>Optional stale-safe turn timers and private-safe current-turn pings.</li><li>Optional public, GM-only, or private turn announcements.</li><li>A permission-checked End My Turn button for the player controlling the current linked character.</li><li>One saved tracker checkpoint for previewed recovery after a mistaken or unreadable change.</li></ul>',
-                '<h2>Normal Encounter Flow</h2>',
-                '<p>If one custom tracker row is clearly named Round, Rounds, Round Count, Round Counter, Round Number, Round Tracker, Combat Round, or Current Round, its positive whole-number value becomes authoritative. A simple signed whole-number calculation such as <code>+1</code> is applied when CombatAssist moves that row to the top. With no recognized counter, CombatAssist begins at round 1 and advances after one complete uninterrupted forward cycle. Backward movement never changes the recorded round.</p>',
-                '<p>You may add or remove combatants, reroll initiative, change priorities, or reorder the native tracker during play. CombatAssist preserves the current round and begins a fresh counting cycle from Roll20\'s current first entry.</p>',
-                '<h2>Announcements and Player Controls</h2>',
-                '<p><strong>GM Only</strong> whispers turn notices and controls to the GM. <strong>Public</strong> announces turns to chat. <strong>Whispers</strong> gives the GM controls and privately gives the current linked character\'s controller an End My Turn button. <strong>Off</strong> suppresses automatic announcements.</p>',
-                '<p>Standard player confirmations use one direct sentence. Varied confirmations rotate through a small warmer library, with the Standard sentence included once. Hidden GM-layer tokens, unlinked objects, and custom tracker rows are never named to players.</p>',
-                '<h2>Tracker Changes and Recovery</h2>',
-                '<p>Use Pause and Resume when you want to make several quiet edits. Ordinary readable additions, removals, rerolls, and reordering can also be made directly. If the tracker becomes unreadable or ambiguous, CombatAssist stops guessing and offers Use Current Tracker, Restore Last Safe Tracker, or Restart at Round 1.</p>',
-                '<p>With exactly two tracker rows, Roll20 exposes the same resulting order for forward and backward movement. Use CombatAssist Next Turn or Previous Turn so the direction remains explicit.</p>',
-                '<h2>Turn Timers and Pings</h2>',
-                '<p>Turn timers are disabled by default. The GM chooses a turn length, the deadline recipient, and up to five early reminder points with their own GM, current-player, both, or public audience. Every callback verifies the same encounter, round, current token, tracker revision, and deadline before speaking. Timers report time only and never advance initiative.</p>',
-                '<p>Current-turn pings are also disabled by default. They use Roll20\'s temporary native ping without moving anyone\'s view or changing token properties. GM-layer and hidden tokens are always restricted to the GM, regardless of the selected audience.</p>',
-                '<h2>Command Reference</h2>',
-                '<ul><li><code>!Combat-GM</code> or <code>!Combat-DM</code> - open the Game Master control center.</li><li><code>!Combat-Help</code> or <code>!Combat-Guide</code> - open the compact guide.</li><li><code>!Combat-Info</code> - whisper a short purpose summary.</li><li><code>!Combat-Status</code> - show encounter state.</li><li><code>!Combat-Audit</code> - read the tracker and saved encounter without changing either.</li><li><code>!Combat-Start</code>, <code>!Combat-Pause</code>, <code>!Combat-Resume</code>, and <code>!Combat-End</code> - manage encounter tracking.</li><li><code>!Combat-Next</code> and <code>!Combat-Prev</code> - move exactly one tracker row.</li><li><code>!Combat-Announce gm|public|whispers|off</code> - choose turn-message recipients.</li><li><code>!Combat-Confirm standard|varied</code> - choose the player completion style.</li><li><code>!Combat-Timer</code> - configure duration, deadlines, and reminder points.</li><li><code>!Combat-Cue off|gm|players|both|public</code> - configure the native current-turn ping.</li></ul>',
-                '<h2>Where Initiative Fits</h2>',
-                '<p>Use Roll20 or InitiativeAssist to roll and place initiative. CombatAssist begins after the Turn Tracker is ready and does not replace initiative calculation.</p>'
-            ].join('');
-        }
-
-        function writeCombatManual() {
-            const result = GameAssist.writeModuleManual(MODULE_NAME, combatManualHtml());
-            if (!result.ok) {
-                warning(result.message, GameAssist.createButton('Whisper Short Version', '!Combat-Info'));
-                return;
-            }
-            sendPanel('CombatAssist Manual Ready', [
-                { label: 'Handout', value: `${result.link}<br>${_sanitize(result.name)} was ${result.created ? 'created' : 'updated'}.` },
-                { label: 'Continue', value: `${GameAssist.createButton('Whisper Short Version', '!Combat-Info')} ${GameAssist.createButton('Open Control Center', '!Combat-Menu')}` }
-            ]);
-        }
-
-        function showInfo() {
-            sendPanel('What CombatAssist Does', [
-                { label: 'Purpose', value: 'Adds native-counter-aware rounds, guarded turn controls, optional timers and pings, private player turn buttons, and recoverable tracker checkpoints to Roll20\'s native Turn Tracker.' },
-                { label: 'At The Table', value: 'Roll initiative normally, start CombatAssist, then keep using Roll20\'s tracker or the CombatAssist turn buttons.' },
-                { label: 'Learn More', value: `${GameAssist.createButton('Create or Update Manual', '!Combat-Manual')} ${GameAssist.createButton('Open Control Center', '!Combat-Menu')} ${GameAssist.createButton('Back to Guide', '!Combat-Help')}` }
-            ]);
-        }
-
-        function restartCurrentTurnTimer() {
-            const encounter = synchronize({ notify: false });
-            if (!encounter || encounter.status !== 'active') return false;
-            const snapshot = GameAssist.TurnTrackerService.snapshot();
-            const analysis = analyzeSnapshot(snapshot);
-            if (!analysis.ok || !sameOrder(analysis.identities, encounter.order)) return false;
-            return scheduleTurnTimers(encounter, snapshot, analysis);
-        }
-
-        function showTimerMenu() {
-            const reminderButtons = modState.config.timerReminders.length
-                ? modState.config.timerReminders.map(reminder => GameAssist.createButton(
-                    `Remove ${reminder.remainingSeconds}s`,
-                    `!Combat-Timer remove ${reminder.remainingSeconds}`
-                )).join(' ')
-                : 'No early reminders are configured.';
-            sendPanel('CombatAssist Turn Timer', [
-                { label: 'Status', value: modState.config.timerEnabled ? 'On. A fresh timer begins whenever a token turn becomes current.' : 'Off. No callbacks or reminders are scheduled.' },
-                { label: 'Turn Length', value: `${modState.config.timerDurationSeconds} seconds ${GameAssist.createButton('Change', '!Combat-Timer duration ?{Turn length in seconds|120}')}` },
-                { label: 'When Time Expires', value: `${_sanitize(modState.config.timerDeadlineAudience)} ${GameAssist.createButton('GM', '!Combat-Timer deadline gm')} ${GameAssist.createButton('Player', '!Combat-Timer deadline player')} ${GameAssist.createButton('Both', '!Combat-Timer deadline both')} ${GameAssist.createButton('Public', '!Combat-Timer deadline public')}` },
-                { label: 'Early Reminders', value: `${timerReminderSummary()}<br>${GameAssist.createButton('Add Reminder', '!Combat-Timer add ?{Seconds remaining|30} ?{Who receives it?|GM,gm|Current player,player|GM and player,both|Public chat,public}')}` },
-                { label: 'Remove Reminders', value: reminderButtons },
-                { label: 'Controls', value: `${GameAssist.createButton(modState.config.timerEnabled ? 'Turn Timer Off' : 'Turn Timer On', `!Combat-Timer ${modState.config.timerEnabled ? 'off' : 'on'}`)} ${GameAssist.createButton('Clear Reminders', '!Combat-Timer clear')} ${GameAssist.createButton('Back to Combat', '!Combat-Menu')}` },
-                { label: 'Safety', value: 'A reminder rechecks the encounter, round, current token, and exact Turn Tracker revision. It expires silently after initiative moves and never advances a turn.' }
-            ]);
-        }
-
-        function timerAudience(value) {
-            const requested = String(value || '').trim().toLowerCase();
-            return VALID_TIMER_AUDIENCES.has(requested) ? requested : null;
-        }
-
-        function handleTimerCommand(rest, args) {
-            const parts = String(rest || '').trim().split(/\s+/).filter(Boolean);
-            const action = String(parts[0] || '').toLowerCase();
-            if (!action || action === 'status' || action === 'menu') {
-                showTimerMenu();
-                return;
-            }
-            if (action === 'on' || action === 'off') {
-                modState.config.timerEnabled = action === 'on';
-                if (modState.config.timerEnabled) restartCurrentTurnTimer();
-                else clearTurnTimers(getEncounter(), { forget: true });
-                showTimerMenu();
-                return;
-            }
-            if (action === 'duration') {
-                const requested = Number(parts[1]);
-                if (!Number.isInteger(requested) || requested < POLICY.combat.minimumTurnDurationSeconds || requested > POLICY.combat.maximumTurnDurationSeconds) {
-                    warning(`Choose a whole-number turn length from ${POLICY.combat.minimumTurnDurationSeconds} to ${POLICY.combat.maximumTurnDurationSeconds} seconds.`, GameAssist.createButton('Timer Settings', '!Combat-Timer'));
-                    return;
-                }
-                modState.config.timerDurationSeconds = requested;
-                modState.config.timerReminders = modState.config.timerReminders.filter(reminder => reminder.remainingSeconds < requested);
-                restartCurrentTurnTimer();
-                showTimerMenu();
-                return;
-            }
-            if (action === 'deadline') {
-                const audience = timerAudience(parts[1]);
-                if (!audience) {
-                    warning('Choose GM, player, both, or public for the timer deadline.', GameAssist.createButton('Timer Settings', '!Combat-Timer'));
-                    return;
-                }
-                modState.config.timerDeadlineAudience = audience;
-                restartCurrentTurnTimer();
-                showTimerMenu();
-                return;
-            }
-            if (action === 'add') {
-                const remainingSeconds = Number(parts[1]);
-                const audience = timerAudience(parts[2] || 'gm');
-                if (!Number.isInteger(remainingSeconds) || remainingSeconds <= 0 || remainingSeconds >= modState.config.timerDurationSeconds || !audience) {
-                    warning(`Choose whole seconds greater than 0 and below the ${modState.config.timerDurationSeconds}-second turn length, followed by GM, player, both, or public.`, GameAssist.createButton('Timer Settings', '!Combat-Timer'));
-                    return;
-                }
-                const existing = modState.config.timerReminders.find(reminder => reminder.remainingSeconds === remainingSeconds);
-                if (existing) existing.audience = audience;
-                else if (modState.config.timerReminders.length >= POLICY.combat.maximumTimerReminders) {
-                    warning(`CombatAssist supports up to ${POLICY.combat.maximumTimerReminders} early reminders. Remove one before adding another.`, GameAssist.createButton('Timer Settings', '!Combat-Timer'));
-                    return;
-                } else modState.config.timerReminders.push({ remainingSeconds, audience });
-                modState.config.timerReminders.sort((left, right) => right.remainingSeconds - left.remainingSeconds);
-                restartCurrentTurnTimer();
-                showTimerMenu();
-                return;
-            }
-            if (action === 'remove') {
-                const remainingSeconds = Number(parts[1]);
-                modState.config.timerReminders = modState.config.timerReminders.filter(reminder => reminder.remainingSeconds !== remainingSeconds);
-                restartCurrentTurnTimer();
-                showTimerMenu();
-                return;
-            }
-            if (action === 'clear') {
-                if (args.confirm !== true) {
-                    sendPanel('Clear CombatAssist Reminders?', [
-                        { label: 'What Changes', value: 'Only the early reminder points are removed. The timer duration and deadline recipient stay configured.' },
-                        { label: 'Choose', value: `${GameAssist.createButton('Clear Reminders', '!Combat-Timer clear --confirm')} ${GameAssist.createButton('Keep Reminders', '!Combat-Timer')}` }
-                    ]);
-                    return;
-                }
-                modState.config.timerReminders = [];
-                restartCurrentTurnTimer();
-                showTimerMenu();
-                return;
-            }
-            warning('That timer command was not recognized.', GameAssist.createButton('Timer Settings', '!Combat-Timer'));
-        }
-
-        function setTurnCue(value) {
-            const requested = String(value || '').trim().toLowerCase();
-            if (!requested) {
-                sendPanel('CombatAssist Current-Turn Ping', [
-                    { label: 'Current Setting', value: _sanitize(String(modState.config.turnCue || 'off')) },
-                    { label: 'Audience', value: `${GameAssist.createButton('Off', '!Combat-Cue off')} ${GameAssist.createButton('GM', '!Combat-Cue gm')} ${GameAssist.createButton('Players', '!Combat-Cue players')} ${GameAssist.createButton('Both', '!Combat-Cue both')} ${GameAssist.createButton('Public', '!Combat-Cue public')}` },
-                    { label: 'Behavior', value: 'Uses Roll20\'s temporary native ping without moving anyone\'s view or changing the token. Hidden and GM-layer turns are restricted to GM visibility.' },
-                    { label: 'Return', value: GameAssist.createButton('Back to Combat', '!Combat-Menu') }
-                ]);
-                return;
-            }
-            if (!VALID_TURN_CUES.has(requested)) {
-                warning('Choose off, GM, players, both, or public for the current-turn ping.', GameAssist.createButton('Ping Settings', '!Combat-Cue'));
-                return;
-            }
-            modState.config.turnCue = requested;
-            if (requested !== 'off') {
-                const snapshot = GameAssist.TurnTrackerService.snapshot();
-                const analysis = analyzeSnapshot(snapshot);
-                if (analysis.ok) sendCurrentTurnCue(analysis);
-            }
-            showMenu();
-        }
-
-        function showHelp(rawTopic = '') {
-            const topic = String(rawTopic || '').trim().split(/\s+/)[0].toLowerCase();
-            const back = GameAssist.createButton('Back to Guide', '!Combat-Help');
-            const topics = {
-                turns: [
-                    { label: 'Prepare', value: `Use Roll20 or ${GameAssist.createButton('InitiativeAssist', '!Init-Menu')} to place at least two distinct rows in the tracker.` },
-                    { label: 'Begin', value: `${GameAssist.createButton('Start Encounter', '!Combat-Start')} reads the current tracker. A recognized round counter supplies the round; otherwise CombatAssist begins at round 1. Opening the tracker alone never starts combat.` },
-                    { label: 'During Play', value: `Use Roll20's arrows, ${GameAssist.createButton('Next Turn', '!Combat-Next')}, or ${GameAssist.createButton('Previous Turn', '!Combat-Prev')}. With exactly two rows, use the CombatAssist buttons so direction remains unambiguous.` },
-                    { label: 'Native Round Counter', value: 'A single custom row clearly named Round, Rounds, Round Count, Round Counter, Round Number, Round Tracker, Combat Round, or Current Round becomes authoritative. CombatAssist honors a simple +1 calculation when it moves that row to the top.' },
-                    { label: 'Lineup Changes', value: 'Add, remove, reroll, or reorder combatants normally. CombatAssist keeps the current round and starts a fresh counting cycle from the current entry.' }
-                ],
-                recovery: [
-                    { label: 'Several Quiet Edits', value: 'Pause, make the tracker changes, then resume with the current order.' },
-                    { label: 'Undo Or Restore', value: 'Undo Last Tracker Change restores the previous accepted order. Restore Last Safe Tracker is offered when the current tracker cannot be read safely. Both require confirmation.' },
-                    { label: 'Retained Progress', value: 'CombatAssist keeps the last accepted round and tracker checkpoint until the encounter is deliberately ended.' }
-                ],
-                messages: [
-                    { label: 'Audience', value: 'Choose GM Only, Public, Whispers, or Off. Whispers sends the GM controls and gives the current character\'s controller an End My Turn button.' },
-                    { label: 'Player Confirmation', value: 'Standard uses one direct message. Varied rotates among warmer alternatives and includes the Standard sentence exactly once.' },
-                    { label: 'Privacy', value: 'A completion message names only a linked token visible on the objects layer. Hidden NPCs, props, and custom rows use a generic next-initiative message.' }
-                ],
-                timers: [
-                    { label: 'Turn Timer', value: `${GameAssist.createButton('Open Timer Settings', '!Combat-Timer')} sets the turn length, deadline recipient, and up to ${POLICY.combat.maximumTimerReminders} early reminders.` },
-                    { label: 'Current-Turn Ping', value: `${GameAssist.createButton('Open Ping Settings', '!Combat-Cue')} uses Roll20's temporary native ping without moving views or changing tokens.` },
-                    { label: 'Safety', value: 'Old reminders expire silently after initiative changes. Timers never advance a turn, and hidden turns are never pinged to players.' }
-                ],
-                attention: [
-                    { label: 'Why Tracking Stops', value: 'The tracker may be closed, on another page, malformed, or contain stale or indistinguishable entries.' },
-                    { label: 'What To Do', value: `Open ${GameAssist.createButton('Status', '!Combat-Status')} and choose Use Current Tracker, Restore, Restart, or End Encounter as appropriate.` }
-                ]
-            };
-            if (topics[topic]) {
-                sendPanel('CombatAssist Guide', [...topics[topic], { label: 'Guide', value: back }]);
-                return;
-            }
-            if (topic === 'overview' || topic === 'manual') {
-                writeCombatManual();
-                return;
-            }
-            sendPanel('CombatAssist Quick Guide', [
-                { label: 'Actions', value: `${GameAssist.createButton('Control Center', '!Combat-Menu')} ${GameAssist.createButton('Current Status', '!Combat-Status')}` },
-                { label: 'Learn Or Review', value: `${GameAssist.createButton('What does CombatAssist do?', '!Combat-Manual')} ${GameAssist.createButton('Start & Run Encounters', '!Combat-Help turns')} ${GameAssist.createButton('Timers & Pings', '!Combat-Help timers')} ${GameAssist.createButton('Edit & Recover Tracker', '!Combat-Help recovery')} ${GameAssist.createButton('Messages to Players', '!Combat-Help messages')} ${GameAssist.createButton('Help With A Problem', '!Combat-Help attention')}` }
-            ]);
-        }
-
-        function setAnnouncements(value) {
-            const requested = String(value || '').trim().toLowerCase();
-            if (!VALID_ANNOUNCEMENTS.has(requested)) {
-                warning('Choose GM only, public, whispers, or off for CombatAssist turn announcements.', GameAssist.createButton('Open Control Center', '!Combat-Menu'));
-                return;
-            }
-            modState.config.announcements = requested;
-            showMenu();
-        }
-
-        function setPlayerConfirmations(value) {
-            const raw = String(value || '').trim().toLowerCase();
-            const requested = raw === 'fun' ? 'varied' : raw;
-            if (!VALID_PLAYER_CONFIRMATIONS.has(requested)) {
-                warning('Choose standard or varied for player End My Turn confirmations.', GameAssist.createButton('Open Control Center', '!Combat-Menu'));
-                return;
-            }
-            modState.config.playerConfirmations = requested;
-            showMenu();
-        }
-
-        function parseCommand(msg) {
-            const content = String(msg.content || '').trim();
-            const first = content.split(/\s+/)[0];
-            const rest = content.slice(first.length).trim();
-            return {
-                command: first.toLowerCase(),
-                rest,
-                args: _parseArgs(rest).args || {}
-            };
-        }
-
-        function handleCommand(msg) {
-            const { command, rest, args } = parseCommand(msg);
-            if (command === '!combat-end-turn') {
-                endPlayerTurn(msg, args);
-                return;
-            }
-            if (!requireGm(msg)) return;
-            switch (command) {
-                case '!combat-':
-                case '!combat-gm':
-                case '!combat-dm':
-                case '!combat-menu':
-                    showMenu();
-                    return;
-                case '!combat-guide':
-                case '!combat-help':
-                    showHelp(rest);
-                    return;
-                case '!combat-manual':
-                    writeCombatManual();
-                    return;
-                case '!combat-info':
-                    showInfo();
-                    return;
-                case '!combat-start':
-                    startEncounter(msg, args.confirm === true);
-                    return;
-                case '!combat-next':
-                    advanceTurn();
-                    return;
-                case '!combat-prev':
-                    previousTurn();
-                    return;
-                case '!combat-adopt':
-                    adoptCurrentTracker();
-                    return;
-                case '!combat-restore':
-                    restoreTracker(args);
-                    return;
-                case '!combat-pause':
-                    pauseEncounter();
-                    return;
-                case '!combat-resume':
-                    resumeEncounter();
-                    return;
-                case '!combat-status':
-                    showStatus();
-                    return;
-                case '!combat-audit':
-                    showStatus({ audit: true });
-                    return;
-                case '!combat-end':
-                    endEncounter(args.confirm === true);
-                    return;
-                case '!combat-announce':
-                    setAnnouncements(rest.split(/\s+/)[0]);
-                    return;
-                case '!combat-confirm':
-                    setPlayerConfirmations(rest.split(/\s+/)[0]);
-                    return;
-                case '!combat-timer':
-                    handleTimerCommand(rest, args);
-                    return;
-                case '!combat-cue':
-                    setTurnCue(rest.split(/\s+/)[0]);
-                    return;
-                default:
-                    warning('That CombatAssist command was not recognized.', GameAssist.createButton('Open Guide', '!Combat-Help'));
-            }
-        }
-
-        const savedEncounter = getEncounter();
-        if (savedEncounter?.status === 'active') {
-            const current = GameAssist.TurnTrackerService.snapshot();
-            const currentAnalysis = analyzeSnapshot(current);
-            if (
-                !currentAnalysis.ok ||
-                current.pageId !== savedEncounter.pageId ||
-                !sameOrder(currentAnalysis.identities, savedEncounter.order)
-            ) {
-                enterAttention(
-                    savedEncounter,
-                    currentAnalysis.reason || 'The Turn Tracker changed while CombatAssist was unavailable. Restart tracking after reviewing the current order.',
-                    current,
-                    { notify: false }
-                );
-            } else {
-                useRoundCounter(savedEncounter, currentAnalysis);
-                scheduleTurnTimers(savedEncounter, current, currentAnalysis, { resume: true });
-            }
-        }
-
-        GameAssist.TurnTrackerService.clearObservers(MODULE_NAME);
-        GameAssist.TurnTrackerService.observe(event => {
-            if (!MODULES[MODULE_NAME]?.active) return;
-            if (event.source === 'gameassist' && event.label === 'CombatAssist restore tracker') return;
-            processSnapshot(event.current, {
-                directionHint: event.source === 'gameassist' && event.label === 'CombatAssist next turn'
-                    ? 'forward'
-                    : (event.source === 'gameassist' && event.label === 'CombatAssist previous turn'
-                        ? 'backward'
-                        : (event.source === 'gameassist' ? 'rebase' : null))
-            });
-        }, { owner: MODULE_NAME });
-
-        GameAssist.CombatAssist = Object.freeze({
-            version: MODULE_VERSION,
-            combatEventSchemaVersion: COMBAT_EVENT_SCHEMA_VERSION,
-            getStatus: () => {
-                const encounter = getEncounter();
-                return encounter ? JSON.parse(JSON.stringify(encounter)) : null;
-            },
-            observe: (callback, { owner = 'CombatAssistConsumer' } = {}) => GameAssist.SemanticEvents.observe(callback, {
-                owner,
-                types: ['combat.encounter.started', 'combat.encounter.rebased', 'combat.encounter.attention', 'combat.encounter.paused', 'combat.encounter.resumed', 'combat.encounter.ended', 'combat.turn.changed']
-            }),
-            clearObservers: owner => GameAssist.SemanticEvents.clearObservers(owner)
-        });
-
-        teardownCombatAssist = function() {
-            clearTurnTimers(getEncounter(), { forget: true });
-            GameAssist.TurnTrackerService?.clearObservers?.(MODULE_NAME);
-            delete GameAssist.CombatAssist;
-        };
-
-        GameAssist.onCommand('!Combat-', handleCommand, MODULE_NAME, {
-            match: { caseInsensitive: true, mode: 'prefix' }
-        });
-        GameAssist.log(MODULE_NAME, 'Ready: native tracker flow, round counters, turn timers, current-turn pings, recovery, and player confirmations.', 'INFO', { startup: true });
-    }, {
-        enabled: false,
-        prefixes: ['!Combat-'],
-        dependsOn: ['TurnTrackerService'],
-        // CHOICE: resolve the live closure at teardown time because register() captures option values before module init assigns its cleanup function.
-        teardown: () => teardownCombatAssist(),
-        preserveRuntimeOnDisable: true
-    });
-    // --- Notes & Comments ---
-    // Maintenance (v2.0.0, no semantic change): Corrected the runtime version display to the owner-authoritative CombatAssist 1.1.0 recorded by this section, the release inventory, and the changelog; encounter behavior is unchanged.
-    // Changed (v2.0.0): Added the standard GameAssist Home return to the CombatAssist GM control screen.
-    // Changed (v2.0.0): Advanced CombatAssist to 1.1.0 with stable encounter identity, monotonic verified-forward progression, and immutable public semantic events for optional consumers; native tracker ownership and all established encounter controls remain unchanged.
-    // Decision log:
-    //   CHOICE: Publish verified encounter observations without exposing a consumer write path - ALT: let EffectAssist parse Roll20 turnorder independently; REJECTED: duplicate tracker interpretation would drift from CombatAssist's accepted baseline and safety rules.
-    // Prior notes:
-    //   v0.1.7.0: Advanced CombatAssist to 1.0.5; !Combat-GM and !Combat-DM are equal role aliases for the encounter control center, while the shared manual writer and all encounter, timer, ping, and tracker behavior remained unchanged.
-    //   CHOICE: Start disabled and require explicit GM encounter start - ALT: infer combat from an open tracker; REJECTED: Roll20 trackers are also used for setup, exploration, and non-combat ordering.
-    //   CHOICE: Identify token rows by token id and custom rows by exact label - ALT: include initiative priority; REJECTED: priority edits do not change row ownership or identity.
-    //   CHOICE: Refuse indistinguishable duplicate rows and require CombatAssist Next Turn for a two-row tracker - ALT: guess native arrow direction; REJECTED: forward and backward produce the same two-row order.
-    //   CHOICE: Require a complete uninterrupted forward cycle after backward movement before another round increment - ALT: increment on the next anchor return; REJECTED: undoing a backward step must not manufacture a new round.
-    //   CHOICE: Keep Next, Previous, and End My Turn to one array rotation through TurnTrackerService - ALT: write Campaign turnorder directly; REJECTED: all native tracker mutation belongs to the guarded core authority.
-    //   CHOICE: Authorize End My Turn against the current linked character and token id at execution time - ALT: trust an old whispered button; REJECTED: a player controlling multiple characters could otherwise advance a later turn with a stale button.
-    //   CHOICE: Flush the outgoing player's confirmation inside the guarded tracker observer before the next current-player whisper - ALT: confirm only after apply returns; REJECTED: synchronous observer delivery produces A-A-B ordering for one player controlling consecutive characters.
-    //   CHOICE: Write the complete purpose and operating manual to one stable handout name - ALT: repeat the manual in chat; REJECTED: long chat guides bury encounter controls and are difficult to revisit.
-    //   CHOICE: Preserve the round and begin a fresh cycle after a valid native roster or initiative change - ALT: enter attention for every edit; REJECTED: normal Roll20 encounter maintenance must not erase progress or require ritual pause/resume steps.
-    //   CHOICE: Retain one complete accepted tracker checkpoint and require a revision-matched restore confirmation - ALT: provide no retcon path or maintain an unbounded history; REJECTED: the former strands the GM and the latter grows persistent state without limit.
-    //   CHOICE: Keep baseline module operation independent while permitting explicitly labeled opt-in integrations - ALT: forbid every cross-module feature; REJECTED: useful optional interoperability may have a prerequisite without making either module generally dependent.
-    //   CHOICE: Recognize only conservative whole-label round-counter names and refuse multiple candidates - ALT: treat every custom row containing "round" as authoritative; REJECTED: lair actions and reminders could be mistaken for the campaign round.
-    //   CHOICE: Evaluate only simple signed whole-number calculations on a recognized counter during forward GameAssist movement - ALT: execute arbitrary Roll20 expressions; REJECTED: the Mod API does not expose the native calculation parser as a safe reusable function.
-    //   CHOICE: Bind every timer callback to encounter start, round, current identity, tracker revision, and absolute deadline - ALT: trust the original timeout; REJECTED: a stale callback could remind a player after initiative moved.
-    //   CHOICE: Send player timer notices only for visible linked object-layer turns - ALT: trust token controllers for hidden or unlinked rows; REJECTED: control permission does not make a hidden tracker identity safe to reveal.
-    //   CHOICE: Implement current-turn visibility first with native non-centering pings - ALT: overwrite aura, tint, or marker properties; REJECTED: native pings are ephemeral and require no token-state restoration.
-    //   CHOICE: Defer teardown through a closure that resolves the initialized cleanup function - ALT: pass the pre-init placeholder directly; REJECTED: register() captures option values before module init assigns scoped cleanup.
-    //   CHOICE: Retain tracker state while disabled and mark uncertain resumes for attention - ALT: erase active encounter context; REJECTED: disabling a feature must not silently destroy recoverable campaign state.
-    // Prior notes:
-    //   v0.1.7.0 / CombatAssist 1.0.3: A single clearly named native round-counter row became authoritative and received its simple signed whole-number calculation on forward CombatAssist movement. Added disabled-by-default stale-safe turn timers, privacy-gated recipients, non-centering native current-turn pings, and teardown cleanup.
-    //   v0.1.7.0 / CombatAssist 1.0.2: Ordered outgoing completion before the next controlled-character prompt, made next-turn wording neutral and privacy-safe, added Standard/Varied confirmations, common navigation aliases, and a persistent manual handout.
-    //   v0.1.7.0 / CombatAssist 1.0.1: Valid native roster edits, initiative rerolls, and manual order changes preserve the round and rebase automatically; unreadable states retain a revision-guarded restorable snapshot; player End My Turn actions receive configurable private success and already-advanced confirmations.
-    //   v0.1.7.0 / CombatAssist 1.0.0: Introduced explicit lifecycle controls, exact native and guarded movement, conservative round counting, Whispers mode, and execution-time End My Turn authorization.
-    //   v0.1.7.0 / CombatAssist 1.0.0 decision superseded by 1.0.1: tracker rebasing originally required explicit pause/resume because arbitrary live edits could conceal skipped turns or row replacements.
-    // [GAMEASSIST:MODULES:COMBATASSIST] END
-    // =============================================================================
-
-    // ————— WELCOMEASSIST MODULE v0.1.5 —————
-    // =============================================================================
-    // [GAMEASSIST:MODULES:WELCOMEASSIST] BEGIN
-    // Section Title: Optional table welcome and startup greeting
-    // -------------------------------------------------------------------------
-    // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:WELCOMEASSIST", title: "WelcomeAssist",
-    //   guarantees: ["Disabled-by-default public startup greeting","At most one automatic greeting per sandbox lifecycle","Automatic output begins only after completed GameAssist bootstrap and a bounded health check","Custom greetings are bounded, deduplicated, and neutralized against Roll20 chat directives","Configuration, status, and previews remain GM-only while explicit and automatic announcements are public","Short case-insensitive !Welcome and !Welcome- commands are primary while the legacy !welcome-assist surface remains accepted once","The root guide stays compact while topic buttons and a stable on-demand manual reveal detailed guidance","Private control panels use the shared Roll20 default-template presentation while the public greeting remains visibly distinct","Unknown commands explain the problem and provide a direct guide button"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:STATE]","[GAMEASSIST:CORE:OBJECT]"],
-    //   observability: { spans: ["[GAMEASSIST:MODULES:WELCOMEASSIST]"] },
-    //   last_updated_version: "v2.0.0", lifecycle: "active",
-    //   independent_versions: { module_version: "0.1.5" } }
-    // -------------------------------------------------------------------------
-    // Narrative
-    // WelcomeAssist optionally posts one public greeting after GameAssist completes
-    // bootstrap. Enabling it during a live sandbox never announces unexpectedly;
-    // the GM configures and previews first, then reloads for automatic behavior.
-    // Modes include one professional default, the built-in greeting library, one to ten
-    // campaign greetings, or a mixed pool where each campaign greeting has double
-    // the individual weight of a built-in line.
-    // -------------------------------------------------------------------------
-    const WELCOMEASSIST_MODULE_VERSION = '0.1.5';
-    const WELCOMEASSIST_MODES = Object.freeze(['default', 'builtin', 'custom', 'mixed']);
-    const WELCOMEASSIST_DEFAULTS = Object.freeze({
-        enabled: false,
-        mode: 'mixed',
-        delayMs: 3000,
-        showHeader: true,
-        header: '🎲 Game Night Is Ready',
-        defaultGreeting: 'Welcome, adventurers. The table is ready—may your plans be clever, your rolls be kind, and your game night be legendary.',
-        customGreetings: Object.freeze([])
-    });
-    const WELCOMEASSIST_BUILT_INS = Object.freeze([
-        'The table is live. Please roll responsibly.',
-        'Initiative is optional. Snacks are not.',
-        'The dice are awake, and they have chosen chaos.',
-        'The GM has spoken. The dice will now file an appeal.',
-        'The council has decided: more dice.',
-        'Please keep hands, feet, and familiars inside the encounter.',
-        'The prophecy was vague, but it definitely mentioned snacks.',
-        "Tonight's forecast: scattered crits with a chance of TPK.",
-        'The party has entered the chat. The dungeon regrets this.',
-        'Adventure is loading. Common sense has been disabled.',
-        'Sharpen your pencils and your alibis.',
-        'The GM prepared several outcomes. You will discover none of them as planned.',
-        "The quest begins when someone asks, 'What could go wrong?'",
-        'Tonight, even the side quests have side quests.',
-        'Roll for courage, snacks, and basic spatial awareness.',
-        'All systems nominal. Party judgment remains unverified.',
-        'The tavern is open, the quest board is full, and somebody already adopted the goblin.',
-        'Please remain calm while the party applies brute force to a problem that was carefully constructed to reward observation, diplomacy, and a basic understanding of levers.',
-        'The dungeon was designed according to sound architectural principles, peer-reviewed trap placement, and the assumption that no rational person would attempt the plan the party has come up with.'
-    ]);
-
-    let welcomeAssistTimer = null;
-    let welcomeAssistAutoAnnounced = false;
-    let welcomeAssistLastAnnouncement = null;
-
-    function clearWelcomeAssistTimer() {
-        if (welcomeAssistTimer === null) return;
-        clearTimeout(welcomeAssistTimer);
-        welcomeAssistTimer = null;
-    }
-
-    function normalizeWelcomeText(value, fallback, maxLength) {
-        const normalized = String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, maxLength);
-        return normalized || fallback;
-    }
-
-    function normalizeWelcomeMode(value) {
-        const normalized = String(value ?? '').trim().toLowerCase();
-        return WELCOMEASSIST_MODES.includes(normalized) ? normalized : WELCOMEASSIST_DEFAULTS.mode;
-    }
-
-    function normalizeWelcomeDelay(value) {
-        const numericValue = Number(value);
-        if (!Number.isFinite(numericValue)) return WELCOMEASSIST_DEFAULTS.delayMs;
-        return Math.min(POLICY.welcome.maxDelayMs, Math.max(POLICY.welcome.minDelayMs, Math.round(numericValue)));
-    }
-
-    function normalizeCustomGreetings(value) {
-        const source = Array.isArray(value) ? value : [];
-        const seen = new Set();
-        const normalized = [];
-        source.forEach(entry => {
-            if (normalized.length >= POLICY.welcome.maxCustomGreetings) return;
-            const greeting = normalizeWelcomeText(entry, '', POLICY.welcome.maxGreetingLength);
-            if (!greeting) return;
-            const key = greeting.toLowerCase();
-            if (seen.has(key)) return;
-            seen.add(key);
-            normalized.push(greeting);
-        });
-        return normalized;
-    }
-
-    function normalizeWelcomeConfig(modState) {
-        Object.assign(modState.config, {
-            enabled: WELCOMEASSIST_DEFAULTS.enabled,
-            mode: WELCOMEASSIST_DEFAULTS.mode,
-            delayMs: WELCOMEASSIST_DEFAULTS.delayMs,
-            showHeader: WELCOMEASSIST_DEFAULTS.showHeader,
-            header: WELCOMEASSIST_DEFAULTS.header,
-            defaultGreeting: WELCOMEASSIST_DEFAULTS.defaultGreeting,
-            customGreetings: [],
-            ...modState.config
-        });
-        modState.config.mode = normalizeWelcomeMode(modState.config.mode);
-        modState.config.delayMs = normalizeWelcomeDelay(modState.config.delayMs);
-        modState.config.showHeader = modState.config.showHeader !== false;
-        modState.config.header = normalizeWelcomeText(
-            modState.config.header,
-            WELCOMEASSIST_DEFAULTS.header,
-            POLICY.welcome.maxHeaderLength
-        );
-        modState.config.defaultGreeting = normalizeWelcomeText(
-            modState.config.defaultGreeting,
-            WELCOMEASSIST_DEFAULTS.defaultGreeting,
-            POLICY.welcome.maxGreetingLength
-        );
-        modState.config.customGreetings = normalizeCustomGreetings(modState.config.customGreetings);
-        return modState.config;
-    }
-
-    function pickWelcomeGreeting(pool) {
-        if (!Array.isArray(pool) || !pool.length) return WELCOMEASSIST_DEFAULTS.defaultGreeting;
-        return pool[randomInteger(pool.length) - 1];
-    }
-
-    function chooseWelcomeGreeting(config, modeOverride = null) {
-        const mode = normalizeWelcomeMode(modeOverride || config.mode);
-        const custom = normalizeCustomGreetings(config.customGreetings);
-        if (mode === 'default') return { mode, greeting: config.defaultGreeting };
-        if (mode === 'builtin') return { mode, greeting: pickWelcomeGreeting(WELCOMEASSIST_BUILT_INS) };
-        if (mode === 'custom') {
-            return {
-                mode,
-                greeting: custom.length ? pickWelcomeGreeting(custom) : config.defaultGreeting,
-                fallback: custom.length === 0
-            };
-        }
-        const mixed = [config.defaultGreeting].concat(WELCOMEASSIST_BUILT_INS);
-        custom.forEach(greeting => {
-            // CHOICE: Two entries give each campaign greeting twice the individual weight of a built-in or default line.
-            mixed.push(greeting, greeting);
-        });
-        return { mode: 'mixed', greeting: pickWelcomeGreeting(mixed), fallback: custom.length === 0 };
-    }
-
-    /**
-     * sanitizeWelcomeForChat — Escape layout HTML and neutralize Roll20 chat directives.
-     * Inputs: bounded owner-authored header or greeting text.
-     * Outputs: display-safe HTML text that cannot invoke inline rolls, attributes, abilities, or queries.
-     * Failure: never throws for null or malformed input; string conversion is deterministic.
-     * Design: public custom text remains expressive without becoming executable Roll20 chat syntax.
-     */
-    function sanitizeWelcomeForChat(value) {
-        return _sanitize(String(value ?? ''))
-            .replace(/\[/g, '&#91;')
-            .replace(/\]/g, '&#93;')
-            .replace(/@/g, '&#64;')
-            .replace(/%/g, '&#37;')
-            .replace(/\?/g, '&#63;');
-    }
-
-    function buildWelcomeCard(config, greeting) {
-        const header = config.showHeader
-            ? `<div style="font-weight:bold;color:#3f2f72;margin-bottom:4px;">${sanitizeWelcomeForChat(config.header)}</div>`
-            : '';
-        return [
-            '<div style="border:1px solid #6d5ca5;background:#f7f5ff;padding:8px 10px;border-radius:6px;">',
-            header,
-            `<div style="font-style:italic;">${sanitizeWelcomeForChat(greeting)}</div>`,
-            '</div>'
-        ].join('');
-    }
-
-    function getBlockingWelcomeModules() {
-        return Object.entries(MODULES)
-            .filter(([name]) => name !== 'WelcomeAssist')
-            .filter(([name, mod]) => {
-                const branch = getState(name);
-                return branch.config.enabled !== false && !(mod.initialized && mod.active);
-            })
-            .map(([name]) => name)
-            .sort((left, right) => left.localeCompare(right));
-    }
-
-    function recordWelcomeAnnouncement(modState, choice, reason) {
-        const record = {
-            greeting: choice.greeting,
-            mode: choice.mode,
-            reason,
-            announcedAt: isoNow()
-        };
-        welcomeAssistLastAnnouncement = record;
-        modState.runtime.lastGreeting = record.greeting;
-        modState.runtime.lastMode = record.mode;
-        modState.runtime.lastReason = record.reason;
-        modState.runtime.lastAnnouncedAt = record.announcedAt;
-    }
-
-    function announceWelcome(modState, reason = 'manual') {
-        const config = normalizeWelcomeConfig(modState);
-        const choice = chooseWelcomeGreeting(config);
-        if (choice.fallback && config.mode === 'custom') {
-            GameAssist.log('WelcomeAssist', 'Custom mode has no campaign greetings; using the professional default.', 'WARN');
-        }
-        sendChat('WelcomeAssist', buildWelcomeCard(config, choice.greeting));
-        recordWelcomeAnnouncement(modState, choice, reason);
-        if (reason === 'automatic') welcomeAssistAutoAnnounced = true;
-        return choice;
-    }
-
-    function scheduleWelcomeAfterBootstrap(modState) {
-        if (welcomeAssistAutoAnnounced || welcomeAssistTimer !== null) return;
-        const config = normalizeWelcomeConfig(modState);
-        const deadline = now() + config.delayMs + POLICY.welcome.readinessWaitMs;
-        const tryAnnouncement = () => {
-            welcomeAssistTimer = null;
-            if (!MODULES.WelcomeAssist?.initialized || !MODULES.WelcomeAssist?.active) return;
-            const blocking = getBlockingWelcomeModules();
-            if (!blocking.length) {
-                announceWelcome(modState, 'automatic');
-                return;
-            }
-            if (now() >= deadline) {
-                GameAssist.log(
-                    'WelcomeAssist',
-                    `Greeting skipped because these enabled GameAssist components were not ready: ${blocking.join(', ')}.`,
-                    'WARN'
-                );
-                return;
-            }
-            welcomeAssistTimer = setTimeout(tryAnnouncement, POLICY.welcome.readinessPollMs);
-        };
-        welcomeAssistTimer = setTimeout(tryAnnouncement, config.delayMs);
-    }
-
-    function whisperWelcomeAssist(message) {
-        sendChat('WelcomeAssist', `/w gm ${message}`);
-    }
-
-    function welcomeAssistPanel(title, content) {
-        whisperWelcomeAssist(`&{template:default} {{name=${sanitizeWelcomeForChat(title)}}} {{Details=${content}}}`);
-    }
-
-    function welcomeModeButtons() {
-        return WELCOMEASSIST_MODES.map(mode => GameAssist.createButton(
-            mode[0].toUpperCase() + mode.slice(1),
-            `!Welcome-Mode ${mode}`
-        )).join(' ');
-    }
-
-    function showWelcomeHelp(rawTopic = '') {
-        const topic = String(rawTopic || '').trim().split(/\s+/)[0].toLowerCase();
-        const back = GameAssist.createButton('Back to Guide', '!Welcome-Help');
-        const topics = {
-            overview: [
-                '<div style="margin-top:6px;"><strong>Purpose</strong><br>WelcomeAssist posts one optional greeting after GameAssist starts successfully. It is disabled until the GM chooses to use it.</div>',
-                '<div style="margin-top:8px;"><strong>What Stays Private</strong><br>Configuration, status, and previews are whispered to the GM. Only Announce Now and a completed automatic greeting are public.</div>'
-            ],
-            setup: [
-                '<div style="margin-top:6px;"><strong>1. Enable</strong><br>Enable WelcomeAssist from GameAssist settings.</div>',
-                '<div style="margin-top:8px;"><strong>2. Choose And Preview</strong><br>Select a greeting mode, then preview it privately.</div>',
-                '<div style="margin-top:8px;"><strong>3. Reload</strong><br>Reload the Mod sandbox. The automatic greeting appears once after the configured delay and a healthy GameAssist startup.</div>'
-            ],
-            modes: [
-                `<div style="margin-top:6px;"><strong>Choose A Mode</strong><br>${welcomeModeButtons()}</div>`,
-                '<div style="margin-top:8px;"><strong>Default</strong> uses one professional greeting. <strong>Built-in</strong> chooses from the included library. <strong>Custom</strong> uses campaign greetings. <strong>Mixed</strong> combines all three and gives each campaign greeting double weight.</div>'
-            ],
-            custom: [
-                `<div style="margin-top:6px;"><strong>Campaign Greetings</strong><br>${GameAssist.createButton('View List', '!Welcome-Custom list')} ${GameAssist.createButton('Add Greeting', '!Welcome-Custom add ?{Campaign greeting}')}</div>`,
-                '<div style="margin-top:8px;">WelcomeAssist keeps up to ten distinct campaign greetings. View List provides numbered removal and confirmed clear controls.</div>'
-            ],
-            appearance: [
-                `<div style="margin-top:6px;"><strong>Header</strong><br>${GameAssist.createButton('Change Header', '!Welcome-Header ?{Welcome header|Game Night Is Ready}')} ${GameAssist.createButton('Show Header', '!Welcome-Header show')} ${GameAssist.createButton('Hide Header', '!Welcome-Header hide')}</div>`,
-                `<div style="margin-top:8px;"><strong>Startup Delay</strong><br>${GameAssist.createButton('Set Delay', '!Welcome-Delay ?{Delay in seconds|3}')} waits 1 to 60 seconds after GameAssist is ready.</div>`
-            ],
-            safety: [
-                '<div style="margin-top:6px;"><strong>No Surprise Post</strong><br>Enabling WelcomeAssist does not announce immediately. Reloading schedules the automatic greeting; Announce Now is always deliberate.</div>',
-                '<div style="margin-top:8px;"><strong>Startup Check</strong><br>The automatic greeting is skipped if another enabled GameAssist component is still unavailable.</div>',
-                '<div style="margin-top:8px;"><strong>Campaign Text</strong><br>Custom greetings are stored as bounded plain text and cannot execute rolls, abilities, attributes, or Roll20 queries.</div>'
-            ]
-        };
-        if (topics[topic]) {
-            welcomeAssistPanel('WelcomeAssist Guide', [...topics[topic], `<div style="margin-top:8px;">${back}</div>`].join(''));
-            return;
-        }
-        welcomeAssistPanel('WelcomeAssist Guide', [
-            `<div style="margin-top:6px;"><strong>Actions</strong><br>${GameAssist.createButton('Preview to GM', '!Welcome-Preview')} ${GameAssist.createButton('Status & Settings', '!Welcome-Status')} ${GameAssist.createButton('Announce Now', '!Welcome-Announce')}</div>`,
-            `<div style="margin-top:8px;"><strong>Learn Or Configure</strong><br>${GameAssist.createButton('What does WelcomeAssist do?', '!Welcome-Manual')} ${GameAssist.createButton('Quick Setup', '!Welcome-Help setup')} ${GameAssist.createButton('Greeting Modes', '!Welcome-Help modes')} ${GameAssist.createButton('Campaign Greetings', '!Welcome-Help custom')} ${GameAssist.createButton('Appearance & Delay', '!Welcome-Help appearance')} ${GameAssist.createButton('Privacy & Startup', '!Welcome-Help safety')}</div>`
-        ].join(''));
-    }
-
-    function showWelcomeStatus(modState, { audit = false } = {}) {
-        const config = normalizeWelcomeConfig(modState);
-        const last = welcomeAssistLastAnnouncement
-            ? `${sanitizeWelcomeForChat(welcomeAssistLastAnnouncement.greeting)}<br><em>${sanitizeWelcomeForChat(welcomeAssistLastAnnouncement.reason)} at ${sanitizeWelcomeForChat(localTime(new Date(welcomeAssistLastAnnouncement.announcedAt).getTime()))}</em>`
-            : 'None in this sandbox lifecycle.';
-        welcomeAssistPanel(audit ? 'WelcomeAssist Audit' : 'WelcomeAssist Status', [
-            `<div style="margin-top:6px;"><strong>Module</strong>: ${WELCOMEASSIST_MODULE_VERSION} | Enabled and running</div>`,
-            `<div><strong>Mode</strong>: ${sanitizeWelcomeForChat(config.mode)} | <strong>Delay</strong>: ${(config.delayMs / 1000).toFixed(1)} seconds</div>`,
-            `<div><strong>Header</strong>: ${config.showHeader ? 'Shown' : 'Hidden'} | <strong>Campaign Greetings</strong>: ${config.customGreetings.length}/${POLICY.welcome.maxCustomGreetings}</div>`,
-            `<div><strong>Automatic Greeting</strong>: ${welcomeAssistAutoAnnounced ? 'Sent' : (welcomeAssistTimer !== null ? 'Waiting' : 'Not sent')}</div>`,
-            `<div style="margin-top:6px;"><strong>Last This Sandbox</strong><br>${last}</div>`,
-            audit ? '<div style="margin-top:6px;"><strong>Changes</strong>: None. This audit reads WelcomeAssist configuration and current-sandbox activity without announcing or changing settings.</div>' : '',
-            `<div style="margin-top:8px;">${GameAssist.createButton('Preview', '!Welcome-Preview')} ${GameAssist.createButton('Announce Now', '!Welcome-Announce')} ${GameAssist.createButton('Custom List', '!Welcome-Custom list')} ${GameAssist.createButton('Guide', '!Welcome-Help')}</div>`,
-            `<div style="margin-top:6px;">${welcomeModeButtons()}</div>`,
-            `<div style="margin-top:8px;">${gameAssistHomeButton()}</div>`
-        ].join(''));
-    }
-
-    function showWelcomeInfo() {
-        welcomeAssistPanel('What WelcomeAssist Does', [
-            '<div style="margin-top:6px;"><strong>Purpose</strong><br>Posts one optional campaign greeting after a healthy GameAssist startup, with private preview and setup controls for the GM.</div>',
-            '<div style="margin-top:8px;"><strong>At The Table</strong><br>Choose a professional, built-in, campaign, or mixed greeting pool; preview it privately; then reload the sandbox when you want the automatic greeting enabled.</div>',
-            `<div style="margin-top:8px;">${GameAssist.createButton('Create or Update Manual', '!Welcome-Manual')} ${GameAssist.createButton('Status & Settings', '!Welcome-Status')} ${GameAssist.createButton('Back to Guide', '!Welcome-Help')}</div>`
-        ].join(''));
-    }
-
-    function welcomeManualHtml() {
-        return [
-            '<h1>WelcomeAssist User Manual</h1>',
-            `<p><strong>GameAssist v${_sanitize(VERSION)} | WelcomeAssist ${_sanitize(WELCOMEASSIST_MODULE_VERSION)}</strong></p>`,
-            '<p>WelcomeAssist posts one optional public greeting after GameAssist starts successfully. Setup, status, and previews remain private to the GM. The module is disabled by default.</p>',
-            '<h2>Quick Start</h2>',
-            '<ol><li>Enable WelcomeAssist in GameAssist settings.</li><li>Run <code>!Welcome-Status</code> and choose a greeting mode.</li><li>Use <code>!Welcome-Preview</code> to review the result privately.</li><li>Reload the Mod sandbox. WelcomeAssist waits for the configured delay and checks that other enabled GameAssist components are healthy before posting once.</li></ol>',
-            '<h2>Greeting Modes</h2>',
-            '<ul><li><strong>Default:</strong> one professional greeting.</li><li><strong>Built-in:</strong> one line from the included table-friendly library.</li><li><strong>Custom:</strong> one of the GM\'s campaign greetings.</li><li><strong>Mixed:</strong> combines all sources and gives each campaign greeting twice the individual weight of a built-in line.</li></ul>',
-            '<h2>Campaign Greetings</h2>',
-            '<p>Up to ten distinct campaign greetings can be added, listed, removed by number, or cleared with confirmation. Saved text is bounded and neutralized so it cannot execute Roll20 rolls, abilities, attributes, or queries.</p>',
-            '<h2>Privacy And Startup</h2>',
-            '<p>Preview, status, audit, and configuration are GM whispers. Only Announce Now and a completed automatic greeting are public. Enabling the module never posts immediately; the automatic greeting begins only after a later sandbox reload.</p>',
-            '<h2>Command Reference</h2>',
-            '<ul><li><code>!Welcome-GM</code> or <code>!Welcome-DM</code> - private Game Master settings and current state.</li><li><code>!Welcome-Help</code> or <code>!Welcome-Guide</code> - compact guide.</li><li><code>!Welcome-Status</code> or <code>!Welcome-Menu</code> - settings and current state.</li><li><code>!Welcome-Preview</code> - private preview.</li><li><code>!Welcome-Announce</code> - deliberate public greeting now.</li><li><code>!Welcome-Mode</code>, <code>!Welcome-Delay</code>, <code>!Welcome-Header</code>, and <code>!Welcome-Custom</code> - configuration.</li><li><code>!Welcome-Audit</code> - read-only configuration/activity check.</li></ul>',
-            '<h2>Troubleshooting</h2>',
-            '<p>If the automatic greeting is skipped, open WelcomeAssist Status and GameAssist system status. WelcomeAssist will not announce that the suite is ready while another enabled GameAssist component remains unavailable.</p>'
-        ].join('');
-    }
-
-    function writeWelcomeManual() {
-        const result = GameAssist.writeModuleManual('WelcomeAssist', welcomeManualHtml());
-        if (!result.ok) {
-            welcomeAssistPanel('WelcomeAssist Manual', `<div><strong>Needs Attention</strong><br>${_sanitize(result.message)}</div><div style="margin-top:8px;">${GameAssist.createButton('Whisper Short Version', '!Welcome-Info')}</div>`);
-            return;
-        }
-        welcomeAssistPanel('WelcomeAssist Manual Ready', [
-            `<div><strong>Handout</strong><br>${result.link}<br>${_sanitize(result.name)} was ${result.created ? 'created' : 'updated'}.</div>`,
-            `<div style="margin-top:8px;">${GameAssist.createButton('Whisper Short Version', '!Welcome-Info')} ${GameAssist.createButton('Status & Settings', '!Welcome-Status')}</div>`
-        ].join(''));
-    }
-
-    function showCustomGreetings(modState) {
-        const config = normalizeWelcomeConfig(modState);
-        const rows = config.customGreetings.length
-            ? config.customGreetings.map((greeting, index) => [
-                `<div style="margin-top:5px;"><strong>${index + 1}.</strong> ${sanitizeWelcomeForChat(greeting)} `,
-                GameAssist.createButton('Remove', `!Welcome-Custom remove ${index + 1}`),
-                '</div>'
-            ].join('')).join('')
-            : '<div style="margin-top:6px;">No campaign greetings have been added.</div>';
-        welcomeAssistPanel(`Campaign Greetings (${config.customGreetings.length}/${POLICY.welcome.maxCustomGreetings})`, [
-            rows,
-            `<div style="margin-top:8px;">${GameAssist.createButton('Add Greeting', '!Welcome-Custom add ?{Campaign greeting}')} ${GameAssist.createButton('Clear All', '!Welcome-Custom clear --confirm')} ${GameAssist.createButton('Back to Status', '!Welcome-Status')}</div>`
-        ].join(''));
-    }
-
-    function splitWelcomeCommand(payload) {
-        const match = String(payload || '').trim().match(/^(\S+)(?:\s+([\s\S]*))?$/);
-        return {
-            command: (match?.[1] || 'help').toLowerCase(),
-            remainder: (match?.[2] || '').trim()
-        };
-    }
-
-    function stripMatchingQuotes(value) {
-        const text = String(value || '').trim();
-        if (text.length < 2) return text;
-        const first = text[0];
-        const last = text[text.length - 1];
-        if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
-            return text.slice(1, -1).trim();
-        }
-        return text;
-    }
-
-    function setWelcomeMode(modState, rawMode) {
-        const requested = String(rawMode || '').trim().toLowerCase();
-        if (!WELCOMEASSIST_MODES.includes(requested)) {
-            GameAssist.log('WelcomeAssist', 'Choose default, builtin, custom, or mixed.', 'WARN');
-            return;
-        }
-        modState.config.mode = requested;
-        GameAssist.log('WelcomeAssist', `Greeting mode set to ${requested}.`);
-        showWelcomeStatus(modState);
-    }
-
-    function setWelcomeDelay(modState, rawSeconds) {
-        const input = String(rawSeconds || '').trim();
-        if (!/^\d+(?:\.\d+)?$/.test(input)) {
-            GameAssist.log('WelcomeAssist', 'Delay must be a number of seconds from 1 to 60.', 'WARN');
-            return;
-        }
-        const requestedMs = Math.round(Number(input) * 1000);
-        const normalizedMs = normalizeWelcomeDelay(requestedMs);
-        modState.config.delayMs = normalizedMs;
-        if (normalizedMs !== requestedMs) {
-            GameAssist.log('WelcomeAssist', `Delay constrained to ${(normalizedMs / 1000).toFixed(1)} seconds.`, 'WARN');
-            return;
-        }
-        GameAssist.log('WelcomeAssist', `Delay set to ${(normalizedMs / 1000).toFixed(1)} seconds.`);
-    }
-
-    function setWelcomeText(modState, key, rawText) {
-        const maxLength = key === 'header' ? POLICY.welcome.maxHeaderLength : POLICY.welcome.maxGreetingLength;
-        const normalized = normalizeWelcomeText(stripMatchingQuotes(rawText), '', maxLength);
-        if (!normalized) {
-            GameAssist.log('WelcomeAssist', `${key === 'header' ? 'Header' : 'Default greeting'} cannot be blank.`, 'WARN');
-            return;
-        }
-        modState.config[key] = normalized;
-        GameAssist.log('WelcomeAssist', `${key === 'header' ? 'Header' : 'Default greeting'} updated.`);
-    }
-
-    function manageWelcomeHeader(modState, rawText) {
-        const requested = String(rawText || '').trim().toLowerCase();
-        if (requested === 'show' || requested === 'hide') {
-            modState.config.showHeader = requested === 'show';
-            GameAssist.log('WelcomeAssist', `Greeting header ${requested === 'show' ? 'enabled' : 'hidden'}.`);
-            return;
-        }
-        setWelcomeText(modState, 'header', rawText);
-    }
-
-    function manageCustomGreetings(modState, rawCommand) {
-        const parsed = splitWelcomeCommand(rawCommand);
-        const config = normalizeWelcomeConfig(modState);
-        if (parsed.command === 'list') {
-            showCustomGreetings(modState);
-            return;
-        }
-        if (parsed.command === 'add') {
-            const greeting = normalizeWelcomeText(stripMatchingQuotes(parsed.remainder), '', POLICY.welcome.maxGreetingLength);
-            if (!greeting) {
-                GameAssist.log('WelcomeAssist', 'Provide a greeting after custom add.', 'WARN');
-                return;
-            }
-            if (config.customGreetings.length >= POLICY.welcome.maxCustomGreetings) {
-                GameAssist.log('WelcomeAssist', `Campaign greetings are limited to ${POLICY.welcome.maxCustomGreetings}.`, 'WARN');
-                return;
-            }
-            if (config.customGreetings.some(existing => existing.toLowerCase() === greeting.toLowerCase())) {
-                GameAssist.log('WelcomeAssist', 'That campaign greeting is already present.', 'WARN');
-                return;
-            }
-            config.customGreetings.push(greeting);
-            modState.config.customGreetings = normalizeCustomGreetings(config.customGreetings);
-            GameAssist.log('WelcomeAssist', `Campaign greeting added (${modState.config.customGreetings.length}/${POLICY.welcome.maxCustomGreetings}).`);
-            return;
-        }
-        if (parsed.command === 'remove') {
-            if (!/^[1-9]\d*$/.test(parsed.remainder)) {
-                GameAssist.log('WelcomeAssist', 'Provide the exact campaign greeting number to remove.', 'WARN');
-                return;
-            }
-            const index = Number(parsed.remainder);
-            if (index > config.customGreetings.length) {
-                GameAssist.log('WelcomeAssist', 'That campaign greeting number does not exist.', 'WARN');
-                return;
-            }
-            config.customGreetings.splice(index - 1, 1);
-            modState.config.customGreetings = config.customGreetings;
-            GameAssist.log('WelcomeAssist', `Campaign greeting ${index} removed.`);
-            return;
-        }
-        if (parsed.command === 'clear') {
-            if (!/(?:^|\s)--confirm(?:\s|$)/i.test(parsed.remainder)) {
-                GameAssist.log('WelcomeAssist', 'Clearing campaign greetings requires --confirm.', 'WARN');
-                return;
-            }
-            modState.config.customGreetings = [];
-            GameAssist.log('WelcomeAssist', 'All campaign greetings cleared.');
-            return;
-        }
-        GameAssist.log('WelcomeAssist', 'Use custom list, custom add <text>, custom remove <number>, or custom clear --confirm.', 'WARN');
-    }
-
-    function teardownWelcomeAssist() {
-        clearWelcomeAssistTimer();
-        delete GameAssist.WelcomeAssist;
-    }
-
-    GameAssist.register('WelcomeAssist', function() {
-        const modState = GameAssist.getState('WelcomeAssist');
-        normalizeWelcomeConfig(modState);
-        GameAssist.WelcomeAssist = Object.freeze({
-            version: WELCOMEASSIST_MODULE_VERSION,
-            onBootstrapComplete() {
-                scheduleWelcomeAfterBootstrap(modState);
-            }
-        });
-        const handleWelcomeCommand = msg => {
-            const content = String(msg.content || '').trim();
-            let payload = '';
-            if (/^!welcome-assist(?:\s|$)/i.test(content)) {
-                payload = content.replace(/^!welcome-assist\b\s*/i, '');
-            } else if (/^!welcome-/i.test(content)) {
-                payload = content.replace(/^!welcome-/i, '').replace(/^(\S+)(?:\s+|$)/, '$1 ');
-            } else {
-                payload = content.replace(/^!welcome\b\s*/i, '');
-            }
-            const parsed = splitWelcomeCommand(payload);
-            if (parsed.command === 'help' || parsed.command === 'guide') {
-                showWelcomeHelp(parsed.remainder);
-                return;
-            }
-            if (['status', 'refresh', 'menu', 'gm', 'dm', 'config', 'settings'].includes(parsed.command)) {
-                showWelcomeStatus(modState);
-                return;
-            }
-            if (parsed.command === 'audit') {
-                showWelcomeStatus(modState, { audit: true });
-                return;
-            }
-            if (parsed.command === 'info' || parsed.command === 'about') {
-                showWelcomeInfo();
-                return;
-            }
-            if (parsed.command === 'manual') {
-                writeWelcomeManual();
-                return;
-            }
-            if (parsed.command === 'preview') {
-                const config = normalizeWelcomeConfig(modState);
-                const choice = chooseWelcomeGreeting(config);
-                whisperWelcomeAssist(buildWelcomeCard(config, choice.greeting));
-                return;
-            }
-            if (parsed.command === 'announce') {
-                clearWelcomeAssistTimer();
-                welcomeAssistAutoAnnounced = true;
-                announceWelcome(modState, 'manual');
-                return;
-            }
-            if (parsed.command === 'mode') {
-                setWelcomeMode(modState, parsed.remainder);
-                return;
-            }
-            if (parsed.command === 'delay') {
-                setWelcomeDelay(modState, parsed.remainder);
-                return;
-            }
-            if (parsed.command === 'header') {
-                manageWelcomeHeader(modState, parsed.remainder);
-                return;
-            }
-            if (parsed.command === 'default') {
-                setWelcomeText(modState, 'defaultGreeting', parsed.remainder);
-                return;
-            }
-            if (parsed.command === 'custom') {
-                manageCustomGreetings(modState, parsed.remainder);
-                return;
-            }
-            welcomeAssistPanel('WelcomeAssist', [
-                '<div style="margin-top:6px;"><strong>Needs Attention</strong><br>That WelcomeAssist command was not recognized.</div>',
-                `<div style="margin-top:8px;"><strong>Next Step</strong><br>${GameAssist.createButton('Open Guide', '!Welcome-Help')}</div>`
-            ].join(''));
-        };
-        GameAssist.onCommand('!Welcome', handleWelcomeCommand, 'WelcomeAssist', {
-            gmOnly: true,
-            match: { caseInsensitive: true, mode: 'token' }
-        });
-        GameAssist.onCommand('!Welcome-', msg => {
-            // The retained legacy command also begins with !welcome-; its dedicated registration owns that exact surface.
-            if (/^!welcome-assist(?:\s|$)/i.test(String(msg.content || ''))) return;
-            handleWelcomeCommand(msg);
-        }, 'WelcomeAssist', {
-            gmOnly: true,
-            match: { caseInsensitive: true, mode: 'prefix' }
-        });
-        GameAssist.onCommand('!welcome-assist', handleWelcomeCommand, 'WelcomeAssist', {
-            gmOnly: true,
-            match: { caseInsensitive: true, mode: 'token' }
-        });
-        GameAssist.log('WelcomeAssist', 'Ready: !Welcome-Help. Reload after setup for the automatic greeting.', 'INFO', { startup: true });
-    }, {
-        enabled: false,
-        prefixes: ['!Welcome', '!Welcome-', '!welcome-assist'],
-        teardown: teardownWelcomeAssist,
-        preserveRuntimeOnDisable: false,
-        protectedConfigKeys: ['customGreetings']
-    });
-    // --- Notes & Comments ---
-    // Changed (v2.0.0): Advanced WelcomeAssist to 0.1.5 and standardized its private guide, settings, status, and preview controls while retaining the intentionally distinct public greeting card.
-    // Changed (v2.0.0): Added the standard GameAssist Home return to the WelcomeAssist GM status and settings screen.
-    // Changed (v0.1.7.0): Advanced WelcomeAssist to 0.1.4; !Welcome-GM and !Welcome-DM are equal role aliases for the private status and settings screen, with Guide/Help, Info, Audit, Manual, and short !Welcome navigation preserved.
-    // Decision log:
-    //   CHOICE: Trigger automatic output only through the post-bootstrap seam - ALT: schedule from module init; REJECTED: live enablement could surprise the table before the GM finishes configuration.
-    //   CHOICE: Refuse a public ready greeting while another configured GameAssist component remains inactive - ALT: announce after a fixed delay regardless; REJECTED: would present an unhealthy startup as ready.
-    //   CHOICE: Retain the owner-selected brief fandom references alongside original table humor - ALT: replace the pool with only generic prose; REJECTED: recognizable geek-culture playfulness is an intentional part of the module's voice.
-    //   CHOICE: Keep !welcome-assist as a compatibility alias while routing new buttons through !Welcome-Action - ALT: remove the longer command immediately; REJECTED: saved campaign macros should continue to work.
-    //   CHOICE: Store plain bounded custom text and neutralize Roll20 directives at emission - ALT: permit executable chat syntax; REJECTED: a greeting must not trigger rolls, attributes, abilities, or queries.
-    //   CHOICE: Keep the current-sandbox announcement record in memory while retaining the latest historical record in runtime state - ALT: label persistent history as current; REJECTED: reloads would produce misleading status.
-    // Prior notes:
-    //   v0.1.7.0 / WelcomeAssist 0.1.2: Made short case-insensitive !Welcome and !Welcome-Action commands the primary buttons while retaining the complete !welcome-assist command surface without duplicate handling.
-    //   v0.1.7.0 / WelcomeAssist 0.1.1: Replaced the long root guide with compact actions and topic references and added unknown-command recovery.
-    //   v0.1.6.1 / WelcomeAssist 0.1.0: Added disabled-by-default post-bootstrap greetings, professional/built-in/custom/mixed modes, a curated original built-in greeting library, double-weighted campaign greetings, bounded GM configuration, private previews, manual announcements, directive-neutralized public text, a complete configured-component health gate, and one automatic greeting per sandbox lifecycle.
-    // [GAMEASSIST:MODULES:WELCOMEASSIST] END
-    // =============================================================================
-
-    // =============================================================================
-    // [GAMEASSIST:MODULES:NPCASSIST] BEGIN
-    // Section Title: NPCAssist module
-    // -------------------------------------------------------------------------
-    // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:NPCASSIST", title: "NPCAssist",
-    //   guarantees: ["Auto toggle resolved configured dead marker based on known HP transitions; maintain hierarchical death-history handouts and curated arc rosters", "Assign page-local unique names to newly added linked NPC tokens without renaming existing tokens or storing sequence counters", "Optionally whisper the GM once when an eligible living object-layer NPC crosses from above half HP to half HP or below", "Date-based Session rollover and timestamp rendering use the validated GameAssist timezone while stored instants remain absolute", "Compact layered navigation and a stable on-demand manual keep ordinary chat readable", "Audits are read-only; separately confirmed repair commands re-scan current HP and change only the configured death marker", "HPAssist auto-roll initialization is not recorded as death/revival history or a Bloodied alert", "Death-marker reads and writes use CORE:MARKERSERVICE"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
-    //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.4.0" } }
-    // -------------------------------------------------------------------------
-    // Narrative
-    // MODULES:NPCAssist monitors token HP changes to set or clear the configured
-    // death marker through CORE:MARKERSERVICE. New-token HP initialization
-    // is ignored while HPAssist auto-roll-on-add establishes the token's starting HP.
-    // It records deaths into active Campaign, Chapter,
-    // Section, and Session buckets; writes bucket/audit handouts; rolls date-based
-    // sessions forward before new activity; maintains deduplicated, editable
-    // story arc rosters for selected linked PC/NPC tokens or Session imports;
-    // assigns collision-free page-local names when linked NPC tokens are added;
-    // and can privately alert the GM on a true living-NPC half-HP threshold crossing.
-    // -------------------------------------------------------------------------
-    GameAssist.register('NPCAssist', function() {
-        const modState = GameAssist.getState('NPCAssist');
-
-        Object.assign(modState.config, {
-            enabled: true,
-            autoTrackDeath: true,
-            notifyBloodied: true,
-            autoNumberNpcTokens: true,
-            deadMarker: 'dead',
-            autoHide: false,
-            hideLayer: 'gmlayer',
-            ...modState.config
-        });
-
-        const DEATH_BUCKET_SCOPES = ['campaign', 'chapter', 'section', 'session'];
-        const DEATH_BUCKET_TITLES = {
-            campaign: 'Campaign',
-            chapter: 'Chapter',
-            section: 'Section',
-            session: 'Session'
-        };
-        const DEFAULT_BUCKET_NAMES = {
-            campaign: 'Campaign',
-            chapter: 'Chapter',
-            section: 'Section'
-        };
-        const NESTED_BUCKET_SCOPES = {
-            campaign: ['campaign', 'chapter', 'section', 'session'],
-            chapter: ['chapter', 'section', 'session'],
-            section: ['section', 'session'],
-            session: ['session']
-        };
-        const DEATH_LOG_LIMIT = POLICY.runtime.deathLogLimit;
-        const AUDIT_DETAIL_LIMIT = POLICY.runtime.npcAuditDetailLimit;
-        const DEATH_REPORT_SUMMARY_LIMIT = POLICY.runtime.deathReportSummaryLimit;
-        const DEATH_REPORT_DETAIL_LIMIT = POLICY.runtime.deathReportDetailLimit;
-        const AUDIT_HANDOUT_NAME = 'GameAssist NPC Death Audit';
-        const NPCMANAGER_MODULE_VERSION = '1.4.0';
-        const initializingNpcHp = new Set();
-
-        function currentSessionDateKey(raw = now()) {
-            return localDateKey(raw);
-        }
-
-        function defaultBucketName(scope) {
-            return scope === 'session' ? currentSessionDateKey() : DEFAULT_BUCKET_NAMES[scope];
-        }
-
-        function ensureDeathBucketConfig() {
-            const existing = modState.config.deathBuckets;
-            const current = existing && typeof existing === 'object' && !Array.isArray(existing)
-                ? existing
-                : {};
-
-            modState.config.deathBuckets = DEATH_BUCKET_SCOPES.reduce((next, scope) => {
-                const raw = current[scope];
-                const fallback = defaultBucketName(scope);
-                next[scope] = String(raw || fallback).trim() || fallback;
-                return next;
-            }, {});
-
-            return modState.config.deathBuckets;
-        }
-
-        ensureDeathBucketConfig();
-
-        function ensureNPCManagerRuntime() {
-            const state = ensureRuntimeObject(modState);
-            const deathLog = ensureModRuntimeKey(modState, 'deathLog', 'array');
-            const buckets = ensureModRuntimeKey(modState, 'deathBuckets', 'object');
-            const arcs = ensureModRuntimeKey(modState, 'deathArcs', 'array');
-
-            DEATH_BUCKET_SCOPES.forEach(scope => {
-                if (!Array.isArray(buckets[scope])) buckets[scope] = [];
-            });
-
-            return { state, deathLog, buckets, arcs };
-        }
-
-        function getDeathMarkerResolution() {
-            return GameAssist.MarkerService.resolve(modState.config.deadMarker || 'dead');
-        }
-
-        function deathMarkerWarning(resolution) {
-            const marker = _sanitize(resolution.requested || modState.config.deadMarker || 'dead');
-            const detail = resolution.registryError
-                ? ` Roll20 marker registry problem: ${_sanitize(resolution.registryError)}.`
-                : '';
-            return `Configured NPC death marker "${marker}" could not be recognized.${detail}` +
-                ' Use a built-in marker id such as dead or configure the exact custom marker tag.';
-        }
-
-        function panelText(value) {
-            return _sanitize(value ?? '')
-                .replace(/\{/g, '&#123;')
-                .replace(/\}/g, '&#125;');
-        }
-
-        function panelValue(value) {
-            if (Array.isArray(value)) {
-                return value.map(panelText).join('<br>');
-            }
-            return panelText(value);
-        }
-
-        function sendNPCPanel(title, fields) {
-            const content = fields
-                .map(({ label, value }) => `{{${panelValue(label)}=${panelValue(value)}}}`)
-                .join(' ');
-            sendChat('GameAssist', `/w gm &{template:default} {{name=${panelValue(title)}}} ${content}`);
-        }
-
-        function sendAuditReport(fields) {
-            sendNPCPanel('NPC Death Audit', fields);
-        }
-
-        function sendDeathReport(fields) {
-            sendNPCPanel('NPC Death Report', fields);
-        }
-
-        function summarizeAuditNames(names, limit = 5) {
-            const listed = names.slice(0, limit).join(', ');
-            return names.length > limit ? `${listed}, +${names.length - limit} more` : listed;
-        }
-
-        function formatAuditEntries(entries, limit = AUDIT_DETAIL_LIMIT) {
-            const lines = [];
-            entries.slice(0, limit).forEach((entry, index) => {
-                if (index > 0) lines.push('');
-                lines.push(
-                    entry.name,
-                    `HP: ${entry.hp}`,
-                    `Markers: ${entry.markers}`,
-                    `Token ID: ${entry.id}`
-                );
-            });
-            if (entries.length > limit) {
-                lines.push('', `Showing ${limit} of ${entries.length}. Run again after fixing these to see the next set.`);
-            }
-            return lines;
-        }
-
-        /**
-         * collectDeathAudit - Build the shared read-only view used by audit and repair.
-         * Blank or invalid HP is reported but never treated as zero for automatic repair.
-         */
-        function collectDeathAudit() {
-            const pageId = Campaign().get('playerpageid');
-            const tokens = findObjs({
-                _pageid: pageId,
-                _type: 'graphic',
-                layer: 'objects'
-            });
-            const resolution = getDeathMarkerResolution();
-            const needsMarker = [];
-            const needsClear = [];
-            const unlinked = [];
-            const invalidHp = [];
-
-            for (const token of tokens) {
-                const link = GameAssist.getLinkedCharacter(token);
-                if (!link) {
-                    unlinked.push(token.get('name') || '(Unnamed)');
-                    continue;
-                }
-                if (!getNPCContext(token, link)) continue;
-
-                const hp = parseTrackedHP(token.get('bar1_value'));
-                if (hp === null) {
-                    invalidHp.push(token.get('name') || '(Unnamed NPC)');
-                    continue;
-                }
-
-                const isDead = resolution.ok && GameAssist.MarkerService.has(token, resolution.id);
-                const entry = {
-                    token,
-                    name: token.get('name') || '(Unnamed)',
-                    id: token.id,
-                    hp,
-                    markers: token.get('statusmarkers') || '(none)'
-                };
-                if (hp < 1 && !isDead) needsMarker.push(entry);
-                else if (hp >= 1 && isDead) needsClear.push(entry);
-            }
-
-            return {
-                pageId,
-                resolution,
-                needsMarker,
-                needsClear,
-                unlinked,
-                invalidHp,
-                mismatchCount: needsMarker.length + needsClear.length
-            };
-        }
-
-        function normalizeScope(scope, fallback = 'session') {
-            const value = String(scope || fallback).toLowerCase();
-            return DEATH_BUCKET_SCOPES.includes(value) ? value : fallback;
-        }
-
-        function htmlText(value) {
-            return _sanitize(value ?? '');
-        }
-
-        function handoutSafeName(value, fallback = 'Unnamed') {
-            return String(value || fallback)
-                .replace(/[<>]/g, '')
-                .replace(/\s+/g, ' ')
-                .trim()
-                .slice(0, 80) || fallback;
-        }
-
-        function queryDefault(value, fallback = 'Bucket') {
-            return String(value || fallback)
-                .replace(/[|"{}]/g, ' ')
-                .replace(/\s+/g, ' ')
-                .trim() || fallback;
-        }
-
-        function bucketHandoutName(scope, name) {
-            return `GameAssist Deaths - ${DEATH_BUCKET_TITLES[scope]} - ${handoutSafeName(name)}`;
-        }
-
-        function arcHandoutName(name) {
-            return `GameAssist Arc - ${handoutSafeName(name)}`;
-        }
-
-        function getOrCreateHandout(name) {
-            let handout = findObjs({ type: 'handout', name })[0];
-            if (!handout) handout = createObj('handout', { name, archived: false });
-            return handout;
-        }
-
-        function setHandoutNotes(name, notes) {
-            const handout = getOrCreateHandout(name);
-            handout.set('notes', notes);
-            return handout;
-        }
-
-        function findNamedCollectionItem(list, name) {
-            const target = String(name || '').trim();
-            return (Array.isArray(list) ? list : []).find(item => item && item.name === target) || null;
-        }
-
-        function getActiveBucket(scope) {
-            const safeScope = normalizeScope(scope);
-            const runtime = ensureNPCManagerRuntime();
-            const names = ensureDeathBucketConfig();
-            const bucketName = names[safeScope] || defaultBucketName(safeScope);
-            let bucket = findNamedCollectionItem(runtime.buckets[safeScope], bucketName);
-
-            if (!bucket) {
-                bucket = {
-                    scope: safeScope,
-                    name: bucketName,
-                    createdAt: isoNow(),
-                    entries: []
-                };
-                runtime.buckets[safeScope].push(bucket);
-            }
-
-            if (!Array.isArray(bucket.entries)) bucket.entries = [];
-            return bucket;
-        }
-
-        function getActiveBuckets() {
-            return DEATH_BUCKET_SCOPES.reduce((memo, scope) => {
-                memo[scope] = getActiveBucket(scope);
-                return memo;
-            }, {});
-        }
-
-        function nextArcEntryId() {
-            const runtime = ensureNPCManagerRuntime();
-            const current = Number(runtime.state.arcEntryCounter);
-            runtime.state.arcEntryCounter = Number.isFinite(current) && current >= 0 ? current + 1 : 1;
-            return `arc-${now()}-${runtime.state.arcEntryCounter}`;
-        }
-
-        function ensureArcEntryShape(entry) {
-            if (!entry || typeof entry !== 'object') return null;
-            if (!entry.arcEntryId) entry.arcEntryId = nextArcEntryId();
-            return entry;
-        }
-
-        function arcEntityKey(entry) {
-            if (entry?.tokenId) return `token:${entry.tokenId}`;
-            if (entry?.characterId) return `character:${entry.characterId}`;
-            const name = String(entry?.name || '').trim().toLowerCase();
-            return name ? `name:${name}` : null;
-        }
-
-        function findArcEntityEntry(arc, candidate) {
-            const key = arcEntityKey(candidate);
-            if (!key) return null;
-            return arc.entries.find(entry => arcEntityKey(entry) === key) || null;
-        }
-
-        function beginArcBatch(arc, label) {
-            return {
-                id: `batch-${now()}-${arc.entries.length}`,
-                label,
-                createdAt: isoNow(),
-                addedArcEntryIds: [],
-                updatedEntries: []
-            };
-        }
-
-        function rememberArcEntryBeforeUpdate(batch, entry) {
-            if (!batch || batch.addedArcEntryIds.includes(entry.arcEntryId)) return;
-            if (batch.updatedEntries.some(item => item.arcEntryId === entry.arcEntryId)) return;
-            batch.updatedEntries.push({
-                arcEntryId: entry.arcEntryId,
-                before: { ...entry }
-            });
-        }
-
-        function mergeArcEntry(existing, incoming, batch) {
-            let changed = false;
-            const incomingNote = String(incoming.note || '').trim();
-
-            if (incomingNote && !String(existing.note || '').split(' | ').includes(incomingNote)) {
-                rememberArcEntryBeforeUpdate(batch, existing);
-                existing.note = existing.note ? `${existing.note} | ${incomingNote}` : incomingNote;
-                changed = true;
-            }
-
-            if (incoming.sourceEventId && !existing.sourceEventId) {
-                rememberArcEntryBeforeUpdate(batch, existing);
-                [
-                    'sourceEventId', 'source', 'hp', 'marker', 'time', 'timestamp',
-                    'revivedAt', 'revivedTime', 'revivedHp'
-                ].forEach(key => {
-                    if (incoming[key] !== undefined) existing[key] = incoming[key];
-                });
-                changed = true;
-            }
-
-            return changed;
-        }
-
-        function appendArcCandidate(arc, candidate, options = {}) {
-            const allowDuplicates = Boolean(options.allowDuplicates);
-            const batch = options.batch || null;
-            const existing = allowDuplicates ? null : findArcEntityEntry(arc, candidate);
-
-            if (existing) {
-                return mergeArcEntry(existing, candidate, batch)
-                    ? { added: 0, updated: 1, duplicate: 0 }
-                    : { added: 0, updated: 0, duplicate: 1 };
-            }
-
-            const entry = ensureArcEntryShape({ ...candidate });
-            arc.entries.push(entry);
-            pruneEntries(arc.entries);
-            if (batch) batch.addedArcEntryIds.push(entry.arcEntryId);
-            return { added: 1, updated: 0, duplicate: 0 };
-        }
-
-        function finalizeArcBatch(arc, batch) {
-            const changed = batch.addedArcEntryIds.length > 0 || batch.updatedEntries.length > 0;
-            if (changed) arc.lastBatch = batch;
-            return changed;
-        }
-
-        function undoLastArcBatch(arc) {
-            const batch = arc.lastBatch;
-            if (!batch) return { addedRemoved: 0, updatesRestored: 0, label: null };
-
-            const addedIds = new Set(batch.addedArcEntryIds || []);
-            const beforeCount = arc.entries.length;
-            arc.entries = arc.entries.filter(entry => !addedIds.has(entry.arcEntryId));
-
-            let updatesRestored = 0;
-            (batch.updatedEntries || []).forEach(snapshot => {
-                const index = arc.entries.findIndex(entry => entry.arcEntryId === snapshot.arcEntryId);
-                if (index < 0) return;
-                arc.entries[index] = { ...snapshot.before };
-                updatesRestored++;
-            });
-
-            arc.lastBatch = null;
-            return {
-                addedRemoved: beforeCount - arc.entries.length,
-                updatesRestored,
-                label: batch.label || 'last arc update'
-            };
-        }
-
-        function removeArcEntryById(arc, arcEntryId) {
-            const before = arc.entries.length;
-            arc.entries = arc.entries.filter(entry => entry.arcEntryId !== arcEntryId);
-            arc.lastBatch = null;
-            return before - arc.entries.length;
-        }
-
-        function removeSelectedArcEntries(arc, msg) {
-            const selected = Array.isArray(msg.selected) ? msg.selected : [];
-            const selectedKeys = new Set();
-
-            selected.forEach(sel => {
-                const token = getObj('graphic', sel._id);
-                if (!token) return;
-                const link = GameAssist.getLinkedCharacter(token);
-                selectedKeys.add(`token:${token.id}`);
-                if (link?.character?.id) selectedKeys.add(`character:${link.character.id}`);
-            });
-
-            const before = arc.entries.length;
-            arc.entries = arc.entries.filter(entry => !selectedKeys.has(arcEntityKey(entry)));
-            arc.lastBatch = null;
-            return before - arc.entries.length;
-        }
-
-        function getOrCreateArc(name) {
-            const runtime = ensureNPCManagerRuntime();
-            const arcName = handoutSafeName(name, 'Unnamed Arc');
-            let arc = findNamedCollectionItem(runtime.arcs, arcName);
-
-            if (!arc) {
-                arc = {
-                    name: arcName,
-                    createdAt: isoNow(),
-                    entries: []
-                };
-                runtime.arcs.push(arc);
-            }
-
-            if (!Array.isArray(arc.entries)) arc.entries = [];
-            arc.entries = arc.entries.filter(Boolean).map(ensureArcEntryShape);
-            return arc;
-        }
-
-        function entryStatus(entry) {
-            return entry.revivedAt
-                ? `Revived ${displayStoredTime(entry.revivedAt, entry.revivedTime || entry.revivedAt)}`
-                : 'Dead';
-        }
-
-        function deathEntryKey(entry) {
-            return entry?.sourceEventId || entry?.id || `${entry?.name || ''}|${entry?.timestamp || ''}|${entry?.hp ?? ''}`;
-        }
-
-        function renderDeathEntries(entries) {
-            if (!entries.length) return '<p>No recorded NPC deaths in this bucket yet.</p>';
-
-            const rows = entries.slice().reverse().map(entry => [
-                '<tr>',
-                `<td>${htmlText(entry.name)}</td>`,
-                `<td>${htmlText(entry.hp ?? 'unknown')}</td>`,
-                `<td>${htmlText(displayStoredTime(entry.timestamp, entry.time || entry.timestamp || 'time unknown'))}</td>`,
-                `<td>${htmlText(entryStatus(entry))}</td>`,
-                '</tr>'
-            ].join(''));
-
-            return [
-                '<table>',
-                '<thead><tr><th>NPC</th><th>HP</th><th>Recorded</th><th>Status</th></tr></thead>',
-                `<tbody>${rows.join('')}</tbody>`,
-                '</table>'
-            ].join('\n');
-        }
-
-        function renderDeathBucketHandout(bucket) {
-            const title = `${DEATH_BUCKET_TITLES[bucket.scope]}: ${bucket.name}`;
-            return [
-                `<h2>${htmlText(title)}</h2>`,
-                `<p><strong>Updated:</strong> ${htmlText(localNow())}</p>`,
-                `<p><strong>Total entries:</strong> ${bucket.entries.length}</p>`,
-                renderDeathEntries(bucket.entries),
-                '<p><em>Deaths are recorded into Campaign, Chapter, Section, and Session buckets. Revivals are annotated on the matching entry instead of silently deleting history.</em></p>'
-            ].join('\n');
-        }
-
-        function writeBucketHandout(bucket) {
-            setHandoutNotes(bucketHandoutName(bucket.scope, bucket.name), renderDeathBucketHandout(bucket));
-        }
-
-        function writeActiveBucketHandouts() {
-            const buckets = getActiveBuckets();
-            DEATH_BUCKET_SCOPES.forEach(scope => writeBucketHandout(buckets[scope]));
-            return buckets;
-        }
-
-        function renderArcHandout(arc) {
-            const rows = arc.entries.length
-                ? '<ol>' + arc.entries.slice().reverse().map(entry => {
-                    const source = entry.source ? ` | ${htmlText(entry.source)}` : '';
-                    const note = entry.note ? ` | ${htmlText(entry.note)}` : '';
-                    const status = entry.revivedAt ? ` | ${htmlText(entryStatus(entry))}` : '';
-                    return `<li><strong>${htmlText(entry.name)}</strong> | ${htmlText(displayStoredTime(entry.timestamp, entry.time || entry.timestamp || 'time unknown'))}${source}${status}${note}</li>`;
-                }).join('') + '</ol>'
-                : '<p>No entries recorded in this arc yet.</p>';
-
-            return [
-                `<h2>Arc: ${htmlText(arc.name)}</h2>`,
-                `<p><strong>Updated:</strong> ${htmlText(localNow())}</p>`,
-                `<p><strong>Total entries:</strong> ${arc.entries.length}</p>`,
-                rows,
-                '<p><em>Arc buckets keep one entry per linked creature by default. Use the Arc management menu to remove entries, undo the last addition, or deliberately allow duplicates.</em></p>'
-            ].join('\n');
-        }
-
-        function writeArcHandout(arc) {
-            setHandoutNotes(arcHandoutName(arc.name), renderArcHandout(arc));
-        }
-
-        function deathEventIdentity(token, hp) {
-            const linked = GameAssist.getLinkedCharacter(token);
-            const character = linked?.character || null;
-            const name = token.get('name') || character?.get('name') || '(Unnamed NPC)';
-            return {
-                id: `${now()}-${token.id}`,
-                tokenId: token.id,
-                characterId: character?.id || null,
-                name,
-                hp,
-                marker: modState.config.deadMarker || 'dead',
-                time: localNow(),
-                timestamp: isoNow()
-            };
-        }
-
-        function cloneDeathEntry(entry) {
-            return {
-                id: entry.id,
-                sourceEventId: entry.sourceEventId || entry.id || null,
-                tokenId: entry.tokenId || null,
-                characterId: entry.characterId || null,
-                name: entry.name || '(Unnamed NPC)',
-                hp: entry.hp ?? null,
-                marker: entry.marker || modState.config.deadMarker || 'dead',
-                time: entry.time || entry.timestamp || 'time unknown',
-                timestamp: entry.timestamp || null,
-                source: entry.source || null,
-                note: entry.note || null,
-                revivedAt: entry.revivedAt || null,
-                revivedTime: entry.revivedTime || null,
-                revivedHp: entry.revivedHp ?? null
-            };
-        }
-
-        function pruneEntries(entries, limit = DEATH_LOG_LIMIT) {
-            if (entries.length > limit) entries.splice(0, entries.length - limit);
-        }
-
-        function backfillBucketsFromLegacyLog() {
-            const runtime = ensureNPCManagerRuntime();
-            if (runtime.state.deathBucketsBackfilled) return;
-            if (!runtime.deathLog.length) {
-                runtime.state.deathBucketsBackfilled = true;
-                return;
-            }
-
-            const anyBucketHasEntries = DEATH_BUCKET_SCOPES.some(scope =>
-                runtime.buckets[scope].some(bucket => Array.isArray(bucket.entries) && bucket.entries.length)
-            );
-            if (anyBucketHasEntries) {
-                runtime.state.deathBucketsBackfilled = true;
-                return;
-            }
-
-            const activeBuckets = getActiveBuckets();
-            DEATH_BUCKET_SCOPES.forEach(scope => {
-                const bucket = activeBuckets[scope];
-                runtime.deathLog.forEach(entry => {
-                    bucket.entries.push(cloneDeathEntry(entry));
-                });
-                pruneEntries(bucket.entries);
-                writeBucketHandout(bucket);
-            });
-            runtime.state.deathBucketsBackfilled = true;
-        }
-
-        function recordDeathInBuckets(entry) {
-            const runtime = ensureNPCManagerRuntime();
-            runtime.deathLog.push(cloneDeathEntry(entry));
-            pruneEntries(runtime.deathLog);
-
-            DEATH_BUCKET_SCOPES.forEach(scope => {
-                const bucket = getActiveBucket(scope);
-                bucket.entries.push(cloneDeathEntry(entry));
-                pruneEntries(bucket.entries);
-                writeBucketHandout(bucket);
-            });
-        }
-
-        function entryMatchesToken(entry, token, fallbackName) {
-            if (entry?.tokenId) return entry.tokenId === token.id;
-            return Boolean(entry?.name && fallbackName && entry.name === fallbackName);
-        }
-
-        function hasOpenDeathEntry(token) {
-            const runtime = ensureNPCManagerRuntime();
-            const collections = [runtime.deathLog];
-            DEATH_BUCKET_SCOPES.forEach(scope => {
-                runtime.buckets[scope].forEach(bucket => {
-                    if (Array.isArray(bucket.entries)) collections.push(bucket.entries);
-                });
-            });
-            return collections.some(entries => entries.some(entry =>
-                entry?.tokenId === token.id && !entry.revivedAt
-            ));
-        }
-
-        function annotateRevivalInEntries(entries, token, fallbackName, hp, isEligible = null) {
-            for (let i = entries.length - 1; i >= 0; i--) {
-                const entry = entries[i];
-                if (entry?.revivedAt) continue;
-                if (isEligible && !isEligible(entry)) continue;
-                if (!entryMatchesToken(entry, token, fallbackName)) continue;
-
-                entry.revivedAt = isoNow();
-                entry.revivedTime = localNow();
-                entry.revivedHp = hp;
-                return true;
-            }
-            return false;
-        }
-
-        function annotateRevivalInBuckets(token, hp) {
-            const runtime = ensureNPCManagerRuntime();
-            const fallbackName = token.get('name') || '(Unnamed NPC)';
-            let changed = false;
-
-            if (annotateRevivalInEntries(runtime.deathLog, token, fallbackName, hp)) changed = true;
-            DEATH_BUCKET_SCOPES.forEach(scope => {
-                runtime.buckets[scope].forEach(bucket => {
-                    if (annotateRevivalInEntries(bucket.entries, token, fallbackName, hp)) {
-                        changed = true;
-                        writeBucketHandout(bucket);
-                    }
-                });
-            });
-            runtime.arcs.forEach(arc => {
-                if (annotateRevivalInEntries(
-                    arc.entries,
-                    token,
-                    fallbackName,
-                    hp,
-                    entry => Boolean(entry?.sourceEventId)
-                )) {
-                    changed = true;
-                    writeArcHandout(arc);
-                }
-            });
-            return changed;
-        }
-
-        function normalizeDeathEvent(entry) {
-            const item = entry && typeof entry === 'object' ? entry : {};
-            return {
-                name: item.name || '(Unnamed NPC)',
-                hp: item.hp ?? 'unknown',
-                time: displayStoredTime(item.timestamp, item.time || item.timestamp || 'time unknown'),
-                timestamp: item.timestamp || null,
-                revivedAt: item.revivedAt || null,
-                revivedTime: item.revivedTime || null
-            };
-        }
-
-        function formatDeathEvent(entry, index) {
-            const item = normalizeDeathEvent(entry);
-            const status = item.revivedAt ? ` (${entryStatus(item)})` : '';
-            return `${index}. ${item.name} - HP ${item.hp} - ${item.time}${status}`;
-        }
-
-        function summarizeDeathCounts(log, limit = DEATH_REPORT_SUMMARY_LIMIT) {
-            const counts = {};
-            log.forEach(entry => {
-                const item = normalizeDeathEvent(entry);
-                counts[item.name] = (counts[item.name] || 0) + 1;
-            });
-
-            const rows = Object.entries(counts)
-                .sort(([nameA, countA], [nameB, countB]) => {
-                    if (countB !== countA) return countB - countA;
-                    return nameA.localeCompare(nameB);
-                });
-
-            if (!rows.length) return 'No recorded NPC deaths yet.';
-
-            const lines = rows.slice(0, limit)
-                .map(([name, count]) => `${name}: ${count}`);
-
-            if (rows.length > limit) {
-                lines.push(`+${rows.length - limit} more NPC name${rows.length - limit === 1 ? '' : 's'}`);
-            }
-
-            return lines;
-        }
-
-        function getDeathReportPage(log, page = 1, limit = DEATH_REPORT_DETAIL_LIMIT) {
-            const newestFirst = log.slice().reverse();
-            const pageCount = Math.max(1, Math.ceil(newestFirst.length / limit));
-            const currentPage = Math.min(Math.max(parseInt(page, 10) || 1, 1), pageCount);
-            const start = (currentPage - 1) * limit;
-            const entries = newestFirst.slice(start, start + limit);
-            const lines = entries.map((entry, index) => formatDeathEvent(entry, start + index + 1));
-
-            return { currentPage, pageCount, lines };
-        }
-
-        function deathReportActions(scope = 'session', currentPage = 1, pageCount = 1) {
-            const safeScope = normalizeScope(scope);
-            const scoped = `--scope ${safeScope}`;
-            const buttons = [
-                GameAssist.createButton('Summary', `!npc-death-report ${scoped}`),
-                GameAssist.createButton('Recent', `!npc-death-report ${scoped} --recent`)
-            ];
-
-            if (currentPage > 1) {
-                buttons.push(GameAssist.createButton('Newer', `!npc-death-report ${scoped} --page ${currentPage - 1}`));
-            }
-            if (currentPage < pageCount) {
-                buttons.push(GameAssist.createButton('Older', `!npc-death-report ${scoped} --page ${currentPage + 1}`));
-            }
-
-            buttons.push(
-                GameAssist.createButton('Buckets', '!npc-death-buckets'),
-                GameAssist.createButton('Write Reports', '!npc-wr'),
-                GameAssist.createButton('Run Audit', '!npc-death-audit'),
-                GameAssist.createButton('Clear This Bucket', `!npc-death-clear ${scoped}`)
-            );
-
-            return buttons.join(' ');
-        }
-
-        function showDeathReportHelp(title = 'NPCAssist Guide: Death Reports') {
-            sendNPCPanel(title, [
-                {
-                    label: 'Actions',
-                    value: [
-                        GameAssist.createButton('Current Status', '!npc-death-status'),
-                        GameAssist.createButton('Session Report', '!npc-death-report --scope session'),
-                        GameAssist.createButton('Write Reports', '!npc-wr')
-                    ]
-                },
-                {
-                    label: 'Manage',
-                    value: [
-                        GameAssist.createButton('Campaign / Chapter / Section / Session', '!npc-death-buckets'),
-                        GameAssist.createButton('Arc Buckets', '!npc-death-arc'),
-                        GameAssist.createButton('Clear History', '!npc-death-clear --scope session')
-                    ]
-                },
-                {
-                    label: 'Review Or Repair',
-                    value: [
-                        GameAssist.createButton('Run Audit', '!npc-death-audit'),
-                        GameAssist.createButton('Review Marker Repairs', '!npc-death-repair')
-                    ]
-                },
-                {
-                    label: 'Learn Or Review',
-                    value: [
-                        GameAssist.createButton('What does NPCAssist do?', '!npc-death-info'),
-                        GameAssist.createButton('Create or Update Manual', '!npc-death-manual')
-                    ]
-                },
-                {
-                    label: 'GameAssist',
-                    value: gameAssistHomeButton()
-                }
-            ]);
-        }
-
-        function showNPCManagerHelp() {
-            showDeathReportHelp();
-        }
-
-        function showNPCManagerControl() {
-            const bloodiedEnabled = modState.config.notifyBloodied !== false;
-            const numberingEnabled = modState.config.autoNumberNpcTokens !== false;
-            sendNPCPanel('NPCAssist Control Center', [
-                {
-                    label: 'Bloodied Alerts',
-                    value: `${bloodiedEnabled ? 'On' : 'Off'} ${GameAssist.createButton(bloodiedEnabled ? 'Turn Off' : 'Turn On', '!npc-bloodied')}`
-                },
-                {
-                    label: 'Automatic NPC Names',
-                    value: `${numberingEnabled ? 'On' : 'Off'} ${GameAssist.createButton(numberingEnabled ? 'Turn Off' : 'Turn On', '!npc-numbering')}`
-                },
-                {
-                    label: 'Actions',
-                    value: [
-                        GameAssist.createButton('Current Status', '!npc-death-status'),
-                        GameAssist.createButton('Session Report', '!npc-death-report --scope session'),
-                        GameAssist.createButton('Write Reports', '!npc-wr')
-                    ]
-                },
-                {
-                    label: 'Manage',
-                    value: [
-                        GameAssist.createButton('Campaign / Chapter / Section / Session', '!npc-death-buckets'),
-                        GameAssist.createButton('Arc Buckets', '!npc-death-arc'),
-                        GameAssist.createButton('Clear History', '!npc-death-clear --scope session')
-                    ]
-                },
-                {
-                    label: 'Review Or Repair',
-                    value: [
-                        GameAssist.createButton('Run Audit', '!npc-death-audit'),
-                        GameAssist.createButton('Review Marker Repairs', '!npc-death-repair')
-                    ]
-                },
-                {
-                    label: 'Learn Or Review',
-                    value: [
-                        GameAssist.createButton('What does NPCAssist do?', '!npc-death-info'),
-                        GameAssist.createButton('Create or Update Manual', '!npc-death-manual')
-                    ]
-                }
-            ]);
-        }
-
-        function showNPCManagerStatus() {
-            prepareNPCManagerActivity();
-            const names = ensureDeathBucketConfig();
-            const buckets = getActiveBuckets();
-            const activeLines = DEATH_BUCKET_SCOPES.map(scope =>
-                `${DEATH_BUCKET_TITLES[scope]}: ${names[scope]} (${buckets[scope].entries.length} recorded deaths)`
-            );
-            sendNPCPanel('NPCAssist Status', [
-                { label: 'Module', value: `${NPCMANAGER_MODULE_VERSION} | enabled and responding` },
-                { label: 'Death Tracking', value: `${modState.config.autoTrackDeath === false ? 'Off' : 'On'} | marker ${modState.config.deadMarker || 'dead'} | bar 1 HP` },
-                { label: 'Bloodied Alerts', value: modState.config.notifyBloodied === false ? 'Off' : 'On | private GM notice at half HP' },
-                { label: 'Automatic NPC Names', value: modState.config.autoNumberNpcTokens === false ? 'Off' : 'On | page-local lowest available suffix' },
-                { label: 'Active Histories', value: activeLines },
-                { label: 'Arc Buckets', value: `${ensureNPCManagerRuntime().arcs.length} saved` },
-                { label: 'Actions', value: `${GameAssist.createButton('Run Audit', '!npc-death-audit')} ${GameAssist.createButton('Open Guide', '!npc-death-help')} ${GameAssist.createButton('Manage Buckets', '!npc-death-buckets')}` }
-            ]);
-        }
-
-        function showNPCManagerInfo() {
-            sendNPCPanel('What NPCAssist Does', [
-                { label: 'Purpose', value: 'Assigns clear page-local names to newly added linked NPC tokens, privately reports qualifying Bloodied crossings, tracks linked NPC deaths and revivals from bar 1 HP, maintains the configured death marker, audits HP/marker mismatches, and organizes history into Campaign, Chapter, Section, Session, and separate Arc handouts.' },
-                { label: 'At The Table', value: 'Let HP changes record automatically, review a concise report when needed, and write the full history to stable handouts at the end of a scene or session.' },
-                { label: 'Learn More', value: `${GameAssist.createButton('Create or Update Manual', '!npc-death-manual')} ${GameAssist.createButton('Open Guide', '!npc-death-help')} ${GameAssist.createButton('Current Status', '!npc-death-status')}` }
-            ]);
-        }
-
-        function npcManagerManualHtml() {
-            return [
-                '<h1>NPCAssist User Manual</h1>',
-                `<p><strong>GameAssist v${_sanitize(VERSION)} | NPCAssist ${_sanitize(NPCMANAGER_MODULE_VERSION)}</strong></p>`,
-                '<p>NPCAssist gives newly added linked NPC tokens clear page-local names, watches linked NPC bar 1 HP, privately alerts the GM when an eligible living NPC crosses to half HP or below, records deaths and revivals, manages the configured death marker, and turns encounter history into readable Campaign, Chapter, Section, Session, and Arc records.</p>',
-                '<h2>Quick Start</h2>',
-                '<ol><li>Use <code>!npc-death-buckets</code> to name the active Campaign, Chapter, Section, and Session.</li><li>Use linked NPC tokens with numeric bar 1 HP.</li><li>Let HP cross from positive to 0 or below to record a death; raising HP above 0 records a revival.</li><li>Run <code>!npc-death-report</code> for a chat summary or <code>!npc-wr</code> to update report handouts.</li></ol>',
-                '<h2>Campaign, Chapter, Section, And Session</h2>',
-                '<p>Every death is recorded in all four active levels. Session is the smallest unit; Section contains its sessions, Chapter contains its sections, and Campaign contains everything. Changing a name starts or resumes that named history without erasing older buckets.</p>',
-                '<p>The Session defaults to the current GameAssist table date and advances after the configured timezone changes to a new date. A deliberately custom Session name stays active until the GM resets date-managed Sessions.</p>',
-                '<h2>Reports And Handouts</h2>',
-                '<p>Chat reports are intentionally summarized. The report writer updates one or all stable scope handouts. It can also begin a new Section using only the current Session when the GM needs to correct end-of-session organization.</p>',
-                '<h2>Clearing History</h2>',
-                '<p>Clear first opens a confirmation menu. The safest choice clears only the selected bucket. Campaign, Chapter, and Section also offer a nested clear that includes every lower level. Clearing history never happens without explicit confirmation.</p>',
-                '<h2>Arc Buckets</h2>',
-                '<p>Arcs are separate story rosters for selected linked NPC or PC tokens. Entries are deduplicated by default, including when a whole Session is imported after individual additions. Arc management can remove one entry, remove selected entries, or undo the last addition. Duplicates require the deliberate <code>--allowDuplicates</code> option.</p>',
-                '<h2>Audit And Repair</h2>',
-                '<p><code>!npc-death-audit</code> compares linked NPC bar 1 HP with the configured death marker on the current player page. Player characters are excluded. Audit is read-only and writes its detail to the stable audit handout.</p>',
-                '<p><code>!npc-death-repair</code> previews proposed marker corrections and requires confirmation. Repair rechecks current HP, changes only the configured death marker, and does not change HP, death history, report buckets, Arc records, or unrelated markers.</p>',
-                '<h2>Automatic NPC Names</h2>',
-                '<p>When <code>autoNumberNpcTokens</code> is enabled, each newly added linked NPC token on the Objects or GM layer uses its represented character name. If that name is already used by another eligible NPC token on the same page, NPCAssist adds the lowest available positive suffix, such as Goblin 1 or Goblin 2. Other pages are independent, existing tokens are never renumbered, deleted names become available again, and a GM may turn the feature off or rename a token afterward to create a deliberate duplicate.</p>',
-                '<h2>Bloodied Alerts</h2>',
-                '<p>When <code>notifyBloodied</code> is enabled, NPCAssist whispers the GM when a living object-layer NPC crosses from above half of a valid positive maximum HP value to half HP or below. Remaining below half does not repeat the alert; healing above half naturally allows a later crossing to alert again. The notice does not add a marker or history entry and never reports NPC HP publicly.</p>',
-                '<h2>Command Reference</h2>',
-                '<p>Every command below accepts the same suffix through <code>!NPC-*</code>, <code>!NPCAssist-*</code>, <code>!NPC-Death-*</code>, or the legacy <code>!NPCManager-*</code> family. Commands are not case-sensitive.</p>',
-                '<ul><li><code>!NPC-GM</code> or <code>!NPC-DM</code> - Game Master control center.</li><li><code>!npc-death-help</code> or <code>!npc-death-guide</code> - compact guide.</li><li><code>!npc-death-status</code> - active configuration and history counts.</li><li><code>!npc-bloodied</code> - toggle private Bloodied alerts and return to the Control Center.</li><li><code>!npc-numbering</code> - toggle automatic page-local NPC names and return to the Control Center.</li><li><code>!npc-death-report --scope campaign|chapter|section|session</code> - read a report.</li><li><code>!npc-wr</code> or <code>!npc-death-write</code> - report writer.</li><li><code>!npc-death-buckets</code> - names and active scopes.</li><li><code>!npc-death-arc</code> - Arc controls.</li><li><code>!npc-death-audit</code> - read-only HP/marker review.</li><li><code>!npc-death-repair</code> - preview and confirm marker correction.</li><li><code>!npc-death-clear</code> - confirmed history clearing.</li></ul>',
-                '<h2>Token Eligibility</h2>',
-                '<p>NPCAssist uses linked token objects whose character is marked as an NPC and whose bar 1 HP is numeric. Unlinked map items, scenery, labels, props, and player characters are outside death tracking.</p>'
-            ].join('');
-        }
-
-        function writeNPCManagerManual() {
-            const result = GameAssist.writeModuleManual('NPCAssist', npcManagerManualHtml(), {
-                legacyModuleNames: ['NPCManager']
-            });
-            if (!result.ok) {
-                sendNPCPanel('NPCAssist Manual', [
-                    { label: 'Needs Attention', value: result.message },
-                    { label: 'Continue', value: GameAssist.createButton('Whisper Short Version', '!npc-death-info') }
-                ]);
-                return;
-            }
-            sendNPCPanel('NPCAssist Manual Ready', [
-                { label: 'Handout', value: `${result.link}<br>${result.name} was ${result.created ? 'created' : 'updated'}.` },
-                { label: 'Continue', value: `${GameAssist.createButton('Whisper Short Version', '!npc-death-info')} ${GameAssist.createButton('Open Guide', '!npc-death-help')}` }
-            ]);
-        }
-
-        function showDeathReportSummary(bucket) {
-            const log = bucket.entries;
-            const scopeTitle = DEATH_BUCKET_TITLES[bucket.scope];
-            const handoutName = bucketHandoutName(bucket.scope, bucket.name);
-
-            if (!log.length) {
-                sendDeathReport([
-                    { label: 'Viewing', value: `${scopeTitle}: ${bucket.name}` },
-                    { label: 'Result', value: 'No NPC deaths recorded in this bucket yet.' },
-                    { label: 'Handout', value: handoutName },
-                    {
-                        label: 'What To Use Next',
-                        value: [
-                            GameAssist.createButton('Run Audit', '!npc-death-audit'),
-                            GameAssist.createButton('Manage Buckets', '!npc-death-buckets')
-                        ]
-                    }
-                ]);
-                return;
-            }
-
-            const latest = normalizeDeathEvent(log[log.length - 1]);
-            const recent = getDeathReportPage(log, 1, DEATH_REPORT_SUMMARY_LIMIT);
-            sendDeathReport([
-                {
-                    label: 'Viewing',
-                    value: `${scopeTitle}: ${bucket.name}`
-                },
-                {
-                    label: 'Handout',
-                    value: handoutName
-                },
-                {
-                    label: 'Total Recorded',
-                    value: `${log.length} NPC death event${log.length === 1 ? '' : 's'}`
-                },
-                {
-                    label: 'Latest',
-                    value: `${latest.name} - ${latest.time}`
-                },
-                {
-                    label: 'Most Frequent',
-                    value: summarizeDeathCounts(log)
-                },
-                {
-                    label: 'Recent',
-                    value: recent.lines
-                },
-                {
-                    label: 'Actions',
-                    value: deathReportActions(bucket.scope)
-                }
-            ]);
-        }
-
-        function showDeathReportPage(bucket, page = 1, label = 'Entries') {
-            const log = bucket.entries;
-            if (!log.length) {
-                showDeathReportSummary(bucket);
-                return;
-            }
-
-            const reportPage = getDeathReportPage(log, page);
-            sendDeathReport([
-                {
-                    label,
-                    value: `${DEATH_BUCKET_TITLES[bucket.scope]}: ${bucket.name}. Showing page ${reportPage.currentPage} of ${reportPage.pageCount}. Newest entries appear first.`
-                },
-                {
-                    label: 'Recorded Deaths',
-                    value: reportPage.lines
-                },
-                {
-                    label: 'Actions',
-                    value: deathReportActions(bucket.scope, reportPage.currentPage, reportPage.pageCount)
-                }
-            ]);
-        }
-
-        function updateDeathBucketNames(args) {
-            const names = ensureDeathBucketConfig();
-            const runtime = ensureNPCManagerRuntime();
-            let changed = false;
-
-            DEATH_BUCKET_SCOPES.forEach(scope => {
-                if (args[scope] === undefined) return;
-                if (args[scope] === true) return;
-                const next = handoutSafeName(args[scope], defaultBucketName(scope));
-                if (names[scope] !== next) {
-                    names[scope] = next;
-                    changed = true;
-                }
-                if (scope === 'session') {
-                    runtime.state.activeSessionDateKey = currentSessionDateKey();
-                    runtime.state.sessionDateManaged = false;
-                }
-            });
-
-            if (args.resetSession) {
-                const next = currentSessionDateKey();
-                if (names.session !== next) {
-                    names.session = next;
-                    changed = true;
-                }
-                runtime.state.activeSessionDateKey = next;
-                runtime.state.sessionDateManaged = true;
-            }
-
-            if (changed) writeActiveBucketHandouts();
-            return changed;
-        }
-
-        function ensureSessionDateRollover(announce = true) {
-            const runtime = ensureNPCManagerRuntime();
-            const names = ensureDeathBucketConfig();
-            const currentDate = currentSessionDateKey();
-            const previousDate = runtime.state.activeSessionDateKey;
-            const sessionLooksDateNamed = /^\d{4}-\d{2}-\d{2}$/.test(names.session);
-            if (runtime.state.sessionDateManaged === undefined) {
-                runtime.state.sessionDateManaged = sessionLooksDateNamed;
-            }
-            const sessionDateManaged = Boolean(runtime.state.sessionDateManaged);
-
-            if (!previousDate) {
-                runtime.state.activeSessionDateKey = currentDate;
-                if (!sessionDateManaged || names.session === currentDate) return false;
-            } else if (previousDate === currentDate) {
-                return false;
-            }
-
-            runtime.state.activeSessionDateKey = currentDate;
-            if (!sessionDateManaged) return false;
-
-            const previousName = names.session;
-            names.session = currentDate;
-            const bucket = getActiveBucket('session');
-            writeBucketHandout(bucket);
-
-            if (announce) {
-                GameAssist.log(
-                    'NPCAssist',
-                    `Date changed from ${previousDate || previousName} to ${currentDate}; active Session is now ${currentDate}.`,
-                    'INFO'
-                );
-            }
-            return true;
-        }
-
-        function prepareNPCManagerActivity() {
-            backfillBucketsFromLegacyLog();
-            return ensureSessionDateRollover();
-        }
-
-        GameAssist.NPCAssist = Object.freeze({
-            version: NPCMANAGER_MODULE_VERSION,
-            refreshSessionDate(options = {}) {
-                return ensureSessionDateRollover(options.announce !== false);
-            }
-        });
-        GameAssist.NPCManager = GameAssist.NPCAssist;
-
-        function showDeathBucketsPanel(message = null) {
-            const names = ensureDeathBucketConfig();
-            const buckets = getActiveBuckets();
-            const lines = DEATH_BUCKET_SCOPES.map(scope =>
-                `${DEATH_BUCKET_TITLES[scope]}: ${names[scope]} (${buckets[scope].entries.length} deaths)`
-            );
-
-            sendNPCPanel('NPC Death Buckets', [
-                {
-                    label: 'Active Buckets',
-                    value: lines
-                },
-                {
-                    label: 'Change Names',
-                    value: [
-                        GameAssist.createButton('Set Campaign', `!npc-death-buckets --campaign "?{Campaign bucket name|${queryDefault(names.campaign)}}"`),
-                        GameAssist.createButton('Set Chapter', `!npc-death-buckets --chapter "?{Chapter bucket name|${queryDefault(names.chapter)}}"`),
-                        GameAssist.createButton('Set Section', `!npc-death-buckets --section "?{Section bucket name|${queryDefault(names.section)}}"`),
-                        GameAssist.createButton('Set Session', `!npc-death-buckets --session "?{Session bucket name|${queryDefault(names.session)}}"`),
-                        GameAssist.createButton('Reset Session Date', '!npc-death-buckets --resetSession')
-                    ]
-                },
-                {
-                    label: 'Reports',
-                    value: DEATH_BUCKET_SCOPES.map(scope =>
-                        GameAssist.createButton(DEATH_BUCKET_TITLES[scope], `!npc-death-report --scope ${scope}`)
-                    )
-                },
-                {
-                    label: 'Write Reports',
-                    value: GameAssist.createButton('Open Report Writer', '!npc-wr')
-                },
-                {
-                    label: 'Tip',
-                    value: message || 'Changing a bucket name starts or resumes that named bucket. Existing bucket handouts are retained.'
-                }
-            ]);
-        }
-
-        function appendUniqueDeathEntries(targetBucket, sourceEntries) {
-            const existing = new Set(targetBucket.entries.map(deathEntryKey));
-            let added = 0;
-
-            sourceEntries.forEach(entry => {
-                const key = deathEntryKey(entry);
-                if (existing.has(key)) return;
-                targetBucket.entries.push(cloneDeathEntry(entry));
-                existing.add(key);
-                added++;
-            });
-
-            pruneEntries(targetBucket.entries);
-            return added;
-        }
-
-        function startSectionFromCurrentSession(sectionName) {
-            const names = ensureDeathBucketConfig();
-            names.section = handoutSafeName(sectionName, defaultBucketName('section'));
-            const section = getActiveBucket('section');
-            const session = getActiveBucket('session');
-            const added = appendUniqueDeathEntries(section, session.entries);
-            writeBucketHandout(section);
-            writeBucketHandout(session);
-            return { section, session, added };
-        }
-
-        function showReportWriterPanel(message = null) {
-            const names = ensureDeathBucketConfig();
-            const buckets = getActiveBuckets();
-            const activeLines = DEATH_BUCKET_SCOPES.map(scope =>
-                `${DEATH_BUCKET_TITLES[scope]}: ${names[scope]} (${buckets[scope].entries.length} deaths)`
-            );
-
-            sendNPCPanel('NPC Report Writer', [
-                {
-                    label: 'Before You Write',
-                    value: 'Review the active names and counts below. Writing updates handouts from saved GameAssist history; it does not create another death entry.'
-                },
-                { label: 'Active Reports', value: activeLines },
-                {
-                    label: 'Write Now',
-                    value: [
-                        GameAssist.createButton('Write All Four', '!npc-death-write --all'),
-                        ...DEATH_BUCKET_SCOPES.map(scope =>
-                            GameAssist.createButton(`Write ${DEATH_BUCKET_TITLES[scope]}`, `!npc-death-write --scope ${scope}`)
-                        )
-                    ]
-                },
-                {
-                    label: 'Adjust First',
-                    value: [
-                        GameAssist.createButton('Change Active Names', '!npc-death-buckets'),
-                        GameAssist.createButton('New Section From Current Session', `!npc-death-write --newSection "?{New section name|${queryDefault(names.section)}}"`)
-                    ]
-                },
-                {
-                    label: 'New Section From Session',
-                    value: 'Changes the active Section name, copies only missing deaths from the current Session into that Section, and writes both handouts. Campaign and Chapter are not rewritten by that action.'
-                },
-                {
-                    label: 'Short Command',
-                    value: '!NPC-WR opens this menu. !npc-death-write is the full command.'
-                },
-                { label: 'Result', value: message || 'No reports written yet.' }
-            ]);
-        }
-
-        function handleReportWriter(args = {}) {
-            if (args.newSection && args.newSection !== true) {
-                const result = startSectionFromCurrentSession(args.newSection);
-                showReportWriterPanel(
-                    `Section is now ${result.section.name}. Added ${result.added} current-session death${result.added === 1 ? '' : 's'} and updated the Section and Session handouts.`
-                );
-                return;
-            }
-
-            if (args.all) {
-                writeActiveBucketHandouts();
-                showReportWriterPanel('Campaign, Chapter, Section, and Session handouts updated.');
-                return;
-            }
-
-            if (args.scope) {
-                const scope = normalizeScope(args.scope);
-                const bucket = getActiveBucket(scope);
-                writeBucketHandout(bucket);
-                showReportWriterPanel(`${DEATH_BUCKET_TITLES[scope]} handout updated: ${bucketHandoutName(scope, bucket.name)}.`);
-                return;
-            }
-
-            showReportWriterPanel();
-        }
-
-        function showDeathClearConfirm(scope) {
-            const safeScope = normalizeScope(scope);
-            const onlyBucket = getActiveBucket(safeScope);
-            const nestedScopes = NESTED_BUCKET_SCOPES[safeScope];
-            const nestedBuckets = nestedScopes.map(getActiveBucket);
-            const nestedCount = nestedBuckets.reduce((total, bucket) => total + bucket.entries.length, 0);
-            const nestedNames = nestedBuckets.map(bucket => `${DEATH_BUCKET_TITLES[bucket.scope]}: ${bucket.name}`).join(', ');
-
-            if (!nestedCount) {
-                sendNPCPanel('NPC Death Bucket Clear', [
-                    { label: 'Result', value: `No recorded NPC deaths to clear from ${nestedNames}.` },
-                    { label: 'Actions', value: deathReportActions(safeScope) }
-                ]);
-                return;
-            }
-
-            sendNPCPanel('NPC Death Bucket Clear', [
-                {
-                    label: 'Clear Only This Bucket',
-                    value: `${DEATH_BUCKET_TITLES[safeScope]}: ${onlyBucket.name} contains ${onlyBucket.entries.length} recorded death${onlyBucket.entries.length === 1 ? '' : 's'}.`
-                },
-                {
-                    label: 'Clear This Level And Below',
-                    value: nestedScopes.length > 1
-                        ? `${nestedCount} total entries across ${nestedNames}. Parent buckets above ${DEATH_BUCKET_TITLES[safeScope]} are retained.`
-                        : 'Session has no nested bucket beneath it.'
-                },
-                {
-                    label: 'Buttons',
-                    value: [
-                        GameAssist.createButton(`Clear Only ${DEATH_BUCKET_TITLES[safeScope]}`, `!npc-death-clear --scope ${safeScope} --confirm`),
-                        ...(nestedScopes.length > 1
-                            ? [GameAssist.createButton(`Clear ${DEATH_BUCKET_TITLES[safeScope]} And Below`, `!npc-death-clear --scope ${safeScope} --nested --confirm`)]
-                            : []),
-                        GameAssist.createButton('Cancel', `!npc-death-report --scope ${safeScope}`)
-                    ]
-                }
-            ]);
-        }
-
-        function clearActiveDeathBuckets(scope, includeNested = false) {
-            const safeScope = normalizeScope(scope);
-            const scopes = includeNested ? NESTED_BUCKET_SCOPES[safeScope] : [safeScope];
-            const results = scopes.map(itemScope => {
-                const bucket = getActiveBucket(itemScope);
-                const count = bucket.entries.length;
-                bucket.entries.length = 0;
-                writeBucketHandout(bucket);
-                return { bucket, count };
-            });
-
-            if (scopes.includes('session')) {
-                const runtime = ensureNPCManagerRuntime();
-                runtime.deathLog.length = 0;
-            }
-
-            return {
-                scope: safeScope,
-                includeNested,
-                results,
-                count: results.reduce((total, result) => total + result.count, 0)
-            };
-        }
-
-        function renderAuditHandout(needsMarker, needsClear, unlinked, invalidHp) {
-            function renderList(title, entries) {
-                if (!entries.length) return `<h3>${htmlText(title)}</h3><p>None.</p>`;
-                return [
-                    `<h3>${htmlText(title)}</h3>`,
-                    '<ul>',
-                    entries.map(entry =>
-                        `<li><strong>${htmlText(entry.name)}</strong> | HP ${htmlText(entry.hp)} | Markers: ${htmlText(entry.markers)} | Token ID: ${htmlText(entry.id)}</li>`
-                    ).join(''),
-                    '</ul>'
-                ].join('\n');
-            }
-
-            return [
-                '<h2>NPC Death Audit</h2>',
-                `<p><strong>Updated:</strong> ${htmlText(localNow())}</p>`,
-                '<p>Checked linked NPC tokens on the current player page. Player characters are intentionally not included.</p>',
-                `<p><strong>Configured death marker:</strong> ${htmlText(modState.config.deadMarker || 'dead')}</p>`,
-                renderList('Needs Death Marker', needsMarker),
-                renderList('Needs Marker Cleared', needsClear),
-                unlinked.length
-                    ? `<h3>Ignored Unlinked Items</h3><p>${htmlText(summarizeAuditNames(unlinked, 20))}</p><p>Expected for party markers, scenery, labels, or props.</p>`
-                    : '<h3>Ignored Unlinked Items</h3><p>None.</p>',
-                invalidHp.length
-                    ? `<h3>Ignored Invalid HP</h3><p>${htmlText(summarizeAuditNames(invalidHp, 20))}</p><p>Blank or non-numeric HP is never treated as zero by marker repair.</p>`
-                    : '<h3>Ignored Invalid HP</h3><p>None.</p>',
-                '<p><strong>Safety:</strong> The audit is read-only. The separate repair command re-scans current HP, requires confirmation, and changes only the configured death marker.</p>'
-            ].join('\n');
-        }
-
-        function selectedArcEntry(token, note = null) {
-            const link = GameAssist.getLinkedCharacter(token);
-            if (!link) return null;
-            const isNPC = Boolean(getNPCContext(token, link));
-            const character = link.character;
-            const rawHP = token.get('bar1_value');
-            return {
-                id: `${now()}-${token.id}`,
-                tokenId: token.id,
-                characterId: character.id,
-                name: token.get('name') || character.get('name') || '(Unnamed)',
-                hp: rawHP === '' || rawHP == null ? null : rawHP,
-                marker: token.get('statusmarkers') || null,
-                time: localNow(),
-                timestamp: isoNow(),
-                source: isNPC ? 'Selected NPC token' : 'Selected PC token',
-                note: note || null
-            };
-        }
-
-        function appendSelectedTokensToArc(arc, msg, note = null, options = {}) {
-            const selected = Array.isArray(msg.selected) ? msg.selected : [];
-            const skipped = [];
-            const result = { added: 0, updated: 0, duplicates: 0, skipped };
-
-            selected.forEach(sel => {
-                const token = getObj('graphic', sel._id);
-                if (!token) {
-                    skipped.push('(missing token)');
-                    return;
-                }
-
-                const entry = selectedArcEntry(token, note);
-                if (!entry) {
-                    skipped.push(token.get('name') || '(Unnamed)');
-                    return;
-                }
-
-                const change = appendArcCandidate(arc, entry, options);
-                result.added += change.added;
-                result.updated += change.updated;
-                result.duplicates += change.duplicate;
-            });
-
-            return result;
-        }
-
-        function appendSessionToArc(arc, options = {}) {
-            const bucket = getActiveBucket('session');
-            const result = { added: 0, updated: 0, duplicates: 0 };
-
-            bucket.entries.forEach(entry => {
-                const key = deathEntryKey(entry);
-                const change = appendArcCandidate(arc, {
-                    ...cloneDeathEntry(entry),
-                    source: `Session bucket: ${bucket.name}`,
-                    sourceEventId: key
-                }, options);
-                result.added += change.added;
-                result.updated += change.updated;
-                result.duplicates += change.duplicate;
-            });
-
-            return result;
-        }
-
-        function showArcPanel(message = null) {
-            const runtime = ensureNPCManagerRuntime();
-            const arcLines = runtime.arcs.length
-                ? runtime.arcs.map(arc => [
-                    `${arc.name}: ${Array.isArray(arc.entries) ? arc.entries.length : 0} entries`,
-                    GameAssist.createButton('Manage', `!npc-death-arc --name "${queryDefault(arc.name)}" --manage`)
-                ].join(' '))
-                : ['No arc buckets created yet.'];
-
-            sendNPCPanel('NPC Arc Buckets', [
-                {
-                    label: 'Default Rule',
-                    value: 'Each linked creature appears once per arc. Adding it again updates the existing entry instead of creating a duplicate.'
-                },
-                {
-                    label: 'Current Arcs',
-                    value: arcLines
-                },
-                {
-                    label: 'Commands',
-                    value: [
-                        '!npc-death-arc --name "Paladin Atonement" = add selected linked PC/NPC tokens',
-                        '!npc-death-arc --name "Paladin Atonement" --session = append current session deaths',
-                        '!npc-death-arc --name "Paladin Atonement" --note "text" = add a short note to selected tokens',
-                        '!npc-death-arc --name "Paladin Atonement" --manage = remove or undo entries',
-                        '!npc-death-arc --name "Paladin Atonement" --allowDuplicates = deliberately bypass deduplication'
-                    ]
-                },
-                {
-                    label: 'Buttons',
-                    value: [
-                        GameAssist.createButton('Add Selected To Arc', '!npc-death-arc --name "?{Arc bucket name|Paladin Atonement}"'),
-                        GameAssist.createButton('Append Session To Arc', '!npc-death-arc --name "?{Arc bucket name|Paladin Atonement}" --session'),
-                        GameAssist.createButton('Manage Arc', '!npc-death-arc --name "?{Arc bucket name|Paladin Atonement}" --manage')
-                    ]
-                },
-                {
-                    label: 'Tip',
-                    value: message || 'Select tokens before using the selected-token command.'
-                }
-            ]);
-        }
-
-        function showArcManagePanel(arc, page = 1, message = null) {
-            const limit = DEATH_REPORT_DETAIL_LIMIT;
-            const newest = arc.entries.slice().reverse();
-            const pageCount = Math.max(1, Math.ceil(newest.length / limit));
-            const currentPage = Math.min(Math.max(parseInt(page, 10) || 1, 1), pageCount);
-            const start = (currentPage - 1) * limit;
-            const entries = newest.slice(start, start + limit);
-            const arcName = queryDefault(arc.name, 'Arc');
-            const entryLines = entries.length
-                ? entries.map(entry => [
-                    `${entry.name} | ${entry.source || 'Manual entry'}`,
-                    GameAssist.createButton('Remove', `!npc-death-arc --name "${arcName}" --remove ${entry.arcEntryId}`)
-                ].join(' '))
-                : ['No entries in this arc.'];
-            const nav = [];
-
-            if (currentPage > 1) {
-                nav.push(GameAssist.createButton('Newer', `!npc-death-arc --name "${arcName}" --manage --page ${currentPage - 1}`));
-            }
-            if (currentPage < pageCount) {
-                nav.push(GameAssist.createButton('Older', `!npc-death-arc --name "${arcName}" --manage --page ${currentPage + 1}`));
-            }
-
-            sendNPCPanel('Manage NPC Arc', [
-                { label: 'Arc', value: `${arc.name} (${arc.entries.length} entries)` },
-                { label: 'Entries', value: entryLines },
-                {
-                    label: 'Bulk Actions',
-                    value: [
-                        GameAssist.createButton('Remove Selected Tokens', `!npc-death-arc --name "${arcName}" --removeSelected`),
-                        GameAssist.createButton('Undo Last Addition', `!npc-death-arc --name "${arcName}" --undo`),
-                        GameAssist.createButton('Append Current Session', `!npc-death-arc --name "${arcName}" --session`)
-                    ]
-                },
-                { label: 'Pages', value: nav.length ? nav : `Page ${currentPage} of ${pageCount}` },
-                {
-                    label: 'Tip',
-                    value: message || 'Remove buttons affect only this arc handout. Campaign, Chapter, Section, and Session death history is unchanged.'
-                }
-            ]);
-        }
-
-        function requestDeathMarker(token, on) {
-            const resolution = getDeathMarkerResolution();
-            if (!resolution.ok) {
-                GameAssist.log('NPCAssist', deathMarkerWarning(resolution), 'WARN');
-                return false;
-            }
-
-            if (resolution.ambiguous) {
-                GameAssist.log(
-                    'NPCAssist',
-                    `Marker "${resolution.requested}" matches multiple custom markers; using ${resolution.id}.`,
-                    'WARN'
-                );
-            }
-
-            const result = GameAssist.MarkerService.set(token, modState.config.deadMarker || 'dead', on, { owner: 'NPCAssist' });
-            if (!result.ok) {
-                GameAssist.log('NPCAssist', result.message || `Marker change failed (${result.code || 'INTERNAL'}).`, 'WARN');
-                return false;
-            }
-            return true;
-        }
-
-        function getNPCContext(token, link = null) {
-            const linked = link || GameAssist.getLinkedCharacter(token);
-            if (!linked) return null;
-
-            const npcAttr = findObjs({
-                _type: 'attribute',
-                _characterid: linked.character.id,
-                name: 'npc'
-            })[0];
-
-            if (!npcAttr || npcAttr.get('current') !== '1') return null;
-            return linked;
-        }
-
-        function parseTrackedHP(raw) {
-            if (raw === '' || raw == null) return null;
-            const hp = parseInt(raw, 10);
-            return Number.isFinite(hp) ? hp : null;
-        }
-
-        function getNpcNamingContext(token) {
-            if (!token || typeof token.get !== 'function') return null;
-            if (!['objects', 'gmlayer'].includes(token.get('layer'))) return null;
-            const characterId = token.get('represents');
-            if (!characterId) return null;
-            const character = getObj('character', characterId);
-            if (!character) return null;
-            const npcAttr = findObjs({ _type: 'attribute', _characterid: character.id, name: 'npc' })[0];
-            if (!npcAttr || String(npcAttr.get('current')) !== '1') return null;
-            const characterName = String(character.get('name') || '').trim();
-            const tokenName = String(token.get('name') || '').trim();
-            const baseName = characterName || tokenName;
-            return baseName ? { token, character, baseName } : null;
-        }
-
-        function normalizedNpcTokenName(raw) {
-            return String(raw || '').trim().toLowerCase();
-        }
-
-        /**
-         * autoNumberNpcToken — Give a newly added NPC the lowest available page-local name.
-         * Inputs: one newly added graphic; the linked NPC character name is authoritative when present.
-         * Invariants: current eligible page tokens are the only sequence source; existing tokens are never renamed.
-         * Failure: PCs, unlinked/blank tokens, map-layer graphics, and unreadable identity are skipped silently.
-         * Design: no saved counter means deletion and sandbox restart require no repair.
-         */
-        function autoNumberNpcToken(token) {
-            if (modState.config.autoNumberNpcTokens === false) return false;
-            const context = getNpcNamingContext(token);
-            const pageId = token && token.get('_pageid');
-            if (!context || !pageId) return false;
-            const usedNames = new Set(
-                findObjs({ _type: 'graphic', _pageid: pageId })
-                    .filter(other => other.id !== token.id && getNpcNamingContext(other))
-                    .map(other => normalizedNpcTokenName(other.get('name')))
-                    .filter(Boolean)
-            );
-            let assignedName = context.baseName;
-            if (usedNames.has(normalizedNpcTokenName(assignedName))) {
-                let suffix = 1;
-                while (usedNames.has(normalizedNpcTokenName(`${context.baseName} ${suffix}`))) suffix++;
-                assignedName = `${context.baseName} ${suffix}`;
-            }
-            if (String(token.get('name') || '') === assignedName) return false;
-            token.set('name', assignedName);
-            return true;
-        }
-
-        /**
-         * handleTokenAdd — Name a new NPC, then guard HPAssist's placeholder-HP interval.
-         * Context: Roll20 can expose zero/blank bar values before auto-roll-on-add writes rolled HP.
-         * Invariant: only active auto-roll-on-add receives the grace period; normal gameplay HP changes remain direct.
-         */
-        function handleTokenAdd(token) {
-            autoNumberNpcToken(token);
-            const hpRollerConfig = GameAssist.getState('HPAssist')?.config;
-            if (hpRollerConfig?.enabled === false || hpRollerConfig?.autoRollOnAdd !== true) return;
-
-            initializingNpcHp.add(token.id);
-            setTimeout(
-                () => initializingNpcHp.delete(token.id),
-                POLICY.runtime.npcHpInitializationGraceMs
-            );
-        }
-
-        function parseBloodiedHP(raw) {
-            if (raw == null || String(raw).trim() === '') return null;
-            const hp = Number(raw);
-            return Number.isFinite(hp) ? hp : null;
-        }
-
-        /**
-         * notifyBloodiedCrossing — Whisper one private notice for a true half-HP crossing.
-         * Inputs: current token plus Roll20's previous/current bar 1 values; maximum HP comes from current bar 1 max.
-         * Invariants: living object-layer NPC only; no marker, history, Arc, or persistent per-token state changes.
-         * Failure: missing or invalid HP evidence is ignored without guessing or chat output.
-         * Design: previous/current values naturally rearm after healing above half and prevent repeats while still below half.
-         */
-        function notifyBloodiedCrossing(token, previousRaw, currentRaw) {
-            if (modState.config.notifyBloodied === false || token.get('layer') !== 'objects') return false;
-
-            const linked = getNPCContext(token);
-            if (!linked) return false;
-
-            const previousHp = parseBloodiedHP(previousRaw);
-            const currentHp = parseBloodiedHP(currentRaw);
-            const maxHp = parseBloodiedHP(token.get('bar1_max'));
-            if (previousHp === null || currentHp === null || maxHp === null || maxHp <= 0 || currentHp <= 0) {
-                return false;
-            }
-            if (!(previousHp * 2 > maxHp && currentHp * 2 <= maxHp)) return false;
-
-            const name = token.get('name') || linked.character.get('name') || '(Unnamed NPC)';
-            sendNPCPanel('NPCAssist: Bloodied', [
-                { label: 'NPC', value: name },
-                { label: 'HP', value: `${currentHp} / ${maxHp}` }
-            ]);
-            return true;
-        }
-
-        function checkForDeath(token) {
-            if (!modState.config.autoTrackDeath) return;
-
-            if (!getNPCContext(token)) return;
-
-            const hp = parseTrackedHP(token.get('bar1_value'));
-            if (hp === null) return;
-
-            prepareNPCManagerActivity();
-            const isDead = GameAssist.MarkerService.has(token, modState.config.deadMarker);
-
-            if (hp < 1) {
-                if (!isDead) requestDeathMarker(token, true);
-                if (hasOpenDeathEntry(token)) return;
-
-                const name = token.get('name') || '(Unnamed NPC)';
-                GameAssist.log('NPCAssist', `${name} recorded as dead (HP: ${hp})`);
-
-                // Auto-hide if enabled
-                if (modState.config.autoHide) {
-                    token.set('layer', modState.config.hideLayer);
-                    GameAssist.log('NPCAssist', `${name} moved to ${modState.config.hideLayer}`);
-                }
-
-                recordDeathInBuckets(deathEventIdentity(token, hp));
-            } else if (hp >= 1) {
-                const annotated = annotateRevivalInBuckets(token, hp);
-                if (isDead) requestDeathMarker(token, false);
-                if (isDead || annotated) {
-                    GameAssist.log('NPCAssist', `${token.get('name')} revived (HP: ${hp})`);
-                }
-            }
-        }
-
-        function handleTokenChange(obj, prev) {
-            const currentHp = parseTrackedHP(obj.get('bar1_value'));
-            const previousHp = parseTrackedHP(prev?.bar1_value);
-            if (currentHp === null || currentHp === previousHp) return;
-
-            if (initializingNpcHp.has(obj.id)) {
-                if (currentHp >= 1) initializingNpcHp.delete(obj.id);
-                return;
-            }
-
-            // CHOICE: unknown/blank -> dead is initialization, not evidence of a living NPC crossing zero.
-            if (previousHp === null && currentHp < 1) return;
-            checkForDeath(obj);
-            notifyBloodiedCrossing(obj, prev?.bar1_value, obj.get('bar1_value'));
-        }
-
-        const npcCommandFamilies = ['!npc-', '!npcassist-', '!npc-death-', '!npcmanager-'];
-        const npcKnownCommands = new Set();
-
-        function registerNPCCommand(suffix, handler) {
-            npcCommandFamilies.forEach(family => {
-                const prefix = `${family}${suffix}`;
-                npcKnownCommands.add(prefix.toLowerCase());
-                GameAssist.onCommand(prefix, msg => {
-                    const content = String(msg.content || '').trim();
-                    const first = content.split(/\s+/)[0];
-                    const remainder = content.slice(first.length).trim();
-                    handler({
-                        ...msg,
-                        content: `!npc-death-${suffix}${remainder ? ` ${remainder}` : ''}`
-                    });
-                }, 'NPCAssist', { gmOnly: true });
-            });
-        }
-
-        registerNPCCommand('help', msg => {
-            prepareNPCManagerActivity();
-            showNPCManagerHelp();
-        });
-
-        registerNPCCommand('guide', () => {
-            prepareNPCManagerActivity();
-            showNPCManagerHelp();
-        });
-
-        ['menu', 'gm', 'dm'].forEach(suffix => {
-            registerNPCCommand(suffix, () => {
-                prepareNPCManagerActivity();
-                showNPCManagerControl();
-            });
-        });
-
-        registerNPCCommand('status', () => {
-            showNPCManagerStatus();
-        });
-
-        registerNPCCommand('refresh', () => {
-            showNPCManagerStatus();
-        });
-
-        registerNPCCommand('bloodied', () => {
-            modState.config.notifyBloodied = modState.config.notifyBloodied === false;
-            showNPCManagerControl();
-        });
-
-        registerNPCCommand('numbering', () => {
-            modState.config.autoNumberNpcTokens = modState.config.autoNumberNpcTokens === false;
-            showNPCManagerControl();
-        });
-
-        ['info', 'about'].forEach(suffix => {
-            registerNPCCommand(suffix, () => {
-                showNPCManagerInfo();
-            });
-        });
-
-        registerNPCCommand('manual', () => {
-            writeNPCManagerManual();
-        });
-
-        ['settings', 'config'].forEach(suffix => {
-            registerNPCCommand(suffix, () => {
-                prepareNPCManagerActivity();
-                showDeathBucketsPanel();
-            });
-        });
-
-        registerNPCCommand('report', msg => {
-            const { args } = _parseArgs(msg.content);
-            prepareNPCManagerActivity();
-
-            if (args.help) {
-                showDeathReportHelp();
-                return;
-            }
-
-            if (args.write) {
-                handleReportWriter(args);
-                return;
-            }
-
-            const scope = normalizeScope(args.scope);
-            const bucket = getActiveBucket(scope);
-
-            if (args.recent) {
-                showDeathReportPage(bucket, 1, 'Recent Entries');
-                return;
-            }
-
-            if (args.page || args.details || args.all) {
-                showDeathReportPage(bucket, args.page || 1, 'Detail View');
-                return;
-            }
-
-            showDeathReportSummary(bucket);
-        });
-
-        registerNPCCommand('clear', msg => {
-            const { args } = _parseArgs(msg.content);
-            const scope = normalizeScope(args.scope);
-            prepareNPCManagerActivity();
-
-            if (!args.confirm) {
-                showDeathClearConfirm(scope);
-                return;
-            }
-
-            const result = clearActiveDeathBuckets(scope, Boolean(args.nested));
-            const cleared = result.results
-                .map(item => `${DEATH_BUCKET_TITLES[item.bucket.scope]} ${item.bucket.name}: ${item.count}`)
-                .join(', ');
-            sendNPCPanel('NPC Death Bucket Clear', [
-                { label: 'Result', value: `Cleared ${result.count} recorded NPC death event${result.count === 1 ? '' : 's'}.` },
-                { label: 'Buckets', value: cleared },
-                { label: 'Mode', value: result.includeNested ? 'Selected level and all nested levels.' : 'Selected bucket only.' },
-                { label: 'Actions', value: deathReportActions(result.scope) }
-            ]);
-        });
-
-        registerNPCCommand('buckets', msg => {
-            const { args } = _parseArgs(msg.content);
-            prepareNPCManagerActivity();
-            const changed = updateDeathBucketNames(args);
-            showDeathBucketsPanel(changed ? 'Bucket names updated and active bucket handouts refreshed.' : null);
-        });
-
-        function reportWriterCommand(msg) {
-            const { args } = _parseArgs(msg.content);
-            prepareNPCManagerActivity();
-            handleReportWriter(args);
-        }
-
-        registerNPCCommand('write', reportWriterCommand);
-        ['!npc-wr', '!npc-death-wr', '!npcmanager-wr'].forEach(prefix => {
-            npcKnownCommands.add(prefix.toLowerCase());
-            GameAssist.onCommand(prefix, msg => {
-                const content = String(msg.content || '').trim();
-                const first = content.split(/\s+/)[0];
-                const remainder = content.slice(first.length).trim();
-                reportWriterCommand({ ...msg, content: `!npc-death-write${remainder ? ` ${remainder}` : ''}` });
-            }, 'NPCAssist', { gmOnly: true });
-        });
-
-        registerNPCCommand('arc', msg => {
-            const { args } = _parseArgs(msg.content);
-            prepareNPCManagerActivity();
-
-            if (args.help || args.list || !args.name || args.name === true) {
-                showArcPanel(args.name === true ? 'Add an arc name, for example: !npc-death-arc --name "Paladin Atonement".' : null);
-                return;
-            }
-
-            const arc = getOrCreateArc(args.name);
-            if (args.manage) {
-                showArcManagePanel(arc, args.page || 1);
-                return;
-            }
-
-            if (args.undo) {
-                const result = undoLastArcBatch(arc);
-                writeArcHandout(arc);
-                showArcManagePanel(
-                    arc,
-                    1,
-                    result.label
-                        ? `Undid ${result.label}: removed ${result.addedRemoved} added entr${result.addedRemoved === 1 ? 'y' : 'ies'} and restored ${result.updatesRestored} updated entr${result.updatesRestored === 1 ? 'y' : 'ies'}.`
-                        : 'There is no recent arc addition to undo.'
-                );
-                return;
-            }
-
-            if (args.removeSelected) {
-                const removed = removeSelectedArcEntries(arc, msg);
-                writeArcHandout(arc);
-                showArcManagePanel(arc, 1, removed
-                    ? `Removed ${removed} entr${removed === 1 ? 'y' : 'ies'} matching the selected token${removed === 1 ? '' : 's'}.`
-                    : 'No arc entries matched the selected tokens.');
-                return;
-            }
-
-            if (args.remove && args.remove !== true) {
-                const removed = removeArcEntryById(arc, String(args.remove));
-                writeArcHandout(arc);
-                showArcManagePanel(arc, args.page || 1, removed ? 'Entry removed.' : 'That arc entry was not found.');
-                return;
-            }
-
-            const allowDuplicates = Boolean(args.allowDuplicates || args.duplicate);
-            const batch = beginArcBatch(arc, args.session ? `Session import: ${getActiveBucket('session').name}` : 'Selected-token addition');
-            const options = { allowDuplicates, batch };
-            const selectedResult = args.session
-                ? { added: 0, updated: 0, duplicates: 0, skipped: [] }
-                : appendSelectedTokensToArc(arc, msg, args.note || null, options);
-            const sessionResult = args.session
-                ? appendSessionToArc(arc, options)
-                : { added: 0, updated: 0, duplicates: 0 };
-            const added = selectedResult.added + sessionResult.added;
-            const updated = selectedResult.updated + sessionResult.updated;
-            const duplicates = selectedResult.duplicates + sessionResult.duplicates;
-            const changed = finalizeArcBatch(arc, batch);
-
-            if (!changed) {
-                showArcManagePanel(
-                    arc,
-                    1,
-                    args.session
-                        ? `No new creatures were added. ${duplicates} existing entr${duplicates === 1 ? 'y was' : 'ies were'} kept without duplication.`
-                        : 'No new linked creatures were added. Select linked tokens, or use --allowDuplicates when repetition is intentional.'
-                );
-                return;
-            }
-
-            writeArcHandout(arc);
-            sendNPCPanel('NPC Arc Bucket Updated', [
-                { label: 'Arc', value: arc.name },
-                { label: 'Added', value: `${added} entr${added === 1 ? 'y' : 'ies'}` },
-                { label: 'Updated', value: `${updated} existing entr${updated === 1 ? 'y' : 'ies'}` },
-                { label: 'Duplicates Avoided', value: duplicates },
-                { label: 'Handout', value: arcHandoutName(arc.name) },
-                {
-                    label: 'Skipped',
-                    value: selectedResult.skipped.length
-                        ? `${selectedResult.skipped.length} unlinked or missing token${selectedResult.skipped.length === 1 ? '' : 's'}: ${summarizeAuditNames(selectedResult.skipped)}`
-                        : 'None'
-                },
-                {
-                    label: 'Actions',
-                    value: [
-                        GameAssist.createButton('Manage Arc', `!npc-death-arc --name "${queryDefault(arc.name)}" --manage`),
-                        GameAssist.createButton('Undo This Addition', `!npc-death-arc --name "${queryDefault(arc.name)}" --undo`)
-                    ]
-                }
-            ]);
-        });
-
-        function showDeathAudit() {
-            prepareNPCManagerActivity();
-            const audit = collectDeathAudit();
-            setHandoutNotes(AUDIT_HANDOUT_NAME, renderAuditHandout(
-                audit.needsMarker,
-                audit.needsClear,
-                audit.unlinked,
-                audit.invalidHp
-            ));
-            const fields = [
-                {
-                    label: 'Result',
-                    value: !audit.resolution.ok
-                        ? deathMarkerWarning(audit.resolution)
-                        : (audit.mismatchCount
-                            ? `⚠️ ${audit.mismatchCount} linked NPC${audit.mismatchCount === 1 ? '' : 's'} need death-marker attention.`
-                            : '✅ No death-marker problems found for linked NPCs.')
-                }
-            ];
-
-            if (audit.needsMarker.length) {
-                fields.push({
-                    label: `Add Death Marker (${audit.needsMarker.length})`,
-                    value: formatAuditEntries(audit.needsMarker)
-                });
-            }
-
-            if (audit.needsClear.length) {
-                fields.push({
-                    label: `Remove Death Marker (${audit.needsClear.length})`,
-                    value: formatAuditEntries(audit.needsClear)
-                });
-            }
-
-            fields.push(
-                {
-                    label: 'Scope',
-                    value: 'Checked linked NPC tokens on the current player page. Player characters are not included.'
-                },
-                {
-                    label: 'Detail Handout',
-                    value: AUDIT_HANDOUT_NAME
-                },
-                {
-                    label: 'Configured Marker',
-                    value: modState.config.deadMarker || 'dead'
-                },
-                {
-                    label: 'Counts',
-                    value: [
-                        `Needs marker: ${audit.needsMarker.length}`,
-                        `Needs marker cleared: ${audit.needsClear.length}`,
-                        `Ignored unlinked: ${audit.unlinked.length}`,
-                        `Ignored invalid HP: ${audit.invalidHp.length}`
-                    ]
-                }
-            );
-
-            if (audit.unlinked.length) {
-                fields.push({
-                    label: `Ignored Unlinked (${audit.unlinked.length})`,
-                    value: [
-                        summarizeAuditNames(audit.unlinked),
-                        'Expected for party markers, scenery, labels, or props.'
-                    ]
-                });
-            }
-
-            if (audit.invalidHp.length) {
-                fields.push({
-                    label: `Ignored Invalid HP (${audit.invalidHp.length})`,
-                    value: [
-                        summarizeAuditNames(audit.invalidHp),
-                        'Blank or non-numeric HP is not treated as zero.'
-                    ]
-                });
-            }
-
-            fields.push({
-                label: 'Actions',
-                value: [
-                    GameAssist.createButton('Refresh Audit', '!npc-death-audit'),
-                    ...(audit.resolution.ok && audit.mismatchCount
-                        ? [GameAssist.createButton('Review Marker Repairs', '!npc-death-repair')]
-                        : [])
-                ]
-            });
-
-            sendAuditReport(fields);
-        }
-
-        function showDeathRepair(confirmed = false) {
-            prepareNPCManagerActivity();
-            const audit = collectDeathAudit();
-
-            if (!audit.resolution.ok) {
-                sendNPCPanel('NPC Death Marker Repair', [
-                    { label: 'Result', value: deathMarkerWarning(audit.resolution) },
-                    { label: 'Changed', value: 'Nothing. Repair cannot run until the configured marker is recognized.' },
-                    { label: 'Actions', value: GameAssist.createButton('Back to Audit', '!npc-death-audit') }
-                ]);
-                return;
-            }
-
-            if (!audit.mismatchCount) {
-                sendNPCPanel('NPC Death Marker Repair', [
-                    { label: 'Result', value: 'No marker repairs are currently needed.' },
-                    { label: 'Changed', value: 'Nothing.' },
-                    { label: 'Actions', value: GameAssist.createButton('Run Audit', '!npc-death-audit') }
-                ]);
-                return;
-            }
-
-            if (!confirmed) {
-                sendNPCPanel('Review NPC Death Marker Repairs', [
-                    {
-                        label: 'Proposed Changes',
-                        value: [
-                            `Add ${modState.config.deadMarker || 'dead'} to ${audit.needsMarker.length} NPC${audit.needsMarker.length === 1 ? '' : 's'} with HP below 1.`,
-                            `Remove ${modState.config.deadMarker || 'dead'} from ${audit.needsClear.length} NPC${audit.needsClear.length === 1 ? '' : 's'} with positive HP.`
-                        ]
-                    },
-                    {
-                        label: 'Important',
-                        value: [
-                            'This follows the HP currently shown on bar 1.',
-                            'It changes only the configured death marker. It does not change HP, death history, bucket records, or Arc records.',
-                            'If HP is wrong, cancel and correct HP before repairing markers.'
-                        ]
-                    },
-                    {
-                        label: 'Actions',
-                        value: [
-                            GameAssist.createButton('Confirm Marker Repairs', '!npc-death-repair --confirm'),
-                            GameAssist.createButton('Cancel', '!npc-death-audit')
-                        ]
-                    }
-                ]);
-                return;
-            }
-
-            let added = 0;
-            let removed = 0;
-            const failed = [];
-            const apply = (entries, action) => {
-                entries.forEach(entry => {
-                    const token = getObj('graphic', entry.id);
-                    if (!token) {
-                        failed.push(`${entry.name}: token no longer exists`);
-                        return;
-                    }
-                    const result = GameAssist.MarkerService[action](
-                        token,
-                        modState.config.deadMarker || 'dead',
-                        { owner: 'NPCAssist' }
-                    );
-                    if (!result.ok || result.verified !== true) {
-                        failed.push(`${entry.name}: ${result.message || result.code || 'marker change was not verified'}`);
-                        return;
-                    }
-                    if (result.changed) {
-                        if (action === 'add') added++;
-                        else removed++;
-                    }
-                });
-            };
-
-            apply(audit.needsMarker, 'add');
-            apply(audit.needsClear, 'remove');
-
-            const after = collectDeathAudit();
-            setHandoutNotes(AUDIT_HANDOUT_NAME, renderAuditHandout(
-                after.needsMarker,
-                after.needsClear,
-                after.unlinked,
-                after.invalidHp
-            ));
-            sendNPCPanel('NPC Death Marker Repair Complete', [
-                {
-                    label: 'Changed',
-                    value: [
-                        `Markers added: ${added}`,
-                        `Markers removed: ${removed}`,
-                        `Changes not completed: ${failed.length}`
-                    ]
-                },
-                {
-                    label: 'Remaining Mismatches',
-                    value: after.mismatchCount
-                        ? `${after.mismatchCount} linked NPC${after.mismatchCount === 1 ? '' : 's'} still need attention.`
-                        : 'None.'
-                },
-                ...(failed.length ? [{ label: 'Needs Manual Attention', value: summarizeAuditNames(failed, AUDIT_DETAIL_LIMIT) }] : []),
-                {
-                    label: 'Preserved',
-                    value: 'HP, death history, bucket records, Arc records, and unrelated markers were not changed.'
-                },
-                { label: 'Actions', value: GameAssist.createButton('Run Audit', '!npc-death-audit') }
-            ]);
-        }
-
-        registerNPCCommand('audit', () => {
-            showDeathAudit();
-        });
-
-        registerNPCCommand('repair', msg => {
-            showDeathRepair(/(?:^|\s)--confirm(?:\s|$)/i.test(String(msg.content || '')));
-        });
-
-        npcCommandFamilies.forEach(family => {
-            GameAssist.onCommand(family, msg => {
-                const command = String(msg.content || '').trim().split(/\s+/)[0].toLowerCase();
-                if (family === '!npc-' && (command.startsWith('!npc-death-') || command.startsWith('!npc-hp-'))) return;
-                if (npcKnownCommands.has(command)) return;
-                sendNPCPanel('NPCAssist', [
-                    { label: 'Needs Attention', value: 'That NPCAssist command was not recognized.' },
-                    { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!npc-death-help') }
-                ]);
-            }, 'NPCAssist', {
-                gmOnly: true,
-                match: { caseInsensitive: true, mode: 'prefix' }
-            });
-        });
-
-        GameAssist.onEvent('add:graphic', handleTokenAdd, 'NPCAssist');
-        GameAssist.onEvent('change:graphic:bar1_value', handleTokenChange, 'NPCAssist');
-        GameAssist.log('NPCAssist', `${NPCMANAGER_MODULE_VERSION} Ready: Page-local NPC names + private Bloodied alerts + auto death tracking + hierarchical reports/writer/audits/confirmed marker repair/arcs`, 'INFO', { startup: true });
-    }, {
-        enabled: true,
-        events: ['add:graphic', 'change:graphic:bar1_value'],
-        prefixes: ['!npc-', '!npcassist-', '!npc-death-', '!npcmanager-'],
-        dependsOn: ['MarkerService'],
-        preserveRuntimeOnDisable: true,
-        teardown: () => {
-            const branch = GameAssist.getState('NPCAssist');
-            const marker = branch?.config?.deadMarker || 'dead';
-            const resolution = GameAssist.MarkerService.resolve(marker);
-            const pageId = Campaign().get('playerpageid');
-
-            if (!pageId) return;
-            if (!resolution.ok) {
-                const detail = resolution.registryError
-                    ? ` Roll20 marker registry problem: ${_sanitize(resolution.registryError)}.`
-                    : '';
-                GameAssist.log('NPCAssist', `Configured NPC death marker "${_sanitize(marker)}" could not be recognized during teardown.${detail}`, 'WARN');
-                return;
-            }
-
-            const targets = findObjs({
-                _type: 'graphic',
-                _pageid: pageId,
-                layer: 'objects'
-            }).filter(token => GameAssist.MarkerService.has(token, resolution.id));
-
-            if (!targets.length) return;
-
-            let removed = 0;
-            targets.forEach(token => {
-                const result = GameAssist.MarkerService.remove(token, resolution.id, { owner: 'NPCAssist' });
-                if (!result.ok) {
-                    GameAssist.log('NPCAssist', result.message || `Marker removal failed (${result.code || 'INTERNAL'}).`, 'WARN');
-                } else if (result.changed) {
-                    removed++;
-                }
-            });
-
-            if (removed) {
-                GameAssist.log('NPCAssist', `Removed ${resolution.id} from ${removed} token(s) during teardown.`);
-            }
-        }
-    });
-    // --- Notes & Comments ---
-    // Changed (v2.0.0): Added the standard GameAssist Home return to the NPCAssist GM control center.
-    // Changed (v1.8.2): Added optional page-local progressive names for newly added linked NPC tokens on the Objects or GM layer; current eligible token names are the source of truth, the lowest available suffix is deterministic, existing tokens are never renamed, and the broad !npc-* recovery listener yields deprecated !npc-hp-* aliases to HPAssist.
-    // Decision log:
-    //   CHOICE: Derive every assignment from current eligible names on the token's page - ALT: persist campaign or page counters; REJECTED: saved counters drift after deletion, manual edits, copy/paste, and sandbox restarts.
-    //   CHOICE: Keep successful naming quiet and change only the new token's name - ALT: announce or renumber the page; REJECTED: routine token setup should not interrupt play or rewrite deliberate existing names.
-    //   CHOICE: Use previous/current HP evidence instead of persistent Bloodied state - ALT: remember each token's threshold state; REJECTED: crossing evidence naturally suppresses repeats and rearms after healing without stale runtime data.
-    //   CHOICE: Keep Bloodied notices private and independent from markers/history - ALT: add a marker or report entry; REJECTED: the notice must not reveal NPC HP or change established death-history semantics.
-    // Prior notes:
-    //   v1.8.1 / NPCAssist 1.3.3: Added optional GM-private Bloodied alerts for true above-half to living-at-or-below-half HP crossings and a one-click Control Center toggle; invalid maxima, setup transitions, PCs, unlinked tokens, GM-layer tokens, and deaths remain silent.
-
-    //   Changed (v1.8.0): Renamed the module to NPCAssist while preserving NPCManager state, reports, handouts, public API access, and every established command alias.
-    //   Decision log:
-    //     CHOICE: Keep death-history recording independent from marker mutation success - ALT: record only after marker success; REJECTED: history should describe HP events even when a visual marker cannot change.
-    //     CHOICE: Identify Arc creatures by token before character/name fallbacks - ALT: character-only identity; REJECTED: multiple NPC tokens may share one character sheet.
-    //     CHOICE: Require a separate preview and confirmation before repairing audit mismatches - ALT: repair from the audit command; REJECTED: a marker/HP mismatch may reveal HP housekeeping the DM wants to correct manually.
-    //     CHOICE: Ignore blank or invalid HP during audit repair - ALT: coerce it to zero; REJECTED: automatic repair must not mark an incompletely configured NPC as dead.
-    //   v0.1.5.0: Audits remain read-only while !npc-death-repair previews, confirms, re-scans, and verifies death-marker corrections without changing HP or history. All marker reads, writes, audits, repair actions, and teardown use CORE:MARKERSERVICE with no standalone TokenMod dependency. Writes preserve configured numbered overlays such as dead@2.
-    //   v0.1.4.7: Suppressed placeholder HP transitions, advanced NPCManager to 1.1.1, and used verified TokenMod --api-as marker requests.
-    //   v0.1.4.5: Advanced NPCManager through 1.0.0 and 1.1.0 for scoped history, handouts, Arc curation, hierarchical clearing, date-managed Sessions, report writing, retention, deduplication, and help.
-    //   v0.1.4.5: Explicit Session names persisted across dates; revival annotations no longer depended on marker removal; bounded audit details were restored.
-    //   v0.1.4.4: Grouped death-audit output, stated PC exclusion, categorized mismatches, and bounded chat detail.
-    //   v0.1.4.3: Resolved configured death markers before add/remove/teardown requests.
-    //   v0.1.4.1: Used exact marker matching, POLICY cache limits, and shared time seams.
-    //   v0.1.3: Hardened deathLog self-healing and added module narrative.
-    //   v0.1.1.2: Updated MECHSUITS metadata.
-    //   v0.1.7.0: Advanced NPCManager to 1.3.2; every command is available through equivalent case-insensitive !NPC-*, !NPC-Death-*, and !NPCManager-* families, and GM/DM open the action-focused control center while Guide/Help remains instructional.
-    // [GAMEASSIST:MODULES:NPCASSIST] END
-    // =============================================================================
-
-    // ————— CONCENTRATIONASSIST MODULE v0.6.0 —————
-    // =============================================================================
-    // [GAMEASSIST:MODULES:CONCENTRATIONASSIST] BEGIN
-    // Section Title: ConcentrationAssist module
-    // -------------------------------------------------------------------------
-    // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:CONCENTRATIONASSIST", title: "ConcentrationAssist",
-    //   guarantees: ["Chat UI for supported 2014 concentration saves; unavailable or 2024 save data is refused instead of guessed","Exact configured-marker status reporting and verified marker mutations through CORE:MARKERSERVICE","A portable built-in default and GM marker controls prevent campaign-specific marker names from becoming hidden prerequisites","Stable public set/read/observe contracts let dependent modules react without scraping private state","Optional HealthService offers are private, deduplicated, bounded, and revalidated before a roll","Compact layered navigation, stable on-demand manual, read-only audit, and unknown-command recovery preserve !concentration and !cc"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
-    //   provides: ["GameAssist.ConcentrationAssist"],
-    //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "0.6.0", health_offer_schema_version: 1 } }
-    // -------------------------------------------------------------------------
-    // Narrative
-    // MODULES:CONCENTRATIONASSIST manages concentration save rolls, whispering outcomes,
-    // and applying the configured marker through CORE:MARKERSERVICE. Status reads resolve custom marker
-    // display names to their stored Roll20 tags and report invalid configuration.
-    // -------------------------------------------------------------------------
-    GameAssist.register('ConcentrationAssist', function() {
-    // ─── Module Setup ──────────────────────────────────────────────────────────────
-    const modState = GameAssist.getState('ConcentrationAssist');
-    Object.assign(modState.config, {
-        enabled:   true,
-        marker:    'stopwatch',
-        randomize: true,
-        healthPrompts: true,
-        ...modState.config
-    });
-
-    const LAST_DAMAGE_LIMIT = POLICY.runtime.lastDamageLimit;
-    const MODULE_VERSION = '0.6.0';
-    const HEALTH_OFFER_SCHEMA_VERSION = 1;
-    const HEALTH_OBSERVER_OWNER = 'ConcentrationAssist.HealthOffers';
-    const healthOffers = new Map();
-    const healthOfferByEvent = new Map();
-    let healthOfferSequence = 0;
-
-    function getEntryTimestamp(entry) {
-        const ts = Number(entry && entry.timestamp);
-        return (Number.isFinite(ts) && ts > 0) ? ts : 0;
-    }
-
-    function pruneLastDamage(lastDamage) {
-        const entries = Object.entries(lastDamage || {});
-        if (entries.length <= LAST_DAMAGE_LIMIT) return;
-
-        entries
-            .sort(([, a], [, b]) => getEntryTimestamp(a) - getEntryTimestamp(b))
-            .slice(0, entries.length - LAST_DAMAGE_LIMIT)
-            .forEach(([playerId]) => delete lastDamage[playerId]);
-    }
-
-    function normalizeLastDamageCache() {
-        const lastDamage = ensureModRuntimeKey(modState, 'lastDamage', 'object');
-
-        Object.entries(lastDamage).forEach(([playerId, payload]) => {
-            if (typeof payload === 'number' || typeof payload === 'string') {
-                const dmg = Number(payload) || 0;
-                lastDamage[playerId] = {
-                    damage: dmg,
-                    dc: Math.max(10, Math.floor(dmg / 2)),
-                    bonus: null,
-                    mode: 'normal',
-                    tokenId: null,
-                    tokenName: null,
-                    characterId: null,
-                    characterName: null,
-                    player: (getObj('player', playerId)?.get('displayname') || null),
-                    timestamp: 0
-                };
-                return;
-            }
-
-            if (payload && typeof payload === 'object') {
-                let tokenId = null;
-                if (payload.tokenId) tokenId = payload.tokenId;
-                else if (payload.tokenID) tokenId = payload.tokenID;
-                else if (payload.tokenIdLegacy) tokenId = payload.tokenIdLegacy;
-
-                const damage = Number(payload.damage) || 0;
-                const normalized = {
-                    damage,
-                    dc: payload.dc !== undefined ? (Number(payload.dc) || Math.max(10, Math.floor(damage / 2))) : Math.max(10, Math.floor(damage / 2)),
-                    bonus: Number.isFinite(Number(payload.bonus)) ? Number(payload.bonus) : null,
-                    mode: (payload.mode === 'adv' || payload.mode === 'dis' || payload.mode === 'normal') ? payload.mode : 'normal',
-                    tokenId: tokenId,
-                    tokenName: payload.tokenName || payload.token,
-                    characterId: payload.characterId,
-                    characterName: payload.characterName,
-                    player: payload.player || payload.playerName,
-                    timestamp: sanitizeTimestamp(payload.timestamp, 0)
-                };
-
-                lastDamage[playerId] = normalized;
-                return;
-            }
-
-            delete lastDamage[playerId];
-        });
-
-        pruneLastDamage(lastDamage);
-        return lastDamage;
-    }
-
-    function ensureConcentrationRuntime() {
-        const runtime = ensureRuntimeObject(modState);
-        const lastDamage = normalizeLastDamageCache();
-        return { runtime, lastDamage };
-    }
-
-    // One-time normalization/repair of runtime cache at module init.
-    // Return value intentionally ignored: this call is for side effects (mutates runtime).
-    ensureConcentrationRuntime();
-
-    // ─── Public Command Prefixes ───────────────────────────────────────────────────
-    const CMDS = ['!Con', '!Concentration', '!ConcentrationAssist', '!concentration-<command>', '!con-<command>', '!cc'];
-
-    // ─── Marker Helper ──────────────────────────────────────────────────────────────
-    function getMarker() {
-        return modState.config.marker || 'stopwatch';
-    }
-
-    function getMarkerResolution() {
-        return GameAssist.MarkerService.resolve(getMarker());
-    }
-
-    function markerResolutionWarning(resolution) {
-        const marker = _sanitize(resolution.requested || getMarker());
-        const detail = resolution.registryError
-            ? ` Roll20 marker registry problem: ${_sanitize(resolution.registryError)}.`
-            : '';
-        return `⚠️ Configured concentration marker "${marker}" could not be recognized.${detail}` +
-            ` Open ConcentrationAssist Settings to choose a built-in marker or an exact custom marker tag.`;
-    }
-
-    /**
-     * repairLegacyMarkerDefault - Replace only the former unresolved stock default.
-     * Existing valid custom markers and registry failures are preserved for the GM.
-     */
-    function repairLegacyMarkerDefault() {
-        if (String(modState.config.marker || '') !== 'Concentrating') return false;
-        const resolution = getMarkerResolution();
-        if (resolution.ok || resolution.code !== 'NOT_FOUND') return false;
-        modState.config.marker = 'stopwatch';
-        GameAssist.log(
-            'ConcentrationAssist',
-            'The unavailable legacy default marker "Concentrating" was replaced with Roll20\'s built-in stopwatch marker. Use ConcentrationAssist Settings to choose another marker.',
-            'INFO',
-            { startup: true }
-        );
-        return true;
-    }
-
-    repairLegacyMarkerDefault();
-
-    // ─── Default Emote Lines ────────────────────────────────────────────────────────
-    const DEFAULT_LINES = {
-        success: [
-            "steadies their breath, holding their focus.",
-            "'s grip tightens as they maintain their spell.",
-            "staggers slightly but does not lose concentration.",
-            "clenches their jaw, magic still flickering with intent.",
-            "narrows their eyes, spell still intact."
-        ],
-        failure: [
-            "gasps, their focus shattered as the spell falters.",
-            "'s concentration breaks and the magic fades.",
-            "cries out, unable to maintain the spell.",
-            "'s spell fizzles as they lose control.",
-            "winces, focus lost in the heat of battle."
-        ]
-    };
-
-    // ─── Helper Functions ──────────────────────────────────────────────────────────
-
-    /**
-     * getConfig()
-     *   Merge default settings with stored config.
-     */
-    function getConfig() {
-        return Object.assign({ randomize: true, healthPrompts: true }, modState.config);
-    }
-
-    function isTokenConcentrating(tokenOrId) {
-        const token = typeof tokenOrId === 'string' ? getObj('graphic', tokenOrId) : tokenOrId;
-        const resolution = getMarkerResolution();
-        return Boolean(token && resolution.ok && GameAssist.MarkerService.has(token, resolution.id));
-    }
-
-    function pruneHealthOffers() {
-        const cutoff = Date.now();
-        healthOffers.forEach((offer, offerId) => {
-            if (offer.expiresAt > cutoff) return;
-            healthOffers.delete(offerId);
-            healthOfferByEvent.delete(offer.eventId);
-        });
-        while (healthOffers.size > POLICY.concentration.healthOfferLimit) {
-            const oldestId = healthOffers.keys().next().value;
-            const oldest = healthOffers.get(oldestId);
-            healthOffers.delete(oldestId);
-            if (oldest) healthOfferByEvent.delete(oldest.eventId);
-        }
-    }
-
-    function clearHealthOffers() {
-        healthOffers.clear();
-        healthOfferByEvent.clear();
-    }
-
-    function nextHealthOfferId() {
-        healthOfferSequence++;
-        return `conc-${Date.now().toString(36)}-${healthOfferSequence.toString(36)}`;
-    }
-
-    function playerDisplayName(playerId) {
-        const player = getObj('player', playerId);
-        return String(player?.get('_displayname') || player?.get('displayname') || '')
-            .replace(/ \(GM\)$/, '')
-            .replace(/["\\]/g, '')
-            .trim();
-    }
-
-    function playerControllerIds(token, character) {
-        const raw = [token?.get('controlledby'), character?.get('controlledby')]
-            .flatMap(value => String(value || '').split(','))
-            .map(value => value.trim())
-            .filter(Boolean);
-        const candidates = raw.includes('all')
-            ? findObjs({ _type: 'player' }).map(player => String(player.id))
-            : raw;
-        return [...new Set(candidates)]
-            .filter(playerId => !playerIsGM(playerId) && Boolean(getObj('player', playerId)));
-    }
-
-    function playerVisiblePageId(playerId) {
-        const fallback = String(Campaign().get('playerpageid') || '');
-        const raw = Campaign().get('playerspecificpages');
-        if (!raw) return fallback;
-        try {
-            const pages = typeof raw === 'string' ? JSON.parse(raw) : raw;
-            return String(pages?.[playerId] || fallback);
-        } catch {
-            return fallback;
-        }
-    }
-
-    function healthOfferTarget(event) {
-        const payload = event?.payload || {};
-        const characterId = String(payload.character?.id || '');
-        const character = characterId ? getObj('character', characterId) : null;
-        if (!character) return { ok: false, code: 'NOT_FOUND' };
-
-        const eventToken = payload.token?.id ? getObj('graphic', String(payload.token.id)) : null;
-        if (eventToken && isTokenConcentrating(eventToken)) {
-            return { ok: true, token: eventToken, character };
-        }
-
-        const marked = findObjs({ _type: 'graphic', represents: characterId })
-            .filter(token => ['objects', 'gmlayer'].includes(String(token.get('layer') || '')))
-            .filter(isTokenConcentrating);
-        if (!marked.length) return { ok: false, code: 'NOT_CONCENTRATING', character };
-
-        const eventPageId = String(
-            payload.pageId
-            || eventToken?.get('_pageid')
-            || eventToken?.get('pageid')
-            || ''
-        );
-        const playerPageId = String(Campaign().get('playerpageid') || '');
-        const preferredPages = [...new Set([eventPageId, playerPageId].filter(Boolean))];
-        for (const pageId of preferredPages) {
-            const candidates = marked
-                .filter(token => String(token.get('_pageid') || token.get('pageid') || '') === pageId)
-                .sort((left, right) => {
-                    const layerRank = token => String(token.get('layer') || '') === 'objects' ? 0 : 1;
-                    return layerRank(left) - layerRank(right) || String(left.id).localeCompare(String(right.id));
-                });
-            if (candidates.length) return { ok: true, token: candidates[0], character };
-        }
-
-        // CHOICE: Ignore stale/off-page concentration markers for character-sheet HP changes.
-        // The current player page is the only unambiguous gameplay context Roll20 exposes here.
-        return { ok: false, code: 'NOT_CONCENTRATING', character };
-    }
-
-    function healthOfferAmount(event) {
-        const payload = event?.payload || {};
-        const delta = Number(payload.delta);
-        if (payload.direction !== 'decrease' || !Number.isFinite(delta) || delta >= 0) return null;
-        const verifiedDamage = payload.classification === 'damage' && payload.confidence === 'declared-and-verified';
-        const unexplainedDecrease = payload.classification === 'unknown' && payload.confidence === 'unknown';
-        if (!verifiedDamage && !unexplainedDecrease) return null;
-        return { amount: Math.abs(delta), verifiedDamage };
-    }
-
-    function healthOfferPanel(offer) {
-        const amountLabel = offer.verifiedDamage ? 'Damage' : 'Observed HP Loss';
-        const explanation = offer.verifiedDamage
-            ? 'GameAssist verified this damage change.'
-            : 'HP decreased, but Roll20 did not identify the cause. Use a button only if this loss requires a concentration check.';
-        const buttons = [
-            GameAssist.createButton('Normal', `!Con-Check ${offer.id} normal`),
-            GameAssist.createButton('Advantage', `!Con-Check ${offer.id} adv`),
-            GameAssist.createButton('Disadvantage', `!Con-Check ${offer.id} dis`)
-        ].join(' ');
-        return `&{template:default} {{name=Concentration Check Available}}` +
-            ` {{Character=${_sanitize(offer.characterName)}}}` +
-            ` {{${amountLabel}=${offer.damage}}}` +
-            ` {{DC=${offer.dc}}}` +
-            ` {{Why You Are Seeing This=${_sanitize(explanation)}}}` +
-            ` {{Roll=${buttons}}}`;
-    }
-
-    function offerHealthCheck(event) {
-        if (modState.config.enabled === false || getConfig().healthPrompts === false) return;
-        if (!GameAssist.HealthService?.isEnabled?.() || event?.type !== 'health.transition') return;
-        const health = healthOfferAmount(event);
-        if (!health || healthOfferByEvent.has(event.eventId)) return;
-
-        const target = healthOfferTarget(event);
-        if (!target.ok) return;
-
-        pruneHealthOffers();
-        const payload = event.payload;
-        const offer = Object.freeze({
-            healthOfferSchemaVersion: HEALTH_OFFER_SCHEMA_VERSION,
-            id: nextHealthOfferId(),
-            eventId: String(event.eventId),
-            transitionId: String(payload.transitionId || ''),
-            canonicalKey: String(payload.after?.canonicalKey || payload.canonicalKey || ''),
-            tokenId: String(target.token.id),
-            characterId: String(target.character.id),
-            characterName: String(target.character.get('name') || target.token.get('name') || 'Unnamed character'),
-            afterCurrentRaw: String(payload.after?.current?.raw ?? ''),
-            damage: health.amount,
-            dc: Math.max(10, Math.floor(health.amount / 2)),
-            verifiedDamage: health.verifiedDamage,
-            createdAt: Date.now(),
-            expiresAt: Date.now() + POLICY.concentration.healthOfferMs
-        });
-        healthOffers.set(offer.id, offer);
-        healthOfferByEvent.set(offer.eventId, offer.id);
-        pruneHealthOffers();
-
-        const panel = healthOfferPanel(offer);
-        sendChat('ConcentrationAssist', `/w gm ${panel}`);
-        const tokenPageId = String(target.token.get('_pageid') || target.token.get('pageid') || '');
-        if (String(target.token.get('layer') || '') !== 'objects') return;
-        playerControllerIds(target.token, target.character).forEach(playerId => {
-            if (!tokenPageId || playerVisiblePageId(playerId) !== tokenPageId) return;
-            const name = playerDisplayName(playerId);
-            if (name) sendChat('ConcentrationAssist', `/w "${name}" ${panel}`);
-        });
-    }
-
-    function latestHealthEvent(canonicalKey) {
-        const matching = (GameAssist.HealthService?.getRecent?.(POLICY.health.recentTransitionLimit) || [])
-            .filter(event => String(event?.payload?.canonicalKey || '') === canonicalKey);
-        return matching.length ? matching[matching.length - 1] : null;
-    }
-
-    function healthOfferSnapshot(offer, token, character) {
-        return offer.canonicalKey.startsWith('character:')
-            ? GameAssist.HealthService?.readCharacter?.(character)
-            : GameAssist.HealthService?.readToken?.(token);
-    }
-
-    /**
-     * getOutcomeLines(name)
-     *   Returns the success/failure emote arrays with {{name}} replaced.
-     */
-    function getOutcomeLines(name) {
-        const fill = line => line.replace("{{name}}", name);
-        return {
-            success: DEFAULT_LINES.success.map(fill),
-            failure: DEFAULT_LINES.failure.map(fill)
-        };
-    }
-
-    /**
-     * getConBonus(character) - Resolve a supported 2014 Constitution save bonus.
-     * Context: 2024 Beacon sheets use a separate asynchronous data surface.
-     * Inputs: a linked Roll20 character object.
-     * Outputs: an explicit result carrying a finite bonus or a safe refusal.
-     * Invariants: missing or unsupported data never becomes a silent +0 roll.
-     */
-    function getConBonus(character) {
-        const sheetHint = String(
-            character?.get('charactersheetname')
-            || getAttrByName(character?.id, 'charactersheetname')
-            || ''
-        ).trim().toLowerCase();
-        const characterName = String(character?.get('name') || 'That character');
-        if (sheetHint === 'dnd2024byroll20') {
-            return {
-                ok: false,
-                code: 'UNAVAILABLE',
-                message: `${characterName} uses Roll20's 2024 character sheet. ConcentrationAssist cannot yet read that Constitution save safely; use the sheet's native save button. No +0 fallback was rolled.`
-            };
-        }
-        const attr = findObjs({
-            _type:       'attribute',
-            _characterid: character.id,
-            name:        'constitution_save_bonus'
-        })[0];
-        const raw = attr ? attr.get('current') : getAttrByName(character.id, 'constitution_save_bonus');
-        const bonus = Number(raw);
-        if (raw === '' || raw === null || raw === undefined || !Number.isFinite(bonus) || bonus < -30 || bonus > 30) {
-            return {
-                ok: false,
-                code: 'UNAVAILABLE',
-                message: `${characterName} does not expose a usable 2014 Constitution save bonus. Open and save that save on the character sheet, or use the sheet's native save button.`
-            };
-        }
-        return { ok: true, bonus };
-    }
-
-    /**
-     * setConcentrationMarker(tokenOrId, on, context)
-     *   Changes concentration through MarkerService and publishes one semantic result.
-     *   Context is bounded operational metadata; it never exposes private module state.
-     */
-    function setConcentrationMarker(tokenOrId, on, context = {}) {
-        if (modState.config.enabled === false && context.allowDisabled !== true) {
-            return { ok: false, code: 'UNAVAILABLE', message: 'ConcentrationAssist is disabled.' };
-        }
-        const token = typeof tokenOrId === 'string' ? getObj('graphic', tokenOrId) : tokenOrId;
-        if (!token) return { ok: false, code: 'NOT_FOUND', message: 'The concentration token was not found.' };
-        if (!['objects', 'gmlayer'].includes(String(token.get('layer') || ''))) {
-            return { ok: false, code: 'UNPROCESSABLE', message: 'The concentration token must be on the Objects or GM layer.' };
-        }
-        const characterId = String(token.get('represents') || '');
-        const character = characterId ? getObj('character', characterId) : null;
-        if (!character) return { ok: false, code: 'UNPROCESSABLE', message: 'The concentration token must represent a character.' };
-        const resolution = getMarkerResolution();
-        if (!resolution.ok) {
-            GameAssist.log('ConcentrationAssist', markerResolutionWarning(resolution), 'WARN');
-            return { ok: false, code: resolution.code || 'NOT_FOUND', message: markerResolutionWarning(resolution) };
-        }
-
-        if (resolution.ambiguous) {
-            GameAssist.log(
-                'ConcentrationAssist',
-                `Marker "${resolution.requested}" matches multiple custom markers; using ${resolution.id}.`,
-                'WARN'
-            );
-        }
-
-        const result = GameAssist.MarkerService.set(token, getMarker(), on, { owner: 'ConcentrationAssist' });
-        if (!result.ok) {
-            GameAssist.log('ConcentrationAssist', result.message || `Marker change failed (${result.code || 'INTERNAL'}).`, 'WARN');
-            return result;
-        }
-        if (result.verified !== true || result.present !== (on === true)) {
-            const failure = {
-                ok: false,
-                code: 'CONFLICT',
-                message: `Roll20 did not verify the requested concentration marker state on ${token.get('name') || character.get('name') || 'the selected token'}.`
-            };
-            GameAssist.log('ConcentrationAssist', failure.message, 'WARN');
-            return failure;
-        }
-        const reason = String(context.reason || (on ? 'established' : 'ended')).slice(0, POLICY.semanticEvents.typeLength);
-        const eventType = on
-            ? 'concentration.established'
-            : (reason === 'check-failed' ? 'concentration.failed' : 'concentration.ended');
-        if (result.changed || context.emitUnchanged === true || reason === 'check-failed') {
-            GameAssist.SemanticEvents.publish(eventType, 'ConcentrationAssist', {
-                tokenId: token.id,
-                tokenName: String(token.get('name') || character.get('name') || 'Unnamed token'),
-                characterId: character.id,
-                characterName: String(character.get('name') || token.get('name') || 'Unnamed character'),
-                active: on === true,
-                reason,
-                actor: String(context.actor || 'api').slice(0, POLICY.semanticEvents.ownerLength),
-                instanceId: context.instanceId ? String(context.instanceId).slice(0, POLICY.effects.requestIdLength) : null,
-                damage: Number.isFinite(Number(context.damage)) ? Number(context.damage) : null,
-                dc: Number.isFinite(Number(context.dc)) ? Number(context.dc) : null,
-                total: Number.isFinite(Number(context.total)) ? Number(context.total) : null
-            });
-        }
-        return { ...result, tokenId: token.id, characterId: character.id, marker: getMarker() };
-    }
-
-    function toggleMarker(token, on, context = {}) {
-        return setConcentrationMarker(token, on, context).ok === true;
-    }
-
-    /**
-     * postButtons(recipient)
-     *   Sends the three-button UI for a new concentration check.
-     */
-    function postButtons(recipient, { includeHome = false } = {}) {
-        const dmg = '?{Damage taken?|0}';
-        const buttons = [
-            GameAssist.createButton('🎯 Maintain Control', `!concentration --damage ${dmg} --mode normal`),
-            GameAssist.createButton('🧠 Brace for the Distraction', `!concentration --damage ${dmg} --mode adv`),
-            GameAssist.createButton('😣 Struggling to Focus', `!concentration --damage ${dmg} --mode dis`)
-        ].join(' ');
-        sendChat('ConcentrationAssist',
-            `/w "${recipient}" ${buttons}<br>⚠️ Select your token before clicking.${includeHome ? `<br>${gameAssistHomeButton()}` : ''}`
-        );
-    }
-
-    /**
-     * sendResult(player, dc, total, rolls, formula)
-     *   Whispers the concentration-check result to player & GM.
-     */
-    function sendResult(player, dc, total, rolls, formula) {
-        const tpl =
-            `&{template:default} {{name=🧠 Concentration Check}}` +
-            ` {{DC=${dc}}} {{Result=Roll(s) ${rolls} → ${total} (from ${formula})}}`;
-        sendChat('ConcentrationAssist', `/w "${player}" ${tpl}`);
-        sendChat('ConcentrationAssist', `/w gm ${tpl}`);
-    }
-
-    /**
-     * showStatus(player)
-     *   Lists all tokens currently marked Concentrating.
-     */
-    function showStatus(player, { audit = false } = {}) {
-        const page = Campaign().get('playerpageid');
-        const resolution = getMarkerResolution();
-        if (!resolution.ok) {
-            return sendChat(
-                'ConcentrationAssist',
-                `/w "${player}" ${markerResolutionWarning(resolution)}`
-            );
-        }
-        if (!page) {
-            return sendChat(
-                'ConcentrationAssist',
-                `/w "${player}" ⚠️ Current player page could not be determined. Check !ga-status and try again.`
-            );
-        }
-        if (resolution.ambiguous) {
-            GameAssist.log(
-                'ConcentrationAssist',
-                `Marker "${resolution.requested}" matches multiple custom markers; status uses ${resolution.id}.`,
-                'WARN'
-            );
-        }
-        const tokens = findObjs({
-            _type:  'graphic',
-            _pageid: page,
-            layer:  'objects'
-        }).filter(t => GameAssist.MarkerService.has(t, resolution.id));
-        if (!tokens.length) {
-            return sendChat('ConcentrationAssist', `/w "${player}" ${audit
-                ? `&{template:default} {{name=ConcentrationAssist Audit}} {{Result=No tokens concentrating.}} {{Marker=${_sanitize(getMarker())}}} {{Changes=None. This audit read current-page token markers without changing them.}}`
-                : 'No tokens concentrating.'}`);
-        }
-        let out = `&{template:default} {{name=${audit ? 'ConcentrationAssist Audit' : '🧠 Concentration Status'}}}`;
-        tokens.forEach(t => {
-            out += `{{${t.get('name') || 'Unnamed'}=Concentrating}}`;
-        });
-        if (audit) out += ` {{Marker=${_sanitize(getMarker())}}} {{Changes=None. This audit read current-page token markers without changing them.}}`;
-        sendChat('ConcentrationAssist', `/w "${player}" ${out}`);
-    }
-
-    function buildStatusTemplate() {
-        const { lastDamage } = ensureConcentrationRuntime();
-        const entries = Object.entries(lastDamage || {});
-        if (!entries.length) return null;
-
-        const compiled = entries.map(([playerId, payload]) => {
-            const data = (payload && typeof payload === 'object')
-                ? payload
-                : { damage: Number(payload) || 0, mode: 'normal', timestamp: 0 };
-            const playerObj = getObj('player', playerId);
-            const display = data.player || playerObj?.get('displayname') || 'Unknown Player';
-            const playerName = display.replace(/ \(GM\)$/, '');
-            const damage = Number(data.damage) || 0;
-            const dc = data.dc ?? Math.max(10, Math.floor(damage / 2));
-            const bonus = typeof data.bonus === 'number' ? data.bonus : null;
-            const mode = data.mode || 'normal';
-            const token = data.tokenId ? getObj('graphic', data.tokenId) : null;
-            const character = data.characterId ? getObj('character', data.characterId) : null;
-            const tokenName = data.tokenName || token?.get('name') || character?.get('name') || '(Token)';
-            const characterName = data.characterName || character?.get('name') || tokenName;
-            const recorded = data.timestamp ? localTime(data.timestamp) : '—';
-            const bonusText = bonus !== null ? (bonus >= 0 ? `+${bonus}` : `${bonus}`) : '—';
-
-            return {
-                player: playerName,
-                info: `${characterName} • DMG ${damage} → DC ${dc} • Bonus ${bonusText} • Mode ${mode} • @ ${recorded}`,
-                timestamp: data.timestamp || 0
-            };
-        });
-
-        compiled.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
-        const rows = compiled.map(row => `{{${_sanitize(row.player)}=${_sanitize(row.info)}}}`);
-        return `&{template:default} {{name=🧠 Concentration Status}} ${rows.join(' ')}`;
-    }
-
-    /**
-     * showHelp(player)
-     *   Whisper the full list of commands and usage.
-     */
-    function showHelp(player) {
-        const out = `&{template:default} {{name=ConcentrationAssist Guide}}` +
-            ` {{Actions=${GameAssist.createButton('Open Check Buttons', '!concentration menu')} ${GameAssist.createButton('Current Status', '!concentration status')}}}` +
-            ` {{Learn Or Review=${GameAssist.createButton('What does ConcentrationAssist do?', '!concentration info')} ${GameAssist.createButton('Create or Update Manual', '!concentration manual')} ${GameAssist.createButton('Read-Only Audit', '!concentration audit')}}}` +
-            ` {{Settings=${GameAssist.createButton('Open Settings', '!concentration settings')}}}`;
-        sendChat('ConcentrationAssist', `/w "${player}" ${out}`);
-    }
-
-    function showConcentrationInfo(player) {
-        const out = `&{template:default} {{name=What ConcentrationAssist Does}}` +
-            ` {{Purpose=Builds normal, advantage, or disadvantage Constitution saves from damage, remembers each player's latest check, and manages the configured concentration marker.}}` +
-            ` {{At The Table=Use the manual controls at any time. When Health Prompts are on, a supported HP decrease can also offer one private, rechecked save to the GM and the affected character's controllers.}}` +
-            ` {{Learn More=${GameAssist.createButton('Create or Update Manual', '!concentration manual')} ${GameAssist.createButton('Back to Guide', '!concentration help')}}}`;
-        sendChat('ConcentrationAssist', `/w "${player}" ${out}`);
-    }
-
-    function showMarkerChoices(msg, player) {
-        if (!playerIsGM(msg.playerid)) {
-            return sendChat('ConcentrationAssist', `/w "${player}" Only the GM can change the campaign concentration marker.`);
-        }
-        const registry = GameAssist.MarkerService.getRegistry();
-        const common = ['stopwatch', 'stop', 'frozen-orb', 'lightning-helix', 'aura', 'all-for-one']
-            .map(marker => GameAssist.createButton(marker, `!concentration marker --value "${marker}"`))
-            .join(' ');
-        const custom = (registry.markers || []).slice(0, 20)
-            .map(entry => GameAssist.createButton(entry.name, `!concentration marker --value "${entry.tag}"`))
-            .join(' ');
-        const registryNote = registry.error
-            ? `Roll20's custom marker list could not be read: ${_sanitize(registry.error)}`
-            : (custom || 'No custom campaign markers are currently available.');
-        const out = `&{template:default} {{name=Choose Concentration Marker}}` +
-            ` {{Common Built-In Markers=${common}}}` +
-            ` {{Custom Campaign Markers=${registryNote}}}` +
-            ` {{Another Marker=${GameAssist.createButton('Enter Name Or Exact Tag', '!concentration marker --value "?{Marker name, built-in id, or exact custom tag|stopwatch}"')}}}` +
-            ` {{Return=${GameAssist.createButton('Back to Settings', '!concentration settings')}}}`;
-        sendChat('ConcentrationAssist', `/w "${player}" ${out}`);
-    }
-
-    function configureMarker(msg, player, body) {
-        if (!playerIsGM(msg.playerid)) {
-            return sendChat('ConcentrationAssist', `/w "${player}" Only the GM can change the campaign concentration marker.`);
-        }
-        const match = String(body || '').match(/^marker(?:\s+--value)?(?:\s+([\s\S]+))?$/i);
-        let requested = String(match?.[1] || '').trim();
-        if ((requested.startsWith('"') && requested.endsWith('"')) || (requested.startsWith("'") && requested.endsWith("'"))) {
-            requested = requested.slice(1, -1).trim();
-        }
-        if (!requested) return showMarkerChoices(msg, player);
-        const resolution = GameAssist.MarkerService.resolve(requested);
-        if (!resolution.ok) {
-            const out = `&{template:default} {{name=Concentration Marker Needs Attention}}` +
-                ` {{Problem=${_sanitize(markerResolutionWarning(resolution))}}}` +
-                ` {{Next Step=${GameAssist.createButton('Choose A Marker', '!concentration markers')} ${GameAssist.createButton('Back to Settings', '!concentration settings')}}}`;
-            return sendChat('ConcentrationAssist', `/w "${player}" ${out}`);
-        }
-        modState.config.marker = resolution.id;
-        return showConcentrationSettings(player, {
-            canConfigureHealth: true,
-            notice: `Concentration marker changed to ${resolution.source === 'built-in' ? resolution.id : (requested + ' (' + resolution.id + ')')}.`
-        });
-    }
-
-    function showConcentrationSettings(player, { canConfigureHealth = false, notice = '' } = {}) {
-        const config = getConfig();
-        const randomize = config.randomize === true;
-        const healthPrompts = config.healthPrompts !== false;
-        const healthAvailable = GameAssist.HealthService?.isEnabled?.() === true;
-        const markerResolution = getMarkerResolution();
-        const out = `&{template:default} {{name=ConcentrationAssist Settings}}` +
-            (notice ? ` {{Updated=${_sanitize(notice)}}}` : '') +
-            ` {{Result Messages=${randomize ? 'Varied' : 'Standard'}}}` +
-            ` {{Choose=${GameAssist.createButton('Standard', '!concentration --config randomize off')} ${GameAssist.createButton('Varied', '!concentration --config randomize on')}}}` +
-            ` {{HP-Loss Check Offers=${healthPrompts ? 'On' : 'Off'}${healthPrompts && !healthAvailable ? ' (HealthService is disabled)' : ''}}}` +
-            ` {{Health Offer Choice=${canConfigureHealth ? GameAssist.createButton(healthPrompts ? 'Turn Off' : 'Turn On', `!concentration --config healthPrompts ${healthPrompts ? 'off' : 'on'}`) : 'Managed by the GM'}}}` +
-            ` {{Marker=${_sanitize(getMarker())} | ${markerResolution.ok ? 'Ready' : 'Needs attention'}}}` +
-            ` {{Marker Controls=${canConfigureHealth ? `${GameAssist.createButton('Use Stopwatch', '!concentration marker --value "stopwatch"')} ${GameAssist.createButton('Choose Marker', '!concentration markers')}` : 'Managed by the GM'}}}` +
-            ` {{Return=${GameAssist.createButton('Back to Guide', '!concentration help')}}}`;
-        sendChat('ConcentrationAssist', `/w "${player}" ${out}`);
-    }
-
-    function concentrationManualHtml() {
-        return [
-            '<h1>ConcentrationAssist User Manual</h1>',
-            `<p><strong>GameAssist v${_sanitize(VERSION)} | ConcentrationAssist ${_sanitize(MODULE_VERSION)}</strong></p>`,
-            '<p>ConcentrationAssist builds D&amp;D 5E concentration checks from damage, reads the linked character\'s Constitution saving throw bonus, remembers the player\'s latest check, and manages the configured concentration marker.</p>',
-            '<h2>Quick Start</h2>',
-            '<ol><li>Select one linked character token on the Objects layer.</li><li>Run <code>!concentration</code> or <code>!cc</code>.</li><li>Choose normal, advantage, or disadvantage.</li><li>Enter the damage taken. The DC is the greater of 10 or half the damage, rounded down.</li></ol>',
-            '<h2>Results And Marker Behavior</h2>',
-            '<p>The player and GM receive the DC, every d20 result, final total, and full roll formula. A successful check applies the configured concentration marker; a failed check removes it. The public character emote can use one standard line or a varied set.</p>',
-            '<h2>Optional HP-Loss Offers</h2>',
-            '<p>When Health Prompts and HealthService are enabled, verified GameAssist damage or an otherwise unexplained numeric HP decrease can offer one private concentration check to the GM and eligible controllers of an already-concentrating character. Unexplained decreases are labeled observed HP loss because Roll20 does not identify their cause. Every button expires, belongs to that character, and is refused if HP changes again, concentration ends, or the clicking player is no longer authorized. Healing, initialization, synchronization, blank, invalid, and unrelated changes remain silent.</p>',
-            '<h2>Status And Audit</h2>',
-            '<p><code>!concentration status</code> or <code>!concentration --status</code> lists marked tokens on the current player page and always responds when the module is running. <code>!concentration audit</code> performs the same read-only marker inspection and states that no marker changed.</p>',
-            '<h2>Command Reference</h2>',
-            '<ul><li><code>!Con-GM</code>, <code>!Con-DM</code>, <code>!Concentration-GM</code>, or <code>!Concentration-DM</code> - check controls.</li><li><code>!concentration help</code> / <code>guide</code> - compact guide.</li><li><code>!concentration</code> or <code>!cc</code> - check buttons.</li><li><code>!concentration --damage 12 --mode normal|adv|dis</code> or <code>!Con-Damage 12 --mode normal|adv|dis</code> - run a check.</li><li><code>!concentration --last</code> - repeat the player\'s previous check.</li><li><code>!concentration --off</code> - remove the configured marker from selected linked tokens.</li><li><code>!concentration status</code> / <code>audit</code> - current-page marker review.</li><li><code>!concentration settings</code> - result-message, HP-loss offer, and marker choices.</li><li><code>!concentration markers</code> - choose a built-in or custom campaign marker.</li><li><code>!ga-conc-status</code> - GM activity summary.</li></ul>',
-            '<h2>Troubleshooting</h2>',
-            '<p>If the configured marker cannot be recognized, use the marker name or exact stored custom marker tag shown by Roll20. Status reads token markers directly; marker changes require GameAssist MarkerService to be enabled.</p>'
-        ].join('');
-    }
-
-    function writeConcentrationManual(msg, player) {
-        if (!playerIsGM(msg.playerid)) {
-            sendChat('ConcentrationAssist', `/w "${player}" The campaign manual is created or updated only by the GM. ${GameAssist.createButton('Open Guide', '!concentration help')}`);
-            return;
-        }
-        const result = GameAssist.writeModuleManual('ConcentrationAssist', concentrationManualHtml(), {
-            legacyModuleNames: ['ConcentrationTracker']
-        });
-        if (!result.ok) {
-            sendChat('ConcentrationAssist', `/w gm &{template:default} {{name=ConcentrationAssist Manual}} {{Needs Attention=${_sanitize(result.message)}}} {{Continue=${GameAssist.createButton('Whisper Short Version', '!concentration info')}}}`);
-            return;
-        }
-        sendChat('ConcentrationAssist', `/w gm &{template:default} {{name=ConcentrationAssist Manual Ready}} {{Handout=${result.link}<br>${_sanitize(result.name)} was ${result.created ? 'created' : 'updated'}.}} {{Continue=${GameAssist.createButton('Whisper Short Version', '!concentration info')} ${GameAssist.createButton('Open Check Buttons', '!concentration menu')}}}`);
-    }
-
-    /**
-     * executeConcentrationRoll(msg, token, character, damage, mode)
-     *   Executes the shared concentration roll after the caller has selected and
-     *   authorized a specific linked token.
-     */
-    function executeConcentrationRoll(msg, token, character, damage, mode, { announcePublic = true } = {}) {
-        const { lastDamage } = ensureConcentrationRuntime();
-        const player = String(msg.who || 'GM').replace(/ \(GM\)$/, '');
-        const actorId = String(msg.playerid || 'API');
-        const normalizedDamage = Number(damage);
-        const normalizedMode = ['normal', 'adv', 'dis'].includes(mode) ? mode : 'normal';
-        if (!token || !character || !Number.isFinite(normalizedDamage) || normalizedDamage <= 0) {
-            return { ok: false, code: 'INVALID_ARGUMENT', message: 'A linked token and positive damage amount are required.' };
-        }
-        if (
-            String(token.get('represents') || '') !== String(character.id) ||
-            !['objects', 'gmlayer'].includes(String(token.get('layer') || ''))
-        ) {
-            return { ok: false, code: 'UNPROCESSABLE', message: 'The token must represent that character on the Objects or GM layer.' };
-        }
-
-        const bonusResult = getConBonus(character);
-        if (!bonusResult.ok) {
-            sendChat(
-                'ConcentrationAssist',
-                `/w "${player}" &{template:default} {{name=Concentration Check}} {{Needs Attention=${_sanitize(bonusResult.message)}}} {{Next Step=${GameAssist.createButton('Open Check Buttons', '!concentration menu')}}}`
-            );
-            return bonusResult;
-        }
-        const bonus = bonusResult.bonus;
-        const dc    = Math.max(10, Math.floor(normalizedDamage / 2));
-        const name  = token.get('name') || character.get('name');
-        const { success: S, failure: F } = getOutcomeLines(name);
-        const { randomize } = getConfig();
-
-        let expr = `1d20 + ${bonus}`;
-        if (normalizedMode === 'adv') expr = `2d20kh1 + ${bonus}`;
-        if (normalizedMode === 'dis') expr = `2d20kl1 + ${bonus}`;
-
-        lastDamage[actorId] = {
-            damage: normalizedDamage,
-            dc,
-            bonus,
-            mode: normalizedMode,
-            tokenId: token.id,
-            tokenName: name,
-            characterId: character.id,
-            characterName: character.get('name'),
-            player,
-            timestamp: sanitizeTimestamp(now())
-        };
-
-        pruneLastDamage(lastDamage);
-
-        sendChat('', `[[${expr}]]`, ops => {
-            const roll = ops[0].inlinerolls?.[0];
-            if (!roll) {
-                return sendChat('ConcentrationAssist',
-                    `/w "${player}" ⚠️ Roll failed.`
-                );
-            }
-            const total   = roll.results.total;
-            const formula = roll.expression;
-            const vals    = roll.results.rolls[0].results.map(r => r.v);
-            const rollsText = (normalizedMode === 'normal' ? vals[0] : vals.join(','));
-            const ok        = total >= dc;
-
-            sendResult(player, dc, total, rollsText, formula);
-
-            const pool = ok ? S : F;
-            const tail = randomize
-                ? pool[Math.floor(Math.random() * pool.length)]
-                : pool[0];
-            if (announcePublic) sendChat(`character|${character.id}`, `/em ${tail}`);
-            toggleMarker(token, ok, {
-                actor: actorId,
-                reason: ok ? 'check-succeeded' : 'check-failed',
-                emitUnchanged: !ok,
-                damage: normalizedDamage,
-                dc,
-                total
-            });
-        });
-        return { ok: true, pending: true, tokenId: token.id, characterId: character.id, damage: normalizedDamage, dc, mode: normalizedMode };
-    }
-
-    /**
-     * handleRoll(msg, damage, mode)
-     *   Resolves the established selected-token command into the shared roll path.
-     */
-    function handleRoll(msg, damage, mode) {
-        const player = String(msg.who || 'GM').replace(/ \(GM\)$/, '');
-        if (!msg.selected?.length) {
-            return sendChat('ConcentrationAssist',
-                `/w "${player}" ⚠️ No token selected.`
-            );
-        }
-        const token = getObj('graphic', msg.selected[0]._id);
-        if (!token) {
-            return sendChat('ConcentrationAssist',
-                `/w "${player}" ⚠️ Token not found.`
-            );
-        }
-
-        const linked = GameAssist.getLinkedCharacter(token);
-        if (!linked) {
-            return sendChat('ConcentrationAssist',
-                `/w "${player}" ⚠️ Token must be on the Objects layer and linked to a character.`
-            );
-        }
-
-        const { character } = linked;
-        return executeConcentrationRoll(msg, token, character, damage, mode);
-    }
-
-    function healthOfferProblem(player, problem) {
-        sendChat(
-            'ConcentrationAssist',
-            `/w "${player}" &{template:default} {{name=Concentration Check}} {{Needs Attention=${_sanitize(problem)}}} {{Next Step=${GameAssist.createButton('Open Check Buttons', '!concentration menu')}}}`
-        );
-    }
-
-    function handleHealthOffer(msg, body) {
-        const player = String(msg.who || 'GM').replace(/ \(GM\)$/, '');
-        const [, offerId = '', requestedMode = ''] = String(body || '').trim().split(/\s+/);
-        const mode = requestedMode.toLowerCase();
-        if (!/^[A-Za-z0-9-]+$/.test(offerId) || !['normal', 'adv', 'dis'].includes(mode)) {
-            return healthOfferProblem(player, 'That concentration-check button is not valid.');
-        }
-
-        pruneHealthOffers();
-        const offer = healthOffers.get(offerId);
-        if (!offer) {
-            return healthOfferProblem(player, 'That concentration-check offer has expired or was already used.');
-        }
-        if (!GameAssist.HealthService?.isEnabled?.()) {
-            return healthOfferProblem(player, 'HealthService is currently disabled. Use the normal concentration check controls instead.');
-        }
-
-        const token = getObj('graphic', offer.tokenId);
-        const character = getObj('character', offer.characterId);
-        if (!token || !character || String(token.get('represents') || '') !== offer.characterId) {
-            return healthOfferProblem(player, 'The affected token or character is no longer available.');
-        }
-        if (!playerIsGM(msg.playerid)) {
-            const tokenPageId = String(token.get('_pageid') || token.get('pageid') || '');
-            const authorized = String(token.get('layer') || '') === 'objects'
-                && Boolean(tokenPageId)
-                && tokenPageId === playerVisiblePageId(String(msg.playerid))
-                && playerControllerIds(token, character).includes(String(msg.playerid));
-            if (!authorized) return healthOfferProblem(player, 'That private concentration check belongs to another character.');
-        }
-        if (!isTokenConcentrating(token)) {
-            healthOffers.delete(offer.id);
-            healthOfferByEvent.delete(offer.eventId);
-            return healthOfferProblem(player, `${offer.characterName} is no longer concentrating.`);
-        }
-
-        const latest = latestHealthEvent(offer.canonicalKey);
-        const snapshot = healthOfferSnapshot(offer, token, character);
-        const latestCurrentRaw = String(latest?.payload?.after?.current?.raw ?? '');
-        // CHOICE: Revalidate the resulting HP value, not the exact event id. Roll20
-        // can mirror one linked sheet/token change as later equivalent evidence even
-        // though the player has not changed HP a second time.
-        if (!latest || latestCurrentRaw !== offer.afterCurrentRaw || String(snapshot?.values?.current?.raw ?? '') !== offer.afterCurrentRaw) {
-            healthOffers.delete(offer.id);
-            healthOfferByEvent.delete(offer.eventId);
-            return healthOfferProblem(player, 'HP changed again after this offer. Use the newest offer or the normal concentration controls.');
-        }
-
-        healthOffers.delete(offer.id);
-        healthOfferByEvent.delete(offer.eventId);
-        const visibleOnPlayerPage = String(token.get('layer') || '') === 'objects'
-            && String(token.get('_pageid') || token.get('pageid') || '') === String(Campaign().get('playerpageid') || '');
-        return executeConcentrationRoll(msg, token, character, offer.damage, mode, {
-            announcePublic: visibleOnPlayerPage
-        });
-    }
-
-    /**
-     * handleClear(msg)
-     *   Clears the marker from selected tokens.
-     */
-    function handleClear(msg) {
-        const player = msg.who.replace(/ \(GM\)$/, '');
-
-        if (!msg.selected || msg.selected.length === 0) {
-            sendChat('ConcentrationAssist', `/w "${player}" ⚠️ No tokens selected.`);
-            return;
-        }
-
-        const skipped = [];
-
-        msg.selected.forEach(sel => {
-            const t = getObj('graphic', sel._id);
-            if (!t) {
-                skipped.push('(Missing Token)');
-                return;
-            }
-
-            if (!GameAssist.getLinkedCharacter(t)) {
-                skipped.push(t.get('name') || '(Unnamed)');
-                return;
-            }
-
-            if (!toggleMarker(t, false, { actor: msg.playerid, reason: 'manual-clear', emitUnchanged: true })) {
-                skipped.push(t.get('name') || '(Unnamed)');
-            }
-        });
-
-        let response = '✅ Requested marker removal.';
-        if (skipped.length) {
-            response += ` Skipped: ${skipped.join(', ')}.`;
-        }
-
-        sendChat('ConcentrationAssist', `/w "${player}" ${response}`);
-    }
-
-    /**
-     * handleLast(msg)
-     *   Repeats the last concentration check.
-     */
-    function handleLast(msg) {
-        const { lastDamage } = ensureConcentrationRuntime();
-        const player = msg.who.replace(/ \(GM\)$/, '');
-        const entry  = lastDamage[msg.playerid];
-        const dmg    = typeof entry === 'object' ? Number(entry.damage) : Number(entry);
-        if (!entry || !dmg) {
-            return sendChat('ConcentrationAssist',
-                `/w "${player}" ⚠️ No previous damage.`
-            );
-        }
-        const mode = typeof entry === 'object' && entry.mode ? entry.mode : 'normal';
-        handleRoll(msg, dmg, mode);
-    }
-
-    // ─── Core Handler (Case-Insensitive) ──────────────────────────────────────────
-    function normalizeConcentrationCommand(raw) {
-        const hyphen = raw.match(/^!(concentrationassist|concentration|con)-([a-z][a-z-]*)(?:\s+([\s\S]*))?$/i);
-        if (hyphen) {
-            const command = String(hyphen[2] || '').toLowerCase();
-            const remainder = String(hyphen[3] || '').trim();
-            const option = ['damage', 'mode', 'last', 'off', 'config'].includes(command);
-            const body = `${option ? '--' : ''}${command}${remainder ? ` ${remainder}` : ''}`;
-            return { body, normalizedRaw: `!concentration ${body}` };
-        }
-        const spaced = raw.match(/^!(concentrationassist|concentration|con|cc)(?:\s+([\s\S]*))?$/i);
-        if (!spaced) return null;
-        const body = String(spaced[2] || '').trim();
-        return { body, normalizedRaw: `!concentration${body ? ` ${body}` : ''}` };
-    }
-
-    function handler(msg) {
-        if (msg.type !== 'api') return;
-
-        // 1) Normalize the established prefix while accepting plain navigation words.
-        const raw = msg.content.trim();
-        const command = normalizeConcentrationCommand(raw);
-        if (!command) return;
-        const { body, normalizedRaw } = command;
-        const direct = body && !body.startsWith('--')
-            ? body.split(/\s+/)[0].toLowerCase()
-            : '';
-
-        ensureConcentrationRuntime();
-
-        // 2) Identify player (strip " (GM)")
-        const player = msg.who.replace(/ \(GM\)$/, '');
-
-        if (direct) {
-            if (direct === 'help' || direct === 'guide') return showHelp(player);
-            if (direct === 'menu' || direct === 'gm' || direct === 'dm') {
-                return postButtons(player, { includeHome: (direct === 'gm' || direct === 'dm') && playerIsGM(msg.playerid) });
-            }
-            if (direct === 'check') return handleHealthOffer(msg, body);
-            if (direct === 'status' || direct === 'refresh') return showStatus(player);
-            if (direct === 'audit') return showStatus(player, { audit: true });
-            if (direct === 'info' || direct === 'about') return showConcentrationInfo(player);
-            if (direct === 'manual') return writeConcentrationManual(msg, player);
-            if (direct === 'marker') return configureMarker(msg, player, body);
-            if (direct === 'markers') return showMarkerChoices(msg, player);
-            if (direct === 'config' || direct === 'settings') return showConcentrationSettings(player, { canConfigureHealth: playerIsGM(msg.playerid) });
-            return sendChat(
-                'ConcentrationAssist',
-                `/w "${player}" &{template:default} {{name=ConcentrationAssist}} {{Needs Attention=That ConcentrationAssist command was not recognized.}} {{Next Step=${GameAssist.createButton('Open Guide', '!concentration help')}}}`
-            );
-        }
-
-        const parts = normalizedRaw.toLowerCase().split(/\s+--/);
-        parts.shift();
-
-        // 3) Config branch
-        if (parts[0]?.startsWith('config ')) {
-            const [, key, val] = parts[0].split(/\s+/);
-            if (key === 'randomize') {
-                modState.config.randomize = (val === 'on' || val === 'true');
-                return sendChat('ConcentrationAssist',
-                    `/w "${player}" ✅ Randomize = ${modState.config.randomize}`
-                );
-            }
-            if (key === 'healthprompts') {
-                if (!playerIsGM(msg.playerid)) {
-                    return healthOfferProblem(player, 'Only the GM can change automatic HP-loss check offers.');
-                }
-                modState.config.healthPrompts = (val === 'on' || val === 'true');
-                if (!modState.config.healthPrompts) clearHealthOffers();
-                return showConcentrationSettings(player, { canConfigureHealth: true });
-            }
-            return sendChat('ConcentrationAssist',
-                `/w "${player}" ❌ Unknown config ${key}`
-            );
-        }
-
-        // 4) Parse flags
-        let damage = 0, mode = 'normal';
-        for (let p of parts) {
-            if (p === 'help' || p === 'guide') return showHelp(player);
-            if (p === 'status') return showStatus(player);
-            if (p === 'audit')  return showStatus(player, { audit: true });
-            if (p === 'info')   return showConcentrationInfo(player);
-            if (p === 'manual') return writeConcentrationManual(msg, player);
-            if (p === 'last')   return handleLast(msg);
-            if (p === 'off')    return handleClear(msg);
-            if (p.startsWith('damage ')) {
-                damage = parseInt(p.split(' ')[1], 10);
-                if (damage > 0) continue;
-            }
-            if (p.startsWith('mode ')) {
-                mode = p.split(' ')[1];
-                if (['normal', 'adv', 'dis'].includes(mode)) continue;
-            }
-            return sendChat(
-                'ConcentrationAssist',
-                `/w "${player}" &{template:default} {{name=ConcentrationAssist}} {{Needs Attention=That ConcentrationAssist option was not recognized.}} {{Next Step=${GameAssist.createButton('Open Guide', '!concentration help')}}}`
-            );
-        }
-
-        // 5) Execute
-        if (damage > 0) {
-            handleRoll(msg, damage, mode);
-        } else {
-            postButtons(player);
-        }
-    }
-
-    // ─── Public Integration Contract ───────────────────────────────────────────────
-    function observeConcentration(callback, { owner = 'ConcentrationAssistConsumer' } = {}) {
-        return GameAssist.SemanticEvents.observe(callback, {
-            owner,
-            types: ['concentration.established', 'concentration.failed', 'concentration.ended']
-        });
-    }
-
-    GameAssist.ConcentrationAssist = Object.freeze({
-        version: MODULE_VERSION,
-        healthOfferSchemaVersion: HEALTH_OFFER_SCHEMA_VERSION,
-        getMarker,
-        resolveMarker: getMarkerResolution,
-        isConcentrating: isTokenConcentrating,
-        set: (tokenOrId, active, context = {}) => setConcentrationMarker(tokenOrId, active === true, context),
-        roll: ({ msg, token, character, damage, mode = 'normal', announcePublic = true } = {}) => {
-            const tokenObject = typeof token === 'string' ? getObj('graphic', token) : token;
-            const characterObject = typeof character === 'string' ? getObj('character', character) : character;
-            return executeConcentrationRoll(msg || {}, tokenObject, characterObject, damage, mode, { announcePublic });
-        },
-        observe: observeConcentration,
-        clearObservers: owner => GameAssist.SemanticEvents.clearObservers(owner),
-        clearHealthOffers,
-        getHealthOfferStatus: () => Object.freeze({
-            enabled: getConfig().healthPrompts !== false,
-            healthServiceAvailable: GameAssist.HealthService?.isEnabled?.() === true,
-            pending: (pruneHealthOffers(), healthOffers.size)
-        }),
-        isAvailable: () => modState.config.enabled !== false && GameAssist.MarkerService.isEnabled()
-    });
-
-    GameAssist.SemanticEvents.clearObservers(HEALTH_OBSERVER_OWNER);
-    const healthObservation = GameAssist.HealthService?.observe?.(offerHealthCheck, { owner: HEALTH_OBSERVER_OWNER });
-    if (healthObservation && healthObservation.ok === false) {
-        GameAssist.log('ConcentrationAssist', `Optional HealthService prompts could not start: ${healthObservation.message}`, 'WARN');
-    }
-
-    // ─── Wire It Up ────────────────────────────────────────────────────────────────
-    GameAssist.onCommand('!ga-conc-status', () => {
-        const tpl = buildStatusTemplate();
-        if (!tpl) {
-            GameAssist.log('ConcentrationAssist', 'No concentration activity recorded yet.');
-            return;
-        }
-        sendChat('ConcentrationAssist', `/w gm ${tpl}`);
-    }, 'ConcentrationAssist', { gmOnly: true });
-
-    GameAssist.onEvent('chat:message', handler, 'ConcentrationAssist');
-    GameAssist.log(
-        'ConcentrationAssist',
-        `Ready: ${[...CMDS, '!ga-conc-status'].join(' & ')}`,
-        'INFO',
-        { startup: true }
-    );
-}, {
-    enabled:  true,
-    events: ['chat:message'],
-    prefixes: ['!Con','!Concentration','!ConcentrationAssist','!ConcentrationAssist-','!concentration','!concentration-','!con-','!cc','!ga-conc-status'],
-    dependsOn: ['MarkerService'],
-    teardown: () => {
-        GameAssist.ConcentrationAssist?.clearHealthOffers?.();
-        const page = Campaign().get('playerpageid');
-        const marker = (GameAssist.getState('ConcentrationAssist')?.config?.marker) || 'stopwatch';
-        const resolution = GameAssist.MarkerService.resolve(marker);
-        if (!resolution.ok) {
-            GameAssist.log(
-                'ConcentrationAssist',
-                `Teardown could not resolve configured marker "${marker}"; no markers were removed.`,
-                'WARN'
-            );
-            return;
-        }
-        const targets = findObjs({ _type: 'graphic', _pageid: page, layer: 'objects' })
-            .filter(t => GameAssist.MarkerService.has(t, resolution.id));
-        let removed = 0;
-        targets.forEach(token => {
-            const result = GameAssist.MarkerService.remove(token, resolution.id, { owner: 'ConcentrationAssist' });
-            if (!result.ok) {
-                GameAssist.log('ConcentrationAssist', result.message || `Marker removal failed (${result.code || 'INTERNAL'}).`, 'WARN');
-            } else if (result.changed) {
-                removed++;
-            }
-        });
-        if (removed) {
-            GameAssist.log('ConcentrationAssist', `Removed the concentration marker from ${removed} token(s) during teardown.`);
-        }
-    }
-    });
-    // --- Notes & Comments ---
-    // Changed (v2.0.0): Advanced ConcentrationAssist to 0.6.0; manual and public-API rolls now require a finite supported 2014 Constitution save bonus, recognized 2024 sheets receive an explicit native-save path, and marker lifecycle publication requires a verified final token state.
-    // Changed (v2.0.0): Advanced ConcentrationAssist to 0.5.0; fresh campaigns use Roll20's built-in stopwatch marker, the unresolved former stock "Concentrating" default self-migrates without overwriting valid custom configuration, and GM settings now provide guided built-in/custom marker selection.
-    // Changed (v2.0.0): Advanced ConcentrationAssist to 0.4.2; HP-loss offers now remain valid across Roll20's equivalent linked sheet/token evidence while still expiring whenever the canonical current HP value actually changes.
-    // Changed (v2.0.0): Advanced ConcentrationAssist to 0.4.1; character-sheet HP losses now prefer the event page and Player Ribbon page, ignore stale off-page markers, and choose one deterministic current-page token when duplicate representations exist.
-    // Changed (v2.0.0): Added the standard GameAssist Home return when ConcentrationAssist is opened through a GM/DM role command.
-    // Changed (v2.0.0): Advanced ConcentrationAssist to 0.4.0 with optional private HealthService-driven HP-loss offers, bounded one-event deduplication, controller-aware delivery, and stale-button revalidation while preserving every manual check path.
-    // Decision log:
-    //   CHOICE: Refuse unsupported 2024 or unavailable save data - ALT: substitute +0; REJECTED: a plausible-looking incorrect save is worse than an explicit limitation.
-    //   CHOICE: Migrate only the exact unresolved former stock default - ALT: replace every unknown marker or retain a campaign-specific default; REJECTED: the former destroys intentional configuration while the latter makes fresh installs fail outside the development campaign.
-    //   CHOICE: Offer checks for verified damage and unexplained numeric decreases - ALT: treat every decrease as proven damage or ignore direct Roll20 edits; REJECTED: the former invents cause while the latter omits the principal supported manual workflow.
-    //   CHOICE: Recheck the latest health event, HP value, concentration marker, token identity, and player control before rolling - ALT: trust a previously rendered button; REJECTED: chat buttons can outlive the state that authorized them.
-    //   CHOICE: Keep HealthService optional rather than a module dependency - ALT: disable all concentration commands with HealthService; REJECTED: manual concentration checks remain independently useful.
-    //   CHOICE: Publish semantic concentration transitions after verified marker requests - ALT: let consumers scrape lastDamage or marker state; REJECTED: private caches do not prove lifecycle and create order-dependent coupling.
-    // Prior notes:
-    //   v1.8.0: Renamed the module to ConcentrationAssist while preserving saved concentration activity, !concentration, !con, !cc, and the complete prior option grammar.
-    //   Decision: Keep lowercase parsing and established aliases instead of introducing a new command grammar.
-    //   v0.1.4.7: Advanced to 0.1.0.6 and used verified TokenMod --api-as marker requests while preserving standalone StatusInfo observation.
-    //   v0.1.4.3: Resolved custom marker names to stored tags and reported unrecognized configuration.
-    //   v0.1.4.1: Routed lastDamage limits and timestamps through POLICY/shared time seams.
-    //   v0.1.4: Added exact configured-marker matching and GM whisper handling.
-    //   v0.1.3: Sanitized timestamps, normalized legacy/runtime lastDamage entries, self-healed post-toggle state, and added module narrative.
-    //   v0.1.1.2: Updated MECHSUITS metadata.
-    //   v0.1.7.0: Advanced ConcentrationTracker to 0.2.2; case-insensitive !Con-* and !Concentration-* aliases cover its command surface, GM/DM open check controls, and !concentration, !cc, and every established --option form remain compatible.
-    // [GAMEASSIST:MODULES:CONCENTRATIONASSIST] END
-    // =============================================================================
-
-    // ————— EFFECTASSIST MODULE v2.5.2 —————
-    // =============================================================================
-    // [GAMEASSIST:MODULES:EFFECTASSIST] BEGIN
-    // Section Title: Catalog-driven semantic effects and 2014 sheet projections
-    // -----------------------------------------------------------------------------
-    // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:EFFECTASSIST", title: "EffectAssist",
-    //   guarantees: ["Effect instances, not markers or sheet fields, are the durable source of truth","Definitions may coordinate multiple source and target projections through one versioned adapter pipeline","Verified 2014 repeating modifier rows are ownership-safe and never overwrite unrelated sheet data","An exact EffectAssist-owned Guidance roll tag may consume one unambiguous supported 2014 skill-check instance; unsupported, edited, or ambiguous checks remain manual","ConcentrationAssist owns concentration state while EffectAssist preflights, verifies, and reports the exact source token dependency","Optional duration providers create reviewable GM candidates but never end effects automatically","Combat duration evidence comes only from accepted CombatAssist progression and world-time evidence comes only from committed AlmanacAssist changes","Provider absence, tracker rebases, backward movement, restarts, and large time jumps are handled without guessed or unbounded replay","Official 2014 Bless spell cards create bounded GM proposals only when template, spell, character, page, token, and controller evidence are unambiguous","Cast recognition never infers recipients or bypasses the normal preview and confirmation pipeline","Audit is read-only; application and repair require bounded confirmation","Player casting uses short-lived opaque choices, rechecks source control, uses visible native target selection, and may be locked by the GM","Recipient failures identify every affected token and distinguish an empty Represents Character choice from a stale character link","Duplicate source-character tokens are labeled by exact token and layer before concentration is established","GM-assisted player requests are retained briefly, preserve source authorization, and expose no full GM controls","Successful player-originated applications announce the source, effect, and public target names","The built-in catalog distinguishes automated mechanics from tracked rules"],
-    //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]","[GAMEASSIST:MODULES:CONDITIONASSIST]","[GAMEASSIST:MODULES:CONCENTRATIONASSIST]"],
-    //   provides: ["GameAssist.EffectAssist"],
-    //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "2.5.2", effect_state_schema_version: 3, cast_proposal_schema_version: 1, player_cast_flow_schema_version: 1 }, lifecycle: "active" }
-    // -----------------------------------------------------------------------------
-    // Narrative
-    // EffectAssist is a catalog-driven rules coordinator. It records the source,
-    // targets, stacking, duration, dependencies, and every visible or mechanical
-    // projection of an effect. MarkerService, ConditionAssist, ConcentrationAssist,
-    // and verified sheet adapters retain authority over their own mechanics.
-    // The v2.0.0 adapter supports the D&D 5E by Roll20 2014 sheet. Mechanics that
-    // cannot be represented safely remain explicit assisted steps instead of
-    // pretending that a token marker is complete automation.
-    // -----------------------------------------------------------------------------
-    GameAssist.register('EffectAssist', function() {
-        const MODULE_NAME = 'EffectAssist';
-        const MODULE_VERSION = '2.5.2';
-        const STATE_SCHEMA_VERSION = 3;
-        const CAST_PROPOSAL_SCHEMA_VERSION = 1;
-        const PLAYER_CAST_FLOW_SCHEMA_VERSION = 1;
-        const GUIDANCE_ROLL_TAG = 'GameAssist Guidance';
-        const GUIDANCE_ROLL_VALUE = `1d4[${GUIDANCE_ROLL_TAG}]`;
-        const modState = GameAssist.getState(MODULE_NAME);
-        const repairGrants = new Map();
-        const applyGrants = new Map();
-        const playerCastFlows = new Map();
-        const playerRequests = new Map();
-        const projectionAdapters = new Map();
-        const suppressedConcentrationTokens = new Map();
-        const castProposals = new Map();
-        const recentCastEvidence = new Map();
-
-        const OGL_SECTIONS = Object.freeze({
-            attack: Object.freeze({
-                section: 'tohitmod',
-                enableFlag: 'global_attack_mod_flag',
-                activeField: 'global_attack_active_flag',
-                nameField: 'global_attack_name',
-                valueField: 'global_attack_roll'
-            }),
-            save: Object.freeze({
-                section: 'savemod',
-                enableFlag: 'global_save_mod_flag',
-                activeField: 'global_save_active_flag',
-                nameField: 'global_save_name',
-                valueField: 'global_save_roll'
-            }),
-            skill: Object.freeze({
-                section: 'skillmod',
-                enableFlag: 'global_skill_mod_flag',
-                activeField: 'global_skill_active_flag',
-                nameField: 'global_skill_name',
-                valueField: 'global_skill_roll'
-            }),
-            ac: Object.freeze({
-                section: 'acmod',
-                enableFlag: 'global_ac_mod_flag',
-                activeField: 'global_ac_active_flag',
-                nameField: 'global_ac_name',
-                valueField: 'global_ac_val'
-            })
-        });
-
-        const BUILTIN_DEFINITIONS = Object.freeze({
-            bless: Object.freeze({
-                id: 'bless',
-                definitionVersion: 2,
-                name: 'Bless',
-                description: 'Blessed targets add 1d4 to attack rolls and saving throws.',
-                concentration: true,
-                duration: 'Up to 1 minute',
-                durationRules: Object.freeze({ encounterRounds: 10, worldMinutes: 1, ending: Object.freeze(['manual', 'concentration']) }),
-                targets: 'Up to three creatures at base level; higher slots may affect more.',
-                catalogGroup: 'automated',
-                stacking: Object.freeze({ group: 'bless', mode: 'nonstacking' }),
-                projections: Object.freeze([
-                    Object.freeze({ id: 'blessed-marker', adapter: 'marker', subject: 'target-token', marker: 'angel-outfit', label: 'Blessed marker' }),
-                    Object.freeze({ id: 'attack-bonus', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'attack', label: 'Bless (GA)', value: '1d4', optional: true }),
-                    Object.freeze({ id: 'save-bonus', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'save', label: 'Bless (GA)', value: '1d4', optional: true })
-                ]),
-                automatic: Object.freeze(['Blessed marker', '2014-sheet 1d4 global attack modifier', '2014-sheet 1d4 global saving-throw modifier', 'source concentration and cleanup']),
-                assisted: Object.freeze(['Choose the targets and end the effect early when a rule outside concentration requires it.']),
-                informational: Object.freeze([])
-            }),
-            guidance: Object.freeze({
-                id: 'guidance',
-                definitionVersion: 3,
-                name: 'Guidance',
-                description: 'The target may add 1d4 to one ability check before the spell ends.',
-                concentration: true,
-                duration: 'Up to 1 minute or until the bonus is used',
-                durationRules: Object.freeze({ encounterRounds: 10, worldMinutes: 1, ending: Object.freeze(['manual', 'concentration', 'bonus-used']) }),
-                targets: 'One willing creature',
-                catalogGroup: 'automated',
-                stacking: Object.freeze({ group: 'guidance', mode: 'nonstacking' }),
-                projections: Object.freeze([
-                    Object.freeze({ id: 'guidance-marker', adapter: 'marker', subject: 'target-token', marker: 'aura', label: 'Guidance marker' }),
-                    Object.freeze({ id: 'guidance-skill', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'skill', label: 'Guidance (GA)', value: GUIDANCE_ROLL_VALUE, optional: true })
-                ]),
-                automatic: Object.freeze(['Guidance marker', '2014-sheet 1d4 global skill modifier', 'source concentration and cleanup']),
-                assisted: Object.freeze(['For an ability check that is not represented by a sheet skill, roll the Guidance d4 manually; end Guidance after its one bonus is used.']),
-                informational: Object.freeze(['The 2014 sheet global skill modifier covers sheet skill checks but not every possible ability check.'])
-            }),
-            'warding-bond': Object.freeze({
-                id: 'warding-bond',
-                definitionVersion: 1,
-                name: 'Warding Bond',
-                description: 'The target gains +1 AC, +1 to saving throws, resistance to damage, and shares damage with the source.',
-                concentration: false,
-                duration: '1 hour',
-                durationRules: Object.freeze({ encounterRounds: 600, worldMinutes: 60, ending: Object.freeze(['manual', 'source-or-target-rule']) }),
-                targets: 'One willing creature',
-                catalogGroup: 'automated',
-                stacking: Object.freeze({ group: 'warding-bond', mode: 'nonstacking' }),
-                projections: Object.freeze([
-                    Object.freeze({ id: 'bond-marker', adapter: 'marker', subject: 'target-token', marker: 'chained-heart', label: 'Warding Bond marker' }),
-                    Object.freeze({ id: 'bond-ac', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'ac', label: 'Warding Bond (GA)', value: '1', optional: true }),
-                    Object.freeze({ id: 'bond-save', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'save', label: 'Warding Bond (GA)', value: '1', optional: true })
-                ]),
-                automatic: Object.freeze(['Warding Bond marker', '2014-sheet +1 AC modifier', '2014-sheet +1 saving-throw modifier']),
-                assisted: Object.freeze(['Apply resistance and mirrored damage according to the spell.']),
-                informational: Object.freeze(['GameAssist does not alter damage because it cannot safely identify every damage source or resistance interaction.'])
-            }),
-            'holy-weapon': Object.freeze({
-                id: 'holy-weapon',
-                definitionVersion: 1,
-                name: 'Holy Weapon',
-                description: 'One weapon deals extra radiant damage and can be dismissed in a burst of radiance.',
-                concentration: true,
-                duration: 'Up to 1 hour',
-                durationRules: Object.freeze({ encounterRounds: 600, worldMinutes: 60, ending: Object.freeze(['manual', 'concentration', 'dismissed-for-burst']) }),
-                targets: 'One weapon carried by a creature',
-                catalogGroup: 'tracked',
-                stacking: Object.freeze({ group: 'holy-weapon', mode: 'nonstacking' }),
-                projections: Object.freeze([
-                    Object.freeze({ id: 'holy-weapon-marker', adapter: 'marker', subject: 'target-token', marker: 'fluffy-wing', label: 'Holy Weapon marker' })
-                ]),
-                automatic: Object.freeze(['Holy Weapon marker', 'source concentration and cleanup']),
-                assisted: Object.freeze(['Add 2d8 radiant damage only to the affected weapon and resolve the optional burst manually.']),
-                informational: Object.freeze(['A global damage row would incorrectly modify every weapon attack.'])
-            }),
-            haste: Object.freeze({
-                id: 'haste',
-                definitionVersion: 1,
-                name: 'Haste',
-                description: 'The target gains +2 AC and the other benefits and limits described by Haste.',
-                concentration: true,
-                duration: 'Up to 1 minute',
-                durationRules: Object.freeze({ encounterRounds: 10, worldMinutes: 1, ending: Object.freeze(['manual', 'concentration']) }),
-                targets: 'One willing creature',
-                catalogGroup: 'automated',
-                stacking: Object.freeze({ group: 'haste', mode: 'nonstacking' }),
-                projections: Object.freeze([
-                    Object.freeze({ id: 'haste-marker', adapter: 'marker', subject: 'target-token', marker: 'lightning-helix', label: 'Haste marker' }),
-                    Object.freeze({ id: 'haste-ac', adapter: 'ogl-repeating', subject: 'target-character', modifier: 'ac', label: 'Haste (GA)', value: '2', optional: true })
-                ]),
-                automatic: Object.freeze(['Haste marker', '2014-sheet +2 AC modifier', 'source concentration and cleanup']),
-                assisted: Object.freeze(['Apply doubled speed, Dexterity-save advantage, the restricted extra action, and ending lethargy at the table.']),
-                informational: Object.freeze(['The 2014 sheet has no isolated safe switch for all remaining Haste mechanics.'])
-            }),
-            'pass-without-a-trace': Object.freeze({
-                id: 'pass-without-a-trace',
-                definitionVersion: 1,
-                name: 'Pass Without a Trace',
-                description: 'Chosen creatures near the source gain +10 to Dexterity (Stealth) checks and cannot be tracked except by magic.',
-                concentration: true,
-                duration: 'Up to 1 hour',
-                durationRules: Object.freeze({ encounterRounds: 600, worldMinutes: 60, ending: Object.freeze(['manual', 'concentration', 'target-leaves-area']) }),
-                targets: 'Chosen creatures within 30 feet of the source',
-                catalogGroup: 'tracked',
-                stacking: Object.freeze({ group: 'pass-without-a-trace', mode: 'nonstacking' }),
-                projections: Object.freeze([
-                    Object.freeze({ id: 'pass-without-trace-marker', adapter: 'marker', subject: 'target-token', marker: 'ninja-mask', label: 'Pass Without a Trace marker' })
-                ]),
-                automatic: Object.freeze(['Pass Without a Trace marker', 'source concentration and cleanup']),
-                assisted: Object.freeze(['Add +10 to affected Dexterity (Stealth) checks and keep the target list current as creatures enter or leave the area.']),
-                informational: Object.freeze(['The 2014 sheet does not expose an isolated ownership-safe Stealth-only repeating modifier.'])
-            })
-        });
-
-        const PLAYER_TARGET_COUNTS = Object.freeze({
-            bless: Object.freeze([1, 2, 3]),
-            guidance: Object.freeze([1]),
-            'warding-bond': Object.freeze([1]),
-            'holy-weapon': Object.freeze([1]),
-            haste: Object.freeze([1]),
-            'pass-without-a-trace': Object.freeze([1, 2, 3])
-        });
-
-        Object.assign(modState.config, {
-            enabled: false,
-            allowPlayerCasting: true,
-            reviewApplications: false,
-            allowMultipleConcentration: false,
-            durationCandidates: true,
-            castRecognition: true,
-            markerOverrides: {},
-            customDefinitions: {},
-            ...modState.config
-        });
-
-        function isPlainObject(value) {
-            return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-        }
-
-        function clone(value) {
-            try {
-                return JSON.parse(JSON.stringify(value));
-            } catch {
-                return null;
-            }
-        }
-
-        function boundedText(value, maximum, label, { required = true } = {}) {
-            const text = String(value ?? '').trim();
-            if (required && !text) return { ok: false, code: 'INVALID_ARGUMENT', message: `${label} is required.` };
-            if (text.length > maximum) return { ok: false, code: 'INVALID_ARGUMENT', message: `${label} must be ${maximum} characters or fewer.` };
-            return { ok: true, value: text };
-        }
-
-        function normalizeDefinitionId(value) {
-            const normalized = String(value || '')
-                .trim()
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, '-')
-                .replace(/^-+|-+$/g, '')
-                .slice(0, POLICY.effects.nameLength);
-            return normalized && !POLICY.config.unsafeKeys.includes(normalized) ? normalized : '';
-        }
-
-        function normalizeDurationRules(value) {
-            if (!isPlainObject(value)) return null;
-            const encounterRounds = Math.floor(Number(value.encounterRounds));
-            const worldMinutes = Math.floor(Number(value.worldMinutes));
-            const ending = [...new Set((Array.isArray(value.ending) ? value.ending : [])
-                .map(item => String(item || '').trim().toLowerCase())
-                .filter(Boolean))].slice(0, 8);
-            const rules = {
-                encounterRounds: Number.isFinite(encounterRounds)
-                    && encounterRounds >= 1
-                    && encounterRounds <= POLICY.effects.maximumEncounterDurationRounds
-                    ? encounterRounds
-                    : null,
-                worldMinutes: Number.isFinite(worldMinutes)
-                    && worldMinutes >= 1
-                    && worldMinutes <= POLICY.effects.maximumWorldDurationMinutes
-                    ? worldMinutes
-                    : null,
-                ending
-            };
-            return rules.encounterRounds || rules.worldMinutes || rules.ending.length ? rules : null;
-        }
-
-        function normalizeDurationAnchor(value, provider) {
-            if (!isPlainObject(value)) return null;
-            if (provider === 'combat') {
-                const startRound = Math.floor(Number(value.startRound));
-                const targetRound = Math.floor(Number(value.targetRound));
-                if (!value.encounterId || startRound < 1 || targetRound <= startRound) return null;
-                return {
-                    encounterId: String(value.encounterId),
-                    pageId: String(value.pageId || ''),
-                    startRound,
-                    targetRound,
-                    startIdentity: String(value.startIdentity || ''),
-                    startProgression: Math.max(0, Math.floor(Number(value.startProgression) || 0)),
-                    anchoredAt: typeof value.anchoredAt === 'string' ? value.anchoredAt : null
-                };
-            }
-            const startWorldMinute = Math.floor(Number(value.startWorldMinute));
-            const targetWorldMinute = Math.floor(Number(value.targetWorldMinute));
-            if (startWorldMinute < 0 || targetWorldMinute <= startWorldMinute) return null;
-            return {
-                startWorldMinute,
-                targetWorldMinute,
-                startRevision: Math.max(0, Math.floor(Number(value.startRevision) || 0)),
-                anchoredAt: typeof value.anchoredAt === 'string' ? value.anchoredAt : null
-            };
-        }
-
-        function normalizeDurationCandidate(value) {
-            if (!isPlainObject(value) || !value.id || !value.dedupeKey) return null;
-            return {
-                id: String(value.id),
-                dedupeKey: String(value.dedupeKey),
-                provider: ['combat', 'world-time'].includes(value.provider) ? value.provider : 'manual',
-                kind: value.kind === 'reminder' ? 'reminder' : 'expiration-candidate',
-                status: value.status === 'dismissed' ? 'dismissed' : 'open',
-                reason: String(value.reason || 'Review this effect duration.'),
-                evidence: isPlainObject(value.evidence) ? clone(value.evidence) : {},
-                createdAt: typeof value.createdAt === 'string' ? value.createdAt : isoNow(),
-                dismissedAt: typeof value.dismissedAt === 'string' ? value.dismissedAt : null,
-                dismissedBy: value.dismissedBy ? String(value.dismissedBy) : null
-            };
-        }
-
-        function normalizeDurationRecord(instance) {
-            const definition = BUILTIN_DEFINITIONS[instance?.definitionId] || instance?.definitionSnapshot || {};
-            const current = isPlainObject(instance?.duration) ? instance.duration : {};
-            const rules = normalizeDurationRules(current.rules || instance?.definitionSnapshot?.durationRules || definition.durationRules);
-            const anchors = isPlainObject(current.anchors) ? current.anchors : {};
-            const candidates = (Array.isArray(current.candidates) ? current.candidates : [])
-                .map(normalizeDurationCandidate)
-                .filter(Boolean)
-                .slice(-POLICY.effects.durationCandidateLimit);
-            instance.duration = {
-                type: rules && (normalizeDurationAnchor(anchors.combat, 'combat') || normalizeDurationAnchor(anchors.world, 'world') || candidates.length)
-                    ? 'provider-candidates'
-                    : 'manual',
-                label: String(current.label || instance?.definitionSnapshot?.duration || definition.duration || '').slice(0, POLICY.effects.nameLength),
-                rules,
-                anchors: {
-                    combat: normalizeDurationAnchor(anchors.combat, 'combat'),
-                    world: normalizeDurationAnchor(anchors.world, 'world')
-                },
-                candidates
-            };
-            return instance.duration;
-        }
-
-        function stableValue(value) {
-            if (Array.isArray(value)) return value.map(stableValue);
-            if (!isPlainObject(value)) return value;
-            return Object.keys(value).sort().reduce((result, key) => {
-                result[key] = stableValue(value[key]);
-                return result;
-            }, {});
-        }
-
-        function fingerprint(value) {
-            return JSON.stringify(stableValue(value));
-        }
-
-        function requestIntent(request) {
-            return fingerprint({
-                definitionId: request.definitionId || null,
-                name: request.name || null,
-                marker: request.marker || null,
-                condition: request.condition || null,
-                none: request.none || null,
-                dependency: request.dependency || null,
-                sourceTokenId: String(request.sourceTokenId || ''),
-                targetTokenIds: [...new Set((request.targetTokenIds || []).map(String))].sort(),
-                duration: request.duration || null
-            });
-        }
-
-        function attribute(characterId, name) {
-            return findObjs({ _type: 'attribute', _characterid: String(characterId), name: String(name) })[0] || null;
-        }
-
-        function setAttribute(target, values) {
-            if (!target) return;
-            if (typeof target.setWithWorker === 'function') target.setWithWorker(values);
-            else target.set(values);
-        }
-
-        function characterSheetHint(character) {
-            const direct = String(character?.get('charactersheetname') || '').trim().toLowerCase();
-            if (direct) return direct;
-            return String(getAttrByName(character.id, 'charactersheetname') || '').trim().toLowerCase();
-        }
-
-        function is2014Pc(character) {
-            if (!character) return false;
-            const hint = characterSheetHint(character);
-            if (hint === 'dnd2024byroll20') return false;
-            if (String(getAttrByName(character.id, 'npc') || '').trim() === '1') return false;
-            return hint === 'ogl5e'
-                || Boolean(attribute(character.id, 'initiative_bonus'))
-                || Boolean(attribute(character.id, 'constitution_save_bonus'));
-        }
-
-        function newRowId() {
-            if (typeof generateRowID === 'function') return generateRowID();
-            return '-GA' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
-        }
-
-        function ensureState() {
-            if (!isPlainObject(modState.config.customDefinitions)) modState.config.customDefinitions = {};
-            if (!isPlainObject(modState.config.markerOverrides)) modState.config.markerOverrides = {};
-            modState.config.reviewApplications = modState.config.reviewApplications === true;
-            modState.config.allowMultipleConcentration = modState.config.allowMultipleConcentration === true;
-            modState.config.durationCandidates = modState.config.durationCandidates !== false;
-            modState.config.castRecognition = modState.config.castRecognition !== false;
-            if (modState.config.defaultBlessMarker && !modState.config.markerOverrides.bless) {
-                modState.config.markerOverrides.bless = String(modState.config.defaultBlessMarker);
-            }
-            const runtime = ensureRuntimeObject(modState);
-            if (!isPlainObject(runtime.instances)) runtime.instances = {};
-            if (!Array.isArray(runtime.history)) runtime.history = [];
-            if (!isPlainObject(runtime.projectionLedgers)) runtime.projectionLedgers = {};
-            if (!isPlainObject(runtime.requestIds)) runtime.requestIds = {};
-            if (!isPlainObject(runtime.dependencyIndex)) runtime.dependencyIndex = {};
-            if (!isPlainObject(runtime.operations)) runtime.operations = {};
-            if (!Number.isInteger(runtime.nextInstanceNumber) || runtime.nextInstanceNumber < 1) runtime.nextInstanceNumber = 1;
-            if (!Number.isInteger(runtime.stateSchemaVersion) || runtime.stateSchemaVersion < 1) runtime.stateSchemaVersion = 1;
-
-            if (runtime.stateSchemaVersion < 2) migrateStateV1(runtime);
-            if (runtime.stateSchemaVersion < 3) migrateStateV2(runtime);
-            runtime.stateSchemaVersion = STATE_SCHEMA_VERSION;
-            Object.values(runtime.instances).filter(isPlainObject).forEach(normalizeDurationRecord);
-            runtime.history = runtime.history.slice(-POLICY.effects.endedHistoryLimit);
-
-            const requestEntries = Object.entries(runtime.requestIds);
-            if (requestEntries.length > POLICY.effects.requestIdLimit) {
-                requestEntries
-                    .sort(([, left], [, right]) => Number(left?.timestamp || 0) - Number(right?.timestamp || 0))
-                    .slice(0, requestEntries.length - POLICY.effects.requestIdLimit)
-                    .forEach(([key]) => delete runtime.requestIds[key]);
-            }
-            return runtime;
-        }
-
-        function migrateStateV1(runtime) {
-            if (!isPlainObject(runtime.projectionLedgers)) runtime.projectionLedgers = {};
-            Object.values(runtime.instances || {}).forEach(instance => {
-                if (!isPlainObject(instance) || Array.isArray(instance.bindings)) return;
-                const legacy = isPlainObject(instance.projection) ? clone(instance.projection) : null;
-                instance.definitionVersion = 1;
-                instance.definitionSnapshot = {
-                    id: instance.definitionId,
-                    name: instance.name,
-                    description: instance.description || '',
-                    concentration: instance.dependency?.type === 'concentration',
-                    duration: instance.duration?.label || '',
-                    stacking: clone(instance.stacking || { group: instance.definitionId, mode: 'nonstacking' }),
-                    projections: legacy ? [legacy] : []
-                };
-                instance.bindings = [];
-                instance.assistance = ['This effect was created by the pre-release schema. Review it before adding new sheet or concentration projections.'];
-                instance.migrationStatus = 'legacy-incomplete';
-                instance.status = instance.status === 'active' ? 'active' : 'needs-attention';
-            });
-            if (isPlainObject(runtime.projections)) {
-                runtime.legacyProjectionSnapshot = clone(runtime.projections);
-                delete runtime.projections;
-            }
-        }
-
-        function migrateStateV2(runtime) {
-            Object.values(runtime.instances || {}).forEach(instance => {
-                if (!isPlainObject(instance)) return;
-                const priorLabel = String(instance.duration?.label || instance.definitionSnapshot?.duration || '');
-                instance.duration = {
-                    type: 'manual',
-                    label: priorLabel,
-                    rules: normalizeDurationRules(instance.definitionSnapshot?.durationRules || BUILTIN_DEFINITIONS[instance.definitionId]?.durationRules),
-                    anchors: { combat: null, world: null },
-                    candidates: []
-                };
-                if (!Array.isArray(instance.assistance)) instance.assistance = [];
-                const note = 'This effect began before duration providers were recorded; keep its remaining duration manually.';
-                if (!instance.assistance.includes(note)) instance.assistance.push(note);
-            });
-        }
-
-        const runtime = ensureState();
-
-        function validInstance(instance) {
-            return isPlainObject(instance)
-                && typeof instance.id === 'string'
-                && typeof instance.definitionId === 'string'
-                && isPlainObject(instance.source)
-                && Array.isArray(instance.targets)
-                && Array.isArray(instance.bindings)
-                && ['active', 'ending', 'needs-attention'].includes(instance.status);
-        }
-
-        function activeInstances() {
-            // CHOICE: an instance already being cleaned up is not active evidence for
-            // marker or concentration observers; including it permits synchronous
-            // EffectAssist-owned marker removal to re-enter endEffect().
-            return Object.values(runtime.instances).filter(instance =>
-                validInstance(instance) && instance.status !== 'ending'
-            );
-        }
-
-        function currentCombatDurationAnchor(rules, source) {
-            if (GameAssist.getState('CombatAssist')?.config?.enabled === false) return null;
-            const encounter = GameAssist.CombatAssist?.getStatus?.();
-            if (!rules?.encounterRounds || !encounter || encounter.status !== 'active') return null;
-            if (String(encounter.pageId || '') !== String(source?.pageId || '')) return null;
-            const startRound = Math.floor(Number(encounter.round));
-            const startIdentity = String(encounter.order?.[0] || '');
-            if (startRound < 1 || !startIdentity || !encounter.id) return null;
-            return {
-                encounterId: String(encounter.id),
-                pageId: String(encounter.pageId || ''),
-                startRound,
-                targetRound: startRound + rules.encounterRounds,
-                startIdentity,
-                startProgression: Math.max(0, Math.floor(Number(encounter.progression) || 0)),
-                anchoredAt: isoNow()
-            };
-        }
-
-        function currentWorldDurationAnchor(rules) {
-            const current = GameAssist.AlmanacAssist?.getTime?.();
-            const startWorldMinute = Math.floor(Number(current?.worldMinute));
-            if (!rules?.worldMinutes || !Number.isFinite(startWorldMinute) || startWorldMinute < 0) return null;
-            return {
-                startWorldMinute,
-                targetWorldMinute: startWorldMinute + rules.worldMinutes,
-                startRevision: Math.max(0, Math.floor(Number(current?.revision) || 0)),
-                anchoredAt: isoNow()
-            };
-        }
-
-        function createDurationRecord(definition, request, source) {
-            const label = String(request.duration || definition.duration || '').slice(0, POLICY.effects.nameLength);
-            const rules = request.duration ? null : normalizeDurationRules(definition.durationRules);
-            const record = {
-                type: 'manual',
-                label,
-                rules,
-                anchors: { combat: null, world: null },
-                candidates: []
-            };
-            const assistance = [];
-            if (!rules) {
-                if (request.duration) assistance.push('A custom duration was entered, so its remaining time stays manual.');
-                return { record, assistance };
-            }
-            if (modState.config.durationCandidates === false) {
-                assistance.push('Duration candidates are turned off; end this effect manually when its duration is reached.');
-                return { record, assistance };
-            }
-            record.anchors.combat = currentCombatDurationAnchor(rules, source);
-            record.anchors.world = currentWorldDurationAnchor(rules);
-            if (record.anchors.combat || record.anchors.world) {
-                record.type = 'provider-candidates';
-            } else {
-                assistance.push('No duration provider was active when this effect began, so its remaining time stays manual.');
-            }
-            return { record, assistance };
-        }
-
-        function durationRuleSummary(instance) {
-            const rules = instance?.duration?.rules;
-            if (!rules) return instance?.duration?.label || 'Manual duration';
-            const units = [];
-            if (rules.encounterRounds) units.push(`${rules.encounterRounds} encounter round${rules.encounterRounds === 1 ? '' : 's'}`);
-            if (rules.worldMinutes) units.push(`${rules.worldMinutes} world minute${rules.worldMinutes === 1 ? '' : 's'}`);
-            return units.length ? units.join(' or ') : (instance.duration.label || 'Manual duration');
-        }
-
-        function durationProviderSummary(instance, provider) {
-            const rules = instance?.duration?.rules;
-            if (provider === 'combat' && rules?.encounterRounds) {
-                return `${rules.encounterRounds}-round`;
-            }
-            if (provider === 'world-time' && rules?.worldMinutes) {
-                return `${rules.worldMinutes}-world-minute`;
-            }
-            return durationRuleSummary(instance);
-        }
-
-        function openDurationCandidates(instance) {
-            return (instance?.duration?.candidates || []).filter(candidate => candidate.status === 'open');
-        }
-
-        function addDurationCandidate(instance, candidate) {
-            if (!validInstance(instance) || modState.config.durationCandidates === false) return null;
-            const duration = normalizeDurationRecord(instance);
-            if (candidate.kind === 'expiration-candidate'
-                && duration.candidates.some(item => item.kind === 'expiration-candidate')) return null;
-            if (duration.candidates.some(item => item.dedupeKey === candidate.dedupeKey)) return null;
-            const created = normalizeDurationCandidate({
-                ...candidate,
-                id: `DUR-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-                status: 'open',
-                createdAt: isoNow()
-            });
-            if (!created) return null;
-            duration.candidates.push(created);
-            if (duration.candidates.length > POLICY.effects.durationCandidateLimit) {
-                const dismissedIndex = duration.candidates.findIndex(item => item.status === 'dismissed');
-                if (dismissedIndex >= 0) duration.candidates.splice(dismissedIndex, 1);
-                while (duration.candidates.length > POLICY.effects.durationCandidateLimit) duration.candidates.shift();
-            }
-            notifyLifecycle('duration-candidate-created', instance, { candidate: created });
-            return { instance, candidate: created };
-        }
-
-        function combatDurationReached(anchor, payload) {
-            if (!anchor || !payload || String(payload.encounterId || '') !== anchor.encounterId) return false;
-            if (anchor.pageId && String(payload.pageId || '') !== anchor.pageId) return false;
-            const round = Math.floor(Number(payload.round));
-            const identity = String(payload.current?.identity || payload.order?.[0] || '');
-            return round > anchor.targetRound || (round === anchor.targetRound && identity === anchor.startIdentity);
-        }
-
-        function worldDurationReached(anchor, payload) {
-            if (!anchor) return false;
-            const currentWorldMinute = Math.floor(Number(payload?.current?.worldMinute ?? payload?.worldMinute));
-            return Number.isFinite(currentWorldMinute) && currentWorldMinute >= anchor.targetWorldMinute;
-        }
-
-        function announceDurationCandidates(created) {
-            if (!created.length) return;
-            const rows = created.slice(0, POLICY.effects.chatListLimit).map(item =>
-                `<b>${_sanitize(item.instance.name)}</b>: ${_sanitize(item.candidate.reason)} `
-                + GameAssist.createButton('End Effect', '!Effect-End --id ' + item.instance.id) + ' '
-                + GameAssist.createButton('Keep Active', `!Effect-Duration-Dismiss --id ${item.instance.id} --candidate ${item.candidate.id}`)
-            ).join('<br>');
-            panel('Effect Duration Review', [
-                { label: 'GM Decision Needed', value: `${created.length} effect duration item(s) are ready for review. Nothing has ended automatically.` },
-                { label: 'Effects', value: rows },
-                { label: 'Actions', value: `${GameAssist.createButton('Review Durations', '!Effect-Duration')} ${GameAssist.createButton('Active Effects', '!Effect-Active')}` }
-            ], null, { gmOnly: true });
-        }
-
-        function observeDurationProvider(event) {
-            if (modState.config.enabled === false || modState.config.durationCandidates === false) return;
-            const payload = event?.payload || {};
-            const created = [];
-            if (event?.type.startsWith('combat.') && event?.producer !== 'CombatAssist') return;
-            if (event?.type === 'almanac.time.changed' && event?.producer !== 'AlmanacAssist') return;
-            if (event?.type === 'combat.turn.changed'
-                && payload.combatEventSchemaVersion === 1
-                && payload.details?.direction === 'forward') {
-                activeInstances().forEach(instance => {
-                    const anchor = instance.duration?.anchors?.combat;
-                    if (!combatDurationReached(anchor, payload)) return;
-                    const item = addDurationCandidate(instance, {
-                        dedupeKey: `combat-expired:${anchor.encounterId}:${anchor.targetRound}`,
-                        provider: 'combat',
-                        kind: 'expiration-candidate',
-                        reason: `${instance.name} reached its ${durationProviderSummary(instance, 'combat')} boundary in the verified encounter.`,
-                        evidence: { encounterId: anchor.encounterId, round: payload.round, progression: payload.progression, identity: payload.current?.identity || '' }
-                    });
-                    if (item) created.push(item);
-                });
-            } else if (event?.type === 'combat.encounter.ended') {
-                activeInstances().forEach(instance => {
-                    const anchor = instance.duration?.anchors?.combat;
-                    if (!anchor || anchor.encounterId !== String(payload.encounterId || '')) return;
-                    if ((instance.duration?.candidates || []).some(item => item.kind === 'expiration-candidate')) return;
-                    const item = addDurationCandidate(instance, {
-                        dedupeKey: `combat-ended:${anchor.encounterId}`,
-                        provider: 'combat',
-                        kind: 'reminder',
-                        reason: `The tracked encounter ended before ${instance.name}'s round boundary was verified. Keep it active or end it after reviewing the spell.`,
-                        evidence: { encounterId: anchor.encounterId, round: payload.round, progression: payload.progression }
-                    });
-                    if (item) created.push(item);
-                });
-            } else if (event?.type === 'almanac.time.changed') {
-                const previousMinute = Math.floor(Number(payload.previous?.worldMinute));
-                const currentMinute = Math.floor(Number(payload.current?.worldMinute));
-                if (!Number.isFinite(previousMinute) || !Number.isFinite(currentMinute) || currentMinute <= previousMinute) return;
-                activeInstances().forEach(instance => {
-                    const anchor = instance.duration?.anchors?.world;
-                    if (!worldDurationReached(anchor, payload)) return;
-                    const item = addDurationCandidate(instance, {
-                        dedupeKey: `world-expired:${anchor.targetWorldMinute}`,
-                        provider: 'world-time',
-                        kind: 'expiration-candidate',
-                        reason: `${instance.name} reached its ${durationProviderSummary(instance, 'world-time')} boundary in committed Almanac time.`,
-                        evidence: { previousWorldMinute: previousMinute, currentWorldMinute: currentMinute, revision: payload.revision || payload.current?.revision || 0 }
-                    });
-                    if (item) created.push(item);
-                });
-            }
-            announceDurationCandidates(created);
-        }
-
-        function reconcileDurationProviders(options = {}) {
-            if (modState.config.enabled === false || modState.config.durationCandidates === false) return [];
-            const created = [];
-            const encounter = GameAssist.CombatAssist?.getStatus?.();
-            const world = GameAssist.AlmanacAssist?.getTime?.();
-            activeInstances().forEach(instance => {
-                const combat = instance.duration?.anchors?.combat;
-                if (combat && encounter && ['active', 'paused'].includes(encounter.status)
-                    && combatDurationReached(combat, {
-                        encounterId: encounter.id,
-                        pageId: encounter.pageId,
-                        round: encounter.round,
-                        progression: encounter.progression,
-                        current: { identity: String(encounter.order?.[0] || '') }
-                    })) {
-                    const item = addDurationCandidate(instance, {
-                        dedupeKey: `combat-expired:${combat.encounterId}:${combat.targetRound}`,
-                        provider: 'combat',
-                        kind: 'expiration-candidate',
-                        reason: `${instance.name} has reached its ${durationProviderSummary(instance, 'combat')} boundary in the verified encounter.`,
-                        evidence: { encounterId: encounter.id, round: encounter.round, progression: encounter.progression, reconciled: true }
-                    });
-                    if (item) created.push(item);
-                }
-                const worldAnchor = instance.duration?.anchors?.world;
-                if (worldDurationReached(worldAnchor, world)) {
-                    const item = addDurationCandidate(instance, {
-                        dedupeKey: `world-expired:${worldAnchor.targetWorldMinute}`,
-                        provider: 'world-time',
-                        kind: 'expiration-candidate',
-                        reason: `${instance.name} has reached its ${durationProviderSummary(instance, 'world-time')} boundary in committed Almanac time.`,
-                        evidence: { currentWorldMinute: world.worldMinute, revision: world.revision || 0, reconciled: true }
-                    });
-                    if (item) created.push(item);
-                }
-            });
-            if (options.announce !== false) announceDurationCandidates(created);
-            return created;
-        }
-
-        function ledgerOwners(ledger) {
-            return [...new Set((Array.isArray(ledger?.instanceIds) ? ledger.instanceIds : [])
-                .filter(id => validInstance(runtime.instances[id])))];
-        }
-
-        function rebuildDependencyIndex() {
-            runtime.dependencyIndex = {};
-            activeInstances().forEach(instance => {
-                if (instance.dependency?.type !== 'concentration' || !instance.dependency?.established) return;
-                const key = String(instance.source.characterId || '');
-                if (!key) return;
-                if (!Array.isArray(runtime.dependencyIndex[key])) runtime.dependencyIndex[key] = [];
-                runtime.dependencyIndex[key].push(instance.id);
-            });
-        }
-
-        function warnAboutPreservedState() {
-            const knownConfig = new Set(['enabled', 'allowPlayerCasting', 'reviewApplications', 'allowMultipleConcentration', 'durationCandidates', 'castRecognition', 'markerOverrides', 'customDefinitions', 'defaultBlessMarker']);
-            const knownRuntime = new Set(['instances', 'history', 'projectionLedgers', 'requestIds', 'dependencyIndex', 'operations', 'nextInstanceNumber', 'stateSchemaVersion', 'legacyProjectionSnapshot']);
-            const unknownConfig = Object.keys(modState.config).filter(key => !knownConfig.has(key));
-            const unknownRuntime = Object.keys(runtime).filter(key => !knownRuntime.has(key));
-            const invalidInstances = Object.values(runtime.instances).filter(instance => !validInstance(instance)).length;
-            if (unknownConfig.length || unknownRuntime.length) {
-                GameAssist.log(MODULE_NAME, 'Unknown EffectAssist state branches were preserved for review: '
-                    + unknownConfig.map(key => 'config.' + key).concat(unknownRuntime.map(key => 'runtime.' + key)).join(', '), 'WARN');
-            }
-            if (invalidInstances) {
-                GameAssist.log(MODULE_NAME, `${invalidInstances} malformed effect instance record(s) were preserved for manual review.`, 'WARN');
-            }
-        }
-
-        function markerFor(definitionId, projection) {
-            const override = modState.config.markerOverrides[definitionId];
-            return String(override || projection.marker || '').trim();
-        }
-
-        function normalizeDefinition(definition) {
-            const copy = clone(definition);
-            if (!copy) return null;
-            copy.projections = Array.isArray(copy.projections)
-                ? copy.projections
-                : (isPlainObject(copy.projection) ? [copy.projection] : []);
-            copy.stacking = isPlainObject(copy.stacking)
-                ? copy.stacking
-                : { group: copy.stackingGroup || copy.id, mode: copy.stackingMode || 'nonstacking' };
-            copy.automatic = Array.isArray(copy.automatic) ? copy.automatic : [];
-            copy.assisted = Array.isArray(copy.assisted) ? copy.assisted : [];
-            copy.informational = Array.isArray(copy.informational) ? copy.informational : [];
-            copy.durationRules = normalizeDurationRules(copy.durationRules);
-            copy.catalogGroup = copy.catalogGroup === 'automated' ? 'automated' : 'tracked';
-            return copy;
-        }
-
-        function getCustomDefinitions() {
-            return Object.values(modState.config.customDefinitions)
-                .map(normalizeDefinition)
-                .filter(definition => definition && typeof definition.id === 'string' && typeof definition.name === 'string');
-        }
-
-        function getDefinitions() {
-            return Object.values(BUILTIN_DEFINITIONS).map(normalizeDefinition).concat(getCustomDefinitions());
-        }
-
-        function getDefinition(requested) {
-            const id = normalizeDefinitionId(requested);
-            if (!id) return null;
-            const definition = BUILTIN_DEFINITIONS[id] || modState.config.customDefinitions[id];
-            const normalized = normalizeDefinition(definition);
-            if (!normalized) return null;
-            normalized.projections.forEach(projection => {
-                if (projection.adapter === 'marker') projection.marker = markerFor(id, projection);
-            });
-            return normalized;
-        }
-
-        function parseOptions(content) {
-            const options = {};
-            const expression = /--([a-z][a-z0-9-]*)(?:\s+(?:"([^"]*)"|'([^']*)'|([^\s]+)))?/gi;
-            let match;
-            while ((match = expression.exec(String(content || '')))) {
-                options[match[1].toLowerCase()] = match[2] ?? match[3] ?? match[4] ?? true;
-            }
-            return options;
-        }
-
-        function commandAction(content) {
-            const text = String(content || '').trim();
-            const first = text.split(/\s+/)[0].toLowerCase();
-            if (first.startsWith('!effectassist-')) return first.slice('!effectassist-'.length);
-            if (first.startsWith('!effect-')) return first.slice('!effect-'.length);
-            const body = text.replace(/^!effect(?:\s+|$)/i, '').trim();
-            return (body.split(/\s+/)[0] || 'catalog').toLowerCase();
-        }
-
-        function controllerIds(entity) {
-            return String(entity?.get('controlledby') || '')
-                .split(',')
-                .map(value => value.trim())
-                .filter(Boolean);
-        }
-
-        function actorControlsSource(playerId, source) {
-            if (playerIsGM(playerId)) return true;
-            const ids = new Set(controllerIds(source?.token).concat(controllerIds(source?.character)));
-            return ids.has('all') || ids.has(String(playerId || ''));
-        }
-
-        function playerCastingAllowed(msg) {
-            return playerIsGM(msg?.playerid) || modState.config.allowPlayerCasting !== false;
-        }
-
-        function tokenReference(token, fallback = 'Token') {
-            const name = String(token?.get('name') || '').trim();
-            const id = String(token?.id || '').trim();
-            return name || `Unnamed ${String(fallback || 'token').toLowerCase()} (${id ? id.slice(-8) : 'unknown id'})`;
-        }
-
-        function representedCharacter(token, characterId) {
-            const direct = getObj('character', characterId);
-            if (direct) return direct;
-            return findObjs({ _type: 'character' }).find(character => String(character.id || '') === characterId) || null;
-        }
-
-        function resolveLinkedToken(tokenId, label = 'Token') {
-            const requestedId = String(tokenId || '').trim();
-            const token = getObj('graphic', requestedId);
-            if (!token) return { ok: false, code: 'NOT_FOUND', message: `${label} (${requestedId || 'missing id'}) was not found.` };
-            const tokenName = tokenReference(token, label);
-            if (!['objects', 'gmlayer'].includes(String(token.get('layer') || ''))) {
-                return { ok: false, code: 'UNPROCESSABLE', message: `${tokenName} must be on the Objects or GM layer.` };
-            }
-            const characterId = String(token.get('represents') || token.get('_represents') || '').trim();
-            if (!characterId) {
-                return {
-                    ok: false,
-                    code: 'UNPROCESSABLE',
-                    message: `${tokenName} is not linked to a character. Open that token's settings, choose a character under Represents Character, then start the effect again.`
-                };
-            }
-            const character = representedCharacter(token, characterId);
-            if (!character) {
-                return {
-                    ok: false,
-                    code: 'UNPROCESSABLE',
-                    message: `${tokenName} stores character link ${characterId}, but Roll20 could not retrieve that character. Re-select Represents Character on this token, save it, then start the effect again.`
-                };
-            }
-            return {
-                ok: true,
-                token,
-                character,
-                summary: {
-                    tokenId: token.id,
-                    tokenName: String(token.get('name') || character.get('name') || 'Unnamed token'),
-                    characterId: character.id,
-                    characterName: String(character.get('name') || token.get('name') || 'Unnamed character'),
-                    pageId: String(token.get('_pageid') || token.get('pageid') || ''),
-                    layer: String(token.get('layer') || '')
-                }
-            };
-        }
-
-        function resolveTargetTokens(tokenIds, label = 'Recipient') {
-            const results = tokenIds.map(tokenId => resolveLinkedToken(tokenId, label));
-            const failures = results.filter(result => !result.ok);
-            if (failures.length) {
-                return {
-                    ok: false,
-                    code: failures[0].code || 'UNPROCESSABLE',
-                    message: failures.map(result => result.message).join(' '),
-                    failures
-                };
-            }
-            return { ok: true, targets: results };
-        }
-
-        function selectedTargets(msg) {
-            const seen = new Set();
-            const tokenIds = [];
-            (Array.isArray(msg.selected) ? msg.selected : []).forEach(selection => {
-                const tokenId = String(selection?._id || '').trim();
-                if (!tokenId || seen.has(tokenId)) return;
-                seen.add(tokenId);
-                tokenIds.push(tokenId);
-            });
-            if (!tokenIds.length) return { ok: false, code: 'INVALID_ARGUMENT', message: 'Select at least one linked character token before applying an effect.' };
-            if (tokenIds.length > POLICY.effects.targetLimit) {
-                return { ok: false, code: 'RATE_LIMITED', message: `Select no more than ${POLICY.effects.targetLimit} targets at once.` };
-            }
-            return resolveTargetTokens(tokenIds, 'Selected recipient');
-        }
-
-        function effectPageId(playerId) {
-            const campaign = Campaign();
-            let overrides = campaign.get('playerspecificpages');
-            if (typeof overrides === 'string' && overrides) {
-                try { overrides = JSON.parse(overrides); } catch (_error) { overrides = null; }
-            }
-            if (overrides && typeof overrides === 'object' && overrides[playerId]) {
-                return String(overrides[playerId]);
-            }
-            return String(campaign.get('playerpageid') || '');
-        }
-
-        /**
-         * parseRollTemplateFields - Reads named fields from a Roll20 roll-template message.
-         * Context: recognition is a shortcut into GM review, never authority to apply an effect.
-         * Inputs: Roll20 chat content; malformed or unrelated content is accepted as empty evidence.
-         * Outputs: a lower-case-keyed field object containing bounded text values.
-         * Invariants: no field is evaluated and recipient prose is never interpreted as token identity.
-         */
-        function parseRollTemplateFields(content) {
-            const fields = {};
-            const expression = /{{\s*([a-z][a-z0-9_]*)\s*=([\s\S]*?)}}/gi;
-            let match;
-            while ((match = expression.exec(String(content || '')))) {
-                const key = String(match[1] || '').toLowerCase();
-                if (!Object.prototype.hasOwnProperty.call(fields, key)) {
-                    fields[key] = String(match[2] || '').trim().slice(0, POLICY.effects.descriptionLength);
-                }
-            }
-            return fields;
-        }
-
-        function normalizeTemplateValue(value) {
-            return String(value || '')
-                .replace(/<[^>]*>/g, ' ')
-                .replace(/&nbsp;|&#160;/gi, ' ')
-                .replace(/&amp;/gi, '&')
-                .replace(/\s+/g, ' ')
-                .trim();
-        }
-
-        function recognitionPageId(playerId) {
-            const ribbonPage = effectPageId(playerId);
-            if (!playerIsGM(playerId)) return ribbonPage;
-            return String(getObj('player', playerId)?.get('_lastpage') || ribbonPage || '');
-        }
-
-        function pruneCastTracking(now = Date.now()) {
-            [...recentCastEvidence.entries()].forEach(([key, seenAt]) => {
-                if (now - Number(seenAt || 0) > POLICY.effects.castDedupeMs) recentCastEvidence.delete(key);
-            });
-            const evidenceLimit = POLICY.effects.castProposalLimit * 2;
-            if (recentCastEvidence.size > evidenceLimit) {
-                [...recentCastEvidence.keys()]
-                    .slice(0, recentCastEvidence.size - evidenceLimit)
-                    .forEach(key => recentCastEvidence.delete(key));
-            }
-            [...castProposals.entries()].forEach(([id, proposal]) => {
-                if (now - Number(proposal?.createdAt || 0) > POLICY.effects.castProposalMs) castProposals.delete(id);
-            });
-            if (castProposals.size > POLICY.effects.castProposalLimit) {
-                [...castProposals.values()]
-                    .sort((left, right) => Number(left.createdAt || 0) - Number(right.createdAt || 0))
-                    .slice(0, castProposals.size - POLICY.effects.castProposalLimit)
-                    .forEach(proposal => castProposals.delete(proposal.id));
-            }
-        }
-
-        function resolveRecognizedCaster(msg, characterName) {
-            const expectedName = normalizeTemplateValue(characterName).toLowerCase();
-            const characters = findObjs({ _type: 'character' }).filter(character =>
-                normalizeTemplateValue(character.get('name')).toLowerCase() === expectedName
-            );
-            if (characters.length !== 1) {
-                return {
-                    ok: false,
-                    message: characters.length
-                        ? `The Bless card named "${characterName}", but more than one character has that name. Use the Effect Catalog so the source is explicit.`
-                        : `The Bless card named "${characterName}", but no matching Roll20 character was found. Use the Effect Catalog so the source is explicit.`
-                };
-            }
-            const pageId = recognitionPageId(msg.playerid);
-            if (!pageId) return { ok: false, message: 'The Bless card was recognized, but its active Roll20 page could not be determined. Use the Effect Catalog.' };
-            const character = characters[0];
-            const sources = findObjs({ _type: 'graphic', _pageid: pageId })
-                .filter(token => String(token.get('represents') || '') === String(character.id))
-                .filter(token => ['objects', 'gmlayer'].includes(String(token.get('layer') || '')))
-                .map(token => resolveLinkedToken(token.id, 'The source'))
-                .filter(result => result.ok)
-                .filter(result => playerIsGM(msg.playerid)
-                    || (result.summary.layer === 'objects' && actorControlsSource(msg.playerid, result)));
-            if (sources.length !== 1) {
-                return {
-                    ok: false,
-                    message: sources.length
-                        ? `Bless was recognized for ${characterName}, but more than one eligible source token is on the active page. Use the Effect Catalog to choose the source.`
-                        : `Bless was recognized for ${characterName}, but no eligible linked source token is on the active page. Use the Effect Catalog after placing or linking the caster token.`
-                };
-            }
-            return { ok: true, source: sources[0] };
-        }
-
-        function castProposalSummary(proposal) {
-            const ageSeconds = Math.max(0, Math.floor((Date.now() - Number(proposal.createdAt || 0)) / 1000));
-            const requestedBy = getObj('player', proposal.playerId);
-            const requesterName = String(requestedBy?.get('_displayname') || requestedBy?.get('displayname') || proposal.who || 'Unknown player')
-                .replace(/\s*\(GM\)\s*$/i, '')
-                .trim();
-            return `<b>${_sanitize(proposal.effectName)}</b> from ${_sanitize(proposal.sourceName)} | ${_sanitize(requesterName)} | ${ageSeconds}s ago`;
-        }
-
-        function castProposalButtons(proposal) {
-            return `${GameAssist.createButton('Review Selected Recipients', `!Effect-Cast --proposal ${proposal.id}`)} ${GameAssist.createButton('Dismiss', `!Effect-Cast-Dismiss --proposal ${proposal.id}`)}`;
-        }
-
-        function showCastProposals(msg) {
-            pruneCastTracking();
-            const proposals = [...castProposals.values()].sort((left, right) => Number(right.createdAt || 0) - Number(left.createdAt || 0));
-            panel('Recognized Casts', [
-                { label: 'Pending', value: proposals.length
-                    ? proposals.slice(0, POLICY.effects.chatListLimit).map(proposal => `${castProposalSummary(proposal)}<br>${castProposalButtons(proposal)}`).join('<br><br>')
-                    : 'No supported spell cards are waiting for review.' },
-                { label: 'How To Apply', value: 'Select the actual recipient tokens on the map, then use that cast\'s Review Selected Recipients button. Spell-card target wording is never treated as token selection.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
-            ], msg, { gmOnly: true });
-        }
-
-        function handleCastRecognition(msg) {
-            if (modState.config.castRecognition === false || !msg || msg.type === 'api') return;
-            if (!getObj('player', String(msg.playerid || ''))) return;
-            if (!playerIsGM(msg.playerid) && !playerCastingAllowed(msg)) return;
-            if (String(msg.rolltemplate || '').trim().toLowerCase() !== 'spell') return;
-            const fields = parseRollTemplateFields(msg.content);
-            const spellName = normalizeTemplateValue(fields.name);
-            if (spellName.toLowerCase() !== 'bless') return;
-            const characterName = normalizeTemplateValue(fields.charname);
-            if (!characterName) return;
-
-            const now = Date.now();
-            pruneCastTracking(now);
-            const evidenceKey = fingerprint({
-                playerId: String(msg.playerid || ''),
-                rolltemplate: 'spell',
-                spellName: spellName.toLowerCase(),
-                characterName: characterName.toLowerCase(),
-                content: String(msg.content || '').slice(0, POLICY.effects.descriptionLength * 2)
-            });
-            if (recentCastEvidence.has(evidenceKey)) return;
-            recentCastEvidence.set(evidenceKey, now);
-
-            const caster = resolveRecognizedCaster(msg, characterName);
-            if (!caster.ok) {
-                panel('Bless Cast Recognized', [
-                    { label: 'Needs Attention', value: _sanitize(caster.message) },
-                    { label: 'No Changes Made', value: 'No effect record, marker, concentration, or sheet modifier was changed.' },
-                    { label: 'Next Step', value: GameAssist.createButton('Open Effect Catalog', '!Effect-Catalog') }
-                ], msg, { gmOnly: true });
-                return;
-            }
-
-            const proposal = {
-                id: `CAST-${now.toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-                schemaVersion: CAST_PROPOSAL_SCHEMA_VERSION,
-                definitionId: 'bless',
-                effectName: 'Bless',
-                sourceTokenId: caster.source.summary.tokenId,
-                sourceCharacterId: caster.source.summary.characterId,
-                sourceName: caster.source.summary.characterName,
-                playerId: String(msg.playerid || ''),
-                who: String(msg.who || ''),
-                targetText: normalizeTemplateValue(fields.target).slice(0, 240),
-                createdAt: now
-            };
-            castProposals.set(proposal.id, proposal);
-            pruneCastTracking(now);
-            panel('Bless Cast Recognized', [
-                { label: 'Source', value: _sanitize(proposal.sourceName) },
-                { label: 'Effect', value: 'Bless' },
-                { label: 'Choose Recipients', value: 'Select the actual recipient tokens on the map. GameAssist does not guess recipients from the spell-card text.' },
-                { label: 'Review', value: castProposalButtons(proposal) },
-                { label: 'Other Options', value: `${GameAssist.createButton('Pending Casts', '!Effect-Casts')} ${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')}` }
-            ], msg, { gmOnly: true });
-        }
-
-        /**
-         * handleGuidanceConsumption — End one owned Guidance after its sheet bonus is used.
-         * Inputs: a non-API 2014 simple-template roll containing the exact owned roll tag.
-         * Outputs: one normal EffectAssist end transition, or no action when evidence is incomplete.
-         * Invariants: arbitrary d4s, unsupported checks, ambiguous characters, shared instances, and edited rows never consume Guidance.
-         * Failure: cleanup conflicts use the existing needs-attention lifecycle and preserve external edits.
-         * Design: label the owned sheet expression so Roll20 evidence identifies this projection, not merely a die size.
-         */
-        function handleGuidanceConsumption(msg) {
-            if (!msg || msg.type === 'api' || String(msg.rolltemplate || '').toLowerCase() !== 'simple') return;
-            if (!getObj('player', String(msg.playerid || ''))) return;
-            const expressions = (Array.isArray(msg.inlinerolls) ? msg.inlinerolls : [])
-                .map(roll => String(roll?.expression || ''))
-                .filter(expression => /\[\s*GameAssist Guidance\s*\]/i.test(expression));
-            if (!expressions.length) return;
-
-            const now = Date.now();
-            pruneCastTracking(now);
-
-            const entries = [];
-            activeInstances().filter(instance => instance.definitionId === 'guidance').forEach(instance => {
-                const binding = instance.bindings.find(item =>
-                    item.adapter === 'ogl-repeating'
-                    && item.projectionId === 'guidance-skill'
-                    && item.intent?.modifier === 'skill'
-                    && item.intent?.label === 'Guidance (GA)'
-                    && String(item.intent?.value || '') === GUIDANCE_ROLL_VALUE
-                );
-                if (!binding) return;
-                const ledger = runtime.projectionLedgers[binding.key];
-                if (!ledger
-                    || ledger.managed !== true
-                    || ledger.baselinePresent === true
-                    || !(ledger.instanceIds || []).includes(instance.id)) return;
-                const inspected = inspectOgl(binding, ledger);
-                if (!inspected.ok || inspected.state !== 'present') return;
-                const target = instance.targets.find(item => String(item.characterId || '') === String(binding.characterId || ''));
-                const token = target?.tokenId ? getObj('graphic', String(target.tokenId)) : null;
-                const character = getObj('character', String(binding.characterId || ''));
-                if (!token || !character || String(token.get('represents') || '') !== String(character.id)) return;
-                if (!actorControlsSource(msg.playerid, { token, character })) return;
-                entries.push({ instance, binding, token, character });
-            });
-            if (!entries.length) return;
-
-            const speakingMatch = String(msg.speakingas || '').match(/^character\|(.+)$/i);
-            let characterId = speakingMatch ? String(speakingMatch[1] || '') : '';
-            if (!characterId) {
-                const fields = parseRollTemplateFields(msg.content);
-                const characterName = normalizeTemplateValue(fields.charname).toLowerCase();
-                if (!characterName) return;
-                const matchingIds = [...new Set(entries
-                    .filter(entry => normalizeTemplateValue(entry.character.get('name')).toLowerCase() === characterName)
-                    .map(entry => String(entry.character.id)))];
-                if (matchingIds.length !== 1) return;
-                characterId = matchingIds[0];
-            }
-
-            const matching = entries.filter(entry => String(entry.character.id) === characterId);
-            if (matching.length !== 1) return;
-            const entry = matching[0];
-            const evidenceKey = 'guidance-use:' + fingerprint({
-                instanceId: entry.instance.id,
-                playerId: String(msg.playerid || ''),
-                speakingAs: String(msg.speakingas || ''),
-                content: String(msg.content || '').slice(0, POLICY.effects.descriptionLength * 2),
-                expressions
-            });
-            if (recentCastEvidence.has(evidenceKey)) return;
-            recentCastEvidence.set(evidenceKey, now);
-            const result = endEffect(entry.instance.id, msg.playerid, { reason: 'guidance-used' });
-            const fields = result.ok ? [
-                { label: 'Character', value: _sanitize(entry.character.get('name') || entry.token.get('name') || 'Character') },
-                { label: 'Result', value: 'The verified Guidance bonus was used. Its owned marker, sheet row, and source concentration were cleaned up through the normal effect lifecycle.' },
-                { label: 'Actions', value: playerIsGM(msg.playerid) ? `${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` : GameAssist.createButton('Effect Catalog', '!effect') }
-            ] : [
-                { label: 'Needs Attention', value: _sanitize(result.message || 'Guidance was used, but its cleanup needs review.') },
-                { label: 'Actions', value: `${GameAssist.createButton('Effect Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
-            ];
-            panel(result.ok ? 'Guidance Used' : 'Guidance Cleanup Needs Attention', fields, msg);
-            if (!playerIsGM(msg.playerid)) {
-                panel(result.ok ? 'Guidance Used' : 'Guidance Cleanup Needs Attention', fields, null, { gmOnly: true });
-            }
-        }
-
-        function handleEffectChat(msg) {
-            handleCastRecognition(msg);
-            handleGuidanceConsumption(msg);
-        }
-
-        function handleCastProposal(msg, options) {
-            pruneCastTracking();
-            const proposal = castProposals.get(String(options.proposal || ''));
-            if (!proposal) {
-                return panel('EffectAssist', [
-                    { label: 'Needs Attention', value: 'That recognized cast is no longer available. It may have expired, been dismissed, or already been reviewed.' },
-                    { label: 'Next Step', value: `${GameAssist.createButton('Pending Casts', '!Effect-Casts')} ${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')}` }
-                ], msg, { gmOnly: true });
-            }
-            const targets = selectedTargets(msg);
-            if (!targets.ok) {
-                return panel('EffectAssist', [
-                    { label: 'Needs Attention', value: 'Select the actual recipient token or tokens on the map, then click Review Selected Recipients again.' },
-                    { label: 'Cast', value: castProposalSummary(proposal) },
-                    { label: 'Try Again', value: castProposalButtons(proposal) }
-                ], msg, { gmOnly: true });
-            }
-            const source = resolveLinkedToken(proposal.sourceTokenId, 'The recognized source');
-            const sourceStillEligible = source.ok
-                && source.summary.characterId === proposal.sourceCharacterId
-                && source.summary.pageId === recognitionPageId(proposal.playerId)
-                && (playerIsGM(proposal.playerId)
-                    || (modState.config.allowPlayerCasting !== false
-                        && source.summary.layer === 'objects'
-                        && actorControlsSource(proposal.playerId, source)));
-            if (!sourceStillEligible) {
-                castProposals.delete(proposal.id);
-                return panel('EffectAssist', [
-                    { label: 'Needs Attention', value: 'The recognized source, page, layer, control, or player-casting permission changed. Open the Effect Catalog to choose the source again.' },
-                    { label: 'No Changes Made', value: 'No effect was applied.' }
-                ], msg, { gmOnly: true });
-            }
-            castProposals.delete(proposal.id);
-            handleApply(msg, {
-                effect: proposal.definitionId,
-                source: proposal.sourceTokenId,
-                replace: options.replace,
-                request: `recognized:${proposal.id}`,
-                'requested-by': playerIsGM(proposal.playerId) ? undefined : proposal.playerId,
-                announce: true
-            });
-        }
-
-        function handleCastProposalDismiss(msg, options) {
-            pruneCastTracking();
-            const proposalId = String(options.proposal || '');
-            const existed = castProposals.delete(proposalId);
-            panel('Recognized Casts', [
-                { label: 'Result', value: existed ? 'The cast proposal was dismissed. No effect changes were made.' : 'That cast proposal was already unavailable.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Pending Casts', '!Effect-Casts')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
-            ], msg, { gmOnly: true });
-        }
-
-        function handleRecognitionSetting(msg) {
-            const value = String(msg.content || '').trim().split(/\s+/)[1]?.toLowerCase();
-            if (!['on', 'off'].includes(value)) return showControl(msg);
-            modState.config.castRecognition = value === 'on';
-            panel('EffectAssist Cast Recognition', [
-                { label: 'Setting', value: modState.config.castRecognition
-                    ? 'On. Supported 2014 Bless spell cards may create a private GM proposal when their caster evidence is unambiguous.'
-                    : 'Off. Spell cards will not create proposals; the Effect Catalog remains fully available.' },
-                { label: 'Safety', value: 'Recognition never selects recipients or applies an effect automatically.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Pending Casts', '!Effect-Casts')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
-            ], msg, { gmOnly: true });
-        }
-
-        function explicitTargets(msg, rawIds) {
-            const ids = [...new Set(String(rawIds || '')
-                .split(',')
-                .map(value => value.trim())
-                .filter(Boolean))];
-            if (!ids.length) {
-                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Choose at least one recipient token.' };
-            }
-            if (ids.length > POLICY.effects.targetLimit) {
-                return { ok: false, code: 'RATE_LIMITED', message: `Choose no more than ${POLICY.effects.targetLimit} recipients at once.` };
-            }
-            const currentPageId = effectPageId(msg?.playerid);
-            const resolved = resolveTargetTokens(ids, 'Recipient');
-            if (!resolved.ok) return resolved;
-            const targets = resolved.targets;
-            if (!playerIsGM(msg?.playerid)) {
-                const hidden = targets.find(result =>
-                    result.summary.layer !== 'objects' || result.summary.pageId !== currentPageId
-                );
-                if (hidden) {
-                    return {
-                        ok: false,
-                        code: 'FORBIDDEN',
-                        message: 'Players may choose visible recipient tokens on their current Roll20 page. Ask the GM to handle hidden or off-page recipients.'
-                    };
-                }
-            }
-            return { ok: true, targets };
-        }
-
-        function requestedTargets(msg, options) {
-            return options.targets ? explicitTargets(msg, options.targets) : selectedTargets(msg);
-        }
-
-        function safeQueryText(value) {
-            return String(value || '').replace(/[|,}]/g, ' ').replace(/\s+/g, ' ').trim();
-        }
-
-        function controlledSources(msg = null) {
-            const pageId = effectPageId(msg?.playerid);
-            if (!pageId) return [];
-            return findObjs({ _type: 'graphic', _pageid: pageId })
-                .filter(token => ['objects', 'gmlayer'].includes(String(token.get('layer') || '')))
-                .map(token => resolveLinkedToken(token.id, 'Source'))
-                .filter(result => result.ok)
-                .filter(result => playerIsGM(msg?.playerid) || result.summary.layer === 'objects')
-                .filter(result => !msg || actorControlsSource(msg.playerid, result))
-                .sort((left, right) => left.summary.tokenName.localeCompare(right.summary.tokenName))
-                .slice(0, POLICY.effects.sourcePickerLimit);
-        }
-
-        function sourceDisplay(source, candidates = []) {
-            const summary = source?.summary || {};
-            const characterName = String(summary.characterName || 'Unnamed character');
-            const tokenName = String(summary.tokenName || 'Unnamed token');
-            const sameCharacterCount = candidates.filter(candidate =>
-                String(candidate?.summary?.characterId || '') === String(summary.characterId || '')
-            ).length;
-            const layer = summary.layer === 'gmlayer' ? 'GM layer' : 'Objects layer';
-            const tokenDetail = tokenName !== characterName || sameCharacterCount > 1
-                ? ` via ${tokenName}${sameCharacterCount > 1 ? ` [${String(summary.tokenId || '').slice(-6)}]` : ''}`
-                : '';
-            return `${characterName}${tokenDetail} (${layer})`;
-        }
-
-        function sourceQuery(msg = null) {
-            const tokens = controlledSources(msg);
-            if (!tokens.length) return null;
-            return '?{Effect source|' + tokens.map(result =>
-                `${safeQueryText(result.summary.tokenName)},${result.summary.tokenId}`
-            ).join('|') + '}';
-        }
-
-        function conditionQuery() {
-            const conditions = GameAssist.ConditionAssist?.getConditions?.();
-            if (!isPlainObject(conditions)) return null;
-            const choices = Object.entries(conditions)
-                .slice(0, POLICY.effects.conditionPickerLimit)
-                .map(([key, definition]) => `${safeQueryText(definition?.name || key)},${safeQueryText(key)}`);
-            return choices.length ? '?{Condition|' + choices.join('|') + '}' : null;
-        }
-
-        function createCustomDefinition(options) {
-            const nameResult = boundedText(options.name, POLICY.effects.nameLength, 'Effect name');
-            if (!nameResult.ok) return nameResult;
-            const id = normalizeDefinitionId(nameResult.value);
-            if (!id) return { ok: false, code: 'INVALID_ARGUMENT', message: 'The effect name could not form a safe definition id.' };
-
-            let projection;
-            if (options.condition) {
-                const value = boundedText(options.condition, POLICY.effects.nameLength, 'Condition name');
-                if (!value.ok) return value;
-                projection = { id: 'condition', adapter: 'condition', subject: 'target-token', condition: value.value, label: value.value };
-            } else if (options.marker) {
-                const value = boundedText(options.marker, POLICY.effects.markerLength, 'Marker');
-                if (!value.ok) return value;
-                projection = { id: 'marker', adapter: 'marker', subject: 'target-token', marker: value.value, label: value.value };
-            } else if (options.none === true || String(options.none).toLowerCase() === 'true') {
-                projection = { id: 'record', adapter: 'record-only', subject: 'instance', label: 'Record only' };
-            } else {
-                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Choose a marker, a ConditionAssist condition, or --none for the custom effect.' };
-            }
-
-            const dependency = ['none', 'manual', 'concentration'].includes(String(options.dependency || '').toLowerCase())
-                ? String(options.dependency).toLowerCase()
-                : 'manual';
-            const description = boundedText(options.description || '', POLICY.effects.descriptionLength, 'Description', { required: false });
-            if (!description.ok) return description;
-            const definition = {
-                id,
-                definitionVersion: 1,
-                name: nameResult.value,
-                description: description.value,
-                concentration: dependency === 'concentration',
-                duration: String(options.duration || 'Until the GM ends it').slice(0, POLICY.effects.nameLength),
-                targets: 'Selected linked character tokens',
-                stacking: { group: id, mode: 'nonstacking' },
-                projections: [projection],
-                automatic: projection.adapter === 'record-only' ? ['Effect record'] : ['Selected projection and effect record'],
-                assisted: dependency === 'manual' ? ['End the effect when its rule says it ends.'] : [],
-                informational: [],
-                builtin: false
-            };
-            const existing = getDefinition(id);
-            if (existing) {
-                return fingerprint(existing) === fingerprint(normalizeDefinition(definition))
-                    ? { ok: true, definition: existing, isNew: false }
-                    : { ok: false, code: 'CONFLICT', message: `An effect definition named "${existing.name}" already uses different settings.` };
-            }
-            if (getCustomDefinitions().length >= POLICY.effects.definitionLimit) {
-                return { ok: false, code: 'RATE_LIMITED', message: `EffectAssist already has the maximum of ${POLICY.effects.definitionLimit} custom definitions.` };
-            }
-            return { ok: true, definition, isNew: true };
-        }
-
-        function bindingKey(binding) {
-            let adapterIdentity = binding.adapter;
-            let intentIdentity = binding.intent;
-            if (binding.adapter === 'marker' || binding.adapter === 'condition') {
-                const condition = binding.adapter === 'condition'
-                    ? GameAssist.ConditionAssist?.getCondition?.(binding.intent.condition)
-                    : null;
-                const markerRef = condition?.marker || binding.intent.marker || `condition:${binding.intent.condition}`;
-                const resolution = GameAssist.MarkerService?.resolve?.(markerRef);
-                const markerId = resolution?.ok
-                    ? GameAssist.MarkerService.normalizeId(resolution.id)
-                    : String(markerRef || '').trim().toLowerCase();
-                adapterIdentity = 'token-marker';
-                intentIdentity = { markerId };
-            }
-            return [
-                adapterIdentity,
-                binding.subjectType,
-                binding.subjectId,
-                fingerprint(intentIdentity)
-            ].join('|');
-        }
-
-        function expandDefinition(definition, source, targets) {
-            const bindings = [];
-            const assistance = [...definition.assisted, ...definition.informational];
-            const seen = new Set();
-            definition.projections.forEach(projection => {
-                if (projection.adapter === 'record-only') return;
-                const subjects = projection.subject === 'source-token'
-                    ? [source]
-                    : projection.subject === 'source-character'
-                        ? [source]
-                        : targets;
-                subjects.forEach(subject => {
-                    if (projection.adapter === 'ogl-repeating' && !is2014Pc(subject.character)) {
-                        assistance.push(`${subject.summary.characterName}: ${projection.label} is not available as a verified 2014 PC-sheet projection; apply that rule manually.`);
-                        return;
-                    }
-                    const binding = {
-                        adapter: projection.adapter,
-                        projectionId: projection.id,
-                        label: projection.label || projection.id,
-                        subjectType: projection.subject.endsWith('character') ? 'character' : 'token',
-                        subjectId: projection.subject.endsWith('character') ? subject.character.id : subject.token.id,
-                        tokenId: subject.token.id,
-                        characterId: subject.character.id,
-                        expectedRepresents: subject.character.id,
-                        optional: projection.optional === true,
-                        intent: projection.adapter === 'marker'
-                            ? { marker: markerFor(definition.id, projection) }
-                            : projection.adapter === 'condition'
-                                ? { condition: projection.condition }
-                                : projection.adapter === 'ogl-repeating'
-                                    ? { modifier: projection.modifier, label: projection.label, value: String(projection.value) }
-                                    : {}
-                    };
-                    binding.key = bindingKey(binding);
-                    if (!seen.has(binding.key)) {
-                        seen.add(binding.key);
-                        bindings.push(binding);
-                    }
-                });
-            });
-            return { bindings, assistance: [...new Set(assistance)] };
-        }
-
-        function markerDescriptor(binding) {
-            if (!GameAssist.MarkerService?.isEnabled?.()) {
-                return { ok: false, code: 'UNAVAILABLE', message: 'MarkerService is unavailable.' };
-            }
-            const markerRef = binding.intent.marker;
-            const resolution = GameAssist.MarkerService.resolve(markerRef);
-            return resolution.ok
-                ? { ok: true, markerRef, markerId: resolution.id }
-                : { ...resolution, markerRef };
-        }
-
-        function conditionDescriptor(binding) {
-            const conditionApi = GameAssist.ConditionAssist;
-            const conditionConfigured = GameAssist.getState('ConditionAssist')?.config?.enabled !== false;
-            if (!conditionApi?.getCondition || !conditionConfigured) {
-                return { ok: false, code: 'UNAVAILABLE', message: 'ConditionAssist is unavailable.' };
-            }
-            const condition = conditionApi.getCondition(binding.intent.condition);
-            if (!condition?.marker) {
-                return { ok: false, code: 'NOT_FOUND', message: `ConditionAssist does not recognize "${binding.intent.condition}".` };
-            }
-            const marker = markerDescriptor({ intent: { marker: condition.marker } });
-            return marker.ok ? { ...marker, condition: binding.intent.condition } : marker;
-        }
-
-        function inspectMarker(binding) {
-            const descriptor = markerDescriptor(binding);
-            if (!descriptor.ok) return descriptor;
-            const token = getObj('graphic', binding.tokenId);
-            if (!token) return { ok: false, code: 'NOT_FOUND', state: 'missing-subject', message: `${binding.label}: token no longer exists.` };
-            if (String(token.get('represents') || '') !== String(binding.expectedRepresents || '')) {
-                return { ok: false, code: 'CONFLICT', state: 'identity-drift', message: `${binding.label}: token now represents another character.` };
-            }
-            return {
-                ok: true,
-                state: GameAssist.MarkerService.has(token, descriptor.markerId) ? 'present' : 'missing',
-                token,
-                descriptor
-            };
-        }
-
-        function applyMarker(binding) {
-            const inspected = inspectMarker(binding);
-            if (!inspected.ok) return inspected;
-            if (inspected.state === 'present') {
-                return { ok: true, changed: false, managed: false, baselinePresent: true, metadata: { markerId: inspected.descriptor.markerId, markerRef: inspected.descriptor.markerRef } };
-            }
-            const result = GameAssist.MarkerService.add(inspected.token, inspected.descriptor.markerId, { owner: MODULE_NAME });
-            if (!result.ok || !GameAssist.MarkerService.has(inspected.token, inspected.descriptor.markerId)) {
-                return { ok: false, code: result.code || 'CONFLICT', message: result.message || `${binding.label} could not be verified.` };
-            }
-            return { ok: true, changed: result.changed === true, managed: true, baselinePresent: false, metadata: { markerId: inspected.descriptor.markerId, markerRef: inspected.descriptor.markerRef } };
-        }
-
-        function removeMarker(binding, ledger) {
-            const inspected = inspectMarker(binding);
-            if (!inspected.ok) return inspected;
-            if (ledger.managed !== true || inspected.state === 'missing') return { ok: true, changed: false };
-            const result = GameAssist.MarkerService.remove(inspected.token, ledger.metadata?.markerId || inspected.descriptor.markerId, { owner: MODULE_NAME });
-            if (!result.ok || GameAssist.MarkerService.has(inspected.token, ledger.metadata?.markerId || inspected.descriptor.markerId)) {
-                return { ok: false, code: result.code || 'CONFLICT', message: result.message || `${binding.label} could not be removed safely.` };
-            }
-            return { ok: true, changed: result.changed === true };
-        }
-
-        function inspectCondition(binding) {
-            const descriptor = conditionDescriptor(binding);
-            if (!descriptor.ok) return descriptor;
-            return inspectMarker({ ...binding, intent: { marker: descriptor.markerRef } });
-        }
-
-        function applyCondition(binding) {
-            const descriptor = conditionDescriptor(binding);
-            if (!descriptor.ok) return descriptor;
-            const token = getObj('graphic', binding.tokenId);
-            if (!token) return { ok: false, code: 'NOT_FOUND', message: `${binding.label}: token no longer exists.` };
-            const markerBinding = { ...binding, intent: { marker: descriptor.markerRef } };
-            const before = inspectMarker(markerBinding);
-            if (!before.ok) return before;
-            if (before.state === 'present') {
-                return { ok: true, changed: false, managed: false, baselinePresent: true, metadata: { markerId: descriptor.markerId, markerRef: descriptor.markerRef, condition: binding.intent.condition } };
-            }
-            const result = GameAssist.ConditionAssist.apply([token], [binding.intent.condition], 'add');
-            const after = inspectMarker(markerBinding);
-            if (!result.ok || !after.ok || after.state !== 'present') {
-                return { ok: false, code: 'CONFLICT', message: `${binding.label} could not be applied and verified through ConditionAssist.` };
-            }
-            return { ok: true, changed: true, managed: true, baselinePresent: false, metadata: { markerId: descriptor.markerId, markerRef: descriptor.markerRef, condition: binding.intent.condition } };
-        }
-
-        function removeCondition(binding, ledger) {
-            const descriptor = conditionDescriptor(binding);
-            if (!descriptor.ok) return descriptor;
-            if (ledger.managed !== true) return { ok: true, changed: false };
-            const token = getObj('graphic', binding.tokenId);
-            if (!token) return { ok: false, code: 'NOT_FOUND', message: `${binding.label}: token no longer exists.` };
-            const markerBinding = { ...binding, intent: { marker: descriptor.markerRef } };
-            const before = inspectMarker(markerBinding);
-            if (!before.ok) return before;
-            if (before.state === 'missing') return { ok: true, changed: false };
-            const result = GameAssist.ConditionAssist.apply([token], [binding.intent.condition], 'remove');
-            const after = inspectMarker(markerBinding);
-            if (!result.ok || !after.ok || after.state !== 'missing') {
-                return { ok: false, code: 'CONFLICT', message: `${binding.label} could not be removed and verified through ConditionAssist.` };
-            }
-            return { ok: true, changed: true };
-        }
-
-        function rowAttributes(characterId, section, rowId) {
-            const prefix = `repeating_${section}_${rowId}_`;
-            return findObjs({ _type: 'attribute', _characterid: String(characterId) })
-                .filter(item => String(item.get('name') || '').startsWith(prefix));
-        }
-
-        function expectedRow(binding) {
-            const config = OGL_SECTIONS[binding.intent.modifier];
-            if (!config) return null;
-            return {
-                config,
-                expected: {
-                    [config.activeField]: '1',
-                    [config.nameField]: binding.intent.label,
-                    [config.valueField]: String(binding.intent.value),
-                    'options-flag': '0'
-                }
-            };
-        }
-
-        function findMatchingRow(binding) {
-            const row = expectedRow(binding);
-            if (!row) return null;
-            const attrs = findObjs({ _type: 'attribute', _characterid: String(binding.characterId) });
-            const suffix = '_' + row.config.nameField;
-            const candidates = attrs.filter(item => {
-                const name = String(item.get('name') || '');
-                return name.startsWith(`repeating_${row.config.section}_`) && name.endsWith(suffix)
-                    && String(item.get('current') || '') === String(binding.intent.label);
-            });
-            for (const candidate of candidates) {
-                const name = String(candidate.get('name') || '');
-                const rowId = name.slice(`repeating_${row.config.section}_`.length, -suffix.length);
-                const values = Object.fromEntries(rowAttributes(binding.characterId, row.config.section, rowId)
-                    .map(item => [String(item.get('name')).slice(`repeating_${row.config.section}_${rowId}_`.length), String(item.get('current') ?? '')]));
-                if (Object.entries(row.expected).every(([field, value]) => String(values[field] ?? '') === String(value))) {
-                    return { rowId, attributes: rowAttributes(binding.characterId, row.config.section, rowId), expected: row.expected, config: row.config };
-                }
-            }
-            return null;
-        }
-
-        function inspectOgl(binding, ledger) {
-            const character = getObj('character', binding.characterId);
-            if (!character) return { ok: false, code: 'NOT_FOUND', state: 'missing-subject', message: `${binding.label}: character no longer exists.` };
-            if (!is2014Pc(character)) {
-                return { ok: false, code: 'UNAVAILABLE', state: 'unsupported-sheet', message: `${binding.label}: a supported 2014 PC sheet could not be verified.` };
-            }
-            if (!ledger?.metadata?.rowId) {
-                const match = findMatchingRow(binding);
-                return { ok: true, state: match ? 'present-untracked' : 'missing', match };
-            }
-            const row = expectedRow(binding);
-            const attrs = rowAttributes(binding.characterId, row.config.section, ledger.metadata.rowId);
-            if (!attrs.length) return { ok: true, state: 'missing' };
-            const byName = Object.fromEntries(attrs.map(item => [
-                String(item.get('name')).slice(`repeating_${row.config.section}_${ledger.metadata.rowId}_`.length),
-                item
-            ]));
-            const drift = Object.entries(row.expected).filter(([field, value]) =>
-                !byName[field] || String(byName[field].get('current') ?? '') !== String(value)
-            );
-            if (ledger.metadata?.flagManaged === true) {
-                const flag = ledger.metadata.flagId
-                    ? getObj('attribute', ledger.metadata.flagId)
-                    : attribute(binding.characterId, ledger.metadata.enableFlag);
-                if (!flag || String(flag.get('current') || '') !== '1') drift.push([ledger.metadata.enableFlag || 'global modifier flag']);
-            }
-            return drift.length
-                ? { ok: true, state: 'drift', drift: drift.map(entry => Array.isArray(entry) ? entry[0] : entry) }
-                : { ok: true, state: 'present', attributes: attrs };
-        }
-
-        function applyOgl(binding) {
-            const inspected = inspectOgl(binding, null);
-            if (!inspected.ok) return inspected;
-            const row = expectedRow(binding);
-            if (!row) return { ok: false, code: 'INVALID_ARGUMENT', message: `Unknown 2014 modifier type "${binding.intent.modifier}".` };
-            const matched = inspected.state === 'present-untracked' ? inspected.match : null;
-            const rowId = matched?.rowId || newRowId();
-            const created = [];
-            let flag = null;
-            let flagCreatedNow = false;
-            let flagChangedNow = false;
-            let flagBaseline = '';
-            let flagCreated = false;
-            try {
-                if (!matched) {
-                    Object.entries(row.expected).forEach(([field, value]) => {
-                        const item = createObj('attribute', {
-                            characterid: binding.characterId,
-                            name: `repeating_${row.config.section}_${rowId}_${field}`,
-                            current: field === row.config.activeField ? '0' : value,
-                            max: ''
-                        });
-                        if (!item) throw new Error(`Roll20 did not create ${field}.`);
-                        created.push(item);
-                    });
-                }
-
-                flag = attribute(binding.characterId, row.config.enableFlag);
-                const sharedFlagOwner = Object.values(runtime.projectionLedgers).find(ledger =>
-                    ledger?.adapter === 'ogl-repeating'
-                    && String(ledger.binding?.characterId || '') === String(binding.characterId)
-                    && ledger.metadata?.enableFlag === row.config.enableFlag
-                    && ledger.metadata?.flagId
-                );
-                flagCreated = sharedFlagOwner ? sharedFlagOwner.metadata.flagCreated === true : !flag;
-                flagBaseline = sharedFlagOwner
-                    ? String(sharedFlagOwner.metadata.flagBaseline ?? '')
-                    : flag ? String(flag.get('current') ?? '') : '';
-                if (!flag) {
-                    flag = createObj('attribute', {
-                        characterid: binding.characterId,
-                        name: row.config.enableFlag,
-                        current: '0',
-                        max: ''
-                    });
-                    if (!flag) throw new Error(`Roll20 did not create ${row.config.enableFlag}.`);
-                    flagCreatedNow = true;
-                }
-                if (String(flag.get('current') || '') !== '1') {
-                    setAttribute(flag, { current: '1' });
-                    flagChangedNow = true;
-                }
-                if (!matched) {
-                    const activeAttribute = created.find(item =>
-                        String(item.get('name') || '').endsWith('_' + row.config.activeField)
-                    );
-                    if (!activeAttribute) throw new Error(`Roll20 did not create ${row.config.activeField}.`);
-                    // DANGER: the active value must transition through setWithWorker; creating it at 1 displays a checked box without recalculating the 2014 sheet.
-                    setAttribute(activeAttribute, { current: '1' });
-                }
-                const verify = rowAttributes(binding.characterId, row.config.section, rowId);
-                if (verify.length < Object.keys(row.expected).length) throw new Error('Roll20 did not retain every modifier-row field.');
-                if (String(flag.get('current') || '') !== '1') throw new Error(`Roll20 did not enable ${row.config.enableFlag}.`);
-                return {
-                    ok: true,
-                    changed: !matched || flagChangedNow,
-                    managed: !matched || flagCreated || flagBaseline !== '1',
-                    baselinePresent: Boolean(matched),
-                    metadata: {
-                        rowId,
-                        attributeIds: (matched?.attributes || created).map(item => item.id),
-                        expected: row.expected,
-                        section: row.config.section,
-                        rowManaged: !matched,
-                        enableFlag: row.config.enableFlag,
-                        flagId: flag.id,
-                        flagCreated,
-                        flagBaseline,
-                        flagManaged: flagCreated || flagBaseline !== '1'
-                    }
-                };
-            } catch (error) {
-                created.reverse().forEach(item => {
-                    try { item.remove(); } catch { }
-                });
-                if (flagCreatedNow && flag) {
-                    try { flag.remove(); } catch { }
-                } else if (flagChangedNow && flag) {
-                    try { setAttribute(flag, { current: flagBaseline }); } catch { }
-                }
-                return { ok: false, code: 'UNAVAILABLE', message: `${binding.label} could not be created: ${error.message}` };
-            }
-        }
-
-        function removeOgl(binding, ledger) {
-            if (ledger.managed !== true) return { ok: true, changed: false };
-            const inspected = inspectOgl(binding, ledger);
-            if (!inspected.ok) return inspected;
-            if (inspected.state === 'drift') {
-                return { ok: false, code: 'CONFLICT', message: `${binding.label} was edited outside EffectAssist and was preserved.` };
-            }
-            const metadata = ledger.metadata || {};
-            const rowManaged = metadata.rowManaged === true
-                || (metadata.rowManaged === undefined && ledger.managed === true && ledger.baselinePresent !== true);
-            const flag = metadata.flagId ? getObj('attribute', metadata.flagId) : attribute(binding.characterId, metadata.enableFlag);
-            const flagManaged = metadata.flagManaged === true
-                || (metadata.flagManaged === undefined && (metadata.flagCreated === true || String(metadata.flagBaseline || '') !== '1'));
-            let restoreFlag = false;
-            if (flagManaged && flag && String(flag.get('current') || '') === '1' && String(metadata.flagBaseline || '') !== '1') {
-                const section = metadata.section;
-                const activeSuffix = '_' + expectedRow(binding).config.activeField;
-                const currentPrefix = `repeating_${section}_${metadata.rowId}_`;
-                const anotherOwnedFlagUser = Object.values(runtime.projectionLedgers).some(other =>
-                    other !== ledger
-                    && other?.adapter === 'ogl-repeating'
-                    && String(other.binding?.characterId || '') === String(binding.characterId)
-                    && other.metadata?.enableFlag === metadata.enableFlag
-                    && ledgerOwners(other).some(id => validInstance(runtime.instances[id]))
-                );
-                const otherActiveRows = findObjs({ _type: 'attribute', _characterid: String(binding.characterId) })
-                    .some(item => String(item.get('name') || '').startsWith(`repeating_${section}_`)
-                        && !String(item.get('name') || '').startsWith(currentPrefix)
-                        && String(item.get('name') || '').endsWith(activeSuffix)
-                        && String(item.get('current') || '') === '1');
-                restoreFlag = !anotherOwnedFlagUser && !otherActiveRows;
-            }
-
-            const rowAttributesToRemove = rowManaged && inspected.state !== 'missing'
-                ? inspected.attributes.slice()
-                : [];
-            const activeField = expectedRow(binding).config.activeField;
-            const activeAttribute = rowAttributesToRemove.find(item =>
-                String(item.get('name') || '').endsWith('_' + activeField)
-            );
-            const needsWorkerPass = Boolean(
-                (activeAttribute && String(activeAttribute.get('current') || '') === '1')
-                || (restoreFlag && flag && String(flag.get('current') || '') === '1')
-            );
-
-            const finishRemoval = () => {
-                try {
-                    rowAttributesToRemove.forEach(item => {
-                        if (getObj('attribute', item.id)) item.remove();
-                    });
-                    if (restoreFlag && flag && metadata.flagCreated === true && getObj('attribute', flag.id)) {
-                        flag.remove();
-                    }
-                } catch (error) {
-                    GameAssist.log(MODULE_NAME, `${binding.label} sheet-worker cleanup needs attention: ${error.message || error}`, 'WARN');
-                }
-            };
-
-            if (needsWorkerPass) {
-                // DANGER: disable owned rows before removing them so the 2014 sheet can recalculate derived attack, save, skill, and AC values.
-                if (typeof onSheetWorkerCompleted === 'function') onSheetWorkerCompleted(finishRemoval);
-                else setTimeout(finishRemoval, 0);
-                if (activeAttribute && String(activeAttribute.get('current') || '') === '1') {
-                    setAttribute(activeAttribute, { current: '0' });
-                }
-                if (restoreFlag && flag && String(flag.get('current') || '') === '1') {
-                    setAttribute(flag, { current: metadata.flagCreated === true ? '0' : metadata.flagBaseline });
-                }
-            } else {
-                finishRemoval();
-                if (restoreFlag && flag && metadata.flagCreated !== true) {
-                    setAttribute(flag, { current: metadata.flagBaseline });
-                }
-            }
-            return { ok: true, changed: rowAttributesToRemove.length > 0 || restoreFlag, pendingSheetWorkers: needsWorkerPass };
-        }
-        function registerProjectionAdapter(name, adapter) {
-            const id = normalizeDefinitionId(name);
-            if (!id || !isPlainObject(adapter)
-                || typeof adapter.inspect !== 'function'
-                || typeof adapter.apply !== 'function'
-                || typeof adapter.remove !== 'function') {
-                return { ok: false, code: 'INVALID_ARGUMENT', message: 'Projection adapters require inspect, apply, and remove functions.' };
-            }
-            if (projectionAdapters.has(id)) return { ok: false, code: 'CONFLICT', message: `Projection adapter "${id}" is already registered.` };
-            projectionAdapters.set(id, Object.freeze({ ...adapter }));
-            return { ok: true, id };
-        }
-
-        registerProjectionAdapter('marker', { inspect: inspectMarker, apply: applyMarker, remove: removeMarker });
-        registerProjectionAdapter('condition', { inspect: inspectCondition, apply: applyCondition, remove: removeCondition });
-        registerProjectionAdapter('ogl-repeating', { inspect: inspectOgl, apply: applyOgl, remove: removeOgl });
-
-        function nextInstanceId() {
-            let id;
-            do {
-                id = 'EA-' + String(runtime.nextInstanceNumber++).padStart(6, '0');
-            } while (runtime.instances[id]);
-            return id;
-        }
-
-        function requestKey(requestId) {
-            const raw = String(requestId || '').trim();
-            return raw ? 'request:' + raw : '';
-        }
-
-        function findRequest(requestId) {
-            const remembered = runtime.requestIds[requestKey(requestId)];
-            if (!remembered) return null;
-            const instance = runtime.instances[remembered.instanceId]
-                || runtime.history.find(entry => entry.id === remembered.instanceId);
-            return instance ? { remembered, instance } : null;
-        }
-
-        function rememberRequest(requestId, instanceId, intent) {
-            const key = requestKey(requestId);
-            if (!key) return;
-            runtime.requestIds[key] = { instanceId, intent, timestamp: Date.now() };
-            ensureState();
-        }
-
-        function buildPlan(request) {
-            ensureState();
-            ensureMarkerObservation();
-            if (modState.config.enabled === false) return { ok: false, code: 'UNAVAILABLE', message: 'EffectAssist is disabled.' };
-            const rawRequestId = String(request.requestId || '').trim();
-            if (rawRequestId.length > POLICY.effects.requestIdLength) {
-                return { ok: false, code: 'INVALID_ARGUMENT', message: 'The effect request identifier is too long.' };
-            }
-            const intent = requestIntent(request);
-            const existing = findRequest(rawRequestId);
-            if (existing) {
-                return existing.remembered.intent === intent
-                    ? { ok: true, duplicate: true, instance: clone(existing.instance), message: 'That identical effect request was already applied.' }
-                    : { ok: false, code: 'CONFLICT', message: 'That request identifier was already used for a different effect request.' };
-            }
-            if (activeInstances().length >= POLICY.effects.activeInstanceLimit) {
-                return { ok: false, code: 'RATE_LIMITED', message: `EffectAssist already has the maximum of ${POLICY.effects.activeInstanceLimit} active instances.` };
-            }
-
-            const source = resolveLinkedToken(request.sourceTokenId, 'The source');
-            if (!source.ok) return source;
-            const targetIds = [...new Set((request.targetTokenIds || []).map(String).filter(Boolean))];
-            if (!targetIds.length) return { ok: false, code: 'INVALID_ARGUMENT', message: 'At least one target token is required.' };
-            if (targetIds.length > POLICY.effects.targetLimit) {
-                return { ok: false, code: 'RATE_LIMITED', message: `No more than ${POLICY.effects.targetLimit} targets may be applied at once.` };
-            }
-            const targetResolution = resolveTargetTokens(targetIds, 'Recipient');
-            if (!targetResolution.ok) return targetResolution;
-            const targets = targetResolution.targets;
-
-            let definitionResult;
-            if (request.definitionId) {
-                const definition = getDefinition(request.definitionId);
-                definitionResult = definition
-                    ? { ok: true, definition, isNew: false }
-                    : { ok: false, code: 'NOT_FOUND', message: `Effect definition "${request.definitionId}" was not found.` };
-            } else {
-                definitionResult = createCustomDefinition(request);
-            }
-            if (!definitionResult.ok) return definitionResult;
-            const definition = definitionResult.definition;
-            const expanded = expandDefinition(definition, source, targets);
-
-            const concentrationConflicts = definition.concentration
-                ? activeInstances().filter(instance =>
-                    instance.dependency?.type === 'concentration'
-                    && instance.dependency?.established
-                    && String(instance.source.characterId) === String(source.summary.characterId)
-                )
-                : [];
-            const replacementValue = request.replaceConcentration;
-            const replacementWasSpecified = replacementValue !== undefined
-                && replacementValue !== null
-                && String(replacementValue).trim() !== '';
-            const replace = replacementWasSpecified
-                ? ['yes', 'true', 'on', '1'].includes(String(replacementValue).toLowerCase())
-                : modState.config.allowMultipleConcentration !== true;
-            const allowMultiple = modState.config.allowMultipleConcentration === true && !replacementWasSpecified;
-            if (concentrationConflicts.length && !replace && !allowMultiple) {
-                return {
-                    ok: false,
-                    code: 'CONFLICT',
-                    message: `${source.summary.characterName} is already concentrating on ${concentrationConflicts.map(item => item.name).join(', ')}. Replace that effect or enable the advanced multiple-concentration option.`,
-                    concentrationConflicts: concentrationConflicts.map(item => item.id)
-                };
-            }
-
-            const hardFailures = [];
-            expanded.bindings.forEach(binding => {
-                const adapter = projectionAdapters.get(binding.adapter);
-                if (!adapter) {
-                    if (!binding.optional) hardFailures.push(`${binding.label}: projection adapter is unavailable.`);
-                    return;
-                }
-                const inspected = adapter.inspect(binding, runtime.projectionLedgers[binding.key]);
-                if (!inspected.ok && !binding.optional) hardFailures.push(inspected.message || `${binding.label} is unavailable.`);
-            });
-            if (definition.concentration) {
-                const api = GameAssist.ConcentrationAssist;
-                if (!api?.set || !api?.getMarker || GameAssist.getState('ConcentrationAssist')?.config?.enabled === false) {
-                    hardFailures.push('ConcentrationAssist must be enabled before applying a concentration effect.');
-                } else {
-                    const markerResolution = api.resolveMarker?.();
-                    if (!markerResolution?.ok) {
-                        hardFailures.push('The concentration marker is not ready. Open ConcentrationAssist Settings, choose a recognized marker, then apply the effect again.');
-                    }
-                }
-            }
-            if (hardFailures.length) return { ok: false, code: 'UNAVAILABLE', message: hardFailures.join(' ') };
-
-            return {
-                ok: true,
-                request: clone(request),
-                intent,
-                rawRequestId,
-                source,
-                targets,
-                definition,
-                definitionResult,
-                bindings: expanded.bindings,
-                assistance: expanded.assistance,
-                concentrationConflicts,
-                replace
-            };
-        }
-
-        function previewPlan(plan) {
-            const changes = [];
-            plan.bindings.forEach(binding => {
-                const ledger = runtime.projectionLedgers[binding.key];
-                const adapter = projectionAdapters.get(binding.adapter);
-                const inspected = adapter?.inspect(binding, ledger);
-                if (!adapter) changes.push(`${binding.label}: assisted only`);
-                else if (!inspected?.ok) changes.push(`${binding.label}: unavailable`);
-                else if (inspected.state === 'present' || inspected.state === 'present-untracked') changes.push(`${binding.label}: already present and will be shared`);
-                else if (inspected.state === 'drift') changes.push(`${binding.label}: edited value will be preserved for review`);
-                else changes.push(`${binding.label}: will be added`);
-            });
-            if (plan.definition.concentration) {
-                changes.push(`Concentration: ${plan.source.summary.characterName} will be marked Concentrating`);
-                if (plan.concentrationConflicts.length) changes.push(`Replacement: ${plan.concentrationConflicts.length} existing concentration effect(s) will end`);
-            }
-            return changes;
-        }
-
-        function createApplyGrant(plan, playerId) {
-            const id = 'EP-' + Math.random().toString(36).slice(2, 10);
-            applyGrants.set(id, {
-                playerId: String(playerId || ''),
-                expiresAt: Date.now() + POLICY.effects.repairGrantMs,
-                request: clone(plan.request),
-                signature: fingerprint({
-                    source: plan.source.summary,
-                    targets: plan.targets.map(target => target.summary),
-                    definition: plan.definition,
-                    bindings: plan.bindings.map(binding => binding.key),
-                    conflicts: plan.concentrationConflicts.map(item => item.id)
-                })
-            });
-            if (applyGrants.size > POLICY.effects.repairGrantLimit) {
-                applyGrants.delete(applyGrants.keys().next().value);
-            }
-            return id;
-        }
-
-        function verifyApplyGrant(grantId, playerId) {
-            const grant = applyGrants.get(String(grantId || ''));
-            applyGrants.delete(String(grantId || ''));
-            if (!grant || grant.expiresAt < Date.now() || grant.playerId !== String(playerId || '')) {
-                return { ok: false, code: 'UNAUTHORIZED', message: 'That effect confirmation expired. Open the catalog and preview it again.' };
-            }
-            const plan = buildPlan(grant.request);
-            if (!plan.ok) return plan;
-            const signature = fingerprint({
-                source: plan.source.summary,
-                targets: plan.targets.map(target => target.summary),
-                definition: plan.definition,
-                bindings: plan.bindings.map(binding => binding.key),
-                conflicts: plan.concentrationConflicts.map(item => item.id)
-            });
-            return signature === grant.signature
-                ? plan
-                : { ok: false, code: 'CONFLICT', message: 'The source, targets, definition, or concentration state changed after preview. Preview the effect again.' };
-        }
-
-        function notifyLifecycle(transition, instance, context = {}) {
-            return GameAssist.SemanticEvents.publish('effect.lifecycle.changed', MODULE_NAME, {
-                transition,
-                instance: clone(instance),
-                context: clone(context)
-            });
-        }
-
-        function setConcentration(sourceTokenId, active, context = {}) {
-            const api = GameAssist.ConcentrationAssist;
-            if (!api?.set) return { ok: false, code: 'UNAVAILABLE', message: 'ConcentrationAssist is unavailable.' };
-            if (active === false) suppressedConcentrationTokens.set(String(sourceTokenId), Date.now() + 1500);
-            else suppressedConcentrationTokens.delete(String(sourceTokenId));
-            const result = api.set(sourceTokenId, active, {
-                actor: MODULE_NAME,
-                reason: context.reason || (active ? 'effect-established' : 'effect-ended'),
-                instanceId: context.instanceId || null
-            });
-            return result?.ok === true
-                ? result
-                : { ok: false, code: result?.code || 'UNAVAILABLE', message: result?.message || 'ConcentrationAssist could not change concentration.' };
-        }
-
-        function rollbackBindings(applied, instanceId) {
-            const failures = [];
-            [...applied].reverse().forEach(entry => {
-                const ledger = runtime.projectionLedgers[entry.binding.key];
-                if (!ledger) return;
-                ledger.instanceIds = (ledger.instanceIds || []).filter(id => id !== instanceId);
-                if (ledger.instanceIds.length) return;
-                const adapter = projectionAdapters.get(entry.binding.adapter);
-                const result = adapter?.remove(entry.binding, ledger) || { ok: false, message: 'Projection adapter unavailable during rollback.' };
-                if (result.ok) delete runtime.projectionLedgers[entry.binding.key];
-                else failures.push(result.message || entry.binding.label);
-            });
-            return failures;
-        }
-
-        function applyPlan(plan) {
-            if (plan.duplicate) return plan;
-            const durationSetup = createDurationRecord(plan.definition, plan.request, plan.source.summary);
-            const instance = {
-                id: nextInstanceId(),
-                definitionId: plan.definition.id,
-                definitionVersion: plan.definition.definitionVersion || 1,
-                name: plan.definition.name,
-                description: plan.definition.description || '',
-                definitionSnapshot: clone(plan.definition),
-                source: plan.source.summary,
-                targets: plan.targets.map(target => target.summary),
-                dependency: {
-                    type: plan.definition.concentration ? 'concentration' : 'manual',
-                    status: plan.definition.concentration ? 'establishing' : 'not-required',
-                    established: false,
-                    marker: plan.definition.concentration ? String(GameAssist.ConcentrationAssist?.getMarker?.() || '') : null
-                },
-                stacking: clone(plan.definition.stacking),
-                bindings: plan.bindings.map(binding => clone(binding)),
-                assistance: clone(plan.assistance.concat(durationSetup.assistance)),
-                duration: durationSetup.record,
-                status: 'applying',
-                createdAt: isoNow(),
-                createdBy: String(plan.request.createdBy || 'api'),
-                approvedBy: plan.request.approvedBy ? String(plan.request.approvedBy) : null
-            };
-
-            runtime.operations[instance.id] = {
-                type: 'apply',
-                status: 'running',
-                startedAt: isoNow(),
-                bindingKeys: instance.bindings.map(binding => binding.key)
-            };
-
-            const applied = [];
-            const appliedBindingKeys = new Set();
-            for (const binding of plan.bindings) {
-                const adapter = projectionAdapters.get(binding.adapter);
-                if (!adapter) {
-                    if (binding.optional) {
-                        instance.assistance.push(`${binding.label}: adapter unavailable; apply manually.`);
-                        continue;
-                    }
-                    const rollbackFailures = rollbackBindings(applied, instance.id);
-                    delete runtime.operations[instance.id];
-                    return { ok: false, code: 'UNAVAILABLE', message: `${binding.label}: adapter unavailable.`, rollbackFailures };
-                }
-                let ledger = runtime.projectionLedgers[binding.key];
-                if (ledger) {
-                    const inspection = adapter.inspect(binding, ledger);
-                    if (!inspection.ok || !['present', 'present-untracked'].includes(inspection.state)) {
-                        if (binding.optional) {
-                            instance.assistance.push(`${binding.label}: unavailable or changed; apply manually.`);
-                            continue;
-                        }
-                        const rollbackFailures = rollbackBindings(applied, instance.id);
-                        delete runtime.operations[instance.id];
-                        return { ok: false, code: inspection.code || 'CONFLICT', message: inspection.message || `${binding.label} could not be verified.`, rollbackFailures };
-                    }
-                    ledger.instanceIds = [...new Set((ledger.instanceIds || []).concat(instance.id))];
-                    ledger.lastVerifiedAt = isoNow();
-                    applied.push({ binding, shared: true });
-                    appliedBindingKeys.add(binding.key);
-                    continue;
-                }
-
-                const result = adapter.apply(binding);
-                if (!result.ok) {
-                    if (binding.optional) {
-                        instance.assistance.push(`${binding.label}: ${result.message || 'apply manually.'}`);
-                        continue;
-                    }
-                    const rollbackFailures = rollbackBindings(applied, instance.id);
-                    delete runtime.operations[instance.id];
-                    return { ok: false, code: result.code || 'UNAVAILABLE', message: result.message || `${binding.label} could not be applied.`, rollbackFailures };
-                }
-                ledger = {
-                    key: binding.key,
-                    adapter: binding.adapter,
-                    adapterVersion: 1,
-                    binding: clone(binding),
-                    instanceIds: [instance.id],
-                    managed: result.managed === true,
-                    baselinePresent: result.baselinePresent === true,
-                    metadata: clone(result.metadata || {}),
-                    createdAt: isoNow(),
-                    lastVerifiedAt: isoNow()
-                };
-                runtime.projectionLedgers[binding.key] = ledger;
-                applied.push({ binding, shared: false });
-                appliedBindingKeys.add(binding.key);
-            }
-
-            instance.bindings = instance.bindings.filter(binding => appliedBindingKeys.has(binding.key));
-
-            if (plan.definition.concentration) {
-                const concentration = setConcentration(plan.source.token.id, true, { instanceId: instance.id, reason: 'effect-established' });
-                if (!concentration.ok) {
-                    const rollbackFailures = rollbackBindings(applied, instance.id);
-                    delete runtime.operations[instance.id];
-                    return { ok: false, code: concentration.code, message: concentration.message, rollbackFailures };
-                }
-                instance.dependency.status = 'active';
-                instance.dependency.established = true;
-                instance.dependency.marker = String(GameAssist.ConcentrationAssist?.getMarker?.() || instance.dependency.marker || '');
-            }
-
-            instance.status = 'active';
-            runtime.instances[instance.id] = instance;
-            if (plan.definitionResult.isNew) modState.config.customDefinitions[plan.definition.id] = clone(plan.definition);
-            rememberRequest(plan.rawRequestId, instance.id, plan.intent);
-            rebuildDependencyIndex();
-            runtime.operations[instance.id] = { ...runtime.operations[instance.id], status: 'complete', completedAt: isoNow() };
-
-            const replacementFailures = [];
-            plan.concentrationConflicts.forEach(conflict => {
-                const ended = endEffect(conflict.id, plan.request.createdBy || 'api', {
-                    skipConcentration: true,
-                    reason: `replaced-by:${instance.id}`
-                });
-                if (!ended.ok) replacementFailures.push(ended.message);
-            });
-            notifyLifecycle('created', instance, { replacementFailures });
-            return {
-                ok: replacementFailures.length === 0,
-                instance: clone(instance),
-                warnings: [...new Set(instance.assistance.concat(replacementFailures))],
-                message: replacementFailures.length
-                    ? `${instance.name} was applied, but an earlier concentration effect needs cleanup attention.`
-                    : `${instance.name} was applied to ${instance.targets.length} target(s).`
-            };
-        }
-
-        function applyEffectRequest(request) {
-            const plan = buildPlan(request || {});
-            return plan.ok ? applyPlan(plan) : plan;
-        }
-
-        function remainingConcentrationOwners(instance) {
-            return activeInstances().filter(other =>
-                other.id !== instance.id
-                && other.dependency?.type === 'concentration'
-                && other.dependency?.established
-                && String(other.source.tokenId) === String(instance.source.tokenId)
-                && other.status === 'active'
-            );
-        }
-
-        function endEffect(instanceId, actor = 'api', options = {}) {
-            ensureState();
-            if (modState.config.enabled === false && options.allowDisabled !== true) {
-                return { ok: false, code: 'UNAVAILABLE', message: 'EffectAssist is disabled.' };
-            }
-            const instance = runtime.instances[String(instanceId || '')];
-            if (!validInstance(instance)) {
-                const ended = runtime.history.find(entry => entry?.id === String(instanceId || '') && entry?.status === 'ended');
-                return ended
-                    ? { ok: true, unchanged: true, instance: clone(ended), failures: [], message: 'That effect had already ended.' }
-                    : { ok: false, code: 'NOT_FOUND', message: 'That active effect instance was not found.' };
-            }
-
-            instance.status = 'ending';
-            instance.endRequestedAt = isoNow();
-            instance.endRequestedBy = String(actor || 'api');
-            const failures = [];
-            const preserved = [];
-            instance.bindings.forEach(binding => {
-                const ledger = runtime.projectionLedgers[binding.key];
-                if (!ledger || !(ledger.instanceIds || []).includes(instance.id)) return;
-                const otherOwners = (ledger.instanceIds || []).filter(id => id !== instance.id && validInstance(runtime.instances[id]));
-                if (otherOwners.length) {
-                    ledger.instanceIds = [...new Set(otherOwners)];
-                    return;
-                }
-                if (ledger.baselinePresent === true && ledger.managed !== true) {
-                    preserved.push(binding.label);
-                }
-                const adapter = projectionAdapters.get(binding.adapter);
-                if (!adapter) {
-                    failures.push(`${binding.label}: projection adapter is unavailable.`);
-                    return;
-                }
-                const result = adapter.remove(binding, ledger);
-                if (!result.ok) {
-                    failures.push(result.message || `${binding.label} could not be removed.`);
-                    return;
-                }
-                delete runtime.projectionLedgers[binding.key];
-            });
-
-            if (!failures.length && instance.dependency?.type === 'concentration' && instance.dependency?.established
-                && options.skipConcentration !== true && !remainingConcentrationOwners(instance).length) {
-                const result = setConcentration(instance.source.tokenId, false, { instanceId: instance.id, reason: options.reason || 'effect-ended' });
-                if (!result.ok) failures.push(result.message || 'Concentration could not be cleared.');
-            }
-
-            if (failures.length) {
-                instance.status = 'needs-attention';
-                instance.cleanup = { status: 'needs-attention', failures, lastAttemptAt: isoNow() };
-                rebuildDependencyIndex();
-                notifyLifecycle('cleanup-needs-attention', instance, { failures, reason: options.reason || 'manual' });
-                return {
-                    ok: false,
-                    code: 'CONFLICT',
-                    instance: clone(instance),
-                    failures,
-                    preserved,
-                    message: `${instance.name} is ending, but ${failures.length} projection(s) need attention.`
-                };
-            }
-
-            delete runtime.instances[instance.id];
-            delete runtime.operations[instance.id];
-            const ended = {
-                ...clone(instance),
-                status: 'ended',
-                endedAt: isoNow(),
-                endedBy: String(actor || 'api'),
-                endReason: String(options.reason || 'manual'),
-                cleanup: { status: 'complete', failures: [], preserved }
-            };
-            runtime.history.push(ended);
-            runtime.history = runtime.history.slice(-POLICY.effects.endedHistoryLimit);
-            rebuildDependencyIndex();
-            notifyLifecycle('ended', ended, { reason: options.reason || 'manual' });
-            return {
-                ok: true,
-                instance: clone(ended),
-                failures: [],
-                preserved,
-                message: preserved.length
-                    ? `${ended.name} ended. GameAssist removed its owned projections and preserved ${preserved.length} matching item(s) that already existed before the effect.`
-                    : `${ended.name} ended and its unneeded projections were removed.`
-            };
-        }
-
-        function endConcentrationForToken(token, reason) {
-            const tokenId = String(token?.id || '');
-            if (!tokenId) return;
-            const ids = activeInstances()
-                .filter(instance => String(instance.source?.tokenId || '') === tokenId)
-                .map(instance => instance.id);
-            ids.forEach(id => {
-                const ended = endEffect(id, 'ConcentrationAssist', {
-                    skipConcentration: true,
-                    allowDisabled: true,
-                    reason
-                });
-                if (ended.ok && ended.preserved?.length) {
-                    GameAssist.log(MODULE_NAME, ended.message, 'INFO');
-                }
-            });
-        }
-
-        function concentrationMarkerId(markerOverride = null) {
-            const marker = String(markerOverride
-                || GameAssist.ConcentrationAssist?.getMarker?.()
-                || GameAssist.getState('ConcentrationAssist')?.config?.marker
-                || 'stopwatch');
-            const resolution = GameAssist.MarkerService.resolve(marker);
-            return resolution.ok ? GameAssist.MarkerService.normalizeId(resolution.id) : null;
-        }
-
-        function bindingMarkerId(binding) {
-            if (binding.adapter === 'marker') {
-                const descriptor = markerDescriptor(binding);
-                return descriptor.ok ? GameAssist.MarkerService.normalizeId(descriptor.markerId) : null;
-            }
-            if (binding.adapter === 'condition') {
-                const descriptor = conditionDescriptor(binding);
-                return descriptor.ok ? GameAssist.MarkerService.normalizeId(descriptor.markerId) : null;
-            }
-            return null;
-        }
-
-        function observeMarkerChanges(event) {
-            if (modState.config.enabled === false) return;
-            const removed = new Set((event?.removed || []).map(item =>
-                GameAssist.MarkerService.normalizeId(item.id || item.tag || item)
-            ));
-            if (!removed.size) return;
-            const tokenId = String(event.tokenId || event.token?.id || '');
-
-            const concentrationEffects = activeInstances().filter(instance =>
-                instance.dependency?.type === 'concentration'
-                && instance.dependency?.established
-                && String(instance.source.tokenId || '') === tokenId
-                && removed.has(concentrationMarkerId(instance.dependency.marker))
-            );
-            const suppressedUntil = Number(suppressedConcentrationTokens.get(tokenId) || 0);
-            if (suppressedUntil < Date.now()) {
-                concentrationEffects.forEach(instance => {
-                    const ended = endEffect(instance.id, 'MarkerService', {
-                        skipConcentration: true,
-                        allowDisabled: true,
-                        reason: 'concentration-marker-removed'
-                    });
-                    if (ended.ok && ended.preserved?.length) {
-                        GameAssist.log(MODULE_NAME, ended.message, 'INFO');
-                    }
-                });
-            }
-
-            const targetEffects = activeInstances().filter(instance =>
-                (instance.bindings || []).some(binding =>
-                    binding.subjectType === 'token'
-                    && String(binding.tokenId || '') === tokenId
-                    && ['marker', 'condition'].includes(binding.adapter)
-                    && removed.has(bindingMarkerId(binding))
-                )
-            );
-            targetEffects.forEach(instance => {
-                const managedTargetMarkers = (instance.bindings || []).filter(binding =>
-                    binding.subjectType === 'token' && ['marker', 'condition'].includes(binding.adapter)
-                );
-                const markerStillPresent = managedTargetMarkers.some(binding => {
-                    const adapter = projectionAdapters.get(binding.adapter);
-                    const ledger = runtime.projectionLedgers[binding.key];
-                    if (!adapter || !ledger) return false;
-                    const inspected = adapter.inspect(binding, ledger);
-                    return inspected.ok && inspected.state === 'present';
-                });
-                if (!markerStillPresent) {
-                    const ended = endEffect(instance.id, 'MarkerService', {
-                        allowDisabled: true,
-                        reason: 'all-effect-markers-removed'
-                    });
-                    if (ended.ok && ended.preserved?.length) {
-                        GameAssist.log(MODULE_NAME, ended.message, 'INFO');
-                    }
-                }
-            });
-        }
-
-        function ensureMarkerObservation() {
-            if (!GameAssist.MarkerService?.isEnabled?.()) {
-                return { ok: false, code: 'UNAVAILABLE', message: 'MarkerService is disabled.' };
-            }
-            GameAssist.MarkerService.clearObservers(MODULE_NAME);
-            return GameAssist.MarkerService.observe(observeMarkerChanges, { owner: MODULE_NAME });
-        }
-
-        function observeConcentration(event) {
-            if (modState.config.enabled === false) return;
-            const payload = event?.payload || {};
-            if (!['concentration.ended', 'concentration.failed'].includes(event?.type)) return;
-            const tokenId = String(payload.tokenId || '');
-            const suppressedUntil = Number(suppressedConcentrationTokens.get(tokenId) || 0);
-            if (tokenId && suppressedUntil >= Date.now()) {
-                suppressedConcentrationTokens.delete(tokenId);
-                return;
-            }
-            const token = payload.tokenId ? getObj('graphic', payload.tokenId) : null;
-            if (token) endConcentrationForToken(token, payload.reason || event.type);
-            else if (payload.characterId) {
-                [...(runtime.dependencyIndex[String(payload.characterId)] || [])].forEach(id =>
-                    endEffect(id, 'ConcentrationAssist', { skipConcentration: true, allowDisabled: true, reason: payload.reason || event.type })
-                );
-            }
-        }
-
-        function auditEffects() {
-            ensureState();
-            const mismatches = [];
-            const checkedLedgers = new Set();
-            activeInstances().forEach(instance => {
-                if (instance.migrationStatus === 'legacy-incomplete') {
-                    mismatches.push({
-                        key: `legacy:${instance.id}`,
-                        type: 'legacy-incomplete',
-                        instanceId: instance.id,
-                        message: `${instance.name} uses the pre-release schema and needs a reviewed reapplication.`
-                    });
-                }
-                instance.bindings.forEach(binding => {
-                    const ledger = runtime.projectionLedgers[binding.key];
-                    checkedLedgers.add(binding.key);
-                    if (!ledger || !ledgerOwners(ledger).includes(instance.id)) {
-                        mismatches.push({
-                            key: `untracked:${instance.id}:${binding.key}`,
-                            type: 'untracked-projection',
-                            instanceId: instance.id,
-                            binding: clone(binding),
-                            message: `${instance.name}: ${binding.label} has no ownership record.`
-                        });
-                        return;
-                    }
-                    const adapter = projectionAdapters.get(binding.adapter);
-                    if (!adapter) {
-                        mismatches.push({
-                            key: `adapter:${binding.key}`,
-                            type: 'projection-unavailable',
-                            instanceId: instance.id,
-                            binding: clone(binding),
-                            message: `${instance.name}: ${binding.label} adapter is unavailable.`
-                        });
-                        return;
-                    }
-                    const inspected = adapter.inspect(binding, ledger);
-                    if (!inspected.ok) {
-                        mismatches.push({
-                            key: `inspect:${binding.key}`,
-                            type: inspected.state || 'projection-unavailable',
-                            instanceId: instance.id,
-                            binding: clone(binding),
-                            message: inspected.message || `${instance.name}: ${binding.label} could not be inspected.`
-                        });
-                    } else if (inspected.state === 'missing') {
-                        mismatches.push({
-                            key: `missing:${binding.key}`,
-                            type: 'missing-projection',
-                            instanceId: instance.id,
-                            binding: clone(binding),
-                            message: `${instance.name}: ${binding.label} is missing.`
-                        });
-                    } else if (inspected.state === 'drift') {
-                        mismatches.push({
-                            key: `drift:${binding.key}`,
-                            type: 'projection-drift',
-                            instanceId: instance.id,
-                            binding: clone(binding),
-                            message: `${instance.name}: ${binding.label} was edited outside EffectAssist and was preserved.`
-                        });
-                    }
-                });
-                if (instance.dependency?.type === 'concentration' && instance.dependency?.established) {
-                    const token = getObj('graphic', instance.source.tokenId);
-                    const markerId = concentrationMarkerId(instance.dependency.marker);
-                    if (!token || !markerId || !GameAssist.MarkerService.has(token, markerId)) {
-                        mismatches.push({
-                            key: `concentration:${instance.id}`,
-                            type: 'concentration-lost',
-                            instanceId: instance.id,
-                            message: `${instance.name}: ${instance.source.characterName} is no longer marked Concentrating.`
-                        });
-                    }
-                }
-                if (instance.status === 'needs-attention') {
-                    mismatches.push({
-                        key: `cleanup:${instance.id}`,
-                        type: 'cleanup-pending',
-                        instanceId: instance.id,
-                        message: `${instance.name}: cleanup is incomplete.`
-                    });
-                }
-            });
-
-            Object.entries(runtime.projectionLedgers).forEach(([key, ledger]) => {
-                if (!isPlainObject(ledger)) {
-                    mismatches.push({ key, type: 'invalid-ledger', message: 'A malformed projection ledger needs manual review.' });
-                    return;
-                }
-                const owners = ledgerOwners(ledger);
-                if (owners.length || checkedLedgers.has(key)) return;
-                mismatches.push({
-                    key: `orphan:${key}`,
-                    type: 'orphan-projection',
-                    binding: clone(ledger.binding),
-                    message: `${ledger.binding?.label || 'A projection'} remains without an active effect owner.`
-                });
-            });
-
-            const invalid = Object.values(runtime.instances).filter(instance => !validInstance(instance)).length;
-            if (invalid) mismatches.push({ key: 'invalid-instances', type: 'invalid-state', message: `${invalid} malformed effect instance record(s) were preserved for manual review.` });
-            return {
-                ok: mismatches.length === 0,
-                active: activeInstances().length,
-                ended: runtime.history.length,
-                definitions: getDefinitions().length,
-                invalid,
-                mismatches,
-                auditedAt: isoNow()
-            };
-        }
-
-        function mismatchSignature(mismatches) {
-            return mismatches.map(item => `${item.type}:${item.key}`).sort().join('|');
-        }
-
-        function createRepairGrant(audit, playerId) {
-            const id = 'ER-' + Math.random().toString(36).slice(2, 10);
-            repairGrants.set(id, {
-                signature: mismatchSignature(audit.mismatches),
-                playerId: String(playerId || ''),
-                expiresAt: Date.now() + POLICY.effects.repairGrantMs
-            });
-            if (repairGrants.size > POLICY.effects.repairGrantLimit) repairGrants.delete(repairGrants.keys().next().value);
-            return id;
-        }
-
-        function repairEffects(grantId, playerId) {
-            const grant = repairGrants.get(String(grantId || ''));
-            if (!grant || grant.expiresAt < Date.now() || grant.playerId !== String(playerId || '')) {
-                repairGrants.delete(String(grantId || ''));
-                return { ok: false, code: 'UNAUTHORIZED', message: 'That repair confirmation expired. Run the audit again.' };
-            }
-            const audit = auditEffects();
-            if (mismatchSignature(audit.mismatches) !== grant.signature) {
-                repairGrants.delete(String(grantId || ''));
-                return { ok: false, code: 'CONFLICT', message: 'Effect state changed after the preview. Run the audit again.' };
-            }
-            repairGrants.delete(String(grantId || ''));
-
-            const results = [];
-            audit.mismatches.forEach(item => {
-                if (item.type === 'concentration-lost') {
-                    const ended = endEffect(item.instanceId, playerId, { skipConcentration: true, reason: 'confirmed-concentration-loss' });
-                    results.push({ ok: ended.ok, item, message: ended.message });
-                    return;
-                }
-                if (item.type === 'cleanup-pending') {
-                    const ended = endEffect(item.instanceId, playerId, { reason: 'cleanup-retry' });
-                    results.push({ ok: ended.ok, item, message: ended.message });
-                    return;
-                }
-                if (item.type === 'orphan-projection') {
-                    const ledgerKey = String(item.key).replace(/^orphan:/, '');
-                    const ledger = runtime.projectionLedgers[ledgerKey];
-                    const adapter = ledger && projectionAdapters.get(ledger.adapter);
-                    const result = adapter?.remove(ledger.binding, ledger) || { ok: false, message: 'The orphaned projection adapter is unavailable.' };
-                    if (result.ok) delete runtime.projectionLedgers[ledgerKey];
-                    results.push({ ok: result.ok, item, message: result.message });
-                    return;
-                }
-                if (!['missing-projection', 'untracked-projection'].includes(item.type)) return;
-                const instance = runtime.instances[item.instanceId];
-                const binding = item.binding;
-                const adapter = binding && projectionAdapters.get(binding.adapter);
-                if (!validInstance(instance) || !adapter) {
-                    results.push({ ok: false, item, message: 'The active effect or projection adapter is unavailable.' });
-                    return;
-                }
-                let ledger = runtime.projectionLedgers[binding.key];
-                if (ledger) {
-                    const applied = adapter.apply(binding);
-                    if (!applied.ok) {
-                        results.push({ ok: false, item, message: applied.message });
-                        return;
-                    }
-                    ledger.managed = ledger.managed || applied.managed === true;
-                    ledger.metadata = clone(applied.metadata || ledger.metadata || {});
-                    ledger.instanceIds = [...new Set((ledger.instanceIds || []).concat(instance.id))];
-                    ledger.lastVerifiedAt = isoNow();
-                    results.push({ ok: true, item });
-                    return;
-                }
-                const applied = adapter.apply(binding);
-                if (!applied.ok) {
-                    results.push({ ok: false, item, message: applied.message });
-                    return;
-                }
-                runtime.projectionLedgers[binding.key] = {
-                    key: binding.key,
-                    adapter: binding.adapter,
-                    adapterVersion: 1,
-                    binding: clone(binding),
-                    instanceIds: [instance.id],
-                    managed: applied.managed === true,
-                    baselinePresent: applied.baselinePresent === true,
-                    metadata: clone(applied.metadata || {}),
-                    createdAt: isoNow(),
-                    lastVerifiedAt: isoNow()
-                };
-                results.push({ ok: true, item });
-            });
-            const failed = results.filter(result => !result.ok);
-            return {
-                ok: failed.length === 0,
-                attempted: results.length,
-                repaired: results.length - failed.length,
-                failed,
-                audit: auditEffects()
-            };
-        }
-
-        function reconcileMissedConcentrationLoss() {
-            activeInstances().forEach(instance => {
-                if (instance.migrationStatus === 'legacy-incomplete'
-                    || instance.dependency?.type !== 'concentration'
-                    || !instance.dependency?.established) return;
-                const token = getObj('graphic', instance.source.tokenId);
-                const markerId = concentrationMarkerId(instance.dependency.marker);
-                if (token && markerId && !GameAssist.MarkerService.has(token, markerId)) {
-                    endEffect(instance.id, 'EffectAssist startup', {
-                        skipConcentration: true,
-                        allowDisabled: true,
-                        reason: 'concentration-missing-on-enable'
-                    });
-                }
-            });
-        }
-
-        function panel(title, fields, msg = null, { gmOnly = false } = {}) {
-            const body = fields.map(field => `{{${_sanitize(field.label)}=${field.value}}}`).join(' ');
-            const player = msg?.playerid ? getObj('player', msg.playerid) : null;
-            const displayName = String(player?.get('_displayname') || player?.get('displayname') || msg?.who || '')
-                .replace(/["\\]/g, '')
-                .replace(/\s*\(GM\)\s*$/i, '')
-                .trim();
-            const destination = gmOnly || !msg || playerIsGM(msg.playerid) || !displayName
-                ? '/w gm '
-                : `/w "${displayName}" `;
-            sendChat(MODULE_NAME, `${destination}&{template:default} {{name=${_sanitize(title)}}} ${body}`);
-        }
-
-        function listText(values) {
-            return (Array.isArray(values) && values.length)
-                ? values.map(value => `• ${_sanitize(value)}`).join('<br>')
-                : 'None.';
-        }
-
-        function readableList(values) {
-            const items = (Array.isArray(values) ? values : []).filter(Boolean);
-            if (!items.length) return '';
-            if (items.length === 1) return items[0];
-            if (items.length === 2) return `${items[0]} and ${items[1]}`;
-            return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
-        }
-
-        function announcePlayerCast(instance) {
-            if (!validInstance(instance)) return;
-            const sourceName = _sanitize(instance.source.characterName || instance.source.tokenName || 'A character');
-            const publicTargets = (instance.targets || [])
-                .filter(target => target.layer === 'objects')
-                .map(target => _sanitize(target.characterName || target.tokenName || 'a recipient'));
-            const targetText = publicTargets.length === (instance.targets || []).length
-                ? ` on ${readableList(publicTargets)}`
-                : '';
-            sendChat(MODULE_NAME, `/em ${sourceName} has cast ${_sanitize(instance.name)}${targetText}.`);
-        }
-
-        /**
-         * prunePlayerCasting - Bounds sandbox-local casting choices and GM requests.
-         * Context: Roll20 chat buttons can remain visible after their authority expires.
-         * Invariants: no durable effect state is stored here; stale interactions fail with recovery controls.
-         */
-        function prunePlayerCasting(now = Date.now()) {
-            [...playerCastFlows.entries()].forEach(([id, flow]) => {
-                if (Number(flow?.expiresAt || 0) <= now) playerCastFlows.delete(id);
-            });
-            [...playerRequests.entries()].forEach(([id, request]) => {
-                if (Number(request?.expiresAt || 0) <= now) playerRequests.delete(id);
-            });
-        }
-
-        function createInteractionId(prefix, collection) {
-            let id;
-            do {
-                id = prefix + '-' + Math.random().toString(36).slice(2, 10);
-            } while (collection.has(id));
-            return id;
-        }
-
-        function rememberPlayerCastFlow(msg, definition, source, stage) {
-            prunePlayerCasting();
-            const id = createInteractionId('EF', playerCastFlows);
-            playerCastFlows.set(id, Object.freeze({
-                schemaVersion: PLAYER_CAST_FLOW_SCHEMA_VERSION,
-                id,
-                playerId: String(msg?.playerid || ''),
-                definitionId: definition.id,
-                sourceTokenId: source.summary.tokenId,
-                stage,
-                createdAt: Date.now(),
-                expiresAt: Date.now() + POLICY.effects.playerCastFlowMs
-            }));
-            while (playerCastFlows.size > POLICY.effects.playerCastFlowLimit) {
-                playerCastFlows.delete(playerCastFlows.keys().next().value);
-            }
-            return id;
-        }
-
-        function castingRecovery(msg, message = 'That casting choice is no longer available.') {
-            panel('EffectAssist', [
-                { label: 'Needs Attention', value: _sanitize(message) },
-                { label: 'Next Step', value: `${GameAssist.createButton('Start Again', '!effect')} ${GameAssist.createButton('Quick Guide', '!Effect-Guide')}` }
-            ], msg);
-        }
-
-        function resolvePlayerCastFlow(msg, flowId, expectedStage) {
-            prunePlayerCasting();
-            const id = String(flowId || '');
-            const flow = playerCastFlows.get(id);
-            if (!flow || flow.playerId !== String(msg?.playerid || '') || flow.stage !== expectedStage) {
-                return { ok: false, code: 'UNAUTHORIZED', message: 'That casting choice expired or belongs to another player. Start again from the Effect Catalog.' };
-            }
-            const definition = BUILTIN_DEFINITIONS[flow.definitionId] ? getDefinition(flow.definitionId) : null;
-            const source = resolveLinkedToken(flow.sourceTokenId, 'The source');
-            const authorization = definition && source.ok
-                ? authorizeCast(msg, source, definition.id)
-                : (source.ok ? { ok: false, code: 'NOT_FOUND', message: 'That effect is no longer available.' } : source);
-            if (!authorization.ok) return authorization;
-            return { ok: true, id, flow, definition, source };
-        }
-
-        function rememberPlayerRequest(msg, definition, source) {
-            prunePlayerCasting();
-            const player = getObj('player', msg?.playerid);
-            const requesterName = String(player?.get('_displayname') || player?.get('displayname') || msg?.who || 'A player')
-                .replace(/\s*\(GM\)\s*$/i, '')
-                .trim();
-            const id = createInteractionId('ER', playerRequests);
-            const request = Object.freeze({
-                schemaVersion: PLAYER_CAST_FLOW_SCHEMA_VERSION,
-                id,
-                playerId: String(msg?.playerid || ''),
-                requesterName,
-                definitionId: definition.id,
-                sourceTokenId: source.summary.tokenId,
-                sourceName: source.summary.characterName,
-                createdAt: Date.now(),
-                expiresAt: Date.now() + POLICY.effects.playerRequestMs
-            });
-            playerRequests.set(id, request);
-            while (playerRequests.size > POLICY.effects.playerRequestLimit) {
-                playerRequests.delete(playerRequests.keys().next().value);
-            }
-            return request;
-        }
-
-        function resolvePlayerRequest(requestId) {
-            prunePlayerCasting();
-            const request = playerRequests.get(String(requestId || ''));
-            if (!request) {
-                return { ok: false, code: 'NOT_FOUND', message: 'That player request expired or was already completed. Ask the player to send it again.' };
-            }
-            const requester = getObj('player', request.playerId);
-            const definition = BUILTIN_DEFINITIONS[request.definitionId] ? getDefinition(request.definitionId) : null;
-            const source = resolveLinkedToken(request.sourceTokenId, 'The requested source');
-            const authorization = requester && definition && source.ok
-                ? authorizeCast({ playerid: request.playerId }, source, definition.id)
-                : (source.ok ? { ok: false, code: 'UNAVAILABLE', message: 'That player request can no longer be verified.' } : source);
-            if (!authorization.ok) return authorization;
-            return { ok: true, request, definition, source };
-        }
-
-        function playerRequestTargetButtons(request, definition) {
-            const counts = PLAYER_TARGET_COUNTS[definition.id] || [1];
-            return counts.map(count => {
-                const label = counts.length === 1
-                    ? 'Choose Recipient'
-                    : `Choose ${count} Recipient${count === 1 ? '' : 's'}`;
-                return GameAssist.createButton(
-                    label,
-                    `!Effect-Apply --player-request ${request.id} --targets ${nativeTargetIds(definition, count)}`
-                );
-            }).join(' ');
-        }
-
-        function playerRequestFields(requestResult) {
-            if (!requestResult.ok) return [];
-            const { request, definition } = requestResult;
-            return [
-                { label: 'Request', value: `${_sanitize(request.requesterName)} would like ${_sanitize(request.sourceName)} to cast ${_sanitize(definition.name)}.` },
-                { label: 'Use Selected Tokens', value: GameAssist.createButton('Review My Selection', `!Effect-Apply --player-request ${request.id}`) },
-                { label: 'Choose On The Map', value: playerRequestTargetButtons(request, definition) },
-                { label: 'Request Controls', value: GameAssist.createButton('Dismiss', `!Effect-Request-Dismiss --request ${request.id}`) }
-            ];
-        }
-
-        function showPlayerRequests(msg, notice = '') {
-            prunePlayerCasting();
-            const pending = [...playerRequests.values()].sort((left, right) => right.createdAt - left.createdAt);
-            const rows = pending.slice(0, POLICY.effects.chatListLimit).map(request => {
-                const resolved = resolvePlayerRequest(request.id);
-                if (!resolved.ok) {
-                    return `<b>Request Needs Attention</b><br>${_sanitize(resolved.message)}<br>`
-                        + GameAssist.createButton('Dismiss', `!Effect-Request-Dismiss --request ${request.id}`);
-                }
-                return `<b>${_sanitize(request.sourceName)}: ${_sanitize(resolved.definition.name)}</b><br>`
-                    + `Requested by ${_sanitize(request.requesterName)}<br>`
-                    + `${GameAssist.createButton('Use Selected Tokens', `!Effect-Apply --player-request ${request.id}`)} `
-                    + `${playerRequestTargetButtons(request, resolved.definition)} `
-                    + `${GameAssist.createButton('Dismiss', `!Effect-Request-Dismiss --request ${request.id}`)}`;
-            }).filter(Boolean).join('<hr>');
-            panel('Player Effect Requests', [
-                ...(notice ? [{ label: 'Updated', value: _sanitize(notice) }] : []),
-                { label: 'Pending', value: rows || 'No player requests are waiting.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
-            ], msg, { gmOnly: true });
-        }
-
-        function nativeTargetIds(definition, count) {
-            return Array.from({ length: count }, (_value, index) =>
-                `@{target|${safeQueryText(definition.name)} recipient ${index + 1}|token_id}`
-            ).join(',');
-        }
-
-        function targetPickerButtons(definition, source, { requestedBy = '', flowId = '', counts = null } = {}) {
-            const targetCounts = Array.isArray(counts) && counts.length
-                ? counts
-                : (PLAYER_TARGET_COUNTS[definition.id] || [1]);
-            const requestOptions = requestedBy
-                ? ` --requested-by ${requestedBy} --announce true`
-                : '';
-            return targetCounts.map(count => {
-                const label = targetCounts.length === 1
-                    ? 'Choose Recipient'
-                    : `Choose ${count} Recipient${count === 1 ? '' : 's'}`;
-                const command = flowId
-                    ? `!Effect Apply --flow ${flowId} --targets ${nativeTargetIds(definition, count)}`
-                    : `!Effect Apply --effect ${definition.id} --source ${source.summary.tokenId} --targets ${nativeTargetIds(definition, count)}${requestOptions}`;
-                return GameAssist.createButton(label, command);
-            }).join(' ');
-        }
-
-        function showRecipientPicker(msg, definition, source) {
-            const flowId = rememberPlayerCastFlow(msg, definition, source, 'recipients');
-            const recipientButtons = targetPickerButtons(definition, source, { flowId });
-            const higherLevel = definition.id === 'bless'
-                ? GameAssist.createButton('Higher Level Casting', `!Effect Higher --flow ${flowId}`)
-                : '';
-            const askGm = !playerIsGM(msg?.playerid)
-                ? GameAssist.createButton('Ask the GM', `!Effect Request --flow ${flowId}`)
-                : '';
-            panel(`${definition.name}: Choose Recipients`, [
-                { label: 'Casting As', value: _sanitize(sourceDisplay(source, [source])) },
-                { label: 'Number of Recipients', value: `${recipientButtons}${higherLevel ? ` ${higherLevel}` : ''}` },
-                ...(askGm ? [{ label: 'Hidden or Off-Page', value: askGm }] : []),
-                { label: 'Next', value: 'Click a recipient button, then click the requested token or tokens on the map. You do not need to control those tokens.' },
-                { label: 'Return', value: GameAssist.createButton('Effect Catalog', '!effect') }
-            ], msg);
-        }
-
-        function showHigherLevelRecipients(msg, options) {
-            const flow = resolvePlayerCastFlow(msg, options.flow, 'recipients');
-            if (!flow.ok) return castingRecovery(msg, flow.message);
-            if (flow.definition.id !== 'bless') return castingRecovery(msg, 'That effect does not use the Bless higher-level recipient menu.');
-            panel('Bless: Higher Level Casting', [
-                { label: 'Casting As', value: _sanitize(flow.source.summary.characterName) },
-                { label: 'Choose Recipients', value: targetPickerButtons(flow.definition, flow.source, { flowId: flow.id, counts: [4, 5, 6, 7, 8, 9, 10, 11] }) },
-                { label: 'Next', value: 'Choose the total number of recipients, then point at each token on the map.' },
-                { label: 'Return', value: GameAssist.createButton('Base-Level Choices', `!Effect Targets --flow ${rememberPlayerCastFlow(msg, flow.definition, flow.source, 'source')}`) }
-            ], msg);
-        }
-
-        function showSourcePicker(msg, definition) {
-            const sources = controlledSources(msg);
-            if (!sources.length) {
-                return panel('EffectAssist', [
-                    { label: 'Needs Attention', value: 'No linked character token you control is available on your current Roll20 page.' },
-                    { label: 'Next Step', value: GameAssist.createButton('Effect Catalog', '!effect') }
-                ], msg);
-            }
-            const sourceButtons = sources.map(source => GameAssist.createButton(
-                sourceDisplay(source, sources),
-                `!Effect Targets --flow ${rememberPlayerCastFlow(msg, definition, source, 'source')}`
-            )).join(' ');
-            panel(`${definition.name}: Choose Caster`, [
-                { label: 'Who Is Casting?', value: sourceButtons },
-                { label: 'Next', value: 'After choosing the caster, choose how many recipients the effect has.' },
-                { label: 'Return', value: GameAssist.createButton('Effect Catalog', '!effect') }
-            ], msg);
-        }
-
-        function handleTargetStep(msg, options) {
-            if (options.flow) {
-                const flow = resolvePlayerCastFlow(msg, options.flow, 'source');
-                if (!flow.ok) return castingRecovery(msg, flow.message);
-                playerCastFlows.delete(flow.id);
-                return showRecipientPicker(msg, flow.definition, flow.source);
-            }
-            const definitionId = normalizeDefinitionId(options.effect);
-            const definition = getDefinition(definitionId);
-            if (!definition || (!playerIsGM(msg.playerid) && !BUILTIN_DEFINITIONS[definitionId])) {
-                return panel('EffectAssist', [
-                    { label: 'Needs Attention', value: 'That built-in effect is unavailable.' },
-                    { label: 'Next Step', value: GameAssist.createButton('Effect Catalog', '!effect') }
-                ], msg);
-            }
-            if (!options.source) return showSourcePicker(msg, definition);
-            const source = resolveLinkedToken(options.source, 'The source');
-            const authorization = source.ok ? authorizeCast(msg, source, definition.id) : source;
-            if (!authorization.ok) {
-                return panel('EffectAssist', [
-                    { label: 'Needs Attention', value: _sanitize(authorization.message) },
-                    { label: 'Next Step', value: GameAssist.createButton('Effect Catalog', '!effect') }
-                ], msg);
-            }
-            showRecipientPicker(msg, definition, source);
-        }
-
-        function handlePlayerRequest(msg, options) {
-            if (playerIsGM(msg.playerid)) return handleTargetStep(msg, options);
-            const flow = options.flow ? resolvePlayerCastFlow(msg, options.flow, 'recipients') : null;
-            const definitionId = flow?.ok ? flow.definition.id : normalizeDefinitionId(options.effect);
-            const definition = flow?.ok
-                ? flow.definition
-                : (BUILTIN_DEFINITIONS[definitionId] ? getDefinition(definitionId) : null);
-            const source = flow?.ok ? flow.source : resolveLinkedToken(options.source, 'The source');
-            const authorization = definition && source.ok
-                ? authorizeCast(msg, source, definition.id)
-                : (flow && !flow.ok ? flow : (source.ok ? { ok: false, message: 'That built-in effect is unavailable.' } : source));
-            if (!authorization.ok) {
-                return castingRecovery(msg, authorization.message);
-            }
-            if (flow?.ok) playerCastFlows.delete(flow.id);
-            const request = rememberPlayerRequest(msg, definition, source);
-            panel('Player Effect Request', [
-                ...playerRequestFields({ ok: true, request, definition, source }),
-                { label: 'Safety', value: 'The normal review and confirmation still occur before anything changes.' }
-            ], null, { gmOnly: true });
-            panel('Request Sent', [
-                { label: 'Result', value: `The GM received a streamlined request for ${_sanitize(source.summary.characterName)} to cast ${_sanitize(definition.name)}.` },
-                { label: 'Return', value: GameAssist.createButton('Effect Catalog', '!effect') }
-            ], msg);
-        }
-
-        function handlePlayerRequestDismiss(msg, options) {
-            prunePlayerCasting();
-            const existed = playerRequests.delete(String(options.request || ''));
-            showPlayerRequests(msg, existed ? 'The player request was dismissed. No effect changes were made.' : 'That player request was already unavailable.');
-        }
-
-        function activeSummary() {
-            const effects = activeInstances().slice(0, POLICY.effects.chatListLimit);
-            if (!effects.length) return 'No active effects.';
-            return effects.map(instance => {
-                const targets = instance.targets.map(target => _sanitize(target.tokenName)).join(', ');
-                const state = instance.status === 'active' ? '' : ` | ${_sanitize(instance.status)}`;
-                const duration = openDurationCandidates(instance).length
-                    ? ` | <b>duration review needed</b> ${GameAssist.createButton('Review', '!Effect-Duration --id ' + instance.id)}`
-                    : '';
-                const actionLabel = instance.definitionId === 'guidance' ? 'Use Guidance' : 'End';
-                return `<b>${_sanitize(instance.name)}</b> from ${_sanitize(instance.source.tokenName)} to ${targets}${state}${duration} ${GameAssist.createButton(actionLabel, '!Effect-End --id ' + instance.id)}`;
-            }).join('<br>');
-        }
-
-        function durationProviderSummary(instance) {
-            const duration = instance?.duration;
-            if (!duration?.rules) return 'Manual';
-            const providers = [];
-            if (duration.anchors?.combat) providers.push('CombatAssist rounds');
-            if (duration.anchors?.world) providers.push('Almanac time');
-            return providers.length ? providers.join(' + ') : 'Manual; no provider was active when applied';
-        }
-
-        function showDurationReview(msg, options = {}) {
-            reconcileDurationProviders({ announce: false });
-            const requestedId = String(options.id || '');
-            const effects = activeInstances().filter(instance => !requestedId || instance.id === requestedId);
-            const rows = effects.slice(0, POLICY.effects.chatListLimit).map(instance => {
-                const candidates = instance.duration?.candidates || [];
-                const candidateRows = candidates.map(candidate => {
-                    const action = candidate.status === 'dismissed'
-                        ? GameAssist.createButton('Reopen', `!Effect-Duration-Restore --id ${instance.id} --candidate ${candidate.id}`)
-                        : `${GameAssist.createButton('End Effect', '!Effect-End --id ' + instance.id)} ${GameAssist.createButton('Keep Active', `!Effect-Duration-Dismiss --id ${instance.id} --candidate ${candidate.id}`)}`;
-                    return `${candidate.status === 'dismissed' ? 'Kept active' : 'Review'}: ${_sanitize(candidate.reason)} ${action}`;
-                }).join('<br>');
-                const targetNames = (instance.targets || []).map(target => target.tokenName || target.characterName).filter(Boolean).join(', ');
-                return `<b>${_sanitize(instance.name)}</b> | ${_sanitize(instance.id)}<br>`
-                    + `Source: ${_sanitize(instance.source?.tokenName || instance.source?.characterName || 'Unknown')}<br>`
-                    + `Recipients: ${_sanitize(targetNames || 'None')}<br>`
-                    + `Duration: ${_sanitize(durationRuleSummary(instance))}<br>`
-                    + `Provider: ${_sanitize(durationProviderSummary(instance))}<br>`
-                    + (candidateRows || 'No duration candidate has been raised.');
-            }).join('<hr>');
-            panel('Effect Duration Review', [
-                ...(options.notice ? [{ label: 'Updated', value: _sanitize(options.notice) }] : []),
-                { label: 'How This Works', value: 'Provider evidence creates a GM review item. EffectAssist never ends an effect from elapsed time alone.' },
-                { label: 'Active Durations', value: rows || 'No matching active effects.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
-            ], msg, { gmOnly: true });
-        }
-
-        function updateDurationCandidate(msg, options, status) {
-            const instance = runtime.instances[String(options.id || '')];
-            const candidate = validInstance(instance)
-                ? (instance.duration?.candidates || []).find(item => item.id === String(options.candidate || ''))
-                : null;
-            if (!candidate) {
-                return showDurationReview(msg, { notice: 'That duration item is no longer available.' });
-            }
-            candidate.status = status;
-            if (status === 'dismissed') {
-                candidate.dismissedAt = isoNow();
-                candidate.dismissedBy = String(msg.playerid || 'gm');
-            } else {
-                candidate.dismissedAt = null;
-                candidate.dismissedBy = null;
-            }
-            notifyLifecycle(status === 'dismissed' ? 'duration-candidate-dismissed' : 'duration-candidate-restored', instance, { candidate });
-            showDurationReview(msg, {
-                id: instance.id,
-                notice: status === 'dismissed'
-                    ? `${instance.name} remains active. The duration item can be reopened here.`
-                    : `${instance.name}'s duration item is open for review again.`
-            });
-        }
-
-        function catalogButtons(msg, group) {
-            if (!playerIsGM(msg?.playerid)) {
-                return getDefinitions().filter(definition =>
-                    BUILTIN_DEFINITIONS[definition.id] && definition.catalogGroup === group
-                ).map(definition => GameAssist.createButton(
-                    definition.name,
-                    `!Effect-Targets --effect ${definition.id}`
-                )).join(' ') || 'None.';
-            }
-            const source = sourceQuery(msg);
-            if (!source) return 'Place at least one linked character token on the current player page so EffectAssist can offer a source picker.';
-            return getDefinitions().filter(definition =>
-                BUILTIN_DEFINITIONS[definition.id] && definition.catalogGroup === group
-            ).map(definition =>
-                GameAssist.createButton(definition.name, `!Effect-Apply --effect ${definition.id} --source ${source}`)
-            ).join(' ') || 'None.';
-        }
-
-        function showGuide(msg) {
-            panel('EffectAssist Quick Guide', [
-                { label: 'Apply An Effect', value: playerIsGM(msg?.playerid) ? 'Select the affected tokens, open the catalog, choose the effect and source, review the changes, then confirm.' : 'Open the catalog, choose the effect and your casting character, then choose visible recipients directly on the map.' },
-                { label: 'End An Effect', value: playerIsGM(msg?.playerid) ? 'Open Active Effects and end the specific source. Shared markers and bonuses remain while another source still owns them.' : 'Use the End Effect button on your successful casting message.' },
-                ...(playerIsGM(msg?.playerid) ? [{ label: 'Review Duration', value: 'Duration providers can flag an effect for review, but only the GM decides whether it ends.' }] : []),
-                ...(playerIsGM(msg?.playerid) ? [{ label: 'Recognized Casts', value: 'A supported 2014 Bless spell card may offer a private shortcut. You still select the recipients and review every change.' }] : []),
-                { label: 'Actions', value: `${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Control Center', '!Effect-GM') + ' ' + GameAssist.createButton('Active Effects', '!Effect-Active') + ' ' + GameAssist.createButton('Pending Casts', '!Effect-Casts') + ' ' + GameAssist.createButton('Duration Review', '!Effect-Duration') : ''}` }
-            ], msg);
-        }
-
-        function showControl(msg) {
-            pruneCastTracking();
-            prunePlayerCasting();
-            panel('EffectAssist Control Center', [
-                { label: 'Apply To Selected Tokens', value: `<b>Marker + Supported Sheet Automation</b><br>${catalogButtons(msg, 'automated')}<br><b>Tracked Marker; Rules Stay Manual</b><br>${catalogButtons(msg, 'tracked')}` },
-                { label: 'Browse', value: `${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Catalog Details', '!Effect-Definitions')}` },
-                { label: 'Manage', value: `${GameAssist.createButton(`Player Requests (${playerRequests.size})`, '!Effect-Requests')} ${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Recognized Casts', '!Effect-Casts')} ${GameAssist.createButton('Duration Review', '!Effect-Duration')} ${GameAssist.createButton('Status', '!Effect-Status')}` },
-                { label: 'Check', value: `${GameAssist.createButton('Audit and Repair', '!Effect-Audit')} ${GameAssist.createButton('Settings', '!Effect-Settings')} ${GameAssist.createButton('Guide', '!Effect-Guide')}` },
-                { label: 'Player Casting', value: `${modState.config.allowPlayerCasting !== false ? 'Allowed' : 'Locked'} | ${GameAssist.createButton('Allow', '!Effect-Players on')} ${GameAssist.createButton('Lock', '!Effect-Players off')}` },
-                { label: '2014 Cast Recognition', value: `${modState.config.castRecognition !== false ? 'On' : 'Off'} | ${castProposals.size} pending | ${GameAssist.createButton('Turn On', '!Effect-Recognition on')} ${GameAssist.createButton('Turn Off', '!Effect-Recognition off')}` },
-                { label: 'Duration Candidates', value: `${modState.config.durationCandidates !== false ? 'On' : 'Off'} | ${GameAssist.createButton('Turn On', '!Effect-Durations on')} ${GameAssist.createButton('Turn Off', '!Effect-Durations off')}` },
-                { label: 'Learn', value: `${GameAssist.createButton('What does EffectAssist do?', '!Effect-Info')} ${GameAssist.createButton('Create or Update Manual', '!Effect-Manual')}` },
-                { label: 'GameAssist', value: gameAssistHomeButton() }
-            ], msg, { gmOnly: true });
-        }
-
-        function showInfo(msg) {
-            panel('What EffectAssist Does', [
-                { label: 'Purpose', value: 'Applies and tracks spells, features, and custom effects as source-aware records with markers, supported 2014 sheet modifiers, concentration, and safe cleanup.' },
-                { label: 'Why It Is Not TokenAssist', value: 'TokenAssist performs an immediate token edit. EffectAssist remembers the rule relationship over time and removes only what that relationship owns.' },
-                { label: 'Safety', value: 'Unsupported mechanics are clearly labeled as manual. Existing or edited sheet values are preserved and reported instead of overwritten. Recognized spell cards and elapsed duration create GM decisions, never automatic changes.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Open Catalog', '!Effect-Catalog')} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Open Manual', '!Effect-Manual') + ' ' + GameAssist.createButton('Control Center', '!Effect-GM') : ''}` }
-            ], msg);
-        }
-
-        function showCatalog(msg) {
-            if (!playerCastingAllowed(msg)) {
-                return panel('EffectAssist', [
-                    { label: 'Player Casting Is Locked', value: 'The GM has temporarily limited EffectAssist casting controls.' }
-                ], msg);
-            }
-            const source = sourceQuery(msg) || '';
-            const condition = conditionQuery();
-            const customButtons = playerIsGM(msg?.playerid) && source ? [
-                GameAssist.createButton('Marker Effect', '!Effect-Apply --name "?{Effect name|Custom Effect}" --marker "?{Marker id or custom name|aura}" --dependency "?{Dependency|Manual,manual|Concentration,concentration}" --source ' + source),
-                condition ? GameAssist.createButton('Condition Effect', '!Effect-Apply --name "?{Effect name|Custom Effect}" --condition ' + condition + ' --dependency "?{Dependency|Manual,manual|Concentration,concentration}" --source ' + source) : '',
-                GameAssist.createButton('Record Only', '!Effect-Apply --name "?{Effect name|Custom Effect}" --none true --source ' + source)
-            ].filter(Boolean).join(' ') : '';
-            panel('EffectAssist Catalog', [
-                { label: 'Before You Choose', value: playerIsGM(msg?.playerid) ? 'Select every affected linked token. The next prompt asks who created the effect.' : 'Choose an effect, choose your casting character, then point at the visible recipient tokens on the map. No recipient selection is required beforehand.' },
-                { label: 'Marker And Sheet Automation', value: catalogButtons(msg, 'automated') },
-                { label: 'Tracked; Rules Stay Manual', value: catalogButtons(msg, 'tracked') },
-                ...(customButtons ? [{ label: 'Custom', value: customButtons }] : []),
-                { label: 'Learn Before Applying', value: `${GameAssist.createButton('Catalog Details', '!Effect-Definitions')} ${GameAssist.createButton('Quick Guide', '!Effect-Guide')}` }
-            ], msg);
-        }
-
-        function showDefinitions(msg) {
-            const visibleDefinitions = playerIsGM(msg?.playerid)
-                ? getDefinitions()
-                : getDefinitions().filter(definition => BUILTIN_DEFINITIONS[definition.id]);
-            const rows = visibleDefinitions.slice(0, POLICY.effects.chatListLimit)
-                .map(definition => `<b>${_sanitize(definition.name)}</b> | ${definition.catalogGroup === 'tracked' ? 'Tracked; mechanics manual' : 'Marker and sheet automation'} | ${definition.concentration ? 'Concentration' : 'No concentration'} | ${_sanitize(definition.duration)}`)
-                .join('<br>') || 'No definitions.';
-            panel('Effect Catalog Details', [
-                { label: 'Catalog', value: rows },
-                { label: 'How To Read It', value: 'Automated entries change supported marker and 2014-sheet fields. Tracked entries manage the source, marker, concentration, and cleanup while their rule mechanics remain manual.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Apply An Effect', '!Effect-Catalog')} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Open Manual', '!Effect-Manual') : ''}` }
-            ], msg);
-        }
-
-        function endedSummary() {
-            const ended = runtime.history.slice(-POLICY.effects.chatListLimit).reverse();
-            if (!ended.length) return 'No ended effects recorded.';
-            return ended.map(instance => {
-                const targets = (instance.targets || []).map(target => _sanitize(target.tokenName)).join(', ') || 'unknown targets';
-                return `<b>${_sanitize(instance.name)}</b> from ${_sanitize(instance.source?.tokenName || 'unknown source')} to ${targets} | ended ${_sanitize(instance.endedAt || 'unknown time')}`;
-            }).join('<br>');
-        }
-
-        function showActive(msg) {
-            panel('Active Effects', [
-                { label: 'Current Effects', value: activeSummary() },
-                { label: 'Actions', value: `${GameAssist.createButton('Effect Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
-            ], msg, { gmOnly: true });
-        }
-
-        function showStatus(msg) {
-            pruneCastTracking();
-            prunePlayerCasting();
-            const audit = auditEffects();
-            const durationCandidates = activeInstances().reduce((sum, instance) => sum + openDurationCandidates(instance).length, 0);
-            panel('EffectAssist Status', [
-                { label: 'Module', value: `${MODULE_VERSION} | 2014 sheet adapter | state schema ${STATE_SCHEMA_VERSION}` },
-                { label: 'Records', value: `${audit.active} active | ${audit.ended} ended | ${audit.definitions} definitions` },
-                { label: 'Health', value: audit.ok ? 'No mismatches found.' : `${audit.mismatches.length} item(s) need review.` },
-                { label: 'Player Casting', value: modState.config.allowPlayerCasting !== false ? 'Allowed' : 'Locked' },
-                { label: 'Application Review', value: modState.config.reviewApplications === true ? 'On' : 'Off' },
-                { label: 'Concentration Rule', value: modState.config.allowMultipleConcentration === true ? 'Multiple effects allowed' : 'New effect replaces existing concentration' },
-                { label: 'Player Requests', value: `${playerRequests.size} pending request(s)` },
-                { label: '2014 Cast Recognition', value: `${modState.config.castRecognition !== false ? 'On' : 'Off'} | ${castProposals.size} pending Bless proposal(s)` },
-                { label: 'Duration Review', value: `${modState.config.durationCandidates !== false ? 'On' : 'Off'} | ${durationCandidates} open candidate(s)` },
-                { label: 'Actions', value: `${GameAssist.createButton('Catalog', '!Effect-Catalog')} ${GameAssist.createButton('Player Requests', '!Effect-Requests')} ${GameAssist.createButton('Active Effects', '!Effect-Active')} ${GameAssist.createButton('Recognized Casts', '!Effect-Casts')} ${GameAssist.createButton('Durations', '!Effect-Duration')} ${GameAssist.createButton('Audit', '!Effect-Audit')} ${GameAssist.createButton('Control Center', '!Effect-GM')}` }
-            ], msg, { gmOnly: true });
-        }
-
-        function showAudit(msg) {
-            const audit = auditEffects();
-            const details = audit.mismatches.slice(0, POLICY.effects.chatListLimit)
-                .map(item => `• ${_sanitize(item.message)}`).join('<br>');
-            const fields = [
-                { label: 'Summary', value: `${audit.active} active effects | ${audit.mismatches.length} item(s) need attention` },
-                { label: 'Changes', value: 'None. This audit is read-only.' },
-                { label: 'Details', value: details || 'Effect records, concentration, markers, and supported 2014 sheet modifiers agree.' }
-            ];
-            const repairable = audit.mismatches.some(item =>
-                ['missing-projection', 'untracked-projection', 'orphan-projection', 'concentration-lost', 'cleanup-pending'].includes(item.type)
-            );
-            if (repairable) {
-                const grant = createRepairGrant(audit, msg?.playerid);
-                fields.push({ label: 'Repair', value: GameAssist.createButton('Confirm Current Repairs', '!Effect-Repair --grant ' + grant + ' --confirm') });
-            }
-            fields.push({ label: 'Return', value: GameAssist.createButton('Control Center', '!Effect-GM') });
-            panel('EffectAssist Audit', fields, msg, { gmOnly: true });
-        }
-
-        function manualHtml() {
-            const catalog = getDefinitions().map(definition => [
-                `<h3>${_sanitize(definition.name)}</h3>`,
-                `<p>${_sanitize(definition.description)}</p>`,
-                `<ul><li><strong>Concentration:</strong> ${definition.concentration ? 'Yes' : 'No'}</li>`,
-                `<li><strong>Automation level:</strong> ${definition.catalogGroup === 'tracked' ? 'Tracked; rule mechanics remain manual' : 'Marker and supported sheet automation'}</li>`,
-                `<li><strong>Duration:</strong> ${_sanitize(definition.duration)}</li>`,
-                `<li><strong>Targets:</strong> ${_sanitize(definition.targets)}</li></ul>`,
-                `<p><strong>GameAssist will handle</strong><br>${listText(definition.automatic)}</p>`,
-                `<p><strong>The GM still handles</strong><br>${listText(definition.assisted)}</p>`,
-                definition.informational.length ? `<p><strong>Why some parts stay manual</strong><br>${listText(definition.informational)}</p>` : ''
-            ].join('')).join('');
-            return [
-                '<h1>EffectAssist User Manual</h1>',
-                `<p><strong>GameAssist v${_sanitize(VERSION)} | EffectAssist ${MODULE_VERSION}</strong></p>`,
-                '<p>EffectAssist applies and tracks spells, features, and custom effects. Each active record remembers its source, targets, concentration, markers, supported D&amp;D 5E by Roll20 (2014) sheet modifiers, and cleanup responsibilities.</p>',
-                '<h2>GM Quick Start</h2>',
-                '<ol><li>Select every affected linked token.</li><li>Run <code>!effect</code> to open the Effect Catalog directly.</li><li>Choose the effect and source.</li><li>Review exactly what GameAssist will change.</li><li>Confirm.</li><li>Use the immediate End Effect button or Active Effects to end a specific source.</li></ol>',
-                '<h2>Player Casting</h2>',
-                '<p>Players may open <code>!effect</code> or use a spell shortcut when the GM allows player casting. Caster buttons use short-lived private choices instead of placing character or token identifiers in the chat link. After choosing a controlled caster, Roll20 asks the player to point at visible recipient tokens on the map; the player does not need to control those recipients or preselect them. Every application shows a review and rechecks the source, recipients, page, visibility, and control before confirmation.</p>',
-                '<p>For hidden recipients, unusually large groups, or any cast the GM should place, the player may use <strong>Ask the GM</strong>. The request remains available briefly under <strong>Player Requests</strong> in the GM Control Center and offers selected-token and map-target choices. The normal review and confirmation still occur. A successful player-originated cast is announced publicly with the source, effect, and visible recipient names. Direct GM applications remain private unless deliberately announced.</p>',
-                '<p>Player menus expose only the built-in casting path and the player\'s own End Effect control. Status, audit, repair, custom effects, and configuration remain private to the GM.</p>',
-                '<h2>Recognized 2014 Spell Cards</h2>',
-                '<p>When cast recognition is on, an official D&amp;D 5E by Roll20 (2014) Bless spell card can create one short-lived private proposal for the GM. GameAssist accepts it only when the spell, character, active page, linked source token, and player control are unambiguous. The GM selects the actual recipients and uses the proposal button to enter the same review and confirmation path as the catalog.</p>',
-                '<p>Spell-card target wording is descriptive and is never used as token identity. Unsupported spells, ambiguous sources, and 2024-sheet cards do not create effect instances. Use <code>!Effect-Casts</code> to review pending proposals and <code>!Effect-Recognition on|off</code> to control this shortcut. The manual catalog remains available whether recognition is on or off.</p>',
-                '<h2>Concentration</h2>',
-                '<p>ConcentrationAssist owns concentration checks and the configured concentration marker. EffectAssist connects dependent effects to that source. A failed check, deliberate concentration clear, or manual removal of the source marker ends the dependent effect and removes its owned target projections. Removing only a target effect marker creates an audit mismatch so an accidental edit can be repaired; it does not silently end the source or every target.</p>',
-                '<h2>Overlapping Sources</h2>',
-                '<p>Separate sources remain separate records. A non-stacking marker or modifier remains while any valid source still owns it.</p>',
-                '<h2>Duration Review</h2>',
-                '<p>Built-in definitions carry formal round and world-time duration rules. If CombatAssist is actively following the same page when an effect begins, EffectAssist records its current round and initiative point. If AlmanacAssist fictional time is active, it also records the current world minute. Reaching either verified boundary creates a private GM review item; it never ends the effect automatically.</p>',
-                '<p>Use <code>!Effect-Duration</code> to end an effect, keep it active, or reopen a dismissed review item. Pauses, backward movement, tracker rebases, provider absence, and effects created before duration tracking are not guessed through. The original manual End Effect control always remains available. Use <code>!Effect-Durations on|off</code> to enable or disable new candidate processing.</p>',
-                '<h2>Audit And Repair</h2>',
-                '<p>Audit never changes anything. Repair requires a current confirmation, rechecks the state, preserves edited or ambiguous values, and reports anything that still needs attention.</p>',
-                '<h2>Effect Catalog</h2>',
-                catalog,
-                '<h2>Commands</h2>',
-                '<p><code>!effect</code> opens the player catalog directly, while <code>!Effect-GM</code> opens the GM casting and management screen. Player shortcuts are <code>!Bless</code>, <code>!Guidance</code> or <code>!Guide</code>, <code>!Haste</code>, <code>!Warding-Bond</code>, <code>!Holy-Weapon</code>, and <code>!PwoaT</code>. Generated targeting and request buttons use bounded private identifiers; players do not need to memorize them. GM controls include <code>!Effect-GM</code>, <code>!Effect-DM</code>, <code>!Effect-Requests</code>, <code>!Effect-Active</code>, <code>!Effect-Casts</code>, <code>!Effect-Recognition on|off</code>, <code>!Effect-Duration</code>, <code>!Effect-Durations on|off</code>, <code>!Effect-Status</code>, <code>!Effect-Audit</code>, <code>!Effect-Players on|off</code>, <code>!Effect-Manual</code>, and generated Apply, Confirm, End, and Repair buttons.</p>'
-            ].join('');
-        }
-
-        function showManual(msg) {
-            const result = GameAssist.writeModuleManual(MODULE_NAME, manualHtml());
-            panel('EffectAssist Manual', [
-                { label: 'Result', value: result.ok ? 'The manual was created or updated.' : _sanitize(result.message) },
-                ...(result.ok ? [{ label: 'Handout', value: result.link }] : []),
-                { label: 'Actions', value: `${GameAssist.createButton('Control Center', '!Effect-GM')} ${GameAssist.createButton('Short Guide', '!Effect-Guide')}` }
-            ], msg, { gmOnly: true });
-        }
-
-        function authorizeCast(msg, source, definitionId) {
-            if (!playerCastingAllowed(msg)) {
-                return { ok: false, code: 'FORBIDDEN', message: 'The GM has temporarily locked player casting through EffectAssist.' };
-            }
-            if (!playerIsGM(msg.playerid) && (!definitionId || !BUILTIN_DEFINITIONS[definitionId])) {
-                return { ok: false, code: 'FORBIDDEN', message: 'Players may use the built-in catalog; custom effects remain GM-only.' };
-            }
-            if (!playerIsGM(msg.playerid)
-                && (source.summary.layer !== 'objects' || source.summary.pageId !== effectPageId(msg.playerid))) {
-                return { ok: false, code: 'FORBIDDEN', message: 'Choose a visible source token on your current Roll20 page.' };
-            }
-            if (!actorControlsSource(msg.playerid, source)) {
-                return { ok: false, code: 'FORBIDDEN', message: 'Choose a source token controlled by your Roll20 player account.' };
-            }
-            return { ok: true };
-        }
-
-        function canEndInstance(msg, instance) {
-            if (playerIsGM(msg.playerid)) return true;
-            if (String(instance?.createdBy || '') === String(msg.playerid || '')) return true;
-            const source = resolveLinkedToken(instance?.source?.tokenId, 'The source');
-            return source.ok && actorControlsSource(msg.playerid, source);
-        }
-
-        function handleApply(msg, options) {
-            const flow = options.flow ? resolvePlayerCastFlow(msg, options.flow, 'recipients') : null;
-            const pending = playerIsGM(msg.playerid) && options['player-request']
-                ? resolvePlayerRequest(options['player-request'])
-                : null;
-            if ((flow && !flow.ok) || (pending && !pending.ok)) {
-                const failure = flow && !flow.ok ? flow : pending;
-                return castingRecovery(msg, failure.message);
-            }
-            const selected = requestedTargets(msg, options);
-            if (!selected.ok) {
-                panel('EffectAssist', [
-                    { label: 'Needs Attention', value: _sanitize(selected.message) },
-                    { label: 'Next Step', value: pending?.ok
-                        ? `${GameAssist.createButton('Pending Requests', '!Effect-Requests')} ${GameAssist.createButton('Open Guide', '!Effect-Guide')}`
-                        : `${GameAssist.createButton('Start Again', '!effect')} ${GameAssist.createButton('Open Guide', '!Effect-Guide')}` }
-                ], msg);
-                return;
-            }
-            const sourceTokenId = flow?.ok
-                ? flow.source.summary.tokenId
-                : (pending?.ok ? pending.source.summary.tokenId : String(options.source || ''));
-            const source = flow?.ok ? flow.source : (pending?.ok ? pending.source : resolveLinkedToken(sourceTokenId, 'The source'));
-            const definitionId = flow?.ok
-                ? flow.definition.id
-                : (pending?.ok ? pending.definition.id : (options.effect ? normalizeDefinitionId(options.effect) : null));
-            const requestedBy = pending?.ok
-                ? pending.request.playerId
-                : (playerIsGM(msg.playerid) && options['requested-by'] ? String(options['requested-by']) : '');
-            let authorization = source.ok
-                ? authorizeCast(msg, source, definitionId)
-                : source;
-            if (source.ok && requestedBy) {
-                const requester = getObj('player', requestedBy);
-                authorization = requester
-                    && modState.config.allowPlayerCasting !== false
-                    && BUILTIN_DEFINITIONS[definitionId]
-                    && actorControlsSource(requestedBy, source)
-                    ? { ok: true }
-                    : { ok: false, code: 'FORBIDDEN', message: 'That player request is no longer authorized. Ask the player to open a fresh casting request.' };
-            }
-            if (!authorization.ok) {
-                panel('EffectAssist', [
-                    { label: 'Needs Attention', value: _sanitize(authorization.message) },
+                { label: 'Observer Mode', value: 'InitiativeAssist is watching the tracker but w
+... 624022 bytes omitted ...
+ion', value: _sanitize(authorization.message) },
                     { label: 'Next Step', value: GameAssist.createButton('Open Catalog', '!Effect-Catalog') }
                 ], msg);
                 return;
@@ -19892,7 +9407,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Effect', value: _sanitize(plan.definition.name) },
                 { label: 'Source', value: _sanitize(plan.source.summary.characterName) },
                 { label: 'Targets', value: plan.targets.map(target => _sanitize(target.summary.tokenName)).join(', ') },
-                { label: 'GameAssist Will Do', value: previewPlan(plan).map(item => `• ${_sanitize(item)}`).join('<br>') || 'Record the effect.' },
+                { label: 'GameAssist Will Do', value: previewPlan(plan).map(item => ` ${_sanitize(item)}`).join('<br>') || 'Record the effect.' },
                 { label: 'Still Handled At The Table', value: listText(plan.assistance) },
                 { label: 'Confirm', value: `${GameAssist.createButton('Apply This Effect', '!Effect-Confirm --grant ' + grant)} ${GameAssist.createButton('Cancel', '!Effect-Catalog')}` }
             ], msg);
@@ -20021,7 +9536,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             panel('EffectAssist Concentration Options', [
                 { label: 'Setting', value: modState.config.allowMultipleConcentration
                     ? 'Multiple concentration effects are allowed for this campaign.'
-                    : 'Normal 5E behavior is active: a new concentration effect replaces the source character’s existing concentration effect.' },
+                    : 'Normal 5E behavior is active: a new concentration effect replaces the source character's existing concentration effect.' },
                 { label: 'Return', value: GameAssist.createButton('Concentration Options', '!Effect-Advanced') }
             ], msg, { gmOnly: true });
         }
@@ -20097,6 +9612,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         GameAssist.onCommand('!effect', handleCommand, MODULE_NAME);
+        GameAssist.onCommand('!EffectAssist', handleCommand, MODULE_NAME, {
+            match: { caseInsensitive: true, mode: 'token' }
+        });
         GameAssist.onCommand('!Effect-', handleCommand, MODULE_NAME, {
             match: { caseInsensitive: true, mode: 'prefix' }
         });
@@ -20176,7 +9694,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }, {
         enabled: false,
         events: ['chat:message'],
-        prefixes: ['!Effect-', '!effect', '!EffectAssist-','!Bless','!Guidance','!Guide','!Haste','!Warding-Bond','!WardingBond','!Holy-Weapon','!HolyWeapon','!PwoaT'],
+        prefixes: ['!Effect-', '!effect', '!EffectAssist', '!EffectAssist-','!Bless','!Guidance','!Guide','!Haste','!Warding-Bond','!WardingBond','!Holy-Weapon','!HolyWeapon','!PwoaT'],
         preserveRuntimeOnDisable: true,
         protectedConfigKeys: ['customDefinitions', 'markerOverrides'],
         teardown: () => {
@@ -20185,6 +9703,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced EffectAssist to 2.5.3; caster buttons now show the ordinary token or character name alone and add concise character, layer, and token-id details only when duplicate visible labels require disambiguation, while bare !EffectAssist joins the existing command surface.
     // Changed (v2.0.0): Advanced EffectAssist to 2.5.2; recipient validation now names every exact token and distinguishes empty from stale character links, duplicate caster choices identify token and layer, concentration lifecycle follows the chosen source token, and cleanup reports projections preserved because they predated the effect.
     // Changed (v2.0.0): Advanced EffectAssist to 2.5.1; concentration effects now refuse application before projection writes when the configured concentration marker is unavailable, successful results identify the established source dependency, and unlinked recipient failures name the affected token with a direct Roll20 correction.
     // Changed (v2.0.0): Advanced EffectAssist to 2.5.0; player casting now separates caster selection from recipient count, Bless exposes compact base-level choices plus a 4-11 recipient higher-level menu, and every new EffectAssist-owned 2014 sheet row uses the compact "(GA)" label convention.
@@ -20235,7 +9754,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   guarantees: ["Official 2014-sheet healing uses short-lived source, target, roll, review, and one-use confirmation boundaries","Every accepted HP change uses HealthService provenance and verification; multi-target failures attempt verified rollback","Players may target visible supported PCs they do not control while NPC, hidden, and off-page placement remains GM-reviewed","Spell slots, class resources, temporary HP, damage causes, resistance, and unsupported sheet fields are never inferred or consumed"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.HealAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.0.1", interaction_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.1.0", interaction_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // HealAssist is a disabled-by-default HealthService client. It guides an authorized
@@ -20245,19 +9764,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('HealAssist', function() {
         const MODULE_NAME = 'HealAssist';
-        const MODULE_VERSION = '1.0.1';
+        const MODULE_VERSION = '1.1.0';
         const INTERACTION_SCHEMA_VERSION = 1;
         const modState = GameAssist.getState(MODULE_NAME);
         modState.config = {
             enabled: false,
             allowPlayerHealing: true,
             resultAudience: 'public',
+            autoApply: false,
             ...modState.config
         };
         if (!['public', 'private'].includes(String(modState.config.resultAudience || '').toLowerCase())) {
             modState.config.resultAudience = 'public';
         }
         if (typeof modState.config.allowPlayerHealing !== 'boolean') modState.config.allowPlayerHealing = true;
+        if (typeof modState.config.autoApply !== 'boolean') modState.config.autoApply = false;
 
         const ACTIONS = Object.freeze({
             'cure-wounds': Object.freeze({ id: 'cure-wounds', name: 'Cure Wounds', group: 'magic', minimumSlot: 1, maximumSlot: 9, die: 8, diceForSlot: slot => slot, ability: true, targetCounts: [1], tableStep: 'Mark off the spell slot on the character sheet after the heal is confirmed.' }),
@@ -20416,7 +9937,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 });
         }
 
-        function rememberFlow(msg, action, source) {
+        function rememberFlow(msg, action, source, { maximum = false } = {}) {
             pruneInteractions();
             const id = interactionId('HLF');
             flows.set(id, Object.freeze({
@@ -20425,6 +9946,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 playerId: String(msg?.playerid || ''),
                 actionId: action.id,
                 sourceTokenId: String(source.token.id),
+                maximum: maximum === true,
                 expiresAt: Date.now() + POLICY.healing.interactionMs
             }));
             pruneInteractions();
@@ -20522,18 +10044,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             )).join(' ');
         }
 
-        function showRecipientPicker(msg, action, source) {
-            const flowId = rememberFlow(msg, action, source);
-            panel(`${action.name}: Choose Recipients`, [
+        function showRecipientPicker(msg, action, source, { maximum = false } = {}) {
+            const flowId = rememberFlow(msg, action, source, { maximum });
+            panel(`${action.name}${maximum ? ': Maximum Healing' : ''}: Choose Recipients`, [
                 { label: 'Healing As', value: _sanitize(source.name) },
                 { label: 'Choose On The Map', value: recipientButtons(action, flowId) },
+                ...(maximum ? [{ label: 'Healing Result', value: 'The supported formula will use its maximum possible result.' }] : []),
                 ...(!playerIsGm(msg.playerid) ? [{ label: 'Hidden Or Off-Page Recipient', value: GameAssist.createButton('Ask the GM', `!Heal-Request --flow ${flowId}${actionQuery(action)}`) }] : []),
                 { label: 'Next', value: 'Click a recipient button, answer any short Roll20 prompts, then click the requested visible token or tokens. Players do not need to control another player character to heal it.' },
                 { label: 'Return', value: GameAssist.createButton('Healing Actions', '!Heal-Menu') }
             ], msg);
         }
 
-        function showSourcePicker(msg, action) {
+        function showSourcePicker(msg, action, { maximum = false } = {}) {
             const sources = sourceCandidates(msg);
             if (!sources.length) {
                 return panel(MODULE_NAME, [
@@ -20541,9 +10064,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!Heal-Guide') }
                 ], msg);
             }
-            if (sources.length === 1) return showRecipientPicker(msg, action, sources[0]);
-            panel(`${action.name}: Choose The Healer`, [
-                { label: 'Healers', value: sources.map(source => GameAssist.createButton(source.name, `!Heal-Recipients --flow ${rememberFlow(msg, action, source)}`)).join(' ') },
+            if (sources.length === 1) return showRecipientPicker(msg, action, sources[0], { maximum });
+            panel(`${action.name}${maximum ? ': Maximum Healing' : ''}: Choose The Healer`, [
+                { label: 'Healers', value: sources.map(source => GameAssist.createButton(source.name, `!Heal-Recipients --flow ${rememberFlow(msg, action, source, { maximum })}`)).join(' ') },
                 { label: 'Tip', value: 'Selecting the healer token before opening this screen keeps the list short.' },
                 { label: 'Return', value: GameAssist.createButton('Healing Actions', '!Heal-Menu') }
             ], msg);
@@ -20655,8 +10178,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function handleRequest(msg, options) {
             const flowResult = resolveFlow(msg, options.flow);
             if (!flowResult.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(flowResult.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
-            const plan = formulaPlan(flowResult.action, flowResult.source, options);
-            if (!plan.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(plan.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            const basePlan = formulaPlan(flowResult.action, flowResult.source, options);
+            if (!basePlan.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(basePlan.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            const plan = { ...basePlan, maximum: flowResult.flow.maximum === true };
             flows.delete(flowResult.flow.id);
             rememberRequest(msg, flowResult, plan);
             panel('Healing Request Sent', [
@@ -20683,17 +10207,29 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return found;
         }
 
+        function maximumFormulaResult(formula) {
+            const text = String(formula || '').toLowerCase().replace(/\s+/g, '');
+            if (/^\d{1,4}$/.test(text)) return { ok: true, total: Number(text), rolls: [], expression: text };
+            const match = text.match(/^(\d{1,2})d(\d{1,4})([+-]\d{1,4})?$/);
+            if (!match) return { ok: false, message: 'That healing formula cannot be maximized safely.' };
+            const dice = Number(match[1]);
+            const sides = Number(match[2]);
+            const flat = Number(match[3] || 0);
+            const total = (dice * sides) + flat;
+            return total > 0
+                ? { ok: true, total, rolls: Array.from({ length: dice }, () => sides), expression: `${text} (maximum)` }
+                : { ok: false, message: 'That formula does not have a positive maximum healing result.' };
+        }
+
         function rollAndReview(msg, source, action, plan, targets, { request = null } = {}) {
-            sendChat(MODULE_NAME, `/w gm [[${plan.formula}]]`, operations => {
-                const inline = operations?.[0]?.inlinerolls?.[0];
-                const total = Number(inline?.results?.total);
-                if (!Number.isFinite(total) || total <= 0) {
+            const finish = (total, rolls, expression) => {
+                const healing = Math.floor(Number(total));
+                if (!Number.isFinite(healing) || healing <= 0) {
                     return panel(MODULE_NAME, [
                         { label: 'Needs Attention', value: 'Roll20 did not return a positive healing result. No HP was changed.' },
                         { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }
-                    ], msg);
+                    ], msg, { gmOnly: modState.config.autoApply === true });
                 }
-                const healing = Math.floor(total);
                 const targetPlans = targets.map(target => {
                     const proposed = target.current >= target.maximum
                         ? target.current
@@ -20724,15 +10260,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     actionId: action.id,
                     actionName: action.name,
                     plan: Object.freeze({ ...plan }),
-                    formula: String(inline?.expression || plan.formula),
+                    formula: String(expression || plan.formula),
                     total: healing,
-                    rolls: Object.freeze(collectDice(inline?.results?.rolls)),
+                    rolls: Object.freeze([...(rolls || [])]),
                     targets: Object.freeze(targetPlans),
                     expiresAt: Date.now() + POLICY.healing.interactionMs
                 });
                 proposals.set(id, proposal);
                 pruneInteractions();
                 if (request) requests.delete(request.id);
+                if (modState.config.autoApply === true) {
+                    return applyProposal(msg, proposal, { automatic: true });
+                }
                 const targetLines = targetPlans.map(target => `${_sanitize(target.name)}: ${target.before} &rarr; ${target.proposed} of ${target.maximum} (+${target.gained})`);
                 panel(`${action.name}: Review Healing`, [
                     { label: 'Healer', value: _sanitize(source.name) },
@@ -20743,6 +10282,26 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     { label: 'Confirm', value: GameAssist.createButton('Apply This Healing', `!Heal-Confirm --proposal ${id}`) },
                     { label: 'Cancel', value: GameAssist.createButton('Discard And Return', '!Heal-Menu') }
                 ], msg);
+            };
+
+            if (plan.maximum === true) {
+                const maximum = maximumFormulaResult(plan.formula);
+                if (!maximum.ok) {
+                    return panel(MODULE_NAME, [
+                        { label: 'Needs Attention', value: _sanitize(maximum.message) },
+                        { label: 'Next Step', value: GameAssist.createButton('Maximum Healing', '!Heal-Max') }
+                    ], msg, { gmOnly: modState.config.autoApply === true });
+                }
+                return finish(maximum.total, maximum.rolls, maximum.expression);
+            }
+
+            sendChat(MODULE_NAME, `/w gm [[${plan.formula}]]`, operations => {
+                const inline = operations?.[0]?.inlinerolls?.[0];
+                finish(
+                    Number(inline?.results?.total),
+                    collectDice(inline?.results?.rolls),
+                    String(inline?.expression || plan.formula)
+                );
             }, { noarchive: true });
         }
 
@@ -20759,8 +10318,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
             const flowResult = resolveFlow(msg, options.flow);
             if (!flowResult.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(flowResult.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
-            const plan = formulaPlan(flowResult.action, flowResult.source, options);
-            if (!plan.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(plan.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            const basePlan = formulaPlan(flowResult.action, flowResult.source, options);
+            if (!basePlan.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(basePlan.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            const plan = { ...basePlan, maximum: flowResult.flow.maximum === true };
             const ids = targetIdsFrom(msg, options);
             const direct = resolveTargets(msg, options, { allowNpc: playerIsGm(msg.playerid) });
             if (!direct.ok && direct.npcRequiresGm && !playerIsGm(msg.playerid)) {
@@ -20845,24 +10405,28 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
         }
 
-        function handleConfirm(msg, options) {
-            pruneInteractions();
-            const proposal = proposals.get(String(options.proposal || ''));
-            if (!proposal || proposal.confirmPlayerId !== String(msg.playerid || '')) {
-                return panel(MODULE_NAME, [{ label: 'Needs Attention', value: 'That healing review expired, was already used, or belongs to another player.' }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+        function healingProblem(msg, title, fields, { automatic = false, forceGm = false } = {}) {
+            panel(title, fields, msg, { gmOnly: forceGm || automatic });
+            if (automatic && !playerIsGm(msg.playerid)) {
+                privateNotice(msg.playerid, 'Healing Needs Attention', 'Automatic healing could not be applied. The GM received the details.', GameAssist.createButton('Healing Actions', '!Heal-Menu'));
             }
-            if (!GameAssist.HealthService.isEnabled()) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: 'HealthService is disabled. No HP was changed.' }], msg);
+        }
+
+        function applyProposal(msg, proposal, { automatic = false } = {}) {
+            if (!GameAssist.HealthService.isEnabled()) {
+                return healingProblem(msg, MODULE_NAME, [{ label: 'Needs Attention', value: 'HealthService is disabled. No HP was changed.' }], { automatic });
+            }
             const source = resolveSource(proposal.sourceTokenId);
             const authorization = source.ok
                 ? (proposal.requestedBy
                     ? sourceAuthorized({ playerid: proposal.requestedBy }, source)
                     : sourceAuthorized(msg, source))
                 : source;
-            if (!authorization.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(authorization.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            if (!authorization.ok) return healingProblem(msg, MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(authorization.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], { automatic });
             const current = [];
             for (const target of proposal.targets) {
                 const checked = currentTarget(target);
-                if (!checked.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(checked.message) }, { label: 'Changes', value: 'None. The complete proposal was refused before writing.' }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+                if (!checked.ok) return healingProblem(msg, MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(checked.message) }, { label: 'Changes', value: 'None. The complete proposal was refused before writing.' }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], { automatic });
                 current.push(checked);
             }
             proposals.delete(proposal.id);
@@ -20873,28 +10437,42 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     const rollbackFailures = applied
                         .map(appliedIndex => ({ index: appliedIndex, result: rollbackTarget(proposal, proposal.targets[appliedIndex], appliedIndex) }))
                         .filter(item => !item.result.ok);
-                    return panel('Healing Needs Attention', [
+                    return healingProblem(msg, 'Healing Needs Attention', [
                         { label: 'Result', value: _sanitize(result.message || 'A verified HP write failed.') },
                         { label: 'Rollback', value: rollbackFailures.length ? `${rollbackFailures.length} earlier recipient(s) could not be restored automatically. Review them now.` : 'Every earlier recipient was restored to the reviewed value.' },
                         { label: 'Next Step', value: `${GameAssist.createButton('Health Evidence', '!ga-health recent')} ${GameAssist.createButton('Start Again', '!Heal')}` }
-                    ], msg, { gmOnly: rollbackFailures.length > 0 });
+                    ], { automatic, forceGm: rollbackFailures.length > 0 });
                 }
                 applied.push(index);
             }
             announceCompletion(msg, proposal);
         }
 
-        function actionButtons(group) {
-            return Object.values(ACTIONS).filter(action => action.group === group)
-                .map(action => GameAssist.createButton(action.name, `!Heal-Start --action ${action.id}`)).join(' ');
+        function handleConfirm(msg, options) {
+            pruneInteractions();
+            const proposal = proposals.get(String(options.proposal || ''));
+            if (!proposal || proposal.confirmPlayerId !== String(msg.playerid || '')) {
+                return panel(MODULE_NAME, [{ label: 'Needs Attention', value: 'That healing review expired, was already used, or belongs to another player.' }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
+            }
+            return applyProposal(msg, proposal);
         }
 
-        function showCatalog(msg) {
-            panel('HealAssist: Healing Actions', [
-                { label: 'Magic', value: actionButtons('magic') },
-                { label: 'Potions', value: actionButtons('items') },
-                { label: 'Other Healing', value: actionButtons('manual') },
-                { label: 'How It Works', value: 'Choose an action, choose a controlled healer, point at visible recipients, review the roll and HP changes, then confirm once.' },
+        function actionButtons(group, maximum = false) {
+            return Object.values(ACTIONS).filter(action => action.group === group)
+                .map(action => GameAssist.createButton(action.name, `!Heal-Start --action ${action.id}${maximum ? ' --maximum yes' : ''}`)).join(' ');
+        }
+
+        function showCatalog(msg, { maximum = false } = {}) {
+            panel(`HealAssist: ${maximum ? 'Maximum Healing' : 'Healing Actions'}`, [
+                { label: 'Magic', value: actionButtons('magic', maximum) },
+                { label: 'Potions', value: actionButtons('items', maximum) },
+                { label: 'Other Healing', value: actionButtons('manual', maximum) },
+                { label: 'Result Mode', value: maximum
+                    ? `Maximum possible result ${GameAssist.createButton('Use Normal Rolls', '!Heal-Menu')}`
+                    : `Normal Roll20 result ${GameAssist.createButton('Open Maximum Healing', '!Heal-Max')}` },
+                { label: 'Application', value: modState.config.autoApply
+                    ? 'Automatic after recipient selection; the GM is warned if verification fails.'
+                    : 'Review the roll and HP changes, then confirm once.' },
                 { label: 'Learn Or Review', value: `${GameAssist.createButton('Quick Guide', '!Heal-Guide')} ${playerIsGm(msg.playerid) ? `${GameAssist.createButton('Pending Requests', '!Heal-Requests')} ${GameAssist.createButton('GM Controls', '!Heal-GM')}` : ''}` }
             ], msg);
         }
@@ -20926,6 +10504,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Module', value: `v${MODULE_VERSION} | ${modState.config.enabled === false ? 'Disabled' : 'Running'} | HealthService ${GameAssist.HealthService.isEnabled() ? 'available' : 'unavailable'}` },
                 { label: 'Player Healing', value: modState.config.allowPlayerHealing === false ? 'Locked' : 'Allowed for controlled 2014 healers and visible supported PCs' },
                 { label: 'Result Messages', value: modState.config.resultAudience === 'public' ? 'Public for visible PC-only healing; private for NPC or hidden work' : 'Private' },
+                { label: 'Apply After Selection', value: modState.config.autoApply ? 'Automatic' : 'Review first' },
                 { label: 'Waiting', value: `${flows.size} guided choice(s) | ${requests.size} GM request(s) | ${proposals.size} confirmation(s)` },
                 { label: 'Actions', value: `${GameAssist.createButton('Healing Actions', '!Heal-Menu')} ${playerIsGm(msg.playerid) ? `${GameAssist.createButton('Pending Requests', '!Heal-Requests')} ${GameAssist.createButton('GM Controls', '!Heal-GM')}` : GameAssist.createButton('Quick Guide', '!Heal-Guide')}` }
             ], msg, { gmOnly: playerIsGm(msg.playerid) });
@@ -20979,6 +10558,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Start', value: GameAssist.createButton('Healing Actions', '!Heal-Menu') },
                 { label: 'Player Healing', value: `${modState.config.allowPlayerHealing === false ? 'Locked' : 'Allowed'} ${GameAssist.createButton(modState.config.allowPlayerHealing === false ? 'Allow Players' : 'Lock Players', `!Heal-Players ${modState.config.allowPlayerHealing === false ? 'on' : 'off'}`)}` },
                 { label: 'Result Messages', value: `${modState.config.resultAudience === 'public' ? 'Public when safe' : 'Private'} ${GameAssist.createButton(modState.config.resultAudience === 'public' ? 'Make Private' : 'Allow Public PC Results', `!Heal-Results ${modState.config.resultAudience === 'public' ? 'private' : 'public'}`)}` },
+                { label: 'Apply After Selection', value: `${modState.config.autoApply ? 'Automatic' : 'Review first'} ${GameAssist.createButton(modState.config.autoApply ? 'Require Review' : 'Apply Automatically', `!Heal-Auto ${modState.config.autoApply ? 'off' : 'on'}`)}` },
+                { label: 'Maximum Healing', value: GameAssist.createButton('Open Maximum Healing', '!Heal-Max') },
                 { label: 'Review', value: `${GameAssist.createButton(`Pending Requests (${requests.size})`, '!Heal-Requests')} ${GameAssist.createButton('Status', '!Heal-Status')} ${GameAssist.createButton('Audit', '!Heal-Audit')}` },
                 { label: 'Help', value: `${GameAssist.createButton('Quick Guide', '!Heal-Guide')} ${GameAssist.createButton('Manual', '!Heal-Manual')}` },
                 { label: 'GameAssist', value: gameAssistHomeButton() }
@@ -20997,17 +10578,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const action = commandAction(msg.content);
             const options = parseOptions(msg.content);
             if (['menu', 'catalog', 'start-here'].includes(action)) return showCatalog(msg);
+            if (action === 'max' || action === 'maximum') return showCatalog(msg, { maximum: true });
             if (['guide', 'help'].includes(action)) return showGuide(msg);
             if (['info', 'about'].includes(action)) return showInfo(msg);
             if (action === 'status') return showStatus(msg);
             if (action === 'start') {
                 const definition = ACTIONS[String(options.action || '').toLowerCase()];
-                return definition ? showSourcePicker(msg, definition) : showCatalog(msg);
+                const maximum = ['yes', 'true', 'on', 'maximum', 'max'].includes(String(options.maximum || '').toLowerCase());
+                return definition ? showSourcePicker(msg, definition, { maximum }) : showCatalog(msg, { maximum });
             }
             if (action === 'recipients') {
                 const flowResult = resolveFlow(msg, options.flow);
                 return flowResult.ok
-                    ? showRecipientPicker(msg, flowResult.action, flowResult.source)
+                    ? showRecipientPicker(msg, flowResult.action, flowResult.source, { maximum: flowResult.flow.maximum === true })
                     : panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(flowResult.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Heal') }], msg);
             }
             if (action === 'review') return handleReview(msg, options);
@@ -21036,6 +10619,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 modState.config.resultAudience = value;
                 return showControl(msg, `Safe healing results are now ${value}.`);
             }
+            if (action === 'auto') {
+                const value = String(msg.content || '').trim().split(/\s+/).pop().toLowerCase();
+                if (!['on', 'off'].includes(value)) return showControl(msg, 'Choose whether automatic healing application is on or off.');
+                modState.config.autoApply = value === 'on';
+                return showControl(msg, `Automatic healing application turned ${value}.`);
+            }
             if (action === 'audit') return showAudit(msg);
             if (action === 'manual') return showManual(msg);
             panel(MODULE_NAME, [
@@ -21046,6 +10635,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         GameAssist.onCommand('!Heal', handleCommand, MODULE_NAME, { match: { caseInsensitive: true, mode: 'token' } });
         GameAssist.onCommand('!Heal-', handleCommand, MODULE_NAME, { match: { caseInsensitive: true, mode: 'prefix' } });
+        GameAssist.onCommand('!HealAssist', handleCommand, MODULE_NAME, { match: { caseInsensitive: true, mode: 'token' } });
         GameAssist.onCommand('!HealAssist-', handleCommand, MODULE_NAME, { match: { caseInsensitive: true, mode: 'prefix' } });
 
         GameAssist.HealAssist = Object.freeze({
@@ -21056,6 +10646,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 healthServiceAvailable: GameAssist.HealthService.isEnabled(),
                 allowPlayerHealing: modState.config.allowPlayerHealing !== false,
                 resultAudience: modState.config.resultAudience,
+                autoApply: modState.config.autoApply === true,
                 pendingFlows: (pruneInteractions(), flows.size),
                 pendingRequests: requests.size,
                 pendingProposals: proposals.size
@@ -21071,12 +10662,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} ready: guided 2014 healing, GM requests, and verified HealthService application; the module starts disabled.`, 'INFO', { startup: true });
     }, {
         enabled: false,
-        prefixes: ['!Heal', '!Heal-', '!HealAssist-'],
+        prefixes: ['!Heal', '!Heal-', '!HealAssist', '!HealAssist-'],
         dependsOn: ['HealthService'],
-        protectedConfigKeys: ['resultAudience'],
+        protectedConfigKeys: ['resultAudience', 'autoApply'],
         teardown: () => GameAssist.HealAssist?._clearTransient?.()
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced HealAssist to 1.1.0 with a maximum-result action catalog, a GM-controlled automatic-application path that retains stale checks and rollback, explicit GM failure notices, and a bare !healassist entry point.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the HealAssist GM control screen.
     // Changed (v2.0.0): Added HealAssist 1.0.0 with guided official-2014 healing actions, bounded manual formulas, native visible-recipient targeting, private GM placement requests, complete roll/HP review, expiring one-use confirmations, HealthService provenance and verification, over-healing prevention, and multi-target rollback attempts.
     // Decision log:
@@ -21097,7 +10689,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   guarantees: ["Only authorized official-2014 linked sources and verified repeating-attack row identities enter a guided roll","Visible targets use Roll20's native map prompt without requiring target control; hidden or off-page placement remains GM-reviewed","One-use roll submissions materialize the complete sheet-generated attack formula, apply documented Classic-sheet defaults, and refuse unresolved prompts or fields before Roll20 receives the command","AttackAssist never applies damage or changes HP, conditions, effects, initiative, turns, resources, or encounter state"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AttackAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.0.5", interaction_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.0.7", interaction_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // AttackAssist is a disabled-by-default convenience layer for the official 2014
@@ -21107,7 +10699,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('AttackAssist', function() {
         const MODULE_NAME = 'AttackAssist';
-        const MODULE_VERSION = '1.0.5';
+        const MODULE_VERSION = '1.0.7';
         const INTERACTION_SCHEMA_VERSION = 1;
         const modState = GameAssist.getState(MODULE_NAME);
         modState.config = {
@@ -21671,6 +11263,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const attributes = row.attributes || attributeMap(source.character.id);
             const missing = new Set();
             const prompts = new Set();
+            const invalidRollFields = new Set();
             const cycles = new Set();
             const characterName = String(source.character.get('name') || source.name || 'Character')
                 .replace(/[{}@\r\n]/g, ' ')
@@ -21734,6 +11327,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         const promptDefault = classicPromptDefault(reference.name, raw);
                         if (promptDefault !== null) return expand(promptDefault, [...stack, key], depth + 1);
                         if (/\?\{/.test(raw)) prompts.add(resolvedName);
+                        if (/(?:\?|&#(?:0*63|x0*3f);|&quest;)/i.test(raw)) invalidRollFields.add(resolvedName);
                         return expand(raw, [...stack, key], depth + 1);
                     }
 
@@ -21768,6 +11362,20 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return {
                     ok: false,
                     message: `This attack contains an interactive Roll20 prompt${fields} that a Mod-generated roll cannot safely open. Use the native character-sheet attack for this row.`
+                };
+            }
+            if (invalidRollFields.size) {
+                return {
+                    ok: false,
+                    message: `This attack contains an incomplete roll value in ${[...invalidRollFields].sort().join(', ')}. Open that attack on the 2014 character sheet, correct or resave it, then use the native sheet button once before trying AttackAssist again.`
+                };
+            }
+            const inlineRolls = [...rollbase.matchAll(/\[\[([\s\S]*?)\]\]/g)].map(match => match[1]);
+            const unsafeInlineRoll = inlineRolls.find(expression => /(?:\?|&#(?:0*63|x0*3f);|&quest;|@\{|%\{)/i.test(expression));
+            if (!inlineRolls.length || unsafeInlineRoll !== undefined) {
+                return {
+                    ok: false,
+                    message: 'This attack did not produce a complete, prompt-free Roll20 dice expression. Use the native character-sheet attack for this row; AttackAssist did not send the unsafe roll.'
                 };
             }
             if (/@\{|%\{|\btarget\|/i.test(rollbase)) {
@@ -21831,15 +11439,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const command = qualifyRollbase(resolved.source, resolved.row, mode, resolved.submission.privateTarget);
             if (!command.ok) return panel(MODULE_NAME, [{ label: 'Needs Attention', value: _sanitize(command.message) }, { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Attack') }], msg);
             submissions.delete(resolved.submission.id);
-            sendChat(`character|${resolved.source.character.id}`, command.command, operations => {
-                if (!Array.isArray(operations) || !operations.length) {
-                    return panel(MODULE_NAME, [
-                        { label: 'Needs Attention', value: 'Roll20 did not confirm an attack result. No target announcement was sent.' },
-                        { label: 'Next Step', value: GameAssist.createButton('Start Again', '!Attack') }
-                    ], msg, { gmOnly: resolved.submission.privateTarget });
-                }
-                announceSubmittedAttack(msg, resolved);
-            });
+            // CHOICE: omit a sendChat callback so Roll20 renders the familiar attack card.
+            // ALT: inspect callback operations; REJECTED: callback delivery consumes the card instead of showing it in chat.
+            sendChat(`character|${resolved.source.character.id}`, command.command);
+            announceSubmittedAttack(msg, resolved);
         }
 
         function showGuide(msg) {
@@ -22001,6 +11604,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         GameAssist.onCommand('!Attack', handleCommand, MODULE_NAME, { match: { caseInsensitive: true, mode: 'token' } });
         GameAssist.onCommand('!Attack-', handleCommand, MODULE_NAME, { match: { caseInsensitive: true, mode: 'prefix' } });
+        GameAssist.onCommand('!AttackAssist', handleCommand, MODULE_NAME, { match: { caseInsensitive: true, mode: 'token' } });
         GameAssist.onCommand('!AttackAssist-', handleCommand, MODULE_NAME, { match: { caseInsensitive: true, mode: 'prefix' } });
 
         GameAssist.AttackAssist = Object.freeze({
@@ -22027,12 +11631,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} ready: verified 2014 repeating attacks, native targeting, and one-use roll submission; the module starts disabled.`, 'INFO', { startup: true });
     }, {
         enabled: false,
-        prefixes: ['!Attack', '!Attack-', '!AttackAssist-'],
+        prefixes: ['!Attack', '!Attack-', '!AttackAssist', '!AttackAssist-'],
         teardown: () => GameAssist.AttackAssist?._clearTransient?.()
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Advanced AttackAssist to 1.0.5; API-authored attacks now materialize nested Classic-sheet attributes, translate the official per-roll whisper and advantage prompts to their documented first choices, and refuse every other unresolved prompt before sendChat so malformed dice input cannot stop the Roll20 sandbox.
+    // Changed (v2.0.0): Advanced AttackAssist to 1.0.7; field-level and final inline-roll validation now refuse bare or encoded question marks and unresolved prompt syntax before sendChat, preventing incomplete Classic-sheet values from reaching Roll20's dice parser.
     // Prior notes:
+    //   v2.0.0 / AttackAssist 1.0.6: verified attack commands are sent directly to chat without a consuming callback, so Roll20 displays the actual official-sheet roll card before the compact submission notice; bare !attackassist opens the ordinary workflow.
+    //   v2.0.0 / AttackAssist 1.0.5: API-authored attacks materialize nested Classic-sheet attributes, translate the official per-roll whisper and advantage prompts to their documented first choices, and refuse other unresolved prompts before sendChat.
     //   v2.0.0 / AttackAssist 1.0.4: Classic-sheet rollbases may use the official default atkflag, dmgflag, dmg2flag, and saveflag values when Roll20 did not persist those checkbox attributes; unknown missing fields are refused before submission.
     // Changed (v2.0.0): Advanced AttackAssist to 1.0.3; official-2014 roll submission now materializes documented optional sheet defaults such as atkcritrange, character output, whisper mode, and empty global modifiers, while unknown missing fields produce a guided preflight refusal instead of a Roll20 sandbox error.
     // Changed (v2.0.0): Advanced AttackAssist to 1.0.2; the attack picker now uses compact attack buttons, and API-submitted official-2014 roll formulas materialize the sheet d20 placeholder so normal, advantage, and disadvantage rolls do not depend on a nonexistent persisted d20 attribute.
@@ -22045,8 +11651,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Qualify the sheet-generated repeating-row rollbase and substitute the official roll-mode fragment - ALT: temporarily rewrite the character's rtype setting; REJECTED: a temporary sheet mutation can race with ordinary sheet clicks and other Mods.
     //   CHOICE: Submit the roll as character|id - ALT: submit as AttackAssist; REJECTED: familiar character attribution and CritAssist's supported natural-1 observation require the character sender.
     //   CHOICE: Use Roll20's target prompt for visible tokens without target control and retain hidden/off-page requests for the GM - ALT: expose raw hidden token lists to players; REJECTED: hidden identity and placement are GM information.
-    //   CHOICE: Consume one reviewed submission before sendChat and announce only from its callback - ALT: leave buttons reusable or announce before the roll; REJECTED: either path can produce duplicate or false attack announcements.
+    //   CHOICE: Consume one reviewed submission before direct sendChat and render the sheet card - ALT: inspect callback operations; REJECTED: callback delivery consumed the roll card and left only a cosmetic success panel.
     //   CHOICE: Leave damage, HP, resources, effects, conditions, initiative, and turns untouched - ALT: infer a full attack-resolution engine; REJECTED: those mechanics have separate owners and unresolved table-specific decisions.
+    // Prior notes:
+    //   AttackAssist 1.0.5 announced only after a sendChat callback; Roll20 returned operations to the callback but did not render the consumed attack card in chat.
     // [GAMEASSIST:MODULES:ATTACKASSIST] END
     // =============================================================================
 
@@ -22058,7 +11666,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   guarantees: ["Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Optional Almanac integrations improve context without becoming hidden prerequisites","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer exposes direct validated editors for every stored calendar component while moon phases remain visible Astronomy-owned context","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","The GM dashboard prioritizes daily calendar actions and moves setup, diagnostics, and technical reference behind focused controls","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Descriptive announcements report player-perceivable time, weather, visibility, and moon visibility without presenting climate baselines as simultaneous current measurements","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AlmanacAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.6.0", time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.6.1", time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // AlmanacAssist contains six independently toggleable internal submodules behind
@@ -22071,7 +11679,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('AlmanacAssist', function() {
         const MODULE_NAME = 'AlmanacAssist';
-        const MODULE_VERSION = '1.6.0';
+        const MODULE_VERSION = '1.6.1';
         const TIME_STATE_SCHEMA_VERSION = 2;
         const WAYFARER_DRAFT_SCHEMA_VERSION = 3;
         const ANNOUNCEMENT_SCHEMA_VERSION = 4;
@@ -25918,6 +15526,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (/^!aa-/i.test(raw)) return raw.replace(/^!aa-/i, '').trim();
             if (/^!aa(?:\s|$)/i.test(raw)) return raw.replace(/^!aa\s*/i, '').trim() || 'menu';
             if (/^!almanacassist-/i.test(raw)) return raw.replace(/^!almanacassist-/i, '').trim();
+            if (/^!almanacassist(?:\s|$)/i.test(raw)) return raw.replace(/^!almanacassist\s*/i, '').trim() || 'menu';
             if (/^!almanac-/i.test(raw)) return raw.replace(/^!almanac-/i, '').trim();
             if (/^!almanac(?:\s|$)/i.test(raw)) return raw.replace(/^!almanac\s*/i, '').trim() || 'menu';
             return '';
@@ -26019,7 +15628,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
-        ['!Almanac', '!Almanac-', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-'].forEach(prefix => {
+        ['!Almanac', '!Almanac-', '!AlmanacAssist', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-'].forEach(prefix => {
             GameAssist.onCommand(prefix, handleCommand, MODULE_NAME, {
                 match: { caseInsensitive: true, mode: prefix.endsWith('-') ? 'prefix' : 'token' }
             });
@@ -26073,12 +15682,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: Wayfarer-aware time, configurable world announcements, compact climate and environment controls, and all six Almanac systems are available through !Almanac; the module starts disabled.`, 'INFO', { startup: true });
     }, {
         enabled: false,
-        prefixes: ['!Almanac', '!Almanac-', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-'],
+        prefixes: ['!Almanac', '!Almanac-', '!AlmanacAssist', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-'],
         preserveRuntimeOnDisable: true,
         protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'announcement', 'environment', 'rest']
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Advanced AlmanacAssist to 1.6.0; announcement schema 4 gives every information field independent Off, Descriptive, Detailed, and Technical control while preserving the Quick, Calendar, Travel, and Everything presets; the generic climate seed is now Temperate Lowlands; scene overrides are distinguished from stored weather; and complete Roll20 queries preserve direct Wayfarer, astronomy, environment, and rest edits until clicked.
+    // Changed (v2.0.0): Advanced AlmanacAssist to 1.6.1; bare and spaced !AlmanacAssist commands now share the established Almanac command handler.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.5.0; announcements now support Off, Descriptive, Detailed, and Technical presentation, descriptive moon visibility respects daylight and cloud cover, weather owns the displayed current temperature, and ambiguous visibility values are labeled in plain language.
     // Changed (v2.0.0): Repaired deferred Roll20 prompts throughout AlmanacAssist; Wayfarer name/start changes are atomic, clock and period-list changes preserve a valid starting time, Astronomy supplies direct add/edit/remove controls, and RestAlmanac supplies standard, heroic, gritty, and bounded custom rule controls.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.4.0; Wayfarer now presents ordinal Hours, named daily periods, and landmark times instead of AM/PM; announcements support audience, heading, useful presets, and per-field inclusion; Climate and Environment prioritize current state and common actions while moving detailed setup behind focused screens.
@@ -26105,6 +15714,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Preserve elapsed fictional minutes while editing an active Wayfarer calendar - ALT: silently apply the draft starting date; REJECTED: calendar-definition maintenance must not unexpectedly move campaign chronology.
     //   CHOICE: Retain one complete pre-activation rollback point - ALT: persist every calendar body indefinitely; REJECTED: one recovery point is understandable and bounded while chronology history retains the durable event trail.
     // Prior notes:
+    //   v2.0.0 / AlmanacAssist 1.6.0: Announcement schema 4 gives every information field independent Off, Descriptive, Detailed, and Technical control while preserving the Quick, Calendar, Travel, and Everything presets; the generic climate seed is Temperate Lowlands; scene overrides are distinguished from stored weather; and complete Roll20 queries preserve direct Wayfarer, astronomy, environment, and rest edits until clicked.
     //   v2.0.0 / AlmanacAssist 1.3.0: Announcement settings were initially limited to audience and quick/full detail. AlmanacAssist 1.4.0 superseded that boundary after campaign testing showed that calendar, travel, and custom world announcements need different information.
     //   v2.0.0 / AlmanacAssist 1.1.1: Rejected cancelled query values, restored the campaign calendar data, added profile-specific clocks, feast periods that do not advance weekdays, range-based seasons, and exact holiday dates, and made complete period replacement visibly clear index-based dependent dates instead of silently remapping them.
     //   v2.0.0 / AlmanacAssist 1.0.0: Routed supported RestAlmanac HP restoration and rollback through HealthService with producer/operation identity and verified healing/synchronization evidence while preserving the complete preview and transaction rollback contract.
@@ -26129,24 +15739,24 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
 
 
-    // ————— HPASSIST MODULE v0.1.1.3 —————
+    // ----- HPASSIST MODULE v0.3.0 -----
     // =============================================================================
     // [GAMEASSIST:MODULES:HPASSIST] BEGIN
     // Section Title: HPAssist module
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:HPASSIST", title: "HPAssist",
-    //   guarantees: ["Parse NdM±K and set bar1 to rolled HP","Use HealthService for verified producer-identified initialization or synchronization writes when available; preserve direct HP rolling when the optional service is disabled","Case-insensitive !HP-<command> and !hp <command> routes own every public HPAssist action; older HP command families remain compatibility-only aliases"],
+    //   guarantees: ["Parse NdM�K and set HealthService's configured NPC HP bar to rolled current and maximum HP","Use HealthService for verified producer-identified initialization or synchronization writes when available; preserve direct HP rolling when the optional service is disabled","Case-insensitive !HP-<command>, !hp <command>, and !HPAssist <command> routes own every public HPAssist action; older HP command families remain compatibility-only aliases"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "0.2.0" } }
+    //   independent_versions: { module_version: "0.3.0" } }
     // -------------------------------------------------------------------------
     // Narrative
-    // MODULES:HPASSIST parses `npc_hpformula`, rolls HP, and writes to bar1 value/max
+    // MODULES:HPASSIST parses `npc_hpformula`, rolls HP, and writes to the configured HP bar
     // without altering defaults. It keeps the legacy dice parsing semantics and bar writes
     // while surfacing warnings when formulas are invalid.
     // -------------------------------------------------------------------------
     GameAssist.register('HPAssist', function() {
         const modState = GameAssist.getState('HPAssist');
-        const MODULE_VERSION = '0.2.0';
+        const MODULE_VERSION = '0.3.0';
 
     Object.assign(modState.config, {
         enabled: true,
@@ -26154,8 +15764,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         ...modState.config
     });
 
+        function hpFields() {
+            return GameAssist.HealthService?.getHpFields?.() || {
+                bar: 'bar1', label: 'Bar 1', current: 'bar1_value', maximum: 'bar1_max', link: 'bar1_link'
+            };
+        }
+
         function parseDiceString(diceStr) {
-            // Match “NdM”, “NdM+K”, “NdM + K”, “NdM-K”, case-insensitive on “d”
+            // Match "NdM", "NdM+K", "NdM + K", "NdM-K", case-insensitive on "d"
             const match = diceStr.match(
                 /^\s*(\d+)\s*[dD]\s*(\d+)(?:\s*([+-])\s*(\d+))?\s*$/
             );
@@ -26264,8 +15880,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 }
             } else {
                 // CHOICE: HPAssist remains independently usable when HealthService is deliberately disabled; only provenance-aware integration is unavailable.
-                token.set('bar1_value', hp);
-                token.set('bar1_max', hp);
+                const fields = hpFields();
+                token.set(fields.current, hp);
+                token.set(fields.maximum, hp);
             }
 
             const suffix = reason === 'auto' ? ' (auto-roll on add)' : '';
@@ -26297,7 +15914,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function showNpcHpInfo() {
             sendNpcHpPanel('What HPAssist Does', [
-                { label: 'Purpose', value: 'Rolls each qualifying linked NPC\'s npc_hpformula and writes the result to bar 1 current and maximum HP.' },
+                { label: 'Purpose', value: `Rolls each qualifying linked NPC's npc_hpformula and writes the result to ${hpFields().label} current and maximum HP.` },
                 { label: 'At The Table', value: 'Select NPC tokens for a deliberate roll, or roll every qualifying NPC on the current player page. Player characters, unlinked tokens, and invalid formulas are skipped.' },
                 { label: 'Guide', value: `${GameAssist.createButton('Back to Guide', '!HP-Guide')} ${GameAssist.createButton('Read-Only Audit', '!HP-Audit')}` }
             ]);
@@ -26336,7 +15953,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Current Page', value: `${counts.eligible} eligible NPCs | ${counts.pc} player characters | ${counts.unlinked} unlinked items | ${counts.invalid} NPCs with missing or invalid formulas` },
                 { label: 'Actions', value: `${GameAssist.createButton('Roll Selected', '!HP-Selected')} ${GameAssist.createButton('Open Guide', '!HP-Guide')}` }
             ];
-            if (audit) fields.splice(3, 0, { label: 'Changes', value: 'None. This audit checks linkage, NPC flags, and HP formulas without rolling or changing bar 1.' });
+            if (audit) fields.splice(3, 0, { label: 'Changes', value: `None. This audit checks linkage, NPC flags, and HP formulas without rolling or changing ${hpFields().label}.` });
             sendNpcHpPanel(audit ? 'HPAssist Audit' : 'HPAssist Status', fields);
         }
 
@@ -26344,6 +15961,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const enabled = modState.config.autoRollOnAdd === true;
             sendNpcHpPanel('HPAssist Settings', [
                 { label: 'Automatic Roll On Add', value: `${enabled ? 'On' : 'Off'} ${GameAssist.createButton(enabled ? 'Turn Off' : 'Turn On', `!ga-config set HPAssist autoRollOnAdd=${enabled ? 'false' : 'true'}`)}` },
+                { label: 'NPC HP Bar', value: `${hpFields().label} ${GameAssist.createButton('Choose Or Prepare HP Bars', '!ga-health bars')}` },
                 { label: 'Behavior', value: 'When enabled, newly added qualifying NPC tokens receive rolled HP. Setup protection prevents that initialization from creating false NPCAssist death or revival history.' },
                 { label: 'Return', value: GameAssist.createButton('Back to Guide', '!HP-Guide') }
             ]);
@@ -26468,12 +16086,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
         }
 
-        GameAssist.onCommand('!hp', msg => {
+        function handleHpCommand(msg) {
             const raw = String(msg.content || '').trim().toLowerCase();
-            const body = raw.replace(/^!hp(?:\s+|$)/i, '').trim();
+            const body = raw.replace(/^!(?:hp|hpassist)(?:\s+|$)/i, '').trim();
             const command = body.split(/\s+/)[0];
-            if (!command || command === 'help' || command === 'guide') return showNpcHpGuide();
-            if (command === 'menu' || command === 'gm' || command === 'dm') return showNpcHpControl();
+            if (!command || command === 'menu' || command === 'gm' || command === 'dm') return showNpcHpControl();
+            if (command === 'help' || command === 'guide') return showNpcHpGuide();
             if (command === 'info' || command === 'about') return showNpcHpInfo();
             if (command === 'status' || command === 'refresh') return showNpcHpStatus(false);
             if (command === 'audit') return showNpcHpStatus(true);
@@ -26485,7 +16103,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Needs Attention', value: 'That HPAssist command was not recognized.' },
                 { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!HP-Guide') }
             ]);
-        }, 'HPAssist', { gmOnly: true });
+        }
+
+        GameAssist.onCommand('!hp', handleHpCommand, 'HPAssist', { gmOnly: true });
+        GameAssist.onCommand('!HPAssist', handleHpCommand, 'HPAssist', { gmOnly: true });
 
         GameAssist.onEvent('add:graphic', token => {
             if (!modState.config.autoRollOnAdd) return;
@@ -26496,9 +16117,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 }, {
     enabled: true,
     events: ['add:graphic'],
-        prefixes: ['!HP-', '!hp', '!HPAssist-', '!npc-hp-', '!NPCHP-', '!NPCHPRoller-']
+        prefixes: ['!HP-', '!hp', '!HPAssist', '!HPAssist-', '!npc-hp-', '!NPCHP-', '!NPCHPRoller-']
 });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced HPAssist to 0.3.0; verified and fallback HP rolls follow HealthService's configured NPC HP bar, the settings screen links to shared bar setup, and bare !hpassist opens the GM control center.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the HPAssist GM control screen.
     // Changed (v2.0.0): Routed supported HP rolls through HealthService with producer, operation, initialization/synchronization, deduplication, and verification evidence while retaining direct writes when the optional service is deliberately disabled.
     // Decision log:
@@ -26513,7 +16135,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES:HPASSIST] END
     // =============================================================================
 
-    // ————— DEBUG TOOLS MODULE v0.3.0 —————
+    // ----- DEBUG TOOLS MODULE v0.3.1 -----
     // =============================================================================
     // [GAMEASSIST:MODULES:DEBUGTOOLS] BEGIN
     // Section Title: DebugTools module
@@ -26522,7 +16144,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   guarantees: ["Dry-run friendly debugging helpers","Compact guide, status, read-only audit, settings explanation, and unknown-command recovery use !ga-debug","Applied marker diagnostics use CORE:MARKERSERVICE","Applied damage uses verified HealthService provenance on supported HP surfaces and preserves the established direct fallback elsewhere"],
     //   depends_on: ["[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "0.3.0" } }
+    //   independent_versions: { module_version: "0.3.1" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:DEBUGTOOLS offers optional GM-only diagnostics for damage, markers, and
@@ -26531,7 +16153,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('DebugTools', function() {
         const modState = GameAssist.getState('DebugTools');
-        const MODULE_VERSION = '0.3.0';
+        const MODULE_VERSION = '0.3.1';
         let damageOperationSequence = 0;
         Object.assign(modState.config, {
             enabled: false,
@@ -26588,13 +16210,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return;
             }
 
-            const current = Number(token.get('bar1_value')) || 0;
+            const hpFields = GameAssist.HealthService?.getHpFields?.() || { label: 'Bar 1', current: 'bar1_value' };
+            const current = Number(token.get(hpFields.current)) || 0;
             const next    = Math.max(0, current - amount);
             const name    = _sanitize(token.get('name') || token.id);
-            const summary = `${name}: HP ${current} → ${next} (-${amount})`;
+            const summary = `${name}: HP ${current}  ${next} (-${amount})`;
 
             if (!wantsApply(args)) {
-                GameAssist.log('DebugTools', `Dry run — would apply ${summary}. Add --apply to commit.`);
+                GameAssist.log('DebugTools', `Dry run - would apply ${summary}. Add --apply to commit.`);
                 return;
             }
 
@@ -26613,10 +16236,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     GameAssist.log('DebugTools', result.message || `HealthService damage write failed (${result.code || 'INTERNAL'}).`, 'WARN');
                     return;
                 } else {
-                    token.set('bar1_value', next);
+                    token.set(hpFields.current, next);
                 }
             } else {
-                token.set('bar1_value', next);
+                token.set(hpFields.current, next);
             }
             GameAssist.log('DebugTools', `Applied ${summary}${verified ? ' through verified HealthService evidence' : ''}.`);
             ensureDebugRuntime().lastAction = { type: 'damage', token: token.id, amount, previous: current, verified };
@@ -26653,7 +16276,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const name = _sanitize(token.get('name') || token.id);
 
             if (!wantsApply(args)) {
-                GameAssist.log('DebugTools', `Dry run — would ${actionDesc} on ${name}. Add --apply to commit.`);
+                GameAssist.log('DebugTools', `Dry run - would ${actionDesc} on ${name}. Add --apply to commit.`);
                 return;
             }
 
@@ -26699,7 +16322,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
 
             if (!wantsApply(args)) {
-                GameAssist.log('DebugTools', `Dry run — would roll ${expr} vs DC ${dc} (${descriptor}). Add --apply to execute.`);
+                GameAssist.log('DebugTools', `Dry run - would roll ${expr} vs DC ${dc} (${descriptor}). Add --apply to execute.`);
                 return;
             }
 
@@ -26712,7 +16335,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 }
                 const total = roll.results.total;
                 const success = total >= dc;
-                const outcome = success ? '✅ Success' : '❌ Failure';
+                const outcome = success ? '? Success' : '? Failure';
                 const template = `&{template:default} {{name=${label}}} {{Result=${total} vs DC ${dc}}} {{Outcome=${outcome} (${descriptor})}}`;
                 sendChat('DebugTools', `/w gm ${template}`);
                 GameAssist.log('DebugTools', `Rolled ${total} vs DC ${dc} (${descriptor}). ${success ? 'Success' : 'Failure'}.`);
@@ -26758,6 +16381,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Module', value: `${MODULE_VERSION} | enabled and responding` },
                 { label: 'Default Behavior', value: 'Dry-run preview; <code>--apply</code> is required for mutation or a live save roll.' },
                 { label: 'MarkerService', value: GameAssist.MarkerService?.isEnabled?.() ? 'Available' : 'Unavailable' },
+                { label: 'NPC HP Bar', value: GameAssist.HealthService?.getHpFields?.().label || 'Bar 1' },
                 { label: 'Last Applied Action', value: last },
                 { label: 'Actions', value: GameAssist.createButton('Open Guide', '!ga-debug help') }
             ];
@@ -26785,10 +16409,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             save: handleSave
         };
 
-        GameAssist.onCommand('!ga-debug', msg => {
-            const payload = msg.content.replace(/^!ga-debug\s*/i, '');
+        function handleDebugCommand(msg) {
+            const payload = String(msg.content || '')
+                .replace(/^!(?:ga-debug|debugtools|debug)(?:-|\s)*/i, '');
             if (!payload) {
-                showHelp();
+                showDebugControl();
                 return;
             }
 
@@ -26831,7 +16456,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return;
             }
             handler(msg, parsed.args || {});
-        }, 'DebugTools', { gmOnly: true });
+        }
+
+        GameAssist.onCommand('!ga-debug', handleDebugCommand, 'DebugTools', { gmOnly: true });
+        ['!Debug', '!DebugTools'].forEach(prefix => {
+            GameAssist.onCommand(prefix, handleDebugCommand, 'DebugTools', {
+                gmOnly: true,
+                match: { caseInsensitive: true, mode: 'token' }
+            });
+        });
+        ['!Debug-', '!DebugTools-'].forEach(prefix => {
+            GameAssist.onCommand(prefix, handleDebugCommand, 'DebugTools', {
+                gmOnly: true,
+                match: { caseInsensitive: true, mode: 'prefix' }
+            });
+        });
         ['!Debug-GM', '!Debug-DM', '!DebugTools-GM', '!DebugTools-DM'].forEach(prefix => {
             GameAssist.onCommand(prefix, showDebugControl, 'DebugTools', { gmOnly: true });
         });
@@ -26839,10 +16478,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.log('DebugTools', 'Debug module registered. Enable with !ga-enable DebugTools when needed.', 'INFO', { startup: true });
     }, {
         enabled: false,
-        prefixes: ['!ga-debug', '!Debug-', '!DebugTools-'],
+        prefixes: ['!ga-debug', '!Debug', '!Debug-', '!DebugTools', '!DebugTools-'],
         dependsOn: ['MarkerService']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced DebugTools to 0.3.1; damage previews and fallback writes now follow HealthService's configured NPC HP bar instead of assuming bar 1, and bare Debug/DebugTools commands open the existing GM controls.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the DebugTools GM control screen.
     // Changed (v2.0.0): Advanced DebugTools to 0.3.0; applied damage uses HealthService's declared-and-verified damage contract on supported HP surfaces and retains direct mutation when HealthService is disabled or the selected token is unsupported.
     // Decision log:
@@ -26876,7 +16516,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // [GAMEASSIST:MODULES] END
     // =============================================================================
 
-    // ————— BOOTSTRAP —————
+    // ----- BOOTSTRAP -----
     // =============================================================================
     // [GAMEASSIST:BOOTSTRAP] BEGIN
     // Section Title: Sandbox ready bootstrap

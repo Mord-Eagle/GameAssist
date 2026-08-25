@@ -46,6 +46,18 @@ Run:
 !HP gm
 !ConfigUI gm
 !Welcome gm
+!token
+!Combat
+!ConditionAssist
+!InitiativeAssist
+!WelcomeAssist
+!NPCAssist
+!EffectAssist
+!HealAssist
+!AttackAssist
+!AlmanacAssist
+!HPAssist
+!DebugTools
 ```
 
 **Pass when:**
@@ -58,6 +70,7 @@ Run:
 - a disabled module offers **Enable** rather than a dead feature button, and an enabled module that failed to start offers **Check Status**;
 - mixed capitalization and space/hyphen variants such as `!gA gM`, `!GA dM`, `!Ga HeLp`, and `!GA NaV effect apply` behave like their canonical button forms and trigger exactly once;
 - `!GA STATUS --details` preserves the option and opens detailed status, while `!ToKeN AsSiSt Gm`, `!condition-gm`, and `!HP gm` reach their intended module screens;
+- each bare short or full module name reaches that module's established GM screen, player screen, or disabled-module recovery panel instead of remaining silent;
 - the suite navigator, ConfigUI, ConditionAssist, TokenAssist, and WelcomeAssist's private controls use the same readable Roll20 default-template presentation as HPAssist and CombatAssist rather than separate white, pink, or purple control-panel styles;
 - WelcomeAssist's public greeting card may remain visually distinct because it is table content rather than a private control interface;
 - none of these commands posts publicly or exposes another module's protected controls to players.
@@ -77,7 +90,8 @@ Run:
 Use a disposable page with:
 
 - one linked official D&D 5E by Roll20 2014 PC token whose bar 1 is linked to the sheet's `hp` attribute;
-- one linked NPC token with `npc=1`, bar 1 HP, and a valid `npc_hpformula`;
+- one linked NPC token with `npc=1`, valid character HP, and a valid `npc_hpformula`;
+- one disposable token on the same page that does not represent a character;
 - HealthService and HPAssist enabled;
 - known positive current and maximum HP on both test characters.
 
@@ -88,7 +102,19 @@ Run:
 !ga-health audit
 ```
 
-Pass when the private status identifies HealthService 1.0.0 as enabled and the read-only audit counts both supported tokens. Unlinked tokens, unsupported sheets, and unlinked 2014-PC bars may be counted as not included; that is not a failure.
+Pass when the private status identifies HealthService 1.1.0 as enabled and the read-only audit counts both supported tokens. Unlinked tokens, unsupported sheets, and unlinked 2014-PC bars may be counted as not included; that is not a failure.
+
+### Shared NPC HP Bar Setup
+
+1. Record the currently selected NPC HP bar and the disposable linked NPC token's values in all three bars.
+2. Run `!ga-health bars` and choose a different disposable bar, preferably Bar 2 or Bar 3.
+3. Click **Audit**. Confirm the linked NPC is either ready or clearly listed as needing setup, and the unlinked token is named under **Not Representing A Character**.
+4. Click **Prepare Linked NPCs**. Confirm the preview explains that character HP will be copied independently and that the selected bar's sheet link will be cleared.
+5. Click **Confirm Current Page**.
+
+Pass when the selected bar receives the linked NPC character's current and maximum HP, the other two bars remain unchanged, and the unlinked token is not modified. Open `!NPC-GM` and `!HP-Settings`; both must name the same selected bar.
+
+On the linked NPC, lower the selected bar to 0 and then restore it above 0. Pass when NPCAssist applies and removes the configured death marker using that selected bar. Then run `!HP-Selected`; pass when HPAssist writes current and maximum HP to the selected bar only. Restore the campaign's original shared bar after completing this focused suite.
 
 ### Unknown Observation and Linked Deduplication
 
@@ -112,11 +138,11 @@ Select the linked NPC and run:
 !ga-health recent
 ```
 
-Pass when HPAssist still rolls and writes current/max bar 1 HP, and the newest evidence identifies an **HPAssist verified write**. A blank or invalid starting value should be classified as initialization; replacing an already valid value may be classified as synchronization.
+Pass when HPAssist still rolls and writes current/maximum HP to the selected shared NPC bar, and the newest evidence identifies an **HPAssist verified write**. A blank or invalid starting value should be classified as initialization; replacing an already valid value may be classified as synchronization.
 
 ### Clearing and Invalid Evidence
 
-On the disposable NPC token, change bar 1 current HP to blank, then to nonnumeric text. Run `!ga-health recent` after each change.
+On the disposable NPC token, change the selected shared bar's current HP to blank, then to nonnumeric text. Run `!ga-health recent` after each change.
 
 Pass when blank HP is recorded as **clearing**, nonnumeric HP is recorded as **invalid**, and neither entry is called damage or healing. Restore valid positive HP afterward.
 
@@ -163,14 +189,15 @@ Restart the Roll20 Mod sandbox and run `!ga-health` again. Pass when HealthServi
 
 | Requirement | Result |
 | --- | --- |
-| Supported 2014 PC and NPC surfaces recognized | ☐ Pass ☐ Fail |
-| One linked sheet edit produces one unknown transition | ☐ Pass ☐ Fail |
-| HPAssist write is declared and verified | ☐ Pass ☐ Fail |
-| Clearing and invalid values remain non-causal evidence | ☐ Pass ☐ Fail |
-| PC alert controls, preview, GM-only delivery, combined crossings, rearming, and exact-HP option pass | ☐ Pass ☐ Fail |
-| NPCs and non-comparable HP changes remain outside PC alerts | ☐ Pass ☐ Fail |
-| Disable preserves HPAssist fallback and re-enable does not duplicate listeners | ☐ Pass ☐ Fail |
-| Sandbox restart clears bounded evidence and restores observation | ☐ Pass ☐ Fail |
+| Supported 2014 PC and NPC surfaces recognized | ? Pass ? Fail |
+| Bar 1/2/3 choice, current-page audit, independent preparation, and shared module use pass | ? Pass ? Fail |
+| One linked sheet edit produces one unknown transition | ? Pass ? Fail |
+| HPAssist write is declared and verified | ? Pass ? Fail |
+| Clearing and invalid values remain non-causal evidence | ? Pass ? Fail |
+| PC alert controls, preview, GM-only delivery, combined crossings, rearming, and exact-HP option pass | ? Pass ? Fail |
+| NPCs and non-comparable HP changes remain outside PC alerts | ? Pass ? Fail |
+| Disable preserves HPAssist fallback and re-enable does not duplicate listeners | ? Pass ? Fail |
+| Sandbox restart clears bounded evidence and restores observation | ? Pass ? Fail |
 
 ---
 
@@ -244,7 +271,7 @@ Restore valid HP after the check.
 
 ### Hidden NPC Privacy
 
-Put the configured concentration marker on the GM-layer NPC and lower its valid bar 1 HP once. Pass when only the GM receives the offer. After the GM clicks a roll mode, no public emote or hidden NPC name appears in player chat.
+Put the configured concentration marker on the GM-layer NPC and lower its valid selected-bar HP once. Pass when only the GM receives the offer. After the GM clicks a roll mode, no public emote or hidden NPC name appears in player chat.
 
 ### Optional Integration and Manual Fallback
 
@@ -256,20 +283,20 @@ Turn offers back on, disable HealthService, and repeat those two checks. The aut
 
 | Requirement | Result |
 | --- | --- |
-| Direct linked PC loss creates one logical private offer | ☐ Pass ☐ Fail |
-| Controller and unrelated-player privacy are correct | ☐ Pass ☐ Fail |
-| Unknown loss and verified damage use different accurate labels | ☐ Pass ☐ Fail |
-| DC and normal/advantage/disadvantage evidence are correct | ☐ Pass ☐ Fail |
-| Reused, stale, unauthorized, and ended-concentration buttons refuse safely | ☐ Pass ☐ Fail |
-| Healing, setup, synchronization, invalid, and unrelated changes stay silent | ☐ Pass ☐ Fail |
-| GM-layer identity and result remain GM-only | ☐ Pass ☐ Fail |
-| Setting/service opt-out preserves manual concentration checks | ☐ Pass ☐ Fail |
+| Direct linked PC loss creates one logical private offer | ? Pass ? Fail |
+| Controller and unrelated-player privacy are correct | ? Pass ? Fail |
+| Unknown loss and verified damage use different accurate labels | ? Pass ? Fail |
+| DC and normal/advantage/disadvantage evidence are correct | ? Pass ? Fail |
+| Reused, stale, unauthorized, and ended-concentration buttons refuse safely | ? Pass ? Fail |
+| Healing, setup, synchronization, invalid, and unrelated changes stay silent | ? Pass ? Fail |
+| GM-layer identity and result remain GM-only | ? Pass ? Fail |
+| Setting/service opt-out preserves manual concentration checks | ? Pass ? Fail |
 
 ---
 
 ## Focused v2.0.0 HealAssist Acceptance
 
-**What this proves:** HealAssist guides official-2014 healing from an authorized source to reviewed recipients, rolls once, changes HP only after confirmation, and verifies every accepted write through HealthService.
+**What this proves:** HealAssist guides official-2014 normal or maximum healing from an authorized source, supports review or optional automatic application, and verifies every accepted write through HealthService.
 
 **Why test it:** Healing combines player permissions, native target prompts, private NPC information, formula rules, maximum-HP limits, stale-button protection, and multi-target writes. A normal sheet roll does not prove those safeguards.
 
@@ -310,6 +337,18 @@ Set a PC one point below maximum, choose a healing action capable of restoring m
 
 Run `!Heal-Results private` and repeat a small PC heal. Pass when no public completion message appears. Restore the campaign's preferred result setting afterward.
 
+### Maximum Healing and Automatic Application
+
+1. Run `!Heal-Max` and choose a potion or spell whose dice maximum is easy to verify.
+2. Continue to one damaged supported recipient.
+3. Pass when the displayed formula is identified as maximum healing, every die contributes its maximum value, and the proposed HP still stops at the recipient's maximum.
+4. Run `!Heal-Auto on`, damage the recipient again, and repeat one normal or maximum healing action.
+5. Pass when the verified HP change is applied immediately after recipient selection without an **Apply Healing** confirmation screen.
+6. Run `!ga-health recent` and confirm the newest entry identifies HealAssist as a verified healing writer.
+7. Restore the safer default with `!Heal-Auto off` and confirm `!Heal-GM` says **Review first**.
+
+If an automatic application fails naturally, pass only when the GM receives a private explanation and no success message claims that HP changed. Do not manufacture a destructive failure in a live campaign.
+
 ### Manual Formula Boundary
 
 Choose **Manual Healing Formula** and test a simple formula such as `2d6+3`. Pass when the review names that exact formula and reminds the table to resolve its resource manually.
@@ -326,7 +365,7 @@ Create another review and use its confirmation successfully. Click it again. Pas
 
 As the non-GM player, begin a healing action and choose the path for a recipient the player cannot place directly. Pass when the request is retained privately for the GM and neither the NPC's name nor HP appears publicly or in the player's review.
 
-As the GM, open `!Heal-Requests`, choose the request, select the intended NPC, and continue through review and confirmation. Pass when the NPC's token bar 1 receives the verified value and all NPC roll, HP, and completion evidence remains private. Repeat with a GM-layer NPC when practical.
+As the GM, open `!Heal-Requests`, choose the request, select the intended NPC, and continue through review and confirmation. Pass when the NPC's selected shared HP bar receives the verified value and all NPC roll, HP, and completion evidence remains private. Repeat with a GM-layer NPC when practical.
 
 ### Multi-Recipient Healing
 
@@ -346,16 +385,17 @@ Restart the sandbox. Pass when settings persist, pending requests and confirmati
 
 | Requirement | Result |
 | --- | --- |
-| GM controls, Guide, Status, Audit, and manual are readable and private where expected | ☐ Pass ☐ Fail |
-| Controlled player healer can target a visible non-controlled PC | ☐ Pass ☐ Fail |
-| Roll detail, formula, current/proposed/maximum HP, actual gain, and manual resource step are accurate | ☐ Pass ☐ Fail |
-| HP remains unchanged before confirmation and the accepted write has verified HealthService provenance | ☐ Pass ☐ Fail |
-| Maximum-HP cap and public/private result policy are correct | ☐ Pass ☐ Fail |
-| Bounded manual formula works and unsafe expressions are refused | ☐ Pass ☐ Fail |
-| Stale, reused, fabricated, expired, and wrong-player actions refuse without another write | ☐ Pass ☐ Fail |
-| NPC, hidden, GM-layer, and off-page requests remain private and GM-reviewed | ☐ Pass ☐ Fail |
-| Multi-recipient healing uses one review and produces no silently accepted partial result | ☐ Pass ☐ Fail |
-| Player lockout, HealthService cascade, re-enable, and restart behavior pass | ☐ Pass ☐ Fail |
+| GM controls, Guide, Status, Audit, and manual are readable and private where expected | ? Pass ? Fail |
+| Controlled player healer can target a visible non-controlled PC | ? Pass ? Fail |
+| Roll detail, formula, current/proposed/maximum HP, actual gain, and manual resource step are accurate | ? Pass ? Fail |
+| HP remains unchanged before confirmation and the accepted write has verified HealthService provenance | ? Pass ? Fail |
+| Maximum-HP cap and public/private result policy are correct | ? Pass ? Fail |
+| Maximum-healing formulas and optional automatic verified application are correct | ? Pass ? Fail |
+| Bounded manual formula works and unsafe expressions are refused | ? Pass ? Fail |
+| Stale, reused, fabricated, expired, and wrong-player actions refuse without another write | ? Pass ? Fail |
+| NPC, hidden, GM-layer, and off-page requests remain private and GM-reviewed | ? Pass ? Fail |
+| Multi-recipient healing uses one review and produces no silently accepted partial result | ? Pass ? Fail |
+| Player lockout, HealthService cascade, re-enable, and restart behavior pass | ? Pass ? Fail |
 
 ---
 
@@ -397,7 +437,7 @@ Pass when the Control Center is private, the Guide gives the short player path, 
 3. Click **Choose Target** beside that attack and point at the visible target the player does not control.
 4. Choose **Normal** from the review screen.
 
-Pass when both starting commands open the same compact source/attack path, neither produces a bare `{}`, Roll20 opens its native target prompt only after **Choose Target** is clicked, and the target is accepted without granting control. The familiar official attack card should appear once as the attacking character, followed by the attacker/target announcement. The Roll20 API log must not report a missing `d20`, `atkcritrange`, `atkflag`, `dmgflag`, `dmg2flag`, `saveflag`, `charname_output`, roll-mode, empty global-modifier attribute, or dice-parser `?` syntax error. Confirm the chosen row's bonus, range, and damage links match the numbered attack selected. The target's HP, markers, position, effects, conditions, and Roll20 Turn Tracker must remain unchanged.
+Pass when both starting commands open the same compact source/attack path, neither produces a bare `{}`, Roll20 opens its native target prompt only after **Choose Target** is clicked, and the target is accepted without granting control. The familiar official attack card, including its actual attack roll, should appear once as the attacking character; AttackAssist may follow it with one compact submission notice. The Roll20 API log must not report a missing `d20`, `atkcritrange`, `atkflag`, `dmgflag`, `dmg2flag`, `saveflag`, `charname_output`, roll-mode, empty global-modifier attribute, or dice-parser `?` syntax error. Confirm the chosen row's bonus, range, and damage links match the numbered attack selected. The target's HP, markers, position, effects, conditions, and Roll20 Turn Tracker must remain unchanged.
 
 Click the same roll button again. Pass when AttackAssist refuses it without a second roll or announcement.
 
@@ -439,7 +479,7 @@ As the GM, open `!Attack-Requests`, choose the retained request, select the hidd
 
 ### Unsupported Source, Lockout, and Lifecycle
 
-Select the supported 2024 test token and run `!Attack`. Pass when AttackAssist explains that 1.0.4 supports official-2014 repeating attacks and that the native 2024 attack buttons remain available.
+Select the supported 2024 test token and run `!Attack`. Pass when AttackAssist explains that 1.0.7 supports official-2014 repeating attacks and that the native 2024 attack buttons remain available.
 
 Run `!Attack-Players off`. Pass when the player can still read guidance but cannot begin or complete a guided attack; GM attacks remain available. Restore `!Attack-Players on` afterward.
 
@@ -449,16 +489,16 @@ Disable and re-enable AttackAssist. Pass when unrelated modules remain active, o
 
 | Requirement | Result |
 | --- | --- |
-| GM controls, Guide, Status, Audit, and manual are readable and private where expected | ☐ Pass ☐ Fail |
-| Controlled 2014 PC and exact repeating row are verified, including duplicate display names | ☐ Pass ☐ Fail |
-| Visible non-controlled target is accepted without changing target or encounter state | ☐ Pass ☐ Fail |
-| Sheet, Normal, Advantage, and Disadvantage modes are correct without a saved-setting mutation | ☐ Pass ☐ Fail |
-| Unsaved documented optional fields use their safe sheet defaults; unknown missing fields refuse before submission | ☐ Pass ☐ Fail |
-| One accepted roll and one post-roll announcement occur; reused buttons cannot roll again | ☐ Pass ☐ Fail |
-| A natural 1 reaches CritAssist exactly once | ☐ Pass ☐ Fail |
-| Stale-row and wrong-player buttons refuse safely | ☐ Pass ☐ Fail |
-| Hidden, GM-layer, and off-page target identity remains private and GM-reviewed | ☐ Pass ☐ Fail |
-| 2024 refusal, player lockout, disable/re-enable, and restart behavior pass | ☐ Pass ☐ Fail |
+| GM controls, Guide, Status, Audit, and manual are readable and private where expected | ? Pass ? Fail |
+| Controlled 2014 PC and exact repeating row are verified, including duplicate display names | ? Pass ? Fail |
+| Visible non-controlled target is accepted without changing target or encounter state | ? Pass ? Fail |
+| Sheet, Normal, Advantage, and Disadvantage modes are correct without a saved-setting mutation | ? Pass ? Fail |
+| Unsaved documented optional fields use their safe sheet defaults; unknown missing fields refuse before submission | ? Pass ? Fail |
+| One accepted roll and one post-roll announcement occur; reused buttons cannot roll again | ? Pass ? Fail |
+| A natural 1 reaches CritAssist exactly once | ? Pass ? Fail |
+| Stale-row and wrong-player buttons refuse safely | ? Pass ? Fail |
+| Hidden, GM-layer, and off-page target identity remains private and GM-reviewed | ? Pass ? Fail |
+| 2024 refusal, player lockout, disable/re-enable, and restart behavior pass | ? Pass ? Fail |
 
 ---
 
@@ -533,7 +573,7 @@ Clear concentration from the source with ConcentrationAssist. Pass when the Bles
 4. When the source character has two tokens, verify the caster choices distinguish the exact token and layer. Choose one source token.
 5. Remove concentration from the other token representing that character, then from the chosen source token.
 
-**Pass when:** all three valid recipients apply atomically; an invalid request names every affected token and distinguishes an empty **Represents Character** setting from a stale character link; clearing the other source token does nothing; clearing the exact chosen source ends Bless and cleans only the final unneeded EffectAssist-owned projections.
+**Pass when:** ordinary unique caster buttons show only the useful token or character name; only duplicate visible labels add concise character, layer, and token-reference details. All three valid recipients apply atomically; an invalid request names every affected token and distinguishes an empty **Represents Character** setting from a stale character link; clearing the other source token does nothing; clearing the exact chosen source ends Bless and cleans only the final unneeded EffectAssist-owned projections.
 
 ### Launch Catalog Coverage
 
@@ -551,7 +591,7 @@ End each effect from its **Effect Applied** panel or `!Effect-Active`. Pass when
 
 Confirm the catalog visibly separates Bless, Guidance, Warding Bond, and Haste under **Marker + Supported Sheet Automation** from Holy Weapon and Pass Without a Trace under **Tracked Marker; Rules Stay Manual**. Gift of Alacrity, Longstrider, and Beacon of Hope should not appear as built-in launch buttons.
 
-### Guidance Consumption — Issue #85
+### Guidance Consumption - Issue #85
 
 Use a disposable official D&D 5E by Roll20 2014 PC target and a separate source. Apply Guidance, then confirm the target sheet contains one active `Guidance (GA)` global skill row whose value is exactly `1d4[GameAssist Guidance]`.
 
@@ -623,9 +663,9 @@ Use a separate non-GM player login with two linked character tokens that player 
 
 With the target selected, open `!Effect-GM` and test:
 
-1. **Record Only** — use a temporary name; confirm no marker or condition is added.
-2. **Generic Marker** — choose a harmless marker; confirm it is added and removed when the final source ends.
-3. **Condition Effect** — choose a disposable configured condition; confirm ConditionAssist owns the condition lookup and MarkerService owns the marker change.
+1. **Record Only** - use a temporary name; confirm no marker or condition is added.
+2. **Generic Marker** - choose a harmless marker; confirm it is added and removed when the final source ends.
+3. **Condition Effect** - choose a disposable configured condition; confirm ConditionAssist owns the condition lookup and MarkerService owns the marker change.
 
 **Pass when:** each record appears in Status, no unsupported text or unsafe key corrupts state, and every final cleanup preserves unrelated markers.
 
@@ -725,7 +765,7 @@ For the stale-confirmation check:
 
 ## Focused v2.0.0 Complete AlmanacAssist Acceptance
 
-**What this proves:** AlmanacAssist 1.6.0 ships as one complete module whose action-first daily controls and Time, Climate, Astronomy, Weather, Environment, and Rest systems are independently usable, preserve valid state while disabled, and exchange optional context without turning one system into a hidden prerequisite for another.
+**What this proves:** AlmanacAssist 1.6.1 ships as one complete module whose action-first daily controls and Time, Climate, Astronomy, Weather, Environment, and Rest systems are independently usable, preserve valid state while disabled, and exchange optional context without turning one system into a hidden prerequisite for another.
 
 **Why test it:** v2.0.0 must not publish a calendar shell while describing a world-management suite. This track proves the six systems, their boundaries, their shared navigation, and RestAlmanac's deliberate 2014-sheet writes inside the real Roll20 sandbox.
 
@@ -961,14 +1001,14 @@ When HPAssist automatic roll-on-add is enabled, repeat the test and confirm:
 
 ### Quick Check
 
-Use one disposable token on the **Objects layer** that is linked to a character with `npc=1`. Set bar 1 to **51 / 100**.
+Use one disposable token on the **Objects layer** that is linked to a character with `npc=1`. Set the shared NPC HP bar shown by `!ga-health bars` to **51 / 100**.
 
 ```roll20chat
 !ga-config get NPCAssist notifyBloodied
 !ga-config set NPCAssist notifyBloodied=true
 ```
 
-Change bar 1 HP from **51** to **50**.
+Change the selected bar HP from **51** to **50**.
 
 Pass when the GM receives one private panel like:
 
@@ -1034,7 +1074,7 @@ Each command should toggle exactly once and return to the NPCAssist Control Cent
 Run this only when testing `HPAssist autoRollOnAdd=true`.
 
 1. Enable automatic HP rolling on token add.
-2. Add a fresh qualifying NPC token whose temporary bar 1 value is blank, 0, or another placeholder before HPAssist writes the rolled result.
+2. Add a fresh qualifying NPC token whose temporary selected-bar value is blank, 0, or another placeholder before HPAssist writes the rolled result.
 3. Wait for HPAssist to finish.
 
 Pass when the token receives its rolled HP without a Bloodied notice, false death/revival pair, or new death-history entry. A later manual gameplay drop across half HP should still produce one private GM notice.
@@ -1043,7 +1083,7 @@ Pass when the token receives its rolled HP without a Bloodied notice, false deat
 
 If this section fails, record:
 
-- the exact previous, current, and maximum bar 1 values;
+- the exact previous, current, and maximum values on the selected shared NPC HP bar;
 - the token layer and represented character name;
 - the result of `!ga-config get NPCAssist notifyBloodied`;
 - whether HPAssist automatic rolling was active;
@@ -1133,16 +1173,16 @@ Use a disposable campaign, or a campaign where disposable test tokens and test e
 
 | Clean-install requirement | Result |
 | --- | --- |
-| Sandbox reloads without a new GameAssist exception | ☐ Pass ☐ Fail |
-| Core status identifies v2.0.0 | ☐ Pass ☐ Fail |
-| Required Components 1 through 18 pass | ☐ Pass ☐ Fail |
-| Focused HealthService and GM-private PC alert acceptance passes | ☐ Pass ☐ Fail |
-| Focused EffectAssist acceptance passes | ☐ Pass ☐ Fail |
-| Focused HealAssist acceptance passes | ☐ Pass ☐ Fail |
-| Focused AttackAssist acceptance passes | ☐ Pass ☐ Fail |
-| Complete AlmanacAssist acceptance passes | ☐ Pass ☐ Fail |
-| Cross-component checks pass | ☐ Pass ☐ Fail |
-| Restart check preserves active effect records and Almanac state | ☐ Pass ☐ Fail |
+| Sandbox reloads without a new GameAssist exception | ? Pass ? Fail |
+| Core status identifies v2.0.0 | ? Pass ? Fail |
+| Required Components 1 through 18 pass | ? Pass ? Fail |
+| Focused HealthService and GM-private PC alert acceptance passes | ? Pass ? Fail |
+| Focused EffectAssist acceptance passes | ? Pass ? Fail |
+| Focused HealAssist acceptance passes | ? Pass ? Fail |
+| Focused AttackAssist acceptance passes | ? Pass ? Fail |
+| Complete AlmanacAssist acceptance passes | ? Pass ? Fail |
+| Cross-component checks pass | ? Pass ? Fail |
+| Restart check preserves active effect records and Almanac state | ? Pass ? Fail |
 
 ### Track B: Upgrade from v1.8.2
 
@@ -1159,25 +1199,25 @@ Replace v1.8.2 with v2.0.0, save, and wait for the sandbox restart. Then verify:
 
 | Upgrade requirement | Result |
 | --- | --- |
-| Existing modules retain their enabled or disabled state | ☐ Pass ☐ Fail |
-| Existing configuration values remain intact | ☐ Pass ☐ Fail |
-| NPCAssist history and existing handouts remain intact | ☐ Pass ☐ Fail |
-| HealthService appears enabled with empty sandbox-local evidence | ☐ Pass ☐ Fail |
-| EffectAssist appears disabled by default | ☐ Pass ☐ Fail |
-| HealAssist appears disabled by default | ☐ Pass ☐ Fail |
-| AttackAssist appears disabled by default | ☐ Pass ☐ Fail |
-| AlmanacAssist appears disabled by default | ☐ Pass ☐ Fail |
-| Enabling EffectAssist creates only its own state branches | ☐ Pass ☐ Fail |
-| Enabling HealAssist creates only its config/runtime branch and no HP change | ☐ Pass ☐ Fail |
-| Enabling AttackAssist creates only its config/runtime branch and no roll or target change | ☐ Pass ☐ Fail |
-| Enabling AlmanacAssist creates only its own bounded config/runtime branches | ☐ Pass ☐ Fail |
-| A Bless test survives one sandbox restart | ☐ Pass ☐ Fail |
-| HealAssist settings survive restart while pending healing buttons expire | ☐ Pass ☐ Fail |
-| AttackAssist settings survive restart while pending attack buttons expire | ☐ Pass ☐ Fail |
-| A fictional-time change and one setting in every Almanac system survive restart | ☐ Pass ☐ Fail |
-| Disabling EffectAssist preserves records and stops its commands | ☐ Pass ☐ Fail |
-| Re-enabling EffectAssist restores access to the same records | ☐ Pass ☐ Fail |
-| Disabling/re-enabling AlmanacAssist preserves state and restores its commands | ☐ Pass ☐ Fail |
+| Existing modules retain their enabled or disabled state | ? Pass ? Fail |
+| Existing configuration values remain intact | ? Pass ? Fail |
+| NPCAssist history and existing handouts remain intact | ? Pass ? Fail |
+| HealthService appears enabled with empty sandbox-local evidence | ? Pass ? Fail |
+| EffectAssist appears disabled by default | ? Pass ? Fail |
+| HealAssist appears disabled by default | ? Pass ? Fail |
+| AttackAssist appears disabled by default | ? Pass ? Fail |
+| AlmanacAssist appears disabled by default | ? Pass ? Fail |
+| Enabling EffectAssist creates only its own state branches | ? Pass ? Fail |
+| Enabling HealAssist creates only its config/runtime branch and no HP change | ? Pass ? Fail |
+| Enabling AttackAssist creates only its config/runtime branch and no roll or target change | ? Pass ? Fail |
+| Enabling AlmanacAssist creates only its own bounded config/runtime branches | ? Pass ? Fail |
+| A Bless test survives one sandbox restart | ? Pass ? Fail |
+| HealAssist settings survive restart while pending healing buttons expire | ? Pass ? Fail |
+| AttackAssist settings survive restart while pending attack buttons expire | ? Pass ? Fail |
+| A fictional-time change and one setting in every Almanac system survive restart | ? Pass ? Fail |
+| Disabling EffectAssist preserves records and stops its commands | ? Pass ? Fail |
+| Re-enabling EffectAssist restores access to the same records | ? Pass ? Fail |
+| Disabling/re-enabling AlmanacAssist preserves state and restores its commands | ? Pass ? Fail |
 
 Do not approve the release if an existing valid configuration, history record, or unrelated marker is silently removed.
 
@@ -1252,7 +1292,7 @@ Create a character named `GA Test PC` with:
 constitution_save_bonus = 3
 ```
 
-Add an Objects-layer token that represents that character and has positive bar 1 HP.
+Add an Objects-layer token that represents that character and has positive HP on the selected shared NPC bar.
 
 ### Disposable NPC
 
@@ -1263,7 +1303,7 @@ npc = 1
 npc_hpformula = 4d8+8
 ```
 
-Add an Objects-layer token that represents that character and uses bar 1 for HP.
+Add an Objects-layer token that represents that character and uses the selected shared NPC bar for HP.
 
 ### Unlinked Token
 
@@ -1344,7 +1384,7 @@ Run these read-only commands:
 !npc-hp-status
 ```
 
-Pass when each command family reaches its one canonical module exactly once: four NPCAssist responses, three ConcentrationAssist responses, two CritAssist responses, and three HPAssist responses. The deprecated `!npc-hp-status` check must reach HPAssist without an NPCAssist “command was not recognized” warning. No token, marker, HP value, or history record should change.
+Pass when each command family reaches its one canonical module exactly once: four NPCAssist responses, three ConcentrationAssist responses, two CritAssist responses, and three HPAssist responses. The deprecated `!npc-hp-status` check must reach HPAssist without an NPCAssist "command was not recognized" warning. No token, marker, HP value, or history record should change.
 
 ConfigUI, HPAssist, and DebugTools are deliberately brief. Their **Manual** command should explain that the complete guidance remains in chat. The other Manual commands create or update these handouts:
 
@@ -2260,7 +2300,7 @@ Select a disposable token whose name visibility is off, then run:
 !token-assist --set imgsrc|ignored --on showname
 ```
 
-Pass when TokenAssist refuses the unsupported image-side property, explains that this feature is outside TokenAssist 1.0.5, and leaves name visibility unchanged. TokenAssist also does not claim default-token writes, computed or name-resolved attributes, advanced controller-list editing, advanced color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, exact TokenMod report-recipient distinctions, duplicate-index marker editing, conditional marker counts, or TokenMod help-handout rebuilding.
+Pass when TokenAssist refuses the unsupported image-side property, explains that this feature is outside TokenAssist 1.0.7, and leaves name visibility unchanged. TokenAssist also does not claim default-token writes, computed or name-resolved attributes, advanced controller-list editing, advanced color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, exact TokenMod report-recipient distinctions, duplicate-index marker editing, conditional marker counts, or TokenMod help-handout rebuilding.
 
 #### T12. Restore Campaign Settings
 
@@ -2469,7 +2509,7 @@ Record:
 - the exact `!Init-` command or button used;
 - whether the caller was GM or player;
 - Roll20 sheet year and `charactersheetname` for each affected character;
-- token name, ID, page, layer, control, bar 1 HP, and death-marker state;
+- token name, ID, page, layer, control, selected-bar HP, and death-marker state;
 - tracker JSON or screenshots before and after;
 - the displayed `Roll(s)` values, total, and formula;
 - Mod API server selection for 2024 characters;
@@ -2847,7 +2887,7 @@ The complete privacy, deduplication, stale-button, verified-damage, and hidden-t
 
 On the linked test NPC, start with positive HP:
 
-1. Set bar 1 HP to `0`.
+1. Set the shared NPC HP bar shown by `!ga-health bars` to `0`.
 2. Confirm the death marker appears.
 3. Set HP above `0`.
 4. Confirm the marker clears.
@@ -2860,7 +2900,7 @@ On the linked test NPC, start with positive HP:
 
 Pass when one death is recorded, revival is annotated, and the audit reports no remaining mismatch.
 
-Then set bar 1 to **51 / 100** and lower it to **50 / 100**. Pass when the GM receives one private Bloodied notice, players receive nothing, and no marker or history entry is added by that notice.
+Then set the selected bar to **51 / 100** and lower it to **50 / 100**. Pass when the GM receives one private Bloodied notice, players receive nothing, and no marker or history entry is added by that notice.
 
 ### NPCAssist Menu Guide
 
@@ -2913,7 +2953,7 @@ With the deliberate mismatch still present, click **Review Marker Repairs** or r
 !npc-death-repair
 ```
 
-Pass when the preview states how many markers would be added and removed, explains that current bar 1 HP is the authority, and offers **Confirm Marker Repairs**. Opening the preview must not change HP, markers, history, buckets, or Arcs.
+Pass when the preview states how many markers would be added and removed, explains that current selected-bar HP is the authority, and offers **Confirm Marker Repairs**. Opening the preview must not change HP, markers, history, buckets, or Arcs.
 
 On disposable tokens only, confirm the repair. Pass when GameAssist re-scans the page, changes only the configured death marker, preserves unrelated markers, reports any failed verification, and leaves HP and death-history counts unchanged. Run `!npc-death-audit` again and confirm the repaired mismatch is gone.
 
@@ -3075,7 +3115,7 @@ Select the linked test NPC and run:
 !HP-Selected
 ```
 
-Pass when bar 1 current and maximum become the same rolled value and the result identifies the NPC and formula.
+Pass when the selected shared NPC bar's current and maximum become the same rolled value and the result identifies the NPC and formula. The other two bars must remain unchanged.
 
 ### Expanded HPAssist Checks
 
@@ -3661,7 +3701,7 @@ If a command produces duplicate output:
 3. Keep only the intended implementation.
 4. Restart the sandbox and repeat the command.
 
-Scripts that independently respond to `!condition` or `!token-mod`, describe the same marker changes, modify the same NPC HP/bar 1, control the same token properties or death/concentration/condition markers, process the same Natural 1 workflow, or rewrite the native Turn Tracker may conflict even when their names differ. TokenAssist deliberately suspends only its older `!token-mod` compatibility alias when standalone TokenMod is detected, but the standalone copy should still be removed for normal v2.0.0 use. Use InitiativeAssist Observer mode when another initiative roller owns initiative values; leave CombatAssist disabled when another encounter manager owns turn advancement or rounds.
+Scripts that independently respond to `!condition` or `!token-mod`, describe the same marker changes, modify the same NPC HP or selected token bar, control the same token properties or death/concentration/condition markers, process the same Natural 1 workflow, or rewrite the native Turn Tracker may conflict even when their names differ. TokenAssist deliberately suspends only its older `!token-mod` compatibility alias when standalone TokenMod is detected, but the standalone copy should still be removed for normal v2.0.0 use. Use InitiativeAssist Observer mode when another initiative roller owns initiative values; leave CombatAssist disabled when another encounter manager owns turn advancement or rounds.
 
 ## State Recovery
 
