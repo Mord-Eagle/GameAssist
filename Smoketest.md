@@ -2410,7 +2410,7 @@ Select a disposable token whose name visibility is off, then run:
 !token-assist --set imgsrc|ignored --on showname
 ```
 
-Pass when TokenAssist refuses the unsupported image-side property, explains that this feature is outside TokenAssist 1.1.0, and leaves name visibility unchanged. TokenAssist also does not claim default-token writes, computed or name-resolved attributes, advanced controller-list editing, advanced color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, exact TokenMod report-recipient distinctions, duplicate-index marker editing, conditional marker counts, or TokenMod help-handout rebuilding.
+Pass when TokenAssist refuses the unsupported persistent image-side property, leaves name visibility unchanged, and explains that durable token-image/default-token writes remain outside this release. TokenAssist 1.3.0 supports the selected-token marker-expression, controller/report, visual, dimming, side-selection, and exact saved/computed-value behaviors described in the main guide. Rebuilding TokenMod's help handout and creating a global `TokenMod` compatibility object remain outside scope.
 
 #### T12. Restore Campaign Settings
 
