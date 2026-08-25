@@ -633,7 +633,7 @@ ConcentrationAssist consumes HealthService evidence conservatively while preserv
 **Tracking:** [Issue #80](https://github.com/Mord-Eagle/GameAssist/issues/80)
 **Status:** Sandbox verification
 
-EffectAssist records formal duration rules and whichever verified provider anchors are available when a built-in effect begins. CombatAssist 1.1.1 retains the immutable encounter identity and accepted forward/backward transition evidence introduced in 1.1.0; AlmanacAssist continues to publish one committed event for each world-time change.
+EffectAssist records formal duration rules and whichever verified provider anchors are available when a built-in effect begins. CombatAssist 1.2.0 retains the immutable encounter identity and accepted forward/backward transition evidence, and adds bounded HealthService timeline evidence without claiming causation; AlmanacAssist continues to publish one committed event for each world-time change.
 
 - [x] Record ten-round/one-minute rules for Bless, Guidance, and Haste plus six-hundred-round/sixty-minute rules for Warding Bond, Holy Weapon, and Pass Without a Trace.
 - [x] Anchor encounter durations only to an active CombatAssist encounter on the effect source's page.
