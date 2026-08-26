@@ -14,20 +14,20 @@ on the branch touches `main` or the existing branch. All edits are confined to t
 AlmanacAssist section, directly affected shared contracts, documentation, metadata,
 and tests until a final consolidated regression pass.
 
-The plan follows the delivery order in #95. The narrow repairs in **Gate 0** are
+The plan follows the delivery order in #95/#96. The narrow repairs in **Gate 0** are
 completed first because they are independently verifiable and reduce risk before
-the larger architectural work begins.
+the larger architectural work begins. **AlmanacAssist v2.0.0 is the active implementation version for the entire program. Live Roll20 validation is a final release phase and must not begin until all Issue #96 code gates are built.**
 
 ## 1. Status summary
 
 | Gate | Scope | Status |
 | --- | --- | --- |
-| Gate 0 | Preserve and repair the current foundation | **In progress — #92/#93 and focused automated checks are complete; unknown-state and live Roll20 checks remain** |
-| Gate 1 | Make the existing six systems usable in Roll20 | **In progress — compact Current World dashboard and snapshot-backed announcements are implemented; complete live UX verification remains** |
-| Gate 2 | Introduce the SceneResolver current-scene authority | **In progress — read-only snapshot, explicit Phenomena evidence, and focused VM coverage are implemented; live Roll20 verification remains** |
-| Gate 3 | Build live-world systems from #94 | **In progress — generic place composition, Prepared Destinations, reviewed Travel, and explicit Phenomena overlays are implemented; presets and advisor remain** |
+| Gate 0 | Preserve and repair the current foundation | **Code substantially built — #92/#93 and focused automated checks are complete; retain unknown-state hardening through final implementation** |
+| Gate 1 | Make the existing six systems usable in Roll20 | **Code substantially built — compact Current World dashboard and snapshot-backed presentation are implemented; live UX verification is deferred to the final phase** |
+| Gate 2 | Introduce the SceneResolver current-scene authority | **Code built — read-only snapshot, explicit Phenomena evidence, and focused VM coverage are implemented; live verification is deferred to the final phase** |
+| Gate 3 | Build live-world systems from #94 | **In progress — generic place composition, Prepared Destinations, reviewed Travel, explicit Phenomena overlays, and PresetRegistry are built; RulesAdvisor and editor-layer completion remain** |
 | Gate 4 | Portable world data and temporal contexts | Not started |
-| Acceptance | Automated/structural + live Roll20 | Not started |
+| Acceptance | Automated/structural + live Roll20 | **Deferred — begin only after every Issue #96 code gate is built** |
 
 ## 2. Gate 0 — Preserve and repair the current foundation
 
@@ -56,11 +56,9 @@ the larger architectural work begins.
   - Read-only getter behavior is unchanged.
 
 - **Version and metadata.**
-  - AlmanacAssist module version advanced from `1.6.1` to `1.6.2` on this build
-    line (the architectural 2.0 engine is not yet complete, so `2.0.0` is not
-    claimed).
-  - Section metadata and footer were updated.
-  - `GameAssist`, `GameAssist.js`, and `GameAssist-v2.0.0` were kept byte-identical.
+  - Historical internal checkpoints advanced from `1.6.1` through `1.10.0`; the active AlmanacAssist implementation version is now **`2.0.0`** for the full Issue #96 code program.
+  - Section metadata and footer distinguish that active v2.0.0 implementation from retained historical rollback notes.
+  - `GameAssist`, `GameAssist.js`, and `GameAssist-v2.0.0` remain byte-identical at each verified checkpoint.
 
 ### Other Gate 0 items remaining
 
@@ -74,15 +72,11 @@ the larger architectural work begins.
       when AlmanacAssist or a subsystem is disabled and re-enabled. Live Roll20
       lifecycle confirmation remains required.
 - [ ] Keep unknown state warning-only; never delete or reinterpret automatically.
-- [ ] Complete the live Roll20 smoke checks for disable/re-enable and subsystem
-      toggles.
+- [ ] **Final validation only:** Complete the live Roll20 smoke checks for disable/re-enable and subsystem toggles after all Issue #96 code gates are built.
 
 ## 3. Gate 1 — Make the existing six systems usable in Roll20
 
-This is the minimum AlmanacAssist completion gate for PR #81. The 1.10.0 checkpoint
-adds compact Current World/Scene presentation, bounded generic location context,
-Prepared Destinations, reviewed Travel, and explicit Phenomena overlays, but it must
-still be verified against the live Roll20 acceptance track before it can be marked complete.
+This code gate has a v2.0.0 implementation foundation: compact Current World/Scene presentation, bounded generic location context, Prepared Destinations, reviewed Travel, and explicit Phenomena overlays. Its live Roll20 acceptance work is intentionally deferred and must begin only after all remaining Issue #96 code gates are built.
 
 - [x] Implement the compact `!Almanac-GM` / `!Almanac-DM` / `!aa-gm` Current World
       dashboard, Scene view, quick time anchors, and explicit return navigation in
@@ -92,7 +86,7 @@ still be verified against the live Roll20 acceptance track before it can be mark
       ownership when a place changes.
 - [x] Implement reviewed Travel start/route/pace/segment/arrival flow with
       accepted-only fictional-time advancement and final-location switch.
-- [ ] Verify all ordinary Travel and generated buttons in live Roll20.
+- [ ] **Final validation only:** Verify all ordinary Travel and generated buttons in live Roll20 after the complete Issue #96 code build.
 - [ ] Wayfarer calendar manager: create/edit/preview/validate/activate/duplicate/
       roll back/reset without raw JSON; complete query prompts; atomic activation;
       elapsed-time preservation; year-0 behavior defined once.
@@ -100,10 +94,9 @@ still be verified against the live Roll20 acceptance track before it can be mark
       announcement current-world facts through a single read-only SceneResolver
       snapshot. Preserve independent Off/Descriptive/Detailed/Technical fields and
       Quick/Calendar/Travel/Everything presets; technical content is forced GM-only.
-- [ ] Verify every presentation mode and preset in live Roll20.
+- [ ] **Final validation only:** Verify every presentation mode and preset in live Roll20 after the complete Issue #96 code build.
 - [ ] Climate/weather/environment/astronomy/rest ownership and coherence.
-- [ ] Live Roll20 Wayfarer, announcement, weather/environment coherence,
-      astronomy, and rest tracks.
+- [ ] **Final validation only:** Run the live Roll20 Wayfarer, announcement, weather/environment coherence, astronomy, and rest tracks after the complete Issue #96 code build.
 
 ## 4. Gate 2 — SceneResolver current-scene authority
 
@@ -129,8 +122,8 @@ still be verified against the live Roll20 acceptance track before it can be mark
 - [x] Route active reviewed Travel through the snapshot with immutable journey
       evidence and field provenance; Travel actions retain explicit review boundaries.
 - [x] Add bounded explicit Phenomena definitions and immutable read-only overlay evidence; filter scoped/elapsed records without writes, preserve newer active records warning-only, and keep non-authoritative terrain/travel presentation separate.
-- [ ] Complete live Roll20 Phenomena/coherence evidence.
-- [ ] Verify large time changes emit no unbounded event replay in Roll20.
+- [ ] **Final validation only:** Complete live Roll20 Phenomena/coherence evidence after the complete Issue #96 code build.
+- [ ] **Final validation only:** Verify large time changes emit no unbounded event replay in Roll20 after the complete Issue #96 code build.
 
 ## 5. Gate 3 — Live-world systems from #94
 
@@ -150,8 +143,7 @@ still be verified against the live Roll20 acceptance track before it can be mark
       review start and every segment, advance Time only after confirmation, and
       change Location only on accepted arrival.
 - [x] Phenomena: bounded owner-authored definitions with optional Location scope, reviewed activation/deactivation, optional fictional-time expiry, explicit cleanup, safe active-record deletion constraints, Worldbuilding/Session/Travel presentation, and focused VM coverage.
-- [ ] PresetRegistry (immutable versioned built-ins, Preview → Clone/Install →
-      Customize, campaign clones editable).
+- [x] PresetRegistry: immutable generic versioned built-ins, Preview → reviewed Clone/Install → Customize, independent editable campaign clones, provenance, bounded references, and focused VM coverage.
 - [ ] RulesAdvisor (optional, rules-profile-specific, advisory only).
 - [ ] Complete Basic / Detailed / Technical layers for every editor.
 - [ ] Provenance and licensing review before any published setting pack data.
@@ -171,8 +163,8 @@ still be verified against the live Roll20 acceptance track before it can be mark
 ### Automated and structural
 
 - [x] Focused VM harnesses cover Gate 0, SceneResolver, generic Worldbuilding,
-      Prepared Destination/reviewed Travel, and explicit Phenomena boundaries; they
-      do not replace live Roll20 acceptance.
+      Prepared Destination/reviewed Travel, explicit Phenomena boundaries, and PresetRegistry clone/install boundaries; they
+      do not replace final live Roll20 acceptance.
 - [x] Syntax parsing passes for `GameAssist`, `GameAssist.js`, and
       `GameAssist-v2.0.0`.
 - [x] Executable artifacts remain byte-identical.
@@ -189,6 +181,8 @@ still be verified against the live Roll20 acceptance track before it can be mark
 - [ ] Focused Almanac tests before one consolidated GameAssist regression pass.
 
 ### Live Roll20
+
+**Deferred final phase:** Do not execute any item in this section until all Issue #96 code gates—including RulesAdvisor, WorldPacks, and temporal contexts—are built and the consolidated automated regression pass is clean.
 
 - [ ] Nontrivial Wayfarer calendar via chat controls only.
 - [ ] Every generated button opens a complete prompt and produces a visible result.
@@ -211,11 +205,10 @@ still be verified against the live Roll20 acceptance track before it can be mark
   (negative/non-finite input, the last valid minute of year 9999, and the first
   invalid minute), #93 configured-state semantics, valid saved-state preservation,
   and case-insensitive close dashboard aliases.
-- `node --check GameAssist`, `node --check GameAssist.js`, `node --check < GameAssist-v2.0.0`, and all five focused Almanac suites pass, including `tests/almanac-phenomena.test.js`. The Phenomena harness proves no-write immutable scope/expiry filtering, newer-record preservation, review-before-activate/deactivate, explicit expiry cleanup, aliases, and Worldbuilding cards.
+- `node --check GameAssist`, `node --check GameAssist.js`, `node --check < GameAssist-v2.0.0`, and the focused Almanac suites—including `tests/almanac-presets.test.js` and `tests/almanac-phenomena.test.js`—are run before each coherent checkpoint. The Phenomena harness proves no-write immutable scope/expiry filtering, newer-record preservation, review-before-activate/deactivate, explicit expiry cleanup, aliases, and Worldbuilding cards.
 - `maximumWorldMinute` no longer appears anywhere in the source.
 - `getSubmoduleStatus()` now returns the explicit six-field configured-state
   object.
 - `GameAssist`, `GameAssist.js`, and `GameAssist-v2.0.0` are byte-identical after
   the edits.
-- The VM harness is focused automated evidence only. Live Roll20 tests are still
-  pending and remain the governing acceptance evidence for release.
+- The VM harness is focused automated development evidence only. Live Roll20 tests remain the governing final acceptance evidence, but are deliberately deferred until the full Issue #96 code build is complete.

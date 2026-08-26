@@ -768,11 +768,13 @@ For the stale-confirmation check:
 
 ## Focused v2.0.0 Complete AlmanacAssist Acceptance
 
-**What this proves:** AlmanacAssist `1.10.0` on the `AlmanacAssist-v2.0.0-Build` line provides the six independently controlled systems, read-only SceneResolver, bounded generic Worldbuilding, Location-bound Prepared Destinations, reviewed Travel, and explicit reviewed Phenomena overlays for coherent Current World, Scene, Travel, and announcement presentation. It preserves valid state while disabled and exchanges optional context without turning one system into a hidden prerequisite for another. The Gate 0 repairs from Issues #92 and #93 are verified here as well; live Roll20 evidence is still required before release.
+**What this proves:** AlmanacAssist **v2.0.0** on the `AlmanacAssist-v2.0.0-Build` line provides the complete Issue #96 code program in a real Roll20 sandbox: the six independently controlled systems, read-only SceneResolver, bounded generic Worldbuilding, Location-bound Prepared Destinations, reviewed Travel, explicit reviewed Phenomena overlays, PresetRegistry, RulesAdvisor, WorldPacks, and temporal contexts. It must preserve valid state while disabled and exchange optional context without turning one system into a hidden prerequisite for another. The Gate 0 repairs from Issues #92 and #93 are included in the final evidence.
 
-**Why test it:** v2.0.0 must not publish a calendar shell while describing a world-management suite. This track proves the six systems, their boundaries, their shared navigation, and RestAlmanac's deliberate 2014-sheet writes inside the real Roll20 sandbox.
+**Why test it:** v2.0.0 must not publish a calendar shell while describing a world-management suite. This final track proves the six systems, their boundaries, their shared navigation, and RestAlmanac's deliberate 2014-sheet writes inside the real Roll20 sandbox.
 
-**Skip when:** Do not skip this section for v2.0.0 release acceptance. After release, campaigns that keep AlmanacAssist disabled may skip it. Within ordinary troubleshooting, test only the enabled internal system and any optional context provider involved.
+**When to run:** **Do not begin this live Roll20 validation while Issue #96 code is still being built.** Run it only after all Issue #96 implementation gates—including RulesAdvisor, WorldPacks, and temporal contexts—are complete. Focused VM checks are development evidence only and do not consume this final live-validation phase.
+
+**Skip when:** Do not skip this section for v2.0.0 release acceptance after the full code build is complete. After release, campaigns that keep AlmanacAssist disabled may skip it. Within ordinary troubleshooting, test only the enabled internal system and any optional context provider involved.
 
 ### Preparation and Master Controls
 

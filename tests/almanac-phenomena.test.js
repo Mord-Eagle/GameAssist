@@ -3,7 +3,7 @@
 //   codename: "GAMEASSIST_ALMANAC_PHENOMENA_TEST"
 //   project_version: "v2.0.0"
 //   purpose: "Exercise bounded explicit Phenomena overlays, no-write SceneResolver composition, and reviewed Roll20 controls against the shipped executable."
-//   order: ["artifact_identity","read_only_scene_overlay","future_record_preservation","reviewed_activation","reviewed_deactivation","explicit_expiry_cleanup","worldbuilding_controls"]
+//   order: ["artifact_identity","read_only_scene_overlay","future_record_preservation","active_capacity_preservation","reviewed_activation","reviewed_deactivation","explicit_expiry_cleanup","worldbuilding_controls"]
 //   env:
 //     required: ["NODE_RUNTIME"]
 //     optional: []
@@ -151,6 +151,36 @@ function assertFutureRecordIsPreserved(harness) {
     assert.ok(scene.warnings.some(warning => warning.code === 'PHENOMENA_OVERLAY_UNAVAILABLE'), 'a newer record must report warning-only unavailable evidence');
 }
 
+function assertCapacityRefusalPreservesOpaqueFutureRecord(harness) {
+    installPhenomenaWorld(harness);
+    const runtime = harness.state.GameAssist.AlmanacAssist.runtime;
+    const opaqueFuture = {
+        schemaVersion: 99,
+        id: 'future-overlay-record',
+        opaqueFutureField: { preserve: 'exactly', nested: ['future', 'data'] }
+    };
+    runtime.world.activePhenomena = [
+        opaqueFuture,
+        ...Array.from({ length: 11 }, (_, index) => ({
+            schemaVersion: 1,
+            id: `known-overlay-${index + 1}`,
+            phenomenonId: 'ashfall',
+            locationId: 'watch-camp',
+            activatedAt: '2026-01-01T00:00:00.000Z',
+            expiresWorldMinute: null
+        }))
+    ];
+    const opaqueBefore = JSON.stringify(runtime.world.activePhenomena[0]);
+    const activeBefore = JSON.stringify(runtime.world.activePhenomena);
+    const refusal = harness.dispatchCommand('!aa-phenomena activate --id distant-comet');
+    assert.equal(refusal.length, 1, 'capacity refusal must render one narrow panel');
+    assert.match(refusal[0].message, /Active Overlay Limit/, 'a full active collection must refuse a new review before any activation append');
+    assert.equal(runtime.world.activePhenomena.length, 12, 'capacity refusal must keep the full active collection intact');
+    assert.equal(JSON.stringify(runtime.world.activePhenomena[0]), opaqueBefore, 'capacity refusal must preserve the opaque future record without normalization or displacement');
+    assert.equal(JSON.stringify(runtime.world.activePhenomena), activeBefore, 'capacity refusal must not append-and-trim or otherwise reorder active overlays');
+    assert.equal(Object.keys(runtime.world.phenomenonGrants).length, 0, 'capacity refusal must not create a review grant');
+}
+
 function reviewId(harness) {
     const grants = harness.state.GameAssist.AlmanacAssist.runtime.world.phenomenonGrants;
     const ids = Object.keys(grants);
@@ -251,6 +281,9 @@ function run() {
     const futureHarness = createHarness();
     assertFutureRecordIsPreserved(futureHarness);
 
+    const capacityHarness = createHarness();
+    assertCapacityRefusalPreservesOpaqueFutureRecord(capacityHarness);
+
     const workflowHarness = createHarness();
     assertReviewedWorkflow(workflowHarness);
 
@@ -265,7 +298,7 @@ function run() {
 
 run();
 // --- Notes & Comments ---
-// Changed (v2.0.0): add focused evidence for generic, explicit, reviewed Phenomena overlays.
+// Changed (v2.0.0): add focused evidence for generic, explicit, reviewed Phenomena overlays, including capacity refusal that preserves opaque future-schema active records.
 // Decision log:
 //   CHOICE: make expiry cleanup explicit — ALT: silently prune during SceneResolver reads; REJECTED: a read-only resolver must not mutate gameplay-facing state.
 //   CHOICE: preserve newer overlay records without interpretation — ALT: coerce or delete unfamiliar shapes; REJECTED: forward data must remain warning-only and recoverable.
