@@ -3,7 +3,7 @@
 GameAssist - Roll20 API Script
 Version: 2.0.0
 Last Updated: 2026-08-26 (America/New_York)
-Release scope: EffectAssist 2.5.3 compact identity-aware casting, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.0 automatic or reviewed normal/maximum healing, HealthService 1.1.0 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, CombatAssist 1.2.0 timeline and Ready/Delay tools, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist v2.0.0 SceneResolver, generic Worldbuilding, Prepared Destinations, reviewed Travel, explicit Phenomena overlays, PresetRegistry, optional RulesAdvisor, and atomic WorldPacks on the AlmanacAssist-v2.0.0-Build line (one defensive current-scene snapshot, provenance, coherent session presentation, bounded place composition, and accepted-only fictional travel time), and regression repairs across the v2.0.0 module suite.
+Release scope: EffectAssist 2.5.3 compact identity-aware casting, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.0 automatic or reviewed normal/maximum healing, HealthService 1.1.0 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, CombatAssist 1.2.0 timeline and Ready/Delay tools, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist v2.0.0 SceneResolver, layered generic Worldbuilding, Prepared Destinations, reviewed Travel, explicit Phenomena overlays, PresetRegistry, optional RulesAdvisor, atomic WorldPacks, explicit Temporal Contexts, and optional bounded Wayfarer handout editing on the AlmanacAssist-v2.0.0-Build line (one defensive current-scene snapshot, provenance, coherent session presentation, bounded place composition, accepted-only fictional travel time, and one canonical fictional-minute chronology), and regression repairs across the v2.0.0 module suite.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -30,7 +30,7 @@ calls GameAssist.enqueue(). This development package contains fifteen configurab
 - EffectAssist 2.5.3 - Coordinates compact catalog-driven effects, exact caster-and-recipient identity, retained GM requests, GameAssist-owned 2014-sheet modifiers, verified token-specific concentration, ownership-safe cleanup, duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
 - HealAssist 1.2.0 - Guides verified 2014 normal or maximum healing with direct single-recipient targeting, optional automatic application, visible PC targeting, private GM requests, and HealthService verification.
 - AttackAssist 1.1.0 - Guides authorized 2014 repeating attacks through direct visible targeting, default sheet-mode submission, optional GM-enabled roll review, complete prompt-safe Classic-sheet expansion, private GM placement, crash-safe inline-roll validation, and visible one-use native-template rolls without applying damage.
-- AlmanacAssist v2.0.0 - Builds bounded generic PresetRegistry templates, editable campaign Session Preset clones, optional advisory-only RulesAdvisor notes, and atomic handout-reviewed WorldPacks on top of explicit Phenomena overlays, Prepared Destinations, Travel Routes, and review-confirmed Travel. Preset and WorldPack installation are reviewed and confirmed; no built-in setting lore is bundled.
+- AlmanacAssist v2.0.0 - Builds bounded generic PresetRegistry templates, editable campaign Session Preset clones, optional advisory-only RulesAdvisor notes, atomic handout-reviewed WorldPacks, explicit Temporal Contexts, and optional inert Wayfarer handout editing on top of layered generic Worldbuilding, Phenomena overlays, Prepared Destinations, Travel Routes, and review-confirmed Travel. Preset/WorldPack installation, temporal transitions, and calendar-draft imports are reviewed and confirmed; no built-in setting lore is bundled.
 - HPAssist 0.3.0 - Rolls npc_hpformula and uses HealthService for verified writes to the selected shared NPC HP bar when available.
 - DebugTools 0.3.1 - Optional dry-run-first GM diagnostics with verified supported HP damage writes on the selected shared NPC HP bar.
 
@@ -99,7 +99,8 @@ MODULE COMMANDS
   !Attack-Status, !Attack-Audit, !Attack-Requests, and !Attack-Players
 - AlmanacAssist: !Almanac, !aa, !cal, !date, !time, !clim, !astro,
   !weather, !enviro, !rest, !aa-time, !aa-climate, !aa-astro,
-  !aa-weather, !aa-enviro, !aa-rest, !aa-wayfarer, !aa-preview, !aa-announce,
+  !aa-weather, !aa-enviro, !aa-rest, !aa-wayfarer, !aa-world, !aa-worldpacks,
+  !aa-temporal, !aa-rules, !aa-preview, !aa-announce,
   !aa-announcement-settings, focused role/help/status/audit aliases,
   !aa-wayfarer reset-default --confirm yes, !Almanac-GM, !Almanac-DM,
   !Almanac-Status, !Almanac-Audit
@@ -198,7 +199,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 // mechsuit:
 //   codename: "GAMEASSIST"
 //   project_version: "v2.0.0"
-//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, migration-safe module identities, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker, Turn Tracker, and health authorities, optional GM-private PC health-band alerts, source-aware semantic effects with ownership-safe projections, guided verified 2014 healing, guided authorized 2014 repeating attacks, bounded GM-reviewed official 2014 Bless cast proposals, and optional GM-reviewed duration candidates, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, preservation-first encounter flow, GM-private NPC Bloodied alerts, optional health-gated table greetings, validated real-world table time, and independently managed fictional time, climate, astronomy, weather, environments, and deliberate 2014-sheet rests. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, automatic turn advancement, automatic effect application or recipient inference from spell cards, automatic effect expiration from elapsed time, automatic healing-card interpretation or resource consumption, automatic damage application from guided attack rolls, automatic Bloodied markers/history, automatic concentration rolls from observed HP changes, public or player-facing health-threshold disclosure, damage-source guessing, silent effect repair, automatic environmental penalties, or automatic reversal of campaign state when fictional time moves backward."
+//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, migration-safe module identities, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker, Turn Tracker, and health authorities, optional GM-private PC health-band alerts, source-aware semantic effects with ownership-safe projections, guided verified 2014 healing, guided authorized 2014 repeating attacks, bounded GM-reviewed official 2014 Bless cast proposals, and optional GM-reviewed duration candidates, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, preservation-first encounter flow, GM-private NPC Bloodied alerts, optional health-gated table greetings, validated real-world table time, and independently managed fictional time, climate, astronomy, weather, environments, deliberate 2014-sheet rests, and explicit local Temporal Context projections of one canonical fictional-minute chronology. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, automatic turn advancement, automatic effect application or recipient inference from spell cards, automatic effect expiration from elapsed time, automatic healing-card interpretation or resource consumption, automatic damage application from guided attack rolls, automatic Bloodied markers/history, automatic concentration rolls from observed HP changes, public or player-facing health-threshold disclosure, damage-source guessing, silent effect repair, automatic environmental penalties, or automatic reversal of campaign state when fictional time moves backward."
 //   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.turntrackerservice","core.semanticevents","core.healthservice","core.sheetcapabilities","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critassist","modules.conditionassist","modules.tokenassist","modules.initiativeassist","modules.combatassist","modules.welcomeassist","modules.npcassist","modules.concentrationassist","modules.effectassist","modules.healassist","modules.attackassist","modules.almanacassist","modules.hpassist","modules.debugtools","bootstrap"]
 //   env:
 //     required: []
@@ -256,7 +257,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 //     └─ [GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
-// Guarantee: GameAssist v2.0.0 runs policy, utilities, guarded core services including MarkerService, TurnTrackerService, SemanticEvents, and HealthService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/effect/healing/attack/almanac/gameplay modules, then bootstrap in the declared order. HealthService reports only verified supported HP transitions and refuses to guess damage causes, attackers, resistances, or temporary-HP interactions; its optional PC threshold consumer whispers only the GM. HealAssist guides an authorized 2014 healing roll through exact HP review and one-use verified application while refusing to infer or consume spell slots, items, features, or temporary HP. AttackAssist guides a verified 2014 repeating attack through authorized source selection, targeting, and one-use roll submission while refusing to apply damage or mutate combat state. EffectAssist may offer a bounded private GM proposal for an unambiguous official 2014 Bless card, but it refuses to infer recipients or apply an effect before ordinary review and confirmation; it may also turn accepted CombatAssist progression and committed AlmanacAssist time into private GM duration candidates, but it refuses to end effects from elapsed time alone. AlmanacAssist owns its fictional time, climate, astronomy, weather, environment, and rest records without changing GameAssist real-world timestamps, NPCAssist Session dates, or CombatAssist timing. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing real-world times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
+// Guarantee: GameAssist v2.0.0 runs policy, utilities, guarded core services including MarkerService, TurnTrackerService, SemanticEvents, and HealthService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/effect/healing/attack/almanac/gameplay modules, then bootstrap in the declared order. HealthService reports only verified supported HP transitions and refuses to guess damage causes, attackers, resistances, or temporary-HP interactions; its optional PC threshold consumer whispers only the GM. HealAssist guides an authorized 2014 healing roll through exact HP review and one-use verified application while refusing to infer or consume spell slots, items, features, or temporary HP. AttackAssist guides a verified 2014 repeating attack through authorized source selection, targeting, and one-use roll submission while refusing to apply damage or mutate combat state. EffectAssist may offer a bounded private GM proposal for an unambiguous official 2014 Bless card, but it refuses to infer recipients or apply an effect before ordinary review and confirmation; it may also turn accepted CombatAssist progression and committed AlmanacAssist time into private GM duration candidates, but it refuses to end effects from elapsed time alone. AlmanacAssist owns its fictional time, climate, astronomy, weather, environment, rest, WorldPack, and Temporal Context records without changing GameAssist real-world timestamps, NPCAssist Session dates, or CombatAssist timing; Temporal Contexts are local projections, not a second clock. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing real-world times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
 
 // =============================
 // === GameAssist v2.0.0 ===
@@ -527,7 +528,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             worldPackRecordLimit: 240,
             worldPackObjectLimit: 900,
             worldPackDepthLimit: 10,
-            worldPackStringLimit: 1000
+            worldPackStringLimit: 1000,
+            temporalContextLimit: 24,
+            temporalTransitionGrantLimit: 6,
+            temporalTransitionGrantMs: 1000 * 60 * 5,
+            temporalHistoryLimit: 50,
+            temporalMaximumRatePart: 60,
+            temporalMaximumOffsetMinutes: 100000000,
+            temporalMaximumTransitionMinutes: 1440000000,
+            wayfarerHandoutGrantLimit: 4,
+            wayfarerHandoutGrantMs: 1000 * 60 * 5,
+            wayfarerHandoutDocumentCharLimit: 30000,
+            wayfarerHandoutObjectLimit: 300,
+            wayfarerHandoutDepthLimit: 8
         }),
         config: Object.freeze({
             unsafeKeys: Object.freeze(['__proto__', 'prototype', 'constructor'])
@@ -23538,10 +23551,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: AlmanacAssist fictional calendar and world time
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:ALMANACASSIST", title: "AlmanacAssist",
-    //   guarantees: ["Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Optional Almanac integrations improve context without becoming hidden prerequisites","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer exposes direct validated editors for every stored calendar component while moon phases remain visible Astronomy-owned context","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","The internal read-only SceneResolver emits one defensive current-world snapshot with field-level provenance, bounded warnings, separate moon phase and visibility, and no provider-state writes","The GM dashboard, Scene view, announcements, weather forecast display, and rest previews consume one resolved snapshot so current weather, environment, visibility, and celestial evidence do not contradict each other","Worldbuilding Mode provides bounded generic Regions, Geography, Ecoregions, Biomes, Locations, Prepared Destinations, Travel Routes, explicit Phenomena overlays, and Session Presets with safe current-place selection, favorites, recents, and field-owned SceneResolver composition without bundled setting lore","RulesAdvisor is optional, profile-specific, advisory-only, and never applies gameplay state changes","WorldPacks are bounded inert handout data with syntax/schema/reference/provenance review, expiring confirmation, atomic Worldbuilding plus registry commits, stable imported-record provenance, no-overwrite New/Copy policy, and guarded update policy","Prepared Destination, Travel, and Phenomena reviews never advance fictional time or change active Location until the GM explicitly confirms an individual reviewed operation","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Descriptive announcements report player-perceivable time, weather, visibility, and moon visibility without presenting climate baselines as simultaneous current measurements","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
+    //   guarantees: ["Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Optional Almanac integrations improve context without becoming hidden prerequisites","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer exposes direct validated editors for every stored calendar component while moon phases remain visible Astronomy-owned context","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","The internal read-only SceneResolver emits one defensive current-world snapshot with field-level provenance, bounded warnings, separate moon phase and visibility, and no provider-state writes","The GM dashboard, Scene view, announcements, weather forecast display, and rest previews consume one resolved snapshot so current weather, environment, visibility, and celestial evidence do not contradict each other","Worldbuilding Mode provides bounded generic Regions, Geography, Ecoregions, Biomes, Locations, Prepared Destinations, Travel Routes, explicit Phenomena overlays, and Session Presets with safe current-place selection, favorites, recents, and field-owned SceneResolver composition without bundled setting lore","RulesAdvisor is optional, profile-specific, advisory-only, and never applies gameplay state changes","WorldPacks are bounded inert handout data with syntax/schema/reference/provenance review, expiring confirmation, atomic Worldbuilding plus registry commits, stable imported-record provenance, no-overwrite New/Copy policy, and guarded update policy","Temporal Contexts are explicit bounded regional/planar local projections of one canonical fictional-minute chronology; reviewed transitions publish semantic events without reverse-writing other state","Generic Worldbuilding record editors use consistent Basic/Detailed/Technical disclosure with technical stable identity and provenance","Wayfarer chat controls remain complete while an optional bounded inert versioned handout path validates, previews, stale-checks, and atomically replaces only the saved draft","Prepared Destination, Travel, and Phenomena reviews never advance fictional time or change active Location until the GM explicitly confirms an individual reviewed operation","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Descriptive announcements report player-perceivable time, weather, visibility, and moon visibility without presenting climate baselines as simultaneous current measurements","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AlmanacAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "2.0.0", scene_state_schema_version: 1, world_state_schema_version: 4, time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "2.0.0", scene_state_schema_version: 1, world_state_schema_version: 4, time_state_schema_version: 2, wayfarer_draft_schema_version: 3, wayfarer_handout_schema_version: 1, wayfarer_import_runtime_schema_version: 1, world_pack_schema_version: 1, world_pack_runtime_schema_version: 1, temporal_context_schema_version: 1, temporal_runtime_schema_version: 1, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // AlmanacAssist contains six independently toggleable internal submodules behind
@@ -23564,8 +23577,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const RULES_ADVISOR_SCHEMA_VERSION = 1;
         const WORLD_PACK_SCHEMA_VERSION = 1;
         const WORLD_PACK_RUNTIME_SCHEMA_VERSION = 1;
+        const TEMPORAL_CONTEXT_SCHEMA_VERSION = 1;
+        const TEMPORAL_RUNTIME_SCHEMA_VERSION = 1;
         const TIME_STATE_SCHEMA_VERSION = 2;
         const WAYFARER_DRAFT_SCHEMA_VERSION = 3;
+        const WAYFARER_HANDOUT_SCHEMA_VERSION = 1;
+        const WAYFARER_IMPORT_RUNTIME_SCHEMA_VERSION = 1;
         const ANNOUNCEMENT_SCHEMA_VERSION = 4;
         const CLIMATE_STATE_SCHEMA_VERSION = 1;
         const ASTRONOMY_STATE_SCHEMA_VERSION = 1;
@@ -23655,6 +23672,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             leapName: 'Leap Day',
             leapAfterMonth: 16
         });
+        const WAYFARER_HANDOUT_FORMAT = 'GameAssist.WayfarerCalendar';
         const WAYFARER_STAGES = Object.freeze(['identity', 'weekdays', 'months', 'intercalary', 'leap', 'holidays', 'seasons']);
 
         const SUBMODULE_DEFAULTS = Object.freeze({
@@ -23741,6 +23759,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             revision: 0,
             installed: Object.freeze([])
         });
+        const TEMPORAL_CONTEXT_KINDS = Object.freeze(['regional', 'planar']);
+        const DEFAULT_TEMPORAL_CONTEXT_CONFIG = Object.freeze({
+            schemaVersion: TEMPORAL_CONTEXT_SCHEMA_VERSION,
+            revision: 0,
+            contexts: Object.freeze([Object.freeze({
+                id: 'prime',
+                name: 'Prime Context',
+                description: 'The campaign baseline; one local minute equals one authoritative fictional minute.',
+                kind: 'regional',
+                rateNumerator: 1,
+                rateDenominator: 1,
+                epochOffsetMinutes: 0,
+                tags: Object.freeze(['baseline'])
+            })])
+        });
         const WORLD_RECORD_TYPES = Object.freeze(['region', 'geography', 'ecoregion', 'biome', 'location', 'destination', 'route', 'phenomenon', 'preset']);
         const WORLD_RECORD_COLLECTIONS = Object.freeze({
             region: 'regions', geography: 'geographies', ecoregion: 'ecoregions', biome: 'biomes', location: 'locations',
@@ -23812,6 +23845,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             rest: { advanceTime: true, extendedEnabled: false, pace: 'standard', shortHours: 1, longHours: 8, extendedHours: 24, customTypes: [] },
             rulesAdvisor: copy(DEFAULT_RULES_ADVISOR_CONFIG),
             worldPacks: copy(DEFAULT_WORLD_PACK_CONFIG),
+            temporalContexts: copy(DEFAULT_TEMPORAL_CONTEXT_CONFIG),
             world: copy(WORLD_DEFAULT_CONFIG),
             ...modState.config
         });
@@ -24138,28 +24172,97 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             runtime.rest.grants = runtime.rest.grants && typeof runtime.rest.grants === 'object' && !Array.isArray(runtime.rest.grants)
                 ? runtime.rest.grants
                 : {};
+            // A newer transient-review schema is still campaign state. Preserve it
+            // exactly instead of expiring, normalizing, or reinterpreting it in an
+            // older build; focused panels surface a warning and refuse mutations.
+            const storedWayfarerImports = sceneRecord(runtime.wayfarerImports) ? runtime.wayfarerImports : {};
+            const wayfarerImportSchema = Number(storedWayfarerImports.schemaVersion || 0);
+            runtime.wayfarerImports = Number.isFinite(wayfarerImportSchema) && wayfarerImportSchema > WAYFARER_IMPORT_RUNTIME_SCHEMA_VERSION
+                ? storedWayfarerImports
+                : {
+                    ...worldExtras(storedWayfarerImports, ['schemaVersion', 'grants']),
+                    schemaVersion: WAYFARER_IMPORT_RUNTIME_SCHEMA_VERSION,
+                    grants: boundedWayfarerImportGrantMap(storedWayfarerImports.grants)
+                };
+            const storedTemporal = sceneRecord(runtime.temporal) ? runtime.temporal : {};
+            const temporalRuntimeSchema = Number(storedTemporal.schemaVersion || 0);
+            runtime.temporal = Number.isFinite(temporalRuntimeSchema) && temporalRuntimeSchema > TEMPORAL_RUNTIME_SCHEMA_VERSION
+                ? storedTemporal
+                : {
+                    ...worldExtras(storedTemporal, ['schemaVersion', 'revision', 'activeContextId', 'enteredWorldMinute', 'grants', 'history']),
+                    schemaVersion: TEMPORAL_RUNTIME_SCHEMA_VERSION,
+                    revision: Math.max(0, Math.floor(Number(storedTemporal.revision) || 0)),
+                    activeContextId: worldReference(storedTemporal.activeContextId) || 'prime',
+                    enteredWorldMinute: Math.max(0, Math.floor(Number(storedTemporal.enteredWorldMinute) || runtime.time.worldMinute)),
+                    grants: boundedTemporalGrantMap(storedTemporal.grants),
+                    history: (Array.isArray(storedTemporal.history) ? storedTemporal.history : []).filter(sceneRecord).slice(-POLICY.almanac.temporalHistoryLimit).map(copy)
+                };
             const storedWorldPacks = sceneRecord(runtime.worldPacks) ? runtime.worldPacks : {};
-            runtime.worldPacks = {
-                ...worldExtras(storedWorldPacks, ['schemaVersion', 'grants']),
-                schemaVersion: WORLD_PACK_RUNTIME_SCHEMA_VERSION,
-                grants: boundedWorldPackGrantMap(storedWorldPacks.grants)
-            };
+            const worldPackRuntimeSchema = Number(storedWorldPacks.schemaVersion || 0);
+            runtime.worldPacks = Number.isFinite(worldPackRuntimeSchema) && worldPackRuntimeSchema > WORLD_PACK_RUNTIME_SCHEMA_VERSION
+                ? storedWorldPacks
+                : {
+                    ...worldExtras(storedWorldPacks, ['schemaVersion', 'grants']),
+                    schemaVersion: WORLD_PACK_RUNTIME_SCHEMA_VERSION,
+                    grants: boundedWorldPackGrantMap(storedWorldPacks.grants)
+                };
+            // A newer Worldbuilding runtime can contain relationships, review grants, or
+            // records this build cannot safely expire, bound, or reinterpret. Preserve it
+            // exactly and let focused controls report it as unavailable instead of
+            // reconstructing a plausible-looking older branch.
             const storedWorld = sceneRecord(runtime.world) ? runtime.world : {};
+            const worldRuntimeSchema = Number(storedWorld.schemaVersion || 0);
             const worldKnown = ['schemaVersion', 'recentLocationIds', 'revision', 'destinationGrants', 'travel', 'phenomenonGrants', 'activePhenomena', 'phenomenaHistory', 'presetGrants'];
-            runtime.world = {
-                ...worldExtras(storedWorld, worldKnown),
-                schemaVersion: WORLD_RUNTIME_SCHEMA_VERSION,
-                recentLocationIds: [...new Set((Array.isArray(storedWorld.recentLocationIds) ? storedWorld.recentLocationIds : [])
-                    .map(worldReference).filter(Boolean))].slice(0, POLICY.almanac.worldRecentLimit),
-                revision: Math.max(0, Math.floor(Number(storedWorld.revision) || 0)),
-                destinationGrants: boundedWorldGrantMap(storedWorld.destinationGrants, POLICY.almanac.travelGrantLimit),
-                travel: normalizeTravelRuntime(storedWorld.travel),
-                phenomenonGrants: boundedWorldGrantMap(storedWorld.phenomenonGrants, POLICY.almanac.phenomenonGrantLimit),
-                activePhenomena: boundedActivePhenomena(storedWorld.activePhenomena),
-                phenomenaHistory: (Array.isArray(storedWorld.phenomenaHistory) ? storedWorld.phenomenaHistory : []).filter(sceneRecord).slice(-POLICY.almanac.phenomenonHistoryLimit).map(copy),
-                presetGrants: boundedWorldGrantMap(storedWorld.presetGrants, POLICY.almanac.presetGrantLimit)
-            };
+            runtime.world = Number.isFinite(worldRuntimeSchema) && worldRuntimeSchema > WORLD_RUNTIME_SCHEMA_VERSION
+                ? storedWorld
+                : {
+                    ...worldExtras(storedWorld, worldKnown),
+                    schemaVersion: WORLD_RUNTIME_SCHEMA_VERSION,
+                    recentLocationIds: [...new Set((Array.isArray(storedWorld.recentLocationIds) ? storedWorld.recentLocationIds : [])
+                        .map(worldReference).filter(Boolean))].slice(0, POLICY.almanac.worldRecentLimit),
+                    revision: Math.max(0, Math.floor(Number(storedWorld.revision) || 0)),
+                    destinationGrants: boundedWorldGrantMap(storedWorld.destinationGrants, POLICY.almanac.travelGrantLimit),
+                    travel: normalizeTravelRuntime(storedWorld.travel),
+                    phenomenonGrants: boundedWorldGrantMap(storedWorld.phenomenonGrants, POLICY.almanac.phenomenonGrantLimit),
+                    activePhenomena: boundedActivePhenomena(storedWorld.activePhenomena),
+                    phenomenaHistory: (Array.isArray(storedWorld.phenomenaHistory) ? storedWorld.phenomenaHistory : []).filter(sceneRecord).slice(-POLICY.almanac.phenomenonHistoryLimit).map(copy),
+                    presetGrants: boundedWorldGrantMap(storedWorld.presetGrants, POLICY.almanac.presetGrantLimit)
+                };
             return runtime;
+        }
+
+        /**
+         * worldRuntimeResult - Make newer Worldbuilding runtime state warning-only.
+         * Inputs: the persisted world runtime branch.
+         * Outputs: a compatible branch or an explicit unavailable warning.
+         * Invariant: future runtime state is never normalized, expired, interpreted, or mutated by this build.
+         */
+        function worldRuntimeResult(source = modState.runtime?.world) {
+            const runtime = sceneRecord(source) ? source : null;
+            const schema = Number(runtime?.schemaVersion || 0);
+            if (runtime && Number.isFinite(schema) && schema > WORLD_RUNTIME_SCHEMA_VERSION) {
+                return {
+                    ok: false,
+                    runtime: null,
+                    warning: `Worldbuilding runtime schema ${schema} is newer than this AlmanacAssist version; it was left unchanged.`
+                };
+            }
+            return { ok: true, runtime, warning: null };
+        }
+
+        function worldRuntimeForPanel(msg, title = 'Almanac / Worldbuilding Needs Attention') {
+            // A panel guard must be read-only: initialization already creates the
+            // compatible branch, while a later missing/malformed/future branch is
+            // safer to report than to reconstruct during an unrelated command.
+            const result = worldRuntimeResult(modState.runtime?.world);
+            if (result.ok && result.runtime) return result.runtime;
+            sendPanel(msg, title, [
+                { label: 'Worldbuilding Runtime', value: _sanitize(result.warning || 'Worldbuilding runtime is unavailable; it was left unchanged.') },
+                { label: 'Safety', value: 'Travel, Location, Phenomena, Presets, WorldPacks, and Worldbuilding changes are blocked until a compatible build can inspect this runtime state.' },
+                { label: 'Changes', value: 'None.' },
+                { label: 'Navigation', value: `${GameAssist.createButton('Almanac Home', '!aa-gm')} ${GameAssist.createButton('Status', '!Almanac-Status')}` }
+            ]);
+            return null;
         }
 
         function submoduleEnabled(name) {
@@ -24914,6 +25017,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 : 'Sky context unavailable';
             return [
                 moment ? displayMoment(moment) : 'Fictional time unavailable',
+                scene.temporal ? `Temporal Context: ${scene.temporal.name}` : null,
                 scene.location ? scene.location.name : 'Location unassigned',
                 scene.travel ? `Journey: ${scene.travel.destinationName} (${formatTravelMiles(scene.travel.remainingMiles)} remaining)` : null,
                 sceneWeatherSummary(scene),
@@ -24955,6 +25059,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel(msg, technical && isGm ? 'Almanac / Current World / Scene Details' : 'Almanac / Current World / Scene', [
                 { label: 'Current World', value: sceneOverview(scene) },
                 { label: 'Time & Season', value: moment ? `${_sanitize(displayMoment(moment))} | ${_sanitize(moment.season)}` : 'TimeAlmanac is unavailable.' },
+                ...(isGm && scene.temporal ? [{ label: 'Temporal Context', value: `${_sanitize(scene.temporal.name)} | ${_sanitize(temporalRateLabel(scene.temporal))} | ${_sanitize(scene.temporal.projection.label)} ${GameAssist.createButton('Manage', '!aa-temporal')}` }] : []),
                 { label: 'Weather', value: _sanitize(sceneWeatherSummary(scene, { detailed: true })) },
                 { label: 'Immediate Environment', value: _sanitize(sceneEnvironmentSummary(scene, { detailed: true })) },
                 { label: 'Phenomena', value: _sanitize(scenePhenomenaSummary(scene, { detailed: true })) },
@@ -25056,13 +25161,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!requireGm(msg)) return;
             const config = worldConfigForPanel(msg);
             if (!config) return;
+            const worldRuntime = worldRuntimeResult(modState.runtime?.world);
             const scene = resolveScene();
             sendPanel(msg, 'Almanac / Worldbuilding', [
                 { label: 'Current Area', value: compactWorldLocation(scene) },
+                ...(!worldRuntime.ok ? [{ label: 'Runtime Safety', value: `${_sanitize(worldRuntime.warning)} Worldbuilding changes remain blocked until a compatible build can inspect it.` }] : []),
                 { label: 'Places', value: `${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Locations', '!aa-world locations')} ${GameAssist.createButton('Prepared Destinations', '!aa-world destinations')} ${GameAssist.createButton('Regions', '!aa-world regions')} ${GameAssist.createButton('Ecoregions', '!aa-world ecoregions')}` },
                 { label: 'Natural World', value: `${GameAssist.createButton('Geography', '!aa-world geographies')} ${GameAssist.createButton('Biomes', '!aa-world biomes')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Weather', '!weather')}` },
                 { label: 'Local Context', value: `${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Scene', '!aa-scene')}` },
-                { label: 'Time & Sky', value: `${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('Astronomy', '!astro')}` },
+                { label: 'Time & Sky', value: `${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('Astronomy', '!astro')} ${GameAssist.createButton('Temporal Contexts', '!aa-temporal')}` },
                 { label: 'Gameplay', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Travel Routes', '!aa-world routes')} ${GameAssist.createButton('Rules Advisor', '!aa-rules')} ${GameAssist.createButton('Rest', '!rest')}` },
                 { label: 'Campaign Tools', value: `${GameAssist.createButton('Presets', '!aa-presets')} ${GameAssist.createButton('WorldPacks', '!aa-worldpacks')} ${GameAssist.createButton('Systems', '!Almanac-Systems')} ${GameAssist.createButton('Audit', '!Almanac-Audit')}` },
                 { label: 'World Records', value: `${config.locations.length} locations | ${config.destinations.length} prepared destinations | ${config.routes.length} routes | ${config.phenomena.length} phenomena | ${config.presets.length} session presets | ${config.regions.length} regions | ${config.ecoregions.length} ecoregions | ${config.geographies.length} geographies | ${config.biomes.length} biomes` },
@@ -25075,6 +25182,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!WORLD_RECORD_TYPES.includes(type)) return showWorldbuilding(msg);
             const config = worldConfigForPanel(msg);
             if (!config) return;
+            const worldRuntime = worldRuntimeResult(modState.runtime?.world);
             const records = worldCollectionFor(config, type);
             const label = worldKindLabel(type);
             const pluralLabel = type === 'phenomenon' ? 'Phenomena' : `${label}s`;
@@ -25088,7 +25196,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel(msg, `Almanac / Worldbuilding / ${pluralLabel}`, [
                 ...(rows.length ? rows : [{ label: `No ${pluralLabel}`, value: `Add a ${label.toLowerCase()} when preparing this campaign world.` }]),
                 ...extra,
-                { label: 'Actions', value: `${GameAssist.createButton(`Add ${label}`, `!aa-world add ${type} --name "?{${label} name|New ${label}}"`)} ${type === 'location' ? GameAssist.createButton('Change Location', '!aa-location') : ''}` },
+                ...(!worldRuntime.ok ? [{ label: 'Runtime Safety', value: `${_sanitize(worldRuntime.warning)} These records are shown read-only until a compatible build can inspect the retained runtime state.` }] : []),
+                { label: 'Actions', value: worldRuntime.ok
+                    ? `${GameAssist.createButton(`Add ${label}`, `!aa-world add ${type} --name "?{${label} name|New ${label}}"`)} ${type === 'location' ? GameAssist.createButton('Change Location', '!aa-location') : ''}`
+                    : 'Worldbuilding mutations are unavailable while newer runtime state is preserved.' },
                 { label: 'Navigation', value: `${GameAssist.createButton('Back', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
@@ -25144,7 +25255,40 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return fields;
         }
 
-        function showWorldRecordEditor(msg, type, requested) {
+        /**
+         * worldRecordEditorLayers - Give every Worldbuilding record the same progressive disclosure contract.
+         * Inputs: one normalized record editor's full bounded rows.
+         * Outputs: Basic everyday fields, Detailed context fields, and Technical identity/provenance/removal fields.
+         * Invariant: all layers share the same setters and validation; a layer changes presentation only, never authority.
+         */
+        function worldRecordEditorLayers(config, type, record) {
+            const fields = worldRecordEditorFields(config, type, record);
+            const basicLabels = {
+                region: ['Identity', 'Hierarchy'],
+                geography: ['Identity', 'Region', 'Landform'],
+                ecoregion: ['Identity', 'Links'],
+                biome: ['Identity', 'Ecology'],
+                location: ['Identity', 'Place Hierarchy', 'Climate & Map'],
+                destination: ['Identity', 'Prepared Place', 'Travel Default', 'Use During Play'],
+                route: ['Identity', 'Endpoints', 'Journey Estimate'],
+                phenomenon: ['Identity', 'Scope & Category', 'Intensity & Duration', 'Use During Play'],
+                preset: ['Identity', 'Prepared Context', 'Travel Default', 'Preview']
+            }[type] || ['Identity'];
+            const technicalLabels = new Set(['Advanced', 'Registry Source']);
+            const basic = fields.filter(field => basicLabels.includes(field.label));
+            const detailed = fields.filter(field => !basicLabels.includes(field.label) && !technicalLabels.has(field.label));
+            const technical = fields.filter(field => technicalLabels.has(field.label));
+            technical.unshift({
+                label: 'Provenance',
+                value: record.sourcePackId
+                    ? `Imported from WorldPack ${_sanitize(record.sourcePackId)} v${_sanitize(record.sourcePackVersion || 1)}; source record ${_sanitize(record.sourcePackRecordId || record.id)}.`
+                    : 'Campaign-authored record; no WorldPack provenance is attached.'
+            });
+            if (!detailed.length) detailed.push({ label: 'Detailed Context', value: 'This record has no additional detailed fields. Use Technical for stable identity, provenance, and guarded removal.' });
+            return { basic, detailed, technical };
+        }
+
+        function showWorldRecordEditor(msg, type, requested, requestedLayer = 'basic') {
             if (!requireGm(msg)) return;
             if (!WORLD_RECORD_TYPES.includes(type)) return showWorldbuilding(msg);
             const config = worldConfigForPanel(msg);
@@ -25154,8 +25298,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Record', value: `That ${worldKindLabel(type).toLowerCase()} was not found or its name is ambiguous.` },
                 { label: 'Navigation', value: `${GameAssist.createButton('Back', `!aa-world ${WORLD_RECORD_COLLECTIONS[type]}`)} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
             ]);
-            sendPanel(msg, `Almanac / Worldbuilding / ${worldKindLabel(type)} / ${_sanitize(record.name)}`, [
-                ...worldRecordEditorFields(config, type, record),
+            const layer = ['basic', 'detailed', 'technical'].includes(String(requestedLayer || '').toLowerCase()) ? String(requestedLayer).toLowerCase() : 'basic';
+            const layers = worldRecordEditorLayers(config, type, record);
+            const layerName = `${layer[0].toUpperCase()}${layer.slice(1)}`;
+            const layerControls = `${GameAssist.createButton('Basic', `!aa-world edit ${type} --id ${record.id} --layer basic`)} ${GameAssist.createButton('Detailed', `!aa-world edit ${type} --id ${record.id} --layer detailed`)} ${GameAssist.createButton('Technical', `!aa-world edit ${type} --id ${record.id} --layer technical`)}`;
+            sendPanel(msg, `Almanac / Worldbuilding / ${worldKindLabel(type)} / ${_sanitize(record.name)} / ${layerName}`, [
+                { label: 'Editor Layer', value: `Showing ${layerName} fields. ${layer === 'basic' ? 'Open Detailed for richer context or Technical for stable identity, provenance, and guarded removal.' : 'All layers use the same validated campaign record.'} ${layerControls}` },
+                ...layers[layer],
                 { label: 'Navigation', value: `${type === 'location' ? GameAssist.createButton('Change Location', '!aa-location') : ''} ${GameAssist.createButton('Back', `!aa-world ${WORLD_RECORD_COLLECTIONS[type]}`)} ${GameAssist.createButton('Almanac Home', '!aa-gm')}`.trim() }
             ]);
         }
@@ -25168,8 +25317,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!requireGm(msg)) return;
             const config = worldConfigForPanel(msg);
             if (!config) return;
+            const runtime = worldRuntimeForPanel(msg, 'Almanac / Change Location Needs Attention');
+            if (!runtime) return;
             const scene = resolveScene();
-            const runtime = sceneRecord(modState.runtime?.world) ? modState.runtime.world : {};
             const byId = Object.fromEntries(config.locations.map(location => [location.id, location]));
             const current = byId[config.activeLocationId] || null;
             const favorites = config.favoriteLocationIds.map(id => byId[id]).filter(Boolean);
@@ -25342,9 +25492,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function worldRemovalConflict(config, type, record) {
-            const journey = travelJourneyRecord(modState.runtime?.world?.travel?.journey);
+            const runtime = worldRuntimeResult(modState.runtime?.world);
+            if (!runtime.ok) return runtime.warning;
+            const journey = travelJourneyRecord(runtime.runtime?.travel?.journey);
             const activePhenomena = activePhenomenaForWorld();
-            const futurePhenomena = futurePhenomenonActivationCount(modState.runtime?.world?.activePhenomena);
+            const futurePhenomena = futurePhenomenonActivationCount(runtime.runtime?.activePhenomena);
             if (futurePhenomena && ['location', 'phenomenon'].includes(type)) {
                 return `${futurePhenomena} newer active Phenomenon record(s) were preserved without interpretation. Do not remove related Locations or Phenomena until a compatible build can review them.`;
             }
@@ -25389,8 +25541,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (lower === 'ecoregions' || lower === 'ecoregion') return showWorldRecords(msg, 'ecoregion');
             if (lower === 'biomes' || lower === 'biome') return showWorldRecords(msg, 'biome');
             if (!requireGm(msg)) return;
+            if (!worldRuntimeForPanel(msg)) return;
             const edit = body.match(/^edit\s+(region|geography|ecoregion|biome|location|destination|route|phenomenon|preset)\b/i);
-            if (edit) return showWorldRecordEditor(msg, edit[1].toLowerCase(), _parseArgs(body).args.id || _parseArgs(body).args.name);
+            if (edit) {
+                const args = _parseArgs(body).args;
+                return showWorldRecordEditor(msg, edit[1].toLowerCase(), args.id || args.name, args.layer || 'basic');
+            }
             const add = body.match(/^add\s+(region|geography|ecoregion|biome|location|destination|route|phenomenon|preset)\b/i);
             if (add) {
                 const type = add[1].toLowerCase();
@@ -25477,11 +25633,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function activeTravelForWorld(config) {
-            return travelJourneyContext(config, modState.runtime?.world).value;
+            const runtime = worldRuntimeResult(modState.runtime?.world);
+            return runtime.ok ? travelJourneyContext(config, runtime.runtime).value : null;
         }
 
         function activePhenomenaForWorld(phenomenonId = null) {
-            const active = normalizeActivePhenomena(modState.runtime?.world?.activePhenomena);
+            const runtime = worldRuntimeResult(modState.runtime?.world);
+            const active = runtime.ok ? normalizeActivePhenomena(runtime.runtime?.activePhenomena) : [];
             return phenomenonId ? active.filter(item => item.phenomenonId === phenomenonId) : active;
         }
 
@@ -25581,6 +25739,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const args = _parseArgs(body).args;
             const config = worldConfigForPanel(msg);
             if (!config) return;
+            if (!worldRuntimeForPanel(msg, 'Almanac / Change Location Needs Attention')) return;
             if (/^destination\s+confirm\b/i.test(body)) return confirmPreparedDestination(msg, config, args.grant);
             if (/^destination\b/i.test(body)) return showPreparedDestinationReview(msg, config, args.id || args.name);
             const location = worldRecordByReference(config.locations, args.id || args.name);
@@ -26003,6 +26162,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!requireGm(msg)) return;
             const config = worldConfigForPanel(msg);
             if (!config) return;
+            if (!worldRuntimeForPanel(msg, 'Almanac / Travel Needs Attention')) return;
             const journey = activeTravelForWorld(config);
             if (journey) return showTravelJourney(msg, config, journey);
             const scene = resolveScene();
@@ -26037,6 +26197,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!requireGm(msg)) return;
             const config = worldConfigForPanel(msg);
             if (!config) return;
+            if (!worldRuntimeForPanel(msg, 'Almanac / Travel Needs Attention')) return;
             const args = _parseArgs(body).args;
             if (/^plan\b/i.test(body)) return prepareTravel(msg, config, args);
             if (/^start\b/i.test(body)) return confirmTravelStart(msg, config, args.grant);
@@ -26107,7 +26268,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!requireGm(msg)) return;
             const config = worldConfigForPanel(msg);
             if (!config) return;
-            const runtime = ensureWorldRuntime();
+            const runtime = worldRuntimeForPanel(msg, 'Almanac / Phenomena Needs Attention');
+            if (!runtime) return;
             prunePhenomenonGrants(runtime);
             const scene = resolveScene();
             const moment = scene.time?.current || null;
@@ -26283,6 +26445,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!requireGm(msg)) return;
             const config = worldConfigForPanel(msg);
             if (!config) return;
+            if (!worldRuntimeForPanel(msg, 'Almanac / Phenomena Needs Attention')) return;
             const args = _parseArgs(body).args;
             if (/^activate\b/i.test(body)) return preparePhenomenonActivation(msg, config, args);
             if (/^deactivate\b/i.test(body)) return preparePhenomenonDeactivation(msg, config, args);
@@ -26363,7 +26526,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!requireGm(msg)) return;
             const config = worldConfigForPanel(msg);
             if (!config) return;
-            const runtime = ensureWorldRuntime();
+            const runtime = worldRuntimeForPanel(msg, 'Almanac / Presets Needs Attention');
+            if (!runtime) return;
             prunePresetGrants(runtime);
             const builtInRows = BUILT_IN_SESSION_PRESETS.map(preset => ({
                 label: _sanitize(preset.name),
@@ -26456,6 +26620,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!requireGm(msg)) return;
             const config = worldConfigForPanel(msg);
             if (!config) return;
+            if (!worldRuntimeForPanel(msg, 'Almanac / Presets Needs Attention')) return;
             const args = _parseArgs(body).args;
             if (/^preview\b/i.test(body)) {
                 const builtIn = args.builtin !== undefined ? builtInSessionPreset(args.builtin) : null;
@@ -26660,6 +26825,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const args = _parseArgs(body).args;
             if (/^(template|blank|new-template)\b/i.test(body)) return writeWorldPackTemplate(msg);
             if (/^export\b/i.test(body)) return exportCurrentWorldPack(msg, args);
+            if (!worldRuntimeForPanel(msg, 'Almanac / WorldPacks Needs Attention')) return;
             if (/^(import|review)\b/i.test(body)) return prepareWorldPackImport(msg, args);
             if (/^confirm\b/i.test(body)) return confirmWorldPackImport(msg, args.grant);
             if (/^(cancel|discard)\b/i.test(body)) return discardWorldPackPreview(msg, args.grant);
@@ -26678,6 +26844,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return showRulesAdvisor(msg);
             }
             if (/^profile\b/i.test(body)) {
+                if (!worldRuntimeForPanel(msg, 'Almanac / Rules Advisor Needs Attention')) return;
                 const args = _parseArgs(body).args;
                 const requested = String(args.value || args.profile || '').toLowerCase();
                 if (!Object.prototype.hasOwnProperty.call(RULES_ADVISOR_PROFILES, requested)) {
@@ -27260,9 +27427,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function showWorldPacks(msg, notice = null) {
+            const runtime = worldPackRuntimeForPanel(msg);
+            if (!runtime) return;
             const registry = worldPackConfigForPanel(msg);
             if (!registry) return;
-            const runtime = ensureWorldPackRuntime();
             pruneWorldPackGrants(runtime);
             const rows = registry.installed.slice(0, 8).map(item => {
                 const source = item.importedFromPackId ? `; copied from ${item.importedFromPackId}` : '';
@@ -27387,7 +27555,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         { label: 'Back', value: GameAssist.createButton('WorldPacks', '!aa-worldpacks') }
                     ]);
                 }
-                const runtime = ensureWorldPackRuntime();
+                const runtime = worldPackRuntimeForPanel(msg);
+                if (!runtime) return;
                 pruneWorldPackGrants(runtime);
                 const grants = Object.keys(runtime.grants || {});
                 if (grants.length >= POLICY.almanac.worldPackGrantLimit) {
@@ -27416,7 +27585,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function discardWorldPackPreview(msg, grantId) {
-            const runtime = ensureWorldPackRuntime();
+            const runtime = worldPackRuntimeForPanel(msg);
+            if (!runtime) return;
             pruneWorldPackGrants(runtime);
             const id = worldReference(grantId);
             const grant = id ? runtime.grants[id] : null;
@@ -27462,7 +27632,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function confirmWorldPackImport(msg, grantId) {
-            const runtime = ensureWorldPackRuntime();
+            const runtime = worldPackRuntimeForPanel(msg);
+            if (!runtime) return;
             pruneWorldPackGrants(runtime);
             const id = worldReference(grantId);
             const grant = id ? runtime.grants[id] : null;
@@ -27513,6 +27684,682 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             });
         }
 
+        /**
+         * temporalContextRecord - Normalize one explicit regional/planar projection context.
+         * Inputs: a saved context record and a display index.
+         * Outputs: a bounded declarative time-rate context or null when its known schema is malformed.
+         * Invariant: a context stores only a transparent projection formula; it never stores another ticking global clock.
+         */
+        function temporalContextRecord(raw, index = 0) {
+            if (!sceneRecord(raw)) return null;
+            const id = worldReference(raw.id);
+            const name = boundedWorldText(raw.name, '', POLICY.almanac.worldNameLength);
+            const kind = String(raw.kind || '').toLowerCase();
+            const numerator = Math.floor(Number(raw.rateNumerator));
+            const denominator = Math.floor(Number(raw.rateDenominator));
+            const epochOffsetMinutes = Math.floor(Number(raw.epochOffsetMinutes));
+            if (!id || !name || !TEMPORAL_CONTEXT_KINDS.includes(kind)
+                || !Number.isSafeInteger(numerator) || numerator < 1 || numerator > POLICY.almanac.temporalMaximumRatePart
+                || !Number.isSafeInteger(denominator) || denominator < 1 || denominator > POLICY.almanac.temporalMaximumRatePart
+                || !Number.isSafeInteger(epochOffsetMinutes) || epochOffsetMinutes < 0 || epochOffsetMinutes > POLICY.almanac.temporalMaximumOffsetMinutes) return null;
+            return {
+                id,
+                name,
+                description: boundedWorldText(raw.description, '', POLICY.almanac.worldDescriptionLength),
+                kind,
+                rateNumerator: numerator,
+                rateDenominator: denominator,
+                epochOffsetMinutes,
+                tags: worldTags(raw.tags)
+            };
+        }
+
+        function defaultPrimeTemporalContext() {
+            return copy(DEFAULT_TEMPORAL_CONTEXT_CONFIG.contexts[0]);
+        }
+
+        /**
+         * temporalContextConfigResult - Read temporal mechanics as a versioned, warning-only boundary.
+         * Inputs: saved temporal context configuration and explicit persistence intent.
+         * Outputs: compatible bounded contexts or a future/malformed-state refusal.
+         * Invariant: a read path never silently replaces an unknown future context schema.
+         */
+        function temporalContextConfigResult(sourceInput = modState.config.temporalContexts, { persist = sourceInput === modState.config.temporalContexts } = {}) {
+            if (!sceneRecord(sourceInput)) return { ok: false, config: null, warning: 'Temporal context configuration is absent or not an object; it was left unchanged.' };
+            const savedSchema = Number(sourceInput.schemaVersion || 0);
+            if (Number.isFinite(savedSchema) && savedSchema > TEMPORAL_CONTEXT_SCHEMA_VERSION) {
+                return { ok: false, config: null, warning: `Temporal context schema ${savedSchema} is newer than this AlmanacAssist version; it was left unchanged.` };
+            }
+            if (!Array.isArray(sourceInput.contexts)) return { ok: false, config: null, warning: 'Temporal context records are malformed; they were left unchanged.' };
+            if (sourceInput.contexts.length > POLICY.almanac.temporalContextLimit) return { ok: false, config: null, warning: `Temporal context records exceed the bounded limit of ${POLICY.almanac.temporalContextLimit}; they were left unchanged.` };
+            const ids = new Set();
+            const contexts = [];
+            for (let index = 0; index < sourceInput.contexts.length; index += 1) {
+                const context = temporalContextRecord(sourceInput.contexts[index], index);
+                if (!context) return { ok: false, config: null, warning: `Temporal context ${index + 1} is malformed; it was left unchanged.` };
+                if (ids.has(context.id)) return { ok: false, config: null, warning: `Temporal context ID ${context.id} is duplicated; it was left unchanged.` };
+                ids.add(context.id);
+                contexts.push(context);
+            }
+            const prime = contexts.find(context => context.id === 'prime') || null;
+            const defaultPrime = defaultPrimeTemporalContext();
+            const primeMatches = prime && prime.name === defaultPrime.name
+                && prime.description === defaultPrime.description
+                && prime.kind === defaultPrime.kind
+                && prime.rateNumerator === defaultPrime.rateNumerator
+                && prime.rateDenominator === defaultPrime.rateDenominator
+                && prime.epochOffsetMinutes === defaultPrime.epochOffsetMinutes
+                && JSON.stringify(prime.tags) === JSON.stringify(defaultPrime.tags);
+            if (prime && !primeMatches) {
+                return { ok: false, config: null, warning: 'Prime Context must remain the immutable canonical baseline; temporal data was left unchanged.' };
+            }
+            if (!prime) {
+                if (contexts.length >= POLICY.almanac.temporalContextLimit) {
+                    return { ok: false, config: null, warning: `Temporal context records need room for the immutable Prime Context within the limit of ${POLICY.almanac.temporalContextLimit}; they were left unchanged.` };
+                }
+                contexts.unshift(defaultPrimeTemporalContext());
+            }
+            const config = {
+                ...worldExtras(sourceInput, ['schemaVersion', 'revision', 'contexts']),
+                schemaVersion: TEMPORAL_CONTEXT_SCHEMA_VERSION,
+                revision: Math.max(0, Math.floor(Number(sourceInput.revision) || 0)),
+                contexts: contexts.slice(0, POLICY.almanac.temporalContextLimit)
+            };
+            if (persist) modState.config.temporalContexts = config;
+            return { ok: true, config, warning: null };
+        }
+
+        function temporalContextConfigForPanel(msg) {
+            const result = temporalContextConfigResult(modState.config.temporalContexts, { persist: false });
+            if (result.ok) return result.config;
+            sendPanel(msg, 'Almanac / Temporal Contexts Needs Attention', [
+                { label: 'Temporal Data', value: _sanitize(result.warning) },
+                { label: 'Safety', value: 'No time, provider, Worldbuilding, gameplay, or real-world record changed.' },
+                { label: 'Navigation', value: `${GameAssist.createButton('Almanac Home', '!aa-gm')} ${GameAssist.createButton('Worldbuilding', '!aa-world')}` }
+            ]);
+            return null;
+        }
+
+        function temporalContextByReference(config, requested) {
+            const key = String(requested || '').trim().toLowerCase();
+            if (!key) return null;
+            const byId = config.contexts.find(context => context.id === key);
+            if (byId) return byId;
+            const matches = config.contexts.filter(context => context.name.toLowerCase() === key);
+            return matches.length === 1 ? matches[0] : null;
+        }
+
+        function temporalRateLabel(context) {
+            return `${context.rateNumerator}:${context.rateDenominator} local-to-canonical (${context.rateNumerator} local minute${context.rateNumerator === 1 ? '' : 's'} per ${context.rateDenominator} canonical minute${context.rateDenominator === 1 ? '' : 's'})`;
+        }
+
+        function temporalLocalMinute(context, canonicalMinute) {
+            const minute = Math.floor(Number(canonicalMinute));
+            if (!context || !Number.isSafeInteger(minute) || minute < 0) return null;
+            const projected = context.epochOffsetMinutes + Math.floor((minute * context.rateNumerator) / context.rateDenominator);
+            return Number.isSafeInteger(projected) && projected >= 0 ? projected : null;
+        }
+
+        function temporalProjection(context, canonicalMinute) {
+            const localMinute = temporalLocalMinute(context, canonicalMinute);
+            const moment = localMinute === null ? null : resolveWorldMinute(profileFor(), localMinute);
+            return {
+                contextId: context?.id || null,
+                contextName: context?.name || 'Unavailable Context',
+                canonicalMinute: Math.floor(Number(canonicalMinute)),
+                localMinute,
+                moment: moment ? copy(moment) : null,
+                label: moment ? displayMoment(moment) : (localMinute === null ? 'Unavailable' : `Local minute ${localMinute} (outside the configured calendar display range)`)
+            };
+        }
+
+        function temporalElapsedProjection(context, startCanonicalMinute, endCanonicalMinute) {
+            const start = temporalLocalMinute(context, startCanonicalMinute);
+            const end = temporalLocalMinute(context, endCanonicalMinute);
+            return start === null || end === null ? null : end - start;
+        }
+
+        function boundedTemporalGrantMap(raw) {
+            if (!sceneRecord(raw)) return {};
+            return Object.fromEntries(Object.entries(raw).slice(0, POLICY.almanac.temporalTransitionGrantLimit)
+                .filter(([id, grant]) => worldReference(id) && sceneRecord(grant) && Number.isFinite(Number(grant.expiresAt)))
+                .map(([id, grant]) => [worldReference(id), copy(grant)]));
+        }
+
+        function temporalRuntimeView(raw = modState.runtime?.temporal) {
+            const source = sceneRecord(raw) ? raw : {};
+            const activeContextId = worldReference(source.activeContextId) || 'prime';
+            const enteredWorldMinute = Math.floor(Number(source.enteredWorldMinute));
+            return {
+                schemaVersion: Math.max(0, Math.floor(Number(source.schemaVersion) || TEMPORAL_RUNTIME_SCHEMA_VERSION)),
+                revision: Math.max(0, Math.floor(Number(source.revision) || 0)),
+                activeContextId,
+                enteredWorldMinute: Number.isSafeInteger(enteredWorldMinute) && enteredWorldMinute >= 0 ? enteredWorldMinute : 0,
+                grants: boundedTemporalGrantMap(source.grants),
+                history: (Array.isArray(source.history) ? source.history : []).filter(sceneRecord).slice(-POLICY.almanac.temporalHistoryLimit).map(copy)
+            };
+        }
+
+        function ensureTemporalRuntime() {
+            return ensureAlmanacRuntime().temporal;
+        }
+
+        function futureRuntimeSchemaWarning(raw, supportedSchema, label) {
+            const schema = Number(sceneRecord(raw) ? raw.schemaVersion : 0);
+            return Number.isFinite(schema) && schema > supportedSchema
+                ? `${label} runtime schema ${schema} is newer than this AlmanacAssist version; it was left unchanged.`
+                : null;
+        }
+
+        function temporalRuntimeForPanel(msg) {
+            const warning = futureRuntimeSchemaWarning(modState.runtime?.temporal, TEMPORAL_RUNTIME_SCHEMA_VERSION, 'Temporal context');
+            if (!warning) return ensureTemporalRuntime();
+            sendPanel(msg, 'Almanac / Temporal Contexts Needs Attention', [
+                { label: 'Temporal Runtime', value: _sanitize(warning) },
+                { label: 'Safety', value: 'No chronology, context, provider, Worldbuilding, gameplay, or real-world record changed.' },
+                { label: 'Navigation', value: `${GameAssist.createButton('Worldbuilding', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+            return null;
+        }
+
+        function wayfarerImportRuntimeForPanel(msg) {
+            const warning = futureRuntimeSchemaWarning(modState.runtime?.wayfarerImports, WAYFARER_IMPORT_RUNTIME_SCHEMA_VERSION, 'Wayfarer handout import');
+            if (!warning) return ensureWayfarerImportRuntime();
+            sendPanel(msg, 'Wayfarer Handout Import Needs Attention', [
+                { label: 'Import Runtime', value: _sanitize(warning) },
+                { label: 'Safety', value: 'No handout text was parsed or executed. The active calendar, fictional time, and saved draft were unchanged.' },
+                { label: 'Back', value: GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer') }
+            ]);
+            return null;
+        }
+
+        function worldPackRuntimeForPanel(msg) {
+            const warning = futureRuntimeSchemaWarning(modState.runtime?.worldPacks, WORLD_PACK_RUNTIME_SCHEMA_VERSION, 'WorldPack');
+            if (!warning) return ensureWorldPackRuntime();
+            sendPanel(msg, 'Almanac / WorldPacks Needs Attention', [
+                { label: 'WorldPack Runtime', value: _sanitize(warning) },
+                { label: 'Safety', value: 'No handout text was parsed or executed. No Worldbuilding, provider, or gameplay data changed.' },
+                { label: 'Navigation', value: `${GameAssist.createButton('Back', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+            return null;
+        }
+
+        function pruneTemporalGrants(runtime) {
+            const now = Date.now();
+            Object.entries(runtime.grants || {}).forEach(([id, grant]) => {
+                if (!sceneRecord(grant) || Number(grant.expiresAt) <= now || Number(grant.expiresAt) > now + POLICY.almanac.temporalTransitionGrantMs + (1000 * 60)) delete runtime.grants[id];
+            });
+        }
+
+        function temporalActiveContext(config, runtime) {
+            return config.contexts.find(context => context.id === runtime.activeContextId)
+                || config.contexts.find(context => context.id === 'prime')
+                || null;
+        }
+
+        function temporalPublicSnapshot() {
+            const runtimeWarning = futureRuntimeSchemaWarning(modState.runtime?.temporal, TEMPORAL_RUNTIME_SCHEMA_VERSION, 'Temporal context');
+            if (runtimeWarning) {
+                return {
+                    schemaVersion: TEMPORAL_CONTEXT_SCHEMA_VERSION,
+                    available: false,
+                    active: null,
+                    contexts: [],
+                    warning: runtimeWarning
+                };
+            }
+            const configResult = temporalContextConfigResult(modState.config.temporalContexts, { persist: false });
+            if (!configResult.ok) {
+                return {
+                    schemaVersion: TEMPORAL_CONTEXT_SCHEMA_VERSION,
+                    available: false,
+                    active: null,
+                    contexts: [],
+                    warning: configResult.warning
+                };
+            }
+            const runtime = temporalRuntimeView();
+            const active = temporalActiveContext(configResult.config, runtime);
+            const canonicalMinute = Math.floor(Number(modState.runtime?.time?.worldMinute));
+            const projection = Number.isSafeInteger(canonicalMinute) && canonicalMinute >= 0 && active
+                ? temporalProjection(active, canonicalMinute)
+                : null;
+            return {
+                schemaVersion: TEMPORAL_CONTEXT_SCHEMA_VERSION,
+                available: Boolean(active && projection),
+                active: active ? {
+                    context: copy(active),
+                    enteredWorldMinute: runtime.enteredWorldMinute,
+                    projection
+                } : null,
+                contexts: copy(configResult.config.contexts),
+                warning: active ? null : 'The active temporal context is unavailable; no replacement context was invented.'
+            };
+        }
+
+        function temporalContextFromSnapshot(runtimeSnapshot, canonicalMinute) {
+            const runtimeWarning = futureRuntimeSchemaWarning(runtimeSnapshot?.temporal, TEMPORAL_RUNTIME_SCHEMA_VERSION, 'Temporal context');
+            if (runtimeWarning) return { value: null, warning: runtimeWarning };
+            const config = temporalContextConfigResult(modState.config.temporalContexts, { persist: false });
+            if (!config.ok) return { value: null, warning: config.warning };
+            const runtime = temporalRuntimeView(runtimeSnapshot?.temporal);
+            const active = temporalActiveContext(config.config, runtime);
+            if (!active) return { value: null, warning: 'The active temporal context is unavailable; no replacement context was invented.' };
+            const projection = temporalProjection(active, canonicalMinute);
+            if (projection.localMinute === null) return { value: null, warning: 'The active temporal context cannot project the current authoritative fictional minute.' };
+            return {
+                value: {
+                    id: active.id,
+                    name: active.name,
+                    kind: active.kind,
+                    rateNumerator: active.rateNumerator,
+                    rateDenominator: active.rateDenominator,
+                    epochOffsetMinutes: active.epochOffsetMinutes,
+                    enteredWorldMinute: runtime.enteredWorldMinute,
+                    projection
+                },
+                warning: null
+            };
+        }
+
+        function commitTemporalContextConfig(next, previous, details, msg) {
+            next.revision = Math.max(0, Math.floor(Number(previous?.revision) || 0)) + 1;
+            modState.config.temporalContexts = next;
+            GameAssist.SemanticEvents.publish('almanac.temporal.contexts.changed', MODULE_NAME, {
+                schemaVersion: TEMPORAL_CONTEXT_SCHEMA_VERSION,
+                revision: next.revision,
+                contextCount: next.contexts.length,
+                details: copy(details || {})
+            }, { actorId: String(msg?.playerid || 'api'), action: details.action || 'temporal-context-change' });
+        }
+
+        function temporalContextDisplay(context, canonicalMinute) {
+            const projection = temporalProjection(context, canonicalMinute);
+            return `${_sanitize(context.name)} (${_sanitize(context.kind)}) | ${_sanitize(temporalRateLabel(context))} | ${_sanitize(projection.label)}`;
+        }
+
+        function showTemporalContexts(msg, notice = null) {
+            if (!requireGm(msg)) return;
+            if (!temporalRuntimeForPanel(msg)) return;
+            const config = temporalContextConfigForPanel(msg);
+            if (!config) return;
+            // Root normalization rebuilds runtime.temporal; use its persisted branch rather than a pre-normalization reference.
+            const almanacRuntime = ensureAlmanacRuntime();
+            const runtime = almanacRuntime.temporal;
+            pruneTemporalGrants(runtime);
+            const canonicalMinute = almanacRuntime.time.worldMinute;
+            const active = temporalActiveContext(config, runtime);
+            const rows = config.contexts.slice(0, POLICY.almanac.worldListDisplayLimit).map(context => ({
+                label: context.id === active?.id ? `Active: ${_sanitize(context.name)}` : _sanitize(context.name),
+                value: `${temporalContextDisplay(context, canonicalMinute)} ${GameAssist.createButton('Edit', `!aa-temporal edit --id ${context.id}`)} ${context.id !== active?.id ? GameAssist.createButton('Preview Transition', `!aa-temporal transition --id ${context.id} --minutes "?{Canonical elapsed minutes before arrival|0}"`) : ''}`
+            }));
+            const add = '!aa-temporal add --name "?{Context name|New Temporal Context}" --kind "?{Context kind|Regional,regional|Planar,planar}" --rate "?{Local:canonical rate|1:1}" --offset "?{Local epoch offset in minutes|0}"';
+            sendPanel(msg, 'Almanac / Temporal Contexts', [
+                notice ? { label: 'Status', value: _sanitize(notice) } : null,
+                { label: 'Authority', value: 'One authoritative fictional-minute chronology remains global. A Temporal Context is an explicit local projection formula, not a second hidden clock.' },
+                { label: 'Active Context', value: active ? `${temporalContextDisplay(active, canonicalMinute)} | entered at canonical minute ${runtime.enteredWorldMinute}` : 'No compatible active context is available.' },
+                ...rows,
+                { label: 'Transition Safety', value: 'Every regional or planar transition previews departure, destination, canonical elapsed minutes, both local projections, and reconciliation before an expiring confirmation. It never silently reverse-writes Rest, effects, NPC history, combat, resources, or real-world records.' },
+                { label: 'Distinct Data', value: 'Temporal rates are mechanics only. RulesAdvisor profiles, PresetRegistry built-ins, WorldPacks, lore, weather, astronomy, and provider state remain separate.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Add Temporal Context', add)} ${GameAssist.createButton('WorldPacks', '!aa-worldpacks')} ${GameAssist.createButton('Scene', '!aa-scene')}` },
+                { label: 'Navigation', value: `${GameAssist.createButton('Worldbuilding', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ].filter(Boolean));
+        }
+
+        function showTemporalContextEditor(msg, requested, layer = 'basic') {
+            if (!requireGm(msg)) return;
+            if (!temporalRuntimeForPanel(msg)) return;
+            const config = temporalContextConfigForPanel(msg);
+            if (!config) return;
+            const context = temporalContextByReference(config, requested);
+            if (!context) return sendPanel(msg, 'Temporal Context Needs Attention', [
+                { label: 'Context', value: 'That temporal context was not found or its name is ambiguous.' },
+                { label: 'Back', value: GameAssist.createButton('Temporal Contexts', '!aa-temporal') }
+            ]);
+            // Root normalization rebuilds runtime.temporal; use the persisted branch for active-context evidence.
+            const almanacRuntime = ensureAlmanacRuntime();
+            const runtime = almanacRuntime.temporal;
+            const active = temporalActiveContext(config, runtime);
+            const canonicalMinute = almanacRuntime.time.worldMinute;
+            const set = (label, field, current) => GameAssist.createButton(label,
+                `!aa-temporal set --id ${context.id} --field ${field} --value "?{${label}|${current}}"`);
+            const isPrime = context.id === 'prime';
+            const basic = [
+                { label: 'Current Context', value: temporalContextDisplay(context, canonicalMinute) },
+                { label: 'Identity', value: isPrime
+                    ? `${_sanitize(context.name)} | The canonical Prime Context is immutable.`
+                    : `${_sanitize(context.name)} ${set('Rename Context', 'name', context.name)} ${set('Description', 'description', context.description || 'None')}` },
+                { label: 'Use', value: context.id === active?.id ? 'This is the active temporal context.' : GameAssist.createButton('Preview Transition', `!aa-temporal transition --id ${context.id} --minutes "?{Canonical elapsed minutes before arrival|0}"`) },
+                { label: 'Layers', value: `${GameAssist.createButton('Basic', `!aa-temporal edit --id ${context.id} --layer basic`)} ${GameAssist.createButton('Detailed', `!aa-temporal edit --id ${context.id} --layer detailed`)} ${GameAssist.createButton('Technical', `!aa-temporal edit --id ${context.id} --layer technical`)}` }
+            ];
+            const detailed = [
+                { label: 'Current Context', value: temporalContextDisplay(context, canonicalMinute) },
+                { label: 'Context Type', value: isPrime ? 'Regional canonical baseline (immutable).' : `${_sanitize(context.kind)} ${GameAssist.createButton('Set Regional', `!aa-temporal set --id ${context.id} --field kind --value regional`)} ${GameAssist.createButton('Set Planar', `!aa-temporal set --id ${context.id} --field kind --value planar`)}` },
+                { label: 'Rate', value: isPrime ? '1:1 local-to-canonical (immutable).' : `${_sanitize(temporalRateLabel(context))} ${set('Set Local:Canonical Rate', 'rate', `${context.rateNumerator}:${context.rateDenominator}`)}` },
+                { label: 'Local Epoch Offset', value: isPrime ? '0 minutes (immutable).' : `${context.epochOffsetMinutes} minute(s) ${set('Set Epoch Offset Minutes', 'epochOffsetMinutes', context.epochOffsetMinutes)}` },
+                { label: 'Tags', value: isPrime ? `${(context.tags || []).map(_sanitize).join(', ') || 'None'} | Immutable baseline.` : `${(context.tags || []).map(_sanitize).join(', ') || 'None'} ${set('Edit Tags', 'tags', (context.tags || []).join(' '))}` },
+                { label: 'Layers', value: `${GameAssist.createButton('Basic', `!aa-temporal edit --id ${context.id} --layer basic`)} ${GameAssist.createButton('Technical', `!aa-temporal edit --id ${context.id} --layer technical`)}` }
+            ];
+            const technical = [
+                { label: 'Stable Identity', value: _sanitize(context.id) },
+                { label: 'Projection Formula', value: `local minute = ${context.epochOffsetMinutes} + floor(canonical minute × ${context.rateNumerator} / ${context.rateDenominator})` },
+                { label: 'Active Evidence', value: context.id === active?.id ? `Active since canonical minute ${runtime.enteredWorldMinute}; temporal runtime revision ${runtime.revision}.` : 'Not active.' },
+                { label: 'Safety', value: 'Removing a context never changes global fictional time. The Prime Context and active context cannot be removed.' },
+                { label: 'Remove', value: context.id === 'prime' || context.id === active?.id ? 'Unavailable while this context is Prime or active.' : GameAssist.createButton('Remove Context', `!aa-temporal remove --id ${context.id} --confirm ?{Remove ${context.name}?|No,no|Yes,yes}`) },
+                { label: 'Layers', value: `${GameAssist.createButton('Basic', `!aa-temporal edit --id ${context.id} --layer basic`)} ${GameAssist.createButton('Detailed', `!aa-temporal edit --id ${context.id} --layer detailed`)}` }
+            ];
+            const rows = layer === 'technical' ? technical : (layer === 'detailed' ? detailed : basic);
+            sendPanel(msg, `Almanac / Temporal Contexts / ${_sanitize(context.name)} / ${layer[0].toUpperCase()}${layer.slice(1)}`, [
+                ...rows,
+                { label: 'Navigation', value: `${GameAssist.createButton('Back', '!aa-temporal')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function parseTemporalRate(raw) {
+            const match = String(raw || '').trim().match(/^(\d+)\s*:\s*(\d+)$/);
+            if (!match) return null;
+            const numerator = Number(match[1]);
+            const denominator = Number(match[2]);
+            if (!Number.isSafeInteger(numerator) || !Number.isSafeInteger(denominator)
+                || numerator < 1 || denominator < 1
+                || numerator > POLICY.almanac.temporalMaximumRatePart || denominator > POLICY.almanac.temporalMaximumRatePart) return null;
+            return { numerator, denominator };
+        }
+
+        function mutateTemporalContext(msg, contextId, mutation, successNotice) {
+            const config = temporalContextConfigForPanel(msg);
+            if (!config) return;
+            const index = config.contexts.findIndex(context => context.id === contextId);
+            if (index < 0) return sendPanel(msg, 'Temporal Context Needs Attention', [{ label: 'Context', value: 'That temporal context is no longer available.' }]);
+            const previous = copy(config);
+            const next = copy(config);
+            const outcome = mutation(next.contexts[index], next);
+            if (outcome?.ok === false) return sendPanel(msg, 'Temporal Context Needs Attention', [
+                { label: 'Value', value: _sanitize(outcome.message) },
+                { label: 'Changes', value: 'None.' },
+                { label: 'Back', value: GameAssist.createButton('Temporal Contexts', '!aa-temporal') }
+            ]);
+            const checked = temporalContextConfigResult(next, { persist: false });
+            if (!checked.ok) return sendPanel(msg, 'Temporal Context Needs Attention', [{ label: 'Value', value: _sanitize(checked.warning) }, { label: 'Changes', value: 'None.' }]);
+            commitTemporalContextConfig(checked.config, previous, { action: 'temporal-context-edited', contextId }, msg);
+            showTemporalContextEditor(msg, contextId, 'basic');
+        }
+
+        function addTemporalContext(msg, args) {
+            const config = temporalContextConfigForPanel(msg);
+            if (!config) return;
+            if (config.contexts.length >= POLICY.almanac.temporalContextLimit) return sendPanel(msg, 'Temporal Context Needs Attention', [
+                { label: 'Limit', value: `No more than ${POLICY.almanac.temporalContextLimit} temporal contexts are retained.` },
+                { label: 'Changes', value: 'None.' }
+            ]);
+            const name = boundedWorldText(args.name, '', POLICY.almanac.worldNameLength);
+            const kind = String(args.kind || '').toLowerCase();
+            const rate = parseTemporalRate(args.rate || `${args.numerator || ''}:${args.denominator || ''}`);
+            const offset = Math.floor(Number(args.offset ?? args.epochOffsetMinutes));
+            if (!name || !TEMPORAL_CONTEXT_KINDS.includes(kind) || !rate || !Number.isSafeInteger(offset) || offset < 0 || offset > POLICY.almanac.temporalMaximumOffsetMinutes) {
+                return sendPanel(msg, 'Temporal Context Needs Attention', [
+                    { label: 'Context', value: `Provide a name, Regional or Planar kind, a Local:Canonical rate from 1:1 through ${POLICY.almanac.temporalMaximumRatePart}:${POLICY.almanac.temporalMaximumRatePart}, and a non-negative bounded epoch offset.` },
+                    { label: 'Changes', value: 'None.' }
+                ]);
+            }
+            const previous = copy(config);
+            const next = copy(config);
+            const base = worldId(args.id || name, 'temporal-context');
+            let id = base;
+            let suffix = 2;
+            while (next.contexts.some(context => context.id === id)) id = `${base.slice(0, Math.max(1, POLICY.almanac.worldNameLength - String(suffix).length - 1))}-${suffix++}`;
+            next.contexts.push({
+                id, name, kind, rateNumerator: rate.numerator, rateDenominator: rate.denominator,
+                epochOffsetMinutes: offset, description: boundedWorldText(args.description, '', POLICY.almanac.worldDescriptionLength), tags: worldTags(String(args.tags || '').split(/[;,\s]+/))
+            });
+            const checked = temporalContextConfigResult(next, { persist: false });
+            if (!checked.ok) return sendPanel(msg, 'Temporal Context Needs Attention', [{ label: 'Context', value: _sanitize(checked.warning) }, { label: 'Changes', value: 'None.' }]);
+            commitTemporalContextConfig(checked.config, previous, { action: 'temporal-context-added', contextId: id }, msg);
+            showTemporalContextEditor(msg, id, 'basic');
+        }
+
+        function setTemporalContext(msg, args) {
+            const config = temporalContextConfigForPanel(msg);
+            if (!config) return;
+            const context = temporalContextByReference(config, args.id || args.name);
+            const field = String(args.field || '').trim();
+            if (!context || !field || args.value === undefined) return sendPanel(msg, 'Temporal Context Needs Attention', [{ label: 'Command', value: 'Choose an existing context, a supported field, and a value.' }, { label: 'Changes', value: 'None.' }]);
+            if (context.id === 'prime') return sendPanel(msg, 'Temporal Context Needs Attention', [{ label: 'Prime Context', value: 'The canonical Prime Context is immutable: its identity, rate, offset, and baseline metadata remain fixed at the 1:1 zero-offset reference.' }, { label: 'Changes', value: 'None.' }]);
+            const raw = args.value;
+            mutateTemporalContext(msg, context.id, record => {
+                if (field === 'name') {
+                    const value = boundedWorldText(raw, '', POLICY.almanac.worldNameLength);
+                    if (!value) return { ok: false, message: 'A temporal context needs a name.' };
+                    record.name = value;
+                    return { ok: true };
+                }
+                if (field === 'description') {
+                    record.description = /^(none|clear)$/i.test(String(raw).trim()) ? '' : boundedWorldText(raw, '', POLICY.almanac.worldDescriptionLength);
+                    return { ok: true };
+                }
+                if (field === 'tags') {
+                    record.tags = worldTags(String(raw).split(/[;,\s]+/));
+                    return { ok: true };
+                }
+                if (field === 'kind') {
+                    const value = String(raw).toLowerCase();
+                    if (!TEMPORAL_CONTEXT_KINDS.includes(value)) return { ok: false, message: 'Context kind must be Regional or Planar.' };
+                    record.kind = value;
+                    return { ok: true };
+                }
+                if (field === 'rate') {
+                    const rate = parseTemporalRate(raw);
+                    if (!rate) return { ok: false, message: `Rate must use Local:Canonical whole-number parts from 1:1 through ${POLICY.almanac.temporalMaximumRatePart}:${POLICY.almanac.temporalMaximumRatePart}.` };
+                    record.rateNumerator = rate.numerator;
+                    record.rateDenominator = rate.denominator;
+                    return { ok: true };
+                }
+                if (field === 'epochOffsetMinutes') {
+                    const value = Math.floor(Number(raw));
+                    if (!Number.isSafeInteger(value) || value < 0 || value > POLICY.almanac.temporalMaximumOffsetMinutes) return { ok: false, message: `Epoch offset must be a whole number from 0 to ${POLICY.almanac.temporalMaximumOffsetMinutes}.` };
+                    record.epochOffsetMinutes = value;
+                    return { ok: true };
+                }
+                return { ok: false, message: 'That temporal context field is not supported.' };
+            });
+        }
+
+        function removeTemporalContext(msg, args) {
+            const config = temporalContextConfigForPanel(msg);
+            if (!config) return;
+            const context = temporalContextByReference(config, args.id || args.name);
+            if (!context) return sendPanel(msg, 'Temporal Context Needs Attention', [{ label: 'Context', value: 'That temporal context was not found.' }, { label: 'Changes', value: 'None.' }]);
+            const runtime = ensureTemporalRuntime();
+            if (context.id === 'prime' || context.id === runtime.activeContextId) return sendPanel(msg, 'Temporal Context Needs Attention', [{ label: 'Context', value: 'The Prime Context and active temporal context cannot be removed. Transition to another context first.' }, { label: 'Changes', value: 'None.' }]);
+            if (String(args.confirm || '').toLowerCase() !== 'yes') return sendPanel(msg, 'Almanac / Temporal Contexts', [{ label: 'No Change Made', value: 'Removing a temporal context requires explicit confirmation.' }, { label: 'Back', value: GameAssist.createButton('Temporal Contexts', '!aa-temporal') }]);
+            const previous = copy(config);
+            const next = copy(config);
+            next.contexts = next.contexts.filter(item => item.id !== context.id);
+            const checked = temporalContextConfigResult(next, { persist: false });
+            if (!checked.ok) return sendPanel(msg, 'Temporal Context Needs Attention', [{ label: 'Context', value: _sanitize(checked.warning) }, { label: 'Changes', value: 'None.' }]);
+            commitTemporalContextConfig(checked.config, previous, { action: 'temporal-context-removed', contextId: context.id }, msg);
+            showTemporalContexts(msg, `${context.name} was removed without changing canonical fictional time.`);
+        }
+
+        function temporalTransitionSafety(config) {
+            const world = worldConfigResult(modState.config.world, { persist: false });
+            if (!world.ok) return world.warning;
+            const runtime = worldRuntimeResult(modState.runtime?.world);
+            if (!runtime.ok) return runtime.warning;
+            const journey = activeTravelForWorld(world.config);
+            return journey ? 'Finish or cancel the active reviewed Travel journey before beginning a regional or planar temporal transition.' : null;
+        }
+
+        function showTemporalTransitionPreview(msg, grant, departure, destination, plan) {
+            const expiresIn = Math.max(0, Math.ceil((grant.expiresAt - Date.now()) / 1000));
+            sendPanel(msg, 'Almanac / Temporal Contexts / Transition Preview', [
+                { label: 'Departure Context', value: `${_sanitize(departure.name)} | ${_sanitize(temporalRateLabel(departure))} | now ${_sanitize(plan.departureNow.label)} | after canonical elapsed ${_sanitize(plan.departureArrival.label)}` },
+                { label: 'Destination Context', value: `${_sanitize(destination.name)} | ${_sanitize(temporalRateLabel(destination))} | now ${_sanitize(plan.destinationNow.label)} | arrival ${_sanitize(plan.destinationArrival.label)}` },
+                { label: 'Canonical Elapsed Time', value: `${plan.canonicalElapsedMinutes} authoritative fictional minute(s). The global chronology is the only clock that will advance.` },
+                { label: 'Local Relationship', value: `Departure projection changes by ${plan.departureElapsedLocal} local minute(s); destination projection changes by ${plan.destinationElapsedLocal} local minute(s). Local values are derived from saved formulas, not stored as another clock.` },
+                { label: 'Reconciliation', value: 'At confirmation, the canonical timeline advances only by the reviewed amount, then the active context changes at that arrival minute. No Rest, EffectAssist record, NPC history, combat, character resource, provider, Location, or real-world record is reversed, recalculated, or written.' },
+                { label: 'Confirm', value: `${GameAssist.createButton('Confirm Temporal Transition', `!aa-temporal confirm --grant ${grant.id}`)} — expires in about ${expiresIn} seconds.` },
+                { label: 'Cancel', value: `${GameAssist.createButton('Discard Preview', `!aa-temporal cancel --grant ${grant.id}`)} ${GameAssist.createButton('Temporal Contexts', '!aa-temporal')}` }
+            ]);
+        }
+
+        function prepareTemporalTransition(msg, args) {
+            if (!timeAvailable()) return sendPanel(msg, 'Temporal Transition Needs Attention', [
+                { label: 'TimeAlmanac', value: 'Temporal transitions require the authoritative fictional chronology to be available. It remains preserved while disabled.' },
+                { label: 'Next', value: GameAssist.createButton('Turn On TimeAlmanac', '!aa-time on') }
+            ]);
+            const config = temporalContextConfigForPanel(msg);
+            if (!config) return;
+            const almanacRuntime = ensureAlmanacRuntime();
+            const runtime = almanacRuntime.temporal;
+            pruneTemporalGrants(runtime);
+            const safety = temporalTransitionSafety(config);
+            if (safety) return sendPanel(msg, 'Temporal Transition Needs Attention', [{ label: 'Travel Boundary', value: _sanitize(safety) }, { label: 'Changes', value: 'None.' }]);
+            const departure = temporalActiveContext(config, runtime);
+            const destination = temporalContextByReference(config, args.id || args.name);
+            const elapsed = Math.floor(Number(args.minutes ?? args.elapsed));
+            if (!departure || !destination) return sendPanel(msg, 'Temporal Transition Needs Attention', [{ label: 'Context', value: 'Choose an existing destination temporal context.' }, { label: 'Changes', value: 'None.' }]);
+            if (destination.id === departure.id) return sendPanel(msg, 'Temporal Transition Needs Attention', [{ label: 'Context', value: 'That context is already active. Use ordinary Time controls for a same-context advance.' }, { label: 'Changes', value: 'None.' }]);
+            if (!Number.isSafeInteger(elapsed) || elapsed < 0 || elapsed > POLICY.almanac.temporalMaximumTransitionMinutes) return sendPanel(msg, 'Temporal Transition Needs Attention', [{ label: 'Elapsed Time', value: `Canonical elapsed minutes must be a whole number from 0 to ${POLICY.almanac.temporalMaximumTransitionMinutes}.` }, { label: 'Changes', value: 'None.' }]);
+            const time = almanacRuntime.time;
+            const startMinute = time.worldMinute;
+            const endMinute = startMinute + elapsed;
+            if (!resolveWorldMinute(profileFor(), endMinute)) return sendPanel(msg, 'Temporal Transition Needs Attention', [{ label: 'Elapsed Time', value: 'The reviewed arrival would fall outside the supported authoritative fictional calendar range.' }, { label: 'Changes', value: 'None.' }]);
+            const plan = {
+                startMinute,
+                endMinute,
+                canonicalElapsedMinutes: elapsed,
+                departureNow: temporalProjection(departure, startMinute),
+                departureArrival: temporalProjection(departure, endMinute),
+                destinationNow: temporalProjection(destination, startMinute),
+                destinationArrival: temporalProjection(destination, endMinute),
+                departureElapsedLocal: temporalElapsedProjection(departure, startMinute, endMinute),
+                destinationElapsedLocal: temporalElapsedProjection(destination, startMinute, endMinute)
+            };
+            if (Object.keys(runtime.grants).length >= POLICY.almanac.temporalTransitionGrantLimit) return sendPanel(msg, 'Temporal Transition Needs Attention', [{ label: 'Review Limit', value: `Only ${POLICY.almanac.temporalTransitionGrantLimit} unconfirmed temporal transition previews are retained.` }, { label: 'Changes', value: 'None.' }]);
+            const id = worldInteractionId('temporal');
+            const grant = {
+                id,
+                actorId: String(msg?.playerid || ''),
+                departureContextId: departure.id,
+                destinationContextId: destination.id,
+                canonicalElapsedMinutes: elapsed,
+                startMinute,
+                timeRevision: time.revision,
+                temporalRevision: runtime.revision,
+                contextRevision: config.revision,
+                expiresAt: Date.now() + POLICY.almanac.temporalTransitionGrantMs
+            };
+            runtime.grants[id] = grant;
+            showTemporalTransitionPreview(msg, grant, departure, destination, plan);
+        }
+
+        function discardTemporalTransition(msg, grantId) {
+            const runtime = ensureTemporalRuntime();
+            pruneTemporalGrants(runtime);
+            const id = worldReference(grantId);
+            const grant = id ? runtime.grants[id] : null;
+            if (!grant) return sendPanel(msg, 'Temporal Transition', [{ label: 'Status', value: 'That preview already expired or was discarded.' }, { label: 'Back', value: GameAssist.createButton('Temporal Contexts', '!aa-temporal') }]);
+            if (!playerIsGM(msg?.playerid) && String(msg?.playerid) !== String(grant.actorId || '')) return sendPanel(msg, 'Temporal Transition Needs Attention', [{ label: 'Problem', value: 'That preview belongs to another GM.' }]);
+            delete runtime.grants[id];
+            showTemporalContexts(msg, 'The unconfirmed temporal transition preview was discarded.');
+        }
+
+        function confirmTemporalTransition(msg, grantId) {
+            const reviewedRuntime = ensureTemporalRuntime();
+            pruneTemporalGrants(reviewedRuntime);
+            const id = worldReference(grantId);
+            const grant = id ? reviewedRuntime.grants[id] : null;
+            if (!grant) return sendPanel(msg, 'Temporal Transition Needs Attention', [{ label: 'Problem', value: 'That preview expired, was discarded, or was already used. Prepare a new transition preview.' }, { label: 'Back', value: GameAssist.createButton('Temporal Contexts', '!aa-temporal') }]);
+            if (!playerIsGM(msg?.playerid) && String(msg?.playerid) !== String(grant.actorId || '')) return sendPanel(msg, 'Temporal Transition Needs Attention', [{ label: 'Problem', value: 'That preview belongs to another GM.' }]);
+            const config = temporalContextConfigForPanel(msg);
+            if (!config) return;
+            const almanacRuntime = ensureAlmanacRuntime();
+            const currentRuntime = almanacRuntime.temporal;
+            const time = almanacRuntime.time;
+            const safety = temporalTransitionSafety(config);
+            const departure = temporalActiveContext(config, currentRuntime);
+            const destination = temporalContextByReference(config, grant.destinationContextId);
+            if (safety || !departure || !destination || departure.id !== grant.departureContextId
+                || config.revision !== grant.contextRevision || currentRuntime.revision !== grant.temporalRevision
+                || time.revision !== grant.timeRevision || time.worldMinute !== grant.startMinute) {
+                delete currentRuntime.grants[id];
+                return sendPanel(msg, 'Temporal Transition Needs Attention', [
+                    { label: 'Problem', value: _sanitize(safety || 'The authoritative time, active context, or temporal configuration changed after preview. The preview was discarded.') },
+                    { label: 'Changes', value: 'None.' }
+                ]);
+            }
+            const endMinute = grant.startMinute + grant.canonicalElapsedMinutes;
+            if (!resolveWorldMinute(profileFor(), endMinute)) {
+                delete currentRuntime.grants[id];
+                return sendPanel(msg, 'Temporal Transition Needs Attention', [{ label: 'Problem', value: 'The arrival no longer fits the supported authoritative fictional calendar range. The preview was discarded.' }, { label: 'Changes', value: 'None.' }]);
+            }
+            let timeResult = null;
+            if (grant.canonicalElapsedMinutes > 0) {
+                timeResult = commitWorldMinute(endMinute, `Temporal transition: ${departure.name} to ${destination.name}`, msg);
+                if (!timeResult.ok) {
+                    delete currentRuntime.grants[id];
+                    return sendPanel(msg, 'Temporal Transition Needs Attention', [{ label: 'Problem', value: _sanitize(timeResult.message) }, { label: 'Changes', value: 'None.' }]);
+                }
+            }
+            // commitWorldMinute() defensively rebuilds runtime branches, so reacquire the actual temporal branch before the final context commit.
+            const committedRuntime = grant.canonicalElapsedMinutes > 0 ? ensureTemporalRuntime() : currentRuntime;
+            committedRuntime.activeContextId = destination.id;
+            committedRuntime.enteredWorldMinute = endMinute;
+            committedRuntime.revision += 1;
+            const record = {
+                schemaVersion: TEMPORAL_RUNTIME_SCHEMA_VERSION,
+                id: grant.id,
+                actorId: String(msg?.playerid || ''),
+                committedAt: isoNow(),
+                departureContextId: departure.id,
+                destinationContextId: destination.id,
+                canonicalElapsedMinutes: grant.canonicalElapsedMinutes,
+                startMinute: grant.startMinute,
+                endMinute,
+                departureElapsedLocal: temporalElapsedProjection(departure, grant.startMinute, endMinute),
+                destinationElapsedLocal: temporalElapsedProjection(destination, grant.startMinute, endMinute)
+            };
+            committedRuntime.history.push(record);
+            if (committedRuntime.history.length > POLICY.almanac.temporalHistoryLimit) committedRuntime.history.shift();
+            delete committedRuntime.grants[id];
+            GameAssist.SemanticEvents.publish('almanac.temporal.transition', MODULE_NAME, copy(record), {
+                actorId: String(msg?.playerid || 'api'),
+                action: 'temporal-transition',
+                temporalRevision: committedRuntime.revision
+            });
+            GameAssist.recordMetric('almanac_temporal_transition', { mod: MODULE_NAME, canonicalElapsedMinutes: grant.canonicalElapsedMinutes });
+            const arrival = temporalProjection(destination, endMinute);
+            sendPanel(msg, 'Temporal Transition Committed', [
+                { label: 'Arrival Context', value: `${_sanitize(destination.name)} | ${_sanitize(temporalRateLabel(destination))} | ${_sanitize(arrival.label)}` },
+                { label: 'Canonical Time', value: grant.canonicalElapsedMinutes ? `${grant.canonicalElapsedMinutes} authoritative fictional minute(s) advanced after confirmation.` : 'No authoritative fictional minutes advanced; the context shift was explicitly reviewed as instantaneous.' },
+                { label: 'Reconciliation', value: `Departure projection changed by ${record.departureElapsedLocal} local minute(s); destination projection changed by ${record.destinationElapsedLocal} local minute(s). No other timeline, Rest, effect, NPC history, combat, resource, provider, Location, or real-world record was reversed or written.` },
+                { label: 'Next', value: `${GameAssist.createButton('Temporal Contexts', '!aa-temporal')} ${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        /**
+         * handleTemporalContexts - Route all explicit time-rate context controls through GM-reviewed state changes.
+         * Inputs: normalized temporal command text.
+         * Outputs: compact context/editor panels or an expiring transition review.
+         * Invariant: no route creates a second global clock or changes gameplay/provider/real-world records.
+         */
+        function handleTemporalContexts(msg, content) {
+            const body = content.replace(/^temporal(?:contexts?)?\s*/i, '').trim();
+            if (!body || /^(menu|status|list)$/i.test(body)) return showTemporalContexts(msg);
+            if (!requireGm(msg)) return;
+            if (!temporalRuntimeForPanel(msg)) return;
+            const args = _parseArgs(body).args;
+            if (/^add\b/i.test(body)) return addTemporalContext(msg, args);
+            if (/^edit\b/i.test(body)) return showTemporalContextEditor(msg, args.id || args.name, String(args.layer || 'basic').toLowerCase());
+            if (/^set\b/i.test(body)) return setTemporalContext(msg, args);
+            if (/^remove\b/i.test(body)) return removeTemporalContext(msg, args);
+            if (/^(transition|travel|move)\b/i.test(body)) return prepareTemporalTransition(msg, args);
+            if (/^confirm\b/i.test(body)) return confirmTemporalTransition(msg, args.grant);
+            if (/^(cancel|discard)\b/i.test(body)) return discardTemporalTransition(msg, args.grant);
+            return showTemporalContexts(msg, 'Choose a temporal context action from the available controls.');
+        }
+
         function showMaster(msg) {
             if (!playerIsGM(msg?.playerid)) return showCurrent(msg);
             const scene = resolveScene();
@@ -27534,7 +28381,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Session Actions', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${scene.travel ? '' : GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Rules Advice', '!aa-rules')} ${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Short Rest', '!aa-rest preview --type short')} ${GameAssist.createButton('Long Rest', '!aa-rest preview --type long')}`.trim() },
                 ...(rulesNotes.length ? [{ label: 'GM Notes', value: `${rulesNotes.map(note => _sanitize(note.message)).join('<br>')} ${GameAssist.createButton('Rules Details', '!aa-rules')}` }] : []),
                 { label: 'Share', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
-                { label: 'Worldbuilding', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Presets', '!aa-presets')} ${GameAssist.createButton('WorldPacks', '!aa-worldpacks')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Astronomy', '!astro')} ${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('More Tools', '!aa-more')}` },
+                { label: 'Worldbuilding', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Presets', '!aa-presets')} ${GameAssist.createButton('WorldPacks', '!aa-worldpacks')} ${GameAssist.createButton('Temporal Contexts', '!aa-temporal')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Astronomy', '!astro')} ${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('More Tools', '!aa-more')}` },
                 { label: 'Navigation', value: `${GameAssist.createButton('Almanac Guide', '!Almanac-Guide')} ${gameAssistHomeButton()}` }
             ]);
         }
@@ -27645,6 +28492,270 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ].join(' ');
         }
 
+        /**
+         * wayfarerDocumentDigest - Fingerprint inert editable calendar text for stale-preview protection.
+         * Inputs: a bounded handout string or canonical JSON-safe value.
+         * Outputs: deterministic compact non-security identifier used only to compare a reviewed revision.
+         * Invariant: this is not executable content, an authorization token, or a replacement for handout revalidation.
+         */
+        function wayfarerDocumentDigest(value) {
+            const text = typeof value === 'string' ? value : JSON.stringify(value);
+            let hash = 2166136261;
+            for (let index = 0; index < text.length; index += 1) {
+                hash ^= text.charCodeAt(index);
+                hash = Math.imul(hash, 16777619);
+            }
+            return `wf-${(hash >>> 0).toString(16).padStart(8, '0')}`;
+        }
+
+        function inspectWayfarerHandoutJson(value, state, depth = 0) {
+            if (state.errors.length >= 8) return;
+            if (depth > POLICY.almanac.wayfarerHandoutDepthLimit) {
+                state.errors.push(`Wayfarer handout nesting may not exceed ${POLICY.almanac.wayfarerHandoutDepthLimit} levels.`);
+                return;
+            }
+            state.values += 1;
+            if (state.values > POLICY.almanac.wayfarerHandoutObjectLimit) {
+                state.errors.push(`Wayfarer handout may not contain more than ${POLICY.almanac.wayfarerHandoutObjectLimit} values.`);
+                return;
+            }
+            if (value === null || ['string', 'boolean', 'number'].includes(typeof value)) {
+                if (typeof value === 'number' && !Number.isFinite(value)) state.errors.push('Wayfarer handout numbers must be finite.');
+                return;
+            }
+            if (Array.isArray(value)) {
+                if (value.length > POLICY.almanac.wayfarerHandoutObjectLimit) state.errors.push('Wayfarer handout arrays exceed the supported bound.');
+                value.slice(0, POLICY.almanac.wayfarerHandoutObjectLimit).forEach(item => inspectWayfarerHandoutJson(item, state, depth + 1));
+                return;
+            }
+            if (!sceneRecord(value)) {
+                state.errors.push('Wayfarer handout values must be JSON primitives, arrays, or plain records.');
+                return;
+            }
+            const keys = Object.keys(value);
+            if (keys.some(key => POLICY.config.unsafeKeys.includes(key))) state.errors.push('Wayfarer handout contains an unsafe property name.');
+            if (keys.length > POLICY.almanac.wayfarerHandoutObjectLimit) state.errors.push('A Wayfarer handout record has too many fields.');
+            keys.slice(0, POLICY.almanac.wayfarerHandoutObjectLimit).forEach(key => inspectWayfarerHandoutJson(value[key], state, depth + 1));
+        }
+
+        function wayfarerHandoutDocument(draft) {
+            return {
+                format: WAYFARER_HANDOUT_FORMAT,
+                schemaVersion: WAYFARER_HANDOUT_SCHEMA_VERSION,
+                definition: copy(draft.definition),
+                startDate: copy(draft.startDate)
+            };
+        }
+
+        function wayfarerDraftDigest(draft) {
+            return wayfarerDocumentDigest(wayfarerHandoutDocument(draft));
+        }
+
+        function wayfarerHandoutShapeErrors(raw) {
+            const errors = [];
+            const check = (value, allowed, label) => {
+                if (!sceneRecord(value)) return;
+                Object.keys(value).filter(key => !allowed.includes(key)).forEach(key => errors.push(`${label} field ${key} is not supported.`));
+            };
+            check(raw.definition, ['name', 'hoursPerDay', 'minutesPerHour', 'weekdays', 'months', 'intercalary', 'holidays', 'seasonRanges', 'leapEvery', 'leapName', 'leapAfterMonth'], 'Wayfarer definition');
+            check(raw.startDate, ['year', 'period', 'day', 'hour', 'minute'], 'Wayfarer starting date');
+            (Array.isArray(raw.definition?.months) ? raw.definition.months : []).forEach((month, index) => check(month, ['name', 'days', 'season', 'skipWeekday'], `Wayfarer period ${index + 1}`));
+            (Array.isArray(raw.definition?.intercalary) ? raw.definition.intercalary : []).forEach((day, index) => check(day, ['name', 'afterMonth'], `Wayfarer festival day ${index + 1}`));
+            (Array.isArray(raw.definition?.holidays) ? raw.definition.holidays : []).forEach((holiday, index) => check(holiday, ['name', 'monthIndex', 'day'], `Wayfarer holiday ${index + 1}`));
+            (Array.isArray(raw.definition?.seasonRanges) ? raw.definition.seasonRanges : []).forEach((range, index) => check(range, ['name', 'start', 'end'], `Wayfarer seasonal range ${index + 1}`));
+            return errors;
+        }
+
+        /**
+         * parseWayfarerHandoutDocument - Validate an editable handout as inert calendar data before draft replacement.
+         * Inputs: selected handout notes text.
+         * Outputs: one valid unreviewed Wayfarer draft or bounded human errors.
+         * Invariant: no text/HTML/JavaScript is executed; active calendar and fictional time are outside this import path.
+         */
+        function parseWayfarerHandoutDocument(rawText) {
+            const text = typeof rawText === 'string' ? rawText : '';
+            if (!text.trim()) return { ok: false, draft: null, errors: ['The selected handout has no Wayfarer document text.'] };
+            if (text.length > POLICY.almanac.wayfarerHandoutDocumentCharLimit) return { ok: false, draft: null, errors: [`Wayfarer handouts may not exceed ${POLICY.almanac.wayfarerHandoutDocumentCharLimit} characters.`] };
+            let raw;
+            try {
+                raw = JSON.parse(text);
+            } catch {
+                return { ok: false, draft: null, errors: ['Wayfarer handout is not valid JSON. It was not executed or imported.'] };
+            }
+            const state = { values: 0, errors: [] };
+            inspectWayfarerHandoutJson(raw, state);
+            if (state.errors.length) return { ok: false, draft: null, errors: [...new Set(state.errors)].slice(0, 8) };
+            if (!sceneRecord(raw)) return { ok: false, draft: null, errors: ['Wayfarer handout root must be an object.'] };
+            const allowed = new Set(['format', 'schemaVersion', 'definition', 'startDate']);
+            const errors = [
+                ...Object.keys(raw).filter(key => !allowed.has(key)).map(key => `Wayfarer handout field ${key} is not supported.`),
+                ...wayfarerHandoutShapeErrors(raw)
+            ];
+            if (raw.format !== WAYFARER_HANDOUT_FORMAT) errors.push(`Wayfarer handout format must be ${WAYFARER_HANDOUT_FORMAT}.`);
+            if (!Number.isInteger(Number(raw.schemaVersion)) || Number(raw.schemaVersion) !== WAYFARER_HANDOUT_SCHEMA_VERSION) errors.push(`Wayfarer handout schemaVersion must be ${WAYFARER_HANDOUT_SCHEMA_VERSION}.`);
+            const inspection = inspectWayfarerDefinition(raw.definition);
+            if (!inspection.ok) errors.push(...inspection.errors);
+            if (!sceneRecord(raw.startDate)) errors.push('Wayfarer handout needs a starting-date object.');
+            let startDate = null;
+            if (inspection.ok && sceneRecord(raw.startDate)) {
+                startDate = {
+                    year: Math.floor(Number(raw.startDate.year)),
+                    period: String(raw.startDate.period || '').trim(),
+                    day: Math.floor(Number(raw.startDate.day)),
+                    hour: Math.floor(Number(raw.startDate.hour)),
+                    minute: Math.floor(Number(raw.startDate.minute))
+                };
+                const start = minuteForDate(wayfarerProfile(inspection.definition), startDate);
+                if (!start.ok) errors.push(`Starting date: ${start.message}`);
+            }
+            if (errors.length) return { ok: false, draft: null, errors: [...new Set(errors)].slice(0, 8) };
+            return {
+                ok: true,
+                draft: {
+                    schemaVersion: WAYFARER_DRAFT_SCHEMA_VERSION,
+                    definition: inspection.definition,
+                    startDate,
+                    reviewed: WAYFARER_STAGES.reduce((result, stage) => ({ ...result, [stage]: false }), {}),
+                    sourceProfileId: 'wayfarer',
+                    updatedAt: isoNow()
+                },
+                errors: []
+            };
+        }
+
+        function boundedWayfarerImportGrantMap(raw) {
+            if (!sceneRecord(raw)) return {};
+            return Object.fromEntries(Object.entries(raw).slice(0, POLICY.almanac.wayfarerHandoutGrantLimit)
+                .filter(([id, grant]) => worldReference(id) && sceneRecord(grant) && Number.isFinite(Number(grant.expiresAt)))
+                .map(([id, grant]) => [worldReference(id), copy(grant)]));
+        }
+
+        function ensureWayfarerImportRuntime() {
+            return ensureAlmanacRuntime().wayfarerImports;
+        }
+
+        function pruneWayfarerImportGrants(runtime) {
+            const now = Date.now();
+            Object.entries(runtime.grants || {}).forEach(([id, grant]) => {
+                if (!sceneRecord(grant) || Number(grant.expiresAt) <= now || Number(grant.expiresAt) > now + POLICY.almanac.wayfarerHandoutGrantMs + (1000 * 60)) delete runtime.grants[id];
+            });
+        }
+
+        function exportWayfarerHandout(msg) {
+            const draft = ensureWayfarerDraft();
+            const name = 'GameAssist Almanac Wayfarer Calendar Export';
+            const result = GameAssist.ownedHandout(MODULE_NAME, 'wayfarer-calendar-export', name);
+            if (!result.ok) return sendPanel(msg, 'Wayfarer Handout Export Needs Attention', [
+                { label: 'Problem', value: _sanitize(result.message || 'Roll20 could not create the Wayfarer handout.') },
+                { label: 'Safety', value: 'The active calendar, fictional time, and saved draft were unchanged.' }
+            ]);
+            result.handout.set('notes', JSON.stringify(wayfarerHandoutDocument(draft), null, 2));
+            sendPanel(msg, 'Wayfarer Handout Export Ready', [
+                { label: 'Handout', value: `[Open ${_sanitize(name)}](https://journal.roll20.net/handout/${_sanitize(result.id)})` },
+                { label: 'Contents', value: 'One editable versioned Wayfarer definition and starting date. Review an import before it can replace the saved draft.' },
+                { label: 'Safety', value: 'This handout is inert JSON. It cannot run HTML, JavaScript, macros, or provider commands; export changes neither active calendar nor fictional time.' },
+                { label: 'Next', value: `${GameAssist.createButton('Review This Handout', `!aa-wayfarer import --handout ${result.id}`)} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')}` }
+            ]);
+        }
+
+        function showWayfarerImportPreview(msg, grant, candidate, handoutName) {
+            const expiresIn = Math.max(0, Math.ceil((grant.expiresAt - Date.now()) / 1000));
+            const status = wayfarerDraftStatus(candidate);
+            sendPanel(msg, 'Wayfarer Handout Import Preview', [
+                { label: 'Source Handout', value: _sanitize(handoutName || grant.handoutId) },
+                { label: 'Imported Draft', value: wayfarerOverview(candidate) },
+                { label: 'Starting Date', value: _sanitize(formatWayfarerStart(candidate.startDate)) },
+                { label: 'Validation', value: status.errors.length ? _sanitize(status.errors.join(' ')) : 'Calendar definition and starting date are valid. Imported stages begin unreviewed so the GM deliberately reviews the new draft before activation.' },
+                { label: 'Scope', value: 'Confirmation replaces only the saved editable Wayfarer draft. Active calendar, authoritative fictional minute, Time history, Weather, Astronomy, Worldbuilding, providers, and gameplay state remain unchanged.' },
+                { label: 'Confirm', value: `${GameAssist.createButton('Replace Saved Draft', `!aa-wayfarer import-confirm --grant ${grant.id}`)} — expires in about ${expiresIn} seconds.` },
+                { label: 'Cancel', value: `${GameAssist.createButton('Discard Preview', `!aa-wayfarer import-cancel --grant ${grant.id}`)} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')}` }
+            ]);
+        }
+
+        function prepareWayfarerHandoutImport(msg, args) {
+            if (!wayfarerImportRuntimeForPanel(msg)) return;
+            const handoutId = String(args.handout || '').trim();
+            if (!handoutId) return sendPanel(msg, 'Wayfarer Handout Import Needs Attention', [{ label: 'Handout', value: 'Paste the Roll20 handout ID to review its editable Wayfarer calendar data.' }, { label: 'Changes', value: 'None.' }]);
+            const handout = getObj('handout', handoutId);
+            if (!handout) return sendPanel(msg, 'Wayfarer Handout Import Needs Attention', [{ label: 'Handout', value: 'That handout is unavailable. No text was parsed and nothing changed.' }, { label: 'Changes', value: 'None.' }]);
+            handout.get('notes', notes => {
+                const text = String(notes || '');
+                const parsed = parseWayfarerHandoutDocument(text);
+                if (!parsed.ok) return sendPanel(msg, 'Wayfarer Handout Import Needs Attention', [
+                    { label: 'Validation', value: parsed.errors.map(_sanitize).join('<br>') },
+                    { label: 'Safety', value: 'No text was executed. The active calendar, fictional time, and saved draft were unchanged.' }
+                ]);
+                const currentDraft = ensureWayfarerDraft();
+                const runtime = wayfarerImportRuntimeForPanel(msg);
+                if (!runtime) return;
+                pruneWayfarerImportGrants(runtime);
+                if (Object.keys(runtime.grants).length >= POLICY.almanac.wayfarerHandoutGrantLimit) return sendPanel(msg, 'Wayfarer Handout Import Needs Attention', [{ label: 'Review Limit', value: `Only ${POLICY.almanac.wayfarerHandoutGrantLimit} unconfirmed Wayfarer handout previews are retained.` }, { label: 'Changes', value: 'None.' }]);
+                const id = worldInteractionId('wayfarer-import');
+                const grant = {
+                    id,
+                    actorId: String(msg?.playerid || ''),
+                    handoutId,
+                    handoutName: String(handout.get('name') || 'Wayfarer Handout').slice(0, POLICY.almanac.worldNameLength),
+                    documentDigest: wayfarerDocumentDigest(text),
+                    draftDigest: wayfarerDraftDigest(currentDraft),
+                    candidateDigest: wayfarerDraftDigest(parsed.draft),
+                    expiresAt: Date.now() + POLICY.almanac.wayfarerHandoutGrantMs
+                };
+                runtime.grants[id] = grant;
+                showWayfarerImportPreview(msg, grant, parsed.draft, grant.handoutName);
+            });
+        }
+
+        function discardWayfarerHandoutImport(msg, grantId) {
+            const runtime = wayfarerImportRuntimeForPanel(msg);
+            if (!runtime) return;
+            pruneWayfarerImportGrants(runtime);
+            const id = worldReference(grantId);
+            const grant = id ? runtime.grants[id] : null;
+            if (!grant) return sendPanel(msg, 'Wayfarer Handout Import', [{ label: 'Status', value: 'That preview already expired or was discarded.' }, { label: 'Back', value: GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer') }]);
+            if (!playerIsGM(msg?.playerid) && String(msg?.playerid) !== String(grant.actorId || '')) return sendPanel(msg, 'Wayfarer Handout Import Needs Attention', [{ label: 'Problem', value: 'That preview belongs to another GM.' }]);
+            delete runtime.grants[id];
+            showWayfarer(msg);
+        }
+
+        function confirmWayfarerHandoutImport(msg, grantId) {
+            const initialRuntime = wayfarerImportRuntimeForPanel(msg);
+            if (!initialRuntime) return;
+            pruneWayfarerImportGrants(initialRuntime);
+            const id = worldReference(grantId);
+            const grant = id ? initialRuntime.grants[id] : null;
+            if (!grant) return sendPanel(msg, 'Wayfarer Handout Import Needs Attention', [{ label: 'Problem', value: 'That preview expired, was discarded, or was already used. Prepare a new import review.' }, { label: 'Back', value: GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer') }]);
+            if (!playerIsGM(msg?.playerid) && String(msg?.playerid) !== String(grant.actorId || '')) return sendPanel(msg, 'Wayfarer Handout Import Needs Attention', [{ label: 'Problem', value: 'That preview belongs to another GM.' }]);
+            const handout = getObj('handout', String(grant.handoutId || ''));
+            if (!handout) {
+                delete initialRuntime.grants[id];
+                return sendPanel(msg, 'Wayfarer Handout Import Needs Attention', [{ label: 'Problem', value: 'The reviewed handout is no longer available. The preview was discarded; nothing changed.' }]);
+            }
+            handout.get('notes', notes => {
+                const text = String(notes || '');
+                const parsed = parseWayfarerHandoutDocument(text);
+                const currentDraft = ensureWayfarerDraft();
+                if (!parsed.ok || wayfarerDocumentDigest(text) !== grant.documentDigest || wayfarerDraftDigest(parsed.draft) !== grant.candidateDigest || wayfarerDraftDigest(currentDraft) !== grant.draftDigest) {
+                    const runtime = ensureWayfarerImportRuntime();
+                    delete runtime.grants[id];
+                    return sendPanel(msg, 'Wayfarer Handout Import Needs Attention', [
+                        { label: 'Problem', value: 'The handout or saved draft changed after preview, or the handout no longer validates. The preview was discarded; nothing changed.' },
+                        { label: 'Changes', value: 'None.' }
+                    ]);
+                }
+                // The fully parsed candidate replaces one draft branch only after every stale/validation check succeeds.
+                modState.config.wayfarerDraft = copy(parsed.draft);
+                const runtime = ensureWayfarerImportRuntime();
+                delete runtime.grants[id];
+                sendPanel(msg, 'Wayfarer Draft Imported', [
+                    { label: 'Saved Draft', value: wayfarerOverview(parsed.draft) },
+                    { label: 'Active Calendar', value: 'Unchanged.' },
+                    { label: 'Fictional Time', value: 'Unchanged.' },
+                    { label: 'Next', value: `${GameAssist.createButton('Review Imported Draft', '!aa-wayfarer review')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')}` }
+                ]);
+            });
+        }
+
         function showWayfarer(msg) {
             if (!requireGm(msg)) return;
             const draft = ensureWayfarerDraft();
@@ -27662,6 +28773,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Draft', value: `${_sanitize(draft.definition.name)} | ${draftMatchesActive(draft) ? 'matches the saved Wayfarer calendar' : 'has changes not yet activated'}` },
                 { label: 'Edit or Activate', value: `${GameAssist.createButton('Edit Calendar', '!aa-wayfarer edit')} ${GameAssist.createButton('Preview Draft', '!aa-wayfarer preview')} ${GameAssist.createButton('Review & Activate', '!aa-wayfarer review')}` },
                 { label: 'Optional Setup', value: `${GameAssist.createButton('Continue Guided Review', `!aa-wayfarer stage ${nextStage}`)} ${GameAssist.createButton('Start From a Copy', '!aa-wayfarer copies')}` },
+                { label: 'Advanced Handout', value: `${GameAssist.createButton('Export Editable Draft', '!aa-wayfarer export')} ${GameAssist.createButton('Review Handout Import', '!aa-wayfarer import --handout ?{Wayfarer Handout ID|}')}` },
                 { label: 'More', value: `${GameAssist.createButton('Calendar Details', '!aa-wayfarer details')} ${GameAssist.createButton('Recovery Options', '!aa-wayfarer recovery')} ${GameAssist.createButton('Help', '!aa-wayfarer help')}` },
                 { label: 'Return', value: GameAssist.createButton('Almanac', '!aa-gm') }
             ]);
@@ -28130,6 +29242,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (/^explain\b/i.test(body)) return showWayfarerTopicHelp(msg, body.split(/\s+/)[1]?.toLowerCase());
             const action = body.split(/\s+/)[0].toLowerCase();
             const args = _parseArgs(body).args;
+            if (action === 'export') return exportWayfarerHandout(msg);
+            if (action === 'import') return prepareWayfarerHandoutImport(msg, args);
+            if (action === 'import-confirm') return confirmWayfarerHandoutImport(msg, args.grant);
+            if (action === 'import-cancel') return discardWayfarerHandoutImport(msg, args.grant);
             // CHOICE: recovery is command-only and draft-only - ALT: expose a
             // prominent reset button or replace the active calendar; REJECTED:
             // accidental clicks must not erase draft work or move fictional time.
@@ -29960,7 +31076,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function phenomenonContextFromSnapshot(config, runtimeWorld, location, moment) {
-            const active = boundedActivePhenomena(runtimeWorld?.activePhenomena);
+            const runtime = worldRuntimeResult(runtimeWorld);
+            if (!runtime.ok) return { values: [], warnings: [runtime.warning] };
+            const active = boundedActivePhenomena(runtime.runtime?.activePhenomena);
             const values = [];
             const warnings = [];
             active.forEach(rawActivation => {
@@ -30011,7 +31129,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function travelJourneyContext(config, runtimeWorld) {
-            const journey = travelJourneyRecord(runtimeWorld?.travel?.journey);
+            const runtime = worldRuntimeResult(runtimeWorld);
+            if (!runtime.ok) return { value: null, warning: runtime.warning };
+            const journey = travelJourneyRecord(runtime.runtime?.travel?.journey);
             if (!journey) return { value: null, warning: null };
             const origin = config?.locations?.find(location => location.id === journey.originLocationId) || null;
             const destination = config?.locations?.find(location => location.id === journey.destinationLocationId) || null;
@@ -30033,15 +31153,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function ensureWorldRuntime() {
-            return ensureAlmanacRuntime().world;
+            const result = worldRuntimeResult(ensureAlmanacRuntime().world);
+            return result.ok ? result.runtime : null;
         }
 
         function recordRecentLocation(locationId) {
             const id = worldReference(locationId);
-            if (!id) return;
+            if (!id) return false;
             const runtime = ensureWorldRuntime();
+            if (!runtime) return false;
             runtime.recentLocationIds = [id, ...runtime.recentLocationIds.filter(item => item !== id)].slice(0, POLICY.almanac.worldRecentLimit);
             runtime.revision += 1;
+            return true;
         }
 
         function sceneWarning(warnings, code, message, domains = []) {
@@ -30078,6 +31201,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 weather: sceneCopyRecord(runtime.weather),
                 environment: sceneCopyRecord(runtime.environment),
                 rest: sceneCopyRecord(runtime.rest),
+                temporal: sceneCopyRecord(runtime.temporal),
                 world: sceneCopyRecord(runtime.world)
             };
         }
@@ -30136,6 +31260,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const warnings = [];
             const provenance = {};
             const runtime = sceneRuntimeSnapshot();
+            const worldRuntime = worldRuntimeResult(runtime.world);
             const profile = profileFor();
             const parentEnabled = modState.config.enabled !== false;
             const mark = (field, authority, source, status = 'resolved') => {
@@ -30154,6 +31279,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             });
             if (!world.ok) {
                 sceneWarning(warnings, 'WORLD_CONFIGURATION_UNAVAILABLE', world.warning, ['region', 'geography', 'ecoregion', 'biome', 'location']);
+            }
+            if (!worldRuntime.ok) {
+                sceneWarning(warnings, 'WORLD_RUNTIME_UNAVAILABLE', worldRuntime.warning, ['travel', 'phenomena', 'location']);
             }
             const placeContext = world.ok ? worldLocationContext(world.config) : { location: null, region: null, geography: null, ecoregion: null, biome: null };
             const location = providers.location.active ? placeContext.location : null;
@@ -30180,6 +31308,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     mark('season.current', 'TimeAlmanac', profile.name);
                 }
             }
+
+            const temporalResult = moment
+                ? temporalContextFromSnapshot(runtime, moment.worldMinute)
+                : { value: null, warning: 'Temporal Contexts need an available authoritative fictional minute before a local projection can be shown.' };
+            const temporal = temporalResult.value;
+            if (temporal) mark('temporal.active', 'Temporal Contexts', temporal.name);
+            if (temporalResult.warning) sceneWarning(warnings, 'TEMPORAL_CONTEXT_UNAVAILABLE', temporalResult.warning, ['time']);
 
             let climate = null;
             if (providers.climate.active) {
@@ -30255,8 +31390,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 }
             }
 
-            const phenomenaResult = providers.phenomena.active && world.ok
-                ? phenomenonContextFromSnapshot(world.config, runtime.world, location, moment)
+            const phenomenaResult = providers.phenomena.active && world.ok && worldRuntime.ok
+                ? phenomenonContextFromSnapshot(world.config, worldRuntime.runtime, location, moment)
                 : { values: [], warnings: [] };
             const phenomena = phenomenaResult.values;
             if (phenomena.length) mark('phenomena.active', 'Phenomena', phenomena.map(item => item.name).join(', '));
@@ -30302,8 +31437,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 sceneWarning(warnings, 'PERSISTENT_HYDROLOGY_UNAVAILABLE', 'Persistent hydrology is unavailable until the active Geography supplies it; temporary weather effects and immediate local water remain separate.', ['hydrology', 'geography', 'environment', 'weather']);
             }
 
-            const travelResult = providers.travel.active && world.ok
-                ? travelJourneyContext(world.config, runtime.world)
+            const travelResult = providers.travel.active && world.ok && worldRuntime.ok
+                ? travelJourneyContext(world.config, worldRuntime.runtime)
                 : { value: null, warning: null };
             const travel = travelResult.value;
             if (travel) {
@@ -30324,6 +31459,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 sceneStateSchemaVersion: SCENE_STATE_SCHEMA_VERSION,
                 providers,
                 time: { current: moment },
+                temporal,
                 astronomy,
                 region,
                 geography,
@@ -30963,12 +32099,24 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const worldPacksSummary = worldPacksResult.ok
                 ? `${worldPacksResult.config.installed.length}/${POLICY.almanac.worldPackLimit} installed WorldPack(s)`
                 : 'Unavailable';
-            const journey = worldResult.ok ? travelJourneyContext(worldResult.config, runtime.world) : { value: null, warning: null };
+            const temporalResult = temporalContextConfigResult(modState.config.temporalContexts, { persist: false });
+            const temporalRuntimeWarning = futureRuntimeSchemaWarning(runtime.temporal, TEMPORAL_RUNTIME_SCHEMA_VERSION, 'Temporal context');
+            if (!temporalResult.ok) problems.push(temporalResult.warning);
+            if (temporalRuntimeWarning) problems.push(temporalRuntimeWarning);
+            const temporalRuntime = temporalRuntimeWarning ? null : temporalRuntimeView(runtime.temporal);
+            const activeTemporal = temporalResult.ok && temporalRuntime ? temporalActiveContext(temporalResult.config, temporalRuntime) : null;
+            const temporalSummary = activeTemporal
+                ? `${_sanitize(activeTemporal.name)} | ${_sanitize(temporalRateLabel(activeTemporal))}`
+                : 'Unavailable';
+            if (temporalResult.ok && !temporalRuntimeWarning && !activeTemporal) problems.push('The active temporal context is unavailable.');
+            const worldRuntime = worldRuntimeResult(runtime.world);
+            if (!worldRuntime.ok) problems.push(worldRuntime.warning);
+            const journey = worldResult.ok && worldRuntime.ok ? travelJourneyContext(worldResult.config, worldRuntime.runtime) : { value: null, warning: null };
             if (journey.warning) problems.push(journey.warning);
-            const activePhenomena = normalizeActivePhenomena(runtime.world.activePhenomena);
-            const futurePhenomena = futurePhenomenonActivationCount(runtime.world.activePhenomena);
+            const activePhenomena = worldRuntime.ok ? normalizeActivePhenomena(worldRuntime.runtime.activePhenomena) : [];
+            const futurePhenomena = worldRuntime.ok ? futurePhenomenonActivationCount(worldRuntime.runtime.activePhenomena) : 0;
             if (futurePhenomena) problems.push(`${futurePhenomena} active Phenomenon record(s) use a newer schema and remain preserved without interpretation.`);
-            const phenomenonSummary = worldResult.ok
+            const phenomenonSummary = worldResult.ok && worldRuntime.ok
                 ? (activePhenomena.length
                     ? activePhenomena.map(item => worldResult.config.phenomena.find(definition => definition.id === item.phenomenonId)?.name || 'Unavailable definition').map(_sanitize).join(', ')
                     : 'No active Phenomena.')
@@ -30988,11 +32136,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Current', value: moment ? _sanitize(displayMoment(moment)) : 'Unavailable' },
                 { label: 'Wayfarer Draft', value: draftStatus ? `${draftStatus.reviewedCount}/${WAYFARER_STAGES.length} stages reviewed | ${draftStatus.complete ? 'ready to activate' : 'saved for continued setup'}` : 'No saved draft yet' },
                 { label: 'Current Context', value: `${_sanitize(resolvedClimate()?.regionName || 'No region')} | ${_sanitize(runtime.weather.current?.summary || 'No committed weather')} | ${_sanitize(environmentContext().name)}` },
-                { label: 'Travel', value: journey.value ? `${_sanitize(journey.value.originName)} &rarr; ${_sanitize(journey.value.destinationName)} | ${formatTravelMiles(journey.value.remainingMiles)} remaining` : (worldResult.ok ? 'No active reviewed journey.' : 'Worldbuilding data unavailable for Travel.') },
-                { label: 'Phenomena', value: `${phenomenonSummary}${futurePhenomena ? ` | ${futurePhenomena} newer record(s) preserved` : ''}` },
+                { label: 'Travel', value: journey.value ? `${_sanitize(journey.value.originName)} &rarr; ${_sanitize(journey.value.destinationName)} | ${formatTravelMiles(journey.value.remainingMiles)} remaining` : (worldRuntime.ok ? (worldResult.ok ? 'No active reviewed journey.' : 'Worldbuilding data unavailable for Travel.') : 'Unavailable; newer Worldbuilding runtime preserved.') },
+                { label: 'Phenomena', value: `${phenomenonSummary}${futurePhenomena ? ` | ${futurePhenomena} newer record(s) preserved` : (worldRuntime.ok ? '' : ' | Unavailable; newer Worldbuilding runtime preserved.')}` },
                 { label: 'Rules Advisor', value: `${rulesAdvisorSummary} ${GameAssist.createButton('Open', '!aa-rules')}` },
                 { label: 'WorldPacks', value: `${worldPacksSummary} ${GameAssist.createButton('Open', '!aa-worldpacks')}` },
-                { label: 'Retained History', value: `Time ${runtime.history.length}/${POLICY.almanac.historyLimit} | Weather ${runtime.weather.history.length}/${POLICY.almanac.weatherHistoryLimit} | Travel ${runtime.world.travel.history.length}/${POLICY.almanac.travelHistoryLimit} | Phenomena ${runtime.world.phenomenaHistory.length}/${POLICY.almanac.phenomenonHistoryLimit} | Rest ${runtime.rest.history.length}/${POLICY.almanac.restHistoryLimit}` },
+                { label: 'Temporal Context', value: `${temporalSummary} ${GameAssist.createButton('Open', '!aa-temporal')}` },
+                { label: 'Retained History', value: `Time ${runtime.history.length}/${POLICY.almanac.historyLimit} | Weather ${runtime.weather.history.length}/${POLICY.almanac.weatherHistoryLimit} | ${worldRuntime.ok ? `Travel ${worldRuntime.runtime.travel.history.length}/${POLICY.almanac.travelHistoryLimit} | Phenomena ${worldRuntime.runtime.phenomenaHistory.length}/${POLICY.almanac.phenomenonHistoryLimit}` : 'Travel and Phenomena unavailable; newer Worldbuilding runtime preserved'} | Rest ${runtime.rest.history.length}/${POLICY.almanac.restHistoryLimit}` },
                 { label: audit ? 'Audit Result' : 'Health', value: problems.length ? _sanitize(problems.join(' ')) : 'No known Almanac configuration, chronology, or retained-state problems.' },
                 { label: audit ? 'Changes' : 'Actions', value: audit ? 'None. Audit is read-only.' : `${GameAssist.createButton('Almanac', '!Almanac-GM')} ${GameAssist.createButton('Audit', '!Almanac-Audit')}` }
             ]);
@@ -31003,13 +32152,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h1>AlmanacAssist User Manual</h1>',
                 `<p><strong>GameAssist v${_sanitize(VERSION)} | AlmanacAssist v${MODULE_VERSION}</strong></p>`,
                 '<h2>Purpose</h2>',
-                '<p>AlmanacAssist combines fictional time, regional climate, astronomy, weather, environmental context, explicit Phenomena overlays, reviewed Travel, optional advisory-only RulesAdvisor reminders, atomic handout-reviewed WorldPacks, and deliberate rest workflows. Current World, Scene, and announcement views use one read-only scene snapshot so ordinary play sees a coherent world without changing provider state. Each internal system can be turned off without erasing its valid settings or disabling unrelated Almanac features.</p>',
+                '<p>AlmanacAssist combines fictional time, regional climate, astronomy, weather, environmental context, explicit Phenomena overlays, reviewed Travel, optional advisory-only RulesAdvisor reminders, atomic handout-reviewed WorldPacks, explicit Temporal Contexts, and deliberate rest workflows. Current World, Scene, and announcement views use one read-only scene snapshot so ordinary play sees a coherent world without changing provider state. A Temporal Context projects that same one authoritative fictional-minute chronology locally; it never introduces a second ticking clock. Each internal system can be turned off without erasing its valid settings or disabling unrelated Almanac features.</p>',
                 '<h2>Everyday Use</h2>',
                 '<p><code>!aa-gm</code>, <code>!aa-dm</code>, <code>!Almanac</code>, or <code>!aa</code> opens the compact Current World dashboard. It keeps the current scene, common advances, dawn/dusk anchors, calendar selection, rest, weather, Scene, preview, and announce actions together. <code>!aa-scene</code> opens a focused current-world view; GM-only <code>!aa-scene technical</code> opens provenance and warnings. <code>!date</code>, <code>!time</code>, <code>!cal</code>, <code>!clim</code>, <code>!astro</code>, <code>!weather</code>, <code>!enviro</code>, <code>!rest</code>, and <code>!phenomena</code> open focused views.</p>',
                 '<h2>Worldbuilding Mode</h2>',
-                '<p>Open <code>!aa-world</code> for organized Places, Natural World, Local Context, Time &amp; Sky, Gameplay, and Campaign Tools. The current generic place model manages Regions, Geography, Ecoregions, Biomes, Locations, Prepared Destinations, Travel Routes, and Phenomena with bounded chat editors. Use <code>!aa-location</code> to choose the current Location, favorite repeated destinations, use recently visited places, or review a Prepared Destination. These records are owner-authored generic data; AlmanacAssist does not install published setting lore.</p>',
+                '<p>Open <code>!aa-world</code> for organized Places, Natural World, Local Context, Time &amp; Sky, Gameplay, and Campaign Tools. The current generic place model manages Regions, Geography, Ecoregions, Biomes, Locations, Prepared Destinations, Travel Routes, and Phenomena with bounded chat editors. Every generic record has Basic, Detailed, and Technical layers: Basic keeps routine edits compact, Detailed opens structured relationships/mechanics, and Technical shows stable identity, guarded removal, provenance, and source-pack evidence without dumping raw JSON. Use <code>!aa-location</code> to choose the current Location, favorite repeated destinations, use recently visited places, or review a Prepared Destination. These records are owner-authored generic data; AlmanacAssist does not install published setting lore.</p>',
                 '<h2>WorldPacks</h2>',
                 '<p><code>!aa-worldpacks</code> manages portable Worldbuilding components in editable handouts. Create a blank generic template or export the current Worldbuilding records to a canonical handout. A GM reviews an import as Install New, Update Existing Pack, or Import as Copy; AlmanacAssist parses only bounded inert JSON, validates syntax, schema, references, provenance, dependencies, and conflicts, then issues an expiring preview. Confirmation rechecks the handout and campaign revisions before atomically committing Worldbuilding records and one provenance registry entry. New and Copy never overwrite existing records. Update requires a higher pack version and refuses any imported record changed by campaign customization. Packs never import PresetRegistry templates, runtime state, providers, time, weather, astronomy, or gameplay consequences.</p>',
+                '<h2>Temporal Contexts</h2>',
+                '<p>Open <code>!aa-temporal</code> to manage the immutable 1:1 zero-offset Prime Context and bounded owner-authored regional or planar contexts. Each context stores only a local-to-canonical rate and epoch offset. A transition preview shows departure and destination local projections, the one canonical elapsed-minute amount, reconciliation, expiry, and stale checks. Confirmation advances only the canonical fictional minute, selects the destination context, retains bounded reconciliation history, and publishes a committed event. It never reverses or writes Rest, effects, NPC history, combat, resources, providers, Location, or real-world records.</p>',
                 '<h2>Prepared Destinations and Travel</h2>',
                 '<p>A Prepared Destination points to one owner-authored Location, whose Region, Geography, Ecoregion, Biome, Climate reference, and default local context are resolved through the normal Location hierarchy. Choose it from <code>!aa-location</code> to inspect the resulting context and confirm the location switch. The review changes neither fictional time nor Weather, Environment overrides, Astronomy, or other provider-owned current state.</p>',
                 '<p>Open <code>!aa-travel</code> (or <code>!travel</code>) to plan from the current Location. A Travel Route stores two Locations, a GM-entered distance, an owner-authored terrain note, and a Cautious, Standard, or Swift default pace. Review a route or an explicit direct distance, then start the journey. Starting changes nothing. Every one-hour, four-hour, custom-hour, or until-dusk segment is previewed; only its confirmation advances fictional time. Arrival changes the active Location only after the accepted final segment. Canceling a journey never moves the party or reverses already confirmed time.</p>',
@@ -31026,6 +32177,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<p>Open <code>!aa-wayfarer</code>. The compact home screen separates using the saved Wayfarer calendar from editing its draft. Choosing <strong>Use Wayfarer Calendar</strong> activates the last saved complete definition after confirmation; <strong>Edit Calendar</strong> opens focused controls for only the component you want to change. Draft work remains separate from the calendar players see until review and activation.</p>',
                 '<ol><li>Name the calendar, choose the first activation date, and set the hours per day and minutes per hour.</li><li>Enter weekday names in their repeating order.</li><li>Enter calendar periods as <code>Name:Days</code>, separated by commas. Use <code>Name:Days:Feast</code> when those days should not advance the ordinary weekday cycle.</li><li>Add optional festival days as <code>Name:AfterPeriodNumber</code>. A festival day sits between periods and does not use an ordinary weekday.</li><li>Choose whether a named leap day appears every 2-100 years.</li><li>Add optional holidays as <code>Name:PeriodNumber:Day</code>. A holiday names a normal date; it does not add a day.</li><li>Review the preview, then activate deliberately.</li></ol>',
                 '<p>Routine edit screens show the current value, the relevant edit buttons, and a short route back. Read-once explanations and examples live behind <strong>Explain This</strong>; structural evidence lives under <strong>Details</strong>; rollback and draft recovery live under <strong>Recovery</strong>. Invalid entries leave both the active calendar and the prior valid draft unchanged.</p>',
+                '<p><strong>Optional advanced handout:</strong> <code>!aa-wayfarer export</code> writes one owned versioned editable draft handout. Edit only its inert JSON, then use <code>!aa-wayfarer import --handout &lt;id&gt;</code> to validate and preview it. The parser executes no text, bounds its work, detects handout/draft changes after preview, and expires the review. Confirmation replaces only the saved draft and resets its review stages; it never activates the calendar or changes fictional time. The ordinary chat controls remain a complete basic path.</p>',
                 '<h3>Worked Example</h3>',
                 '<p>Create a calendar named <strong>River Kingdom Calendar</strong> with 20 hours per day and 75 minutes per hour. Use weekdays <code>Moonday,Towerday,Marketday,Hearthday,Starday</code>; periods <code>Deepwinter:31,Founding Feast:2:Feast,Thawrise:27,Highsun:35,Harvestfall:29</code>; leap day <code>Starwake</code> every 4 years after period 4; and holidays <code>Oath Day:1:1,River Fair:3:12</code>. Review every stage, preview the starting date, and activate.</p>',
                 '<h3>Editing, Rollback, and Recovery</h3>',
@@ -31040,7 +32192,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h2>Safety</h2>',
                 '<p>Large advances produce one committed change. Moving backward changes only the fictional calendar and requires explicit confirmation. It never reverses rests, effects, combat, NPC history, HP, resources, or other campaign state.</p>',
                 '<h2>Commands</h2>',
-                '<p><code>!aa-wayfarer</code> opens the compact custom-calendar manager; its generated buttons cover direct saved-calendar selection, focused component editing, guided review, preview, activation, draft recovery, duplication, and rollback. <code>!aa-preview</code> privately previews the configured scene announcement, <code>!aa-announce</code> delivers it to the selected audience, and <code>!aa-announcement-settings</code> chooses public or GM-only delivery, a Quick, Calendar, Travel, or Everything preset, a campaign heading, or custom included fields. Technical fields always deliver GM-only; descriptive output limits itself to player-perceivable facts. Wayfarer presents its 20-hour day as ordinal Hours and named daily periods rather than AM/PM. Moon cycles and phase names are managed through Astronomy because they remain world context when a calendar display changes. <code>!aa-time</code>, <code>!aa-climate</code>, <code>!aa-astro</code>, <code>!aa-weather</code>, <code>!aa-enviro</code>, <code>!aa-rest</code>, <code>!aa-phenomena</code> (or <code>!phenomena</code>), <code>!aa-worldpacks</code> (or <code>!worldpacks</code>), and <code>!aa-rules</code> (or <code>!rules</code>) open their focused systems. RulesAdvisor is optional, follows the selected campaign profile, and only presents GM reminders; it never applies gameplay state. Standard role routes such as <code>!Weather-GM</code>, <code>!Weather-DM</code>, <code>!Weather-Help</code>, <code>!Weather-Status</code>, and <code>!Weather-Audit</code> are case-insensitive and also accept spaces in place of the hyphen.</p>'
+                '<p><code>!aa-wayfarer</code> opens the compact custom-calendar manager; its generated buttons cover direct saved-calendar selection, focused component editing, guided review, preview, activation, draft recovery, duplication, rollback, and optional handout export/import review. <code>!aa-temporal</code> opens explicit local-time context controls. <code>!aa-preview</code> privately previews the configured scene announcement, <code>!aa-announce</code> delivers it to the selected audience, and <code>!aa-announcement-settings</code> chooses public or GM-only delivery, a Quick, Calendar, Travel, or Everything preset, a campaign heading, or custom included fields. Technical fields always deliver GM-only; descriptive output limits itself to player-perceivable facts. Wayfarer presents its 20-hour day as ordinal Hours and named daily periods rather than AM/PM. Moon cycles and phase names are managed through Astronomy because they remain world context when a calendar display changes. <code>!aa-time</code>, <code>!aa-climate</code>, <code>!aa-astro</code>, <code>!aa-weather</code>, <code>!aa-enviro</code>, <code>!aa-rest</code>, <code>!aa-phenomena</code> (or <code>!phenomena</code>), <code>!aa-worldpacks</code> (or <code>!worldpacks</code>), and <code>!aa-rules</code> (or <code>!rules</code>) open their focused systems. RulesAdvisor is optional, follows the selected campaign profile, and only presents GM reminders; it never applies gameplay state. Standard role routes such as <code>!Weather-GM</code>, <code>!Weather-DM</code>, <code>!Weather-Help</code>, <code>!Weather-Status</code>, and <code>!Weather-Audit</code> are case-insensitive and also accept spaces in place of the hyphen.</p>'
             ].join('');
         }
 
@@ -31051,7 +32203,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Date and Time', value: `${GameAssist.createButton('Current Date', '!date')} ${GameAssist.createButton('Advance or Set Time', '!aa-time menu')} ${GameAssist.createButton('Choose Calendar', '!cal')}` },
                 { label: 'Share With The Table', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
                 { label: 'World Today', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Rules Advice', '!aa-rules')} ${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Environment', '!enviro')}` },
-                { label: 'Worldbuilding', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('WorldPacks', '!aa-worldpacks')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Travel Routes', '!aa-world routes')}` },
+                { label: 'Worldbuilding', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('WorldPacks', '!aa-worldpacks')} ${GameAssist.createButton('Temporal Contexts', '!aa-temporal')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Travel Routes', '!aa-world routes')}` },
                 { label: 'Calendar Setup', value: GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer') },
                 { label: 'Full Reference', value: GameAssist.createButton('Create or Update Manual', '!Almanac-Manual') }
             ] : [
@@ -31099,11 +32251,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (['guide', 'help', 'info', 'manual'].includes(action)) return `${system} help`;
                 return `${system} ${action}`;
             }
-            const aaFocused = raw.match(/^!aa(?:-|\s+)(phenomen(?:a|on)|presets?|rules(?:-?advisor)?|worldpacks?)(?:-|\s|$)/i);
+            const aaFocused = raw.match(/^!aa(?:-|\s+)(phenomen(?:a|on)|presets?|rules(?:[-\s]?advisor)?|world[-\s]?packs?|temporal(?:[-\s]?contexts?)?)(?:-|\s|$)/i);
             if (aaFocused) {
                 const alias = aaFocused[1].toLowerCase();
-                const system = /^phenomen/.test(alias) ? 'phenomena' : (/^preset/.test(alias) ? 'presets' : (/^worldpack/.test(alias) ? 'worldpacks' : 'rules'));
-                return `${system} ${raw.replace(/^!aa(?:-|\s+)(?:phenomen(?:a|on)|presets?|rules(?:-?advisor)?|worldpacks?)(?:-|\s)*/i, '')}`.trim();
+                const system = /^phenomen/.test(alias) ? 'phenomena' : (/^preset/.test(alias) ? 'presets' : (/^world/.test(alias) ? 'worldpacks' : (/^temporal/.test(alias) ? 'temporal' : 'rules')));
+                return `${system} ${raw.replace(/^!aa(?:-|\s+)(?:phenomen(?:a|on)|presets?|rules(?:[-\s]?advisor)?|world[-\s]?packs?|temporal(?:[-\s]?contexts?)?)(?:-|\s)*/i, '')}`.trim();
             }
             if (/^!date(?:\s|$)/i.test(raw)) return 'current-date';
             if (/^!time(?:\s|$)/i.test(raw)) return 'current-time';
@@ -31114,12 +32266,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (/^!(?:environment|enviro)(?:\s|$)/i.test(raw)) return `environment ${raw.replace(/^!(?:environment|enviro)\s*/i, '')}`.trim();
             if (/^!(?:astronomy|astro)(?:\s|$)/i.test(raw)) return `astronomy ${raw.replace(/^!(?:astronomy|astro)\s*/i, '')}`.trim();
             if (/^!rest(?:\s|$)/i.test(raw)) return `rest ${raw.replace(/^!rest\s*/i, '')}`.trim();
+            if (/^!world[-\s]?packs?(?:-|\s|$)/i.test(raw)) return `worldpacks ${raw.replace(/^!world[-\s]?packs?(?:-|\s)*/i, '')}`.trim();
             if (/^!world(?:-|\s|$)/i.test(raw)) return `world ${raw.replace(/^!world(?:-|\s)*/i, '')}`.trim();
             if (/^!location(?:-|\s|$)/i.test(raw)) return `location ${raw.replace(/^!location(?:-|\s)*/i, '')}`.trim();
             if (/^!travel(?:-|\s|$)/i.test(raw)) return `travel ${raw.replace(/^!travel(?:-|\s)*/i, '')}`.trim();
             if (/^!phenomen(?:a|on)(?:-|\s|$)/i.test(raw)) return `phenomena ${raw.replace(/^!phenomen(?:a|on)(?:-|\s)*/i, '')}`.trim();
             if (/^!presets?(?:-|\s|$)/i.test(raw)) return `presets ${raw.replace(/^!presets?(?:-|\s)*/i, '')}`.trim();
             if (/^!worldpacks?(?:-|\s|$)/i.test(raw)) return `worldpacks ${raw.replace(/^!worldpacks?(?:-|\s)*/i, '')}`.trim();
+            if (/^!temporal(?:contexts?)?(?:-|\s|$)/i.test(raw)) return `temporal ${raw.replace(/^!temporal(?:contexts?)?(?:-|\s)*/i, '')}`.trim();
             if (/^!rules(?:-?advisor)?(?:-|\s|$)/i.test(raw)) return `rules ${raw.replace(/^!rules(?:-?advisor)?(?:-|\s)*/i, '')}`.trim();
             if (/^!aa-wayfarer(?:\s|$)/i.test(raw)) return `wayfarer ${raw.replace(/^!aa-wayfarer\s*/i, '')}`.trim();
             if (/^!aa-time(?:\s|$)/i.test(raw)) return `time ${raw.replace(/^!aa-time\s*/i, '')}`.trim();
@@ -31151,6 +32305,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (lower === 'phenomena' || lower.startsWith('phenomena ') || lower === 'phenomenon' || lower.startsWith('phenomenon ')) return handlePhenomena(msg, input);
             if (lower === 'presets' || lower.startsWith('presets ') || lower === 'preset' || lower.startsWith('preset ')) return handlePresets(msg, input);
             if (lower === 'worldpacks' || lower.startsWith('worldpacks ') || lower === 'worldpack' || lower.startsWith('worldpack ')) return handleWorldPacks(msg, input);
+            if (lower === 'temporal' || lower.startsWith('temporal ') || lower === 'temporalcontext' || lower.startsWith('temporalcontext ') || lower === 'temporalcontexts' || lower.startsWith('temporalcontexts ')) return handleTemporalContexts(msg, input);
             if (lower === 'rules' || lower.startsWith('rules ') || lower === 'rulesadvisor' || lower.startsWith('rulesadvisor ')) return handleRulesAdvisor(msg, input);
             if (lower === 'preview' || lower === 'time preview') return showAnnouncement(msg, true);
             if (lower === 'announce' || lower === 'time announce') return showAnnouncement(msg, false);
@@ -31238,7 +32393,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
-        ['!Almanac', '!Almanac-', '!AlmanacAssist', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-', '!world', '!world-', '!location', '!location-', '!travel', '!travel-', '!phenomena', '!phenomena-', '!phenomenon', '!phenomenon-', '!presets', '!presets-', '!preset', '!preset-', '!worldpacks', '!worldpacks-', '!worldpack', '!worldpack-', '!rules', '!rules-', '!rulesadvisor', '!rulesadvisor-'].forEach(prefix => {
+        ['!Almanac', '!Almanac-', '!AlmanacAssist', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-', '!world', '!world-', '!location', '!location-', '!travel', '!travel-', '!phenomena', '!phenomena-', '!phenomenon', '!phenomenon-', '!presets', '!presets-', '!preset', '!preset-', '!worldpacks', '!worldpacks-', '!worldpack', '!worldpack-', '!temporal', '!temporal-', '!temporalcontext', '!temporalcontext-', '!temporalcontexts', '!temporalcontexts-', '!rules', '!rules-', '!rulesadvisor', '!rulesadvisor-'].forEach(prefix => {
             GameAssist.onCommand(prefix, handleCommand, MODULE_NAME, {
                 match: { caseInsensitive: true, mode: prefix.endsWith('-') ? 'prefix' : 'token' }
             });
@@ -31261,8 +32416,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             presetRegistrySchemaVersion: PRESET_REGISTRY_SCHEMA_VERSION,
             rulesAdvisorSchemaVersion: RULES_ADVISOR_SCHEMA_VERSION,
             worldPackSchemaVersion: WORLD_PACK_SCHEMA_VERSION,
+            temporalContextSchemaVersion: TEMPORAL_CONTEXT_SCHEMA_VERSION,
             timeStateSchemaVersion: TIME_STATE_SCHEMA_VERSION,
             wayfarerDraftSchemaVersion: WAYFARER_DRAFT_SCHEMA_VERSION,
+            wayfarerHandoutSchemaVersion: WAYFARER_HANDOUT_SCHEMA_VERSION,
             climateStateSchemaVersion: CLIMATE_STATE_SCHEMA_VERSION,
             astronomyStateSchemaVersion: ASTRONOMY_STATE_SCHEMA_VERSION,
             weatherStateSchemaVersion: WEATHER_STATE_SCHEMA_VERSION,
@@ -31313,23 +32470,24 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     warning: packs.ok ? null : packs.warning
                 });
             },
+            getTemporalContext: () => immutableSceneSnapshot(temporalPublicSnapshot()),
             getRestHistory: () => Object.freeze(copy(ensureAlmanacRuntime().rest.history)),
             observe: (callback, { owner = 'AlmanacAssistConsumer' } = {}) => GameAssist.SemanticEvents.observe(callback, {
                 owner,
-                types: ['almanac.time.changed', 'almanac.calendar.changed', 'almanac.climate.changed', 'almanac.astronomy.changed', 'almanac.weather.changed', 'almanac.environment.changed', 'almanac.world.changed', 'almanac.travel.changed', 'almanac.phenomena.changed', 'almanac.rest.completed']
+                types: ['almanac.time.changed', 'almanac.calendar.changed', 'almanac.climate.changed', 'almanac.astronomy.changed', 'almanac.weather.changed', 'almanac.environment.changed', 'almanac.world.changed', 'almanac.travel.changed', 'almanac.phenomena.changed', 'almanac.rest.completed', 'almanac.worldpacks.committed', 'almanac.temporal.contexts.changed', 'almanac.temporal.transition']
             }),
             clearObservers: owner => GameAssist.SemanticEvents.clearObservers(owner)
         });
 
-        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: read-only Current World SceneResolver, generic Worldbuilding, PresetRegistry campaign clones, optional RulesAdvisor, atomic WorldPacks, explicit Phenomena overlays, reviewed Travel, Wayfarer-aware time, configurable world announcements, compact climate and environment controls, and all six Almanac systems are available through !Almanac; the module starts disabled.`, 'INFO', { startup: true });
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: read-only Current World SceneResolver, layered generic Worldbuilding, PresetRegistry campaign clones, optional RulesAdvisor, atomic WorldPacks, explicit Temporal Contexts, reviewed Phenomena and Travel, Wayfarer-aware time with optional inert handout editing, configurable world announcements, compact climate and environment controls, and all six Almanac systems are available through !Almanac; the module starts disabled.`, 'INFO', { startup: true });
     }, {
         enabled: false,
-        prefixes: ['!Almanac', '!Almanac-', '!AlmanacAssist', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-', '!world', '!world-', '!location', '!location-', '!travel', '!travel-', '!phenomena', '!phenomena-', '!phenomenon', '!phenomenon-', '!presets', '!presets-', '!preset', '!preset-', '!rules', '!rules-', '!rulesadvisor', '!rulesadvisor-'],
+        prefixes: ['!Almanac', '!Almanac-', '!AlmanacAssist', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-', '!world', '!world-', '!location', '!location-', '!travel', '!travel-', '!phenomena', '!phenomena-', '!phenomenon', '!phenomenon-', '!presets', '!presets-', '!preset', '!preset-', '!worldpacks', '!worldpacks-', '!worldpack', '!worldpack-', '!temporal', '!temporal-', '!temporalcontext', '!temporalcontext-', '!temporalcontexts', '!temporalcontexts-', '!rules', '!rules-', '!rulesadvisor', '!rulesadvisor-'],
         preserveRuntimeOnDisable: true,
-        protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'announcement', 'environment', 'rest', 'rulesAdvisor', 'worldPacks', 'world']
+        protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'announcement', 'environment', 'rest', 'rulesAdvisor', 'worldPacks', 'temporalContexts', 'world']
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): AlmanacAssist is built as v2.0.0 for the full Issue #96 program. Current work adds generic immutable PresetRegistry templates, reviewed editable campaign clones, bounded Session Preset references, optional profile-specific advisory-only RulesAdvisor reminders, and bounded atomic WorldPacks while retaining all prior source-history notes below as historical checkpoints. Live Roll20 validation is deliberately deferred until every Issue #96 code gate is built; focused VM checks remain development evidence only. Rollback: retain the last committed source checkpoint while the v2.0.0 implementation build is incomplete.
+    // Changed (v2.0.0): AlmanacAssist completes the Issue #96 code build while retaining all prior source-history notes below as historical checkpoints: generic immutable PresetRegistry templates and reviewed campaign clones; advisory-only RulesAdvisor; bounded atomic WorldPacks; immutable Prime/regional/planar Temporal Context projections with reviewed canonical-time reconciliation and semantic events; shared Basic/Detailed/Technical Worldbuilding record-editor layers; and optional bounded inert Wayfarer handout export/edit/import that atomically replaces only a reviewed saved draft. Future Worldbuilding, Temporal, WorldPack, and import runtime schemas remain warning-only and untouched. Live Roll20 validation has not begun and remains the final release phase after consolidated automated/structural evidence. Rollback: retain the last committed source checkpoint until acceptance completes.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.10.0 on the AlmanacAssist-v2.0.0-Build line; adds bounded generic Phenomena definitions and reviewed active overlays with optional Location scope and fictional-time expiry. SceneResolver exposes immutable explicit overlay evidence and non-authoritative visibility/terrain/travel presentation notes without replacing Weather, Environment, Astronomy, Climate, Time, or Travel. Rollback: retain the 1.9.0 Prepared Destination and reviewed Travel checkpoint.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.9.0 on the AlmanacAssist-v2.0.0-Build line; adds bounded generic Prepared Destinations and bidirectional Travel Routes, reviewed start/segment/arrival workflow, active-journey SceneResolver evidence, and accepted-only fictional-time plus final-location commits. Prepared location switches deliberately preserve Weather, Environment overrides, Astronomy, and other provider ownership. Phenomena remains an explicit future provider; no setting lore is bundled. Rollback: retain the 1.8.0 generic Worldbuilding foundation with Travel unavailable.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.8.0 on the AlmanacAssist-v2.0.0-Build line; added bounded generic Worldbuilding Mode records for Region, Geography, Ecoregion, Biome, and Location, safe active-place/favorite/recent controls, field-owned SceneResolver composition, generic place chat editors, and warning-only future-schema handling. No published setting data is bundled; Phenomena remained a future provider at this checkpoint. Rollback: retain 1.7.0 SceneResolver behavior with an empty Worldbuilding branch.
@@ -31345,6 +32503,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Changed (v2.0.0): Added the standard GameAssist Home return to the AlmanacAssist GM control screen.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.1.0 with persistent Wayfarer drafts, staged setup and previews, safe profile duplication, atomic activation, elapsed-time preservation, explicit reset fallback, one activation rollback point, and a complete custom-calendar manual.
     // Decision log:
+    //   CHOICE: Model temporal differences as a rate-and-offset projection of canonical minutes — ALT: maintain a second context clock; REJECTED: multiple ticking clocks would make rests, effects, and external history ambiguous.
+    //   CHOICE: Commit a reviewed temporal transition through canonical Time before switching active context — ALT: rewrite other systems to match local time; REJECTED: AlmanacAssist does not own effect, combat, NPC, resource, provider, or real-world history.
+    //   CHOICE: Use one Basic/Detailed/Technical layer helper for generic Worldbuilding records — ALT: make every record screen independently invent disclosure rules; REJECTED: inconsistent exposure obscures provenance and makes ordinary editing harder.
+    //   CHOICE: Import advanced Wayfarer handouts into an unreviewed inactive draft only — ALT: activate handout calendars directly; REJECTED: external editable text must not bypass the existing deliberate calendar/chronology review.
+    //   CHOICE: Preserve future transient review schemas unchanged and block mutations — ALT: prune or normalize unknown grants/history; REJECTED: an older build must not silently destroy newer campaign state.
     //   CHOICE: Require a reviewed start and each reviewed Travel segment before changing fictional time or final Location - ALT: advance time or switch the party when a route is selected; REJECTED: route selection is planning, while chronology and party context must remain explicit accepted operations.
     //   CHOICE: Make Prepared Destinations Location-bound rather than silently overwrite Weather, Environment, Astronomy, or calendar providers - ALT: treat a location bundle as a broad hidden provider write; REJECTED: Location hierarchy already resolves coherent parent context and provider ownership must remain visible.
     //   CHOICE: Start expanded Worldbuilding with generic owner-authored records rather than named setting packs - ALT: seed recognizable published places/calendars/lore; REJECTED: setting provenance and licensing review are separate release gates.

@@ -3,7 +3,7 @@
 //   codename: "GAMEASSIST_ALMANAC_WORLDPACKS_TEST"
 //   project_version: "v2.0.0"
 //   purpose: "Exercise bounded, inert, handout-based WorldPack review, atomic commit, provenance, update, copy, and stale-preview contracts against the shipped executable."
-//   order: ["artifact_identity","public_registry","template","validation","preview","atomic_commit","update_copy","future_schema","aliases"]
+//   order: ["artifact_identity","public_registry","template","validation","preview","atomic_commit","update_copy","future_schema","future_runtime","aliases"]
 //   env:
 //     required: ["NODE_RUNTIME"]
 //     optional: []
@@ -245,6 +245,16 @@ function assertUpdateCopyAndConflictPolicies(harness) {
     assert.equal(originalLocation.description, 'Campaign customization after pack import.', 'refused update must preserve campaign customization');
 }
 
+function assertFutureWorldPackRuntimePreservation(harness) {
+    const almanac = harness.state.GameAssist.AlmanacAssist;
+    almanac.runtime.worldPacks = { schemaVersion: 99, opaqueFutureGrant: { preserve: true } };
+    const before = JSON.stringify(almanac.runtime.worldPacks);
+    const response = harness.dispatchCommand('!aa-worldpacks');
+    assert.equal(response.length, 1, 'future WorldPack runtime must render one warning-only panel');
+    assert.match(response[0].message, /runtime schema 99 is newer than this AlmanacAssist version/i, 'future WorldPack runtime must remain explicit');
+    assert.equal(JSON.stringify(almanac.runtime.worldPacks), before, 'future WorldPack runtime must not be normalized, expired, or reinterpreted');
+}
+
 function assertFutureSchemaAndAliases(harness) {
     const almanac = harness.state.GameAssist.AlmanacAssist;
     almanac.config.worldPacks = { schemaVersion: 99, revision: 8, opaqueFutureField: { preserve: true } };
@@ -257,7 +267,7 @@ function assertFutureSchemaAndAliases(harness) {
     assert.equal(apiResult.warning.includes('newer than this AlmanacAssist version'), true, 'public API must surface future-schema warning');
 
     const aliasHarness = createHarness();
-    ['!WORLDPACKS status', '!worldpacks-status', '!aa worldpacks', '!aa-worldpacks-status', '!worldpack-status'].forEach(command => {
+    ['!WORLDPACKS status', '!worldpacks-status', '!world-packs-status', '!world packs status', '!aa worldpacks', '!aa-worldpacks-status', '!aa-world-packs-status', '!aa world packs status', '!worldpack-status'].forEach(command => {
         const response = aliasHarness.dispatchCommand(command);
         assert.equal(response.length, 1, `${command} must reach exactly one WorldPack panel`);
         assert.match(response[0].message, /Almanac \/ WorldPacks/, `${command} must normalize into WorldPack controls`);
@@ -270,6 +280,7 @@ function run() {
     assertValidationAndPreviewSafety(createHarness());
     assertAtomicCommitAndStaleHandout(createHarness());
     assertUpdateCopyAndConflictPolicies(createHarness());
+    assertFutureWorldPackRuntimePreservation(createHarness());
     assertFutureSchemaAndAliases(createHarness());
     process.stdout.write('PASS: AlmanacAssist WorldPacks focused regression checks\n');
 }

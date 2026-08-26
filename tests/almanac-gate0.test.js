@@ -110,7 +110,7 @@ const POLICY = Object.freeze({
 // in-memory hook exposes the lexical chronology resolver for its exact boundary
 // contract; it is never written into a shipped artifact.
 // -----------------------------------------------------------------------------
-function createHarness() {
+function createHarness(initialAlmanac = {}) {
     const handlers = new Map();
     const chats = [];
     const objects = new Map();
@@ -150,9 +150,15 @@ function createHarness() {
         turnorder: '[]',
         token_markers: '[]'
     });
+    const initial = initialAlmanac && typeof initialAlmanac === 'object' && !Array.isArray(initialAlmanac)
+        ? initialAlmanac
+        : {};
     const state = {
         GameAssist: {
-            AlmanacAssist: { config: { enabled: true } }
+            AlmanacAssist: {
+                ...initial,
+                config: { enabled: true, ...(initial.config && typeof initial.config === 'object' ? initial.config : {}) }
+            }
         }
     };
     const sandbox = {
@@ -231,7 +237,7 @@ function createHarness() {
     return { state, sandbox, dispatchCommand };
 }
 // --- Notes & Comments ---
-// Changed (v2.0.0): add an isolated Roll20-shaped VM harness for deterministic Gate 0 contract checks.
+// Changed (v2.0.0): add an isolated Roll20-shaped VM harness for deterministic Gate 0 contract checks; callers may supply one isolated historical Almanac state fixture for migration evidence.
 // Decision log:
 //   CHOICE: suppress timers in the adapter — ALT: retain Node timers; REJECTED: background module schedules would keep a focused synchronous test process alive.
 //   CHOICE: capture chat output in memory — ALT: print every panel; REJECTED: assertions need exact, side-effect-free route evidence.
