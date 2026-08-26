@@ -768,7 +768,7 @@ For the stale-confirmation check:
 
 ## Focused v2.0.0 Complete AlmanacAssist Acceptance
 
-**What this proves:** AlmanacAssist `1.9.0` on the `AlmanacAssist-v2.0.0-Build` line provides the six independently controlled systems, read-only SceneResolver, bounded generic Worldbuilding, Location-bound Prepared Destinations, and reviewed Travel for coherent Current World, Scene, and announcement presentation. It preserves valid state while disabled and exchanges optional context without turning one system into a hidden prerequisite for another. The Gate 0 repairs from Issues #92 and #93 are verified here as well; live Roll20 evidence is still required before release.
+**What this proves:** AlmanacAssist `1.10.0` on the `AlmanacAssist-v2.0.0-Build` line provides the six independently controlled systems, read-only SceneResolver, bounded generic Worldbuilding, Location-bound Prepared Destinations, reviewed Travel, and explicit reviewed Phenomena overlays for coherent Current World, Scene, Travel, and announcement presentation. It preserves valid state while disabled and exchanges optional context without turning one system into a hidden prerequisite for another. The Gate 0 repairs from Issues #92 and #93 are verified here as well; live Roll20 evidence is still required before release.
 
 **Why test it:** v2.0.0 must not publish a calendar shell while describing a world-management suite. This track proves the six systems, their boundaries, their shared navigation, and RestAlmanac's deliberate 2014-sheet writes inside the real Roll20 sandbox.
 
@@ -919,9 +919,9 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 
 **Pass when:** output identifies visibility, temperature, precipitation, wind, ground, water, exposure, severity, and tags; no token, marker, character, roll, or Turn Tracker state changes; the override persists until cleared; and manual Environment still works without Weather.
 
-### Worldbuilding, Prepared Destinations, and Reviewed Travel
+### Worldbuilding, Prepared Destinations, Reviewed Travel, and Phenomena
 
-**Why:** Session Mode must let a GM move among owner-authored places without editing subsystem state in front of the table. Prepared destinations and Travel must remain explicit reviews: selecting a route is not permission to advance fictional time or silently move the party.
+**Why:** Session Mode must let a GM move among owner-authored places and explicit overlays without editing subsystem state in front of the table. Prepared destinations, Travel, and Phenomena must remain explicit reviews: selecting a route or overlay is not permission to advance fictional time, silently move the party, or replace another provider.
 
 1. Open `!aa-world`. In **Places**, add two generic Locations with distinct names. Use their focused editors to give one a Region/Geography/Ecoregion/Biome relationship or default local context as desired; do not enter raw JSON.
 2. Add a **Prepared Destination**, assign its target Location, and choose a default travel pace. Return to `!aa-location` and confirm the prepared item appears after Current/Favorites/Recents.
@@ -933,8 +933,13 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 8. Choose **Travel 1 Hour**. Before confirming its review, verify fictional time, active Location, and remaining distance are unchanged. Confirm it; verify fictional time advances by the reviewed amount and a non-final segment leaves the active Location at the origin.
 9. Continue until the final segment. Before confirmation, verify the panel identifies arrival but has not moved the party. Confirm it; verify fictional time advances only by the required final segment, the active Location switches to the destination, the journey closes, and Current Scene/Dashboard show the arrival context.
 10. Start a second disposable journey and choose **Cancel Journey**. Decline once, then confirm. Verify cancellation preserves the current Location and does not reverse any already accepted fictional time.
+11. In **Worldbuilding → Phenomena**, add an owner-authored Phenomenon scoped to the current Location. Give it a category, a visibility note, a terrain note, a travel note, severity, and a short default fictional-time duration. Confirm normal cards show direct fields rather than raw JSON.
+12. Open `!aa-phenomena` (also test direct `!phenomena`). Choose **Review Activate**. Before confirmation, record fictional time, Location, current Weather, Environment override, Astronomy, Climate, and active Travel state. Confirm the review panel clearly states its provider boundaries; cancel once and verify no state changed, then review and confirm activation.
+13. Confirm Current World and `!aa-scene` show the active Phenomenon as separate evidence and that its terrain/travel notes are presentation-only. If a journey is active at the scoped Location, confirm its Journey card presents the travel note separately. Verify Weather, Environment, Astronomy, Climate, Time, terrain ownership, and travel progress remain unchanged.
+14. Review **Deactivate**. Verify the overlay remains active before confirmation, then confirm and verify it disappears without changing another provider. Activate a duration-bound overlay again, advance fictional time through an already reviewed normal time or Travel action until its expiry, and verify the Scene hides it while `!aa-phenomena` offers an explicit cleanup; confirm cleanup and verify retained active state is removed only then.
+15. Create a second Location-scoped Phenomenon, activate it, and switch the active Location through the normal reviewed flow. Confirm it is filtered outside its Location rather than copied into the other scene. Attempt to edit or remove an active Phenomenon definition and its scoped Location; confirm the card refuses until it is deactivated.
 
-**Pass when:** all Worldbuilding controls are bounded direct fields with no ordinary raw JSON; prepared-destination review is location-bound and preserves independently owned providers; route planning/start/segment review causes no silent time or location change; every accepted segment advances only its displayed fictional time; arrival changes the Location only after accepted final travel; active journeys surface in Current World and Scene; stale or changed reviews are refused; and cancel never reverses committed time.
+**Pass when:** all Worldbuilding controls are bounded direct fields with no ordinary raw JSON; prepared-destination review is location-bound and preserves independently owned providers; route planning/start/segment review causes no silent time or location change; every accepted segment advances only its displayed fictional time; arrival changes the Location only after accepted final travel; active journeys surface in Current World and Scene; Phenomena activation/deactivation is reviewed and stale-safe, scoped/expired overlay evidence is separate and read-only, and it never replaces Weather/Environment/Astronomy/Climate/Time/Travel authority; stale or changed reviews are refused; and cancel never reverses committed time.
 
 ### RestAlmanac
 

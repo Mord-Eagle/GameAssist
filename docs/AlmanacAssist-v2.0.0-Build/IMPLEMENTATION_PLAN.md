@@ -24,8 +24,8 @@ the larger architectural work begins.
 | --- | --- | --- |
 | Gate 0 | Preserve and repair the current foundation | **In progress — #92/#93 and focused automated checks are complete; unknown-state and live Roll20 checks remain** |
 | Gate 1 | Make the existing six systems usable in Roll20 | **In progress — compact Current World dashboard and snapshot-backed announcements are implemented; complete live UX verification remains** |
-| Gate 2 | Introduce the SceneResolver current-scene authority | **In progress — read-only snapshot foundation and focused VM coverage are implemented; expanded providers remain** |
-| Gate 3 | Build live-world systems from #94 | **In progress — generic place composition, Prepared Destinations, and reviewed Travel are implemented; phenomena, presets, and advisor remain** |
+| Gate 2 | Introduce the SceneResolver current-scene authority | **In progress — read-only snapshot, explicit Phenomena evidence, and focused VM coverage are implemented; live Roll20 verification remains** |
+| Gate 3 | Build live-world systems from #94 | **In progress — generic place composition, Prepared Destinations, reviewed Travel, and explicit Phenomena overlays are implemented; presets and advisor remain** |
 | Gate 4 | Portable world data and temporal contexts | Not started |
 | Acceptance | Automated/structural + live Roll20 | Not started |
 
@@ -79,10 +79,10 @@ the larger architectural work begins.
 
 ## 3. Gate 1 — Make the existing six systems usable in Roll20
 
-This is the minimum AlmanacAssist completion gate for PR #81. The 1.9.0 checkpoint
+This is the minimum AlmanacAssist completion gate for PR #81. The 1.10.0 checkpoint
 adds compact Current World/Scene presentation, bounded generic location context,
-Prepared Destinations, and reviewed Travel, but it must still be verified against the
-live Roll20 acceptance track before it can be marked complete.
+Prepared Destinations, reviewed Travel, and explicit Phenomena overlays, but it must
+still be verified against the live Roll20 acceptance track before it can be marked complete.
 
 - [x] Implement the compact `!Almanac-GM` / `!Almanac-DM` / `!aa-gm` Current World
       dashboard, Scene view, quick time anchors, and explicit return navigation in
@@ -110,8 +110,7 @@ live Roll20 acceptance track before it can be marked complete.
 - [x] Add an internal read-only SceneResolver exposed through
       `GameAssist.AlmanacAssist.getScene()`.
 - [x] Declare the ownership matrix and implement generic Region, Geography,
-      Ecoregion, Biome, Location, and active Travel evidence; Phenomena remains
-      an explicit unavailable domain.
+      Ecoregion, Biome, Location, active Travel, and explicit Phenomena overlay evidence.
 - [x] Return deeply immutable/defensive snapshots with field-level provenance and
       bounded warnings without provider-state writes.
 - [x] Resolve Time-owned season before Climate interpretation; keep Weather's exact
@@ -129,7 +128,8 @@ live Roll20 acceptance track before it can be marked complete.
       snapshot; committed Weather forecast display also uses the snapshot.
 - [x] Route active reviewed Travel through the snapshot with immutable journey
       evidence and field provenance; Travel actions retain explicit review boundaries.
-- [ ] Add Phenomena and complete live Roll20 coherence evidence.
+- [x] Add bounded explicit Phenomena definitions and immutable read-only overlay evidence; filter scoped/elapsed records without writes, preserve newer active records warning-only, and keep non-authoritative terrain/travel presentation separate.
+- [ ] Complete live Roll20 Phenomena/coherence evidence.
 - [ ] Verify large time changes emit no unbounded event replay in Roll20.
 
 ## 5. Gate 3 — Live-world systems from #94
@@ -149,7 +149,7 @@ live Roll20 acceptance track before it can be marked complete.
 - [x] Add bounded bidirectional Travel Routes and retained route/pace journeys;
       review start and every segment, advance Time only after confirmation, and
       change Location only on accepted arrival.
-- [ ] Phenomena (explicit overlays over ordinary world logic).
+- [x] Phenomena: bounded owner-authored definitions with optional Location scope, reviewed activation/deactivation, optional fictional-time expiry, explicit cleanup, safe active-record deletion constraints, Worldbuilding/Session/Travel presentation, and focused VM coverage.
 - [ ] PresetRegistry (immutable versioned built-ins, Preview → Clone/Install →
       Customize, campaign clones editable).
 - [ ] RulesAdvisor (optional, rules-profile-specific, advisory only).
@@ -171,11 +171,11 @@ live Roll20 acceptance track before it can be marked complete.
 ### Automated and structural
 
 - [x] Focused VM harnesses cover Gate 0, SceneResolver, generic Worldbuilding,
-      and Prepared Destination/reviewed Travel boundaries; they do not replace live
-      Roll20 acceptance.
-- [ ] Syntax parsing passes for `GameAssist`, `GameAssist.js`, and
+      Prepared Destination/reviewed Travel, and explicit Phenomena boundaries; they
+      do not replace live Roll20 acceptance.
+- [x] Syntax parsing passes for `GameAssist`, `GameAssist.js`, and
       `GameAssist-v2.0.0`.
-- [ ] Executable artifacts remain byte-identical.
+- [x] Executable artifacts remain byte-identical.
 - [ ] MECHSUITS banner, canonical tree, metadata, footers, and identifier
       literalism pass.
 - [ ] Chronology boundary tests: final valid year, first invalid minute, leap
@@ -211,7 +211,7 @@ live Roll20 acceptance track before it can be marked complete.
   (negative/non-finite input, the last valid minute of year 9999, and the first
   invalid minute), #93 configured-state semantics, valid saved-state preservation,
   and case-insensitive close dashboard aliases.
-- `node --check GameAssist` and `node --check tests/almanac-gate0.test.js` pass.
+- `node --check GameAssist`, `node --check GameAssist.js`, `node --check < GameAssist-v2.0.0`, and all five focused Almanac suites pass, including `tests/almanac-phenomena.test.js`. The Phenomena harness proves no-write immutable scope/expiry filtering, newer-record preservation, review-before-activate/deactivate, explicit expiry cleanup, aliases, and Worldbuilding cards.
 - `maximumWorldMinute` no longer appears anywhere in the source.
 - `getSubmoduleStatus()` now returns the explicit six-field configured-state
   object.

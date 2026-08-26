@@ -130,12 +130,14 @@ function assertSnapshotShapeAndImmutability(harness) {
     assertDeepFrozen(scene);
     assert.equal(scene.providers.time.status, 'available', 'configured Time must report available while the parent is active');
     assert.equal(scene.providers.climate.status, 'available', 'configured Climate must report available while the parent is active');
-    assert.equal(scene.region, null, 'an unimplemented Region provider must not be fabricated');
-    assert.equal(scene.geography, null, 'an unimplemented Geography provider must not be fabricated');
-    assert.equal(scene.location, null, 'an unimplemented Location provider must not be fabricated');
+    assert.equal(scene.region, null, 'an unassigned Region must not be fabricated');
+    assert.equal(scene.geography, null, 'an unassigned Geography must not be fabricated');
+    assert.equal(scene.location, null, 'an unassigned Location must not be fabricated');
+    assert.equal(scene.providers.phenomena.status, 'available', 'the configured generic Phenomena provider must be available even when no overlay is active');
+    assert.equal(scene.phenomena.length, 0, 'an empty Phenomena collection must remain explicit without invented overlay facts');
     assert.equal(scene.rest.pace, 'standard', 'Rest context must be available without requiring a rest preview or sheet write');
     assert.equal(scene.hydrology.persistent, null, 'persistent hydrology must remain distinct and unavailable without Geography');
-    assert.ok(warningCodes(scene).includes('SCENE_PROVIDERS_UNAVAILABLE'), 'unimplemented world domains must be reported as warnings');
+    assert.equal(warningCodes(scene).includes('SCENE_PROVIDERS_UNAVAILABLE'), false, 'an empty implemented Phenomena provider must not emit a generic unavailable warning');
     assert.ok(warningCodes(scene).includes('TERRAIN_PARTIAL'), 'partial immediate terrain must be explicitly labeled');
     assert.ok(warningCodes(scene).includes('PERSISTENT_HYDROLOGY_UNAVAILABLE'), 'persistent hydrology must be explicitly unavailable');
     assert.ok(scene.warnings.length <= 24, 'SceneResolver warnings must stay bounded by policy');

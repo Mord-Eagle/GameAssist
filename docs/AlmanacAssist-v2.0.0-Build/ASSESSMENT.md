@@ -52,18 +52,18 @@ The `75-v2.0.0-effectassist` branch contains:
   Off / Descriptive / Detailed / Technical control, direct calendar and moon
   editors, climate/region management, weather forecasts and locks, environment
   overrides, and transactional 2014-sheet Rest writes.
-- The active build's `GameAssist.AlmanacAssist` public API: `version`, Scene/World/Travel and other schema versions,
+- The active build's `GameAssist.AlmanacAssist` public API: `version`, Scene/World/Travel/Phenomena and other schema versions,
   `isAvailable()`, `isTimeAvailable()`, `getSubmoduleStatus()`, `getScene()`,
   `getTime()`, `getClimate()`, `getAstronomy()`, `getWeather()`,
   `getEnvironment()`, `getRestHistory()`, `observe(...)`, and
   `clearObservers(...)`.
 
 AlmanacAssist is **not** yet at the #95 / #94 destination. The active build checkpoint
-is now **1.9.0**, which adds generic owner-authored Region / Geography /
+is now **1.10.0**, which adds generic owner-authored Region / Geography /
 Ecoregion / Biome / Location composition, Location-bound Prepared Destinations,
-and reviewed route/pace Travel on top of the read-only SceneResolver foundation.
-It does not yet supply Phenomena / PresetRegistry / WorldPackService / temporal
-contexts.
+reviewed route/pace Travel, and explicit reviewed Phenomena overlays on top of the
+read-only SceneResolver foundation. It does not yet supply PresetRegistry /
+WorldPackService / temporal contexts.
 
 ## 4. Assessment by issue
 
@@ -305,16 +305,27 @@ change on the Build branch must satisfy them.
   evidence, and stale-safe start/segment/arrival confirmation. Time advances only
   after a confirmed segment; final Location changes only on confirmed arrival.
   Weather, Environment overrides, Astronomy, and calendar ownership remain separate.
+- **Phenomena foundation:** Implemented at AlmanacAssist `1.10.0`: bounded generic
+  definitions with optional Location scope, descriptive visibility/terrain/travel
+  notes, severity, optional fictional-time expiry, actor-bound review-before-
+  activate/deactivate controls, explicit expiry cleanup, bounded history, and safe
+  active-definition/Location deletion constraints. SceneResolver filters scoped,
+  elapsed, unavailable, and newer-schema overlays without writes and presents
+  immutable provenance-marked overlay evidence without replacing Weather,
+  Environment, Astronomy, Climate, Time, or Travel authority.
 - **Focused harnesses:** `tests/almanac-worldbuilding.test.js` proves generic place
-  composition and `tests/almanac-travel.test.js` proves prepared-destination and
-  accepted-only Travel boundaries in the isolated VM. Neither replaces Roll20.
-- **Not yet implemented:** Gate 1 live acceptance completion; Gate 3 Phenomena,
-  PresetRegistry, and RulesAdvisor; Gate 4 WorldPacks/temporal contexts; full
-  migration review; and the full live Roll20 acceptance track.
+  composition, `tests/almanac-travel.test.js` proves prepared-destination and
+  accepted-only Travel boundaries, and `tests/almanac-phenomena.test.js` proves
+  no-write scope/expiry filtering, forward-record preservation, reviewed overlay
+  state, explicit cleanup, aliases, and Worldbuilding cards in the isolated VM.
+  Neither replaces Roll20.
+- **Not yet implemented:** Gate 1 live acceptance completion; Gate 3 PresetRegistry
+  and RulesAdvisor; Gate 4 WorldPacks/temporal contexts; full migration review; and
+  the full live Roll20 acceptance track.
 
 ## 8. Decisions and rationale
 
-- Keep the source version at `1.9.0` rather than claiming `2.0.0` before the
+- Keep the source version at `1.10.0` rather than claiming `2.0.0` before the
   architectural work is complete. This avoids announcing an incomplete 2.0 engine
   and preserves a trustworthy rollback baseline.
 - Keep all three executable artifacts byte-identical (`GameAssist`,
