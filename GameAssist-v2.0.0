@@ -3,7 +3,7 @@
 GameAssist - Roll20 API Script
 Version: 2.0.0
 Last Updated: 2026-08-26 (America/New_York)
-Release scope: EffectAssist 2.5.3 compact identity-aware casting, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.0 automatic or reviewed normal/maximum healing, HealthService 1.1.0 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, CombatAssist 1.2.0 timeline and Ready/Delay tools, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist 1.7.0 SceneResolver foundation on the AlmanacAssist-v2.0.0-Build line (one defensive current-scene snapshot, provenance, and coherent session presentation), and regression repairs across the v2.0.0 module suite.
+Release scope: EffectAssist 2.5.3 compact identity-aware casting, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.0 automatic or reviewed normal/maximum healing, HealthService 1.1.0 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, CombatAssist 1.2.0 timeline and Ready/Delay tools, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist 1.8.0 SceneResolver and generic Worldbuilding foundation on the AlmanacAssist-v2.0.0-Build line (one defensive current-scene snapshot, provenance, coherent session presentation, and bounded place composition), and regression repairs across the v2.0.0 module suite.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -30,7 +30,7 @@ calls GameAssist.enqueue(). This development package contains fifteen configurab
 - EffectAssist 2.5.3 - Coordinates compact catalog-driven effects, exact caster-and-recipient identity, retained GM requests, GameAssist-owned 2014-sheet modifiers, verified token-specific concentration, ownership-safe cleanup, duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
 - HealAssist 1.2.0 - Guides verified 2014 normal or maximum healing with direct single-recipient targeting, optional automatic application, visible PC targeting, private GM requests, and HealthService verification.
 - AttackAssist 1.1.0 - Guides authorized 2014 repeating attacks through direct visible targeting, default sheet-mode submission, optional GM-enabled roll review, complete prompt-safe Classic-sheet expansion, private GM placement, crash-safe inline-roll validation, and visible one-use native-template rolls without applying damage.
-- AlmanacAssist 1.7.0 - Adds the internal read-only SceneResolver foundation on the AlmanacAssist-v2.0.0-Build line. It emits one defensive current-world snapshot with field provenance, provider status, warnings, terrain/hydrology distinctions, and separate moon phase/visibility while preserving the six-system model, Wayfarer behavior, and GameAssist lifecycle contracts.
+- AlmanacAssist 1.8.0 - Adds bounded generic Worldbuilding records for Regions, Geography, Ecoregions, Biomes, and Locations on top of the read-only SceneResolver foundation. Active Location, favorites, and recents compose into field-owned terrain/hydrology context without bundled setting lore, while the six-system model, Wayfarer behavior, and GameAssist lifecycle contracts remain intact.
 - HPAssist 0.3.0 - Rolls npc_hpformula and uses HealthService for verified writes to the selected shared NPC HP bar when available.
 - DebugTools 0.3.1 - Optional dry-run-first GM diagnostics with verified supported HP damage writes on the selected shared NPC HP bar.
 
@@ -490,7 +490,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             customRestLimit: 10,
             maximumRestHours: 720,
             maximumSummaryLength: 160,
-            sceneWarningLimit: 24
+            sceneWarningLimit: 24,
+            worldRegionLimit: 40,
+            worldGeographyLimit: 60,
+            worldEcoregionLimit: 60,
+            worldBiomeLimit: 40,
+            worldLocationLimit: 100,
+            worldFavoriteLimit: 20,
+            worldRecentLimit: 12,
+            worldListDisplayLimit: 12,
+            worldNameLength: 60,
+            worldDescriptionLength: 240,
+            worldTagLimit: 12
         }),
         config: Object.freeze({
             unsafeKeys: Object.freeze(['__proto__', 'prototype', 'constructor'])
@@ -501,6 +512,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added bounded AlmanacAssist Worldbuilding limits for generic Regions, Geography, Ecoregions, Biomes, Locations, favorites, recents, display rows, names, descriptions, and tags; rollback: retain only the empty versioned Worldbuilding branch while preserving existing six-system policy limits.
     // Changed (v2.0.0): Added AlmanacAssist.sceneWarningLimit (24) so a read-only SceneResolver can report unavailable, disabled, partial, and unusual-provider evidence without unbounded chat/API payload growth; rollback: use the prior bounded six-system displays while retaining saved provider state.
     // Changed (v2.0.0): Added bounded AttackAssist source, row, request, submission, rollbase, and interaction limits alongside the existing HealAssist, HealthService, EffectAssist, AlmanacAssist, and concentration limits; rollback: disable the affected optional module while retaining native sheet workflows.
     // Changed (v2.0.0): Raised CombatAssist health-evidence retention to 500 entries for the active or most recent encounter review; held-action records remain encounter-scoped and are discarded when the encounter ends.
@@ -23500,10 +23512,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: AlmanacAssist fictional calendar and world time
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:ALMANACASSIST", title: "AlmanacAssist",
-    //   guarantees: ["Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Optional Almanac integrations improve context without becoming hidden prerequisites","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer exposes direct validated editors for every stored calendar component while moon phases remain visible Astronomy-owned context","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","The internal read-only SceneResolver emits one defensive current-world snapshot with field-level provenance, bounded warnings, separate moon phase and visibility, and no provider-state writes","The GM dashboard, Scene view, announcements, weather forecast display, and rest previews consume one resolved snapshot so current weather, environment, visibility, and celestial evidence do not contradict each other","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Descriptive announcements report player-perceivable time, weather, visibility, and moon visibility without presenting climate baselines as simultaneous current measurements","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
+    //   guarantees: ["Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Optional Almanac integrations improve context without becoming hidden prerequisites","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer exposes direct validated editors for every stored calendar component while moon phases remain visible Astronomy-owned context","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","The internal read-only SceneResolver emits one defensive current-world snapshot with field-level provenance, bounded warnings, separate moon phase and visibility, and no provider-state writes","The GM dashboard, Scene view, announcements, weather forecast display, and rest previews consume one resolved snapshot so current weather, environment, visibility, and celestial evidence do not contradict each other","Worldbuilding Mode provides bounded generic Regions, Geography, Ecoregions, Biomes, and Locations with safe current-place selection, favorites, recents, and field-owned SceneResolver composition without bundled setting lore","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Descriptive announcements report player-perceivable time, weather, visibility, and moon visibility without presenting climate baselines as simultaneous current measurements","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AlmanacAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.7.0", scene_state_schema_version: 1, time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.8.0", scene_state_schema_version: 1, world_state_schema_version: 1, time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // AlmanacAssist contains six independently toggleable internal submodules behind
@@ -23516,8 +23528,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('AlmanacAssist', function() {
         const MODULE_NAME = 'AlmanacAssist';
-        const MODULE_VERSION = '1.7.0';
+        const MODULE_VERSION = '1.8.0';
         const SCENE_STATE_SCHEMA_VERSION = 1;
+        const WORLD_STATE_SCHEMA_VERSION = 1;
+        const WORLD_RUNTIME_SCHEMA_VERSION = 1;
         const TIME_STATE_SCHEMA_VERSION = 2;
         const WAYFARER_DRAFT_SCHEMA_VERSION = 3;
         const ANNOUNCEMENT_SCHEMA_VERSION = 4;
@@ -23661,15 +23675,37 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             heroic: Object.freeze({ name: 'Heroic', shortHours: 5 / 60, longHours: 1 }),
             gritty: Object.freeze({ name: 'Gritty', shortHours: 8, longHours: 168 })
         });
+        const WORLD_RECORD_TYPES = Object.freeze(['region', 'geography', 'ecoregion', 'biome', 'location']);
+        const WORLD_RECORD_COLLECTIONS = Object.freeze({
+            region: 'regions', geography: 'geographies', ecoregion: 'ecoregions', biome: 'biomes', location: 'locations'
+        });
+        const WORLD_RECORD_LIMITS = Object.freeze({
+            region: POLICY.almanac.worldRegionLimit,
+            geography: POLICY.almanac.worldGeographyLimit,
+            ecoregion: POLICY.almanac.worldEcoregionLimit,
+            biome: POLICY.almanac.worldBiomeLimit,
+            location: POLICY.almanac.worldLocationLimit
+        });
+        const WORLD_DEFAULT_CONFIG = Object.freeze({
+            schemaVersion: WORLD_STATE_SCHEMA_VERSION,
+            regions: Object.freeze([]),
+            geographies: Object.freeze([]),
+            ecoregions: Object.freeze([]),
+            biomes: Object.freeze([]),
+            locations: Object.freeze([]),
+            activeLocationId: null,
+            favoriteLocationIds: Object.freeze([]),
+            rulesProfile: '2014'
+        });
         const SCENE_PROVIDER_DEFINITIONS = Object.freeze({
             time: Object.freeze({ authority: 'TimeAlmanac', configured: () => submoduleEnabled('time') && modState.config.timeAlmanacEnabled !== false }),
             astronomy: Object.freeze({ authority: 'AstronomyAlmanac', configured: () => submoduleEnabled('astronomy') }),
-            region: Object.freeze({ authority: 'Region', configured: () => false }),
-            geography: Object.freeze({ authority: 'Geography', configured: () => false }),
-            ecoregion: Object.freeze({ authority: 'Ecoregion', configured: () => false }),
+            region: Object.freeze({ authority: 'Region', configured: context => context?.world?.ok === true }),
+            geography: Object.freeze({ authority: 'Geography', configured: context => context?.world?.ok === true }),
+            ecoregion: Object.freeze({ authority: 'Ecoregion', configured: context => context?.world?.ok === true }),
             climate: Object.freeze({ authority: 'ClimateAlmanac', configured: () => submoduleEnabled('climate') }),
-            biome: Object.freeze({ authority: 'Biome', configured: () => false }),
-            location: Object.freeze({ authority: 'Location', configured: () => false }),
+            biome: Object.freeze({ authority: 'Biome', configured: context => context?.world?.ok === true }),
+            location: Object.freeze({ authority: 'Location', configured: context => context?.world?.ok === true }),
             environment: Object.freeze({ authority: 'EnviroAlmanac', configured: () => submoduleEnabled('environment') }),
             weather: Object.freeze({ authority: 'WeatherAlmanac', configured: () => submoduleEnabled('weather') }),
             phenomena: Object.freeze({ authority: 'Phenomena', configured: () => false }),
@@ -23677,7 +23713,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             rest: Object.freeze({ authority: 'RestAlmanac', configured: () => submoduleEnabled('rest') })
         });
 
-        const SCENE_UNIMPLEMENTED_PROVIDER_KEYS = Object.freeze(['region', 'geography', 'ecoregion', 'biome', 'location', 'phenomena', 'travel']);
+        const SCENE_UNIMPLEMENTED_PROVIDER_KEYS = Object.freeze(['phenomena', 'travel']);
 
         Object.assign(modState.config, {
             enabled: false,
@@ -23698,6 +23734,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             announcement: { schemaVersion: ANNOUNCEMENT_SCHEMA_VERSION, enabled: true, audience: 'public', style: 'descriptive', preset: 'quick', header: 'Campaign Date and Time', fields: copy(ANNOUNCEMENT_PRESETS.quick) },
             environment: {},
             rest: { advanceTime: true, extendedEnabled: false, pace: 'standard', shortHours: 1, longHours: 8, extendedHours: 24, customTypes: [] },
+            world: copy(WORLD_DEFAULT_CONFIG),
             ...modState.config
         });
 
@@ -24819,6 +24856,419 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
 
+        function worldKindLabel(type) {
+            return ({ region: 'Region', geography: 'Geography', ecoregion: 'Ecoregion', biome: 'Biome', location: 'Location' })[type] || 'World Record';
+        }
+
+        function worldCollectionFor(config, type) {
+            const collection = WORLD_RECORD_COLLECTIONS[type];
+            return collection && Array.isArray(config?.[collection]) ? config[collection] : [];
+        }
+
+        function worldConfigForPanel(msg) {
+            const result = worldConfigResult(modState.config.world, { persist: false });
+            if (result.ok) return result.config;
+            sendPanel(msg, 'Almanac / Worldbuilding Needs Attention', [
+                { label: 'Worldbuilding Data', value: _sanitize(result.warning) },
+                { label: 'Safety', value: 'No worldbuilding data was changed. Use a compatible build or restore a known compatible configuration before editing.' },
+                { label: 'Navigation', value: `${GameAssist.createButton('Back', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+            return null;
+        }
+
+        function worldReferenceLabel(records, id, fallback = 'Unassigned') {
+            const record = records.find(item => item.id === id);
+            return record ? record.name : fallback;
+        }
+
+        function worldSelectQuery(label, records, currentId = null) {
+            const selected = String(currentId || '').toLowerCase();
+            const options = ['None,none', ...records.slice(0, POLICY.almanac.worldListDisplayLimit)
+                .map(record => `${record.name},${record.id}`)];
+            const current = records.find(record => record.id === selected);
+            if (current) options.unshift(`Current: ${current.name},${current.id}`);
+            return `?{${label}|${options.join('|')}}`;
+        }
+
+        function worldRecordSummary(config, type, record) {
+            if (type === 'region') return record.parentId
+                ? `Parent: ${_sanitize(worldReferenceLabel(config.regions, record.parentId))}`
+                : 'Top-level region';
+            if (type === 'geography') return [record.terrain, record.elevation, record.hydrology]
+                .filter(Boolean).map(_sanitize).join(' | ') || 'No persistent terrain details yet.';
+            if (type === 'ecoregion') return [
+                worldReferenceLabel(config.regions, record.regionId),
+                worldReferenceLabel(config.geographies, record.geographyId),
+                worldReferenceLabel(config.biomes, record.biomeId)
+            ].filter(value => value !== 'Unassigned').map(_sanitize).join(' | ') || 'No linked natural-world records yet.';
+            if (type === 'biome') return [record.vegetation, record.aridity, record.ground]
+                .filter(Boolean).map(_sanitize).join(' | ') || 'No ecological details yet.';
+            return [
+                worldReferenceLabel(config.regions, record.regionId),
+                worldReferenceLabel(config.ecoregions, record.ecoregionId),
+                worldReferenceLabel(config.biomes, record.biomeId)
+            ].filter(value => value !== 'Unassigned').map(_sanitize).join(' | ') || 'No parent context selected yet.';
+        }
+
+        function compactWorldLocation(scene) {
+            if (!scene.location) return 'Location unassigned';
+            return [scene.region?.name, scene.ecoregion?.name, scene.location.name].filter(Boolean).map(_sanitize).join(' › ');
+        }
+
+        /**
+         * showWorldbuilding - Present the organized Worldbuilding Mode rather than a flat subsystem list.
+         * Inputs: GM message.
+         * Outputs: a compact category hub that leaves live Session Mode undisturbed.
+         * Invariant: all deeper editors retain Back and Almanac Home exits; no raw configuration is rendered.
+         */
+        function showWorldbuilding(msg) {
+            if (!requireGm(msg)) return;
+            const config = worldConfigForPanel(msg);
+            if (!config) return;
+            const scene = resolveScene();
+            sendPanel(msg, 'Almanac / Worldbuilding', [
+                { label: 'Current Area', value: compactWorldLocation(scene) },
+                { label: 'Places', value: `${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Locations', '!aa-world locations')} ${GameAssist.createButton('Regions', '!aa-world regions')} ${GameAssist.createButton('Ecoregions', '!aa-world ecoregions')}` },
+                { label: 'Natural World', value: `${GameAssist.createButton('Geography', '!aa-world geographies')} ${GameAssist.createButton('Biomes', '!aa-world biomes')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Weather', '!weather')}` },
+                { label: 'Local Context', value: `${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('Scene', '!aa-scene')}` },
+                { label: 'Time & Sky', value: `${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('Astronomy', '!astro')}` },
+                { label: 'Gameplay', value: `${GameAssist.createButton('Rest', '!rest')} ${GameAssist.createButton('Travel', '!aa-travel')}` },
+                { label: 'Campaign Tools', value: `${GameAssist.createButton('Systems', '!Almanac-Systems')} ${GameAssist.createButton('Audit', '!Almanac-Audit')}` },
+                { label: 'World Records', value: `${config.locations.length} locations | ${config.regions.length} regions | ${config.ecoregions.length} ecoregions | ${config.geographies.length} geographies | ${config.biomes.length} biomes` },
+                { label: 'Navigation', value: `${GameAssist.createButton('Back', '!aa-gm')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function showWorldRecords(msg, type) {
+            if (!requireGm(msg)) return;
+            if (!WORLD_RECORD_TYPES.includes(type)) return showWorldbuilding(msg);
+            const config = worldConfigForPanel(msg);
+            if (!config) return;
+            const records = worldCollectionFor(config, type);
+            const label = worldKindLabel(type);
+            const rows = records.slice(0, POLICY.almanac.worldListDisplayLimit).map(record => ({
+                label: _sanitize(record.name),
+                value: `${worldRecordSummary(config, type, record)} ${GameAssist.createButton('Edit', `!aa-world edit ${type} --id ${record.id}`)}`
+            }));
+            const extra = records.length > POLICY.almanac.worldListDisplayLimit
+                ? [{ label: 'More Records', value: `${records.length - POLICY.almanac.worldListDisplayLimit} additional ${label.toLowerCase()} record(s) are retained. Refine names or use the edit command with a stable ID from Technical Details.` }]
+                : [];
+            sendPanel(msg, `Almanac / Worldbuilding / ${label}s`, [
+                ...(rows.length ? rows : [{ label: `No ${label}s`, value: `Add a ${label.toLowerCase()} when preparing this campaign world.` }]),
+                ...extra,
+                { label: 'Actions', value: `${GameAssist.createButton(`Add ${label}`, `!aa-world add ${type} --name "?{${label} name|New ${label}}"`)} ${type === 'location' ? GameAssist.createButton('Change Location', '!aa-location') : ''}` },
+                { label: 'Navigation', value: `${GameAssist.createButton('Back', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function worldRecordEditorFields(config, type, record) {
+            const query = (label, field, current = '') => GameAssist.createButton(label,
+                `!aa-world set ${type} --id ${record.id} --field ${field} --value "?{${label}|${current || 'None'}}"`);
+            const relation = (label, field, records, current) => GameAssist.createButton(label,
+                `!aa-world set ${type} --id ${record.id} --field ${field} --value "${worldSelectQuery(label, records, current)}"`);
+            const fields = [
+                { label: 'Identity', value: `${_sanitize(record.name)} ${query('Rename', 'name', record.name)} ${query('Description', 'description', record.description || 'None')}` },
+                { label: 'Tags', value: `${(record.tags || []).map(_sanitize).join(', ') || 'None'} ${query('Edit Tags', 'tags', (record.tags || []).join(' '))}` }
+            ];
+            if (type === 'region') {
+                fields.push({ label: 'Hierarchy', value: `${worldReferenceLabel(config.regions, record.parentId)} ${relation('Set Parent Region', 'parentId', config.regions.filter(item => item.id !== record.id), record.parentId)}` });
+            } else if (type === 'geography') {
+                fields.push({ label: 'Region', value: `${worldReferenceLabel(config.regions, record.regionId)} ${relation('Set Region', 'regionId', config.regions, record.regionId)}` });
+                fields.push({ label: 'Landform', value: `${_sanitize(record.terrain || 'Unspecified')} ${query('Terrain', 'terrain', record.terrain || 'None')} ${query('Elevation', 'elevation', record.elevation || 'None')} ${query('Roughness', 'roughness', record.roughness || 'None')}` });
+                fields.push({ label: 'Water & Coast', value: `${_sanitize(record.hydrology || 'Unspecified')} ${query('Hydrology', 'hydrology', record.hydrology || 'None')} ${query('Coast Context', 'coast', record.coast || 'None')} ${query('Latitude Band', 'latitudeBand', record.latitudeBand || 'None')}` });
+            } else if (type === 'ecoregion') {
+                fields.push({ label: 'Links', value: `${relation('Set Region', 'regionId', config.regions, record.regionId)} ${relation('Set Geography', 'geographyId', config.geographies, record.geographyId)} ${relation('Set Biome', 'biomeId', config.biomes, record.biomeId)}` });
+                fields.push({ label: 'Climate & Water', value: `${query('Climate Region Name or ID', 'climateRegionId', record.climateRegionId || 'none')} ${query('Water Regime', 'waterRegime', record.waterRegime || 'None')} ${query('Transition', 'transition', record.transition || 'None')}` });
+            } else if (type === 'biome') {
+                fields.push({ label: 'Ecology', value: `${query('Vegetation', 'vegetation', record.vegetation || 'None')} ${query('Aridity', 'aridity', record.aridity || 'None')} ${query('Ground Tendency', 'ground', record.ground || 'None')}` });
+                fields.push({ label: 'Water & Seasons', value: `${query('Water Tendency', 'water', record.water || 'None')} ${query('Seasonal Response', 'seasonalResponse', record.seasonalResponse || 'None')}` });
+            } else {
+                fields.push({ label: 'Place Hierarchy', value: `${relation('Set Region', 'regionId', config.regions, record.regionId)} ${relation('Set Geography', 'geographyId', config.geographies, record.geographyId)} ${relation('Set Ecoregion', 'ecoregionId', config.ecoregions, record.ecoregionId)} ${relation('Set Biome', 'biomeId', config.biomes, record.biomeId)}` });
+                fields.push({ label: 'Climate & Map', value: `${query('Climate Region Name or ID', 'climateRegionId', record.climateRegionId || 'none')} ${query('Page ID', 'pageId', record.pageId || 'None')}` });
+                fields.push({ label: 'Default Local Context', value: `${query('Environment Name', 'environmentName', record.environmentName || 'None')} ${query('Default Ground', 'environmentGround', record.environmentGround || 'None')} ${query('Default Water', 'environmentWater', record.environmentWater || 'None')}` });
+                fields.push({ label: 'Local Modifiers', value: `${query('Temperature Bias', 'temperatureBias', record.modifiers?.temperatureBias || '0')} ${query('Wind Bias', 'windBias', record.modifiers?.windBias || '0')} ${query('Visibility Note', 'visibility', record.modifiers?.visibility || 'None')}` });
+            }
+            fields.push({ label: 'Advanced', value: `Stable ID: ${_sanitize(record.id)} | ${GameAssist.createButton('Remove', `!aa-world remove ${type} --id ${record.id} --confirm ?{Remove ${record.name}?|No,no|Yes,yes}`)}` });
+            return fields;
+        }
+
+        function showWorldRecordEditor(msg, type, requested) {
+            if (!requireGm(msg)) return;
+            if (!WORLD_RECORD_TYPES.includes(type)) return showWorldbuilding(msg);
+            const config = worldConfigForPanel(msg);
+            if (!config) return;
+            const record = worldRecordByReference(worldCollectionFor(config, type), requested);
+            if (!record) return sendPanel(msg, 'Almanac / Worldbuilding Needs Attention', [
+                { label: 'Record', value: `That ${worldKindLabel(type).toLowerCase()} was not found or its name is ambiguous.` },
+                { label: 'Navigation', value: `${GameAssist.createButton('Back', `!aa-world ${WORLD_RECORD_COLLECTIONS[type]}`)} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+            sendPanel(msg, `Almanac / Worldbuilding / ${worldKindLabel(type)} / ${_sanitize(record.name)}`, [
+                ...worldRecordEditorFields(config, type, record),
+                { label: 'Navigation', value: `${type === 'location' ? GameAssist.createButton('Change Location', '!aa-location') : ''} ${GameAssist.createButton('Back', `!aa-world ${WORLD_RECORD_COLLECTIONS[type]}`)} ${GameAssist.createButton('Almanac Home', '!aa-gm')}`.trim() }
+            ]);
+        }
+
+        function locationActionButton(location, label = 'Go Here') {
+            return GameAssist.createButton(label, `!aa-location use --id ${location.id}`);
+        }
+
+        function showLocationPicker(msg) {
+            if (!requireGm(msg)) return;
+            const config = worldConfigForPanel(msg);
+            if (!config) return;
+            const scene = resolveScene();
+            const runtime = sceneRecord(modState.runtime?.world) ? modState.runtime.world : {};
+            const byId = Object.fromEntries(config.locations.map(location => [location.id, location]));
+            const current = byId[config.activeLocationId] || null;
+            const favorites = config.favoriteLocationIds.map(id => byId[id]).filter(Boolean);
+            const recents = (Array.isArray(runtime.recentLocationIds) ? runtime.recentLocationIds : []).map(id => byId[id]).filter(Boolean);
+            const featured = new Set([current?.id, ...favorites.map(item => item.id), ...recents.map(item => item.id)].filter(Boolean));
+            const all = config.locations.filter(location => !featured.has(location.id)).slice(0, POLICY.almanac.worldListDisplayLimit);
+            const row = (label, locations, empty) => ({
+                label,
+                value: locations.length ? locations.map(location => `${_sanitize(location.name)} ${locationActionButton(location)} ${GameAssist.createButton(config.favoriteLocationIds.includes(location.id) ? 'Unfavorite' : 'Favorite', `!aa-location favorite --id ${location.id}`)}`).join('<br>') : empty
+            });
+            sendPanel(msg, 'Almanac / Change Location', [
+                { label: 'Current Area', value: compactWorldLocation(scene) },
+                row('Current Location', current ? [current] : [], 'No named location is active.'),
+                row('Favorites', favorites, 'No favorite locations yet.'),
+                row('Recent Locations', recents, 'No locations have been visited yet.'),
+                row('All Locations', all, 'Add locations in Worldbuilding before selecting one.'),
+                { label: 'Actions', value: `${GameAssist.createButton('Add Location', '!aa-world locations')} ${GameAssist.createButton('Manage World', '!aa-world')}` },
+                { label: 'Navigation', value: `${GameAssist.createButton('Back', '!aa-gm')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function worldRegionWouldCycle(config, record, nextParentId) {
+            const seen = new Set([record.id]);
+            let current = config.regions.find(item => item.id === nextParentId) || null;
+            while (current) {
+                if (seen.has(current.id)) return true;
+                seen.add(current.id);
+                current = config.regions.find(item => item.id === current.parentId) || null;
+            }
+            return false;
+        }
+
+        function resolveWorldRelation(config, field, raw) {
+            const requested = String(raw || '').trim();
+            if (!requested || /^(none|clear|unassigned)$/i.test(requested)) return { ok: true, value: null };
+            const relationMap = {
+                parentId: ['regions', 'Region'], regionId: ['regions', 'Region'], geographyId: ['geographies', 'Geography'],
+                ecoregionId: ['ecoregions', 'Ecoregion'], biomeId: ['biomes', 'Biome']
+            };
+            if (field === 'climateRegionId') {
+                const climate = normalizeClimateConfig(sceneCopyRecord(modState.config.climate) || {}, { persist: false });
+                const record = climateRegion(requested, climate);
+                return record ? { ok: true, value: record.id } : { ok: false, message: 'Choose an existing ClimateAlmanac region or None.' };
+            }
+            const relation = relationMap[field];
+            if (!relation) return { ok: false, message: 'That relationship is not supported.' };
+            const record = worldRecordByReference(config[relation[0]], requested);
+            return record ? { ok: true, value: record.id } : { ok: false, message: `Choose an existing ${relation[1]} or None.` };
+        }
+
+        function setWorldRecordValue(config, type, record, field, raw) {
+            const textFields = {
+                region: ['name', 'description', 'tags'],
+                geography: ['name', 'description', 'tags', 'latitudeBand', 'elevation', 'terrain', 'coast', 'hydrology', 'roughness'],
+                ecoregion: ['name', 'description', 'tags', 'waterRegime', 'transition'],
+                biome: ['name', 'description', 'tags', 'vegetation', 'aridity', 'ground', 'water', 'seasonalResponse'],
+                location: ['name', 'description', 'tags', 'pageId', 'environmentName', 'environmentGround', 'environmentWater', 'visibility']
+            };
+            const relationFields = {
+                region: ['parentId'], geography: ['regionId'], ecoregion: ['regionId', 'geographyId', 'biomeId', 'climateRegionId'],
+                biome: [], location: ['regionId', 'geographyId', 'ecoregionId', 'biomeId', 'climateRegionId']
+            };
+            if (relationFields[type].includes(field)) {
+                const relation = resolveWorldRelation(config, field, raw);
+                if (!relation.ok) return relation;
+                if (type === 'region' && relation.value && worldRegionWouldCycle(config, record, relation.value)) {
+                    return { ok: false, message: 'That parent Region would create a hierarchy cycle.' };
+                }
+                record[field] = relation.value;
+                return { ok: true };
+            }
+            if (['temperatureBias', 'windBias'].includes(field) && type === 'location') {
+                const value = Number(raw);
+                if (!Number.isFinite(value) || value < -100 || value > 100) return { ok: false, message: `${field === 'temperatureBias' ? 'Temperature' : 'Wind'} bias must be a number from -100 to 100.` };
+                record.modifiers = { ...(record.modifiers || {}), [field]: Math.round(value) };
+                return { ok: true };
+            }
+            if (!textFields[type].includes(field)) return { ok: false, message: 'That worldbuilding field is not supported.' };
+            if (field === 'tags') {
+                record.tags = worldTags(String(raw || '').split(/[;\s]+/));
+                return { ok: true };
+            }
+            const max = field === 'description' ? POLICY.almanac.worldDescriptionLength : POLICY.almanac.worldNameLength;
+            const value = /^(none|clear)$/i.test(String(raw || '').trim()) && field !== 'name' ? '' : boundedWorldText(raw, '', max);
+            if (field === 'name' && !value) return { ok: false, message: 'A worldbuilding record needs a name.' };
+            record[field] = value;
+            return { ok: true };
+        }
+
+        function publishWorldChange(previous, current, details, msg) {
+            return GameAssist.SemanticEvents.publish('almanac.world.changed', MODULE_NAME, {
+                worldStateSchemaVersion: WORLD_STATE_SCHEMA_VERSION,
+                actorId: String(msg?.playerid || 'api'),
+                previous: previous ? { activeLocationId: previous.activeLocationId || null } : null,
+                current: current ? { activeLocationId: current.activeLocationId || null } : null,
+                details: copy(details || {})
+            });
+        }
+
+        function commitWorldConfig(config, previous, details, msg) {
+            modState.config.world = config;
+            publishWorldChange(previous, config, details, msg);
+            GameAssist.recordMetric('almanac_world_change', { mod: MODULE_NAME, note: details.action || 'world-change' });
+        }
+
+        function worldRemovalConflict(config, type, record) {
+            const references = {
+                region: [
+                    ...config.regions.filter(item => item.parentId === record.id),
+                    ...config.geographies.filter(item => item.regionId === record.id),
+                    ...config.ecoregions.filter(item => item.regionId === record.id),
+                    ...config.locations.filter(item => item.regionId === record.id)
+                ],
+                geography: [...config.ecoregions.filter(item => item.geographyId === record.id), ...config.locations.filter(item => item.geographyId === record.id)],
+                ecoregion: config.locations.filter(item => item.ecoregionId === record.id),
+                biome: [...config.ecoregions.filter(item => item.biomeId === record.id), ...config.locations.filter(item => item.biomeId === record.id)],
+                location: []
+            };
+            const dependent = references[type] || [];
+            return dependent.length ? `${dependent.length} dependent world record(s) still reference this ${worldKindLabel(type).toLowerCase()}. Clear or reassign them first.` : null;
+        }
+
+        function handleWorld(msg, content) {
+            const body = content.replace(/^world\s*/i, '').trim();
+            const lower = body.toLowerCase();
+            if (!body || /^(menu|manage|status)$/i.test(body)) return showWorldbuilding(msg);
+            if (lower === 'locations' || lower === 'location') return showWorldRecords(msg, 'location');
+            if (lower === 'regions' || lower === 'region') return showWorldRecords(msg, 'region');
+            if (lower === 'geographies' || lower === 'geography') return showWorldRecords(msg, 'geography');
+            if (lower === 'ecoregions' || lower === 'ecoregion') return showWorldRecords(msg, 'ecoregion');
+            if (lower === 'biomes' || lower === 'biome') return showWorldRecords(msg, 'biome');
+            if (!requireGm(msg)) return;
+            const edit = body.match(/^edit\s+(region|geography|ecoregion|biome|location)\b/i);
+            if (edit) return showWorldRecordEditor(msg, edit[1].toLowerCase(), _parseArgs(body).args.id || _parseArgs(body).args.name);
+            const add = body.match(/^add\s+(region|geography|ecoregion|biome|location)\b/i);
+            if (add) {
+                const type = add[1].toLowerCase();
+                const args = _parseArgs(body).args;
+                const name = boundedWorldText(args.name);
+                if (!name) return sendPanel(msg, 'Almanac / Worldbuilding Needs Attention', [{ label: 'Name', value: `Enter a name for the new ${worldKindLabel(type).toLowerCase()}.` }, { label: 'Changes', value: 'None.' }]);
+                const config = worldConfigForPanel(msg);
+                if (!config) return;
+                const collection = worldCollectionFor(config, type);
+                if (collection.length >= WORLD_RECORD_LIMITS[type]) return sendPanel(msg, 'Almanac / Worldbuilding Needs Attention', [{ label: 'Limit', value: `The ${worldKindLabel(type)} limit has been reached.` }, { label: 'Changes', value: 'None.' }]);
+                if (collection.some(record => record.name.toLowerCase() === name.toLowerCase())) return sendPanel(msg, 'Almanac / Worldbuilding Needs Attention', [{ label: 'Name', value: `${_sanitize(name)} already exists. Choose a distinct name.` }, { label: 'Changes', value: 'None.' }]);
+                const previous = copy(config);
+                let id = worldId(name, `${type}-${collection.length + 1}`);
+                let suffix = 2;
+                while (collection.some(record => record.id === id)) id = `${worldId(name, type)}-${suffix++}`;
+                collection.push(worldRecord(type, { id, name }, id, collection.length));
+                commitWorldConfig(config, previous, { action: 'record-added', type, id }, msg);
+                return showWorldRecordEditor(msg, type, id);
+            }
+            const set = body.match(/^set\s+(region|geography|ecoregion|biome|location)\b/i);
+            if (set) {
+                const type = set[1].toLowerCase();
+                const args = _parseArgs(body).args;
+                const config = worldConfigForPanel(msg);
+                if (!config) return;
+                const record = worldRecordByReference(worldCollectionFor(config, type), args.id || args.name);
+                if (!record) return sendPanel(msg, 'Almanac / Worldbuilding Needs Attention', [{ label: 'Record', value: `That ${worldKindLabel(type).toLowerCase()} was not found.` }, { label: 'Changes', value: 'None.' }]);
+                const field = String(args.field || '');
+                if (args.value === undefined) return sendPanel(msg, 'Almanac / Worldbuilding Needs Attention', [{ label: 'Value', value: 'Choose a value before saving this worldbuilding field.' }, { label: 'Changes', value: 'None.' }]);
+                const previous = copy(config);
+                const result = setWorldRecordValue(config, type, record, field, args.value);
+                if (!result.ok) return sendPanel(msg, 'Almanac / Worldbuilding Needs Attention', [{ label: 'Value', value: _sanitize(result.message) }, { label: 'Changes', value: 'None.' }]);
+                commitWorldConfig(config, previous, { action: 'record-updated', type, id: record.id, field }, msg);
+                return showWorldRecordEditor(msg, type, record.id);
+            }
+            const remove = body.match(/^remove\s+(region|geography|ecoregion|biome|location)\b/i);
+            if (remove) {
+                const type = remove[1].toLowerCase();
+                const args = _parseArgs(body).args;
+                if (String(args.confirm || '').toLowerCase() !== 'yes') return sendPanel(msg, 'Almanac / Worldbuilding', [{ label: 'No Change Made', value: 'Removing a worldbuilding record requires confirmation.' }]);
+                const config = worldConfigForPanel(msg);
+                if (!config) return;
+                const collection = worldCollectionFor(config, type);
+                const record = worldRecordByReference(collection, args.id || args.name);
+                if (!record) return sendPanel(msg, 'Almanac / Worldbuilding Needs Attention', [{ label: 'Record', value: `That ${worldKindLabel(type).toLowerCase()} was not found.` }, { label: 'Changes', value: 'None.' }]);
+                const conflict = worldRemovalConflict(config, type, record);
+                if (conflict) return sendPanel(msg, 'Almanac / Worldbuilding Needs Attention', [{ label: 'Dependencies', value: _sanitize(conflict) }, { label: 'Changes', value: 'None.' }]);
+                const previous = copy(config);
+                config[WORLD_RECORD_COLLECTIONS[type]] = collection.filter(item => item.id !== record.id);
+                if (type === 'location') {
+                    if (config.activeLocationId === record.id) config.activeLocationId = null;
+                    config.favoriteLocationIds = config.favoriteLocationIds.filter(id => id !== record.id);
+                }
+                commitWorldConfig(config, previous, { action: 'record-removed', type, id: record.id }, msg);
+                return showWorldRecords(msg, type);
+            }
+            return sendPanel(msg, 'Almanac / Worldbuilding Needs Attention', [
+                { label: 'Command', value: 'That Worldbuilding command was not recognized.' },
+                { label: 'Navigation', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function handleLocation(msg, content) {
+            const body = content.replace(/^location\s*/i, '').trim();
+            const lower = body.toLowerCase();
+            if (!body || /^(menu|status|choose)$/i.test(body)) return showLocationPicker(msg);
+            if (!requireGm(msg)) return;
+            const args = _parseArgs(body).args;
+            const config = worldConfigForPanel(msg);
+            if (!config) return;
+            const location = worldRecordByReference(config.locations, args.id || args.name);
+            if (!location) return sendPanel(msg, 'Almanac / Change Location Needs Attention', [{ label: 'Location', value: 'That location was not found or its name is ambiguous.' }, { label: 'Changes', value: 'None.' }]);
+            if (/^use\b/i.test(body)) {
+                const previous = copy(config);
+                config.activeLocationId = location.id;
+                commitWorldConfig(config, previous, { action: 'location-activated', locationId: location.id }, msg);
+                recordRecentLocation(location.id);
+                return sendPanel(msg, 'Almanac / Change Location', [
+                    { label: 'Current Location', value: `${_sanitize(location.name)} is now active. Weather and other current providers remain separately owned.` },
+                    { label: 'Next Step', value: `${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                ]);
+            }
+            if (/^favorite\b/i.test(body)) {
+                const previous = copy(config);
+                const exists = config.favoriteLocationIds.includes(location.id);
+                config.favoriteLocationIds = exists
+                    ? config.favoriteLocationIds.filter(id => id !== location.id)
+                    : [...config.favoriteLocationIds, location.id].slice(0, POLICY.almanac.worldFavoriteLimit);
+                commitWorldConfig(config, previous, { action: exists ? 'location-unfavorited' : 'location-favorited', locationId: location.id }, msg);
+                return showLocationPicker(msg);
+            }
+            return showLocationPicker(msg);
+        }
+
+
+        function showTravel(msg) {
+            if (!requireGm(msg)) return;
+            const config = worldConfigForPanel(msg);
+            if (!config) return;
+            const scene = resolveScene();
+            sendPanel(msg, 'Almanac / Travel', [
+                { label: 'Current Area', value: compactWorldLocation(scene) },
+                { label: 'Journey State', value: 'No reviewed journey is active yet.' },
+                { label: 'Prepare Travel', value: config.locations.length >= 2
+                    ? 'Choose a destination from Change Location while route, distance, pace, and reviewed Time advancement are prepared in Worldbuilding.'
+                    : 'Add at least two named Locations in Worldbuilding before preparing a route.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Manage World', '!aa-world locations')}` },
+                { label: 'Navigation', value: `${GameAssist.createButton('Back', '!aa-gm')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function handleTravel(msg, content) {
+            const body = content.replace(/^travel\s*/i, '').trim();
+            if (!body || /^(menu|status|route)$/i.test(body)) return showTravel(msg);
+            return showTravel(msg);
+        }
+
         function showMaster(msg) {
             if (!playerIsGM(msg?.playerid)) return showCurrent(msg);
             const scene = resolveScene();
@@ -24832,9 +25282,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Current World', value: sceneOverview(scene) },
                 { label: 'Advance Date & Time', value: timeButtons },
                 { label: 'Set or Change Calendar', value: moment ? `${exactMomentButton(moment)} ${GameAssist.createButton('Choose Calendar', '!cal')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')}` : GameAssist.createButton('Choose Calendar', '!cal') },
-                { label: 'Session Actions', value: `${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Change Region', '!aa-climate regions')} ${GameAssist.createButton('Short Rest', '!aa-rest preview --type short')} ${GameAssist.createButton('Long Rest', '!aa-rest preview --type long')}` },
+                { label: 'Session Actions', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Short Rest', '!aa-rest preview --type short')} ${GameAssist.createButton('Long Rest', '!aa-rest preview --type long')}` },
                 { label: 'Share', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
-                { label: 'Worldbuilding', value: `${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Astronomy', '!astro')} ${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('More Tools', '!aa-more')}` },
+                { label: 'Worldbuilding', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Astronomy', '!astro')} ${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('More Tools', '!aa-more')}` },
                 { label: 'Navigation', value: `${GameAssist.createButton('Almanac Guide', '!Almanac-Guide')} ${gameAssistHomeButton()}` }
             ]);
         }
@@ -26829,6 +27279,233 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return sceneRecord(value) ? copy(value) : null;
         }
 
+        /**
+         * boundedWorldText - Keep human-authored worldbuilding labels useful in Roll20 cards without accepting control syntax.
+         * Inputs: a user/configuration value, fallback, and field-specific maximum length.
+         * Outputs: one compact plain-text value.
+         * Invariant: worldbuilding data remains display-safe and cannot inject Roll20 query/template delimiters.
+         */
+        function boundedWorldText(raw, fallback = '', maximum = POLICY.almanac.worldNameLength) {
+            if (!['string', 'number'].includes(typeof raw)) return fallback;
+            const value = String(raw || '').trim().replace(/[|{}\[\],:?"\\]/g, ' ')
+                .replace(/\s+/g, ' ').slice(0, maximum).trim();
+            return value || fallback;
+        }
+
+        function worldId(raw, fallback) {
+            const candidate = String(raw || fallback || '').toLowerCase()
+                .replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '')
+                .slice(0, POLICY.almanac.worldNameLength);
+            return candidate || fallback;
+        }
+
+        function worldTags(raw) {
+            if (!Array.isArray(raw)) return [];
+            return [...new Set(raw.slice(0, POLICY.almanac.worldTagLimit)
+                .map(tag => boundedWorldText(tag, '', POLICY.almanac.worldNameLength).toLowerCase())
+                .filter(Boolean))];
+        }
+
+        function worldExtras(raw, knownKeys) {
+            if (!sceneRecord(raw)) return {};
+            const known = new Set(knownKeys);
+            return Object.fromEntries(Object.keys(raw)
+                .filter(key => !known.has(key) && !POLICY.config.unsafeKeys.includes(key))
+                .map(key => [key, copy(raw[key])]));
+        }
+
+        function worldReference(raw) {
+            return worldId(raw, '') || null;
+        }
+
+        function worldRecord(type, raw, id, index) {
+            const source = sceneRecord(raw) ? raw : {};
+            const name = boundedWorldText(source.name, `${type.charAt(0).toUpperCase()}${type.slice(1)} ${index + 1}`);
+            const common = {
+                id,
+                name,
+                description: boundedWorldText(source.description, '', POLICY.almanac.worldDescriptionLength),
+                tags: worldTags(source.tags)
+            };
+            if (type === 'region') {
+                return {
+                    ...worldExtras(source, ['id', 'name', 'parentId', 'description', 'tags']),
+                    ...common,
+                    parentId: worldReference(source.parentId)
+                };
+            }
+            if (type === 'geography') {
+                return {
+                    ...worldExtras(source, ['id', 'name', 'regionId', 'latitudeBand', 'elevation', 'terrain', 'coast', 'hydrology', 'roughness', 'description', 'tags']),
+                    ...common,
+                    regionId: worldReference(source.regionId),
+                    latitudeBand: boundedWorldText(source.latitudeBand),
+                    elevation: boundedWorldText(source.elevation),
+                    terrain: boundedWorldText(source.terrain),
+                    coast: boundedWorldText(source.coast),
+                    hydrology: boundedWorldText(source.hydrology),
+                    roughness: boundedWorldText(source.roughness)
+                };
+            }
+            if (type === 'ecoregion') {
+                return {
+                    ...worldExtras(source, ['id', 'name', 'regionId', 'geographyId', 'biomeId', 'climateRegionId', 'waterRegime', 'transition', 'description', 'tags']),
+                    ...common,
+                    regionId: worldReference(source.regionId),
+                    geographyId: worldReference(source.geographyId),
+                    biomeId: worldReference(source.biomeId),
+                    climateRegionId: worldReference(source.climateRegionId),
+                    waterRegime: boundedWorldText(source.waterRegime),
+                    transition: boundedWorldText(source.transition)
+                };
+            }
+            if (type === 'biome') {
+                return {
+                    ...worldExtras(source, ['id', 'name', 'vegetation', 'aridity', 'ground', 'water', 'seasonalResponse', 'description', 'tags']),
+                    ...common,
+                    vegetation: boundedWorldText(source.vegetation),
+                    aridity: boundedWorldText(source.aridity),
+                    ground: boundedWorldText(source.ground),
+                    water: boundedWorldText(source.water),
+                    seasonalResponse: boundedWorldText(source.seasonalResponse)
+                };
+            }
+            const rawModifiers = sceneRecord(source.modifiers) ? source.modifiers : {};
+            return {
+                ...worldExtras(source, ['id', 'name', 'regionId', 'geographyId', 'ecoregionId', 'biomeId', 'climateRegionId', 'pageId', 'environmentName', 'environmentGround', 'environmentWater', 'modifiers', 'description', 'tags']),
+                ...common,
+                regionId: worldReference(source.regionId),
+                geographyId: worldReference(source.geographyId),
+                ecoregionId: worldReference(source.ecoregionId),
+                biomeId: worldReference(source.biomeId),
+                climateRegionId: worldReference(source.climateRegionId),
+                pageId: boundedWorldText(source.pageId, '', POLICY.almanac.worldNameLength),
+                environmentName: boundedWorldText(source.environmentName),
+                environmentGround: boundedWorldText(source.environmentGround),
+                environmentWater: boundedWorldText(source.environmentWater),
+                modifiers: {
+                    temperatureBias: Math.round(clampNumber(rawModifiers.temperatureBias, -100, 100, 0)),
+                    windBias: Math.round(clampNumber(rawModifiers.windBias, -100, 100, 0)),
+                    visibility: boundedWorldText(rawModifiers.visibility)
+                }
+            };
+        }
+
+        function normalizedWorldCollection(type, raw) {
+            const input = Array.isArray(raw) ? raw : [];
+            const limit = WORLD_RECORD_LIMITS[type];
+            const ids = new Set();
+            const records = [];
+            input.slice(0, limit).forEach((item, index) => {
+                const source = sceneRecord(item) ? item : {};
+                const base = worldId(source.id || source.name, `${type}-${index + 1}`);
+                let id = base;
+                let suffix = 2;
+                while (ids.has(id)) id = `${base}-${suffix++}`.slice(0, POLICY.almanac.worldNameLength);
+                ids.add(id);
+                records.push(worldRecord(type, source, id, index));
+            });
+            return records;
+        }
+
+        /**
+         * worldConfigResult - Read and, only on explicit Worldbuilding mutations, normalize campaign-place data.
+         * Inputs: stored Worldbuilding configuration or a defensive resolver copy; optional persist flag.
+         * Outputs: `{ ok, config, warning }`, preserving future-schema state without reinterpretation.
+         * Invariant: SceneResolver always uses `persist:false`; a newer unknown schema is warning-only and never overwritten.
+         */
+        function worldConfigResult(sourceInput = modState.config.world, { persist = sourceInput === modState.config.world } = {}) {
+            if (!sceneRecord(sourceInput)) {
+                return { ok: false, config: null, warning: 'Worldbuilding configuration is absent or not an object; it was left unchanged.' };
+            }
+            const savedSchema = Number(sourceInput.schemaVersion || 0);
+            if (Number.isFinite(savedSchema) && savedSchema > WORLD_STATE_SCHEMA_VERSION) {
+                return { ok: false, config: null, warning: `Worldbuilding schema ${savedSchema} is newer than this AlmanacAssist version; it was left unchanged.` };
+            }
+            const regions = normalizedWorldCollection('region', sourceInput.regions);
+            const geographies = normalizedWorldCollection('geography', sourceInput.geographies);
+            const ecoregions = normalizedWorldCollection('ecoregion', sourceInput.ecoregions);
+            const biomes = normalizedWorldCollection('biome', sourceInput.biomes);
+            const locations = normalizedWorldCollection('location', sourceInput.locations);
+            const regionIds = new Set(regions.map(record => record.id));
+            const geographyIds = new Set(geographies.map(record => record.id));
+            const ecoregionIds = new Set(ecoregions.map(record => record.id));
+            const biomeIds = new Set(biomes.map(record => record.id));
+            const locationIds = new Set(locations.map(record => record.id));
+            const known = ['schemaVersion', 'regions', 'geographies', 'ecoregions', 'biomes', 'locations', 'activeLocationId', 'favoriteLocationIds', 'rulesProfile'];
+            const config = {
+                ...worldExtras(sourceInput, known),
+                schemaVersion: WORLD_STATE_SCHEMA_VERSION,
+                regions: regions.map(record => ({ ...record, parentId: record.parentId && regionIds.has(record.parentId) && record.parentId !== record.id ? record.parentId : null })),
+                geographies: geographies.map(record => ({ ...record, regionId: record.regionId && regionIds.has(record.regionId) ? record.regionId : null })),
+                ecoregions: ecoregions.map(record => ({
+                    ...record,
+                    regionId: record.regionId && regionIds.has(record.regionId) ? record.regionId : null,
+                    geographyId: record.geographyId && geographyIds.has(record.geographyId) ? record.geographyId : null,
+                    biomeId: record.biomeId && biomeIds.has(record.biomeId) ? record.biomeId : null,
+                    climateRegionId: record.climateRegionId || null
+                })),
+                biomes,
+                locations: locations.map(record => ({
+                    ...record,
+                    regionId: record.regionId && regionIds.has(record.regionId) ? record.regionId : null,
+                    geographyId: record.geographyId && geographyIds.has(record.geographyId) ? record.geographyId : null,
+                    ecoregionId: record.ecoregionId && ecoregionIds.has(record.ecoregionId) ? record.ecoregionId : null,
+                    biomeId: record.biomeId && biomeIds.has(record.biomeId) ? record.biomeId : null,
+                    climateRegionId: record.climateRegionId || null
+                })),
+                activeLocationId: locationIds.has(worldReference(sourceInput.activeLocationId)) ? worldReference(sourceInput.activeLocationId) : null,
+                favoriteLocationIds: [...new Set((Array.isArray(sourceInput.favoriteLocationIds) ? sourceInput.favoriteLocationIds : [])
+                    .map(worldReference).filter(id => id && locationIds.has(id)))].slice(0, POLICY.almanac.worldFavoriteLimit),
+                rulesProfile: ['2014', '2024', 'custom'].includes(String(sourceInput.rulesProfile || '').toLowerCase())
+                    ? String(sourceInput.rulesProfile).toLowerCase()
+                    : '2014'
+            };
+            if (persist) modState.config.world = config;
+            return { ok: true, config, warning: null };
+        }
+
+        function worldRecordByReference(records, requested) {
+            const key = String(requested || '').trim().toLowerCase();
+            if (!key) return null;
+            const byId = records.find(record => record.id === key);
+            if (byId) return byId;
+            const matches = records.filter(record => record.name.toLowerCase() === key);
+            return matches.length === 1 ? matches[0] : null;
+        }
+
+        function worldLocationContext(config) {
+            const location = config?.locations?.find(record => record.id === config.activeLocationId) || null;
+            if (!location) return { location: null, region: null, geography: null, ecoregion: null, biome: null };
+            const ecoregion = config.ecoregions.find(record => record.id === location.ecoregionId) || null;
+            const geography = config.geographies.find(record => record.id === (location.geographyId || ecoregion?.geographyId)) || null;
+            const biome = config.biomes.find(record => record.id === (location.biomeId || ecoregion?.biomeId)) || null;
+            const region = config.regions.find(record => record.id === (location.regionId || ecoregion?.regionId || geography?.regionId)) || null;
+            return { location, region, geography, ecoregion, biome };
+        }
+
+        function ensureWorldRuntime() {
+            const runtime = ensureAlmanacRuntime();
+            const stored = sceneRecord(runtime.world) ? runtime.world : {};
+            const known = ['schemaVersion', 'recentLocationIds', 'revision'];
+            runtime.world = {
+                ...worldExtras(stored, known),
+                schemaVersion: WORLD_RUNTIME_SCHEMA_VERSION,
+                recentLocationIds: [...new Set((Array.isArray(stored.recentLocationIds) ? stored.recentLocationIds : [])
+                    .map(worldReference).filter(Boolean))].slice(0, POLICY.almanac.worldRecentLimit),
+                revision: Math.max(0, Math.floor(Number(stored.revision) || 0))
+            };
+            return runtime.world;
+        }
+
+        function recordRecentLocation(locationId) {
+            const id = worldReference(locationId);
+            if (!id) return;
+            const runtime = ensureWorldRuntime();
+            runtime.recentLocationIds = [id, ...runtime.recentLocationIds.filter(item => item !== id)].slice(0, POLICY.almanac.worldRecentLimit);
+            runtime.revision += 1;
+        }
+
         function sceneWarning(warnings, code, message, domains = []) {
             if (warnings.some(warning => warning.code === code)) return;
             if (warnings.length >= POLICY.almanac.sceneWarningLimit) return;
@@ -26841,11 +27518,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
          * Outputs: one bounded status record per authority.
          * Invariant: disabled or unimplemented providers are named rather than replaced with fabricated world facts.
          */
-        function sceneProviderStatus() {
+        function sceneProviderStatus(context = {}) {
             const parentEnabled = modState.config.enabled !== false;
             return Object.fromEntries(Object.entries(SCENE_PROVIDER_DEFINITIONS).map(([key, definition]) => {
                 const unimplemented = SCENE_UNIMPLEMENTED_PROVIDER_KEYS.includes(key);
-                const configured = unimplemented ? false : definition.configured();
+                const configured = unimplemented ? false : definition.configured(context);
                 const active = parentEnabled && configured;
                 return [key, {
                     authority: definition.authority,
@@ -26862,7 +27539,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 time: sceneCopyRecord(runtime.time),
                 weather: sceneCopyRecord(runtime.weather),
                 environment: sceneCopyRecord(runtime.environment),
-                rest: sceneCopyRecord(runtime.rest)
+                rest: sceneCopyRecord(runtime.rest),
+                world: sceneCopyRecord(runtime.world)
             };
         }
 
@@ -26872,7 +27550,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
          * Outputs: an explicit GM override, committed Environment record, weather-derived context, or null.
          * Invariant: a scene override changes immediate surroundings only; it never replaces stored Weather ownership.
          */
-        function sceneEnvironmentFromSnapshot(runtime, weather) {
+        function sceneEnvironmentFromSnapshot(runtime, weather, location = null) {
             const stored = runtime.environment || {};
             if (sceneRecord(stored.override)) return { value: copy(stored.override), source: 'GM scene override' };
             if (sceneRecord(stored.current)) return { value: copy(stored.current), source: 'EnviroAlmanac committed context' };
@@ -26881,6 +27559,27 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 // CHOICE: omit an incidental resolver timestamp — ALT: present a fresh now() value; REJECTED: a read-only snapshot should describe provider evidence, not simulate a provider write.
                 derived.updatedAt = null;
                 return { value: derived, source: 'WeatherAlmanac interpretation' };
+            }
+            if (sceneRecord(location) && location.environmentName) {
+                return {
+                    value: {
+                        stateSchemaVersion: ENVIRONMENT_STATE_SCHEMA_VERSION,
+                        name: location.environmentName,
+                        visibility: location.modifiers?.visibility || 'As described by the Location',
+                        temperature: 'Contextual',
+                        precipitation: 'No current Weather',
+                        wind: 'Contextual',
+                        ground: location.environmentGround || 'As described by the Location',
+                        water: location.environmentWater || 'Unspecified',
+                        exposure: 'Low',
+                        severity: 0,
+                        tags: copy(location.tags || []),
+                        source: 'Location default environment',
+                        updatedAt: null,
+                        weatherId: null
+                    },
+                    source: 'Location default environment'
+                };
             }
             return { value: null, source: 'unresolved' };
         }
@@ -26894,7 +27593,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
          * Design: this is the single scene truth for session presentation and public announcements while future world domains can join without rewriting existing owners.
          */
         function resolveScene() {
-            const providers = sceneProviderStatus();
+            const world = worldConfigResult(sceneCopyRecord(modState.config.world), { persist: false });
+            const providers = sceneProviderStatus({ world });
             const warnings = [];
             const provenance = {};
             const runtime = sceneRuntimeSnapshot();
@@ -26914,6 +27614,23 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     sceneWarning(warnings, `PROVIDER_${key.toUpperCase()}_DISABLED`, `${provider.authority} is disabled; no replacement authority was invented.`, [key]);
                 }
             });
+            if (!world.ok) {
+                sceneWarning(warnings, 'WORLD_CONFIGURATION_UNAVAILABLE', world.warning, ['region', 'geography', 'ecoregion', 'biome', 'location']);
+            }
+            const placeContext = world.ok ? worldLocationContext(world.config) : { location: null, region: null, geography: null, ecoregion: null, biome: null };
+            const location = providers.location.active ? placeContext.location : null;
+            const region = providers.region.active ? placeContext.region : null;
+            const geography = providers.geography.active ? placeContext.geography : null;
+            const ecoregion = providers.ecoregion.active ? placeContext.ecoregion : null;
+            const biome = providers.biome.active ? placeContext.biome : null;
+            if (providers.location.active && !location) {
+                sceneWarning(warnings, 'LOCATION_UNASSIGNED', 'No named Location is active; location-sensitive context remains unassigned.', ['location']);
+            }
+            if (location) mark('location.current', 'Location', location.name);
+            if (region) mark('region.current', 'Region', region.name);
+            if (geography) mark('geography.current', 'Geography', geography.name);
+            if (ecoregion) mark('ecoregion.current', 'Ecoregion', ecoregion.name);
+            if (biome) mark('biome.current', 'Biome', biome.name);
 
             let moment = null;
             if (providers.time.active) {
@@ -26931,7 +27648,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const climateConfig = normalizeClimateConfig(sceneCopyRecord(modState.config.climate) || {}, { persist: false });
                 const season = moment?.season || climateConfig.manualSeason;
                 const seasonAuthority = moment ? 'TimeAlmanac' : 'ClimateAlmanac manual setting';
-                climate = resolvedClimate(null, { config: climateConfig, season, seasonAuthority });
+                const requestedClimateRegion = location?.climateRegionId || ecoregion?.climateRegionId || null;
+                climate = resolvedClimate(requestedClimateRegion, { config: climateConfig, season, seasonAuthority });
+                if (!climate && requestedClimateRegion) sceneWarning(warnings, 'LOCATION_CLIMATE_UNRESOLVED', 'The active Location references a Climate region that is unavailable; no replacement baseline was invented.', ['location', 'climate']);
                 if (climate) {
                     mark('climate.baseline', 'ClimateAlmanac', climate.regionName);
                     mark('climate.seasonInterpretation', seasonAuthority, climate.profileName);
@@ -26986,7 +27705,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             let environment = null;
             let environmentSource = 'unresolved';
             if (providers.environment.active) {
-                const resolvedEnvironment = sceneEnvironmentFromSnapshot(runtime, weather);
+                const resolvedEnvironment = sceneEnvironmentFromSnapshot(runtime, weather, location);
                 environment = resolvedEnvironment.value;
                 environmentSource = resolvedEnvironment.source;
                 if (environment) {
@@ -26998,23 +27717,42 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 }
             }
 
-            const terrain = environment ? {
-                immediateGround: environment.ground || null,
-                immediateSurface: environment.name || null,
+            const terrain = (geography || biome || environment || weather) ? {
+                persistentTerrain: geography?.terrain || null,
+                persistentRoughness: geography?.roughness || null,
+                ecologicalGround: biome?.ground || null,
+                immediateGround: environment?.ground || null,
+                immediateSurface: environment?.name || null,
                 weatherEffect: weather?.precipitation || null,
-                status: 'partial'
+                effectiveSurface: environment?.ground || biome?.ground || geography?.terrain || null,
+                status: geography && biome && environment ? 'resolved' : 'partial'
             } : null;
-            if (terrain) mark('terrain.immediateGround', 'SceneResolver', 'EnviroAlmanac plus WeatherAlmanac', 'partial');
-            sceneWarning(warnings, 'TERRAIN_PARTIAL', 'Terrain is limited to immediate Environment and Weather evidence until Geography and Biome providers are installed.', ['terrain', 'geography', 'biome', 'environment', 'weather']);
+            if (geography?.terrain) mark('terrain.persistentTerrain', 'Geography', geography.name);
+            if (biome?.ground) mark('terrain.ecologicalGround', 'Biome', biome.name);
+            if (terrain?.immediateGround) mark('terrain.immediateGround', 'EnviroAlmanac', environmentSource, terrain.status);
+            if (terrain?.weatherEffect) mark('terrain.weatherEffect', 'WeatherAlmanac', String(weather?.id || 'current weather'), terrain.status);
+            if (terrain?.status === 'partial') {
+                sceneWarning(warnings, 'TERRAIN_PARTIAL', 'Terrain is composed from the available Geography, Biome, Environment, and Weather evidence; missing layers remain explicit.', ['terrain', 'geography', 'biome', 'environment', 'weather']);
+            } else if (!terrain) {
+                sceneWarning(warnings, 'TERRAIN_PARTIAL', 'Terrain has no active Geography, Biome, Environment, or Weather evidence yet.', ['terrain', 'geography', 'biome', 'environment', 'weather']);
+            }
 
             const hydrology = {
-                persistent: null,
+                persistent: geography?.hydrology || null,
+                ecoregionalRegime: ecoregion?.waterRegime || null,
+                biomeTendency: biome?.water || null,
                 temporaryWeatherEffects: weather ? weather.precipitation || null : null,
-                immediateWaterAccess: environment ? environment.water || null : null
+                immediateWaterAccess: environment ? environment.water || null : null,
+                status: geography?.hydrology ? 'resolved' : 'partial'
             };
+            if (hydrology.persistent) mark('hydrology.persistent', 'Geography', geography.name);
+            if (hydrology.ecoregionalRegime) mark('hydrology.ecoregionalRegime', 'Ecoregion', ecoregion.name);
+            if (hydrology.biomeTendency) mark('hydrology.biomeTendency', 'Biome', biome.name);
             if (hydrology.temporaryWeatherEffects) mark('hydrology.temporaryWeatherEffects', 'WeatherAlmanac', String(weather?.id || 'current weather'));
             if (hydrology.immediateWaterAccess) mark('hydrology.immediateWaterAccess', 'EnviroAlmanac', environmentSource);
-            sceneWarning(warnings, 'PERSISTENT_HYDROLOGY_UNAVAILABLE', 'Persistent hydrology is unavailable until Geography is configured; temporary weather effects and immediate local water remain separate.', ['hydrology', 'geography', 'environment', 'weather']);
+            if (!hydrology.persistent) {
+                sceneWarning(warnings, 'PERSISTENT_HYDROLOGY_UNAVAILABLE', 'Persistent hydrology is unavailable until the active Geography supplies it; temporary weather effects and immediate local water remain separate.', ['hydrology', 'geography', 'environment', 'weather']);
+            }
 
             const restConfig = sceneRecord(modState.config.rest) ? modState.config.rest : {};
             const rest = providers.rest.active ? {
@@ -27029,12 +27767,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 providers,
                 time: { current: moment },
                 astronomy,
-                region: null,
-                geography: null,
-                ecoregion: null,
+                region,
+                geography,
+                ecoregion,
                 climate: { baseline: climate },
-                biome: null,
-                location: null,
+                biome,
+                location,
                 environment: { current: environment, source: environmentSource },
                 weather: { current: weather, forecast: weatherForecast },
                 phenomena: [],
@@ -27684,6 +28422,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<p>AlmanacAssist combines fictional time, regional climate, astronomy, weather, environmental context, and deliberate rest workflows. Current World, Scene, and announcement views use one read-only scene snapshot so ordinary play sees a coherent world without changing provider state. Each internal system can be turned off without erasing its valid settings or disabling unrelated Almanac features.</p>',
                 '<h2>Everyday Use</h2>',
                 '<p><code>!aa-gm</code>, <code>!aa-dm</code>, <code>!Almanac</code>, or <code>!aa</code> opens the compact Current World dashboard. It keeps the current scene, common advances, dawn/dusk anchors, calendar selection, rest, weather, Scene, preview, and announce actions together. <code>!aa-scene</code> opens a focused current-world view; GM-only <code>!aa-scene technical</code> opens provenance and warnings. <code>!date</code>, <code>!time</code>, <code>!cal</code>, <code>!clim</code>, <code>!astro</code>, <code>!weather</code>, <code>!enviro</code>, and <code>!rest</code> open focused views.</p>',
+                '<h2>Worldbuilding Mode</h2>',
+                '<p>Open <code>!aa-world</code> for organized Places, Natural World, Local Context, Time &amp; Sky, Gameplay, and Campaign Tools. The current generic place model manages Regions, Geography, Ecoregions, Biomes, and Locations with bounded chat editors. Use <code>!aa-location</code> to choose the current Location, favorite repeated destinations, and use recently visited places. These records are owner-authored generic data; AlmanacAssist does not install published setting lore.</p>',
                 '<h2>Calendars</h2>',
                 '<p>Standard provides familiar months and Gregorian leap years. Solamnic provides the built-in twelve 28-day profile and seven named weekdays. Harptos provides twelve 30-day months, five annual festival days, and Shieldmeet every four years. Wayfarer is campaign-editable through chat controls, including its clock, weekdays, calendar periods, feast periods, festival days, dated holidays, seasonal ranges, and leap rules.</p>',
                 '<h3>Default Wayfarer Calendar</h3>',
@@ -27719,7 +28459,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Start Here', value: GameAssist.createButton('Open Almanac Controls', '!aa-gm') },
                 { label: 'Date and Time', value: `${GameAssist.createButton('Current Date', '!date')} ${GameAssist.createButton('Advance or Set Time', '!aa-time menu')} ${GameAssist.createButton('Choose Calendar', '!cal')}` },
                 { label: 'Share With The Table', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
-                { label: 'World Today', value: `${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Environment', '!enviro')}` },
+                { label: 'World Today', value: `${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Environment', '!enviro')}` },
+                { label: 'Worldbuilding', value: GameAssist.createButton('Manage World', '!aa-world') },
                 { label: 'Calendar Setup', value: GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer') },
                 { label: 'Full Reference', value: GameAssist.createButton('Create or Update Manual', '!Almanac-Manual') }
             ] : [
@@ -27776,6 +28517,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (/^!(?:environment|enviro)(?:\s|$)/i.test(raw)) return `environment ${raw.replace(/^!(?:environment|enviro)\s*/i, '')}`.trim();
             if (/^!(?:astronomy|astro)(?:\s|$)/i.test(raw)) return `astronomy ${raw.replace(/^!(?:astronomy|astro)\s*/i, '')}`.trim();
             if (/^!rest(?:\s|$)/i.test(raw)) return `rest ${raw.replace(/^!rest\s*/i, '')}`.trim();
+            if (/^!world(?:-|\s|$)/i.test(raw)) return `world ${raw.replace(/^!world(?:-|\s)*/i, '')}`.trim();
+            if (/^!location(?:-|\s|$)/i.test(raw)) return `location ${raw.replace(/^!location(?:-|\s)*/i, '')}`.trim();
+            if (/^!travel(?:-|\s|$)/i.test(raw)) return `travel ${raw.replace(/^!travel(?:-|\s)*/i, '')}`.trim();
             if (/^!aa-wayfarer(?:\s|$)/i.test(raw)) return `wayfarer ${raw.replace(/^!aa-wayfarer\s*/i, '')}`.trim();
             if (/^!aa-time(?:\s|$)/i.test(raw)) return `time ${raw.replace(/^!aa-time\s*/i, '')}`.trim();
             if (/^!aa-(?:gm|dm|menu)(?:\s|$)/i.test(raw)) return 'menu';
@@ -27800,6 +28544,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (lower === 'more' || lower === 'tools') return showMoreMenu(msg);
             if (lower === 'scene' || lower === 'scene menu' || lower === 'scene status') return showScene(msg, false);
             if (lower === 'scene technical' || lower === 'scene details' || lower === 'scene audit') return showScene(msg, true);
+            if (lower === 'world' || lower.startsWith('world ')) return handleWorld(msg, input);
+            if (lower === 'location' || lower.startsWith('location ')) return handleLocation(msg, input);
+            if (lower === 'travel' || lower.startsWith('travel ')) return handleTravel(msg, input);
             if (lower === 'preview' || lower === 'time preview') return showAnnouncement(msg, true);
             if (lower === 'announce' || lower === 'time announce') return showAnnouncement(msg, false);
             if (lower === 'announcement-settings' || lower === 'announcements') return showAnnouncementSettings(msg);
@@ -27886,7 +28633,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
-        ['!Almanac', '!Almanac-', '!AlmanacAssist', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-'].forEach(prefix => {
+        ['!Almanac', '!Almanac-', '!AlmanacAssist', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-', '!world', '!world-', '!location', '!location-', '!travel', '!travel-'].forEach(prefix => {
             GameAssist.onCommand(prefix, handleCommand, MODULE_NAME, {
                 match: { caseInsensitive: true, mode: prefix.endsWith('-') ? 'prefix' : 'token' }
             });
@@ -27903,6 +28650,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.AlmanacAssist = Object.freeze({
             version: MODULE_VERSION,
             sceneStateSchemaVersion: SCENE_STATE_SCHEMA_VERSION,
+            worldStateSchemaVersion: WORLD_STATE_SCHEMA_VERSION,
             timeStateSchemaVersion: TIME_STATE_SCHEMA_VERSION,
             wayfarerDraftSchemaVersion: WAYFARER_DRAFT_SCHEMA_VERSION,
             climateStateSchemaVersion: CLIMATE_STATE_SCHEMA_VERSION,
@@ -27941,7 +28689,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             getRestHistory: () => Object.freeze(copy(ensureAlmanacRuntime().rest.history)),
             observe: (callback, { owner = 'AlmanacAssistConsumer' } = {}) => GameAssist.SemanticEvents.observe(callback, {
                 owner,
-                types: ['almanac.time.changed', 'almanac.calendar.changed', 'almanac.climate.changed', 'almanac.astronomy.changed', 'almanac.weather.changed', 'almanac.environment.changed', 'almanac.rest.completed']
+                types: ['almanac.time.changed', 'almanac.calendar.changed', 'almanac.climate.changed', 'almanac.astronomy.changed', 'almanac.weather.changed', 'almanac.environment.changed', 'almanac.world.changed', 'almanac.rest.completed']
             }),
             clearObservers: owner => GameAssist.SemanticEvents.clearObservers(owner)
         });
@@ -27949,11 +28697,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: read-only Current World SceneResolver, Wayfarer-aware time, configurable world announcements, compact climate and environment controls, and all six Almanac systems are available through !Almanac; the module starts disabled.`, 'INFO', { startup: true });
     }, {
         enabled: false,
-        prefixes: ['!Almanac', '!Almanac-', '!AlmanacAssist', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-'],
+        prefixes: ['!Almanac', '!Almanac-', '!AlmanacAssist', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-', '!world', '!world-', '!location', '!location-', '!travel', '!travel-'],
         preserveRuntimeOnDisable: true,
-        protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'announcement', 'environment', 'rest']
+        protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'announcement', 'environment', 'rest', 'world']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced AlmanacAssist to 1.8.0 on the AlmanacAssist-v2.0.0-Build line; added bounded generic Worldbuilding Mode records for Region, Geography, Ecoregion, Biome, and Location, safe active-place/favorite/recent controls, field-owned SceneResolver composition, generic place chat editors, and warning-only future-schema handling. No published setting data is bundled; Travel and Phenomena remain explicit future providers. Rollback: retain 1.7.0 SceneResolver behavior with an empty Worldbuilding branch.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.7.0 on the AlmanacAssist-v2.0.0-Build line; added the read-only, deeply immutable SceneResolver snapshot with provider status, bounded warnings, field provenance, Time/Climate/Weather/Environment/Astronomy/Rest authority boundaries, partial terrain, distinct hydrology, separate moon visibility, compact Current World and Scene presentation, snapshot-backed announcements, and GM-only technical delivery. Rollback: remove the 1.7.0 snapshot/presentation layer while retaining the 1.6.2 six-system state and chronology contracts.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.6.2 on the AlmanacAssist-v2.0.0-Build line; accepted #92 (remove the redundant full-range chronology pre-scan) and #93 (make getSubmoduleStatus() report configured subsystem state consistently). No calendar semantics, saved state, command surface, or lifecycle behavior changed beyond the verified contract.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.6.1; bare and spaced !AlmanacAssist commands now share the established Almanac command handler.
@@ -27966,6 +28715,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Changed (v2.0.0): Added the standard GameAssist Home return to the AlmanacAssist GM control screen.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.1.0 with persistent Wayfarer drafts, staged setup and previews, safe profile duplication, atomic activation, elapsed-time preservation, explicit reset fallback, one activation rollback point, and a complete custom-calendar manual.
     // Decision log:
+    //   CHOICE: Start expanded Worldbuilding with generic owner-authored records rather than named setting packs - ALT: seed recognizable published places/calendars/lore; REJECTED: setting provenance and licensing review are separate release gates.
+    //   CHOICE: Let Location select parent context while preserving separate Region, Geography, Ecoregion, Biome, Climate, Environment, and Weather authority - ALT: copy every parent fact into Location; REJECTED: copied facts would drift and erase provenance.
+    //   CHOICE: Preserve newer unknown Worldbuilding schemas without normalization - ALT: coerce or delete unknown structures on read; REJECTED: an older script must never silently reinterpret a newer campaign world.
     //   CHOICE: Resolve one defensive SceneResolver snapshot without calling state-initializing provider reads - ALT: reuse current display helpers that normalize or initialize runtime branches; REJECTED: a read-only current-world API must not mutate saved state merely by being observed.
     //   CHOICE: Keep current Weather, immediate Environment, and long-term Climate visibly separate in the Scene and announcement renderers - ALT: collapse them into one generic conditions row; REJECTED: collapsing distinct authority makes a current temperature or GM override misleading.
     //   CHOICE: Force technical announcement fields GM-only - ALT: allow public provenance, diagnostics, and baseline evidence; REJECTED: public chat must not disclose GM-only technical context.

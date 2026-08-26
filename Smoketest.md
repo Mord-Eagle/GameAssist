@@ -768,7 +768,7 @@ For the stale-confirmation check:
 
 ## Focused v2.0.0 Complete AlmanacAssist Acceptance
 
-**What this proves:** AlmanacAssist `1.7.0` on the `AlmanacAssist-v2.0.0-Build` line provides the six independently controlled systems plus a read-only SceneResolver foundation for coherent Current World, Scene, and announcement presentation. It preserves valid state while disabled and exchanges optional context without turning one system into a hidden prerequisite for another. The Gate 0 repairs from Issues #92 and #93 are verified here as well; live Roll20 evidence is still required before release.
+**What this proves:** AlmanacAssist `1.8.0` on the `AlmanacAssist-v2.0.0-Build` line provides the six independently controlled systems, the read-only SceneResolver foundation, and bounded generic Worldbuilding place composition for coherent Current World, Scene, and announcement presentation. It preserves valid state while disabled and exchanges optional context without turning one system into a hidden prerequisite for another. The Gate 0 repairs from Issues #92 and #93 are verified here as well; live Roll20 evidence is still required before release.
 
 **Why test it:** v2.0.0 must not publish a calendar shell while describing a world-management suite. This track proves the six systems, their boundaries, their shared navigation, and RestAlmanac's deliberate 2014-sheet writes inside the real Roll20 sandbox.
 
@@ -789,11 +789,11 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 !Almanac-Impossible
 ```
 
-**Pass when:** AlmanacAssist begins disabled on a clean v2.0.0 state; enabling it starts all six saved-on systems; `!aa-gm` opens one private, action-first dashboard with **Now**, **Advance Date & Time**, **Set or Change Calendar**, **Share**, **World Today**, and **More**; routine controls do not dump module health, audit evidence, moon-cycle configuration, or full calendar structure; Systems provides independent toggles; Status identifies every system; Audit explicitly changes nothing; Manual creates or updates one stable handout; and the bad command offers a useful route back.
+**Pass when:** AlmanacAssist begins disabled on a clean v2.0.0 state; enabling it starts all six saved-on systems; `!aa-gm` opens one private, action-first **Almanac Home — Current World** dashboard with the current-world summary, **Advance Date & Time**, **Session Actions** (Travel, Change Location, Scene, Weather, Rest), **Share**, and **Worldbuilding**; routine controls do not dump module health, audit evidence, moon-cycle configuration, or full calendar structure; Systems provides independent toggles; Status identifies every system; Audit explicitly changes nothing; Manual creates or updates one stable handout; and the bad command offers a useful route back.
 
 ### Issue #92 / #93 Foundation Repair Checks
 
-**Why:** The build line first accepted two narrow foundation repairs—removing a redundant full-range chronology pre-scan and making `getSubmoduleStatus()` report configured subsystem state consistently—then added the read-only SceneResolver foundation. The live track must now prove coherent Session Mode behavior.
+**Why:** The build line first accepted two narrow foundation repairs—removing a redundant full-range chronology pre-scan and making `getSubmoduleStatus()` report configured subsystem state consistently—then added the read-only SceneResolver foundation and generic owner-authored Worldbuilding places. The live track must now prove coherent Session Mode behavior.
 
 ```roll20chat
 !Almanac-Status

@@ -52,16 +52,16 @@ The `75-v2.0.0-effectassist` branch contains:
   Off / Descriptive / Detailed / Technical control, direct calendar and moon
   editors, climate/region management, weather forecasts and locks, environment
   overrides, and transactional 2014-sheet Rest writes.
-- The active build's `GameAssist.AlmanacAssist` public API: `version`, schema versions,
+- The active build's `GameAssist.AlmanacAssist` public API: `version`, Scene/World and other schema versions,
   `isAvailable()`, `isTimeAvailable()`, `getSubmoduleStatus()`, `getScene()`,
   `getTime()`, `getClimate()`, `getAstronomy()`, `getWeather()`,
   `getEnvironment()`, `getRestHistory()`, `observe(...)`, and
   `clearObservers(...)`.
 
 AlmanacAssist is **not** yet at the #95 / #94 destination. The active build checkpoint
-is now **1.7.0**, which adds a read-only SceneResolver foundation and compact
-Current World presentation over the six-system prototype. It does not yet supply
-Region / Geography / Ecoregion / Biome / Location / Phenomena / Travel /
+is now **1.8.0**, which adds generic owner-authored Region / Geography /
+Ecoregion / Biome / Location composition and Worldbuilding Mode on top of the
+read-only SceneResolver foundation. It does not yet supply Phenomena / Travel /
 PresetRegistry / WorldPackService / temporal contexts.
 
 ## 4. Assessment by issue
@@ -293,13 +293,22 @@ change on the Build branch must satisfy them.
   immutability, no provider-state writes, disabled/parent-disabled behavior, manual
   Time fallback, unusual Weather warnings, Scene presentation, and technical
   announcement privacy in the isolated VM. It is not a substitute for Roll20.
-- **Not yet implemented:** Gate 1 live acceptance completion; Gate 3 expanded
-  world-domain systems; Gate 4 WorldPacks/temporal contexts; full unknown-state
-  migration review; and the full live Roll20 acceptance track.
+- **Worldbuilding foundation:** Implemented at AlmanacAssist `1.8.0`: bounded,
+  generic owner-authored Regions, Geography, Ecoregions, Biomes, and Locations;
+  active Location, favorites, recents, and organized Worldbuilding chat controls;
+  field-owned terrain/hydrology composition; and warning-only future schema reads.
+  No named setting lore or published pack data is bundled.
+- **Focused Worldbuilding harness:** `tests/almanac-worldbuilding.test.js` proves
+  no-write place-aware scene composition, immutable ownership/provenance, unknown
+  future-schema preservation, and bounded chat workflows in the isolated VM.
+- **Not yet implemented:** Gate 1 live acceptance completion; Gate 3 prepared
+  destinations, reviewed Travel, Phenomena, PresetRegistry, and RulesAdvisor; Gate
+  4 WorldPacks/temporal contexts; full migration review; and the full live Roll20
+  acceptance track.
 
 ## 8. Decisions and rationale
 
-- Keep the source version at `1.7.0` rather than claiming `2.0.0` before the
+- Keep the source version at `1.8.0` rather than claiming `2.0.0` before the
   architectural work is complete. This avoids announcing an incomplete 2.0 engine
   and preserves a trustworthy rollback baseline.
 - Keep all three executable artifacts byte-identical (`GameAssist`,

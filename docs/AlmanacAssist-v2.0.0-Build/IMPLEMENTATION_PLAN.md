@@ -25,7 +25,7 @@ the larger architectural work begins.
 | Gate 0 | Preserve and repair the current foundation | **In progress — #92/#93 and focused automated checks are complete; unknown-state and live Roll20 checks remain** |
 | Gate 1 | Make the existing six systems usable in Roll20 | **In progress — compact Current World dashboard and snapshot-backed announcements are implemented; complete live UX verification remains** |
 | Gate 2 | Introduce the SceneResolver current-scene authority | **In progress — read-only snapshot foundation and focused VM coverage are implemented; expanded providers remain** |
-| Gate 3 | Build live-world systems from #94 | Not started |
+| Gate 3 | Build live-world systems from #94 | **In progress — generic place composition, active-location selection, favorites/recents, and Worldbuilding Mode are implemented; destinations, travel, phenomena, presets, and advisor remain** |
 | Gate 4 | Portable world data and temporal contexts | Not started |
 | Acceptance | Automated/structural + live Roll20 | Not started |
 
@@ -79,7 +79,7 @@ the larger architectural work begins.
 
 ## 3. Gate 1 — Make the existing six systems usable in Roll20
 
-This is the minimum AlmanacAssist completion gate for PR #81. The 1.7.0 checkpoint
+This is the minimum AlmanacAssist completion gate for PR #81. The 1.8.0 checkpoint
 adds a compact Current World dashboard, Scene view, bounded quick actions, and
 snapshot-backed presentation, but it must still be verified against the live Roll20
 acceptance track before it can be marked complete.
@@ -87,8 +87,11 @@ acceptance track before it can be marked complete.
 - [x] Implement the compact `!Almanac-GM` / `!Almanac-DM` / `!aa-gm` Current World
       dashboard, Scene view, quick time anchors, and explicit return navigation in
       the new Session Mode surfaces.
-- [ ] Complete Travel/Change Location flow and verify all ordinary live-play
-      screens and generated buttons in Roll20.
+- [x] Add bounded Change Location selection with current, favorites, recents, and
+      all generic owner-authored Locations; preserve Weather and other provider
+      ownership when a place changes.
+- [ ] Complete reviewed Travel flow and verify all ordinary live-play screens and
+      generated buttons in Roll20.
 - [ ] Wayfarer calendar manager: create/edit/preview/validate/activate/duplicate/
       roll back/reset without raw JSON; complete query prompts; atomic activation;
       elapsed-time preservation; year-0 behavior defined once.
@@ -105,16 +108,17 @@ acceptance track before it can be marked complete.
 
 - [x] Add an internal read-only SceneResolver exposed through
       `GameAssist.AlmanacAssist.getScene()`.
-- [x] Declare the ownership matrix and report current six authorities plus explicit
-      unavailable Region, Geography, Ecoregion, Biome, Location, Phenomena, and
-      Travel domains.
+- [x] Declare the ownership matrix and implement generic Region, Geography,
+      Ecoregion, Biome, and Location evidence; Phenomena and Travel remain
+      explicit unavailable domains.
 - [x] Return deeply immutable/defensive snapshots with field-level provenance and
       bounded warnings without provider-state writes.
 - [x] Resolve Time-owned season before Climate interpretation; keep Weather's exact
       current temperature, Environment's immediate context, Astronomy's phase, and
       SceneResolver's moon-visibility conclusion distinct.
-- [x] Label partial immediate terrain, persistent hydrology as unavailable, temporary
-      weather effects, and immediate water access as separate fields.
+- [x] Compose persistent Geography terrain/hydrology, Ecoregion water regime,
+      Biome ground/water tendencies, immediate Environment, and temporary Weather
+      effects as separate fields; absent layers remain partial/unavailable.
 - [x] Report missing, disabled, and parent-disabled providers without invented facts.
 - [x] Add focused VM checks for no writes, deep immutability, disabled states, manual
       Time fallback, unusual Weather combinations, technical-delivery privacy, and
@@ -128,16 +132,23 @@ acceptance track before it can be marked complete.
 
 ## 5. Gate 3 — Live-world systems from #94
 
+- [x] Establish bounded, generic owner-authored Region, Geography, Ecoregion, Biome,
+      and Location records with direct Roll20 add/edit/remove controls and
+      Location-selected parent composition in SceneResolver.
+- [x] Add Favorites and Recents to the prioritized Change Location picker alongside
+      current place and all Locations.
+- [x] Add the Worldbuilding Mode category hub: Places, Natural World, Local Context,
+      Time & Sky, Gameplay, and Campaign Tools; ordinary cards keep basic facts and
+      put stable IDs/removal under Advanced.
+- [x] Keep unknown future Worldbuilding schemas warning-only and preserve them on
+      SceneResolver reads; add focused VM composition/workflow coverage.
 - [ ] Prepared Destinations (preview and apply coherent context bundles).
-- [ ] Favorites and Recents (prioritized selectors).
 - [ ] Travel (retained route/pace, reviewed Time advancement).
 - [ ] Phenomena (explicit overlays over ordinary world logic).
 - [ ] PresetRegistry (immutable versioned built-ins, Preview → Clone/Install →
       Customize, campaign clones editable).
 - [ ] RulesAdvisor (optional, rules-profile-specific, advisory only).
-- [ ] Worldbuilding Mode (Places / Natural World / Local Context / Time & Sky /
-      Gameplay / Campaign Tools).
-- [ ] Basic / Detailed / Technical layers for every editor.
+- [ ] Complete Basic / Detailed / Technical layers for every editor.
 - [ ] Provenance and licensing review before any published setting pack data.
 
 ## 6. Gate 4 — Portable world data and temporal contexts
