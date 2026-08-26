@@ -3,7 +3,8 @@
 - Build branch: `AlmanacAssist-v2.0.0-Build`
 - Source baseline: duplicate of `75-v2.0.0-effectassist` (`e08cb36`)
 - Assessment date: 2026-08-26
-- Governing issue: **#95 — AlmanacAssist 2.0 implementation master: coherent world engine and live-play UX**
+- Source implementation master: **#95 — AlmanacAssist 2.0 implementation master: coherent world engine and live-play UX** (left unchanged)
+- Build tracking copy: **#96 — AlmanacAssist 2.0 implementation master: coherent world engine and live-play UX (Build tracking)**
 - Architectural destination: **#94 — AlmanacAssist redesign v2.0.0**
 
 ## 1. Purpose
@@ -18,7 +19,8 @@ or `main`.
 
 | Issue | Title | State | Category |
 | --- | --- | --- | --- |
-| #95 | AlmanacAssist 2.0 implementation master: coherent world engine and live-play UX | Open | Implementation master |
+| #95 | AlmanacAssist 2.0 implementation master: coherent world engine and live-play UX | Open | Source implementation master (left unchanged) |
+| #96 | AlmanacAssist 2.0 implementation master: coherent world engine and live-play UX (Build tracking) | Open | Build tracking copy of #95 |
 | #94 | AlmanacAssist redesign v2.0.0 | Open | Architectural destination |
 | #62 | AlmanacAssist master: Build six interoperable campaign-world submodules | Open | Original master |
 | #66 | AlmanacAssist Phase 1: Build TimeAlmanac | Open | Child of #62 |
@@ -42,7 +44,7 @@ The `75-v2.0.0-effectassist` branch contains:
 
 - A single Roll20 script implemented in `GameAssist`, `GameAssist.js`, and
   `GameAssist-v2.0.0` (all byte-identical at the branch head).
-- AlmanacAssist at **module version 1.6.1**, implemented as one GameAssist module
+- AlmanacAssist at **module version 1.6.1** in the historical source baseline, implemented as one GameAssist module
   with six independently toggleable internal systems:
   **Time, Climate, Astronomy, Weather, Environment, Rest**.
 - A complete Wayfarer custom-calendar manager, action-first GM dashboard,
@@ -50,15 +52,18 @@ The `75-v2.0.0-effectassist` branch contains:
   Off / Descriptive / Detailed / Technical control, direct calendar and moon
   editors, climate/region management, weather forecasts and locks, environment
   overrides, and transactional 2014-sheet Rest writes.
-- The `GameAssist.AlmanacAssist` public API: `version`, schema versions,
-  `isAvailable()`, `isTimeAvailable()`, `getSubmoduleStatus()`, `getTime()`,
-  `getClimate()`, `getAstronomy()`, `getWeather()`, `getEnvironment()`,
-  `getRestHistory()`, `observe(...)`, and `clearObservers(...)`.
+- The active build's `GameAssist.AlmanacAssist` public API: `version`, Scene/World/Travel and other schema versions,
+  `isAvailable()`, `isTimeAvailable()`, `getSubmoduleStatus()`, `getScene()`,
+  `getTime()`, `getClimate()`, `getAstronomy()`, `getWeather()`,
+  `getEnvironment()`, `getRestHistory()`, `observe(...)`, and
+  `clearObservers(...)`.
 
-AlmanacAssist is **not** yet at the #95 / #94 destination. It is a coherent
-six-system prototype; it is not yet a SceneResolver-centered engine with
-Region / Geography / Ecoregion / Biome / Location / Environment / Phenomena /
-Travel / PresetRegistry / WorldPackService / temporal contexts.
+AlmanacAssist is **not** yet at the #95 / #94 destination. The active build checkpoint
+is now **1.9.0**, which adds generic owner-authored Region / Geography /
+Ecoregion / Biome / Location composition, Location-bound Prepared Destinations,
+and reviewed route/pace Travel on top of the read-only SceneResolver foundation.
+It does not yet supply Phenomena / PresetRegistry / WorldPackService / temporal
+contexts.
 
 ## 4. Assessment by issue
 
@@ -275,14 +280,41 @@ change on the Build branch must satisfy them.
   `origin/75-v2.0.0-effectassist`.
 - **Gate 0 #92:** Implemented (redundant chronology pre-scan removed).
 - **Gate 0 #93:** Implemented (`getSubmoduleStatus()` reports configured state).
+- **Focused Gate 0 harness:** `tests/almanac-gate0.test.js` boots the shipped
+  artifact in an isolated Roll20-shaped Node VM and verifies artifact identity,
+  #92 boundaries, #93 configured state, saved-state preservation, and close
+  command aliases. It is not a substitute for live Roll20 acceptance.
 - **Assessment / plan documents:** Added under `docs/AlmanacAssist-v2.0.0-Build/`.
-- **Not yet implemented:** Gates 1–4, SceneResolver, the expanded world-domain
-  model, PresetRegistry, WorldPackService, temporal contexts, and the full live
-  Roll20 acceptance track.
+- **SceneResolver foundation:** Implemented at AlmanacAssist `1.7.0`: one deeply
+  immutable no-write snapshot with provider status, field provenance, bounded
+  warnings, Time/Climate/Weather/Environment/Astronomy/Rest boundaries, partial
+  terrain, distinct hydrology fields, and moon phase versus visibility. Dashboard,
+  Scene, announcements, and public weather announcement consume that snapshot.
+- **Focused SceneResolver harness:** `tests/almanac-scene-resolver.test.js` proves
+  immutability, no provider-state writes, disabled/parent-disabled behavior, manual
+  Time fallback, unusual Weather warnings, Scene presentation, and technical
+  announcement privacy in the isolated VM. It is not a substitute for Roll20.
+- **Worldbuilding foundation:** Implemented at AlmanacAssist `1.8.0`: bounded,
+  generic owner-authored Regions, Geography, Ecoregions, Biomes, and Locations;
+  active Location, favorites, recents, organized Worldbuilding chat controls,
+  field-owned terrain/hydrology composition, and warning-only future schema reads.
+  No named setting lore or published pack data is bundled.
+- **Prepared Destination and Travel foundation:** Implemented at AlmanacAssist
+  `1.9.0`: Location-bound prepared-destination review/apply, bounded generic
+  bidirectional Travel Routes, retained route/pace journeys, immutable scene
+  evidence, and stale-safe start/segment/arrival confirmation. Time advances only
+  after a confirmed segment; final Location changes only on confirmed arrival.
+  Weather, Environment overrides, Astronomy, and calendar ownership remain separate.
+- **Focused harnesses:** `tests/almanac-worldbuilding.test.js` proves generic place
+  composition and `tests/almanac-travel.test.js` proves prepared-destination and
+  accepted-only Travel boundaries in the isolated VM. Neither replaces Roll20.
+- **Not yet implemented:** Gate 1 live acceptance completion; Gate 3 Phenomena,
+  PresetRegistry, and RulesAdvisor; Gate 4 WorldPacks/temporal contexts; full
+  migration review; and the full live Roll20 acceptance track.
 
 ## 8. Decisions and rationale
 
-- Keep the source version at `1.6.2` rather than claiming `2.0.0` before the
+- Keep the source version at `1.9.0` rather than claiming `2.0.0` before the
   architectural work is complete. This avoids announcing an incomplete 2.0 engine
   and preserves a trustworthy rollback baseline.
 - Keep all three executable artifacts byte-identical (`GameAssist`,

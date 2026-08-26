@@ -2,7 +2,8 @@
 
 - Build branch: `AlmanacAssist-v2.0.0-Build`
 - Baseline: duplicate of `75-v2.0.0-effectassist` (`e08cb36`)
-- Working issue: **#95**
+- Source implementation master: **#95** (left unchanged)
+- Build tracking copy: **#96**
 - Architectural destination: **#94**
 - Updated: 2026-08-26
 
@@ -21,10 +22,10 @@ the larger architectural work begins.
 
 | Gate | Scope | Status |
 | --- | --- | --- |
-| Gate 0 | Preserve and repair the current foundation | **In progress — #92 and #93 are implemented** |
-| Gate 1 | Make the existing six systems usable in Roll20 | Not started |
-| Gate 2 | Introduce the SceneResolver current-scene authority | Not started |
-| Gate 3 | Build live-world systems from #94 | Not started |
+| Gate 0 | Preserve and repair the current foundation | **In progress — #92/#93 and focused automated checks are complete; unknown-state and live Roll20 checks remain** |
+| Gate 1 | Make the existing six systems usable in Roll20 | **In progress — compact Current World dashboard and snapshot-backed announcements are implemented; complete live UX verification remains** |
+| Gate 2 | Introduce the SceneResolver current-scene authority | **In progress — read-only snapshot foundation and focused VM coverage are implemented; expanded providers remain** |
+| Gate 3 | Build live-world systems from #94 | **In progress — generic place composition, Prepared Destinations, and reviewed Travel are implemented; phenomena, presets, and advisor remain** |
 | Gate 4 | Portable world data and temporal contexts | Not started |
 | Acceptance | Automated/structural + live Roll20 | Not started |
 
@@ -63,60 +64,96 @@ the larger architectural work begins.
 
 ### Other Gate 0 items remaining
 
-- [ ] Confirm all commands are case-insensitive and accept the established close
-      space/hyphen variants (`!Almanac`, `!aa`, `!aa-gm`, `!Almanac-GM`, etc.).
-- [ ] Add or extend focused automated checks for the #92 and #93 contracts.
-- [ ] Preserve valid saved configuration when AlmanacAssist or a subsystem is
-      disabled (already a lifecycle property; must be verified by tests).
+- [x] Confirm in the focused VM harness that commands are case-insensitive and
+      accept established close space/hyphen variants (`!Almanac`, `!aa`,
+      `!aa-gm`, `!Almanac-GM`, etc.). Live Roll20 confirmation remains required.
+- [x] Add focused automated checks for #92 and #93, chronology boundaries,
+      executable identity, configured-state semantics, and valid saved-state
+      preservation through a disable/re-enable simulation.
+- [x] Verify in the focused harness that valid saved configuration is preserved
+      when AlmanacAssist or a subsystem is disabled and re-enabled. Live Roll20
+      lifecycle confirmation remains required.
 - [ ] Keep unknown state warning-only; never delete or reinterpret automatically.
 - [ ] Complete the live Roll20 smoke checks for disable/re-enable and subsystem
       toggles.
 
 ## 3. Gate 1 — Make the existing six systems usable in Roll20
 
-This is the minimum AlmanacAssist completion gate for PR #81. It is largely
-implemented in 1.6.1 but must be verified against the live Roll20 acceptance track
-before it can be marked complete.
+This is the minimum AlmanacAssist completion gate for PR #81. The 1.9.0 checkpoint
+adds compact Current World/Scene presentation, bounded generic location context,
+Prepared Destinations, and reviewed Travel, but it must still be verified against the
+live Roll20 acceptance track before it can be marked complete.
 
-- [ ] Session dashboard: `!Almanac-GM` / `!Almanac-DM` / `!aa-gm` open one compact
-      Current World dashboard; common actions are within one or two screens.
+- [x] Implement the compact `!Almanac-GM` / `!Almanac-DM` / `!aa-gm` Current World
+      dashboard, Scene view, quick time anchors, and explicit return navigation in
+      the new Session Mode surfaces.
+- [x] Add bounded Change Location selection with current, favorites, recents, and
+      all generic owner-authored Locations; preserve Weather and other provider
+      ownership when a place changes.
+- [x] Implement reviewed Travel start/route/pace/segment/arrival flow with
+      accepted-only fictional-time advancement and final-location switch.
+- [ ] Verify all ordinary Travel and generated buttons in live Roll20.
 - [ ] Wayfarer calendar manager: create/edit/preview/validate/activate/duplicate/
       roll back/reset without raw JSON; complete query prompts; atomic activation;
       elapsed-time preservation; year-0 behavior defined once.
-- [ ] Presentation and announcements: one resolved snapshot; independent
-      Off/Descriptive/Detailed/Technical; Quick/Calendar/Travel/Everything presets;
-      preview before delivery.
+- [x] Route dashboard, Scene, announcement preview/delivery, and public weather
+      announcement current-world facts through a single read-only SceneResolver
+      snapshot. Preserve independent Off/Descriptive/Detailed/Technical fields and
+      Quick/Calendar/Travel/Everything presets; technical content is forced GM-only.
+- [ ] Verify every presentation mode and preset in live Roll20.
 - [ ] Climate/weather/environment/astronomy/rest ownership and coherence.
 - [ ] Live Roll20 Wayfarer, announcement, weather/environment coherence,
       astronomy, and rest tracks.
 
 ## 4. Gate 2 — SceneResolver current-scene authority
 
-- [ ] Add an internal read-only SceneResolver.
-- [ ] Ownership matrix: Time, Astronomy, Region, Geography, Ecoregion, Climate,
-      Biome, Location, Environment, Weather, Phenomena, Travel, Rest.
-- [ ] Return immutable/defensive scene snapshots with field-level provenance and
-      warnings.
-- [ ] Resolve season from Time; terrain from Geography + Biome + Environment +
-      Weather.
-- [ ] Distinguish persistent hydrology, transient weather effects, and immediate
-      water access.
-- [ ] Report moon phase separately from moon visibility.
-- [ ] Report missing/disabled providers without inventing authority.
-- [ ] Publish no unbounded event replay on large time changes.
+- [x] Add an internal read-only SceneResolver exposed through
+      `GameAssist.AlmanacAssist.getScene()`.
+- [x] Declare the ownership matrix and implement generic Region, Geography,
+      Ecoregion, Biome, Location, and active Travel evidence; Phenomena remains
+      an explicit unavailable domain.
+- [x] Return deeply immutable/defensive snapshots with field-level provenance and
+      bounded warnings without provider-state writes.
+- [x] Resolve Time-owned season before Climate interpretation; keep Weather's exact
+      current temperature, Environment's immediate context, Astronomy's phase, and
+      SceneResolver's moon-visibility conclusion distinct.
+- [x] Compose persistent Geography terrain/hydrology, Ecoregion water regime,
+      Biome ground/water tendencies, immediate Environment, and temporary Weather
+      effects as separate fields; absent layers remain partial/unavailable.
+- [x] Report missing, disabled, and parent-disabled providers without invented facts.
+- [x] Add focused VM checks for no writes, deep immutability, disabled states, manual
+      Time fallback, unusual Weather combinations, technical-delivery privacy, and
+      Scene presentation.
+- [x] Route committed Weather forecast display through the snapshot.
+- [x] Route Rest preview context and its time-revalidation boundary through the
+      snapshot; committed Weather forecast display also uses the snapshot.
+- [x] Route active reviewed Travel through the snapshot with immutable journey
+      evidence and field provenance; Travel actions retain explicit review boundaries.
+- [ ] Add Phenomena and complete live Roll20 coherence evidence.
+- [ ] Verify large time changes emit no unbounded event replay in Roll20.
 
 ## 5. Gate 3 — Live-world systems from #94
 
-- [ ] Prepared Destinations (preview and apply coherent context bundles).
-- [ ] Favorites and Recents (prioritized selectors).
-- [ ] Travel (retained route/pace, reviewed Time advancement).
+- [x] Establish bounded, generic owner-authored Region, Geography, Ecoregion, Biome,
+      and Location records with direct Roll20 add/edit/remove controls and
+      Location-selected parent composition in SceneResolver.
+- [x] Add Favorites and Recents to the prioritized Change Location picker alongside
+      current place and all Locations.
+- [x] Add the Worldbuilding Mode category hub: Places, Natural World, Local Context,
+      Time & Sky, Gameplay, and Campaign Tools; ordinary cards keep basic facts and
+      put stable IDs/removal under Advanced.
+- [x] Keep unknown future Worldbuilding schemas warning-only and preserve them on
+      SceneResolver reads; add focused VM composition/workflow coverage.
+- [x] Add Location-bound Prepared Destinations with preview/confirm context
+      transitions that preserve Weather, Environment, Astronomy, and Time ownership.
+- [x] Add bounded bidirectional Travel Routes and retained route/pace journeys;
+      review start and every segment, advance Time only after confirmation, and
+      change Location only on accepted arrival.
 - [ ] Phenomena (explicit overlays over ordinary world logic).
 - [ ] PresetRegistry (immutable versioned built-ins, Preview → Clone/Install →
       Customize, campaign clones editable).
 - [ ] RulesAdvisor (optional, rules-profile-specific, advisory only).
-- [ ] Worldbuilding Mode (Places / Natural World / Local Context / Time & Sky /
-      Gameplay / Campaign Tools).
-- [ ] Basic / Detailed / Technical layers for every editor.
+- [ ] Complete Basic / Detailed / Technical layers for every editor.
 - [ ] Provenance and licensing review before any published setting pack data.
 
 ## 6. Gate 4 — Portable world data and temporal contexts
@@ -133,6 +170,9 @@ before it can be marked complete.
 
 ### Automated and structural
 
+- [x] Focused VM harnesses cover Gate 0, SceneResolver, generic Worldbuilding,
+      and Prepared Destination/reviewed Travel boundaries; they do not replace live
+      Roll20 acceptance.
 - [ ] Syntax parsing passes for `GameAssist`, `GameAssist.js`, and
       `GameAssist-v2.0.0`.
 - [ ] Executable artifacts remain byte-identical.
@@ -165,11 +205,17 @@ before it can be marked complete.
 
 ## 8. Verification results on this branch
 
-- `node --check GameAssist` passes.
+- `node tests/almanac-gate0.test.js` passes. It boots the actual `GameAssist`
+  artifact in an isolated Roll20-shaped Node VM and verifies executable-artifact
+  identity, removal of `maximumWorldMinute`, direct resolver boundary behavior
+  (negative/non-finite input, the last valid minute of year 9999, and the first
+  invalid minute), #93 configured-state semantics, valid saved-state preservation,
+  and case-insensitive close dashboard aliases.
+- `node --check GameAssist` and `node --check tests/almanac-gate0.test.js` pass.
 - `maximumWorldMinute` no longer appears anywhere in the source.
 - `getSubmoduleStatus()` now returns the explicit six-field configured-state
   object.
 - `GameAssist`, `GameAssist.js`, and `GameAssist-v2.0.0` are byte-identical after
   the edits.
-- Live Roll20 tests are still pending; mechanical checks are not acceptance
-  evidence for release.
+- The VM harness is focused automated evidence only. Live Roll20 tests are still
+  pending and remain the governing acceptance evidence for release.

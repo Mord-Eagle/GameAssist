@@ -768,7 +768,7 @@ For the stale-confirmation check:
 
 ## Focused v2.0.0 Complete AlmanacAssist Acceptance
 
-**What this proves:** AlmanacAssist `1.6.2` on the `AlmanacAssist-v2.0.0-Build` line ships as one complete module whose action-first daily controls and Time, Climate, Astronomy, Weather, Environment, and Rest systems are independently usable, preserve valid state while disabled, and exchange optional context without turning one system into a hidden prerequisite for another. The Gate 0 repairs from Issues #92 and #93 are verified here as well.
+**What this proves:** AlmanacAssist `1.9.0` on the `AlmanacAssist-v2.0.0-Build` line provides the six independently controlled systems, read-only SceneResolver, bounded generic Worldbuilding, Location-bound Prepared Destinations, and reviewed Travel for coherent Current World, Scene, and announcement presentation. It preserves valid state while disabled and exchanges optional context without turning one system into a hidden prerequisite for another. The Gate 0 repairs from Issues #92 and #93 are verified here as well; live Roll20 evidence is still required before release.
 
 **Why test it:** v2.0.0 must not publish a calendar shell while describing a world-management suite. This track proves the six systems, their boundaries, their shared navigation, and RestAlmanac's deliberate 2014-sheet writes inside the real Roll20 sandbox.
 
@@ -789,11 +789,11 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 !Almanac-Impossible
 ```
 
-**Pass when:** AlmanacAssist begins disabled on a clean v2.0.0 state; enabling it starts all six saved-on systems; `!aa-gm` opens one private, action-first dashboard with **Now**, **Advance Date & Time**, **Set or Change Calendar**, **Share**, **World Today**, and **More**; routine controls do not dump module health, audit evidence, moon-cycle configuration, or full calendar structure; Systems provides independent toggles; Status identifies every system; Audit explicitly changes nothing; Manual creates or updates one stable handout; and the bad command offers a useful route back.
+**Pass when:** AlmanacAssist begins disabled on a clean v2.0.0 state; enabling it starts all six saved-on systems; `!aa-gm` opens one private, action-first **Almanac Home — Current World** dashboard with the current-world summary, **Advance Date & Time**, **Session Actions** (Travel, Change Location, Scene, Weather, Rest), **Share**, and **Worldbuilding**; routine controls do not dump module health, audit evidence, moon-cycle configuration, or full calendar structure; Systems provides independent toggles; Status identifies every system; Audit explicitly changes nothing; Manual creates or updates one stable handout; and the bad command offers a useful route back.
 
 ### Issue #92 / #93 Foundation Repair Checks
 
-**Why:** The build line accepts two narrow foundation repairs before the larger SceneResolver work: removing a redundant full-range chronology pre-scan and making `getSubmoduleStatus()` report configured subsystem state consistently.
+**Why:** The build line first accepted two narrow foundation repairs—removing a redundant full-range chronology pre-scan and making `getSubmoduleStatus()` report configured subsystem state consistently—then added the read-only SceneResolver foundation, generic owner-authored Worldbuilding places, and accepted-only Prepared Destination/Travel workflows. The live track must now prove coherent Session Mode behavior.
 
 ```roll20chat
 !Almanac-Status
@@ -918,6 +918,23 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 8. Turn Weather off and apply a manual preset again.
 
 **Pass when:** output identifies visibility, temperature, precipitation, wind, ground, water, exposure, severity, and tags; no token, marker, character, roll, or Turn Tracker state changes; the override persists until cleared; and manual Environment still works without Weather.
+
+### Worldbuilding, Prepared Destinations, and Reviewed Travel
+
+**Why:** Session Mode must let a GM move among owner-authored places without editing subsystem state in front of the table. Prepared destinations and Travel must remain explicit reviews: selecting a route is not permission to advance fictional time or silently move the party.
+
+1. Open `!aa-world`. In **Places**, add two generic Locations with distinct names. Use their focused editors to give one a Region/Geography/Ecoregion/Biome relationship or default local context as desired; do not enter raw JSON.
+2. Add a **Prepared Destination**, assign its target Location, and choose a default travel pace. Return to `!aa-location` and confirm the prepared item appears after Current/Favorites/Recents.
+3. Select the first Location as current, generate or retain a recognizable current Weather/Environment state, then choose **Review Move** for the prepared destination. Before confirming, record the fictional time, active Location, Weather, Environment override, and Astronomy state.
+4. Confirm the move. Confirm only the active Location and its resolved parent context changes; fictional time, current Weather, Environment override, and Astronomy state remain untouched.
+5. In **Travel Routes**, add a route connecting the two Locations, give it a positive distance, a pace, and a short owner-authored terrain note. Return the active Location to the origin and run `!aa-travel` (also test direct `!travel`).
+6. Plan travel using the prepared destination or the route. Confirm **Review Start** shows origin, destination, route, distance, pace, expected travel, and a statement that starting changes neither Location nor fictional time. Cancel once and verify no state changed; then confirm **Start Journey**.
+7. Confirm the active **Journey** panel shows remaining distance, route/pace, current conditions, and short actions. Attempt ordinary **Change Location** and route editing while the journey is active; both must refuse rather than replacing the journey context.
+8. Choose **Travel 1 Hour**. Before confirming its review, verify fictional time, active Location, and remaining distance are unchanged. Confirm it; verify fictional time advances by the reviewed amount and a non-final segment leaves the active Location at the origin.
+9. Continue until the final segment. Before confirmation, verify the panel identifies arrival but has not moved the party. Confirm it; verify fictional time advances only by the required final segment, the active Location switches to the destination, the journey closes, and Current Scene/Dashboard show the arrival context.
+10. Start a second disposable journey and choose **Cancel Journey**. Decline once, then confirm. Verify cancellation preserves the current Location and does not reverse any already accepted fictional time.
+
+**Pass when:** all Worldbuilding controls are bounded direct fields with no ordinary raw JSON; prepared-destination review is location-bound and preserves independently owned providers; route planning/start/segment review causes no silent time or location change; every accepted segment advances only its displayed fictional time; arrival changes the Location only after accepted final travel; active journeys surface in Current World and Scene; stale or changed reviews are refused; and cancel never reverses committed time.
 
 ### RestAlmanac
 
