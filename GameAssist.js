@@ -3,7 +3,7 @@
 GameAssist - Roll20 API Script
 Version: 2.0.0
 Last Updated: 2026-08-24 (America/New_York)
-Release scope: EffectAssist 2.5.3 compact identity-aware casting, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.0 automatic or reviewed normal/maximum healing, HealthService 1.1.0 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, CombatAssist 1.2.0 timeline and Ready/Delay tools, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist 1.6.1 command consistency, and regression repairs across the v2.0.0 module suite.
+Release scope: EffectAssist 2.5.3 compact identity-aware casting, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.0 automatic or reviewed normal/maximum healing, HealthService 1.1.0 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, CombatAssist 1.2.0 timeline and Ready/Delay tools, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist 1.6.2 foundation repairs on the AlmanacAssist-v2.0.0-Build line (chronology pre-scan removal, consistent configured subsystem status), and regression repairs across the v2.0.0 module suite.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -30,7 +30,7 @@ calls GameAssist.enqueue(). This development package contains fifteen configurab
 - EffectAssist 2.5.3 - Coordinates compact catalog-driven effects, exact caster-and-recipient identity, retained GM requests, GameAssist-owned 2014-sheet modifiers, verified token-specific concentration, ownership-safe cleanup, duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
 - HealAssist 1.2.0 - Guides verified 2014 normal or maximum healing with direct single-recipient targeting, optional automatic application, visible PC targeting, private GM requests, and HealthService verification.
 - AttackAssist 1.1.0 - Guides authorized 2014 repeating attacks through direct visible targeting, default sheet-mode submission, optional GM-enabled roll review, complete prompt-safe Classic-sheet expansion, private GM placement, crash-safe inline-roll validation, and visible one-use native-template rolls without applying damage.
-- AlmanacAssist 1.6.1 - Adds Wayfarer's ordinal 20-hour clock, independently styled world-announcement details, coherent climate/weather/environment presentation, direct Wayfarer and moon editors, configurable rest rules, editable seasonal ranges, and visible moon phases across six independently controlled internal systems.
+- AlmanacAssist 1.6.2 - Foundation repairs on the AlmanacAssist-v2.0.0-Build line: removes the redundant full-range chronology pre-scan described in #92 and makes getSubmoduleStatus() consistently report configured subsystem state as described in #93, while preserving the existing six-system world model, Wayfarer behavior, and GameAssist lifecycle contracts.
 - HPAssist 0.3.0 - Rolls npc_hpformula and uses HealthService for verified writes to the selected shared NPC HP bar when available.
 - DebugTools 0.3.1 - Optional dry-run-first GM diagnostics with verified supported HP damage writes on the selected shared NPC HP bar.
 
@@ -23501,7 +23501,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   guarantees: ["Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Optional Almanac integrations improve context without becoming hidden prerequisites","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer exposes direct validated editors for every stored calendar component while moon phases remain visible Astronomy-owned context","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","The GM dashboard prioritizes daily calendar actions and moves setup, diagnostics, and technical reference behind focused controls","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Descriptive announcements report player-perceivable time, weather, visibility, and moon visibility without presenting climate baselines as simultaneous current measurements","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AlmanacAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.6.1", time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.6.2", time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // AlmanacAssist contains six independently toggleable internal submodules behind
@@ -23514,7 +23514,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('AlmanacAssist', function() {
         const MODULE_NAME = 'AlmanacAssist';
-        const MODULE_VERSION = '1.6.1';
+        const MODULE_VERSION = '1.6.2';
         const TIME_STATE_SCHEMA_VERSION = 2;
         const WAYFARER_DRAFT_SCHEMA_VERSION = 3;
         const ANNOUNCEMENT_SCHEMA_VERSION = 4;
@@ -24184,10 +24184,6 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return total;
         }
 
-        function maximumWorldMinute(profile) {
-            return daysBeforeYear(profile, POLICY.almanac.maximumYear + 1) * calendarMinutesPerDay(profile) - 1;
-        }
-
         function weekdayDaysBefore(profile, year, periodIndex, day) {
             let total = 0;
             for (let current = POLICY.almanac.minimumYear; current < year; current++) {
@@ -24209,7 +24205,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const minute = Math.floor(Number(worldMinute));
             const minutesPerDay = calendarMinutesPerDay(profile);
             const minutesPerHour = calendarMinutesPerHour(profile);
-            if (!Number.isFinite(minute) || minute < 0 || minute > maximumWorldMinute(profile)) return null;
+            if (!Number.isFinite(minute) || minute < 0) return null;
             const absoluteDay = Math.floor(minute / minutesPerDay);
             const minuteOfDay = minute % minutesPerDay;
             let remaining = absoluteDay;
@@ -27480,7 +27476,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             restStateSchemaVersion: REST_STATE_SCHEMA_VERSION,
             isAvailable: () => modState.config.enabled !== false,
             isTimeAvailable: timeAvailable,
-            getSubmoduleStatus: () => Object.freeze(copy({ ...modState.config.submodules, time: timeAvailable() })),
+            getSubmoduleStatus: () => Object.freeze(copy({
+                time: submoduleEnabled('time') && modState.config.timeAlmanacEnabled !== false,
+                climate: submoduleEnabled('climate'),
+                astronomy: submoduleEnabled('astronomy'),
+                weather: submoduleEnabled('weather'),
+                environment: submoduleEnabled('environment'),
+                rest: submoduleEnabled('rest')
+            })),
             getTime: () => {
                 if (!timeAvailable()) return null;
                 const current = currentMoment();
@@ -27514,6 +27517,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'announcement', 'environment', 'rest']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced AlmanacAssist to 1.6.2 on the AlmanacAssist-v2.0.0-Build line; accepted #92 (remove the redundant full-range chronology pre-scan) and #93 (make getSubmoduleStatus() report configured subsystem state consistently). No calendar semantics, saved state, command surface, or lifecycle behavior changed beyond the verified contract.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.6.1; bare and spaced !AlmanacAssist commands now share the established Almanac command handler.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.5.0; announcements now support Off, Descriptive, Detailed, and Technical presentation, descriptive moon visibility respects daylight and cloud cover, weather owns the displayed current temperature, and ambiguous visibility values are labeled in plain language.
     // Changed (v2.0.0): Repaired deferred Roll20 prompts throughout AlmanacAssist; Wayfarer name/start changes are atomic, clock and period-list changes preserve a valid starting time, Astronomy supplies direct add/edit/remove controls, and RestAlmanac supplies standard, heroic, gritty, and bounded custom rule controls.

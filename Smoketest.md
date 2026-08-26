@@ -768,7 +768,7 @@ For the stale-confirmation check:
 
 ## Focused v2.0.0 Complete AlmanacAssist Acceptance
 
-**What this proves:** AlmanacAssist 1.6.1 ships as one complete module whose action-first daily controls and Time, Climate, Astronomy, Weather, Environment, and Rest systems are independently usable, preserve valid state while disabled, and exchange optional context without turning one system into a hidden prerequisite for another.
+**What this proves:** AlmanacAssist `1.6.2` on the `AlmanacAssist-v2.0.0-Build` line ships as one complete module whose action-first daily controls and Time, Climate, Astronomy, Weather, Environment, and Rest systems are independently usable, preserve valid state while disabled, and exchange optional context without turning one system into a hidden prerequisite for another. The Gate 0 repairs from Issues #92 and #93 are verified here as well.
 
 **Why test it:** v2.0.0 must not publish a calendar shell while describing a world-management suite. This track proves the six systems, their boundaries, their shared navigation, and RestAlmanac's deliberate 2014-sheet writes inside the real Roll20 sandbox.
 
@@ -790,6 +790,21 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 ```
 
 **Pass when:** AlmanacAssist begins disabled on a clean v2.0.0 state; enabling it starts all six saved-on systems; `!aa-gm` opens one private, action-first dashboard with **Now**, **Advance Date & Time**, **Set or Change Calendar**, **Share**, **World Today**, and **More**; routine controls do not dump module health, audit evidence, moon-cycle configuration, or full calendar structure; Systems provides independent toggles; Status identifies every system; Audit explicitly changes nothing; Manual creates or updates one stable handout; and the bad command offers a useful route back.
+
+### Issue #92 / #93 Foundation Repair Checks
+
+**Why:** The build line accepts two narrow foundation repairs before the larger SceneResolver work: removing a redundant full-range chronology pre-scan and making `getSubmoduleStatus()` report configured subsystem state consistently.
+
+```roll20chat
+!Almanac-Status
+!Almanac-Systems
+```
+
+**Pass when:**
+
+1. The AlmanacAssist status surface still reports all six configured systems and does not report Time as individually disabled merely because the parent AlmanacAssist module is off.
+2. Disable AlmanacAssist with `!ga-config modules`, restart/refresh the sandbox, re-enable it, and confirm the six saved subsystem toggles are unchanged and `!Almanac-Systems` still lists the same saved choices.
+3. A large fictional time advance still completes without a chronology cache being advertised or added, and the current date remains coherent after the advance.
 
 ### TimeAlmanac and Calendar Announcements
 
