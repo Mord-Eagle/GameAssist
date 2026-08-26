@@ -110,9 +110,10 @@ const POLICY = Object.freeze({
 // in-memory hook exposes the lexical chronology resolver for its exact boundary
 // contract; it is never written into a shipped artifact.
 // -----------------------------------------------------------------------------
-function createHarness(initialAlmanac = {}) {
+function createHarness(initialAlmanac = {}, initialGameAssistBranches = {}) {
     const handlers = new Map();
     const chats = [];
+    const logs = [];
     const objects = new Map();
     let nextObjectId = POLICY.initialObjectId;
 
@@ -153,8 +154,12 @@ function createHarness(initialAlmanac = {}) {
     const initial = initialAlmanac && typeof initialAlmanac === 'object' && !Array.isArray(initialAlmanac)
         ? initialAlmanac
         : {};
+    const initialBranches = initialGameAssistBranches && typeof initialGameAssistBranches === 'object' && !Array.isArray(initialGameAssistBranches)
+        ? initialGameAssistBranches
+        : {};
     const state = {
         GameAssist: {
+            ...initialBranches,
             AlmanacAssist: {
                 ...initial,
                 config: { enabled: true, ...(initial.config && typeof initial.config === 'object' ? initial.config : {}) }
@@ -172,7 +177,9 @@ function createHarness(initialAlmanac = {}) {
             chats.push({ who, message: String(message) });
             if (typeof callback === 'function') callback([]);
         },
-        log() {},
+        log(...entries) {
+            logs.push(entries.map(entry => String(entry)).join(' '));
+        },
         randomInteger() {
             return POLICY.firstRandomInteger;
         },
@@ -223,18 +230,19 @@ function createHarness(initialAlmanac = {}) {
     vm.runInContext(instrumentedSource, sandbox, { filename: POLICY.sourceArtifact });
     (handlers.get('ready') || []).forEach(callback => callback());
 
-    function dispatchCommand(content, playerId = POLICY.gmPlayerId) {
+    function dispatchCommand(content, playerId = POLICY.gmPlayerId, selected = []) {
         chats.length = 0;
         (handlers.get('chat:message') || []).forEach(callback => callback({
             type: 'api',
             content,
             playerid: playerId,
-            who: 'Test GM'
+            who: 'Test GM',
+            selected: Array.isArray(selected) ? selected : []
         }));
         return chats.slice();
     }
 
-    return { state, sandbox, dispatchCommand };
+    return { state, sandbox, dispatchCommand, logs };
 }
 // --- Notes & Comments ---
 // Changed (v2.0.0): add an isolated Roll20-shaped VM harness for deterministic Gate 0 contract checks; callers may supply one isolated historical Almanac state fixture for migration evidence.
@@ -339,6 +347,20 @@ function assertConfiguredStatusAndPreservedState(harness) {
     assert.equal(config.climate.regions[0].name, climateName, 'disable/re-enable must preserve valid saved configuration');
 }
 
+function assertKnownInternalStateNamespace() {
+    const harness = createHarness({}, { Core: { retainedFromPriorBuild: true } });
+    assert.doesNotMatch(
+        harness.logs.join('\n'),
+        /Unexpected state branch: Core/i,
+        'a registered internal Core namespace must not be reported as unknown campaign state'
+    );
+    assert.equal(
+        harness.state.GameAssist.Core.retainedFromPriorBuild,
+        true,
+        'recognizing the internal Core namespace must preserve its retained state rather than deleting it'
+    );
+}
+
 function assertDashboardAliases(harness) {
     POLICY.dashboardAliases.forEach(command => {
         const chats = harness.dispatchCommand(command);
@@ -355,6 +377,7 @@ function run() {
     assert.ok(harness.sandbox.GameAssist.AlmanacAssist, 'AlmanacAssist public API must initialize in the isolated sandbox');
     assertChronologyContract(harness);
     assertConfiguredStatusAndPreservedState(harness);
+    assertKnownInternalStateNamespace();
     assertDashboardAliases(harness);
     process.stdout.write('PASS: AlmanacAssist Gate 0 focused regression checks\n');
 }

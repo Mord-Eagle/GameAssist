@@ -2,11 +2,11 @@
 
 **Prepared:** 2026-08-26 (America/New_York)
 
-**Implementation status:** Issue #96 code program and the focused automated/structural checkpoint are complete.
+**Implementation status:** **Active live-product recovery.** The earlier “Issue #96 code program complete” assessment was incorrect: a real Roll20 exploratory launch proved that a fresh GM could reach empty/dead-end setup paths and an incomplete Climate prompt. The framework and prior automated contracts remain useful, but they are not a complete usable product.
 
-**Release status:** **Not live-accepted or released.** Final live Roll20 validation remains open and has not been run.
+**Release status:** **Not live-accepted or released; not eligible for formal acceptance.** One exploratory real-Roll20 launch has occurred and exposed blockers. Formal acceptance must restart only after the first-run/starter-content and prompt/menu repairs have focused automated coverage and receive a fresh real-Roll20 usability pass.
 
-This document is a practical restart/recovery guide for the AlmanacAssist **v2.0.0** build. It records what is present in the branch, what was deliberately not done, and how to verify or extend the work without weakening its safety boundaries.
+This document is a practical restart/recovery guide for the AlmanacAssist **v2.0.0** build. It records what is present in the branch, what live evidence invalidated the prior completion claim, and how to repair or extend the work without weakening its safety boundaries.
 
 ---
 
@@ -35,13 +35,28 @@ This document is a practical restart/recovery guide for the AlmanacAssist **v2.0
 
 | Area | State | Important qualification |
 | --- | --- | --- |
-| Gate 0 | Code and focused VM evidence complete | Final live disable/re-enable confirmation remains open. |
-| Gate 1 | Code complete | The six systems, Session Mode surfaces, complete Wayfarer chat workflow, optional handout workflow, and snapshot presentation are built. Live UX proof remains open. |
-| Gate 2 | Code complete | SceneResolver is read-only, defensive, provenance-aware, and covered by focused VM tests. |
-| Gate 3 | Code complete | Generic Worldbuilding, location workflow, Travel, Phenomena, Presets, and RulesAdvisor are built. |
-| Gate 4 | Code complete | Bounded atomic WorldPacks and explicit Temporal Contexts are built. |
-| Automated/structural evidence | Complete | All 11 focused Almanac suites, syntax, mirror identity, diff check, manual surface, and targeted source-structure checks passed. |
-| Live Roll20 release acceptance | **Open** | Do not claim it passed. It requires a disposable actual Roll20 campaign and the live tracks in `Smoketest.md`. |
+| Gate 0 | Focused VM evidence retained; source warning repair implemented | The false-positive retained-`Core` state warning is covered without silencing genuinely unknown branches. Final live startup/disable-reenable confirmation remains open. |
+| Gate 1 | **Active recovery** | A real launch found incomplete prompt rendering and first-run dead ends. Every generated control needs focused prompt/render coverage and a usable visible outcome. |
+| Gate 2 | Focused VM evidence retained | SceneResolver safety contracts remain valuable, but “Location unassigned” is not acceptable as the only fresh-campaign experience when no onboarding is offered. |
+| Gate 3 | **Active recovery** | Generic record architecture exists, but a fresh GM needs included selectable starter worlds, active-world switching, usable Locations, Climate regions, destinations, routes, and presets. |
+| Gate 4 | Focused VM evidence retained | WorldPacks and Temporal Contexts remain bounded advanced tools; they must not be an excuse to ship an empty campaign. |
+| Automated/structural evidence | Historical checkpoint plus active additions | Earlier 11-suite passing evidence does not prove rendered Roll20 controls. Add focused recovery coverage before another live checkpoint. |
+| Live Roll20 release acceptance | **Blocked / not eligible** | One exploratory launch exposed product blockers. Do not restart formal acceptance until they are repaired and covered. |
+
+---
+
+## 2.1 Confirmed live-product blockers and recovery direction
+
+The first real Roll20 exploratory run did **not** crash, but it invalidated the prior “complete code program” handoff. The GM reported:
+
+- startup warning: `Unexpected state branch: Core` (now reproduced and repaired in source/focused VM by recognizing retained registered internal namespaces; it still needs fresh Roll20 startup confirmation);
+- no active Location, no Locations/Favorites/Recents/Prepared Destinations, and Travel blocked with no clear first-launch recovery;
+- Scene/Scene Details showing generic provider values while the Location remained unassigned;
+- Climate limited to `Temperate Lowlands` with no practical world/profile selection path;
+- Climate **Add Region** rendering as `!aa-climate region add --name` and returning the missing-name/profile error;
+- no included usable default world collection, despite the product needing practical starter content rather than an empty WorldPack-first framework.
+
+Recovery work must prioritize the fresh-GM journey: World Library/Starter Worlds → active Location → Scene → Climate/Weather/Environment → Travel → editable Worldbuilding records. Included content must be owner-authored generic material or separately license-reviewed; it may not copy published-setting lore. A button is only complete when it opens a complete Roll20 prompt (where needed), does not ask for a hidden identifier, and gives a visible result.
 
 ---
 
@@ -87,9 +102,19 @@ This document is a practical restart/recovery guide for the AlmanacAssist **v2.0
 - It does not write provider state while resolving a scene.
 - Technical scene output remains GM-only.
 
+#### Climate, Weather, and Environment coherence recovery
+
+- The effective current-Scene Climate is explicit and read-only: direct active Location relation, then active Ecoregion relation, then campaign fallback. A Location move does not rewrite the Climate selector, committed Weather, or Environment owner state.
+- `!aa-climate`, Current Scene, dashboard/status, default `getClimate()`, and `almanac.climate.changed` events report that same effective baseline and carry the campaign fallback separately. Explicit `getClimate(region)` remains a named-region lookup.
+- Generated and manual Weather record the effective source. If a Location move makes stored Weather old-region evidence, Weather and Scene Details retain/flag it until a GM chooses Generate or the visible **Set Manual Conditions** path.
+- Before any Weather is committed, EnviroAlmanac follows the active Location’s default context so Environment agrees with Scene. A Climate region referenced by active Worldbuilding cannot be removed until the named Location/Ecoregion relation is reassigned or cleared.
+- Focused source coverage includes direct Location, Ecoregion-only, and campaign-fallback Climate paths, manual provenance, retained mismatch, environment parity, semantic-event payloads, removal guards, and decoded ordinary-screen target checks. A real Roll20 renderer still has final authority.
+
 ### 3.4 Gate 3: generic live-world tools
 
 #### Worldbuilding Mode
+
+**Recovery addition in progress:** the branch now contains an owner-authored generic Starter World collection (Ember Coast, Sunward Expanse, Frostfall Marches, and Mirewood Basin), a World Library that saves/switches compatible active world context, first-run routing from Worldbuilding/Location/Travel/Scene, direct first-Location activation, climate-region selection, guided page/handout references, ordinary Weather manual/history controls, and a broad decoded target audit of ordinary starter screens. The audit now exercises each first-level visible query choice as well as defaults, requires a recovery control on generated refusal/no-change results, keeps known-incompatible GameAssist-owned WorldPack and Wayfarer handouts out of each other’s picker, and covers selected-token Rest previews/confirmation. These are implementation repairs under focused regression coverage, **not** a claim of completed live usability or formal acceptance.
 
 - Added bounded generic owner-authored records for:
   - Region
@@ -172,9 +197,9 @@ Protected future-state paths include:
 - Known newer Phenomenon activation records
 - RulesAdvisor configuration where applicable
 
-### 4.2 The final `runtime.world` audit
+### 4.2 `runtime.world` future-state safety
 
-This was the last identified non-live code risk and is now closed.
+This is a retained safety contract. It is not evidence that the wider live-product recovery is closed.
 
 Before the final hardening, `ensureAlmanacRuntime()` rebuilt `runtime.world` unconditionally. A future `runtime.world.schemaVersion` could therefore have been destructively normalized merely by startup or a display path.
 
@@ -207,6 +232,8 @@ This behavior is intentionally conservative. Do not replace it with a repair/nor
 | `tests/almanac-gate0.test.js` | Shared isolated Roll20-shaped VM harness plus Gate 0 checks. Its harness accepts a historical state fixture for migration testing. |
 | `tests/almanac-scene-resolver.test.js` | SceneResolver no-write/immutability/provenance coverage. |
 | `tests/almanac-worldbuilding.test.js` | Generic records, editor layers, future config/runtime preservation, and mutation-block checks. |
+| `tests/almanac-starter-worlds.test.js` | Fresh-GM onboarding, generic built-in starter worlds, saved-world switching, first-location activation, direct/Ecoregion/fallback Climate provenance, Weather/manual mismatch behavior, Location-default Environment parity, Climate event/removal guards, decoded ordinary-screen prompt targets plus each first-level visible choice, recovery controls for generated refusal/no-change panels, compatible named handout pickers, and no-hidden-ID reference controls. This is focused VM evidence only; a fresh real-Roll20 render/prompt pass remains required. |
+| `tests/almanac-rest.test.js` | Selected linked 2014-PC Rest preview, accepted Long Rest sheet/time commit, stale-plan refusal, and player controller-boundary checks. |
 | `tests/almanac-travel.test.js` | Prepared Destination and reviewed Travel checks. |
 | `tests/almanac-phenomena.test.js` | Phenomena scope, expiry, review, cleanup, and preservation checks. |
 | `tests/almanac-presets.test.js` | PresetRegistry clone/install checks. |
@@ -216,21 +243,22 @@ This behavior is intentionally conservative. Do not replace it with a repair/nor
 | `tests/almanac-wayfarer-handout.test.js` | Inert Wayfarer handout export/import/review/atomicity checks. |
 | `tests/almanac-migration.test.js` | Historical fixture: additive migration, exact Wayfarer starter migration, and future config/runtime preservation. |
 | `README.md`, `ROADMAP.md`, `CHANGELOG.md` | Public/current behavior documentation. |
-| `Smoketest.md` | Final real-Roll20 acceptance checklist. Its Almanac section is eligible but still unexecuted. |
+| `Smoketest.md` | Real-Roll20 recovery and later acceptance checklist. Its prior “eligible” status is withdrawn until fresh-GM starter-content, complete-prompt, and dead-end repair checks pass. |
 | `docs/AlmanacAssist-v2.0.0-Build/ASSESSMENT.md` | Scope/architecture/status assessment. |
 | `docs/AlmanacAssist-v2.0.0-Build/IMPLEMENTATION_PLAN.md` | Gate-by-gate plan and exact automated evidence. |
 | `docs/AlmanacAssist-v2.0.0-Build/HANDOFF.md` | This durable restart/recovery summary. |
 
 ---
 
-## 6. Exact automated verification evidence
+## 6. Automated verification evidence and its limit
 
-The following passed at the final code checkpoint:
+The following are the historical focused checks plus the active recovery suite. They are necessary regression evidence, but the first live result proved they are not sufficient evidence of product usability:
 
 ```bash
 node tests/almanac-gate0.test.js
 node tests/almanac-scene-resolver.test.js
 node tests/almanac-worldbuilding.test.js
+node tests/almanac-starter-worlds.test.js
 node tests/almanac-travel.test.js
 node tests/almanac-phenomena.test.js
 node tests/almanac-presets.test.js
@@ -249,24 +277,21 @@ cmp GameAssist GameAssist-v2.0.0
 git diff --check
 ```
 
-Also passed:
-
-- A targeted structural check for balanced canonical source section markers, the canonical-tree Almanac identifier, and active Almanac section metadata/footer.
-- A manual surface check proving that `!Almanac-Manual` produces a handout containing Temporal Context, Wayfarer handout, and editor-layer guidance.
+Historical checkpoint evidence also included a targeted canonical-section structural check and a manual surface check for `!Almanac-Manual`. Rerun those checks after any source change that affects their contracts.
 
 ### Important test interpretation
 
-These are isolated Node/VM checks. They prove implementation boundaries and regression contracts, **not** Roll20 UI rendering, prompts, API sandbox behavior, real sheet-worker behavior, or release acceptance.
+These are isolated Node/VM checks. They prove implementation boundaries and regression contracts, **not** Roll20 UI rendering, deferred query expansion, API sandbox behavior, real sheet-worker behavior, first-run discoverability, or release acceptance. The recovery suite is deliberately adding assertions for visible first-launch routes, complete encoded query targets, named page/handout choices, and usable starter state; it still cannot substitute for a real Roll20 chat-rendering pass.
 
-There is no separate broader repository test runner in this checkout. The 11 focused Almanac suites are the complete current automated test collection for this work.
+There is no separate broader repository test runner in this checkout. The focused Almanac suite count is not a readiness metric. A green suite must never be summarized as “the code program is complete” without the explicit fresh-GM Roll20 outcome.
 
 ---
 
-## 7. Live validation: the only remaining release phase
+## 7. Live validation: exploratory failure, recovery, then formal acceptance
 
-No live Roll20 validation has started. This was intentional: the user required all Issue #96 code before spending time in a live sandbox.
+An exploratory real Roll20 launch has already happened. It exposed the blockers listed in section 2.1, so it must be recorded as **failed pre-acceptance product discovery**, not omitted or relabeled as a passing/no-start state. The user correctly required that no formal acceptance effort be spent before the implementation is usable; that rule still applies during recovery.
 
-When a disposable real Roll20 campaign is available, use the **Focused v2.0.0 Complete AlmanacAssist Acceptance** section in `Smoketest.md`. It includes checks for:
+Before a new formal acceptance run, run a short disposable-campaign recovery check for a brand-new GM: choose/install a starter world, see a current Location, set/select a climate region, create/activate a Location, prepare and use a destination, start/review Travel, use a generated query button, and open WorldPack/Wayfarer paths without being asked to discover raw Roll20 IDs. Record the rendered chat text and actual results. Only after those checks pass should the full **Focused v2.0.0 Complete AlmanacAssist Acceptance** section in `Smoketest.md` restart. It includes checks for:
 
 - A nontrivial Wayfarer calendar through chat controls only
 - Every generated button and prompt
@@ -287,7 +312,7 @@ Do not mark the implementation as a live Roll20 release until those checks are a
 ## 8. Safe resumption checklist
 
 1. **Stay on the Arena branch.** Do not switch to, create, or push another branch.
-2. Confirm the remote branch contains `9c0a83a` or its descendant.
+2. Confirm the remote branch contains the current recovery work as a descendant of `9c0a83a`; do not treat that historical commit as a completion marker.
 3. Confirm the three executable artifacts are identical before testing or committing source work.
 4. If changing canonical source:
    ```bash
@@ -299,9 +324,9 @@ Do not mark the implementation as a live Roll20 release until those checks are a
    cmp GameAssist GameAssist.js
    cmp GameAssist GameAssist-v2.0.0
    ```
-5. Run the full 11-suite focused collection after any meaningful Almanac change.
+5. Run the applicable focused suite(s), including `almanac-starter-worlds.test.js` for onboarding/UI work, then the full focused collection after any meaningful Almanac change.
 6. Preserve the future-state refusal policy. Add a focused test before changing a migration or normalization path.
-7. Do not begin live Roll20 work until using a disposable campaign and the final checklist deliberately.
+7. Do not restart formal live Roll20 acceptance until the documented fresh-GM recovery checks are green in source and a disposable campaign is ready.
 8. Do not modify Issue #95.
 9. Before a new commit, run `git diff --check`; then commit/push only `arena/01a03c75-gameassist`.
 
@@ -322,4 +347,4 @@ Do not mark the implementation as a live Roll20 release until those checks are a
 
 ## 10. Short status statement for a new thread
 
-> AlmanacAssist **v2.0.0** has the complete Issue #96 code program on `arena/01a03c75-gameassist`, including SceneResolver, layered generic Worldbuilding, Prepared Destinations, reviewed Travel, Phenomena, PresetRegistry, advisory-only RulesAdvisor, atomic WorldPacks, immutable Prime plus regional/planar Temporal Contexts, and optional stale-safe Wayfarer handout editing. All focused automated/structural checks passed, including future `runtime.world` preservation and mutation blocking. Issue #95 was not touched. The only remaining release work is final live Roll20 acceptance in a disposable campaign; it has not started.
+> AlmanacAssist **v2.0.0** is in active live-product recovery on `arena/01a03c75-gameassist`. Earlier framework work supplies SceneResolver, generic Worldbuilding, Travel, Phenomena, Presets, WorldPacks, Temporal Contexts, and Wayfarer, but an exploratory real Roll20 launch found fresh-GM setup, starter-content, Climate prompt, and navigation failures. The branch is repairing a generic Starter World library, active Location/Travel flow, complete deferred prompts, named Roll20 references, and coherent local Climate/Weather/Environment provenance with focused regression coverage. Do not call the Issue #96 program code-complete or start formal acceptance until a fresh GM can use those flows in real Roll20. Issue #95 was not touched.

@@ -93,6 +93,7 @@ function assertExportAndValidation(harness) {
     assert.equal(invalid.length, 1, 'malformed handout must return one warning panel');
     assert.match(invalid[0].message, /not valid JSON|Validation/i, 'malformed handout must be rejected before import');
     assert.match(invalid[0].message, /No text was executed/i, 'malformed handout path must state inert text safety');
+    assert.match(invalid[0].message, /\[Wayfarer Calendar\]\(!aa-wayfarer\)/, 'a malformed editable handout must retain a visible Wayfarer recovery path');
     assert.equal(calendarDigest(almanac), before, 'malformed handout must not change active calendar, time, providers, or draft');
 
     handout.set('notes', JSON.stringify({ ...document, definition: { ...document.definition, unsupportedField: 'must not be dropped silently' } }));
@@ -175,6 +176,19 @@ function assertFutureImportRuntimePreservation(harness) {
     assert.equal(JSON.stringify(almanac.runtime.wayfarerImports), before, 'future Wayfarer import runtime must not be normalized, expired, or reinterpreted');
 }
 
+function assertImportRecoveryControls(harness) {
+    const missing = harness.dispatchCommand('!aa-wayfarer import');
+    assert.equal(missing.length, 1, 'an incomplete Wayfarer import must render one recovery panel');
+    assert.match(missing[0].message, /Choose an editable calendar handout/i, 'an incomplete import must explain the handout prerequisite');
+    assert.match(missing[0].message, /\[Export Editable Draft\]\(!aa-wayfarer export\)/, 'an incomplete import must offer a direct editable-draft creation path');
+    assert.match(missing[0].message, /\[Wayfarer Calendar\]\(!aa-wayfarer\)/, 'an incomplete import must return directly to the named calendar picker');
+
+    const unavailable = harness.dispatchCommand('!aa-wayfarer import --handout missing-handout');
+    assert.equal(unavailable.length, 1, 'an unavailable Wayfarer handout must render one recovery panel');
+    assert.match(unavailable[0].message, /handout is unavailable/i, 'an unavailable Wayfarer handout must state that no text was parsed');
+    assert.match(unavailable[0].message, /\[Wayfarer Calendar\]\(!aa-wayfarer\)/, 'an unavailable handout result must retain a visible calendar recovery path');
+}
+
 function assertAliases(harness) {
     ['!WAYFARER', '!aa-wayfarer', '!aa wayfarer'].forEach(command => {
         const response = harness.dispatchCommand(command);
@@ -189,6 +203,7 @@ function run() {
     assertReviewedDraftOnlyImport(createHarness());
     assertStaleGuards(createHarness());
     assertFutureImportRuntimePreservation(createHarness());
+    assertImportRecoveryControls(createHarness());
     assertAliases(createHarness());
     process.stdout.write('PASS: AlmanacAssist Wayfarer handout focused regression checks\n');
 }

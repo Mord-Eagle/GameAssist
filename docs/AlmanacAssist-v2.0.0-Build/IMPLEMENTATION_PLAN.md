@@ -16,18 +16,18 @@ and tests until a final consolidated regression pass.
 
 The plan follows the delivery order in #95/#96. The narrow repairs in **Gate 0** are
 completed first because they are independently verifiable and reduce risk before
-the larger architectural work begins. **AlmanacAssist v2.0.0 is the active implementation version for the entire program. Live Roll20 validation is a final release phase and must not begin until all Issue #96 code gates are built.**
+the larger architectural work begins. **AlmanacAssist v2.0.0 is the active implementation version for the entire program.** A real exploratory Roll20 launch invalidated the earlier assumption that framework completion meant usable code completion. Formal live acceptance must not restart until the fresh-GM recovery work below is built and focused-covered.
 
 ## 1. Status summary
 
 | Gate | Scope | Status |
 | --- | --- | --- |
-| Gate 0 | Preserve and repair the current foundation | **Code built — #92/#93, configured-state preservation, close aliases, and warning-only future-state guards are covered in focused VM tests; final live lifecycle evidence remains pending** |
-| Gate 1 | Make the existing six systems usable in Roll20 | **Code built — compact Current World/dashboard, complete Wayfarer chat route plus optional handout route, snapshot-backed presentation, and six-system safeguards are implemented; live UX verification remains final-phase work** |
-| Gate 2 | Introduce the SceneResolver current-scene authority | **Code built — read-only snapshot, explicit Phenomena/Temporal evidence, and focused VM coverage are implemented; live verification remains final-phase work** |
-| Gate 3 | Build live-world systems from #94 | **Code built — generic place composition, Prepared Destinations, reviewed Travel, Phenomena, PresetRegistry, RulesAdvisor, and consistent Worldbuilding editor layers are implemented** |
-| Gate 4 | Portable world data and temporal contexts | **Code built — WorldPacks and explicit reviewed temporal contexts are implemented with bounded parser/review/event contracts** |
-| Acceptance | Automated/structural + live Roll20 | **Automated/structural evidence is clean as of 2026-08-26; final live Roll20 acceptance is now eligible but has not begun** |
+| Gate 0 | Preserve and repair the current foundation | **Focused source evidence retained.** #92/#93, future-state contracts, and the false-positive retained-`Core` audit repair are covered; fresh real-Roll20 startup verification remains required. |
+| Gate 1 | Make the existing six systems usable in Roll20 | **Active recovery.** Complete rendered prompts, outcomes, navigation, and first-run recovery are required; framework/menu presence is insufficient. |
+| Gate 2 | Introduce the SceneResolver current-scene authority | **Focused evidence retained.** It must support a usable current Location rather than becoming a generic unassigned-state dead end. |
+| Gate 3 | Build live-world systems from #94 | **Active recovery.** Add/use legally distributable generic starter worlds, world selection, climate profiles/regions, Locations, destinations, and Travel as an ordinary fresh-GM flow. |
+| Gate 4 | Portable world data and temporal contexts | **Focused evidence retained.** Advanced import/context tools remain bounded and must not be required to escape an empty campaign. |
+| Acceptance | Automated/structural + live Roll20 | **Blocked.** Historical VM evidence is not product completion; exploratory live Roll20 found blockers. Formal acceptance is not currently eligible. |
 
 ## 2. Gate 0 — Preserve and repair the current foundation
 
@@ -72,11 +72,24 @@ the larger architectural work begins. **AlmanacAssist v2.0.0 is the active imple
       when AlmanacAssist or a subsystem is disabled and re-enabled. Live Roll20
       lifecycle confirmation remains required.
 - [x] Keep known future Worldbuilding configuration/runtime, WorldPack, Temporal Context, Wayfarer-import, and transition-review state warning-only; never delete, expire, or reinterpret it automatically in an older build.
-- [ ] **Final validation only:** Complete the live Roll20 smoke checks for disable/re-enable and subsystem toggles after all Issue #96 code gates are built.
+- [x] **Recovery source repair:** Reproduced the startup `Unexpected state branch: Core` warning in the Roll20-shaped harness. `auditState()` now recognizes every registered internal module namespace, including retained `state.GameAssist.Core`, without deleting it; genuinely unregistered branches still warn. `assertKnownInternalStateNamespace()` in the Gate 0 harness locks that distinction. Fresh live startup verification remains in the recovery preflight.
+- [ ] **Final validation only:** Complete the live Roll20 smoke checks for disable/re-enable and subsystem toggles after the fresh-GM recovery work is complete.
 
 ## 3. Gate 1 — Make the existing six systems usable in Roll20
 
-This code gate has a v2.0.0 implementation foundation: compact Current World/Scene presentation, bounded generic location context, Prepared Destinations, reviewed Travel, and explicit Phenomena overlays. Its live Roll20 acceptance work is intentionally deferred and must begin only after all remaining Issue #96 code gates are built.
+This gate has a v2.0.0 framework foundation: compact Current World/Scene presentation, bounded generic location context, Prepared Destinations, reviewed Travel, and explicit Phenomena overlays. The exploratory live result proved that those foundations do not yet constitute a usable ordinary GM path.
+
+### Fresh-GM interaction recovery (required before formal live acceptance)
+
+- [ ] Every generated action opens a complete Roll20 prompt or invokes a complete command: no blank `--value`, literal boolean residue, incomplete `--period`, or missing required identifier.
+- [ ] Every generated action gives a visible success/refusal/result panel and recovery link; a GM must not need to memorize a command to continue.
+- [ ] First-run Session, Scene, Location, Travel, Climate, Weather, Environment, Astronomy, Rest, Preset, WorldPack, and Wayfarer screens explain the relevant state and link to a usable next action.
+- [ ] Ordinary panels use names/choices for pages, handouts, worlds, profiles, and records; raw IDs are technical-only evidence, never setup input.
+- [ ] Climate Add Region and every comparable create/edit action have complete deferred queries and useful profile/region selection.
+- [ ] Add focused VM assertions that inspect decoded generated targets and state/outcome behavior; then require a fresh real-Roll20 render/prompt check.
+- [x] Recovery source additions now include generic Starter Worlds/World Library, first-run recovery links, first-created Location activation, selected Climate profiles/regions, deferred Climate queries, and named Roll20 page/handout selection controls. These remain focused-VM evidence pending a fresh rendered Roll20 check.
+- [x] Focused source prompt audit now decodes and checks more than 350 generated actions from ordinary starter-world screens for executable targets, closed/nonblank deferred queries, the visible default plus each first-level named query choice, and the known blank/literal placeholder failures. Generated refusal/no-change panels must retain a recovery control; coverage includes Weather's complete manual-condition/history routes, compatible named WorldPack/Wayfarer handout pickers, and selected-token Rest behavior. This detects source/render-target regressions only; Roll20 remains the final prompt renderer.
+- [x] Reconcile effective Climate provenance across Scene, Climate, Weather, Environment, status, public API, and semantic events: Location direct relation → Ecoregion relation → campaign fallback. Location moves retain provider-owned Weather; mismatches are visible, and both generated and manual Weather record the effective source. No-Weather Environment follows the active Location default. Focused VM coverage includes direct, Ecoregion-only, and no-local/fallback paths.
 
 - [x] Implement the compact `!Almanac-GM` / `!Almanac-DM` / `!aa-gm` Current World
       dashboard, Scene view, quick time anchors, and explicit return navigation in
@@ -86,7 +99,7 @@ This code gate has a v2.0.0 implementation foundation: compact Current World/Sce
       ownership when a place changes.
 - [x] Implement reviewed Travel start/route/pace/segment/arrival flow with
       accepted-only fictional-time advancement and final-location switch.
-- [ ] **Final validation only:** Verify all ordinary Travel and generated buttons in live Roll20 after the complete Issue #96 code build.
+- [ ] **Final validation only:** Verify all ordinary Travel and generated buttons in live Roll20 after fresh-GM recovery is complete.
 - [x] Wayfarer calendar manager: create/edit/preview/validate/activate/duplicate/
       roll back/reset without raw JSON; complete query prompts; atomic activation;
       elapsed-time preservation; year-0 behavior defined once; plus optional bounded
@@ -96,9 +109,9 @@ This code gate has a v2.0.0 implementation foundation: compact Current World/Sce
       announcement current-world facts through a single read-only SceneResolver
       snapshot. Preserve independent Off/Descriptive/Detailed/Technical fields and
       Quick/Calendar/Travel/Everything presets; technical content is forced GM-only.
-- [ ] **Final validation only:** Verify every presentation mode and preset in live Roll20 after the complete Issue #96 code build.
+- [ ] **Final validation only:** Verify every presentation mode and preset in live Roll20 after fresh-GM recovery is complete.
 - [x] Climate/weather/environment/astronomy/rest ownership and coherence are implemented in code through the shared snapshot and guarded provider boundaries; final live proof remains below.
-- [ ] **Final validation only:** Run the live Roll20 Wayfarer, announcement, weather/environment coherence, astronomy, and rest tracks after the complete Issue #96 code build.
+- [ ] **Final validation only:** Run the live Roll20 Wayfarer, announcement, weather/environment coherence, astronomy, and rest tracks after fresh-GM recovery is complete.
 
 ## 4. Gate 2 — SceneResolver current-scene authority
 
@@ -124,10 +137,19 @@ This code gate has a v2.0.0 implementation foundation: compact Current World/Sce
 - [x] Route active reviewed Travel through the snapshot with immutable journey
       evidence and field provenance; Travel actions retain explicit review boundaries.
 - [x] Add bounded explicit Phenomena definitions and immutable read-only overlay evidence; filter scoped/elapsed records without writes, preserve newer active records warning-only, and keep non-authoritative terrain/travel presentation separate.
-- [ ] **Final validation only:** Complete live Roll20 Phenomena/coherence evidence after the complete Issue #96 code build.
-- [ ] **Final validation only:** Verify large time changes emit no unbounded event replay in Roll20 after the complete Issue #96 code build.
+- [ ] **Final validation only:** Complete live Roll20 Phenomena/coherence evidence after fresh-GM recovery is complete.
+- [ ] **Final validation only:** Verify large time changes emit no unbounded event replay in Roll20 after fresh-GM recovery is complete.
 
 ## 5. Gate 3 — Live-world systems from #94
+
+### Starter-world and travel usability recovery
+
+- [ ] A fresh campaign must offer an obvious choice of included, generic, legally distributable starter worlds or an equally usable guided first-world route; it must not require WorldPack import or freeform data entry to begin play.
+- [ ] Installing/selecting a starter must visibly create and select a usable active Location, Climate region/profile, Prepared Destinations, routes, and at least one coherent Scene path.
+- [ ] A GM must be able to inspect, change, and edit starter records through ordinary named controls, retain compatible campaign data when switching saved worlds, and recover to a blank campaign-world without data loss.
+- [ ] Travel must be reachable from the active Location and its no-location state must link to World Library/Location setup rather than merely refuse.
+- [ ] Starter material remains bounded generic owner-authored content; it may not reproduce names, lore, maps, factions, or text from a published setting.
+- [x] Source recovery implementation now has four generic starters (Ember Coast, Sunward Expanse, Frostfall Marches, Mirewood Basin), saved World Library switching, Location/Travel first-run recovery, destinations/routes, and starter-world focused VM coverage. Its real rendered usability remains unproven.
 
 - [x] Establish bounded, generic owner-authored Region, Geography, Ecoregion, Biome,
       and Location records with direct Roll20 add/edit/remove controls and
@@ -177,24 +199,33 @@ This code gate has a v2.0.0 implementation foundation: compact Current World/Sce
       provenance in the focused SceneResolver VM harness.
 - [x] WorldPack import/parser tests prove bounded failure, stale-preview refusal, no-overwrite behavior, update/copy provenance, and atomicity.
 - [x] Temporal-context projection/reconciliation tests prove bounded failure, stale refusal, canonical-only atomic commits, event boundaries, and future-state preservation.
-- [x] Ran the repository's complete focused Almanac collection (11 Node VM suites) as one consolidated automated checkpoint. No separate broader repository test runner exists; this does not replace final live Roll20 acceptance.
+- [x] Historical automated checkpoint: 11 Node VM suites ran as one consolidated checkpoint. No separate broader repository test runner exists. The live exploratory failure showed this does not establish first-run usability.
+- [x] Recovery test expansion: `tests/almanac-starter-worlds.test.js` now covers first-run actions, starter installation/switching, direct/Ecoregion/fallback Climate provenance, retained Weather mismatch/manual provenance, Location-default Environment parity, climate-removal guards, and a decoded ordinary-screen generated-target audit. It runs in the full focused suite. Rare/advanced flows still require continued audit plus final Roll20 rendering evidence.
 
 ### Live Roll20
 
-**Final live phase (eligible, not started):** All Issue #96 code gates—including WorldPacks, Temporal Contexts, future Worldbuilding runtime preservation, layered editors, and the Wayfarer handout workflow—are built, and the consolidated automated checkpoint is clean. Execute the following only in a disposable real Roll20 campaign; no VM result marks a live item complete.
+**Recovery render phase (required before formal acceptance):** An exploratory live launch already found blockers, so formal acceptance is **not eligible**. In a disposable real Roll20 campaign, first run and record the following recovery checks; no VM result marks a live item complete:
 
+- [ ] Fresh campaign: open World Library, preview/install each starter, and verify an active Location, named Climate region/profile, destinations, routes, and coherent Scene are immediately usable.
+- [ ] Fresh campaign: create a first blank Location and verify it becomes current; change/clear/assign a named Roll20 page without typing an ID.
+- [ ] Fresh campaign: create/select a Climate region; verify Add Region’s rendered query supplies name/profile rather than emitting a truncated command.
+- [ ] Fresh campaign: reach Prepared Destination and Travel from Location, review/start a route, and use a no-location recovery link.
+- [ ] WorldPack and Wayfarer: choose named existing handouts or follow an actionable no-handout export/template path without typing an ID.
+- [ ] Startup: confirm no false `Unexpected state branch: Core` audit warning and retain warnings for genuinely unknown state.
 - [ ] Nontrivial Wayfarer calendar via chat controls only.
 - [ ] Every generated button opens a complete prompt and produces a visible result.
 - [ ] Session Mode common actions within one or two screens.
 - [ ] Off/Descriptive/Detailed/Technical output and all presets.
 - [ ] Climate, weather, environment, temperature, precipitation, visibility, and
-      moon visibility are coherent.
+      moon visibility are coherent. In particular, verify direct Location Climate, Ecoregion-only inheritance, and campaign fallback; confirm a Location move retains and flags old-region Weather, then use both Generate and Set Manual Conditions to replace it. Before Weather is committed, confirm EnviroAlmanac matches the active Location default.
 - [ ] Each system disabled alone; AlmanacAssist disabled as a parent.
 - [ ] Rest on disposable supported 2014-sheet characters including stale preview
       and rollback.
 - [ ] Unsupported sheets fail without partial writes.
 - [ ] Large time jumps do not stall the sandbox.
 - [ ] Public output reveals no GM-only technical evidence.
+
+Only after the recovery-render checks pass may this list be treated as the formal full acceptance track. Record each real result; do not collapse a menu/prompt smoke observation into a release claim.
 
 ## 8. Verification results on this branch
 
@@ -204,10 +235,10 @@ This code gate has a v2.0.0 implementation foundation: compact Current World/Sce
   (negative/non-finite input, the last valid minute of year 9999, and the first
   invalid minute), #93 configured-state semantics, valid saved-state preservation,
   and case-insensitive close dashboard aliases.
-- The 2026-08-26 automated checkpoint passed `node --check GameAssist`, `node --check GameAssist.js`, `node --check < GameAssist-v2.0.0`, artifact comparison, `git diff --check`, and all 11 focused Almanac Node VM suites: Gate 0, SceneResolver, Worldbuilding, Travel, Phenomena, Presets, RulesAdvisor, WorldPacks, Temporal Contexts, Wayfarer handout, and conservative migration (including future Worldbuilding runtime preservation). These suites prove no-write immutable scope/expiry filtering, future-state preservation, review-before-commit, and atomicity; they do not replace Roll20.
+- The historical 2026-08-26 automated checkpoint passed `node --check GameAssist`, `node --check GameAssist.js`, `node --check < GameAssist-v2.0.0`, artifact comparison, `git diff --check`, and 11 focused Almanac Node VM suites: Gate 0, SceneResolver, Worldbuilding, Travel, Phenomena, Presets, RulesAdvisor, WorldPacks, Temporal Contexts, Wayfarer handout, and conservative migration (including future Worldbuilding runtime preservation). Those suites prove specific no-write, future-state, review-before-commit, and atomicity contracts; they did not prove fresh-GM Roll20 usability.
 - `maximumWorldMinute` no longer appears anywhere in the source.
 - `getSubmoduleStatus()` now returns the explicit six-field configured-state
   object.
 - `GameAssist`, `GameAssist.js`, and `GameAssist-v2.0.0` are byte-identical after
   the edits.
-- The VM harnesses are focused automated development evidence only. The Issue #96 code build and automated gate are complete; final live Roll20 tests remain the governing release acceptance evidence and have not been run in this repository environment.
+- The current post-coherence checkpoint passed syntax checks, artifact identity, `git diff --check`, and all 12 focused Almanac Node VM suites, including the expanded starter-world/prompt suite. The VM harnesses are focused automated development evidence only. An exploratory real-Roll20 run exposed startup/audit, starter-content, Location/Travel, Climate prompt, and navigation gaps. The Issue #96 program remains in active recovery; formal live Roll20 tests must not be described as merely “not yet run” or as the only remaining work.

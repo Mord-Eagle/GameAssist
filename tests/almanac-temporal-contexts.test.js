@@ -187,7 +187,14 @@ function assertBoundariesAndFutureState(harness) {
     const blocked = harness.dispatchCommand(`!aa-temporal transition --id ${fast.id} --minutes 10`);
     assert.equal(blocked.length, 1, 'active Travel overlap must return one safety panel');
     assert.match(blocked[0].message, /Finish or cancel the active reviewed Travel journey/i, 'temporal transition must preserve Travel ownership boundary');
+    assert.match(blocked[0].message, /\[Open Travel\]\(!aa-travel\)/, 'a Travel-bound temporal transition must offer a direct journey recovery path');
+    assert.match(blocked[0].message, /\[Temporal Contexts\]\(!aa-temporal\)/, 'a Travel-bound temporal transition must retain a direct temporal return path');
     almanac.runtime.world.travel.journey = null;
+
+    const missingContext = harness.dispatchCommand('!aa-temporal transition --id missing-context --minutes 10');
+    assert.equal(missingContext.length, 1, 'an unknown temporal destination must return one recovery panel');
+    assert.match(missingContext[0].message, /Choose an existing destination temporal context/i, 'unknown temporal destinations must state the selection prerequisite');
+    assert.match(missingContext[0].message, /\[Temporal Contexts\]\(!aa-temporal\)/, 'unknown temporal destinations must retain a direct picker recovery path');
 
     const primeRemoval = harness.dispatchCommand('!aa-temporal remove --id prime --confirm yes');
     assert.equal(primeRemoval.length, 1, 'Prime removal must return one refusal panel');
