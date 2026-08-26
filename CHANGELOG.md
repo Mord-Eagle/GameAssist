@@ -51,6 +51,15 @@ GameAssist v2.0.0 remains one active development line in PR #81. EffectAssist 2.
 
 EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so existing campaigns upgrade without receiving new markers, conditions, HP writes, other sheet writes, attack rolls, fictional chronology, weather, or chat output until the GM deliberately enables them.
 
+### Release records and platform sequence - 2026-08-26
+
+- Restores the v2.0.0 command, roadmap, and focused smoke-test records for `!ga-sheets`, `!ga-handouts`, TokenAssist 1.3.0 expansion, CombatAssist health evidence, Ready/Delay controls, and the optional NPCAssist encounter-summary handoff. The executable behavior was already present; this checkpoint returns the public release records to that same scope.
+- Records SheetCapabilities 1.0.0, TokenAssist Issues #42-#44, CombatAssist Issues #52, #53, and #56, and the supported portion of handout Issue #72 as implemented pending their focused Roll20 verification rather than future work.
+- Retains persistent image/default-token writes (#45), API_Meta-style diagnostics (#50), Jukebox hooks (#57), and broad EffectAssist catalog expansion (#82) outside the v2.0.0 gate.
+- Defines Roll20 v2.0.0 as a bounded campaign-scale release. Its editable world definitions and WorldPacks must remain within Roll20 Mod sandbox limits; a full atlas-scale content architecture is not a Roll20 release requirement.
+- Sequences the Foundry edition after Roll20 v2.0.0 live acceptance and stabilization. It will be a Foundry-native sister implementation with its own codebase and release history, beginning with AlmanacAssist and atlas-scale WorldPack storage rather than a concurrent or line-by-line port.
+- No executable behavior, saved state, commands, or module versions change in this documentation and metadata checkpoint.
+
 ### AlmanacAssist 2.0 coherent world engine - 2026-08-26
 
 This checkpoint implements Issue #95 on PR #81 without publishing v2.0.0 or claiming the unperformed Roll20 live gate.

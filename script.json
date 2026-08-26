@@ -181,6 +181,8 @@
     "!ga-health",
     "!ga-health recent",
     "!ga-health audit",
+    "!ga-sheets",
+    "!ga-handouts",
     "!ga-health alerts",
     "!ga-health alerts preview",
     "!ga-timezone",
@@ -364,6 +366,12 @@
     "!Combat-Confirm <standard|varied>",
     "!Combat-Timer [on|off|duration <seconds>|deadline <gm|player|both|public>|add <seconds-remaining> <audience>|remove <seconds-remaining>|clear --confirm]",
     "!Combat-Cue [off|gm|players|both|public]",
+    "!Combat-Ready [on|off|profile <5e|legacy>]",
+    "!Combat-Hold",
+    "!Combat-Now",
+    "!Combat-Cancel-Hold",
+    "!Now",
+    "!Combat-Timeline [round <number>|current|last|clear --confirm]",
     "!CombatAssist-<command>",
     "!Welcome",
     "!Welcome-Help [overview|setup|modes|custom|appearance|safety]",
@@ -747,8 +755,6 @@
     "!AttackAssist",
     "!AlmanacAssist",
     "!HPAssist",
-    "!DebugTools",
-    "!Heal-Max",
-    "!Heal-Auto on|off"
+    "!DebugTools"
   ]
 }

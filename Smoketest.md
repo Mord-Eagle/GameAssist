@@ -1202,6 +1202,113 @@ The maintainer test suite separately checks fixed winter and summer instants, a 
 
 ---
 
+## Focused v2.0.0 Non-Almanac Follow-Up Checks
+
+These checks cover the directly implemented backlog work included in PR #81. They can be skipped only when the corresponding feature will remain disabled or unused. Local checks do not replace the focused Roll20 behavior checks below.
+
+### SheetCapabilities and HealthService
+
+**What it tests:** Whether GameAssist identifies what a character sheet can safely provide before a module reads or writes it.
+
+**Run:** On a page containing one official 2014 PC, one official 2024 PC if available, and one unknown or unlinked token, run:
+
+```roll20chat
+!ga-sheets
+!ga-health audit
+```
+
+**Pass when:** The report distinguishes supported, unsupported, and unknown operations without inventing a bonus or silently claiming that every operation works. No character or token changes occur.
+
+**Skip when:** No sheet-sensitive GameAssist module is enabled.
+
+### MarkerService and TokenAssist
+
+**What it tests:** Whether the shared marker authority preserves advanced expressions while TokenAssist keeps controller, reporting, visual, and multi-sided actions bounded to explicit targets.
+
+**Run:** Select one disposable token and use:
+
+```roll20chat
+!token-assist actions
+!ta-set statusmarkers|red[2]
+!ta-set statusmarkers|+red
+!ta-set statusmarkers|?blue:3
+!ta-set statusmarkers|red:+1:0:9
+!ta-set aura1_color|+10% light_radius|+5 currentSide|+1
+!ta-report gm|"{name}: {bar1_value}"
+```
+
+Then use the action-library buttons for one controller edit and one report route.
+
+**Pass when:** Requested operations return clear success or refusal messages, unrelated markers and token properties remain intact, an unsupported or ambiguous selector is refused without a partial mutation, and the report reaches only its chosen recipient. `!ga-sheets` remains read-only.
+
+**Skip when:** TokenAssist and marker-dependent modules are disabled. Do not use a live NPC marker as the disposable target.
+
+### CombatAssist Health Timeline
+
+**What it tests:** Whether supported HP changes can be reviewed at encounter and turn boundaries without being mislabeled as proven damage.
+
+**Run:** Start a disposable native-tracker encounter with at least two rows, make one supported HP change, advance one turn, make another supported HP change, then run:
+
+```roll20chat
+!Combat-Start
+!Combat-Timeline
+!Combat-Timeline round 1
+```
+
+**Pass when:** The timeline identifies the encounter, round, turn, subject, before/after values, direction, and evidence source. It clearly says that the record is review evidence and does not claim attacker, damage type, resistance, or causation.
+
+**Skip when:** CombatAssist or HealthService is disabled.
+
+### CombatAssist Ready and Delay
+
+**What it tests:** Whether optional held actions work without replacing Roll20's native initiative rules.
+
+**Run:** As GM, open `!Combat-Ready`, enable the feature, leave the profile at `5e`, and use the player-facing **Ready an Action** button. Then use `!Now` and inspect the confirmation. Repeat once with `profile legacy` if that profile is needed by the campaign.
+
+**Pass when:** The current character can record and cancel one held action, the native tracker advances normally, `!Now` announces use without applying damage or conditions, stale or expired records cannot be reused, and the legacy profile does not guess where a delayed turn belongs.
+
+**Skip when:** The campaign does not use Ready/Delay workflows. The feature is off by default.
+
+### CombatAssist to NPCAssist Summary Handoff
+
+**What it tests:** Whether an ended encounter can be summarized in the existing report system without creating fake deaths or revivals.
+
+**Run:** Start and end a disposable encounter. At the end, choose **Add to Session** or **Add to All Active Reports**, then run:
+
+```roll20chat
+!npc-death-report --scope session
+!npc-death-write
+```
+
+Run the same handoff twice to verify deduplication.
+
+**Pass when:** One encounter summary appears in the chosen bucket, a repeated handoff does not duplicate it, and no death/revival entry appears unless an actual NPC death/revival occurred.
+
+**Skip when:** CombatAssist is not used with NPCAssist reports.
+
+### Handout Identity and Index
+
+**What it tests:** Whether GameAssist updates its own reports and manuals without silently replacing a renamed or conflicting handout.
+
+**Run:** Use one report-writing module, then run:
+
+```roll20chat
+!ga-handouts
+!ga-config list
+```
+
+Open the index and one linked handout. If safe in a disposable campaign, rename one GameAssist handout and run the writer again.
+
+**Pass when:** The index lists stable owner/key identities, the existing handout is updated rather than duplicated, and a renamed or conflicting handout produces a clear diagnostic instead of being overwritten.
+
+**Skip when:** The campaign does not use GameAssist handouts or reports. Folder placement remains a manual Journal action.
+
+### Deferred Work
+
+The following are intentionally outside this smoke section: persistent image/default-token writes (#45), API_Meta-style source-offset diagnostics (#50), Jukebox/music hooks (#57), and broad EffectAssist catalog expansion (#82).
+
+---
+
 ## Full v2.0.0 Release Acceptance Test
 
 This release test has two tracks:
