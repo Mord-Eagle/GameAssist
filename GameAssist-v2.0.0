@@ -3,7 +3,7 @@
 GameAssist - Roll20 API Script
 Version: 2.0.0
 Last Updated: 2026-08-26 (America/New_York)
-Release scope: EffectAssist 2.5.3 compact identity-aware casting, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.0 automatic or reviewed normal/maximum healing, HealthService 1.1.0 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, CombatAssist 1.2.0 timeline and Ready/Delay tools, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist v2.0.0 SceneResolver, generic Worldbuilding, Prepared Destinations, reviewed Travel, explicit Phenomena overlays, PresetRegistry, and optional RulesAdvisor on the AlmanacAssist-v2.0.0-Build line (one defensive current-scene snapshot, provenance, coherent session presentation, bounded place composition, and accepted-only fictional travel time), and regression repairs across the v2.0.0 module suite.
+Release scope: EffectAssist 2.5.3 compact identity-aware casting, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.0 automatic or reviewed normal/maximum healing, HealthService 1.1.0 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, CombatAssist 1.2.0 timeline and Ready/Delay tools, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist v2.0.0 SceneResolver, generic Worldbuilding, Prepared Destinations, reviewed Travel, explicit Phenomena overlays, PresetRegistry, optional RulesAdvisor, and atomic WorldPacks on the AlmanacAssist-v2.0.0-Build line (one defensive current-scene snapshot, provenance, coherent session presentation, bounded place composition, and accepted-only fictional travel time), and regression repairs across the v2.0.0 module suite.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -30,7 +30,7 @@ calls GameAssist.enqueue(). This development package contains fifteen configurab
 - EffectAssist 2.5.3 - Coordinates compact catalog-driven effects, exact caster-and-recipient identity, retained GM requests, GameAssist-owned 2014-sheet modifiers, verified token-specific concentration, ownership-safe cleanup, duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
 - HealAssist 1.2.0 - Guides verified 2014 normal or maximum healing with direct single-recipient targeting, optional automatic application, visible PC targeting, private GM requests, and HealthService verification.
 - AttackAssist 1.1.0 - Guides authorized 2014 repeating attacks through direct visible targeting, default sheet-mode submission, optional GM-enabled roll review, complete prompt-safe Classic-sheet expansion, private GM placement, crash-safe inline-roll validation, and visible one-use native-template rolls without applying damage.
-- AlmanacAssist v2.0.0 - Builds bounded generic PresetRegistry templates, editable campaign Session Preset clones, and optional advisory-only RulesAdvisor notes on top of explicit Phenomena overlays, Prepared Destinations, Travel Routes, and review-confirmed Travel. Preset installation is previewed and confirmed; no built-in setting lore is bundled.
+- AlmanacAssist v2.0.0 - Builds bounded generic PresetRegistry templates, editable campaign Session Preset clones, optional advisory-only RulesAdvisor notes, and atomic handout-reviewed WorldPacks on top of explicit Phenomena overlays, Prepared Destinations, Travel Routes, and review-confirmed Travel. Preset and WorldPack installation are reviewed and confirmed; no built-in setting lore is bundled.
 - HPAssist 0.3.0 - Rolls npc_hpformula and uses HealthService for verified writes to the selected shared NPC HP bar when available.
 - DebugTools 0.3.1 - Optional dry-run-first GM diagnostics with verified supported HP damage writes on the selected shared NPC HP bar.
 
@@ -519,7 +519,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             presetPhenomenonLimit: 12,
             presetGrantLimit: 24,
             presetGrantMs: 1000 * 60 * 5,
-            rulesAdvisorNoteLimit: 6
+            rulesAdvisorNoteLimit: 6,
+            worldPackLimit: 24,
+            worldPackGrantLimit: 4,
+            worldPackGrantMs: 1000 * 60 * 5,
+            worldPackDocumentCharLimit: 50000,
+            worldPackRecordLimit: 240,
+            worldPackObjectLimit: 900,
+            worldPackDepthLimit: 10,
+            worldPackStringLimit: 1000
         }),
         config: Object.freeze({
             unsafeKeys: Object.freeze(['__proto__', 'prototype', 'constructor'])
@@ -23530,7 +23538,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: AlmanacAssist fictional calendar and world time
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:ALMANACASSIST", title: "AlmanacAssist",
-    //   guarantees: ["Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Optional Almanac integrations improve context without becoming hidden prerequisites","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer exposes direct validated editors for every stored calendar component while moon phases remain visible Astronomy-owned context","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","The internal read-only SceneResolver emits one defensive current-world snapshot with field-level provenance, bounded warnings, separate moon phase and visibility, and no provider-state writes","The GM dashboard, Scene view, announcements, weather forecast display, and rest previews consume one resolved snapshot so current weather, environment, visibility, and celestial evidence do not contradict each other","Worldbuilding Mode provides bounded generic Regions, Geography, Ecoregions, Biomes, Locations, Prepared Destinations, Travel Routes, explicit Phenomena overlays, and Session Presets with safe current-place selection, favorites, recents, and field-owned SceneResolver composition without bundled setting lore","RulesAdvisor is optional, profile-specific, advisory-only, and never applies gameplay state changes","Prepared Destination, Travel, and Phenomena reviews never advance fictional time or change active Location until the GM explicitly confirms an individual reviewed operation","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Descriptive announcements report player-perceivable time, weather, visibility, and moon visibility without presenting climate baselines as simultaneous current measurements","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
+    //   guarantees: ["Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Optional Almanac integrations improve context without becoming hidden prerequisites","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer exposes direct validated editors for every stored calendar component while moon phases remain visible Astronomy-owned context","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","The internal read-only SceneResolver emits one defensive current-world snapshot with field-level provenance, bounded warnings, separate moon phase and visibility, and no provider-state writes","The GM dashboard, Scene view, announcements, weather forecast display, and rest previews consume one resolved snapshot so current weather, environment, visibility, and celestial evidence do not contradict each other","Worldbuilding Mode provides bounded generic Regions, Geography, Ecoregions, Biomes, Locations, Prepared Destinations, Travel Routes, explicit Phenomena overlays, and Session Presets with safe current-place selection, favorites, recents, and field-owned SceneResolver composition without bundled setting lore","RulesAdvisor is optional, profile-specific, advisory-only, and never applies gameplay state changes","WorldPacks are bounded inert handout data with syntax/schema/reference/provenance review, expiring confirmation, atomic Worldbuilding plus registry commits, stable imported-record provenance, no-overwrite New/Copy policy, and guarded update policy","Prepared Destination, Travel, and Phenomena reviews never advance fictional time or change active Location until the GM explicitly confirms an individual reviewed operation","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Descriptive announcements report player-perceivable time, weather, visibility, and moon visibility without presenting climate baselines as simultaneous current measurements","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AlmanacAssist"], last_updated_version: "v2.0.0",
     //   independent_versions: { module_version: "2.0.0", scene_state_schema_version: 1, world_state_schema_version: 4, time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2 }, lifecycle: "active" }
@@ -23554,6 +23562,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const PHENOMENA_RUNTIME_SCHEMA_VERSION = 1;
         const PRESET_REGISTRY_SCHEMA_VERSION = 1;
         const RULES_ADVISOR_SCHEMA_VERSION = 1;
+        const WORLD_PACK_SCHEMA_VERSION = 1;
+        const WORLD_PACK_RUNTIME_SCHEMA_VERSION = 1;
         const TIME_STATE_SCHEMA_VERSION = 2;
         const WAYFARER_DRAFT_SCHEMA_VERSION = 3;
         const ANNOUNCEMENT_SCHEMA_VERSION = 4;
@@ -23723,6 +23733,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             '2024': Object.freeze({ id: '2024', name: '2024 Advisory Profile', framing: "Use the campaign's applicable 2024 rules reference and table rulings." }),
             custom: Object.freeze({ id: 'custom', name: 'Campaign Custom Advisory Profile', framing: "Use the campaign's owner-authored rules agreement and table rulings." })
         });
+        const WORLD_PACK_FORMAT = 'GameAssist.AlmanacWorldPack';
+        const WORLD_PACK_COLLECTIONS = Object.freeze(['regions', 'geographies', 'ecoregions', 'biomes', 'locations', 'destinations', 'routes', 'phenomena']);
+        const WORLD_PACK_PROVENANCE_TYPES = Object.freeze(['owner-authored', 'license-reviewed', 'public-domain']);
+        const DEFAULT_WORLD_PACK_CONFIG = Object.freeze({
+            schemaVersion: WORLD_PACK_SCHEMA_VERSION,
+            revision: 0,
+            installed: Object.freeze([])
+        });
         const WORLD_RECORD_TYPES = Object.freeze(['region', 'geography', 'ecoregion', 'biome', 'location', 'destination', 'route', 'phenomenon', 'preset']);
         const WORLD_RECORD_COLLECTIONS = Object.freeze({
             region: 'regions', geography: 'geographies', ecoregion: 'ecoregions', biome: 'biomes', location: 'locations',
@@ -23793,6 +23811,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             environment: {},
             rest: { advanceTime: true, extendedEnabled: false, pace: 'standard', shortHours: 1, longHours: 8, extendedHours: 24, customTypes: [] },
             rulesAdvisor: copy(DEFAULT_RULES_ADVISOR_CONFIG),
+            worldPacks: copy(DEFAULT_WORLD_PACK_CONFIG),
             world: copy(WORLD_DEFAULT_CONFIG),
             ...modState.config
         });
@@ -24119,6 +24138,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             runtime.rest.grants = runtime.rest.grants && typeof runtime.rest.grants === 'object' && !Array.isArray(runtime.rest.grants)
                 ? runtime.rest.grants
                 : {};
+            const storedWorldPacks = sceneRecord(runtime.worldPacks) ? runtime.worldPacks : {};
+            runtime.worldPacks = {
+                ...worldExtras(storedWorldPacks, ['schemaVersion', 'grants']),
+                schemaVersion: WORLD_PACK_RUNTIME_SCHEMA_VERSION,
+                grants: boundedWorldPackGrantMap(storedWorldPacks.grants)
+            };
             const storedWorld = sceneRecord(runtime.world) ? runtime.world : {};
             const worldKnown = ['schemaVersion', 'recentLocationIds', 'revision', 'destinationGrants', 'travel', 'phenomenonGrants', 'activePhenomena', 'phenomenaHistory', 'presetGrants'];
             runtime.world = {
@@ -25039,7 +25064,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Local Context', value: `${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Scene', '!aa-scene')}` },
                 { label: 'Time & Sky', value: `${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('Astronomy', '!astro')}` },
                 { label: 'Gameplay', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Travel Routes', '!aa-world routes')} ${GameAssist.createButton('Rules Advisor', '!aa-rules')} ${GameAssist.createButton('Rest', '!rest')}` },
-                { label: 'Campaign Tools', value: `${GameAssist.createButton('Presets', '!aa-presets')} ${GameAssist.createButton('Systems', '!Almanac-Systems')} ${GameAssist.createButton('Audit', '!Almanac-Audit')}` },
+                { label: 'Campaign Tools', value: `${GameAssist.createButton('Presets', '!aa-presets')} ${GameAssist.createButton('WorldPacks', '!aa-worldpacks')} ${GameAssist.createButton('Systems', '!Almanac-Systems')} ${GameAssist.createButton('Audit', '!Almanac-Audit')}` },
                 { label: 'World Records', value: `${config.locations.length} locations | ${config.destinations.length} prepared destinations | ${config.routes.length} routes | ${config.phenomena.length} phenomena | ${config.presets.length} session presets | ${config.regions.length} regions | ${config.ecoregions.length} ecoregions | ${config.geographies.length} geographies | ${config.biomes.length} biomes` },
                 { label: 'Navigation', value: `${GameAssist.createButton('Back', '!aa-gm')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
             ]);
@@ -26619,6 +26644,28 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
+        /**
+         * handleWorldPacks - Route GM WorldPack controls through one review-only import path.
+         * Inputs: normalized WorldPack command text.
+         * Outputs: template/export, validation preview, confirmation, or compact status UI.
+         * Invariant: all imports require a GM and an expiring review grant; no raw handout text is sent to chat.
+         */
+        function handleWorldPacks(msg, content) {
+            const body = content.replace(/^worldpacks?\s*/i, '').trim();
+            if (!body || /^(menu|status|list)$/i.test(body)) {
+                if (!requireGm(msg)) return;
+                return showWorldPacks(msg);
+            }
+            if (!requireGm(msg)) return;
+            const args = _parseArgs(body).args;
+            if (/^(template|blank|new-template)\b/i.test(body)) return writeWorldPackTemplate(msg);
+            if (/^export\b/i.test(body)) return exportCurrentWorldPack(msg, args);
+            if (/^(import|review)\b/i.test(body)) return prepareWorldPackImport(msg, args);
+            if (/^confirm\b/i.test(body)) return confirmWorldPackImport(msg, args.grant);
+            if (/^(cancel|discard)\b/i.test(body)) return discardWorldPackPreview(msg, args.grant);
+            return showWorldPacks(msg, 'Choose a WorldPack action from the available controls.');
+        }
+
         function handleRulesAdvisor(msg, content) {
             const body = content.replace(/^rules(?:-?advisor)?\s*/i, '').trim();
             if (!body || /^(menu|status|list|advisor|gm|dm|guide|help|info|manual)$/i.test(body)) return showRulesAdvisor(msg);
@@ -26647,6 +26694,825 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
 
+        /**
+         * worldPackStableStringify - Canonically serialize a bounded JSON-like value for comparison only.
+         * Inputs: validated JSON-like data.
+         * Outputs: deterministic text with sorted object keys and unsafe keys omitted.
+         * Invariant: the result is never executed or emitted into ordinary chat.
+         */
+        function worldPackStableStringify(value) {
+            if (value === null || typeof value !== 'object') return JSON.stringify(value);
+            if (Array.isArray(value)) return `[${value.map(worldPackStableStringify).join(',')}]`;
+            return `{${Object.keys(value).filter(key => !POLICY.config.unsafeKeys.includes(key)).sort()
+                .map(key => `${JSON.stringify(key)}:${worldPackStableStringify(value[key])}`).join(',')}}`;
+        }
+
+        function worldPackDigest(value) {
+            const text = typeof value === 'string' ? value : worldPackStableStringify(value);
+            let hash = 2166136261;
+            for (let index = 0; index < text.length; index += 1) {
+                hash ^= text.charCodeAt(index);
+                hash = Math.imul(hash, 16777619);
+            }
+            return `wp-${(hash >>> 0).toString(16).padStart(8, '0')}`;
+        }
+
+        function worldPackContentDigest(pack) {
+            const content = sceneRecord(pack) ? copy(pack) : {};
+            delete content.digest;
+            return worldPackDigest(content);
+        }
+
+        function worldPackSafeText(raw, fallback = '', maximum = POLICY.almanac.worldDescriptionLength) {
+            return boundedWorldText(raw, fallback, Math.min(maximum, POLICY.almanac.worldPackStringLimit));
+        }
+
+        function inspectWorldPackJson(value, state, depth = 0) {
+            if (state.errors.length >= 8) return;
+            if (depth > POLICY.almanac.worldPackDepthLimit) {
+                state.errors.push(`Document nesting may not exceed ${POLICY.almanac.worldPackDepthLimit} levels.`);
+                return;
+            }
+            state.objects += 1;
+            if (state.objects > POLICY.almanac.worldPackObjectLimit) {
+                state.errors.push(`Document may not contain more than ${POLICY.almanac.worldPackObjectLimit} values.`);
+                return;
+            }
+            if (typeof value === 'string') {
+                if (value.length > POLICY.almanac.worldPackStringLimit) state.errors.push(`Document strings may not exceed ${POLICY.almanac.worldPackStringLimit} characters.`);
+                return;
+            }
+            if (value === null || ['boolean', 'number'].includes(typeof value)) {
+                if (typeof value === 'number' && !Number.isFinite(value)) state.errors.push('Document numbers must be finite.');
+                return;
+            }
+            if (Array.isArray(value)) {
+                if (value.length > POLICY.almanac.worldPackRecordLimit) state.errors.push(`Document arrays may not exceed ${POLICY.almanac.worldPackRecordLimit} entries.`);
+                value.slice(0, POLICY.almanac.worldPackRecordLimit).forEach(item => inspectWorldPackJson(item, state, depth + 1));
+                return;
+            }
+            if (!sceneRecord(value)) {
+                state.errors.push('Document values must be JSON primitives, arrays, or plain records.');
+                return;
+            }
+            const keys = Object.keys(value);
+            if (keys.some(key => POLICY.config.unsafeKeys.includes(key))) state.errors.push('Document contains an unsafe property name.');
+            if (keys.length > POLICY.almanac.worldPackObjectLimit) state.errors.push('A document record has too many fields.');
+            keys.slice(0, POLICY.almanac.worldPackObjectLimit).forEach(key => inspectWorldPackJson(value[key], state, depth + 1));
+        }
+
+        function worldPackProvenance(raw, errors = null) {
+            const source = sceneRecord(raw) ? raw : {};
+            const type = String(source.type || 'owner-authored').toLowerCase();
+            const safeType = WORLD_PACK_PROVENANCE_TYPES.includes(type) ? type : null;
+            const origin = worldPackSafeText(source.origin, '', POLICY.almanac.worldNameLength);
+            const license = worldPackSafeText(source.license, '', POLICY.almanac.worldDescriptionLength);
+            if (!safeType && errors) errors.push('Provenance type must be owner-authored, license-reviewed, or public-domain.');
+            if (safeType && safeType !== 'owner-authored' && (!origin || !license) && errors) {
+                errors.push('Licensed or public-domain WorldPacks require bounded origin and license statements before review.');
+            }
+            return {
+                type: safeType || 'owner-authored',
+                origin: origin || (safeType === 'owner-authored' ? 'Campaign owner-authored content' : ''),
+                license
+            };
+        }
+
+        function worldPackCollectionType(collection) {
+            return ({
+                regions: 'region', geographies: 'geography', ecoregions: 'ecoregion', biomes: 'biome',
+                locations: 'location', destinations: 'destination', routes: 'route', phenomena: 'phenomenon'
+            })[collection] || null;
+        }
+
+        function worldPackRelationTargets(collection) {
+            return ({
+                regions: { parentId: 'regions' },
+                geographies: { regionId: 'regions' },
+                ecoregions: { regionId: 'regions', geographyId: 'geographies', biomeId: 'biomes' },
+                biomes: {},
+                locations: { regionId: 'regions', geographyId: 'geographies', ecoregionId: 'ecoregions', biomeId: 'biomes' },
+                destinations: { locationId: 'locations' },
+                routes: { fromLocationId: 'locations', toLocationId: 'locations' },
+                phenomena: { locationId: 'locations' }
+            })[collection] || {};
+        }
+
+        function worldPackComparableRecord(record) {
+            if (!sceneRecord(record)) return {};
+            const omitted = new Set(['sourcePackId', 'sourcePackVersion', 'sourcePackRecordId']);
+            return Object.fromEntries(Object.keys(record)
+                .filter(key => !omitted.has(key) && !POLICY.config.unsafeKeys.includes(key))
+                .sort()
+                .map(key => [key, copy(record[key])]));
+        }
+
+        function worldPackRecordDigest(record) {
+            return worldPackDigest(worldPackComparableRecord(record));
+        }
+
+        function worldPackStripProvenance(record) {
+            const result = sceneRecord(record) ? copy(record) : {};
+            delete result.sourcePackId;
+            delete result.sourcePackVersion;
+            delete result.sourcePackRecordId;
+            return result;
+        }
+
+        function worldPackManifestRecord(raw) {
+            if (!sceneRecord(raw)) return null;
+            const collection = WORLD_PACK_COLLECTIONS.includes(String(raw.collection || '')) ? String(raw.collection) : null;
+            const id = worldReference(raw.id);
+            const digest = typeof raw.digest === 'string' && /^wp-[a-f0-9]{8}$/i.test(raw.digest) ? raw.digest.toLowerCase() : null;
+            return collection && id && digest ? { collection, id, digest } : null;
+        }
+
+        function worldPackInstallationRecord(raw, index = 0) {
+            if (!sceneRecord(raw)) return null;
+            const id = worldReference(raw.id);
+            const version = Math.floor(Number(raw.version));
+            const manifest = Array.isArray(raw.manifest)
+                ? raw.manifest.map(worldPackManifestRecord).filter(Boolean).slice(0, POLICY.almanac.worldPackRecordLimit)
+                : [];
+            if (!id || !Number.isSafeInteger(version) || version < 1) return null;
+            return {
+                id,
+                name: worldPackSafeText(raw.name, `WorldPack ${index + 1}`, POLICY.almanac.worldNameLength),
+                description: worldPackSafeText(raw.description, '', POLICY.almanac.worldDescriptionLength),
+                version,
+                provenance: worldPackProvenance(raw.provenance),
+                packDigest: typeof raw.packDigest === 'string' && /^wp-[a-f0-9]{8}$/i.test(raw.packDigest) ? raw.packDigest.toLowerCase() : null,
+                sourceHandoutId: typeof raw.sourceHandoutId === 'string' ? raw.sourceHandoutId.slice(0, POLICY.almanac.worldNameLength) : null,
+                sourceDocumentDigest: typeof raw.sourceDocumentDigest === 'string' && /^wp-[a-f0-9]{8}$/i.test(raw.sourceDocumentDigest) ? raw.sourceDocumentDigest.toLowerCase() : null,
+                importedFromPackId: worldReference(raw.importedFromPackId),
+                installedAt: typeof raw.installedAt === 'string' ? raw.installedAt : null,
+                manifest
+            };
+        }
+
+        /**
+         * worldPackConfigResult - Read persistent WorldPack provenance separately from Worldbuilding records.
+         * Inputs: saved WorldPack registry and an explicit persistence choice.
+         * Outputs: a compatible registry view or a warning-only future-schema refusal.
+         * Invariant: malformed/future registry reads do not rewrite campaign data.
+         */
+        function worldPackConfigResult(sourceInput = modState.config.worldPacks, { persist = sourceInput === modState.config.worldPacks } = {}) {
+            if (!sceneRecord(sourceInput)) return { ok: false, config: null, warning: 'WorldPack registry is absent or not an object; it was left unchanged.' };
+            const savedSchema = Number(sourceInput.schemaVersion || 0);
+            if (Number.isFinite(savedSchema) && savedSchema > WORLD_PACK_SCHEMA_VERSION) {
+                return { ok: false, config: null, warning: `WorldPack registry schema ${savedSchema} is newer than this AlmanacAssist version; it was left unchanged.` };
+            }
+            const ids = new Set();
+            const installed = [];
+            (Array.isArray(sourceInput.installed) ? sourceInput.installed : []).slice(0, POLICY.almanac.worldPackLimit).forEach((raw, index) => {
+                const record = worldPackInstallationRecord(raw, index);
+                if (!record || ids.has(record.id)) return;
+                ids.add(record.id);
+                installed.push(record);
+            });
+            const config = {
+                ...worldExtras(sourceInput, ['schemaVersion', 'revision', 'installed']),
+                schemaVersion: WORLD_PACK_SCHEMA_VERSION,
+                revision: Math.max(0, Math.floor(Number(sourceInput.revision) || 0)),
+                installed
+            };
+            if (persist) modState.config.worldPacks = config;
+            return { ok: true, config, warning: null };
+        }
+
+        function worldPackConfigForPanel(msg) {
+            const result = worldPackConfigResult(modState.config.worldPacks, { persist: false });
+            if (result.ok) return result.config;
+            sendPanel(msg, 'Almanac / WorldPacks Needs Attention', [
+                { label: 'WorldPack Registry', value: _sanitize(result.warning) },
+                { label: 'Safety', value: 'No pack, Worldbuilding, provider, or gameplay data was changed.' },
+                { label: 'Navigation', value: `${GameAssist.createButton('Back', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+            return null;
+        }
+
+        function boundedWorldPackGrantMap(raw) {
+            if (!sceneRecord(raw)) return {};
+            const entries = Object.entries(raw).slice(0, POLICY.almanac.worldPackGrantLimit)
+                .filter(([id, grant]) => worldReference(id) && sceneRecord(grant) && Number.isFinite(Number(grant.expiresAt)))
+                .map(([id, grant]) => [worldReference(id), copy(grant)]);
+            return Object.fromEntries(entries);
+        }
+
+        function ensureWorldPackRuntime() {
+            const runtime = ensureAlmanacRuntime();
+            return runtime.worldPacks;
+        }
+
+        function pruneWorldPackGrants(runtime) {
+            const now = Date.now();
+            Object.entries(runtime.grants || {}).forEach(([id, grant]) => {
+                if (!sceneRecord(grant) || Number(grant.expiresAt) <= now || Number(grant.expiresAt) > now + POLICY.almanac.worldPackGrantMs + (1000 * 60)) delete runtime.grants[id];
+            });
+        }
+
+        function worldPackRawWorld(raw) {
+            const source = sceneRecord(raw) ? raw : {};
+            const world = {};
+            WORLD_PACK_COLLECTIONS.forEach(collection => {
+                world[collection] = Array.isArray(source[collection]) ? source[collection].map(worldPackStripProvenance) : [];
+            });
+            return world;
+        }
+
+        function worldPackReferenceErrors(rawWorld, normalizedWorld, errors) {
+            WORLD_PACK_COLLECTIONS.forEach(collection => {
+                const normalized = new Map((normalizedWorld[collection] || []).map(record => [record.id, record]));
+                const targets = worldPackRelationTargets(collection);
+                (Array.isArray(rawWorld[collection]) ? rawWorld[collection] : []).forEach(rawRecord => {
+                    const id = worldReference(rawRecord?.id);
+                    const record = id ? normalized.get(id) : null;
+                    Object.entries(targets).forEach(([field]) => {
+                        const requested = worldReference(rawRecord?.[field]);
+                        if (requested && record?.[field] !== requested) errors.push(`${worldPackCollectionType(collection)} ${id || 'record'} references unavailable ${field}.`);
+                    });
+                });
+            });
+        }
+
+        function worldPackDependencies(world) {
+            const climateRegionIds = [...new Set(['ecoregions', 'locations'].flatMap(collection => (world[collection] || [])
+                .map(record => worldReference(record.climateRegionId)).filter(Boolean)))];
+            return { climateRegionIds };
+        }
+
+        /**
+         * normalizeWorldPack - Validate one parsed portable WorldPack without importing it.
+         * Inputs: plain parsed JSON from a GM-selected handout.
+         * Outputs: bounded normalized WorldPack data, semantic errors, and external dependencies.
+         * Invariant: built-in presets, runtime state, Time, Weather, Astronomy, and executable text are outside this schema.
+         */
+        function normalizeWorldPack(raw) {
+            const errors = [];
+            if (!sceneRecord(raw)) return { ok: false, pack: null, errors: ['WorldPack root must be an object.'] };
+            const allowed = new Set(['format', 'schemaVersion', 'id', 'version', 'name', 'description', 'tags', 'provenance', 'world', 'dependencies']);
+            Object.keys(raw).filter(key => !allowed.has(key)).forEach(key => errors.push(`WorldPack field ${key} is not supported.`));
+            if (raw.format !== WORLD_PACK_FORMAT) errors.push(`WorldPack format must be ${WORLD_PACK_FORMAT}.`);
+            const schemaVersion = Math.floor(Number(raw.schemaVersion));
+            if (!Number.isSafeInteger(schemaVersion) || schemaVersion !== WORLD_PACK_SCHEMA_VERSION) errors.push(`WorldPack schemaVersion must be ${WORLD_PACK_SCHEMA_VERSION}.`);
+            const id = worldReference(raw.id);
+            const version = Math.floor(Number(raw.version));
+            const name = worldPackSafeText(raw.name, '', POLICY.almanac.worldNameLength);
+            if (!id) errors.push('WorldPack needs a stable ID.');
+            if (!name) errors.push('WorldPack needs a name.');
+            if (!Number.isSafeInteger(version) || version < 1 || version > 1000000) errors.push('WorldPack version must be a whole number from 1 to 1000000.');
+            const provenance = worldPackProvenance(raw.provenance, errors);
+            if (!sceneRecord(raw.world)) errors.push('WorldPack needs a world object with supported collections.');
+            const rawWorld = worldPackRawWorld(raw.world);
+            const sourceWorld = copy(WORLD_DEFAULT_CONFIG);
+            sourceWorld.schemaVersion = WORLD_STATE_SCHEMA_VERSION;
+            sourceWorld.activeLocationId = null;
+            sourceWorld.favoriteLocationIds = [];
+            WORLD_PACK_COLLECTIONS.forEach(collection => {
+                if (raw.world && !Array.isArray(raw.world[collection])) errors.push(`WorldPack world.${collection} must be an array.`);
+                sourceWorld[collection] = rawWorld[collection];
+            });
+            if (raw.world && Object.keys(raw.world).some(key => !WORLD_PACK_COLLECTIONS.includes(key))) errors.push('WorldPack world contains an unsupported collection; presets and runtime data remain separate.');
+            let totalRecords = 0;
+            WORLD_PACK_COLLECTIONS.forEach(collection => {
+                const ids = new Set();
+                rawWorld[collection].forEach((record, index) => {
+                    totalRecords += 1;
+                    if (!sceneRecord(record)) {
+                        errors.push(`WorldPack ${collection} entry ${index + 1} must be an object.`);
+                        return;
+                    }
+                    const recordId = worldReference(record.id);
+                    if (!recordId) errors.push(`WorldPack ${collection} entry ${index + 1} needs a stable ID.`);
+                    else if (ids.has(recordId)) errors.push(`WorldPack ${collection} contains duplicate ID ${recordId}.`);
+                    else ids.add(recordId);
+                });
+            });
+            if (totalRecords > POLICY.almanac.worldPackRecordLimit) errors.push(`WorldPack may not contain more than ${POLICY.almanac.worldPackRecordLimit} world records.`);
+            if (errors.length) return { ok: false, pack: null, errors: [...new Set(errors)].slice(0, 8) };
+            const result = worldConfigResult(sourceWorld, { persist: false });
+            if (!result.ok) return { ok: false, pack: null, errors: [result.warning] };
+            const world = Object.fromEntries(WORLD_PACK_COLLECTIONS.map(collection => [collection, result.config[collection].map(worldPackStripProvenance)]));
+            worldPackReferenceErrors(rawWorld, world, errors);
+            if (errors.length) return { ok: false, pack: null, errors: [...new Set(errors)].slice(0, 8) };
+            const pack = {
+                format: WORLD_PACK_FORMAT,
+                schemaVersion: WORLD_PACK_SCHEMA_VERSION,
+                id,
+                version,
+                name,
+                description: worldPackSafeText(raw.description, '', POLICY.almanac.worldDescriptionLength),
+                tags: worldTags(raw.tags),
+                provenance,
+                world,
+                dependencies: worldPackDependencies(world)
+            };
+            pack.digest = worldPackContentDigest(pack);
+            return { ok: true, pack, errors: [] };
+        }
+
+        function parseWorldPackDocument(rawText) {
+            const text = typeof rawText === 'string' ? rawText : '';
+            if (!text.trim()) return { ok: false, pack: null, errors: ['The selected handout has no WorldPack document text.'] };
+            if (text.length > POLICY.almanac.worldPackDocumentCharLimit) {
+                return { ok: false, pack: null, errors: [`WorldPack documents may not exceed ${POLICY.almanac.worldPackDocumentCharLimit} characters.`] };
+            }
+            let parsed;
+            try {
+                parsed = JSON.parse(text);
+            } catch (error) {
+                return { ok: false, pack: null, errors: ['WorldPack document is not valid JSON. It was not executed or imported.'] };
+            }
+            const state = { objects: 0, errors: [] };
+            inspectWorldPackJson(parsed, state);
+            if (state.errors.length) return { ok: false, pack: null, errors: [...new Set(state.errors)].slice(0, 8) };
+            return normalizeWorldPack(parsed);
+        }
+
+        function worldPackAllRecords(pack) {
+            return WORLD_PACK_COLLECTIONS.flatMap(collection => (pack.world[collection] || []).map(record => ({ collection, record })));
+        }
+
+        function worldPackTaggedRecord(record, pack) {
+            return {
+                ...worldPackStripProvenance(record),
+                sourcePackId: pack.id,
+                sourcePackVersion: pack.version,
+                sourcePackRecordId: record.id
+            };
+        }
+
+        function worldPackManifestFor(config, packId) {
+            return WORLD_PACK_COLLECTIONS.flatMap(collection => (config[collection] || [])
+                .filter(record => record.sourcePackId === packId)
+                .map(record => ({ collection, id: record.id, digest: worldPackRecordDigest(record) })))
+                .sort((left, right) => `${left.collection}:${left.id}`.localeCompare(`${right.collection}:${right.id}`));
+        }
+
+        function worldPackInstallationFrom(pack, config, { handoutId = null, documentDigest = null, importedFromPackId = null } = {}) {
+            return {
+                id: pack.id,
+                name: pack.name,
+                description: pack.description,
+                version: pack.version,
+                provenance: copy(pack.provenance),
+                packDigest: pack.digest,
+                sourceHandoutId: handoutId ? String(handoutId).slice(0, POLICY.almanac.worldNameLength) : null,
+                sourceDocumentDigest: documentDigest || null,
+                importedFromPackId: importedFromPackId || null,
+                installedAt: isoNow(),
+                manifest: worldPackManifestFor(config, pack.id)
+            };
+        }
+
+        function worldPackManifestUnchanged(config, installed) {
+            return (installed.manifest || []).every(entry => {
+                const record = (config[entry.collection] || []).find(item => item.id === entry.id) || null;
+                return record && record.sourcePackId === installed.id && worldPackRecordDigest(record) === entry.digest;
+            });
+        }
+
+        function worldPackUniqueId(base, used, fallback = 'worldpack') {
+            const initial = worldId(base, fallback);
+            let candidate = initial;
+            let suffix = 2;
+            while (used.has(candidate)) {
+                const ending = `-${suffix++}`;
+                candidate = `${initial.slice(0, Math.max(1, POLICY.almanac.worldNameLength - ending.length))}${ending}`;
+            }
+            used.add(candidate);
+            return candidate;
+        }
+
+        function worldPackCopyWithFreshIds(pack, config, registry) {
+            const usedPackIds = new Set(registry.installed.map(item => item.id));
+            const copied = copy(pack);
+            const copiedId = worldPackUniqueId(`${pack.id}-copy`, usedPackIds, 'worldpack-copy');
+            const idMaps = Object.fromEntries(WORLD_PACK_COLLECTIONS.map(collection => [collection, new Map()]));
+            WORLD_PACK_COLLECTIONS.forEach(collection => {
+                const used = new Set((config[collection] || []).map(record => record.id));
+                (copied.world[collection] || []).forEach(record => {
+                    idMaps[collection].set(record.id, worldPackUniqueId(`${copiedId}-${record.id}`, used, worldPackCollectionType(collection) || 'record'));
+                });
+            });
+            WORLD_PACK_COLLECTIONS.forEach(collection => {
+                const targets = worldPackRelationTargets(collection);
+                copied.world[collection] = (copied.world[collection] || []).map(record => {
+                    const next = copy(record);
+                    next.id = idMaps[collection].get(record.id);
+                    Object.entries(targets).forEach(([field, targetCollection]) => {
+                        if (next[field] && idMaps[targetCollection].has(next[field])) next[field] = idMaps[targetCollection].get(next[field]);
+                    });
+                    return next;
+                });
+            });
+            copied.id = copiedId;
+            copied.version = 1;
+            copied.name = worldPackSafeText(`${pack.name} Copy`, pack.name, POLICY.almanac.worldNameLength);
+            copied.digest = worldPackContentDigest(copied);
+            return copied;
+        }
+
+        function worldPackUnresolvedDependencies(pack) {
+            const climate = normalizeClimateConfig(sceneCopyRecord(modState.config.climate) || {}, { persist: false });
+            return (pack.dependencies?.climateRegionIds || []).filter(id => !climateRegion(id, climate));
+        }
+
+        /**
+         * worldPackInstallPlan - Produce a fully validated proposed Worldbuilding and registry state before any write.
+         * Inputs: normalized current world/registry, validated pack, requested mode, and provenance metadata.
+         * Outputs: one atomic plan or concise conflicts; no state changes occur here.
+         * Invariant: new/copy imports never overwrite campaign records; updates refuse modified imported records and removals.
+         */
+        function worldPackInstallPlan(worldConfig, registry, rawPack, mode, metadata = {}) {
+            const requestedMode = ['new', 'update', 'copy'].includes(String(mode || '').toLowerCase()) ? String(mode).toLowerCase() : null;
+            if (!requestedMode) return { ok: false, message: 'Choose Install New, Update Existing Pack, or Import as Copy.' };
+            const existing = registry.installed.find(item => item.id === rawPack.id) || null;
+            let pack = rawPack;
+            let importedFromPackId = null;
+            if (requestedMode === 'copy') {
+                pack = worldPackCopyWithFreshIds(rawPack, worldConfig, registry);
+                importedFromPackId = rawPack.id;
+            } else if (requestedMode === 'new' && existing) {
+                return { ok: false, message: `WorldPack ${rawPack.id} is already installed. Review Update Existing Pack or Import as Copy instead.` };
+            } else if (requestedMode === 'update' && !existing) {
+                return { ok: false, message: `WorldPack ${rawPack.id} is not installed, so it cannot be updated.` };
+            } else if (requestedMode === 'update' && rawPack.version <= existing.version) {
+                return { ok: false, message: `WorldPack updates must use a version higher than the installed v${existing.version}.` };
+            }
+            if (requestedMode !== 'update' && registry.installed.length >= POLICY.almanac.worldPackLimit) {
+                return { ok: false, message: `No more than ${POLICY.almanac.worldPackLimit} installed WorldPacks are retained.` };
+            }
+            if (requestedMode === 'update' && !worldPackManifestUnchanged(worldConfig, existing)) {
+                return { ok: false, message: 'One or more campaign records from this WorldPack changed after installation. Update was refused to avoid overwriting campaign customization; import a copy or resolve the records manually.' };
+            }
+            const incomingKeys = new Set(worldPackAllRecords(pack).map(({ collection, record }) => `${collection}:${record.id}`));
+            if (requestedMode === 'update') {
+                const missing = (existing.manifest || []).filter(entry => !incomingKeys.has(`${entry.collection}:${entry.id}`));
+                if (missing.length) return { ok: false, message: 'WorldPack updates may not remove previously installed records. Keep them in the new pack or import a separate copy.' };
+            }
+            const nextWorld = copy(worldConfig);
+            const managedKeys = new Set(requestedMode === 'update' ? (existing.manifest || []).map(entry => `${entry.collection}:${entry.id}`) : []);
+            for (const { collection, record } of worldPackAllRecords(pack)) {
+                const current = nextWorld[collection] || [];
+                const key = `${collection}:${record.id}`;
+                const collision = current.find(item => item.id === record.id) || null;
+                if (collision && !managedKeys.has(key)) {
+                    return { ok: false, message: `${worldPackCollectionType(collection)} ID ${record.id} already belongs to campaign content or another WorldPack. No record was overwritten.` };
+                }
+            }
+            WORLD_PACK_COLLECTIONS.forEach(collection => {
+                const incoming = new Map((pack.world[collection] || []).map(record => [record.id, worldPackTaggedRecord(record, pack)]));
+                const current = nextWorld[collection] || [];
+                nextWorld[collection] = current.map(record => incoming.has(record.id) && managedKeys.has(`${collection}:${record.id}`)
+                    ? incoming.get(record.id)
+                    : record);
+                incoming.forEach((record, id) => {
+                    if (!current.some(item => item.id === id)) nextWorld[collection].push(record);
+                });
+            });
+            const normalizedWorld = worldConfigResult(nextWorld, { persist: false });
+            if (!normalizedWorld.ok) return { ok: false, message: normalizedWorld.warning };
+            const nextRegistry = copy(registry);
+            if (requestedMode === 'update') nextRegistry.installed = nextRegistry.installed.filter(item => item.id !== existing.id);
+            const installation = worldPackInstallationFrom(pack, normalizedWorld.config, {
+                handoutId: metadata.handoutId,
+                documentDigest: metadata.documentDigest,
+                importedFromPackId
+            });
+            nextRegistry.installed.push(installation);
+            const unresolvedDependencies = worldPackUnresolvedDependencies(pack);
+            return {
+                ok: true,
+                mode: requestedMode,
+                pack,
+                nextWorld: normalizedWorld.config,
+                nextRegistry,
+                installation,
+                unresolvedDependencies,
+                recordCount: worldPackAllRecords(pack).length
+            };
+        }
+
+        function worldPackHandoutLink(id, name) {
+            return id
+                ? `[Open ${_sanitize(name)}](https://journal.roll20.net/handout/${_sanitize(id)})`
+                : _sanitize(name);
+        }
+
+        function writeWorldPackHandout(key, name, pack) {
+            const result = GameAssist.ownedHandout(MODULE_NAME, key, name);
+            if (!result.ok) return result;
+            const document = copy(pack);
+            delete document.digest;
+            result.handout.set('notes', JSON.stringify(document, null, 2));
+            return {
+                ok: true,
+                id: result.id,
+                name,
+                link: worldPackHandoutLink(result.id, name),
+                created: result.created
+            };
+        }
+
+        function blankWorldPackTemplate() {
+            return {
+                format: WORLD_PACK_FORMAT,
+                schemaVersion: WORLD_PACK_SCHEMA_VERSION,
+                id: 'campaign-worldpack',
+                version: 1,
+                name: 'Campaign WorldPack',
+                description: 'Replace this generic owner-authored example with your own portable world components.',
+                tags: ['campaign'],
+                provenance: {
+                    type: 'owner-authored',
+                    origin: 'Campaign owner-authored content',
+                    license: ''
+                },
+                world: Object.fromEntries(WORLD_PACK_COLLECTIONS.map(collection => [collection, []])),
+                dependencies: { climateRegionIds: [] }
+            };
+        }
+
+        function exportedWorldPack(worldConfig, args) {
+            const id = worldReference(args.id);
+            const name = worldPackSafeText(args.name, '', POLICY.almanac.worldNameLength);
+            if (!id || !name) return { ok: false, message: 'Export needs both a stable Pack ID and a Pack Name.' };
+            const pack = {
+                format: WORLD_PACK_FORMAT,
+                schemaVersion: WORLD_PACK_SCHEMA_VERSION,
+                id,
+                version: Math.max(1, Math.floor(Number(args.version) || 1)),
+                name,
+                description: worldPackSafeText(args.description, `Portable campaign WorldPacks export: ${name}.`, POLICY.almanac.worldDescriptionLength),
+                tags: worldTags(args.tags ? String(args.tags).split(/[;,]/) : ['campaign']),
+                provenance: {
+                    type: 'owner-authored',
+                    origin: 'Campaign owner-authored content',
+                    license: ''
+                },
+                world: Object.fromEntries(WORLD_PACK_COLLECTIONS.map(collection => [collection, (worldConfig[collection] || []).map(worldPackStripProvenance)])),
+                dependencies: { climateRegionIds: [] }
+            };
+            pack.dependencies = worldPackDependencies(pack.world);
+            const checked = normalizeWorldPack(pack);
+            return checked.ok ? { ok: true, pack: checked.pack } : { ok: false, message: checked.errors.join(' ') };
+        }
+
+        function showWorldPacks(msg, notice = null) {
+            const registry = worldPackConfigForPanel(msg);
+            if (!registry) return;
+            const runtime = ensureWorldPackRuntime();
+            pruneWorldPackGrants(runtime);
+            const rows = registry.installed.slice(0, 8).map(item => {
+                const source = item.importedFromPackId ? `; copied from ${item.importedFromPackId}` : '';
+                return `${_sanitize(item.name)} (v${item.version}, ${item.manifest.length} record${item.manifest.length === 1 ? '' : 's'}, ${_sanitize(item.provenance.type)}${source})`;
+            });
+            const exportCommand = '!aa-worldpacks export --id "?{New Pack ID|campaign-worldpack}" --name "?{New Pack Name|Campaign WorldPack}" --version ?{Version|1}';
+            const importCommand = '!aa-worldpacks import --handout ?{WorldPack Handout ID|} --mode ?{Review as|Install New,new|Update Existing Pack,update|Import as Copy,copy}';
+            sendPanel(msg, 'Almanac / WorldPacks', [
+                notice ? { label: 'Status', value: _sanitize(notice) } : null,
+                { label: 'Purpose', value: 'Portable, bounded Worldbuilding components. Built-in PresetRegistry data, Time, Weather, Astronomy, provider state, and gameplay effects are outside WorldPacks.' },
+                { label: 'Installed', value: rows.length ? rows.join('<br>') : 'No WorldPacks installed.' },
+                { label: 'Review Safety', value: 'Every handout import is parsed as inert JSON, validated for syntax, schema, references, provenance, conflicts, and bounds, then shown as an expiring Preview before confirmation.' },
+                { label: 'Campaign Safety', value: 'Install New and Import as Copy never overwrite campaign records. Update Existing Pack requires a higher pack version and refuses records edited after the earlier import.' },
+                { label: 'Dependencies', value: 'Climate-region references are reported during preview; packs do not create or modify Climate settings.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Create Blank Template', '!aa-worldpacks template')} ${GameAssist.createButton('Export Current World', exportCommand)} ${GameAssist.createButton('Review Handout Import', importCommand)}` },
+                { label: 'Handout Import', value: 'Open or create a handout containing only the editable WorldPack JSON, then paste its Roll20 handout ID into Review Handout Import. Normal chat panels never display raw JSON.' },
+                { label: 'Navigation', value: `${GameAssist.createButton('Worldbuilding', '!aa-world')} ${GameAssist.createButton('Presets', '!aa-presets')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ].filter(Boolean));
+        }
+
+        function writeWorldPackTemplate(msg) {
+            const name = 'GameAssist Almanac WorldPack Template';
+            const result = writeWorldPackHandout('worldpack-template', name, blankWorldPackTemplate());
+            if (!result.ok) {
+                return sendPanel(msg, 'WorldPack Template Needs Attention', [
+                    { label: 'Problem', value: _sanitize(result.message || 'Roll20 could not create the template handout.') },
+                    { label: 'Safety', value: 'No Worldbuilding or gameplay state was changed.' },
+                    { label: 'Back', value: GameAssist.createButton('WorldPacks', '!aa-worldpacks') }
+                ]);
+            }
+            sendPanel(msg, 'WorldPack Template Ready', [
+                { label: 'Handout', value: result.link },
+                { label: 'Start Here', value: 'Replace the generic ID, name, and empty collections with campaign-authored world records. Keep the format and schemaVersion unchanged.' },
+                { label: 'Safety', value: 'The template is inert data. Review it from WorldPacks after editing; it cannot run JavaScript, HTML, macros, or provider commands.' },
+                { label: 'Next', value: `${GameAssist.createButton('Review This Template', `!aa-worldpacks import --handout ${result.id} --mode new`)} ${GameAssist.createButton('WorldPacks', '!aa-worldpacks')}` }
+            ]);
+        }
+
+        function exportCurrentWorldPack(msg, args) {
+            const world = worldConfigForPanel(msg);
+            if (!world) return;
+            const exported = exportedWorldPack(world, args);
+            if (!exported.ok) {
+                return sendPanel(msg, 'WorldPack Export Needs Attention', [
+                    { label: 'Problem', value: _sanitize(exported.message) },
+                    { label: 'Next', value: GameAssist.createButton('Try Export Again', '!aa-worldpacks') }
+                ]);
+            }
+            const name = `GameAssist Almanac WorldPack - ${exported.pack.name}`;
+            const result = writeWorldPackHandout(`worldpack-export-${exported.pack.id}`, name, exported.pack);
+            if (!result.ok) {
+                return sendPanel(msg, 'WorldPack Export Needs Attention', [
+                    { label: 'Problem', value: _sanitize(result.message || 'Roll20 could not write the export handout.') },
+                    { label: 'Safety', value: 'The campaign world was not changed.' },
+                    { label: 'Back', value: GameAssist.createButton('WorldPacks', '!aa-worldpacks') }
+                ]);
+            }
+            const dependencies = exported.pack.dependencies.climateRegionIds.length
+                ? `References ${exported.pack.dependencies.climateRegionIds.map(_sanitize).join(', ')}. These Climate regions are dependencies, not exported Climate settings.`
+                : 'No external Climate-region dependencies were found.';
+            sendPanel(msg, 'WorldPack Export Ready', [
+                { label: 'Handout', value: result.link },
+                { label: 'Contents', value: `${worldPackAllRecords(exported.pack).length} portable Worldbuilding record(s); no runtime, provider, preset registry, Time, Weather, Astronomy, or gameplay state.` },
+                { label: 'Dependencies', value: dependencies },
+                { label: 'Next', value: `${GameAssist.createButton('WorldPacks', '!aa-worldpacks')} ${GameAssist.createButton('Worldbuilding', '!aa-world')}` }
+            ]);
+        }
+
+        function worldPackReviewPanel(msg, grant, plan, handoutName) {
+            const expiresIn = Math.max(0, Math.ceil((Number(grant.expiresAt) - Date.now()) / 1000));
+            const modeLabel = ({ new: 'Install New', update: 'Update Existing Pack', copy: 'Import as Copy' })[grant.mode] || 'Import';
+            const dependencyText = plan.unresolvedDependencies.length
+                ? `Unresolved Climate-region references: ${plan.unresolvedDependencies.map(_sanitize).join(', ')}. They are retained as explicit references only; no Climate setting will be created or modified.`
+                : 'All declared external Climate-region references match the current Climate configuration, or no such references exist.';
+            sendPanel(msg, 'WorldPack Import Preview', [
+                { label: 'Source Handout', value: _sanitize(handoutName || grant.handoutId) },
+                { label: 'Pack', value: `${_sanitize(plan.pack.name)} — ID ${_sanitize(plan.pack.id)}, v${plan.pack.version}, ${plan.recordCount} record${plan.recordCount === 1 ? '' : 's'}.` },
+                { label: 'Requested Action', value: modeLabel },
+                { label: 'Provenance', value: `${_sanitize(plan.pack.provenance.type)}${plan.pack.provenance.origin ? ` — ${_sanitize(plan.pack.provenance.origin)}` : ''}${plan.pack.provenance.license ? `; ${_sanitize(plan.pack.provenance.license)}` : ''}` },
+                { label: 'Conflict Policy', value: grant.mode === 'update' ? 'Only unchanged records previously installed by this same pack will be replaced. Any campaign edit, ID collision, removed record, changed world revision, handout edit, or registry revision invalidates this preview.' : 'No existing campaign or other-pack record will be overwritten. An ID conflict invalidates this preview.' },
+                { label: 'Dependencies', value: dependencyText },
+                { label: 'Scope', value: 'Worldbuilding components only. Active location, favorites, recents, travel, phenomena runtime, PresetRegistry, provider state, calendar/time, weather, astronomy, and gameplay consequences remain unchanged.' },
+                { label: 'Confirm', value: `${GameAssist.createButton(`Confirm ${modeLabel}`, `!aa-worldpacks confirm --grant ${grant.id}`)} — expires in about ${expiresIn} seconds.` },
+                { label: 'Cancel', value: `${GameAssist.createButton('Discard Preview', `!aa-worldpacks cancel --grant ${grant.id}`)} ${GameAssist.createButton('WorldPacks', '!aa-worldpacks')}` }
+            ]);
+        }
+
+        function prepareWorldPackImport(msg, args) {
+            const handoutId = String(args.handout || '').trim();
+            const mode = String(args.mode || '').toLowerCase();
+            if (!handoutId || !['new', 'update', 'copy'].includes(mode)) {
+                return sendPanel(msg, 'WorldPack Import Needs Attention', [
+                    { label: 'Problem', value: 'Choose a handout ID and one review mode: Install New, Update Existing Pack, or Import as Copy.' },
+                    { label: 'Back', value: GameAssist.createButton('WorldPacks', '!aa-worldpacks') }
+                ]);
+            }
+            const handout = getObj('handout', handoutId);
+            if (!handout) {
+                return sendPanel(msg, 'WorldPack Import Needs Attention', [
+                    { label: 'Problem', value: 'That handout is unavailable. No text was parsed and no campaign data changed.' },
+                    { label: 'Back', value: GameAssist.createButton('WorldPacks', '!aa-worldpacks') }
+                ]);
+            }
+            handout.get('notes', notes => {
+                const parsed = parseWorldPackDocument(String(notes || ''));
+                if (!parsed.ok) {
+                    return sendPanel(msg, 'WorldPack Import Needs Attention', [
+                        { label: 'Validation', value: parsed.errors.map(_sanitize).join('<br>') },
+                        { label: 'Safety', value: 'No text was executed. No Worldbuilding, provider, or gameplay state changed.' },
+                        { label: 'Back', value: GameAssist.createButton('WorldPacks', '!aa-worldpacks') }
+                    ]);
+                }
+                const world = worldConfigForPanel(msg);
+                const registry = worldPackConfigForPanel(msg);
+                if (!world || !registry) return;
+                const documentDigest = worldPackDigest(String(notes || ''));
+                const plan = worldPackInstallPlan(world, registry, parsed.pack, mode, { handoutId, documentDigest });
+                if (!plan.ok) {
+                    return sendPanel(msg, 'WorldPack Import Needs Attention', [
+                        { label: 'Review Refused', value: _sanitize(plan.message) },
+                        { label: 'Safety', value: 'No Worldbuilding or gameplay data was changed.' },
+                        { label: 'Back', value: GameAssist.createButton('WorldPacks', '!aa-worldpacks') }
+                    ]);
+                }
+                const runtime = ensureWorldPackRuntime();
+                pruneWorldPackGrants(runtime);
+                const grants = Object.keys(runtime.grants || {});
+                if (grants.length >= POLICY.almanac.worldPackGrantLimit) {
+                    return sendPanel(msg, 'WorldPack Import Needs Attention', [
+                        { label: 'Problem', value: `Only ${POLICY.almanac.worldPackGrantLimit} unconfirmed WorldPack previews are retained. Confirm or discard an existing preview first.` },
+                        { label: 'Safety', value: 'No Worldbuilding or gameplay data was changed.' }
+                    ]);
+                }
+                const id = worldInteractionId('worldpack');
+                const grant = {
+                    id,
+                    actorId: String(msg.playerid || ''),
+                    handoutId,
+                    handoutName: String(handout.get('name') || 'WorldPack Handout').slice(0, POLICY.almanac.worldNameLength),
+                    documentDigest,
+                    pack: copy(parsed.pack),
+                    packDigest: parsed.pack.digest,
+                    mode,
+                    worldRevision: world.revision,
+                    registryRevision: registry.revision,
+                    expiresAt: Date.now() + POLICY.almanac.worldPackGrantMs
+                };
+                runtime.grants[id] = grant;
+                worldPackReviewPanel(msg, grant, plan, grant.handoutName);
+            });
+        }
+
+        function discardWorldPackPreview(msg, grantId) {
+            const runtime = ensureWorldPackRuntime();
+            pruneWorldPackGrants(runtime);
+            const id = worldReference(grantId);
+            const grant = id ? runtime.grants[id] : null;
+            if (!grant) return sendPanel(msg, 'WorldPack Preview', [{ label: 'Status', value: 'That preview already expired or was discarded.' }, { label: 'Back', value: GameAssist.createButton('WorldPacks', '!aa-worldpacks') }]);
+            if (!playerIsGM(msg?.playerid) && String(msg?.playerid) !== String(grant.actorId || '')) {
+                return sendPanel(msg, 'WorldPack Preview Needs Attention', [{ label: 'Problem', value: 'That preview belongs to another GM.' }]);
+            }
+            delete runtime.grants[id];
+            showWorldPacks(msg, 'The unconfirmed WorldPack preview was discarded.');
+        }
+
+        function applyWorldPackInstall(msg, grant, plan) {
+            const world = copy(plan.nextWorld);
+            const registry = copy(plan.nextRegistry);
+            world.revision = Math.max(0, Math.floor(Number(modState.config.world?.revision) || 0)) + 1;
+            registry.revision = Math.max(0, Math.floor(Number(modState.config.worldPacks?.revision) || 0)) + 1;
+            // Both fully validated branches are assigned together only after every stale/conflict check succeeded.
+            modState.config.world = world;
+            modState.config.worldPacks = registry;
+            const runtime = ensureWorldPackRuntime();
+            delete runtime.grants[grant.id];
+            const event = {
+                packId: plan.pack.id,
+                packVersion: plan.pack.version,
+                packName: plan.pack.name,
+                mode: plan.mode,
+                records: plan.recordCount,
+                worldRevision: world.revision,
+                registryRevision: registry.revision
+            };
+            GameAssist.SemanticEvents.publish('almanac.worldpacks.committed', MODULE_NAME, copy(event), {
+                action: 'worldpack-commit',
+                mode: plan.mode,
+                actorId: String(msg?.playerid || 'api')
+            });
+            GameAssist.recordMetric('almanac_worldpack_commit', { mod: MODULE_NAME, mode: plan.mode });
+            sendPanel(msg, 'WorldPack Committed', [
+                { label: 'Pack', value: `${_sanitize(plan.pack.name)} v${plan.pack.version} committed as ${_sanitize(plan.mode)}.` },
+                { label: 'Records', value: `${plan.recordCount} Worldbuilding record(s) committed atomically after preview.` },
+                { label: 'Unchanged', value: 'No active location, favorites, recents, travel, phenomena runtime, presets, provider state, Time, Weather, Astronomy, or gameplay consequence was changed.' },
+                { label: 'Next', value: `${GameAssist.createButton('WorldPacks', '!aa-worldpacks')} ${GameAssist.createButton('Worldbuilding', '!aa-world')}` }
+            ]);
+        }
+
+        function confirmWorldPackImport(msg, grantId) {
+            const runtime = ensureWorldPackRuntime();
+            pruneWorldPackGrants(runtime);
+            const id = worldReference(grantId);
+            const grant = id ? runtime.grants[id] : null;
+            if (!grant) return sendPanel(msg, 'WorldPack Import Needs Attention', [{ label: 'Problem', value: 'That preview expired, was discarded, or was already used. Prepare a new preview.' }, { label: 'Back', value: GameAssist.createButton('WorldPacks', '!aa-worldpacks') }]);
+            if (!playerIsGM(msg?.playerid) && String(msg?.playerid) !== String(grant.actorId || '')) {
+                return sendPanel(msg, 'WorldPack Import Needs Attention', [{ label: 'Problem', value: 'That preview belongs to another GM.' }]);
+            }
+            const world = worldConfigForPanel(msg);
+            const registry = worldPackConfigForPanel(msg);
+            if (!world || !registry) return;
+            if (world.revision !== grant.worldRevision || registry.revision !== grant.registryRevision || worldPackContentDigest(grant.pack) !== grant.packDigest) {
+                delete runtime.grants[id];
+                return sendPanel(msg, 'WorldPack Import Needs Attention', [
+                    { label: 'Problem', value: 'Campaign Worldbuilding, the pack registry, or the saved preview changed after review. The preview was discarded; prepare a new one.' },
+                    { label: 'Changes', value: 'None.' }
+                ]);
+            }
+            const handout = getObj('handout', String(grant.handoutId || ''));
+            if (!handout) {
+                delete runtime.grants[id];
+                return sendPanel(msg, 'WorldPack Import Needs Attention', [{ label: 'Problem', value: 'The reviewed handout is no longer available. The preview was discarded; no data changed.' }]);
+            }
+            handout.get('notes', notes => {
+                const text = String(notes || '');
+                const parsed = parseWorldPackDocument(text);
+                if (worldPackDigest(text) !== grant.documentDigest || !parsed.ok || parsed.pack.digest !== grant.packDigest) {
+                    delete runtime.grants[id];
+                    return sendPanel(msg, 'WorldPack Import Needs Attention', [
+                        { label: 'Problem', value: 'The handout changed or no longer validates after preview. The preview was discarded; no data changed.' },
+                        { label: 'Changes', value: 'None.' }
+                    ]);
+                }
+                const currentWorld = worldConfigForPanel(msg);
+                const currentRegistry = worldPackConfigForPanel(msg);
+                if (!currentWorld || !currentRegistry) return;
+                const plan = worldPackInstallPlan(currentWorld, currentRegistry, parsed.pack, grant.mode, {
+                    handoutId: grant.handoutId,
+                    documentDigest: grant.documentDigest
+                });
+                if (!plan.ok) {
+                    delete runtime.grants[id];
+                    return sendPanel(msg, 'WorldPack Import Needs Attention', [
+                        { label: 'Problem', value: `${_sanitize(plan.message)} The preview was discarded.` },
+                        { label: 'Changes', value: 'None.' }
+                    ]);
+                }
+                applyWorldPackInstall(msg, grant, plan);
+            });
+        }
+
         function showMaster(msg) {
             if (!playerIsGM(msg?.playerid)) return showCurrent(msg);
             const scene = resolveScene();
@@ -26668,7 +27534,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Session Actions', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${scene.travel ? '' : GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Rules Advice', '!aa-rules')} ${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Short Rest', '!aa-rest preview --type short')} ${GameAssist.createButton('Long Rest', '!aa-rest preview --type long')}`.trim() },
                 ...(rulesNotes.length ? [{ label: 'GM Notes', value: `${rulesNotes.map(note => _sanitize(note.message)).join('<br>')} ${GameAssist.createButton('Rules Details', '!aa-rules')}` }] : []),
                 { label: 'Share', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
-                { label: 'Worldbuilding', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Presets', '!aa-presets')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Astronomy', '!astro')} ${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('More Tools', '!aa-more')}` },
+                { label: 'Worldbuilding', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Presets', '!aa-presets')} ${GameAssist.createButton('WorldPacks', '!aa-worldpacks')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Astronomy', '!astro')} ${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('More Tools', '!aa-more')}` },
                 { label: 'Navigation', value: `${GameAssist.createButton('Almanac Guide', '!Almanac-Guide')} ${gameAssistHomeButton()}` }
             ]);
         }
@@ -30092,6 +30958,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const rulesAdvisorSummary = rulesAdvisorResult.ok
                 ? `${rulesAdvisorResult.config.enabled ? 'On' : 'Off'} | ${_sanitize(rulesAdvisorProfile(worldResult.ok ? worldResult.config.rulesProfile : 'custom').name)}`
                 : 'Unavailable';
+            const worldPacksResult = worldPackConfigResult(modState.config.worldPacks, { persist: false });
+            if (!worldPacksResult.ok) problems.push(worldPacksResult.warning);
+            const worldPacksSummary = worldPacksResult.ok
+                ? `${worldPacksResult.config.installed.length}/${POLICY.almanac.worldPackLimit} installed WorldPack(s)`
+                : 'Unavailable';
             const journey = worldResult.ok ? travelJourneyContext(worldResult.config, runtime.world) : { value: null, warning: null };
             if (journey.warning) problems.push(journey.warning);
             const activePhenomena = normalizeActivePhenomena(runtime.world.activePhenomena);
@@ -30120,6 +30991,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Travel', value: journey.value ? `${_sanitize(journey.value.originName)} &rarr; ${_sanitize(journey.value.destinationName)} | ${formatTravelMiles(journey.value.remainingMiles)} remaining` : (worldResult.ok ? 'No active reviewed journey.' : 'Worldbuilding data unavailable for Travel.') },
                 { label: 'Phenomena', value: `${phenomenonSummary}${futurePhenomena ? ` | ${futurePhenomena} newer record(s) preserved` : ''}` },
                 { label: 'Rules Advisor', value: `${rulesAdvisorSummary} ${GameAssist.createButton('Open', '!aa-rules')}` },
+                { label: 'WorldPacks', value: `${worldPacksSummary} ${GameAssist.createButton('Open', '!aa-worldpacks')}` },
                 { label: 'Retained History', value: `Time ${runtime.history.length}/${POLICY.almanac.historyLimit} | Weather ${runtime.weather.history.length}/${POLICY.almanac.weatherHistoryLimit} | Travel ${runtime.world.travel.history.length}/${POLICY.almanac.travelHistoryLimit} | Phenomena ${runtime.world.phenomenaHistory.length}/${POLICY.almanac.phenomenonHistoryLimit} | Rest ${runtime.rest.history.length}/${POLICY.almanac.restHistoryLimit}` },
                 { label: audit ? 'Audit Result' : 'Health', value: problems.length ? _sanitize(problems.join(' ')) : 'No known Almanac configuration, chronology, or retained-state problems.' },
                 { label: audit ? 'Changes' : 'Actions', value: audit ? 'None. Audit is read-only.' : `${GameAssist.createButton('Almanac', '!Almanac-GM')} ${GameAssist.createButton('Audit', '!Almanac-Audit')}` }
@@ -30131,11 +31003,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h1>AlmanacAssist User Manual</h1>',
                 `<p><strong>GameAssist v${_sanitize(VERSION)} | AlmanacAssist v${MODULE_VERSION}</strong></p>`,
                 '<h2>Purpose</h2>',
-                '<p>AlmanacAssist combines fictional time, regional climate, astronomy, weather, environmental context, explicit Phenomena overlays, reviewed Travel, optional advisory-only RulesAdvisor reminders, and deliberate rest workflows. Current World, Scene, and announcement views use one read-only scene snapshot so ordinary play sees a coherent world without changing provider state. Each internal system can be turned off without erasing its valid settings or disabling unrelated Almanac features.</p>',
+                '<p>AlmanacAssist combines fictional time, regional climate, astronomy, weather, environmental context, explicit Phenomena overlays, reviewed Travel, optional advisory-only RulesAdvisor reminders, atomic handout-reviewed WorldPacks, and deliberate rest workflows. Current World, Scene, and announcement views use one read-only scene snapshot so ordinary play sees a coherent world without changing provider state. Each internal system can be turned off without erasing its valid settings or disabling unrelated Almanac features.</p>',
                 '<h2>Everyday Use</h2>',
                 '<p><code>!aa-gm</code>, <code>!aa-dm</code>, <code>!Almanac</code>, or <code>!aa</code> opens the compact Current World dashboard. It keeps the current scene, common advances, dawn/dusk anchors, calendar selection, rest, weather, Scene, preview, and announce actions together. <code>!aa-scene</code> opens a focused current-world view; GM-only <code>!aa-scene technical</code> opens provenance and warnings. <code>!date</code>, <code>!time</code>, <code>!cal</code>, <code>!clim</code>, <code>!astro</code>, <code>!weather</code>, <code>!enviro</code>, <code>!rest</code>, and <code>!phenomena</code> open focused views.</p>',
                 '<h2>Worldbuilding Mode</h2>',
                 '<p>Open <code>!aa-world</code> for organized Places, Natural World, Local Context, Time &amp; Sky, Gameplay, and Campaign Tools. The current generic place model manages Regions, Geography, Ecoregions, Biomes, Locations, Prepared Destinations, Travel Routes, and Phenomena with bounded chat editors. Use <code>!aa-location</code> to choose the current Location, favorite repeated destinations, use recently visited places, or review a Prepared Destination. These records are owner-authored generic data; AlmanacAssist does not install published setting lore.</p>',
+                '<h2>WorldPacks</h2>',
+                '<p><code>!aa-worldpacks</code> manages portable Worldbuilding components in editable handouts. Create a blank generic template or export the current Worldbuilding records to a canonical handout. A GM reviews an import as Install New, Update Existing Pack, or Import as Copy; AlmanacAssist parses only bounded inert JSON, validates syntax, schema, references, provenance, dependencies, and conflicts, then issues an expiring preview. Confirmation rechecks the handout and campaign revisions before atomically committing Worldbuilding records and one provenance registry entry. New and Copy never overwrite existing records. Update requires a higher pack version and refuses any imported record changed by campaign customization. Packs never import PresetRegistry templates, runtime state, providers, time, weather, astronomy, or gameplay consequences.</p>',
                 '<h2>Prepared Destinations and Travel</h2>',
                 '<p>A Prepared Destination points to one owner-authored Location, whose Region, Geography, Ecoregion, Biome, Climate reference, and default local context are resolved through the normal Location hierarchy. Choose it from <code>!aa-location</code> to inspect the resulting context and confirm the location switch. The review changes neither fictional time nor Weather, Environment overrides, Astronomy, or other provider-owned current state.</p>',
                 '<p>Open <code>!aa-travel</code> (or <code>!travel</code>) to plan from the current Location. A Travel Route stores two Locations, a GM-entered distance, an owner-authored terrain note, and a Cautious, Standard, or Swift default pace. Review a route or an explicit direct distance, then start the journey. Starting changes nothing. Every one-hour, four-hour, custom-hour, or until-dusk segment is previewed; only its confirmation advances fictional time. Arrival changes the active Location only after the accepted final segment. Canceling a journey never moves the party or reverses already confirmed time.</p>',
@@ -30166,7 +31040,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h2>Safety</h2>',
                 '<p>Large advances produce one committed change. Moving backward changes only the fictional calendar and requires explicit confirmation. It never reverses rests, effects, combat, NPC history, HP, resources, or other campaign state.</p>',
                 '<h2>Commands</h2>',
-                '<p><code>!aa-wayfarer</code> opens the compact custom-calendar manager; its generated buttons cover direct saved-calendar selection, focused component editing, guided review, preview, activation, draft recovery, duplication, and rollback. <code>!aa-preview</code> privately previews the configured scene announcement, <code>!aa-announce</code> delivers it to the selected audience, and <code>!aa-announcement-settings</code> chooses public or GM-only delivery, a Quick, Calendar, Travel, or Everything preset, a campaign heading, or custom included fields. Technical fields always deliver GM-only; descriptive output limits itself to player-perceivable facts. Wayfarer presents its 20-hour day as ordinal Hours and named daily periods rather than AM/PM. Moon cycles and phase names are managed through Astronomy because they remain world context when a calendar display changes. <code>!aa-time</code>, <code>!aa-climate</code>, <code>!aa-astro</code>, <code>!aa-weather</code>, <code>!aa-enviro</code>, <code>!aa-rest</code>, <code>!aa-phenomena</code> (or <code>!phenomena</code>), and <code>!aa-rules</code> (or <code>!rules</code>) open their focused systems. RulesAdvisor is optional, follows the selected campaign profile, and only presents GM reminders; it never applies gameplay state. Standard role routes such as <code>!Weather-GM</code>, <code>!Weather-DM</code>, <code>!Weather-Help</code>, <code>!Weather-Status</code>, and <code>!Weather-Audit</code> are case-insensitive and also accept spaces in place of the hyphen.</p>'
+                '<p><code>!aa-wayfarer</code> opens the compact custom-calendar manager; its generated buttons cover direct saved-calendar selection, focused component editing, guided review, preview, activation, draft recovery, duplication, and rollback. <code>!aa-preview</code> privately previews the configured scene announcement, <code>!aa-announce</code> delivers it to the selected audience, and <code>!aa-announcement-settings</code> chooses public or GM-only delivery, a Quick, Calendar, Travel, or Everything preset, a campaign heading, or custom included fields. Technical fields always deliver GM-only; descriptive output limits itself to player-perceivable facts. Wayfarer presents its 20-hour day as ordinal Hours and named daily periods rather than AM/PM. Moon cycles and phase names are managed through Astronomy because they remain world context when a calendar display changes. <code>!aa-time</code>, <code>!aa-climate</code>, <code>!aa-astro</code>, <code>!aa-weather</code>, <code>!aa-enviro</code>, <code>!aa-rest</code>, <code>!aa-phenomena</code> (or <code>!phenomena</code>), <code>!aa-worldpacks</code> (or <code>!worldpacks</code>), and <code>!aa-rules</code> (or <code>!rules</code>) open their focused systems. RulesAdvisor is optional, follows the selected campaign profile, and only presents GM reminders; it never applies gameplay state. Standard role routes such as <code>!Weather-GM</code>, <code>!Weather-DM</code>, <code>!Weather-Help</code>, <code>!Weather-Status</code>, and <code>!Weather-Audit</code> are case-insensitive and also accept spaces in place of the hyphen.</p>'
             ].join('');
         }
 
@@ -30177,7 +31051,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Date and Time', value: `${GameAssist.createButton('Current Date', '!date')} ${GameAssist.createButton('Advance or Set Time', '!aa-time menu')} ${GameAssist.createButton('Choose Calendar', '!cal')}` },
                 { label: 'Share With The Table', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
                 { label: 'World Today', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Rules Advice', '!aa-rules')} ${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Environment', '!enviro')}` },
-                { label: 'Worldbuilding', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Travel Routes', '!aa-world routes')}` },
+                { label: 'Worldbuilding', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('WorldPacks', '!aa-worldpacks')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Travel Routes', '!aa-world routes')}` },
                 { label: 'Calendar Setup', value: GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer') },
                 { label: 'Full Reference', value: GameAssist.createButton('Create or Update Manual', '!Almanac-Manual') }
             ] : [
@@ -30225,11 +31099,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (['guide', 'help', 'info', 'manual'].includes(action)) return `${system} help`;
                 return `${system} ${action}`;
             }
-            const aaFocused = raw.match(/^!aa(?:-|\s+)(phenomen(?:a|on)|presets?|rules(?:-?advisor)?)(?:-|\s|$)/i);
+            const aaFocused = raw.match(/^!aa(?:-|\s+)(phenomen(?:a|on)|presets?|rules(?:-?advisor)?|worldpacks?)(?:-|\s|$)/i);
             if (aaFocused) {
                 const alias = aaFocused[1].toLowerCase();
-                const system = /^phenomen/.test(alias) ? 'phenomena' : (/^preset/.test(alias) ? 'presets' : 'rules');
-                return `${system} ${raw.replace(/^!aa(?:-|\s+)(?:phenomen(?:a|on)|presets?|rules(?:-?advisor)?)(?:-|\s)*/i, '')}`.trim();
+                const system = /^phenomen/.test(alias) ? 'phenomena' : (/^preset/.test(alias) ? 'presets' : (/^worldpack/.test(alias) ? 'worldpacks' : 'rules'));
+                return `${system} ${raw.replace(/^!aa(?:-|\s+)(?:phenomen(?:a|on)|presets?|rules(?:-?advisor)?|worldpacks?)(?:-|\s)*/i, '')}`.trim();
             }
             if (/^!date(?:\s|$)/i.test(raw)) return 'current-date';
             if (/^!time(?:\s|$)/i.test(raw)) return 'current-time';
@@ -30245,6 +31119,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (/^!travel(?:-|\s|$)/i.test(raw)) return `travel ${raw.replace(/^!travel(?:-|\s)*/i, '')}`.trim();
             if (/^!phenomen(?:a|on)(?:-|\s|$)/i.test(raw)) return `phenomena ${raw.replace(/^!phenomen(?:a|on)(?:-|\s)*/i, '')}`.trim();
             if (/^!presets?(?:-|\s|$)/i.test(raw)) return `presets ${raw.replace(/^!presets?(?:-|\s)*/i, '')}`.trim();
+            if (/^!worldpacks?(?:-|\s|$)/i.test(raw)) return `worldpacks ${raw.replace(/^!worldpacks?(?:-|\s)*/i, '')}`.trim();
             if (/^!rules(?:-?advisor)?(?:-|\s|$)/i.test(raw)) return `rules ${raw.replace(/^!rules(?:-?advisor)?(?:-|\s)*/i, '')}`.trim();
             if (/^!aa-wayfarer(?:\s|$)/i.test(raw)) return `wayfarer ${raw.replace(/^!aa-wayfarer\s*/i, '')}`.trim();
             if (/^!aa-time(?:\s|$)/i.test(raw)) return `time ${raw.replace(/^!aa-time\s*/i, '')}`.trim();
@@ -30275,6 +31150,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (lower === 'travel' || lower.startsWith('travel ')) return handleTravel(msg, input);
             if (lower === 'phenomena' || lower.startsWith('phenomena ') || lower === 'phenomenon' || lower.startsWith('phenomenon ')) return handlePhenomena(msg, input);
             if (lower === 'presets' || lower.startsWith('presets ') || lower === 'preset' || lower.startsWith('preset ')) return handlePresets(msg, input);
+            if (lower === 'worldpacks' || lower.startsWith('worldpacks ') || lower === 'worldpack' || lower.startsWith('worldpack ')) return handleWorldPacks(msg, input);
             if (lower === 'rules' || lower.startsWith('rules ') || lower === 'rulesadvisor' || lower.startsWith('rulesadvisor ')) return handleRulesAdvisor(msg, input);
             if (lower === 'preview' || lower === 'time preview') return showAnnouncement(msg, true);
             if (lower === 'announce' || lower === 'time announce') return showAnnouncement(msg, false);
@@ -30362,7 +31238,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
-        ['!Almanac', '!Almanac-', '!AlmanacAssist', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-', '!world', '!world-', '!location', '!location-', '!travel', '!travel-', '!phenomena', '!phenomena-', '!phenomenon', '!phenomenon-', '!presets', '!presets-', '!preset', '!preset-', '!rules', '!rules-', '!rulesadvisor', '!rulesadvisor-'].forEach(prefix => {
+        ['!Almanac', '!Almanac-', '!AlmanacAssist', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-', '!world', '!world-', '!location', '!location-', '!travel', '!travel-', '!phenomena', '!phenomena-', '!phenomenon', '!phenomenon-', '!presets', '!presets-', '!preset', '!preset-', '!worldpacks', '!worldpacks-', '!worldpack', '!worldpack-', '!rules', '!rules-', '!rulesadvisor', '!rulesadvisor-'].forEach(prefix => {
             GameAssist.onCommand(prefix, handleCommand, MODULE_NAME, {
                 match: { caseInsensitive: true, mode: prefix.endsWith('-') ? 'prefix' : 'token' }
             });
@@ -30384,6 +31260,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             phenomenaStateSchemaVersion: PHENOMENA_RUNTIME_SCHEMA_VERSION,
             presetRegistrySchemaVersion: PRESET_REGISTRY_SCHEMA_VERSION,
             rulesAdvisorSchemaVersion: RULES_ADVISOR_SCHEMA_VERSION,
+            worldPackSchemaVersion: WORLD_PACK_SCHEMA_VERSION,
             timeStateSchemaVersion: TIME_STATE_SCHEMA_VERSION,
             wayfarerDraftSchemaVersion: WAYFARER_DRAFT_SCHEMA_VERSION,
             climateStateSchemaVersion: CLIMATE_STATE_SCHEMA_VERSION,
@@ -30428,6 +31305,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 });
             },
             getRulesAdvice: () => immutableSceneSnapshot(resolveRulesAdvice()),
+            getWorldPacks: () => {
+                const packs = worldPackConfigResult(modState.config.worldPacks, { persist: false });
+                return immutableSceneSnapshot({
+                    schemaVersion: WORLD_PACK_SCHEMA_VERSION,
+                    installed: packs.ok ? packs.config.installed : [],
+                    warning: packs.ok ? null : packs.warning
+                });
+            },
             getRestHistory: () => Object.freeze(copy(ensureAlmanacRuntime().rest.history)),
             observe: (callback, { owner = 'AlmanacAssistConsumer' } = {}) => GameAssist.SemanticEvents.observe(callback, {
                 owner,
@@ -30436,15 +31321,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             clearObservers: owner => GameAssist.SemanticEvents.clearObservers(owner)
         });
 
-        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: read-only Current World SceneResolver, generic Worldbuilding, PresetRegistry campaign clones, optional RulesAdvisor, explicit Phenomena overlays, reviewed Travel, Wayfarer-aware time, configurable world announcements, compact climate and environment controls, and all six Almanac systems are available through !Almanac; the module starts disabled.`, 'INFO', { startup: true });
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: read-only Current World SceneResolver, generic Worldbuilding, PresetRegistry campaign clones, optional RulesAdvisor, atomic WorldPacks, explicit Phenomena overlays, reviewed Travel, Wayfarer-aware time, configurable world announcements, compact climate and environment controls, and all six Almanac systems are available through !Almanac; the module starts disabled.`, 'INFO', { startup: true });
     }, {
         enabled: false,
         prefixes: ['!Almanac', '!Almanac-', '!AlmanacAssist', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-', '!world', '!world-', '!location', '!location-', '!travel', '!travel-', '!phenomena', '!phenomena-', '!phenomenon', '!phenomenon-', '!presets', '!presets-', '!preset', '!preset-', '!rules', '!rules-', '!rulesadvisor', '!rulesadvisor-'],
         preserveRuntimeOnDisable: true,
-        protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'announcement', 'environment', 'rest', 'rulesAdvisor', 'world']
+        protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'announcement', 'environment', 'rest', 'rulesAdvisor', 'worldPacks', 'world']
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): AlmanacAssist is built as v2.0.0 for the full Issue #96 program. Current work adds generic immutable PresetRegistry templates, reviewed editable campaign clones, bounded Session Preset references, and optional profile-specific advisory-only RulesAdvisor reminders while retaining all prior source-history notes below as historical checkpoints. Live Roll20 validation is deliberately deferred until every Issue #96 code gate is built; focused VM checks remain development evidence only. Rollback: retain the last committed source checkpoint while the v2.0.0 implementation build is incomplete.
+    // Changed (v2.0.0): AlmanacAssist is built as v2.0.0 for the full Issue #96 program. Current work adds generic immutable PresetRegistry templates, reviewed editable campaign clones, bounded Session Preset references, optional profile-specific advisory-only RulesAdvisor reminders, and bounded atomic WorldPacks while retaining all prior source-history notes below as historical checkpoints. Live Roll20 validation is deliberately deferred until every Issue #96 code gate is built; focused VM checks remain development evidence only. Rollback: retain the last committed source checkpoint while the v2.0.0 implementation build is incomplete.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.10.0 on the AlmanacAssist-v2.0.0-Build line; adds bounded generic Phenomena definitions and reviewed active overlays with optional Location scope and fictional-time expiry. SceneResolver exposes immutable explicit overlay evidence and non-authoritative visibility/terrain/travel presentation notes without replacing Weather, Environment, Astronomy, Climate, Time, or Travel. Rollback: retain the 1.9.0 Prepared Destination and reviewed Travel checkpoint.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.9.0 on the AlmanacAssist-v2.0.0-Build line; adds bounded generic Prepared Destinations and bidirectional Travel Routes, reviewed start/segment/arrival workflow, active-journey SceneResolver evidence, and accepted-only fictional-time plus final-location commits. Prepared location switches deliberately preserve Weather, Environment overrides, Astronomy, and other provider ownership. Phenomena remains an explicit future provider; no setting lore is bundled. Rollback: retain the 1.8.0 generic Worldbuilding foundation with Travel unavailable.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.8.0 on the AlmanacAssist-v2.0.0-Build line; added bounded generic Worldbuilding Mode records for Region, Geography, Ecoregion, Biome, and Location, safe active-place/favorite/recent controls, field-owned SceneResolver composition, generic place chat editors, and warning-only future-schema handling. No published setting data is bundled; Phenomena remained a future provider at this checkpoint. Rollback: retain 1.7.0 SceneResolver behavior with an empty Worldbuilding branch.
@@ -30464,6 +31349,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Make Prepared Destinations Location-bound rather than silently overwrite Weather, Environment, Astronomy, or calendar providers - ALT: treat a location bundle as a broad hidden provider write; REJECTED: Location hierarchy already resolves coherent parent context and provider ownership must remain visible.
     //   CHOICE: Start expanded Worldbuilding with generic owner-authored records rather than named setting packs - ALT: seed recognizable published places/calendars/lore; REJECTED: setting provenance and licensing review are separate release gates.
     //   CHOICE: Derive optional RulesAdvisor reminders from the immutable SceneResolver snapshot - ALT: write conditions, penalties, movement, saves, markers, or trackers from weather and terrain; REJECTED: rules advice must remain profile-specific GM guidance without becoming a hidden gameplay authority.
+    //   CHOICE: Treat WorldPacks as bounded inert handout JSON reviewed through expiring New/Update/Copy plans - ALT: execute handout text or merge data immediately; REJECTED: portable authoring must not become a code path, silently overwrite campaign content, or blend runtime/provider/gameplay authority into Worldbuilding data.
     //   CHOICE: Let Location select parent context while preserving separate Region, Geography, Ecoregion, Biome, Climate, Environment, and Weather authority - ALT: copy every parent fact into Location; REJECTED: copied facts would drift and erase provenance.
     //   CHOICE: Preserve newer unknown Worldbuilding schemas without normalization - ALT: coerce or delete unknown structures on read; REJECTED: an older script must never silently reinterpret a newer campaign world.
     //   CHOICE: Resolve one defensive SceneResolver snapshot without calling state-initializing provider reads - ALT: reuse current display helpers that normalize or initialize runtime branches; REJECTED: a read-only current-world API must not mutate saved state merely by being observed.

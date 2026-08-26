@@ -150,9 +150,7 @@ This code gate has a v2.0.0 implementation foundation: compact Current World/Sce
 
 ## 6. Gate 4 — Portable world data and temporal contexts
 
-- [ ] WorldPackService (separate data classes; shared versioned schema; bounded
-      sizes; Preview → Confirm → Atomic Commit; stale-preview token; Install/Update/
-      Import; stable provenance; documented template; no imported text execution).
+- [x] WorldPackService: separate PresetRegistry/WorldPack/runtime data classes; shared versioned editable handout/canonical-export schema; bounded documents/parser work; syntax/schema/semantic/reference/conflict/provenance validation; dependency report; Preview → stale-protected Confirm → atomic Worldbuilding/registry commit; New/Update/Copy; stable provenance; blank template; no imported-text execution; and focused VM coverage.
 - [ ] Temporal contexts (explicit planar/regional time-rate contexts; preview plus
       reconciliation; no silent reversal of rests/effects/NPC history/combat/
       resources/real-world records; rules/lore presets distinct from mechanics;
@@ -163,8 +161,7 @@ This code gate has a v2.0.0 implementation foundation: compact Current World/Sce
 ### Automated and structural
 
 - [x] Focused VM harnesses cover Gate 0, SceneResolver, generic Worldbuilding,
-      Prepared Destination/reviewed Travel, explicit Phenomena boundaries, and PresetRegistry clone/install boundaries; they
-      do not replace final live Roll20 acceptance.
+      Prepared Destination/reviewed Travel, explicit Phenomena boundaries, PresetRegistry clone/install boundaries, RulesAdvisor, and WorldPack parser/review/atomicity boundaries; they do not replace final live Roll20 acceptance.
 - [x] Syntax parsing passes for `GameAssist`, `GameAssist.js`, and
       `GameAssist-v2.0.0`.
 - [x] Executable artifacts remain byte-identical.
@@ -177,7 +174,8 @@ This code gate has a v2.0.0 implementation foundation: compact Current World/Sce
       and malformed-input tests.
 - [ ] Scene coherence tests: one authoritative value per field with field-level
       provenance.
-- [ ] Import/parser tests prove bounded failure and atomicity.
+- [x] WorldPack import/parser tests prove bounded failure, stale-preview refusal, no-overwrite behavior, update/copy provenance, and atomicity.
+- [ ] Temporal-context import/reconciliation tests prove bounded failure and atomicity.
 - [ ] Focused Almanac tests before one consolidated GameAssist regression pass.
 
 ### Live Roll20
