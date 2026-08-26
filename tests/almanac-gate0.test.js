@@ -265,9 +265,9 @@ function assertExecutableArtifactsAreIdentical() {
     }));
     const reference = artifacts[0];
     artifacts.slice(1).forEach(artifact => {
-        assert.deepEqual(
-            artifact.content,
-            reference.content,
+        assert.equal(
+            artifact.content.equals(reference.content),
+            true,
             `${artifact.name} must remain byte-identical to ${reference.name}`
         );
     });
@@ -337,8 +337,9 @@ function assertDashboardAliases(harness) {
     POLICY.dashboardAliases.forEach(command => {
         const chats = harness.dispatchCommand(command);
         assert.equal(chats.length, 1, `${command} must produce one compact dashboard panel`);
-        assert.match(chats[0].message, /\{\{name=AlmanacAssist\}\}/, `${command} must open the Current World dashboard`);
+        assert.match(chats[0].message, /\{\{name=Almanac Home — Current World\}\}/, `${command} must open the Current World dashboard`);
         assert.match(chats[0].message, /Advance Date &amp; Time/, `${command} must expose time advancement within the dashboard`);
+        assert.match(chats[0].message, /Until Dawn/, `${command} must expose bounded Session Mode quick actions`);
     });
 }
 
@@ -352,8 +353,16 @@ function run() {
     process.stdout.write('PASS: AlmanacAssist Gate 0 focused regression checks\n');
 }
 
-run();
+if (require.main === module) run();
+
+module.exports = Object.freeze({
+    POLICY,
+    REPOSITORY_ROOT,
+    createHarness,
+    assertExecutableArtifactsAreIdentical
+});
 // --- Notes & Comments ---
+// Maintenance (v2.0.0, no semantic Gate 0 change): expose the existing isolated harness for the separate SceneResolver suite and update dashboard assertions for the compact Current World presentation.
 // Changed (v2.0.0): establish executable Gate 0 checks for #92/#93, lifecycle preservation, artifact identity, and close command aliases.
 // Decision log:
 //   CHOICE: test public AlmanacAssist API/chat contracts plus an in-memory lexical resolver hook — ALT: add production-only test exports; REJECTED: the shipped API must not expand merely for a focused regression test.

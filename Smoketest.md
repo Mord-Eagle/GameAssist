@@ -768,7 +768,7 @@ For the stale-confirmation check:
 
 ## Focused v2.0.0 Complete AlmanacAssist Acceptance
 
-**What this proves:** AlmanacAssist `1.6.2` on the `AlmanacAssist-v2.0.0-Build` line ships as one complete module whose action-first daily controls and Time, Climate, Astronomy, Weather, Environment, and Rest systems are independently usable, preserve valid state while disabled, and exchange optional context without turning one system into a hidden prerequisite for another. The Gate 0 repairs from Issues #92 and #93 are verified here as well.
+**What this proves:** AlmanacAssist `1.7.0` on the `AlmanacAssist-v2.0.0-Build` line provides the six independently controlled systems plus a read-only SceneResolver foundation for coherent Current World, Scene, and announcement presentation. It preserves valid state while disabled and exchanges optional context without turning one system into a hidden prerequisite for another. The Gate 0 repairs from Issues #92 and #93 are verified here as well; live Roll20 evidence is still required before release.
 
 **Why test it:** v2.0.0 must not publish a calendar shell while describing a world-management suite. This track proves the six systems, their boundaries, their shared navigation, and RestAlmanac's deliberate 2014-sheet writes inside the real Roll20 sandbox.
 
@@ -793,7 +793,7 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 
 ### Issue #92 / #93 Foundation Repair Checks
 
-**Why:** The build line accepts two narrow foundation repairs before the larger SceneResolver work: removing a redundant full-range chronology pre-scan and making `getSubmoduleStatus()` report configured subsystem state consistently.
+**Why:** The build line first accepted two narrow foundation repairs—removing a redundant full-range chronology pre-scan and making `getSubmoduleStatus()` report configured subsystem state consistently—then added the read-only SceneResolver foundation. The live track must now prove coherent Session Mode behavior.
 
 ```roll20chat
 !Almanac-Status

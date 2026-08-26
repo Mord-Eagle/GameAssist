@@ -44,7 +44,7 @@ The `75-v2.0.0-effectassist` branch contains:
 
 - A single Roll20 script implemented in `GameAssist`, `GameAssist.js`, and
   `GameAssist-v2.0.0` (all byte-identical at the branch head).
-- AlmanacAssist at **module version 1.6.1**, implemented as one GameAssist module
+- AlmanacAssist at **module version 1.6.1** in the historical source baseline, implemented as one GameAssist module
   with six independently toggleable internal systems:
   **Time, Climate, Astronomy, Weather, Environment, Rest**.
 - A complete Wayfarer custom-calendar manager, action-first GM dashboard,
@@ -52,15 +52,17 @@ The `75-v2.0.0-effectassist` branch contains:
   Off / Descriptive / Detailed / Technical control, direct calendar and moon
   editors, climate/region management, weather forecasts and locks, environment
   overrides, and transactional 2014-sheet Rest writes.
-- The `GameAssist.AlmanacAssist` public API: `version`, schema versions,
-  `isAvailable()`, `isTimeAvailable()`, `getSubmoduleStatus()`, `getTime()`,
-  `getClimate()`, `getAstronomy()`, `getWeather()`, `getEnvironment()`,
-  `getRestHistory()`, `observe(...)`, and `clearObservers(...)`.
+- The active build's `GameAssist.AlmanacAssist` public API: `version`, schema versions,
+  `isAvailable()`, `isTimeAvailable()`, `getSubmoduleStatus()`, `getScene()`,
+  `getTime()`, `getClimate()`, `getAstronomy()`, `getWeather()`,
+  `getEnvironment()`, `getRestHistory()`, `observe(...)`, and
+  `clearObservers(...)`.
 
-AlmanacAssist is **not** yet at the #95 / #94 destination. It is a coherent
-six-system prototype; it is not yet a SceneResolver-centered engine with
-Region / Geography / Ecoregion / Biome / Location / Environment / Phenomena /
-Travel / PresetRegistry / WorldPackService / temporal contexts.
+AlmanacAssist is **not** yet at the #95 / #94 destination. The active build checkpoint
+is now **1.7.0**, which adds a read-only SceneResolver foundation and compact
+Current World presentation over the six-system prototype. It does not yet supply
+Region / Geography / Ecoregion / Biome / Location / Phenomena / Travel /
+PresetRegistry / WorldPackService / temporal contexts.
 
 ## 4. Assessment by issue
 
@@ -282,13 +284,22 @@ change on the Build branch must satisfy them.
   #92 boundaries, #93 configured state, saved-state preservation, and close
   command aliases. It is not a substitute for live Roll20 acceptance.
 - **Assessment / plan documents:** Added under `docs/AlmanacAssist-v2.0.0-Build/`.
-- **Not yet implemented:** Gates 1–4, SceneResolver, the expanded world-domain
-  model, PresetRegistry, WorldPackService, temporal contexts, unknown-state
-  warning-only handling, and the full live Roll20 acceptance track.
+- **SceneResolver foundation:** Implemented at AlmanacAssist `1.7.0`: one deeply
+  immutable no-write snapshot with provider status, field provenance, bounded
+  warnings, Time/Climate/Weather/Environment/Astronomy/Rest boundaries, partial
+  terrain, distinct hydrology fields, and moon phase versus visibility. Dashboard,
+  Scene, announcements, and public weather announcement consume that snapshot.
+- **Focused SceneResolver harness:** `tests/almanac-scene-resolver.test.js` proves
+  immutability, no provider-state writes, disabled/parent-disabled behavior, manual
+  Time fallback, unusual Weather warnings, Scene presentation, and technical
+  announcement privacy in the isolated VM. It is not a substitute for Roll20.
+- **Not yet implemented:** Gate 1 live acceptance completion; Gate 3 expanded
+  world-domain systems; Gate 4 WorldPacks/temporal contexts; full unknown-state
+  migration review; and the full live Roll20 acceptance track.
 
 ## 8. Decisions and rationale
 
-- Keep the source version at `1.6.2` rather than claiming `2.0.0` before the
+- Keep the source version at `1.7.0` rather than claiming `2.0.0` before the
   architectural work is complete. This avoids announcing an incomplete 2.0 engine
   and preserves a trustworthy rollback baseline.
 - Keep all three executable artifacts byte-identical (`GameAssist`,

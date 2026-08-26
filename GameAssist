@@ -2,8 +2,8 @@
 ========================================
 GameAssist - Roll20 API Script
 Version: 2.0.0
-Last Updated: 2026-08-24 (America/New_York)
-Release scope: EffectAssist 2.5.3 compact identity-aware casting, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.0 automatic or reviewed normal/maximum healing, HealthService 1.1.0 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, CombatAssist 1.2.0 timeline and Ready/Delay tools, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist 1.6.2 foundation repairs on the AlmanacAssist-v2.0.0-Build line (chronology pre-scan removal, consistent configured subsystem status), and regression repairs across the v2.0.0 module suite.
+Last Updated: 2026-08-26 (America/New_York)
+Release scope: EffectAssist 2.5.3 compact identity-aware casting, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.0 automatic or reviewed normal/maximum healing, HealthService 1.1.0 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, CombatAssist 1.2.0 timeline and Ready/Delay tools, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist 1.7.0 SceneResolver foundation on the AlmanacAssist-v2.0.0-Build line (one defensive current-scene snapshot, provenance, and coherent session presentation), and regression repairs across the v2.0.0 module suite.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -30,7 +30,7 @@ calls GameAssist.enqueue(). This development package contains fifteen configurab
 - EffectAssist 2.5.3 - Coordinates compact catalog-driven effects, exact caster-and-recipient identity, retained GM requests, GameAssist-owned 2014-sheet modifiers, verified token-specific concentration, ownership-safe cleanup, duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
 - HealAssist 1.2.0 - Guides verified 2014 normal or maximum healing with direct single-recipient targeting, optional automatic application, visible PC targeting, private GM requests, and HealthService verification.
 - AttackAssist 1.1.0 - Guides authorized 2014 repeating attacks through direct visible targeting, default sheet-mode submission, optional GM-enabled roll review, complete prompt-safe Classic-sheet expansion, private GM placement, crash-safe inline-roll validation, and visible one-use native-template rolls without applying damage.
-- AlmanacAssist 1.6.2 - Foundation repairs on the AlmanacAssist-v2.0.0-Build line: removes the redundant full-range chronology pre-scan described in #92 and makes getSubmoduleStatus() consistently report configured subsystem state as described in #93, while preserving the existing six-system world model, Wayfarer behavior, and GameAssist lifecycle contracts.
+- AlmanacAssist 1.7.0 - Adds the internal read-only SceneResolver foundation on the AlmanacAssist-v2.0.0-Build line. It emits one defensive current-world snapshot with field provenance, provider status, warnings, terrain/hydrology distinctions, and separate moon phase/visibility while preserving the six-system model, Wayfarer behavior, and GameAssist lifecycle contracts.
 - HPAssist 0.3.0 - Rolls npc_hpformula and uses HealthService for verified writes to the selected shared NPC HP bar when available.
 - DebugTools 0.3.1 - Optional dry-run-first GM diagnostics with verified supported HP damage writes on the selected shared NPC HP bar.
 
@@ -489,7 +489,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             restGrantMs: 1000 * 60 * 5,
             customRestLimit: 10,
             maximumRestHours: 720,
-            maximumSummaryLength: 160
+            maximumSummaryLength: 160,
+            sceneWarningLimit: 24
         }),
         config: Object.freeze({
             unsafeKeys: Object.freeze(['__proto__', 'prototype', 'constructor'])
@@ -500,6 +501,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added AlmanacAssist.sceneWarningLimit (24) so a read-only SceneResolver can report unavailable, disabled, partial, and unusual-provider evidence without unbounded chat/API payload growth; rollback: use the prior bounded six-system displays while retaining saved provider state.
     // Changed (v2.0.0): Added bounded AttackAssist source, row, request, submission, rollbase, and interaction limits alongside the existing HealAssist, HealthService, EffectAssist, AlmanacAssist, and concentration limits; rollback: disable the affected optional module while retaining native sheet workflows.
     // Changed (v2.0.0): Raised CombatAssist health-evidence retention to 500 entries for the active or most recent encounter review; held-action records remain encounter-scoped and are discarded when the encounter ends.
     // Decision log:
@@ -23498,10 +23500,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: AlmanacAssist fictional calendar and world time
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:ALMANACASSIST", title: "AlmanacAssist",
-    //   guarantees: ["Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Optional Almanac integrations improve context without becoming hidden prerequisites","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer exposes direct validated editors for every stored calendar component while moon phases remain visible Astronomy-owned context","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","The GM dashboard prioritizes daily calendar actions and moves setup, diagnostics, and technical reference behind focused controls","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Descriptive announcements report player-perceivable time, weather, visibility, and moon visibility without presenting climate baselines as simultaneous current measurements","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
+    //   guarantees: ["Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Optional Almanac integrations improve context without becoming hidden prerequisites","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer exposes direct validated editors for every stored calendar component while moon phases remain visible Astronomy-owned context","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","The internal read-only SceneResolver emits one defensive current-world snapshot with field-level provenance, bounded warnings, separate moon phase and visibility, and no provider-state writes","The GM dashboard, Scene view, announcements, weather forecast display, and rest previews consume one resolved snapshot so current weather, environment, visibility, and celestial evidence do not contradict each other","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Descriptive announcements report player-perceivable time, weather, visibility, and moon visibility without presenting climate baselines as simultaneous current measurements","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AlmanacAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.6.2", time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.7.0", scene_state_schema_version: 1, time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // AlmanacAssist contains six independently toggleable internal submodules behind
@@ -23514,7 +23516,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('AlmanacAssist', function() {
         const MODULE_NAME = 'AlmanacAssist';
-        const MODULE_VERSION = '1.6.2';
+        const MODULE_VERSION = '1.7.0';
+        const SCENE_STATE_SCHEMA_VERSION = 1;
         const TIME_STATE_SCHEMA_VERSION = 2;
         const WAYFARER_DRAFT_SCHEMA_VERSION = 3;
         const ANNOUNCEMENT_SCHEMA_VERSION = 4;
@@ -23658,6 +23661,23 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             heroic: Object.freeze({ name: 'Heroic', shortHours: 5 / 60, longHours: 1 }),
             gritty: Object.freeze({ name: 'Gritty', shortHours: 8, longHours: 168 })
         });
+        const SCENE_PROVIDER_DEFINITIONS = Object.freeze({
+            time: Object.freeze({ authority: 'TimeAlmanac', configured: () => submoduleEnabled('time') && modState.config.timeAlmanacEnabled !== false }),
+            astronomy: Object.freeze({ authority: 'AstronomyAlmanac', configured: () => submoduleEnabled('astronomy') }),
+            region: Object.freeze({ authority: 'Region', configured: () => false }),
+            geography: Object.freeze({ authority: 'Geography', configured: () => false }),
+            ecoregion: Object.freeze({ authority: 'Ecoregion', configured: () => false }),
+            climate: Object.freeze({ authority: 'ClimateAlmanac', configured: () => submoduleEnabled('climate') }),
+            biome: Object.freeze({ authority: 'Biome', configured: () => false }),
+            location: Object.freeze({ authority: 'Location', configured: () => false }),
+            environment: Object.freeze({ authority: 'EnviroAlmanac', configured: () => submoduleEnabled('environment') }),
+            weather: Object.freeze({ authority: 'WeatherAlmanac', configured: () => submoduleEnabled('weather') }),
+            phenomena: Object.freeze({ authority: 'Phenomena', configured: () => false }),
+            travel: Object.freeze({ authority: 'Travel', configured: () => false }),
+            rest: Object.freeze({ authority: 'RestAlmanac', configured: () => submoduleEnabled('rest') })
+        });
+
+        const SCENE_UNIMPLEMENTED_PROVIDER_KEYS = Object.freeze(['region', 'geography', 'ecoregion', 'biome', 'location', 'phenomena', 'travel']);
 
         Object.assign(modState.config, {
             enabled: false,
@@ -24409,22 +24429,23 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function showCurrent(msg, focus = 'both') {
-            if (!timeAvailable()) {
+            const scene = resolveScene();
+            const moment = scene.time?.current;
+            if (!moment) {
                 sendPanel(msg, 'AlmanacAssist', [
-                    { label: 'TimeAlmanac', value: 'Currently turned off. Stored fictional time has been preserved.' },
+                    { label: 'TimeAlmanac', value: 'Currently turned off or unavailable. Stored fictional time has been preserved.' },
                     { label: 'Next Step', value: playerIsGM(msg?.playerid) ? GameAssist.createButton('Open Almanac', '!Almanac-GM') : 'Ask the GM to enable TimeAlmanac.' }
                 ]);
                 return;
             }
-            const moment = currentMoment();
             const fields = [];
             if (focus !== 'time') fields.push({ label: 'Date', value: _sanitize(displayDate(moment)) });
             if (focus !== 'date') fields.push({ label: 'Time', value: _sanitize(displayTime(moment)) });
             fields.push({ label: 'Season', value: _sanitize(moment.season) });
-            if (submoduleEnabled('astronomy')) fields.push({ label: 'Moon Phases', value: _sanitize(currentMoonSummary()) });
+            if (scene.astronomy?.moons?.length) fields.push({ label: 'Moon Phases', value: _sanitize(announcementMoonSummary('detailed', scene.astronomy)) });
             if (moment.holidays?.length) fields.push({ label: 'Holiday', value: moment.holidays.map(_sanitize).join(', ') });
             fields.push({ label: 'Calendar', value: _sanitize(moment.calendarName) });
-            if (playerIsGM(msg?.playerid)) fields.push({ label: 'Actions', value: `${GameAssist.createButton('Advance Time', '!aa-time menu')} ${GameAssist.createButton('Open Almanac', '!Almanac-GM')}` });
+            if (playerIsGM(msg?.playerid)) fields.push({ label: 'Actions', value: `${GameAssist.createButton('Advance Time', '!aa-time menu')} ${GameAssist.createButton('Current World', '!aa-scene')} ${GameAssist.createButton('Almanac Home', '!Almanac-GM')}` });
             sendPanel(msg, 'Campaign Date and Time', fields);
         }
 
@@ -24526,11 +24547,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return 'Visibility remains good';
         }
 
-        function moonVisibility(moment, weather) {
-            const displayedHour = Number(moment.hour) + 1;
-            const daylight = moment.profileId === 'wayfarer'
-                ? displayedHour >= 2 && displayedHour <= 14
-                : Number(moment.hour) >= 6 && Number(moment.hour) < 18;
+        /**
+         * moonVisibility - Resolve player-perceivable moon visibility from Astronomy daylight plus current atmospheric evidence.
+         * Inputs: a TimeAlmanac moment, WeatherAlmanac condition, and AstronomyAlmanac celestial context.
+         * Outputs: a visibility conclusion distinct from Astronomy-owned phase.
+         * Invariant: Astronomy controls daylight duration; SceneResolver combines it with local clock and Weather without changing either provider.
+         */
+        function moonVisibility(moment, weather, astronomy = null) {
+            const profile = profileFor(moment?.profileId);
+            const hoursPerDay = calendarHoursPerDay(profile);
+            const daylightHours = clampNumber(astronomy?.daylightHours, 0, 24, 12);
+            const scaledDaylight = Math.min(hoursPerDay, daylightHours / 24 * hoursPerDay);
+            const sunrise = (hoursPerDay - scaledDaylight) / 2;
+            const sunset = sunrise + scaledDaylight;
+            const clockHour = Number(moment?.hour) + Number(moment?.minute || 0) / calendarMinutesPerHour(profile);
+            const daylight = Number.isFinite(clockHour) && clockHour >= sunrise && clockHour < sunset;
             const cloudCover = Boolean(weather) && (
                 String(weather.precipitation || '').toLowerCase() !== 'none'
                 || ['overcast', 'storm clouds', 'low cloud', 'whiteout'].includes(String(weather.cloud || '').toLowerCase())
@@ -24541,86 +24572,115 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return { visible: reasons.length === 0, reasons };
         }
 
-        function announcementMoonSummary(style, moment, weather) {
-            const context = astronomyContext();
-            if (!context?.moons?.length) return 'No moons are configured.';
-            const visibility = moonVisibility(moment, weather);
-            return context.moons.map(moon => {
-                const hidden = visibility.visible ? '' : `Not Visible (${visibility.reasons.join(' and ')})`;
+        /**
+         * announcementMoonSummary - Render moon phase and already-resolved visibility from one SceneResolver snapshot.
+         * Inputs: presentation style and SceneResolver astronomy evidence.
+         * Outputs: compact moon text without re-reading Time, Weather, or Astronomy providers.
+         * Invariant: Astronomy owns phase; SceneResolver owns the visibility conclusion.
+         */
+        function announcementMoonSummary(style, astronomy) {
+            if (!astronomy?.moons?.length) return 'No moons are configured.';
+            const visibility = astronomy.moonVisibility;
+            return astronomy.moons.map(moon => {
+                const hidden = visibility && visibility.visible === false ? `Not Visible (${visibility.reasons.join(' and ')})` : '';
                 if (style === 'descriptive') return `${moon.name}: ${hidden || moon.phase}`;
                 if (style === 'technical') {
-                    return `${moon.name}: ${moon.phase} | cycle day ${moon.cyclePosition + 1} of ${moon.cycleDays}${hidden ? ` | ${hidden}` : ' | Visible'}`;
+                    const visibilityText = visibility ? (hidden || 'Visible') : 'Visibility unresolved';
+                    return `${moon.name}: ${moon.phase} | cycle day ${moon.cyclePosition + 1} of ${moon.cycleDays} | ${visibilityText}`;
                 }
                 return `${moon.name}: ${moon.phase}${hidden ? ` - ${hidden}` : ''}`;
             }).join(' | ');
         }
 
-        function announcementFields(config = normalizedAnnouncementConfig()) {
-            const moment = currentMoment();
+        /**
+         * announcementFields - Present one supplied SceneResolver snapshot at the selected disclosure levels.
+         * Inputs: normalized announcement settings and one immutable scene snapshot.
+         * Outputs: Roll20 template fields; no provider is re-read while rendering.
+         * Invariant: Weather supplies the single exact current temperature; Environment is separately labeled immediate context.
+         */
+        function announcementFields(config = normalizedAnnouncementConfig(), scene = resolveScene()) {
+            const moment = scene.time?.current || null;
+            const weather = scene.weather?.current || null;
+            const climate = scene.climate?.baseline || null;
+            const environment = scene.environment?.current || null;
+            const astronomy = scene.astronomy || null;
             const fields = [];
             const fieldStyle = key => ANNOUNCEMENT_STYLES.includes(config.fields[key]) ? config.fields[key] : 'off';
+            const sourceFor = field => {
+                const evidence = scene.provenance?.[field];
+                return evidence ? `${evidence.authority}: ${evidence.source}` : 'No resolved source';
+            };
             const dateStyle = fieldStyle('date');
             const timeStyle = fieldStyle('time');
             const seasonStyle = fieldStyle('season');
             const observanceStyle = fieldStyle('observances');
-            if (dateStyle !== 'off') fields.push({ label: 'Date', value: _sanitize(displayDate(moment)) });
-            if (timeStyle !== 'off') fields.push({ label: 'Time', value: _sanitize(timeStyle === 'descriptive' ? descriptiveTime(moment) : displayTime(moment)) });
-            if (seasonStyle !== 'off') fields.push({ label: 'Season', value: _sanitize(moment.season) });
-            if (observanceStyle !== 'off' && moment.holidays?.length) fields.push({ label: 'Observances', value: moment.holidays.map(_sanitize).join(', ') });
-            const weatherStyle = fieldStyle('weather');
-            const sceneOverride = submoduleEnabled('environment') ? ensureAlmanacRuntime().environment.override : null;
-            const weather = weatherStyle !== 'off' && submoduleEnabled('weather') && !sceneOverride ? currentWeather() : null;
+            if (moment && dateStyle !== 'off') fields.push({ label: 'Date', value: _sanitize(displayDate(moment)) });
+            if (moment && timeStyle !== 'off') fields.push({ label: 'Time', value: _sanitize(timeStyle === 'descriptive' ? descriptiveTime(moment) : displayTime(moment)) });
+            if (moment && seasonStyle !== 'off') fields.push({ label: 'Season', value: _sanitize(moment.season) });
+            if (moment && observanceStyle !== 'off' && moment.holidays?.length) fields.push({ label: 'Observances', value: moment.holidays.map(_sanitize).join(', ') });
+
             const moonStyle = fieldStyle('moons');
-            if (moonStyle !== 'off' && submoduleEnabled('astronomy')) fields.push({ label: 'Moon Phases', value: _sanitize(announcementMoonSummary(moonStyle, moment, currentWeather())) });
-            if (weather) {
+            if (moonStyle !== 'off' && astronomy) {
+                fields.push({ label: moonStyle === 'technical' ? 'Moon Phases (Technical)' : 'Moon Phases', value: _sanitize(announcementMoonSummary(moonStyle, astronomy)) });
+            }
+
+            const weatherStyle = fieldStyle('weather');
+            if (weatherStyle !== 'off' && weather) {
                 const weatherValue = weatherStyle === 'descriptive'
                     ? `${weather.summary} | ${descriptiveTemperature(weather.temperatureF)} | ${descriptiveWind(weather.windMph)} | ${descriptiveVisibility(weather.visibility)}`
                     : weatherStyle === 'technical'
-                        ? `${weather.summary} | ${weather.temperatureF} F | ${weather.windMph} mph wind | ${weather.precipitation} | ${weather.cloud} | Visibility: ${weather.visibility} | Source: ${weather.context}`
+                        ? `${weather.summary} | ${weather.temperatureF} F | ${weather.windMph} mph wind | ${weather.precipitation} | ${weather.cloud} | Visibility: ${weather.visibility} | Source: ${sourceFor('weather.current')}`
                         : `${weather.summary} | ${weather.temperatureF} F | ${weather.windMph} mph wind | Visibility: ${weather.visibility}`;
                 fields.push({ label: weatherStyle === 'technical' ? 'Weather (Technical)' : 'Weather', value: _sanitize(weatherValue) });
             }
-            if (weatherStyle !== 'off' && sceneOverride) {
-                const sceneValue = weatherStyle === 'descriptive'
-                    ? `${sceneOverride.name} | ${sceneOverride.temperature} | ${sceneOverride.wind} | ${descriptiveVisibility(sceneOverride.visibility)}`
-                    : weatherStyle === 'technical'
-                        ? `${sceneOverride.name} | Temperature: ${sceneOverride.temperature} | Wind: ${sceneOverride.wind} | Precipitation: ${sceneOverride.precipitation} | Visibility: ${sceneOverride.visibility} | Source: GM scene override`
-                        : `${sceneOverride.name} | ${sceneOverride.temperature} | ${sceneOverride.wind} wind | Visibility: ${sceneOverride.visibility}`;
-                fields.push({ label: weatherStyle === 'technical' ? 'Scene Conditions (Technical)' : 'Scene Conditions', value: _sanitize(sceneValue) });
-            }
+
             const climateStyle = fieldStyle('climate');
-            const climate = climateStyle !== 'off' && submoduleEnabled('climate') ? resolvedClimate() : null;
-            if (climate) {
+            if (climateStyle !== 'off' && climate) {
                 const climateValue = climateStyle === 'descriptive'
                     ? `${climate.regionName} | ${climate.profileName}`
                     : climateStyle === 'technical'
-                    ? `${climate.profileName} baseline | ${climate.humidity}% typical humidity | ${climate.precipitationChance}% precipitation chance | ${climate.windMph} mph typical wind${climate.regionId === 'home' ? '' : ` | Region: ${climate.regionName}`}`
-                    : `${climate.profileName} climate | ${climate.humidity}% typical humidity | ${climate.precipitationChance}% precipitation chance${climate.regionId === 'home' ? '' : ` | ${climate.regionName}`}`;
-                fields.push({ label: climateStyle === 'technical' ? 'Climate Baseline' : 'Climate', value: _sanitize(climateValue) });
+                        ? `${climate.profileName} baseline | ${climate.humidity}% typical humidity | ${climate.precipitationChance}% precipitation chance | ${climate.windMph} mph typical wind${climate.regionId === 'home' ? '' : ` | Region: ${climate.regionName}`} | Source: ${sourceFor('climate.baseline')}`
+                        : `${climate.profileName} climate | ${climate.humidity}% typical humidity | ${climate.precipitationChance}% precipitation chance${climate.regionId === 'home' ? '' : ` | ${climate.regionName}`}`;
+                fields.push({ label: climateStyle === 'technical' ? 'Climate Baseline (Technical)' : 'Climate', value: _sanitize(climateValue) });
             }
+
             const environmentStyle = fieldStyle('environment');
-            const environment = environmentStyle !== 'off' && submoduleEnabled('environment') ? environmentContext() : null;
-            if (environment) {
+            if (environmentStyle !== 'off' && environment) {
                 const environmentValue = environmentStyle === 'descriptive'
                     ? `${environment.name} | ${descriptiveVisibility(environment.visibility)} | ${environment.ground}`
                     : environmentStyle === 'technical'
-                        ? `${environment.name} | Visibility: ${environment.visibility} | Temperature: ${environment.temperature} | Wind: ${environment.wind} | Ground: ${environment.ground} | Water: ${environment.water} | Exposure: ${environment.exposure} | Severity: ${environment.severity}`
+                        ? `${environment.name} | Visibility: ${environment.visibility} | Temperature: ${environment.temperature} | Wind: ${environment.wind} | Ground: ${environment.ground} | Water: ${environment.water} | Exposure: ${environment.exposure} | Severity: ${environment.severity} | Source: ${sourceFor('environment.current')}`
                         : `${environment.name} | Visibility: ${environment.visibility} | ${environment.temperature} | Ground: ${environment.ground}`;
-                fields.push({ label: environmentStyle === 'technical' ? 'Environment (Technical)' : 'Environment', value: _sanitize(environmentValue) });
+                fields.push({ label: environmentStyle === 'technical' ? 'Immediate Environment (Technical)' : 'Immediate Environment', value: _sanitize(environmentValue) });
             }
             return fields;
+        }
+
+        function announcementHasTechnicalFields(config) {
+            return Object.values(config?.fields || {}).some(style => style === 'technical');
+        }
+
+        function announcementDelivery(config) {
+            const technical = announcementHasTechnicalFields(config);
+            return {
+                technical,
+                publicMessage: config.audience === 'public' && !technical,
+                label: technical ? 'GM Only (technical detail is never public)' : (config.audience === 'public' ? 'Public Chat' : 'GM Only')
+            };
         }
 
         function showAnnouncement(msg, preview = false) {
             if (!requireGm(msg) || !timeAvailable()) return;
             const config = normalizedAnnouncementConfig();
+            const delivery = announcementDelivery(config);
             if (!config.enabled) {
                 return sendPanel(msg, preview ? 'Almanac Announcement Preview' : 'Announcement Not Sent', [
                     { label: 'Announcements', value: 'Off. No public or GM announcement was sent.' },
                     { label: 'Actions', value: `${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')} ${GameAssist.createButton('Almanac', '!aa-gm')}` }
                 ]);
             }
-            const fields = announcementFields(config);
+            const scene = resolveScene();
+            const fields = announcementFields(config, scene);
             if (!fields.length) {
                 return sendPanel(msg, preview ? 'Almanac Announcement Preview' : 'Announcement Not Sent', [
                     { label: 'Information', value: 'Every announcement detail is off. Choose at least one detail or restore the announcement defaults.' },
@@ -24630,7 +24690,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (preview) {
                 fields.unshift({
                     label: 'Delivery',
-                    value: `${config.audience === 'public' ? 'Public Chat' : 'GM Only'} | ${config.style.charAt(0).toUpperCase()}${config.style.slice(1)} | ${config.preset === 'custom' ? 'Custom Information' : `${config.preset.charAt(0).toUpperCase()}${config.preset.slice(1)} Preset`}`
+                    value: `${delivery.label} | ${config.style.charAt(0).toUpperCase()}${config.style.slice(1)} | ${config.preset === 'custom' ? 'Custom Information' : `${config.preset.charAt(0).toUpperCase()}${config.preset.slice(1)} Preset`}`
                 });
                 fields.push({
                     label: 'Actions',
@@ -24638,7 +24698,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 });
                 return sendPanel(msg, `${config.header} - Preview`, fields);
             }
-            return sendPanel(msg, config.header, fields, { publicMessage: config.audience === 'public' });
+            return sendPanel(msg, config.header, fields, { publicMessage: delivery.publicMessage });
         }
 
         function showAnnouncementFields(msg) {
@@ -24664,6 +24724,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function showAnnouncementSettings(msg) {
             if (!requireGm(msg)) return;
             const config = normalizedAnnouncementConfig();
+            const delivery = announcementDelivery(config);
             const queryHeader = String(config.header).replace(/["|{}?]/g, ' ').replace(/\s+/g, ' ').trim();
             const choice = (label, active, command) => active ? `<strong>${_sanitize(label)}</strong>` : GameAssist.createButton(label, command);
             sendPanel(msg, 'Almanac Announcement Settings', [
@@ -24673,9 +24734,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 },
                 {
                     label: 'Audience',
-                    value: `${choice('Public Chat', config.audience === 'public', '!aa-announcement audience public')} ${choice('GM Only', config.audience === 'gm', '!aa-announcement audience gm')}`
+                    value: `${choice('Public Chat', delivery.publicMessage, '!aa-announcement audience public')} ${choice('GM Only', !delivery.publicMessage, '!aa-announcement audience gm')}${delivery.technical ? '<br><span style="font-size:smaller;">Technical fields are always delivered GM-only.</span>' : ''}`
                 },
-                { label: 'What The Styles Mean', value: 'Descriptive shares what characters can readily perceive. Detailed includes exact current values. Technical adds baselines, sources, and diagnostic context. Off sends nothing.' },
+                { label: 'What The Styles Mean', value: 'Descriptive shares what characters can readily perceive. Detailed includes exact current values. Technical adds baselines, sources, and diagnostic context for the GM only. Off sends nothing.' },
                 {
                     label: 'Information Preset',
                     value: `${choice('Quick', config.preset === 'quick', '!aa-announcement preset quick')} ${choice('Calendar', config.preset === 'calendar', '!aa-announcement preset calendar')} ${choice('Travel', config.preset === 'travel', '!aa-announcement preset travel')} ${choice('Everything', config.preset === 'full', '!aa-announcement preset full')}`
@@ -24686,20 +24747,95 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
+        function sceneWeatherSummary(scene, { detailed = false } = {}) {
+            const weather = scene.weather?.current;
+            if (!weather) return 'No committed weather.';
+            return detailed
+                ? `${weather.summary} | ${weather.temperatureF} F | ${weather.windMph} mph wind | ${weather.visibility}`
+                : `${weather.summary} | ${descriptiveTemperature(weather.temperatureF)} | ${descriptiveVisibility(weather.visibility)}`;
+        }
+
+        function sceneEnvironmentSummary(scene, { detailed = false } = {}) {
+            const environment = scene.environment?.current;
+            if (!environment) return 'No immediate environment is resolved.';
+            return detailed
+                ? `${environment.name} | ${environment.ground} | ${environment.visibility} | ${environment.water}`
+                : `${environment.name} | ${environment.ground}`;
+        }
+
+        function sceneOverview(scene) {
+            const moment = scene.time?.current;
+            const sky = scene.astronomy?.moons?.length
+                ? scene.astronomy.moons.map(moon => `${moon.name}: ${moon.phase}${moon.visibility?.visible === false ? ' obscured' : ''}`).join(' | ')
+                : 'Sky context unavailable';
+            return [
+                moment ? displayMoment(moment) : 'Fictional time unavailable',
+                scene.location ? scene.location.name : 'Location unassigned',
+                sceneWeatherSummary(scene),
+                sceneEnvironmentSummary(scene),
+                sky
+            ].map(_sanitize).join('<br>');
+        }
+
+        function sceneAnchorAdvanceCommand(moment, { standardHour, wayfarerHour }) {
+            if (!moment) return '';
+            const profile = profileFor(moment.profileId);
+            const minutesPerHour = calendarMinutesPerHour(profile);
+            const minutesPerDay = calendarMinutesPerDay(profile);
+            const targetHour = profile.id === 'wayfarer' ? wayfarerHour : standardHour;
+            const currentMinute = moment.hour * minutesPerHour + moment.minute;
+            let delta = targetHour * minutesPerHour - currentMinute;
+            if (delta <= 0) delta += minutesPerDay;
+            return `!aa-time advance --minutes ${delta}`;
+        }
+
+        /**
+         * showScene - Render one SceneResolver snapshot without recalculating individual providers.
+         * Inputs: player/GM message and an optional GM-only technical flag.
+         * Outputs: a compact Current World screen with descriptive data first and provenance/warnings only when deliberately opened by a GM.
+         * Invariant: the screen never mutates provider state and always exposes an Almanac Home return.
+         */
+        function showScene(msg, technical = false) {
+            const isGm = playerIsGM(msg?.playerid);
+            const scene = resolveScene();
+            const moment = scene.time?.current;
+            const astronomy = scene.astronomy;
+            const environment = scene.environment?.current;
+            const technicalFields = technical && isGm ? [
+                { label: 'Provider Status', value: Object.entries(scene.providers).map(([key, provider]) => `${_sanitize(provider.authority)}: ${_sanitize(provider.status)}`).join(' | ') },
+                { label: 'Provenance', value: Object.entries(scene.provenance).map(([field, evidence]) => `${_sanitize(field)} = ${_sanitize(evidence.authority)} (${_sanitize(evidence.source)})`).join('<br>') || 'No resolved fields.' },
+                { label: 'Warnings', value: scene.warnings.length ? scene.warnings.map(warning => _sanitize(warning.message)).join('<br>') : 'No SceneResolver warnings.' }
+            ] : [];
+            sendPanel(msg, technical && isGm ? 'Almanac / Current World / Scene Details' : 'Almanac / Current World / Scene', [
+                { label: 'Current World', value: sceneOverview(scene) },
+                { label: 'Time & Season', value: moment ? `${_sanitize(displayMoment(moment))} | ${_sanitize(moment.season)}` : 'TimeAlmanac is unavailable.' },
+                { label: 'Weather', value: _sanitize(sceneWeatherSummary(scene, { detailed: true })) },
+                { label: 'Immediate Environment', value: _sanitize(sceneEnvironmentSummary(scene, { detailed: true })) },
+                { label: 'Sky', value: astronomy?.moons?.length ? _sanitize(announcementMoonSummary('detailed', astronomy)) : 'Astronomy context unavailable.' },
+                { label: 'Location', value: scene.location ? _sanitize(scene.location.name) : 'Unassigned. The GM has not prepared a named location.' },
+                ...technicalFields,
+                { label: 'Navigation', value: `${isGm && !technical ? GameAssist.createButton('Scene Details', '!aa-scene technical') : ''} ${GameAssist.createButton('Back', '!aa-gm')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}`.trim() }
+            ]);
+        }
+
+
         function showMaster(msg) {
             if (!playerIsGM(msg?.playerid)) return showCurrent(msg);
-            const moment = currentMoment();
-            const timeButtons = timeAvailable()
-                ? `${GameAssist.createButton('+10 Minutes', '!aa-time advance --minutes 10')} ${GameAssist.createButton('+1 Hour', '!aa-time advance --hours 1')} ${GameAssist.createButton('+1 Day', '!aa-time advance --days 1')} ${GameAssist.createButton('Choose Advance', '!aa-time advance --days ?{Days|0} --hours ?{Hours|0} --minutes ?{Minutes|0}')}`
+            const scene = resolveScene();
+            const moment = scene.time?.current;
+            const dawnCommand = sceneAnchorAdvanceCommand(moment, { standardHour: 6, wayfarerHour: 1 });
+            const duskCommand = sceneAnchorAdvanceCommand(moment, { standardHour: 18, wayfarerHour: 11 });
+            const timeButtons = moment
+                ? `${GameAssist.createButton('+10 Minutes', '!aa-time advance --minutes 10')} ${GameAssist.createButton('+1 Hour', '!aa-time advance --hours 1')} ${GameAssist.createButton('Until Dawn', dawnCommand)} ${GameAssist.createButton('Until Dusk', duskCommand)} ${GameAssist.createButton('Choose Advance', '!aa-time advance --days ?{Days|0} --hours ?{Hours|0} --minutes ?{Minutes|0}')}`
                 : GameAssist.createButton('Turn On TimeAlmanac', '!aa-time on');
-            sendPanel(msg, 'AlmanacAssist', [
-                { label: 'Now', value: timeAvailable() ? _sanitize(displayMoment(moment)) : 'TimeAlmanac is turned off; chronology is preserved.' },
+            sendPanel(msg, 'Almanac Home — Current World', [
+                { label: 'Current World', value: sceneOverview(scene) },
                 { label: 'Advance Date & Time', value: timeButtons },
-                { label: 'Set or Change Calendar', value: timeAvailable() ? `${exactMomentButton(moment)} ${GameAssist.createButton('Choose Calendar', '!cal')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')}` : GameAssist.createButton('Choose Calendar', '!cal') },
-                { label: 'Share', value: `${GameAssist.createButton('Preview Announcement', '!aa-preview')} ${GameAssist.createButton('Announce Now', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
-                { label: 'World Today', value: `${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Environment', '!enviro')}` },
-                { label: 'More', value: `${GameAssist.createButton('Rest', '!rest')} ${GameAssist.createButton('More Almanac Tools', '!aa-more')} ${GameAssist.createButton('Guide', '!Almanac-Guide')}` },
-                { label: 'GameAssist', value: gameAssistHomeButton() }
+                { label: 'Set or Change Calendar', value: moment ? `${exactMomentButton(moment)} ${GameAssist.createButton('Choose Calendar', '!cal')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')}` : GameAssist.createButton('Choose Calendar', '!cal') },
+                { label: 'Session Actions', value: `${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Change Region', '!aa-climate regions')} ${GameAssist.createButton('Short Rest', '!aa-rest preview --type short')} ${GameAssist.createButton('Long Rest', '!aa-rest preview --type long')}` },
+                { label: 'Share', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
+                { label: 'Worldbuilding', value: `${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Astronomy', '!astro')} ${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('More Tools', '!aa-more')}` },
+                { label: 'Navigation', value: `${GameAssist.createButton('Almanac Guide', '!Almanac-Guide')} ${gameAssistHomeButton()}` }
             ]);
         }
 
@@ -25686,8 +25822,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             };
         }
 
-        function normalizeClimateConfig() {
-            const source = modState.config.climate;
+        /**
+         * normalizeClimateConfig - Produce one bounded ClimateAlmanac configuration.
+         * Inputs: persisted campaign configuration by default, or an explicit defensive copy for read-only resolution.
+         * Outputs: a canonical configuration; the default path persists it for legacy editor behavior.
+         * Invariant: SceneResolver passes persist:false so resolving a scene never writes provider configuration.
+         * Design: retain existing editor self-healing while giving read-only consumers a pure normalization seam.
+         */
+        function normalizeClimateConfig(sourceInput = modState.config.climate, { persist = sourceInput === modState.config.climate } = {}) {
+            const source = sourceInput && typeof sourceInput === 'object' && !Array.isArray(sourceInput) ? sourceInput : {};
             const profileOverrides = normalizeBuiltInProfileOverrides(source.profileOverrides);
             const customProfiles = [];
             const profileIds = new Set(Object.keys(CLIMATE_PROFILES));
@@ -25739,18 +25882,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const activeRegionId = byId[String(source.activeRegionId || '').toLowerCase()]
                 ? String(source.activeRegionId).toLowerCase()
                 : regions[0].id;
-            modState.config.climate = {
+            const normalized = {
                 activeRegionId,
                 manualSeason: normalizeSeason(source.manualSeason, 'Spring'),
                 profileOverrides,
                 customProfiles,
                 regions
             };
-            return modState.config.climate;
+            if (persist) modState.config.climate = normalized;
+            return normalized;
         }
 
-        function climateRegion(requested) {
-            const config = normalizeClimateConfig();
+        function climateRegion(requested, config = normalizeClimateConfig()) {
             const key = String(requested || config.activeRegionId).trim().toLowerCase();
             const byId = config.regions.find(region => region.id === key);
             if (byId) return byId;
@@ -25785,9 +25928,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return timeAvailable() ? currentMoment().season : normalizeClimateConfig().manualSeason;
         }
 
-        function resolvedClimate(requestedRegion = null) {
-            const config = normalizeClimateConfig();
-            const region = climateRegion(requestedRegion);
+        /**
+         * resolvedClimate - Resolve a long-term seasonal Climate baseline without becoming Weather authority.
+         * Inputs: optional region plus an optional pure config/season context from SceneResolver.
+         * Outputs: a defensive baseline with source authority; no provider state is written when options are supplied.
+         * Invariant: Weather remains the owner of the one current measured temperature.
+         */
+        function resolvedClimate(requestedRegion = null, options = {}) {
+            const config = options.config || normalizeClimateConfig();
+            const region = climateRegion(requestedRegion, config);
             if (!region) return null;
             const profiles = climateProfileMap(config);
             const chain = [];
@@ -25814,7 +25963,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 (overrides.tags || []).forEach(tag => tags.add(tag));
             });
             if (!tags.size) (profile.tags || []).forEach(tag => tags.add(tag));
-            const season = currentSeason();
+            const season = options.season || currentSeason();
+            const seasonAuthority = options.seasonAuthority || (timeAvailable() ? 'TimeAlmanac' : 'ClimateAlmanac manual setting');
             const seasonalOffset = { Winter: -18, Spring: 0, Summer: 18, Autumn: 0 }[season] || 0;
             return Object.freeze({
                 stateSchemaVersion: CLIMATE_STATE_SCHEMA_VERSION,
@@ -25823,7 +25973,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ancestry: chain.map(item => item.name),
                 profileName: profile.name,
                 season,
-                seasonAuthority: timeAvailable() ? 'TimeAlmanac' : 'ClimateAlmanac manual setting',
+                seasonAuthority,
                 temperatureF: Math.round(profile.temperatureF + seasonalOffset),
                 humidity: Math.round(profile.humidity),
                 precipitationChance: Math.round(profile.precipitationChance),
@@ -26067,8 +26217,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'That climate command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Climate', '!clim') }]);
         }
 
-        function normalizeAstronomyConfig() {
-            const source = modState.config.astronomy;
+        /**
+         * normalizeAstronomyConfig - Produce bounded moon and celestial-event data.
+         * Inputs: persisted campaign configuration by default, or an explicit defensive copy for SceneResolver.
+         * Outputs: a canonical configuration; only the legacy default path persists it.
+         * Invariant: pure scene resolution never changes moon definitions or manual astronomy context.
+         */
+        function normalizeAstronomyConfig(sourceInput = modState.config.astronomy, { persist = sourceInput === modState.config.astronomy } = {}) {
+            const source = sourceInput && typeof sourceInput === 'object' && !Array.isArray(sourceInput) ? sourceInput : {};
             const input = Array.isArray(source.moons) ? source.moons : DEFAULT_MOONS;
             const moons = [];
             const ids = new Set();
@@ -26105,13 +26261,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 rareEvents.push({ id, name, weight });
             });
             if (!rareEvents.length) rareEvents.push(...copy(DEFAULT_RARE_EVENTS));
-            modState.config.astronomy = {
+            const normalized = {
                 manualAbsoluteDay: Math.max(0, Math.floor(Number(source.manualAbsoluteDay) || 0)),
                 manualSeason: normalizeSeason(source.manualSeason, 'Spring'),
                 moons,
                 rareEvents
             };
-            return modState.config.astronomy;
+            if (persist) modState.config.astronomy = normalized;
+            return normalized;
         }
 
         function astronomyItem(items, requested) {
@@ -26170,17 +26327,26 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return { ok: true, changes };
         }
 
-        function astronomyContext(dayOffset = 0) {
-            const config = normalizeAstronomyConfig();
-            const baseMoment = timeAvailable() ? currentMoment() : null;
-            const moment = baseMoment ? resolveWorldMinute(profileFor(), baseMoment.worldMinute + Math.floor(Number(dayOffset) || 0) * calendarMinutesPerDay(profileFor())) : null;
+        /**
+         * astronomyContext - Resolve deterministic celestial facts from Time when available or manual astronomy context otherwise.
+         * Inputs: a day offset plus optional pure SceneResolver config/moment/profile snapshots.
+         * Outputs: moon phase/daylight evidence; it never writes moon definitions.
+         * Invariant: phase authority stays Astronomy while visibility is resolved by SceneResolver from time and atmospheric evidence.
+         */
+        function astronomyContext(dayOffset = 0, options = {}) {
+            const config = options.config || normalizeAstronomyConfig();
+            const profile = options.profile || profileFor();
+            const hasExplicitMoment = Object.prototype.hasOwnProperty.call(options, 'moment');
+            const baseMoment = hasExplicitMoment ? options.moment : (timeAvailable() ? currentMoment() : null);
+            const offset = Math.floor(Number(dayOffset) || 0);
+            const moment = baseMoment ? resolveWorldMinute(profile, baseMoment.worldMinute + offset * calendarMinutesPerDay(profile)) : null;
             if (baseMoment && !moment) return null;
-            const absoluteDay = moment ? moment.absoluteDay : config.manualAbsoluteDay + Math.floor(Number(dayOffset) || 0);
+            const absoluteDay = moment ? moment.absoluteDay : config.manualAbsoluteDay + offset;
             const season = moment ? moment.season : config.manualSeason;
             const daylightHours = { Winter: 9, Spring: 12, Summer: 15, Autumn: 12 }[season] || 12;
             let seasonalEvent = null;
             if (moment && moment.absoluteDay > 0) {
-                const previousMoment = resolveWorldMinute(profileFor(), moment.worldMinute - calendarMinutesPerDay(profileFor()));
+                const previousMoment = resolveWorldMinute(profile, moment.worldMinute - calendarMinutesPerDay(profile));
                 if (previousMoment && previousMoment.season !== moment.season) {
                     seasonalEvent = {
                         Spring: 'Vernal Equinox',
@@ -26527,10 +26693,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function showWeather(msg) {
             if (!submoduleEnabled('weather')) return sendPanel(msg, 'WeatherAlmanac', [{ label: 'Status', value: 'Turned off; current weather, forecast, and history are preserved.' }]);
             const runtime = ensureAlmanacRuntime();
-            const weather = runtime.weather.current;
-            const sceneOverride = runtime.environment.override;
-            const forecast = runtime.weather.forecast.length
-                ? runtime.weather.forecast.map((item, index) => `+${index + 1}: ${_sanitize(item.summary)}, ${item.temperatureF} F`).join('<br>')
+            const scene = resolveScene();
+            const weather = scene.weather?.current || null;
+            const immediateEnvironment = scene.environment?.current || null;
+            const sceneOverride = scene.provenance?.['environment.current']?.source === 'GM scene override' ? immediateEnvironment : null;
+            const forecast = scene.weather?.forecast?.length
+                ? scene.weather.forecast.map((item, index) => `+${index + 1}: ${_sanitize(item.summary)}, ${item.temperatureF} F`).join('<br>')
                 : 'No forecast prepared.';
             sendPanel(msg, 'WeatherAlmanac', [
                 ...(sceneOverride ? [{ label: 'Current Scene', value: `${_sanitize(sceneOverride.name)} | ${_sanitize(sceneOverride.temperature)} | ${_sanitize(sceneOverride.wind)} wind | ${_sanitize(sceneOverride.visibility)}` }] : []),
@@ -26606,12 +26774,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return showWeather(msg);
             }
             if (lower === 'announce') {
-                const weather = runtime.weather.current;
+                const scene = resolveScene();
+                const weather = scene.weather?.current;
+                const environment = scene.environment?.current;
                 if (!weather) return sendPanel(msg, 'WeatherAlmanac Needs Attention', [{ label: 'Problem', value: 'Generate or choose current weather first.' }]);
                 return sendPanel(msg, 'Current Weather', [
                     { label: 'Conditions', value: `${_sanitize(weather.summary)} | ${weather.temperatureF} F | ${weather.windMph} mph wind` },
-                    { label: 'Visibility', value: _sanitize(weather.visibility) },
-                    { label: 'Region', value: _sanitize(weather.regionName) }
+                    { label: 'Visibility', value: _sanitize(environment?.visibility || weather.visibility) },
+                    { label: 'Immediate Environment', value: environment ? _sanitize(`${environment.name} | ${environment.ground}`) : 'No immediate environment is resolved.' },
+                    { label: 'Climate Region', value: _sanitize(scene.climate?.baseline?.regionName || weather.regionName || 'No climate region is configured.') }
                 ], { publicMessage: true });
             }
             sendPanel(msg, 'WeatherAlmanac Needs Attention', [{ label: 'Problem', value: 'That weather command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Weather', '!weather') }]);
@@ -26623,6 +26794,257 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (runtime.environment.current) return Object.freeze(copy(runtime.environment.current));
             if (runtime.weather.current) return Object.freeze(deriveEnvironment(runtime.weather.current));
             return Object.freeze({ ...copy(ENVIRONMENT_PRESETS.clear), stateSchemaVersion: ENVIRONMENT_STATE_SCHEMA_VERSION, source: 'EnviroAlmanac fallback', updatedAt: isoNow(), weatherId: null });
+        }
+
+
+        /**
+         * sceneRecord - Identify a JSON-like state record without treating arrays as provider objects.
+         * Inputs: untrusted saved-state values.
+         * Outputs: true only for non-null plain object-shaped values.
+         * Invariant: SceneResolver never attempts to normalize or write an absent provider branch in place.
+         */
+        function sceneRecord(value) {
+            return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+        }
+
+        /**
+         * immutableSceneSnapshot - Defensive deep-copy and freeze a resolved scene value.
+         * Inputs: JSON-like context assembled from provider snapshots.
+         * Outputs: recursively frozen arrays/records with unsafe property names excluded.
+         * Invariant: callers cannot mutate provider state through a returned SceneResolver snapshot.
+         * Design: copy only enumerable data; Roll20 state is expected to be JSON-like and no provider objects leak through this boundary.
+         */
+        function immutableSceneSnapshot(value) {
+            if (Array.isArray(value)) return Object.freeze(value.map(item => immutableSceneSnapshot(item)));
+            if (!sceneRecord(value)) return value;
+            const snapshot = {};
+            Object.keys(value).forEach(key => {
+                if (POLICY.config.unsafeKeys.includes(key)) return;
+                snapshot[key] = immutableSceneSnapshot(value[key]);
+            });
+            return Object.freeze(snapshot);
+        }
+
+        function sceneCopyRecord(value) {
+            return sceneRecord(value) ? copy(value) : null;
+        }
+
+        function sceneWarning(warnings, code, message, domains = []) {
+            if (warnings.some(warning => warning.code === code)) return;
+            if (warnings.length >= POLICY.almanac.sceneWarningLimit) return;
+            warnings.push({ code, message, domains: [...domains] });
+        }
+
+        /**
+         * sceneProviderStatus - Keep configuration, parent lifecycle, and implementation availability distinct.
+         * Inputs: the fixed SceneResolver provider registry.
+         * Outputs: one bounded status record per authority.
+         * Invariant: disabled or unimplemented providers are named rather than replaced with fabricated world facts.
+         */
+        function sceneProviderStatus() {
+            const parentEnabled = modState.config.enabled !== false;
+            return Object.fromEntries(Object.entries(SCENE_PROVIDER_DEFINITIONS).map(([key, definition]) => {
+                const unimplemented = SCENE_UNIMPLEMENTED_PROVIDER_KEYS.includes(key);
+                const configured = unimplemented ? false : definition.configured();
+                const active = parentEnabled && configured;
+                return [key, {
+                    authority: definition.authority,
+                    configured,
+                    active,
+                    status: unimplemented ? 'unavailable' : (active ? 'available' : (configured ? 'parent-disabled' : 'disabled'))
+                }];
+            }));
+        }
+
+        function sceneRuntimeSnapshot() {
+            const runtime = sceneRecord(modState.runtime) ? modState.runtime : {};
+            return {
+                time: sceneCopyRecord(runtime.time),
+                weather: sceneCopyRecord(runtime.weather),
+                environment: sceneCopyRecord(runtime.environment),
+                rest: sceneCopyRecord(runtime.rest)
+            };
+        }
+
+        /**
+         * sceneEnvironmentFromSnapshot - Resolve immediate local context without mutating EnviroAlmanac.
+         * Inputs: a defensive runtime snapshot and the one authoritative current Weather record.
+         * Outputs: an explicit GM override, committed Environment record, weather-derived context, or null.
+         * Invariant: a scene override changes immediate surroundings only; it never replaces stored Weather ownership.
+         */
+        function sceneEnvironmentFromSnapshot(runtime, weather) {
+            const stored = runtime.environment || {};
+            if (sceneRecord(stored.override)) return { value: copy(stored.override), source: 'GM scene override' };
+            if (sceneRecord(stored.current)) return { value: copy(stored.current), source: 'EnviroAlmanac committed context' };
+            if (sceneRecord(weather)) {
+                const derived = deriveEnvironment(weather, 'SceneResolver weather interpretation');
+                // CHOICE: omit an incidental resolver timestamp — ALT: present a fresh now() value; REJECTED: a read-only snapshot should describe provider evidence, not simulate a provider write.
+                derived.updatedAt = null;
+                return { value: derived, source: 'WeatherAlmanac interpretation' };
+            }
+            return { value: null, source: 'unresolved' };
+        }
+
+        /**
+         * resolveScene - Compose the current fictional-world snapshot from defensive provider inputs.
+         * Inputs: no mutable provider objects; reads current saved state only.
+         * Outputs: one deeply immutable snapshot with providers, field-level provenance, and bounded warnings.
+         * Invariants: Time owns chronology/season; Astronomy owns phases; Weather owns current temperature; Environment owns immediate context; no provider state is written.
+         * Failure: missing, disabled, invalid, or not-yet-implemented providers become explicit warnings rather than invented authority.
+         * Design: this is the single scene truth for session presentation and public announcements while future world domains can join without rewriting existing owners.
+         */
+        function resolveScene() {
+            const providers = sceneProviderStatus();
+            const warnings = [];
+            const provenance = {};
+            const runtime = sceneRuntimeSnapshot();
+            const profile = profileFor();
+            const parentEnabled = modState.config.enabled !== false;
+            const mark = (field, authority, source, status = 'resolved') => {
+                provenance[field] = { authority, source, status };
+            };
+
+            if (!parentEnabled) {
+                sceneWarning(warnings, 'ALMANAC_PARENT_DISABLED', 'AlmanacAssist is disabled; unavailable providers were not resolved.', Object.keys(providers));
+            }
+            const unimplemented = SCENE_UNIMPLEMENTED_PROVIDER_KEYS.map(key => providers[key].authority);
+            sceneWarning(warnings, 'SCENE_PROVIDERS_UNAVAILABLE', `${unimplemented.join(', ')} providers are not implemented yet.`, SCENE_UNIMPLEMENTED_PROVIDER_KEYS);
+            Object.entries(providers).forEach(([key, provider]) => {
+                if (provider.status === 'disabled') {
+                    sceneWarning(warnings, `PROVIDER_${key.toUpperCase()}_DISABLED`, `${provider.authority} is disabled; no replacement authority was invented.`, [key]);
+                }
+            });
+
+            let moment = null;
+            if (providers.time.active) {
+                const minute = Math.floor(Number(runtime.time?.worldMinute));
+                if (Number.isFinite(minute) && minute >= 0) moment = resolveWorldMinute(profile, minute);
+                if (!moment) sceneWarning(warnings, 'TIME_UNRESOLVED', 'TimeAlmanac has no valid resolvable fictional minute.', ['time']);
+                else {
+                    mark('time.current', 'TimeAlmanac', profile.name);
+                    mark('season.current', 'TimeAlmanac', profile.name);
+                }
+            }
+
+            let climate = null;
+            if (providers.climate.active) {
+                const climateConfig = normalizeClimateConfig(sceneCopyRecord(modState.config.climate) || {}, { persist: false });
+                const season = moment?.season || climateConfig.manualSeason;
+                const seasonAuthority = moment ? 'TimeAlmanac' : 'ClimateAlmanac manual setting';
+                climate = resolvedClimate(null, { config: climateConfig, season, seasonAuthority });
+                if (climate) {
+                    mark('climate.baseline', 'ClimateAlmanac', climate.regionName);
+                    mark('climate.seasonInterpretation', seasonAuthority, climate.profileName);
+                }
+                if (!moment) sceneWarning(warnings, 'CLIMATE_MANUAL_SEASON', 'Climate uses its explicit manual season because TimeAlmanac is unavailable.', ['climate', 'time']);
+            }
+
+            let weather = null;
+            let weatherForecast = [];
+            if (providers.weather.active) {
+                weather = sceneCopyRecord(runtime.weather?.current);
+                weatherForecast = Array.isArray(runtime.weather?.forecast)
+                    ? runtime.weather.forecast.filter(sceneRecord).slice(0, POLICY.almanac.weatherForecastLimit).map(copy)
+                    : [];
+                if (weatherForecast.length) mark('weather.forecast', 'WeatherAlmanac', 'committed forecast');
+                if (!weather) sceneWarning(warnings, 'WEATHER_UNRESOLVED', 'WeatherAlmanac has no committed current condition.', ['weather']);
+                else {
+                    mark('weather.current', 'WeatherAlmanac', String(weather.source || weather.context || 'committed weather'));
+                    mark('weather.temperatureF', 'WeatherAlmanac', String(weather.id || 'current weather'));
+                    mark('weather.visibility', 'WeatherAlmanac', String(weather.id || 'current weather'));
+                    if (moment && weather.season && weather.season !== moment.season) {
+                        sceneWarning(warnings, 'WEATHER_SEASON_DIFFERENCE', `Current Weather records ${weather.season} while TimeAlmanac resolves ${moment.season}; the combination was retained as intentional or stale evidence.`, ['weather', 'time']);
+                    }
+                    if (String(weather.precipitation || '').toLowerCase() !== 'none' && String(weather.cloud || '').toLowerCase() === 'clear') {
+                        sceneWarning(warnings, 'WEATHER_CLOUD_PRECIPITATION_COMBINATION', 'Weather reports precipitation with clear cloud data; both values are retained and explicitly sourced.', ['weather']);
+                    }
+                }
+            }
+
+            let astronomy = null;
+            if (providers.astronomy.active) {
+                const astronomyConfig = normalizeAstronomyConfig(sceneCopyRecord(modState.config.astronomy) || {}, { persist: false });
+                const context = astronomyContext(0, { config: astronomyConfig, moment, profile });
+                if (context) {
+                    const visibility = moment ? moonVisibility(moment, weather, context) : null;
+                    astronomy = {
+                        ...copy(context),
+                        moons: context.moons.map(moon => ({
+                            ...copy(moon),
+                            visibility: visibility ? { visible: visibility.visible, reasons: [...visibility.reasons] } : null
+                        })),
+                        moonVisibility: visibility
+                    };
+                    mark('astronomy.moons', 'AstronomyAlmanac', context.authority);
+                    mark('astronomy.moonVisibility', 'SceneResolver', moment ? 'AstronomyAlmanac daylight plus TimeAlmanac and WeatherAlmanac' : 'unresolved without TimeAlmanac');
+                    if (!visibility) sceneWarning(warnings, 'MOON_VISIBILITY_UNRESOLVED', 'Moon phase is available from Astronomy, but visibility needs TimeAlmanac and atmospheric evidence.', ['astronomy', 'time', 'weather']);
+                } else {
+                    sceneWarning(warnings, 'ASTRONOMY_UNRESOLVED', 'AstronomyAlmanac could not resolve celestial context.', ['astronomy']);
+                }
+            }
+
+            let environment = null;
+            let environmentSource = 'unresolved';
+            if (providers.environment.active) {
+                const resolvedEnvironment = sceneEnvironmentFromSnapshot(runtime, weather);
+                environment = resolvedEnvironment.value;
+                environmentSource = resolvedEnvironment.source;
+                if (environment) {
+                    mark('environment.current', 'EnviroAlmanac', environmentSource);
+                    mark('environment.visibility', 'EnviroAlmanac', environmentSource);
+                    mark('environment.immediateWater', 'EnviroAlmanac', environmentSource);
+                } else {
+                    sceneWarning(warnings, 'ENVIRONMENT_UNRESOLVED', 'EnviroAlmanac has no committed override, local context, or Weather evidence to interpret.', ['environment', 'weather']);
+                }
+            }
+
+            const terrain = environment ? {
+                immediateGround: environment.ground || null,
+                immediateSurface: environment.name || null,
+                weatherEffect: weather?.precipitation || null,
+                status: 'partial'
+            } : null;
+            if (terrain) mark('terrain.immediateGround', 'SceneResolver', 'EnviroAlmanac plus WeatherAlmanac', 'partial');
+            sceneWarning(warnings, 'TERRAIN_PARTIAL', 'Terrain is limited to immediate Environment and Weather evidence until Geography and Biome providers are installed.', ['terrain', 'geography', 'biome', 'environment', 'weather']);
+
+            const hydrology = {
+                persistent: null,
+                temporaryWeatherEffects: weather ? weather.precipitation || null : null,
+                immediateWaterAccess: environment ? environment.water || null : null
+            };
+            if (hydrology.temporaryWeatherEffects) mark('hydrology.temporaryWeatherEffects', 'WeatherAlmanac', String(weather?.id || 'current weather'));
+            if (hydrology.immediateWaterAccess) mark('hydrology.immediateWaterAccess', 'EnviroAlmanac', environmentSource);
+            sceneWarning(warnings, 'PERSISTENT_HYDROLOGY_UNAVAILABLE', 'Persistent hydrology is unavailable until Geography is configured; temporary weather effects and immediate local water remain separate.', ['hydrology', 'geography', 'environment', 'weather']);
+
+            const restConfig = sceneRecord(modState.config.rest) ? modState.config.rest : {};
+            const rest = providers.rest.active ? {
+                pace: String(restConfig.pace || 'standard'),
+                advanceTime: restConfig.advanceTime === true,
+                supportedWriteBoundary: 'verified 2014-sheet RestAlmanac transaction'
+            } : null;
+            if (rest) mark('rest.context', 'RestAlmanac', 'configured recovery workflow');
+
+            return immutableSceneSnapshot({
+                sceneStateSchemaVersion: SCENE_STATE_SCHEMA_VERSION,
+                providers,
+                time: { current: moment },
+                astronomy,
+                region: null,
+                geography: null,
+                ecoregion: null,
+                climate: { baseline: climate },
+                biome: null,
+                location: null,
+                environment: { current: environment, source: environmentSource },
+                weather: { current: weather, forecast: weatherForecast },
+                phenomena: [],
+                travel: null,
+                rest,
+                terrain,
+                hydrology,
+                provenance,
+                warnings
+            });
         }
 
         function commitEnvironmentOverride(next, msg, reason) {
@@ -26917,7 +27339,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const plans = subjects.map(subject => planRestForCharacter(subject, definition));
             const failure = plans.find(plan => !plan.ok);
             if (failure) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: _sanitize(failure.message) }, { label: 'Changes', value: 'None. Every selected character must validate before a rest can be confirmed.' }]);
-            const advanceTime = normalizeRestConfig().advanceTime && timeAvailable() && Number(definition.hours) > 0;
+            const scene = resolveScene();
+            const previewWorldMinute = scene.time?.current?.worldMinute ?? null;
+            const advanceTime = normalizeRestConfig().advanceTime && previewWorldMinute !== null && Number(definition.hours) > 0;
             pruneRestGrants();
             const runtime = ensureAlmanacRuntime();
             const id = `rest-${Date.now().toString(36)}-${randomInteger(999999)}`;
@@ -26928,6 +27352,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 expiresAt: Date.now() + POLICY.almanac.restGrantMs,
                 definition: copy(definition),
                 advanceTime,
+                worldMinuteAtPreview: advanceTime ? previewWorldMinute : null,
                 plans: copy(plans)
             };
             const totalWrites = plans.reduce((sum, plan) => sum + plan.writes.length, 0);
@@ -26935,7 +27360,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel(msg, `${definition.name} Preview`, [
                 { label: 'Characters', value: summary },
                 { label: 'Sheet Changes', value: `${totalWrites} verified change(s). No change has been made yet.` },
-                { label: 'World Time', value: advanceTime ? `Advance ${definition.hours} hour(s) after successful sheet changes.` : 'No automatic fictional-time change.' },
+                { label: 'Current World', value: _sanitize(`${scene.time?.current ? displayMoment(scene.time.current) : 'Fictional time unavailable'} | ${sceneEnvironmentSummary(scene)}`) },
+                { label: 'World Time', value: advanceTime ? `Advance ${definition.hours} hour(s) after successful sheet changes from this previewed fictional moment.` : 'No automatic fictional-time change.' },
                 { label: 'Confirm', value: GameAssist.createButton('Complete Rest', `!aa-rest confirm --grant ${id}`) },
                 { label: 'Cancel', value: GameAssist.createButton('Rest Menu', '!rest') }
             ]);
@@ -27000,6 +27426,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 }
             }
             const shouldAdvance = grant.advanceTime === true;
+            const confirmationScene = shouldAdvance ? resolveScene() : null;
+            if (shouldAdvance && confirmationScene?.time?.current?.worldMinute !== grant.worldMinuteAtPreview) {
+                delete runtime.rest.grants[grant.id];
+                return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'Fictional time changed after this rest preview. Prepare a new preview so the time result remains explicit.' }, { label: 'Changes', value: 'None.' }]);
+            }
             if (shouldAdvance && !timeAvailable()) {
                 delete runtime.rest.grants[grant.id];
                 return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'TimeAlmanac was turned off after this preview. Prepare a new preview so the rest and fictional-time result are explicit.' }, { label: 'Changes', value: 'None.' }]);
@@ -27055,9 +27486,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!submoduleEnabled('rest')) return sendPanel(msg, 'RestAlmanac', [{ label: 'Status', value: 'Turned off; rest definitions and history are preserved.' }]);
             const config = normalizeRestConfig();
             const runtime = ensureAlmanacRuntime();
+            const scene = resolveScene();
             const custom = config.customTypes.length ? config.customTypes.map(type => `${GameAssist.createButton(type.name, `!aa-rest preview --type ${type.id}`)} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Remove', `!aa-rest custom remove --id ${type.id} --confirm ?{Remove ${type.name}?|No,no|Yes,yes}`) : ''}`).join('<br>') : 'None';
             sendPanel(msg, 'RestAlmanac', [
                 { label: 'How To Use', value: 'Select linked 2014 PC token(s), then prepare a preview. Nothing changes until confirmation.' },
+                { label: 'Current World', value: _sanitize(`${scene.time?.current ? displayMoment(scene.time.current) : 'Fictional time unavailable'} | ${sceneEnvironmentSummary(scene)}`) },
                 { label: 'Rest Types', value: `${GameAssist.createButton(`Short Rest (${restDuration(config.shortHours)})`, '!aa-rest preview --type short')} ${GameAssist.createButton(`Long Rest (${restDuration(config.longHours)})`, '!aa-rest preview --type long')} ${config.extendedEnabled ? GameAssist.createButton(`Extended Rest (${restDuration(config.extendedHours)})`, '!aa-rest preview --type extended') : ''}` },
                 { label: 'Rest Pace', value: `${config.pace === 'heroic' ? 'Heroic (Epic Heroism)' : config.pace.charAt(0).toUpperCase() + config.pace.slice(1)} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Change Rest Rules', '!aa-rest rules') : ''}` },
                 { label: 'Custom Rest Types', value: custom },
@@ -27248,9 +27681,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h1>AlmanacAssist User Manual</h1>',
                 `<p><strong>GameAssist v${_sanitize(VERSION)} | AlmanacAssist ${MODULE_VERSION}</strong></p>`,
                 '<h2>Purpose</h2>',
-                '<p>AlmanacAssist combines fictional time, regional climate, astronomy, weather, environmental context, and deliberate rest workflows. Each internal system can be turned off without erasing its valid settings or disabling unrelated Almanac features.</p>',
+                '<p>AlmanacAssist combines fictional time, regional climate, astronomy, weather, environmental context, and deliberate rest workflows. Current World, Scene, and announcement views use one read-only scene snapshot so ordinary play sees a coherent world without changing provider state. Each internal system can be turned off without erasing its valid settings or disabling unrelated Almanac features.</p>',
                 '<h2>Everyday Use</h2>',
-                '<p><code>!aa-gm</code>, <code>!aa-dm</code>, <code>!Almanac</code>, or <code>!aa</code> opens the action-first GM dashboard. It keeps the current date, common advances, exact date/time changes, calendar selection, announcement controls, and today\'s world context together. <code>!date</code>, <code>!time</code>, <code>!cal</code>, <code>!clim</code>, <code>!astro</code>, <code>!weather</code>, <code>!enviro</code>, and <code>!rest</code> open focused views.</p>',
+                '<p><code>!aa-gm</code>, <code>!aa-dm</code>, <code>!Almanac</code>, or <code>!aa</code> opens the compact Current World dashboard. It keeps the current scene, common advances, dawn/dusk anchors, calendar selection, rest, weather, Scene, preview, and announce actions together. <code>!aa-scene</code> opens a focused current-world view; GM-only <code>!aa-scene technical</code> opens provenance and warnings. <code>!date</code>, <code>!time</code>, <code>!cal</code>, <code>!clim</code>, <code>!astro</code>, <code>!weather</code>, <code>!enviro</code>, and <code>!rest</code> open focused views.</p>',
                 '<h2>Calendars</h2>',
                 '<p>Standard provides familiar months and Gregorian leap years. Solamnic provides the built-in twelve 28-day profile and seven named weekdays. Harptos provides twelve 30-day months, five annual festival days, and Shieldmeet every four years. Wayfarer is campaign-editable through chat controls, including its clock, weekdays, calendar periods, feast periods, festival days, dated holidays, seasonal ranges, and leap rules.</p>',
                 '<h3>Default Wayfarer Calendar</h3>',
@@ -27270,13 +27703,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h2>Climate and Astronomy</h2>',
                 '<p>ClimateAlmanac manages bounded regions, parent inheritance, editable built-in starting profiles, custom profiles, overrides, and a manual season fallback. AstronomyAlmanac calculates reproducible configurable moon phases, future phase/daylight forecasts, and deterministic season boundaries from TimeAlmanac when available or explicit manual context when it is not. Its bounded weighted rare-event catalog remains separate from deterministic results.</p>',
                 '<h2>Weather and Environment</h2>',
-                '<p>WeatherAlmanac can generate continuity-aware conditions without other submodules. Climate and Time improve its context when enabled. Locked or manually chosen weather is never silently replaced. EnviroAlmanac translates committed weather into readable visibility, temperature, wind, ground, water, exposure, severity, and tags; a GM override remains authoritative until cleared.</p>',
+                '<p>WeatherAlmanac can generate continuity-aware conditions without other submodules. Climate and Time improve its context when enabled. Locked or manually chosen weather is never silently replaced. Weather owns the single exact current temperature; Climate is a long-term baseline; EnviroAlmanac owns immediate surroundings and translates committed weather into readable visibility, ground, water, exposure, severity, and tags. A GM environment override remains authoritative for immediate context until cleared, while stored Weather remains distinct.</p>',
                 '<h2>Rest</h2>',
-                '<p>RestAlmanac uses selected linked D&amp;D 5E by Roll20 2014 PC tokens. Every rest is previewed and revalidated before confirmation. Long Rest restores only verified HP, Hit Dice, and remaining spell-slot fields. Short Rest leaves Hit Dice spending on the character sheet. Other class resources remain unchanged unless a later verified adapter explicitly owns them.</p>',
+                '<p>RestAlmanac uses selected linked D&amp;D 5E by Roll20 2014 PC tokens. Every rest previews the current scene and fictional moment, then revalidates sheets and that moment before confirmation. Long Rest restores only verified HP, Hit Dice, and remaining spell-slot fields. Short Rest leaves Hit Dice spending on the character sheet. Other class resources remain unchanged unless a later verified adapter explicitly owns them.</p>',
                 '<h2>Safety</h2>',
                 '<p>Large advances produce one committed change. Moving backward changes only the fictional calendar and requires explicit confirmation. It never reverses rests, effects, combat, NPC history, HP, resources, or other campaign state.</p>',
                 '<h2>Commands</h2>',
-                '<p><code>!aa-wayfarer</code> opens the compact custom-calendar manager; its generated buttons cover direct saved-calendar selection, focused component editing, guided review, preview, activation, draft recovery, duplication, and rollback. <code>!aa-preview</code> privately previews the configured calendar announcement, <code>!aa-announce</code> delivers it to the configured audience, and <code>!aa-announcement-settings</code> chooses public or GM-only delivery, a Quick, Calendar, Travel, or Everything preset, a campaign heading, or custom included fields. Wayfarer presents its 20-hour day as ordinal Hours and named daily periods rather than AM/PM. Moon cycles and phase names are managed through Astronomy because they remain world context when a calendar display changes. <code>!aa-time</code>, <code>!aa-climate</code>, <code>!aa-astro</code>, <code>!aa-weather</code>, <code>!aa-enviro</code>, and <code>!aa-rest</code> open their focused systems. Standard role routes such as <code>!Weather-GM</code>, <code>!Weather-DM</code>, <code>!Weather-Help</code>, <code>!Weather-Status</code>, and <code>!Weather-Audit</code> are case-insensitive and also accept spaces in place of the hyphen.</p>'
+                '<p><code>!aa-wayfarer</code> opens the compact custom-calendar manager; its generated buttons cover direct saved-calendar selection, focused component editing, guided review, preview, activation, draft recovery, duplication, and rollback. <code>!aa-preview</code> privately previews the configured scene announcement, <code>!aa-announce</code> delivers it to the selected audience, and <code>!aa-announcement-settings</code> chooses public or GM-only delivery, a Quick, Calendar, Travel, or Everything preset, a campaign heading, or custom included fields. Technical fields always deliver GM-only; descriptive output limits itself to player-perceivable facts. Wayfarer presents its 20-hour day as ordinal Hours and named daily periods rather than AM/PM. Moon cycles and phase names are managed through Astronomy because they remain world context when a calendar display changes. <code>!aa-time</code>, <code>!aa-climate</code>, <code>!aa-astro</code>, <code>!aa-weather</code>, <code>!aa-enviro</code>, and <code>!aa-rest</code> open their focused systems. Standard role routes such as <code>!Weather-GM</code>, <code>!Weather-DM</code>, <code>!Weather-Help</code>, <code>!Weather-Status</code>, and <code>!Weather-Audit</code> are case-insensitive and also accept spaces in place of the hyphen.</p>'
             ].join('');
         }
 
@@ -27286,12 +27719,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Start Here', value: GameAssist.createButton('Open Almanac Controls', '!aa-gm') },
                 { label: 'Date and Time', value: `${GameAssist.createButton('Current Date', '!date')} ${GameAssist.createButton('Advance or Set Time', '!aa-time menu')} ${GameAssist.createButton('Choose Calendar', '!cal')}` },
                 { label: 'Share With The Table', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
-                { label: 'World Today', value: `${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Environment', '!enviro')}` },
+                { label: 'World Today', value: `${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Environment', '!enviro')}` },
                 { label: 'Calendar Setup', value: GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer') },
                 { label: 'Full Reference', value: GameAssist.createButton('Create or Update Manual', '!Almanac-Manual') }
             ] : [
                 { label: 'Campaign World', value: `${GameAssist.createButton('Current Date', '!date')} ${GameAssist.createButton('Current Time', '!time')} ${GameAssist.createButton('Calendar', '!cal')}` },
-                { label: 'Current Conditions', value: `${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Environment', '!enviro')}` },
+                { label: 'Current Conditions', value: `${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Environment', '!enviro')}` },
                 { label: 'Changes', value: 'The GM controls persistent calendar and world changes.' }
             ]);
         }
@@ -27365,6 +27798,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (lower === 'audit') return showStatus(msg, true);
             if (lower === 'systems' || lower === 'settings' || lower === 'setup') return showSystems(msg);
             if (lower === 'more' || lower === 'tools') return showMoreMenu(msg);
+            if (lower === 'scene' || lower === 'scene menu' || lower === 'scene status') return showScene(msg, false);
+            if (lower === 'scene technical' || lower === 'scene details' || lower === 'scene audit') return showScene(msg, true);
             if (lower === 'preview' || lower === 'time preview') return showAnnouncement(msg, true);
             if (lower === 'announce' || lower === 'time announce') return showAnnouncement(msg, false);
             if (lower === 'announcement-settings' || lower === 'announcements') return showAnnouncementSettings(msg);
@@ -27467,6 +27902,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         GameAssist.AlmanacAssist = Object.freeze({
             version: MODULE_VERSION,
+            sceneStateSchemaVersion: SCENE_STATE_SCHEMA_VERSION,
             timeStateSchemaVersion: TIME_STATE_SCHEMA_VERSION,
             wayfarerDraftSchemaVersion: WAYFARER_DRAFT_SCHEMA_VERSION,
             climateStateSchemaVersion: CLIMATE_STATE_SCHEMA_VERSION,
@@ -27476,6 +27912,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             restStateSchemaVersion: REST_STATE_SCHEMA_VERSION,
             isAvailable: () => modState.config.enabled !== false,
             isTimeAvailable: timeAvailable,
+            getScene: () => resolveScene(),
             getSubmoduleStatus: () => Object.freeze(copy({
                 time: submoduleEnabled('time') && modState.config.timeAlmanacEnabled !== false,
                 climate: submoduleEnabled('climate'),
@@ -27509,7 +27946,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             clearObservers: owner => GameAssist.SemanticEvents.clearObservers(owner)
         });
 
-        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: Wayfarer-aware time, configurable world announcements, compact climate and environment controls, and all six Almanac systems are available through !Almanac; the module starts disabled.`, 'INFO', { startup: true });
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: read-only Current World SceneResolver, Wayfarer-aware time, configurable world announcements, compact climate and environment controls, and all six Almanac systems are available through !Almanac; the module starts disabled.`, 'INFO', { startup: true });
     }, {
         enabled: false,
         prefixes: ['!Almanac', '!Almanac-', '!AlmanacAssist', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-'],
@@ -27517,6 +27954,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'announcement', 'environment', 'rest']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced AlmanacAssist to 1.7.0 on the AlmanacAssist-v2.0.0-Build line; added the read-only, deeply immutable SceneResolver snapshot with provider status, bounded warnings, field provenance, Time/Climate/Weather/Environment/Astronomy/Rest authority boundaries, partial terrain, distinct hydrology, separate moon visibility, compact Current World and Scene presentation, snapshot-backed announcements, and GM-only technical delivery. Rollback: remove the 1.7.0 snapshot/presentation layer while retaining the 1.6.2 six-system state and chronology contracts.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.6.2 on the AlmanacAssist-v2.0.0-Build line; accepted #92 (remove the redundant full-range chronology pre-scan) and #93 (make getSubmoduleStatus() report configured subsystem state consistently). No calendar semantics, saved state, command surface, or lifecycle behavior changed beyond the verified contract.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.6.1; bare and spaced !AlmanacAssist commands now share the established Almanac command handler.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.5.0; announcements now support Off, Descriptive, Detailed, and Technical presentation, descriptive moon visibility respects daylight and cloud cover, weather owns the displayed current temperature, and ambiguous visibility values are labeled in plain language.
@@ -27528,6 +27966,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Changed (v2.0.0): Added the standard GameAssist Home return to the AlmanacAssist GM control screen.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.1.0 with persistent Wayfarer drafts, staged setup and previews, safe profile duplication, atomic activation, elapsed-time preservation, explicit reset fallback, one activation rollback point, and a complete custom-calendar manual.
     // Decision log:
+    //   CHOICE: Resolve one defensive SceneResolver snapshot without calling state-initializing provider reads - ALT: reuse current display helpers that normalize or initialize runtime branches; REJECTED: a read-only current-world API must not mutate saved state merely by being observed.
+    //   CHOICE: Keep current Weather, immediate Environment, and long-term Climate visibly separate in the Scene and announcement renderers - ALT: collapse them into one generic conditions row; REJECTED: collapsing distinct authority makes a current temperature or GM override misleading.
+    //   CHOICE: Force technical announcement fields GM-only - ALT: allow public provenance, diagnostics, and baseline evidence; REJECTED: public chat must not disclose GM-only technical context.
     //   CHOICE: Treat WeatherAlmanac as the current observed temperature and ClimateAlmanac as background likelihood/context - ALT: display two unlabeled exact temperatures; REJECTED: two exact values presented as current conditions are misleading.
     //   CHOICE: Keep Descriptive, Detailed, and Technical as explicit announcement presentations - ALT: label the player-facing mode only as cinematic; REJECTED: descriptive states what information is being transformed without implying invented narration.
     //   CHOICE: Clamp a saved draft's starting clock when the GM deliberately shrinks the clock definition - ALT: reject every clock edit until the starting date is changed first; REJECTED: that created a circular, unintuitive setup workflow.

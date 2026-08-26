@@ -23,8 +23,8 @@ the larger architectural work begins.
 | Gate | Scope | Status |
 | --- | --- | --- |
 | Gate 0 | Preserve and repair the current foundation | **In progress — #92/#93 and focused automated checks are complete; unknown-state and live Roll20 checks remain** |
-| Gate 1 | Make the existing six systems usable in Roll20 | Not started |
-| Gate 2 | Introduce the SceneResolver current-scene authority | Not started |
+| Gate 1 | Make the existing six systems usable in Roll20 | **In progress — compact Current World dashboard and snapshot-backed announcements are implemented; complete live UX verification remains** |
+| Gate 2 | Introduce the SceneResolver current-scene authority | **In progress — read-only snapshot foundation and focused VM coverage are implemented; expanded providers remain** |
 | Gate 3 | Build live-world systems from #94 | Not started |
 | Gate 4 | Portable world data and temporal contexts | Not started |
 | Acceptance | Automated/structural + live Roll20 | Not started |
@@ -79,36 +79,52 @@ the larger architectural work begins.
 
 ## 3. Gate 1 — Make the existing six systems usable in Roll20
 
-This is the minimum AlmanacAssist completion gate for PR #81. It is largely
-implemented in 1.6.1 but must be verified against the live Roll20 acceptance track
-before it can be marked complete.
+This is the minimum AlmanacAssist completion gate for PR #81. The 1.7.0 checkpoint
+adds a compact Current World dashboard, Scene view, bounded quick actions, and
+snapshot-backed presentation, but it must still be verified against the live Roll20
+acceptance track before it can be marked complete.
 
-- [ ] Session dashboard: `!Almanac-GM` / `!Almanac-DM` / `!aa-gm` open one compact
-      Current World dashboard; common actions are within one or two screens.
+- [x] Implement the compact `!Almanac-GM` / `!Almanac-DM` / `!aa-gm` Current World
+      dashboard, Scene view, quick time anchors, and explicit return navigation in
+      the new Session Mode surfaces.
+- [ ] Complete Travel/Change Location flow and verify all ordinary live-play
+      screens and generated buttons in Roll20.
 - [ ] Wayfarer calendar manager: create/edit/preview/validate/activate/duplicate/
       roll back/reset without raw JSON; complete query prompts; atomic activation;
       elapsed-time preservation; year-0 behavior defined once.
-- [ ] Presentation and announcements: one resolved snapshot; independent
-      Off/Descriptive/Detailed/Technical; Quick/Calendar/Travel/Everything presets;
-      preview before delivery.
+- [x] Route dashboard, Scene, announcement preview/delivery, and public weather
+      announcement current-world facts through a single read-only SceneResolver
+      snapshot. Preserve independent Off/Descriptive/Detailed/Technical fields and
+      Quick/Calendar/Travel/Everything presets; technical content is forced GM-only.
+- [ ] Verify every presentation mode and preset in live Roll20.
 - [ ] Climate/weather/environment/astronomy/rest ownership and coherence.
 - [ ] Live Roll20 Wayfarer, announcement, weather/environment coherence,
       astronomy, and rest tracks.
 
 ## 4. Gate 2 — SceneResolver current-scene authority
 
-- [ ] Add an internal read-only SceneResolver.
-- [ ] Ownership matrix: Time, Astronomy, Region, Geography, Ecoregion, Climate,
-      Biome, Location, Environment, Weather, Phenomena, Travel, Rest.
-- [ ] Return immutable/defensive scene snapshots with field-level provenance and
-      warnings.
-- [ ] Resolve season from Time; terrain from Geography + Biome + Environment +
-      Weather.
-- [ ] Distinguish persistent hydrology, transient weather effects, and immediate
-      water access.
-- [ ] Report moon phase separately from moon visibility.
-- [ ] Report missing/disabled providers without inventing authority.
-- [ ] Publish no unbounded event replay on large time changes.
+- [x] Add an internal read-only SceneResolver exposed through
+      `GameAssist.AlmanacAssist.getScene()`.
+- [x] Declare the ownership matrix and report current six authorities plus explicit
+      unavailable Region, Geography, Ecoregion, Biome, Location, Phenomena, and
+      Travel domains.
+- [x] Return deeply immutable/defensive snapshots with field-level provenance and
+      bounded warnings without provider-state writes.
+- [x] Resolve Time-owned season before Climate interpretation; keep Weather's exact
+      current temperature, Environment's immediate context, Astronomy's phase, and
+      SceneResolver's moon-visibility conclusion distinct.
+- [x] Label partial immediate terrain, persistent hydrology as unavailable, temporary
+      weather effects, and immediate water access as separate fields.
+- [x] Report missing, disabled, and parent-disabled providers without invented facts.
+- [x] Add focused VM checks for no writes, deep immutability, disabled states, manual
+      Time fallback, unusual Weather combinations, technical-delivery privacy, and
+      Scene presentation.
+- [x] Route committed Weather forecast display through the snapshot.
+- [x] Route Rest preview context and its time-revalidation boundary through the
+      snapshot; committed Weather forecast display also uses the snapshot.
+- [ ] Expand the provider set through Gate 3, route Travel actions through the
+      snapshot, and complete live Roll20 coherence evidence.
+- [ ] Verify large time changes emit no unbounded event replay in Roll20.
 
 ## 5. Gate 3 — Live-world systems from #94
 
