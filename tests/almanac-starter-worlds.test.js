@@ -282,6 +282,11 @@ function assertGeneratedValidationRecoveryPaths() {
     const sameRouteEndpoint = onePanel(harness, '!aa-world set route --id harbor-mosswood-road --field fromLocationId --value mosswood-crossing');
     assert.match(sameRouteEndpoint, /Travel Route needs two different endpoint Locations/i, 'a named route picker must refuse an endpoint that duplicates its other endpoint');
     assert.equal(buttonTarget(sameRouteEndpoint, 'Edit Travel Route'), '!aa-world edit route --id harbor-mosswood-road', 'an invalid named route choice must return directly to the affected route editor');
+
+    const fresh = createHarness();
+    const lastRegion = onePanel(fresh, '!aa-climate region remove --id home --confirm yes');
+    assert.match(lastRegion, /Keep at least one valid region/i, 'a stale or last-record generated removal must explain its safe refusal');
+    assert.equal(buttonTarget(lastRegion, 'Almanac Home'), '!aa-gm', 'an otherwise unanticipated Almanac refusal must retain the bounded generic Home recovery control');
 }
 
 function assertWayfarerOptionalListsUseVisibleClearSentinels() {

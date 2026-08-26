@@ -24797,9 +24797,27 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return playerIsGM(msg?.playerid) ? '/w gm ' : `/w "${safeWho(msg)}" `;
         }
 
+        function panelHasCommandAction(fields) {
+            return (fields || []).some(field => /\]\(\s*!/i.test(String(field?.value || '')));
+        }
+
+        function panelNeedsAlmanacRecovery(title, fields) {
+            const attentionTitle = /needs attention/i.test(String(title || ''));
+            const attentionRow = (fields || []).some(field => /^(?:needs attention|problem|no change made|review refused|validation|limit|unavailable)$/i.test(String(field?.label || '').trim()));
+            return (attentionTitle || attentionRow) && !panelHasCommandAction(fields);
+        }
+
         function sendPanel(msg, title, fields, { publicMessage = false } = {}) {
-            const rows = fields.map(field => `{{${_sanitize(field.label)}=${field.value}}}`).join(' ');
-            sendChat(MODULE_NAME, `${publicMessage ? '' : whisperPrefix(msg)}&{template:default} {{name=${_sanitize(title)}}} ${rows}`);
+            const rows = Array.isArray(fields) ? fields.slice() : [];
+            // Validation is only useful if a GM can continue without recalling a
+            // command. Contextual panels supply their own focused action; this
+            // bounded final fallback keeps unexpected/stale ordinary Almanac
+            // refusals from becoming a chat dead end.
+            if (panelNeedsAlmanacRecovery(title, rows)) {
+                rows.push({ label: 'Continue', value: GameAssist.createButton('Almanac Home', '!aa-gm') });
+            }
+            const renderedRows = rows.map(field => `{{${_sanitize(field.label)}=${field.value}}}`).join(' ');
+            sendChat(MODULE_NAME, `${publicMessage ? '' : whisperPrefix(msg)}&{template:default} {{name=${_sanitize(title)}}} ${renderedRows}`);
         }
 
         function requireGm(msg) {
