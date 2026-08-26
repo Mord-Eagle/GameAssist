@@ -3,7 +3,8 @@
 - Build branch: `AlmanacAssist-v2.0.0-Build`
 - Source baseline: duplicate of `75-v2.0.0-effectassist` (`e08cb36`)
 - Assessment date: 2026-08-26
-- Governing issue: **#95 — AlmanacAssist 2.0 implementation master: coherent world engine and live-play UX**
+- Source implementation master: **#95 — AlmanacAssist 2.0 implementation master: coherent world engine and live-play UX** (left unchanged)
+- Build tracking copy: **#96 — AlmanacAssist 2.0 implementation master: coherent world engine and live-play UX (Build tracking)**
 - Architectural destination: **#94 — AlmanacAssist redesign v2.0.0**
 
 ## 1. Purpose
@@ -18,7 +19,8 @@ or `main`.
 
 | Issue | Title | State | Category |
 | --- | --- | --- | --- |
-| #95 | AlmanacAssist 2.0 implementation master: coherent world engine and live-play UX | Open | Implementation master |
+| #95 | AlmanacAssist 2.0 implementation master: coherent world engine and live-play UX | Open | Source implementation master (left unchanged) |
+| #96 | AlmanacAssist 2.0 implementation master: coherent world engine and live-play UX (Build tracking) | Open | Build tracking copy of #95 |
 | #94 | AlmanacAssist redesign v2.0.0 | Open | Architectural destination |
 | #62 | AlmanacAssist master: Build six interoperable campaign-world submodules | Open | Original master |
 | #66 | AlmanacAssist Phase 1: Build TimeAlmanac | Open | Child of #62 |
@@ -275,10 +277,14 @@ change on the Build branch must satisfy them.
   `origin/75-v2.0.0-effectassist`.
 - **Gate 0 #92:** Implemented (redundant chronology pre-scan removed).
 - **Gate 0 #93:** Implemented (`getSubmoduleStatus()` reports configured state).
+- **Focused Gate 0 harness:** `tests/almanac-gate0.test.js` boots the shipped
+  artifact in an isolated Roll20-shaped Node VM and verifies artifact identity,
+  #92 boundaries, #93 configured state, saved-state preservation, and close
+  command aliases. It is not a substitute for live Roll20 acceptance.
 - **Assessment / plan documents:** Added under `docs/AlmanacAssist-v2.0.0-Build/`.
 - **Not yet implemented:** Gates 1–4, SceneResolver, the expanded world-domain
-  model, PresetRegistry, WorldPackService, temporal contexts, and the full live
-  Roll20 acceptance track.
+  model, PresetRegistry, WorldPackService, temporal contexts, unknown-state
+  warning-only handling, and the full live Roll20 acceptance track.
 
 ## 8. Decisions and rationale
 

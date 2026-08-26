@@ -2,7 +2,8 @@
 
 - Build branch: `AlmanacAssist-v2.0.0-Build`
 - Baseline: duplicate of `75-v2.0.0-effectassist` (`e08cb36`)
-- Working issue: **#95**
+- Source implementation master: **#95** (left unchanged)
+- Build tracking copy: **#96**
 - Architectural destination: **#94**
 - Updated: 2026-08-26
 
@@ -21,7 +22,7 @@ the larger architectural work begins.
 
 | Gate | Scope | Status |
 | --- | --- | --- |
-| Gate 0 | Preserve and repair the current foundation | **In progress — #92 and #93 are implemented** |
+| Gate 0 | Preserve and repair the current foundation | **In progress — #92/#93 and focused automated checks are complete; unknown-state and live Roll20 checks remain** |
 | Gate 1 | Make the existing six systems usable in Roll20 | Not started |
 | Gate 2 | Introduce the SceneResolver current-scene authority | Not started |
 | Gate 3 | Build live-world systems from #94 | Not started |
@@ -63,11 +64,15 @@ the larger architectural work begins.
 
 ### Other Gate 0 items remaining
 
-- [ ] Confirm all commands are case-insensitive and accept the established close
-      space/hyphen variants (`!Almanac`, `!aa`, `!aa-gm`, `!Almanac-GM`, etc.).
-- [ ] Add or extend focused automated checks for the #92 and #93 contracts.
-- [ ] Preserve valid saved configuration when AlmanacAssist or a subsystem is
-      disabled (already a lifecycle property; must be verified by tests).
+- [x] Confirm in the focused VM harness that commands are case-insensitive and
+      accept established close space/hyphen variants (`!Almanac`, `!aa`,
+      `!aa-gm`, `!Almanac-GM`, etc.). Live Roll20 confirmation remains required.
+- [x] Add focused automated checks for #92 and #93, chronology boundaries,
+      executable identity, configured-state semantics, and valid saved-state
+      preservation through a disable/re-enable simulation.
+- [x] Verify in the focused harness that valid saved configuration is preserved
+      when AlmanacAssist or a subsystem is disabled and re-enabled. Live Roll20
+      lifecycle confirmation remains required.
 - [ ] Keep unknown state warning-only; never delete or reinterpret automatically.
 - [ ] Complete the live Roll20 smoke checks for disable/re-enable and subsystem
       toggles.
@@ -165,11 +170,17 @@ before it can be marked complete.
 
 ## 8. Verification results on this branch
 
-- `node --check GameAssist` passes.
+- `node tests/almanac-gate0.test.js` passes. It boots the actual `GameAssist`
+  artifact in an isolated Roll20-shaped Node VM and verifies executable-artifact
+  identity, removal of `maximumWorldMinute`, direct resolver boundary behavior
+  (negative/non-finite input, the last valid minute of year 9999, and the first
+  invalid minute), #93 configured-state semantics, valid saved-state preservation,
+  and case-insensitive close dashboard aliases.
+- `node --check GameAssist` and `node --check tests/almanac-gate0.test.js` pass.
 - `maximumWorldMinute` no longer appears anywhere in the source.
 - `getSubmoduleStatus()` now returns the explicit six-field configured-state
   object.
 - `GameAssist`, `GameAssist.js`, and `GameAssist-v2.0.0` are byte-identical after
   the edits.
-- Live Roll20 tests are still pending; mechanical checks are not acceptance
-  evidence for release.
+- The VM harness is focused automated evidence only. Live Roll20 tests are still
+  pending and remain the governing acceptance evidence for release.

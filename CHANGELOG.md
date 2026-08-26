@@ -60,6 +60,7 @@ This checkpoint is a duplicate of the `75-v2.0.0-effectassist` branch on the new
 - **Issue #93:** `getSubmoduleStatus()` now consistently reports configured subsystem state for all six internal systems. Previously `time` used effective runtime availability (`timeAvailable()`) while the other five fields used their stored individual switches. Parent availability remains available through `isAvailable()`, effective Time availability through `isTimeAvailable()`, and no generalized effective-availability helper was introduced.
 - No calendar semantics, saved state, command surface, or lifecycle behavior changed beyond the verified #92/#93 contracts.
 - `GameAssist`, `GameAssist.js`, and `GameAssist-v2.0.0` remain byte-identical.
+- Added `tests/almanac-gate0.test.js`, a dependency-free focused Node harness that boots the shipped artifact in an isolated Roll20-shaped VM. It verifies #92 resolver boundaries and removal of the pre-scan, #93 configured subsystem status, valid saved-state preservation through simulated disable/re-enable, close command aliases, and executable-artifact identity. It does not substitute for required live Roll20 acceptance.
 - Added `docs/AlmanacAssist-v2.0.0-Build/` with the issue assessment, Issue #95 comparison, GameAssist compatibility guardrails, and the Gate-by-Gate implementation plan.
 
 ### Shared service and non-Almanac completion pass - 2026-08-25
