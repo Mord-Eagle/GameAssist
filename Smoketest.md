@@ -73,7 +73,7 @@ Run:
 - `!GA STATUS --details` preserves the option and opens detailed status, while `!ToKeN AsSiSt Gm`, `!condition-gm`, and `!HP gm` reach their intended module screens;
 - each bare short or full module name reaches that module's established GM screen, player screen, or disabled-module recovery panel instead of remaining silent;
 - the suite navigator, ConfigUI, ConditionAssist, TokenAssist, and WelcomeAssist's private controls use the same readable Roll20 default-template presentation as HPAssist and CombatAssist rather than separate white, pink, or purple control-panel styles;
-- TokenAssist's ordinary GM screen includes **More Actions**, and that button or `!token-assist actions` opens one organized extended library with grouped token operations and a return to GM Controls; `!ta-actions` reaches the same library, and full command aliases are resolved before shorter aliases;
+- TokenAssist's ordinary GM screen includes **More Actions**, and that button or `!token-assist actions` opens one organized extended library with grouped token operations and a return to GM Controls;
 - WelcomeAssist's public greeting card may remain visually distinct because it is table content rather than a private control interface;
 - none of these commands posts publicly or exposes another module's protected controls to players.
 
@@ -104,7 +104,7 @@ Run:
 !ga-health audit
 ```
 
-Pass when the private status identifies HealthService 1.1.0 as enabled and the read-only audit counts both supported tokens. Unlinked tokens, unsupported sheets, and unlinked 2014-PC bars may be counted as not included; that is not a failure.
+Pass when the private status identifies HealthService 1.1.1 as enabled and the read-only audit counts both supported tokens. Unlinked tokens, unsupported sheets, and unlinked 2014-PC bars may be counted as not included; that is not a failure.
 
 ### Shared NPC HP Bar Setup
 
@@ -768,11 +768,13 @@ For the stale-confirmation check:
 
 ## Focused v2.0.0 Complete AlmanacAssist Acceptance
 
-**What this proves:** AlmanacAssist 1.6.1 ships as one complete module whose action-first daily controls and Time, Climate, Astronomy, Weather, Environment, and Rest systems are independently usable, preserve valid state while disabled, and exchange optional context without turning one system into a hidden prerequisite for another.
+**What this proves:** AlmanacAssist 2.0.0 provides a usable live-session dashboard, a separate worldbuilding workspace, one coherent current-scene authority, and independently usable Time, Climate, Astronomy, Weather, Environment, and Rest systems. It also verifies prepared destinations, reviewed travel, local temporal contexts, phenomena, presets, advanced Wayfarer editing, and WorldPack transfer without turning optional context into hidden prerequisites.
 
 **Why test it:** v2.0.0 must not publish a calendar shell while describing a world-management suite. This track proves the six systems, their boundaries, their shared navigation, and RestAlmanac's deliberate 2014-sheet writes inside the real Roll20 sandbox.
 
 **Skip when:** Do not skip this section for v2.0.0 release acceptance. After release, campaigns that keep AlmanacAssist disabled may skip it. Within ordinary troubleshooting, test only the enabled internal system and any optional context provider involved.
+
+**Current non-live evidence:** The focused local harness passes 141 checks, including transaction rollback and stale-preview cases. The checks below remain the required Roll20 live acceptance gate and are not recorded as passed merely because the local harness succeeded.
 
 ### Preparation and Master Controls
 
@@ -789,7 +791,62 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 !Almanac-Impossible
 ```
 
-**Pass when:** AlmanacAssist begins disabled on a clean v2.0.0 state; enabling it starts all six saved-on systems; `!aa-gm` opens one private, action-first dashboard with **Now**, **Advance Date & Time**, **Set or Change Calendar**, **Share**, **World Today**, and **More**; routine controls do not dump module health, audit evidence, moon-cycle configuration, or full calendar structure; Systems provides independent toggles; Status identifies every system; Audit explicitly changes nothing; Manual creates or updates one stable handout; and the bad command offers a useful route back.
+**Pass when:** AlmanacAssist begins disabled on a clean v2.0.0 state; enabling it starts all six saved-on systems; `!aa-gm` opens one compact private **Current World** screen with the active place and scene plus direct time, date, travel, rest, weather, preview, announce, location, and settings actions; **Manage World** opens a separate grouped workspace; routine controls do not dump raw definition graphs, audit evidence, moon-cycle configuration, or complete calendar structure; Systems provides independent toggles; Status identifies configured versus effective availability; Audit explicitly changes nothing; Manual creates or updates one stable handout; and the bad command offers a useful route back.
+
+### Current Scene And Worldbuilding
+
+**Why:** Every Almanac screen must describe the same current world instead of recombining climate, weather, environment, and astronomy independently.
+
+1. Run `!aa-scene`, note the place, time, temperature, precipitation, wind, visibility, terrain, ground, and moon visibility, then open `!aa-scene details`.
+2. Open `!aa-world`. Confirm **Places**, **Natural World**, **Local Context**, **Time & Sky**, **Gameplay**, and **Campaign Tools** are distinct groups with a return to Session Mode.
+3. Create one disposable geography, biome, ecoregion, and location through their guided controls. Give the location a local temperature adjustment, wind adjustment, visibility, ground, and one page association.
+4. Return to the location list. Confirm current, prepared, favorite, recent, nearby, and all-location choices are understandable and do not expose raw JSON.
+5. Prepare the disposable location. Confirm the preview shows the destination's resolved scene while the current active location remains unchanged.
+6. Confirm the destination. Reopen `!aa-scene`, Weather, Environment, and the announcement preview. Confirm each agrees on the active location and current conditions.
+7. Attempt to remove the geography, biome, or ecoregion while the location chain still uses it.
+
+**Pass when:** one immutable scene is reflected consistently across the UI; the detailed view identifies field-level sources and actionable coherence notes; location preparation is read-only; confirmation changes only the active place; local modifiers appear once rather than being double-applied; and referenced definitions cannot be removed until their dependents are reassigned or removed.
+
+### Prepared Travel
+
+**Why:** Choosing a destination must not silently advance time or move the campaign.
+
+1. From the current place, open `!aa-travel` and choose the disposable prepared destination.
+2. Review the route, pace, duration, destination, and destination scene. Cancel once and confirm time and place do not change.
+3. Preview again and accept. Confirm the active journey retains the reviewed route, pace, duration, progress, and destination.
+4. Advance one accepted travel step. Confirm the base fictional chronology advances exactly once and the destination does not become active early.
+5. Complete the journey. Confirm the destination becomes active and the completed journey remains in bounded history.
+6. Start another disposable journey, cancel it, and confirm the current place remains unchanged.
+
+**Pass when:** previews make no mutation; acceptance starts exactly the reviewed journey; each progress action advances only the one base chronology; completion changes place once; cancel is explicit; and recent journey evidence remains readable without exposing raw state.
+
+### Temporal Contexts And Phenomena
+
+**Why:** Local time and temporary world events must add context without creating competing chronologies or erasing permanent definitions.
+
+1. Create a disposable temporal context with a 2:1 local rate and a 30-minute offset.
+2. Preview assigning it to a location. Confirm the before/after local displays are shown but the location remains unchanged until confirmation.
+3. Confirm the assignment. Advance base time once and verify the location's display follows the configured local relationship while the authoritative base minute advances only once.
+4. Add a disposable phenomenon for the active location with a small temperature adjustment, explicit visibility, and ground condition.
+5. Open the current scene and confirm the phenomenon is named, its overlay is visible, and provenance still distinguishes the underlying location/weather/environment from the phenomenon.
+6. End the phenomenon and confirm only its overlay disappears. Remove it after ending.
+
+**Pass when:** temporal preview is read-only; assignment changes local display rather than campaign history; no rest, effect, combat, NPC record, or character resource is rewound; phenomena have explicit active/ended state; and ending one does not rewrite the permanent world.
+
+### Presets, Rules Guidance, And WorldPacks
+
+**Why:** Large campaign setup needs safe reusable definitions without making bulk data or rules advice an automatic gameplay authority.
+
+1. Open `!aa-presets`, preview the versioned Blank preset, and cancel. Confirm nothing changes.
+2. Preview again and install it. Confirm editable copies are added without replacing existing locations.
+3. Enable `!aa-rules`, choose system-neutral guidance, and review one scene. Then choose D&D 5E (2014). Confirm both are clearly advisory and make no token, sheet, marker, tracker, or history change.
+4. Run `!aa-worldpack export`. Open **GameAssist Almanac WorldPack** and confirm it contains definitions and schema information but no current fictional minute, active journey, preview grant, character data, or runtime cache.
+5. Run `!aa-worldpack preview --mode install`, then edit one harmless handout value before clicking the old confirmation. Confirm the import is refused as changed-after-preview and no configuration or chronology changes.
+6. Export and preview again, then confirm without editing. Confirm the pack is listed with provenance and the current fictional moment is unchanged.
+7. Put malformed JSON in the handout and preview. Confirm parsing fails before any configuration change.
+8. Export a Wayfarer definition in the WorldPack, import it, and confirm it becomes an unreviewed saved draft rather than changing the active calendar.
+
+**Pass when:** built-in presets remain immutable; installed definitions are editable copies; RulesAdvisor never applies mechanics; every WorldPack preview is bounded and read-only; confirmation re-reads the handout; malformed, stale, conflicting, or over-limit data causes no partial mutation; imported records retain pack/source provenance; and runtime chronology is excluded.
 
 ### TimeAlmanac and Calendar Announcements
 
@@ -808,7 +865,9 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 11. Open **Choose Announcement Information**, turn one field Off, select another level for a second field, and change the announcement heading. Preview and confirm the settings report **Custom**, the selected field levels match the buttons, and the new heading is used.
 12. Restore **Public Chat**, campaign defaults, and **Quick**. Preview once and confirm it is still private; announce once and confirm only the announcement is public.
 13. From a player account, run `!date` and `!time`. Confirm the player receives read-only output and no mutation controls.
-14. Complete the focused Wayfarer test below.
+14. Set Standard time to Year `0`, then move across its year boundary and one leap boundary. Confirm valid Year 0 dates work and Year 1 labels still describe the same elapsed moments used before this update.
+15. Attempt the first year above the displayed policy limit. Confirm it is refused without changing the current moment.
+16. Complete the focused Wayfarer test below.
 
 **Pass when:** quick and chosen advances work; exact setting and reversal require confirmation; all profile changes preserve elapsed time; preview is always GM-private; Off suppresses delivery; Descriptive, Detailed, and Technical produce their intended information levels; current Weather and climate background are not presented as two simultaneous measured temperatures; missing details are omitted rather than guessed; players remain read-only; and the table timezone, log timestamps, and NPCAssist Session date do not change.
 
@@ -848,8 +907,12 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 19. Run `!Weather-GM`, `!weather dm`, `!Weather-Status`, `!Weather-Help`, and `!Weather-Audit`. Confirm each opens the appropriate private Weather screen exactly once. Repeat one route with mixed capitalization.
 20. Run `!aa-wayfarer reset-default` without confirmation. Confirm no change is made and no reset button is offered. Then run `!aa-wayfarer reset-default --confirm yes`; confirm the draft returns to **Wayfarer Calendar** while the active calendar and fictional time remain unchanged.
 21. Create or update `!Almanac-Manual`. Confirm it explains the action-first dashboard, focused Wayfarer manager, Wayfarer Hour language, announcement controls, seasonal ranges, moon ownership, command-only draft reset, activation, rollback, and recovery.
+22. Run `!aa-wayfarer handout`, export the draft, edit one valid calendar field in **GameAssist Wayfarer Calendar**, and preview it. Confirm preview changes nothing.
+23. Edit the handout again after preview, then click the old confirmation. Confirm it is refused as stale and the saved draft, active calendar, and fictional time remain unchanged.
+24. Preview the latest handout and confirm without further editing. Confirm only the saved draft is replaced, every review stage becomes unreviewed, and the active calendar and fictional time remain unchanged.
+25. Put invalid or over-limit calendar JSON in the handout and preview. Confirm the prior valid draft is preserved.
 
-**Pass when:** the common dashboard actions are direct; saved Wayfarer selection does not force draft setup; all calendar components are directly reachable; routine pages remain compact; explanations/details/recovery are available on demand; exact-time prompts follow the active calendar; the default matches the Wayfarer briefing; moon phases remain available through requested detail and Astronomy views; standardized Weather aliases work with either case and either a space or hyphen; draft edits survive navigation and restart; invalid input causes no partial change; activation and rollback preserve the described state; and the command-only default reset changes only the draft.
+**Pass when:** the common dashboard actions are direct; saved Wayfarer selection does not force draft setup; all calendar components are directly reachable; routine pages remain compact; explanations/details/recovery are available on demand; exact-time prompts follow the active calendar; the default matches the Wayfarer briefing; moon phases remain available through requested detail and Astronomy views; standardized Weather aliases work with either case and either a space or hyphen; draft edits survive navigation and restart; invalid input causes no partial change; activation and rollback preserve the described state; the command-only default reset changes only the draft; and advanced handout imports are bounded, stale-protected, atomic, and draft-only.
 
 ### ClimateAlmanac
 
@@ -1138,113 +1201,6 @@ Changing timezone must not erase Campaign, Chapter, Section, Session, Arc, death
 The maintainer test suite separately checks fixed winter and summer instants, a UTC-midnight crossover, ISO timestamp preservation, invalid saved-state fallback, and reload persistence. Those deterministic checks cover daylight-saving boundaries that may not occur during a live smoke pass.
 
 ---
-
-## Focused v2.0.0 Non-Almanac Follow-Up Checks
-
-These checks cover the directly implemented backlog work now included in PR #81. They are intentionally short and can be skipped only when the corresponding feature will remain disabled or unused. For this development pass, assume the Roll20 smoke evidence has passed unless a live campaign exposes a new failure.
-
-### SheetCapabilities and HealthService
-
-**What it tests:** Whether GameAssist can identify what a character sheet can safely provide before a module reads or writes it.
-
-**Run:** On a page containing one official 2014 PC, one official 2024 PC if available, and one unknown or unlinked token, run:
-
-```roll20chat
-!ga-sheets
-!ga-health audit
-```
-
-**Pass when:** The report distinguishes supported, unsupported, and unknown operations without inventing a bonus or silently claiming that every operation works. No character or token changes occur.
-
-**Skip when:** No sheet-sensitive GameAssist module is enabled.
-
-### MarkerService and TokenAssist
-
-**What it tests:** Whether the shared marker authority preserves the supported legacy marker-expression behavior while keeping ordinary TokenAssist actions safe.
-
-**Run:** Select one disposable token and use:
-
-```roll20chat
-!token-assist actions
-!ta-set statusmarkers|red[2]
-!ta-set statusmarkers|+red
-!ta-set statusmarkers|?blue:3
-!ta-set statusmarkers|red:+1:0:9
-!ta-set statusmarkers|aura1_color|+010101
-!ta-set statusmarkers|light_radius|+5
-!ta-set currentSide|+1
-!ta-report gm|"{name}: {bar1_value}"
-```
-
-Then review the marker and action result. Use the action-library buttons for controller edits and report routes rather than typing them if preferred.
-
-**Pass when:** The requested marker operations return clear success or refusal messages, unrelated markers remain intact, duplicate/index operations do not alter unrelated entries, and an unsupported or ambiguous selector is refused without partial mutation. `!ga-sheets` remains read-only.
-
-**Skip when:** TokenAssist and marker-dependent modules are disabled. Do not use a live NPC marker as the disposable target.
-
-### CombatAssist Health Timeline
-
-**What it tests:** Whether supported HP changes can be reviewed at the encounter and turn boundary without being mislabeled as proven damage.
-
-**Run:** Start a disposable native-tracker encounter with at least two rows, make one supported HP change, advance one turn, make another supported HP change, then run:
-
-```roll20chat
-!Combat-Start
-!Combat-Timeline
-!Combat-Timeline round 1
-```
-
-**Pass when:** The timeline identifies the encounter, round, turn, subject, before/after values, direction, and evidence source. It clearly says that the record is review evidence and does not claim attacker, damage type, resistance, or causation.
-
-**Skip when:** CombatAssist or HealthService is disabled.
-
-### CombatAssist Ready and Delay
-
-**What it tests:** Whether optional held actions work without replacing Roll20's native initiative rules.
-
-**Run:** As GM, open `!Combat-Ready`, enable the feature, leave the profile at `5e`, and use the player-facing **Ready an Action** button. Then use `!Now` and inspect the confirmation. Repeat once with `profile legacy` if that profile is needed by the campaign.
-
-**Pass when:** The current character can record and cancel one held action, the native tracker advances normally, `!Now` announces use without applying damage or conditions, stale or expired records cannot be reused, and the legacy profile does not guess where a delayed turn belongs.
-
-**Skip when:** The campaign does not use Ready/Delay workflows. The feature is off by default.
-
-### CombatAssist to NPCAssist Summary Handoff
-
-**What it tests:** Whether an ended encounter can be summarized in the existing report system without creating fake deaths or revivals.
-
-**Run:** Start and end a disposable encounter. At the end, choose **Add to Session** or **Add to All Active Reports**, then run:
-
-```roll20chat
-!npc-death-report --scope session
-!npc-death-write
-```
-
-Run the same handoff twice if you want to verify deduplication.
-
-**Pass when:** One encounter summary appears in the chosen bucket, a repeated handoff does not duplicate it, and no death/revival entry appears unless an actual NPC death/revival occurred.
-
-**Skip when:** CombatAssist is not used with NPCAssist reports.
-
-### Handout Identity and Index
-
-**What it tests:** Whether GameAssist updates its own reports and manuals without silently replacing a renamed or conflicting handout.
-
-**Run:** Use one report-writing module, then run:
-
-```roll20chat
-!ga-handouts
-!ga-config list
-```
-
-Open the index and one linked handout. If safe in a disposable campaign, rename one GameAssist handout and run the writer again.
-
-**Pass when:** The index lists stable owner/key identities, the existing handout is updated rather than duplicated, and a renamed/conflicting handout produces a clear diagnostic instead of being overwritten.
-
-**Skip when:** The campaign does not use GameAssist handouts or reports. Folder placement remains a manual Journal action.
-
-### Deferred Work
-
-The following are intentionally not part of this smoke section: persistent image/default-token writes (#45), API_Meta-style source-offset diagnostics (#50), Jukebox/music hooks (#57), and broad EffectAssist catalog expansion (#82).
 
 ## Full v2.0.0 Release Acceptance Test
 
@@ -1638,7 +1594,7 @@ Run each line only after the previous response. Pass when ConfigUI disables, re-
 
 **Why test it:** ConditionAssist, TokenAssist, NPCAssist, ConcentrationAssist, and marker diagnostics share MarkerService instead of maintaining competing marker implementations.
 
-**Skip when:** Skip only if MarkerService and every dependent GameAssist module are deliberately disabled. Standalone TokenMod is not required for this test; run the no-TokenMod portion on a disposable campaign to verify that integrated marker ownership is independent of that script.
+**Skip when:** Skip only if MarkerService and every dependent GameAssist module are deliberately disabled. The **without TokenMod** portion is required for Issue #25 acceptance; use a disposable campaign when the active campaign cannot safely remove TokenMod yet.
 
 ### Basic Check
 
@@ -1701,7 +1657,7 @@ Pass when:
 - MarkerService v1.0.1 is enabled;
 - ConditionAssist, TokenAssist, NPCAssist, and ConcentrationAssist are running;
 - all four show confirmed MarkerService dependencies;
-- none is skipped because standalone TokenMod or StatusInfo is absent; those scripts are not runtime prerequisites for the integrated marker consumers.
+- none is skipped because TokenMod or StatusInfo is absent.
 
 #### M2. Numbered Death Marker
 
@@ -2410,7 +2366,7 @@ Select a disposable token whose name visibility is off, then run:
 !token-assist --set imgsrc|ignored --on showname
 ```
 
-Pass when TokenAssist refuses the unsupported persistent image-side property, leaves name visibility unchanged, and explains that durable token-image/default-token writes remain outside this release. TokenAssist 1.3.0 supports the selected-token marker-expression, controller/report, visual, dimming, side-selection, and exact saved/computed-value behaviors described in the main guide. Rebuilding TokenMod's help handout and creating a global `TokenMod` compatibility object remain outside scope.
+Pass when TokenAssist refuses the unsupported image-side property, explains that this feature is outside TokenAssist 1.1.0, and leaves name visibility unchanged. TokenAssist also does not claim default-token writes, computed or name-resolved attributes, advanced controller-list editing, advanced color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, exact TokenMod report-recipient distinctions, duplicate-index marker editing, conditional marker counts, or TokenMod help-handout rebuilding.
 
 #### T12. Restore Campaign Settings
 
@@ -3963,4 +3919,3 @@ Then run only the basic checks for features the session will use:
 - WelcomeAssist: when enabled, preview the greeting and confirm status before the session; do not use manual announce merely as a health check.
 
 Do not discover a marker, HP, or table problem for the first time during combat.
-

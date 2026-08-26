@@ -2,8 +2,8 @@
 ========================================
 GameAssist - Roll20 API Script
 Version: 2.0.0
-Last Updated: 2026-08-24 (America/New_York)
-Release scope: EffectAssist 2.5.3 compact identity-aware casting, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.0 automatic or reviewed normal/maximum healing, HealthService 1.1.0 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, CombatAssist 1.2.0 timeline and Ready/Delay tools, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist 1.6.1 command consistency, and regression repairs across the v2.0.0 module suite.
+Last Updated: 2026-08-26 (America/New_York)
+Release scope: EffectAssist 2.5.4 duration-label repair, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.1 safe public result delivery, HealthService 1.1.1 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, InitiativeAssist 1.0.6 mixed-sheet actor repair, CombatAssist 1.2.1 encounter-ending repair, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist 2.0.0 coherent campaign-world engine, and regression repairs across the v2.0.0 module suite.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -19,18 +19,18 @@ PC health-band alerts use that shared evidence and remain private to the GM.
 Normal event handlers execute directly unless a module deliberately
 calls GameAssist.enqueue(). This development package contains fifteen configurable modules:
 - ConfigUI 0.2.5 - GM-only chat controls with service-first grouping, compact readable configuration summaries, module toggles, common options, and PC health alerts.
-- CritAssist 0.2.5.2 - Detects natural-1 attacks and offers fumble/confirm menus with direct module recovery controls.
+- CritAssist 0.2.5.3 - Detects kept natural-1 attack dice and offers fumble/confirm menus with direct module recovery controls.
 - ConditionAssist 1.0.5 - Provides condition wording, artwork, announcements, marker controls, and full-name command aliases.
 - TokenAssist 1.3.0 - Provides general token controls through !token, !tokenassist, !token-assist, and !ta commands with compact GM navigation, an organized action library, longest-name-first alias routing, controller/report routing, computed-value reports, and MarkerService-backed marker expressions. Legacy !token-mod syntax remains only as a temporary migration alias.
-- InitiativeAssist 1.0.5 - Uses Roll20's native Turn Tracker for mixed-sheet initiative workflows and compact topic guidance.
-- CombatAssist 1.2.0 - Tracks encounters, native round counters, guarded turns, optional timers, private-safe pings, recoverable tracker changes, verified semantic progression events, bounded health evidence, and optional Ready/Delay signaling.
+- InitiativeAssist 1.0.6 - Uses Roll20's native Turn Tracker for mixed-sheet initiative workflows and compact topic guidance.
+- CombatAssist 1.2.1 - Tracks encounters, native round counters, guarded turns, optional timers, private-safe pings, recoverable tracker changes, verified semantic progression events, bounded health evidence, and optional Ready/Delay signaling.
 - WelcomeAssist 0.1.6 - Optionally greets the table after a healthy GameAssist startup through short or full-name commands.
 - ConcentrationAssist 0.6.0 - Runs supported 2014 manual and private HP-loss-offered concentration checks, refuses unavailable save data instead of guessing, provides guided marker configuration, manages its configured marker, and exposes concentration lifecycle events.
 - NPCAssist 1.5.0 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, Arc rosters, and optional CombatAssist encounter summaries on the shared NPC HP bar.
-- EffectAssist 2.5.3 - Coordinates compact catalog-driven effects, exact caster-and-recipient identity, retained GM requests, GameAssist-owned 2014-sheet modifiers, verified token-specific concentration, ownership-safe cleanup, duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
-- HealAssist 1.2.0 - Guides verified 2014 normal or maximum healing with direct single-recipient targeting, optional automatic application, visible PC targeting, private GM requests, and HealthService verification.
+- EffectAssist 2.5.4 - Coordinates compact catalog-driven effects, exact caster-and-recipient identity, retained GM requests, GameAssist-owned 2014-sheet modifiers, verified token-specific concentration, ownership-safe cleanup, provider-specific duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
+- HealAssist 1.2.1 - Guides verified 2014 normal or maximum healing with direct single-recipient targeting, optional automatic application, visible PC targeting, private GM requests, safe public announcements, and HealthService verification.
 - AttackAssist 1.1.0 - Guides authorized 2014 repeating attacks through direct visible targeting, default sheet-mode submission, optional GM-enabled roll review, complete prompt-safe Classic-sheet expansion, private GM placement, crash-safe inline-roll validation, and visible one-use native-template rolls without applying damage.
-- AlmanacAssist 1.6.1 - Adds Wayfarer's ordinal 20-hour clock, independently styled world-announcement details, coherent climate/weather/environment presentation, direct Wayfarer and moon editors, configurable rest rules, editable seasonal ranges, and visible moon phases across six independently controlled internal systems.
+- AlmanacAssist 2.0.0 - Separates live Session and Worldbuilding modes; resolves one coherent provenance-bearing current scene; supports bounded places, natural-world definitions, travel, phenomena, local time, presets, advanced Wayfarer editing, and WorldPacks; and retains six independently controlled Almanac systems and transactional rests.
 - HPAssist 0.3.0 - Rolls npc_hpformula and uses HealthService for verified writes to the selected shared NPC HP bar when available.
 - DebugTools 0.3.1 - Optional dry-run-first GM diagnostics with verified supported HP damage writes on the selected shared NPC HP bar.
 
@@ -128,7 +128,7 @@ V2.0.0 FOUNDATION
   assisted table steps instead of being represented by unsafe sheet rewrites.
 - EffectAssist audits projection drift without writing and requires a fresh GM confirmation before repair.
 - Built-in EffectAssist definitions carry formal duration rules. Accepted CombatAssist progression and committed AlmanacAssist time may create private GM review candidates, but elapsed time never ends an effect automatically.
-- A verified official 2014 Bless spell card may create one short-lived GM proposal; it never infers recipients or changes an effect before ordinary review and confirmation.
+- A verified official 2014 Bless spell card may create one short-lived GM proposal; it never infers recipients, and application follows the GM's configured direct-apply or optional review workflow after recipient selection.
 - AlmanacAssist remains disabled until the GM enables it and provides all six
   independently controlled Time, Climate, Astronomy, Weather, Environment,
   and Rest systems as one complete v2.0.0 module.
@@ -198,7 +198,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 // mechsuit:
 //   codename: "GAMEASSIST"
 //   project_version: "v2.0.0"
-//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, migration-safe module identities, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker, Turn Tracker, and health authorities, optional GM-private PC health-band alerts, source-aware semantic effects with ownership-safe projections, guided verified 2014 healing, guided authorized 2014 repeating attacks, bounded GM-reviewed official 2014 Bless cast proposals, and optional GM-reviewed duration candidates, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, preservation-first encounter flow, GM-private NPC Bloodied alerts, optional health-gated table greetings, validated real-world table time, and independently managed fictional time, climate, astronomy, weather, environments, and deliberate 2014-sheet rests. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, automatic turn advancement, automatic effect application or recipient inference from spell cards, automatic effect expiration from elapsed time, automatic healing-card interpretation or resource consumption, automatic damage application from guided attack rolls, automatic Bloodied markers/history, automatic concentration rolls from observed HP changes, public or player-facing health-threshold disclosure, damage-source guessing, silent effect repair, automatic environmental penalties, or automatic reversal of campaign state when fictional time moves backward."
+//   purpose: "Roll20 API modular kernel and bundled modules with MECHSUITS v1.5.2 contracts, migration-safe module identities, explicit opt-in queue execution, state self-healing, dependency diagnostics, toggleable marker, Turn Tracker, and health authorities, optional GM-private PC health-band alerts, source-aware semantic effects with ownership-safe projections, guided verified 2014 healing, guided authorized 2014 repeating attacks, bounded GM-reviewed official 2014 Bless cast proposals, and optional GM-reviewed duration candidates, integrated condition guidance, general token controls, mixed 2014/2024 initiative workflows, preservation-first encounter flow, GM-private NPC Bloodied alerts, optional health-gated table greetings, validated real-world table time, and independently managed fictional time, climate, astronomy, weather, environments, and deliberate 2014-sheet rests. Non-goals: fallback dispatch to standalone TokenMod/StatusInfo, implicit event queueing, automatic turn advancement, unreviewed effect application from spell-card recognition or inferred recipients, automatic effect expiration from elapsed time, automatic healing-card interpretation or resource consumption, automatic damage application from guided attack rolls, automatic Bloodied markers/history, automatic concentration rolls from observed HP changes, public or player-facing health-threshold disclosure, damage-source guessing, silent effect repair, automatic environmental penalties, or automatic reversal of campaign state when fictional time moves backward."
 //   order: ["policy","app.utils","core.queue","core.compat","core.state","core.markerservice","core.turntrackerservice","core.semanticevents","core.healthservice","core.sheetcapabilities","core.object","interfaces.events","interfaces.commands","modules.configui","modules.critassist","modules.conditionassist","modules.tokenassist","modules.initiativeassist","modules.combatassist","modules.welcomeassist","modules.npcassist","modules.concentrationassist","modules.effectassist","modules.healassist","modules.attackassist","modules.almanacassist","modules.hpassist","modules.debugtools","bootstrap"]
 //   env:
 //     required: []
@@ -256,7 +256,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 //     └─ [GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
-// Guarantee: GameAssist v2.0.0 runs policy, utilities, guarded core services including MarkerService, TurnTrackerService, SemanticEvents, and HealthService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/effect/healing/attack/almanac/gameplay modules, then bootstrap in the declared order. HealthService reports only verified supported HP transitions and refuses to guess damage causes, attackers, resistances, or temporary-HP interactions; its optional PC threshold consumer whispers only the GM. HealAssist guides an authorized 2014 healing roll through exact HP review and one-use verified application while refusing to infer or consume spell slots, items, features, or temporary HP. AttackAssist guides a verified 2014 repeating attack through authorized source selection, targeting, and one-use roll submission while refusing to apply damage or mutate combat state. EffectAssist may offer a bounded private GM proposal for an unambiguous official 2014 Bless card, but it refuses to infer recipients or apply an effect before ordinary review and confirmation; it may also turn accepted CombatAssist progression and committed AlmanacAssist time into private GM duration candidates, but it refuses to end effects from elapsed time alone. AlmanacAssist owns its fictional time, climate, astronomy, weather, environment, and rest records without changing GameAssist real-world timestamps, NPCAssist Session dates, or CombatAssist timing. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing real-world times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
+// Guarantee: GameAssist v2.0.0 runs policy, utilities, guarded core services including MarkerService, TurnTrackerService, SemanticEvents, and HealthService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/effect/healing/attack/almanac/gameplay modules, then bootstrap in the declared order. HealthService reports only verified supported HP transitions and refuses to guess damage causes, attackers, resistances, or temporary-HP interactions; its optional PC threshold consumer whispers only the GM. HealAssist guides an authorized 2014 healing roll through exact HP review and one-use verified application while refusing to infer or consume spell slots, items, features, or temporary HP. AttackAssist guides a verified 2014 repeating attack through authorized source selection, targeting, and one-use roll submission while refusing to apply damage or mutate combat state. EffectAssist may offer a bounded private GM proposal for an unambiguous official 2014 Bless card, but it refuses to infer recipients; after the GM chooses recipients, application follows the configured direct-apply or optional review workflow. It may also turn accepted CombatAssist progression and committed AlmanacAssist time into private GM duration candidates, but it refuses to end effects from elapsed time alone. AlmanacAssist owns its fictional time, climate, astronomy, weather, environment, and rest records without changing GameAssist real-world timestamps, NPCAssist Session dates, or CombatAssist timing. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing real-world times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
 
 // =============================
 // === GameAssist v2.0.0 ===
@@ -319,7 +319,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             deathReportSummaryLimit: 5,
             deathReportDetailLimit: 10,
             npcHpInitializationGraceMs: 2000,
-            lastDamageLimit: 50
+            lastDamageLimit: 50,
+            commandMatcherCacheLimit: 512
         }),
         timestamps: Object.freeze({
             maxFutureMs: 1000 * 60 * 60 * 24 * 7,
@@ -455,7 +456,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             descriptionLength: 1000
         }),
         almanac: Object.freeze({
-            minimumYear: 1,
+            minimumYear: 0,
             maximumYear: 9999,
             maximumAdvanceDays: 1000000,
             historyLimit: 50,
@@ -489,7 +490,23 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             restGrantMs: 1000 * 60 * 5,
             customRestLimit: 10,
             maximumRestHours: 720,
-            maximumSummaryLength: 160
+            maximumSummaryLength: 160,
+            maximumQuickActions: 8,
+            maximumLocations: 100,
+            maximumEcoregions: 60,
+            maximumBiomes: 40,
+            maximumGeographies: 40,
+            maximumPhenomena: 30,
+            maximumPreparedDestinations: 30,
+            maximumPageAssociations: 20,
+            travelHistoryLimit: 50,
+            maximumWorldPacks: 10,
+            maximumWorldPackBytes: 120000,
+            maximumWorldPackObjects: 500,
+            maximumWorldPackDepth: 8,
+            maximumTemporalContexts: 20,
+            worldPackGrantLimit: 10,
+            worldPackGrantMs: 1000 * 60 * 5
         }),
         config: Object.freeze({
             unsafeKeys: Object.freeze(['__proto__', 'prototype', 'constructor'])
@@ -500,6 +517,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added bounded AlmanacAssist scene, place, phenomenon, travel, WorldPack, temporal-context, and preview limits; year zero is a supported fictional-calendar year across every profile.
+    // Changed (v2.0.0): Added a bounded compiled command-matcher cache; command semantics are unchanged while repeated alias routing avoids rebuilding identical regular expressions.
     // Changed (v2.0.0): Added bounded AttackAssist source, row, request, submission, rollbase, and interaction limits alongside the existing HealAssist, HealthService, EffectAssist, AlmanacAssist, and concentration limits; rollback: disable the affected optional module while retaining native sheet workflows.
     // Changed (v2.0.0): Raised CombatAssist health-evidence retention to 500 entries for the active or most recent encounter review; held-action records remain encounter-scoped and are discarded when the encounter ends.
     // Decision log:
@@ -546,7 +565,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Utilities (arg parsing, state helpers, audit, sanitize)
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "APP:UTILS", title: "Utilities",
-    //   guarantees: ["Shared non-marker helpers; known module state branches self-heal without deleting valid config","Absolute timestamps remain unchanged while human displays and date keys use one validated DM timezone","Standalone-script evidence remains diagnostic rather than a marker dependency","GameAssist-owned handouts retain stable Roll20 identities, refuse missing/renamed/ambiguous replacements, and remain independent from unsupported Journal folders","Explicit module-manual requests create or update one stable GameAssist-owned handout without touching other handouts","GameAssist command paths match case-insensitively and accept spaces or hyphens between command words while preserving arguments","Nested configuration values are summarized for chat without replacing the complete snapshot format"],
+    //   guarantees: ["Shared non-marker helpers; known module state branches self-heal without deleting valid config","Absolute timestamps remain unchanged while human displays and date keys use one validated DM timezone","Standalone-script evidence remains diagnostic rather than a marker dependency","GameAssist-owned handouts retain stable Roll20 identities, refuse missing/renamed/ambiguous replacements, and remain independent from unsupported Journal folders","Explicit module-manual requests create or update one stable GameAssist-owned handout without touching other handouts","GameAssist command paths match case-insensitively and accept spaces or hyphens between command words while preserving arguments","Long option names may contain internal hyphens without consuming the next option or permitting prototype-mutating keys","Nested configuration values are summarized for chat without replacing the complete snapshot format"],
     //   depends_on: ["[GAMEASSIST:POLICY]"], last_updated_version: "v2.0.0", lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
@@ -803,9 +822,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
     function _parseArgs(content) {
         // CHOICE: A following --name begins a new flag; it is never consumed as the prior flag's value.
-        const args = {}, pattern = /--(\w+)(?:\s+(?!--)("[^"]*"|[^\s]+))?/g;
+        const args = Object.create(null);
+        const pattern = /--([A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*)(?:\s+(?!--)("[^"]*"|[^\s]+))?/g;
         let m;
         while ((m = pattern.exec(content))) {
+            if (POLICY.config.unsafeKeys.includes(String(m[1]).toLowerCase())) continue;
             let v = m[2] || true;
             if (typeof v === 'string') {
                 if (/^".*"$/.test(v))      v = v.slice(1, -1);
@@ -934,26 +955,36 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
      * Failure: malformed or unrelated chat returns null and is left available to other Roll20 Mods.
      * Design: normalize at the GameAssist command edge so module parsers keep one stable internal command language.
      */
+    const commandMatcherCache = new Map();
+
     function commandMatchDetails(content, prefix, { caseInsensitive = true, mode = 'token' } = {}) {
         const raw = String(content || '').trim();
         const registered = String(prefix || '').trim();
         if (!raw || !registered) return null;
 
-        const escapeRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const segments = registered.split(/[-\s]+/).filter(Boolean);
-        if (!segments.length) return null;
+        const cacheKey = `${caseInsensitive ? 'i' : ''}|${mode}|${registered}`;
+        let expression = commandMatcherCache.get(cacheKey);
+        if (!expression) {
+            const escapeRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const segments = registered.split(/[-\s]+/).filter(Boolean);
+            if (!segments.length) return null;
 
-        const flexibleSeparator = '(?:-|\\s)+';
-        let source = segments.map(escapeRegex).join(flexibleSeparator);
-        if (/[-\s]$/.test(registered)) {
-            // DANGER: a space before --option belongs to the base command, not a trailing subcommand family.
-            source += `${flexibleSeparator}(?=[^-\\s])`;
+            const flexibleSeparator = '(?:-|\\s)+';
+            let source = segments.map(escapeRegex).join(flexibleSeparator);
+            if (/[-\s]$/.test(registered)) {
+                // DANGER: a space before --option belongs to the base command, not a trailing subcommand family.
+                source += `${flexibleSeparator}(?=[^-\\s])`;
+            }
+
+            const suffix = mode === 'exact'
+                ? '$'
+                : (mode === 'token' ? '(?=$|[-\\s])' : '');
+            expression = new RegExp(`^${source}${suffix}`, caseInsensitive ? 'i' : '');
+            commandMatcherCache.set(cacheKey, expression);
+            while (commandMatcherCache.size > POLICY.runtime.commandMatcherCacheLimit) {
+                commandMatcherCache.delete(commandMatcherCache.keys().next().value);
+            }
         }
-
-        const suffix = mode === 'exact'
-            ? '$'
-            : (mode === 'token' ? '(?=$|[-\\s])' : '');
-        const expression = new RegExp(`^${source}${suffix}`, caseInsensitive ? 'i' : '');
         const matched = raw.match(expression);
         if (!matched) return null;
 
@@ -1348,12 +1379,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     }
     // --- Notes & Comments ---
     // NOTE: State auditor warns about unexpected branches; no automatic deletion occurs.
+    // Changed (v2.0.0): Reused bounded compiled command matchers and rejected prototype-mutating option names while preserving ordinary null-prototype argument maps.
+    // Changed (v2.0.0): Accepted internal hyphens in long option names so routed controls such as --rate-numerator retain their complete owner-authored keys.
     // Changed (v2.0.0): Added a stable GameAssist-owned handout registry and optional index; registered ids survive manual Journal filing while missing, renamed, archived, and ambiguous records remain explicit without touching unsupported folder internals.
     // Changed (v2.0.0): Added bounded human configuration summaries so Roll20 chat panels never serialize nested saved-state objects; full configuration remains available in the versioned snapshot handout.
     // Changed (v2.0.0): Added canonical command-path matching so registered GameAssist commands accept mixed case and either spaces or hyphens without rewriting option flags or unrelated chat.
+    // Changed (v2.0.0): Returned parsed option maps without an object prototype and ignored prototype-mutating option names at the shared chat edge.
     // Changed (v1.8.0): Added explicit legacy guide-name adoption so renamed modules reuse and rename one existing owned handout instead of creating a duplicate.
     // Changed (v0.1.5.1): Added validated IANA timezone resolution, bounded formatter reuse, DST-aware human formatting, date-key generation, and legacy-display fallback while preserving stored absolute timestamps.
     // Decision log:
+    //   CHOICE: Accept ASCII letters, digits, underscores, and internal hyphens in long option names - ALT: keep word-character-only parsing; REJECTED: valid multiword controls were truncated into different keys.
     //   CHOICE: Summarize nested configuration for chat and reserve full serialization for the snapshot handout - ALT: share one raw formatter across both surfaces; REJECTED: compact chat and complete export have different readability and evidence requirements.
     //   CHOICE: Reserve one exact `GameAssist Guide - <Module>` handout name and refuse duplicate-name ambiguity - ALT: create numbered copies; REJECTED: duplicate manuals become stale and can overwrite unrelated notes unpredictably.
     //   CHOICE: Keep standalone detection as diagnostics only - ALT: use it for marker dependency gating; REJECTED: MarkerService owns GameAssist marker behavior.
@@ -1526,12 +1561,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Compatibility audit
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "CORE:COMPAT", title: "Compat",
-    //   guarantees: ["Optional visibility of known/unknown scripts","TokenMod overlap guidance matches TokenAssist and MarkerService ownership","Known Turn Tracker owners receive responsibility-specific InitiativeAssist overlap guidance"], last_updated_version: "v0.1.6.0" }
+    //   guarantees: ["External scripts are reported only from public runtime evidence; campaign state is never treated as an authoritative script inventory","TokenMod overlap guidance matches TokenAssist and MarkerService ownership","Known Turn Tracker owners retain responsibility-specific InitiativeAssist overlap guidance for manual review"], last_updated_version: "v2.0.0" }
     // -------------------------------------------------------------------------
     // Narrative
-    // CORE:COMPAT inspects other loaded scripts against known signatures to highlight
-    // overlapping prefixes or event hooks. It is gated by DEBUG_COMPAT to avoid noisy
-    // logs during normal play.
+    // CORE:COMPAT can confirm only external scripts that expose a known public runtime
+    // contract. It never treats mutable campaign state as Roll20's script inventory.
+    // Known signatures remain guidance for manual review, and DEBUG_COMPAT avoids noise.
     // -------------------------------------------------------------------------
     const KNOWN_SCRIPTS = [
         'tokenmod.js','universaltvttimporter.js','npc-hp.js','wolfpack.js',
@@ -1675,16 +1710,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         const plannedEvents   = GameAssist._plannedEvents;
         const plannedPrefixes = GameAssist._plannedChatPrefixes;
-        const scriptState     = state.api?.scripts;
+        const activeEntries = ['TokenMod', 'StatusInfo']
+            .filter(name => getStandaloneScriptEvidence(name).confirmed);
 
-        if (!scriptState || !Object.keys(scriptState).length) {
-            GameAssist.log('Compat', 'Sandbox did not expose external scripts; compatibility scoring limited.');
+        if (!activeEntries.length) {
+            GameAssist.log('Compat', 'No supported public external-script contract was confirmed. Roll20 does not expose an authoritative script inventory, so manual compatibility review may still be needed.');
             GameAssist.log('Compat', '🔌 Events: '   + (plannedEvents.join(', ')   || 'none'));
             GameAssist.log('Compat', '💬 Commands: ' + (plannedPrefixes.join(', ') || 'none'));
             return;
         }
 
-        const activeEntries   = Object.keys(scriptState);
         const activeNormalized = activeEntries.map(normalizeScriptName);
 
         const knownSet = new Set([
@@ -1758,6 +1793,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         GameAssist.log('Compat', `Compatibility hints:\n${table}`);
     }
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Removed mutable state.api.scripts as compatibility evidence; automatic scoring now uses only confirmed public runtime contracts and explicitly reports that Roll20 exposes no authoritative general script inventory.
     // Changed (v0.1.6.0): Added responsibility-specific overlap guidance for common initiative rollers, combat managers, turn managers, and custom-turn utilities.
     // CHOICE: DEBUG_COMPAT gate avoids noise; GM toggles as needed.
     // Prior notes:
@@ -1812,7 +1848,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   depends_on: ["[GAMEASSIST:APP:UTILS]"], provides: ["GameAssist.MarkerService"],
     //   observability: { spans: ["[GAMEASSIST:CORE:MARKERSERVICE]"] },
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { marker_service_version: "1.1.0", tokenmod_reference_version: "0.8.88" }, lifecycle: "active" }
+    //   independent_versions: { marker_service_version: "1.1.1", tokenmod_reference_version: "0.8.88" }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // MarkerService resolves Roll20 built-in marker ids, custom display names, and exact
@@ -1826,7 +1862,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -----------------------------------------------------------------------------
     let setMarkerServiceEnabled;
     const MarkerService = (() => {
-        const version = '1.1.0';
+        const version = '1.1.1';
         const builtInMarkerIds = new Set([
             'red', 'blue', 'green', 'brown', 'purple', 'pink', 'yellow', 'dead',
             'skull', 'sleepy', 'half-heart', 'half-haze', 'interdiction', 'snail',
@@ -1861,7 +1897,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             'grab', 'screaming', 'grenade', 'sentry-gun', 'all-for-one',
             'angel-outfit', 'archery-target'
         ]);
-        let registryCache = { key: null, raw: null, source: null, markers: [], error: null };
+        let registryCache = { attempts: null, raw: null, source: null, markers: [], error: null };
         const observers = new Map();
         let observerId = 0;
         let observerWired = false;
@@ -1969,9 +2005,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     };
                 }
             });
-            const cacheKey = JSON.stringify(attempts);
+            const unchanged = Array.isArray(registryCache.attempts)
+                && registryCache.attempts.length === attempts.length
+                && registryCache.attempts.every((cached, index) =>
+                    cached.property === attempts[index].property
+                    && cached.raw === attempts[index].raw
+                    && cached.error === attempts[index].error
+                );
 
-            if (registryCache.key === cacheKey) {
+            if (unchanged) {
                 return {
                     raw: registryCache.raw,
                     source: registryCache.source,
@@ -2011,7 +2053,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     }))
                     .filter(entry => entry.name && entry.tag);
                 registryCache = {
-                    key: cacheKey,
+                    attempts,
                     raw: selected.raw,
                     source: selected.property,
                     markers,
@@ -2019,7 +2061,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 };
             } else if (attempts.every(attempt => attempt.raw === null && !attempt.error)) {
                 registryCache = {
-                    key: cacheKey,
+                    attempts,
                     raw: '[]',
                     source: 'token_markers',
                     markers: [],
@@ -2027,7 +2069,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 };
             } else {
                 registryCache = {
-                    key: cacheKey,
+                    attempts,
                     raw: attempts.find(attempt => attempt.raw !== null)?.raw || null,
                     source: null,
                     markers: [],
@@ -2672,8 +2714,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         });
     })();
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Advanced MarkerService to 1.1.0 with TokenMod 0.8.88-compatible marker expressions for duplicate indexes, conditional updates, relative counts, min/max bounds, relative colors, dimming values, and relative/random side selection. The service remains the single direct marker authority.
+    // Changed (v2.0.0): Advanced MarkerService to 1.1.1; unchanged campaign marker registries are recognized without serializing their complete JSON text on every marker operation.
     // Prior notes:
+    //   v2.0.0 / MarkerService 1.1.0: Added the advanced marker expressions used by TokenAssist for duplicate indexes, conditional updates, relative counts, min/max bounds, relative colors, dimming values, and relative/random side selection. The service remains the single direct marker authority; ATTRIBUTIONS.md records the TokenMod design reference.
     //   v0.1.5.0: Advanced MarkerService to 1.0.1 with built-in and custom marker artwork metadata, documented token_markers registry lookup with _token_markers compatibility fallback, explicit lifecycle controls, and no GameAssist marker dependence on chat-generated TokenMod commands.
     // Decision log:
     //   CHOICE: Mutate statusmarkers directly and publish one observation contract - ALT: send TokenMod chat commands; REJECTED: external authorization, timing, and dependency ambiguity.
@@ -3162,7 +3205,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   guarantees: ["Supported 2014-PC HP attributes and linked-NPC changes on the configured token bar normalize into one immutable health.transition contract","GameAssist-owned HP writes require producer and operation identity, verify the resulting object, and deduplicate linked token/sheet events","The GM may choose bar 1, 2, or 3 as the shared NPC HP surface and explicitly prepare or link qualifying current-page NPC tokens","Unknown Roll20 changes remain unknown; the service never guesses an attacker, damage type, resistance, temporary-HP interaction, concentration result, or combat cause","Observer failures remain isolated through SemanticEvents and retained evidence is bounded in memory"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]"],
     //   provides: ["HealthService"], last_updated_version: "v2.0.0",
-    //   independent_versions: { service_version: "1.1.0", health_event_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { service_version: "1.1.1", health_event_schema_version: 1 }, lifecycle: "active" }
     // -----------------------------------------------------------------------------
     // Narrative
     // HealthService is the shared HP boundary for GameAssist. It observes only
@@ -3172,7 +3215,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // record NPC deaths, advance combat, or persist a causal combat ledger.
     // -----------------------------------------------------------------------------
     const HealthService = (() => {
-        const SERVICE_VERSION = '1.1.0';
+        const SERVICE_VERSION = '1.1.1';
         const HEALTH_EVENT_SCHEMA_VERSION = 1;
         const EVENT_TYPE = 'health.transition';
         const CLASSIFICATIONS = new Set([
@@ -3649,13 +3692,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!hpAttribute) return { ok: false, code: 'UNPROCESSABLE', message: `${character.get('name') || 'That NPC'} has no hp attribute.` };
             const current = parseHealthField(hpAttribute.get('current'));
             const maximum = parseHealthField(hpAttribute.get('max'));
-            const fallbackMaximum = parseHealthField(getAttrByName(character.id, 'npc_hpbase'));
             const currentRaw = current.state === 'valid'
                 ? current.raw
-                : (maximum.state === 'valid' ? maximum.raw : fallbackMaximum.raw);
+                : maximum.raw;
             const maximumRaw = maximum.state === 'valid'
                 ? maximum.raw
-                : (fallbackMaximum.state === 'valid' ? fallbackMaximum.raw : currentRaw);
+                : currentRaw;
             if (parseHealthField(currentRaw).state !== 'valid' || parseHealthField(maximumRaw).state !== 'valid') {
                 return { ok: false, code: 'UNPROCESSABLE', message: `${character.get('name') || 'That NPC'} has no numeric HP value to place on the token.` };
             }
@@ -3737,10 +3779,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         });
     })();
     // --- Notes & Comments ---
-    // Changed (v2.0.0): Advanced HealthService to 1.1.0; bar 1, 2, or 3 may be the shared NPC HP surface, verified token reads and writes follow that setting, and explicit current-page copy/link setup is available without changing the 2014 PC hp-attribute contract.
+    // Changed (v2.0.0): Advanced HealthService to 1.1.1; NPC token setup now derives both values only from the supported hp attribute and refuses missing numeric evidence instead of consulting the nonexistent npc_hpbase field.
+    // Prior notes:
+    //   v2.0.0 / HealthService 1.1.0: Bar 1, 2, or 3 may be the shared NPC HP surface, verified token reads and writes follow that setting, and explicit current-page copy/link setup is available without changing the 2014 PC hp-attribute contract.
+    //   v2.0.0 / HealthService 1.0.0: Added canonical supported HP snapshots, immutable semantic transitions, bounded deduplication, and verified producer/operation-aware writes for linked NPC bar 1 and official 2014 PC HP attributes.
     // Decision log:
     //   CHOICE: Make unlinked value-copy the recommended NPC setup and expose sheet linking separately - ALT: link every same-character NPC token automatically; REJECTED: linked duplicates share one HP pool and can make several creatures lose HP together.
-    // Changed (v2.0.0): Added HealthService 1.0.0 with canonical supported HP snapshots, immutable semantic transitions, bounded deduplication, and verified producer/operation-aware writes for linked NPC bar 1 and official 2014 PC HP attributes.
     //   CHOICE: Treat an unexplained numeric decrease or increase as unknown evidence - ALT: label it damage or healing from direction alone; REJECTED: Roll20 does not expose attack, resistance, temporary-HP, synchronization, or causal metadata reliably.
     //   CHOICE: Deduplicate by canonical subject plus before/after values - ALT: expose token and attribute events separately; REJECTED: linked bars can represent one logical write on two Roll20 surfaces.
     //   CHOICE: Retain only bounded in-memory recent evidence - ALT: persist a combat ledger; REJECTED: sandbox restarts and unknown external causes would make durable causal claims misleading.
@@ -3973,6 +4017,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         _commandHandlers: {},
         _commandRoutes: [],
         _commandRouteSequence: 0,
+        _commandResolutionCache: new WeakMap(),
         _eventHandlers: {},
         _transitioning,
         config: {},
@@ -4065,6 +4110,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return candidates[0] || null;
         },
 
+        _resolveCommandMessage(msg) {
+            if (!msg || typeof msg !== 'object') return this._resolveCommandRoute(msg?.content);
+            if (this._commandResolutionCache.has(msg)) return this._commandResolutionCache.get(msg);
+            const resolved = this._resolveCommandRoute(msg.content);
+            this._commandResolutionCache.set(msg, resolved);
+            return resolved;
+        },
+
         _resolveUnavailableCommand(content) {
             if (this._resolveCommandRoute(content)) return null;
             const candidates = Object.entries(MODULES)
@@ -4119,7 +4172,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const wrapped = msg => {
                 if (!MODULES[mod]?.initialized || !MODULES[mod]?.active) return;
                 if (msg.type !== 'api') return;
-                const resolved = this._resolveCommandRoute(msg.content);
+                const resolved = this._resolveCommandMessage(msg);
                 if (!resolved || resolved.route.id !== route.id) return;
                 if (gmOnly && !playerIsGM(msg.playerid)) return;
                 if (acl.length && !acl.includes(msg.playerid)) return;
@@ -4162,6 +4215,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         _clearAllListeners() {
             this._commandHandlers = {};
+            this._commandResolutionCache = new WeakMap();
             this._listeners = {};
         },
 
@@ -4173,9 +4227,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         },
 
         _getActiveScriptNames() {
-            const scripts = state.api?.scripts;
-            if (!scripts) return null;
-            return Object.keys(scripts).map(normalizeScriptName);
+            const confirmed = ['TokenMod', 'StatusInfo']
+                .filter(name => getStandaloneScriptEvidence(name).confirmed)
+                .map(normalizeScriptName);
+            return confirmed.length ? confirmed : null;
         },
 
         _checkDependencies(name) {
@@ -4516,6 +4571,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Changed (v2.0.0): Protected complete Roll20 query and attribute expressions inside template-rendered Mod-command buttons by deferring braces and pipe delimiters alongside their introducers; live prompts now survive until the click instead of collapsing to blank or boolean command values.
     // Changed (v2.0.0): Deferred Roll20 target references, roll queries, ability calls, and bracketed rolls in generated Mod-command buttons using Roll20's documented HTML entities so prompts run when clicked instead of being consumed while the API renders the panel.
     // Changed (v2.0.0): Added one bounded unavailable-command responder so disabled or inactive feature commands produce a clear recovery panel instead of failing silently; active command routes still take precedence.
+    // Changed (v2.0.0): Cached one route decision per Roll20 API message so overlapping registered aliases no longer rescan every active route once per listener.
     // Changed (v2.0.0): Added a most-specific command router that canonicalizes case and command-word separators once, prevents overlapping aliases from double-firing, and leaves non-GameAssist chat untouched.
     // Changed (v2.0.0): Protected HealthService's validated PC-alert settings from generic config writes while retaining the shared toggleable HP evidence and verified-write lifecycle.
     // Decision log:
@@ -6340,7 +6396,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   guarantees: ["Compact layered navigation, table-readiness status/audit, stable on-demand manual, unknown-command recovery, and direct GM module-disable access","Natural-1 detection bugfix retained"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "0.2.5.2" } }
+    //   independent_versions: { module_version: "0.2.5.3" } }
     // -------------------------------------------------------------------------
     // Narrative
     // MODULES:CRITASSIST watches rolltemplate outputs for natural-1 results and serves
@@ -6362,8 +6418,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const ACTIVE_PLAYER_LIMIT = POLICY.runtime.activePlayerLimit;
 
         // ─── Constants ─────────────────────────────────────────────────────────────────
-        /** Roll20 rolltemplates monitored for natural-1s */
-        const VALID_TEMPLATES = ['atk','atkdmg','npcatk','npcfullatk','npcaction','spell','simple','dmg','default'];
+        /** Roll20 attack rolltemplates monitored for natural-1s. */
+        const VALID_TEMPLATES = ['atk', 'atkdmg', 'npcatk', 'npcfullatk'];
         const FUMBLE_TABLES = {
             melee:   'CF-Melee',
             ranged:  'CF-Ranged',
@@ -6382,7 +6438,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             'Confirm-Crit-Martial',
             'Confirm-Crit-Magic'
         ];
-        const MODULE_VERSION = '0.2.5.2';
+        const MODULE_VERSION = '0.2.5.3';
 
         function ensureCritFumbleRuntime() {
             const runtime = ensureRuntimeObject(modState);
@@ -6542,7 +6598,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (roll.type !== 'R' || roll.sides !== 20 || !Array.isArray(roll.results)) continue;
             for (const result of roll.results) {
                 // Defensive: result must have .v (value); .r is not always present
-                if (typeof result.v !== 'number') continue;
+                if (typeof result.v !== 'number' || result.d === true) continue;
                 if (result.v === 1) return true;
             }
         }
@@ -6779,6 +6835,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         prefixes: ['!crit','!crit-','!CritAssist','!CritAssist-','!critfail','!critfumble','!critfumble-','!CritFumble-GM','!CritFumble-DM']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced CritAssist to 0.2.5.3; automatic fumbles now inspect only attack templates and ignore dropped d20 results from advantage, disadvantage, and other keep/drop expressions.
     // Changed (v2.0.0): Advanced CritAssist to 0.2.5.2; the GM player picker now exposes a direct Disable CritAssist recovery control without expanding player-facing menus.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the CritAssist GM player picker, including its empty-session state.
     // Changed (v1.8.0): Renamed the module to CritAssist while preserving the established !critfumble command family, campaign state, rollable-table names, and legacy controls.
@@ -9881,7 +9938,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   observability: { spans: ["[GAMEASSIST:MODULES:INITIATIVEASSIST]"] },
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.0.5" }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.0.6" }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // InitiativeAssist classifies D&D 5E 2014 and 2024 tracker actors, resolves
@@ -9891,7 +9948,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('InitiativeAssist', function() {
         const MODULE_NAME = 'InitiativeAssist';
-        const MODULE_VERSION = '1.0.5';
+        const MODULE_VERSION = '1.0.6';
         const modState = GameAssist.getState(MODULE_NAME);
         Object.assign(modState.config, {
             enabled: false,
@@ -10142,7 +10199,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!type && hasPlayerController(token, character)) type = 'pc';
             if (!type) attention.push('PC or NPC type could not be established safely.');
             return {
-                sheet,
+                sheet: contract,
                 adapter,
                 type,
                 modifier,
@@ -11477,6 +11534,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => GameAssist.TurnTrackerService.clearObservers('InitiativeAssist')
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced InitiativeAssist to 1.0.6; mixed-sheet actor results now retain the inspected sheet contract instead of referencing an undefined local identifier.
     // Changed (v2.0.0): Advanced InitiativeAssist to 1.0.5; bare Init, Initiative, and InitiativeAssist commands and their hyphenated actions share the established case-insensitive parser.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the private InitiativeAssist GM/DM start roster.
     // Changed (v0.1.7.0): Advanced InitiativeAssist to 1.0.4; !Init-GM and !Init-DM are equal role aliases for the private initiative-start roster, with Guide/Help, Info, Manual, and complete layered navigation preserved.
@@ -11515,7 +11573,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:TURNTRACKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   observability: { spans: ["[GAMEASSIST:MODULES:COMBATASSIST]"] },
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.2.0", combat_event_schema_version: 1, combat_timeline_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.2.1", combat_event_schema_version: 1, combat_timeline_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // CombatAssist begins only after a GM explicitly starts it against an open,
@@ -11528,7 +11586,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     let teardownCombatAssist = () => {};
     GameAssist.register('CombatAssist', function() {
         const MODULE_NAME = 'CombatAssist';
-        const MODULE_VERSION = '1.2.0';
+        const MODULE_VERSION = '1.2.1';
         const COMBAT_EVENT_SCHEMA_VERSION = 1;
         const COMBAT_TIMELINE_SCHEMA_VERSION = 1;
         const VALID_STATES = new Set(['active', 'paused', 'attention']);
@@ -12873,7 +12931,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const npcHandoffAvailable = Boolean(MODULES.NPCAssist?.active && GameAssist.NPCAssist?.appendEncounterSummary);
             if (args.confirm !== true) {
                 sendPanel('End CombatAssist Encounter?', [
-                    { label: 'Encounter Summary', value: `Round ${_sanitize(String(encounter.round))} | ${participantCount} tracker entr${participantCount === 1 ? 'y' : 'ies'} | started ${_sanitize(localDateTime(encounter.startedAt))}` },
+                    { label: 'Encounter Summary', value: `Round ${_sanitize(String(encounter.round))} | ${participantCount} tracker entr${participantCount === 1 ? 'y' : 'ies'} | started ${_sanitize(displayStoredTime(encounter.startedAt))}` },
                     { label: 'What Changes', value: 'CombatAssist tracking is cleared. Roll20 Turn Tracker rows remain exactly as they are.' },
                     { label: 'End Only', value: GameAssist.createButton('End Encounter', '!Combat-End --confirm') },
                     ...(npcHandoffAvailable ? [{ label: 'Optional NPCAssist Copy', value: `${GameAssist.createButton('Add to Session Report', '!Combat-End --confirm --handoff session')} ${GameAssist.createButton('Add to All Active Reports', '!Combat-End --confirm --handoff all')}` }] : [{ label: 'NPCAssist', value: 'Optional report copy is unavailable. Ending the encounter still works normally.' }]),
@@ -13743,6 +13801,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         preserveRuntimeOnDisable: true
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced CombatAssist to 1.2.1; the encounter-ending confirmation now formats its stored start time through the shared timezone-aware display helper instead of calling an undefined function.
     // Changed (v2.0.0): Advanced CombatAssist to 1.2.0 with optional 5e Ready/legacy Delay records and !Now signaling, bounded HealthService evidence by turn boundary, and an explicit deduplicated NPCAssist encounter-summary handoff.
     // Changed (v2.0.0): Restored verified semantic progression events to the release inventory; the 500-entry health bound is per active or most recent encounter review, while held actions remain encounter-scoped.
     // Changed (v2.0.0): Added the standard GameAssist Home return to the CombatAssist GM control screen.
@@ -17861,11 +17920,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Catalog-driven semantic effects and 2014 sheet projections
     // -----------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:EFFECTASSIST", title: "EffectAssist",
-    //   guarantees: ["Effect instances, not markers or sheet fields, are the durable source of truth","Definitions may coordinate multiple source and target projections through one versioned adapter pipeline","Verified 2014 repeating modifier rows are ownership-safe and never overwrite unrelated sheet data","An exact EffectAssist-owned Guidance roll tag may consume one unambiguous supported 2014 skill-check instance; unsupported, edited, or ambiguous checks remain manual","ConcentrationAssist owns concentration state while EffectAssist preflights, verifies, and reports the exact source token dependency","Optional duration providers create reviewable GM candidates but never end effects automatically","Combat duration evidence comes only from accepted CombatAssist progression and world-time evidence comes only from committed AlmanacAssist changes","Provider absence, tracker rebases, backward movement, restarts, and large time jumps are handled without guessed or unbounded replay","Official 2014 Bless spell cards create bounded GM proposals only when template, spell, character, page, token, and controller evidence are unambiguous","Cast recognition never infers recipients or bypasses the normal preview and confirmation pipeline","Audit is read-only; application and repair require bounded confirmation","Player casting uses short-lived opaque choices, rechecks source control, uses visible native target selection, and may be locked by the GM","Recipient failures identify every affected token and distinguish an empty Represents Character choice from a stale character link","Duplicate source-character tokens are labeled by exact token and layer before concentration is established","GM-assisted player requests are retained briefly, preserve source authorization, and expose no full GM controls","Successful player-originated applications announce the source, effect, and public target names","The built-in catalog distinguishes automated mechanics from tracked rules"],
+    //   guarantees: ["Effect instances, not markers or sheet fields, are the durable source of truth","Definitions may coordinate multiple source and target projections through one versioned adapter pipeline","Verified 2014 repeating modifier rows are ownership-safe and never overwrite unrelated sheet data","An exact EffectAssist-owned Guidance roll tag may consume one unambiguous supported 2014 skill-check instance; unsupported, edited, or ambiguous checks remain manual","ConcentrationAssist owns concentration state while EffectAssist preflights, verifies, and reports the exact source token dependency","Optional duration providers create reviewable GM candidates but never end effects automatically","Combat duration evidence comes only from accepted CombatAssist progression and world-time evidence comes only from committed AlmanacAssist changes","Provider absence, tracker rebases, backward movement, restarts, and large time jumps are handled without guessed or unbounded replay","Official 2014 Bless spell cards create bounded GM proposals only when template, spell, character, page, token, and controller evidence are unambiguous","Cast recognition never infers recipients; after GM recipient selection, application follows the configured direct-apply or optional review workflow","Audit is read-only; application and repair require bounded confirmation","Player casting uses short-lived opaque choices, rechecks source control, uses visible native target selection, and may be locked by the GM","Recipient failures identify every affected token and distinguish an empty Represents Character choice from a stale character link","Duplicate source-character tokens are labeled by exact token and layer before concentration is established","GM-assisted player requests are retained briefly, preserve source authorization, and expose no full GM controls","Successful player-originated applications announce the source, effect, and public target names","The built-in catalog distinguishes automated mechanics from tracked rules"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:MARKERSERVICE]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]","[GAMEASSIST:MODULES:CONDITIONASSIST]","[GAMEASSIST:MODULES:CONCENTRATIONASSIST]"],
     //   provides: ["GameAssist.EffectAssist"],
     //   last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "2.5.3", effect_state_schema_version: 3, cast_proposal_schema_version: 1, player_cast_flow_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "2.5.4", effect_state_schema_version: 3, cast_proposal_schema_version: 1, player_cast_flow_schema_version: 1 }, lifecycle: "active" }
     // -----------------------------------------------------------------------------
     // Narrative
     // EffectAssist is a catalog-driven rules coordinator. It records the source,
@@ -17878,7 +17937,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -----------------------------------------------------------------------------
     GameAssist.register('EffectAssist', function() {
         const MODULE_NAME = 'EffectAssist';
-        const MODULE_VERSION = '2.5.3';
+        const MODULE_VERSION = '2.5.4';
         const STATE_SCHEMA_VERSION = 3;
         const CAST_PROPOSAL_SCHEMA_VERSION = 1;
         const PLAYER_CAST_FLOW_SCHEMA_VERSION = 1;
@@ -18397,7 +18456,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return units.length ? units.join(' or ') : (instance.duration.label || 'Manual duration');
         }
 
-        function durationProviderSummary(instance, provider) {
+        function durationBoundarySummary(instance, provider) {
             const rules = instance?.duration?.rules;
             if (provider === 'combat' && rules?.encounterRounds) {
                 return `${rules.encounterRounds}-round`;
@@ -18479,7 +18538,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         dedupeKey: `combat-expired:${anchor.encounterId}:${anchor.targetRound}`,
                         provider: 'combat',
                         kind: 'expiration-candidate',
-                        reason: `${instance.name} reached its ${durationProviderSummary(instance, 'combat')} boundary in the verified encounter.`,
+                        reason: `${instance.name} reached its ${durationBoundarySummary(instance, 'combat')} boundary in the verified encounter.`,
                         evidence: { encounterId: anchor.encounterId, round: payload.round, progression: payload.progression, identity: payload.current?.identity || '' }
                     });
                     if (item) created.push(item);
@@ -18509,7 +18568,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         dedupeKey: `world-expired:${anchor.targetWorldMinute}`,
                         provider: 'world-time',
                         kind: 'expiration-candidate',
-                        reason: `${instance.name} reached its ${durationProviderSummary(instance, 'world-time')} boundary in committed Almanac time.`,
+                        reason: `${instance.name} reached its ${durationBoundarySummary(instance, 'world-time')} boundary in committed Almanac time.`,
                         evidence: { previousWorldMinute: previousMinute, currentWorldMinute: currentMinute, revision: payload.revision || payload.current?.revision || 0 }
                     });
                     if (item) created.push(item);
@@ -18537,7 +18596,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         dedupeKey: `combat-expired:${combat.encounterId}:${combat.targetRound}`,
                         provider: 'combat',
                         kind: 'expiration-candidate',
-                        reason: `${instance.name} has reached its ${durationProviderSummary(instance, 'combat')} boundary in the verified encounter.`,
+                        reason: `${instance.name} has reached its ${durationBoundarySummary(instance, 'combat')} boundary in the verified encounter.`,
                         evidence: { encounterId: encounter.id, round: encounter.round, progression: encounter.progression, reconciled: true }
                     });
                     if (item) created.push(item);
@@ -18548,7 +18607,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         dedupeKey: `world-expired:${worldAnchor.targetWorldMinute}`,
                         provider: 'world-time',
                         kind: 'expiration-candidate',
-                        reason: `${instance.name} has reached its ${durationProviderSummary(instance, 'world-time')} boundary in committed Almanac time.`,
+                        reason: `${instance.name} has reached its ${durationBoundarySummary(instance, 'world-time')} boundary in committed Almanac time.`,
                         evidence: { currentWorldMinute: world.worldMinute, revision: world.revision || 0, reconciled: true }
                     });
                     if (item) created.push(item);
@@ -21495,6 +21554,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
     });
     // --- Notes & Comments ---
+    // Maintenance (v2.0.0, no semantic change): Clarified that recognized casts never infer recipients and follow the GM's configured direct-apply or optional review workflow after recipient selection; runtime behavior is unchanged.
+    // Changed (v2.0.0): Advanced EffectAssist to 2.5.4; provider-specific expiration labels use a distinct boundary helper so later UI provider summaries cannot shadow or replace their wording.
     // Changed (v2.0.0): Advanced EffectAssist to 2.5.3; caster buttons now show the ordinary token or character name alone and add concise character, layer, and token-id details only when duplicate visible labels require disambiguation, while bare !EffectAssist joins the existing command surface.
     // Changed (v2.0.0): Advanced EffectAssist to 2.5.2; recipient validation now names every exact token and distinguishes empty from stale character links, duplicate caster choices identify token and layer, concentration lifecycle follows the chosen source token, and cleanup reports projections preserved because they predated the effect.
     // Changed (v2.0.0): Advanced EffectAssist to 2.5.1; concentration effects now refuse application before projection writes when the configured concentration marker is unavailable, successful results identify the established source dependency, and unlinked recipient failures name the affected token with a direct Roll20 correction.
@@ -21546,7 +21607,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   guarantees: ["Official 2014-sheet healing uses short-lived source, target, roll, review, and one-use confirmation boundaries","Every accepted HP change uses HealthService provenance and verification; multi-target failures attempt verified rollback","Players may target visible supported PCs they do not control while NPC, hidden, and off-page placement remains GM-reviewed","Spell slots, class resources, temporary HP, damage causes, resistance, and unsupported sheet fields are never inferred or consumed"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.HealAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.2.0", interaction_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.2.1", interaction_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // HealAssist is a disabled-by-default HealthService client. It guides an authorized
@@ -21556,7 +21617,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('HealAssist', function() {
         const MODULE_NAME = 'HealAssist';
-        const MODULE_VERSION = '1.2.0';
+        const MODULE_VERSION = '1.2.1';
         const INTERACTION_SCHEMA_VERSION = 1;
         const modState = GameAssist.getState(MODULE_NAME);
         modState.config = {
@@ -22207,7 +22268,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const allPublicPc = proposal.targets.every(target => !target.npc && target.layer === 'objects');
             if (modState.config.resultAudience === 'public' && allPublicPc) {
                 const results = proposal.targets.map(target => `${target.name} regains ${target.gained} HP`).join('; ');
-                sendChat(`character|${getObj('graphic', proposal.sourceTokenId)?.get('represents') || ''}`, `/em uses ${proposal.actionName}. ${results}.`);
+                const sourceToken = getObj('graphic', proposal.sourceTokenId);
+                const sourceCharacterId = String(sourceToken?.get('represents') || '');
+                const speaker = sourceCharacterId && getObj('character', sourceCharacterId)
+                    ? `character|${sourceCharacterId}`
+                    : MODULE_NAME;
+                sendChat(speaker, `/em uses ${proposal.actionName}. ${results}.`);
             }
             const summary = `${proposal.actionName} completed: ${completionSummary(proposal)}.`;
             panel('Healing Applied', [
@@ -22491,6 +22557,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => GameAssist.HealAssist?._clearTransient?.()
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced HealAssist to 1.2.1; public completion emotes now fall back to the module speaker when the reviewed source token or represented character no longer exists.
     // Changed (v2.0.0): Advanced HealAssist to 1.2.0; actions with exactly one legal recipient now carry their target prompt from the action catalog and bypass the redundant recipient-count screen while retaining source authorization, private placement, review, automatic application, and legacy command paths.
     // Prior notes:
     //   v2.0.0 / HealAssist 1.1.0: added a maximum-result action catalog, a GM-controlled automatic-application path that retained stale checks and rollback, explicit GM failure notices, and a bare !healassist entry point.
@@ -23495,26 +23562,27 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
     // =============================================================================
     // [GAMEASSIST:MODULES:ALMANACASSIST] BEGIN
-    // Section Title: AlmanacAssist fictional calendar and world time
+    // Section Title: AlmanacAssist campaign world engine
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:ALMANACASSIST", title: "AlmanacAssist",
-    //   guarantees: ["Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Optional Almanac integrations improve context without becoming hidden prerequisites","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer exposes direct validated editors for every stored calendar component while moon phases remain visible Astronomy-owned context","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","The GM dashboard prioritizes daily calendar actions and moves setup, diagnostics, and technical reference behind focused controls","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Descriptive announcements report player-perceivable time, weather, visibility, and moon visibility without presenting climate baselines as simultaneous current measurements","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
+    //   guarantees: ["Session Mode keeps current place, scene, time, travel, rest, weather, and announcement actions compact while Worldbuilding Mode owns durable definitions","Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows without becoming hidden prerequisites","One signed base chronology keeps Year 1 at elapsed minute zero for saved-campaign compatibility while allowing validated Year 0 dates","SceneResolver publishes one immutable coherent snapshot with field-level provenance for place, local time, climate, weather, environment, astronomy, and active phenomena","Geographies, biomes, ecoregions, locations, phenomena, quick actions, and local temporal contexts are bounded, validated, and dependency-aware","Prepared destinations and travel change chronology or active location only after explicit review and confirmation","Immutable versioned presets install editable copies without replacing existing places","Wayfarer provides complete chat editors plus a versioned advanced handout whose stale-protected import changes only the saved draft","WorldPack import/export excludes runtime chronology and character state, validates the complete bounded definition graph before mutation, and records provenance","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Optional RulesAdvisor guidance is profile-specific, read-only, and never applies gameplay changes","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AlmanacAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.6.1", time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "2.0.0", time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2, world_state_schema_version: 1, scene_schema_version: 1, worldpack_schema_version: 1, temporal_context_schema_version: 1, wayfarer_handout_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
-    // AlmanacAssist contains six independently toggleable internal submodules behind
-    // one action-first GM dashboard and compact router. Daily time, calendar, and
-    // announcement actions stay prominent while setup and technical detail remain
-    // available through focused screens. Each system works with manual context when a
-    // related enhancement is unavailable. Time and world descriptions never mutate gameplay automatically;
-    // RestAlmanac is the only sheet-writing surface and requires a fresh preview and
-    // confirmation against verified D&D 5E by Roll20 2014 attributes.
+    // AlmanacAssist presents a compact Session Mode for live play and a separate
+    // Worldbuilding Mode for durable campaign definitions. SceneResolver composes those
+    // definitions with the six independently controlled Almanac systems into one
+    // immutable current-scene contract. Reviewed travel, local temporal contexts,
+    // phenomena, presets, advanced Wayfarer drafts, and WorldPacks extend that contract
+    // without changing chronology or gameplay state merely because a preview was opened.
+    // RestAlmanac remains the only sheet-writing surface and requires a fresh preview
+    // and confirmation against verified D&D 5E by Roll20 2014 attributes.
     // -------------------------------------------------------------------------
     GameAssist.register('AlmanacAssist', function() {
         const MODULE_NAME = 'AlmanacAssist';
-        const MODULE_VERSION = '1.6.1';
+        const MODULE_VERSION = '2.0.0';
         const TIME_STATE_SCHEMA_VERSION = 2;
         const WAYFARER_DRAFT_SCHEMA_VERSION = 3;
         const ANNOUNCEMENT_SCHEMA_VERSION = 4;
@@ -23523,6 +23591,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const WEATHER_STATE_SCHEMA_VERSION = 1;
         const ENVIRONMENT_STATE_SCHEMA_VERSION = 2;
         const REST_STATE_SCHEMA_VERSION = 2;
+        const WORLD_STATE_SCHEMA_VERSION = 1;
+        const SCENE_SCHEMA_VERSION = 1;
+        const WORLDPACK_SCHEMA_VERSION = 1;
+        const TEMPORAL_CONTEXT_SCHEMA_VERSION = 1;
+        const WAYFARER_HANDOUT_SCHEMA_VERSION = 1;
+        const CHRONOLOGY_ANCHOR_YEAR = 1;
         const DEFAULT_WORLD_MINUTE = 8 * 60;
         const modState = GameAssist.getState(MODULE_NAME);
 
@@ -23658,6 +23732,59 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             heroic: Object.freeze({ name: 'Heroic', shortHours: 5 / 60, longHours: 1 }),
             gritty: Object.freeze({ name: 'Gritty', shortHours: 8, longHours: 168 })
         });
+        const DEFAULT_WORLD = Object.freeze({
+            activeLocationId: 'campaign-start',
+            geographies: Object.freeze([
+                Object.freeze({ id: 'rolling-lowlands', name: 'Rolling Lowlands', terrain: 'Rolling lowlands', elevationFt: 500, coastal: false, hydrology: 'Streams and groundwater' })
+            ]),
+            biomes: Object.freeze([
+                Object.freeze({ id: 'temperate-woodland', name: 'Temperate Woodland', vegetation: 'Mixed woodland and grassland', aridity: 'Moderate', ground: 'Firm woodland earth', water: 'Seasonal streams', tags: Object.freeze(['temperate', 'woodland']) })
+            ]),
+            ecoregions: Object.freeze([
+                Object.freeze({ id: 'lowland-mosaic', name: 'Lowland Mosaic', regionId: 'home', geographyId: 'rolling-lowlands', biomeId: 'temperate-woodland' })
+            ]),
+            locations: Object.freeze([
+                Object.freeze({ id: 'campaign-start', name: 'Campaign Start', regionId: 'home', ecoregionId: 'lowland-mosaic', geographyId: 'rolling-lowlands', biomeId: 'temperate-woodland', environmentPresetId: 'clear', temporalContextId: 'material', favorite: true })
+            ]),
+            preparedDestinationIds: Object.freeze(['campaign-start']),
+            recentLocationIds: Object.freeze(['campaign-start']),
+            phenomena: Object.freeze([]),
+            quickActions: Object.freeze([
+                Object.freeze({ id: 'ten-minutes', label: '+10 Minutes', kind: 'advance', minutes: 10 }),
+                Object.freeze({ id: 'one-hour', label: '+1 Hour', kind: 'advance', hours: 1 }),
+                Object.freeze({ id: 'until-dawn', label: 'Until Dawn', kind: 'landmark', landmark: 'dawn' }),
+                Object.freeze({ id: 'until-dusk', label: 'Until Dusk', kind: 'landmark', landmark: 'dusk' }),
+                Object.freeze({ id: 'short-rest', label: 'Short Rest', kind: 'rest', restType: 'short' }),
+                Object.freeze({ id: 'long-rest', label: 'Long Rest', kind: 'rest', restType: 'long' })
+            ])
+        });
+        const DEFAULT_TEMPORAL_CONTEXTS = Object.freeze([
+            Object.freeze({ id: 'material', name: 'Material Time', rateNumerator: 1, rateDenominator: 1, offsetMinutes: 0 })
+        ]);
+        const WORLD_PRESETS = Object.freeze({
+            'temperate-lowlands': Object.freeze({
+                id: 'temperate-lowlands',
+                name: 'Temperate Lowlands Starter',
+                version: 'preset-v1',
+                description: 'A generic rolling-lowland geography, temperate woodland biome, ecoregion, and prepared starting location.',
+                world: DEFAULT_WORLD
+            }),
+            blank: Object.freeze({
+                id: 'blank',
+                name: 'Blank World Starter',
+                version: 'preset-v1',
+                description: 'A minimal generic place structure intended to be renamed and expanded.',
+                world: Object.freeze({
+                    ...DEFAULT_WORLD,
+                    geographies: Object.freeze([Object.freeze({ id: 'blank-geography', name: 'Unspecified Geography', terrain: 'Unspecified terrain', elevationFt: 0, coastal: false, hydrology: 'Unspecified hydrology' })]),
+                    biomes: Object.freeze([Object.freeze({ id: 'blank-biome', name: 'Unspecified Biome', vegetation: 'Unspecified', aridity: 'Unspecified', ground: 'Unspecified ground', water: 'Unspecified water', tags: Object.freeze([]) })]),
+                    ecoregions: Object.freeze([Object.freeze({ id: 'blank-ecoregion', name: 'Unspecified Ecoregion', regionId: 'home', geographyId: 'blank-geography', biomeId: 'blank-biome' })]),
+                    locations: Object.freeze([Object.freeze({ id: 'blank-location', name: 'New Location', regionId: 'home', ecoregionId: 'blank-ecoregion', geographyId: 'blank-geography', biomeId: 'blank-biome', environmentPresetId: 'clear', temporalContextId: 'material', favorite: true })]),
+                    preparedDestinationIds: Object.freeze(['blank-location']),
+                    recentLocationIds: Object.freeze(['blank-location'])
+                })
+            })
+        });
 
         Object.assign(modState.config, {
             enabled: false,
@@ -23678,6 +23805,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             announcement: { schemaVersion: ANNOUNCEMENT_SCHEMA_VERSION, enabled: true, audience: 'public', style: 'descriptive', preset: 'quick', header: 'Campaign Date and Time', fields: copy(ANNOUNCEMENT_PRESETS.quick) },
             environment: {},
             rest: { advanceTime: true, extendedEnabled: false, pace: 'standard', shortHours: 1, longHours: 8, extendedHours: 24, customTypes: [] },
+            world: copy(DEFAULT_WORLD),
+            temporalContexts: copy(DEFAULT_TEMPORAL_CONTEXTS),
+            worldPacks: [],
+            rulesAdvisorEnabled: false,
+            rulesAdvisorProfile: 'dnd5e2014',
             ...modState.config
         });
 
@@ -23858,7 +23990,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             };
             const profile = wayfarerProfile(definition);
             if (minuteForDate(profile, start).ok) return start;
-            return { year: POLICY.almanac.minimumYear, period: profile.months[0].name, day: 1, hour: 8, minute: 0 };
+            return { year: CHRONOLOGY_ANCHOR_YEAR, period: profile.months[0].name, day: 1, hour: 8, minute: 0 };
         }
 
         function normalizeWayfarerDraft(raw) {
@@ -23881,7 +24013,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
             const profileId = String(raw.profileId || '').toLowerCase();
             const worldMinute = Math.floor(Number(raw.worldMinute));
-            if (!['standard', 'solamnic', 'harptos', 'wayfarer'].includes(profileId) || !Number.isFinite(worldMinute) || worldMinute < 0) return null;
+            if (!['standard', 'solamnic', 'harptos', 'wayfarer'].includes(profileId) || !Number.isFinite(worldMinute)) return null;
             return {
                 definition: normalizeWayfarer(raw.definition),
                 profileId,
@@ -23952,12 +24084,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         modState.config.rest = modState.config.rest && typeof modState.config.rest === 'object' && !Array.isArray(modState.config.rest)
             ? modState.config.rest
             : {};
+        modState.config.world = modState.config.world && typeof modState.config.world === 'object' && !Array.isArray(modState.config.world)
+            ? modState.config.world
+            : copy(DEFAULT_WORLD);
+        modState.config.temporalContexts = Array.isArray(modState.config.temporalContexts)
+            ? modState.config.temporalContexts
+            : copy(DEFAULT_TEMPORAL_CONTEXTS);
+        modState.config.worldPacks = Array.isArray(modState.config.worldPacks)
+            ? modState.config.worldPacks.slice(0, POLICY.almanac.maximumWorldPacks)
+            : [];
 
         function ensureAlmanacRuntime() {
             const runtime = ensureRuntimeObject(modState);
             if (!runtime.time || typeof runtime.time !== 'object' || Array.isArray(runtime.time)) runtime.time = {};
             const worldMinute = Math.floor(Number(runtime.time.worldMinute));
-            runtime.time.worldMinute = Number.isFinite(worldMinute) && worldMinute >= 0 ? worldMinute : DEFAULT_WORLD_MINUTE;
+            runtime.time.worldMinute = Number.isFinite(worldMinute) ? worldMinute : DEFAULT_WORLD_MINUTE;
             const revision = Math.floor(Number(runtime.time.revision));
             runtime.time.revision = Number.isFinite(revision) && revision >= 0 ? revision : 0;
             runtime.time.schemaVersion = TIME_STATE_SCHEMA_VERSION;
@@ -24003,6 +24144,28 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             runtime.rest.grants = runtime.rest.grants && typeof runtime.rest.grants === 'object' && !Array.isArray(runtime.rest.grants)
                 ? runtime.rest.grants
                 : {};
+            if (!runtime.world || typeof runtime.world !== 'object' || Array.isArray(runtime.world)) runtime.world = {};
+            runtime.world.schemaVersion = WORLD_STATE_SCHEMA_VERSION;
+            runtime.world.revision = Math.max(0, Math.floor(Number(runtime.world.revision) || 0));
+            runtime.world.travel = runtime.world.travel && typeof runtime.world.travel === 'object' && !Array.isArray(runtime.world.travel)
+                ? runtime.world.travel
+                : null;
+            runtime.world.travelHistory = Array.isArray(runtime.world.travelHistory)
+                ? runtime.world.travelHistory.slice(-POLICY.almanac.travelHistoryLimit)
+                : [];
+            runtime.world.worldPackGrants = runtime.world.worldPackGrants && typeof runtime.world.worldPackGrants === 'object' && !Array.isArray(runtime.world.worldPackGrants)
+                ? runtime.world.worldPackGrants
+                : {};
+            const grantEntries = Object.entries(runtime.world.worldPackGrants)
+                .filter(([, grant]) => grant && typeof grant === 'object' && Number(grant.expiresAt) > Date.now())
+                .slice(-POLICY.almanac.worldPackGrantLimit);
+            runtime.world.worldPackGrants = Object.fromEntries(grantEntries);
+            runtime.world.wayfarerGrants = runtime.world.wayfarerGrants && typeof runtime.world.wayfarerGrants === 'object' && !Array.isArray(runtime.world.wayfarerGrants)
+                ? runtime.world.wayfarerGrants
+                : {};
+            runtime.world.wayfarerGrants = Object.fromEntries(Object.entries(runtime.world.wayfarerGrants)
+                .filter(([, grant]) => grant && typeof grant === 'object' && Number(grant.expiresAt) > Date.now())
+                .slice(-POLICY.almanac.worldPackGrantLimit));
             return runtime;
         }
 
@@ -24106,7 +24269,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const current = resolveWorldMinute(wayfarerProfile(definition), ensureAlmanacRuntime().time.worldMinute);
             return current
                 ? { year: current.year, period: current.periodName, day: current.day, hour: current.hour, minute: current.minute }
-                : { year: POLICY.almanac.minimumYear, period: definition.months[0].name, day: 1, hour: 8, minute: 0 };
+                : { year: CHRONOLOGY_ANCHOR_YEAR, period: definition.months[0].name, day: 1, hour: 8, minute: 0 };
         }
 
         function createWayfarerDraft(profileId = 'wayfarer', reviewed = false) {
@@ -24180,20 +24343,28 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function daysBeforeYear(profile, year) {
             let total = 0;
-            for (let current = POLICY.almanac.minimumYear; current < year; current++) total += daysInYear(profile, current);
+            if (year >= CHRONOLOGY_ANCHOR_YEAR) {
+                for (let current = CHRONOLOGY_ANCHOR_YEAR; current < year; current++) total += daysInYear(profile, current);
+            } else {
+                for (let current = year; current < CHRONOLOGY_ANCHOR_YEAR; current++) total -= daysInYear(profile, current);
+            }
             return total;
-        }
-
-        function maximumWorldMinute(profile) {
-            return daysBeforeYear(profile, POLICY.almanac.maximumYear + 1) * calendarMinutesPerDay(profile) - 1;
         }
 
         function weekdayDaysBefore(profile, year, periodIndex, day) {
             let total = 0;
-            for (let current = POLICY.almanac.minimumYear; current < year; current++) {
-                total += periodsForYear(profile, current)
-                    .filter(period => period.skipWeekday !== true && period.kind !== 'intercalary')
-                    .reduce((sum, period) => sum + period.days, 0);
+            if (year >= CHRONOLOGY_ANCHOR_YEAR) {
+                for (let current = CHRONOLOGY_ANCHOR_YEAR; current < year; current++) {
+                    total += periodsForYear(profile, current)
+                        .filter(period => period.skipWeekday !== true && period.kind !== 'intercalary')
+                        .reduce((sum, period) => sum + period.days, 0);
+                }
+            } else {
+                for (let current = year; current < CHRONOLOGY_ANCHOR_YEAR; current++) {
+                    total -= periodsForYear(profile, current)
+                        .filter(period => period.skipWeekday !== true && period.kind !== 'intercalary')
+                        .reduce((sum, period) => sum + period.days, 0);
+                }
             }
             const periods = periodsForYear(profile, year);
             total += periods.slice(0, periodIndex)
@@ -24209,18 +24380,27 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const minute = Math.floor(Number(worldMinute));
             const minutesPerDay = calendarMinutesPerDay(profile);
             const minutesPerHour = calendarMinutesPerHour(profile);
-            if (!Number.isFinite(minute) || minute < 0 || minute > maximumWorldMinute(profile)) return null;
+            if (!Number.isFinite(minute)) return null;
             const absoluteDay = Math.floor(minute / minutesPerDay);
-            const minuteOfDay = minute % minutesPerDay;
+            const minuteOfDay = ((minute % minutesPerDay) + minutesPerDay) % minutesPerDay;
             let remaining = absoluteDay;
-            let year = POLICY.almanac.minimumYear;
-            while (year <= POLICY.almanac.maximumYear) {
-                const yearDays = daysInYear(profile, year);
-                if (remaining < yearDays) break;
-                remaining -= yearDays;
-                year++;
+            let year = CHRONOLOGY_ANCHOR_YEAR;
+            if (remaining >= 0) {
+                while (year <= POLICY.almanac.maximumYear) {
+                    const yearDays = daysInYear(profile, year);
+                    if (remaining < yearDays) break;
+                    remaining -= yearDays;
+                    year++;
+                }
+            } else {
+                year = CHRONOLOGY_ANCHOR_YEAR - 1;
+                while (year >= POLICY.almanac.minimumYear) {
+                    remaining += daysInYear(profile, year);
+                    if (remaining >= 0) break;
+                    year--;
+                }
             }
-            if (year > POLICY.almanac.maximumYear) return null;
+            if (year < POLICY.almanac.minimumYear || year > POLICY.almanac.maximumYear) return null;
             const dayOfYear = remaining;
             const periods = periodsForYear(profile, year);
             let period = periods[0];
@@ -24234,9 +24414,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 remaining -= periods[index].days;
             }
             const day = remaining + 1;
-            const weekdayIndex = profile.id === 'harptos' && period.kind === 'month'
+            const rawWeekdayIndex = profile.id === 'harptos' && period.kind === 'month'
                 ? (day - 1) % profile.weekdays.length
                 : weekdayDaysBefore(profile, year, periodIndex, day) % profile.weekdays.length;
+            const weekdayIndex = (rawWeekdayIndex + profile.weekdays.length) % profile.weekdays.length;
             const weekday = period.kind === 'intercalary'
                 ? 'Festival Day'
                 : period.skipWeekday === true ? 'Feast Day' : profile.weekdays[weekdayIndex];
@@ -24560,7 +24741,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function announcementFields(config = normalizedAnnouncementConfig()) {
-            const moment = currentMoment();
+            const resolved = resolveScene();
+            const moment = resolved.time;
             const fields = [];
             const fieldStyle = key => ANNOUNCEMENT_STYLES.includes(config.fields[key]) ? config.fields[key] : 'off';
             const dateStyle = fieldStyle('date');
@@ -24571,45 +24753,43 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (timeStyle !== 'off') fields.push({ label: 'Time', value: _sanitize(timeStyle === 'descriptive' ? descriptiveTime(moment) : displayTime(moment)) });
             if (seasonStyle !== 'off') fields.push({ label: 'Season', value: _sanitize(moment.season) });
             if (observanceStyle !== 'off' && moment.holidays?.length) fields.push({ label: 'Observances', value: moment.holidays.map(_sanitize).join(', ') });
-            const weatherStyle = fieldStyle('weather');
-            const sceneOverride = submoduleEnabled('environment') ? ensureAlmanacRuntime().environment.override : null;
-            const weather = weatherStyle !== 'off' && submoduleEnabled('weather') && !sceneOverride ? currentWeather() : null;
             const moonStyle = fieldStyle('moons');
-            if (moonStyle !== 'off' && submoduleEnabled('astronomy')) fields.push({ label: 'Moon Phases', value: _sanitize(announcementMoonSummary(moonStyle, moment, currentWeather())) });
-            if (weather) {
-                const weatherValue = weatherStyle === 'descriptive'
-                    ? `${weather.summary} | ${descriptiveTemperature(weather.temperatureF)} | ${descriptiveWind(weather.windMph)} | ${descriptiveVisibility(weather.visibility)}`
-                    : weatherStyle === 'technical'
-                        ? `${weather.summary} | ${weather.temperatureF} F | ${weather.windMph} mph wind | ${weather.precipitation} | ${weather.cloud} | Visibility: ${weather.visibility} | Source: ${weather.context}`
-                        : `${weather.summary} | ${weather.temperatureF} F | ${weather.windMph} mph wind | Visibility: ${weather.visibility}`;
-                fields.push({ label: weatherStyle === 'technical' ? 'Weather (Technical)' : 'Weather', value: _sanitize(weatherValue) });
+            if (moonStyle !== 'off' && resolved.scene.moons.length) {
+                const moonValue = resolved.scene.moons.map(moon => {
+                    if (moonStyle === 'descriptive') return `${moon.name}: ${moon.visible ? moon.phase : 'Not Visible'}`;
+                    if (moonStyle === 'technical') return `${moon.name}: ${moon.phase} | cycle day ${moon.cyclePosition + 1} of ${moon.cycleDays} | ${moon.visibilityReason}`;
+                    return `${moon.name}: ${moon.phase} - ${moon.visibilityReason}`;
+                }).join(' | ');
+                fields.push({ label: 'Moon Phases', value: _sanitize(moonValue) });
             }
-            if (weatherStyle !== 'off' && sceneOverride) {
-                const sceneValue = weatherStyle === 'descriptive'
-                    ? `${sceneOverride.name} | ${sceneOverride.temperature} | ${sceneOverride.wind} | ${descriptiveVisibility(sceneOverride.visibility)}`
+            const weatherStyle = fieldStyle('weather');
+            if (weatherStyle !== 'off') {
+                const summary = resolved.weather?.summary || resolved.scene.precipitation;
+                const weatherValue = weatherStyle === 'descriptive'
+                    ? `${summary} | ${descriptiveTemperature(resolved.scene.temperatureF)} | ${descriptiveWind(resolved.scene.windMph)} | ${descriptiveVisibility(resolved.scene.visibility)}`
                     : weatherStyle === 'technical'
-                        ? `${sceneOverride.name} | Temperature: ${sceneOverride.temperature} | Wind: ${sceneOverride.wind} | Precipitation: ${sceneOverride.precipitation} | Visibility: ${sceneOverride.visibility} | Source: GM scene override`
-                        : `${sceneOverride.name} | ${sceneOverride.temperature} | ${sceneOverride.wind} wind | Visibility: ${sceneOverride.visibility}`;
-                fields.push({ label: weatherStyle === 'technical' ? 'Scene Conditions (Technical)' : 'Scene Conditions', value: _sanitize(sceneValue) });
+                        ? `${summary} | ${resolved.scene.temperatureF} F | ${resolved.scene.windMph} mph wind | Precipitation: ${resolved.scene.precipitation} | Cloud: ${resolved.scene.cloudCover} | Visibility: ${resolved.scene.visibility} | Sources: temperature ${resolved.provenance.temperature.join(' + ')}, precipitation ${resolved.provenance.precipitation.join(' + ')}`
+                        : `${summary} | ${resolved.scene.temperatureF} F | ${resolved.scene.windMph} mph wind | ${resolved.scene.precipitation} | Visibility: ${resolved.scene.visibility}`;
+                fields.push({ label: weatherStyle === 'technical' ? 'Current Conditions (Technical)' : 'Current Conditions', value: _sanitize(weatherValue) });
             }
             const climateStyle = fieldStyle('climate');
-            const climate = climateStyle !== 'off' && submoduleEnabled('climate') ? resolvedClimate() : null;
+            const climate = climateStyle !== 'off' ? resolved.climate : null;
             if (climate) {
                 const climateValue = climateStyle === 'descriptive'
                     ? `${climate.regionName} | ${climate.profileName}`
                     : climateStyle === 'technical'
-                    ? `${climate.profileName} baseline | ${climate.humidity}% typical humidity | ${climate.precipitationChance}% precipitation chance | ${climate.windMph} mph typical wind${climate.regionId === 'home' ? '' : ` | Region: ${climate.regionName}`}`
-                    : `${climate.profileName} climate | ${climate.humidity}% typical humidity | ${climate.precipitationChance}% precipitation chance${climate.regionId === 'home' ? '' : ` | ${climate.regionName}`}`;
+                    ? `${climate.profileName} baseline | Seasonal baseline ${climate.temperatureF} F | ${climate.humidity}% typical humidity | ${climate.precipitationChance}% precipitation chance | ${climate.windMph} mph typical wind | Region: ${climate.regionName}`
+                    : `${climate.profileName} climate | ${climate.humidity}% typical humidity | ${climate.precipitationChance}% precipitation chance | ${climate.regionName}`;
                 fields.push({ label: climateStyle === 'technical' ? 'Climate Baseline' : 'Climate', value: _sanitize(climateValue) });
             }
             const environmentStyle = fieldStyle('environment');
-            const environment = environmentStyle !== 'off' && submoduleEnabled('environment') ? environmentContext() : null;
+            const environment = environmentStyle !== 'off' ? resolved.environment : null;
             if (environment) {
                 const environmentValue = environmentStyle === 'descriptive'
-                    ? `${environment.name} | ${descriptiveVisibility(environment.visibility)} | ${environment.ground}`
+                    ? `${resolved.location.name} | ${descriptiveVisibility(resolved.scene.visibility)} | ${resolved.scene.ground}`
                     : environmentStyle === 'technical'
-                        ? `${environment.name} | Visibility: ${environment.visibility} | Temperature: ${environment.temperature} | Wind: ${environment.wind} | Ground: ${environment.ground} | Water: ${environment.water} | Exposure: ${environment.exposure} | Severity: ${environment.severity}`
-                        : `${environment.name} | Visibility: ${environment.visibility} | ${environment.temperature} | Ground: ${environment.ground}`;
+                        ? `${environment.name} | Visibility: ${resolved.scene.visibility} | Ground: ${resolved.scene.ground} | Water: ${resolved.scene.hydrology.immediate} | Exposure: ${resolved.scene.exposure} | Sources: ${resolved.provenance.ground.join(' + ')}`
+                        : `${environment.name} | Visibility: ${resolved.scene.visibility} | Ground: ${resolved.scene.ground} | Water: ${resolved.scene.hydrology.immediate}`;
                 fields.push({ label: environmentStyle === 'technical' ? 'Environment (Technical)' : 'Environment', value: _sanitize(environmentValue) });
             }
             return fields;
@@ -24690,19 +24870,386 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
+        function quickActionButton(action) {
+            if (action.kind === 'advance') {
+                return GameAssist.createButton(action.label, `!aa-time advance --days ${action.days || 0} --hours ${action.hours || 0} --minutes ${action.minutes || 0}`);
+            }
+            if (action.kind === 'landmark') return GameAssist.createButton(action.label, `!aa-quick --id ${action.id}`);
+            if (action.kind === 'rest' && action.restType) return GameAssist.createButton(action.label, `!aa-rest preview --type ${action.restType}`);
+            return '';
+        }
+
+        function handleQuickAction(msg, content) {
+            if (!requireGm(msg)) return;
+            const body = content.replace(/^quick\s*/i, '').trim();
+            const world = normalizeWorldConfig();
+            if (!body || /^(menu|manage|gm|dm|status)$/i.test(body)) {
+                const rows = world.quickActions.map(action => `${quickActionButton(action)} ${GameAssist.createButton('Remove', `!aa-quick remove --id ${action.id}`)}`).join('<br>');
+                return sendPanel(msg, 'Almanac Quick Actions', [
+                    { label: 'Current', value: rows || 'No quick actions configured.' },
+                    { label: 'Add Time', value: GameAssist.createButton('Add Time Advance', '!aa-quick add --kind advance --label "?{Button label|+2 Hours}" --days ?{Days|0} --hours ?{Hours|2} --minutes ?{Minutes|0}') },
+                    { label: 'Add Landmark', value: `${GameAssist.createButton('Add Until Dawn', '!aa-quick add --kind landmark --label "Until Dawn" --landmark dawn')} ${GameAssist.createButton('Add Until Dusk', '!aa-quick add --kind landmark --label "Until Dusk" --landmark dusk')}` },
+                    { label: 'Add Rest', value: GameAssist.createButton('Add Rest', '!aa-quick add --kind rest --label "?{Button label|Short Rest}" --rest ?{Rest type|Short,short|Long,long|Extended,extended}') },
+                    { label: 'Return', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                ]);
+            }
+            const args = _parseArgs(body).args;
+            if (/^remove\b/i.test(body)) {
+                world.quickActions = world.quickActions.filter(action => action.id !== args.id);
+                ensureAlmanacRuntime().world.revision++;
+                return handleQuickAction(msg, 'quick manage');
+            }
+            if (/^add\b/i.test(body)) {
+                if (world.quickActions.length >= POLICY.almanac.maximumQuickActions) return sendPanel(msg, 'Quick Actions Need Attention', [{ label: 'Problem', value: `The quick-action limit of ${POLICY.almanac.maximumQuickActions} has been reached.` }]);
+                const kind = ['advance', 'landmark', 'rest'].includes(String(args.kind || '').toLowerCase()) ? String(args.kind).toLowerCase() : null;
+                const label = boundedName(args.label);
+                if (!kind || !label) return sendPanel(msg, 'Quick Actions Need Attention', [{ label: 'Problem', value: 'Choose a supported action type and button label.' }]);
+                const baseId = label.replace(/[^A-Za-z0-9_]+/g, '-').replace(/^-+|-+$/g, '') || `quick-${world.quickActions.length + 1}`;
+                let id = baseId;
+                let suffix = 2;
+                while (worldItem(world.quickActions, id)) id = `${baseId}-${suffix++}`;
+                world.quickActions.push({
+                    id, label, kind,
+                    days: Math.floor(clampNumber(args.days, 0, POLICY.almanac.maximumAdvanceDays, 0)),
+                    hours: Math.floor(clampNumber(args.hours, 0, 1000, 0)),
+                    minutes: Math.floor(clampNumber(args.minutes, 0, 100000, 0)),
+                    landmark: ['dawn', 'dusk'].includes(String(args.landmark || '').toLowerCase()) ? String(args.landmark).toLowerCase() : null,
+                    restType: ['short', 'long', 'extended'].includes(String(args.rest || '').toLowerCase()) ? String(args.rest).toLowerCase() : null
+                });
+                ensureAlmanacRuntime().world.revision++;
+                return handleQuickAction(msg, 'quick manage');
+            }
+            if (!timeAvailable()) return sendPanel(msg, 'Quick Action Needs Attention', [{ label: 'Problem', value: 'TimeAlmanac is not effectively available, so this time shortcut cannot run.' }, { label: 'Next Step', value: GameAssist.createButton('Almanac Systems', '!Almanac-Systems') }]);
+            const action = worldItem(world.quickActions, args.id);
+            if (!action) return sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: 'That quick action was not found.' }, { label: 'Next Step', value: GameAssist.createButton('Almanac Home', '!aa-gm') }]);
+            if (action.kind !== 'landmark') return showMaster(msg);
+            const moment = currentMoment();
+            const profile = profileFor();
+            const minutesPerHour = calendarMinutesPerHour(profile);
+            const minutesPerDay = calendarMinutesPerDay(profile);
+            const targetHour = profile.id === 'wayfarer'
+                ? (action.landmark === 'dawn' ? 1 : 11)
+                : (action.landmark === 'dawn' ? 6 : 18);
+            const currentMinuteOfDay = moment.hour * minutesPerHour + moment.minute;
+            let delta = targetHour * minutesPerHour - currentMinuteOfDay;
+            if (delta <= 0) delta += minutesPerDay;
+            const result = commitWorldMinute(ensureAlmanacRuntime().time.worldMinute + delta, `Advanced until ${action.landmark}`, msg);
+            if (result.ok) showMaster(msg);
+            else sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: GameAssist.createButton('Almanac Home', '!aa-gm') }]);
+        }
+
+        function showWorldMenu(msg) {
+            if (!requireGm(msg)) return;
+            sendPanel(msg, 'Manage World', [
+                { label: 'Places', value: `${GameAssist.createButton('Locations', '!aa-location manage')} ${GameAssist.createButton('Ecoregions', '!aa-world ecoregions')} ${GameAssist.createButton('Climate Regions', '!aa-climate regions')}` },
+                { label: 'Natural World', value: `${GameAssist.createButton('Geography', '!aa-world geographies')} ${GameAssist.createButton('Biomes', '!aa-world biomes')} ${GameAssist.createButton('Climate', '!clim')}` },
+                { label: 'Local Context', value: `${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')}` },
+                { label: 'Time and Sky', value: `${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('Wayfarer', '!aa-wayfarer')} ${GameAssist.createButton('Astronomy', '!astro')}` },
+                { label: 'Gameplay', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Rest', '!rest')} ${GameAssist.createButton('Rules Advisor', '!aa-rules')} ${GameAssist.createButton('Scene Details', '!aa-scene details')}` },
+                { label: 'Campaign Tools', value: `${GameAssist.createButton('Presets', '!aa-presets')} ${GameAssist.createButton('WorldPacks', '!aa-worldpack')} ${GameAssist.createButton('Temporal Contexts', '!aa-temporal')} ${GameAssist.createButton('Systems', '!Almanac-Systems')} ${GameAssist.createButton('Audit', '!Almanac-Audit')}` },
+                { label: 'Session Shortcuts', value: GameAssist.createButton('Quick Actions', '!aa-quick manage') },
+                { label: 'Return', value: `${GameAssist.createButton('Almanac Home', '!aa-gm')} ${gameAssistHomeButton()}` }
+            ]);
+        }
+
+        function showWorldDefinitions(msg, kind) {
+            if (!requireGm(msg)) return;
+            const world = normalizeWorldConfig();
+            if (kind === 'geographies') {
+                return sendPanel(msg, 'World Geography', [
+                    { label: 'Definitions', value: world.geographies.map(item => `<strong>${_sanitize(item.name)}</strong> [${_sanitize(item.id)}] - ${_sanitize(item.terrain)}; ${item.elevationFt} ft; ${_sanitize(item.hydrology)} ${GameAssist.createButton('Edit', `!aa-world geography-edit --id ${item.id}`)}`).join('<br>') },
+                    { label: 'Add', value: GameAssist.createButton('Add Geography', '!aa-world geography-add --name "?{Name}" --terrain "?{Terrain}" --elevation ?{Elevation in feet|0} --coastal ?{Coastal?|No,no|Yes,yes} --hydrology "?{Persistent hydrology}"') },
+                    { label: 'Return', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                ]);
+            }
+            if (kind === 'biomes') {
+                return sendPanel(msg, 'World Biomes', [
+                    { label: 'Definitions', value: world.biomes.map(item => `<strong>${_sanitize(item.name)}</strong> [${_sanitize(item.id)}] - ${_sanitize(item.vegetation)}; ${_sanitize(item.aridity)}; ${_sanitize(item.ground)} ${GameAssist.createButton('Edit', `!aa-world biome-edit --id ${item.id}`)}`).join('<br>') },
+                    { label: 'Add', value: GameAssist.createButton('Add Biome', '!aa-world biome-add --name "?{Name}" --vegetation "?{Vegetation}" --aridity "?{Aridity}" --ground "?{Typical ground}" --water "?{Typical water availability}" --tags "?{Comma-separated tags}"') },
+                    { label: 'Return', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                ]);
+            }
+            sendPanel(msg, 'World Ecoregions', [
+                { label: 'Definitions', value: world.ecoregions.map(item => `<strong>${_sanitize(item.name)}</strong> [${_sanitize(item.id)}] - region ${_sanitize(item.regionId)}; geography ${_sanitize(item.geographyId)}; biome ${_sanitize(item.biomeId)} ${GameAssist.createButton('Edit', `!aa-world ecoregion-edit --id ${item.id}`)}`).join('<br>') },
+                { label: 'Add', value: GameAssist.createButton('Add Ecoregion', '!aa-world ecoregion-add --name "?{Name}" --region "?{Climate region id|home}" --geography "?{Geography id}" --biome "?{Biome id}"') },
+                { label: 'Return', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function showWorldDefinitionEditor(msg, kind, requested) {
+            if (!requireGm(msg)) return;
+            const world = normalizeWorldConfig();
+            const collection = kind === 'geography' ? world.geographies : kind === 'biome' ? world.biomes : world.ecoregions;
+            const item = worldItem(collection, requested);
+            if (!item) return sendPanel(msg, 'World Setup Needs Attention', [{ label: 'Problem', value: `That ${kind} was not found.` }, { label: 'Next Step', value: GameAssist.createButton('Manage World', '!aa-world') }]);
+            const usedBy = kind === 'geography'
+                ? world.locations.filter(location => location.geographyId === item.id).length + world.ecoregions.filter(ecoregion => ecoregion.geographyId === item.id).length
+                : kind === 'biome'
+                    ? world.locations.filter(location => location.biomeId === item.id).length + world.ecoregions.filter(ecoregion => ecoregion.biomeId === item.id).length
+                    : world.locations.filter(location => location.ecoregionId === item.id).length;
+            let editButton;
+            if (kind === 'geography') editButton = GameAssist.createButton('Edit Geography', `!aa-world geography-edit --id ${item.id} --name "?{Name|${item.name}}" --terrain "?{Terrain|${item.terrain}}" --topography "?{Topography|${item.topography}}" --latitude ?{Latitude -90 to 90|${item.latitudeDeg}} --elevation ?{Elevation in feet|${item.elevationFt}} --coastal ?{Coastal?|${item.coastal ? 'Yes,yes|No,no' : 'No,no|Yes,yes'}} --hydrology "?{Persistent hydrology|${item.hydrology}}"`);
+            else if (kind === 'biome') editButton = GameAssist.createButton('Edit Biome', `!aa-world biome-edit --id ${item.id} --name "?{Name|${item.name}}" --vegetation "?{Vegetation|${item.vegetation}}" --aridity "?{Aridity|${item.aridity}}" --ground "?{Typical ground|${item.ground}}" --water "?{Typical water|${item.water}}" --seasonal "?{Seasonal response|${item.seasonalResponse}}" --tags "?{Comma-separated tags|${item.tags.join(',')}}"`);
+            else editButton = GameAssist.createButton('Edit Ecoregion', `!aa-world ecoregion-edit --id ${item.id} --name "?{Name|${item.name}}" --region "?{Climate region id|${item.regionId}}" --geography "?{Geography id|${item.geographyId}}" --biome "?{Biome id|${item.biomeId}}" --transition "?{Transition notes|${item.transitionNotes}}"`);
+            sendPanel(msg, `Edit ${kind[0].toUpperCase()}${kind.slice(1)}`, [
+                { label: 'Definition', value: `<strong>${_sanitize(item.name)}</strong> [${_sanitize(item.id)}]` },
+                { label: 'Use', value: `${usedBy} dependent world reference${usedBy === 1 ? '' : 's'}` },
+                { label: 'Edit', value: editButton },
+                { label: 'Remove', value: usedBy ? 'Reassign dependent definitions and locations before removal.' : GameAssist.createButton(`Remove ${kind}`, `!aa-world ${kind}-remove --id ${item.id} --confirm ?{Remove ${item.name}?|No,no|Yes,yes}`) },
+                { label: 'Return', value: `${GameAssist.createButton(`All ${kind === 'geography' ? 'Geographies' : kind === 'biome' ? 'Biomes' : 'Ecoregions'}`, `!aa-world ${kind === 'geography' ? 'geographies' : `${kind}s`}`)} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function appendWorldDefinition(items, limit, rawName, prefix, fields) {
+            if (items.length >= limit) return { ok: false, message: `The ${prefix} limit of ${limit} has been reached.` };
+            const name = boundedName(rawName);
+            if (!name) return { ok: false, message: `Enter a ${prefix} name.` };
+            const baseId = name.replace(/[^A-Za-z0-9_]+/g, '-').replace(/^-+|-+$/g, '') || `${prefix}-${items.length + 1}`;
+            let id = baseId;
+            let suffix = 2;
+            while (worldItem(items, id)) id = `${baseId}-${suffix++}`;
+            items.push({ id, name, ...fields });
+            ensureAlmanacRuntime().world.revision++;
+            return { ok: true, id };
+        }
+
+        function handleWorld(msg, content) {
+            const body = content.replace(/^world\s*/i, '').trim();
+            if (!body || /^(menu|gm|dm|status)$/i.test(body)) return showWorldMenu(msg);
+            if (!requireGm(msg)) return;
+            const lower = body.toLowerCase();
+            if (lower === 'geographies' || lower === 'geography') return showWorldDefinitions(msg, 'geographies');
+            if (lower === 'biomes' || lower === 'biome') return showWorldDefinitions(msg, 'biomes');
+            if (lower === 'ecoregions' || lower === 'ecoregion') return showWorldDefinitions(msg, 'ecoregions');
+            const args = _parseArgs(body).args;
+            const world = normalizeWorldConfig();
+            let result = null;
+            if (/^(geography|biome|ecoregion)-edit\b/i.test(body)) {
+                const kind = body.match(/^(geography|biome|ecoregion)-edit/i)[1].toLowerCase();
+                const collection = kind === 'geography' ? world.geographies : kind === 'biome' ? world.biomes : world.ecoregions;
+                const item = worldItem(collection, args.id);
+                if (!item || args.name === undefined) return showWorldDefinitionEditor(msg, kind, args.id);
+                const name = boundedName(args.name);
+                if (!name) return sendPanel(msg, 'World Setup Needs Attention', [{ label: 'Problem', value: `Enter a ${kind} name. Nothing was changed.` }, { label: 'Next Step', value: GameAssist.createButton(`Edit ${kind}`, `!aa-world ${kind}-edit --id ${item.id}`) }]);
+                if (kind === 'geography') Object.assign(item, {
+                    name,
+                    terrain: boundedWorldText(args.terrain, item.terrain),
+                    topography: boundedWorldText(args.topography, item.topography),
+                    latitudeDeg: clampNumber(args.latitude, -90, 90, item.latitudeDeg),
+                    elevationFt: Math.round(clampNumber(args.elevation, -2000, 40000, item.elevationFt)),
+                    coastal: String(args.coastal || '').toLowerCase() === 'yes',
+                    hydrology: boundedWorldText(args.hydrology, item.hydrology)
+                });
+                if (kind === 'biome') Object.assign(item, {
+                    name,
+                    vegetation: boundedWorldText(args.vegetation, item.vegetation),
+                    aridity: boundedWorldText(args.aridity, item.aridity),
+                    ground: boundedWorldText(args.ground, item.ground),
+                    water: boundedWorldText(args.water, item.water),
+                    seasonalResponse: boundedWorldText(args.seasonal, ''),
+                    tags: normalizeClimateTags(String(args.tags || '').split(',').map(tag => tag.trim()).filter(Boolean))
+                });
+                if (kind === 'ecoregion') {
+                    const region = climateRegion(args.region);
+                    const geography = worldItem(world.geographies, args.geography);
+                    const biome = worldItem(world.biomes, args.biome);
+                    if (!region || !geography || !biome) return sendPanel(msg, 'World Setup Needs Attention', [{ label: 'Problem', value: 'Choose one existing climate region, geography, and biome. Nothing was changed.' }, { label: 'Next Step', value: GameAssist.createButton('Edit Ecoregion', `!aa-world ecoregion-edit --id ${item.id}`) }]);
+                    Object.assign(item, { name, regionId: region.id, geographyId: geography.id, biomeId: biome.id, transitionNotes: boundedWorldText(args.transition, '') });
+                }
+                ensureAlmanacRuntime().world.revision++;
+                return showWorldDefinitionEditor(msg, kind, item.id);
+            }
+            if (/^(geography|biome|ecoregion)-remove\b/i.test(body)) {
+                const kind = body.match(/^(geography|biome|ecoregion)-remove/i)[1].toLowerCase();
+                const collectionKey = kind === 'geography' ? 'geographies' : kind === 'biome' ? 'biomes' : 'ecoregions';
+                const item = worldItem(world[collectionKey], args.id);
+                if (!item || String(args.confirm || '').toLowerCase() !== 'yes') return showWorldDefinitions(msg, collectionKey);
+                const used = kind === 'geography'
+                    ? world.locations.some(location => location.geographyId === item.id) || world.ecoregions.some(ecoregion => ecoregion.geographyId === item.id)
+                    : kind === 'biome'
+                        ? world.locations.some(location => location.biomeId === item.id) || world.ecoregions.some(ecoregion => ecoregion.biomeId === item.id)
+                        : world.locations.some(location => location.ecoregionId === item.id);
+                if (used) return sendPanel(msg, 'World Setup Needs Attention', [{ label: 'Problem', value: `That ${kind} still has dependent references. Reassign them before removal.` }, { label: 'Changes', value: 'None.' }]);
+                world[collectionKey] = world[collectionKey].filter(entry => entry.id !== item.id);
+                ensureAlmanacRuntime().world.revision++;
+                return showWorldDefinitions(msg, collectionKey);
+            }
+            if (/^geography-add\b/i.test(body)) {
+                result = appendWorldDefinition(world.geographies, POLICY.almanac.maximumGeographies, args.name, 'geography', {
+                    terrain: boundedWorldText(args.terrain, 'Unspecified terrain'),
+                    topography: boundedWorldText(args.terrain, 'Unspecified topography'),
+                    latitudeDeg: 0,
+                    elevationFt: Math.round(clampNumber(args.elevation, -2000, 40000, 0)),
+                    coastal: String(args.coastal || '').toLowerCase() === 'yes',
+                    hydrology: boundedWorldText(args.hydrology, 'No persistent hydrology specified'),
+                    packId: null,
+                    sourceId: null
+                });
+                if (result.ok) return showWorldDefinitions(msg, 'geographies');
+            }
+            if (/^biome-add\b/i.test(body)) {
+                result = appendWorldDefinition(world.biomes, POLICY.almanac.maximumBiomes, args.name, 'biome', {
+                    vegetation: boundedWorldText(args.vegetation, 'Unspecified vegetation'),
+                    aridity: boundedWorldText(args.aridity, 'Moderate'),
+                    ground: boundedWorldText(args.ground, 'Natural ground'),
+                    water: boundedWorldText(args.water, 'Water availability unspecified'),
+                    tags: normalizeClimateTags(String(args.tags || '').split(',').map(tag => tag.trim()).filter(Boolean)),
+                    seasonalResponse: '',
+                    packId: null,
+                    sourceId: null
+                });
+                if (result.ok) return showWorldDefinitions(msg, 'biomes');
+            }
+            if (/^ecoregion-add\b/i.test(body)) {
+                const geography = worldItem(world.geographies, args.geography);
+                const biome = worldItem(world.biomes, args.biome);
+                const region = climateRegion(args.region);
+                if (!geography || !biome || !region) result = { ok: false, message: 'Choose one existing climate region, geography, and biome.' };
+                else result = appendWorldDefinition(world.ecoregions, POLICY.almanac.maximumEcoregions, args.name, 'ecoregion', { regionId: region.id, geographyId: geography.id, biomeId: biome.id, transitionNotes: '', packId: null, sourceId: null });
+                if (result.ok) return showWorldDefinitions(msg, 'ecoregions');
+            }
+            sendPanel(msg, 'World Setup Needs Attention', [{ label: 'Problem', value: _sanitize(result?.message || 'That world command was not recognized.') }, { label: 'Next Step', value: GameAssist.createButton('Manage World', '!aa-world') }]);
+        }
+
+        function nextPresetId(items, requested) {
+            let id = requested;
+            let suffix = 2;
+            while (worldItem(items, id)) id = `${requested}-${suffix++}`;
+            return id;
+        }
+
+        function installWorldPreset(msg, preset) {
+            const world = normalizeWorldConfig();
+            const source = copy(preset.world);
+            const capacityChecks = [
+                ['geography', world.geographies.length, source.geographies.length, POLICY.almanac.maximumGeographies],
+                ['biome', world.biomes.length, source.biomes.length, POLICY.almanac.maximumBiomes],
+                ['ecoregion', world.ecoregions.length, source.ecoregions.length, POLICY.almanac.maximumEcoregions],
+                ['location', world.locations.length, source.locations.length, POLICY.almanac.maximumLocations]
+            ];
+            const overflow = capacityChecks.find(([, current, incoming, limit]) => current + incoming > limit);
+            if (overflow) return { ok: false, message: `Installing this preset would exceed the ${overflow[0]} limit of ${overflow[3]}.` };
+            const geographyMap = {};
+            const biomeMap = {};
+            const ecoregionMap = {};
+            source.geographies.forEach(item => {
+                const id = nextPresetId(world.geographies, item.id);
+                geographyMap[item.id] = id;
+                world.geographies.push({ ...item, id, name: boundedName(`${item.name} Copy`, item.name) });
+            });
+            source.biomes.forEach(item => {
+                const id = nextPresetId(world.biomes, item.id);
+                biomeMap[item.id] = id;
+                world.biomes.push({ ...item, id, name: boundedName(`${item.name} Copy`, item.name) });
+            });
+            source.ecoregions.forEach(item => {
+                const id = nextPresetId(world.ecoregions, item.id);
+                ecoregionMap[item.id] = id;
+                world.ecoregions.push({ ...item, id, geographyId: geographyMap[item.geographyId], biomeId: biomeMap[item.biomeId], name: boundedName(`${item.name} Copy`, item.name) });
+            });
+            const addedLocations = [];
+            source.locations.forEach(item => {
+                const id = nextPresetId(world.locations, item.id);
+                world.locations.push({ ...item, id, ecoregionId: ecoregionMap[item.ecoregionId], geographyId: geographyMap[item.geographyId], biomeId: biomeMap[item.biomeId], name: boundedName(`${item.name} Copy`, item.name) });
+                world.preparedDestinationIds.push(id);
+                addedLocations.push(id);
+            });
+            modState.config.world = normalizeWorldConfig(world);
+            ensureAlmanacRuntime().world.revision++;
+            publishChange('almanac.preset.installed', null, { presetId: preset.id, locationIds: addedLocations }, { source: 'PresetRegistry clone' }, msg);
+            return { ok: true, locationIds: addedLocations };
+        }
+
+        function showWorldPresets(msg, requested = null) {
+            if (!requireGm(msg)) return;
+            const preset = WORLD_PRESETS[requested];
+            if (preset) {
+                return sendPanel(msg, 'Preview World Preset', [
+                    { label: 'Preset', value: `<strong>${_sanitize(preset.name)}</strong> | ${_sanitize(preset.version)}<br>${_sanitize(preset.description)}` },
+                    { label: 'Contents', value: `${preset.world.locations.length} location | ${preset.world.ecoregions.length} ecoregion | ${preset.world.geographies.length} geography | ${preset.world.biomes.length} biome` },
+                    { label: 'Install Behavior', value: 'Built-in definitions remain immutable. Installation creates editable campaign copies and does not replace existing places.' },
+                    { label: 'Actions', value: `${GameAssist.createButton('Clone and Install', `!aa-presets install --id ${preset.id} --confirm yes`)} ${GameAssist.createButton('Cancel', '!aa-presets')}` }
+                ]);
+            }
+            sendPanel(msg, 'World Presets', [
+                { label: 'Built-In Starters', value: Object.values(WORLD_PRESETS).map(item => GameAssist.createButton(item.name, `!aa-presets preview --id ${item.id}`)).join(' ') },
+                { label: 'How Presets Work', value: 'Preview, clone, then customize. Built-ins are never edited or used to overwrite campaign definitions.' },
+                { label: 'Setting Packs', value: 'Published-setting packs are not bundled without a separate provenance and licensing review.' },
+                { label: 'Return', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function handleWorldPresets(msg, content) {
+            const body = content.replace(/^presets?\s*/i, '').trim();
+            if (!body || /^(menu|gm|dm|status)$/i.test(body)) return showWorldPresets(msg);
+            if (!requireGm(msg)) return;
+            const args = _parseArgs(body).args;
+            const preset = WORLD_PRESETS[String(args.id || '').toLowerCase()];
+            if (/^preview\b/i.test(body)) return preset ? showWorldPresets(msg, preset.id) : showWorldPresets(msg);
+            if (/^install\b/i.test(body) && String(args.confirm || '').toLowerCase() === 'yes' && preset) {
+                const result = installWorldPreset(msg, preset);
+                if (!result.ok) return sendPanel(msg, 'World Preset Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Changes', value: 'None.' }, { label: 'Next Step', value: GameAssist.createButton('World Presets', '!aa-presets') }]);
+                return sendPanel(msg, 'World Preset Installed', [
+                    { label: 'Preset', value: _sanitize(preset.name) },
+                    { label: 'Created', value: `${result.locationIds.length} editable prepared location${result.locationIds.length === 1 ? '' : 's'}. Existing world definitions were preserved.` },
+                    { label: 'Actions', value: `${GameAssist.createButton('Locations', '!aa-location manage')} ${GameAssist.createButton('Manage World', '!aa-world')}` }
+                ]);
+            }
+            showWorldPresets(msg);
+        }
+
+        function rulesAdvice(scene = resolveScene()) {
+            const advice = [];
+            const profile = ['dnd5e2014', 'system-neutral'].includes(modState.config.rulesAdvisorProfile) ? modState.config.rulesAdvisorProfile : 'dnd5e2014';
+            if (scene.scene.temperatureF <= 0) advice.push(profile === 'dnd5e2014' ? 'D&D 5E (2014) extreme-cold procedures may apply.' : 'The current temperature may deserve an extreme-cold rules check.');
+            if (scene.scene.temperatureF >= 100) advice.push(profile === 'dnd5e2014' ? 'D&D 5E (2014) extreme-heat procedures may apply.' : 'The current temperature may deserve an extreme-heat rules check.');
+            if (scene.scene.windMph >= 25) advice.push('Strong wind may affect exposed travel, ranged actions, or open flames under the campaign rules.');
+            if (/very poor|heavily|whiteout/i.test(descriptiveVisibility(scene.scene.visibility))) advice.push('Very poor visibility may affect sight-dependent actions and navigation.');
+            if (/deep snow|mud|flood|ice|slick/i.test(scene.scene.ground)) advice.push('Current ground may affect movement or travel pace.');
+            scene.phenomena.filter(item => item.severity >= 3).forEach(item => advice.push(`${item.name} is severe and may require a specific campaign ruling.`));
+            return advice;
+        }
+
+        function showRulesAdvisor(msg) {
+            if (!requireGm(msg)) return;
+            const enabled = modState.config.rulesAdvisorEnabled === true;
+            const profile = ['dnd5e2014', 'system-neutral'].includes(modState.config.rulesAdvisorProfile) ? modState.config.rulesAdvisorProfile : 'dnd5e2014';
+            const advice = rulesAdvice();
+            sendPanel(msg, 'Almanac Rules Advisor', [
+                { label: 'Status', value: `${enabled ? 'On' : 'Off'} ${GameAssist.createButton(enabled ? 'Turn Off' : 'Turn On', `!aa-rules ${enabled ? 'off' : 'on'}`)}` },
+                { label: 'Rules Profile', value: `${profile === 'dnd5e2014' ? '<strong>D&D 5E (2014)</strong>' : GameAssist.createButton('D&D 5E (2014)', '!aa-rules profile dnd5e2014')} ${profile === 'system-neutral' ? '<strong>System Neutral</strong>' : GameAssist.createButton('System Neutral', '!aa-rules profile system-neutral')}` },
+                { label: 'Current Advice', value: enabled ? (advice.length ? advice.map(_sanitize).join('<br>') : 'No current scene condition needs a general rules reminder.') : 'Rules advice is disabled. Scene simulation remains available.' },
+                { label: 'Authority', value: 'Advice is informational. It never applies damage, exhaustion, conditions, movement, markers, lighting, or tracker changes.' },
+                { label: 'Return', value: `${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Manage World', '!aa-world')}` }
+            ]);
+        }
+
+        function handleRulesAdvisor(msg, content) {
+            const body = content.replace(/^rules\s*/i, '').trim().toLowerCase();
+            if (!body || /^(menu|gm|dm|status)$/i.test(body)) return showRulesAdvisor(msg);
+            if (!requireGm(msg)) return;
+            if (body === 'on' || body === 'off') modState.config.rulesAdvisorEnabled = body === 'on';
+            if (body.startsWith('profile ')) {
+                const profile = body.slice(8).trim();
+                if (['dnd5e2014', 'system-neutral'].includes(profile)) modState.config.rulesAdvisorProfile = profile;
+            }
+            showRulesAdvisor(msg);
+        }
+
         function showMaster(msg) {
             if (!playerIsGM(msg?.playerid)) return showCurrent(msg);
-            const moment = currentMoment();
-            const timeButtons = timeAvailable()
-                ? `${GameAssist.createButton('+10 Minutes', '!aa-time advance --minutes 10')} ${GameAssist.createButton('+1 Hour', '!aa-time advance --hours 1')} ${GameAssist.createButton('+1 Day', '!aa-time advance --days 1')} ${GameAssist.createButton('Choose Advance', '!aa-time advance --days ?{Days|0} --hours ?{Hours|0} --minutes ?{Minutes|0}')}`
-                : GameAssist.createButton('Turn On TimeAlmanac', '!aa-time on');
-            sendPanel(msg, 'AlmanacAssist', [
-                { label: 'Now', value: timeAvailable() ? _sanitize(displayMoment(moment)) : 'TimeAlmanac is turned off; chronology is preserved.' },
-                { label: 'Advance Date & Time', value: timeButtons },
-                { label: 'Set or Change Calendar', value: timeAvailable() ? `${exactMomentButton(moment)} ${GameAssist.createButton('Choose Calendar', '!cal')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')}` : GameAssist.createButton('Choose Calendar', '!cal') },
-                { label: 'Share', value: `${GameAssist.createButton('Preview Announcement', '!aa-preview')} ${GameAssist.createButton('Announce Now', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
-                { label: 'World Today', value: `${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Environment', '!enviro')}` },
-                { label: 'More', value: `${GameAssist.createButton('Rest', '!rest')} ${GameAssist.createButton('More Almanac Tools', '!aa-more')} ${GameAssist.createButton('Guide', '!Almanac-Guide')}` },
+            const scene = resolveScene();
+            const travel = ensureAlmanacRuntime().world.travel;
+            const quickActions = normalizeWorldConfig().quickActions.map(quickActionButton).filter(Boolean).join(' ');
+            sendPanel(msg, 'Almanac', [
+                { label: 'Current World', value: `${scenePath(scene)}<br>${scene.time ? _sanitize(displayMoment(scene.time)) : 'Fictional time unavailable'}` },
+                { label: 'Conditions', value: `${_sanitize(descriptiveTemperature(scene.scene.temperatureF))} | ${_sanitize(scene.scene.precipitation)} | ${_sanitize(descriptiveWind(scene.scene.windMph))}<br>${_sanitize(scene.scene.terrain)} | ${_sanitize(scene.scene.ground)}` },
+                ...(travel ? [{ label: 'Journey', value: `${_sanitize(travel.fromName)} &rarr; ${_sanitize(travel.toName)} | ${Math.max(0, travel.plannedHours - travel.travelledHours)} hours remaining ${GameAssist.createButton('Continue', '!aa-travel')}` }] : []),
+                { label: 'Do Something', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Advance Time', '!aa-time menu')} ${GameAssist.createButton('Advance Date', '!aa-time advance --days ?{Days|1}')} ${GameAssist.createButton('Rest', '!rest')}` },
+                { label: 'Explore', value: `${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Change Location', '!aa-location')}` },
+                { label: 'Share', value: `${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Settings', '!aa-announcement-settings')}` },
+                { label: 'Quick Actions', value: quickActions || 'No quick actions configured.' },
+                { label: 'Worldbuilding', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Guide', '!Almanac-Guide')}` },
                 { label: 'GameAssist', value: gameAssistHomeButton() }
             ]);
         }
@@ -24711,6 +25258,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!requireGm(msg)) return;
             sendPanel(msg, 'More Almanac Tools', [
                 { label: 'Calendar', value: `${GameAssist.createButton('Time Controls', '!aa-time menu')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')} ${GameAssist.createButton('Choose Calendar', '!cal')}` },
+                { label: 'Current World', value: `${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Locations', '!aa-location')} ${GameAssist.createButton('Travel', '!aa-travel')}` },
                 { label: 'Systems', value: `${GameAssist.createButton('Turn Systems On or Off', '!Almanac-Systems')} ${GameAssist.createButton('Status', '!Almanac-Status')} ${GameAssist.createButton('Audit', '!Almanac-Audit')}` },
                 { label: 'Reference', value: `${GameAssist.createButton('Quick Guide', '!Almanac-Guide')} ${GameAssist.createButton('Full Manual', '!Almanac-Manual')}` },
                 { label: 'Return', value: `${GameAssist.createButton('Almanac', '!aa-gm')} ${gameAssistHomeButton()}` }
@@ -24830,7 +25378,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Draft', value: `${_sanitize(draft.definition.name)} | ${draftMatchesActive(draft) ? 'matches the saved Wayfarer calendar' : 'has changes not yet activated'}` },
                 { label: 'Edit or Activate', value: `${GameAssist.createButton('Edit Calendar', '!aa-wayfarer edit')} ${GameAssist.createButton('Preview Draft', '!aa-wayfarer preview')} ${GameAssist.createButton('Review & Activate', '!aa-wayfarer review')}` },
                 { label: 'Optional Setup', value: `${GameAssist.createButton('Continue Guided Review', `!aa-wayfarer stage ${nextStage}`)} ${GameAssist.createButton('Start From a Copy', '!aa-wayfarer copies')}` },
-                { label: 'More', value: `${GameAssist.createButton('Calendar Details', '!aa-wayfarer details')} ${GameAssist.createButton('Recovery Options', '!aa-wayfarer recovery')} ${GameAssist.createButton('Help', '!aa-wayfarer help')}` },
+                { label: 'More', value: `${GameAssist.createButton('Calendar Details', '!aa-wayfarer details')} ${GameAssist.createButton('Advanced Handout', '!aa-wayfarer handout')} ${GameAssist.createButton('Recovery Options', '!aa-wayfarer recovery')} ${GameAssist.createButton('Help', '!aa-wayfarer help')}` },
                 { label: 'Return', value: GameAssist.createButton('Almanac', '!aa-gm') }
             ]);
         }
@@ -25285,6 +25833,128 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return ranges;
         }
 
+        function wayfarerTransferHandout() {
+            return GameAssist.ownedHandout(MODULE_NAME, 'wayfarer-calendar', 'GameAssist Wayfarer Calendar');
+        }
+
+        function wayfarerTransferPayload() {
+            const draft = ensureWayfarerDraft();
+            return {
+                format: 'gameassist-wayfarer-calendar',
+                schemaVersion: WAYFARER_HANDOUT_SCHEMA_VERSION,
+                calendar: copy(draft.definition),
+                startingDate: copy(draft.startDate)
+            };
+        }
+
+        function writeWayfarerTransferHandout() {
+            const result = wayfarerTransferHandout();
+            if (!result.ok) return result;
+            const json = JSON.stringify(wayfarerTransferPayload(), null, 2);
+            result.handout.set('notes', [
+                '<h2>GameAssist Wayfarer Calendar</h2>',
+                '<p>This is an advanced bulk-edit surface. Edit only the JSON in the block, then return to Wayfarer and preview the import. Import changes the saved draft only; the active calendar and fictional time do not change until the ordinary activation review succeeds.</p>',
+                `<pre>${_sanitize(json)}</pre>`
+            ].join(''));
+            return { ...result, json };
+        }
+
+        function readWayfarerTransferHandout(callback) {
+            const result = wayfarerTransferHandout();
+            if (!result.ok) return callback({ ok: false, message: result.message });
+            const finish = notes => callback({ ok: true, text: decodeWorldPackNotes(notes) });
+            if (typeof result.handout.get === 'function' && result.handout.get.length >= 2) result.handout.get('notes', finish);
+            else finish(result.handout.get('notes'));
+        }
+
+        function validateWayfarerTransfer(text) {
+            if (text.length > POLICY.almanac.maximumWorldPackBytes) return { ok: false, message: `Calendar handout text may not exceed ${POLICY.almanac.maximumWorldPackBytes} characters.` };
+            let payload;
+            try {
+                payload = JSON.parse(text);
+            } catch (error) {
+                return { ok: false, message: `Calendar JSON could not be parsed: ${error.message}` };
+            }
+            const stats = worldPackObjectStats(payload);
+            if (!stats.ok) return stats;
+            if (!payload || typeof payload !== 'object' || Array.isArray(payload) || payload.format !== 'gameassist-wayfarer-calendar' || Number(payload.schemaVersion) !== WAYFARER_HANDOUT_SCHEMA_VERSION) {
+                return { ok: false, message: `Calendar handout must use format gameassist-wayfarer-calendar and schema ${WAYFARER_HANDOUT_SCHEMA_VERSION}.` };
+            }
+            const inspection = inspectWayfarerDefinition(payload.calendar);
+            if (!inspection.ok) return { ok: false, message: inspection.errors.join(' ') };
+            const startDate = payload.startingDate && typeof payload.startingDate === 'object' && !Array.isArray(payload.startingDate)
+                ? { year: Number(payload.startingDate.year), period: String(payload.startingDate.period || ''), day: Number(payload.startingDate.day), hour: Number(payload.startingDate.hour), minute: Number(payload.startingDate.minute) }
+                : null;
+            if (!startDate || !minuteForDate(wayfarerProfile(inspection.definition), startDate).ok) return { ok: false, message: 'The starting date is not valid for this calendar definition.' };
+            return { ok: true, definition: inspection.definition, startDate, fingerprint: worldPackFingerprint(text), stats };
+        }
+
+        function showWayfarerHandout(msg) {
+            if (!requireGm(msg)) return;
+            sendPanel(msg, 'Wayfarer Advanced Handout', [
+                { label: 'Purpose', value: 'Bulk-edit a complete calendar definition in one owned GM handout. The ordinary chat manager remains the complete basic path.' },
+                { label: 'Workflow', value: 'Export Draft, edit the JSON, Preview Import, then confirm the exact preview. A changed or expired preview cannot be committed.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Export Draft', '!aa-wayfarer handout-export')} ${GameAssist.createButton('Preview Import', '!aa-wayfarer handout-preview')}` },
+                { label: 'Safety', value: 'Import updates only the saved draft and is bounded, validated, previewed, stale-protected, and atomic. It never changes the active calendar or fictional time directly.' },
+                { label: 'Return', value: `${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function handleWayfarerHandout(msg, body) {
+            const action = body.replace(/^handout[-\s]*/i, '').trim().toLowerCase();
+            if (!action) return showWayfarerHandout(msg);
+            if (action === 'export') {
+                const result = writeWayfarerTransferHandout();
+                return sendPanel(msg, result.ok ? 'Wayfarer Draft Exported' : 'Wayfarer Export Needs Attention', [
+                    { label: result.ok ? 'Handout' : 'Problem', value: result.ok ? 'GameAssist Wayfarer Calendar was created or updated.' : _sanitize(result.message) },
+                    { label: 'Next Step', value: result.ok ? `${GameAssist.createButton('Preview Import', '!aa-wayfarer handout-preview')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')}` : GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer') }
+                ]);
+            }
+            if (action === 'preview') {
+                return readWayfarerTransferHandout(read => {
+                    if (!read.ok) return sendPanel(msg, 'Wayfarer Import Needs Attention', [{ label: 'Problem', value: _sanitize(read.message) }]);
+                    const validation = validateWayfarerTransfer(read.text);
+                    if (!validation.ok) return sendPanel(msg, 'Wayfarer Import Needs Attention', [{ label: 'Problem', value: _sanitize(validation.message) }, { label: 'Changes', value: 'None. The saved draft, active calendar, and fictional time were preserved.' }]);
+                    const grantId = `wayfarer-${Date.now().toString(36)}-${randomInteger(9999)}`;
+                    ensureAlmanacRuntime().world.wayfarerGrants[grantId] = { fingerprint: validation.fingerprint, expiresAt: Date.now() + POLICY.almanac.worldPackGrantMs };
+                    sendPanel(msg, 'Preview Wayfarer Import', [
+                        { label: 'Calendar', value: wayfarerOverview({ definition: validation.definition }) },
+                        { label: 'Starting Date', value: formatWayfarerStart(validation.startDate) },
+                        { label: 'Changes', value: 'Confirmation replaces only the saved draft. The active calendar and fictional chronology stay unchanged until ordinary activation.' },
+                        { label: 'Actions', value: `${GameAssist.createButton('Replace Saved Draft', `!aa-wayfarer handout-commit --grant ${grantId}`)} ${GameAssist.createButton('Cancel', '!aa-wayfarer handout')}` }
+                    ]);
+                });
+            }
+            if (action.startsWith('commit')) {
+                const args = _parseArgs(body).args;
+                const grants = ensureAlmanacRuntime().world.wayfarerGrants;
+                const grant = grants[args.grant];
+                if (!grant || grant.expiresAt <= Date.now()) return sendPanel(msg, 'Wayfarer Import Needs Attention', [{ label: 'Problem', value: 'That preview expired or was not found. Preview the handout again.' }, { label: 'Changes', value: 'None.' }]);
+                // CHOICE: A confirmation grant is single-use even when the handout changed; a new preview must authorize the new bytes.
+                delete grants[args.grant];
+                return readWayfarerTransferHandout(read => {
+                    const validation = read.ok ? validateWayfarerTransfer(read.text) : read;
+                    if (!validation.ok || validation.fingerprint !== grant.fingerprint) return sendPanel(msg, 'Wayfarer Import Needs Attention', [{ label: 'Problem', value: validation.ok ? 'The handout changed after preview. Preview it again before confirmation.' : _sanitize(validation.message) }, { label: 'Changes', value: 'None.' }]);
+                    const previous = copy(modState.config.wayfarerDraft);
+                    try {
+                        modState.config.wayfarerDraft = {
+                            schemaVersion: WAYFARER_DRAFT_SCHEMA_VERSION,
+                            definition: copy(validation.definition),
+                            startDate: copy(validation.startDate),
+                            reviewed: Object.fromEntries(WAYFARER_STAGES.map(stage => [stage, false])),
+                            sourceProfileId: 'wayfarer',
+                            updatedAt: isoNow()
+                        };
+                        return showWayfarerPreview(msg, false);
+                    } catch (error) {
+                        modState.config.wayfarerDraft = previous;
+                        return sendPanel(msg, 'Wayfarer Import Needs Attention', [{ label: 'Problem', value: `The import was rolled back: ${_sanitize(error.message)}` }, { label: 'Changes', value: 'None.' }]);
+                    }
+                });
+            }
+            showWayfarerHandout(msg);
+        }
+
         function handleWayfarer(msg, content) {
             if (!requireGm(msg)) return;
             const body = content.replace(/^wayfarer\s*/i, '').trim();
@@ -25295,6 +25965,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (/^(?:copies|copy|starting-point)$/i.test(body)) return showWayfarerCopyMenu(msg);
             if (/^(?:details|detail)$/i.test(body)) return showWayfarerDetails(msg);
             if (/^(?:recovery|recover)$/i.test(body)) return showWayfarerRecovery(msg);
+            if (/^handout(?:-|\s|$)/i.test(body)) return handleWayfarerHandout(msg, body);
             if (/^explain\b/i.test(body)) return showWayfarerTopicHelp(msg, body.split(/\s+/)[1]?.toLowerCase());
             const action = body.split(/\s+/)[0].toLowerCase();
             const args = _parseArgs(body).args;
@@ -25605,6 +26276,244 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const numeric = Number(value);
             if (!Number.isFinite(numeric)) return fallback;
             return Math.min(maximum, Math.max(minimum, numeric));
+        }
+
+        function boundedWorldText(raw, fallback = '') {
+            if (!['string', 'number'].includes(typeof raw)) return fallback;
+            const text = String(raw).trim().replace(/[|{}\[\]]/g, ' ').replace(/\s+/g, ' ')
+                .slice(0, POLICY.almanac.maximumSummaryLength).trim();
+            return text || fallback;
+        }
+
+        function boundedWorldId(raw, fallback) {
+            const requested = typeof raw === 'string' ? raw.trim() : '';
+            if (/^[A-Za-z0-9_-]+$/.test(requested) && requested.length <= POLICY.almanac.maximumNameLength) return requested;
+            return fallback;
+        }
+
+        function uniqueWorldItems(raw, limit, normalizeItem) {
+            const result = [];
+            const ids = new Set();
+            (Array.isArray(raw) ? raw : []).slice(0, limit).forEach((item, index) => {
+                const normalized = normalizeItem(item, index);
+                if (!normalized) return;
+                const key = normalized.id.toLowerCase();
+                if (ids.has(key)) return;
+                ids.add(key);
+                result.push(normalized);
+            });
+            return result;
+        }
+
+        function worldItem(items, requested) {
+            const key = String(requested || '').trim().toLowerCase();
+            if (!key) return null;
+            const byId = items.find(item => String(item.id).toLowerCase() === key);
+            if (byId) return byId;
+            const byName = items.filter(item => String(item.name).toLowerCase() === key);
+            return byName.length === 1 ? byName[0] : null;
+        }
+
+        function normalizeTemporalContexts(raw = modState.config.temporalContexts) {
+            const contexts = uniqueWorldItems(raw, POLICY.almanac.maximumTemporalContexts, (item, index) => {
+                const source = item && typeof item === 'object' && !Array.isArray(item) ? item : {};
+                return {
+                    id: boundedWorldId(source.id, `temporal-${index + 1}`),
+                    name: boundedName(source.name, `Temporal Context ${index + 1}`),
+                    rateNumerator: Math.round(clampNumber(source.rateNumerator, 1, 100, 1)),
+                    rateDenominator: Math.round(clampNumber(source.rateDenominator, 1, 100, 1)),
+                    offsetMinutes: Math.round(clampNumber(source.offsetMinutes, -POLICY.almanac.maximumAdvanceDays * 1440, POLICY.almanac.maximumAdvanceDays * 1440, 0)),
+                    packId: boundedWorldId(source.packId, null),
+                    sourceId: boundedWorldId(source.sourceId, null)
+                };
+            });
+            if (!worldItem(contexts, 'material')) contexts.unshift(copy(DEFAULT_TEMPORAL_CONTEXTS[0]));
+            modState.config.temporalContexts = contexts.slice(0, POLICY.almanac.maximumTemporalContexts);
+            return modState.config.temporalContexts;
+        }
+
+        function temporalContext(requested) {
+            const contexts = normalizeTemporalContexts();
+            return worldItem(contexts, requested) || worldItem(contexts, 'material') || contexts[0];
+        }
+
+        function normalizeWorldConfig(raw = modState.config.world) {
+            const source = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+            const knownKeys = new Set(['schemaVersion', 'activeLocationId', 'geographies', 'biomes', 'ecoregions', 'locations', 'preparedDestinationIds', 'recentLocationIds', 'phenomena', 'quickActions']);
+            const unknown = Object.fromEntries(Object.entries(source).filter(([key]) => !knownKeys.has(key)));
+            const geographyInput = Array.isArray(source.geographies) ? source.geographies : DEFAULT_WORLD.geographies;
+            const geographies = uniqueWorldItems(geographyInput, POLICY.almanac.maximumGeographies, (item, index) => {
+                const value = item && typeof item === 'object' && !Array.isArray(item) ? item : {};
+                return {
+                    id: boundedWorldId(value.id, `geography-${index + 1}`),
+                    name: boundedName(value.name, `Geography ${index + 1}`),
+                    terrain: boundedWorldText(value.terrain, 'Unspecified terrain'),
+                    topography: boundedWorldText(value.topography, value.terrain || 'Unspecified topography'),
+                    latitudeDeg: clampNumber(value.latitudeDeg, -90, 90, 0),
+                    elevationFt: Math.round(clampNumber(value.elevationFt, -2000, 40000, 0)),
+                    coastal: value.coastal === true,
+                    hydrology: boundedWorldText(value.hydrology, 'No persistent hydrology specified'),
+                    packId: boundedWorldId(value.packId, null),
+                    sourceId: boundedWorldId(value.sourceId, null)
+                };
+            });
+            if (!geographies.length) geographies.push(copy(DEFAULT_WORLD.geographies[0]));
+
+            const biomeInput = Array.isArray(source.biomes) ? source.biomes : DEFAULT_WORLD.biomes;
+            const biomes = uniqueWorldItems(biomeInput, POLICY.almanac.maximumBiomes, (item, index) => {
+                const value = item && typeof item === 'object' && !Array.isArray(item) ? item : {};
+                return {
+                    id: boundedWorldId(value.id, `biome-${index + 1}`),
+                    name: boundedName(value.name, `Biome ${index + 1}`),
+                    vegetation: boundedWorldText(value.vegetation, 'Unspecified vegetation'),
+                    aridity: boundedWorldText(value.aridity, 'Moderate'),
+                    ground: boundedWorldText(value.ground, 'Natural ground'),
+                    water: boundedWorldText(value.water, 'Water availability unspecified'),
+                    tags: normalizeClimateTags(value.tags),
+                    seasonalResponse: boundedWorldText(value.seasonalResponse, ''),
+                    packId: boundedWorldId(value.packId, null),
+                    sourceId: boundedWorldId(value.sourceId, null)
+                };
+            });
+            if (!biomes.length) biomes.push(copy(DEFAULT_WORLD.biomes[0]));
+
+            const climateConfig = normalizeClimateConfig();
+            const regionIds = new Map(climateConfig.regions.map(region => [region.id.toLowerCase(), region.id]));
+            const geographyIds = new Map(geographies.map(item => [item.id.toLowerCase(), item.id]));
+            const biomeIds = new Map(biomes.map(item => [item.id.toLowerCase(), item.id]));
+            const ecoregionInput = Array.isArray(source.ecoregions) ? source.ecoregions : DEFAULT_WORLD.ecoregions;
+            const ecoregions = uniqueWorldItems(ecoregionInput, POLICY.almanac.maximumEcoregions, (item, index) => {
+                const value = item && typeof item === 'object' && !Array.isArray(item) ? item : {};
+                return {
+                    id: boundedWorldId(value.id, `ecoregion-${index + 1}`),
+                    name: boundedName(value.name, `Ecoregion ${index + 1}`),
+                    regionId: regionIds.get(String(value.regionId || '').toLowerCase()) || climateConfig.activeRegionId,
+                    geographyId: geographyIds.get(String(value.geographyId || '').toLowerCase()) || geographies[0].id,
+                    biomeId: biomeIds.get(String(value.biomeId || '').toLowerCase()) || biomes[0].id,
+                    transitionNotes: boundedWorldText(value.transitionNotes, ''),
+                    packId: boundedWorldId(value.packId, null),
+                    sourceId: boundedWorldId(value.sourceId, null)
+                };
+            });
+            if (!ecoregions.length) ecoregions.push({
+                ...copy(DEFAULT_WORLD.ecoregions[0]),
+                regionId: climateConfig.activeRegionId,
+                geographyId: geographies[0].id,
+                biomeId: biomes[0].id
+            });
+            const ecoregionIds = new Map(ecoregions.map(item => [item.id.toLowerCase(), item.id]));
+            const contextIds = new Map(normalizeTemporalContexts().map(item => [item.id.toLowerCase(), item.id]));
+            const locationInput = Array.isArray(source.locations) ? source.locations : DEFAULT_WORLD.locations;
+            const locations = uniqueWorldItems(locationInput, POLICY.almanac.maximumLocations, (item, index) => {
+                const value = item && typeof item === 'object' && !Array.isArray(item) ? item : {};
+                const ecoregion = worldItem(ecoregions, value.ecoregionId) || ecoregions[0];
+                return {
+                    id: boundedWorldId(value.id, `location-${index + 1}`),
+                    name: boundedName(value.name, `Location ${index + 1}`),
+                    regionId: regionIds.get(String(value.regionId || '').toLowerCase()) || ecoregion.regionId,
+                    ecoregionId: ecoregionIds.get(String(value.ecoregionId || '').toLowerCase()) || ecoregion.id,
+                    geographyId: geographyIds.get(String(value.geographyId || '').toLowerCase()) || ecoregion.geographyId,
+                    biomeId: biomeIds.get(String(value.biomeId || '').toLowerCase()) || ecoregion.biomeId,
+                    environmentPresetId: Object.prototype.hasOwnProperty.call(ENVIRONMENT_PRESETS, String(value.environmentPresetId || '').toLowerCase())
+                        ? String(value.environmentPresetId).toLowerCase()
+                        : 'clear',
+                    temporalContextId: contextIds.get(String(value.temporalContextId || '').toLowerCase()) || 'material',
+                    favorite: value.favorite === true,
+                    notes: boundedWorldText(value.notes, ''),
+                    pageIds: [...new Set((Array.isArray(value.pageIds) ? value.pageIds : []).map(pageId => boundedWorldId(pageId, null)).filter(Boolean))].slice(0, POLICY.almanac.maximumPageAssociations),
+                    temperatureDeltaF: Math.round(clampNumber(value.temperatureDeltaF, -100, 100, 0)),
+                    windDeltaMph: Math.round(clampNumber(value.windDeltaMph, -100, 100, 0)),
+                    visibilityOverride: boundedWorldText(value.visibilityOverride, ''),
+                    groundOverride: boundedWorldText(value.groundOverride, ''),
+                    packId: boundedWorldId(value.packId, null),
+                    sourceId: boundedWorldId(value.sourceId, null)
+                };
+            });
+            if (!locations.length) locations.push({
+                ...copy(DEFAULT_WORLD.locations[0]),
+                regionId: climateConfig.activeRegionId,
+                ecoregionId: ecoregions[0].id,
+                geographyId: geographies[0].id,
+                biomeId: biomes[0].id
+            });
+            const locationIds = new Map(locations.map(item => [item.id.toLowerCase(), item.id]));
+            const activeLocationId = locationIds.get(String(source.activeLocationId || '').toLowerCase()) || locations[0].id;
+            const normalizeLocationIds = (values, limit) => [...new Set((Array.isArray(values) ? values : [])
+                .map(value => locationIds.get(String(value || '').toLowerCase()))
+                .filter(Boolean))].slice(0, limit);
+            const preparedDestinationIds = normalizeLocationIds(source.preparedDestinationIds, POLICY.almanac.maximumPreparedDestinations);
+            if (!preparedDestinationIds.length) preparedDestinationIds.push(activeLocationId);
+            const recentLocationIds = normalizeLocationIds(source.recentLocationIds, 10);
+            if (!recentLocationIds.includes(activeLocationId)) recentLocationIds.unshift(activeLocationId);
+
+            const phenomena = uniqueWorldItems(source.phenomena, POLICY.almanac.maximumPhenomena, (item, index) => {
+                const value = item && typeof item === 'object' && !Array.isArray(item) ? item : {};
+                const start = value.startWorldMinute === null || value.startWorldMinute === undefined ? null : Number(value.startWorldMinute);
+                const end = value.endWorldMinute === null || value.endWorldMinute === undefined ? null : Number(value.endWorldMinute);
+                return {
+                    id: boundedWorldId(value.id, `phenomenon-${index + 1}`),
+                    name: boundedName(value.name, `Phenomenon ${index + 1}`),
+                    description: boundedWorldText(value.description, 'Extraordinary world condition'),
+                    locationId: locationIds.get(String(value.locationId || '').toLowerCase()) || null,
+                    regionId: regionIds.get(String(value.regionId || '').toLowerCase()) || null,
+                    startWorldMinute: start !== null && Number.isSafeInteger(Math.floor(start)) ? Math.floor(start) : null,
+                    endWorldMinute: end !== null && Number.isSafeInteger(Math.floor(end)) ? Math.floor(end) : null,
+                    enabled: value.enabled !== false,
+                    severity: Math.round(clampNumber(value.severity, 0, 5, 1)),
+                    temperatureDeltaF: Math.round(clampNumber(value.temperatureDeltaF, -100, 100, 0)),
+                    precipitation: boundedWorldText(value.precipitation, ''),
+                    visibility: boundedWorldText(value.visibility, ''),
+                    ground: boundedWorldText(value.ground, ''),
+                    tags: normalizeClimateTags(value.tags),
+                    packId: boundedWorldId(value.packId, null),
+                    sourceId: boundedWorldId(value.sourceId, null)
+                };
+            }).filter(item => item.endWorldMinute === null || item.startWorldMinute === null || item.endWorldMinute >= item.startWorldMinute);
+
+            const quickActions = uniqueWorldItems(source.quickActions, POLICY.almanac.maximumQuickActions, (item, index) => {
+                const value = item && typeof item === 'object' && !Array.isArray(item) ? item : {};
+                const kind = ['advance', 'landmark', 'rest'].includes(String(value.kind || '').toLowerCase()) ? String(value.kind).toLowerCase() : null;
+                if (!kind) return null;
+                return {
+                    id: boundedWorldId(value.id, `quick-${index + 1}`),
+                    label: boundedName(value.label, `Quick Action ${index + 1}`),
+                    kind,
+                    days: Math.floor(clampNumber(value.days, 0, POLICY.almanac.maximumAdvanceDays, 0)),
+                    hours: Math.floor(clampNumber(value.hours, 0, 1000, 0)),
+                    minutes: Math.floor(clampNumber(value.minutes, 0, 100000, 0)),
+                    landmark: ['dawn', 'dusk'].includes(String(value.landmark || '').toLowerCase()) ? String(value.landmark).toLowerCase() : null,
+                    restType: ['short', 'long', 'extended'].includes(String(value.restType || '').toLowerCase()) ? String(value.restType).toLowerCase() : null,
+                    packId: boundedWorldId(value.packId, null),
+                    sourceId: boundedWorldId(value.sourceId, null)
+                };
+            });
+            if (!quickActions.length) quickActions.push(...copy(DEFAULT_WORLD.quickActions));
+
+            modState.config.world = {
+                ...unknown,
+                schemaVersion: WORLD_STATE_SCHEMA_VERSION,
+                activeLocationId,
+                geographies,
+                biomes,
+                ecoregions,
+                locations,
+                preparedDestinationIds,
+                recentLocationIds: recentLocationIds.slice(0, 10),
+                phenomena,
+                quickActions
+            };
+            return modState.config.world;
+        }
+
+        function currentWorldContext(requestedLocation = null) {
+            const world = normalizeWorldConfig();
+            const location = worldItem(world.locations, requestedLocation || world.activeLocationId) || world.locations[0];
+            const ecoregion = worldItem(world.ecoregions, location.ecoregionId) || world.ecoregions[0];
+            const geography = worldItem(world.geographies, location.geographyId) || worldItem(world.geographies, ecoregion.geographyId) || world.geographies[0];
+            const biome = worldItem(world.biomes, location.biomeId) || worldItem(world.biomes, ecoregion.biomeId) || world.biomes[0];
+            const region = climateRegion(location.regionId) || climateRegion(ecoregion.regionId) || climateRegion();
+            const context = temporalContext(location.temporalContextId);
+            return Object.freeze(copy({ location, ecoregion, geography, biome, region, temporalContext: context }));
         }
 
         function normalizeSeason(value, fallback = 'Spring') {
@@ -26411,16 +27320,26 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function generateWeather(previous = null, forecastOffset = 0) {
             const climate = weatherClimateContext();
-            const randomTemperature = climate.temperatureF + randomInteger(21) - 11;
+            const place = currentWorldContext();
+            const biomeTags = new Set((place.biome?.tags || []).map(tag => String(tag).toLowerCase()));
+            const elevationAdjustment = Math.round(-3.5 * ((Number(place.geography?.elevationFt || 0) - 500) / 1000));
+            const localTemperatureAdjustment = Number(place.location?.temperatureDeltaF || 0);
+            const variation = place.geography?.coastal ? 15 : 21;
+            const randomTemperature = climate.temperatureF + elevationAdjustment + localTemperatureAdjustment + randomInteger(variation) - Math.ceil(variation / 2);
             const temperatureF = previous
                 ? Math.round((Number(previous.temperatureF) * 2 + randomTemperature) / 3)
                 : Math.round(randomTemperature);
+            const precipitationChance = Math.max(0, Math.min(100, climate.precipitationChance
+                + (place.geography?.coastal ? 5 : 0)
+                + (biomeTags.has('wet') || biomeTags.has('rainforest') ? 15 : 0)
+                - (biomeTags.has('arid') || biomeTags.has('desert') ? 20 : 0)));
             const precipitationRoll = randomInteger(100);
             const cloudRoll = randomInteger(100);
             const windVariation = randomInteger(13) - 7;
-            const windMph = Math.max(0, Math.round((previous ? Number(previous.windMph) + climate.windMph : climate.windMph * 2) / 2 + windVariation));
-            const precipitation = precipitationRoll <= climate.precipitationChance;
-            const severe = precipitation && randomInteger(100) <= Math.max(5, Math.round(climate.precipitationChance / 5));
+            const localWindAdjustment = Number(place.location?.windDeltaMph || 0) + (place.geography?.coastal ? 2 : 0);
+            const windMph = Math.max(0, Math.round((previous ? Number(previous.windMph) + climate.windMph : climate.windMph * 2) / 2 + windVariation + localWindAdjustment));
+            const precipitation = precipitationRoll <= precipitationChance;
+            const severe = precipitation && randomInteger(100) <= Math.max(5, Math.round(precipitationChance / 5));
             let kind = 'clear';
             if (precipitation && temperatureF <= 32) kind = severe ? 'blizzard' : 'snow';
             else if (precipitation) kind = severe ? 'storm' : 'rain';
@@ -26461,6 +27380,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 tags: [...new Set([...(climate.tags || []), ...tags])],
                 regionId: climate.regionId,
                 regionName: climate.regionName,
+                locationId: place.location?.id || null,
+                locationName: place.location?.name || null,
+                geographyId: place.geography?.id || null,
+                biomeId: place.biome?.id || null,
                 season: climate.season,
                 context: submoduleEnabled('climate') ? 'ClimateAlmanac' : (timeAvailable() ? 'TimeAlmanac plus fallback climate' : 'WeatherAlmanac fallback'),
                 forecastOffset,
@@ -26755,6 +27678,1092 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return showEnvironment(msg);
             }
             sendPanel(msg, 'EnviroAlmanac Needs Attention', [{ label: 'Problem', value: 'That environment command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Environment', '!enviro') }]);
+        }
+
+        function activePhenomena(context, worldMinute) {
+            const world = normalizeWorldConfig();
+            return world.phenomena.filter(item => {
+                if (item.enabled === false) return false;
+                if (item.locationId && item.locationId !== context.location.id) return false;
+                if (item.regionId && item.regionId !== context.region?.id) return false;
+                if (item.startWorldMinute !== null && worldMinute < item.startWorldMinute) return false;
+                if (item.endWorldMinute !== null && worldMinute > item.endWorldMinute) return false;
+                return true;
+            });
+        }
+
+        function contextualMoment(context, baseWorldMinute) {
+            const temporal = context.temporalContext || temporalContext('material');
+            const localMinute = Math.floor((baseWorldMinute * temporal.rateNumerator) / temporal.rateDenominator) + temporal.offsetMinutes;
+            return {
+                moment: resolveWorldMinute(profileFor(), localMinute),
+                baseWorldMinute,
+                localWorldMinute: localMinute,
+                context: temporal
+            };
+        }
+
+        function resolvedMoonVisibility(moment, weather, environment) {
+            const basic = moonVisibility(moment, weather);
+            const tags = new Set((environment?.tags || []).map(tag => String(tag).toLowerCase()));
+            const exposure = String(environment?.exposure || '').toLowerCase();
+            const reasons = basic.reasons.slice();
+            if (tags.has('underground') || tags.has('indoors') || tags.has('underwater') || exposure.includes('no sky')) reasons.push('the current scene blocks the sky');
+            return { visible: reasons.length === 0, reasons: [...new Set(reasons)] };
+        }
+
+        function resolveScene(requestedLocation = null) {
+            const context = currentWorldContext(requestedLocation);
+            const active = context.location.id === normalizeWorldConfig().activeLocationId;
+            const runtime = ensureAlmanacRuntime();
+            const parentAvailable = modState.config.enabled !== false;
+            const climateAvailable = parentAvailable && submoduleEnabled('climate');
+            const weatherAvailable = parentAvailable && submoduleEnabled('weather');
+            const environmentAvailable = parentAvailable && submoduleEnabled('environment');
+            const astronomyAvailable = parentAvailable && submoduleEnabled('astronomy');
+            const temporal = contextualMoment(context, runtime.time.worldMinute);
+            const moment = temporal.moment || currentMoment();
+            const climate = climateAvailable ? resolvedClimate(context.region?.id) : null;
+            const storedWeather = weatherAvailable && active ? currentWeather() : null;
+            const currentEnvironment = environmentAvailable && active
+                ? environmentContext()
+                : copy(ENVIRONMENT_PRESETS[context.location.environmentPresetId] || ENVIRONMENT_PRESETS.clear);
+            const phenomena = activePhenomena(context, runtime.time.worldMinute);
+            const warnings = [];
+            const provenance = {};
+            if (!parentAvailable) warnings.push('AlmanacAssist is disabled; this defensive snapshot uses preserved configuration without claiming provider availability.');
+            if (!timeAvailable()) warnings.push('TimeAlmanac is not effectively available; the preserved chronology is shown without allowing ordinary time changes.');
+            if (!climateAvailable) warnings.push('ClimateAlmanac is not effectively available; SceneResolver cannot supply a campaign climate baseline.');
+            if (!weatherAvailable) warnings.push('WeatherAlmanac is not effectively available; current atmospheric state falls back to local context.');
+            if (!environmentAvailable) warnings.push('EnviroAlmanac is not effectively available; the location preset supplies local surroundings.');
+            if (!astronomyAvailable) warnings.push('AstronomyAlmanac is not effectively available; no moon phase or celestial state is available.');
+            if (!temporal.moment) warnings.push(`The local time produced by ${temporal.context.name} falls outside the supported Year ${POLICY.almanac.minimumYear}-${POLICY.almanac.maximumYear} range; the base chronology is shown instead.`);
+
+            let temperatureF = Number(storedWeather?.temperatureF);
+            if (Number.isFinite(temperatureF)) provenance.temperature = ['Weather'];
+            else if (Number.isFinite(Number(climate?.temperatureF))) {
+                temperatureF = Number(climate.temperatureF);
+                provenance.temperature = ['Climate', 'Season'];
+            } else {
+                temperatureF = 60;
+                provenance.temperature = ['Almanac fallback'];
+                warnings.push('No authoritative climate or weather temperature is available.');
+            }
+            if (context.location.temperatureDeltaF && storedWeather?.locationId !== context.location.id) {
+                temperatureF += context.location.temperatureDeltaF;
+                provenance.temperature.push(`Location:${context.location.name}`);
+            }
+            phenomena.forEach(item => {
+                if (item.temperatureDeltaF) {
+                    temperatureF += item.temperatureDeltaF;
+                    provenance.temperature.push(`Phenomenon:${item.name}`);
+                }
+            });
+            temperatureF = Math.round(temperatureF);
+
+            let precipitation = boundedWorldText(storedWeather?.precipitation, currentEnvironment?.precipitation || 'None');
+            provenance.precipitation = [storedWeather ? 'Weather' : 'Environment'];
+            const precipitationPhenomenon = phenomena.slice().reverse().find(item => item.precipitation);
+            if (precipitationPhenomenon) {
+                precipitation = precipitationPhenomenon.precipitation;
+                provenance.precipitation.push(`Phenomenon:${precipitationPhenomenon.name}`);
+            }
+            let cloudCover = boundedWorldText(storedWeather?.cloud, precipitation.toLowerCase() === 'none' ? 'Clear' : 'Clouded by precipitation');
+            if (precipitation.toLowerCase() !== 'none' && /^(clear|cloudless)$/i.test(cloudCover)) {
+                cloudCover = 'Clouded by precipitation';
+                warnings.push('Stored cloud cover conflicted with current precipitation and was resolved for presentation.');
+            }
+            provenance.cloudCover = [storedWeather ? 'Weather' : 'SceneResolver'];
+
+            let windMph = Number(storedWeather?.windMph);
+            if (!Number.isFinite(windMph)) windMph = Number(climate?.windMph);
+            if (!Number.isFinite(windMph)) windMph = 0;
+            if (context.location.windDeltaMph && storedWeather?.locationId !== context.location.id) windMph += context.location.windDeltaMph;
+            windMph = Math.max(0, Math.round(windMph));
+            provenance.wind = [storedWeather ? 'Weather' : climate ? 'Climate' : 'Almanac fallback'];
+            if (context.location.windDeltaMph && storedWeather?.locationId !== context.location.id) provenance.wind.push(`Location:${context.location.name}`);
+
+            let visibility = boundedWorldText(
+                active && runtime.environment.override ? currentEnvironment?.visibility : context.location.visibilityOverride,
+                currentEnvironment?.visibility || storedWeather?.visibility || 'Clear'
+            );
+            provenance.visibility = [active && runtime.environment.override ? 'GM Environment override' : storedWeather ? 'Weather' : 'Location Environment'];
+            if (!runtime.environment.override && context.location.visibilityOverride) provenance.visibility.unshift(`Location:${context.location.name}`);
+            const visibilityPhenomenon = phenomena.slice().reverse().find(item => item.visibility);
+            if (visibilityPhenomenon) {
+                visibility = visibilityPhenomenon.visibility;
+                provenance.visibility.push(`Phenomenon:${visibilityPhenomenon.name}`);
+            }
+
+            let ground = boundedWorldText(
+                active && runtime.environment.override ? currentEnvironment?.ground : context.location.groundOverride,
+                currentEnvironment?.ground || context.biome?.ground || context.geography?.terrain || 'Unspecified ground'
+            );
+            provenance.ground = [currentEnvironment ? 'Environment' : 'Biome', 'Geography'];
+            if (!runtime.environment.override && context.location.groundOverride) provenance.ground.unshift(`Location:${context.location.name}`);
+            const groundPhenomenon = phenomena.slice().reverse().find(item => item.ground);
+            if (groundPhenomenon) {
+                ground = groundPhenomenon.ground;
+                provenance.ground.push(`Phenomenon:${groundPhenomenon.name}`);
+            } else if (precipitation.toLowerCase().includes('rain') && !/mud|wet|flood|water/i.test(ground)) {
+                ground = `${ground}; wet from rain`;
+                provenance.ground.push('Weather');
+            }
+
+            const hydrology = {
+                persistent: context.geography?.hydrology || 'No persistent hydrology specified',
+                ecological: context.biome?.water || 'Water availability unspecified',
+                immediate: currentEnvironment?.water || 'No immediate water specified'
+            };
+            provenance.hydrology = ['Geography', 'Biome', 'Environment'];
+
+            const astronomy = astronomyAvailable ? astronomyContext() : null;
+            const moonVisibilityState = resolvedMoonVisibility(moment, storedWeather, currentEnvironment);
+            const moons = (astronomy?.moons || []).map(moon => ({
+                ...copy(moon),
+                visible: moonVisibilityState.visible,
+                visibilityReason: moonVisibilityState.visible ? 'Visible' : `Not visible because of ${moonVisibilityState.reasons.join(' and ')}`
+            }));
+            provenance.moonVisibility = ['Astronomy', 'Time', storedWeather ? 'Weather' : 'Location Environment'];
+
+            const climateTags = new Set((climate?.tags || []).map(tag => String(tag).toLowerCase()));
+            const biomeTags = new Set((context.biome?.tags || []).map(tag => String(tag).toLowerCase()));
+            if ((climateTags.has('arctic') || climateTags.has('cold')) && biomeTags.has('tropical')) {
+                warnings.push('The active cold climate and tropical biome are unusual together. This may be intentional fantasy geography.');
+            }
+            if (context.location.regionId !== context.ecoregion.regionId) warnings.push('The active location and ecoregion reference different regions.');
+            if (temporal.context.rateNumerator !== temporal.context.rateDenominator || temporal.context.offsetMinutes !== 0) {
+                warnings.push(`Local time uses ${temporal.context.name}; base chronology remains unchanged.`);
+            }
+
+            return Object.freeze(copy({
+                schemaVersion: SCENE_SCHEMA_VERSION,
+                resolvedAt: isoNow(),
+                active,
+                time: moment,
+                temporalContext: temporal,
+                region: context.region,
+                ecoregion: context.ecoregion,
+                location: context.location,
+                geography: context.geography,
+                climate,
+                biome: context.biome,
+                environment: currentEnvironment,
+                weather: storedWeather,
+                phenomena,
+                scene: {
+                    season: moment?.season || climate?.season || 'Unspecified',
+                    temperatureF,
+                    precipitation,
+                    cloudCover,
+                    windMph,
+                    visibility,
+                    terrain: context.geography?.terrain || 'Unspecified terrain',
+                    ground,
+                    hydrology,
+                    shelter: currentEnvironment?.name || context.location.environmentPresetId,
+                    exposure: currentEnvironment?.exposure || 'Unspecified',
+                    daylight: descriptiveTime(moment),
+                    moons
+                },
+                provenance,
+                warnings
+            }));
+        }
+
+        function scenePath(scene) {
+            return [scene.region?.name, scene.ecoregion?.name, scene.location?.name].filter(Boolean).map(_sanitize).join(' &rsaquo; ');
+        }
+
+        function showScene(msg, technical = false) {
+            const scene = resolveScene();
+            const fields = [
+                { label: 'Where', value: scenePath(scene) },
+                { label: 'When', value: scene.time ? _sanitize(displayMoment(scene.time)) : 'Fictional time unavailable' },
+                { label: 'Conditions', value: `${_sanitize(descriptiveTemperature(scene.scene.temperatureF))} | ${_sanitize(scene.scene.precipitation)} | ${_sanitize(descriptiveWind(scene.scene.windMph))}` },
+                { label: 'Terrain', value: `${_sanitize(scene.scene.terrain)} | ${_sanitize(scene.scene.ground)}` },
+                { label: 'Sky', value: scene.scene.moons.length ? scene.scene.moons.map(moon => `${_sanitize(moon.name)}: ${_sanitize(moon.phase)} - ${_sanitize(moon.visibilityReason)}`).join('<br>') : 'No moons configured' },
+                { label: 'Actions', value: `${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ];
+            if (technical) {
+                fields.splice(fields.length - 1, 0,
+                    { label: 'Hydrology', value: `${_sanitize(scene.scene.hydrology.persistent)} | ${_sanitize(scene.scene.hydrology.ecological)} | ${_sanitize(scene.scene.hydrology.immediate)}` },
+                    { label: 'Provenance', value: Object.entries(scene.provenance).map(([key, values]) => `${_sanitize(key)}: ${values.map(_sanitize).join(' + ')}`).join('<br>') },
+                    { label: 'Warnings', value: scene.warnings.length ? scene.warnings.map(_sanitize).join('<br>') : 'None' }
+                );
+            } else if (scene.warnings.length) {
+                fields.splice(fields.length - 1, 0, { label: 'Needs Attention', value: `${scene.warnings.length} coherence note${scene.warnings.length === 1 ? '' : 's'}. ${GameAssist.createButton('View Details', '!aa-scene details')}` });
+            }
+            sendPanel(msg, technical ? 'Current Scene Details' : 'Current Scene', fields);
+        }
+
+        function regenerateWeatherForLocation(msg) {
+            const runtime = ensureAlmanacRuntime();
+            if (!submoduleEnabled('weather') || runtime.weather.locked) return;
+            const previous = runtime.weather.current;
+            const next = generateWeather(previous);
+            runtime.weather.current = next;
+            runtime.weather.forecast = [];
+            runtime.weather.history.push(copy(next));
+            if (runtime.weather.history.length > POLICY.almanac.weatherHistoryLimit) runtime.weather.history.shift();
+            if (!runtime.environment.override) runtime.environment.current = deriveEnvironment(next);
+            publishChange('almanac.weather.changed', previous, next, { reason: 'Location context changed' }, msg);
+        }
+
+        function commitLocation(msg, requested) {
+            const world = normalizeWorldConfig();
+            const next = worldItem(world.locations, requested);
+            if (!next) return { ok: false, message: 'That location was not found or its name is ambiguous.' };
+            const previousScene = resolveScene();
+            if (next.id === world.activeLocationId) return { ok: true, changed: false, scene: previousScene };
+            world.activeLocationId = next.id;
+            world.recentLocationIds = [next.id, ...world.recentLocationIds.filter(id => id !== next.id)].slice(0, 10);
+            // Persist the complete normalized branch before dependent providers read it.
+            modState.config.world = world;
+            const climate = normalizeClimateConfig();
+            if (climateRegion(next.regionId)) climate.activeRegionId = next.regionId;
+            ensureAlmanacRuntime().world.revision++;
+            regenerateWeatherForLocation(msg);
+            const currentScene = resolveScene();
+            publishChange('almanac.location.changed', previousScene, currentScene, { locationId: next.id }, msg);
+            return { ok: true, changed: true, scene: currentScene };
+        }
+
+        function locationChoiceRows(locations, currentId) {
+            return locations.map(location => {
+                if (location.id === currentId) return `<strong>${_sanitize(location.name)} (current)</strong>`;
+                return GameAssist.createButton(location.name, `!aa-location preview --id ${location.id}`);
+            }).join(' ');
+        }
+
+        function locationManagementRows(locations, currentId) {
+            return locations.map(location => {
+                const state = location.id === currentId ? ' <strong>(current)</strong>' : '';
+                return `${_sanitize(location.name)}${state} ${GameAssist.createButton('Edit', `!aa-location edit --id ${location.id}`)}`;
+            }).join('<br>');
+        }
+
+        function showLocationEditor(msg, requested) {
+            if (!requireGm(msg)) return;
+            const world = normalizeWorldConfig();
+            const location = worldItem(world.locations, requested);
+            if (!location) return sendPanel(msg, 'Location Needs Attention', [{ label: 'Problem', value: 'That location was not found.' }, { label: 'Next Step', value: GameAssist.createButton('Manage Locations', '!aa-location manage') }]);
+            const prepared = world.preparedDestinationIds.includes(location.id);
+            sendPanel(msg, `Edit Location: ${location.name}`, [
+                { label: 'World Context', value: `Region ${_sanitize(location.regionId)} | Ecoregion ${_sanitize(location.ecoregionId)} | Geography ${_sanitize(location.geographyId)} | Biome ${_sanitize(location.biomeId)}` },
+                { label: 'Local Context', value: `Environment ${_sanitize(location.environmentPresetId)} | Time ${_sanitize(location.temporalContextId)} | Temperature ${location.temperatureDeltaF >= 0 ? '+' : ''}${location.temperatureDeltaF} F | Wind ${location.windDeltaMph >= 0 ? '+' : ''}${location.windDeltaMph} mph` },
+                { label: 'Basic Details', value: GameAssist.createButton('Edit Name and Context', `!aa-location edit --id ${location.id} --name "?{Location name|${location.name}}" --region "?{Climate region id|${location.regionId}}" --ecoregion "?{Ecoregion id|${location.ecoregionId}}" --geography "?{Geography id|${location.geographyId}}" --biome "?{Biome id|${location.biomeId}}" --environment ?{Default environment|Clear,clear|Blizzard,blizzard|Desert Terrain,desert|Swamp,swamp|Underwater,underwater} --temporal "?{Temporal context id|${location.temporalContextId}}"`) },
+                { label: 'Scene Modifiers', value: GameAssist.createButton('Edit Local Modifiers', `!aa-location local --id ${location.id} --temperature ?{Temperature adjustment F|${location.temperatureDeltaF}} --wind ?{Wind adjustment mph|${location.windDeltaMph}} --visibility "?{Visibility override; blank follows resolved context|${location.visibilityOverride}}" --ground "?{Ground override; blank follows resolved context|${location.groundOverride}}"`) },
+                { label: 'Map Pages and Notes', value: GameAssist.createButton('Edit Associations', `!aa-location associations --id ${location.id} --pages "?{Comma-separated Roll20 page ids|${location.pageIds.join(',')}}" --notes "?{Private GM notes|${location.notes}}"`) },
+                { label: 'Lists', value: `${GameAssist.createButton(prepared ? 'Remove from Prepared' : 'Add to Prepared', `!aa-location prepare --id ${location.id}`)} ${GameAssist.createButton(location.favorite ? 'Remove Favorite' : 'Mark Favorite', `!aa-location favorite --id ${location.id}`)}` },
+                { label: 'Remove', value: location.id === world.activeLocationId ? 'The current location cannot be removed.' : GameAssist.createButton('Remove Location', `!aa-location remove --id ${location.id} --confirm ?{Remove ${location.name}? Other world definitions are preserved.|No,no|Yes,yes}`) },
+                { label: 'Return', value: `${GameAssist.createButton('Manage Locations', '!aa-location manage')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function showLocationPreview(msg, requested) {
+            if (!requireGm(msg)) return;
+            const world = normalizeWorldConfig();
+            const location = worldItem(world.locations, requested);
+            if (!location) return sendPanel(msg, 'Location Needs Attention', [{ label: 'Problem', value: 'That location was not found.' }, { label: 'Next Step', value: GameAssist.createButton('Locations', '!aa-location') }]);
+            const current = resolveScene();
+            const destination = resolveScene(location.id);
+            const timeChange = destination.temporalContext.context.id === current.temporalContext.context.id
+                ? 'Local time uses the same temporal context.'
+                : `${current.temporalContext.context.name}: ${current.time ? displayMoment(current.time) : 'unavailable'}<br>${destination.temporalContext.context.name}: ${destination.time ? displayMoment(destination.time) : 'unavailable'}<br>The base fictional chronology is not rewritten.`;
+            const weatherPolicy = ensureAlmanacRuntime().weather.locked
+                ? 'Locked weather is preserved and may need GM review after arrival.'
+                : 'Unlocked generated weather is refreshed for the destination; manual scene overrides remain explicit.';
+            sendPanel(msg, 'Preview Location Change', [
+                { label: 'Move', value: `${scenePath(current)}<br>&darr;<br>${scenePath(destination)}` },
+                { label: 'Local Time', value: _sanitize(timeChange).replace(/&lt;br&gt;/g, '<br>') },
+                { label: 'Weather', value: weatherPolicy },
+                { label: 'Destination Scene', value: `${_sanitize(descriptiveTemperature(destination.scene.temperatureF))} | ${_sanitize(destination.scene.terrain)} | ${_sanitize(destination.scene.ground)}` },
+                { label: 'Actions', value: `${GameAssist.createButton('Move Party', `!aa-location use --id ${location.id} --confirm yes`)} ${GameAssist.createButton('Cancel', '!aa-location')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function showLocations(msg, manage = false) {
+            if (!requireGm(msg)) return;
+            const world = normalizeWorldConfig();
+            const current = worldItem(world.locations, world.activeLocationId);
+            const prepared = world.preparedDestinationIds.map(id => worldItem(world.locations, id)).filter(Boolean);
+            const recent = world.recentLocationIds.map(id => worldItem(world.locations, id)).filter(Boolean);
+            const favorites = world.locations.filter(location => location.favorite);
+            const prioritized = new Set([world.activeLocationId, ...world.preparedDestinationIds, ...favorites.map(location => location.id), ...recent.map(location => location.id)]);
+            const nearby = world.locations.filter(location => location.ecoregionId === current?.ecoregionId && !prioritized.has(location.id));
+            const fields = [
+                { label: 'Current Location', value: _sanitize(current?.name || 'Unassigned') },
+                { label: 'Prepared Destinations', value: prepared.length ? locationChoiceRows(prepared, world.activeLocationId) : 'None prepared.' },
+                { label: 'Favorites', value: favorites.length ? locationChoiceRows(favorites, world.activeLocationId) : 'None marked.' },
+                { label: 'Recent', value: recent.length ? locationChoiceRows(recent, world.activeLocationId) : 'No recent locations.' },
+                { label: 'Nearby', value: nearby.length ? locationChoiceRows(nearby, world.activeLocationId) : 'No additional locations share the current ecoregion.' }
+            ];
+            if (manage) {
+                fields.push(
+                    { label: 'All Locations', value: locationManagementRows(world.locations, world.activeLocationId) },
+                    { label: 'Add Location', value: GameAssist.createButton('Create Location', '!aa-location add --name "?{Location name}" --region "?{Climate region id|home}" --ecoregion "?{Ecoregion id|lowland-mosaic}" --geography "?{Geography id|rolling-lowlands}" --biome "?{Biome id|temperate-woodland}" --environment ?{Default environment|Clear,clear|Blizzard,blizzard|Desert Terrain,desert|Swamp,swamp|Underwater,underwater}') },
+                    { label: 'Manage', value: `${GameAssist.createButton('Prepared List', '!aa-location prepared')} ${GameAssist.createButton('World Setup', '!aa-world')}` }
+                );
+            } else {
+                fields.push({ label: 'More', value: GameAssist.createButton('Manage Locations', '!aa-location manage') });
+            }
+            fields.push({ label: 'Return', value: GameAssist.createButton('Almanac Home', '!aa-gm') });
+            sendPanel(msg, manage ? 'Manage Locations' : 'Change Location', fields);
+        }
+
+        function handleLocation(msg, content) {
+            const body = content.replace(/^location\s*/i, '').trim();
+            if (!body || /^(menu|gm|dm|status)$/i.test(body)) return showLocations(msg, false);
+            if (!requireGm(msg)) return;
+            const lower = body.toLowerCase();
+            if (lower === 'manage' || lower === 'all') return showLocations(msg, true);
+            const args = _parseArgs(body).args;
+            if (/^preview\b/i.test(body)) return showLocationPreview(msg, args.id || args.name);
+            if (/^use\b/i.test(body)) {
+                if (String(args.confirm || '').toLowerCase() !== 'yes') return showLocations(msg, false);
+                const result = commitLocation(msg, args.id || args.name);
+                if (!result.ok) return sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: GameAssist.createButton('Locations', '!aa-location') }]);
+                return showScene(msg);
+            }
+            if (/^add\b/i.test(body)) {
+                const world = normalizeWorldConfig();
+                if (world.locations.length >= POLICY.almanac.maximumLocations) return sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: `The location limit of ${POLICY.almanac.maximumLocations} has been reached.` }]);
+                const name = boundedName(args.name);
+                if (!name) return sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: 'Enter a location name.' }]);
+                const baseId = name.replace(/[^A-Za-z0-9_]+/g, '-').replace(/^-+|-+$/g, '') || `location-${world.locations.length + 1}`;
+                let id = baseId;
+                let suffix = 2;
+                while (worldItem(world.locations, id)) id = `${baseId}-${suffix++}`;
+                world.locations.push({
+                    id,
+                    name,
+                    regionId: climateRegion(args.region)?.id || normalizeClimateConfig().activeRegionId,
+                    ecoregionId: worldItem(world.ecoregions, args.ecoregion)?.id || world.ecoregions[0].id,
+                    geographyId: worldItem(world.geographies, args.geography)?.id || world.geographies[0].id,
+                    biomeId: worldItem(world.biomes, args.biome)?.id || world.biomes[0].id,
+                    environmentPresetId: Object.prototype.hasOwnProperty.call(ENVIRONMENT_PRESETS, String(args.environment || '').toLowerCase()) ? String(args.environment).toLowerCase() : 'clear',
+                    temporalContextId: temporalContext(args.temporal).id,
+                    favorite: false,
+                    notes: '',
+                    pageIds: [],
+                    temperatureDeltaF: 0,
+                    windDeltaMph: 0,
+                    visibilityOverride: '',
+                    groundOverride: '',
+                    packId: null,
+                    sourceId: null
+                });
+                ensureAlmanacRuntime().world.revision++;
+                return showLocations(msg, true);
+            }
+            if (/^edit\b/i.test(body)) {
+                const world = normalizeWorldConfig();
+                const location = worldItem(world.locations, args.id || args.name);
+                if (!location) return showLocationEditor(msg, args.id || args.name);
+                const hasChanges = ['name', 'region', 'ecoregion', 'geography', 'biome', 'environment', 'temporal'].some(key => args[key] !== undefined);
+                if (!hasChanges) return showLocationEditor(msg, location.id);
+                const region = climateRegion(args.region);
+                const ecoregion = worldItem(world.ecoregions, args.ecoregion);
+                const geography = worldItem(world.geographies, args.geography);
+                const biome = worldItem(world.biomes, args.biome);
+                const context = worldItem(normalizeTemporalContexts(), args.temporal);
+                const environment = String(args.environment || '').toLowerCase();
+                if (!boundedName(args.name) || !region || !ecoregion || !geography || !biome || !context || !Object.prototype.hasOwnProperty.call(ENVIRONMENT_PRESETS, environment)) {
+                    return sendPanel(msg, 'Location Needs Attention', [{ label: 'Problem', value: 'Choose an existing region, ecoregion, geography, biome, environment, and temporal context. The location was not partially changed.' }, { label: 'Next Step', value: GameAssist.createButton('Edit Location', `!aa-location edit --id ${location.id}`) }]);
+                }
+                Object.assign(location, { name: boundedName(args.name), regionId: region.id, ecoregionId: ecoregion.id, geographyId: geography.id, biomeId: biome.id, environmentPresetId: environment, temporalContextId: context.id });
+                ensureAlmanacRuntime().world.revision++;
+                if (location.id === world.activeLocationId) {
+                    normalizeClimateConfig().activeRegionId = region.id;
+                    regenerateWeatherForLocation(msg);
+                }
+                return showLocationEditor(msg, location.id);
+            }
+            if (/^local\b/i.test(body)) {
+                const world = normalizeWorldConfig();
+                const location = worldItem(world.locations, args.id);
+                if (!location) return showLocationEditor(msg, args.id);
+                Object.assign(location, {
+                    temperatureDeltaF: Math.round(clampNumber(args.temperature, -100, 100, location.temperatureDeltaF)),
+                    windDeltaMph: Math.round(clampNumber(args.wind, -100, 100, location.windDeltaMph)),
+                    visibilityOverride: boundedWorldText(args.visibility, ''),
+                    groundOverride: boundedWorldText(args.ground, '')
+                });
+                ensureAlmanacRuntime().world.revision++;
+                return showLocationEditor(msg, location.id);
+            }
+            if (/^associations\b/i.test(body)) {
+                const world = normalizeWorldConfig();
+                const location = worldItem(world.locations, args.id);
+                if (!location) return showLocationEditor(msg, args.id);
+                location.pageIds = [...new Set(String(args.pages || '').split(',').map(value => boundedWorldId(value.trim(), null)).filter(Boolean))].slice(0, POLICY.almanac.maximumPageAssociations);
+                location.notes = boundedWorldText(args.notes, '');
+                ensureAlmanacRuntime().world.revision++;
+                return showLocationEditor(msg, location.id);
+            }
+            if (/^remove\b/i.test(body)) {
+                const world = normalizeWorldConfig();
+                const location = worldItem(world.locations, args.id);
+                if (!location || location.id === world.activeLocationId || String(args.confirm || '').toLowerCase() !== 'yes') return showLocations(msg, true);
+                world.locations = world.locations.filter(item => item.id !== location.id);
+                world.preparedDestinationIds = world.preparedDestinationIds.filter(id => id !== location.id);
+                world.recentLocationIds = world.recentLocationIds.filter(id => id !== location.id);
+                world.phenomena.forEach(item => { if (item.locationId === location.id) item.locationId = null; });
+                ensureAlmanacRuntime().world.revision++;
+                return showLocations(msg, true);
+            }
+            if (/^(prepare|favorite)\b/i.test(body)) {
+                const world = normalizeWorldConfig();
+                const location = worldItem(world.locations, args.id || args.name);
+                if (!location) return sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: 'That location was not found.' }]);
+                if (/^prepare/i.test(body)) {
+                    world.preparedDestinationIds = world.preparedDestinationIds.includes(location.id)
+                        ? world.preparedDestinationIds.filter(id => id !== location.id)
+                        : [...world.preparedDestinationIds, location.id].slice(0, POLICY.almanac.maximumPreparedDestinations);
+                } else location.favorite = !location.favorite;
+                ensureAlmanacRuntime().world.revision++;
+                return showLocations(msg, true);
+            }
+            sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: 'That location command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Locations', '!aa-location') }]);
+        }
+
+        function showTravel(msg) {
+            if (!requireGm(msg)) return;
+            const runtime = ensureAlmanacRuntime();
+            const world = normalizeWorldConfig();
+            const active = runtime.world.travel;
+            if (active) {
+                const destination = worldItem(world.locations, active.toLocationId);
+                const remaining = Math.max(0, active.plannedHours - active.travelledHours);
+                return sendPanel(msg, 'Travel in Progress', [
+                    { label: 'Journey', value: `${_sanitize(active.fromName)} &rarr; ${_sanitize(destination?.name || active.toName)}` },
+                    { label: 'Progress', value: `${active.travelledHours} of ${active.plannedHours} hours | ${remaining} remaining | ${_sanitize(active.pace)} pace` },
+                    { label: 'Continue', value: `${GameAssist.createButton('Travel 1 Hour', '!aa-travel advance --hours 1')} ${GameAssist.createButton('Travel 4 Hours', '!aa-travel advance --hours 4')} ${GameAssist.createButton('Travel Remaining', `!aa-travel advance --hours ${remaining}`)}` },
+                    { label: 'Actions', value: `${GameAssist.createButton('Arrive Now', '!aa-travel complete --confirm ?{Complete this journey and move to the destination?|No,no|Yes,yes}')} ${GameAssist.createButton('Cancel Journey', '!aa-travel cancel --confirm ?{Cancel this journey without moving the party?|No,no|Yes,yes}')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                ]);
+            }
+            const destinations = world.preparedDestinationIds.map(id => worldItem(world.locations, id)).filter(location => location && location.id !== world.activeLocationId);
+            sendPanel(msg, 'Start Travel', [
+                { label: 'From', value: _sanitize(worldItem(world.locations, world.activeLocationId)?.name || 'Current location') },
+                { label: 'Prepared Destinations', value: destinations.length ? destinations.map(location => GameAssist.createButton(location.name, `!aa-travel preview --to ${location.id} --hours ?{Expected travel hours|8} --pace ?{Pace|Normal,normal|Slow,slow|Fast,fast}`)).join(' ') : 'Prepare another location before starting travel.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Locations', '!aa-location manage')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function showTravelPreview(msg, destination, hours, pace) {
+            const world = normalizeWorldConfig();
+            const origin = worldItem(world.locations, world.activeLocationId);
+            const fromScene = resolveScene(origin.id);
+            const toScene = resolveScene(destination.id);
+            const temporal = fromScene.temporalContext.context.id === toScene.temporalContext.context.id
+                ? `${_sanitize(toScene.temporalContext.context.name)}; no context-rate change.`
+                : `${_sanitize(fromScene.temporalContext.context.name)} local display: ${_sanitize(displayMoment(fromScene.time))}<br>${_sanitize(toScene.temporalContext.context.name)} arrival-context display before travel elapses: ${_sanitize(displayMoment(toScene.time))}<br>The base fictional chronology remains authoritative.`;
+            sendPanel(msg, 'Review Journey', [
+                { label: 'Route', value: `${_sanitize(origin.name)} &rarr; ${_sanitize(destination.name)}` },
+                { label: 'Plan', value: `${hours} hour${hours === 1 ? '' : 's'} | ${_sanitize(pace)} pace` },
+                { label: 'Destination', value: `${scenePath(toScene)}<br>${_sanitize(descriptiveTemperature(toScene.scene.temperatureF))} | ${_sanitize(toScene.scene.terrain)} | ${_sanitize(toScene.scene.ground)}` },
+                { label: 'Temporal Context', value: temporal },
+                { label: 'Chronology', value: timeAvailable() ? 'Accepted progress advances the one authoritative fictional chronology.' : 'TimeAlmanac is off. Journey progress can still be recorded, but fictional time will not advance.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Start Journey', `!aa-travel start --to ${destination.id} --hours ${hours} --pace ${pace} --confirm yes`)} ${GameAssist.createButton('Cancel', '!aa-travel')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function finishTravel(msg, reason) {
+            const runtime = ensureAlmanacRuntime();
+            const travel = runtime.world.travel;
+            if (!travel) return { ok: false, message: 'No journey is active.' };
+            const result = commitLocation(msg, travel.toLocationId);
+            if (!result.ok) return result;
+            const completed = { ...copy(travel), completedAtWorldMinute: runtime.time.worldMinute, reason };
+            runtime.world.travelHistory.push(completed);
+            if (runtime.world.travelHistory.length > POLICY.almanac.travelHistoryLimit) runtime.world.travelHistory.shift();
+            runtime.world.travel = null;
+            publishChange('almanac.travel.completed', travel, completed, { reason }, msg);
+            return { ok: true, scene: result.scene };
+        }
+
+        function handleTravel(msg, content) {
+            const body = content.replace(/^travel\s*/i, '').trim();
+            if (!body || /^(menu|gm|dm|status)$/i.test(body)) return showTravel(msg);
+            if (!requireGm(msg)) return;
+            const runtime = ensureAlmanacRuntime();
+            const world = normalizeWorldConfig();
+            const args = _parseArgs(body).args;
+            if (/^preview\b/i.test(body)) {
+                if (runtime.world.travel) return showTravel(msg);
+                const destination = worldItem(world.locations, args.to);
+                const origin = worldItem(world.locations, world.activeLocationId);
+                const hours = Math.round(clampNumber(args.hours, 1, POLICY.almanac.maximumRestHours, 8));
+                const pace = ['slow', 'normal', 'fast'].includes(String(args.pace || '').toLowerCase()) ? String(args.pace).toLowerCase() : 'normal';
+                if (!destination || destination.id === origin?.id) return sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: 'Choose a prepared destination other than the current location.' }, { label: 'Next Step', value: GameAssist.createButton('Travel', '!aa-travel') }]);
+                return showTravelPreview(msg, destination, hours, pace);
+            }
+            if (/^start\b/i.test(body)) {
+                if (runtime.world.travel) return showTravel(msg);
+                const destination = worldItem(world.locations, args.to);
+                const origin = worldItem(world.locations, world.activeLocationId);
+                const hours = Math.round(clampNumber(args.hours, 1, POLICY.almanac.maximumRestHours, 8));
+                if (!destination || destination.id === origin?.id) return sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: 'Choose a prepared destination other than the current location.' }]);
+                if (String(args.confirm || '').toLowerCase() !== 'yes') return showTravelPreview(msg, destination, hours, ['slow', 'normal', 'fast'].includes(String(args.pace || '').toLowerCase()) ? String(args.pace).toLowerCase() : 'normal');
+                runtime.world.travel = {
+                    id: `travel-${Date.now().toString(36)}-${randomInteger(9999)}`,
+                    fromLocationId: origin.id,
+                    fromName: origin.name,
+                    toLocationId: destination.id,
+                    toName: destination.name,
+                    pace: ['slow', 'normal', 'fast'].includes(String(args.pace || '').toLowerCase()) ? String(args.pace).toLowerCase() : 'normal',
+                    plannedHours: hours,
+                    travelledHours: 0,
+                    startedAtWorldMinute: runtime.time.worldMinute,
+                    startedAt: isoNow()
+                };
+                publishChange('almanac.travel.started', null, runtime.world.travel, { destinationId: destination.id }, msg);
+                return showTravel(msg);
+            }
+            if (/^advance\b/i.test(body)) {
+                const travel = runtime.world.travel;
+                if (!travel) return showTravel(msg);
+                const remaining = Math.max(0, travel.plannedHours - travel.travelledHours);
+                const hours = Math.min(remaining, Math.round(clampNumber(args.hours, 1, POLICY.almanac.maximumRestHours, 1)));
+                if (hours > 0 && timeAvailable()) {
+                    const minutes = hours * calendarMinutesPerHour(profileFor());
+                    const timeResult = commitWorldMinute(runtime.time.worldMinute + minutes, `Travel advanced ${hours} hour${hours === 1 ? '' : 's'}`, msg);
+                    if (!timeResult.ok) return sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: _sanitize(timeResult.message) }, { label: 'Changes', value: 'Journey progress and fictional time were preserved.' }]);
+                }
+                travel.travelledHours += hours;
+                publishChange('almanac.travel.progressed', null, travel, { hours }, msg);
+                if (travel.travelledHours >= travel.plannedHours) {
+                    const result = finishTravel(msg, 'Planned travel completed');
+                    if (!result.ok) return sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }]);
+                    return showScene(msg);
+                }
+                return showTravel(msg);
+            }
+            if (/^complete\b/i.test(body)) {
+                if (String(args.confirm || '').toLowerCase() !== 'yes') return showTravel(msg);
+                const result = finishTravel(msg, 'GM completed the journey');
+                if (!result.ok) return sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }]);
+                return showScene(msg);
+            }
+            if (/^cancel\b/i.test(body)) {
+                if (String(args.confirm || '').toLowerCase() !== 'yes') return showTravel(msg);
+                const previous = runtime.world.travel;
+                runtime.world.travel = null;
+                if (previous) publishChange('almanac.travel.cancelled', previous, null, { reason: 'GM cancelled journey' }, msg);
+                return showTravel(msg);
+            }
+            sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: 'That travel command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Travel', '!aa-travel') }]);
+        }
+
+        function showPhenomena(msg) {
+            if (!requireGm(msg)) return;
+            const scene = resolveScene();
+            const world = normalizeWorldConfig();
+            const rows = world.phenomena.length
+                ? world.phenomena.map(item => {
+                    const active = scene.phenomena.some(candidate => candidate.id === item.id);
+                    return `${active ? '<strong>Active:</strong> ' : ''}${_sanitize(item.name)} [${_sanitize(item.id)}] - ${_sanitize(item.description)} ${GameAssist.createButton('Edit', `!aa-phenomena edit --id ${item.id}`)} ${GameAssist.createButton(active ? 'End' : 'Begin', `!aa-phenomena ${active ? 'end' : 'begin'} --id ${item.id}`)} ${GameAssist.createButton('Remove', `!aa-phenomena remove --id ${item.id} --confirm ?{Remove ${item.name}?|No,no|Yes,yes}`)}`;
+                }).join('<br>')
+                : 'No phenomena configured.';
+            sendPanel(msg, 'World Phenomena', [
+                { label: 'Configured', value: rows },
+                { label: 'Add', value: GameAssist.createButton('Add Phenomenon', '!aa-phenomena add --name "?{Name}" --description "?{Description}" --location "?{Location id; blank means any|}" --severity ?{Severity 0-5|1} --temperature ?{Temperature change F|0} --precipitation "?{Precipitation override; blank means none|}" --visibility "?{Visibility override; blank means none|}" --ground "?{Ground override; blank means none|}"') },
+                { label: 'Return', value: `${GameAssist.createButton('World Setup', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function handlePhenomena(msg, content) {
+            const body = content.replace(/^phenomena\s*/i, '').trim();
+            if (!body || /^(menu|gm|dm|status)$/i.test(body)) return showPhenomena(msg);
+            if (!requireGm(msg)) return;
+            const args = _parseArgs(body).args;
+            const world = normalizeWorldConfig();
+            if (/^add\b/i.test(body)) {
+                if (world.phenomena.length >= POLICY.almanac.maximumPhenomena) return sendPanel(msg, 'Phenomena Needs Attention', [{ label: 'Problem', value: `The phenomenon limit of ${POLICY.almanac.maximumPhenomena} has been reached.` }]);
+                const name = boundedName(args.name);
+                if (!name) return sendPanel(msg, 'Phenomena Needs Attention', [{ label: 'Problem', value: 'Enter a phenomenon name.' }]);
+                const baseId = name.replace(/[^A-Za-z0-9_]+/g, '-').replace(/^-+|-+$/g, '') || `phenomenon-${world.phenomena.length + 1}`;
+                let id = baseId;
+                let suffix = 2;
+                while (worldItem(world.phenomena, id)) id = `${baseId}-${suffix++}`;
+                world.phenomena.push({
+                    id,
+                    name,
+                    description: boundedWorldText(args.description, 'Extraordinary world condition'),
+                    locationId: worldItem(world.locations, args.location)?.id || null,
+                    regionId: args.region ? (climateRegion(args.region)?.id || null) : null,
+                    startWorldMinute: ensureAlmanacRuntime().time.worldMinute,
+                    endWorldMinute: null,
+                    enabled: true,
+                    severity: Math.round(clampNumber(args.severity, 0, 5, 1)),
+                    temperatureDeltaF: Math.round(clampNumber(args.temperature, -100, 100, 0)),
+                    precipitation: boundedWorldText(args.precipitation, ''),
+                    visibility: boundedWorldText(args.visibility, ''),
+                    ground: boundedWorldText(args.ground, ''),
+                    tags: normalizeClimateTags(String(args.tags || '').split(',').filter(Boolean))
+                });
+                ensureAlmanacRuntime().world.revision++;
+                return showPhenomena(msg);
+            }
+            if (/^edit\b/i.test(body)) {
+                const item = worldItem(world.phenomena, args.id);
+                if (!item) return sendPanel(msg, 'Phenomena Needs Attention', [{ label: 'Problem', value: 'That phenomenon was not found.' }]);
+                if (args.name === undefined) return sendPanel(msg, `Edit Phenomenon: ${item.name}`, [
+                    { label: 'Current', value: `${_sanitize(item.description)} | severity ${item.severity}` },
+                    { label: 'Edit', value: GameAssist.createButton('Edit Details', `!aa-phenomena edit --id ${item.id} --name "?{Name|${item.name}}" --description "?{Description|${item.description}}" --location "?{Location id; blank means any|${item.locationId || ''}}" --region "?{Region id; blank means any|${item.regionId || ''}}" --severity ?{Severity 0-5|${item.severity}} --temperature ?{Temperature change F|${item.temperatureDeltaF}} --precipitation "?{Precipitation override; blank means none|${item.precipitation}}" --visibility "?{Visibility override; blank means none|${item.visibility}}" --ground "?{Ground override; blank means none|${item.ground}}" --tags "?{Comma-separated tags|${item.tags.join(',')}}"`) },
+                    { label: 'Return', value: `${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                ]);
+                const name = boundedName(args.name);
+                if (!name) return sendPanel(msg, 'Phenomena Needs Attention', [{ label: 'Problem', value: 'Enter a phenomenon name. Nothing was changed.' }]);
+                Object.assign(item, {
+                    name,
+                    description: boundedWorldText(args.description, item.description),
+                    locationId: worldItem(world.locations, args.location)?.id || null,
+                    regionId: args.region ? (climateRegion(args.region)?.id || null) : null,
+                    severity: Math.round(clampNumber(args.severity, 0, 5, item.severity)),
+                    temperatureDeltaF: Math.round(clampNumber(args.temperature, -100, 100, item.temperatureDeltaF)),
+                    precipitation: boundedWorldText(args.precipitation, ''),
+                    visibility: boundedWorldText(args.visibility, ''),
+                    ground: boundedWorldText(args.ground, ''),
+                    tags: normalizeClimateTags(String(args.tags || '').split(',').map(tag => tag.trim()).filter(Boolean))
+                });
+                ensureAlmanacRuntime().world.revision++;
+                return showPhenomena(msg);
+            }
+            if (/^(begin|end)\b/i.test(body)) {
+                const item = worldItem(world.phenomena, args.id);
+                if (!item) return sendPanel(msg, 'Phenomena Needs Attention', [{ label: 'Problem', value: 'That phenomenon was not found.' }]);
+                if (/^begin/i.test(body)) {
+                    item.startWorldMinute = ensureAlmanacRuntime().time.worldMinute;
+                    item.endWorldMinute = null;
+                    item.enabled = true;
+                } else {
+                    item.endWorldMinute = ensureAlmanacRuntime().time.worldMinute;
+                    item.enabled = false;
+                }
+                ensureAlmanacRuntime().world.revision++;
+                return showPhenomena(msg);
+            }
+            if (/^remove\b/i.test(body)) {
+                if (String(args.confirm || '').toLowerCase() !== 'yes') return showPhenomena(msg);
+                const item = worldItem(world.phenomena, args.id || args.name);
+                if (item) world.phenomena = world.phenomena.filter(candidate => candidate.id !== item.id);
+                ensureAlmanacRuntime().world.revision++;
+                return showPhenomena(msg);
+            }
+            sendPanel(msg, 'Phenomena Needs Attention', [{ label: 'Problem', value: 'That phenomena command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Phenomena', '!aa-phenomena') }]);
+        }
+
+        function showTemporalContexts(msg) {
+            if (!requireGm(msg)) return;
+            const contexts = normalizeTemporalContexts();
+            const world = normalizeWorldConfig();
+            const rows = contexts.map(context => {
+                const used = world.locations.filter(location => location.temporalContextId === context.id).length;
+                const rate = context.rateNumerator === context.rateDenominator ? 'normal rate' : `${context.rateNumerator}:${context.rateDenominator} rate`;
+                const edit = context.id === 'material' ? '' : ` ${GameAssist.createButton('Edit', `!aa-temporal edit --id ${context.id} --name "?{Context name|${context.name}}" --rate-numerator ?{Local minutes numerator|${context.rateNumerator}} --rate-denominator ?{Base minutes denominator|${context.rateDenominator}} --offset ?{Local offset in minutes|${context.offsetMinutes}}`)}`;
+                return `<strong>${_sanitize(context.name)}</strong> [${_sanitize(context.id)}] - ${rate}; offset ${context.offsetMinutes} minutes; ${used} location${used === 1 ? '' : 's'}${edit}`;
+            }).join('<br>');
+            sendPanel(msg, 'Temporal Contexts', [
+                { label: 'Contexts', value: rows },
+                { label: 'Add', value: GameAssist.createButton('Add Temporal Context', '!aa-temporal add --name "?{Context name}" --rate-numerator ?{Local minutes numerator|1} --rate-denominator ?{Base minutes denominator|1} --offset ?{Local offset in minutes|0}') },
+                { label: 'Assign', value: GameAssist.createButton('Assign to Location', '!aa-temporal preview --location "?{Location id}" --context "?{Temporal context id|material}"') },
+                { label: 'Remove', value: GameAssist.createButton('Remove Unused Context', '!aa-temporal remove --id "?{Temporal context id}" --confirm ?{Remove this unused temporal context?|No,no|Yes,yes}') },
+                { label: 'Important', value: 'Temporal contexts change local scene display only. The one base fictional chronology remains authoritative, and no rest, effect, combat, NPC history, or character resource is reversed automatically.' },
+                { label: 'Return', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function handleTemporalContexts(msg, content) {
+            const body = content.replace(/^temporal\s*/i, '').trim();
+            if (!body || /^(menu|gm|dm|status)$/i.test(body)) return showTemporalContexts(msg);
+            if (!requireGm(msg)) return;
+            const args = _parseArgs(body).args;
+            const contexts = normalizeTemporalContexts();
+            const world = normalizeWorldConfig();
+            if (/^preview\b/i.test(body)) {
+                const location = worldItem(world.locations, args.location);
+                const context = worldItem(contexts, args.context);
+                if (!location || !context) return sendPanel(msg, 'Temporal Contexts Need Attention', [{ label: 'Problem', value: 'Choose one existing location and temporal context.' }, { label: 'Next Step', value: GameAssist.createButton('Temporal Contexts', '!aa-temporal') }]);
+                const before = resolveScene(location.id);
+                const originalWorld = copy(modState.config.world);
+                let after;
+                try {
+                    location.temporalContextId = context.id;
+                    after = resolveScene(location.id);
+                } finally {
+                    // Preview must restore the complete definition graph because resolution normalizes and replaces that graph.
+                    modState.config.world = originalWorld;
+                }
+                return sendPanel(msg, 'Preview Temporal Assignment', [
+                    { label: 'Location', value: _sanitize(location.name) },
+                    { label: 'Before', value: `${_sanitize(before.temporalContext.context.name)} | ${_sanitize(displayMoment(before.time))}` },
+                    { label: 'After', value: `${_sanitize(after.temporalContext.context.name)} | ${_sanitize(displayMoment(after.time))}` },
+                    { label: 'Unchanged', value: 'The base fictional chronology, rests, effects, combat, NPC history, and character resources are not rewritten.' },
+                    { label: 'Actions', value: `${GameAssist.createButton('Assign Context', `!aa-temporal assign --location ${location.id} --context ${context.id} --confirm yes`)} ${GameAssist.createButton('Cancel', '!aa-temporal')}` }
+                ]);
+            }
+            if (/^add\b/i.test(body)) {
+                if (contexts.length >= POLICY.almanac.maximumTemporalContexts) return sendPanel(msg, 'Temporal Contexts Need Attention', [{ label: 'Problem', value: `The temporal-context limit of ${POLICY.almanac.maximumTemporalContexts} has been reached.` }]);
+                const name = boundedName(args.name);
+                if (!name) return sendPanel(msg, 'Temporal Contexts Need Attention', [{ label: 'Problem', value: 'Enter a context name.' }]);
+                const numerator = Number(args['rate-numerator']);
+                const denominator = Number(args['rate-denominator']);
+                const offset = Number(args.offset);
+                if (![numerator, denominator, offset].every(Number.isFinite) || numerator < 1 || numerator > 100 || denominator < 1 || denominator > 100) {
+                    return sendPanel(msg, 'Temporal Contexts Need Attention', [{ label: 'Problem', value: 'Rate numerator and denominator must be 1-100, and offset must be a number.' }]);
+                }
+                const baseId = name.replace(/[^A-Za-z0-9_]+/g, '-').replace(/^-+|-+$/g, '') || `temporal-${contexts.length + 1}`;
+                let id = baseId;
+                let suffix = 2;
+                while (worldItem(contexts, id)) id = `${baseId}-${suffix++}`;
+                contexts.push({ id, name, rateNumerator: Math.round(numerator), rateDenominator: Math.round(denominator), offsetMinutes: Math.round(offset) });
+                modState.config.temporalContexts = contexts;
+                ensureAlmanacRuntime().world.revision++;
+                return showTemporalContexts(msg);
+            }
+            if (/^edit\b/i.test(body)) {
+                const context = worldItem(contexts, args.id);
+                if (!context || context.id === 'material') return sendPanel(msg, 'Temporal Contexts Need Attention', [{ label: 'Problem', value: 'Choose an editable temporal context. Material Time is the fixed base chronology.' }, { label: 'Changes', value: 'None.' }]);
+                const name = boundedName(args.name);
+                const numerator = Number(args['rate-numerator']);
+                const denominator = Number(args['rate-denominator']);
+                const offset = Number(args.offset);
+                if (!name || ![numerator, denominator, offset].every(Number.isFinite) || numerator < 1 || numerator > 100 || denominator < 1 || denominator > 100) {
+                    return sendPanel(msg, 'Temporal Contexts Need Attention', [{ label: 'Problem', value: 'Enter a name, rate numerator and denominator from 1-100, and a numeric offset. Nothing was changed.' }]);
+                }
+                Object.assign(context, { name, rateNumerator: Math.round(numerator), rateDenominator: Math.round(denominator), offsetMinutes: Math.round(clampNumber(offset, -POLICY.almanac.maximumAdvanceDays * 1440, POLICY.almanac.maximumAdvanceDays * 1440, 0)) });
+                ensureAlmanacRuntime().world.revision++;
+                return showTemporalContexts(msg);
+            }
+            if (/^assign\b/i.test(body)) {
+                const location = worldItem(world.locations, args.location);
+                const context = worldItem(contexts, args.context);
+                if (!location || !context) return sendPanel(msg, 'Temporal Contexts Need Attention', [{ label: 'Problem', value: 'Choose one existing location and temporal context.' }]);
+                if (String(args.confirm || '').toLowerCase() !== 'yes') return handleTemporalContexts(msg, `temporal preview --location ${location.id} --context ${context.id}`);
+                location.temporalContextId = context.id;
+                ensureAlmanacRuntime().world.revision++;
+                return showTemporalContexts(msg);
+            }
+            if (/^remove\b/i.test(body)) {
+                if (String(args.confirm || '').toLowerCase() !== 'yes') return showTemporalContexts(msg);
+                const context = worldItem(contexts, args.id);
+                if (!context || context.id === 'material') return sendPanel(msg, 'Temporal Contexts Need Attention', [{ label: 'Problem', value: 'Material Time is the required fallback and cannot be removed.' }]);
+                if (world.locations.some(location => location.temporalContextId === context.id)) return sendPanel(msg, 'Temporal Contexts Need Attention', [{ label: 'Problem', value: 'That context is still assigned to a location. Reassign those locations first.' }]);
+                modState.config.temporalContexts = contexts.filter(item => item.id !== context.id);
+                ensureAlmanacRuntime().world.revision++;
+                return showTemporalContexts(msg);
+            }
+            sendPanel(msg, 'Temporal Contexts Need Attention', [{ label: 'Problem', value: 'That temporal-context command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Temporal Contexts', '!aa-temporal') }]);
+        }
+
+        function worldPackFingerprint(text) {
+            let hash = 2166136261;
+            for (let index = 0; index < text.length; index++) {
+                hash ^= text.charCodeAt(index);
+                hash = Math.imul(hash, 16777619);
+            }
+            return (hash >>> 0).toString(16).padStart(8, '0');
+        }
+
+        function worldPackObjectStats(value, depth = 0, seen = new Set()) {
+            if (depth > POLICY.almanac.maximumWorldPackDepth) return { ok: false, count: seen.size, message: `WorldPack nesting may not exceed ${POLICY.almanac.maximumWorldPackDepth} levels.` };
+            if (!value || typeof value !== 'object') return { ok: true, count: seen.size };
+            if (seen.has(value)) return { ok: false, count: seen.size, message: 'WorldPack data may not contain circular references.' };
+            seen.add(value);
+            if (seen.size > POLICY.almanac.maximumWorldPackObjects) return { ok: false, count: seen.size, message: `WorldPack data may not contain more than ${POLICY.almanac.maximumWorldPackObjects} objects and arrays.` };
+            for (const [key, child] of Object.entries(value)) {
+                if (POLICY.config.unsafeKeys.includes(key)) return { ok: false, count: seen.size, message: `WorldPack key "${key}" is not allowed.` };
+                const result = worldPackObjectStats(child, depth + 1, seen);
+                if (!result.ok) return result;
+            }
+            return { ok: true, count: seen.size };
+        }
+
+        function worldPackPayload({ blank = false } = {}) {
+            const packName = blank ? 'New Almanac WorldPack' : 'Campaign Almanac WorldPack';
+            const packId = blank ? 'new-worldpack' : 'campaign-world';
+            return {
+                format: 'gameassist-almanac-worldpack',
+                schemaVersion: WORLDPACK_SCHEMA_VERSION,
+                pack: { id: packId, name: packName, version: 'worldpack-v1', description: blank ? 'Edit this bounded template, then preview it from AlmanacAssist.' : 'Exported campaign world definitions.' },
+                data: {
+                    wayfarer: blank ? copy(DEFAULT_WAYFARER) : copy(modState.config.wayfarer),
+                    climate: blank ? {
+                        activeRegionId: 'home', manualSeason: 'Spring', profileOverrides: {}, customProfiles: [],
+                        regions: [{ id: 'home', name: 'Temperate Lowlands', parentId: null, profileId: 'temperate', overrides: {} }]
+                    } : copy(normalizeClimateConfig()),
+                    astronomy: blank ? { manualAbsoluteDay: 0, manualSeason: 'Spring', moons: copy(DEFAULT_MOONS), rareEvents: copy(DEFAULT_RARE_EVENTS) } : copy(normalizeAstronomyConfig()),
+                    weather: blank ? { defaultForecastDays: 3 } : copy(modState.config.weather),
+                    environment: blank ? {} : copy(modState.config.environment),
+                    rest: blank ? { advanceTime: true, extendedEnabled: false, pace: 'standard', shortHours: 1, longHours: 8, extendedHours: 24, customTypes: [] } : copy(normalizeRestConfig()),
+                    world: blank ? copy(DEFAULT_WORLD) : copy(normalizeWorldConfig()),
+                    temporalContexts: blank ? copy(DEFAULT_TEMPORAL_CONTEXTS) : copy(normalizeTemporalContexts())
+                }
+            };
+        }
+
+        function worldPackHandout() {
+            return GameAssist.ownedHandout(MODULE_NAME, 'worldpack', 'GameAssist Almanac WorldPack');
+        }
+
+        function writeWorldPackHandout(payload) {
+            const result = worldPackHandout();
+            if (!result.ok) return result;
+            const json = JSON.stringify(payload, null, 2);
+            result.handout.set('notes', [
+                '<h2>GameAssist Almanac WorldPack</h2>',
+                '<p>Edit only the JSON inside the block. Use AlmanacAssist to preview and validate before importing. This handout never executes code and does not contain runtime chronology, forecasts, histories, grants, or character data.</p>',
+                `<pre>${_sanitize(json)}</pre>`
+            ].join(''));
+            return { ...result, json };
+        }
+
+        function decodeWorldPackNotes(notes) {
+            const raw = String(notes || '');
+            const match = raw.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
+            const encoded = match ? match[1] : raw;
+            return encoded
+                .replace(/<br\s*\/?>/gi, '\n')
+                .replace(/<\/p>/gi, '\n')
+                .replace(/<[^>]+>/g, '')
+                .replace(/&quot;|&#34;/g, '"')
+                .replace(/&#39;|&apos;/g, "'")
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&amp;/g, '&')
+                .replace(/&nbsp;/g, ' ')
+                .trim();
+        }
+
+        function readWorldPackHandout(callback) {
+            const result = worldPackHandout();
+            if (!result.ok) return callback({ ok: false, message: result.message });
+            const finish = notes => callback({ ok: true, result, text: decodeWorldPackNotes(notes) });
+            if (typeof result.handout.get === 'function' && result.handout.get.length >= 2) result.handout.get('notes', finish);
+            else finish(result.handout.get('notes'));
+        }
+
+        function previewNormalizedWorldPack(data) {
+            const previous = {
+                wayfarer: copy(modState.config.wayfarer),
+                climate: copy(modState.config.climate),
+                astronomy: copy(modState.config.astronomy),
+                weather: copy(modState.config.weather),
+                environment: copy(modState.config.environment),
+                rest: copy(modState.config.rest),
+                world: copy(modState.config.world),
+                temporalContexts: copy(modState.config.temporalContexts)
+            };
+            try {
+                const wayfarerInspection = inspectWayfarerDefinition(data.wayfarer);
+                if (!wayfarerInspection.ok) return { ok: false, message: `Wayfarer: ${wayfarerInspection.errors.join(' ')}` };
+                modState.config.wayfarer = wayfarerInspection.definition;
+                modState.config.climate = copy(data.climate);
+                modState.config.astronomy = copy(data.astronomy);
+                modState.config.weather = data.weather && typeof data.weather === 'object' && !Array.isArray(data.weather) ? copy(data.weather) : {};
+                modState.config.environment = data.environment && typeof data.environment === 'object' && !Array.isArray(data.environment) ? copy(data.environment) : {};
+                modState.config.rest = copy(data.rest);
+                modState.config.temporalContexts = copy(data.temporalContexts);
+                modState.config.world = copy(data.world);
+                const normalized = {
+                    wayfarer: copy(wayfarerInspection.definition),
+                    climate: copy(normalizeClimateConfig()),
+                    astronomy: copy(normalizeAstronomyConfig()),
+                    weather: copy(modState.config.weather),
+                    environment: copy(modState.config.environment),
+                    rest: copy(normalizeRestConfig()),
+                    temporalContexts: copy(normalizeTemporalContexts()),
+                    world: copy(normalizeWorldConfig())
+                };
+                return { ok: true, data: normalized };
+            } catch (error) {
+                return { ok: false, message: `WorldPack normalization failed: ${error.message}` };
+            } finally {
+                Object.assign(modState.config, previous);
+            }
+        }
+
+        function validateWorldPackText(text) {
+            if (text.length > POLICY.almanac.maximumWorldPackBytes) return { ok: false, message: `WorldPack text may not exceed ${POLICY.almanac.maximumWorldPackBytes} characters.` };
+            let payload;
+            try {
+                payload = JSON.parse(text);
+            } catch (error) {
+                return { ok: false, message: `WorldPack JSON could not be parsed: ${error.message}` };
+            }
+            const stats = worldPackObjectStats(payload);
+            if (!stats.ok) return stats;
+            if (!payload || typeof payload !== 'object' || Array.isArray(payload) || payload.format !== 'gameassist-almanac-worldpack' || Number(payload.schemaVersion) !== WORLDPACK_SCHEMA_VERSION) {
+                return { ok: false, message: `WorldPack must use format gameassist-almanac-worldpack and schema ${WORLDPACK_SCHEMA_VERSION}.` };
+            }
+            const pack = payload.pack && typeof payload.pack === 'object' && !Array.isArray(payload.pack) ? payload.pack : {};
+            const id = boundedWorldId(pack.id, '');
+            const name = boundedName(pack.name);
+            if (!id || !name) return { ok: false, message: 'WorldPack metadata requires a valid id and name.' };
+            const data = payload.data && typeof payload.data === 'object' && !Array.isArray(payload.data) ? payload.data : null;
+            const required = ['wayfarer', 'climate', 'astronomy', 'weather', 'environment', 'rest', 'world', 'temporalContexts'];
+            if (!data || required.some(key => data[key] === undefined)) return { ok: false, message: `WorldPack data must include ${required.join(', ')}.` };
+            const normalized = previewNormalizedWorldPack(data);
+            if (!normalized.ok) return normalized;
+            return {
+                ok: true,
+                payload,
+                pack: { id, name, version: boundedWorldText(pack.version, 'worldpack-v1'), description: boundedWorldText(pack.description, '') },
+                data: normalized.data,
+                fingerprint: worldPackFingerprint(text),
+                stats
+            };
+        }
+
+        function showWorldPacks(msg) {
+            if (!requireGm(msg)) return;
+            const installed = modState.config.worldPacks.length
+                ? modState.config.worldPacks.map(pack => `${_sanitize(pack.name)} [${_sanitize(pack.id)}] - ${_sanitize(pack.version)}`).join('<br>')
+                : 'No WorldPacks have been installed.';
+            sendPanel(msg, 'Almanac WorldPacks', [
+                { label: 'Installed', value: installed },
+                { label: 'Handout', value: 'One owned handout is the editable authoring surface. Export or create a blank template, edit the JSON, then preview before importing.' },
+                { label: 'Create or Export', value: `${GameAssist.createButton('Export Current World', '!aa-worldpack export')} ${GameAssist.createButton('Create Blank Template', '!aa-worldpack blank --confirm ?{Replace the WorldPack handout with a blank starter template?|No,no|Yes,yes}')}` },
+                { label: 'Import', value: GameAssist.createButton('Preview Handout Import', '!aa-worldpack preview --mode ?{Import mode|Install New,install|Update Existing,update|Import as Copy,copy}') },
+                { label: 'Safety', value: 'Imports are bounded, validated, previewed, re-read at confirmation, and committed atomically. Runtime chronology, forecasts, histories, grants, and character data are never imported.' },
+                { label: 'Return', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function tagWorldPackDefinitions(data, packId) {
+            const tagged = copy(data);
+            const tagItems = items => (Array.isArray(items) ? items : []).forEach(item => {
+                if (!item || typeof item !== 'object' || Array.isArray(item)) return;
+                item.sourceId = boundedWorldId(item.sourceId || item.id, null);
+                item.packId = packId;
+            });
+            ['geographies', 'biomes', 'ecoregions', 'locations', 'phenomena', 'quickActions'].forEach(key => tagItems(tagged.world?.[key]));
+            tagItems((tagged.temporalContexts || []).filter(context => String(context?.id || '').toLowerCase() !== 'material'));
+            return tagged;
+        }
+
+        function commitWorldPack(msg, grant, validation) {
+            const previous = {
+                wayfarer: copy(modState.config.wayfarer), wayfarerDraft: copy(modState.config.wayfarerDraft), climate: copy(modState.config.climate), astronomy: copy(modState.config.astronomy),
+                weather: copy(modState.config.weather), environment: copy(modState.config.environment), rest: copy(modState.config.rest),
+                world: copy(modState.config.world), temporalContexts: copy(modState.config.temporalContexts), worldPacks: copy(modState.config.worldPacks)
+            };
+            try {
+                const existingIndex = modState.config.worldPacks.findIndex(pack => String(pack.id).toLowerCase() === validation.pack.id.toLowerCase());
+                if (grant.mode === 'install' && existingIndex >= 0) return { ok: false, message: 'That WorldPack is already installed. Choose Update Existing or Import as Copy.' };
+                if (grant.mode === 'update' && existingIndex < 0) return { ok: false, message: 'That WorldPack is not installed. Choose Install New or Import as Copy.' };
+                const manifest = { ...validation.pack };
+                if (grant.mode === 'copy') {
+                    const base = manifest.id;
+                    let suffix = 2;
+                    while (modState.config.worldPacks.some(pack => String(pack.id).toLowerCase() === manifest.id.toLowerCase())) manifest.id = `${base}-${suffix++}`;
+                    manifest.name = boundedName(`${manifest.name} Copy`, manifest.name);
+                }
+                const imported = tagWorldPackDefinitions(validation.data, manifest.id);
+                const importedWayfarer = copy(imported.wayfarer);
+                delete imported.wayfarer;
+                Object.assign(modState.config, imported);
+                normalizeClimateConfig();
+                normalizeAstronomyConfig();
+                normalizeRestConfig();
+                normalizeTemporalContexts();
+                normalizeWorldConfig();
+                const importedMoment = resolveWorldMinute(wayfarerProfile(importedWayfarer), ensureAlmanacRuntime().time.worldMinute);
+                if (!importedMoment) throw new Error('The imported Wayfarer calendar cannot represent the current elapsed fictional time.');
+                modState.config.wayfarerDraft = {
+                    schemaVersion: WAYFARER_DRAFT_SCHEMA_VERSION,
+                    definition: importedWayfarer,
+                    startDate: { year: importedMoment.year, period: importedMoment.period, day: importedMoment.day, hour: importedMoment.hour, minute: importedMoment.minute },
+                    reviewed: Object.fromEntries(WAYFARER_STAGES.map(stage => [stage, false])),
+                    sourceProfileId: 'wayfarer',
+                    updatedAt: isoNow()
+                };
+                const record = { ...manifest, importedAt: isoNow(), fingerprint: validation.fingerprint };
+                if (grant.mode === 'update') modState.config.worldPacks[existingIndex] = record;
+                else modState.config.worldPacks.push(record);
+                modState.config.worldPacks = modState.config.worldPacks.slice(-POLICY.almanac.maximumWorldPacks);
+                ensureAlmanacRuntime().world.revision++;
+                publishChange('almanac.worldpack.imported', null, record, { mode: grant.mode }, msg);
+                return { ok: true, record };
+            } catch (error) {
+                Object.assign(modState.config, previous);
+                return { ok: false, message: `WorldPack import was rolled back: ${error.message}` };
+            }
+        }
+
+        function handleWorldPacks(msg, content) {
+            const body = content.replace(/^worldpack\s*/i, '').trim();
+            if (!body || /^(menu|gm|dm|status)$/i.test(body)) return showWorldPacks(msg);
+            if (!requireGm(msg)) return;
+            const args = _parseArgs(body).args;
+            const lowerBody = body.toLowerCase();
+            if (lowerBody.startsWith('export')) {
+                const result = writeWorldPackHandout(worldPackPayload());
+                return sendPanel(msg, result.ok ? 'WorldPack Exported' : 'WorldPack Needs Attention', result.ok ? [
+                    { label: 'Handout', value: `[Open WorldPack](https://journal.roll20.net/handout/${result.id})` },
+                    { label: 'Contents', value: 'Current definitions only; runtime chronology and campaign activity were excluded.' },
+                    { label: 'Return', value: GameAssist.createButton('WorldPacks', '!aa-worldpack') }
+                ] : [{ label: 'Problem', value: _sanitize(result.message) }]);
+            }
+            if (lowerBody.startsWith('blank')) {
+                if (String(args.confirm || '').toLowerCase() !== 'yes') return showWorldPacks(msg);
+                const result = writeWorldPackHandout(worldPackPayload({ blank: true }));
+                return sendPanel(msg, result.ok ? 'WorldPack Template Created' : 'WorldPack Needs Attention', result.ok ? [
+                    { label: 'Handout', value: `[Open WorldPack](https://journal.roll20.net/handout/${result.id})` },
+                    { label: 'Next Step', value: 'Edit the JSON, then return to WorldPacks and preview the import.' },
+                    { label: 'Return', value: GameAssist.createButton('WorldPacks', '!aa-worldpack') }
+                ] : [{ label: 'Problem', value: _sanitize(result.message) }]);
+            }
+            if (lowerBody.startsWith('preview')) {
+                const mode = ['install', 'update', 'copy'].includes(String(args.mode || '').toLowerCase()) ? String(args.mode).toLowerCase() : 'install';
+                return readWorldPackHandout(read => {
+                    if (!read.ok) return sendPanel(msg, 'WorldPack Needs Attention', [{ label: 'Problem', value: _sanitize(read.message) }]);
+                    const validation = validateWorldPackText(read.text);
+                    if (!validation.ok) return sendPanel(msg, 'WorldPack Needs Attention', [{ label: 'Problem', value: _sanitize(validation.message) }, { label: 'Changes', value: 'None.' }, { label: 'Return', value: GameAssist.createButton('WorldPacks', '!aa-worldpack') }]);
+                    const exists = modState.config.worldPacks.some(pack => String(pack.id).toLowerCase() === validation.pack.id.toLowerCase());
+                    if ((mode === 'install' && exists) || (mode === 'update' && !exists)) {
+                        const problem = exists
+                            ? 'That pack id is already installed. Preview Update Existing or Import as Copy instead.'
+                            : 'That pack id is not installed. Preview Install New or Import as Copy instead.';
+                        return sendPanel(msg, 'WorldPack Conflict', [{ label: 'Problem', value: problem }, { label: 'Changes', value: 'None.' }, { label: 'Next Step', value: GameAssist.createButton('WorldPacks', '!aa-worldpack') }]);
+                    }
+                    if (mode !== 'update' && modState.config.worldPacks.length >= POLICY.almanac.maximumWorldPacks) {
+                        return sendPanel(msg, 'WorldPack Conflict', [{ label: 'Problem', value: `The installed-pack limit of ${POLICY.almanac.maximumWorldPacks} has been reached.` }, { label: 'Changes', value: 'None.' }]);
+                    }
+                    const runtime = ensureAlmanacRuntime();
+                    const grantId = `WP-${Date.now().toString(36)}-${randomInteger(9999)}`;
+                    runtime.world.worldPackGrants[grantId] = { id: grantId, mode, fingerprint: validation.fingerprint, packId: validation.pack.id, expiresAt: Date.now() + POLICY.almanac.worldPackGrantMs };
+                    sendPanel(msg, 'Review WorldPack Import', [
+                        { label: 'Pack', value: `${_sanitize(validation.pack.name)} [${_sanitize(validation.pack.id)}] - ${_sanitize(validation.pack.version)}` },
+                        { label: 'Mode', value: _sanitize(mode) },
+                        { label: 'Definitions', value: `${validation.data.world.locations.length} locations | ${validation.data.world.ecoregions.length} ecoregions | ${validation.data.world.biomes.length} biomes | ${validation.data.world.geographies.length} geographies | ${validation.data.world.phenomena.length} phenomena | ${validation.data.astronomy.moons.length} moons` },
+                        { label: 'Calendar', value: 'The imported Wayfarer definition becomes a saved draft. It does not change the active calendar until the separate Wayfarer activation review.' },
+                        { label: 'Safety', value: 'The handout will be re-read. Any edit after this preview makes this confirmation stale.' },
+                        { label: 'Actions', value: `${GameAssist.createButton('Import WorldPack', `!aa-worldpack confirm --grant ${grantId}`)} ${GameAssist.createButton('Cancel', '!aa-worldpack')}` }
+                    ]);
+                });
+            }
+            if (lowerBody.startsWith('confirm')) {
+                const runtime = ensureAlmanacRuntime();
+                const grant = runtime.world.worldPackGrants[String(args.grant || '')];
+                if (!grant || Number(grant.expiresAt) <= Date.now()) return sendPanel(msg, 'WorldPack Needs Attention', [{ label: 'Problem', value: 'That preview expired or was already used. Preview the handout again.' }]);
+                delete runtime.world.worldPackGrants[grant.id];
+                return readWorldPackHandout(read => {
+                    if (!read.ok) return sendPanel(msg, 'WorldPack Needs Attention', [{ label: 'Problem', value: _sanitize(read.message) }]);
+                    const validation = validateWorldPackText(read.text);
+                    if (!validation.ok) return sendPanel(msg, 'WorldPack Needs Attention', [{ label: 'Problem', value: _sanitize(validation.message) }, { label: 'Changes', value: 'None.' }]);
+                    if (validation.fingerprint !== grant.fingerprint || validation.pack.id !== grant.packId) return sendPanel(msg, 'WorldPack Needs Attention', [{ label: 'Problem', value: 'The handout changed after preview. No data was imported.' }, { label: 'Next Step', value: GameAssist.createButton('Preview Again', `!aa-worldpack preview --mode ${grant.mode}`) }]);
+                    const result = commitWorldPack(msg, grant, validation);
+                    return sendPanel(msg, result.ok ? 'WorldPack Imported' : 'WorldPack Needs Attention', result.ok ? [
+                        { label: 'Installed', value: `${_sanitize(result.record.name)} [${_sanitize(result.record.id)}]` },
+                        { label: 'Result', value: 'World definitions were committed atomically with pack provenance. The imported Wayfarer calendar is a saved draft pending its separate activation review. Runtime chronology and campaign activity were not replaced.' },
+                        { label: 'Actions', value: `${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('WorldPacks', '!aa-worldpack')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                    ] : [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Changes', value: 'None.' }]);
+                });
+            }
+            sendPanel(msg, 'WorldPack Needs Attention', [{ label: 'Problem', value: 'That WorldPack command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('WorldPacks', '!aa-worldpack') }]);
         }
 
         function normalizeRestConfig() {
@@ -27224,11 +29233,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!climate.regions.length || !climateRegion(climate.activeRegionId)) problems.push('ClimateAlmanac has no valid active region.');
             const astronomy = normalizeAstronomyConfig();
             if (!astronomy.moons.length) problems.push('AstronomyAlmanac has no valid moon.');
+            const world = normalizeWorldConfig();
+            const scene = resolveScene();
+            if (!world.locations.length || !worldItem(world.locations, world.activeLocationId)) problems.push('The world model has no valid active location.');
+            if (!world.ecoregions.length || !world.geographies.length || !world.biomes.length) problems.push('The world model is missing a required place definition.');
             if (runtime.weather.forecast.length > POLICY.almanac.weatherForecastLimit) problems.push('Weather forecast exceeds policy bounds.');
             if (runtime.environment.override && !runtime.environment.override.name) problems.push('Environment override is malformed.');
             if (!audit) pruneRestGrants();
             const submoduleRows = Object.entries({
-                Time: timeAvailable(),
+                Time: submoduleEnabled('time') && modState.config.timeAlmanacEnabled !== false,
                 Climate: submoduleEnabled('climate'),
                 Astronomy: submoduleEnabled('astronomy'),
                 Weather: submoduleEnabled('weather'),
@@ -27240,8 +29253,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Submodules', value: submoduleRows },
                 { label: 'Current', value: moment ? _sanitize(displayMoment(moment)) : 'Unavailable' },
                 { label: 'Wayfarer Draft', value: draftStatus ? `${draftStatus.reviewedCount}/${WAYFARER_STAGES.length} stages reviewed | ${draftStatus.complete ? 'ready to activate' : 'saved for continued setup'}` : 'No saved draft yet' },
-                { label: 'Current Context', value: `${_sanitize(resolvedClimate()?.regionName || 'No region')} | ${_sanitize(runtime.weather.current?.summary || 'No committed weather')} | ${_sanitize(environmentContext().name)}` },
+                { label: 'Current Context', value: `${scenePath(scene)}<br>${_sanitize(descriptiveTemperature(scene.scene.temperatureF))} | ${_sanitize(scene.scene.precipitation)} | ${_sanitize(scene.scene.ground)}` },
+                { label: 'World Model', value: `${world.locations.length}/${POLICY.almanac.maximumLocations} locations | ${world.ecoregions.length}/${POLICY.almanac.maximumEcoregions} ecoregions | ${world.phenomena.length}/${POLICY.almanac.maximumPhenomena} phenomena | ${modState.config.worldPacks.length}/${POLICY.almanac.maximumWorldPacks} WorldPacks` },
+                { label: 'Travel', value: runtime.world.travel ? `${_sanitize(runtime.world.travel.fromName)} to ${_sanitize(runtime.world.travel.toName)} | ${Math.max(0, runtime.world.travel.plannedHours - runtime.world.travel.travelledHours)} hours remaining` : `No active journey | ${runtime.world.travelHistory.length}/${POLICY.almanac.travelHistoryLimit} retained` },
                 { label: 'Retained History', value: `Time ${runtime.history.length}/${POLICY.almanac.historyLimit} | Weather ${runtime.weather.history.length}/${POLICY.almanac.weatherHistoryLimit} | Rest ${runtime.rest.history.length}/${POLICY.almanac.restHistoryLimit}` },
+                ...(scene.warnings.length ? [{ label: 'Scene Notes', value: scene.warnings.map(_sanitize).join('<br>') }] : []),
                 { label: audit ? 'Audit Result' : 'Health', value: problems.length ? _sanitize(problems.join(' ')) : 'No known Almanac configuration, chronology, or retained-state problems.' },
                 { label: audit ? 'Changes' : 'Actions', value: audit ? 'None. Audit is read-only.' : `${GameAssist.createButton('Almanac', '!Almanac-GM')} ${GameAssist.createButton('Audit', '!Almanac-Audit')}` }
             ]);
@@ -27351,7 +29367,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (/^!aa-time(?:\s|$)/i.test(raw)) return `time ${raw.replace(/^!aa-time\s*/i, '')}`.trim();
             if (/^!aa-(?:gm|dm|menu)(?:\s|$)/i.test(raw)) return 'menu';
             if (/^!aa-/i.test(raw)) return raw.replace(/^!aa-/i, '').trim();
-            if (/^!aa(?:\s|$)/i.test(raw)) return raw.replace(/^!aa\s*/i, '').trim() || 'menu';
+            if (/^!aa(?:\s|$)/i.test(raw)) {
+                const nested = raw.replace(/^!aa\s*/i, '').trim() || 'menu';
+                const focusedNested = nested.match(/^(time|calendar|cal|wayfarer|climate|clim|astronomy|astro|weather|environment|enviro|rest)(?:-|\s)+(gm|dm|menu|guide|help|info|manual|status|audit)(?:\s|$)/i);
+                if (focusedNested) {
+                    const system = { cal: 'calendar', clim: 'climate', astro: 'astronomy', enviro: 'environment' }[focusedNested[1].toLowerCase()] || focusedNested[1].toLowerCase();
+                    const action = focusedNested[2].toLowerCase();
+                    if (system === 'calendar') return ['gm', 'dm', 'menu', 'status'].includes(action) ? 'calendar' : (action === 'audit' ? 'audit' : 'guide');
+                    if (['gm', 'dm', 'menu'].includes(action)) return `${system} menu`;
+                    if (['guide', 'help', 'info', 'manual'].includes(action)) return `${system} help`;
+                    return `${system} ${action}`;
+                }
+                return nested;
+            }
             if (/^!almanacassist-/i.test(raw)) return raw.replace(/^!almanacassist-/i, '').trim();
             if (/^!almanacassist(?:\s|$)/i.test(raw)) return raw.replace(/^!almanacassist\s*/i, '').trim() || 'menu';
             if (/^!almanac-/i.test(raw)) return raw.replace(/^!almanac-/i, '').trim();
@@ -27428,6 +29456,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (lower === 'current-date' || lower === 'date') return showCurrent(msg, 'date');
             if (lower === 'current-time') return showCurrent(msg, 'time');
             if (lower === 'calendar' || lower === 'cal') return showCalendarMenu(msg);
+            if (lower === 'scene' || lower === 'scene menu' || lower === 'scene status') return showScene(msg, false);
+            if (lower === 'scene details' || lower === 'scene audit' || lower === 'scene technical') return showScene(msg, true);
+            if (lower === 'location' || lower.startsWith('location ')) return handleLocation(msg, input);
+            if (lower === 'travel' || lower.startsWith('travel ')) return handleTravel(msg, input);
+            if (lower === 'phenomena' || lower.startsWith('phenomena ')) return handlePhenomena(msg, input);
+            if (lower === 'temporal' || lower.startsWith('temporal ')) return handleTemporalContexts(msg, input);
+            if (lower === 'worldpack' || lower.startsWith('worldpack ')) return handleWorldPacks(msg, input);
+            if (lower === 'world' || lower.startsWith('world ') || lower === 'manage world') return handleWorld(msg, input);
+            if (lower === 'preset' || lower === 'presets' || lower.startsWith('preset ') || lower.startsWith('presets ')) return handleWorldPresets(msg, input);
+            if (lower === 'rules' || lower.startsWith('rules ')) return handleRulesAdvisor(msg, input);
+            if (lower.startsWith('quick ')) return handleQuickAction(msg, input);
             if (lower.startsWith('wayfarer')) return handleWayfarer(msg, input);
             if (lower === 'climate' || lower.startsWith('climate ')) return handleClimate(msg, input);
             if (lower === 'astronomy' || lower.startsWith('astronomy ') || lower === 'astro' || lower.startsWith('astro ')) return handleAstronomy(msg, input);
@@ -27465,6 +29504,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         normalizeClimateConfig();
         normalizeAstronomyConfig();
         normalizeRestConfig();
+        normalizeTemporalContexts();
+        normalizeWorldConfig();
+        modState.config.rulesAdvisorEnabled = modState.config.rulesAdvisorEnabled === true;
+        modState.config.rulesAdvisorProfile = ['dnd5e2014', 'system-neutral'].includes(String(modState.config.rulesAdvisorProfile || '').toLowerCase())
+            ? String(modState.config.rulesAdvisorProfile).toLowerCase()
+            : 'dnd5e2014';
         normalizedAnnouncementConfig();
         const activeProfile = profileFor();
         if (!resolveWorldMinute(activeProfile, runtime.time.worldMinute)) runtime.time.worldMinute = DEFAULT_WORLD_MINUTE;
@@ -27478,9 +29523,30 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             weatherStateSchemaVersion: WEATHER_STATE_SCHEMA_VERSION,
             environmentStateSchemaVersion: ENVIRONMENT_STATE_SCHEMA_VERSION,
             restStateSchemaVersion: REST_STATE_SCHEMA_VERSION,
+            worldStateSchemaVersion: WORLD_STATE_SCHEMA_VERSION,
+            sceneSchemaVersion: SCENE_SCHEMA_VERSION,
+            worldPackSchemaVersion: WORLDPACK_SCHEMA_VERSION,
+            temporalContextSchemaVersion: TEMPORAL_CONTEXT_SCHEMA_VERSION,
+            wayfarerHandoutSchemaVersion: WAYFARER_HANDOUT_SCHEMA_VERSION,
             isAvailable: () => modState.config.enabled !== false,
             isTimeAvailable: timeAvailable,
-            getSubmoduleStatus: () => Object.freeze(copy({ ...modState.config.submodules, time: timeAvailable() })),
+            getSubmoduleStatus: () => {
+                const parentEnabled = modState.config.enabled !== false;
+                const configured = {
+                    time: submoduleEnabled('time') && modState.config.timeAlmanacEnabled !== false,
+                    climate: submoduleEnabled('climate'),
+                    astronomy: submoduleEnabled('astronomy'),
+                    weather: submoduleEnabled('weather'),
+                    environment: submoduleEnabled('environment'),
+                    rest: submoduleEnabled('rest')
+                };
+                return Object.freeze(copy({
+                    ...configured,
+                    parentEnabled,
+                    configured,
+                    effective: Object.fromEntries(Object.entries(configured).map(([name, enabled]) => [name, parentEnabled && enabled]))
+                }));
+            },
             getTime: () => {
                 if (!timeAvailable()) return null;
                 const current = currentMoment();
@@ -27498,22 +29564,27 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return current ? Object.freeze(copy(current)) : null;
             },
             getEnvironment: () => submoduleEnabled('environment') ? Object.freeze(copy(environmentContext())) : null,
+            getScene: location => Object.freeze(copy(resolveScene(location))),
+            getWorld: () => Object.freeze(copy(normalizeWorldConfig())),
+            getTemporalContexts: () => Object.freeze(copy(normalizeTemporalContexts())),
             getRestHistory: () => Object.freeze(copy(ensureAlmanacRuntime().rest.history)),
             observe: (callback, { owner = 'AlmanacAssistConsumer' } = {}) => GameAssist.SemanticEvents.observe(callback, {
                 owner,
-                types: ['almanac.time.changed', 'almanac.calendar.changed', 'almanac.climate.changed', 'almanac.astronomy.changed', 'almanac.weather.changed', 'almanac.environment.changed', 'almanac.rest.completed']
+                types: ['almanac.time.changed', 'almanac.calendar.changed', 'almanac.climate.changed', 'almanac.astronomy.changed', 'almanac.weather.changed', 'almanac.environment.changed', 'almanac.rest.completed', 'almanac.location.changed', 'almanac.travel.started', 'almanac.travel.progressed', 'almanac.travel.completed', 'almanac.travel.cancelled', 'almanac.preset.installed', 'almanac.worldpack.imported']
             }),
             clearObservers: owner => GameAssist.SemanticEvents.clearObservers(owner)
         });
 
-        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: Wayfarer-aware time, configurable world announcements, compact climate and environment controls, and all six Almanac systems are available through !Almanac; the module starts disabled.`, 'INFO', { startup: true });
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: Session Mode, Worldbuilding Mode, coherent scene resolution, reviewed travel, Wayfarer and WorldPack handouts, and all six independently controlled Almanac systems are available through !Almanac; the module starts disabled.`, 'INFO', { startup: true });
     }, {
         enabled: false,
         prefixes: ['!Almanac', '!Almanac-', '!AlmanacAssist', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-'],
         preserveRuntimeOnDisable: true,
-        protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'announcement', 'environment', 'rest']
+        protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'announcement', 'environment', 'rest', 'world', 'temporalContexts', 'worldPacks', 'rulesAdvisorEnabled', 'rulesAdvisorProfile']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced AlmanacAssist to 2.0.0 with a compact Session Mode, separate Worldbuilding Mode, bounded geography/biome/ecoregion/location/phenomenon definitions, one authoritative SceneResolver, prepared destinations, reviewed travel, local temporal contexts, immutable presets, optional RulesAdvisor guidance, advanced Wayfarer handout editing, and atomic versioned WorldPack transfer.
+    // Changed (v2.0.0): Added signed Year 0 chronology while retaining Year 1 as elapsed minute zero, preserving every existing saved campaign date across the chronology expansion.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.6.1; bare and spaced !AlmanacAssist commands now share the established Almanac command handler.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.5.0; announcements now support Off, Descriptive, Detailed, and Technical presentation, descriptive moon visibility respects daylight and cloud cover, weather owns the displayed current temperature, and ambiguous visibility values are labeled in plain language.
     // Changed (v2.0.0): Repaired deferred Roll20 prompts throughout AlmanacAssist; Wayfarer name/start changes are atomic, clock and period-list changes preserve a valid starting time, Astronomy supplies direct add/edit/remove controls, and RestAlmanac supplies standard, heroic, gritty, and bounded custom rule controls.
@@ -27524,6 +29595,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Changed (v2.0.0): Added the standard GameAssist Home return to the AlmanacAssist GM control screen.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.1.0 with persistent Wayfarer drafts, staged setup and previews, safe profile duplication, atomic activation, elapsed-time preservation, explicit reset fallback, one activation rollback point, and a complete custom-calendar manual.
     // Decision log:
+    //   CHOICE: Resolve every public world view through one immutable SceneResolver snapshot with field-level provenance - ALT: let each panel independently combine climate, weather, environment, and astronomy; REJECTED: duplicate composition produced contradictory current conditions.
+    //   CHOICE: Separate daily Session Mode from durable Worldbuilding Mode - ALT: expose every definition and diagnostic on the primary GM panel; REJECTED: live play needs a short action-first path while campaign construction needs complete controls.
+    //   CHOICE: Preserve Year 1 as elapsed minute zero and represent Year 0 with signed minutes - ALT: shift every existing chronology forward by one year; REJECTED: enabling Year 0 must not silently change saved campaign dates.
+    //   CHOICE: Require travel review before changing time or place - ALT: advance on destination selection; REJECTED: route, pace, duration, and destination must be visible before chronology changes.
+    //   CHOICE: Treat phenomena as explicit overlays with their own lifecycle - ALT: rewrite climate, weather, or location definitions; REJECTED: temporary and magical events must end without erasing the underlying world.
+    //   CHOICE: Import a WorldPack Wayfarer calendar as an unreviewed saved draft - ALT: activate it during pack import; REJECTED: bulk world transfer must not silently reinterpret the active chronology.
+    //   CHOICE: Re-read handouts after expiring one-use previews and commit only after complete validation - ALT: trust previewed bytes or partially merge as validation succeeds; REJECTED: edited or malformed handouts must cause no partial mutation.
     //   CHOICE: Treat WeatherAlmanac as the current observed temperature and ClimateAlmanac as background likelihood/context - ALT: display two unlabeled exact temperatures; REJECTED: two exact values presented as current conditions are misleading.
     //   CHOICE: Keep Descriptive, Detailed, and Technical as explicit announcement presentations - ALT: label the player-facing mode only as cinematic; REJECTED: descriptive states what information is being transformed without implying invented narration.
     //   CHOICE: Clamp a saved draft's starting clock when the GM deliberately shrinks the clock definition - ALT: reject every clock edit until the starting date is changed first; REJECTED: that created a circular, unintuitive setup workflow.

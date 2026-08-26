@@ -10,7 +10,7 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 | Revision | Status | Role |
 | --- | --- | --- |
-| **v2.0.0** | Active development in PR #81; focused EffectAssist, HealAssist, AttackAssist, player-casting, cast-recognition, duration, AlmanacAssist, HealthService, SheetCapabilities, TokenAssist, CombatAssist, NPCAssist handoff, handout organization, PC health-alert, concentration-offer, and suite-navigation work are included; Roll20 acceptance pending | Source-aware effects, guarded Guidance consumption, guided verified healing and attacks, secure player workflows and retained GM requests, bounded 2014 Bless proposals, complete campaign-world systems, canonical HP evidence, read-only sheet capability contracts, MarkerService-backed marker expressions with temporary legacy syntax compatibility, exact controller/report routing, verified semantic combat progression events, bounded combat evidence and Ready/Delay records, deduplicated encounter summaries, stable handout identities, GM-private PC health bands, private HP-loss check offers, and unified GM/help navigation |
+| **v2.0.0** | Active development in PR #81; focused EffectAssist, HealAssist, AttackAssist, player-casting, cast-recognition, duration, AlmanacAssist, HealthService, PC health-alert, concentration-offer, and suite-navigation checks are included; Roll20 acceptance pending | Source-aware effects, guarded Guidance consumption, guided verified healing and attacks, secure player workflows and retained GM requests, bounded 2014 Bless proposals, complete campaign-world systems, canonical HP evidence, GM-private PC health bands, private HP-loss check offers, and unified GM/help navigation |
 | **v1.8.2** | Merged through PR #74; Issue #65 closed | Page-local progressive NPC token naming |
 | **v1.8.1** | Merged through PR #73 | GM-private NPCAssist Bloodied threshold alerts and Control Center toggle |
 | **v1.8.0** | Merged through PR #63; 712 automated checks passed | Canonical module identities and migration-safe project version transition |
@@ -47,56 +47,76 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ### Release definition
 
-GameAssist v2.0.0 remains one active development line in PR #81. EffectAssist 2.5.3 coordinates the focused official-2014 effect catalog with compact caster choices, duplicate-token disambiguation, Bless totals from one through eleven, exact recipient diagnostics, token-specific concentration-linked cleanup, consistent compact `(GA)` sheet labels, retained GM placement requests, bounded Bless proposals, guarded Guidance consumption, worker-safe projection cleanup, and optional duration review. HealAssist 1.2.0 adds guided official-2014 normal or maximum healing, direct target selection for one-recipient actions, review, and optional automatic verified application. AttackAssist 1.1.0 adds compact official-2014 repeating-attack selection, stable row identity, native visible targeting, immediate sheet-setting submission by default, optional roll-mode review, complete prompt-safe Classic-sheet formula materialization, crash-safe final dice-expression validation, visible one-use character-attributed sheet rolls, and no automatic attack consequences. TokenAssist 1.3.0 adds an organized extended action library, MarkerService-backed marker expressions, longest-name-first alias routing, exact controller resolution, and explicit report/attribute/computed-value routing; older TokenMod expression syntax remains only as a temporary migration alias. AlmanacAssist 1.6.1 remains in development under Issue #90 for complete custom-calendar and world-context acceptance. HealthService 1.1.0 adds one canonical supported HP-observation and verified-write boundary, a shared selectable NPC HP bar, current-page setup controls, and an optional GM-private PC threshold consumer. SheetCapabilities 1.0.0 supplies read-only per-operation 2014/2024/unknown sheet evidence to sheet-sensitive modules. ConcentrationAssist 0.6.0 uses portable built-in marker defaults, guided marker controls, explicit official-2014 save qualification, and the same health evidence for optional private, page-safe check offers after supported HP loss. CombatAssist 1.2.0 adds verified semantic progression events, bounded HealthService evidence with up to 500 entries retained for the active or most recent encounter review, encounter-scoped held actions, optional 5e Ready or legacy Delay records, `!Now` signaling, expiry/cancellation, and a deduplicated optional NPCAssist encounter-summary handoff. NPCAssist 1.5.0 stores those summaries without creating death or revival history rows. Stable handout identities and `!ga-handouts` indexing protect module manuals and reports. The shared SemanticEvents service provides immutable in-sandbox lifecycle notifications without coupling module state.
+GameAssist v2.0.0 remains one active development line in PR #81. EffectAssist 2.5.4 coordinates the focused official-2014 effect catalog with compact caster choices, exact duplicate disambiguation, concentration-linked cleanup, retained GM requests, bounded Bless proposals, guarded Guidance consumption, worker-safe projections, and optional duration review. HealAssist 1.2.1 provides guided normal or maximum healing with direct single-recipient targeting, review, and optional verified automatic application. AttackAssist 1.1.0 provides compact official-2014 repeating-attack selection, prompt-safe Classic-sheet materialization, native visible targeting, immediate sheet-setting submission by default, optional roll-mode review, visible one-use sheet rolls, and no automatic attack consequences. TokenAssist 1.3.0 retains longest-name-first aliases, an organized action library, advanced MarkerService expressions, controller/report routing, computed reports, relative visual controls, multi-sided selection, and duplicate-install protection. AlmanacAssist 2.0.0 implements the consolidated Issue #95 campaign-world engine described below. HealthService 1.1.1 provides the canonical supported HP observation/write boundary and shared NPC HP-bar controls. ConcentrationAssist 0.6.0 uses that evidence for optional private check offers. CombatAssist 1.2.1 supplies accepted encounter progression, native round-counter handling, timers, pings, recovery, held actions, and optional integrations without replacing Roll20's Turn Tracker. Shared SemanticEvents remain immutable, in-sandbox, and non-replayed.
 
 EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so existing campaigns upgrade without receiving new markers, conditions, HP writes, other sheet writes, attack rolls, fictional chronology, weather, or chat output until the GM deliberately enables them.
 
-### Shared service and non-Almanac completion pass - 2026-08-25
+### AlmanacAssist 2.0 coherent world engine - 2026-08-26
 
-This checkpoint keeps the work on PR #81 and completes the safe, directly useful portions of the remaining non-Almanac backlog. It does not publish v2.0.0 or create a parallel release line.
+This checkpoint implements Issue #95 on PR #81 without publishing v2.0.0 or claiming the unperformed Roll20 live gate.
 
-#### SheetCapabilities 1.0.0
+#### Live-play and worldbuilding surfaces
 
-- Adds one read-only, always-on capability contract for sheet-sensitive operations.
-- Classifies supported official 2014 sheets, supported 2024/Beacon sheets, and unknown surfaces per operation instead of treating a recognizable sheet name as proof that every operation is available.
-- Initiative, concentration, effects, healing, attacks, rests, HealthService PC handling, and TokenAssist attribute/computed reports now use explicit capability checks and actionable refusal messages.
-- Adds the GM-only `!ga-sheets` audit for current-page evidence and operation status.
+- Advances AlmanacAssist from 1.6.1 to 2.0.0.
+- Rebuilds `!aa-gm` as a compact Current World screen for place, coherent scene, common time/date actions, travel, rest, weather, announcements, location changes, and campaign quick actions.
+- Adds a separate `!aa-world` workspace grouped into Places, Natural World, Local Context, Time & Sky, Gameplay, and Campaign Tools.
+- Keeps routine session controls separate from definition lists, provenance evidence, transfer tools, diagnostics, and read-once instruction.
 
-#### Documentation and policy correction - 2026-08-25
+#### Chronology and scene authority
 
-- Clarifies that TokenAssist owns marker behavior through MarkerService. Legacy TokenMod expression syntax is retained only as a temporary migration surface; standalone TokenMod is not a runtime prerequisite and is not a second marker authority.
-- Restores the documented TokenAssist guarantees for the organized action library and longest-name-first alias routing.
-- Restores the documented CombatAssist guarantee for verified semantic progression events.
-- Raises CombatAssist health-evidence retention from 200 to 500 entries for the active or most recent encounter review. Held-action records remain encounter-scoped and are removed when the encounter ends.
+- Adds valid Year 0 dates through signed elapsed minutes while retaining Year 1 at minute zero, so existing saved campaign dates do not shift.
+- Adds one immutable `SceneResolver` snapshot with field-level provenance for location, local time, climate, weather, environment, astronomy, terrain, ground, visibility, hydrology, and active phenomena.
+- Uses the resolved scene across current-world views and records unavailable subsystems or coherence limitations instead of exposing stale or competing values as simultaneous truth.
+- Applies local temperature and wind adjustments exactly once when weather was generated for the active location.
 
-#### MarkerService 1.1.0 and TokenAssist 1.3.0
+#### Campaign-world definitions and movement
 
-- Preserves the supported legacy TokenMod 0.8.88 expression behavior through MarkerService for duplicate indexes, conditional updates, relative counts, min/max bounds, relative colors, dimming controls, and relative/random side selection; TokenAssist remains the branded owner and standalone TokenMod is not required.
-- Adds exact controller-list editing and rejects ambiguous player display names rather than silently choosing one.
-- Adds `token`, `character`, `control`, `player`, `gm`, and `all` report routes plus exact saved-attribute and explicitly named computed-value reports when the sandbox exposes them.
-- Keeps persistent image-side, token-image, and default-token writes out of this checkpoint; those remain tracked under Issue #45.
+- Adds bounded, validated geographies, biomes, ecoregions, locations, phenomena, quick actions, page associations, and local temporal contexts.
+- Preserves owner-provided valid identifiers and refuses dependency-breaking removals.
+- Adds current, prepared, favorite, recent, nearby, and complete location views plus read-only destination previews.
+- Adds reviewed travel with retained route, pace, progress, destination, explicit completion/cancellation, bounded history, and one base chronology advanced only by accepted progress.
+- Adds explicit phenomena as temporary overlays that can begin and end without rewriting permanent climate, weather, environment, or location definitions.
 
-#### CombatAssist 1.2.0 and NPCAssist 1.5.0
+#### Reusable setup and transfer
 
-- Retains bounded HealthService transitions with encounter, round, turn, actor, tracker revision, before/after, direction, confidence, and provenance fields for `!Combat-Timeline` review.
-- Retains verified semantic progression events and permits up to 500 health-evidence entries for the active or most recent encounter review; held-action records remain encounter-scoped.
-- Adds disabled-by-default 5e Ready and legacy Delay records, player authorization, `!Now`, cancellation, expiry handling, and private confirmations without applying attacks, damage, conditions, resources, or non-native initiative rules.
-- Offers an optional encounter-summary handoff at encounter end to the NPCAssist Session bucket or all active report buckets.
-- Deduplicates encounter summaries by encounter id and keeps them distinct from death/revival history.
+- Adds immutable versioned starter presets that install editable copies without replacing existing places.
+- Adds optional D&D 5E (2014) and system-neutral RulesAdvisor guidance that never applies gameplay changes.
+- Adds the owned `GameAssist Wayfarer Calendar` advanced handout. Import is bounded, previewed, stale-protected, one-use, atomic, and replaces only the unreviewed saved draft.
+- Adds the owned `GameAssist Almanac WorldPack` transfer format. It validates syntax, schema, object bounds, unsafe keys, references, conflicts, and the complete definition graph before one commit; runtime chronology, travel state, preview grants, characters, and runtime caches are excluded.
+- Tags imported records with pack/source provenance and keeps an imported Wayfarer definition inactive until its separate review and activation succeeds.
 
-#### Handout organization
+#### Contracts and verification
 
-- Adds stable owner/key identity records for GameAssist-owned manuals, configuration snapshots, condition status, NPC reports, and the handout index.
-- Refuses to overwrite a renamed or conflicting handout and reports the conflict to the GM.
-- Adds `!ga-handouts` for a readable index and explicit conflict diagnostics.
-- Does not claim to place handouts into Journal folders because Roll20 does not expose a supported writable folder API.
+- Exposes exact world, scene, WorldPack, temporal-context, and Wayfarer-handout schema versions through `GameAssist.AlmanacAssist` together with defensive `getScene()`, `getWorld()`, and `getTemporalContexts()` reads.
+- Extends the shared argument parser to retain owner-authored hyphenated option names such as `--rate-numerator` while preserving null-prototype maps and unsafe-key rejection.
+- Passes 141 focused non-live checks covering the original six systems plus chronology compatibility, routing, world definitions, coherent scenes, travel, local temporal contexts, phenomena, presets, rules guidance, Wayfarer handout transactions, WorldPack transactions, and disable/re-enable preservation.
+- Roll20 live acceptance remains required for chat layout, target prompts, handout editing, restart persistence, custom calendars, travel, scene coherence, WorldPack use, and verified 2014-sheet rests.
 
-#### Deferred scope
+### Static-audit repairs and documentation alignment - 2026-08-25
 
-- Issue #45 remains deferred for persistent token assets and default-token writes.
-- Issue #50 remains deferred for API_Meta-style generated source-offset diagnostics.
-- Issue #57 remains deferred for Jukebox/music hooks.
-- Issue #82 remains deferred for broad EffectAssist catalog expansion until each effect has a verified adapter and clear mechanics.
+This checkpoint repairs confirmed runtime defects and low-cost hardening findings without changing AlmanacAssist behavior or broadening the v2.0.0 feature scope.
+
+#### Runtime repairs
+
+- Advances CritAssist to 0.2.5.3. Automatic fumble detection now watches attack templates only and ignores dropped d20 results from advantage, disadvantage, and other keep/drop expressions.
+- Advances InitiativeAssist to 1.0.6. Mixed-sheet actor classification now returns the inspected sheet contract instead of referencing an undefined local identifier.
+- Advances CombatAssist to 1.2.1. The encounter-ending confirmation formats its stored start time through GameAssist's shared timezone-aware helper instead of calling an undefined function.
+- Advances EffectAssist to 2.5.4. Provider-specific expiration wording and general provider-list wording now use separate helpers, preventing function-hoisting collisions.
+- Advances HealAssist to 1.2.1. Public completion emotes validate the reviewed source character and fall back to the HealAssist speaker if that token or character has disappeared.
+- Advances MarkerService and HealthService to 1.1.1. Marker registry caching no longer serializes the complete campaign registry on every operation, and NPC HP setup no longer consults the nonexistent `npc_hpbase` field.
+
+#### Core hardening
+
+- Parses shared option maps without an object prototype and ignores prototype-mutating option names.
+- Reuses bounded compiled command matchers and one route decision per Roll20 API message, preserving most-specific case-insensitive routing without repeated full-route scans by every listener.
+- Removes mutable `state.api.scripts` as external-script evidence. Compatibility diagnostics now use only supported public runtime contracts and explicitly treat general Roll20 script inventory as unavailable.
+
+#### Documentation and verification
+
+- Synchronizes current module and service versions across the executable inventory, README, roadmap, smoke test, and MECHSUITS footers while preserving earlier changelog checkpoints as historical records.
+- JavaScript syntax parsing passes for both executable artifacts; `script.json` parses successfully; both executable artifacts are byte-identical with SHA-256 `A8BCDC6556FFFB7CB669210B85E12B53B3E77020211A6F8E56E66A300EDDDC3B`.
+- The focused repair, concentration-health, duration-provider, HealthService, HealAssist, PC-health-alert, current EffectAssist, current AlmanacAssist, and MECHSUITS structural harnesses pass 20, 34, 40, 70, 64, 46, 134, 107, and 33 checks respectively.
+- The AlmanacAssist harness verifies existing mechanical contracts only; live custom-calendar usability remains governed by the consolidated AlmanacAssist issue and is not claimed complete by this checkpoint.
 
 ### Focused table-flow refinement - 2026-08-24
 
@@ -2007,10 +2027,10 @@ This section preserves the supplied granular v0.1.3-era development record, incl
 
 ### CritFumble Module
 
-- **Natural 1 Detection Bugfix:**  
+- **Natural 1 Detection Bugfix:**
   Refactored `hasNaturalOne` to robustly detect natural 1s on d20 attack rolls across template complexity and non-standard inline-roll shapes. This removed `"Cannot read properties of undefined (reading 'r')"` failures and ensured valid attack rolls could be checked without assuming every result contains `.r`.
 
-- **GM Visibility Improvement:**  
+- **GM Visibility Improvement:**
   Whispered the **Confirm Critical Miss** confirmation menu to both the GM and the player, rather than only the player, so GM oversight remains consistent.
 
 ---
@@ -2019,28 +2039,28 @@ This section preserves the supplied granular v0.1.3-era development record, incl
 
 ### Core Framework
 
-- **Quiet Startup Option:**  
+- **Quiet Startup Option:**
   Added `flags.QUIET_STARTUP`, default `true`. Per-module “Ready” chat lines may be suppressed while the core summary remains visible.
 
-- **Logging Improvements:**  
+- **Logging Improvements:**
   - Re-implemented `GameAssist.log` for clearer output and log hygiene.
   - Escaped user text.
   - Split multiline output into properly formatted GM whisper content.
   - Preserved message order and formatting.
   - Added `{ startup: true }` metadata so modules can mark suppressible ready messages.
 
-- **Core-Ready Announcement:**  
+- **Core-Ready Announcement:**
   The core ready message remains unsuppressed even when quiet startup is enabled.
 
-- **Status Command Update:**  
+- **Status Command Update:**
   - `!ga-status` uses real newline characters.
   - Output remains grouped into one GM whisper.
 
-- **Module Announcements:**  
+- **Module Announcements:**
   - CritFumble, NPCManager, ConcentrationTracker, and NPCHPRoller marked their ready messages with `{ startup: true }`.
   - NPCHPRoller adopted the shared startup-output pattern.
 
-- **Summary:**  
+- **Summary:**
   No intended gameplay changes. Work focused on GM chat quality, reduced startup noise, and clearer diagnostics.
 
 ---
@@ -3858,4 +3878,3 @@ The eight automated behavior tracks pass 545 assertions in total. The structural
 ### Roll20 acceptance
 
 The dedicated live Roll20 pass completed successfully. It confirmed native round-counter `+1`, fallback round counting, backward safety, preserved-round tracker edits, stale timer cancellation, deadline non-advancement, ping audiences and hidden-turn privacy, recovery, GM/current-player controls, A-B-A delivery, privacy-safe confirmations, the persistent manual, unreadable-state attention, two-row behavior, disable/reload behavior, and unchanged InitiativeAssist operation. The same pass accepted compact module navigation, read-only audit wording, unknown-command recovery, stable non-duplicating manuals, equal `GM`/`DM` module screens, and the NPCManager and Concentration command aliases.
-
