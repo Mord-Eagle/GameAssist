@@ -58,7 +58,7 @@ The `75-v2.0.0-effectassist` branch contains:
   `getEnvironment()`, `getPresets()`, `getRestHistory()`, `observe(...)`, and
   `clearObservers(...)`. The v2.0.0 API also exposes `presetRegistrySchemaVersion`.
 
-AlmanacAssist **v2.0.0** is an in-progress full #96 implementation, not a partial-version release. It includes generic owner-authored Region / Geography / Ecoregion / Biome / Location composition, Location-bound Prepared Destinations, reviewed route/pace Travel, explicit reviewed Phenomena overlays, and the generic immutable PresetRegistry with editable campaign clones. It does not yet supply RulesAdvisor, WorldPackService, or temporal contexts. Live Roll20 validation is deliberately deferred until those remaining code gates are built.
+AlmanacAssist **v2.0.0** is an in-progress full #96 implementation, not a partial-version release. It includes generic owner-authored Region / Geography / Ecoregion / Biome / Location composition, Location-bound Prepared Destinations, reviewed route/pace Travel, explicit reviewed Phenomena overlays, the generic immutable PresetRegistry with editable campaign clones, and optional profile-specific advisory-only RulesAdvisor reminders. It does not yet supply WorldPackService or temporal contexts. Live Roll20 validation is deliberately deferred until those remaining code gates are built.
 
 ## 4. Assessment by issue
 
@@ -309,7 +309,8 @@ change on the Build branch must satisfy them.
   state, explicit cleanup, aliases, and Worldbuilding cards in the isolated VM.
   Neither replaces Roll20.
 - **PresetRegistry foundation:** Implemented in the v2.0.0 build: immutable generic versioned templates, preview/review/clone/customize workflow, independent campaign IDs and provenance, bounded references, and no provider-state application.
-- **Not yet implemented:** RulesAdvisor; Gate 4 WorldPacks/temporal contexts; full migration review; and the final live Roll20 acceptance track. Live validation must not begin until all of those code gates are built.
+- **RulesAdvisor foundation:** Implemented in the v2.0.0 build: optional profile-specific reminders derived from the immutable scene snapshot, explicit on/off and profile controls, bounded output, and an advisory-only no-provider/no-gameplay-write boundary.
+- **Not yet implemented:** Gate 4 WorldPacks/temporal contexts; full migration review; and the final live Roll20 acceptance track. Live validation must not begin until all of those code gates are built.
 
 ## 8. Decisions and rationale
 

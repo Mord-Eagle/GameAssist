@@ -772,7 +772,7 @@ For the stale-confirmation check:
 
 **Why test it:** v2.0.0 must not publish a calendar shell while describing a world-management suite. This final track proves the six systems, their boundaries, their shared navigation, and RestAlmanac's deliberate 2014-sheet writes inside the real Roll20 sandbox.
 
-**When to run:** **Do not begin this live Roll20 validation while Issue #96 code is still being built.** Run it only after all Issue #96 implementation gates—including RulesAdvisor, WorldPacks, and temporal contexts—are complete. Focused VM checks are development evidence only and do not consume this final live-validation phase.
+**When to run:** **Do not begin this live Roll20 validation while Issue #96 code is still being built.** Run it only after all Issue #96 implementation gates—including WorldPacks and temporal contexts—are complete. Focused VM checks are development evidence only and do not consume this final live-validation phase.
 
 **Skip when:** Do not skip this section for v2.0.0 release acceptance after the full code build is complete. After release, campaigns that keep AlmanacAssist disabled may skip it. Within ordinary troubleshooting, test only the enabled internal system and any optional context provider involved.
 

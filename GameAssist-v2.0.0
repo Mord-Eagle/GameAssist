@@ -3,7 +3,7 @@
 GameAssist - Roll20 API Script
 Version: 2.0.0
 Last Updated: 2026-08-26 (America/New_York)
-Release scope: EffectAssist 2.5.3 compact identity-aware casting, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.0 automatic or reviewed normal/maximum healing, HealthService 1.1.0 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, CombatAssist 1.2.0 timeline and Ready/Delay tools, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist v2.0.0 SceneResolver, generic Worldbuilding, Prepared Destinations, reviewed Travel, explicit Phenomena overlays, and PresetRegistry on the AlmanacAssist-v2.0.0-Build line (one defensive current-scene snapshot, provenance, coherent session presentation, bounded place composition, and accepted-only fictional travel time), and regression repairs across the v2.0.0 module suite.
+Release scope: EffectAssist 2.5.3 compact identity-aware casting, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.0 automatic or reviewed normal/maximum healing, HealthService 1.1.0 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, CombatAssist 1.2.0 timeline and Ready/Delay tools, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist v2.0.0 SceneResolver, generic Worldbuilding, Prepared Destinations, reviewed Travel, explicit Phenomena overlays, PresetRegistry, and optional RulesAdvisor on the AlmanacAssist-v2.0.0-Build line (one defensive current-scene snapshot, provenance, coherent session presentation, bounded place composition, and accepted-only fictional travel time), and regression repairs across the v2.0.0 module suite.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -30,7 +30,7 @@ calls GameAssist.enqueue(). This development package contains fifteen configurab
 - EffectAssist 2.5.3 - Coordinates compact catalog-driven effects, exact caster-and-recipient identity, retained GM requests, GameAssist-owned 2014-sheet modifiers, verified token-specific concentration, ownership-safe cleanup, duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
 - HealAssist 1.2.0 - Guides verified 2014 normal or maximum healing with direct single-recipient targeting, optional automatic application, visible PC targeting, private GM requests, and HealthService verification.
 - AttackAssist 1.1.0 - Guides authorized 2014 repeating attacks through direct visible targeting, default sheet-mode submission, optional GM-enabled roll review, complete prompt-safe Classic-sheet expansion, private GM placement, crash-safe inline-roll validation, and visible one-use native-template rolls without applying damage.
-- AlmanacAssist v2.0.0 - Builds bounded generic PresetRegistry templates and editable campaign Session Preset clones on top of explicit Phenomena overlays, Prepared Destinations, Travel Routes, and review-confirmed Travel. Preset installation is previewed and confirmed; no built-in setting lore is bundled.
+- AlmanacAssist v2.0.0 - Builds bounded generic PresetRegistry templates, editable campaign Session Preset clones, and optional advisory-only RulesAdvisor notes on top of explicit Phenomena overlays, Prepared Destinations, Travel Routes, and review-confirmed Travel. Preset installation is previewed and confirmed; no built-in setting lore is bundled.
 - HPAssist 0.3.0 - Rolls npc_hpformula and uses HealthService for verified writes to the selected shared NPC HP bar when available.
 - DebugTools 0.3.1 - Optional dry-run-first GM diagnostics with verified supported HP damage writes on the selected shared NPC HP bar.
 
@@ -518,7 +518,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             worldPresetLimit: 60,
             presetPhenomenonLimit: 12,
             presetGrantLimit: 24,
-            presetGrantMs: 1000 * 60 * 5
+            presetGrantMs: 1000 * 60 * 5,
+            rulesAdvisorNoteLimit: 6
         }),
         config: Object.freeze({
             unsafeKeys: Object.freeze(['__proto__', 'prototype', 'constructor'])
@@ -23529,7 +23530,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: AlmanacAssist fictional calendar and world time
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:ALMANACASSIST", title: "AlmanacAssist",
-    //   guarantees: ["Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Optional Almanac integrations improve context without becoming hidden prerequisites","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer exposes direct validated editors for every stored calendar component while moon phases remain visible Astronomy-owned context","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","The internal read-only SceneResolver emits one defensive current-world snapshot with field-level provenance, bounded warnings, separate moon phase and visibility, and no provider-state writes","The GM dashboard, Scene view, announcements, weather forecast display, and rest previews consume one resolved snapshot so current weather, environment, visibility, and celestial evidence do not contradict each other","Worldbuilding Mode provides bounded generic Regions, Geography, Ecoregions, Biomes, Locations, Prepared Destinations, Travel Routes, and explicit Phenomena overlays with safe current-place selection, favorites, recents, and field-owned SceneResolver composition without bundled setting lore","Prepared Destination, Travel, and Phenomena reviews never advance fictional time or change active Location until the GM explicitly confirms an individual reviewed operation","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Descriptive announcements report player-perceivable time, weather, visibility, and moon visibility without presenting climate baselines as simultaneous current measurements","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
+    //   guarantees: ["Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Optional Almanac integrations improve context without becoming hidden prerequisites","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer exposes direct validated editors for every stored calendar component while moon phases remain visible Astronomy-owned context","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","The internal read-only SceneResolver emits one defensive current-world snapshot with field-level provenance, bounded warnings, separate moon phase and visibility, and no provider-state writes","The GM dashboard, Scene view, announcements, weather forecast display, and rest previews consume one resolved snapshot so current weather, environment, visibility, and celestial evidence do not contradict each other","Worldbuilding Mode provides bounded generic Regions, Geography, Ecoregions, Biomes, Locations, Prepared Destinations, Travel Routes, explicit Phenomena overlays, and Session Presets with safe current-place selection, favorites, recents, and field-owned SceneResolver composition without bundled setting lore","RulesAdvisor is optional, profile-specific, advisory-only, and never applies gameplay state changes","Prepared Destination, Travel, and Phenomena reviews never advance fictional time or change active Location until the GM explicitly confirms an individual reviewed operation","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Descriptive announcements report player-perceivable time, weather, visibility, and moon visibility without presenting climate baselines as simultaneous current measurements","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AlmanacAssist"], last_updated_version: "v2.0.0",
     //   independent_versions: { module_version: "2.0.0", scene_state_schema_version: 1, world_state_schema_version: 4, time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2 }, lifecycle: "active" }
@@ -23552,6 +23553,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const TRAVEL_RUNTIME_SCHEMA_VERSION = 1;
         const PHENOMENA_RUNTIME_SCHEMA_VERSION = 1;
         const PRESET_REGISTRY_SCHEMA_VERSION = 1;
+        const RULES_ADVISOR_SCHEMA_VERSION = 1;
         const TIME_STATE_SCHEMA_VERSION = 2;
         const WAYFARER_DRAFT_SCHEMA_VERSION = 3;
         const ANNOUNCEMENT_SCHEMA_VERSION = 4;
@@ -23712,6 +23714,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 tags: Object.freeze(['generic', 'travel']), locationId: null, phenomenonIds: Object.freeze([]), defaultPace: 'standard'
             })
         ]);
+        const DEFAULT_RULES_ADVISOR_CONFIG = Object.freeze({
+            schemaVersion: RULES_ADVISOR_SCHEMA_VERSION,
+            enabled: true
+        });
+        const RULES_ADVISOR_PROFILES = Object.freeze({
+            '2014': Object.freeze({ id: '2014', name: '2014 Advisory Profile', framing: "Use the campaign's applicable 2014 rules reference and table rulings." }),
+            '2024': Object.freeze({ id: '2024', name: '2024 Advisory Profile', framing: "Use the campaign's applicable 2024 rules reference and table rulings." }),
+            custom: Object.freeze({ id: 'custom', name: 'Campaign Custom Advisory Profile', framing: "Use the campaign's owner-authored rules agreement and table rulings." })
+        });
         const WORLD_RECORD_TYPES = Object.freeze(['region', 'geography', 'ecoregion', 'biome', 'location', 'destination', 'route', 'phenomenon', 'preset']);
         const WORLD_RECORD_COLLECTIONS = Object.freeze({
             region: 'regions', geography: 'geographies', ecoregion: 'ecoregions', biome: 'biomes', location: 'locations',
@@ -23781,6 +23792,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             announcement: { schemaVersion: ANNOUNCEMENT_SCHEMA_VERSION, enabled: true, audience: 'public', style: 'descriptive', preset: 'quick', header: 'Campaign Date and Time', fields: copy(ANNOUNCEMENT_PRESETS.quick) },
             environment: {},
             rest: { advanceTime: true, extendedEnabled: false, pace: 'standard', shortHours: 1, longHours: 8, extendedHours: 24, customTypes: [] },
+            rulesAdvisor: copy(DEFAULT_RULES_ADVISOR_CONFIG),
             world: copy(WORLD_DEFAULT_CONFIG),
             ...modState.config
         });
@@ -25026,7 +25038,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Natural World', value: `${GameAssist.createButton('Geography', '!aa-world geographies')} ${GameAssist.createButton('Biomes', '!aa-world biomes')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Weather', '!weather')}` },
                 { label: 'Local Context', value: `${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Scene', '!aa-scene')}` },
                 { label: 'Time & Sky', value: `${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('Astronomy', '!astro')}` },
-                { label: 'Gameplay', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Travel Routes', '!aa-world routes')} ${GameAssist.createButton('Rest', '!rest')}` },
+                { label: 'Gameplay', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Travel Routes', '!aa-world routes')} ${GameAssist.createButton('Rules Advisor', '!aa-rules')} ${GameAssist.createButton('Rest', '!rest')}` },
                 { label: 'Campaign Tools', value: `${GameAssist.createButton('Presets', '!aa-presets')} ${GameAssist.createButton('Systems', '!Almanac-Systems')} ${GameAssist.createButton('Audit', '!Almanac-Audit')}` },
                 { label: 'World Records', value: `${config.locations.length} locations | ${config.destinations.length} prepared destinations | ${config.routes.length} routes | ${config.phenomena.length} phenomena | ${config.presets.length} session presets | ${config.regions.length} regions | ${config.ecoregions.length} ecoregions | ${config.geographies.length} geographies | ${config.biomes.length} biomes` },
                 { label: 'Navigation', value: `${GameAssist.createButton('Back', '!aa-gm')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
@@ -26431,9 +26443,214 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
 
+        /**
+         * rulesAdvisorConfigResult - Read the small optional advisory configuration without treating it as game state.
+         * Inputs: saved advisory configuration and an explicit persistence choice.
+         * Outputs: a compatible bounded configuration or a warning-only refusal for newer/malformed data.
+         * Invariant: a display/read path never writes the configuration, provider state, or gameplay state.
+         */
+        function rulesAdvisorConfigResult(sourceInput = modState.config.rulesAdvisor, { persist = sourceInput === modState.config.rulesAdvisor } = {}) {
+            if (!sceneRecord(sourceInput)) {
+                return { ok: false, config: null, warning: 'RulesAdvisor configuration is absent or not an object; it was left unchanged.' };
+            }
+            const savedSchema = Number(sourceInput.schemaVersion || 0);
+            if (Number.isFinite(savedSchema) && savedSchema > RULES_ADVISOR_SCHEMA_VERSION) {
+                return { ok: false, config: null, warning: `RulesAdvisor schema ${savedSchema} is newer than this AlmanacAssist version; it was left unchanged.` };
+            }
+            const config = {
+                ...worldExtras(sourceInput, ['schemaVersion', 'enabled']),
+                schemaVersion: RULES_ADVISOR_SCHEMA_VERSION,
+                enabled: sourceInput.enabled !== false
+            };
+            if (persist) modState.config.rulesAdvisor = config;
+            return { ok: true, config, warning: null };
+        }
+
+        function rulesAdvisorConfigForPanel(msg) {
+            const result = rulesAdvisorConfigResult(modState.config.rulesAdvisor, { persist: false });
+            if (result.ok) return result.config;
+            sendPanel(msg, 'Almanac / Rules Advisor Needs Attention', [
+                { label: 'Advisor Data', value: _sanitize(result.warning) },
+                { label: 'Safety', value: 'No advisory, provider, world, or gameplay data was changed.' },
+                { label: 'Navigation', value: `${GameAssist.createButton('Back', '!aa-gm')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+            return null;
+        }
+
+        function rulesAdvisorProfile(profileId) {
+            const id = String(profileId || '').toLowerCase();
+            return RULES_ADVISOR_PROFILES[id] || RULES_ADVISOR_PROFILES.custom;
+        }
+
+        function rulesAdvisorProfileText(profile, subject) {
+            if (profile.id === 'custom') return `${subject}: use the campaign's custom agreement and GM adjudication.`;
+            return `${subject}: consult the campaign's applicable ${profile.id} reference and GM adjudication.`;
+        }
+
+        function rulesAdvisorHaystack(...values) {
+            return values.filter(value => value !== null && value !== undefined).map(value => String(value).toLowerCase()).join(' ');
+        }
+
+        /**
+         * rulesAdvisorNotes - Derive bounded GM-only reminders from a resolved scene.
+         * Inputs: one immutable SceneResolver snapshot and the campaign-selected advisory profile.
+         * Outputs: generic advisory notes with source evidence, never an instruction to mutate game state.
+         * Invariant: no note changes damage, exhaustion, movement, saves, conditions, markers, trackers, Time, or any provider.
+         */
+        function rulesAdvisorNotes(scene, profileId) {
+            const profile = rulesAdvisorProfile(profileId);
+            const notes = [];
+            const seen = new Set();
+            const add = (id, title, message, evidence = []) => {
+                if (seen.has(id) || notes.length >= POLICY.almanac.rulesAdvisorNoteLimit) return;
+                seen.add(id);
+                notes.push({
+                    id,
+                    title,
+                    message,
+                    evidence: evidence.filter(Boolean).slice(0, 3)
+                });
+            };
+            const weather = scene?.weather?.current || null;
+            const environment = scene?.environment?.current || null;
+            const weatherTerms = rulesAdvisorHaystack(weather?.summary, weather?.precipitation, weather?.wind, weather?.cloud, weather?.visibility, weather?.temperatureF);
+            const environmentTerms = rulesAdvisorHaystack(environment?.name, environment?.temperature, environment?.ground, environment?.water, environment?.exposure, environment?.visibility, ...(environment?.tags || []));
+            const visibilityTerms = rulesAdvisorHaystack(weather?.visibility, environment?.visibility);
+            const harshExposure = /extreme|blizzard|severe|freezing|scorch|hazard|storm/.test(weatherTerms) || /extreme|freezing|exposure/.test(environmentTerms);
+            const difficultSurface = /deep snow|snow|ice|mud|waterlogged|loose sand|submerged|rough|slick/.test(environmentTerms);
+            const reducedVisibility = /obscur|limited|poor|fog|smoke|ash|dark/.test(visibilityTerms);
+            if (harshExposure) {
+                add('exposure', 'Exposure Reminder', rulesAdvisorProfileText(profile, 'Harsh exposure is present'), [weather?.summary, environment?.name]);
+            }
+            if (difficultSurface) {
+                add('surface', 'Surface Reminder', rulesAdvisorProfileText(profile, 'The immediate surface may affect travel or movement'), [environment?.ground, environment?.water]);
+            }
+            if (reducedVisibility) {
+                add('visibility', 'Visibility Reminder', rulesAdvisorProfileText(profile, 'Reduced visibility may affect what participants can perceive'), [weather?.visibility, environment?.visibility]);
+            }
+            if (scene?.travel) {
+                add('travel', 'Travel Reminder', rulesAdvisorProfileText(profile, 'An active journey is present; pace and route consequences remain for the GM to adjudicate'), [scene.travel.routeName, scene.travel.destinationName]);
+            }
+            const notablePhenomena = (Array.isArray(scene?.phenomena) ? scene.phenomena : []).filter(item => Number(item?.severity) >= 3);
+            if (notablePhenomena.length) {
+                add('phenomena', 'Phenomenon Reminder', rulesAdvisorProfileText(profile, 'An extraordinary overlay is active; it is descriptive evidence, not an automatic condition or penalty'), notablePhenomena.map(item => item.name));
+            }
+            if (!notes.length) {
+                add('clear-context', 'GM Note', `${profile.name}: no strong environmental or travel reminder is currently derived. Continue to use table judgment.`, []);
+            }
+            return notes;
+        }
+
+        function resolveRulesAdvice() {
+            const advisor = rulesAdvisorConfigResult(modState.config.rulesAdvisor, { persist: false });
+            if (!advisor.ok) {
+                return {
+                    schemaVersion: RULES_ADVISOR_SCHEMA_VERSION,
+                    available: false,
+                    enabled: false,
+                    profile: null,
+                    notes: [],
+                    warning: advisor.warning
+                };
+            }
+            const world = worldConfigResult(modState.config.world, { persist: false });
+            if (!world.ok) {
+                return {
+                    schemaVersion: RULES_ADVISOR_SCHEMA_VERSION,
+                    available: false,
+                    enabled: advisor.config.enabled,
+                    profile: null,
+                    notes: [],
+                    warning: world.warning
+                };
+            }
+            const profile = rulesAdvisorProfile(world.config.rulesProfile);
+            if (!advisor.config.enabled) {
+                return {
+                    schemaVersion: RULES_ADVISOR_SCHEMA_VERSION,
+                    available: true,
+                    enabled: false,
+                    profile: { id: profile.id, name: profile.name },
+                    notes: [],
+                    warning: null
+                };
+            }
+            const scene = resolveScene({ worldConfig: world.config });
+            return {
+                schemaVersion: RULES_ADVISOR_SCHEMA_VERSION,
+                available: true,
+                enabled: true,
+                profile: { id: profile.id, name: profile.name },
+                notes: rulesAdvisorNotes(scene, profile.id),
+                warning: null
+            };
+        }
+
+        function rulesAdvisorDashboardNotes(scene) {
+            const advisor = rulesAdvisorConfigResult(modState.config.rulesAdvisor, { persist: false });
+            const world = worldConfigResult(modState.config.world, { persist: false });
+            if (!advisor.ok || !advisor.config.enabled || !world.ok) return [];
+            return rulesAdvisorNotes(scene, world.config.rulesProfile).slice(0, 2);
+        }
+
+        function showRulesAdvisor(msg) {
+            if (!requireGm(msg)) return;
+            const advisor = rulesAdvisorConfigForPanel(msg);
+            if (!advisor) return;
+            const world = worldConfigForPanel(msg);
+            if (!world) return;
+            const profile = rulesAdvisorProfile(world.rulesProfile);
+            if (!advisor.enabled) {
+                return sendPanel(msg, 'Almanac / Rules Advisor', [
+                    { label: 'Status', value: `Off | ${_sanitize(profile.name)}` },
+                    { label: 'Optional Advice', value: 'RulesAdvisor is disabled. It never applies damage, exhaustion, movement, saves, conditions, markers, or tracker changes.' },
+                    { label: 'Actions', value: `${GameAssist.createButton('Turn On', '!aa-rules on')} ${GameAssist.createButton('2014 Profile', '!aa-rules profile --value 2014')} ${GameAssist.createButton('2024 Profile', '!aa-rules profile --value 2024')} ${GameAssist.createButton('Custom Profile', '!aa-rules profile --value custom')}` },
+                    { label: 'Navigation', value: `${GameAssist.createButton('Back', '!aa-gm')} ${GameAssist.createButton('Worldbuilding', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                ]);
+            }
+            const scene = resolveScene({ worldConfig: world });
+            const notes = rulesAdvisorNotes(scene, profile.id);
+            sendPanel(msg, 'Almanac / Rules Advisor', [
+                { label: 'Rules Profile', value: `${_sanitize(profile.name)} | ${_sanitize(profile.framing)}` },
+                ...notes.map(note => ({ label: _sanitize(note.title), value: `${_sanitize(note.message)}${note.evidence.length ? `<br><em>Scene evidence: ${note.evidence.map(_sanitize).join(' | ')}</em>` : ''}` })),
+                { label: 'Safety Boundary', value: 'Advice only. RulesAdvisor does not apply damage, exhaustion, movement, saves, conditions, markers, tracker changes, Time changes, or provider-state writes.' },
+                { label: 'Actions', value: `${GameAssist.createButton('Turn Off', '!aa-rules off')} ${GameAssist.createButton('2014 Profile', '!aa-rules profile --value 2014')} ${GameAssist.createButton('2024 Profile', '!aa-rules profile --value 2024')} ${GameAssist.createButton('Custom Profile', '!aa-rules profile --value custom')}` },
+                { label: 'Navigation', value: `${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Back', '!aa-gm')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function handleRulesAdvisor(msg, content) {
+            const body = content.replace(/^rules(?:-?advisor)?\s*/i, '').trim();
+            if (!body || /^(menu|status|list|advisor|gm|dm|guide|help|info|manual)$/i.test(body)) return showRulesAdvisor(msg);
+            if (!requireGm(msg)) return;
+            const advisor = rulesAdvisorConfigForPanel(msg);
+            if (!advisor) return;
+            if (/^(on|off)\b/i.test(body)) {
+                advisor.enabled = /^on\b/i.test(body);
+                modState.config.rulesAdvisor = advisor;
+                return showRulesAdvisor(msg);
+            }
+            if (/^profile\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                const requested = String(args.value || args.profile || '').toLowerCase();
+                if (!Object.prototype.hasOwnProperty.call(RULES_ADVISOR_PROFILES, requested)) {
+                    return sendPanel(msg, 'Almanac / Rules Advisor Needs Attention', [{ label: 'Rules Profile', value: 'Choose 2014, 2024, or Custom.' }, { label: 'Changes', value: 'None.' }]);
+                }
+                const world = worldConfigForPanel(msg);
+                if (!world) return;
+                const previous = copy(world);
+                world.rulesProfile = requested;
+                commitWorldConfig(world, previous, { action: 'rules-advisor-profile', profile: requested }, msg);
+                return showRulesAdvisor(msg);
+            }
+            return showRulesAdvisor(msg);
+        }
+
+
         function showMaster(msg) {
             if (!playerIsGM(msg?.playerid)) return showCurrent(msg);
             const scene = resolveScene();
+            const rulesNotes = rulesAdvisorDashboardNotes(scene);
             const moment = scene.time?.current;
             const dawnCommand = sceneAnchorAdvanceCommand(moment, { standardHour: 6, wayfarerHour: 1 });
             const duskCommand = sceneAnchorAdvanceCommand(moment, { standardHour: 18, wayfarerHour: 11 });
@@ -26448,7 +26665,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ...(scene.travel ? [{ label: 'Journey', value: `${_sanitize(scene.travel.originName)} &rarr; ${_sanitize(scene.travel.destinationName)} | ${formatTravelMiles(scene.travel.remainingMiles)} remaining | ${_sanitize(travelPace(scene.travel.paceId).name)} pace` }, { label: 'Journey Actions', value: journeyActions }] : []),
                 { label: 'Advance Date & Time', value: timeButtons },
                 { label: 'Set or Change Calendar', value: moment ? `${exactMomentButton(moment)} ${GameAssist.createButton('Choose Calendar', '!cal')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')}` : GameAssist.createButton('Choose Calendar', '!cal') },
-                { label: 'Session Actions', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${scene.travel ? '' : GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Short Rest', '!aa-rest preview --type short')} ${GameAssist.createButton('Long Rest', '!aa-rest preview --type long')}`.trim() },
+                { label: 'Session Actions', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${scene.travel ? '' : GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Rules Advice', '!aa-rules')} ${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Short Rest', '!aa-rest preview --type short')} ${GameAssist.createButton('Long Rest', '!aa-rest preview --type long')}`.trim() },
+                ...(rulesNotes.length ? [{ label: 'GM Notes', value: `${rulesNotes.map(note => _sanitize(note.message)).join('<br>')} ${GameAssist.createButton('Rules Details', '!aa-rules')}` }] : []),
                 { label: 'Share', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
                 { label: 'Worldbuilding', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Presets', '!aa-presets')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Astronomy', '!astro')} ${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('More Tools', '!aa-more')}` },
                 { label: 'Navigation', value: `${GameAssist.createButton('Almanac Guide', '!Almanac-Guide')} ${gameAssistHomeButton()}` }
@@ -29869,6 +30087,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (runtime.environment.override && !runtime.environment.override.name) problems.push('Environment override is malformed.');
             const worldResult = worldConfigResult(modState.config.world, { persist: false });
             if (!worldResult.ok) problems.push(worldResult.warning);
+            const rulesAdvisorResult = rulesAdvisorConfigResult(modState.config.rulesAdvisor, { persist: false });
+            if (!rulesAdvisorResult.ok) problems.push(rulesAdvisorResult.warning);
+            const rulesAdvisorSummary = rulesAdvisorResult.ok
+                ? `${rulesAdvisorResult.config.enabled ? 'On' : 'Off'} | ${_sanitize(rulesAdvisorProfile(worldResult.ok ? worldResult.config.rulesProfile : 'custom').name)}`
+                : 'Unavailable';
             const journey = worldResult.ok ? travelJourneyContext(worldResult.config, runtime.world) : { value: null, warning: null };
             if (journey.warning) problems.push(journey.warning);
             const activePhenomena = normalizeActivePhenomena(runtime.world.activePhenomena);
@@ -29896,6 +30119,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Current Context', value: `${_sanitize(resolvedClimate()?.regionName || 'No region')} | ${_sanitize(runtime.weather.current?.summary || 'No committed weather')} | ${_sanitize(environmentContext().name)}` },
                 { label: 'Travel', value: journey.value ? `${_sanitize(journey.value.originName)} &rarr; ${_sanitize(journey.value.destinationName)} | ${formatTravelMiles(journey.value.remainingMiles)} remaining` : (worldResult.ok ? 'No active reviewed journey.' : 'Worldbuilding data unavailable for Travel.') },
                 { label: 'Phenomena', value: `${phenomenonSummary}${futurePhenomena ? ` | ${futurePhenomena} newer record(s) preserved` : ''}` },
+                { label: 'Rules Advisor', value: `${rulesAdvisorSummary} ${GameAssist.createButton('Open', '!aa-rules')}` },
                 { label: 'Retained History', value: `Time ${runtime.history.length}/${POLICY.almanac.historyLimit} | Weather ${runtime.weather.history.length}/${POLICY.almanac.weatherHistoryLimit} | Travel ${runtime.world.travel.history.length}/${POLICY.almanac.travelHistoryLimit} | Phenomena ${runtime.world.phenomenaHistory.length}/${POLICY.almanac.phenomenonHistoryLimit} | Rest ${runtime.rest.history.length}/${POLICY.almanac.restHistoryLimit}` },
                 { label: audit ? 'Audit Result' : 'Health', value: problems.length ? _sanitize(problems.join(' ')) : 'No known Almanac configuration, chronology, or retained-state problems.' },
                 { label: audit ? 'Changes' : 'Actions', value: audit ? 'None. Audit is read-only.' : `${GameAssist.createButton('Almanac', '!Almanac-GM')} ${GameAssist.createButton('Audit', '!Almanac-Audit')}` }
@@ -29905,9 +30129,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function manualHtml() {
             return [
                 '<h1>AlmanacAssist User Manual</h1>',
-                `<p><strong>GameAssist v${_sanitize(VERSION)} | AlmanacAssist ${MODULE_VERSION}</strong></p>`,
+                `<p><strong>GameAssist v${_sanitize(VERSION)} | AlmanacAssist v${MODULE_VERSION}</strong></p>`,
                 '<h2>Purpose</h2>',
-                '<p>AlmanacAssist combines fictional time, regional climate, astronomy, weather, environmental context, explicit Phenomena overlays, reviewed Travel, and deliberate rest workflows. Current World, Scene, and announcement views use one read-only scene snapshot so ordinary play sees a coherent world without changing provider state. Each internal system can be turned off without erasing its valid settings or disabling unrelated Almanac features.</p>',
+                '<p>AlmanacAssist combines fictional time, regional climate, astronomy, weather, environmental context, explicit Phenomena overlays, reviewed Travel, optional advisory-only RulesAdvisor reminders, and deliberate rest workflows. Current World, Scene, and announcement views use one read-only scene snapshot so ordinary play sees a coherent world without changing provider state. Each internal system can be turned off without erasing its valid settings or disabling unrelated Almanac features.</p>',
                 '<h2>Everyday Use</h2>',
                 '<p><code>!aa-gm</code>, <code>!aa-dm</code>, <code>!Almanac</code>, or <code>!aa</code> opens the compact Current World dashboard. It keeps the current scene, common advances, dawn/dusk anchors, calendar selection, rest, weather, Scene, preview, and announce actions together. <code>!aa-scene</code> opens a focused current-world view; GM-only <code>!aa-scene technical</code> opens provenance and warnings. <code>!date</code>, <code>!time</code>, <code>!cal</code>, <code>!clim</code>, <code>!astro</code>, <code>!weather</code>, <code>!enviro</code>, <code>!rest</code>, and <code>!phenomena</code> open focused views.</p>',
                 '<h2>Worldbuilding Mode</h2>',
@@ -29942,7 +30166,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h2>Safety</h2>',
                 '<p>Large advances produce one committed change. Moving backward changes only the fictional calendar and requires explicit confirmation. It never reverses rests, effects, combat, NPC history, HP, resources, or other campaign state.</p>',
                 '<h2>Commands</h2>',
-                '<p><code>!aa-wayfarer</code> opens the compact custom-calendar manager; its generated buttons cover direct saved-calendar selection, focused component editing, guided review, preview, activation, draft recovery, duplication, and rollback. <code>!aa-preview</code> privately previews the configured scene announcement, <code>!aa-announce</code> delivers it to the selected audience, and <code>!aa-announcement-settings</code> chooses public or GM-only delivery, a Quick, Calendar, Travel, or Everything preset, a campaign heading, or custom included fields. Technical fields always deliver GM-only; descriptive output limits itself to player-perceivable facts. Wayfarer presents its 20-hour day as ordinal Hours and named daily periods rather than AM/PM. Moon cycles and phase names are managed through Astronomy because they remain world context when a calendar display changes. <code>!aa-time</code>, <code>!aa-climate</code>, <code>!aa-astro</code>, <code>!aa-weather</code>, <code>!aa-enviro</code>, <code>!aa-rest</code>, and <code>!aa-phenomena</code> (or <code>!phenomena</code>) open their focused systems. Standard role routes such as <code>!Weather-GM</code>, <code>!Weather-DM</code>, <code>!Weather-Help</code>, <code>!Weather-Status</code>, and <code>!Weather-Audit</code> are case-insensitive and also accept spaces in place of the hyphen.</p>'
+                '<p><code>!aa-wayfarer</code> opens the compact custom-calendar manager; its generated buttons cover direct saved-calendar selection, focused component editing, guided review, preview, activation, draft recovery, duplication, and rollback. <code>!aa-preview</code> privately previews the configured scene announcement, <code>!aa-announce</code> delivers it to the selected audience, and <code>!aa-announcement-settings</code> chooses public or GM-only delivery, a Quick, Calendar, Travel, or Everything preset, a campaign heading, or custom included fields. Technical fields always deliver GM-only; descriptive output limits itself to player-perceivable facts. Wayfarer presents its 20-hour day as ordinal Hours and named daily periods rather than AM/PM. Moon cycles and phase names are managed through Astronomy because they remain world context when a calendar display changes. <code>!aa-time</code>, <code>!aa-climate</code>, <code>!aa-astro</code>, <code>!aa-weather</code>, <code>!aa-enviro</code>, <code>!aa-rest</code>, <code>!aa-phenomena</code> (or <code>!phenomena</code>), and <code>!aa-rules</code> (or <code>!rules</code>) open their focused systems. RulesAdvisor is optional, follows the selected campaign profile, and only presents GM reminders; it never applies gameplay state. Standard role routes such as <code>!Weather-GM</code>, <code>!Weather-DM</code>, <code>!Weather-Help</code>, <code>!Weather-Status</code>, and <code>!Weather-Audit</code> are case-insensitive and also accept spaces in place of the hyphen.</p>'
             ].join('');
         }
 
@@ -29952,7 +30176,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Start Here', value: GameAssist.createButton('Open Almanac Controls', '!aa-gm') },
                 { label: 'Date and Time', value: `${GameAssist.createButton('Current Date', '!date')} ${GameAssist.createButton('Advance or Set Time', '!aa-time menu')} ${GameAssist.createButton('Choose Calendar', '!cal')}` },
                 { label: 'Share With The Table', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
-                { label: 'World Today', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Environment', '!enviro')}` },
+                { label: 'World Today', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Rules Advice', '!aa-rules')} ${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Environment', '!enviro')}` },
                 { label: 'Worldbuilding', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Travel Routes', '!aa-world routes')}` },
                 { label: 'Calendar Setup', value: GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer') },
                 { label: 'Full Reference', value: GameAssist.createButton('Create or Update Manual', '!Almanac-Manual') }
@@ -30001,6 +30225,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (['guide', 'help', 'info', 'manual'].includes(action)) return `${system} help`;
                 return `${system} ${action}`;
             }
+            const aaFocused = raw.match(/^!aa(?:-|\s+)(phenomen(?:a|on)|presets?|rules(?:-?advisor)?)(?:-|\s|$)/i);
+            if (aaFocused) {
+                const alias = aaFocused[1].toLowerCase();
+                const system = /^phenomen/.test(alias) ? 'phenomena' : (/^preset/.test(alias) ? 'presets' : 'rules');
+                return `${system} ${raw.replace(/^!aa(?:-|\s+)(?:phenomen(?:a|on)|presets?|rules(?:-?advisor)?)(?:-|\s)*/i, '')}`.trim();
+            }
             if (/^!date(?:\s|$)/i.test(raw)) return 'current-date';
             if (/^!time(?:\s|$)/i.test(raw)) return 'current-time';
             if (/^!(?:calendar|cal)(?:\s|$)/i.test(raw)) return 'calendar';
@@ -30015,6 +30245,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (/^!travel(?:-|\s|$)/i.test(raw)) return `travel ${raw.replace(/^!travel(?:-|\s)*/i, '')}`.trim();
             if (/^!phenomen(?:a|on)(?:-|\s|$)/i.test(raw)) return `phenomena ${raw.replace(/^!phenomen(?:a|on)(?:-|\s)*/i, '')}`.trim();
             if (/^!presets?(?:-|\s|$)/i.test(raw)) return `presets ${raw.replace(/^!presets?(?:-|\s)*/i, '')}`.trim();
+            if (/^!rules(?:-?advisor)?(?:-|\s|$)/i.test(raw)) return `rules ${raw.replace(/^!rules(?:-?advisor)?(?:-|\s)*/i, '')}`.trim();
             if (/^!aa-wayfarer(?:\s|$)/i.test(raw)) return `wayfarer ${raw.replace(/^!aa-wayfarer\s*/i, '')}`.trim();
             if (/^!aa-time(?:\s|$)/i.test(raw)) return `time ${raw.replace(/^!aa-time\s*/i, '')}`.trim();
             if (/^!aa-(?:gm|dm|menu)(?:\s|$)/i.test(raw)) return 'menu';
@@ -30044,6 +30275,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (lower === 'travel' || lower.startsWith('travel ')) return handleTravel(msg, input);
             if (lower === 'phenomena' || lower.startsWith('phenomena ') || lower === 'phenomenon' || lower.startsWith('phenomenon ')) return handlePhenomena(msg, input);
             if (lower === 'presets' || lower.startsWith('presets ') || lower === 'preset' || lower.startsWith('preset ')) return handlePresets(msg, input);
+            if (lower === 'rules' || lower.startsWith('rules ') || lower === 'rulesadvisor' || lower.startsWith('rulesadvisor ')) return handleRulesAdvisor(msg, input);
             if (lower === 'preview' || lower === 'time preview') return showAnnouncement(msg, true);
             if (lower === 'announce' || lower === 'time announce') return showAnnouncement(msg, false);
             if (lower === 'announcement-settings' || lower === 'announcements') return showAnnouncementSettings(msg);
@@ -30130,7 +30362,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
-        ['!Almanac', '!Almanac-', '!AlmanacAssist', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-', '!world', '!world-', '!location', '!location-', '!travel', '!travel-', '!phenomena', '!phenomena-', '!phenomenon', '!phenomenon-', '!presets', '!presets-', '!preset', '!preset-'].forEach(prefix => {
+        ['!Almanac', '!Almanac-', '!AlmanacAssist', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-', '!world', '!world-', '!location', '!location-', '!travel', '!travel-', '!phenomena', '!phenomena-', '!phenomenon', '!phenomenon-', '!presets', '!presets-', '!preset', '!preset-', '!rules', '!rules-', '!rulesadvisor', '!rulesadvisor-'].forEach(prefix => {
             GameAssist.onCommand(prefix, handleCommand, MODULE_NAME, {
                 match: { caseInsensitive: true, mode: prefix.endsWith('-') ? 'prefix' : 'token' }
             });
@@ -30151,6 +30383,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             travelStateSchemaVersion: TRAVEL_RUNTIME_SCHEMA_VERSION,
             phenomenaStateSchemaVersion: PHENOMENA_RUNTIME_SCHEMA_VERSION,
             presetRegistrySchemaVersion: PRESET_REGISTRY_SCHEMA_VERSION,
+            rulesAdvisorSchemaVersion: RULES_ADVISOR_SCHEMA_VERSION,
             timeStateSchemaVersion: TIME_STATE_SCHEMA_VERSION,
             wayfarerDraftSchemaVersion: WAYFARER_DRAFT_SCHEMA_VERSION,
             climateStateSchemaVersion: CLIMATE_STATE_SCHEMA_VERSION,
@@ -30194,6 +30427,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     campaign: world.ok ? world.config.presets : []
                 });
             },
+            getRulesAdvice: () => immutableSceneSnapshot(resolveRulesAdvice()),
             getRestHistory: () => Object.freeze(copy(ensureAlmanacRuntime().rest.history)),
             observe: (callback, { owner = 'AlmanacAssistConsumer' } = {}) => GameAssist.SemanticEvents.observe(callback, {
                 owner,
@@ -30202,15 +30436,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             clearObservers: owner => GameAssist.SemanticEvents.clearObservers(owner)
         });
 
-        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: read-only Current World SceneResolver, generic Worldbuilding, PresetRegistry campaign clones, explicit Phenomena overlays, reviewed Travel, Wayfarer-aware time, configurable world announcements, compact climate and environment controls, and all six Almanac systems are available through !Almanac; the module starts disabled.`, 'INFO', { startup: true });
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: read-only Current World SceneResolver, generic Worldbuilding, PresetRegistry campaign clones, optional RulesAdvisor, explicit Phenomena overlays, reviewed Travel, Wayfarer-aware time, configurable world announcements, compact climate and environment controls, and all six Almanac systems are available through !Almanac; the module starts disabled.`, 'INFO', { startup: true });
     }, {
         enabled: false,
-        prefixes: ['!Almanac', '!Almanac-', '!AlmanacAssist', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-', '!world', '!world-', '!location', '!location-', '!travel', '!travel-', '!phenomena', '!phenomena-', '!phenomenon', '!phenomenon-', '!presets', '!presets-', '!preset', '!preset-'],
+        prefixes: ['!Almanac', '!Almanac-', '!AlmanacAssist', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-', '!world', '!world-', '!location', '!location-', '!travel', '!travel-', '!phenomena', '!phenomena-', '!phenomenon', '!phenomenon-', '!presets', '!presets-', '!preset', '!preset-', '!rules', '!rules-', '!rulesadvisor', '!rulesadvisor-'],
         preserveRuntimeOnDisable: true,
-        protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'announcement', 'environment', 'rest', 'world']
+        protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'announcement', 'environment', 'rest', 'rulesAdvisor', 'world']
     });
     // --- Notes & Comments ---
-    // Changed (v2.0.0): AlmanacAssist is built as v2.0.0 for the full Issue #96 program. Current work adds generic immutable PresetRegistry templates, reviewed editable campaign clones, and bounded Session Preset references while retaining all prior source-history notes below as historical checkpoints. Live Roll20 validation is deliberately deferred until every Issue #96 code gate is built; focused VM checks remain development evidence only. Rollback: retain the last committed source checkpoint while the v2.0.0 implementation build is incomplete.
+    // Changed (v2.0.0): AlmanacAssist is built as v2.0.0 for the full Issue #96 program. Current work adds generic immutable PresetRegistry templates, reviewed editable campaign clones, bounded Session Preset references, and optional profile-specific advisory-only RulesAdvisor reminders while retaining all prior source-history notes below as historical checkpoints. Live Roll20 validation is deliberately deferred until every Issue #96 code gate is built; focused VM checks remain development evidence only. Rollback: retain the last committed source checkpoint while the v2.0.0 implementation build is incomplete.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.10.0 on the AlmanacAssist-v2.0.0-Build line; adds bounded generic Phenomena definitions and reviewed active overlays with optional Location scope and fictional-time expiry. SceneResolver exposes immutable explicit overlay evidence and non-authoritative visibility/terrain/travel presentation notes without replacing Weather, Environment, Astronomy, Climate, Time, or Travel. Rollback: retain the 1.9.0 Prepared Destination and reviewed Travel checkpoint.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.9.0 on the AlmanacAssist-v2.0.0-Build line; adds bounded generic Prepared Destinations and bidirectional Travel Routes, reviewed start/segment/arrival workflow, active-journey SceneResolver evidence, and accepted-only fictional-time plus final-location commits. Prepared location switches deliberately preserve Weather, Environment overrides, Astronomy, and other provider ownership. Phenomena remains an explicit future provider; no setting lore is bundled. Rollback: retain the 1.8.0 generic Worldbuilding foundation with Travel unavailable.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.8.0 on the AlmanacAssist-v2.0.0-Build line; added bounded generic Worldbuilding Mode records for Region, Geography, Ecoregion, Biome, and Location, safe active-place/favorite/recent controls, field-owned SceneResolver composition, generic place chat editors, and warning-only future-schema handling. No published setting data is bundled; Phenomena remained a future provider at this checkpoint. Rollback: retain 1.7.0 SceneResolver behavior with an empty Worldbuilding branch.
@@ -30229,6 +30463,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Require a reviewed start and each reviewed Travel segment before changing fictional time or final Location - ALT: advance time or switch the party when a route is selected; REJECTED: route selection is planning, while chronology and party context must remain explicit accepted operations.
     //   CHOICE: Make Prepared Destinations Location-bound rather than silently overwrite Weather, Environment, Astronomy, or calendar providers - ALT: treat a location bundle as a broad hidden provider write; REJECTED: Location hierarchy already resolves coherent parent context and provider ownership must remain visible.
     //   CHOICE: Start expanded Worldbuilding with generic owner-authored records rather than named setting packs - ALT: seed recognizable published places/calendars/lore; REJECTED: setting provenance and licensing review are separate release gates.
+    //   CHOICE: Derive optional RulesAdvisor reminders from the immutable SceneResolver snapshot - ALT: write conditions, penalties, movement, saves, markers, or trackers from weather and terrain; REJECTED: rules advice must remain profile-specific GM guidance without becoming a hidden gameplay authority.
     //   CHOICE: Let Location select parent context while preserving separate Region, Geography, Ecoregion, Biome, Climate, Environment, and Weather authority - ALT: copy every parent fact into Location; REJECTED: copied facts would drift and erase provenance.
     //   CHOICE: Preserve newer unknown Worldbuilding schemas without normalization - ALT: coerce or delete unknown structures on read; REJECTED: an older script must never silently reinterpret a newer campaign world.
     //   CHOICE: Resolve one defensive SceneResolver snapshot without calling state-initializing provider reads - ALT: reuse current display helpers that normalize or initialize runtime branches; REJECTED: a read-only current-world API must not mutate saved state merely by being observed.

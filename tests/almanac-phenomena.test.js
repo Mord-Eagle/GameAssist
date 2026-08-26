@@ -225,6 +225,10 @@ function assertReviewedWorkflow(harness) {
     assert.equal(hyphenAlias.length, 1, 'the case-insensitive hyphenated Phenomena alias must share the compact handler');
     assert.match(hyphenAlias[0].message, /Almanac \/ Phenomena/, 'the close hyphen variant must reach the Phenomena panel');
 
+    const aaHyphenAlias = harness.dispatchCommand('!aa-phenomena-status');
+    assert.equal(aaHyphenAlias.length, 1, 'the Almanac-prefixed close hyphen Phenomena alias must share the compact handler');
+    assert.match(aaHyphenAlias[0].message, /Almanac \/ Phenomena/, 'the Almanac-prefixed close hyphen form must reach the Phenomena panel');
+
     const deactivateReview = harness.dispatchCommand(`!aa-phenomena deactivate --id ${active.id}`);
     assert.equal(deactivateReview.length, 1, 'deactivation must first render one review panel');
     assert.match(deactivateReview[0].message, /Review Deactivation/, 'deactivation must be explicitly reviewed');

@@ -25,7 +25,7 @@ the larger architectural work begins. **AlmanacAssist v2.0.0 is the active imple
 | Gate 0 | Preserve and repair the current foundation | **Code substantially built — #92/#93 and focused automated checks are complete; retain unknown-state hardening through final implementation** |
 | Gate 1 | Make the existing six systems usable in Roll20 | **Code substantially built — compact Current World dashboard and snapshot-backed presentation are implemented; live UX verification is deferred to the final phase** |
 | Gate 2 | Introduce the SceneResolver current-scene authority | **Code built — read-only snapshot, explicit Phenomena evidence, and focused VM coverage are implemented; live verification is deferred to the final phase** |
-| Gate 3 | Build live-world systems from #94 | **In progress — generic place composition, Prepared Destinations, reviewed Travel, explicit Phenomena overlays, and PresetRegistry are built; RulesAdvisor and editor-layer completion remain** |
+| Gate 3 | Build live-world systems from #94 | **In progress — generic place composition, Prepared Destinations, reviewed Travel, explicit Phenomena overlays, PresetRegistry, and RulesAdvisor are built; editor-layer completion remains** |
 | Gate 4 | Portable world data and temporal contexts | Not started |
 | Acceptance | Automated/structural + live Roll20 | **Deferred — begin only after every Issue #96 code gate is built** |
 
@@ -144,7 +144,7 @@ This code gate has a v2.0.0 implementation foundation: compact Current World/Sce
       change Location only on accepted arrival.
 - [x] Phenomena: bounded owner-authored definitions with optional Location scope, reviewed activation/deactivation, optional fictional-time expiry, explicit cleanup, safe active-record deletion constraints, Worldbuilding/Session/Travel presentation, and focused VM coverage.
 - [x] PresetRegistry: immutable generic versioned built-ins, Preview → reviewed Clone/Install → Customize, independent editable campaign clones, provenance, bounded references, and focused VM coverage.
-- [ ] RulesAdvisor (optional, rules-profile-specific, advisory only).
+- [x] RulesAdvisor: optional profile-specific bounded SceneResolver-derived reminders, explicit on/off and profile controls, no provider/gameplay writes, and focused VM coverage.
 - [ ] Complete Basic / Detailed / Technical layers for every editor.
 - [ ] Provenance and licensing review before any published setting pack data.
 
@@ -182,7 +182,7 @@ This code gate has a v2.0.0 implementation foundation: compact Current World/Sce
 
 ### Live Roll20
 
-**Deferred final phase:** Do not execute any item in this section until all Issue #96 code gates—including RulesAdvisor, WorldPacks, and temporal contexts—are built and the consolidated automated regression pass is clean.
+**Deferred final phase:** Do not execute any item in this section until all Issue #96 code gates—including WorldPacks and temporal contexts—are built and the consolidated automated regression pass is clean.
 
 - [ ] Nontrivial Wayfarer calendar via chat controls only.
 - [ ] Every generated button opens a complete prompt and produces a visible result.

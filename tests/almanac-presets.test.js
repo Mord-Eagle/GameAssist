@@ -204,7 +204,7 @@ function assertReferenceSafetyAndAliases(harness) {
     assert.equal(removePhenomenon.length, 1, 'referenced Phenomenon removal must return one guarded panel');
     assert.match(removePhenomenon[0].message, /Dependencies/, 'preset Phenomenon reference must block unsafe removal');
 
-    ['!PRESET-status', '!presets status', '!preset status', '!presets-status', '!aa-presets', '!aa presets'].forEach(command => {
+    ['!PRESET-status', '!presets status', '!preset status', '!presets-status', '!aa-presets', '!aa presets', '!aa-presets-status', '!aa presets-status'].forEach(command => {
         const alias = harness.dispatchCommand(command);
         assert.equal(alias.length, 1, `${command} must reach exactly one PresetRegistry panel through registered direct or Almanac aliases`);
         assert.match(alias[0].message, /Almanac \/ Presets/, `${command} must reach the PresetRegistry panel`);
