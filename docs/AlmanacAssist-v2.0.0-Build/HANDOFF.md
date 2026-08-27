@@ -149,7 +149,10 @@ Recovery work must prioritize the fresh-GM journey: World Library/Starter Worlds
   Travel Profile/intermediate-Location choices. It prevents a distant record from
   disappearing after the first twelve choices and avoids oversized dynamic links;
   the picker itself is read-only and delegates any selection to the existing
-  guarded setter or atomic Route Leg split path.
+  guarded setter or atomic Route Leg split path. The rich Route Leg editor pages
+  four legs at a time (the generic chooser page remains twelve choices), and a
+  Route with explicit legs replaces endpoint-change controls with a direct
+  Route-Leg recovery path rather than offering a known refusal button.
 
 #### Prepared Destinations and Travel
 
