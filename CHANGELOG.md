@@ -59,6 +59,13 @@ EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so exis
 - Adds the recovery standard: a fresh GM must be able to choose or create a generic world, acquire an active Location, select a climate region/profile, prepare/travel, use complete generated prompts, and choose ordinary Roll20 pages/handouts by visible name without memorizing commands or pasting IDs.
 - Retains the 2026-08-26 automated/structural checkpoint as historical regression evidence only. It neither proves rendered chat behavior nor makes formal live Roll20 acceptance eligible.
 
+### AlmanacAssist v2.0.0 executable artifact convergence - active
+
+- Reconciles the previously deferred `GameAssist.js` and `GameAssist-v2.0.0` executable mirrors with the canonical `GameAssist` source, including the complete WorldPack, Session catalog, Route Leg, World Library, and prompt-recovery implementation.
+- Preserves/reconciles the prior mirror-only prompt-hardening delta before convergence; its active protections are present in canonical source, and its obsolete inline-query helper edits are superseded by the bounded named chooser implementation.
+- Restores mandatory byte-identity checks to the WorldPack-v2 and migration focused runners. `GameAssist`, `GameAssist.js`, and `GameAssist-v2.0.0` must now be updated together and pass syntax, `cmp`, and Gate 0 identity checks before focused evidence is accepted.
+- The post-convergence strict suite passes all 14 focused Almanac Node VM checks. This makes the code available in the actual release artifacts; it does not claim that a fresh live Roll20 recovery or formal acceptance test has passed.
+
 ### AlmanacAssist v2.0.0 starter-world and prompt recovery - active
 
 - Adds four bounded generic owner-authored Starter Worlds—Ember Coast, Sunward Expanse, Frostfall Marches, and Mirewood Basin—with three Locations, prepared destinations, routes, phenomena, and climate regions each. They deliberately contain no copied published-setting lore.
@@ -124,7 +131,7 @@ EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so exis
 - Makes update refusals name a bounded set of protected campaign records and leave all branches unchanged. A built-in-source refusal offers a separately reviewed **Independent Copy** recovery route, so a GM can retain customization without command memorization or an overwrite.
 - Corrects the generated Almanac manual and README to describe the current original Cinderturn, Tidebound, and Lantern Way calendar data. Retired compatibility profile tokens remain input-boundary migration aliases only; they are not emitted in menus, prompts, current documentation, source packages, or newly written provenance.
 - Adds a documented human-editable WorldPack Worksheet envelope with one inert fenced JSON block, while canonical WorldPack exports remain raw normalized JSON. The bounded parser accepts either representation, rejects ambiguous worksheet blocks, and sends both through the same stale-safe review path.
-- Extends local canonical focused coverage for source-update availability, confirmation, current-source no-op behavior, campaign-edit conflict evidence, independent-copy recovery, worksheet round-trip, and ambiguous-worksheet refusal. These VM checks remain development evidence only; executable mirror identity and live Roll20 acceptance are still deferred.
+- Extends focused coverage for source-update availability, confirmation, current-source no-op behavior, campaign-edit conflict evidence, independent-copy recovery, worksheet round-trip, and ambiguous-worksheet refusal. These VM checks remain development evidence only; all executable artifacts are now identity-gated, while live Roll20 acceptance remains deferred.
 
 ### AlmanacAssist 1.10.0 explicit Phenomena pass - 2026-08-26
 

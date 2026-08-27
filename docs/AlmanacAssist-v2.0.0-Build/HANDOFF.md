@@ -22,12 +22,12 @@ This document is a practical restart/recovery guide for the AlmanacAssist **v2.0
   2. `GameAssist.js` — executable mirror
   3. `GameAssist-v2.0.0` — executable mirror with no JavaScript filename extension
 
-  **Current recovery boundary:** the two mirrors are known stale and have broad
-  pre-existing differences. Do **not** synchronize them during the current
-  canonical-source recovery pass. Their identity guard is expected to fail until
-  an explicit artifact-convergence pass is planned; focused canonical VM checks
-  may bypass only that assertion locally and never treat the bypass as release
-  evidence.
+  **Artifact-convergence policy:** the three executable artifacts are synchronized
+  and must remain byte-identical. The former source-only mirror deferral and
+  identity-skip workflow is retired: every meaningful `GameAssist` edit must be
+  copied into both release artifacts in the same commit, followed by the real
+  identity gate. Convergence makes the current source available to the actual
+  release artifacts; it does **not** claim a live Roll20 acceptance result.
 
 ### Tracker boundaries
 
@@ -142,7 +142,7 @@ Recovery work must prioritize the fresh-GM journey: World Library/Starter Worlds
   ordinary named collection controls render a name-sorted 12-entry page with
   Previous/Next, name/tag Search, and direct **Edit** actions. Browsing/searching
   is read-only and does not require a GM to recover a Technical stable ID.
-- **Current canonical-source recovery addition:** editor relations now use the same
+- **Current recovery addition:** editor relations now use the same
   complete bounded named catalog rather than an inline Roll20 option query. This
   covers Worldbuilding hierarchy/endpoints, Climate and Roll20 page assignment,
   installed-palette profile bindings, Session Preset overlays, and Route Leg
@@ -153,7 +153,7 @@ Recovery work must prioritize the fresh-GM journey: World Library/Starter Worlds
   four legs at a time (the generic chooser page remains twelve choices), and a
   Route with explicit legs replaces endpoint-change controls with a direct
   Route-Leg recovery path rather than offering a known refusal button.
-- **Current canonical-source recovery addition:** Phenomena and Presets Session
+- **Current recovery addition:** Phenomena and Presets Session
   roots now disclose their complete campaign counts but retain only three compact
   representative rows. Their direct **Browse**/**Search** catalogs retain every
   campaign definition/preset in 12-entry name/tag pages, with the original
@@ -161,7 +161,7 @@ Recovery work must prioritize the fresh-GM journey: World Library/Starter Worlds
   active-location scoped installed Phenomenon Template list receives the same
   bounded clone-review catalog; browsing alone does not create a definition or
   activate an overlay.
-- **Current canonical-source recovery addition:** the 24-world saved World Library
+- **Current recovery addition:** the 24-world saved World Library
   no longer dumps every rich snapshot/switch row into its hub. The hub names the
   active world, discloses the total, and shows at most three representatives; its
   Saved Worlds catalog uses six name/tag-searchable rows with direct guarded
@@ -202,7 +202,7 @@ Recovery work must prioritize the fresh-GM journey: World Library/Starter Worlds
   160-record state/import/addition boundary; an Ecoregion Profile's selected
   Phenomenon Templates are retained canonically as an array rather than a
   malformed one-value text field.
-- **Current canonical-source recovery addition:** the WorldPacks hub now discloses
+- **Current recovery addition:** the WorldPacks hub now discloses
   the full installed-clone count and opens a complete, read-only Installed catalog
   rather than silently showing only its first eight records or constructing one
   all-pack palette query. The catalog pages six rich provenance/palette rows,
@@ -277,9 +277,9 @@ This behavior is intentionally conservative. Do not replace it with a repair/nor
 
 | Path | Purpose |
 | --- | --- |
-| `GameAssist` | Canonical Roll20 source. Make all source changes here first. |
-| `GameAssist.js` | Known-stale executable mirror. Do not synchronize during the canonical recovery pass; identity is deferred to an explicit convergence gate. |
-| `GameAssist-v2.0.0` | Known-stale executable mirror. Do not synchronize during the canonical recovery pass; when convergence is authorized later, syntax must be checked via stdin because its filename extension is not `.js`. |
+| `GameAssist` | Canonical Roll20 source. Make source changes here first, then synchronize the two release artifacts in the same commit. |
+| `GameAssist.js` | Synchronized executable / One-Click release mirror. It must remain byte-identical to `GameAssist`; never leave it source-stale. |
+| `GameAssist-v2.0.0` | Synchronized versioned Roll20 release artifact. It must remain byte-identical to `GameAssist`; check its syntax through stdin because its filename extension is not `.js`. |
 | `tests/almanac-gate0.test.js` | Shared isolated Roll20-shaped VM harness plus Gate 0 checks. Its harness accepts a historical state fixture for migration testing. |
 | `tests/almanac-scene-resolver.test.js` | SceneResolver no-write/immutability/provenance coverage. |
 | `tests/almanac-worldbuilding.test.js` | Generic records, editor layers, future config/runtime preservation, and mutation-block checks. |
@@ -304,7 +304,7 @@ This behavior is intentionally conservative. Do not replace it with a repair/nor
 
 ## 6. Automated verification evidence and its limit
 
-The following are the historical focused checks plus the active recovery suite. They are necessary regression evidence, but the first live result proved they are not sufficient evidence of product usability. The direct identity assertions and `cmp` commands are the **future artifact-convergence** sequence; while the mirrors remain deliberately stale, run the same canonical behavioral suites through a temporary local identity-skip copy and leave the real assertions unchanged:
+The following are the historical focused checks plus the active recovery suite. They are necessary regression evidence, but the first live result proved they are not sufficient evidence of product usability. Artifact convergence is now mandatory rather than deferred: run the direct identity assertions and `cmp` commands against all three artifacts. Do not use an identity-skip copy as ordinary development evidence:
 
 ```bash
 node tests/almanac-gate0.test.js
@@ -366,13 +366,14 @@ Do not mark the implementation as a live Roll20 release until those checks are a
 
 1. **Stay on the Arena branch.** Do not switch to, create, or push another branch.
 2. Confirm the remote branch contains the current recovery work as a descendant of `9c0a83a`; do not treat that historical commit as a completion marker.
-3. Confirm whether the current task is still under the deferred mirror boundary. It is at present: do not require identity or copy canonical source into either mirror before testing/committing canonical recovery work.
-4. If changing canonical source during the deferred boundary:
+3. Confirm the three release artifacts are byte-identical before interpreting any focused suite as executable-artifact evidence:
    ```bash
-   node --check GameAssist
-   git diff --check
+   cmp GameAssist GameAssist.js
+   cmp GameAssist GameAssist-v2.0.0
    ```
-   Run relevant canonical behavioral suites with a temporary local identity-skip copy only; remove that copy immediately. When an explicit artifact-convergence pass is authorized later, synchronize all three artifacts, check both mirror syntaxes, and run the real identity guard before release work.
+4. For every canonical source change, synchronize `GameAssist.js` and
+   `GameAssist-v2.0.0` in the same commit, check all three syntaxes, and run the
+   real identity guard. Do not restore a source-only or identity-skip workflow.
 5. Run the applicable focused suite(s), including `almanac-starter-worlds.test.js` for onboarding/UI work and `almanac-worldpack-v2.test.js` for setting-scale catalog/source work, then the full focused collection after any meaningful Almanac change.
 6. Preserve the future-state refusal policy. Add a focused test before changing a migration or normalization path.
 7. Do not restart formal live Roll20 acceptance until the documented fresh-GM recovery checks are green in source and a disposable campaign is ready.

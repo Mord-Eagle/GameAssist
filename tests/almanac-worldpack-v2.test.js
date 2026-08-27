@@ -891,10 +891,7 @@ function assertV2RefusalAndCopyRemapping() {
 }
 
 function run() {
-    // Canonical-source development intentionally precedes mirror publication. Full
-    // release / Gate 0 runs do not set this opt-out and therefore still require
-    // byte-identical executable artifacts before they can pass.
-    if (!process.env.GAMEASSIST_SKIP_ARTIFACT_IDENTITY) assertExecutableArtifactsAreIdentical();
+    assertExecutableArtifactsAreIdentical();
     assertPresetRegistry();
     assertPresetLibrarySafetyAndRestart();
     assertBuiltInPresetSourceUpdates();

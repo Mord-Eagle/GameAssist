@@ -146,9 +146,7 @@ function assertCalendarReplacementPreservesCustomWayfarer() {
 }
 
 function run() {
-    // Canonical-source development intentionally precedes mirror publication.
-    // Release / Gate 0 runs omit this opt-out and still require artifact identity.
-    if (!process.env.GAMEASSIST_SKIP_ARTIFACT_IDENTITY) assertExecutableArtifactsAreIdentical();
+    assertExecutableArtifactsAreIdentical();
     assertConservativeHistoricalMigration();
     assertCalendarReplacementPreservesCustomWayfarer();
     process.stdout.write('PASS: AlmanacAssist conservative migration focused regression checks\n');
