@@ -66,6 +66,14 @@ EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so exis
 - Restores mandatory byte-identity checks to the WorldPack-v2 and migration focused runners. `GameAssist`, `GameAssist.js`, and `GameAssist-v2.0.0` must now be updated together and pass syntax, `cmp`, and Gate 0 identity checks before focused evidence is accepted.
 - The post-convergence strict suite passes all 14 focused Almanac Node VM checks. This makes the code available in the actual release artifacts; it does not claim that a fresh live Roll20 recovery or formal acceptance test has passed.
 
+### AlmanacAssist v2.0.0 full-WorldPack first-session recovery - active
+
+- Addresses the reported post-install framework dead end: after a full WorldPack review/confirmation, the GM now receives a visible **Choose an Opening Area** route rather than being left at an unassigned 160-Location catalog.
+- Adds a compact, paged campaign-front opener built from actual installed Prepared Destinations and Locations. Each original opening exposes its Region, named place, and campaign hook, then explicitly sets that place as the Current Area; it never silently starts Travel or changes Time, Weather, provider state, recents, favorites, or a World Library snapshot.
+- Makes Almanac Home, Worldbuilding, World Library, Scene, Location, and Travel identify an installed full WorldPack as a campaign setting rather than incorrectly presenting it as no selected/saved world. Before a Current Area is selected, they route to the same opening chooser and stop foregrounding a Travel action that would only refuse.
+- Refocuses the daily Almanac Home controls into Session Mode (Scene, area, Journey, Weather, Phenomena), time/calendar, session support, and a compact world/setup route. The first explicit location selection acknowledges Session Area Ready and supplies direct Scene, Weather, and Travel next steps.
+- Extends `tests/almanac-worldpack-v2.test.js` with the full visible first-session route, compact pagination, playable opening content, no-write browsing boundary, and Session Area Ready follow-up controls. This is still isolated VM regression evidence only; it does not establish live Roll20 rendering, usability, or formal acceptance.
+
 ### AlmanacAssist v2.0.0 starter-world and prompt recovery - active
 
 - Adds four bounded generic owner-authored Starter Worlds—Ember Coast, Sunward Expanse, Frostfall Marches, and Mirewood Basin—with three Locations, prepared destinations, routes, phenomena, and climate regions each. They deliberately contain no copied published-setting lore.

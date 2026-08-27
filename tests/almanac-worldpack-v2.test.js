@@ -300,6 +300,71 @@ function assertPresetLibrarySafetyAndRestart() {
 }
 
 /**
+ * Installing a setting-scale WorldPack is not a usable first-run experience if
+ * it strands the GM at "Location unassigned" amid a 160-place catalog. This
+ * checks the visible Session Mode handoff: one concrete campaign-front chooser,
+ * one explicit Current Area selection, and direct Scene/Weather/Travel follow-up
+ * controls without silently changing any provider while the chooser is opened.
+ */
+function assertWorldPackFirstSessionOnboarding() {
+    const harness = createHarness();
+    const almanac = harness.state.GameAssist.AlmanacAssist;
+    installPreset(harness, 'asterfall-concord');
+    assert.equal(almanac.config.world.activeLocationId, null, 'WorldPack installation must not guess a Current Area');
+
+    const beforeOpening = JSON.stringify({
+        world: almanac.config.world,
+        registry: almanac.config.worldPacks,
+        definitions: almanac.config.worldPackDefinitions,
+        runtime: almanac.runtime.world
+    });
+    const dashboard = harness.dispatchCommand('!aa-gm');
+    assert.match(dashboard[0].message, /Choose a Session Area/, 'a full WorldPack with no Current Area must make the remaining session step explicit on Almanac Home');
+    assert.match(dashboard[0].message, /Asterfall Concord.*160 playable Locations/i, 'Almanac Home must identify the installed full setting rather than imply no world was selected');
+    assert.match(dashboard[0].message, /!aa-worldpacks start --pack asterfall-concord/, 'Almanac Home must offer a one-click opening-area route without command memorization');
+    assert.doesNotMatch(dashboard[0].message, /\[Travel\]\(!aa-travel\)/, 'Almanac Home must not foreground a Travel button that can only refuse before a Current Area is selected');
+
+    const worldbuilding = harness.dispatchCommand('!aa-world');
+    assert.match(worldbuilding[0].message, /installed as a full campaign setting/i, 'Worldbuilding must distinguish an installed WorldPack from an unsaved World Library snapshot');
+    assert.match(worldbuilding[0].message, /Start This Session/, 'Worldbuilding must retain the concrete opening-area handoff while the setting has no Current Area');
+    assert.doesNotMatch(worldbuilding[0].message, /not yet saved in the World Library/i, 'Worldbuilding must not misdiagnose an installed setting-scale pack as an absent world');
+
+    const library = harness.dispatchCommand('!aa-world library');
+    assert.match(library[0].message, /installed as a full campaign setting, not a World Library snapshot/i, 'World Library must explain the separate full-WorldPack persistence model instead of presenting a false no-world state');
+
+    const scene = harness.dispatchCommand('!aa-scene');
+    assert.match(scene[0].message, /No current area is selected in Asterfall Concord/i, 'Scene must send an unassigned full setting to the opening selector rather than back to generic installation');
+    assert.match(scene[0].message, /Choose Asterfall Concord Opening Area/, 'Scene must retain an actionable focused recovery path');
+
+    const travel = harness.dispatchCommand('!aa-travel');
+    assert.match(travel[0].message, /Choose an opening area in Asterfall Concord before planning Travel/i, 'Travel must explain the one remaining setup action in play-facing terms');
+    assert.match(travel[0].message, /Choose Asterfall Concord Opening Area/, 'Travel must expose the same one-click opening chooser rather than a command-only dead end');
+
+    const openings = harness.dispatchCommand('!aa-worldpacks start --pack asterfall-concord');
+    assert.match(openings[0].message, /Opening Areas 1 of 2/, 'campaign-front openings must page compactly rather than render a whole 160-Location catalog');
+    assert.match(openings[0].message, /Ember Coast — Harbor Stead/, 'opening chooser must render a concrete original campaign front and Location');
+    assert.match(openings[0].message, /Dock councils seek neutral guides for a disputed convoy/, 'opening chooser must surface playable local content rather than only architecture labels');
+    assert.equal((openings[0].message.match(/\[Start Here\]/g) || []).length, 6, 'opening chooser must retain its six-entry compact WorldPack page bound');
+    assert.match(openings[0].message, /More Openings/, 'opening chooser must retain a visible second-page route for the remaining campaign fronts');
+    assertBoundedRenderedTargets(openings[0].message, 'full WorldPack opening-area chooser');
+    assert.equal(JSON.stringify({
+        world: almanac.config.world,
+        registry: almanac.config.worldPacks,
+        definitions: almanac.config.worldPackDefinitions,
+        runtime: almanac.runtime.world
+    }), beforeOpening, 'opening-area browsing must not activate a Location or mutate WorldPack, Worldbuilding, or runtime state');
+
+    const start = harness.dispatchCommand('!aa-location use --id asterfall-concord-location-1-1');
+    assert.match(start[0].message, /Session Area Ready/, 'choosing a first opening must clearly acknowledge that the campaign is now playable');
+    assert.match(start[0].message, /Generate Weather/, 'first-area confirmation must offer a direct current-conditions follow-up');
+    assert.match(start[0].message, /Plan Journey/, 'first-area confirmation must offer a direct Travel follow-up');
+    assert.equal(almanac.config.world.activeLocationId, 'asterfall-concord-location-1-1', 'the selected opening must become the explicit Current Area');
+
+    const readyDashboard = harness.dispatchCommand('!aa-gm');
+    assert.match(readyDashboard[0].message, /Session Mode=.*\[Current Scene\].*\[Plan Journey\].*\[Generate Weather\]/, 'the ready Session Mode dashboard must lead with concrete session controls after an opening is selected');
+}
+
+/**
  * Create the narrowly scoped persisted shape an earlier v1 built-in source
  * would have left behind before the v2 network expansion: a verified preset
  * clone with its 56 later secondary Routes absent.  This does not change the
@@ -894,6 +959,7 @@ function run() {
     assertExecutableArtifactsAreIdentical();
     assertPresetRegistry();
     assertPresetLibrarySafetyAndRestart();
+    assertWorldPackFirstSessionOnboarding();
     assertBuiltInPresetSourceUpdates();
     assertFourIndependentInstalls();
     assertOperationalProfilesAndControls();

@@ -25871,6 +25871,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const moment = scene.time?.current;
             const astronomy = scene.astronomy;
             const environment = scene.environment?.current;
+            const worldResult = isGm ? worldConfigResult(modState.config.world, { persist: false }) : null;
+            const sessionPacks = worldResult?.ok ? worldPackSessionContext(worldResult.config) : null;
+            const missingLocationMessage = (() => {
+                if (!isGm) return 'Unassigned. The GM has not prepared a named location yet.';
+                if (worldResult?.ok && worldResult.config.locations.length) {
+                    if (sessionPacks?.singlePack) {
+                        return `No current area is selected in ${_sanitize(sessionPacks.singlePack.name)}. ${worldPackOpeningButton(sessionPacks.singlePack)} ${GameAssist.createButton('Choose Any Location', '!aa-location')}`;
+                    }
+                    if (sessionPacks?.installed.length) {
+                        return `No current area is selected. Choose an installed WorldPack opening or any Location. ${worldPackOpeningActions(sessionPacks)} ${GameAssist.createButton('Choose Any Location', '!aa-location')}`;
+                    }
+                    return `No current area is selected. ${GameAssist.createButton('Choose Current Area', '!aa-location')}`;
+                }
+                return `Unassigned. ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Create a Location', '!aa-world add location --name "?{Location name|Starting Location}"')}`;
+            })();
             const technicalFields = technical && isGm ? [
                 { label: 'Provider Status', value: Object.entries(scene.providers).map(([key, provider]) => `${_sanitize(provider.authority)}: ${_sanitize(provider.status)}`).join(' | ') },
                 { label: 'Provenance', value: Object.entries(scene.provenance).map(([field, evidence]) => `${_sanitize(field)} = ${_sanitize(evidence.authority)} (${_sanitize(evidence.source)})`).join('<br>') || 'No resolved fields.' },
@@ -25885,11 +25900,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Immediate Environment', value: _sanitize(sceneEnvironmentSummary(scene, { detailed: true })) },
                 { label: 'Phenomena', value: _sanitize(scenePhenomenaSummary(scene, { detailed: true })) },
                 { label: 'Sky', value: astronomy?.moons?.length ? _sanitize(announcementMoonSummary('detailed', astronomy)) : 'Astronomy context unavailable.' },
-                { label: 'Location', value: scene.location
-                    ? _sanitize(scene.location.name)
-                    : (isGm
-                        ? `Unassigned. ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Create a Location', '!aa-world add location --name "?{Location name|Starting Location}"')}`
-                        : 'Unassigned. The GM has not prepared a named location yet.') },
+                { label: 'Location', value: scene.location ? _sanitize(scene.location.name) : missingLocationMessage },
                 ...(scene.travel ? [{ label: 'Journey', value: `${_sanitize(scene.travel.destinationName)} via ${_sanitize(scene.travel.routeName)} | ${formatTravelMiles(scene.travel.remainingMiles)} remaining ${GameAssist.createButton('Open Travel', '!aa-travel')}` }] : []),
                 ...technicalFields,
                 { label: 'Navigation', value: `${isGm && !technical ? GameAssist.createButton('Scene Details', '!aa-scene technical') : ''} ${GameAssist.createButton('Back', '!aa-gm')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}`.trim() }
@@ -26330,6 +26341,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const current = worldConfigForPanel(msg);
             if (!current) return;
             const active = activeWorldLibraryEntry(library);
+            const packContext = worldPackSessionContext(current);
             const starterRows = BUILT_IN_STARTER_WORLDS.map(starter =>
                 `<strong>${_sanitize(starter.name)}</strong> — ${_sanitize(starter.description)}<br>${starterWorldLocationCount(starter)} locations | ${starter.world.routes.length} routes | ${starter.climate.regions.map(region => _sanitize(region.name)).join(', ')}<br>${GameAssist.createButton('Preview & Start', `!aa-world starter preview --id ${starter.id}`)}`
             );
@@ -26343,7 +26355,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 : 'No campaign worlds have been saved yet.';
             const savedSearch = `!aa-world library saved search --query "?{Search saved worlds by name or tag|${roll20QueryText(savedAll[0]?.name, 'Name', POLICY.almanac.worldNameLength)}}" --page 0`;
             sendPanel(msg, 'Almanac / World Library', [
-                { label: 'Active World', value: active ? `<strong>${_sanitize(active.name)}</strong> — ${_sanitize(active.provenance?.label || 'Campaign world')}` : (worldConfigIsEmpty(current) ? 'No world selected yet.' : 'Current campaign world is active but has not been saved to the World Library yet.') },
+                { label: 'Active World', value: active
+                    ? `<strong>${_sanitize(active.name)}</strong> — ${_sanitize(active.provenance?.label || 'Campaign world')}`
+                    : (packContext.activePack
+                        ? `<strong>${_sanitize(packContext.activePack.name)}</strong> is the active full WorldPack at ${_sanitize(current.locations.find(location => location.id === current.activeLocationId)?.name || 'the current area')}. It is an installed campaign clone, not a World Library snapshot.`
+                        : (packContext.singlePack
+                            ? `<strong>${_sanitize(packContext.singlePack.name)}</strong> is installed as a full campaign setting, not a World Library snapshot. ${worldPackOpeningButton(packContext.singlePack)}`
+                            : (packContext.installed.length > 1
+                                ? `${packContext.installed.length} full WorldPacks are installed; choose a current area to enter one. ${worldPackOpeningActions(packContext)}`
+                                : (worldConfigIsEmpty(current) ? 'No world selected yet.' : 'Current campaign world is active but has not been saved to the World Library yet.')))) },
                 { label: 'Full Original WorldPacks', value: `Four immutable, legally distributable, setting-scale sources are ready to review and install as editable campaign clones. ${GameAssist.createButton('Browse Full WorldPacks', '!aa-worldpacks library')}` },
                 { label: 'Quick Local Starters', value: `These compact local play surfaces remain available for a fast one-area start; they are not substitutes for a full WorldPack.<br>${starterRows.join('<hr>')}` },
                 { label: `Saved Worlds (${library.worlds.length})`, value: savedRows },
@@ -26569,6 +26589,107 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         /**
+         * installedWorldPackByReference - Resolve one campaign-owned WorldPack
+         * without ever treating an immutable source as the installed campaign
+         * record. Name matching is intentionally accepted only when unique, just
+         * like the ordinary Worldbuilding selectors.
+         */
+        function installedWorldPackByReference(installed, requested) {
+            const key = String(requested || '').trim().toLowerCase();
+            if (!key) return null;
+            const records = Array.isArray(installed) ? installed : [];
+            const byId = records.find(record => String(record?.id || '').toLowerCase() === key);
+            if (byId) return byId;
+            const matches = records.filter(record => String(record?.name || '').toLowerCase() === key);
+            return matches.length === 1 ? matches[0] : null;
+        }
+
+        /**
+         * worldPackSessionContext - Translate the installed-pack catalog into a
+         * compact Session Mode fact.  A World Library snapshot and an installed
+         * WorldPack are deliberately different persistence mechanisms, so this
+         * helper prevents a newly installed full setting from being described as
+         * "no world selected" merely because it has not been snapshotted.
+         *
+         * Inputs: a normalized Worldbuilding config and optional normalized pack
+         * registry. Outputs: only read-only current/available pack context.
+         * Invariant: resolving the Session Mode label never activates a Location,
+         * selects a library snapshot, or changes any provider/runtime state.
+         */
+        function worldPackSessionContext(config, registryInput = null) {
+            const registryResult = registryInput
+                ? { ok: true, config: registryInput, warning: null }
+                : worldPackConfigResult(modState.config.worldPacks, { persist: false });
+            if (!registryResult.ok) {
+                return { installed: [], activePack: null, singlePack: null, warning: registryResult.warning || 'Installed WorldPack status is unavailable.' };
+            }
+            const installed = Array.isArray(registryResult.config?.installed) ? registryResult.config.installed : [];
+            const activeLocation = (config?.locations || []).find(location => location.id === config?.activeLocationId) || null;
+            const sourcePackId = worldReference(activeLocation?.sourcePackId);
+            const activePack = sourcePackId ? installed.find(pack => pack.id === sourcePackId) || null : null;
+            return {
+                installed,
+                activePack,
+                singlePack: installed.length === 1 ? installed[0] : null,
+                warning: null
+            };
+        }
+
+        /**
+         * worldPackOpeningEntries - Derive one welcoming campaign-front entry per
+         * Region from real Prepared Destinations, with a Location fallback for
+         * valid custom packages that do not define destinations. This keeps a
+         * 160-place setting immediately startable without dumping a catalog or
+         * requiring the GM to know an internal ID.
+         */
+        function worldPackOpeningEntries(config, packId) {
+            const id = worldReference(packId);
+            if (!id || !config) return [];
+            const locationsById = new Map((config.locations || []).map(location => [location.id, location]));
+            const regionsById = new Map((config.regions || []).map(region => [region.id, region]));
+            const entries = [];
+            const seenRegions = new Set();
+            const append = (location, destination = null) => {
+                if (!location || location.sourcePackId !== id) return;
+                const regionId = worldReference(location.regionId) || `location:${location.id}`;
+                if (seenRegions.has(regionId)) return;
+                seenRegions.add(regionId);
+                entries.push({
+                    location,
+                    destination,
+                    region: regionsById.get(location.regionId) || null
+                });
+            };
+            // Generated full settings intentionally put their first prepared
+            // destination at the hand-authored landmark for each campaign front.
+            // Preserve authored collection order instead of alphabetizing away
+            // that useful opening-point intent.
+            (config.destinations || [])
+                .filter(destination => destination.sourcePackId === id)
+                .forEach(destination => append(locationsById.get(destination.locationId), destination));
+            (config.locations || [])
+                .filter(location => location.sourcePackId === id)
+                .forEach(location => append(location));
+            return entries;
+        }
+
+        function worldPackOpeningButton(pack, label = null) {
+            if (!pack?.id) return '';
+            const text = label || `Choose ${pack.name} Opening Area`;
+            return GameAssist.createButton(text, `!aa-worldpacks start --pack ${pack.id}`);
+        }
+
+        function worldPackOpeningActions(context, { limit = POLICY.almanac.worldSessionCategoryLimit } = {}) {
+            const packs = Array.isArray(context?.installed) ? context.installed : [];
+            if (!packs.length) return '';
+            if (context.singlePack) return worldPackOpeningButton(context.singlePack);
+            const visible = packs.slice(0, Math.max(1, limit));
+            const choices = visible.map(pack => worldPackOpeningButton(pack, `Open ${pack.name}`));
+            const more = packs.length > visible.length ? GameAssist.createButton('Browse Installed WorldPacks', '!aa-worldpacks installed --page 0') : '';
+            return [...choices, more].filter(Boolean).join(' ');
+        }
+
+        /**
          * showWorldbuilding - Present the organized Worldbuilding Mode rather than a flat subsystem list.
          * Inputs: GM message.
          * Outputs: a compact category hub that leaves live Session Mode undisturbed.
@@ -26583,14 +26704,39 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const activeWorld = libraryResult.ok ? activeWorldLibraryEntry(libraryResult.config) : null;
             const hasNoWorld = worldConfigIsEmpty(config);
             const scene = resolveScene();
+            const packContext = worldPackSessionContext(config);
+            const needsCurrentArea = !scene.location && config.locations.length > 0;
+            const openingActions = worldPackOpeningActions(packContext);
+            const currentWorld = (() => {
+                if (packContext.activePack) {
+                    return `<strong>${_sanitize(packContext.activePack.name)}</strong> — installed full WorldPack; the current area is part of this campaign setting. ${worldPackOpeningButton(packContext.activePack, 'Choose Another Opening Area')}`;
+                }
+                if (activeWorld) return `<strong>${_sanitize(activeWorld.name)}</strong> — ${_sanitize(activeWorld.provenance?.label || 'Campaign world')} ${GameAssist.createButton('Switch World', '!aa-world library')}`;
+                if (packContext.singlePack) {
+                    return `<strong>${_sanitize(packContext.singlePack.name)}</strong> is installed as a full campaign setting. ${needsCurrentArea ? `Choose an opening area to begin play. ${openingActions}` : 'Choose a current area whenever this setting becomes the active session.'}`;
+                }
+                if (packContext.installed.length > 1) {
+                    return `${packContext.installed.length} full WorldPacks are installed. Choose a current area to enter one in Session Mode. ${openingActions}`;
+                }
+                if (hasNoWorld) return `No world has been selected. ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')}`;
+                return `Current campaign world is not yet saved in the World Library. ${GameAssist.createButton('Save or Switch Worlds', '!aa-world library')}`;
+            })();
+            const currentArea = scene.location
+                ? compactWorldLocation(scene)
+                : (packContext.singlePack
+                    ? `No current area yet in ${_sanitize(packContext.singlePack.name)}. ${worldPackOpeningButton(packContext.singlePack)}`
+                    : `Location unassigned. ${config.locations.length ? GameAssist.createButton('Choose Current Area', '!aa-location') : ''}`.trim());
+            const startHere = hasNoWorld
+                ? `A new campaign needs a usable place before Travel and location-sensitive Scene context can begin. ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Create an Empty World', '!aa-world create --name "?{New world name|My Campaign World}"')}`
+                : (needsCurrentArea
+                    ? (packContext.installed.length
+                        ? `Choose one opening area to make this setting usable in Session Mode. This sets only the Current Area; Weather and other providers remain under their own controls. ${openingActions} ${GameAssist.createButton('Change Location', '!aa-location')}`
+                        : `Locations are ready, but none is the Current Area. Choose one before opening Scene or Travel. ${GameAssist.createButton('Choose Current Area', '!aa-location')}`)
+                    : '');
             sendPanel(msg, 'Almanac / Worldbuilding', [
-                { label: 'Current World', value: activeWorld
-                    ? `<strong>${_sanitize(activeWorld.name)}</strong> — ${_sanitize(activeWorld.provenance?.label || 'Campaign world')} ${GameAssist.createButton('Switch World', '!aa-world library')}`
-                    : (hasNoWorld
-                        ? `No world has been selected. ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')}`
-                        : `Current campaign world is not yet saved in the World Library. ${GameAssist.createButton('Save or Switch Worlds', '!aa-world library')}`) },
-                { label: 'Current Area', value: compactWorldLocation(scene) },
-                ...(hasNoWorld ? [{ label: 'Start Here', value: `A new campaign needs a usable place before Travel and location-sensitive Scene context can begin. ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Create an Empty World', '!aa-world create --name "?{New world name|My Campaign World}"')}` }] : []),
+                { label: 'Current World', value: currentWorld },
+                { label: 'Current Area', value: currentArea },
+                ...(startHere ? [{ label: hasNoWorld ? 'Start Here' : 'Start This Session', value: startHere }] : []),
                 ...(!libraryResult.ok ? [{ label: 'World Library Safety', value: `${_sanitize(libraryResult.warning)} World switching is unavailable until a compatible build can inspect it.` }] : []),
                 ...(!worldRuntime.ok ? [{ label: 'Runtime Safety', value: `${_sanitize(worldRuntime.warning)} Worldbuilding changes remain blocked until a compatible build can inspect it.` }] : []),
                 { label: 'Places', value: `${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Locations', '!aa-world locations')} ${GameAssist.createButton('Prepared Destinations', '!aa-world destinations')} ${GameAssist.createButton('Regions', '!aa-world regions')} ${GameAssist.createButton('Ecoregions', '!aa-world ecoregions')}` },
@@ -27019,6 +27165,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const runtime = worldRuntimeForPanel(msg, 'Almanac / Change Location Needs Attention');
             if (!runtime) return;
             const scene = resolveScene();
+            const packContext = worldPackSessionContext(config);
             const index = worldLocationSelectorIndex(config, runtime);
             const current = index.current;
             const query = boundedWorldText(search, '', POLICY.almanac.worldNameLength).toLowerCase();
@@ -27036,7 +27183,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const hasNoLocations = config.locations.length === 0;
             const fields = [
                 { label: 'Current Area', value: compactWorldLocation(scene) },
-                ...(hasNoLocations ? [{ label: 'Start With A Usable Place', value: `This campaign has no named Locations yet, so Travel cannot begin. ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Create a Location', '!aa-world add location --name "?{Location name|Starting Location}"')}` }] : [])
+                ...(hasNoLocations ? [{ label: 'Start With A Usable Place', value: `This campaign has no named Locations yet, so Travel cannot begin. ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Create a Location', '!aa-world add location --name "?{Location name|Starting Location}"')}` }] : []),
+                ...(!current && !hasNoLocations && packContext.installed.length ? [{
+                    label: 'Start This Full World',
+                    value: packContext.singlePack
+                        ? `${_sanitize(packContext.singlePack.name)} is ready with ${config.locations.filter(location => location.sourcePackId === packContext.singlePack.id).length} playable Locations. Choose one campaign-front opening instead of searching the full catalog. ${worldPackOpeningButton(packContext.singlePack)}`
+                        : `Choose an installed WorldPack opening, or use the compact categories below to choose any Location. ${worldPackOpeningActions(packContext)}`
+                }] : [])
             ];
             if (query) {
                 const matches = config.locations.filter(location => `${location.name} ${(location.tags || []).join(' ')} ${location.description || ''}`.toLowerCase().includes(query));
@@ -27905,17 +28058,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     { label: 'Next Step', value: GameAssist.createButton('Open Travel', '!aa-travel') }
                 ]);
                 const previous = copy(config);
+                const selectedFirstSessionArea = !previous.activeLocationId;
                 config.activeLocationId = location.id;
                 const nextClimate = effectiveClimateContext({ worldConfig: config });
                 commitWorldConfig(config, previous, { action: 'location-activated', locationId: location.id }, msg);
                 recordRecentLocation(location.id);
-                return sendPanel(msg, 'Almanac / Change Location', [
+                return sendPanel(msg, selectedFirstSessionArea ? 'Almanac / Session Area Ready' : 'Almanac / Change Location', [
                     { label: 'Current Location', value: `${_sanitize(location.name)} is now active.` },
+                    ...(selectedFirstSessionArea ? [{ label: 'Session Ready', value: `This is now the Current Area for Scene and Travel. ${_sanitize(location.description || 'Use the location details as the opening scene cue.')} No journey or fictional time was started by selecting it.` }] : []),
                     { label: 'Climate Context', value: nextClimate.baseline
                         ? `${_sanitize(nextClimate.baseline.regionName)} — ${_sanitize(nextClimate.baseline.profileName)} via ${_sanitize(nextClimate.sourceLabel)}.`
                         : 'No Climate baseline is assigned to this Location; the campaign fallback remains available in ClimateAlmanac.' },
                     { label: 'Provider Boundaries', value: 'Weather and other current providers remain separately owned. Existing Weather is retained until the GM generates or sets a new condition.' },
-                    { label: 'Next Step', value: `${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Climate', '!aa-climate')} ${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                    { label: 'Next Step', value: `${GameAssist.createButton('Open Current Scene', '!aa-scene')} ${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Plan Journey', '!aa-travel')} ${GameAssist.createButton('Change Area', '!aa-location')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
                 ]);
             }
             if (/^favorite\b/i.test(body)) {
@@ -28464,16 +28619,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!requireGm(msg)) return;
             const config = worldConfigForPanel(msg);
             if (!config) return;
+            const packContext = worldPackSessionContext(config);
             if (!worldRuntimeForPanel(msg, 'Almanac / Travel Needs Attention')) return;
             const journey = activeTravelForWorld(config);
             if (journey) return showTravelJourney(msg, config, journey);
             const origin = worldRecordByReference(config.locations, config.activeLocationId);
             if (!origin) return sendPanel(msg, 'Almanac / Travel', [
                 { label: 'Current Area', value: config.locations.length
-                    ? 'Choose a current Location before preparing Travel.'
+                    ? (packContext.singlePack
+                        ? `Choose an opening area in ${_sanitize(packContext.singlePack.name)} before planning Travel.`
+                        : 'Choose a current Location before preparing Travel.')
                     : 'Travel needs at least one named Location. This campaign has none yet.' },
                 { label: 'Actions', value: config.locations.length
-                    ? `${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Manage World', '!aa-world locations')}`
+                    ? `${worldPackOpeningActions(packContext)} ${GameAssist.createButton('Choose Any Location', '!aa-location')} ${GameAssist.createButton('Manage World', '!aa-world locations')}`.trim()
                     : `${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Create a Location', '!aa-world add location --name "?{Location name|Starting Location}"')} ${GameAssist.createButton('Manage World', '!aa-world')}` },
                 { label: 'Navigation', value: `${GameAssist.createButton('Back', '!aa-gm')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
             ]);
@@ -29850,6 +30008,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const args = _parseArgs(body).args;
             if (/^installed\s+search\b/i.test(body)) return showInstalledWorldPackCatalog(msg, { page: args.page, search: args.query || args.value || args.term || '', searchRequested: true });
             if (/^installed\b/i.test(body)) return showInstalledWorldPackCatalog(msg, { page: args.page });
+            if (/^(start|openings?)\b/i.test(body)) return showWorldPackOpeningAreas(msg, args.pack || args.id || args.name, { page: args.page });
             if (/^(library|catalog|builtins?)\b/i.test(body)) return showBuiltInWorldPackRegistry(msg);
             if (/^preset\s+preview\b/i.test(body)) return showBuiltInWorldPackRegistry(msg, args.id || args.name);
             if (/^preset\s+update\b/i.test(body)) return prepareBuiltInWorldPackInstall(msg, args.id || args.name, 'update');
@@ -31583,6 +31742,69 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
+        /**
+         * showWorldPackOpeningAreas - Give a newly installed setting-scale pack a
+         * concrete first-session surface. The normal Location picker stays the
+         * complete bounded catalog; this focused screen instead presents one
+         * authored opening per campaign front so a GM does not have to search
+         * hundreds of imported records before Scene and Travel become useful.
+         *
+         * Opening actions deliberately use the existing explicit Location switch.
+         * They make only Current Area current—no journey, time, weather, provider,
+         * or World Library snapshot is silently changed.
+         */
+        function showWorldPackOpeningAreas(msg, requestedPack, { page = 0 } = {}) {
+            if (!requireGm(msg)) return;
+            const config = worldConfigForPanel(msg);
+            const registry = worldPackConfigForPanel(msg);
+            if (!config || !registry) return;
+            const context = worldPackSessionContext(config, registry);
+            const selected = installedWorldPackByReference(context.installed, requestedPack)
+                || (!requestedPack ? (context.activePack || context.singlePack) : null);
+            if (!selected) {
+                const choices = context.installed.slice(0, POLICY.almanac.worldPackListDisplayLimit)
+                    .map(pack => worldPackOpeningButton(pack, `Open ${pack.name}`)).join(' ');
+                return sendPanel(msg, 'Almanac / WorldPacks / Choose an Opening Area', [
+                    { label: 'Choose a Full World', value: context.installed.length
+                        ? `Choose the installed WorldPack whose opening areas you want to use. ${choices} ${context.installed.length > POLICY.almanac.worldPackListDisplayLimit ? GameAssist.createButton('Browse Installed WorldPacks', '!aa-worldpacks installed --page 0') : ''}`.trim()
+                        : `No installed WorldPack has opening areas yet. ${GameAssist.createButton('Browse Full WorldPacks', '!aa-worldpacks library')}` },
+                    { label: 'Why This Step', value: 'A full WorldPack adds campaign-owned places without guessing which one should become the Current Area. Choose one visible opening to begin a Session.' },
+                    { label: 'Navigation', value: `${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('WorldPacks', '!aa-worldpacks')}` }
+                ]);
+            }
+            const openings = worldPackOpeningEntries(config, selected.id);
+            if (!openings.length) {
+                return sendPanel(msg, 'Almanac / WorldPacks / Opening Areas Needs Attention', [
+                    { label: 'Installed WorldPack', value: `${_sanitize(selected.name)} is installed, but no compatible campaign-owned Location is available for an opening area.` },
+                    { label: 'Next Step', value: `${GameAssist.createButton('Choose Any Location', '!aa-location')} ${GameAssist.createButton('Manage Locations', '!aa-world locations')} ${GameAssist.createButton('WorldPacks', '!aa-worldpacks')}` }
+                ]);
+            }
+            const perPage = POLICY.almanac.worldPackListDisplayLimit;
+            const pageCount = Math.max(1, Math.ceil(openings.length / perPage));
+            const safePage = Math.min(Math.max(0, Math.floor(Number(page) || 0)), pageCount - 1);
+            const visible = openings.slice(safePage * perPage, (safePage + 1) * perPage);
+            const pageControls = [
+                safePage > 0 ? GameAssist.createButton('Previous Openings', `!aa-worldpacks start --pack ${selected.id} --page ${safePage - 1}`) : '',
+                safePage + 1 < pageCount ? GameAssist.createButton('More Openings', `!aa-worldpacks start --pack ${selected.id} --page ${safePage + 1}`) : ''
+            ].filter(Boolean).join(' ');
+            const locationCount = config.locations.filter(location => location.sourcePackId === selected.id).length;
+            sendPanel(msg, `Almanac / WorldPacks / ${_sanitize(selected.name)} / Opening Areas`, [
+                { label: 'Ready for a First Session', value: `${_sanitize(selected.description || 'Installed full WorldPack.')} ${locationCount} playable Locations are available; these are one clear opening from each campaign front.` },
+                { label: `Opening Areas ${safePage + 1} of ${pageCount}`, value: `Choose a visible opening to make its Location the Current Area. Then open Scene, generate Weather if desired, or plan Travel. No time or other provider state changes here.` },
+                ...visible.map(entry => {
+                    const regionName = entry.region?.name || 'Campaign Front';
+                    const description = entry.location.description || entry.destination?.description || 'A ready-to-use campaign opening.';
+                    return {
+                        label: `${_sanitize(regionName)} — ${_sanitize(entry.location.name)}`,
+                        value: `${_sanitize(description)} ${GameAssist.createButton('Start Here', `!aa-location use --id ${entry.location.id}`)}`
+                    };
+                }),
+                ...(pageControls ? [{ label: 'More Campaign Fronts', value: pageControls }] : []),
+                { label: 'Find Another Place', value: `${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Browse All Locations', '!aa-location all --page 0')} — the regular Session Mode picker keeps Nearby, Prepared, Favorites, Recent, Search, and bounded All views.` },
+                { label: 'Navigation', value: `${GameAssist.createButton('WorldPacks', '!aa-worldpacks')} ${GameAssist.createButton('Worldbuilding', '!aa-world')}` }
+            ]);
+        }
+
         function showWorldPacks(msg, notice = null) {
             const runtime = worldPackRuntimeForPanel(msg);
             if (!runtime) return;
@@ -31808,11 +32030,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 actorId: String(msg?.playerid || 'api')
             });
             GameAssist.recordMetric('almanac_worldpack_commit', { mod: MODULE_NAME, mode: plan.mode });
+            const openingEntries = worldPackOpeningEntries(world, plan.pack.id);
+            const openingAction = openingEntries.length
+                ? worldPackOpeningButton(plan.pack, 'Choose an Opening Area')
+                : GameAssist.createButton('Choose a Starting Location', '!aa-location');
             sendPanel(msg, 'WorldPack Committed', [
                 { label: 'Pack', value: `${_sanitize(plan.pack.name)} v${plan.pack.version} committed as ${_sanitize(plan.mode)}.` },
+                { label: 'Ready to Play', value: openingEntries.length
+                    ? `${openingEntries.length} campaign-front opening area${openingEntries.length === 1 ? '' : 's'} are ready. Choose one visible opening to make its named Location the Current Area, then use Scene or Travel without working through setup records.`
+                    : 'The WorldPack is installed. Choose a current Location before using location-sensitive Scene or Travel.' },
                 { label: 'Contents', value: `${plan.geographicRecordCount} geographic record(s) and ${plan.definitionRecordCount} reusable palette definition(s) committed atomically after preview.` },
-                { label: 'Unchanged', value: 'No active location, favorites, recents, travel, phenomena runtime, provider state, Time, Weather, Astronomy, or gameplay consequence was changed.' },
-                { label: 'Next', value: `${GameAssist.createButton('Choose Starting Location', '!aa-location')} ${GameAssist.createButton('Installed Locations', '!aa-world locations')} ${GameAssist.createButton('WorldPacks', '!aa-worldpacks')} ${GameAssist.createButton('Worldbuilding', '!aa-world')}` }
+                { label: 'Current Session', value: 'No Current Area was guessed or changed. Favorites, recents, Travel, Phenomena runtime, provider state, Time, Weather, Astronomy, and gameplay consequences remain unchanged.' },
+                { label: 'Next', value: `${openingAction} ${GameAssist.createButton('Choose Any Location', '!aa-location')} ${GameAssist.createButton('Installed Locations', '!aa-world locations')} ${GameAssist.createButton('WorldPacks', '!aa-worldpacks')} ${GameAssist.createButton('Worldbuilding', '!aa-world')}` }
             ]);
         }
 
@@ -32608,6 +32837,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const scene = resolveScene();
             const world = worldConfigResult(modState.config.world, { persist: false });
             const noLocations = !world.ok || world.config.locations.length === 0;
+            const hasCurrentArea = Boolean(scene.location);
+            const packContext = world.ok ? worldPackSessionContext(world.config) : null;
             const library = worldLibraryResult(modState.config.worldLibrary, { persist: false });
             const activeWorld = library.ok ? activeWorldLibraryEntry(library.config) : null;
             const rulesNotes = rulesAdvisorDashboardNotes(scene);
@@ -32620,16 +32851,29 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const journeyActions = scene.travel
                 ? `${GameAssist.createButton('Travel 1 Hour', '!aa-travel continue --hours 1')} ${GameAssist.createButton('Travel 4 Hours', '!aa-travel continue --hours 4')} ${GameAssist.createButton('Until Dusk', '!aa-travel continue --until dusk')} ${GameAssist.createButton('Journey', '!aa-travel')}`
                 : null;
+            const openingActions = world.ok ? worldPackOpeningActions(packContext) : '';
+            const chooseAreaAction = openingActions || GameAssist.createButton('Choose Current Area', '!aa-location');
+            const unassignedSession = !noLocations && !hasCurrentArea
+                ? (packContext?.singlePack
+                    ? `<strong>${_sanitize(packContext.singlePack.name)}</strong> is installed with ${world.config.locations.filter(location => location.sourcePackId === packContext.singlePack.id).length} playable Locations, but no Current Area is selected. Choose one campaign-front opening and Session Mode will have a coherent place to use.`
+                    : (packContext?.installed.length
+                        ? `${packContext.installed.length} full WorldPacks are installed, but no Current Area is selected. Choose an opening area before using Scene or Travel.`
+                        : 'Locations are ready, but no Current Area is selected. Choose one before using Scene or Travel.'))
+                : '';
+            const sessionActions = !hasCurrentArea
+                ? `${chooseAreaAction} ${GameAssist.createButton('Open Current Scene', '!aa-scene')} ${noLocations ? GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library') : ''}`.trim()
+                : `${GameAssist.createButton('Current Scene', '!aa-scene')} ${scene.travel ? GameAssist.createButton('Open Journey', '!aa-travel') : GameAssist.createButton('Plan Journey', '!aa-travel')} ${scene.travel ? '' : GameAssist.createButton('Change Area', '!aa-location')} ${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')}`.trim();
             sendPanel(msg, 'Almanac Home — Current World', [
                 { label: 'Current World', value: sceneOverview(scene) },
                 ...(noLocations ? [{ label: 'First Campaign Step', value: `${activeWorld ? `<strong>${_sanitize(activeWorld.name)}</strong> is active but needs Locations.` : 'No playable world is selected yet.'} Start with a full original setting, a compact local starter, or your own first place. ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Create a Location', '!aa-world add location --name "?{Location name|Starting Location}"')}` }] : []),
+                ...(unassignedSession ? [{ label: 'Choose a Session Area', value: `${unassignedSession} ${chooseAreaAction} ${GameAssist.createButton('Choose Any Location', '!aa-location')}`.trim() }] : []),
                 ...(scene.travel ? [{ label: 'Journey', value: `${_sanitize(scene.travel.originName)} &rarr; ${_sanitize(scene.travel.destinationName)} | ${formatTravelMiles(scene.travel.remainingMiles)} remaining | ${_sanitize(travelPace(scene.travel.paceId).name)} pace` }, { label: 'Journey Actions', value: journeyActions }] : []),
+                { label: 'Session Mode', value: sessionActions },
                 { label: 'Advance Date & Time', value: timeButtons },
-                { label: 'Set or Change Calendar', value: moment ? `${exactMomentButton(moment)} ${GameAssist.createButton('Choose Calendar', '!cal')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')}` : GameAssist.createButton('Choose Calendar', '!cal') },
-                { label: 'Session Actions', value: `${noLocations ? GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library') : ''} ${noLocations ? GameAssist.createButton('Choose a Starter World', '!aa-world starters') : ''} ${GameAssist.createButton('Travel', '!aa-travel')} ${scene.travel ? '' : GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Rules Advice', '!aa-rules')} ${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Short Rest', '!aa-rest preview --type short')} ${GameAssist.createButton('Long Rest', '!aa-rest preview --type long')}`.trim() },
+                { label: 'Calendar', value: moment ? `${exactMomentButton(moment)} ${GameAssist.createButton('Choose Calendar', '!cal')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')} ${GameAssist.createButton('Time Controls', '!aa-time menu')}` : GameAssist.createButton('Choose Calendar', '!cal') },
+                { label: 'Session Support', value: `${GameAssist.createButton('Rules Advice', '!aa-rules')} ${GameAssist.createButton('Short Rest', '!aa-rest preview --type short')} ${GameAssist.createButton('Long Rest', '!aa-rest preview --type long')} ${GameAssist.createButton('Announcement Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')}` },
                 ...(rulesNotes.length ? [{ label: 'GM Notes', value: `${rulesNotes.map(note => _sanitize(note.message)).join('<br>')} ${GameAssist.createButton('Rules Details', '!aa-rules')}` }] : []),
-                { label: 'Share', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
-                { label: 'Worldbuilding', value: `${GameAssist.createButton('Full WorldPacks', '!aa-worldpacks library')} ${GameAssist.createButton('Quick Local Starters', '!aa-world starters')} ${GameAssist.createButton('World Library', '!aa-world library')} ${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Presets', '!aa-presets')} ${GameAssist.createButton('Manage WorldPacks', '!aa-worldpacks')} ${GameAssist.createButton('Temporal Contexts', '!aa-temporal')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Astronomy', '!astro')} ${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('More Tools', '!aa-more')}` },
+                { label: 'World & Setup', value: `${GameAssist.createButton('Worldbuilding', '!aa-world')} ${GameAssist.createButton('Full WorldPacks', '!aa-worldpacks library')} ${GameAssist.createButton('World Library', '!aa-world library')} ${GameAssist.createButton('More Almanac Tools', '!aa-more')}` },
                 { label: 'Navigation', value: `${GameAssist.createButton('Almanac Guide', '!Almanac-Guide')} ${gameAssistHomeButton()}` }
             ]);
         }
