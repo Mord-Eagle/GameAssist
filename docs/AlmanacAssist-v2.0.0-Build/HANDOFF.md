@@ -188,6 +188,13 @@ Recovery work must prioritize the fresh-GM journey: World Library/Starter Worlds
   160-record state/import/addition boundary; an Ecoregion Profile's selected
   Phenomenon Templates are retained canonically as an array rather than a
   malformed one-value text field.
+- **Current canonical-source recovery addition:** the WorldPacks hub now discloses
+  the full installed-clone count and opens a complete, read-only Installed catalog
+  rather than silently showing only its first eight records or constructing one
+  all-pack palette query. The catalog pages six rich provenance/palette rows,
+  supports name/provenance Search, provides a direct matching-palette action, and
+  limits source-update controls to a direct source clone rather than a separately
+  imported copy.
 - Validation covers syntax, document/schema shape, references, provenance, dependencies, conflicts, and policy bounds.
 - Imports stop at Preview → stale-protected Confirm → atomic Worldbuilding-plus-registry commit.
 - Supports New, Update, and Copy behavior:
@@ -269,7 +276,7 @@ This behavior is intentionally conservative. Do not replace it with a repair/nor
 | `tests/almanac-presets.test.js` | PresetRegistry clone/install checks. |
 | `tests/almanac-rules-advisor.test.js` | Advisory-only RulesAdvisor checks. |
 | `tests/almanac-worldpacks.test.js` | Bounded WorldPack parser/review/atomicity/future-runtime/alias checks. |
-| `tests/almanac-worldpack-v2.test.js` | Four original setting-scale source workload, Scene/Travel palette inheritance, update/copy, and 640-Location/860-Route catalog paging/search checks. |
+| `tests/almanac-worldpack-v2.test.js` | Four original setting-scale source workload, Scene/Travel palette inheritance, update/copy, 24-clone installed-WorldPack catalog paging/search, and 640-Location/860-Route catalog paging/search checks. |
 | `tests/almanac-temporal-contexts.test.js` | Temporal context, Prime immutability, projection, transition, event, stale, and future-state checks. |
 | `tests/almanac-wayfarer-handout.test.js` | Inert Wayfarer handout export/import/review/atomicity checks. |
 | `tests/almanac-migration.test.js` | Historical fixture: additive migration, exact Wayfarer starter migration, and future config/runtime preservation. |

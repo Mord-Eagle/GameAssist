@@ -3,7 +3,7 @@
 //   codename: "GAMEASSIST_ALMANAC_WORLDPACK_V2_TEST"
 //   project_version: "v2.0.0"
 //   purpose: "Exercise setting-scale PresetRegistry sources, installed palette clones, operational profile resolution, atomic Route Legs, copy remapping, and malformed v2 refusal in an isolated Roll20-shaped VM."
-//   order: ["artifact_identity", "registry", "library_permissions_stale_restart", "four_independent_installs", "scene_profiles", "palette_controls", "palette_catalog_relation_pickers", "calendar_projection", "phenomenon_templates", "large_scale_selector", "route_legs", "active_journey_refusal", "empty_palette_update_guard", "v2_refusal", "copy_remapping"]
+//   order: ["artifact_identity", "registry", "library_permissions_stale_restart", "four_independent_installs", "scene_profiles", "palette_controls", "installed_pack_catalog", "palette_catalog_relation_pickers", "calendar_projection", "phenomenon_templates", "large_scale_selector", "route_legs", "active_journey_refusal", "empty_palette_update_guard", "v2_refusal", "copy_remapping"]
 //   env: { required: ["NODE_RUNTIME"], secrets: [] }
 //   data_class: "Internal"
 //   ai_data: "internal_redacted"
@@ -380,6 +380,14 @@ function assertBuiltInPresetSourceUpdates() {
     assert.ok(copied, 'source-copy recovery must create a second campaign-owned pack rather than replacing the conflicted clone');
     assert.equal(copied.importedFromPackId, 'asterfall-concord', 'source-copy recovery must disclose its source relationship in campaign provenance');
     assert.equal(legacy.almanac.config.world.locations.find(location => location.id === 'asterfall-concord-location-1-1').description, 'Campaign-authored harbor detail that must survive a source update refusal.', 'source-copy recovery must leave the edited original clone untouched');
+
+    // A copied package can retain PresetRegistry provenance, but it does not own
+    // the direct source installation slot. Its catalog row must never offer an
+    // update action that would actually target the original clone.
+    copied.version = 1;
+    const installedCatalog = conflictHarness.dispatchCommand('!aa-worldpacks installed --page 0');
+    assert.match(installedCatalog[0].message, /Imported as a distinct campaign-owned copy/, 'installed catalog must disclose copied-package provenance');
+    assert.equal((installedCatalog[0].message.match(/\[Review Source Update to v2\]/g) || []).length, 1, 'only the direct source clone may expose its source-update action');
 }
 
 function assertFourIndependentInstalls() {
@@ -506,6 +514,65 @@ function assertPaletteEditingAndCalendarProjection() {
     assert.equal(definitions().palette.travelProfiles.some(profile => profile.id === 'asterfall-removable-trail'), false, 'confirmed unreferenced palette removal must delete only that campaign clone record');
     const protectedRemoval = harness.dispatchCommand('!aa-worldpacks palette remove --pack asterfall-concord --collection travelProfiles --id asterfall-concord-travel --confirm yes');
     assert.match(protectedRemoval[0].message, /still used/i, 'referenced palette removal must refuse rather than create dangling defaults or Route Legs');
+}
+
+/**
+ * WorldPack installations are themselves a bounded campaign catalog. The root
+ * manager must not expose only an arbitrary first handful or construct a
+ * setting-scale installed-pack query macro just to open an editable palette.
+ */
+function assertInstalledWorldPackCatalogScale() {
+    const harness = createHarness();
+    installFixture(harness, makeV2Fixture());
+    const almanac = harness.state.GameAssist.AlmanacAssist;
+    const installed = almanac.config.worldPacks.installed[0];
+    const definition = almanac.config.worldPackDefinitions.packs[0];
+    const installations = [];
+    const definitions = [];
+    for (let index = 1; index <= 24; index += 1) {
+        const suffix = String(index).padStart(3, '0');
+        const id = `fixture-installed-${suffix}`;
+        installations.push({
+            ...JSON.parse(JSON.stringify(installed)), id, name: `Fixture Installed ${suffix}`,
+            presetSourceId: null, presetSourceVersion: null, importedFromPackId: null
+        });
+        definitions.push({ ...JSON.parse(JSON.stringify(definition)), id, name: `Fixture Installed ${suffix}` });
+    }
+    almanac.config.worldPacks.installed = installations;
+    almanac.config.worldPackDefinitions.packs = definitions;
+    const beforeBrowse = JSON.stringify({
+        registry: almanac.config.worldPacks,
+        definitions: almanac.config.worldPackDefinitions,
+        world: almanac.config.world
+    });
+
+    const root = harness.dispatchCommand('!aa-worldpacks');
+    assert.match(root[0].message, /24 campaign-owned editable clones installed/, 'WorldPacks root must disclose the complete installed-clone count at the registry bound');
+    assert.match(root[0].message, /Browse Installed WorldPacks/, 'WorldPacks root must offer an explicit path to every installed clone');
+    assert.doesNotMatch(root[0].message, /Fixture Installed 001/, 'WorldPacks root must summarize rather than silently render an arbitrary partial installed-pack list');
+    assert.ok(root[0].message.length < 6000, 'WorldPacks root must remain compact at the installed-pack bound');
+
+    const first = harness.dispatchCommand('!aa-worldpacks installed --page 0');
+    assert.match(first[0].message, /Installed WorldPacks 1 of 4/, 'installed WorldPack catalog must page the full 24-pack registry at its rich-row bound');
+    assert.match(first[0].message, /Fixture Installed 001/, 'installed WorldPack catalog must expose the first named clone');
+    assert.doesNotMatch(first[0].message, /Fixture Installed 007/, 'installed WorldPack catalog must not overrun its six-row compact page bound');
+    assert.equal((first[0].message.match(/\[Open Installed Palette\]/g) || []).length, 6, 'installed WorldPack catalog must expose no more than six direct palette actions per rich page');
+    assert.ok(first[0].message.length < 6000, 'installed WorldPack catalog must remain compact at the registry bound');
+    assertBoundedRenderedTargets(first[0].message, 'installed WorldPack catalog');
+
+    const last = harness.dispatchCommand('!aa-worldpacks installed --page 3');
+    assert.match(last[0].message, /Installed WorldPacks 4 of 4/, 'installed WorldPack catalog must retain access to its final page');
+    assert.match(last[0].message, /Fixture Installed 024/, 'installed WorldPack catalog must expose a distant campaign clone by name');
+    const search = harness.dispatchCommand('!aa-worldpacks installed search --query "Fixture Installed 024" --page 0');
+    assert.match(search[0].message, /Search: fixture installed 024 1 of 1/, 'installed WorldPack catalog search must resolve a distant clone without an ID lookup');
+    assert.match(search[0].message, /!aa-worldpacks palette --pack fixture-installed-024/, 'installed WorldPack catalog search must retain the matching direct palette route');
+    const palette = harness.dispatchCommand('!aa-worldpacks palette --pack fixture-installed-024');
+    assert.match(palette[0].message, /Fixture Installed 024/, 'a catalog-selected installed pack must open its own editable campaign palette');
+    assert.equal(JSON.stringify({
+        registry: almanac.config.worldPacks,
+        definitions: almanac.config.worldPackDefinitions,
+        world: almanac.config.world
+    }), beforeBrowse, 'installed WorldPack browse/search/palette navigation must not mutate clone, definition, or Worldbuilding data');
 }
 
 function makePaletteCatalogFixture(recordCount = 25) {
@@ -834,6 +901,7 @@ function run() {
     assertFourIndependentInstalls();
     assertOperationalProfilesAndControls();
     assertPaletteEditingAndCalendarProjection();
+    assertInstalledWorldPackCatalogScale();
     assertPaletteCatalogScaleAndBindingPicker();
     assertLargeScaleSessionSelectors();
     assertRouteLegEditor();
@@ -850,9 +918,10 @@ module.exports = Object.freeze({ run, makeV2Fixture });
 // --- Notes & Comments ---
 // Changed (v2.0.0): add isolated regression evidence for four immutable original
 // setting-scale registry sources, 160-Location installed editable clones, library
-// routing/permissions/stale/restart safety, palette and provider-backed calendar
-// controls, per-collection palette bounds, paged palette/default/cross-reference
-// pickers, Worldbuilding relation/profile/page and Route Leg choice catalogs,
+// routing/permissions/stale/restart safety, a complete 24-clone installed-pack
+// catalog, palette and provider-backed calendar controls, per-collection palette
+// bounds, paged palette/default/cross-reference pickers, Worldbuilding
+// relation/profile/page and Route Leg choice catalogs,
 // SceneResolver/Travel profile use, bounded large-catalog selection, nested Route
 // Leg atomic editing, source-package refusal, and copy reference remapping. These
 // checks intentionally do not claim Roll20 acceptance.

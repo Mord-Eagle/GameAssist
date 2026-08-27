@@ -391,7 +391,13 @@ four-leg page; a 32-leg route therefore stays compact while retaining complete
 Previous/Next access. Palette roots summarize each typed collection, and each
 collection/default binding/cross-palette reference has the same paged chooser
 pattern. Each reusable palette collection is independently bounded at 160 records;
-that is a package-state limit, not a chat-card size target.
+that is a package-state limit, not a chat-card size target. Installed WorldPacks
+are also a campaign catalog rather than a root-card sample: the WorldPacks hub
+discloses the full clone count, and its **Browse Installed WorldPacks** route uses
+six rich provenance/palette rows per page with Previous/Next and name/provenance
+Search. A row opens only its matching campaign-owned palette clone. Source-update
+controls appear only on the direct verified source clone, never on a separately
+imported copy whose provenance happens to name that source.
 
 The resolver and UI should use indexes keyed by stable ID, Region ancestry,
 Ecoregion Instance, and route endpoint. These indexes are derived in memory from
@@ -402,6 +408,7 @@ configuration yields a safe warning rather than an improvised rebuild/write.
 Changed (v2.0.0): caps compact Location and Travel groups at three representatives and isolates complete Search/All/Prepared views to 12-entry pages, including a 640-Location local regression workload.
 Changed (v2.0.0): extends 12-entry name-first paging and direct Edit access to every Worldbuilding record collection, so setting-scale management does not depend on Technical stable-ID recall.
 Changed (v2.0.0): routes editor relations, palette cross-references/defaults, preset overlays, and Route Leg profile/split choices through complete 12-entry named catalogs; this replaces inline query lists that could silently omit distant records or exceed a safe chat-card size.
+Changed (v2.0.0): replaces the WorldPacks hub's silent first-eight installed-clone sample and all-installed palette query with a complete six-row installed catalog, name/provenance search, and per-clone direct palette access at the 24-pack bound.
 Prior notes:
   Changed (v2.0.0): makes setting-scale capacity and bounded selector behavior explicit acceptance engineering rather than a future data-size assumption.
 Decision log:

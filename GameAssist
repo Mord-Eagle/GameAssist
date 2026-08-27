@@ -535,6 +535,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             presetGrantMs: 1000 * 60 * 5,
             rulesAdvisorNoteLimit: 6,
             worldPackLimit: 24,
+            // Installed WorldPack rows include provenance, clone counts, and
+            // guarded update actions, so page this richer catalog more sparsely
+            // than ordinary Worldbuilding record lists.
+            worldPackListDisplayLimit: 6,
             worldPackGrantLimit: 4,
             worldPackGrantMs: 1000 * 60 * 5,
             // One reusable profile collection can support the same setting-scale
@@ -29668,6 +29672,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             if (!requireGm(msg)) return;
             const args = _parseArgs(body).args;
+            if (/^installed\s+search\b/i.test(body)) return showInstalledWorldPackCatalog(msg, { page: args.page, search: args.query || args.value || args.term || '', searchRequested: true });
+            if (/^installed\b/i.test(body)) return showInstalledWorldPackCatalog(msg, { page: args.page });
             if (/^(library|catalog|builtins?)\b/i.test(body)) return showBuiltInWorldPackRegistry(msg);
             if (/^preset\s+preview\b/i.test(body)) return showBuiltInWorldPackRegistry(msg, args.id || args.name);
             if (/^preset\s+update\b/i.test(body)) return prepareBuiltInWorldPackInstall(msg, args.id || args.name, 'update');
@@ -31328,6 +31334,79 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
 
+        /**
+         * showInstalledWorldPackCatalog - Keep campaign-owned WorldPack clones
+         * discoverable at the registry limit without a giant Roll20 query or a
+         * silent first-page-only list.  This is a read-only index: opening it
+         * never revises an installation, palette, provenance, or runtime grant.
+         */
+        function showInstalledWorldPackCatalog(msg, { page = 0, search = '', searchRequested = false } = {}) {
+            const runtime = worldPackRuntimeForPanel(msg);
+            if (!runtime) return;
+            const registry = worldPackConfigForPanel(msg);
+            const definitions = worldPackDefinitionsConfigForPanel(msg);
+            if (!registry || !definitions) return;
+            pruneWorldPackGrants(runtime);
+            const perPage = POLICY.almanac.worldPackListDisplayLimit;
+            const normalizedSearch = boundedWorldText(search, '', POLICY.almanac.worldNameLength).toLowerCase();
+            const isSearch = searchRequested || Boolean(normalizedSearch);
+            const allPacks = registry.installed.slice().sort((left, right) => left.name.localeCompare(right.name) || left.id.localeCompare(right.id));
+            const matches = !isSearch
+                ? allPacks
+                : (normalizedSearch
+                    ? allPacks.filter(item => [
+                        item.name, item.id, item.presetSourceId, item.importedFromPackId,
+                        item.provenance?.type, item.provenance?.origin, item.provenance?.license
+                    ].filter(Boolean).join(' ').toLowerCase().includes(normalizedSearch))
+                    : []);
+            const pageCount = Math.max(1, Math.ceil(matches.length / perPage));
+            const requestedPage = Math.max(0, Math.floor(Number(page) || 0));
+            const safePage = Math.min(requestedPage, pageCount - 1);
+            const visible = matches.slice(safePage * perPage, (safePage + 1) * perPage);
+            const pageCommand = nextPage => isSearch
+                ? `!aa-worldpacks installed search --query "${roll20QueryText(normalizedSearch, 'search', POLICY.almanac.worldNameLength)}" --page ${nextPage}`
+                : `!aa-worldpacks installed --page ${nextPage}`;
+            const browse = [
+                safePage > 0 ? GameAssist.createButton('Previous', pageCommand(safePage - 1)) : '',
+                safePage + 1 < pageCount ? GameAssist.createButton('Next', pageCommand(safePage + 1)) : '',
+                isSearch ? GameAssist.createButton('Browse All', '!aa-worldpacks installed --page 0') : ''
+            ].filter(Boolean).join(' ');
+            const searchExample = roll20QueryText(allPacks[0]?.name, 'Name', POLICY.almanac.worldNameLength);
+            const searchCommand = `!aa-worldpacks installed search --query "?{Search installed WorldPacks by name or provenance|${searchExample}}" --page 0`;
+            const catalogLabel = isSearch
+                ? `Search: ${normalizedSearch || 'enter a name'} ${safePage + 1} of ${pageCount}`
+                : `Installed WorldPacks ${safePage + 1} of ${pageCount}`;
+            const rows = visible.map(item => {
+                const definition = definitions.packs.find(pack => pack.id === item.id) || null;
+                const preset = item.presetSourceId ? builtInWorldPackPreset(item.presetSourceId) : null;
+                const source = item.importedFromPackId
+                    ? 'Imported as a distinct campaign-owned copy'
+                    : (preset ? `Built-in ${preset.name} source v${item.presetSourceVersion || 1}` : (item.presetSourceId ? 'Built-in source provenance cannot be matched' : 'Campaign-authored or handout-imported'));
+                const paletteCount = (item.definitionManifest || []).length;
+                // Only the direct source clone can accept a source update. A
+                // separately imported copy retains provenance for disclosure, but
+                // must not render an update button that would target another pack.
+                const update = preset && item.id === preset.id && preset.version > item.version
+                    ? GameAssist.createButton(`Review Source Update to v${preset.version}`, `!aa-worldpacks preset update --id ${preset.id}`)
+                    : '';
+                return {
+                    label: _sanitize(item.name),
+                    value: `v${item.version} | ${item.manifest.length} geographic record${item.manifest.length === 1 ? '' : 's'} | ${paletteCount} palette definition${paletteCount === 1 ? '' : 's'}<br>${_sanitize(source)} | ${_sanitize(item.provenance.type)}<br>${definition ? GameAssist.createButton('Open Installed Palette', `!aa-worldpacks palette --pack ${definition.id}`) : 'Installed palette definition is unavailable.'} ${update}`.trim()
+                };
+            });
+            const empty = isSearch
+                ? (normalizedSearch ? 'No installed WorldPacks matched that name or provenance. Try another search.' : 'Enter a WorldPack name or provenance term to search the installed catalog.')
+                : 'No WorldPacks are installed. Browse the immutable full-world library or review a handout import.';
+            sendPanel(msg, 'Almanac / WorldPacks / Installed', [
+                { label: 'Catalog', value: `${_sanitize(catalogLabel)} — ${matches.length} matching campaign-owned clone${matches.length === 1 ? '' : 's'}; ${perPage} entries per page.` },
+                ...(rows.length ? rows : [{ label: 'No Installed WorldPacks', value: empty }]),
+                ...(browse ? [{ label: 'Browse', value: browse }] : []),
+                { label: 'Find', value: `${GameAssist.createButton('Search', searchCommand)} ${isSearch ? GameAssist.createButton('Clear Search', '!aa-worldpacks installed --page 0') : ''}`.trim() },
+                { label: 'Actions', value: `${GameAssist.createButton('WorldPack Library', '!aa-worldpacks library')} ${GameAssist.createButton('Create Blank Template', '!aa-worldpacks template')}` },
+                { label: 'Navigation', value: `${GameAssist.createButton('Back to WorldPacks', '!aa-worldpacks')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
         function showWorldPacks(msg, notice = null) {
             const runtime = worldPackRuntimeForPanel(msg);
             if (!runtime) return;
@@ -31335,33 +31414,22 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const definitions = worldPackDefinitionsConfigForPanel(msg);
             if (!registry || !definitions) return;
             pruneWorldPackGrants(runtime);
-            const rows = registry.installed.slice(0, 8).map(item => {
-                const preset = item.presetSourceId ? builtInWorldPackPreset(item.presetSourceId) : null;
-                const source = item.importedFromPackId
-                    ? '; imported as a campaign-owned copy'
-                    : (preset ? `; built-in ${_sanitize(preset.name)} source v${item.presetSourceVersion || 1}` : (item.presetSourceId ? '; built-in source provenance cannot be matched' : ''));
-                const paletteCount = (item.definitionManifest || []).length;
-                const update = preset && preset.version > item.version
-                    ? `<br>${GameAssist.createButton(`Review Source Update to v${preset.version}`, `!aa-worldpacks preset update --id ${preset.id}`)} <em>Current clone: v${item.version}; unchanged records only.</em>`
-                    : '';
-                return `${_sanitize(item.name)} (v${item.version}, ${item.manifest.length} geographic record${item.manifest.length === 1 ? '' : 's'}, ${paletteCount} palette definition${paletteCount === 1 ? '' : 's'}, ${_sanitize(item.provenance.type)}${source})${update}`;
-            });
             const exportCommand = '!aa-worldpacks export --id "?{New Pack ID|campaign-worldpack}" --name "?{New Pack Name|Campaign WorldPack}" --version ?{Version|1}';
             const handouts = availableHandoutChoices(owned => owned.owner === MODULE_NAME && (owned.key === 'worldpack-template' || String(owned.key || '').startsWith('worldpack-export-')));
             const importCommand = handouts.length
                 ? `!aa-worldpacks import --handout ${handoutSelectQuery('Choose a WorldPack handout', handouts)} --mode ?{Review as|Install New,new|Update Existing Pack,update|Import as Copy,copy}`
                 : null;
-            const paletteCommand = definitions.packs.length
-                ? `!aa-worldpacks palette --pack ?{Choose installed palette|${definitions.packs.map(pack => `${roll20QueryText(pack.name, pack.id, POLICY.almanac.worldNameLength)},${pack.id}`).join('|')}}`
-                : null;
+            const installedSummary = registry.installed.length
+                ? `${registry.installed.length} campaign-owned editable clone${registry.installed.length === 1 ? '' : 's'} installed (maximum ${POLICY.almanac.worldPackLimit}). ${GameAssist.createButton('Browse Installed WorldPacks', '!aa-worldpacks installed --page 0')}`
+                : `No WorldPacks installed. ${GameAssist.createButton('Browse Full WorldPacks', '!aa-worldpacks library')}`;
             sendPanel(msg, 'Almanac / WorldPacks', [
                 notice ? { label: 'Status', value: _sanitize(notice) } : null,
                 { label: 'Purpose', value: 'Portable setting definitions: reusable palette plus geographic graph. Immutable built-in sources, campaign-owned installed clones, and live Scene/Travel runtime remain separate.' },
-                { label: 'Installed', value: rows.length ? rows.join('<br>') : 'No WorldPacks installed.' },
+                { label: 'Installed', value: installedSummary },
                 { label: 'Review Safety', value: 'Every handout import accepts canonical JSON or the documented single-block WorldPack Worksheet as inert data, validates syntax, schema, references, provenance, conflicts, and bounds, then shows an expiring Preview before confirmation.' },
                 { label: 'Campaign Safety', value: 'Install New and Import as Copy never overwrite campaign records. Update Existing Pack requires a higher version and refuses changed geographic or palette clone records rather than erasing campaign customization.' },
                 { label: 'Dependencies', value: 'External Climate-region and package references are reported during preview. Palette definitions do not silently write current Time, Weather, Astronomy, Environment, or runtime state.' },
-                { label: 'Actions', value: `${GameAssist.createButton('WorldPack Library', '!aa-worldpacks library')} ${GameAssist.createButton('Create Blank Template', '!aa-worldpacks template')} ${GameAssist.createButton('Export Current World', exportCommand)} ${paletteCommand ? GameAssist.createButton('Edit Installed Palette', paletteCommand) : ''} ${importCommand ? GameAssist.createButton('Review Handout Import', importCommand) : ''}`.trim() },
+                { label: 'Actions', value: `${GameAssist.createButton('WorldPack Library', '!aa-worldpacks library')} ${GameAssist.createButton('Browse Installed WorldPacks', '!aa-worldpacks installed --page 0')} ${GameAssist.createButton('Create Blank Template', '!aa-worldpacks template')} ${GameAssist.createButton('Export Current World', exportCommand)} ${importCommand ? GameAssist.createButton('Review Handout Import', importCommand) : ''}`.trim() },
                 { label: 'Handout Import', value: handouts.length
                     ? `Choose one of ${handouts.length} available handout(s) from the Review Handout Import menu. Normal chat panels never display raw JSON or require a handout ID.`
                     : 'Create Blank Template to make a documented ready-to-edit worksheet. Its completion panel includes a direct Review This Template button; no handout ID is required.' },
