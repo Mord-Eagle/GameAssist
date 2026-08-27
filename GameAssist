@@ -26632,6 +26632,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
          * query list.
          */
         function worldRecordChoiceContext(config, type, record, field) {
+            if (type === 'route' && ['fromLocationId', 'toLocationId'].includes(field) && Array.isArray(record.legs) && record.legs.length) {
+                return {
+                    warning: 'This Travel Route has explicit Route Legs. Edit or rebuild its continuous leg path before changing an endpoint.',
+                    nextLabel: 'Edit Route Legs',
+                    nextCommand: `!aa-world route legs --route ${record.id}`
+                };
+            }
             const relationCollection = worldRecordRelationCollection(type, field);
             if (relationCollection) {
                 const records = (config[relationCollection] || []).filter(candidate => !(type === 'region' && field === 'parentId' && candidate.id === record.id));
@@ -26688,7 +26695,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (context.warning) return sendPanel(msg, 'Almanac / Worldbuilding Needs Attention', [
                 { label: 'Relation Choice', value: _sanitize(context.warning) },
                 { label: 'Changes', value: 'None.' },
-                { label: 'Next Step', value: GameAssist.createButton(`Edit ${worldKindLabel(type)}`, `!aa-world edit ${type} --id ${record.id}`) }
+                { label: 'Next Step', value: GameAssist.createButton(context.nextLabel || `Edit ${worldKindLabel(type)}`, context.nextCommand || `!aa-world edit ${type} --id ${record.id}`) }
             ]);
             const browseCommand = nextPage => `!aa-world choose --type ${type} --id ${record.id} --field ${field} --page ${nextPage}`;
             const searchCommand = (query, nextPage) => `!aa-world choose search --type ${type} --id ${record.id} --field ${field} --query "${query}" --page ${nextPage}`;
@@ -26797,7 +26804,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 fields.push({ label: 'Travel Default', value: `${_sanitize(travelPace(record.defaultPace).name)} ${GameAssist.createButton('Set Pace', `!aa-world set destination --id ${record.id} --field defaultPace --value "${travelPaceQuery('Default travel pace', record.defaultPace)}"`)}` });
                 fields.push({ label: 'Use During Play', value: record.locationId ? GameAssist.createButton('Review Move', `!aa-location destination --id ${record.id}`) : 'Choose a Location before this prepared destination can be reviewed.' });
             } else if (type === 'route') {
-                fields.push({ label: 'Endpoints', value: `${relation('Set Origin', 'fromLocationId', config.locations, record.fromLocationId)} ${relation('Set Destination', 'toLocationId', config.locations, record.toLocationId)}` });
+                const hasExplicitLegs = Array.isArray(record.legs) && record.legs.length;
+                fields.push({ label: 'Endpoints', value: hasExplicitLegs
+                    ? `${_sanitize(worldReferenceLabel(config.locations, record.fromLocationId))} &rarr; ${_sanitize(worldReferenceLabel(config.locations, record.toLocationId))}. Explicit Route Legs lock endpoints until their continuous path is rebuilt. ${GameAssist.createButton('Edit Route Legs', `!aa-world route legs --route ${record.id}`)}`
+                    : `${relation('Set Origin', 'fromLocationId', config.locations, record.fromLocationId)} ${relation('Set Destination', 'toLocationId', config.locations, record.toLocationId)}` });
                 fields.push({ label: 'Journey Estimate', value: `${formatTravelMiles(record.distanceMiles)} ${query('Distance Miles', 'distanceMiles', record.distanceMiles || 'None')} ${_sanitize(travelPace(record.defaultPace).name)} ${GameAssist.createButton('Set Pace', `!aa-world set route --id ${record.id} --field defaultPace --value "${travelPaceQuery('Default travel pace', record.defaultPace)}"`)}` });
                 fields.push({ label: 'Route Context', value: `${_sanitize(record.terrainNote || 'No route terrain note.')} ${query('Terrain Note', 'terrainNote', record.terrainNote || 'None')}` });
                 if (Array.isArray(record.legs) && record.legs.length) {

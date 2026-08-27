@@ -659,12 +659,14 @@ function assertLargeScaleSessionSelectors() {
     });
 
     // Editor relations must not silently inherit the old twelve-choice query
-    // ceiling. A route editor and Route Leg both need complete discovery paths
-    // across the same 640 Location setting-scale workload.
-    const routeEndpointChoices = harness.dispatchCommand('!aa-world choose --type route --id asterfall-concord-route-1-1 --field toLocationId --page 53');
-    assert.match(routeEndpointChoices[0].message, /Destination Location 54 of 54/, 'Route endpoint chooser must retain access to the final Location page instead of truncating to its first dozen options');
-    assert.ok((routeEndpointChoices[0].message.match(/\[Use This Choice\]/g) || []).length <= 12, 'Route endpoint chooser must retain the direct-selection page bound');
-    assert.ok(routeEndpointChoices[0].message.length < 6000, 'Route endpoint chooser must remain compact at four-world Location scale');
+    // ceiling. A scoped Phenomenon and Route Leg both need complete discovery
+    // paths across the same 640 Location setting-scale workload.
+    const scopeProbe = world.phenomena.find(phenomenon => phenomenon.sourcePackId === 'asterfall-concord');
+    assert.ok(scopeProbe, 'the installed source must provide a scoped-phenomenon relation picker workload');
+    const phenomenonLocationChoices = harness.dispatchCommand(`!aa-world choose --type phenomenon --id ${scopeProbe.id} --field locationId --page 53`);
+    assert.match(phenomenonLocationChoices[0].message, /Location 54 of 54/, 'Phenomenon scope chooser must retain access to the final Location page instead of truncating to its first dozen options');
+    assert.ok((phenomenonLocationChoices[0].message.match(/\[Use This Choice\]/g) || []).length <= 12, 'Phenomenon scope chooser must retain the direct-selection page bound');
+    assert.ok(phenomenonLocationChoices[0].message.length < 6000, 'Phenomenon scope chooser must remain compact at four-world Location scale');
     const routeViaChoices = harness.dispatchCommand('!aa-world route leg choose via --route asterfall-concord-route-1-1 --id asterfall-concord-route-1-1-leg-1 --page 53');
     assert.match(routeViaChoices[0].message, /Intermediate Location 54 of 54/, 'Route Leg split chooser must retain access to the final eligible intermediate Location page');
     assert.ok((routeViaChoices[0].message.match(/\[Split Through Here\]/g) || []).length <= 12, 'Route Leg split chooser must retain the direct-action page bound');
@@ -709,6 +711,12 @@ function assertRouteLegEditor() {
     const almanac = harness.state.GameAssist.AlmanacAssist;
     const initial = harness.dispatchCommand('!aa-world route legs --route fixture-route');
     assert.match(initial[0].message, /Route Legs/, 'Route Leg editor must be reachable from a route command');
+    const lockedRouteEditor = harness.dispatchCommand('!aa-world edit route --id fixture-route');
+    assert.match(lockedRouteEditor[0].message, /Explicit Route Legs lock endpoints/, 'route editor must explain why a legged route cannot silently desynchronize its endpoints');
+    assert.doesNotMatch(lockedRouteEditor[0].message, /\[Set Origin\]|\[Set Destination\]/, 'route editor must route a legged endpoint change to Route Leg editing instead of offering a known refusal button');
+    const lockedEndpointPicker = harness.dispatchCommand('!aa-world choose --type route --id fixture-route --field fromLocationId --page 0');
+    assert.match(lockedEndpointPicker[0].message, /explicit Route Legs/i, 'a stale/manual endpoint-picker route must retain the same guarded Route Leg explanation');
+    assert.match(lockedEndpointPicker[0].message, /Edit Route Legs/, 'a stale/manual endpoint-picker route must retain a focused Route Leg recovery action');
     const split = harness.dispatchCommand('!aa-world route leg split --route fixture-route --id fixture-leg-a-b --via fixture-c --first 2');
     // fixture-c is an existing intermediate Location even though it was previously
     // the route endpoint of the second leg; the whole replacement remains valid.
