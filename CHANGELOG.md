@@ -60,6 +60,30 @@ EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so exis
 - Sequences the Foundry edition after Roll20 v2.0.0 live acceptance and stabilization. It will be a Foundry-native sister implementation with its own codebase and release history, beginning with AlmanacAssist and atlas-scale WorldPack storage rather than a concurrent or line-by-line port.
 - No executable behavior, saved state, commands, or module versions change in this documentation and metadata checkpoint.
 
+### AlmanacAssist 2.0.4 Current Settings and location snapshots - 2026-08-27
+
+#### Direct weather setup
+
+- Adds **Current Settings** to the Almanac GM home screen, with the direct case-insensitive command `!aa current` / `!aa-current`. The GM chooses a regional climate baseline, one local influence profile, and optional adjustments without first constructing regions, ecoregion areas, or linked geography and biome definitions.
+- Adds a twelve-profile influence matrix using the existing named ecoregion starters. Each entry exposes temperature, humidity, precipitation-chance, and wind adjustments. Switching profiles replaces those values rather than repeatedly accumulating modifiers.
+- Adds button-driven numeric and text editors for baseline values, local influences, separate GM adjustments, terrain, ground, water, and vegetation. Edited local profiles can be saved under a unique name for reuse with other baselines. Working edits do not silently alter shared profiles or previously saved places.
+- Routes the resulting settings through the existing weather generator and SceneResolver. Seasonal responses use the current or forecast date; matrix influences are applied once, without adding the linked-world elevation, coast, biome, or local adjustments a second time. Unrelated prior weather contexts are not carried into the new setup.
+
+#### Named places and preservation
+
+- **Save Current Settings** can create a named active place or explicitly update the current saved place after confirmation. Each place stores a self-contained schema-1 settings snapshot, including baseline values, local influences, GM adjustments, descriptions, and local context.
+- **Recall Location** restores that setup without advancing the calendar, restoring an old weather roll, or generating new weather automatically. It asks before replacing unsaved working changes and refuses a location switch during an active journey.
+- Working settings survive module disabling and sandbox restarts. Confirmed discard restores the saved setup and retains one prior working copy. Saved-location updates and generated buttons are checked against the current settings so stale controls cannot overwrite newer edits.
+- Existing locations, commands, profile definitions, runtime history, weather locks, and manual environment overrides remain available. The older linked-world palette is retained under **More Tools**; broad removal of older paths is not part of this change.
+
+#### Transfer, validation, and user guidance
+
+- WorldPack exports include saved location snapshots and reusable custom influence profiles, but exclude unsaved working settings. Import validates snapshot structure and local-time references before committing. A confirmed import replaces the working context, retains one recovery copy, and preserves runtime chronology and current weather.
+- Explicit local-time assignments update the saved snapshot and matching working context together, preventing a recalled snapshot from masking the GM's assignment.
+- Missing, malformed, out-of-range, cancelled, or stale inputs produce a private explanation without partially applying the requested change. Player requests cannot change settings or browse private location lists.
+- Updates the in-game manual, README, command metadata, and focused smoke instructions for the new workflow. AlmanacAssist advances from 2.0.3 to 2.0.4; GameAssist remains v2.0.0 on PR #81.
+- Verification exercises emitted commands, query answers, calculations, location isolation, permissions, stale controls, WorldPack transfer, module restart, and fresh script evaluation. These local checks do not establish live Roll20 button or query behavior; the **Current Settings And Location Recall** smoke tests cover that boundary.
+
 ### AlmanacAssist 2.0.3 palette buttons and location controls - 2026-08-27
 
 #### Palette repairs

@@ -3,7 +3,7 @@
 GameAssist - Roll20 API Script
 Version: 2.0.0
 Last Updated: 2026-08-27 (America/New_York)
-Release scope: EffectAssist 2.5.4 duration-label repair, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.1 safe public result delivery, HealthService 1.1.1 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, InitiativeAssist 1.0.6 mixed-sheet actor repair, CombatAssist 1.2.1 encounter-ending repair, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist 2.0.3 reusable world profiles, seasonal weather, and reviewed travel, and regression repairs across the v2.0.0 module suite.
+Release scope: EffectAssist 2.5.4 duration-label repair, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.1 safe public result delivery, HealthService 1.1.1 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, InitiativeAssist 1.0.6 mixed-sheet actor repair, CombatAssist 1.2.1 encounter-ending repair, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist 2.0.4 Current Settings, saved-location snapshots, reusable world profiles, seasonal weather, and reviewed travel, and regression repairs across the v2.0.0 module suite.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -30,7 +30,7 @@ calls GameAssist.enqueue(). This development package contains fifteen configurab
 - EffectAssist 2.5.4 - Coordinates compact catalog-driven effects, exact caster-and-recipient identity, retained GM requests, GameAssist-owned 2014-sheet modifiers, verified token-specific concentration, ownership-safe cleanup, provider-specific duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
 - HealAssist 1.2.1 - Guides verified 2014 normal or maximum healing with direct single-recipient targeting, optional automatic application, visible PC targeting, private GM requests, safe public announcements, and HealthService verification.
 - AttackAssist 1.1.0 - Guides authorized 2014 repeating attacks through direct visible targeting, default sheet-mode submission, optional GM-enabled roll review, complete prompt-safe Classic-sheet expansion, private GM placement, crash-safe inline-roll validation, and visible one-use native-template rolls without applying damage.
-- AlmanacAssist 2.0.3 - Separates compact Session controls from Worldbuilding; supplies reusable climate, biome, geography, ecoregion, and seasonal palettes with editable campaign copies and named region controls; generates weather from the current place and calendar season; supports coherent scenes and reviewed travel with private encounter checks; and retains phenomena, local time, advanced Wayfarer editing, WorldPacks, six independently controlled systems, and transactional rests.
+- AlmanacAssist 2.0.4 - Separates compact Session controls from Worldbuilding; adds Current Settings with regional baselines, a twelve-profile influence matrix, and independent saved-location snapshots; retains reusable climate, biome, geography, ecoregion, and seasonal palettes with editable campaign copies and named region controls; generates weather from the current place and calendar season; supports coherent scenes and reviewed travel with private encounter checks; and retains phenomena, local time, advanced Wayfarer editing, WorldPacks, six independently controlled systems, and transactional rests.
 - HPAssist 0.3.0 - Rolls npc_hpformula and uses HealthService for verified writes to the selected shared NPC HP bar when available.
 - DebugTools 0.3.1 - Optional dry-run-first GM diagnostics with verified supported HP damage writes on the selected shared NPC HP bar.
 
@@ -23610,7 +23610,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   guarantees: ["Session Mode keeps current place, scene, time, travel, rest, weather, event, and announcement actions compact while Worldbuilding Mode owns durable definitions","Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows without becoming hidden prerequisites","One signed base chronology keeps Year 1 at elapsed minute zero for saved-campaign compatibility while allowing validated Year 0 dates","SceneResolver publishes one immutable coherent snapshot with field-level provenance for place, local time, climate, weather, environment, astronomy, and active phenomena","Geographies, biomes, ecoregions, locations, phenomena, quick actions, and local temporal contexts are bounded, validated, and dependency-aware","Prepared destinations and mileage-based travel change chronology or active location only after explicit review and confirmation","Travel encounter checks are private GM evidence derived from a selected interval and die, never encounter-content generation or automatic gameplay mutation","Immutable versioned presets install editable copies without replacing existing places","Wayfarer provides complete chat editors plus a versioned advanced handout whose stale-protected import changes only the saved draft","WorldPack import/export excludes runtime chronology and character state, validates the complete bounded definition graph before mutation, and records provenance","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Optional RulesAdvisor guidance is profile-specific, read-only, and never applies gameplay changes","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AlmanacAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "2.0.3", time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2, world_state_schema_version: 1, scene_schema_version: 1, worldpack_schema_version: 1, temporal_context_schema_version: 1, wayfarer_handout_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "2.0.4", current_settings_schema_version: 1, time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2, world_state_schema_version: 1, scene_schema_version: 1, worldpack_schema_version: 1, temporal_context_schema_version: 1, wayfarer_handout_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // AlmanacAssist presents a compact Session Mode for live play and a separate
@@ -23621,10 +23621,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // without changing chronology or gameplay state merely because a preview was opened.
     // RestAlmanac remains the only sheet-writing surface and requires a fresh preview
     // and confirmation against verified D&D 5E by Roll20 2014 attributes.
+    // Current Settings supplies an independent regional baseline plus one local
+    // influence profile and explicit GM adjustments. Named locations retain value
+    // snapshots, not shared mutable references or the weather/date of a past visit.
+    // The existing resolver and generator consume that context without applying
+    // the old geography/biome adjustments twice; legacy locations keep their path.
     // -------------------------------------------------------------------------
     GameAssist.register('AlmanacAssist', function() {
         const MODULE_NAME = 'AlmanacAssist';
-        const MODULE_VERSION = '2.0.3';
+        const MODULE_VERSION = '2.0.4';
         const TIME_STATE_SCHEMA_VERSION = 2;
         const WAYFARER_DRAFT_SCHEMA_VERSION = 3;
         const ANNOUNCEMENT_SCHEMA_VERSION = 4;
@@ -25058,6 +25063,331 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             else sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: GameAssist.createButton('Almanac Home', '!aa-gm') }]);
         }
 
+        // EXEMPT: These editable setting seeds are game abstractions, not climate
+        // measurements. Four deltas replace one another; they never accumulate.
+        const CURRENT_SETTING_MATRIX = Object.freeze([
+            ['wooded-lowlands', 0, 5, 0, -2],
+            ['wet-coastal-forest', -2, 15, 20, 3],
+            ['montane-conifer', -15, 0, 5, 5],
+            ['continental-steppe', 0, -15, -15, 4],
+            ['desert-basin', 10, -25, -25, 2],
+            ['cold-desert-upland', -10, -20, -20, 5],
+            ['tropical-river-forest', 3, 20, 20, -3],
+            ['seasonal-savanna', 5, -5, -5, 2],
+            ['northern-peatland', -5, 15, 10, -2],
+            ['polar-coast', -20, 0, 0, 6],
+            ['dry-coastal-scrub', 2, -10, -10, 3],
+            ['mangrove-estuary', 3, 20, 15, -2]
+        ].map(([id, temperatureDeltaF, humidityDelta, precipitationDelta, windDeltaMph]) => {
+            const seed = ECOREGION_PALETTE.find(item => item.id === id);
+            const geography = GEOGRAPHY_PALETTE.find(item => item.id === seed.geographyId);
+            const biome = BIOME_PALETTE.find(item => item.id === seed.biomeId);
+            return Object.freeze({ id, name: seed.name, temperatureDeltaF, humidityDelta, precipitationDelta, windDeltaMph,
+                terrain: geography.terrain, elevationFt: geography.elevationFt, coastal: geography.coastal,
+                ground: biome.ground, water: biome.water, vegetation: biome.vegetation, tags: copy(biome.tags) });
+        }));
+        const CURRENT_SETTING_FIELDS = Object.freeze({ temperatureDeltaF: 'Temperature adjustment (F)', humidityDelta: 'Humidity adjustment (points)', precipitationDelta: 'Precipitation adjustment (points)', windDeltaMph: 'Wind adjustment (mph)' });
+
+        /** Validate a portable settings snapshot without resolving world references.
+         * Missing or malformed fields are refused, not coerced to true/zero. The
+         * same boundary protects commands, saved places, and WorldPack imports.
+         */
+        function validateCurrentSettings(raw) {
+            try {
+                const object = value => {
+                    if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Settings must contain named objects.');
+                    return value;
+                };
+                const text = (value, allowEmpty = false) => {
+                    if (typeof value !== 'string' || (!allowEmpty && !value.trim()) || value.length > POLICY.almanac.maximumSummaryLength) throw new Error('Enter a short text value for each setting name or description.');
+                    return value.trim();
+                };
+                const number = (value, min, max) => {
+                    if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) throw new Error(`A settings value must be a number from ${min} to ${max}.`);
+                    return value;
+                };
+                const deltas = value => Object.fromEntries(Object.keys(CURRENT_SETTING_FIELDS).map(key => [key, number(object(value)[key], POLICY.almanac.minimumClimateTemperatureBias, POLICY.almanac.maximumClimateTemperatureBias)]));
+                const tags = value => {
+                    if (!Array.isArray(value) || value.length > POLICY.almanac.maximumClimateTags) throw new Error('Settings tags must be a short list.');
+                    return value.map(item => text(item));
+                };
+                const source = object(raw), base = object(source.baseline), profile = object(source.profile);
+                if (source.schemaVersion !== 1) throw new Error('This Current Settings format is not supported.');
+                if (typeof profile.coastal !== 'boolean') throw new Error('Coastal influence must be true or false.');
+                const settings = {
+                    schemaVersion: 1,
+                    baseline: { id: text(base.id), name: text(base.name), temperatureF: number(base.temperatureF, POLICY.almanac.minimumClimateTemperatureF, POLICY.almanac.maximumClimateTemperatureF),
+                        humidity: number(base.humidity, 0, 100), precipitationChance: number(base.precipitationChance, 0, 100), windMph: number(base.windMph, 0, POLICY.almanac.maximumClimateWindMph),
+                        seasonalScale: number(base.seasonalScale, 0, 3), tags: tags(base.tags) },
+                    profile: { id: text(profile.id), name: text(profile.name), ...deltas(profile), terrain: text(profile.terrain), ground: text(profile.ground), water: text(profile.water),
+                        vegetation: text(profile.vegetation), elevationFt: number(profile.elevationFt, -2000, 40000), coastal: profile.coastal, tags: tags(profile.tags) },
+                    adjustments: deltas(source.adjustments),
+                    environmentPresetId: text(source.environmentPresetId), temporalContextId: text(source.temporalContextId),
+                    visibilityOverride: text(source.visibilityOverride, true), groundOverride: text(source.groundOverride, true)
+                };
+                if (!Object.prototype.hasOwnProperty.call(ENVIRONMENT_PRESETS, settings.environmentPresetId)) throw new Error('Choose an existing environment preset.');
+                return { ok: true, settings };
+            } catch (error) { return { ok: false, message: error.message }; }
+        }
+
+        /** Capture unseasoned values: recalling a location must use today's season,
+         * not bake the previous visit's weather or calendar date into its climate.
+         */
+        function captureCurrentSettings(locationId) {
+            const place = currentWorldContext(locationId);
+            if (place.currentSettings) return copy(place.currentSettings);
+            const override = place.location.climateProfileId || (place.location.useRegionClimate ? null : place.ecoregionProfile?.climateProfileId);
+            const base = resolvedClimate(place.region.id, '', override);
+            const configured = climateProfile(base.profileId);
+            const policy = POLICY.almanac.weatherModel;
+            const wet = place.biome.tags.some(tag => ['wet', 'rainforest'].includes(tag));
+            const dry = place.biome.tags.some(tag => ['arid', 'desert'].includes(tag));
+            return {
+                schemaVersion: 1,
+                baseline: { id: base.profileId || 'regional', name: base.profileName, temperatureF: base.temperatureF, humidity: base.humidity,
+                    precipitationChance: base.precipitationChance, windMph: base.windMph, seasonalScale: configured?.seasonalScale ?? 1, tags: copy(base.tags) },
+                profile: { id: 'captured-context', name: 'Current local influences',
+                    temperatureDeltaF: clampNumber(Math.round(-policy.elevationCoolingFPer1000Ft * (place.geography.elevationFt - base.referenceElevationFt) / 1000), -100, 100, 0),
+                    humidityDelta: 0, precipitationDelta: (place.geography.coastal ? policy.coastalPrecipitationBonus : 0) + (wet ? policy.wetBiomePrecipitationBonus : 0) - (dry ? policy.dryBiomePrecipitationPenalty : 0),
+                    windDeltaMph: place.geography.coastal ? 2 : 0, terrain: place.geography.terrain, elevationFt: place.geography.elevationFt, coastal: place.geography.coastal,
+                    ground: place.biome.ground, water: place.biome.water, vegetation: place.biome.vegetation, tags: copy(place.biome.tags) },
+                adjustments: { temperatureDeltaF: place.location.temperatureDeltaF, humidityDelta: 0, precipitationDelta: 0, windDeltaMph: place.location.windDeltaMph },
+                environmentPresetId: place.location.environmentPresetId, temporalContextId: place.location.temporalContextId,
+                visibilityOverride: place.location.visibilityOverride, groundOverride: place.location.groundOverride
+            };
+        }
+
+        function currentSettingsRecord() {
+            const world = normalizeWorldConfig();
+            const working = ensureAlmanacRuntime().world.currentSettings;
+            const location = worldItem(world.locations, world.activeLocationId);
+            const raw = working?.locationId === world.activeLocationId ? working.settings : location.settingsSnapshot !== undefined ? location.settingsSnapshot : captureCurrentSettings(world.activeLocationId);
+            const result = validateCurrentSettings(raw);
+            if (!result.ok) throw new Error(result.message);
+            if (!worldItem(normalizeTemporalContexts(), result.settings.temporalContextId)) throw new Error('The saved local time context is unavailable. Restore it in Local Time settings before using this snapshot.');
+            return result.settings;
+        }
+
+        function currentSettingsStamp(settings = currentSettingsRecord()) {
+            // A nonnumeric prefix prevents the shared argument parser changing this id.
+            return `s${worldPackFingerprint(JSON.stringify({ settings, world: normalizeWorldConfig(), climate: normalizeClimateConfig() }))}`;
+        }
+
+        function currentSettingsButton(label, action = '', settings = currentSettingsRecord()) {
+            return GameAssist.createButton(label, `!aa current ${action}${action ? ` --stamp ${currentSettingsStamp(settings)}` : ''}`.trim());
+        }
+
+        function currentSettingsClimate(settings, season) {
+            const { baseline: base, profile, adjustments } = settings;
+            const rule = normalizeClimateConfig().seasonRules.find(item => item.name.toLowerCase() === String(season).toLowerCase());
+            const drySummer = base.tags.includes('dry-summer') ? (Number(rule?.temperatureBias || 0) > 0 ? -20 : Number(rule?.temperatureBias || 0) < 0 ? 20 : 0) : 0;
+            return { model: 'matrix', profileId: base.id, profileName: base.name, season, seasonMapped: Boolean(rule),
+                seasonAuthority: timeAvailable() ? 'TimeAlmanac' : 'ClimateAlmanac manual setting',
+                temperatureF: Math.round(clampNumber(base.temperatureF + profile.temperatureDeltaF + adjustments.temperatureDeltaF + Number(rule?.temperatureBias || 0) * base.seasonalScale, POLICY.almanac.minimumClimateTemperatureF, POLICY.almanac.maximumClimateTemperatureF, base.temperatureF)),
+                humidity: clampNumber(base.humidity + profile.humidityDelta + adjustments.humidityDelta + Number(rule?.humidityDelta || 0), 0, 100, base.humidity),
+                precipitationChance: clampNumber(base.precipitationChance + profile.precipitationDelta + adjustments.precipitationDelta + Number(rule?.precipitationDelta || 0) + drySummer, 0, 100, base.precipitationChance),
+                windMph: clampNumber(base.windMph + profile.windDeltaMph + adjustments.windDeltaMph + Number(rule?.windDelta || 0), 0, POLICY.almanac.maximumClimateWindMph, base.windMph),
+                tags: [...new Set([...base.tags, ...profile.tags])].slice(0, POLICY.almanac.maximumClimateTags) };
+        }
+
+        function storeCurrentSettings(settings) {
+            const result = validateCurrentSettings(settings);
+            if (!result.ok) throw new Error(result.message);
+            const world = normalizeWorldConfig(), runtime = ensureAlmanacRuntime();
+            runtime.world.currentSettings = { locationId: world.activeLocationId, settings: copy(result.settings) };
+            runtime.world.revision++;
+            // Editing a working copy neither changes saved locations nor rerolls weather.
+            runtime.weather.forecast = [];
+        }
+
+        function showCurrentSettings(msg, note = '') {
+            const settings = currentSettingsRecord(), world = normalizeWorldConfig();
+            const location = worldItem(world.locations, world.activeLocationId);
+            const baseline = validateCurrentSettings(location.settingsSnapshot || captureCurrentSettings(location.id)).settings;
+            const changed = JSON.stringify(settings) !== JSON.stringify(baseline);
+            const season = timeAvailable() ? contextualMoment({ temporalContext: temporalContext(settings.temporalContextId) }, ensureAlmanacRuntime().time.worldMinute).moment?.season : currentSeason();
+            const climate = currentSettingsClimate(settings, season || currentSeason());
+            sendPanel(msg, 'Current Settings', [
+                ...(note ? [{ label: 'Result', value: _sanitize(note) }] : []),
+                { label: 'Place', value: `${_sanitize(locationDisplayName(location))}${changed ? '<br>Unsaved settings; the saved place is unchanged.' : ''}` },
+                { label: 'Regional Baseline', value: `${_sanitize(settings.baseline.name)} ${currentSettingsButton('Choose Baseline', 'baselines', settings)}` },
+                { label: 'Local Profile', value: `${_sanitize(settings.profile.name)} ${currentSettingsButton('Choose Ecoregion', 'profiles', settings)}` },
+                { label: 'Weather Starting Point', value: `${climate.temperatureF} F | ${climate.humidity}% humidity<br>${climate.precipitationChance}% precipitation chance | ${climate.windMph} mph wind<br>Season: ${_sanitize(climate.season)}` },
+                ...(!submoduleEnabled('climate') ? [{ label: 'Climate Is Off', value: 'Weather uses its fallback until Climate is enabled. Your settings are preserved.' }] : []),
+                { label: 'Actions', value: `${currentSettingsButton('Generate Weather', 'generate', settings)} ${currentSettingsButton('Adjust Settings', 'adjust', settings)}` },
+                { label: 'Locations', value: `${currentSettingsButton('Save Current Settings', 'save-menu', settings)} ${currentSettingsButton('Recall Location', 'locations', settings)}` },
+                { label: 'Return', value: `${GameAssist.createButton('Almanac Home', '!aa-gm')} ${currentSettingsButton('How This Works', 'help', settings)}` }
+            ]);
+        }
+
+        /** GM-only, stale-checked adapter for the working copy and named snapshots.
+         * All writes validate a complete candidate first. Existing world records,
+         * runtime chronology, weather locks, and manual overrides remain owned by
+         * their original workflows; this endpoint never imports executable text.
+         */
+        function handleCurrentSettings(msg, input) {
+            if (!requireGm(msg)) return;
+            try {
+                const body = input.replace(/^current(?:-|\s)*/i, '').trim();
+                const action = body.split(/\s+/)[0].toLowerCase() || 'menu';
+                const args = _parseArgs(body).args;
+                if (action === 'discard') {
+                    if (String(args.confirm).toLowerCase() !== 'yes') return showCurrentSettings(msg, 'Working settings unchanged.');
+                    if (args.stamp !== undefined && args.stamp !== currentSettingsStamp()) throw new Error('The working settings changed. Open Adjust Settings before discarding them.');
+                    const runtime = ensureAlmanacRuntime();
+                    if (runtime.world.currentSettings) runtime.world.previousCurrentSettings = copy(runtime.world.currentSettings);
+                    runtime.world.currentSettings = null;
+                    runtime.world.revision++;
+                    runtime.weather.forecast = [];
+                    return showCurrentSettings(msg, 'Working changes discarded. The saved location and current weather were not changed.');
+                }
+                const settings = currentSettingsRecord();
+                if (args.stamp !== undefined && args.stamp !== currentSettingsStamp(settings)) throw new Error('The settings changed after this button was opened. Open Current Settings and choose again.');
+                const back = () => currentSettingsButton('Current Settings');
+                const paginate = (items, title, row) => {
+                    const count = Math.max(1, Math.ceil(items.length / POLICY.almanac.palettePageSize));
+                    const page = Math.floor(clampNumber(args.page, 1, count, 1));
+                    sendPanel(msg, title, [...items.slice((page - 1) * POLICY.almanac.palettePageSize, page * POLICY.almanac.palettePageSize).map(row),
+                        { label: 'Pages', value: `${page} of ${count} ${page > 1 ? currentSettingsButton('Previous', `${action} --page ${page - 1}`) : ''} ${page < count ? currentSettingsButton('Next', `${action} --page ${page + 1}`) : ''}` },
+                        { label: 'Return', value: back() }]);
+                };
+                const profiles = () => {
+                    const saved = normalizeWorldConfig().currentSettingProfiles || [];
+                    if (!Array.isArray(saved) || saved.length > POLICY.almanac.maximumEcoregionProfiles) throw new Error('The custom setting profiles need repair in World Setup.');
+                    return [...CURRENT_SETTING_MATRIX.map(profile => ({ key: `builtin:${profile.id}`, profile })), ...saved.map(profile => ({ key: `saved:${profile.id}`, profile }))];
+                };
+                if (['menu', 'gm', 'dm', 'status'].includes(action)) return showCurrentSettings(msg);
+                if (action === 'help') return sendPanel(msg, 'Current Settings Quick Guide', [
+                    { label: 'Prepare', value: 'Choose a regional baseline, then an ecoregion. Adjust the numbers or descriptions when your setting needs something different.' },
+                    { label: 'Generate', value: 'Generate Weather uses this setup with the current calendar season. Profile changes do not replace existing weather by themselves.' },
+                    { label: 'Keep', value: 'Save Current Settings records a named location. Recall restores its setup, not an old date or weather roll. Updating an existing place requires confirmation.' },
+                    { label: 'Customize', value: 'Adjust Settings can change the baseline, local influences, and your extra adjustments. Save Custom Profile keeps the edited local influences for reuse.' },
+                    { label: 'Return', value: back() }
+                ]);
+                if (action === 'baselines') return paginate(Object.values(climateProfileMap(normalizeClimateConfig())), 'Choose Regional Baseline', profile => ({
+                    label: profile.name, value: `${profile.temperatureF} F | ${profile.humidity}% humidity<br>${profile.precipitationChance}% precipitation | ${profile.windMph} mph ${currentSettingsButton('Use Baseline', `baseline --id "${profile.id}"`)}`
+                }));
+                if (action === 'baseline') {
+                    const base = climateProfile(String(args.id || ''));
+                    if (!base) throw new Error('Choose a baseline from the list.');
+                    settings.baseline = { id: base.id, name: base.name, temperatureF: base.temperatureF, humidity: base.humidity, precipitationChance: base.precipitationChance,
+                        windMph: base.windMph, seasonalScale: base.seasonalScale ?? 1, tags: copy(base.tags || []) };
+                    storeCurrentSettings(settings);
+                    return showCurrentSettings(msg, 'Baseline changed. Saved locations and current weather are unchanged.');
+                }
+                if (action === 'profiles') return paginate(profiles(), 'Ecoregion Influence Matrix', entry => ({ label: entry.profile.name,
+                    value: `Temperature ${entry.profile.temperatureDeltaF >= 0 ? '+' : ''}${entry.profile.temperatureDeltaF} F | Humidity ${entry.profile.humidityDelta}<br>Precipitation ${entry.profile.precipitationDelta} points | Wind ${entry.profile.windDeltaMph} mph ${currentSettingsButton('Use Profile', `profile --id "${entry.key}"`)}` }));
+                if (action === 'profile') {
+                    const entry = profiles().find(item => item.key === args.id);
+                    if (!entry) throw new Error('Choose an ecoregion from the matrix.');
+                    settings.profile = copy(entry.profile);
+                    storeCurrentSettings(settings);
+                    return showCurrentSettings(msg, 'Local influences replaced. Earlier profile adjustments were not stacked.');
+                }
+                if (action === 'adjust') return sendPanel(msg, 'Adjust Current Settings', [
+                    { label: 'Regional Baseline', value: currentSettingsButton('Edit Baseline Values', 'edit --group baseline') },
+                    { label: 'Local Profile', value: currentSettingsButton('Edit Profile Influences', 'edit --group profile') },
+                    { label: 'Extra Adjustments', value: currentSettingsButton('Edit GM Adjustments', 'edit --group adjustments') },
+                    { label: 'Descriptions', value: ['terrain', 'ground', 'water', 'vegetation'].map(field => currentSettingsButton(`Change ${field}`, `set --group profile --field ${field} --value "?{New ${field} description}"`)).join(' ') },
+                    { label: 'Reuse', value: currentSettingsButton('Save Custom Profile', 'save-profile --name "?{Custom profile name}"') },
+                    { label: 'Saved Setup', value: currentSettingsButton('Discard Working Changes', 'discard --confirm ?{Discard working changes and use the saved location settings?|No,no|Yes,yes}') },
+                    { label: 'Return', value: back() }
+                ]);
+                if (action === 'edit') {
+                    if (!['baseline', 'profile', 'adjustments'].includes(args.group)) throw new Error('Choose which settings to adjust.');
+                    const fields = args.group === 'baseline' ? { temperatureF: 'Baseline temperature (F)', humidity: 'Humidity (%)', precipitationChance: 'Precipitation chance (%)', windMph: 'Wind (mph)', seasonalScale: 'Season temperature strength (0-3)' } : CURRENT_SETTING_FIELDS;
+                    return sendPanel(msg, 'Edit Settings Values', Object.entries(fields).map(([key, label]) => ({ label, value: `${settings[args.group][key]} ${currentSettingsButton('Change', `set --group ${args.group} --field ${key} --value ?{${label}|${settings[args.group][key]}}`)}` })).concat([{ label: 'Return', value: currentSettingsButton('Adjust Settings', 'adjust') }]));
+                }
+                if (action === 'set') {
+                    const fields = args.group === 'baseline' ? ['temperatureF', 'humidity', 'precipitationChance', 'windMph', 'seasonalScale'] : args.group === 'profile' ? [...Object.keys(CURRENT_SETTING_FIELDS), 'terrain', 'ground', 'water', 'vegetation'] : args.group === 'adjustments' ? Object.keys(CURRENT_SETTING_FIELDS) : [];
+                    if (!fields.includes(args.field) || !['number', 'string'].includes(typeof args.value) || String(args.value).trim() === '') throw new Error('Enter a value using Adjust Settings. Nothing was changed.');
+                    settings[args.group][args.field] = ['terrain', 'ground', 'water', 'vegetation'].includes(args.field) ? String(args.value) : Number(args.value);
+                    storeCurrentSettings(settings);
+                    return showCurrentSettings(msg, 'Working settings updated. Saved places are unchanged.');
+                }
+                if (action === 'save-profile') {
+                    const name = typeof args.name === 'string' ? boundedName(args.name) : '';
+                    if (!name) throw new Error('Enter a custom profile name.');
+                    const world = copy(normalizeWorldConfig()), saved = world.currentSettingProfiles || [];
+                    if (!Array.isArray(saved) || saved.length >= POLICY.almanac.maximumEcoregionProfiles) throw new Error('The custom profile limit has been reached.');
+                    if (saved.some(item => item.name.toLowerCase() === name.toLowerCase())) throw new Error('That profile name is already saved. Use a different name; the existing profile was not replaced.');
+                    const profile = { ...copy(settings.profile), id: nextPresetId(saved, 'setting-profile'), name };
+                    world.currentSettingProfiles = [...saved, profile];
+                    modState.config.world = world;
+                    settings.profile = profile;
+                    storeCurrentSettings(settings);
+                    return showCurrentSettings(msg, 'Custom profile saved. Other places keep their saved values.');
+                }
+                if (action === 'generate') {
+                    if (!submoduleEnabled('weather')) return handleWeather(msg, 'weather generate');
+                    storeCurrentSettings(settings);
+                    return handleWeather(msg, 'weather generate');
+                }
+                if (action === 'save-menu') {
+                    const world = normalizeWorldConfig(), location = worldItem(world.locations, world.activeLocationId);
+                    return sendPanel(msg, 'Save Current Settings', [
+                        { label: 'New Location', value: currentSettingsButton('Save As New Location', 'save --name "?{Location name}"') },
+                        { label: 'Existing Location', value: `${_sanitize(locationDisplayName(location))}<br>${currentSettingsButton('Update This Location', `update --id "${location.id}" --confirm ?{Replace this location\'s saved setup? Calendar and weather history are preserved.|No,no|Yes,yes}`)}` },
+                        { label: 'Saved Content', value: 'Baseline, local profile, extra adjustments, and local context. Current date, weather rolls, and runtime history are not copied.' },
+                        { label: 'Return', value: back() }
+                    ]);
+                }
+                if (action === 'save' || action === 'update') {
+                    const world = copy(normalizeWorldConfig());
+                    const source = worldItem(world.locations, world.activeLocationId);
+                    let target;
+                    if (action === 'update') {
+                        if (String(args.confirm).toLowerCase() !== 'yes') return showCurrentSettings(msg, 'Saved location unchanged.');
+                        if (args.id !== source.id || args.stamp !== currentSettingsStamp(settings)) throw new Error('Open Save Current Settings again before updating this location.');
+                        target = source;
+                    } else {
+                        const name = typeof args.name === 'string' ? boundedName(args.name) : '';
+                        if (!name) throw new Error('Enter a location name.');
+                        if (world.locations.some(item => item.name.toLowerCase() === name.toLowerCase())) throw new Error('That location already exists. Recall it and choose Update This Location, or use another name.');
+                        if (world.locations.length >= POLICY.almanac.maximumLocations) throw new Error('The saved location limit has been reached.');
+                        target = { ...copy(source), id: nextPresetId(world.locations, 'saved-place'), name, notes: '', pageIds: [], favorite: false, packId: null, sourceId: null };
+                        world.locations.push(target);
+                    }
+                    target.settingsSnapshot = copy(settings);
+                    target.environmentPresetId = settings.environmentPresetId;
+                    target.temporalContextId = settings.temporalContextId;
+                    world.activeLocationId = target.id;
+                    modState.config.world = world;
+                    ensureAlmanacRuntime().world.currentSettings = null;
+                    ensureAlmanacRuntime().world.revision++;
+                    ensureAlmanacRuntime().weather.forecast = [];
+                    return showCurrentSettings(msg, `Settings saved for ${target.name}. Calendar and weather history were preserved.`);
+                }
+                if (action === 'locations') return paginate(normalizeWorldConfig().locations, 'Recall Location Settings', location => ({ label: locationDisplayName(location), value: currentSettingsButton('Recall', `load --id "${location.id}"`) }));
+                if (action === 'load') {
+                    const world = copy(normalizeWorldConfig()), target = worldItem(world.locations, args.id);
+                    if (!target) throw new Error('That saved location is no longer available.');
+                    const runtime = ensureAlmanacRuntime();
+                    if (runtime.world.travel) throw new Error('Finish or cancel the active journey in Travel before recalling another location.');
+                    const source = worldItem(world.locations, world.activeLocationId);
+                    const saved = validateCurrentSettings(source.settingsSnapshot || captureCurrentSettings(source.id)).settings;
+                    if (JSON.stringify(saved) !== JSON.stringify(settings) && String(args.confirm).toLowerCase() !== 'yes') return sendPanel(msg, 'Recall Location?', [
+                        { label: 'Unsaved Settings', value: `Recall ${_sanitize(target.name)} and replace the working settings? Saved places and the calendar will not be changed.` },
+                        { label: 'Choose', value: `${currentSettingsButton('Recall Location', `load --id "${target.id}" --confirm yes`)} ${back()}` }
+                    ]);
+                    const next = target.settingsSnapshot || captureCurrentSettings(target.id);
+                    const validated = validateCurrentSettings(next);
+                    if (!validated.ok) throw new Error(validated.message);
+                    if (!worldItem(normalizeTemporalContexts(), validated.settings.temporalContextId)) throw new Error('This location needs its saved local-time context restored before it can be recalled.');
+                    world.activeLocationId = target.id;
+                    modState.config.world = world;
+                    runtime.world.currentSettings = { locationId: target.id, settings: copy(validated.settings) };
+                    runtime.world.revision++;
+                    runtime.weather.forecast = [];
+                    return showCurrentSettings(msg, `Loaded ${target.name}. Generate weather for the current date when ready; existing weather was not replaced.`);
+                }
+                throw new Error('That Current Settings command was not recognized. Open Current Settings to choose an action.');
+            } catch (error) {
+                sendPanel(msg, 'Current Settings Needs Attention', [{ label: 'Problem', value: _sanitize(error.message) },
+                    { label: 'Next Step', value: `${GameAssist.createButton('Current Settings', '!aa current')} ${GameAssist.createButton('Almanac Audit', '!Almanac-Audit')} ${GameAssist.createButton('Use Saved Setup', '!aa current discard --confirm ?{Discard working changes and use the saved location settings?|No,no|Yes,yes}')}` }]);
+            }
+        }
+
         const PALETTE_LABELS = Object.freeze({ climate: 'Climates', biome: 'Biomes', geography: 'Geography', ecoregion: 'Ecoregion Profiles' });
 
         function paletteEntries(kind) {
@@ -25210,6 +25540,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const locationWorld = normalizeWorldConfig();
             const requestedLocation = args.location === undefined ? locationWorld.activeLocationId : String(args.location);
             if (!worldItem(locationWorld.locations, requestedLocation)) return fail('That location is no longer available. Open Locations and choose a saved place.');
+            if (action === 'use' && worldItem(locationWorld.locations, requestedLocation).settingsSnapshot) return sendPanel(msg, 'Saved Location Settings', [
+                { label: 'Next Step', value: 'This place uses a saved Current Settings snapshot. Recall it, choose a profile there, then save the updated location.' },
+                { label: 'Actions', value: GameAssist.createButton('Current Settings', '!aa current') }
+            ]);
             if (action === 'seasons') return showSeasonPalette(msg);
             if (action === 'season') {
                 const name = typeof args.name === 'string' ? boundedName(args.name) : '';
@@ -25608,7 +25942,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'World Today', value: `${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('Events & Omens', '!aa-events')}` },
                 { label: 'Share', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
                 ...(quickActions ? [{ label: 'Campaign Shortcuts', value: quickActions }] : []),
-                { label: 'Campaign Setup', value: `${GameAssist.createButton('World Palettes', '!aa-palette')} ${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('More Tools', '!aa-more')}` },
+                { label: 'Campaign Setup', value: `${GameAssist.createButton('Current Settings', '!aa current')} ${GameAssist.createButton('Recall Location', '!aa current locations')} ${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('More Tools', '!aa-more')}` },
                 { label: 'GameAssist', value: gameAssistHomeButton() }
             ]);
         }
@@ -25618,7 +25952,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel(msg, 'More Almanac Tools', [
                 { label: 'Calendar', value: `${GameAssist.createButton('Time Controls', '!aa-time menu')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')} ${GameAssist.createButton('Choose Calendar', '!cal')}` },
                 { label: 'Current World', value: `${GameAssist.createButton('Scene Details', '!aa-scene')} ${GameAssist.createButton('Locations', '!aa-location')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Events & Omens', '!aa-events')}` },
-                { label: 'Worldbuilding', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('WorldPacks', '!aa-worldpack')}` },
+                { label: 'Worldbuilding', value: `${GameAssist.createButton('World Palettes', '!aa-palette')} ${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('WorldPacks', '!aa-worldpack')}` },
                 { label: 'Systems', value: `${GameAssist.createButton('Turn Systems On or Off', '!Almanac-Systems')} ${GameAssist.createButton('Status', '!Almanac-Status')} ${GameAssist.createButton('Audit', '!Almanac-Audit')}` },
                 { label: 'Reference', value: `${GameAssist.createButton('Quick Guide', '!Almanac-Guide')} ${GameAssist.createButton('Full Manual', '!Almanac-Manual')}` },
                 { label: 'Return', value: `${GameAssist.createButton('Almanac', '!aa-gm')} ${gameAssistHomeButton()}` }
@@ -26798,6 +27132,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     windDeltaMph: Math.round(clampNumber(value.windDeltaMph, -100, 100, 0)),
                     visibilityOverride: boundedWorldText(value.visibilityOverride, ''),
                     groundOverride: boundedWorldText(value.groundOverride, ''),
+                    // Keep optional snapshots verbatim; consumers validate before use.
+                    // Unknown/malformed saved data is never silently deleted here.
+                    ...(value.settingsSnapshot !== undefined ? { settingsSnapshot: copy(value.settingsSnapshot) } : {}),
                     packId: boundedWorldId(value.packId, null),
                     sourceId: boundedWorldId(value.sourceId, null)
                 };
@@ -26889,6 +27226,20 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const biome = worldItem(world.biomes, location.inheritEcoregion ? (ecoregionProfile?.biomeId || ecoregion.biomeId) : location.biomeId) || world.biomes[0];
             const region = climateRegion(location.regionId) || climateRegion(ecoregion.regionId) || climateRegion();
             const context = temporalContext(location.temporalContextId);
+            const working = ensureAlmanacRuntime().world.currentSettings;
+            const candidate = !requestedLocation && working?.locationId === location.id ? working.settings : location.settingsSnapshot;
+            const validated = candidate === undefined ? null : validateCurrentSettings(candidate);
+            if (validated?.ok) {
+                const settings = validated.settings, profile = settings.profile;
+                // Matrix values already contain the local influences; legacy weather
+                // must not add elevation, coast, or location adjustments a second time.
+                return Object.freeze(copy({ location: { ...location, temperatureDeltaF: 0, windDeltaMph: 0,
+                    visibilityOverride: settings.visibilityOverride, groundOverride: settings.groundOverride,
+                    environmentPresetId: settings.environmentPresetId, temporalContextId: settings.temporalContextId },
+                    ecoregion, ecoregionProfile, region, temporalContext: temporalContext(settings.temporalContextId), currentSettings: settings,
+                    geography: { ...geography, id: `settings-${profile.id}`, name: profile.name, terrain: profile.terrain, elevationFt: profile.elevationFt, coastal: profile.coastal, hydrology: profile.water },
+                    biome: { ...biome, id: `settings-${profile.id}`, name: profile.name, ground: profile.ground, water: profile.water, vegetation: profile.vegetation, tags: copy(profile.tags) } }));
+            }
             return Object.freeze(copy({ location, ecoregion, ecoregionProfile, geography, biome, region, temporalContext: context }));
         }
 
@@ -27774,6 +28125,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function weatherClimateContext(place = currentWorldContext(), worldMinute = ensureAlmanacRuntime().time.worldMinute) {
             const season = timeAvailable() ? (contextualMoment(place, worldMinute).moment?.season || currentSeason()) : currentSeason();
+            if (place.currentSettings && submoduleEnabled('climate')) return {
+                ...currentSettingsClimate(place.currentSettings, season), regionId: place.region.id, regionName: place.region.name
+            };
             const profileId = place.location?.climateProfileId || (place.location?.useRegionClimate ? null : place.ecoregionProfile?.climateProfileId) || null;
             if (submoduleEnabled('climate')) return resolvedClimate(place.region?.id, season, profileId);
             const rule = normalizeClimateConfig().seasonRules.find(item => item.name.toLowerCase() === String(season).toLowerCase());
@@ -27797,6 +28151,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const baseMinute = ensureAlmanacRuntime().time.worldMinute;
             const worldMinute = baseMinute + forecastOffset * calendarMinutesPerDay(profileFor());
             const climate = weatherClimateContext(place, worldMinute);
+            const matrix = climate.model === 'matrix';
             const biomeTags = new Set((place.biome?.tags || []).map(tag => String(tag).toLowerCase()));
             const contextKey = worldPackFingerprint(JSON.stringify({ climate, location: place.location, geography: place.geography, biome: place.biome }));
             // Carry weather forward only inside the same physical/seasonal context.
@@ -27805,21 +28160,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const continuous = previous && previous.source !== 'Manual' && previous.contextKey === contextKey
                 && elapsed >= 0 && elapsed <= policy.continuityHours * calendarMinutesPerHour(profileFor());
             const prior = continuous ? previous : null;
-            const elevationAdjustment = Math.round(-policy.elevationCoolingFPer1000Ft * ((Number(place.geography?.elevationFt || 0) - Number(climate.referenceElevationFt ?? policy.referenceElevationFt)) / 1000));
-            const localTemperatureAdjustment = Number(place.location?.temperatureDeltaF || 0);
+            const elevationAdjustment = matrix ? 0 : Math.round(-policy.elevationCoolingFPer1000Ft * ((Number(place.geography?.elevationFt || 0) - Number(climate.referenceElevationFt ?? policy.referenceElevationFt)) / 1000));
+            const localTemperatureAdjustment = matrix ? 0 : Number(place.location?.temperatureDeltaF || 0);
             const variation = 2 * (place.geography?.coastal ? policy.coastalSwingF : policy.temperatureSwingF) + 1;
             const randomTemperature = climate.temperatureF + elevationAdjustment + localTemperatureAdjustment + randomInteger(variation) - Math.ceil(variation / 2);
             const temperatureF = prior
                 ? Math.round((Number(prior.temperatureF) * 2 + randomTemperature) / 3)
                 : Math.round(randomTemperature);
             const precipitationChance = Math.max(0, Math.min(100, climate.precipitationChance
-                + (place.geography?.coastal ? policy.coastalPrecipitationBonus : 0)
-                + (biomeTags.has('wet') || biomeTags.has('rainforest') ? policy.wetBiomePrecipitationBonus : 0)
-                - (biomeTags.has('arid') || biomeTags.has('desert') ? policy.dryBiomePrecipitationPenalty : 0)));
+                + (!matrix && place.geography?.coastal ? policy.coastalPrecipitationBonus : 0)
+                + (!matrix && (biomeTags.has('wet') || biomeTags.has('rainforest')) ? policy.wetBiomePrecipitationBonus : 0)
+                - (!matrix && (biomeTags.has('arid') || biomeTags.has('desert')) ? policy.dryBiomePrecipitationPenalty : 0)));
             const precipitationRoll = randomInteger(100);
             const cloudRoll = randomInteger(100);
             const windVariation = randomInteger(policy.windSwingMph * 2 + 1) - policy.windSwingMph - 1;
-            const localWindAdjustment = Number(place.location?.windDeltaMph || 0) + (place.geography?.coastal ? 2 : 0);
+            const localWindAdjustment = matrix ? 0 : Number(place.location?.windDeltaMph || 0) + (place.geography?.coastal ? 2 : 0);
             const targetWind = climate.windMph + localWindAdjustment;
             let windMph = Math.max(0, Math.round((prior ? (Number(prior.windMph) + targetWind) / 2 : targetWind) + windVariation));
             const precipitation = precipitationRoll <= precipitationChance;
@@ -28244,7 +28599,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (Number.isFinite(temperatureF)) provenance.temperature = ['Weather'];
             else if (Number.isFinite(Number(climate?.temperatureF))) {
                 const policy = POLICY.almanac.weatherModel;
-                temperatureF = Number(climate.temperatureF) - policy.elevationCoolingFPer1000Ft * ((Number(context.geography?.elevationFt || 0) - Number(climate.referenceElevationFt ?? policy.referenceElevationFt)) / 1000);
+                temperatureF = Number(climate.temperatureF) - (climate.model === 'matrix' ? 0 : policy.elevationCoolingFPer1000Ft * ((Number(context.geography?.elevationFt || 0) - Number(climate.referenceElevationFt ?? policy.referenceElevationFt)) / 1000));
                 provenance.temperature = ['Climate', 'Season', 'Geography'];
             } else {
                 temperatureF = 60;
@@ -28435,6 +28790,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             modState.config.world = world;
             const climate = normalizeClimateConfig();
             if (climate.regions.some(region => region.id === next.regionId)) climate.activeRegionId = next.regionId;
+            ensureAlmanacRuntime().world.currentSettings = null;
             ensureAlmanacRuntime().world.revision++;
             regenerateWeatherForLocation(msg);
             const currentScene = resolveScene();
@@ -28607,6 +28963,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (!location) return showLocationEditor(msg, args.id || args.name);
                 const hasChanges = ['name', 'region', 'ecoregion', 'geography', 'biome', 'environment', 'temporal'].some(key => args[key] !== undefined);
                 if (!hasChanges) return showLocationEditor(msg, location.id);
+                if (location.settingsSnapshot && ['region', 'ecoregion', 'geography', 'biome', 'environment', 'temporal'].some(key => args[key] !== undefined)) return sendPanel(msg, 'Saved Location Settings', [
+                    { label: 'Next Step', value: 'Recall this location in Current Settings to change its setup. Its saved snapshot was not modified.' },
+                    { label: 'Actions', value: GameAssist.createButton('Recall Location', '!aa current locations') }
+                ]);
                 const name = args.name === undefined ? location.name : typeof args.name === 'string' ? boundedName(args.name) : '';
                 const region = climateRegion(args.region === undefined ? location.regionId : args.region);
                 const ecoregion = worldItem(world.ecoregions, args.ecoregion === undefined ? location.ecoregionId : args.ecoregion);
@@ -29189,6 +29549,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 let after;
                 try {
                     location.temporalContextId = context.id;
+                    if (location.settingsSnapshot) location.settingsSnapshot.temporalContextId = context.id;
                     after = resolveScene(location.id);
                 } finally {
                     // Preview must restore the complete definition graph because resolution normalizes and replaces that graph.
@@ -29241,6 +29602,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (!location || !context) return sendPanel(msg, 'Temporal Contexts Need Attention', [{ label: 'Problem', value: 'Choose one existing location and temporal context.' }]);
                 if (String(args.confirm || '').toLowerCase() !== 'yes') return handleTemporalContexts(msg, `temporal preview --location ${location.id} --context ${context.id}`);
                 location.temporalContextId = context.id;
+                // Explicit local-time assignments apply to the snapshot and its
+                // working copy too; otherwise the new settings would mask the edit.
+                if (location.settingsSnapshot) location.settingsSnapshot.temporalContextId = context.id;
+                const working = ensureAlmanacRuntime().world.currentSettings;
+                if (working?.locationId === location.id && working.settings) working.settings.temporalContextId = context.id;
                 ensureAlmanacRuntime().world.revision++;
                 return showTemporalContexts(msg);
             }
@@ -29383,7 +29749,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
         }
 
-        function paletteReferenceProblems(world, climate) {
+        function paletteReferenceProblems(world, climate, contexts = normalizeTemporalContexts()) {
             const problems = [];
             if (['geographies', 'biomes', 'ecoregions', 'locations'].some(key => !Array.isArray(world[key])) || (climate.customProfiles !== undefined && !Array.isArray(climate.customProfiles))) return ['WorldPack place definitions and custom climate profiles must be lists.'];
             if ([...world.geographies, ...world.biomes, ...world.ecoregions, ...world.locations, ...(climate.customProfiles || [])].some(item => !item || typeof item !== 'object' || Array.isArray(item))) return ['WorldPack definitions must be named objects, not empty or scalar entries.'];
@@ -29404,7 +29770,27 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             });
             (world.locations || []).forEach(item => {
                 if (item.climateProfileId && !profiles[item.climateProfileId]) problems.push(`Location ${item.name} refers to a missing climate profile.`);
+                if (item.settingsSnapshot !== undefined) {
+                    const snapshot = validateCurrentSettings(item.settingsSnapshot);
+                    if (!snapshot.ok) problems.push(`Location ${item.name}: ${snapshot.message}`);
+                    else if (!worldItem(contexts, snapshot.settings.temporalContextId)) problems.push(`Location ${item.name} refers to a missing saved local-time context.`);
+                }
             });
+            if (world.currentSettingProfiles !== undefined) {
+                const list = world.currentSettingProfiles;
+                if (!Array.isArray(list) || list.length > POLICY.almanac.maximumEcoregionProfiles) problems.push('Current Settings custom profiles must be a bounded list.');
+                else {
+                    const used = new Set();
+                    list.forEach(profile => {
+                        const validation = validateCurrentSettings({ schemaVersion: 1,
+                            baseline: { ...copy(CLIMATE_PROFILES.temperate), id: 'temperate', seasonalScale: 1 }, profile,
+                            adjustments: Object.fromEntries(Object.keys(CURRENT_SETTING_FIELDS).map(key => [key, 0])),
+                            environmentPresetId: 'clear', temporalContextId: 'material', visibilityOverride: '', groundOverride: '' });
+                        if (!validation.ok || used.has(profile?.id)) problems.push('Each custom setting profile needs a unique id and valid influence values.');
+                        used.add(profile?.id);
+                    });
+                }
+            }
             if (climate.seasonRules !== undefined && (!Array.isArray(climate.seasonRules) || climate.seasonRules.length > POLICY.almanac.maximumSeasonRules)) problems.push('Season rules must be a bounded list.');
             else {
                 const seasonNames = new Set();
@@ -29440,7 +29826,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             // Validate new optional references before normalization can repair a bad import.
             // Older schema-1 packs without palettes remain valid and retain their defaults.
             if (!data.world || !data.climate || typeof data.world !== 'object' || typeof data.climate !== 'object') return { ok: false, message: 'WorldPack world and climate must be objects.' };
-            const paletteProblems = paletteReferenceProblems(data.world, data.climate);
+            const paletteProblems = paletteReferenceProblems(data.world, data.climate, data.temporalContexts);
             if (paletteProblems.length) return { ok: false, message: paletteProblems.join(' ') };
             const normalized = previewNormalizedWorldPack(data);
             if (!normalized.ok) return normalized;
@@ -29476,7 +29862,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 item.sourceId = boundedWorldId(item.sourceId || item.id, null);
                 item.packId = packId;
             });
-            ['geographies', 'biomes', 'ecoregionProfiles', 'ecoregions', 'locations', 'phenomena', 'quickActions'].forEach(key => tagItems(tagged.world?.[key]));
+            ['geographies', 'biomes', 'ecoregionProfiles', 'currentSettingProfiles', 'ecoregions', 'locations', 'phenomena', 'quickActions'].forEach(key => tagItems(tagged.world?.[key]));
             tagItems((tagged.temporalContexts || []).filter(context => String(context?.id || '').toLowerCase() !== 'material'));
             return tagged;
         }
@@ -29523,6 +29909,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 modState.config.worldPacks = modState.config.worldPacks.slice(-POLICY.almanac.maximumWorldPacks);
                 ensureAlmanacRuntime().world.revision++;
                 publishChange('almanac.worldpack.imported', null, record, { mode: grant.mode }, msg);
+                // A confirmed world replacement must not be shadowed by the old
+                // working settings. Retain one recovery copy without importing it.
+                const runtime = ensureAlmanacRuntime();
+                if (runtime.world.currentSettings) runtime.world.previousCurrentSettings = copy(runtime.world.currentSettings);
+                runtime.world.currentSettings = null;
                 return { ok: true, record };
             } catch (error) {
                 Object.assign(modState.config, previous);
@@ -29577,6 +29968,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         { label: 'Mode', value: _sanitize(mode) },
                         { label: 'Definitions', value: `${validation.data.world.locations.length} locations | ${validation.data.world.ecoregions.length} ecoregions | ${validation.data.world.biomes.length} biomes | ${validation.data.world.geographies.length} geographies | ${validation.data.world.phenomena.length} phenomena | ${validation.data.astronomy.moons.length} moons` },
                         { label: 'Calendar', value: 'The imported Wayfarer definition becomes a saved draft. It does not change the active calendar until the separate Wayfarer activation review.' },
+                        ...(runtime.world.currentSettings ? [{ label: 'Current Settings', value: 'Importing replaces the working setup with the imported location settings. Save any working changes as a location and export them first if you want to keep them.' }] : []),
                         { label: 'Safety', value: 'The handout will be re-read. Any edit after this preview makes this confirmation stale.' },
                         { label: 'Actions', value: `${GameAssist.createButton('Import WorldPack', `!aa-worldpack confirm --grant ${grantId}`)} ${GameAssist.createButton('Cancel', '!aa-worldpack')}` }
                     ]);
@@ -30126,9 +30518,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<p>The Wayfarer Calendar Manager offers direct controls for its name, clock, starting date, weekdays, periods, festival days, leap rule, holidays, and seasonal ranges. Replacing the complete period list deliberately clears index-based festival days, leap placement, holidays, and seasonal ranges so they are not silently moved to unrelated dates; the manager identifies the cleared areas for re-entry. When Wayfarer is already active, activation preserves elapsed fictional time and shows the reinterpreted date. If the revised calendar cannot represent that elapsed time, activation is refused and offers a separate, clearly labeled reset-to-draft-start choice. The latest activation keeps one rollback point containing the previous calendar and fictional time. Discard Draft abandons only unactivated work; Restore Previous Activation rolls back the most recent activation.</p>',
                 '<p>A fresh Wayfarer draft starts with the campaign Wayfarer Calendar, including its 20-hour clock, 75-minute hours, named weekdays, twelve months, five festival periods, holidays, seasonal ranges, and documented daily rhythm. Use Start From A Copy to replace the draft with Standard, built-in Solamnic, Harptos, or the saved Wayfarer definition. The command <code>!aa-wayfarer reset-default --confirm yes</code> restores only the saved draft to this campaign default; it never changes the active calendar or fictional time. Wayfarer supports one repeating leap interval, so a Standard copy uses a four-year leap day and does not reproduce Gregorian century exceptions.</p>',
                 '<h2>Climate and Astronomy</h2>',
+                '<h3>Current Settings and Saved Places</h3>',
+                '<p>Open <strong>Current Settings</strong> from <code>!aa-gm</code>, or use <code>!aa current</code>. Choose a regional baseline, choose one ecoregion influence profile, then adjust its values or terrain descriptions if needed. The matrix shows temperature, humidity, precipitation, and wind adjustments. Choosing a different profile replaces the previous local influences; it does not stack them.</p>',
+                '<p><strong>Generate Weather</strong> uses these settings with the current season. <strong>Save Current Settings</strong> creates an independent named place, or updates the active place after confirmation. <strong>Recall Location</strong> restores its setup without advancing time or restoring an old weather roll. Subsequent edits remain a working copy until saved. <strong>Adjust Settings</strong> also provides reusable custom profiles and confirmed discard. Weather locks and explicit environment overrides remain in force.</p>',
                 '<p>ClimateAlmanac manages bounded regions, parent inheritance, editable built-in starting profiles, custom profiles, overrides, and a manual season fallback. AstronomyAlmanac calculates reproducible configurable moon phases, future phase/daylight forecasts, and deterministic season boundaries from TimeAlmanac when available or explicit manual context when it is not. Its bounded weighted rare-event catalog remains separate from deterministic results.</p>',
                 '<h3>Choose the Natural World</h3>',
-                '<p>Open <code>!aa-palette</code> from Almanac Home. Choose an <strong>Ecoregion Profile</strong> for a matching climate, biome, and geography together, or choose those three independently. The library contains 17 climate types, 16 biomes, 12 geographies, and 12 combined ecoregion profiles. Preview a choice, then use it for the named location. Generate weather to see the new context in action; a profile choice alone does not replace existing weather.</p>',
+                '<p>The linked-world controls remain under <strong>More Tools > World Palettes</strong>, or <code>!aa-palette</code>. Choose an <strong>Ecoregion Profile</strong> for a matching climate, biome, and geography together, or choose those three independently. The library contains 17 climate types, 16 biomes, 12 geographies, and 12 combined ecoregion profiles. Preview a choice, then use it for the named location. Places saved through Current Settings are edited there instead, because their snapshots keep independent values. A profile choice alone does not replace existing weather.</p>',
                 '<p>Open <code>!aa-location</code> to <strong>Name This Place</strong>, <strong>Create Location</strong>, or choose a saved place. Creation asks only for a name and starts from the current physical setup without moving the party. Its <strong>Choose World Profiles</strong> button customizes that destination before visiting. <strong>Move Party Here</strong> opens a preview; only <strong>Move Party</strong> changes the active place. Renaming does not reroll weather.</p>',
                 '<p><strong>Context and Notes</strong> contains region and area choices, local adjustments, private notes, page associations, favorites, prepared destinations, and removal. <strong>Travel Lists</strong> separates prepared, favorite, and recent places from daily controls. For advanced handout editing, <strong>WorldPack Handout</strong> opens the existing JSON export, preview, and import workflow; it is not a separate location-note importer. Existing locations are preserved until the GM edits or explicitly removes them.</p>',
                 '<p><strong>Create Editable Copy</strong> saves a campaign version without changing the starter or another place. <strong>Edit Saved Profile</strong> customizes it. Places following the same saved profile share its future edits; choosing a different profile for one location leaves other places assigned as before. <strong>Regions</strong> are names you give actual places, with optional parent regions and local climate adjustments, not names for climate types.</p>',
@@ -30308,6 +30703,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (lower === 'scene' || lower === 'scene menu' || lower === 'scene status') return showScene(msg, false);
             if (lower === 'scene details' || lower === 'scene audit' || lower === 'scene technical') return showScene(msg, true);
             if (lower === 'events' || lower === 'omens' || lower === 'events menu') return showEventMenu(msg);
+            if (lower === 'current' || lower.startsWith('current ') || lower.startsWith('current-')) return handleCurrentSettings(msg, input);
             if (lower === 'palette' || lower === 'palettes' || lower.startsWith('palette ') || lower.startsWith('palettes ')) return handlePalette(msg, input);
             if (lower === 'location' || lower.startsWith('location ')) return handleLocation(msg, input);
             if (lower === 'travel' || lower.startsWith('travel ')) return handleTravel(msg, input);
@@ -30434,6 +30830,23 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'announcement', 'environment', 'rest', 'world', 'temporalContexts', 'worldPacks', 'rulesAdvisorEnabled', 'rulesAdvisorProfile']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced AlmanacAssist to 2.0.4 with Current Settings, a
+    // twelve-row editable ecoregion influence matrix, regional baselines, separate
+    // GM adjustments, reusable custom profiles, and confirmed named-location updates.
+    // Changed (v2.0.0): Optional schema-1 settings snapshots survive normalization,
+    // restart, and validated WorldPack transfer. Recall preserves chronology,
+    // current weather, and manual environment overrides. Weather and scene consumers
+    // use the same matrix context, applying seasonal and local influences once.
+    // Decision log:
+    //   CHOICE: Save self-contained values per location - ALT: require shared area/profile graphs; REJECTED: daily setup and returning visits must not require worldbuilding dependencies.
+    //   CHOICE: Reuse the existing procedural generator - ALT: create Roll20 roll-table artifacts; REJECTED: weighted generation already exists and extra table installation would add a second setup burden.
+    //   CHOICE: Retain legacy location paths and comments - ALT: remove the older model in this change; REJECTED: cleanup follows live acceptance, while existing saved worlds must still load.
+    // Verification: .internal/almanac-current-settings-harness.js follows emitted
+    // buttons and checks calculations, isolation, imports, cancellation, stale
+    // controls, invalid values, player privacy, and fresh sandbox evaluation.
+    // Risk: local mocks cannot prove Roll20 query rendering; the Current Settings
+    // smoke checks exercise that boundary. No new public sink or character write.
+    // Prior notes:
     // Changed (v2.0.0): Advanced AlmanacAssist to 2.0.3; palette buttons preserve opaque numeric fingerprints and explicit destination identities from list to preview to apply. Saved places can be prepared without moving the party or generating weather there.
     // Changed (v2.0.0): Location controls put naming, creation, and a bounded saved-place list first; travel lists and detailed context stay separate. Missing names and invalid explicit references are refused; rename-only edits preserve weather and other context; empty prepared lists remain empty after normalization and restart.
     // Decision log:

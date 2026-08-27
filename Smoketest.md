@@ -768,13 +768,13 @@ For the stale-confirmation check:
 
 ## Focused v2.0.0 Complete AlmanacAssist Acceptance
 
-**What this proves:** AlmanacAssist 2.0.3 provides a usable live-session dashboard, direct weather and event palettes, reviewed pace-and-mileage travel with private encounter checks, a separate worldbuilding workspace, one coherent current-scene authority, and independently usable Time, Climate, Astronomy, Weather, Environment, and Rest systems. It also verifies prepared destinations, local temporal contexts, phenomena, presets, advanced Wayfarer editing, and WorldPack transfer without turning optional context into hidden prerequisites.
+**What this proves:** AlmanacAssist 2.0.4 provides a usable live-session dashboard, direct weather and event palettes, reviewed pace-and-mileage travel with private encounter checks, a separate worldbuilding workspace, one coherent current-scene authority, and independently usable Time, Climate, Astronomy, Weather, Environment, and Rest systems. It also verifies prepared destinations, local temporal contexts, phenomena, presets, advanced Wayfarer editing, and WorldPack transfer without turning optional context into hidden prerequisites.
 
 **Why test it:** These checks verify the world controls a GM uses during play, the weather those choices produce, preserved campaign settings, and deliberate 2014-sheet rest writes.
 
 **Skip when:** Do not skip this section for v2.0.0 release acceptance. After release, campaigns that keep AlmanacAssist disabled may skip it. Within ordinary troubleshooting, test only the enabled internal system and any optional context provider involved.
 
-**Current non-live evidence:** The focused local harness passes 195 checks, including transaction rollback, stale-preview rejection, one-use mileage travel, bounded encounter checks, private roll evidence, and the d4 midpoint case. An additional 48 palette/location checks cover emitted button paths, numeric identifiers, destination setup, permissions, and persistence. The checks below remain the required Roll20 live acceptance gate and are not recorded as passed merely because the local harness succeeded.
+**Current non-live evidence:** The focused local harness passes 195 checks, including transaction rollback, stale-preview rejection, one-use mileage travel, bounded encounter checks, private roll evidence, and the d4 midpoint case. An additional 48 palette/location checks cover emitted button paths, numeric identifiers, destination setup, permissions, and persistence; 61 Current Settings checks cover the matrix, saved snapshots, calculations, query answers, stale controls, WorldPack transfer, and restarts. The checks below remain the required Roll20 live acceptance gate and are not recorded as passed merely because the local harness succeeded.
 
 ### Preparation and Master Controls
 
@@ -793,6 +793,26 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 
 **Pass when:** AlmanacAssist begins disabled on a clean v2.0.0 state; enabling it starts all six saved-on systems; `!aa-gm` opens one compact private **Current World** screen with current conditions plus direct **Generate Weather**, time, date, travel, rest, weather, moons, environment, events, preview, announce, location, calendar, and setup actions; **More Tools** and **Manage World** open separate grouped workspaces; routine controls do not dump raw definition graphs, audit evidence, moon-cycle configuration, or complete calendar structure; Systems provides independent toggles; Status identifies configured versus effective availability; Audit explicitly changes nothing; Manual creates or updates one stable handout; and the bad command offers a useful route back.
 
+### Current Settings And Location Recall
+
+**What:** Build a weather setup directly, save it as a place, and recall it without constructing a hierarchy.
+
+**Why:** This checks the actual buttons and Roll20 prompts, along with the calculations and saved data behind them.
+
+**Skip when:** AlmanacAssist is disabled and you are only checking unrelated modules. Do not skip for acceptance of this change. Enable Climate and Weather; use disposable place names and record the current date and weather first.
+
+1. Run `!aa-gm`, then click **Current Settings**. Confirm **Choose Baseline**, **Choose Ecoregion**, **Adjust Settings**, **Generate Weather**, **Save Current Settings**, and **Recall Location** are visible. `!AA-CURRENT` and `!aa current` should open the same screen.
+2. Choose **Temperate** as the baseline and **Hot Desert Basin** as the local profile. Check the displayed weather starting point. Choose the same profile again: its adjustments must not accumulate. Choose **Wet Coastal Woodland** instead: the matrix values should replace the desert values, not stack on top.
+3. Open **Adjust Settings > Edit GM Adjustments**. Change temperature to `7` through its button and popup. Change ground to `Cobblestone road` through **Change ground**. Confirm both inputs are retained; cancelling an input must not replace it with `true` or an empty value.
+4. Choose **Save Current Settings > Save As New Location**, enter `Matrix Test Haven`, and confirm it becomes the active place. Date and current weather must remain unchanged. No additional region or area prompts should appear.
+5. Change the profile and save another place as `Matrix Test Ridge`. Recall `Matrix Test Haven`. Confirm its baseline, profile, `7` temperature adjustment, and ground description return. Existing weather stays until you choose **Generate Weather**; a saved place must not restore its old calendar date.
+6. Edit an adjustment at Haven. Open **Save Current Settings > Update This Location** and decline confirmation, then recall Ridge and return to Haven. The saved Haven value must be unchanged. Repeat the edit and confirm the update: only Haven should change. An old update button must refuse to overwrite newer settings.
+7. Choose **Generate Weather**, then view `!aa-scene details`. Check the location and ground agree with the chosen setup. Weather varies around the displayed starting point; rain is a probability, not a guaranteed result. Lock weather through `!weather`, change settings, and try Generate again: the locked result must remain intact. Unlock before continuing.
+8. Save a custom local profile through **Adjust Settings > Save Custom Profile**. Find it under **Choose Ecoregion**, using Next if needed. Selecting and editing it must not rewrite previously saved locations or the reusable profile itself.
+9. Make an unsaved adjustment, restart the sandbox, and reopen Current Settings. Confirm the working adjustment and both named places remain. **Discard Working Changes** should restore the saved setup after confirmation. Repeat a settings command as a non-GM: it must not change settings or reveal private places.
+
+**Pass when:** Every control opens or changes the intended setting, location snapshots stay independent, and weather locks, calendar time, permissions, and restart persistence hold. WorldPack transfer of these snapshots uses the separate WorldPack checks below.
+
 ### World Profiles And Seasonal Weather
 
 **What:** Select and customize the world profiles that weather uses.
@@ -803,7 +823,7 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 
 Use a disposable location. Record its original setup before changing profiles. Start from the buttons on `!aa-gm`, not only typed commands, so the complete click path is tested.
 
-1. Run `!aa-gm` and click **World Palettes**. Click each of **Climates**, **Biomes**, **Geography**, and **Ecoregion Profiles**, then Previous/Next and a named profile. Each must open the correct screen, with at most eight choices per page. **Regions** and **Seasons** must also open their controls.
+1. Run `!aa-gm`, click **More Tools**, then **World Palettes**. Use a disposable location created through `!aa-location`, not a Current Settings snapshot, for these linked-world checks. Click each of **Climates**, **Biomes**, **Geography**, and **Ecoregion Profiles**, then Previous/Next and a named profile. Each must open the correct screen, with at most eight choices per page. **Regions** and **Seasons** must also open their controls.
 2. Open **Ecoregion Profiles**, choose **Hot Desert Basin**, and click **Use for This Location**. Confirm the current place is named in the result and existing weather has not changed yet.
 3. Click **Generate Weather**. Open `!aa-scene details` and `!weather`. Confirm the location uses a desert climate, sandy/stony ground, and dry weather with the unmodified preset. A cold season can lower desert temperature; do not expect one fixed number.
 4. Choose **Tropical River Forest** and generate again. Confirm the profile, biome, and geography all change. Rainfall is probable, not guaranteed. If rain is generated, visibility must not be Clear and the sky must not be cloudless.
