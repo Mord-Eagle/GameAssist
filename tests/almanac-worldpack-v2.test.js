@@ -423,6 +423,31 @@ function assertWorldPackSessionClockAndWeatherBoundary() {
     assert.match(timeControls[0].message, /World Context=<strong>Lumenfen Atlas<\/strong> — Full WorldPack \| Current Area: <strong>Reedmarket<\/strong>/, 'Time controls must retain the active setting and current area instead of dropping spatial context');
     assert.match(timeControls[0].message, /Campaign Clock=.*Local Clock=Lumenfen Atlas Local Measure: .*Quick advances and dawn\/dusk anchors use the Campaign Clock/, 'Time controls must distinguish a local display from the one authoritative clock before offering time actions');
     assert.match(timeControls[0].message, /\[Until Campaign Dawn\].*\[Until Campaign Dusk\]/, 'time-anchor actions must name their Campaign Clock authority when a local WorldPack projection differs');
+    assert.match(timeControls[0].message, /\[Until Campaign Dawn\]\(!aa-time advance --minutes 1020\)/, 'campaign dawn must calculate against the exact active WorldPack Calendar definition rather than the similarly named saved fallback profile');
+    const calendarMenu = harness.dispatchCommand('!cal');
+    assert.match(calendarMenu[0].message, /Campaign Clock Calendar=Lumenfen Atlas Reckoning — active WorldPack Calendar/, 'the calendar menu must identify the WorldPack Calendar that actually presents the Campaign Clock');
+    assert.match(calendarMenu[0].message, /Saved Fallback Calendar=<strong>Standard<\/strong> — used when the Current Area has no active WorldPack Calendar/, 'the calendar menu must distinguish the stored fallback from the active WorldPack Calendar');
+    assert.doesNotMatch(calendarMenu[0].message, /Current Calendar=Standard/, 'the calendar menu must not mislabel the inactive fallback as the current Campaign Clock');
+    const wayfarerMenu = harness.dispatchCommand('!aa-wayfarer');
+    assert.match(wayfarerMenu[0].message, /World Context=<strong>Lumenfen Atlas<\/strong> — Full WorldPack \| Current Area: <strong>Reedmarket<\/strong>/, 'the Wayfarer root must retain active setting and area context');
+    assert.match(wayfarerMenu[0].message, /Campaign Clock Calendar=Lumenfen Atlas Reckoning — active WorldPack Calendar/, 'the Wayfarer root must not call an inactive fallback its active calendar');
+    assert.match(wayfarerMenu[0].message, /Wayfarer Fallback=.*Set Lantern Way Calendar as Fallback/, 'the Wayfarer root must describe its available calendar change as a fallback while an installed WorldPack Calendar is active');
+    const astronomyMenu = harness.dispatchCommand('!aa-astro');
+    assert.match(astronomyMenu[0].message, /Campaign Clock=.*Local Clock=Lumenfen Atlas Local Measure: .*Daylight below is expressed in the Campaign Clock/, 'Astronomy must distinguish its campaign-clock daylight facts from the active local-clock display');
+    assert.match(astronomyMenu[0].message, /Campaign Season and Daylight=.*sunrise near 7th Hour/, 'Astronomy daylight labels must use the active WorldPack Calendar clock convention');
+
+    const exactWorldPackDate = harness.dispatchCommand('!aa-time set --year 1 --period "First Flow" --day 2 --hour 9 --minute 0 --one-based-hour yes --confirm yes');
+    assert.match(exactWorldPackDate[0].message, /\{\{name=World Time Updated\}\}/, 'the Time-panel WorldPack date prompt must be accepted by the matching WorldPack Calendar parser');
+    assert.match(exactWorldPackDate[0].message, /Current=Chart Day, 2 First Flow, Year 1 at 9th Hour, 0 minutes/, 'the one-based WorldPack Hour prompt must preserve its displayed hour instead of adding one');
+    assert.equal(almanac.runtime.time.worldMinute, 1920, 'setting a visible WorldPack date must resolve against its active 24-hour Calendar definition');
+    const fallbackChange = harness.dispatchCommand('!aa-time profile wayfarer --confirm yes');
+    assert.match(fallbackChange[0].message, /\{\{name=Campaign Fallback Calendar Updated\}\}/, 'changing a stored calendar while a WorldPack Calendar is active must report the limited fallback effect');
+    assert.match(fallbackChange[0].message, /Lumenfen Atlas Reckoning remains the active WorldPack Calendar display/, 'changing a fallback must not imply that it silently replaced the current WorldPack Campaign Clock');
+    assert.equal(almanac.config.profileId, 'wayfarer', 'the requested fallback calendar must still be saved for an unbound Current Area');
+    const worldPackHourAdvance = harness.dispatchCommand('!aa-time advance --hours 1');
+    assert.match(worldPackHourAdvance[0].message, /Current=Chart Day, 2 First Flow, Year 1 at 10th Hour, 0 minutes/, 'an hour advance must use the active WorldPack Calendar hour length rather than the saved Wayfarer fallback hour length');
+    assert.equal(almanac.runtime.time.worldMinute, 1980, 'one Campaign Clock hour in this WorldPack must advance exactly 60 canonical minutes');
+
     const playerCurrentTime = harness.dispatchCommand('!time', 'player-1');
     assert.match(playerCurrentTime[0].message, /Campaign Time=.*Local Time \(Lumenfen Atlas Local Measure\)=/, 'a player-facing current-time request must distinguish the shared Campaign Clock from the active area local clock');
     assert.match(playerCurrentTime[0].message, /World Context=<strong>Lumenfen Atlas<\/strong> — Full WorldPack \| Current Area: <strong>Reedmarket<\/strong>/, 'a player-facing current-time request must retain readable setting and area context');

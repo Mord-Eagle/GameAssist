@@ -883,7 +883,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
     function _parseArgs(content) {
         // CHOICE: A following --name begins a new flag; it is never consumed as the prior flag's value.
-        const args = {}, pattern = /--(\w+)(?:\s+(?!--)("[^"]*"|[^\s]+))?/g;
+        // Flags may use hyphens because generated Roll20 actions use explicit
+        // names such as --one-based-hour and --player-request. Keep the key
+        // literal so command handlers can distinguish similarly named options.
+        const args = Object.create(null), pattern = /--([A-Za-z][A-Za-z0-9_-]*)(?:\s+(?!--)("[^"]*"|[^\s]+))?/g;
         let m;
         while ((m = pattern.exec(content))) {
             let v = m[2] || true;
@@ -25932,9 +25935,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ].filter(Boolean).map(_sanitize).join('<br>');
         }
 
-        function sceneAnchorAdvanceCommand(moment, { standardHour, wayfarerHour }) {
+        function sceneAnchorAdvanceCommand(moment, { standardHour, wayfarerHour }, calendarProfile = worldChronologyProfile()) {
             if (!moment) return '';
-            const profile = profileFor(moment.profileId);
+            // The visible Campaign Clock can be an installed WorldPack Calendar
+            // definition that happens to carry the generic `wayfarer` profile ID.
+            // Retain its exact hours/minutes instead of re-looking up the saved
+            // campaign fallback by ID before calculating a dawn/dusk advance.
+            const profile = calendarProfile || profileFor(moment.profileId);
             const minutesPerHour = calendarMinutesPerHour(profile);
             const minutesPerDay = calendarMinutesPerDay(profile);
             const targetHour = profile.id === 'wayfarer' ? wayfarerHour : standardHour;
@@ -27628,19 +27635,23 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             // Worldbuilding commits must not normalize or touch provider runtime merely
             // to compare Climate context. Read a direct Time snapshot when available
             // so event baselines retain the live season without rewriting providers.
-            const passiveClimateContext = climateConfig
-                ? nonMutatingClimateSeasonContext(climateConfig)
+            const previousClimateContext = climateConfig && previous
+                ? nonMutatingClimateSeasonContext(climateConfig, previous)
+                : {};
+            const currentClimateContext = climateConfig
+                ? nonMutatingClimateSeasonContext(climateConfig, config)
                 : {};
             const previousClimate = climateConfig && previous
-                ? effectiveClimateContext({ config: climateConfig, worldConfig: previous, ...passiveClimateContext })
+                ? effectiveClimateContext({ config: climateConfig, worldConfig: previous, ...previousClimateContext })
                 : null;
             config.revision = Math.max(0, Math.floor(Number(previous?.revision) || 0)) + 1;
             modState.config.world = config;
             publishWorldChange(previous, config, details, msg);
             if (climateConfig) {
-                const currentClimate = effectiveClimateContext({ config: climateConfig, worldConfig: config, ...passiveClimateContext });
+                const currentClimate = effectiveClimateContext({ config: climateConfig, worldConfig: config, ...currentClimateContext });
                 const contextChanged = previousClimate
                     && (previousClimate.baseline?.regionId !== currentClimate.baseline?.regionId
+                        || previousClimate.baseline?.season !== currentClimate.baseline?.season
                         || previousClimate.scope !== currentClimate.scope
                         || previousClimate.sourceKind !== currentClimate.sourceKind
                         || previousClimate.sourceLabel !== currentClimate.sourceLabel);
@@ -27653,7 +27664,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         config: climateConfig,
                         worldConfig: config,
                         previous: previousClimate.baseline,
-                        ...passiveClimateContext
+                        ...currentClimateContext
                     });
                 }
             }
@@ -32984,7 +32995,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const time = almanacRuntime.time;
             const startMinute = time.worldMinute;
             const endMinute = startMinute + elapsed;
-            if (!resolveWorldMinute(profileFor(), endMinute)) return sendPanel(msg, 'Temporal Transition Needs Attention', [
+            if (!resolveWorldMinute(worldChronologyProfile(), endMinute)) return sendPanel(msg, 'Temporal Transition Needs Attention', [
                 { label: 'Elapsed Time', value: 'The reviewed arrival would fall outside the supported authoritative fictional calendar range.' },
                 { label: 'Changes', value: 'None.' },
                 { label: 'Back', value: GameAssist.createButton('Temporal Contexts', '!aa-temporal') }
@@ -33059,7 +33070,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ]);
             }
             const endMinute = grant.startMinute + grant.canonicalElapsedMinutes;
-            if (!resolveWorldMinute(profileFor(), endMinute)) {
+            if (!resolveWorldMinute(worldChronologyProfile(), endMinute)) {
                 delete currentRuntime.grants[id];
                 return sendPanel(msg, 'Temporal Transition Needs Attention', [
                     { label: 'Problem', value: 'The arrival no longer fits the supported authoritative fictional calendar range. The preview was discarded.' },
@@ -33257,24 +33268,47 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function showCalendarMenu(msg) {
-            const current = profileFor();
+            // The configured profile is the campaign fallback. The active Current
+            // Area can instead supply an installed WorldPack Calendar projection
+            // for the one authoritative Campaign Clock, so never label the
+            // fallback as "current" when the visible date comes from that pack.
+            const fallback = profileFor();
+            const projection = worldChronologyProjection();
+            const campaignProfile = projection.profile || fallback;
+            const usesWorldPackCalendar = Boolean(projection.calendar && !projection.warning && projection.source !== 'campaign calendar fallback');
             const moment = currentMoment();
             const isGm = playerIsGM(msg?.playerid);
+            const worldContext = currentWorldSessionContext();
             const profiles = CALENDAR_PROFILE_IDS;
             const buttons = profiles.map(id => {
                 const profile = profileFor(id);
-                if (id === current.id) return `<strong>Current: ${_sanitize(profile.name)}</strong>`;
+                if (id === fallback.id) return `<strong>${usesWorldPackCalendar ? 'Saved Fallback' : 'Current'}: ${_sanitize(profile.name)}</strong>`;
                 if (!isGm) return _sanitize(profile.name);
-                return GameAssist.createButton(`Use ${profile.name}`, `!aa-time profile ${id} --confirm ?{Please confirm the change of the calendar display to ${profile.name}? Elapsed calendar time is preserved.|No,no|Yes,yes}`);
+                const profileName = roll20QueryText(profile.name, 'selected calendar', POLICY.almanac.worldNameLength);
+                const confirmation = usesWorldPackCalendar
+                    ? `Save ${profileName} as the campaign fallback calendar? The active WorldPack Calendar remains the current Campaign Clock display until the Current Area changes.|No,no|Yes,yes`
+                    : `Please confirm the change of the calendar display to ${profileName}. Elapsed calendar time is preserved.|No,no|Yes,yes`;
+                return GameAssist.createButton(usesWorldPackCalendar ? `Set ${profile.name} as Fallback` : `Use ${profile.name}`, `!aa-time profile ${id} --confirm ?{${confirmation}}`);
             }).join(' ');
             const fields = [
-                { label: 'Current Calendar', value: `${_sanitize(current.name)}<br>${_sanitize(displayDate(moment))}` },
-                { label: 'Switch Calendar', value: buttons }
+                { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                {
+                    label: usesWorldPackCalendar ? 'Campaign Clock Calendar' : 'Current Calendar',
+                    value: `${_sanitize(campaignProfile.name)}${usesWorldPackCalendar ? ' — active WorldPack Calendar' : ''}<br>${moment ? _sanitize(displayDate(moment)) : 'Fictional date unavailable'}`
+                },
+                ...(usesWorldPackCalendar ? [{
+                    label: 'Saved Fallback Calendar',
+                    value: `<strong>${_sanitize(fallback.name)}</strong> — used when the Current Area has no active WorldPack Calendar.`
+                }] : []),
+                {
+                    label: usesWorldPackCalendar ? 'Set Fallback Calendar' : 'Switch Calendar',
+                    value: buttons
+                }
             ];
             if (isGm) {
                 fields.push({
                     label: 'Wayfarer',
-                    value: `${GameAssist.createButton('Manage Wayfarer Calendar', '!aa-wayfarer')} <span style="font-size:smaller;">The Wayfarer button above uses the last saved Wayfarer calendar immediately; draft edits remain separate until activated.</span>`
+                    value: `${GameAssist.createButton('Manage Wayfarer Calendar', '!aa-wayfarer')} <span style="font-size:smaller;">Wayfarer edits remain a saved fallback until activated. An active WorldPack Calendar continues to present the Campaign Clock for this Current Area.</span>`
                 });
             }
             fields.push({ label: 'Return', value: GameAssist.createButton(isGm ? 'Almanac' : 'Current Date', isGm ? '!aa-gm' : '!date') });
@@ -33599,20 +33633,41 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!requireGm(msg)) return;
             const draft = ensureWayfarerDraft();
             const status = wayfarerDraftStatus(draft);
-            const active = profileFor();
+            const fallback = profileFor();
+            const projection = worldChronologyProjection();
+            const campaignProfile = projection.profile || fallback;
+            const usesWorldPackCalendar = Boolean(projection.calendar && !projection.warning && projection.source !== 'campaign calendar fallback');
             const current = currentMoment();
+            const worldContext = currentWorldSessionContext();
             const nextStage = WAYFARER_STAGES.find(stage => draft.reviewed?.[stage] !== true) || 'review';
             const savedWayfarer = profileFor('wayfarer');
-            const useSaved = active.id === 'wayfarer'
-                ? `<strong>${_sanitize(active.name)} is active</strong>`
-                : GameAssist.createButton(`Use ${savedWayfarer.name}`, `!aa-time profile wayfarer --confirm ?{Please confirm the change of the calendar display to ${savedWayfarer.name}? Elapsed calendar time is preserved.|No,no|Yes,yes}`);
+            const savedWayfarerName = roll20QueryText(savedWayfarer.name, 'Lantern Way Calendar', POLICY.almanac.worldNameLength);
+            const useSaved = fallback.id === 'wayfarer'
+                ? `<strong>${_sanitize(fallback.name)} is saved as the campaign fallback</strong>`
+                : GameAssist.createButton(
+                    usesWorldPackCalendar ? `Set ${savedWayfarer.name} as Fallback` : `Use ${savedWayfarer.name}`,
+                    `!aa-time profile wayfarer --confirm ?{${usesWorldPackCalendar
+                        ? `Save ${savedWayfarerName} as the campaign fallback calendar? The active WorldPack Calendar remains the current Campaign Clock display until the Current Area changes.`
+                        : `Please confirm the change of the calendar display to ${savedWayfarerName}. Elapsed calendar time is preserved.`}|No,no|Yes,yes}`
+                );
             const handouts = availableHandoutChoices(owned => owned.owner === MODULE_NAME && owned.key === 'wayfarer-calendar-export');
             const importHandout = handouts.length
                 ? GameAssist.createButton('Review Handout Import', `!aa-wayfarer import --handout ${handoutSelectQuery('Choose an editable calendar handout', handouts)}`)
                 : '';
             sendPanel(msg, 'Wayfarer Calendar', [
-                { label: 'Active Calendar', value: `${_sanitize(active.name)}<br>${current ? _sanitize(displayMoment(current)) : 'Fictional date unavailable'}` },
-                { label: 'Use Wayfarer', value: `${useSaved} ${GameAssist.createButton('Choose Another Calendar', '!cal')}` },
+                { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                {
+                    label: usesWorldPackCalendar ? 'Campaign Clock Calendar' : 'Active Calendar',
+                    value: `${_sanitize(campaignProfile.name)}${usesWorldPackCalendar ? ' — active WorldPack Calendar' : ''}<br>${current ? _sanitize(displayMoment(current)) : 'Fictional date unavailable'}`
+                },
+                ...(usesWorldPackCalendar ? [{
+                    label: 'Saved Fallback Calendar',
+                    value: `<strong>${_sanitize(fallback.name)}</strong> — used when the Current Area has no active WorldPack Calendar.`
+                }] : []),
+                {
+                    label: usesWorldPackCalendar ? 'Wayfarer Fallback' : 'Use Wayfarer',
+                    value: `${useSaved} ${GameAssist.createButton('Choose Another Calendar', '!cal')}`
+                },
                 { label: 'Draft', value: `${_sanitize(draft.definition.name)} | ${draftMatchesActive(draft) ? 'matches the saved Wayfarer calendar' : 'has changes not yet activated'}` },
                 { label: 'Edit or Activate', value: `${GameAssist.createButton('Edit Calendar', '!aa-wayfarer edit')} ${GameAssist.createButton('Preview Draft', '!aa-wayfarer preview')} ${GameAssist.createButton('Review & Activate', '!aa-wayfarer review')}` },
                 { label: 'Optional Setup', value: `${GameAssist.createButton('Continue Guided Review', `!aa-wayfarer stage ${nextStage}`)} ${GameAssist.createButton('Start From a Copy', '!aa-wayfarer copies')}` },
@@ -33820,7 +33875,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (![days, hours, minutes].every(Number.isFinite) || [days, hours, minutes].some(value => value < 0)) {
                 return { ok: false, message: 'Days, hours, and minutes must be zero or positive numbers.' };
             }
-            const profile = profileFor();
+            // Days and hours in a Time command always mean the currently visible
+            // Campaign Clock. An installed WorldPack Calendar is a read-only
+            // projection of that one clock, but its day length remains the unit
+            // that the GM just saw in the Time controls.
+            const profile = worldChronologyProfile();
             const totalMinutes = Math.floor(days * calendarMinutesPerDay(profile) + hours * calendarMinutesPerHour(profile) + minutes);
             if (totalMinutes <= 0) return { ok: false, message: 'Choose an amount greater than zero.' };
             if (totalMinutes > POLICY.almanac.maximumAdvanceDays * calendarMinutesPerDay(profile)) {
@@ -33860,7 +33919,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     { label: 'Next Step', value: GameAssist.createButton('Open Time Controls', '!aa-time menu') }
                 ]);
             }
-            const profile = profileFor();
+            // Parse the exact date in the same effective Campaign Calendar that
+            // supplied the Time-panel prompt. Otherwise an installed WorldPack
+            // date such as "First Flow" would be incorrectly rejected against
+            // the hidden saved fallback calendar.
+            const profile = worldChronologyProfile();
             const requestedHour = profile.id === 'wayfarer' && String(args['one-based-hour'] || '').toLowerCase() === 'yes'
                 ? Number(args.hour) - 1
                 : args.hour;
@@ -33893,21 +33956,51 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const args = _parseArgs(content).args;
             if (String(args.confirm || '').toLowerCase() !== 'yes') return showCalendarMenu(msg);
             const runtime = ensureAlmanacRuntime();
-            const previousProfile = profileFor();
-            const previous = resolveWorldMinute(previousProfile, runtime.time.worldMinute);
-            const nextProfile = profileFor(requested);
-            const current = resolveWorldMinute(nextProfile, runtime.time.worldMinute);
-            if (!current) return sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: 'The stored elapsed time falls outside that calendar profile.' }]);
+            const previousFallback = profileFor();
+            const previousProjection = worldChronologyProjection();
+            const previous = resolveWorldMinute(previousProjection.profile, runtime.time.worldMinute);
+            const nextFallback = profileFor(requested);
+            // A fallback still needs to represent the saved authoritative minute,
+            // even when an active WorldPack Calendar currently presents that
+            // minute. This protects the next unbound Current Area from inheriting
+            // an unusable calendar selection.
+            const fallbackMoment = resolveWorldMinute(nextFallback, runtime.time.worldMinute);
+            if (!fallbackMoment) return sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: 'The stored elapsed time falls outside that fallback calendar profile.' }]);
             modState.config.profileId = requested;
+            const currentProjection = worldChronologyProjection();
+            const current = resolveWorldMinute(currentProjection.profile, runtime.time.worldMinute);
+            if (!current) {
+                // This should only be possible if a separately saved WorldPack
+                // projection is malformed. Restore the prior fallback rather
+                // than leaving Time configured with an unpresentable clock.
+                modState.config.profileId = previousFallback.id;
+                return sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: 'The active Campaign Clock could not be represented after that fallback change. The prior fallback was restored.' }]);
+            }
+            const usesWorldPackCalendar = Boolean(currentProjection.calendar && !currentProjection.warning && currentProjection.source !== 'campaign calendar fallback');
             runtime.time.revision += 1;
             runtime.time.updatedAt = isoNow();
-            runtime.history.push({ revision: runtime.time.revision, committedAt: runtime.time.updatedAt, actorId: String(msg.playerid), reason: `Calendar changed from ${previousProfile.id} to ${requested}`, previousWorldMinute: runtime.time.worldMinute, currentWorldMinute: runtime.time.worldMinute, profileId: requested });
+            runtime.history.push({
+                revision: runtime.time.revision,
+                committedAt: runtime.time.updatedAt,
+                actorId: String(msg.playerid),
+                reason: `Campaign fallback calendar changed from ${previousFallback.id} to ${requested}`,
+                previousWorldMinute: runtime.time.worldMinute,
+                currentWorldMinute: runtime.time.worldMinute,
+                profileId: requested
+            });
             if (runtime.history.length > POLICY.almanac.historyLimit) runtime.history.splice(0, runtime.history.length - POLICY.almanac.historyLimit);
-            publishChange('almanac.calendar.changed', previous, current, { previousProfileId: previousProfile.id, currentProfileId: requested }, msg);
-            sendPanel(msg, 'Calendar Updated', [
-                { label: 'Calendar', value: `${_sanitize(previousProfile.name)} to ${_sanitize(nextProfile.name)}` },
+            publishChange('almanac.calendar.changed', previous, current, {
+                previousProfileId: previousFallback.id,
+                currentProfileId: requested,
+                campaignCalendarSource: currentProjection.source
+            }, msg);
+            sendPanel(msg, usesWorldPackCalendar ? 'Campaign Fallback Calendar Updated' : 'Calendar Updated', [
+                { label: usesWorldPackCalendar ? 'Saved Fallback Calendar' : 'Calendar', value: `${_sanitize(previousFallback.name)} to ${_sanitize(nextFallback.name)}` },
                 { label: 'Elapsed Time', value: 'Preserved' },
-                { label: 'Current Date', value: _sanitize(displayDate(current)) },
+                ...(usesWorldPackCalendar ? [{
+                    label: 'Campaign Clock',
+                    value: `${_sanitize(displayDate(current))}<br><em>${_sanitize(currentProjection.calendar.name)} remains the active WorldPack Calendar display for the Current Area.</em>`
+                }] : [{ label: 'Current Date', value: _sanitize(displayDate(current)) }]),
                 { label: 'Next Step', value: GameAssist.createButton('Calendar', '!cal') }
             ]);
         }
@@ -34593,14 +34686,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return timeAvailable() ? currentMoment().season : normalizeClimateConfig().manualSeason;
         }
 
-        function nonMutatingClimateSeasonContext(config = normalizeClimateConfig()) {
+        function nonMutatingClimateSeasonContext(config = normalizeClimateConfig(), worldConfig = modState.config.world) {
             const minute = Math.floor(Number(modState.runtime?.time?.worldMinute));
             if (modState.config.enabled !== false
                 && modState.config.timeAlmanacEnabled !== false
                 && submoduleEnabled('time')
                 && Number.isFinite(minute)
                 && minute >= 0) {
-                const moment = resolveWorldMinute(profileFor(), minute);
+                // A before/after Worldbuilding comparison can cross two installed
+                // WorldPack Calendars. Resolve each side against its own read-only
+                // Campaign Clock presentation rather than applying the old area's
+                // season to the candidate area's Climate event.
+                const moment = resolveWorldMinute(worldChronologyProfile(worldConfig), minute);
                 if (moment) return { season: moment.season, seasonAuthority: 'TimeAlmanac' };
             }
             return { season: config.manualSeason, seasonAuthority: 'ClimateAlmanac manual setting' };
@@ -35277,7 +35374,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return context.moons.map(moon => `${moon.name}: ${moon.phase}`).join(' | ');
         }
 
-        function astronomyLocalClockLabel(decimalHour, profile = profileFor()) {
+        function astronomyLocalClockLabel(decimalHour, profile = worldChronologyProfile()) {
             const hoursPerDay = calendarHoursPerDay(profile);
             const minutesPerHour = calendarMinutesPerHour(profile);
             const minutesPerDay = hoursPerDay * minutesPerHour;
@@ -35290,13 +35387,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             });
         }
 
-        function astronomyDaylightHours(context, profile = profileFor()) {
+        function astronomyDaylightHours(context, profile = worldChronologyProfile()) {
             const hoursPerDay = calendarHoursPerDay(profile);
             const localHours = clampNumber(Number(context?.daylightHours), 0, 24, 12) / 24 * hoursPerDay;
             return Math.round(localHours * 10) / 10;
         }
 
-        function astronomyDaylightSummary(context, profile = profileFor()) {
+        function astronomyDaylightSummary(context, profile = worldChronologyProfile()) {
             const hoursPerDay = calendarHoursPerDay(profile);
             const localHours = astronomyDaylightHours(context, profile);
             const sunrise = (hoursPerDay - localHours) / 2;
@@ -35311,12 +35408,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Status', value: 'Turned off; moons and settings are preserved.' }
             ]);
             const scene = resolveScene();
+            const clock = sceneClockContext(scene);
             const context = scene.astronomy || astronomyContext();
+            const campaignProfile = worldChronologyProfile();
             const moonRows = context.moons.map(moon => `${_sanitize(moon.name)}: ${_sanitize(moon.phase)}; full in ${moon.daysUntilFull} day(s)`).join('<br>');
             sendPanel(msg, 'AstronomyAlmanac', [
                 { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
                 { label: 'Authority', value: _sanitize(context.authority) },
-                { label: 'Season and Daylight', value: `${_sanitize(context.season)} | ${_sanitize(astronomyDaylightSummary(context))}` },
+                ...(clock.hasDistinctLocalClock ? [{
+                    label: 'Campaign Clock',
+                    value: _sanitize(displayMoment(clock.campaignMoment))
+                }, {
+                    label: 'Local Clock',
+                    value: `${_sanitize(clock.temporal.name)}: ${_sanitize(clock.temporal.projection.label)}. Daylight below is expressed in the Campaign Clock.`
+                }] : []),
+                { label: clock.hasDistinctLocalClock ? 'Campaign Season and Daylight' : 'Season and Daylight', value: `${_sanitize(context.season)} | ${_sanitize(astronomyDaylightSummary(context, campaignProfile))}` },
                 { label: 'Deterministic Event', value: context.seasonalEvent ? _sanitize(context.seasonalEvent) : 'No season boundary today.' },
                 ...(context.installedProfile ? [{ label: 'Installed Astronomy Profile', value: `${_sanitize(context.installedProfile.name)} | visibility: ${_sanitize(context.installedProfile.visibilityPolicy)}${context.installedProfile.summary ? `<br>${_sanitize(context.installedProfile.summary)}` : ''}` }] : []),
                 { label: 'Moons', value: moonRows || 'None configured.' },
@@ -35332,7 +35438,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const context = astronomyContext(offset, { profile });
                 if (!context) break;
                 const moons = context.moons.map(moon => `${moon.name}: ${moon.phase}`).join(', ');
-                rows.push(`+${offset}: ${context.season}; about ${astronomyDaylightHours(context)} local daylight hours; ${moons}${context.seasonalEvent ? `; ${context.seasonalEvent}` : ''}`);
+                rows.push(`+${offset}: ${context.season}; about ${astronomyDaylightHours(context, profile)} local daylight hours; ${moons}${context.seasonalEvent ? `; ${context.seasonalEvent}` : ''}`);
             }
             sendPanel(msg, 'Astronomy Forecast', [
                 { label: 'Authority', value: timeAvailable() ? 'TimeAlmanac future dates' : 'Manual astronomy day with the current manual season' },
@@ -37490,8 +37596,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 delete runtime.rest.grants[grant.id];
                 return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'TimeAlmanac was turned off after this preview. Prepare a new preview so the rest and fictional-time result are explicit.' }, { label: 'Changes', value: 'None.' }]);
             }
-            const nextMinute = shouldAdvance ? runtime.time.worldMinute + Math.round(Number(grant.definition.hours) * calendarMinutesPerHour(profileFor())) : null;
-            if (shouldAdvance && !resolveWorldMinute(profileFor(), nextMinute)) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'The optional time advance would exceed the supported calendar range.' }, { label: 'Changes', value: 'None.' }]);
+            // Rest duration is expressed in the same Campaign Clock hours that
+            // the preview showed. A WorldPack Calendar may provide that display
+            // profile without changing the stored fallback calendar selection.
+            const campaignProfile = shouldAdvance ? worldChronologyProfile() : null;
+            const advancedMinutes = shouldAdvance
+                ? Math.round(Number(grant.definition.hours) * calendarMinutesPerHour(campaignProfile))
+                : 0;
+            const nextMinute = shouldAdvance ? runtime.time.worldMinute + advancedMinutes : null;
+            if (shouldAdvance && !resolveWorldMinute(campaignProfile, nextMinute)) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'The optional time advance would exceed the supported calendar range.' }, { label: 'Changes', value: 'None.' }]);
             const completed = [];
             try {
                 writes.forEach(write => {
@@ -37523,7 +37636,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 characterIds: grant.plans.map(plan => plan.characterId),
                 characterNames: grant.plans.map(plan => plan.name),
                 writes: writes.length,
-                advancedMinutes: timeResult ? Math.round(Number(grant.definition.hours) * calendarMinutesPerHour(profileFor())) : 0
+                advancedMinutes: timeResult ? advancedMinutes : 0
             };
             runtime.rest.history.push(record);
             if (runtime.rest.history.length > POLICY.almanac.restHistoryLimit) runtime.rest.history.shift();
@@ -37706,7 +37819,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function showStatus(msg, audit = false) {
             const runtime = ensureAlmanacRuntime();
-            const profile = profileFor();
+            const profile = worldChronologyProfile();
             const moment = resolveWorldMinute(profile, runtime.time.worldMinute);
             const problems = [];
             if (!moment) problems.push('Stored fictional time is outside the active calendar range.');
@@ -38039,7 +38152,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         normalizeAstronomyConfig();
         normalizeRestConfig();
         normalizedAnnouncementConfig();
-        const activeProfile = profileFor();
+        const activeProfile = worldChronologyProfile();
         if (!resolveWorldMinute(activeProfile, runtime.time.worldMinute)) runtime.time.worldMinute = DEFAULT_WORLD_MINUTE;
 
         GameAssist.AlmanacAssist = Object.freeze({

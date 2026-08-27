@@ -140,6 +140,36 @@ function assertReviewedLongRest(harness) {
     assert.equal(Object.keys(almanac.runtime.rest.grants).length, 0, 'accepted completion must consume its one-use review grant');
 }
 
+function installWorldPackClockFixture(harness) {
+    const almanac = harness.state.GameAssist.AlmanacAssist;
+    harness.dispatchCommand('!aa-worldpacks preset install --id lumenfen-atlas');
+    const grantId = Object.keys(almanac.runtime.worldPacks.grants)[0];
+    assert.ok(grantId, 'the WorldPack clock fixture must retain an installation review');
+    harness.dispatchCommand(`!aa-worldpacks confirm --grant ${grantId}`);
+    harness.dispatchCommand('!aa-location use --id lumenfen-atlas-location-1-1');
+    const calendar = almanac.config.worldPackDefinitions.packs[0]?.palette?.calendars?.[0]?.definition;
+    assert.ok(calendar, 'the installed WorldPack must expose its editable Calendar definition');
+    // Exercise a valid campaign-owned calendar clone whose hours are unlike the
+    // saved Standard fallback. This is a runtime behavior fixture rather than a
+    // source-package mutation: the production editor validates this same shape.
+    calendar.hoursPerDay = 20;
+    calendar.minutesPerHour = 75;
+    return almanac;
+}
+
+function assertWorldPackCalendarRestDuration(harness) {
+    const almanac = installWorldPackClockFixture(harness);
+    const fixture = install2014RestFixture(harness, { name: 'Clockwork', characterId: 'clock-pc', tokenId: 'clock-token' });
+    const startingMinute = almanac.runtime.time.worldMinute;
+    const preview = onlyPanel(harness, '!aa-rest preview --type long', 'GM', fixture.selected);
+    assert.match(preview, /Campaign Clock=.*7th Hour, 30 minutes/, 'Rest preview must render the active WorldPack Calendar clock rather than the saved Standard fallback');
+    assert.match(preview, /Advance 8 hour\(s\) after successful sheet changes from this previewed Campaign Clock moment/, 'Rest preview must describe the same Campaign Clock unit that confirmation will advance');
+    const complete = onlyPanel(harness, `!aa-rest confirm --grant ${onlyGrant(harness)}`);
+    assert.match(complete, /Advanced 600 fictional minute\(s\)/, 'a Long Rest must convert eight active WorldPack Calendar hours at 75 minutes each');
+    assert.equal(almanac.runtime.time.worldMinute, startingMinute + 600, 'Rest confirmation must advance the one Campaign Clock using the active WorldPack Calendar hour length');
+    assert.equal(almanac.runtime.rest.history.at(-1).advancedMinutes, 600, 'Rest history must retain the same committed WorldPack-clock duration');
+}
+
 function assertStalePlanGuard(harness) {
     const fixture = install2014RestFixture(harness, { name: 'Bram', characterId: 'stale-pc', tokenId: 'stale-token' });
     const almanac = harness.state.GameAssist.AlmanacAssist;
@@ -196,6 +226,7 @@ function run() {
     assertExecutableArtifactsAreIdentical();
     assertSelectionRecovery(createHarness());
     assertReviewedLongRest(createHarness());
+    assertWorldPackCalendarRestDuration(createHarness());
     assertStalePlanGuard(createHarness());
     assertCustomRestCancellationRecovery(createHarness());
     assertControllerBoundary(createHarness());
