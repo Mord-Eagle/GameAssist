@@ -379,6 +379,12 @@ without Technical-ID recall. Installed Phenomenon Templates receive an equivalen
 active-location scoped catalog; choosing one begins only the existing reviewed
 editable-clone flow and never activates it automatically.
 
+The saved World Library has a separate setting-scale surface too. Its compact hub
+shows the active world plus at most three representative snapshots, discloses the
+complete saved-world count, and links to a six-row name/tag-searchable Saved Worlds
+catalog. Every non-active row retains its direct guarded **Switch Here** action;
+browsing and searching never save, replace, or switch a campaign world.
+
 Worldbuilding management uses the same bounded-access rule without pretending that
 the first page is the whole setting. Each ordinary record collection (Regions,
 Geographies, Ecoregions, Biomes, Locations, Prepared Destinations, Routes,
@@ -419,6 +425,7 @@ Changed (v2.0.0): extends 12-entry name-first paging and direct Edit access to e
 Changed (v2.0.0): routes editor relations, palette cross-references/defaults, preset overlays, and Route Leg profile/split choices through complete 12-entry named catalogs; this replaces inline query lists that could silently omit distant records or exceed a safe chat-card size.
 Changed (v2.0.0): replaces the WorldPacks hub's silent first-eight installed-clone sample and all-installed palette query with a complete six-row installed catalog, name/provenance search, and per-clone direct palette access at the 24-pack bound.
 Changed (v2.0.0): replaces first-page-only Session Phenomena, installed-template, and campaign-preset samples with count-disclosing three-row roots plus complete 12-entry named catalogs for their actual Session actions.
+Changed (v2.0.0): pages the 24-world saved World Library at six rich switch rows and makes its hub an explicit count-disclosing representative view rather than a full-snapshot dump.
 Prior notes:
   Changed (v2.0.0): makes setting-scale capacity and bounded selector behavior explicit acceptance engineering rather than a future data-size assumption.
 Decision log:

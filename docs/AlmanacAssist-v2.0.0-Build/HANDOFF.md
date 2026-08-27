@@ -161,6 +161,12 @@ Recovery work must prioritize the fresh-GM journey: World Library/Starter Worlds
   active-location scoped installed Phenomenon Template list receives the same
   bounded clone-review catalog; browsing alone does not create a definition or
   activate an overlay.
+- **Current canonical-source recovery addition:** the 24-world saved World Library
+  no longer dumps every rich snapshot/switch row into its hub. The hub names the
+  active world, discloses the total, and shows at most three representatives; its
+  Saved Worlds catalog uses six name/tag-searchable rows with direct guarded
+  **Switch Here** actions. Browsing/searching is read-only until that action begins
+  the ordinary save-and-switch transaction.
 
 #### Prepared Destinations and Travel
 
@@ -277,7 +283,7 @@ This behavior is intentionally conservative. Do not replace it with a repair/nor
 | `tests/almanac-gate0.test.js` | Shared isolated Roll20-shaped VM harness plus Gate 0 checks. Its harness accepts a historical state fixture for migration testing. |
 | `tests/almanac-scene-resolver.test.js` | SceneResolver no-write/immutability/provenance coverage. |
 | `tests/almanac-worldbuilding.test.js` | Generic records, editor layers, future config/runtime preservation, and mutation-block checks. |
-| `tests/almanac-starter-worlds.test.js` | Fresh-GM onboarding, generic built-in starter worlds, saved-world switching, first-location activation, direct/Ecoregion/fallback Climate provenance, Weather/manual mismatch behavior, Location-default Environment parity, Climate event/removal guards, decoded ordinary-screen prompt targets plus each first-level visible choice, recovery controls for generated refusal/no-change panels, compatible named handout pickers, entity/percent/Markdown-safe picker labels and IDs, and no-hidden-ID reference controls. This is focused VM evidence only; a fresh real-Roll20 render/prompt pass remains required. |
+| `tests/almanac-starter-worlds.test.js` | Fresh-GM onboarding, generic built-in starter worlds, saved-world switching and 24-world catalog paging/search, first-location activation, direct/Ecoregion/fallback Climate provenance, Weather/manual mismatch behavior, Location-default Environment parity, Climate event/removal guards, decoded ordinary-screen prompt targets plus each first-level visible choice, recovery controls for generated refusal/no-change panels, compatible named handout pickers, entity/percent/Markdown-safe picker labels and IDs, and no-hidden-ID reference controls. This is focused VM evidence only; a fresh real-Roll20 render/prompt pass remains required. |
 | `tests/almanac-rest.test.js` | Selected linked 2014-PC Rest preview, accepted Long Rest sheet/time commit, stale-plan refusal, and player controller-boundary checks. |
 | `tests/almanac-travel.test.js` | Prepared Destination and reviewed Travel checks. |
 | `tests/almanac-phenomena.test.js` | Phenomena scope, expiry, review, cleanup, preservation, and setting-scale campaign/template catalog checks. |

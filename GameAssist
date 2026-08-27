@@ -507,7 +507,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             // explicit search/all pages retain the larger 12-entry page boundary.
             worldSessionCategoryLimit: 3,
             worldListDisplayLimit: 12,
+            // A saved-world row includes a description, origin, and guarded
+            // switch action, so keep this richer catalog at six rows per page.
             worldLibraryLimit: 24,
+            worldLibraryDisplayLimit: 6,
             worldNameLength: 60,
             worldDescriptionLength: 240,
             worldTagLimit: 24,
@@ -26260,6 +26263,66 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
+        /**
+         * showSavedWorldLibraryCatalog - Keep saved campaign worlds reachable at
+         * the library bound without placing every snapshot's rich switch row on
+         * the World Library hub. This is read-only until a visible Switch Here
+         * action invokes the existing save/switch transaction.
+         */
+        function showSavedWorldLibraryCatalog(msg, { page = 0, search = '', searchRequested = false } = {}) {
+            if (!requireGm(msg)) return;
+            const library = worldLibraryForPanel(msg);
+            if (!library) return;
+            const perPage = POLICY.almanac.worldLibraryDisplayLimit;
+            const normalizedSearch = boundedWorldText(search, '', POLICY.almanac.worldNameLength).toLowerCase();
+            const isSearch = searchRequested || Boolean(normalizedSearch);
+            const allWorlds = library.worlds.slice().sort((left, right) => left.name.localeCompare(right.name) || left.id.localeCompare(right.id));
+            const matches = !isSearch
+                ? allWorlds
+                : (normalizedSearch
+                    ? allWorlds.filter(entry => [
+                        entry.name, entry.id, entry.description, entry.origin,
+                        entry.starterId, entry.provenance?.label, entry.provenance?.note
+                    ].filter(Boolean).join(' ').toLowerCase().includes(normalizedSearch))
+                    : []);
+            const pageCount = Math.max(1, Math.ceil(matches.length / perPage));
+            const requestedPage = Math.max(0, Math.floor(Number(page) || 0));
+            const safePage = Math.min(requestedPage, pageCount - 1);
+            const visible = matches.slice(safePage * perPage, (safePage + 1) * perPage);
+            const pageCommand = nextPage => isSearch
+                ? `!aa-world library saved search --query "${roll20QueryText(normalizedSearch, 'search', POLICY.almanac.worldNameLength)}" --page ${nextPage}`
+                : `!aa-world library saved --page ${nextPage}`;
+            const browse = [
+                safePage > 0 ? GameAssist.createButton('Previous', pageCommand(safePage - 1)) : '',
+                safePage + 1 < pageCount ? GameAssist.createButton('Next', pageCommand(safePage + 1)) : '',
+                isSearch ? GameAssist.createButton('Browse All', '!aa-world library saved --page 0') : ''
+            ].filter(Boolean).join(' ');
+            const searchExample = roll20QueryText(allWorlds[0]?.name, 'Name', POLICY.almanac.worldNameLength);
+            const searchCommand = `!aa-world library saved search --query "?{Search saved worlds by name or tag|${searchExample}}" --page 0`;
+            const catalogLabel = isSearch
+                ? `Search: ${normalizedSearch || 'enter a name'} ${safePage + 1} of ${pageCount}`
+                : `Saved Worlds ${safePage + 1} of ${pageCount}`;
+            const rows = visible.map(entry => {
+                const active = entry.id === library.activeWorldId;
+                const provenance = entry.provenance?.label || `${entry.origin} campaign world`;
+                return {
+                    label: `${active ? 'Active: ' : ''}${_sanitize(entry.name)}`,
+                    value: `${_sanitize(entry.description || 'Saved campaign world.')}<br>${_sanitize(provenance)} | ${_sanitize(entry.origin)}${active ? '<br><em>Current active world.</em>' : `<br>${GameAssist.createButton('Switch Here', `!aa-world switch --id ${entry.id}`)}`}`
+                };
+            });
+            const empty = isSearch
+                ? (normalizedSearch ? 'No saved worlds matched that name or tag. Try another search.' : 'Enter a world name or tag to search the saved library.')
+                : 'No campaign worlds have been saved yet. Start a compact local starter, install a full WorldPack, or create an empty world.';
+            sendPanel(msg, 'Almanac / World Library / Saved Worlds', [
+                { label: 'Catalog', value: `${_sanitize(catalogLabel)} — ${matches.length} matching saved world${matches.length === 1 ? '' : 's'}; ${perPage} entries per page.` },
+                ...(rows.length ? rows : [{ label: 'No Saved Worlds', value: empty }]),
+                ...(browse ? [{ label: 'Browse', value: browse }] : []),
+                { label: 'Find', value: `${GameAssist.createButton('Search', searchCommand)} ${isSearch ? GameAssist.createButton('Clear Search', '!aa-world library saved --page 0') : ''}`.trim() },
+                { label: 'Actions', value: `${GameAssist.createButton('Quick Local Starters', '!aa-world starters')} ${GameAssist.createButton('Full WorldPacks', '!aa-worldpacks library')} ${GameAssist.createButton('Create Empty World', '!aa-world create --name "?{New world name|My Campaign World}"')}` },
+                { label: 'Navigation', value: `${GameAssist.createButton('Back to World Library', '!aa-world library')} ${GameAssist.createButton('Worldbuilding', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
         function showWorldLibrary(msg) {
             if (!requireGm(msg)) return;
             const library = worldLibraryForPanel(msg);
@@ -26270,14 +26333,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const starterRows = BUILT_IN_STARTER_WORLDS.map(starter =>
                 `<strong>${_sanitize(starter.name)}</strong> — ${_sanitize(starter.description)}<br>${starterWorldLocationCount(starter)} locations | ${starter.world.routes.length} routes | ${starter.climate.regions.map(region => _sanitize(region.name)).join(', ')}<br>${GameAssist.createButton('Preview & Start', `!aa-world starter preview --id ${starter.id}`)}`
             );
-            const savedRows = library.worlds.length
-                ? library.worlds.map(entry => `${entry.id === library.activeWorldId ? '<strong>Active:</strong> ' : ''}<strong>${_sanitize(entry.name)}</strong> — ${_sanitize(entry.description || 'Saved campaign world.')} ${entry.id === library.activeWorldId ? '' : GameAssist.createButton('Switch Here', `!aa-world switch --id ${entry.id}`)}`).join('<br>')
+            const savedAll = library.worlds.slice().sort((left, right) => left.name.localeCompare(right.name) || left.id.localeCompare(right.id));
+            const savedRepresentatives = [
+                ...(active ? [active] : []),
+                ...savedAll.filter(entry => entry.id !== active?.id)
+            ].slice(0, POLICY.almanac.worldSessionCategoryLimit);
+            const savedRows = savedRepresentatives.length
+                ? `${savedRepresentatives.map(entry => `${entry.id === library.activeWorldId ? '<strong>Active:</strong> ' : ''}<strong>${_sanitize(entry.name)}</strong> — ${_sanitize(entry.description || 'Saved campaign world.')} ${entry.id === library.activeWorldId ? '' : GameAssist.createButton('Switch Here', `!aa-world switch --id ${entry.id}`)}`).join('<br>')}${library.worlds.length > savedRepresentatives.length ? `<br><em>Showing ${savedRepresentatives.length} representatives; use Browse Saved Worlds or Search for every saved campaign.</em>` : ''}`
                 : 'No campaign worlds have been saved yet.';
+            const savedSearch = `!aa-world library saved search --query "?{Search saved worlds by name or tag|${roll20QueryText(savedAll[0]?.name, 'Name', POLICY.almanac.worldNameLength)}}" --page 0`;
             sendPanel(msg, 'Almanac / World Library', [
                 { label: 'Active World', value: active ? `<strong>${_sanitize(active.name)}</strong> — ${_sanitize(active.provenance?.label || 'Campaign world')}` : (worldConfigIsEmpty(current) ? 'No world selected yet.' : 'Current campaign world is active but has not been saved to the World Library yet.') },
                 { label: 'Full Original WorldPacks', value: `Four immutable, legally distributable, setting-scale sources are ready to review and install as editable campaign clones. ${GameAssist.createButton('Browse Full WorldPacks', '!aa-worldpacks library')}` },
                 { label: 'Quick Local Starters', value: `These compact local play surfaces remain available for a fast one-area start; they are not substitutes for a full WorldPack.<br>${starterRows.join('<hr>')}` },
-                { label: 'Saved Worlds', value: savedRows },
+                { label: `Saved Worlds (${library.worlds.length})`, value: savedRows },
+                { label: 'Find Saved Worlds', value: `${GameAssist.createButton('Browse Saved Worlds', '!aa-world library saved --page 0')} ${GameAssist.createButton('Search Saved Worlds', savedSearch)}` },
                 { label: 'Create From Scratch', value: GameAssist.createButton('Create Empty World', '!aa-world create --name "?{New world name|My Campaign World}"') },
                 { label: 'What Starting Does', value: 'Starting or switching a quick local world saves the current compatible Worldbuilding, Climate, Travel, Weather, and Environment context first. Full WorldPacks use their separate Preview → Confirm clone workflow; neither path copies protected published-setting material.' },
                 { label: 'Navigation', value: `${GameAssist.createButton('Full WorldPacks', '!aa-worldpacks library')} ${GameAssist.createButton('Worldbuilding', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
@@ -27531,6 +27601,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const body = content.replace(/^world\s*/i, '').trim();
             const lower = body.toLowerCase();
             if (!body || /^(menu|manage|status)$/i.test(body)) return showWorldbuilding(msg);
+            const libraryCatalogArgs = _parseArgs(body).args;
+            if (/^library\s+saved\s+search\b/i.test(body)) return showSavedWorldLibraryCatalog(msg, { page: libraryCatalogArgs.page, search: libraryCatalogArgs.query || libraryCatalogArgs.value || libraryCatalogArgs.term || '', searchRequested: true });
+            if (/^library\s+saved\b/i.test(body)) return showSavedWorldLibraryCatalog(msg, { page: libraryCatalogArgs.page });
             if (lower === 'starters' || lower === 'starter worlds' || lower === 'library' || lower === 'world library') return showWorldLibrary(msg);
             // Complete catalog access stays on the ordinary Worldbuilding route:
             // `routes --page 2` and `routes search --query "ridge"` must not

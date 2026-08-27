@@ -3,7 +3,7 @@
 //   codename: "GAMEASSIST_ALMANAC_STARTER_WORLDS_TEST"
 //   project_version: "v2.0.0"
 //   purpose: "Exercise first-run AlmanacAssist onboarding, generic built-in starter worlds, world-library switching, deferred Roll20 command-button prompts, and complete bounded named editor pickers."
-//   order: ["artifact_identity","first_run_onboarding","deferred_prompt_contract","starter_world_install","world_switch_preservation"]
+//   order: ["artifact_identity","first_run_onboarding","deferred_prompt_contract","starter_world_install","world_switch_preservation","saved_world_catalog_scale"]
 //   env:
 //     required: ["NODE_RUNTIME"]
 //     optional: []
@@ -651,6 +651,53 @@ function assertExistingCampaignIsSavedBeforeSwitching() {
     assert.equal(worldState(harness).config.world.activeLocationId, 'legacy-camp', 'a saved existing campaign world must be switchable back into active context');
 }
 
+/**
+ * A campaign can retain the full 24-world library while experimenting with
+ * local starters and full-world contexts. Keep the hub compact, but retain
+ * name-first switching access to every saved snapshot.
+ */
+function assertSavedWorldCatalogScale() {
+    const harness = createHarness();
+    installStarter(harness, 'ember-coast');
+    const almanac = worldState(harness);
+    const base = almanac.config.worldLibrary.worlds[0];
+    const worlds = Array.from({ length: 24 }, (_, index) => {
+        const suffix = String(index + 1).padStart(3, '0');
+        return {
+            ...JSON.parse(JSON.stringify(base)),
+            id: `saved-campaign-${suffix}`,
+            name: `Saved Campaign ${suffix}`,
+            description: `Saved setting-scale campaign snapshot ${suffix}.`,
+            origin: 'campaign', starterId: null, starterVersion: null,
+            tags: ['catalog', 'campaign']
+        };
+    });
+    almanac.config.worldLibrary.worlds = worlds;
+    almanac.config.worldLibrary.activeWorldId = 'saved-campaign-001';
+    const before = JSON.stringify({ world: almanac.config.world, library: almanac.config.worldLibrary });
+
+    const root = onePanel(harness, '!aa-world library');
+    assert.match(root, /Saved Worlds \(24\)/, 'World Library hub must disclose the complete saved-world count at its declared bound');
+    assert.match(root, /Browse Saved Worlds/, 'World Library hub must offer an explicit complete saved-world route');
+    assert.doesNotMatch(root, /Saved Campaign 024/, 'World Library hub must remain a compact representative view instead of rendering every saved snapshot');
+    assert.ok(root.length < 6000, 'World Library hub must remain compact at the 24-world library bound');
+
+    const first = onePanel(harness, '!aa-world library saved --page 0');
+    assert.match(first, /Saved Worlds 1 of 4/, 'saved-world catalog must page all 24 retained worlds at its rich-row bound');
+    assert.match(first, /Saved Campaign 001/, 'saved-world catalog must expose the first named campaign snapshot');
+    assert.doesNotMatch(first, /Saved Campaign 007/, 'saved-world catalog must not exceed its six-row compact page bound');
+    assert.ok((first.match(/\[Switch Here\]/g) || []).length <= 6, 'saved-world catalog must retain a bounded direct-switch action count');
+    assert.ok(first.length < 6000, 'saved-world catalog must remain compact at the library bound');
+
+    const last = onePanel(harness, '!aa-world library saved --page 3');
+    assert.match(last, /Saved Worlds 4 of 4/, 'saved-world catalog must retain access to its final page');
+    assert.match(last, /Saved Campaign 024/, 'saved-world catalog must expose a distant campaign snapshot by name');
+    assert.match(last, /!aa-world switch --id saved-campaign-024/, 'saved-world catalog must retain a direct guarded switch route for a distant snapshot');
+    const search = onePanel(harness, '!aa-world library saved search --query "Saved Campaign 024" --page 0');
+    assert.match(search, /Search: saved campaign 024 1 of 1/, 'saved-world catalog search must resolve a distant snapshot without Technical-ID recall');
+    assert.equal(JSON.stringify({ world: almanac.config.world, library: almanac.config.worldLibrary }), before, 'saved-world browse/search must remain read-only until a Switch Here action is chosen');
+}
+
 function run() {
     assertExecutableArtifactsAreIdentical();
     assertFirstRunOnboardingAndPromptContract();
@@ -665,13 +712,14 @@ function run() {
     assertGuidedReferencesAvoidRawIds();
     assertHandoutPickerQueriesKeepEntitySyntaxInert();
     assertExistingCampaignIsSavedBeforeSwitching();
+    assertSavedWorldCatalogScale();
     process.stdout.write('PASS: AlmanacAssist starter-world and prompt regression checks\n');
 }
 
 run();
 // --- Notes & Comments ---
 // Changed (v2.0.0): verify that WorldPack and Wayfarer named-handout pickers neutralize literal, HTML-entity, percent-escape, and Markdown query controls without losing valid opaque Roll20 IDs.
-// Changed (v2.0.0): add focused evidence for generic built-in starter worlds, first-run guided controls, deferred prompt targets, and saved-world switching.
+// Changed (v2.0.0): add focused evidence for generic built-in starter worlds, first-run guided controls, deferred prompt targets, saved-world switching, and 24-world saved-catalog paging/search.
 // Decision log:
 //   CHOICE: inspect generated command targets after numeric-entity decoding — ALT: claim source strings alone prove prompt behavior; REJECTED: the live defect occurred at the rendered-button seam.
 //   CHOICE: retain a separate focused live Roll20 pass — ALT: treat VM link inspection as final renderer proof; REJECTED: Roll20 remains the authority for final chat rendering and prompts.
