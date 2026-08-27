@@ -25659,10 +25659,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
          * announcementFields - Present one supplied SceneResolver snapshot at the selected disclosure levels.
          * Inputs: normalized announcement settings and one immutable scene snapshot.
          * Outputs: Roll20 template fields; no provider is re-read while rendering.
-         * Invariant: Weather supplies the single exact current temperature; Environment is separately labeled immediate context.
+         * Invariant: Weather supplies the single exact current temperature; Environment is separately labeled immediate context; a distinct local temporal projection is labeled as local rather than treated as a second stored clock.
          */
         function announcementFields(config = normalizedAnnouncementConfig(), scene = resolveScene()) {
-            const moment = scene.time?.current || null;
+            // Announcements are player-facing scene presentation. When the active
+            // Current Area supplies a distinct local projection, show its local
+            // calendar facts—not an unlabeled campaign value that characters
+            // would experience at another local hour. The original Campaign Clock
+            // remains the only stored chronology and is retained in GM-only
+            // technical disclosure.
+            const clock = sceneClockContext(scene);
+            const campaignMoment = clock.campaignMoment;
+            const usesLocalClock = Boolean(clock.hasDistinctLocalClock && clock.localMoment);
+            const moment = usesLocalClock ? clock.localMoment : campaignMoment;
             const weather = scene.weather?.current || null;
             const climate = scene.climate?.baseline || null;
             const environment = scene.environment?.current || null;
@@ -25673,14 +25682,31 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const evidence = scene.provenance?.[field];
                 return evidence ? `${evidence.authority}: ${evidence.source}` : 'No resolved source';
             };
+            const technicalClockEvidence = field => usesLocalClock
+                ? ` | Campaign Clock: ${field(campaignMoment)} | Local Context: ${clock.temporal?.name || 'Local Context'} | Sources: ${sourceFor('time.current')}; ${sourceFor('temporal.active')}`
+                : ` | Source: ${sourceFor('time.current')}`;
             const dateStyle = fieldStyle('date');
             const timeStyle = fieldStyle('time');
             const seasonStyle = fieldStyle('season');
             const observanceStyle = fieldStyle('observances');
-            if (moment && dateStyle !== 'off') fields.push({ label: 'Date', value: _sanitize(displayDate(moment)) });
-            if (moment && timeStyle !== 'off') fields.push({ label: 'Time', value: _sanitize(timeStyle === 'descriptive' ? descriptiveTime(moment) : displayTime(moment)) });
-            if (moment && seasonStyle !== 'off') fields.push({ label: 'Season', value: _sanitize(moment.season) });
-            if (moment && observanceStyle !== 'off' && moment.holidays?.length) fields.push({ label: 'Observances', value: moment.holidays.map(_sanitize).join(', ') });
+            if (moment && dateStyle !== 'off') {
+                const value = displayDate(moment) + (dateStyle === 'technical' ? technicalClockEvidence(displayDate) : '');
+                fields.push({ label: `${usesLocalClock ? 'Local Date' : 'Date'}${dateStyle === 'technical' ? ' (Technical)' : ''}`, value: _sanitize(value) });
+            }
+            if (moment && timeStyle !== 'off') {
+                const display = value => timeStyle === 'descriptive' ? descriptiveTime(value) : displayTime(value);
+                const value = display(moment) + (timeStyle === 'technical' ? technicalClockEvidence(displayTime) : '');
+                fields.push({ label: `${usesLocalClock ? 'Local Time' : 'Time'}${timeStyle === 'technical' ? ' (Technical)' : ''}`, value: _sanitize(value) });
+            }
+            if (moment && seasonStyle !== 'off') {
+                const value = moment.season + (seasonStyle === 'technical' ? technicalClockEvidence(value => value.season) : '');
+                fields.push({ label: `${usesLocalClock ? 'Local Season' : 'Season'}${seasonStyle === 'technical' ? ' (Technical)' : ''}`, value: _sanitize(value) });
+            }
+            if (moment && observanceStyle !== 'off' && moment.holidays?.length) {
+                const observances = moment.holidays.join(', ');
+                const value = observances + (observanceStyle === 'technical' ? technicalClockEvidence(value => (value.holidays || []).join(', ') || 'None') : '');
+                fields.push({ label: `${usesLocalClock ? 'Local Observances' : 'Observances'}${observanceStyle === 'technical' ? ' (Technical)' : ''}`, value: _sanitize(value) });
+            }
 
             const moonStyle = fieldStyle('moons');
             if (moonStyle !== 'off' && astronomy) {
@@ -25699,11 +25725,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
             const climateStyle = fieldStyle('climate');
             if (climateStyle !== 'off' && climate) {
+                // Keep ordinary announcements in the same place-first seasonal
+                // language as the Session cards. Palette/profile provenance stays
+                // deliberately confined to the technical GM-only presentation.
+                const climateIdentity = climateBaselineIdentity(climate) || 'Climate baseline';
+                const climateBaseline = /seasonal baseline$/i.test(climateIdentity)
+                    ? climateIdentity
+                    : `${climateIdentity} seasonal baseline`;
                 const climateValue = climateStyle === 'descriptive'
-                    ? `${climate.regionName} | ${climate.profileName}`
+                    ? climateSeasonalContextSummary(climate)
                     : climateStyle === 'technical'
-                        ? `${climate.profileName} baseline | ${climate.humidity}% typical humidity | ${climate.precipitationChance}% precipitation chance | ${climate.windMph} mph typical wind${climate.regionId === 'home' ? '' : ` | Region: ${climate.regionName}`} | Source: ${sourceFor('climate.baseline')}`
-                        : `${climate.profileName} climate | ${climate.humidity}% typical humidity | ${climate.precipitationChance}% precipitation chance${climate.regionId === 'home' ? '' : ` | ${climate.regionName}`}`;
+                        ? `${climateBaseline} | ${climate.humidity}% typical humidity | ${climate.precipitationChance}% precipitation chance | ${climate.windMph} mph typical wind | Source: ${sourceFor('climate.baseline')}`
+                        : `${climateBaseline} | ${climate.season} | ${climate.humidity}% typical humidity | ${climate.precipitationChance}% precipitation chance`;
                 fields.push({ label: climateStyle === 'technical' ? 'Climate Baseline (Technical)' : 'Climate', value: _sanitize(climateValue) });
             }
 
@@ -35968,11 +36001,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     { label: 'Problem', value: 'Generate or set current Weather before announcing conditions.' },
                     { label: 'Next Step', value: `${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Set Manual Conditions', weatherManualCommand())} ${GameAssist.createButton('Weather', '!aa-weather')}` }
                 ]);
+                const climate = scene.climate?.baseline || null;
                 return sendPanel(msg, 'Current Weather', [
+                    ...(scene.location ? [{ label: 'Current Area', value: _sanitize(scene.location.name) }] : []),
                     { label: 'Conditions', value: `${_sanitize(weather.summary)} | ${weather.temperatureF} F | ${weather.windMph} mph wind` },
                     { label: 'Visibility', value: _sanitize(environment?.visibility || weather.visibility) },
                     { label: 'Immediate Environment', value: environment ? _sanitize(`${environment.name} | ${environment.ground}`) : 'No immediate environment is resolved.' },
-                    { label: 'Climate Region', value: _sanitize(scene.climate?.baseline?.regionName || weather.regionName || 'No climate region is configured.') }
+                    { label: 'Seasonal Climate', value: climate ? _sanitize(climateSeasonalContextSummary(climate)) : _sanitize(weather.regionName || 'No climate region is configured.') }
                 ], { publicMessage: true });
             }
             sendPanel(msg, 'WeatherAlmanac Needs Attention', [{ label: 'Problem', value: 'That weather command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Weather', '!weather') }]);

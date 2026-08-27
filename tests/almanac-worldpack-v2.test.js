@@ -436,17 +436,30 @@ function assertWorldPackSessionClockAndWeatherBoundary() {
     assert.match(astronomyMenu[0].message, /Campaign Clock=.*Local Clock=Lumenfen Atlas Local Measure: .*Daylight below is expressed in the Campaign Clock/, 'Astronomy must distinguish its campaign-clock daylight facts from the active local-clock display');
     assert.match(astronomyMenu[0].message, /Campaign Season and Daylight=.*sunrise near 7th Hour/, 'Astronomy daylight labels must use the active WorldPack Calendar clock convention');
 
-    const exactWorldPackDate = harness.dispatchCommand('!aa-time set --year 1 --period "First Flow" --day 2 --hour 9 --minute 0 --one-based-hour yes --confirm yes');
+    const exactWorldPackDate = harness.dispatchCommand('!aa-time set --year 1 --period "First Flow" --day 2 --hour 4 --minute 0 --one-based-hour yes --confirm yes');
     assert.match(exactWorldPackDate[0].message, /\{\{name=World Time Updated\}\}/, 'the Time-panel WorldPack date prompt must be accepted by the matching WorldPack Calendar parser');
-    assert.match(exactWorldPackDate[0].message, /Current=Chart Day, 2 First Flow, Year 1 at 9th Hour, 0 minutes/, 'the one-based WorldPack Hour prompt must preserve its displayed hour instead of adding one');
-    assert.equal(almanac.runtime.time.worldMinute, 1920, 'setting a visible WorldPack date must resolve against its active 24-hour Calendar definition');
+    assert.match(exactWorldPackDate[0].message, /Current=Chart Day, 2 First Flow, Year 1 at 4th Hour, 0 minutes/, 'the one-based WorldPack Hour prompt must preserve its displayed hour instead of adding one');
+    assert.equal(almanac.runtime.time.worldMinute, 1620, 'setting a visible WorldPack date must resolve against its active 24-hour Calendar definition');
+    const localAnnouncementPreview = harness.dispatchCommand('!aa-preview');
+    assert.match(localAnnouncementPreview[0].message, /Local Date=Chart Day, 2 First Flow, Year 1/, 'the normal player-facing announcement preview must use the active local calendar date when the Current Area has a distinct local projection');
+    assert.match(localAnnouncementPreview[0].message, /Local Time=Highsun/, 'the normal player-facing announcement preview must use the active local time rather than the Campaign Clock Morningtide value');
+    assert.match(localAnnouncementPreview[0].message, /Local Season=Spring/, 'the normal player-facing announcement preview must label local calendar season rather than silently mixing clock scopes');
+    const localAnnouncement = harness.dispatchCommand('!aa-announce');
+    assert.doesNotMatch(localAnnouncement[0].message, /^\/w /, 'a descriptive local-clock announcement must remain public when no technical fields are selected');
+    assert.match(localAnnouncement[0].message, /Local Time=Highsun/, 'the delivered announcement must match its reviewed local-time preview');
+    assert.doesNotMatch(localAnnouncement[0].message, /Campaign Clock|Ecoregion WorldPack Profile/, 'ordinary public announcements must not leak internal Campaign Clock or WorldPack profile provenance');
+    harness.dispatchCommand('!aa-announcement preset travel');
+    const localTravelAnnouncement = harness.dispatchCommand('!aa-preview');
+    assert.match(localTravelAnnouncement[0].message, /Climate=Lumenfen Atlas Seasonal Baseline \| Spring/, 'ordinary announcement Climate must use the readable seasonal session summary');
+    assert.doesNotMatch(localTravelAnnouncement[0].message, /Ecoregion WorldPack Profile|Seasonal Baseline \| Lumenfen Atlas Seasonal Baseline/, 'ordinary announcement Climate must not leak profile wiring or duplicate the profile name');
+    harness.dispatchCommand('!aa-announcement preset quick');
     const fallbackChange = harness.dispatchCommand('!aa-time profile wayfarer --confirm yes');
     assert.match(fallbackChange[0].message, /\{\{name=Campaign Fallback Calendar Updated\}\}/, 'changing a stored calendar while a WorldPack Calendar is active must report the limited fallback effect');
     assert.match(fallbackChange[0].message, /Lumenfen Atlas Reckoning remains the active WorldPack Calendar display/, 'changing a fallback must not imply that it silently replaced the current WorldPack Campaign Clock');
     assert.equal(almanac.config.profileId, 'wayfarer', 'the requested fallback calendar must still be saved for an unbound Current Area');
     const worldPackHourAdvance = harness.dispatchCommand('!aa-time advance --hours 1');
-    assert.match(worldPackHourAdvance[0].message, /Current=Chart Day, 2 First Flow, Year 1 at 10th Hour, 0 minutes/, 'an hour advance must use the active WorldPack Calendar hour length rather than the saved Wayfarer fallback hour length');
-    assert.equal(almanac.runtime.time.worldMinute, 1980, 'one Campaign Clock hour in this WorldPack must advance exactly 60 canonical minutes');
+    assert.match(worldPackHourAdvance[0].message, /Current=Chart Day, 2 First Flow, Year 1 at 5th Hour, 0 minutes/, 'an hour advance must use the active WorldPack Calendar hour length rather than the saved Wayfarer fallback hour length');
+    assert.equal(almanac.runtime.time.worldMinute, 1680, 'one Campaign Clock hour in this WorldPack must advance exactly 60 canonical minutes');
 
     const playerCurrentTime = harness.dispatchCommand('!time', 'player-1');
     assert.match(playerCurrentTime[0].message, /Campaign Time=.*Local Time \(Lumenfen Atlas Local Measure\)=/, 'a player-facing current-time request must distinguish the shared Campaign Clock from the active area local clock');
@@ -493,6 +506,11 @@ function assertWorldPackSessionClockAndWeatherBoundary() {
     assert.match(secondContextId, /^worldpack-climate:lumenfen-atlas:lumenfen-atlas-climate$/, 'new WorldPack Weather must retain its new profile-backed Climate identity');
     assert.notEqual(secondContextId, firstContextId, 'different installed WorldPack Climate profiles must never share a Weather continuity identity');
     assert.equal(harness.sandbox.GameAssist.AlmanacAssist.getScene().warnings.some(warning => warning.code === 'WEATHER_CLIMATE_REGION_DIFFERENCE'), false, 'new Weather generated for the active profile baseline must clear the retained-condition mismatch warning');
+    const weatherAnnouncement = harness.dispatchCommand('!aa-weather announce');
+    assert.doesNotMatch(weatherAnnouncement[0].message, /^\/w /, 'ordinary current-weather delivery must remain public');
+    assert.match(weatherAnnouncement[0].message, /Current Area=Reedmarket/, 'a public current-weather card must name the active area rather than detach its conditions from place');
+    assert.match(weatherAnnouncement[0].message, /Seasonal Climate=Lumenfen Atlas Seasonal Baseline \| Spring/, 'a public current-weather card must use the same readable seasonal Climate summary as Session Mode');
+    assert.doesNotMatch(weatherAnnouncement[0].message, /Ecoregion WorldPack Profile/, 'ordinary current-weather delivery must keep WorldPack profile wiring private');
 }
 
 /**
