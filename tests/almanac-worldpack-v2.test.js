@@ -427,6 +427,14 @@ function assertWorldPackFirstSessionOnboarding() {
     const travelPicker = harness.dispatchCommand('!aa-travel');
     assert.match(travelPicker[0].message, /World Context=<strong>Asterfall Concord<\/strong> — Full WorldPack \| Current Area: <strong>Harbor Stead<\/strong>/, 'Travel must keep the setting identity visible instead of showing only subordinate place names');
     assert.doesNotMatch(travelPicker[0].message, /Harbor Stead \(Harbor Stead\)/, 'Travel must not duplicate the active Location after its geographic hierarchy');
+    assert.match(travelPicker[0].message, /Beaconstairs.*Ember Coast.*Cliff signal tower.*\[Inspect\].*\[Plan Travel\]/, 'setting-scale Travel choices must identify a destination’s front and role and offer read-only inspection before creating a review');
+    const beforeTravelInspection = providerAndRuntimeDigest(almanac);
+    const travelInspection = harness.dispatchCommand('!aa-travel inspect --location asterfall-concord-location-1-2');
+    assert.match(travelInspection[0].message, /Candidate Destination=.*Beaconstairs.*does not change the Current Area/, 'Travel inspection must distinguish a candidate destination from the current session area');
+    assert.match(travelInspection[0].message, /Routes At This Destination=.*Harbor Stead.*Ember Coast Passage 1/, 'Travel inspection must expose destination context without pretending the party has already moved');
+    assert.match(travelInspection[0].message, /\[Review Travel Here\].*\[Back to Travel\]/, 'Travel inspection must retain a direct review-first handoff and a return to Travel');
+    assert.doesNotMatch(travelInspection[0].message, /\[Make Current Area\]/, 'Travel inspection must not foreground a direct area switch over the reviewed journey path');
+    assert.equal(providerAndRuntimeDigest(almanac), beforeTravelInspection, 'inspecting a Travel destination must not create a journey review or mutate provider/runtime state');
 
     const readyDashboard = harness.dispatchCommand('!aa-gm');
     assert.match(readyDashboard[0].message, /Session Mode=.*\[Area Brief\].*\[Current Scene\].*\[Plan Journey\].*\[Generate Weather\]/, 'the ready Session Mode dashboard must lead with an authored-area brief and concrete session controls after an opening is selected');

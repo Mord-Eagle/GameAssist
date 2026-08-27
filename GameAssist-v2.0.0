@@ -27431,7 +27431,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
          * setting-scale Location selector and Scene/Travel; it has no persistence
          * effects of its own.
          */
-        function showLocationBrief(msg, config, requested) {
+        function showLocationBrief(msg, config, requested, options = {}) {
             const requestedText = String(requested || '').trim();
             const location = /^(?:current|here)?$/i.test(requestedText)
                 ? worldRecordByReference(config.locations, config.activeLocationId)
@@ -27441,6 +27441,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Navigation', value: `${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
             ]);
             const isCurrent = location.id === config.activeLocationId;
+            const travelTarget = options.travelTarget === true && !isCurrent;
+            const backCommand = String(options.returnCommand || '!aa-location');
+            const backLabel = String(options.returnLabel || 'Back to Change Location');
+            const travelReviewCommand = String(options.travelReviewCommand || `!aa-travel plan --location ${location.id}`);
             const currentContext = currentWorldSessionContext(config);
             const packContext = worldPackSessionContext(config);
             const candidatePackId = worldReference(location.sourcePackId);
@@ -27479,7 +27483,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const localDestinations = allLocalDestinations.slice(0, routeLimit);
             const destinationRows = localDestinations.map(destination => {
                 const target = config.locations.find(candidate => candidate.id === destination.locationId);
-                return `${_sanitize(destination.name)} — ${_sanitize(target.name)}${destination.description ? ` | ${_sanitize(destination.description)}` : ''} ${GameAssist.createButton('Review Move', `!aa-location destination --id ${destination.id}`)}`;
+                const action = travelTarget ? '' : ` ${GameAssist.createButton('Review Move', `!aa-location destination --id ${destination.id}`)}`;
+                return `${_sanitize(destination.name)} — ${_sanitize(target.name)}${destination.description ? ` | ${_sanitize(destination.description)}` : ''}${action}`;
             });
             const allFrontPhenomena = config.phenomena.filter(phenomenon => {
                 const target = config.locations.find(candidate => candidate.id === phenomenon.locationId) || null;
@@ -27499,22 +27504,28 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 location.environmentName ? `Immediate setting: ${location.environmentName}` : null
             ].filter(Boolean).map(_sanitize).join(' | ');
             const actionButtons = [
-                isCurrent ? '' : locationActionButton(location, 'Make Current Area'),
+                !isCurrent && !travelTarget ? locationActionButton(location, 'Make Current Area') : '',
+                travelTarget ? GameAssist.createButton('Review Travel Here', travelReviewCommand) : '',
                 isCurrent ? GameAssist.createButton('Open Current Scene', '!aa-scene') : '',
                 isCurrent ? GameAssist.createButton('Generate Weather', '!aa-weather generate') : '',
                 isCurrent ? GameAssist.createButton('Plan Journey', '!aa-travel') : '',
-                GameAssist.createButton('Change Area', '!aa-location')
+                travelTarget ? '' : GameAssist.createButton('Change Area', '!aa-location')
             ].filter(Boolean).join(' ');
+            const candidateLabel = travelTarget ? 'Candidate Destination' : 'Candidate Area';
+            const routeLabel = isCurrent ? 'Routes From This Area' : (travelTarget ? 'Routes At This Destination' : 'Routes From This Area');
+            const routeInstruction = travelTarget
+                ? '<br><em>These routes leave this destination after arrival; Review Travel Here plans from the actual Current Area.</em>'
+                : (isCurrent ? '' : '<br><em>Make this the Current Area to review a journey from it.</em>');
             sendPanel(msg, `Almanac / Session Area / ${_sanitize(location.name)}`, [
                 { label: 'World Context', value: sessionWorldContextPanelValue(msg, currentContext) },
                 ...(showCandidateSetting ? [{ label: 'Candidate Setting', value: `<strong>${_sanitize(candidatePack.name)}</strong> — Full WorldPack; this brief is for one of its campaign-front Locations.` }] : []),
-                { label: isCurrent ? 'Current Area' : 'Candidate Area', value: `<strong>${_sanitize(location.name)}</strong>${isCurrent ? ' is the Current Area for this Session.' : ' has not been selected; this brief does not change the Current Area.'}` },
+                { label: isCurrent ? 'Current Area' : candidateLabel, value: `<strong>${_sanitize(location.name)}</strong>${isCurrent ? ' is the Current Area for this Session.' : ' has not been selected; this brief does not change the Current Area.'}` },
                 { label: 'Opening Cue', value: _sanitize(location.description || 'No opening cue is recorded for this Location yet.') },
                 { label: 'Landscape', value: landscape || 'No linked landscape details are recorded yet.' },
                 { label: 'Seasonal Climate', value: climate ? _sanitize(climateSeasonalContextSummary(climate)) : 'No Climate baseline is resolved for this Location.' },
-                { label: `Routes From This Area${allDirectRoutes.length > routeLimit ? ` (first ${routeLimit})` : (directRoutes.length ? '' : ' (none prepared)')}`, value: routeRows.length
-                    ? `${routeRows.join('<br>')}${allDirectRoutes.length > directRoutes.length ? `<br><em>${allDirectRoutes.length - directRoutes.length} more prepared route${allDirectRoutes.length - directRoutes.length === 1 ? '' : 's'}: open Travel to browse them.</em>` : ''}${isCurrent ? '' : '<br><em>Make this the Current Area to review a journey from it.</em>'}`
-                    : 'No prepared Route directly connects this Location. Use Travel to enter a reviewed direct estimate.' },
+                { label: `${routeLabel}${allDirectRoutes.length > routeLimit ? ` (first ${routeLimit})` : (directRoutes.length ? '' : ' (none prepared)')}`, value: routeRows.length
+                    ? `${routeRows.join('<br>')}${allDirectRoutes.length > directRoutes.length ? `<br><em>${allDirectRoutes.length - directRoutes.length} more prepared route${allDirectRoutes.length - directRoutes.length === 1 ? '' : 's'}: open Travel to browse them.</em>` : ''}${routeInstruction}`
+                    : `No prepared Route directly connects this Location.${travelTarget ? ' Review Travel Here to select an available route from the Current Area.' : ' Use Travel to enter a reviewed direct estimate.'}` },
                 { label: `Prepared In This Front${allLocalDestinations.length > routeLimit ? ` (first ${routeLimit})` : (localDestinations.length ? '' : ' (none elsewhere)')}`, value: destinationRows.length
                     ? `${destinationRows.join('<br>')}${allLocalDestinations.length > localDestinations.length ? `<br><em>${allLocalDestinations.length - localDestinations.length} more prepared destination${allLocalDestinations.length - localDestinations.length === 1 ? '' : 's'}: open Change Area to browse them.</em>` : ''}`
                     : 'No other Prepared Destination is recorded in this campaign front.' },
@@ -27523,7 +27534,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     : 'No prepared Phenomena are recorded in this campaign front.' },
                 { label: 'Next Step', value: actionButtons },
                 { label: 'Safety', value: 'Viewing an area is read-only. It does not move the party, advance fictional time, generate Weather, activate Phenomena, or alter other provider state.' },
-                { label: 'Navigation', value: `${GameAssist.createButton('Back to Change Location', '!aa-location')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                { label: 'Navigation', value: `${GameAssist.createButton(backLabel, backCommand)} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
 
@@ -29011,10 +29022,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const searchCommand = `!aa-travel search --query "?{Search destinations by name or tag|${searchExample}}"`;
             const compactLabel = (label, count) => count > categoryLimit ? `${label} (first ${categoryLimit})` : label;
             const locationRows = (locations, empty, limit = perPage) => locations.length
-                ? locations.slice(0, limit).map(location => `${_sanitize(location.name)} ${GameAssist.createButton('Plan Travel', `!aa-travel plan --location ${location.id}`)}`).join('<br>')
+                ? locations.slice(0, limit).map(location => {
+                    const summary = sessionLocationPickerSummary(config, location);
+                    return `<strong>${_sanitize(location.name)}</strong>${summary ? ` — ${_sanitize(summary)}` : ''} ${GameAssist.createButton('Inspect', `!aa-travel inspect --location ${location.id}`)} ${GameAssist.createButton('Plan Travel', `!aa-travel plan --location ${location.id}`)}`;
+                }).join('<br>')
                 : empty;
             const preparedRows = (entries, empty, limit = perPage) => entries.length
-                ? entries.slice(0, limit).map(({ destination, location }) => `${_sanitize(destination.name)} &mdash; ${_sanitize(location.name)} ${GameAssist.createButton('Plan Travel', `!aa-travel plan --destination ${destination.id}`)}`).join('<br>')
+                ? entries.slice(0, limit).map(({ destination, location }) => {
+                    const summary = sessionLocationPickerSummary(config, location);
+                    return `<strong>${_sanitize(destination.name)}</strong> &mdash; ${_sanitize(location.name)}${summary ? ` (${_sanitize(summary)})` : ''} ${GameAssist.createButton('Inspect', `!aa-travel inspect --destination ${destination.id}`)} ${GameAssist.createButton('Plan Travel', `!aa-travel plan --destination ${destination.id}`)}`;
+                }).join('<br>')
                 : empty;
             const pageNumber = Math.max(0, Math.floor(Number(page) || 0));
             const pageControls = (pageCount, safePage, commandForPage, compactCommand) => [
@@ -29109,6 +29126,26 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (/^all\b/i.test(body)) return showTravelDestinationPicker(msg, config, { view: 'all', page: args.page });
             if (/^prepared\b/i.test(body)) return showTravelDestinationPicker(msg, config, { view: 'prepared', page: args.page });
             if (/^search\b/i.test(body)) return showTravelDestinationPicker(msg, config, { view: 'search', search: args.query || args.value || args.term || '', page: args.page });
+            if (/^inspect\b/i.test(body)) {
+                if (args.destination === undefined && args.location === undefined && args.id === undefined && args.name === undefined && args.to === undefined) {
+                    return showTravelDestinationPicker(msg, config);
+                }
+                const target = travelTargetFromArgs(config, args);
+                if (!target.ok) return sendPanel(msg, 'Almanac / Travel Needs Attention', [
+                    { label: 'Destination', value: _sanitize(target.message) },
+                    { label: 'Changes', value: 'None.' },
+                    { label: 'Navigation', value: `${GameAssist.createButton('Back to Travel', '!aa-travel')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                ]);
+                const travelReviewCommand = target.destination
+                    ? `!aa-travel plan --destination ${target.destination.id}`
+                    : `!aa-travel plan --location ${target.location.id}`;
+                return showLocationBrief(msg, config, target.location.id, {
+                    travelTarget: true,
+                    travelReviewCommand,
+                    returnLabel: 'Back to Travel',
+                    returnCommand: '!aa-travel'
+                });
+            }
             if (/^plan\b/i.test(body)) return prepareTravel(msg, config, args);
             if (/^start\b/i.test(body)) return confirmTravelStart(msg, config, args.grant);
             if (/^continue\b/i.test(body)) return prepareTravelSegment(msg, config, args);
@@ -38185,7 +38222,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<p>Open <code>!aa-temporal</code> to manage the immutable 1:1 zero-offset Prime Context and bounded owner-authored regional or planar contexts. Each context stores only a local-to-canonical rate and epoch offset. A transition preview shows departure and destination local projections, the one canonical elapsed-minute amount, reconciliation, expiry, and stale checks. Confirmation advances only the canonical fictional minute, selects the destination context, retains bounded reconciliation history, and publishes a committed event. It never reverses or writes Rest, effects, NPC history, combat, resources, providers, Location, or real-world records.</p>',
                 '<h2>Prepared Destinations and Travel</h2>',
                 '<p>A Prepared Destination points to one owner-authored Location, whose Region, Geography, Ecoregion, Biome, Climate reference, and default local context are resolved through the normal Location hierarchy. Choose it from <code>!aa-location</code> to inspect the resulting context and confirm the location switch. The review changes neither fictional time nor Weather, Environment overrides, Astronomy, or other provider-owned current state.</p>',
-                '<p>Open <code>!aa-travel</code> (or <code>!travel</code>) to plan from the current Location. A Travel Route stores two Locations, a GM-entered distance, an owner-authored terrain note, and a Cautious, Standard, or Swift default pace. Review a route or an explicit direct distance, then start the journey. Starting changes nothing. Every one-hour, four-hour, custom-hour, or until-dusk segment is previewed; only its confirmation advances fictional time. Arrival changes the active Location only after the accepted final segment. Canceling a journey never moves the party or reverses already confirmed time.</p>',
+                '<p>Open <code>!aa-travel</code> (or <code>!travel</code>) to plan from the current Location. Each bounded destination selector provides an <strong>Inspect</strong> route that opens the candidate’s read-only area brief and then returns to Travel, so a GM can compare its front, climate, routes, prepared contexts, and Phenomena before creating a travel review. A Travel Route stores two Locations, a GM-entered distance, an owner-authored terrain note, and a Cautious, Standard, or Swift default pace. Review a route or an explicit direct distance, then start the journey. Starting changes nothing. Every one-hour, four-hour, custom-hour, or until-dusk segment is previewed; only its confirmation advances fictional time. Arrival changes the active Location only after the accepted final segment. Canceling a journey never moves the party or reverses already confirmed time.</p>',
                 '<h2>Phenomena</h2>',
                 '<p>Open <code>!aa-phenomena</code> (or <code>!phenomena</code>) to manage generic owner-authored scene overlays. A Phenomenon may be scoped to one Location or apply everywhere, and may provide descriptive visibility, terrain, and travel notes with a severity and optional fictional-time duration. Review before activation or deactivation; activation never advances time or changes Weather, Environment, Astronomy, Climate, Travel, or other provider-owned state. Elapsed duration records stay visible until the GM explicitly cleans them up. Current World, Scene, and Travel present applicable overlays as separate Phenomena evidence.</p>',
                 '<h2>Calendars</h2>',
