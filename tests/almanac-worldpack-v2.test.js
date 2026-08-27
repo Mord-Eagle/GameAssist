@@ -99,6 +99,31 @@ function makeV2Fixture(version = 1) {
     };
 }
 
+function makeMaxRouteLegFixture() {
+    const pack = makeV2Fixture();
+    const locationIds = ['fixture-a', 'fixture-b', 'fixture-c'];
+    for (let index = 3; index <= 32; index += 1) {
+        const suffix = String(index).padStart(3, '0');
+        const id = `fixture-leg-location-${suffix}`;
+        locationIds.push(id);
+        pack.world.locations.push({
+            id, name: `Fixture Leg Place ${suffix}`, description: `Fixture route-leg place ${suffix}.`, tags: ['fixture', 'route-leg'],
+            regionId: 'fixture-region', ecoregionId: 'fixture-ecoregion', geographyId: null, biomeId: null,
+            climateProfileId: 'fixture-climate', environmentName: 'Fixture ground', environmentGround: 'Firm', environmentWater: 'Spring',
+            modifiers: { temperatureBias: 0, windBias: 0, visibility: '' }
+        });
+    }
+    const legs = locationIds.slice(0, -1).map((fromLocationId, index) => ({
+        id: `fixture-max-leg-route-leg-${index + 1}`, fromLocationId, toLocationId: locationIds[index + 1], distanceMiles: 1,
+        terrainNote: 'Fixture leg.', travelProfileId: 'fixture-travel', description: '', tags: ['fixture']
+    }));
+    pack.world.routes.push({
+        id: 'fixture-max-leg-route', name: 'Fixture Thirty-Two Leg Route', description: 'Fixture route at the supported Route Leg bound.', tags: ['fixture', 'route-leg'],
+        fromLocationId: locationIds[0], toLocationId: locationIds.at(-1), distanceMiles: legs.length, defaultPace: 'standard', travelProfileId: 'fixture-travel', terrainNote: 'Fixture route.', legs
+    });
+    return pack;
+}
+
 function makeEmptyPaletteFixture(version = 1) {
     const pack = makeV2Fixture(version);
     Object.keys(pack.palette).forEach(collection => { pack.palette[collection] = []; });
@@ -706,6 +731,22 @@ function assertRouteLegEditor() {
     assert.equal(route.distanceMiles, 10, 'clear must preserve the ordinary route estimate');
 }
 
+function assertRouteLegCatalogPaging() {
+    const harness = createHarness();
+    installFixture(harness, makeMaxRouteLegFixture());
+    const last = harness.dispatchCommand('!aa-world route legs --route fixture-max-leg-route --page 7');
+    assert.match(last[0].message, /Route Legs 8 of 8/, 'Route Leg editor must page a route at the full 32-leg supported bound with its richer compact-editor density');
+    assert.match(last[0].message, /Leg 32:/, 'Route Leg editor must retain access to the final explicit leg');
+    assert.ok((last[0].message.match(/\[Travel Profile\]/g) || []).length <= 4, 'Route Leg editor must retain its richer direct-action page bound at 32 legs');
+    assert.ok(last[0].message.length < 8000, 'Route Leg final page must remain compact at the supported 32-leg bound');
+    const routeDetail = harness.dispatchCommand('!aa-world edit route --id fixture-max-leg-route --layer detailed');
+    assert.match(routeDetail[0].message, /28 additional explicit legs are available in the compact Route Leg editor/, 'Route editor must summarize rather than dump every Route Leg into its detailed card');
+    assert.ok(routeDetail[0].message.length < 6000, 'Route detailed editor must remain compact at the supported 32-leg bound');
+    const viaLast = harness.dispatchCommand('!aa-world route leg choose via --route fixture-max-leg-route --id fixture-max-leg-route-leg-1 --page 2');
+    assert.match(viaLast[0].message, /Intermediate Location 3 of 3/, 'Route Leg intermediate-location chooser must page every eligible route location at the full leg fixture scale');
+    assert.ok((viaLast[0].message.match(/\[Split Through Here\]/g) || []).length <= 12, 'Route Leg intermediate-location chooser must retain the direct-action page bound');
+}
+
 function assertRouteLegActiveJourneyRefusal() {
     const harness = createHarness();
     installFixture(harness, makeV2Fixture());
@@ -788,6 +829,7 @@ function run() {
     assertPaletteCatalogScaleAndBindingPicker();
     assertLargeScaleSessionSelectors();
     assertRouteLegEditor();
+    assertRouteLegCatalogPaging();
     assertRouteLegActiveJourneyRefusal();
     assertEmptyPaletteBindingDigestSafety();
     assertV2RefusalAndCopyRemapping();

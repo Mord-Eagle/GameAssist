@@ -514,6 +514,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             worldDestinationLimit: 600,
             worldRouteLimit: 1400,
             worldRouteLegLimit: 32,
+            // Route Leg rows contain several guarded edit/split actions. Keep this
+            // richer editor below the ordinary twelve-row catalog density so a
+            // max-leg route still fits one practical Roll20 chat card.
+            worldRouteLegEditorDisplayLimit: 4,
             maximumTravelMiles: 1000000,
             maximumTravelSegmentHours: 168,
             travelGrantLimit: 24,
@@ -26796,8 +26800,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 fields.push({ label: 'Endpoints', value: `${relation('Set Origin', 'fromLocationId', config.locations, record.fromLocationId)} ${relation('Set Destination', 'toLocationId', config.locations, record.toLocationId)}` });
                 fields.push({ label: 'Journey Estimate', value: `${formatTravelMiles(record.distanceMiles)} ${query('Distance Miles', 'distanceMiles', record.distanceMiles || 'None')} ${_sanitize(travelPace(record.defaultPace).name)} ${GameAssist.createButton('Set Pace', `!aa-world set route --id ${record.id} --field defaultPace --value "${travelPaceQuery('Default travel pace', record.defaultPace)}"`)}` });
                 fields.push({ label: 'Route Context', value: `${_sanitize(record.terrainNote || 'No route terrain note.')} ${query('Terrain Note', 'terrainNote', record.terrainNote || 'None')}` });
-                if (Array.isArray(record.legs) && record.legs.length) fields.push({ label: 'Route Legs', value: `${record.legs.map(leg => `${_sanitize(worldReferenceLabel(config.locations, leg.fromLocationId))} &rarr; ${_sanitize(worldReferenceLabel(config.locations, leg.toLocationId))} | ${formatTravelMiles(leg.distanceMiles)}${leg.terrainNote ? ` | ${_sanitize(leg.terrainNote)}` : ''}`).join('<br>')}<br>${GameAssist.createButton('Edit Route Legs', `!aa-world route legs --route ${record.id}`)}` });
-                else fields.push({ label: 'Route Legs', value: `No explicit legs. ${GameAssist.createButton('Build Route Legs', `!aa-world route legs --route ${record.id}`)}` });
+                if (Array.isArray(record.legs) && record.legs.length) {
+                    const legPreviewLimit = POLICY.almanac.worldRouteLegEditorDisplayLimit;
+                    const legPreview = record.legs.slice(0, legPreviewLimit).map(leg => `${_sanitize(worldReferenceLabel(config.locations, leg.fromLocationId))} &rarr; ${_sanitize(worldReferenceLabel(config.locations, leg.toLocationId))} | ${formatTravelMiles(leg.distanceMiles)}${leg.terrainNote ? ` | ${_sanitize(leg.terrainNote)}` : ''}`);
+                    const remainingLegs = record.legs.length - legPreview.length;
+                    fields.push({ label: 'Route Legs', value: `${legPreview.join('<br>')}${remainingLegs ? `<br>${remainingLegs} additional explicit leg${remainingLegs === 1 ? '' : 's'} are available in the compact Route Leg editor.` : ''}<br>${GameAssist.createButton('Edit Route Legs', `!aa-world route legs --route ${record.id}`)}` });
+                } else fields.push({ label: 'Route Legs', value: `No explicit legs. ${GameAssist.createButton('Build Route Legs', `!aa-world route legs --route ${record.id}`)}` });
             } else if (type === 'phenomenon') {
                 fields.push({ label: 'Scope & Category', value: `${worldReferenceLabel(config.locations, record.locationId, 'Everywhere')} ${relation('Set Location Scope', 'locationId', config.locations, record.locationId)} ${query('Category', 'category', record.category || 'General')}` });
                 fields.push({ label: 'Overlay', value: `${query('Visibility Note', 'visibilityNote', record.visibilityNote || 'None')} ${query('Terrain Note', 'terrainNote', record.terrainNote || 'None')} ${query('Travel Note', 'travelNote', record.travelNote || 'None')}` });
@@ -27337,7 +27345,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Navigation', value: `${GameAssist.createButton('Routes', '!aa-world routes')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
             ]);
             const legs = route.legs || [];
-            const perPage = POLICY.almanac.worldListDisplayLimit;
+            const perPage = POLICY.almanac.worldRouteLegEditorDisplayLimit;
             const pageCount = Math.max(1, Math.ceil(legs.length / perPage));
             const requestedPage = Math.max(0, Math.floor(Number(page) || 0));
             const safePage = Math.min(requestedPage, pageCount - 1);

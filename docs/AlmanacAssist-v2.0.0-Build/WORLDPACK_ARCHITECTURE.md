@@ -385,10 +385,13 @@ Travel Profile, or Route Leg split-through Location opens a separate 12-entry
 name/tag-searchable chooser. It does not embed a partial or setting-scale option
 list inside one Roll20 query button. The selection action returns through the
 ordinary guarded setter/split path, so hierarchy, route-leg continuity, ownership,
-and whole-record validation remain authoritative. Palette roots summarize each
-typed collection, and each collection/default binding/cross-palette reference has
-the same paged chooser pattern. Each reusable palette collection is independently
-bounded at 160 records; that is a package-state limit, not a chat-card size target.
+and whole-record validation remain authoritative. Because each Route Leg row itself
+contains several guarded edit and split actions, its rich editor uses a stricter
+four-leg page; a 32-leg route therefore stays compact while retaining complete
+Previous/Next access. Palette roots summarize each typed collection, and each
+collection/default binding/cross-palette reference has the same paged chooser
+pattern. Each reusable palette collection is independently bounded at 160 records;
+that is a package-state limit, not a chat-card size target.
 
 The resolver and UI should use indexes keyed by stable ID, Region ancestry,
 Ecoregion Instance, and route endpoint. These indexes are derived in memory from
