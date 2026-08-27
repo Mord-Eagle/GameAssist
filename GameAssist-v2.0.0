@@ -26046,7 +26046,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Location', value: scene.location ? _sanitize(scene.location.name) : missingLocationMessage },
                 ...(scene.travel ? [{ label: 'Journey', value: `${_sanitize(scene.travel.destinationName)} via ${_sanitize(scene.travel.routeName)} | ${formatTravelMiles(scene.travel.remainingMiles)} remaining ${GameAssist.createButton('Open Travel', '!aa-travel')}` }] : []),
                 ...technicalFields,
-                { label: 'Navigation', value: `${isGm && !technical ? GameAssist.createButton('Scene Details', '!aa-scene technical') : ''} ${GameAssist.createButton('Back', '!aa-gm')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}`.trim() }
+                { label: 'Navigation', value: `${isGm && scene.location ? GameAssist.createButton('Area Brief', `!aa-location view --id ${scene.location.id}`) : ''} ${isGm && !technical ? GameAssist.createButton('Scene Details', '!aa-scene technical') : ''} ${GameAssist.createButton('Back', '!aa-gm')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}`.trim() }
             ]);
         }
 
@@ -27425,6 +27425,108 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return { byId, current, favorites, recents, nearby, prepared };
         }
 
+        /**
+         * showLocationBrief - Let a GM inspect a candidate session area before
+         * changing Current Area. This is the guided-play bridge between a bounded
+         * setting-scale Location selector and Scene/Travel; it has no persistence
+         * effects of its own.
+         */
+        function showLocationBrief(msg, config, requested) {
+            const requestedText = String(requested || '').trim();
+            const location = /^(?:current|here)?$/i.test(requestedText)
+                ? worldRecordByReference(config.locations, config.activeLocationId)
+                : worldRecordByReference(config.locations, requestedText);
+            if (!location) return sendPanel(msg, 'Almanac / Session Area Needs Attention', [
+                { label: 'Location', value: requestedText ? 'That Location was not found or its name is ambiguous.' : 'Choose a Current Area or use a named Location Details button before opening an area brief.' },
+                { label: 'Navigation', value: `${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+            const isCurrent = location.id === config.activeLocationId;
+            const currentContext = currentWorldSessionContext(config);
+            const packContext = worldPackSessionContext(config);
+            const candidatePackId = worldReference(location.sourcePackId);
+            const candidatePack = candidatePackId ? packContext.installed.find(pack => pack.id === candidatePackId) || null : null;
+            const showCandidateSetting = Boolean(candidatePack && currentContext.pack?.id !== candidatePack.id);
+            const place = worldLocationContextAt(config, location);
+            const candidateWorld = { ...config, activeLocationId: location.id };
+            const climateConfig = normalizeClimateConfig(modState.config.climate, { persist: false });
+            const seasonContext = nonMutatingClimateSeasonContext(climateConfig, candidateWorld);
+            const climate = effectiveClimateContext({
+                config: climateConfig,
+                worldConfig: candidateWorld,
+                season: seasonContext.season,
+                seasonAuthority: seasonContext.seasonAuthority
+            }).baseline;
+            const routeLimit = POLICY.almanac.worldSessionCategoryLimit;
+            const allDirectRoutes = config.routes.filter(route => route
+                && (route.fromLocationId === location.id || route.toLocationId === location.id));
+            const directRoutes = allDirectRoutes.slice(0, routeLimit);
+            const routeRows = directRoutes.map(route => {
+                const otherId = route.fromLocationId === location.id ? route.toLocationId : route.fromLocationId;
+                const other = config.locations.find(candidate => candidate.id === otherId) || null;
+                const profile = worldPackTravelProfileForRoute(config, route).profile;
+                const basePace = travelPace(route.defaultPace || profile?.defaultPace);
+                const pace = worldPackTravelPace(basePace, profile);
+                const review = isCurrent && other
+                    ? ` ${GameAssist.createButton('Review Journey', `!aa-travel plan --location ${other.id} --route ${route.id}`)}`
+                    : '';
+                return `${_sanitize(other?.name || 'Unavailable Location')} — ${_sanitize(route.name)} | ${formatTravelMiles(route.distanceMiles)} | ${_sanitize(basePace.name)} pace (${pace.milesPerHour} miles per fictional hour)${review}`;
+            });
+            const allLocalDestinations = config.destinations.filter(destination => {
+                const target = config.locations.find(candidate => candidate.id === destination.locationId) || null;
+                if (!target || target.id === location.id) return false;
+                return Boolean(place.region?.id && worldLocationContextAt(config, target).region?.id === place.region.id);
+            });
+            const localDestinations = allLocalDestinations.slice(0, routeLimit);
+            const destinationRows = localDestinations.map(destination => {
+                const target = config.locations.find(candidate => candidate.id === destination.locationId);
+                return `${_sanitize(destination.name)} — ${_sanitize(target.name)}${destination.description ? ` | ${_sanitize(destination.description)}` : ''} ${GameAssist.createButton('Review Move', `!aa-location destination --id ${destination.id}`)}`;
+            });
+            const allFrontPhenomena = config.phenomena.filter(phenomenon => {
+                const target = config.locations.find(candidate => candidate.id === phenomenon.locationId) || null;
+                return Boolean(target && (target.id === location.id
+                    || (place.region?.id && worldLocationContextAt(config, target).region?.id === place.region.id)));
+            });
+            const frontPhenomena = allFrontPhenomena.slice(0, routeLimit);
+            const phenomenonRows = frontPhenomena.map(phenomenon => {
+                const target = config.locations.find(candidate => candidate.id === phenomenon.locationId);
+                return `${_sanitize(phenomenon.name)} — ${_sanitize(target?.name || 'This front')} | ${_sanitize(phenomenon.category)} | Severity ${phenomenon.severity}/5 ${GameAssist.createButton('Review Activate', `!aa-phenomena activate --id ${phenomenon.id}`)}`;
+            });
+            const landscape = [
+                place.region?.name ? `Campaign Front: ${place.region.name}` : null,
+                place.geography?.terrain ? `Terrain: ${place.geography.terrain}` : null,
+                place.geography?.hydrology ? `Water: ${place.geography.hydrology}` : null,
+                place.biome?.vegetation ? `Biome: ${place.biome.vegetation}` : null,
+                location.environmentName ? `Immediate setting: ${location.environmentName}` : null
+            ].filter(Boolean).map(_sanitize).join(' | ');
+            const actionButtons = [
+                isCurrent ? '' : locationActionButton(location, 'Make Current Area'),
+                isCurrent ? GameAssist.createButton('Open Current Scene', '!aa-scene') : '',
+                isCurrent ? GameAssist.createButton('Generate Weather', '!aa-weather generate') : '',
+                isCurrent ? GameAssist.createButton('Plan Journey', '!aa-travel') : '',
+                GameAssist.createButton('Change Area', '!aa-location')
+            ].filter(Boolean).join(' ');
+            sendPanel(msg, `Almanac / Session Area / ${_sanitize(location.name)}`, [
+                { label: 'World Context', value: sessionWorldContextPanelValue(msg, currentContext) },
+                ...(showCandidateSetting ? [{ label: 'Candidate Setting', value: `<strong>${_sanitize(candidatePack.name)}</strong> — Full WorldPack; this brief is for one of its campaign-front Locations.` }] : []),
+                { label: isCurrent ? 'Current Area' : 'Candidate Area', value: `<strong>${_sanitize(location.name)}</strong>${isCurrent ? ' is the Current Area for this Session.' : ' has not been selected; this brief does not change the Current Area.'}` },
+                { label: 'Opening Cue', value: _sanitize(location.description || 'No opening cue is recorded for this Location yet.') },
+                { label: 'Landscape', value: landscape || 'No linked landscape details are recorded yet.' },
+                { label: 'Seasonal Climate', value: climate ? _sanitize(climateSeasonalContextSummary(climate)) : 'No Climate baseline is resolved for this Location.' },
+                { label: `Routes From This Area${allDirectRoutes.length > routeLimit ? ` (first ${routeLimit})` : (directRoutes.length ? '' : ' (none prepared)')}`, value: routeRows.length
+                    ? `${routeRows.join('<br>')}${allDirectRoutes.length > directRoutes.length ? `<br><em>${allDirectRoutes.length - directRoutes.length} more prepared route${allDirectRoutes.length - directRoutes.length === 1 ? '' : 's'}: open Travel to browse them.</em>` : ''}${isCurrent ? '' : '<br><em>Make this the Current Area to review a journey from it.</em>'}`
+                    : 'No prepared Route directly connects this Location. Use Travel to enter a reviewed direct estimate.' },
+                { label: `Prepared In This Front${allLocalDestinations.length > routeLimit ? ` (first ${routeLimit})` : (localDestinations.length ? '' : ' (none elsewhere)')}`, value: destinationRows.length
+                    ? `${destinationRows.join('<br>')}${allLocalDestinations.length > localDestinations.length ? `<br><em>${allLocalDestinations.length - localDestinations.length} more prepared destination${allLocalDestinations.length - localDestinations.length === 1 ? '' : 's'}: open Change Area to browse them.</em>` : ''}`
+                    : 'No other Prepared Destination is recorded in this campaign front.' },
+                { label: `Prepared Phenomena${allFrontPhenomena.length > routeLimit ? ` (first ${routeLimit})` : (frontPhenomena.length ? '' : ' (none in this front)')}`, value: phenomenonRows.length
+                    ? `${phenomenonRows.join('<br>')}${allFrontPhenomena.length > frontPhenomena.length ? `<br><em>${allFrontPhenomena.length - frontPhenomena.length} more prepared Phenomena: open Phenomena to browse them.</em>` : ''}<br><em>These are available definitions, not active scene effects.</em>`
+                    : 'No prepared Phenomena are recorded in this campaign front.' },
+                { label: 'Next Step', value: actionButtons },
+                { label: 'Safety', value: 'Viewing an area is read-only. It does not move the party, advance fictional time, generate Weather, activate Phenomena, or alter other provider state.' },
+                { label: 'Navigation', value: `${GameAssist.createButton('Back to Change Location', '!aa-location')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
         function showLocationPicker(msg, { search = '', allPage = null } = {}) {
             if (!requireGm(msg)) return;
             const config = worldConfigForPanel(msg);
@@ -27441,12 +27543,24 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const featured = new Set([current?.id, ...index.favorites.map(item => item.id), ...index.recents.map(item => item.id), ...index.nearby.map(item => item.id)].filter(Boolean));
             const defaultAll = config.locations.filter(location => !featured.has(location.id));
             const compactLabel = (label, count) => count > compactLimit ? `${label} (first ${compactLimit})` : label;
+            const locationDetailsButton = location => GameAssist.createButton('Details', `!aa-location view --id ${location.id}`);
+            const locationRowValue = (location, includeFavorite) => {
+                const summary = sessionLocationPickerSummary(config, location);
+                const move = location.id === current?.id ? '' : ` ${locationActionButton(location)}`;
+                const favorite = includeFavorite
+                    ? ` ${GameAssist.createButton(config.favoriteLocationIds.includes(location.id) ? 'Unfavorite' : 'Favorite', `!aa-location favorite --id ${location.id}`)}`
+                    : '';
+                return `<strong>${_sanitize(location.name)}</strong>${summary ? ` — ${_sanitize(summary)}` : ''} ${locationDetailsButton(location)}${move}${favorite}`;
+            };
             const row = (label, locations, empty, limit = compactLimit, compact = true, includeFavorite = true) => ({
                 label: compact ? compactLabel(label, locations.length) : label,
-                value: locations.length ? locations.slice(0, limit).map(location => `${_sanitize(location.name)} ${locationActionButton(location)}${includeFavorite ? ` ${GameAssist.createButton(config.favoriteLocationIds.includes(location.id) ? 'Unfavorite' : 'Favorite', `!aa-location favorite --id ${location.id}`)}` : ''}`).join('<br>') : empty
+                value: locations.length ? locations.slice(0, limit).map(location => locationRowValue(location, includeFavorite)).join('<br>') : empty
             });
             const preparedRow = (entries = index.prepared, limit = compactLimit) => entries.length
-                ? entries.slice(0, limit).map(({ destination, location }) => `${_sanitize(destination.name)} &mdash; ${_sanitize(location.name)} ${GameAssist.createButton('Review Move', `!aa-location destination --id ${destination.id}`)}`).join('<br>')
+                ? entries.slice(0, limit).map(({ destination, location }) => {
+                    const summary = sessionLocationPickerSummary(config, location);
+                    return `<strong>${_sanitize(destination.name)}</strong> &mdash; ${_sanitize(location.name)}${summary ? ` (${_sanitize(summary)})` : ''} ${locationDetailsButton(location)} ${GameAssist.createButton('Review Move', `!aa-location destination --id ${destination.id}`)}`;
+                }).join('<br>')
                 : 'No prepared destinations yet. Prepare a Location bundle in Worldbuilding for fast, reviewed switching.';
             const hasNoLocations = config.locations.length === 0;
             const fields = [
@@ -28042,7 +28156,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Current Area', value: `<strong>${_sanitize(location.name)}</strong> is now the Current Area.` },
                 { label: 'Ready to Begin', value: 'Your first named Location is enough to begin a Scene. Region, Geography, Ecoregion, map, and local-detail fields are optional refinements, not a required setup checklist.' },
                 { label: 'Climate for Now', value: climateText },
-                { label: 'Next Step', value: `${GameAssist.createButton('Open Current Scene', '!aa-scene')} ${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Adjust Climate', '!aa-climate')} ${GameAssist.createButton('Add Another Location for Travel', '!aa-world add location --name "?{Location name|Next Location}"')} ${GameAssist.createButton('Add Details to This Location', `!aa-world edit location --id ${location.id}`)} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                { label: 'Next Step', value: `${GameAssist.createButton('Open Area Brief', `!aa-location view --id ${location.id}`)} ${GameAssist.createButton('Open Current Scene', '!aa-scene')} ${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Adjust Climate', '!aa-climate')} ${GameAssist.createButton('Add Another Location for Travel', '!aa-world add location --name "?{Location name|Next Location}"')} ${GameAssist.createButton('Add Details to This Location', `!aa-world edit location --id ${location.id}`)} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
 
@@ -28351,7 +28465,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     ? `${_sanitize(climateSeasonalContextSummary(nextClimate.baseline))}.`
                     : 'No Climate baseline is assigned to this Location; use ClimateAlmanac to choose a fallback region.' },
                 { label: 'Provider Boundaries', value: 'Weather and other current providers were not replaced by this location switch. Existing Weather remains retained until the GM generates or sets a new condition.' },
-                { label: 'Next Step', value: `${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Climate', '!aa-climate')} ${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                { label: 'Next Step', value: `${GameAssist.createButton('Open Area Brief', `!aa-location view --id ${target.id}`)} ${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Climate', '!aa-climate')} ${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
 
@@ -28366,6 +28480,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const config = worldConfigForPanel(msg);
             if (!config) return;
             if (!worldRuntimeForPanel(msg, 'Almanac / Change Location Needs Attention')) return;
+            if (/^(?:view|details|inspect)\b/i.test(body)) return showLocationBrief(msg, config, args.id || args.name);
             if (/^destination\s+confirm\b/i.test(body)) return confirmPreparedDestination(msg, config, args.grant);
             if (/^destination\b/i.test(body)) return showPreparedDestinationReview(msg, config, args.id || args.name);
             const location = worldRecordByReference(config.locations, args.id || args.name);
@@ -28392,7 +28507,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         ? `${_sanitize(climateSeasonalContextSummary(nextClimate.baseline))}.`
                         : 'No Climate baseline is assigned to this Location; the campaign fallback remains available in ClimateAlmanac.' },
                     { label: 'Provider Boundaries', value: 'Weather and other current providers remain separately owned. Existing Weather is retained until the GM generates or sets a new condition.' },
-                    { label: 'Next Step', value: `${GameAssist.createButton('Open Current Scene', '!aa-scene')} ${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('View Climate', '!aa-climate')} ${GameAssist.createButton('Plan Journey', '!aa-travel')} ${GameAssist.createButton('Change Area', '!aa-location')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                    { label: 'Next Step', value: `${GameAssist.createButton('Open Area Brief', `!aa-location view --id ${location.id}`)} ${GameAssist.createButton('Open Current Scene', '!aa-scene')} ${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('View Climate', '!aa-climate')} ${GameAssist.createButton('Plan Journey', '!aa-travel')} ${GameAssist.createButton('Change Area', '!aa-location')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
                 ]);
             }
             if (/^favorite\b/i.test(body)) {
@@ -28819,7 +28934,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     { label: 'Arrival', value: `${_sanitize(journey.destinationName)} is now the active Location.` },
                     { label: 'Campaign Clock', value: `${_sanitize(displayMoment(timeResult.previous))} &rarr; ${_sanitize(displayMoment(timeResult.current))}` },
                     { label: 'Provider Boundaries', value: 'The Location changed on arrival. Weather and other provider-owned current evidence remain separately owned.' },
-                    { label: 'Next Step', value: `${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                    { label: 'Next Step', value: `${GameAssist.createButton('Open Area Brief', `!aa-location view --id ${journey.destinationLocationId}`)} ${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
                 ]);
             }
             return showTravelJourney(msg, config, activeTravelForWorld(config));
@@ -32145,7 +32260,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     const description = entry.location.description || entry.destination?.description || 'A ready-to-use campaign opening.';
                     return {
                         label: `${_sanitize(regionName)} — ${_sanitize(entry.location.name)}`,
-                        value: `${_sanitize(description)} ${GameAssist.createButton('Start Here', `!aa-location use --id ${entry.location.id}`)}`
+                        value: `${_sanitize(description)} ${GameAssist.createButton('Explore Area', `!aa-location view --id ${entry.location.id}`)} ${GameAssist.createButton('Start Here', `!aa-location use --id ${entry.location.id}`)}`
                     };
                 }),
                 ...(pageControls ? [{ label: 'More Campaign Fronts', value: pageControls }] : []),
@@ -33216,7 +33331,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ? (noLocations
                     ? `${GameAssist.createButton(activeWorld ? 'Create First Location' : 'Create a Location', '!aa-world add location --name "?{Location name|Starting Location}"')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')}`
                     : `${chooseAreaAction} ${GameAssist.createButton('Choose Any Location', '!aa-location')} ${GameAssist.createButton('Open Current Scene', '!aa-scene')}`)
-                : `${GameAssist.createButton('Current Scene', '!aa-scene')} ${scene.travel ? GameAssist.createButton('Open Journey', '!aa-travel') : GameAssist.createButton('Plan Journey', '!aa-travel')} ${scene.travel ? '' : GameAssist.createButton('Change Area', '!aa-location')} ${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')}`.trim();
+                : `${GameAssist.createButton('Area Brief', `!aa-location view --id ${scene.location.id}`)} ${GameAssist.createButton('Current Scene', '!aa-scene')} ${scene.travel ? GameAssist.createButton('Open Journey', '!aa-travel') : GameAssist.createButton('Plan Journey', '!aa-travel')} ${scene.travel ? '' : GameAssist.createButton('Change Area', '!aa-location')} ${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')}`.trim();
             sendPanel(msg, 'Almanac Home — Current World', [
                 { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
                 { label: 'Current World', value: sceneOverview(scene) },
@@ -36487,14 +36602,44 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return matches.length === 1 ? matches[0] : null;
         }
 
-        function worldLocationContext(config) {
-            const location = config?.locations?.find(record => record.id === config.activeLocationId) || null;
+        /**
+         * worldLocationContextAt - Resolve one named Location's inherited
+         * geographic context without changing the campaign Current Area. Session
+         * browsing uses this same read-only hierarchy so a setting-scale catalog
+         * can explain a candidate place before a GM selects it.
+         */
+        function worldLocationContextAt(config, locationInput = null) {
+            const locationId = typeof locationInput === 'string' ? worldReference(locationInput) : null;
+            const location = locationInput && typeof locationInput === 'object'
+                ? locationInput
+                : (config?.locations?.find(record => record.id === (locationId || config?.activeLocationId)) || null);
             if (!location) return { location: null, region: null, geography: null, ecoregion: null, biome: null };
             const ecoregion = config.ecoregions.find(record => record.id === location.ecoregionId) || null;
             const geography = config.geographies.find(record => record.id === (location.geographyId || ecoregion?.geographyId)) || null;
             const biome = config.biomes.find(record => record.id === (location.biomeId || ecoregion?.biomeId)) || null;
             const region = config.regions.find(record => record.id === (location.regionId || ecoregion?.regionId || geography?.regionId)) || null;
             return { location, region, geography, ecoregion, biome };
+        }
+
+        function worldLocationContext(config) {
+            return worldLocationContextAt(config, config?.activeLocationId || null);
+        }
+
+        /**
+         * sessionLocationPickerSummary - Give each setting-scale selector entry
+         * one useful human-facing cue while keeping the selector compact. It
+         * intentionally uses only place/role language, not stable IDs, palette
+         * names, or inheritance provenance.
+         */
+        function sessionLocationPickerSummary(config, location) {
+            const place = worldLocationContextAt(config, location);
+            const region = boundedWorldText(place.region?.name, '', POLICY.almanac.worldNameLength);
+            const role = boundedWorldText(location?.environmentName, '', POLICY.almanac.worldNameLength);
+            const description = boundedWorldText(location?.description, '', POLICY.almanac.worldDescriptionLength);
+            if (region || role) return [region, role].filter(Boolean).join(' — ');
+            if (!description) return 'No place cue is recorded yet.';
+            const maximum = 96;
+            return description.length > maximum ? `${description.slice(0, maximum - 1).trim()}…` : description;
         }
 
 
@@ -37937,7 +38082,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h2>Purpose</h2>',
                 '<p>AlmanacAssist combines fictional time, regional climate, astronomy, weather, environmental context, explicit Phenomena overlays, reviewed Travel, optional advisory-only RulesAdvisor reminders, atomic handout-reviewed WorldPacks, explicit Temporal Contexts, and deliberate rest workflows. Current World, Scene, and announcement views use one read-only scene snapshot so ordinary play sees a coherent world without changing provider state. A Temporal Context projects that same one authoritative fictional-minute chronology locally; it never introduces a second ticking clock. Each internal system can be turned off without erasing its valid settings or disabling unrelated Almanac features.</p>',
                 '<h2>Everyday Use</h2>',
-                '<p><code>!aa-gm</code>, <code>!aa-dm</code>, <code>!Almanac</code>, or <code>!aa</code> opens the compact Current World dashboard. It keeps the current scene, common advances, dawn/dusk anchors, calendar selection, rest, weather, Scene, preview, and announce actions together. <code>!aa-scene</code> opens a focused current-world view; GM-only <code>!aa-scene technical</code> opens provenance and warnings. <code>!date</code>, <code>!time</code>, <code>!cal</code>, <code>!clim</code>, <code>!astro</code>, <code>!weather</code>, <code>!enviro</code>, <code>!rest</code>, and <code>!phenomena</code> open focused views.</p>',
+                '<p><code>!aa-gm</code>, <code>!aa-dm</code>, <code>!Almanac</code>, or <code>!aa</code> opens the compact Current World dashboard. It keeps the current scene, common advances, dawn/dusk anchors, calendar selection, rest, weather, Scene, preview, and announce actions together. <code>!aa-location view</code> opens a read-only Session Area Brief with the opening cue, local routes, prepared destinations, and available Phenomena before a GM changes the Current Area; every Location selector also offers a Details button. <code>!aa-scene</code> opens a focused current-world view; GM-only <code>!aa-scene technical</code> opens provenance and warnings. <code>!date</code>, <code>!time</code>, <code>!cal</code>, <code>!clim</code>, <code>!astro</code>, <code>!weather</code>, <code>!enviro</code>, <code>!rest</code>, and <code>!phenomena</code> open focused views.</p>',
                 '<h2>Worldbuilding Mode</h2>',
                 '<p>For a new campaign, open <code>!aa-world</code> and choose <strong>World Library</strong>. Preview and start one included generic Starter World, or create an empty campaign world and add its first Location. A starter immediately supplies named Locations, climate regions, Prepared Destinations, routes, phenomena, and a Session Preset; it is owner-authored generic material, not published-setting lore. The current generic place model manages Regions, Geography, Ecoregions, Biomes, Locations, Prepared Destinations, Travel Routes, and Phenomena with bounded chat editors. At setting scale, each Worldbuilding collection is name-first and paged to 12 direct Edit controls: open its ordinary button, use Previous or Next, or choose Search to find a name or tag; no Technical stable ID is needed just to reach a record. Every generic record has Basic, Detailed, and Technical layers: Basic keeps routine edits compact, Detailed opens structured relationships/mechanics, and Technical shows stable identity, guarded removal, provenance, and source-pack evidence without dumping raw JSON. Use <code>!aa-location</code> to choose the current Location, favorite repeated destinations, use recently visited places, assign a named Roll20 page, or review a Prepared Destination. A Location climate relation supplies the current Scene baseline; the campaign Climate fallback remains separate. Changing Location does not silently replace committed Weather, so Weather explicitly identifies a retained old-region result until the GM generates a new one.</p>',
                 '<h2>WorldPacks</h2>',
@@ -37985,7 +38130,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Start Here', value: `${GameAssist.createButton('Open Almanac Controls', '!aa-gm')} ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Create a First Location', '!aa-world add location --name "?{Location name|Starting Location}"')}` },
                 { label: 'Date and Time', value: `${GameAssist.createButton('Current Date', '!date')} ${GameAssist.createButton('Advance or Set Time', '!aa-time menu')} ${GameAssist.createButton('Choose Calendar', '!cal')}` },
                 { label: 'Share With The Table', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
-                { label: 'World Today', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Rules Advice', '!aa-rules')} ${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Environment', '!enviro')}` },
+                { label: 'World Today', value: `${GameAssist.createButton('Area Brief', '!aa-location view')} ${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Rules Advice', '!aa-rules')} ${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Environment', '!enviro')}` },
                 { label: 'Worldbuilding', value: `${GameAssist.createButton('World Library', '!aa-world library')} ${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('WorldPacks', '!aa-worldpacks')} ${GameAssist.createButton('Temporal Contexts', '!aa-temporal')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Travel Routes', '!aa-world routes')}` },
                 { label: 'Calendar Setup', value: GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer') },
                 { label: 'Full Reference', value: GameAssist.createButton('Create or Update Manual', '!Almanac-Manual') }

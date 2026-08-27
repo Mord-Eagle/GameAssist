@@ -344,6 +344,7 @@ function assertWorldPackFirstSessionOnboarding() {
     assert.match(openings[0].message, /Opening Areas 1 of 2/, 'campaign-front openings must page compactly rather than render a whole 160-Location catalog');
     assert.match(openings[0].message, /Ember Coast — Harbor Stead/, 'opening chooser must render a concrete original campaign front and Location');
     assert.match(openings[0].message, /Dock councils seek neutral guides for a disputed convoy/, 'opening chooser must surface playable local content rather than only architecture labels');
+    assert.match(openings[0].message, /\[Explore Area\]\(!aa-location view --id asterfall-concord-location-1-1\)/, 'each opening must offer a read-only area brief before a GM makes it Current Area');
     assert.equal((openings[0].message.match(/\[Start Here\]/g) || []).length, 6, 'opening chooser must retain its six-entry compact WorldPack page bound');
     assert.match(openings[0].message, /More Openings/, 'opening chooser must retain a visible second-page route for the remaining campaign fronts');
     assertBoundedRenderedTargets(openings[0].message, 'full WorldPack opening-area chooser');
@@ -354,12 +355,34 @@ function assertWorldPackFirstSessionOnboarding() {
         runtime: almanac.runtime.world
     }), beforeOpening, 'opening-area browsing must not activate a Location or mutate WorldPack, Worldbuilding, or runtime state');
 
+    const candidateBrief = harness.dispatchCommand('!aa-location view --id asterfall-concord-location-1-1');
+    assert.match(candidateBrief[0].message, /Almanac \/ Session Area \/ Harbor Stead/, 'an opening-area Details action must render a named Session Area Brief instead of a generic editor');
+    assert.match(candidateBrief[0].message, /Candidate Area=.*has not been selected; this brief does not change the Current Area/, 'a candidate area brief must clearly distinguish inspection from activating a new Current Area');
+    assert.match(candidateBrief[0].message, /Opening Cue=.*Dock councils seek neutral guides for a disputed convoy/, 'the area brief must preserve the authored campaign-front hook as a usable opening cue');
+    assert.match(candidateBrief[0].message, /Routes From This Area=.*Beaconstairs.*Ember Coast Passage 1/, 'the area brief must expose a concrete nearby prepared route from the selected opening');
+    assert.match(candidateBrief[0].message, /Prepared In This Front=.*Ember Coast Field Network/, 'the area brief must surface authored nearby prepared destinations rather than a bare place name');
+    assert.match(candidateBrief[0].message, /Prepared Phenomena=.*Ember Coast Skyglow/, 'the area brief must surface authored available front Phenomena without activating them');
+    assert.match(candidateBrief[0].message, /\[Make Current Area\]/, 'a candidate brief must retain one explicit activation action after read-only inspection');
+    assert.doesNotMatch(candidateBrief[0].message, /Ecoregion WorldPack Profile|Asterfall Concord Overland Profile/, 'ordinary session-area briefs must not expose palette or inheritance provenance');
+    assert.equal(JSON.stringify({
+        world: almanac.config.world,
+        registry: almanac.config.worldPacks,
+        definitions: almanac.config.worldPackDefinitions,
+        runtime: almanac.runtime.world
+    }), beforeOpening, 'opening-area inspection must not activate a Location or mutate WorldPack, Worldbuilding, or runtime state');
+
     const start = harness.dispatchCommand('!aa-location use --id asterfall-concord-location-1-1');
     assert.match(start[0].message, /Session Area Ready/, 'choosing a first opening must clearly acknowledge that the campaign is now playable');
     assert.match(start[0].message, /Generate Weather/, 'first-area confirmation must offer a direct current-conditions follow-up');
     assert.match(start[0].message, /View Climate/, 'first-area confirmation must expose the inherited Climate context without command recall');
     assert.match(start[0].message, /Plan Journey/, 'first-area confirmation must offer a direct Travel follow-up');
+    assert.match(start[0].message, /Open Area Brief/, 'first-area confirmation must keep the guided area brief one click away after activation');
     assert.equal(almanac.config.world.activeLocationId, 'asterfall-concord-location-1-1', 'the selected opening must become the explicit Current Area');
+    const currentBrief = harness.dispatchCommand('!aa-location view');
+    assert.match(currentBrief[0].message, /Current Area=.*Harbor Stead.*Current Area for this Session/, 'the no-ID Area Brief route must resolve the already selected Current Area');
+    assert.match(currentBrief[0].message, /\[Review Journey\]/, 'the active-area brief must offer a reviewed route handoff instead of silently starting Travel');
+    assert.match(currentBrief[0].message, /\[Open Current Scene\].*\[Generate Weather\].*\[Plan Journey\]/, 'the active-area brief must connect authored context to ordinary Scene, Weather, and Travel actions');
+    assert.match(currentBrief[0].message, /Viewing an area is read-only/, 'the area brief must state its no-mutation boundary explicitly');
 
     // All session-facing climate, weather, environment, and astronomy panels
     // need the same setting identity. A full WorldPack is an installed campaign
@@ -374,12 +397,13 @@ function assertWorldPackFirstSessionOnboarding() {
 
     const locationPicker = harness.dispatchCommand('!aa-location');
     assert.match(locationPicker[0].message, /World Context=<strong>Asterfall Concord<\/strong> — Full WorldPack \| Current Area: <strong>Harbor Stead<\/strong>/, 'Change Location must keep the setting identity visible while browsing a 160-place WorldPack');
+    assert.match(locationPicker[0].message, /Beaconstairs.*Ember Coast.*Cliff signal tower.*\[Details\]/, 'compact Session Mode location groups must provide a usable front-and-role cue plus a no-mutation Details route');
     const travelPicker = harness.dispatchCommand('!aa-travel');
     assert.match(travelPicker[0].message, /World Context=<strong>Asterfall Concord<\/strong> — Full WorldPack \| Current Area: <strong>Harbor Stead<\/strong>/, 'Travel must keep the setting identity visible instead of showing only subordinate place names');
     assert.doesNotMatch(travelPicker[0].message, /Harbor Stead \(Harbor Stead\)/, 'Travel must not duplicate the active Location after its geographic hierarchy');
 
     const readyDashboard = harness.dispatchCommand('!aa-gm');
-    assert.match(readyDashboard[0].message, /Session Mode=.*\[Current Scene\].*\[Plan Journey\].*\[Generate Weather\]/, 'the ready Session Mode dashboard must lead with concrete session controls after an opening is selected');
+    assert.match(readyDashboard[0].message, /Session Mode=.*\[Area Brief\].*\[Current Scene\].*\[Plan Journey\].*\[Generate Weather\]/, 'the ready Session Mode dashboard must lead with an authored-area brief and concrete session controls after an opening is selected');
 }
 
 /**
@@ -401,6 +425,11 @@ function assertWorldPackSessionClockAndWeatherBoundary() {
     assert.match(firstWeather[0].message, /Seasonal Context=Asterfall Concord Seasonal Baseline \| Spring/, 'generated WorldPack Weather must disclose its human-readable seasonal baseline');
     const firstContextId = almanac.runtime.weather.current.climateContextId;
     assert.match(firstContextId, /^worldpack-climate:asterfall-concord:asterfall-concord-climate$/, 'profile-backed generated Weather must retain an explicit stable Climate context identity instead of a null legacy region ID');
+
+    const crossPackBrief = harness.dispatchCommand('!aa-location view --id lumenfen-atlas-location-1-1');
+    assert.match(crossPackBrief[0].message, /World Context=<strong>Asterfall Concord<\/strong> — Full WorldPack \| Current Area: <strong>Harbor Stead<\/strong>/, 'a candidate brief must retain the actual current setting while a GM considers another installed WorldPack');
+    assert.match(crossPackBrief[0].message, /Candidate Setting=<strong>Lumenfen Atlas<\/strong> — Full WorldPack/, 'a candidate brief must name a different candidate WorldPack rather than hiding its setting-scale identity');
+    assert.equal(almanac.config.world.activeLocationId, 'asterfall-concord-location-1-1', 'cross-pack area inspection must remain read-only until the GM explicitly makes an area current');
 
     harness.dispatchCommand('!aa-location use --id lumenfen-atlas-location-1-1');
     const dashboard = harness.dispatchCommand('!aa-gm');
