@@ -165,6 +165,7 @@ function assertAuthorityAndUnusualCombination(harness) {
     assert.equal(scene.hydrology.immediateWaterAccess, 'Conditions may affect exposed water', 'immediate water access must be separately labeled');
     assert.ok(codes.includes('WEATHER_CLOUD_PRECIPITATION_COMBINATION'), 'intentional or unusual precipitation/cloud combinations must warn rather than fail');
     assert.ok(codes.includes('WEATHER_SEASON_DIFFERENCE'), 'season mismatches must warn rather than silently rewrite weather');
+    assert.equal(codes.includes('WEATHER_CLIMATE_REGION_DIFFERENCE'), false, 'a persisted Weather fixture without the additive context key must still safely match its concrete legacy Climate-region ID');
     assert.ok(scene.astronomy.moons.every(moon => moon.visibility && moon.visibility.visible === false), 'moon phase must remain separate from weather/daylight visibility');
     assert.equal(scene.provenance['astronomy.moons'].authority, 'AstronomyAlmanac', 'moon phases must remain Astronomy-owned');
     assert.equal(scene.provenance['astronomy.moonVisibility'].authority, 'SceneResolver', 'visibility must be an explicit resolved conclusion');
@@ -204,13 +205,15 @@ function assertScenePresentation(harness) {
     const chats = harness.dispatchCommand('!aa-scene');
     assert.equal(chats.length, 1, 'the Scene command must render one compact panel');
     assert.match(chats[0].message, /\{\{name=Almanac \/ Current World \/ Scene\}\}/, 'the normal Scene panel must keep a compact location hierarchy');
+    assert.match(chats[0].message, /World Context=/, 'the normal Scene panel must disclose the compact session World Context before provider details');
     assert.match(chats[0].message, /Immediate Environment/, 'the normal Scene panel must label immediate context separately from Weather');
     assert.match(chats[0].message, /Almanac Home/, 'the normal Scene panel must provide an Almanac Home return');
-    assert.doesNotMatch(chats[0].message, /sceneStateSchemaVersion|PERSISTENT_HYDROLOGY_UNAVAILABLE/, 'normal Scene output must keep raw schema and warning evidence out of live play');
+    assert.doesNotMatch(chats[0].message, /Campaign fallback region|sceneStateSchemaVersion|PERSISTENT_HYDROLOGY_UNAVAILABLE/, 'normal Scene output must keep raw Climate provenance, schema, and warning evidence out of live play');
 
     const technicalChats = harness.dispatchCommand('!aa-scene technical');
     assert.equal(technicalChats.length, 1, 'the GM technical Scene command must render one focused panel');
     assert.match(technicalChats[0].message, /Scene Details/, 'technical Scene output must be deliberately opened');
+    assert.match(technicalChats[0].message, /Campaign fallback region/, 'technical Scene output must retain exact Climate provenance for diagnosis');
     assert.match(technicalChats[0].message, /Provider Status/, 'technical Scene output must expose provenance status intentionally');
 
     const weatherChats = harness.dispatchCommand('!weather');

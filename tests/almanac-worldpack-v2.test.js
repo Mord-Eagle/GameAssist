@@ -3,7 +3,7 @@
 //   codename: "GAMEASSIST_ALMANAC_WORLDPACK_V2_TEST"
 //   project_version: "v2.0.0"
 //   purpose: "Exercise setting-scale PresetRegistry sources, installed palette clones, operational profile resolution, atomic Route Legs, copy remapping, and malformed v2 refusal in an isolated Roll20-shaped VM."
-//   order: ["artifact_identity", "registry", "library_permissions_stale_restart", "four_independent_installs", "scene_profiles", "palette_controls", "installed_pack_catalog", "palette_catalog_relation_pickers", "calendar_projection", "phenomenon_templates", "large_scale_selector", "route_legs", "active_journey_refusal", "empty_palette_update_guard", "v2_refusal", "copy_remapping"]
+//   order: ["artifact_identity", "registry", "library_permissions_stale_restart", "four_independent_installs", "scene_profiles", "legacy_weather_compatibility", "palette_controls", "installed_pack_catalog", "palette_catalog_relation_pickers", "calendar_projection", "phenomenon_templates", "large_scale_selector", "route_legs", "active_journey_refusal", "empty_palette_update_guard", "v2_refusal", "copy_remapping"]
 //   env: { required: ["NODE_RUNTIME"], secrets: [] }
 //   data_class: "Internal"
 //   ai_data: "internal_redacted"
@@ -361,8 +361,151 @@ function assertWorldPackFirstSessionOnboarding() {
     assert.match(start[0].message, /Plan Journey/, 'first-area confirmation must offer a direct Travel follow-up');
     assert.equal(almanac.config.world.activeLocationId, 'asterfall-concord-location-1-1', 'the selected opening must become the explicit Current Area');
 
+    // All session-facing climate, weather, environment, and astronomy panels
+    // need the same setting identity. A full WorldPack is an installed campaign
+    // clone rather than a World Library snapshot, so none may fall back to the
+    // false "no world selected" copy merely because no library card exists.
+    ['!aa-climate', '!aa-weather', '!aa-enviro', '!aa-astro'].forEach(command => {
+        const panel = harness.dispatchCommand(command);
+        assert.equal(panel.length, 1, `${command} must render one focused session panel`);
+        assert.match(panel[0].message, /World Context=<strong>Asterfall Concord<\/strong> — Full WorldPack \| Current Area: <strong>Harbor Stead<\/strong>/, `${command} must identify the active installed setting and Current Area`);
+        assert.doesNotMatch(panel[0].message, /No (?:campaign )?world is selected/i, `${command} must not misdiagnose an active full WorldPack as an absent world`);
+    });
+
+    const locationPicker = harness.dispatchCommand('!aa-location');
+    assert.match(locationPicker[0].message, /World Context=<strong>Asterfall Concord<\/strong> — Full WorldPack \| Current Area: <strong>Harbor Stead<\/strong>/, 'Change Location must keep the setting identity visible while browsing a 160-place WorldPack');
+    const travelPicker = harness.dispatchCommand('!aa-travel');
+    assert.match(travelPicker[0].message, /World Context=<strong>Asterfall Concord<\/strong> — Full WorldPack \| Current Area: <strong>Harbor Stead<\/strong>/, 'Travel must keep the setting identity visible instead of showing only subordinate place names');
+    assert.doesNotMatch(travelPicker[0].message, /Harbor Stead \(Harbor Stead\)/, 'Travel must not duplicate the active Location after its geographic hierarchy');
+
     const readyDashboard = harness.dispatchCommand('!aa-gm');
     assert.match(readyDashboard[0].message, /Session Mode=.*\[Current Scene\].*\[Plan Journey\].*\[Generate Weather\]/, 'the ready Session Mode dashboard must lead with concrete session controls after an opening is selected');
+}
+
+/**
+ * Profile-backed full WorldPack Climate baselines deliberately have no legacy
+ * Climate-region ID. Weather must therefore retain a separate stable baseline
+ * identity: moving between two installed settings must not treat two null IDs
+ * as one climate, silently blend continuity, or hide the retained condition.
+ * The same exercise verifies that the Session dashboard and ordinary Scene
+ * explain canonical and local clocks without leaking profile provenance.
+ */
+function assertWorldPackSessionClockAndWeatherBoundary() {
+    const harness = createHarness();
+    const almanac = harness.state.GameAssist.AlmanacAssist;
+    installPreset(harness, 'asterfall-concord');
+    installPreset(harness, 'lumenfen-atlas');
+
+    harness.dispatchCommand('!aa-location use --id asterfall-concord-location-1-1');
+    const firstWeather = harness.dispatchCommand('!aa-weather generate');
+    assert.match(firstWeather[0].message, /Seasonal Context=Asterfall Concord Seasonal Baseline \| Spring/, 'generated WorldPack Weather must disclose its human-readable seasonal baseline');
+    const firstContextId = almanac.runtime.weather.current.climateContextId;
+    assert.match(firstContextId, /^worldpack-climate:asterfall-concord:asterfall-concord-climate$/, 'profile-backed generated Weather must retain an explicit stable Climate context identity instead of a null legacy region ID');
+
+    harness.dispatchCommand('!aa-location use --id lumenfen-atlas-location-1-1');
+    const dashboard = harness.dispatchCommand('!aa-gm');
+    assert.match(dashboard[0].message, /World Context=<strong>Lumenfen Atlas<\/strong> — Full WorldPack \| Current Area: <strong>Reedmarket<\/strong>/, 'Session dashboard must identify the active installed setting instead of only its subordinate location');
+    assert.match(dashboard[0].message, /Campaign Clock: .*<br>Local Clock \(Lumenfen Atlas Local Measure\):/, 'a WorldPack local clock must be visibly distinguished from the one campaign clock on the dashboard');
+    assert.doesNotMatch(dashboard[0].message, /Ecoregion WorldPack Profile/, 'ordinary Session dashboard must keep profile provenance out of live-play summary copy');
+
+    const retainedWeather = harness.dispatchCommand('!aa-weather');
+    assert.match(retainedWeather[0].message, /Current Area Climate=Current Weather was recorded for Asterfall Concord Seasonal Baseline\. This Current Area uses Lumenfen Atlas Seasonal Baseline \| Spring/, 'moving between profile-backed WorldPacks must visibly retain rather than silently relabel prior Weather');
+    assert.match(retainedWeather[0].message, /Stored Weather Context=Asterfall Concord Seasonal Baseline \| Spring when this Weather was set/, 'retained WorldPack Weather must disclose its previous playable context without raw provider wiring');
+
+    const normalScene = harness.dispatchCommand('!aa-scene');
+    assert.match(normalScene[0].message, /Campaign Clock &amp; Season=/, 'ordinary Scene must label the canonical clock when a local projection differs');
+    assert.match(normalScene[0].message, /Local Clock=Lumenfen Atlas Local Measure: .*The Campaign Clock remains the one elapsed-fictional-time authority/, 'ordinary Scene must explain that its local display is not a second ticking clock');
+    assert.doesNotMatch(normalScene[0].message, /Ecoregion WorldPack Profile/, 'ordinary Scene must keep profile provenance behind the focused details control');
+    const technicalScene = harness.dispatchCommand('!aa-scene technical');
+    assert.match(technicalScene[0].message, /Climate Baseline=Lumenfen Atlas Seasonal Baseline via Ecoregion WorldPack Profile: Mirewood Basin Ecoregion/, 'deliberately opened Scene Details must retain exact WorldPack Climate provenance for diagnosis');
+
+    const timeControls = harness.dispatchCommand('!aa-time menu');
+    assert.match(timeControls[0].message, /World Context=<strong>Lumenfen Atlas<\/strong> — Full WorldPack \| Current Area: <strong>Reedmarket<\/strong>/, 'Time controls must retain the active setting and current area instead of dropping spatial context');
+    assert.match(timeControls[0].message, /Campaign Clock=.*Local Clock=Lumenfen Atlas Local Measure: .*Quick advances and dawn\/dusk anchors use the Campaign Clock/, 'Time controls must distinguish a local display from the one authoritative clock before offering time actions');
+    assert.match(timeControls[0].message, /\[Until Campaign Dawn\].*\[Until Campaign Dusk\]/, 'time-anchor actions must name their Campaign Clock authority when a local WorldPack projection differs');
+
+    const restMenu = harness.dispatchCommand('!aa-rest');
+    assert.match(restMenu[0].message, /World Context=<strong>Lumenfen Atlas<\/strong> — Full WorldPack \| Current Area: <strong>Reedmarket<\/strong>/, 'Rest must retain compact setting context during an ordinary session action');
+    assert.match(restMenu[0].message, /Campaign Clock=.*Local Clock=Lumenfen Atlas Local Measure: .*Rest duration advances the Campaign Clock only/, 'Rest must explain that optional duration changes use the canonical clock rather than a competing local timeline');
+
+    const phenomenaMenu = harness.dispatchCommand('!aa-phenomena');
+    assert.match(phenomenaMenu[0].message, /World Context=<strong>Lumenfen Atlas<\/strong> — Full WorldPack \| Current Area: <strong>Reedmarket<\/strong>/, 'Phenomena must retain compact setting context while reviewing local overlays');
+    const announcementPreview = harness.dispatchCommand('!aa-preview');
+    assert.match(announcementPreview[0].message, /World Context=<strong>Lumenfen Atlas<\/strong> — Full WorldPack \| Current Area: <strong>Reedmarket<\/strong>/, 'the private announcement preview must disclose the current setting and area before a GM sends scene text');
+
+    const preparedDestination = almanac.config.world.destinations.find(destination => destination.sourcePackId === 'lumenfen-atlas' && destination.locationId !== almanac.config.world.activeLocationId);
+    assert.ok(preparedDestination, 'Lumenfen must provide a second Prepared Destination for ordinary location and Travel review coverage');
+    const locationReview = harness.dispatchCommand(`!aa-location destination --id ${preparedDestination.id}`);
+    assert.match(locationReview[0].message, /World Context=<strong>Lumenfen Atlas<\/strong> — Full WorldPack \| Current Area: <strong>Reedmarket<\/strong>/, 'Prepared Location review must retain the existing setting context before a move is confirmed');
+    assert.match(locationReview[0].message, /Resolved Context After Move=.*Seasonal Climate: Lumenfen Atlas Seasonal Baseline \| Spring/, 'Prepared Location review must explain the destination through its readable seasonal context');
+    assert.doesNotMatch(locationReview[0].message, /Ecoregion WorldPack Profile/, 'ordinary Prepared Location review must keep palette provenance behind Scene Details');
+
+    const currentLocationId = almanac.config.world.activeLocationId;
+    const preparedRoute = almanac.config.world.routes.find(route => route.sourcePackId === 'lumenfen-atlas' && (route.fromLocationId === currentLocationId || route.toLocationId === currentLocationId));
+    assert.ok(preparedRoute, 'Lumenfen must provide a reviewed route from the chosen opening area');
+    const travelTargetId = preparedRoute.fromLocationId === currentLocationId ? preparedRoute.toLocationId : preparedRoute.fromLocationId;
+    const routeReview = harness.dispatchCommand(`!aa-travel plan --location ${travelTargetId} --route ${preparedRoute.id}`);
+    assert.match(routeReview[0].message, /\{\{name=Almanac \/ Travel \/ Review Start\}\}/, 'a direct Session travel choice must remain reviewed before it starts');
+    assert.match(routeReview[0].message, /World Context=<strong>Lumenfen Atlas<\/strong> — Full WorldPack \| Current Area: <strong>Reedmarket<\/strong>/, 'Travel route review must retain the compact setting context');
+    assert.match(routeReview[0].message, /Arrival Context=.*Seasonal Climate: Lumenfen Atlas Seasonal Baseline \| Spring/, 'Travel route review must present an arrival baseline in ordinary seasonal language');
+    assert.doesNotMatch(routeReview[0].message, /Ecoregion WorldPack Profile/, 'ordinary Travel route review must not expose WorldPack implementation provenance');
+    const travelGrantIds = Object.keys(almanac.runtime.world.travel.grants);
+    assert.equal(travelGrantIds.length, 1, 'the reviewed Travel route must retain one expiring confirmation grant');
+    const journey = harness.dispatchCommand(`!aa-travel start --grant ${travelGrantIds[0]}`);
+    assert.match(journey[0].message, /Campaign Clock=.*Local Clock=Lumenfen Atlas Local Measure: .*Travel advances the Campaign Clock only after each review is confirmed/, 'an active Journey must keep both clock displays and state its canonical advancement boundary');
+    assert.match(journey[0].message, /\[Until Campaign Dusk\]/, 'an active Journey must name the Campaign Clock dusk anchor when local time differs');
+
+    const mismatchScene = harness.sandbox.GameAssist.AlmanacAssist.getScene();
+    assert.ok(mismatchScene.warnings.some(warning => warning.code === 'WEATHER_CLIMATE_REGION_DIFFERENCE'), 'SceneResolver must surface retained Weather/profile-baseline mismatch even when both legacy region IDs are null');
+
+    const regenerated = harness.dispatchCommand('!aa-weather generate');
+    assert.match(regenerated[0].message, /Seasonal Context=Lumenfen Atlas Seasonal Baseline \| Spring/, 'explicit Weather regeneration must adopt the new active WorldPack baseline');
+    const secondContextId = almanac.runtime.weather.current.climateContextId;
+    assert.match(secondContextId, /^worldpack-climate:lumenfen-atlas:lumenfen-atlas-climate$/, 'new WorldPack Weather must retain its new profile-backed Climate identity');
+    assert.notEqual(secondContextId, firstContextId, 'different installed WorldPack Climate profiles must never share a Weather continuity identity');
+    assert.equal(harness.sandbox.GameAssist.AlmanacAssist.getScene().warnings.some(warning => warning.code === 'WEATHER_CLIMATE_REGION_DIFFERENCE'), false, 'new Weather generated for the active profile baseline must clear the retained-condition mismatch warning');
+}
+
+/**
+ * The Weather climate-context key is deliberately additive, not a destructive
+ * runtime-schema rewrite. Booting a persisted pre-key record must preserve the
+ * record, safely bridge old named Climate regions, and conservatively request a
+ * refresh when an old null-ID WorldPack record cannot prove its source setting.
+ */
+function assertLegacyWeatherClimateContextCompatibility() {
+    const classic = createHarness();
+    classic.dispatchCommand('!aa-weather generate');
+    const classicPersisted = JSON.parse(JSON.stringify(classic.state.GameAssist.AlmanacAssist));
+    delete classicPersisted.runtime.weather.current.climateContextId;
+    classicPersisted.runtime.weather.history.forEach(entry => delete entry.climateContextId);
+    const classicReloaded = createHarness(classicPersisted);
+    const classicWeather = classicReloaded.state.GameAssist.AlmanacAssist.runtime.weather.current;
+    assert.equal(classicReloaded.state.GameAssist.AlmanacAssist.runtime.weather.schemaVersion, 1, 'the additive Weather context key must not mislabel a compatible v1 runtime as an unsupported future schema');
+    assert.equal(Object.hasOwn(classicWeather, 'climateContextId'), false, 'boot normalization must preserve a saved Weather record that predates the additive context key instead of fabricating provenance');
+    const classicPanel = classicReloaded.dispatchCommand('!aa-weather');
+    assert.match(classicPanel[0].message, /Seasonal Context=Temperate Lowlands — Temperate seasonal baseline/, 'a legacy Weather record with a real legacy Climate-region ID must continue through the safe compatibility bridge');
+    assert.doesNotMatch(classicPanel[0].message, /Current Area Climate=/, 'a legacy Weather record with the same concrete Climate region must not be falsely marked stale');
+    assert.equal(classicReloaded.sandbox.GameAssist.AlmanacAssist.getScene().warnings.some(warning => warning.code === 'WEATHER_CLIMATE_REGION_DIFFERENCE'), false, 'the legacy concrete-region bridge must also keep SceneResolver consistent');
+
+    const profile = createHarness();
+    installPreset(profile, 'asterfall-concord');
+    profile.dispatchCommand('!aa-location use --id asterfall-concord-location-1-1');
+    profile.dispatchCommand('!aa-weather generate');
+    const profilePersisted = JSON.parse(JSON.stringify(profile.state.GameAssist.AlmanacAssist));
+    delete profilePersisted.runtime.weather.current.climateContextId;
+    profilePersisted.runtime.weather.history.forEach(entry => delete entry.climateContextId);
+    const profileReloaded = createHarness(profilePersisted);
+    const profileWeather = profileReloaded.state.GameAssist.AlmanacAssist.runtime.weather.current;
+    assert.equal(Object.hasOwn(profileWeather, 'climateContextId'), false, 'a persisted profile-backed Weather record must remain intact when it predates stable context identity');
+    const needsRefresh = profileReloaded.dispatchCommand('!aa-weather');
+    assert.match(needsRefresh[0].message, /Current Area Climate=This stored Weather predates stable Climate-context tracking\. It remains intact, but its setting identity cannot be confirmed\./, 'a null-ID legacy WorldPack Weather record must explain its conservative refresh requirement in ordinary session language');
+    assert.match(needsRefresh[0].message, /Stored Weather Context=Asterfall Concord Seasonal Baseline \| Spring when this Weather was set/, 'the legacy Weather card must retain its readable saved context while avoiding raw identity leakage');
+    const legacyWarning = profileReloaded.sandbox.GameAssist.AlmanacAssist.getScene().warnings.find(warning => warning.code === 'WEATHER_CLIMATE_REGION_DIFFERENCE');
+    assert.match(legacyWarning?.message || '', /predates stable Climate-context tracking/, 'Scene Details must diagnose a legacy null-ID Weather safeguard rather than implying same-named baselines are different places');
+    profileReloaded.dispatchCommand('!aa-weather generate');
+    assert.match(profileReloaded.state.GameAssist.AlmanacAssist.runtime.weather.current.climateContextId, /^worldpack-climate:asterfall-concord:asterfall-concord-climate$/, 'the next deliberate Weather generation must write the stable identity without a destructive startup migration');
+    const refreshed = profileReloaded.dispatchCommand('!aa-weather');
+    assert.doesNotMatch(refreshed[0].message, /predates stable Climate-context tracking|Current Area Climate=/, 'fresh profile-backed Weather must clear the conservative legacy refresh notice');
 }
 
 /**
@@ -961,6 +1104,8 @@ function run() {
     assertPresetRegistry();
     assertPresetLibrarySafetyAndRestart();
     assertWorldPackFirstSessionOnboarding();
+    assertWorldPackSessionClockAndWeatherBoundary();
+    assertLegacyWeatherClimateContextCompatibility();
     assertBuiltInPresetSourceUpdates();
     assertFourIndependentInstalls();
     assertOperationalProfilesAndControls();
@@ -986,6 +1131,6 @@ module.exports = Object.freeze({ run, makeV2Fixture });
 // catalog, palette and provider-backed calendar controls, per-collection palette
 // bounds, paged palette/default/cross-reference pickers, Worldbuilding
 // relation/profile/page and Route Leg choice catalogs,
-// SceneResolver/Travel profile use, bounded large-catalog selection, nested Route
+// SceneResolver/Travel profile use, persisted pre-key Weather compatibility, bounded large-catalog selection, nested Route
 // Leg atomic editing, source-package refusal, and copy reference remapping. These
 // checks intentionally do not claim Roll20 acceptance.

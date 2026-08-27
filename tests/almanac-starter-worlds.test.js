@@ -156,7 +156,8 @@ function assertFirstRunOnboardingAndPromptContract() {
 
     const freshDashboard = onePanel(harness, '!aa-gm');
     assert.match(freshDashboard, /First Campaign Step=No playable world is selected yet/, 'the fresh Session dashboard must make the missing playable world explicit rather than implying a ready campaign');
-    assert.match(freshDashboard, /Climate: Temperate Lowlands — Temperate seasonal baseline \(Campaign fallback region\)/, 'the fresh Session dashboard must label generic Climate as campaign fallback while no Location is assigned');
+    assert.match(freshDashboard, /Climate: Temperate Lowlands — Temperate seasonal baseline/, 'the fresh Session dashboard must show the available generic Climate baseline without pretending that setup is complete');
+    assert.doesNotMatch(freshDashboard, /Campaign fallback region/, 'ordinary Session Mode must keep Climate provenance out of the live-play summary');
 
     const world = onePanel(harness, '!aa-world');
     assert.match(world, /Start Here/, 'an empty Worldbuilding hub must explain the first campaign step');
@@ -422,7 +423,8 @@ function assertStarterSessionScreensStayActionable() {
     assert.match(travelReview, /Review Start/, 'starter Travel must produce a reviewed start panel rather than a hidden command failure');
     const presetPreview = onePanel(harness, '!aa-presets preview --id ember-arrival');
     assert.match(presetPreview, /Session Preset Preview/, 'starter Session Presets must open a visible preview path');
-    assert.match(presetPreview, /Climate: Ember Coast via Location(?: Climate region)?: Harbor Stead/, 'prepared Session Preset previews must disclose the same resolved local Climate source used by Scene and Weather');
+    assert.match(presetPreview, /Seasonal Climate: Ember Coast — Coastal seasonal baseline \| Winter/, 'prepared Session Preset previews must disclose the same resolved local seasonal baseline used by Scene and Weather');
+    assert.doesNotMatch(presetPreview, /Location Climate region/, 'ordinary prepared Session Preset previews must keep Climate provenance behind technical details rather than exposing subsystem wiring');
 }
 
 function assertLocationClimateKeepsClimateAndWeatherCoherent() {
@@ -441,10 +443,10 @@ function assertLocationClimateKeepsClimateAndWeatherCoherent() {
     assert.equal(locationClimateEvent.payload.details.currentSceneClimateScope, 'location', 'a Location change Climate event must preserve the stable coarse local-precedence contract rather than imply a fallback rewrite');
     assert.equal(locationClimateEvent.payload.details.currentSceneClimateSourceKind, 'location-climate-region', 'a Location change Climate event must separately disclose the more specific resolved local source');
     assert.equal(locationClimateEvent.payload.details.campaignFallbackRegionId, 'ember-coast-climate', 'a Location change Climate event must retain the separately configured campaign fallback for integrations');
-    assert.match(movedToMosswood, /Climate Context=Mosswood Interior — Temperate via Location: Mosswood Crossing/, 'a Location change must visibly identify the newly active Climate context while retaining Weather ownership');
+    assert.match(movedToMosswood, /Climate Context=Mosswood Interior — Temperate seasonal baseline \| Winter/, 'a Location change must visibly identify the newly active seasonal Climate context while retaining Weather ownership');
     const climateAtMosswood = onePanel(harness, '!aa-climate');
-    assert.match(climateAtMosswood, /Current Region=Mosswood Interior - Temperate/, 'Climate must resolve the active Location climate rather than silently showing the unrelated campaign fallback');
-    assert.match(climateAtMosswood, /Location: Mosswood Crossing selects the current Scene baseline/, 'Climate must explain why the active Location takes precedence over the campaign fallback');
+    assert.match(climateAtMosswood, /Current Region=Mosswood Interior — Temperate/, 'Climate must resolve the active Location climate rather than silently showing the unrelated campaign fallback');
+    assert.match(climateAtMosswood, /Current Area: Mosswood Crossing supplies the current seasonal baseline/, 'Climate must explain why the active Location takes precedence over the campaign fallback in place-first session language');
     assert.match(climateAtMosswood, /Campaign Fallback Region/, 'Climate must keep the separate fallback selector visible without pretending it changed the active Location');
     onePanel(harness, '!aa-climate region use --id ember-coast-climate');
     const fallbackClimateEvent = climateEvents.at(-1);
@@ -458,12 +460,14 @@ function assertLocationClimateKeepsClimateAndWeatherCoherent() {
     assert.match(statusAtMosswood, /Current Context=Mosswood Interior \| No committed weather/, 'Status must report the active Location Climate rather than the unrelated campaign fallback');
 
     const mosswoodWeather = onePanel(harness, '!aa-weather generate');
-    assert.match(mosswoodWeather, /Context=Mosswood Interior \| Winter \| ClimateAlmanac — Location: Mosswood Crossing/, 'new Weather must generate against the active Location climate baseline');
+    assert.match(mosswoodWeather, /Seasonal Context=Mosswood Interior — Temperate seasonal baseline \| Winter/, 'new Weather must show the active Location seasonal baseline without exposing provider wiring in the ordinary session panel');
     assert.equal(worldState(harness).runtime.weather.current.regionId, 'ember-wood-climate', 'generated Weather must retain the active Location climate provenance');
 
     const manualMosswoodWeather = onePanel(harness, '!aa-weather manual --summary "Cold river mist" --temp 37 --wind 4 --precipitation Mist --cloud Low --visibility Reduced --severity 2 --duration 6');
     assert.match(manualMosswoodWeather, /Current=Cold river mist \| 37 F \| 4 mph wind/, 'manual Weather must return a visible committed condition');
-    assert.match(manualMosswoodWeather, /Context=Mosswood Interior \| Winter \| GM manual weather — Location: Mosswood Crossing/, 'manual Weather must use the same active Location Climate provenance as generated Weather');
+    assert.match(manualMosswoodWeather, /Seasonal Context=Mosswood Interior — Temperate seasonal baseline \| Winter/, 'manual Weather must use the same active Location seasonal baseline as generated Weather');
+    assert.doesNotMatch(manualMosswoodWeather, /GM manual weather|ClimateAlmanac/, 'ordinary Weather must not expose manual/provider provenance that belongs in technical evidence');
+    assert.equal(worldState(harness).runtime.weather.current.context, 'GM manual weather — Location: Mosswood Crossing', 'manual Weather must retain its active Location Climate provenance in the saved provider record');
     assert.equal(worldState(harness).runtime.weather.current.regionId, 'ember-wood-climate', 'manual Weather must record the active Location climate region without rewriting Climate configuration');
     assert.equal(worldState(harness).runtime.weather.current.source, 'Manual', 'manual Weather must retain its distinct provider provenance');
     const weatherHistory = onePanel(harness, '!aa-weather history');
@@ -471,13 +475,13 @@ function assertLocationClimateKeepsClimateAndWeatherCoherent() {
 
     onePanel(harness, '!aa-location use --id harbor-stead');
     const retainedWeather = onePanel(harness, '!aa-weather');
-    assert.match(retainedWeather, /Location Climate=Current Weather was recorded for Mosswood Interior\. The active Scene now uses Ember Coast/, 'changing Location must transparently retain prior Weather instead of silently relabeling it as the new climate');
+    assert.match(retainedWeather, /Current Area Climate=Current Weather was recorded for Mosswood Interior\. This Current Area uses Ember Coast/, 'changing Location must transparently retain prior Weather instead of silently relabeling it as the new climate');
     assert.match(retainedWeather, /Generate or Set Manual Conditions when ready/, 'a retained Weather mismatch must offer both ordinary replacement paths');
     const sceneTechnical = onePanel(harness, '!aa-scene technical');
-    assert.match(sceneTechnical, /Current Weather was recorded for Mosswood Interior while the active Scene uses Climate region Ember Coast/, 'Scene technical evidence must report retained Weather/active-Climate mismatch until the GM chooses a new Weather result');
+    assert.match(sceneTechnical, /Current Weather was recorded for Mosswood Interior while the active Scene uses Ember Coast/, 'Scene technical evidence must report retained Weather/active-Climate mismatch until the GM chooses a new Weather result');
 
     const harborWeather = onePanel(harness, '!aa-weather generate');
-    assert.match(harborWeather, /Context=Ember Coast \| Winter \| ClimateAlmanac — Location: Harbor Stead/, 'generating after a Location switch must use the newly active Location climate');
+    assert.match(harborWeather, /Seasonal Context=Ember Coast — Coastal seasonal baseline \| Winter/, 'generating after a Location switch must use the newly active Location seasonal climate');
     assert.equal(worldState(harness).runtime.weather.current.regionId, 'ember-coast-climate', 'new Weather must replace only the Weather provider with the new Location climate provenance');
     subscription.unsubscribe();
 }
@@ -503,12 +507,13 @@ function assertClimateInheritanceAndCampaignFallback() {
     onePanel(harness, '!aa-world set ecoregion --id ember-coast-ecoregion --field climateRegionId --value ember-wood-climate');
 
     const ecoregionClimate = onePanel(harness, '!aa-climate');
-    assert.match(ecoregionClimate, /Current Region=Mosswood Interior - Temperate/, 'an active Location without a direct Climate assignment must inherit its Ecoregion Climate');
-    assert.match(ecoregionClimate, /Why This Region=Ecoregion: Shorewood Fringe selects the current Scene baseline/, 'Climate must disclose Ecoregion inheritance rather than present it as a hidden campaign fallback');
+    assert.match(ecoregionClimate, /Current Region=Mosswood Interior — Temperate/, 'an active Location without a direct Climate assignment must inherit its Ecoregion Climate');
+    assert.match(ecoregionClimate, /Why This Region=Current Area Ecoregion: Shorewood Fringe supplies the current seasonal baseline/, 'Climate must disclose Ecoregion inheritance rather than present it as a hidden campaign fallback');
     assert.equal(harness.sandbox.GameAssist.AlmanacAssist.getClimate().regionId, 'ember-wood-climate', 'the public default Climate getter must honor Ecoregion inheritance');
 
     const ecoregionManualWeather = onePanel(harness, '!aa-weather manual --summary "Woodland haze" --temp 51 --wind 3 --precipitation Mist --cloud Low --visibility Reduced --severity 1 --duration 4');
-    assert.match(ecoregionManualWeather, /Context=Mosswood Interior \| Winter \| GM manual weather — Ecoregion: Shorewood Fringe/, 'manual Weather must retain Ecoregion Climate provenance when a Location has no direct assignment');
+    assert.match(ecoregionManualWeather, /Seasonal Context=Mosswood Interior — Temperate seasonal baseline \| Winter/, 'manual Weather must show the inherited Ecoregion Climate baseline without exposing provider wiring');
+    assert.equal(worldState(harness).runtime.weather.current.context, 'GM manual weather — Ecoregion: Shorewood Fringe', 'manual Weather must retain Ecoregion Climate provenance in the saved provider record');
 
     const ecoregionEditor = onePanel(harness, '!aa-world edit ecoregion --id ember-coast-ecoregion --layer detailed');
     const ecoregionClimateSelector = buttonTarget(ecoregionEditor, 'Set Climate Region');
@@ -519,14 +524,16 @@ function assertClimateInheritanceAndCampaignFallback() {
     onePanel(harness, '!aa-world set ecoregion --id ember-coast-ecoregion --field climateRegionId --value none');
 
     const fallbackClimate = onePanel(harness, '!aa-climate');
-    assert.match(fallbackClimate, /Current Region=Ember Coast - Coastal/, 'without Location or Ecoregion Climate assignments, Climate must use the configured campaign fallback');
-    assert.match(fallbackClimate, /Why This Region=Campaign fallback region selects the current Scene baseline/, 'Climate must name campaign fallback provenance when no local relation exists');
+    assert.match(fallbackClimate, /Current Region=Ember Coast — Coastal/, 'without Location or Ecoregion Climate assignments, Climate must use the configured campaign fallback');
+    assert.match(fallbackClimate, /Why This Region=Campaign fallback supplies the current seasonal baseline/, 'Climate must name campaign fallback provenance when no local relation exists');
     const fallbackScene = onePanel(harness, '!aa-scene');
-    assert.match(fallbackScene, /Climate Baseline=Ember Coast — Coastal seasonal baseline via Campaign fallback region/, 'Scene must agree with Climate on the no-local-assignment campaign fallback');
+    assert.match(fallbackScene, /Climate Baseline=Ember Coast — Coastal seasonal baseline/, 'Scene must agree with Climate on the no-local-assignment campaign fallback without exposing provenance in live play');
+    assert.doesNotMatch(fallbackScene, /Campaign fallback region/, 'normal Scene must reserve campaign fallback provenance for its deliberate details view');
     assert.equal(harness.sandbox.GameAssist.AlmanacAssist.getClimate().regionId, 'ember-coast-climate', 'the public default Climate getter must use campaign fallback only after local sources are absent');
 
     const fallbackManualWeather = onePanel(harness, '!aa-weather manual --summary "Coastal drizzle" --temp 45 --wind 16 --precipitation Rain --cloud Overcast --visibility Reduced --severity 2 --duration 5');
-    assert.match(fallbackManualWeather, /Context=Ember Coast \| Winter \| GM manual weather — Campaign fallback region/, 'manual Weather must retain campaign-fallback provenance only when all local Climate assignments are absent');
+    assert.match(fallbackManualWeather, /Seasonal Context=Ember Coast — Coastal seasonal baseline \| Winter/, 'manual Weather must show the campaign fallback seasonal baseline when all local Climate assignments are absent');
+    assert.equal(worldState(harness).runtime.weather.current.context, 'GM manual weather — Campaign fallback region', 'manual Weather must retain campaign-fallback provenance in the saved provider record');
 }
 
 function assertWorldSwitchPreservesCurrentCampaignContext() {
