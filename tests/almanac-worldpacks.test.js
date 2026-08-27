@@ -45,6 +45,12 @@ function emptyWorld() {
     };
 }
 
+function worksheetJson(notes) {
+    const match = String(notes || '').match(/```json\s*\n([\s\S]*?)\n```/i);
+    assert.ok(match, 'WorldPack Worksheet must contain one visible fenced JSON document');
+    return JSON.parse(match[1]);
+}
+
 function makePack(version = 1) {
     const world = emptyWorld();
     world.regions.push({ id: 'mist-frontier', name: 'Mist Frontier', description: 'Generic owner-authored frontier.', tags: ['generic'] });
@@ -131,8 +137,11 @@ function assertPublicRegistryAndTemplate(harness) {
     const before = JSON.stringify(harness.state.GameAssist.AlmanacAssist.config.worldPacks);
     const packs = api.getWorldPacks();
     assert.equal(api.version, '2.0.0', 'the active AlmanacAssist implementation must identify itself as v2.0.0');
-    assert.equal(api.worldPackSchemaVersion, 1, 'public API must disclose WorldPack schema version');
-    assert.equal(packs.schemaVersion, 1, 'read-only WorldPack registry must identify its schema');
+    assert.equal(api.worldPackSchemaVersion, 2, 'public API must disclose the latest portable WorldPack schema version');
+    assert.equal(api.worldPackRegistrySchemaVersion, 1, 'public API must distinguish the campaign installation registry schema');
+    assert.equal(api.worldPackDefinitionSchemaVersion, 1, 'public API must disclose the campaign-owned installed-definition schema');
+    assert.equal(packs.schemaVersion, 2, 'read-only WorldPack API result must identify the portable document schema');
+    assert.equal(packs.registrySchemaVersion, 1, 'read-only WorldPack API result must distinguish registry schema from document schema');
     assert.equal(Object.isFrozen(packs), true, 'WorldPack API result must be deeply immutable at public boundary');
     assert.equal(Object.isFrozen(packs.installed), true, 'WorldPack installation list must be immutable');
     assert.throws(() => { packs.installed.push({ id: 'mutated' }); }, /read only|not extensible|object is not extensible/i, 'callers must not mutate installed registry output');
@@ -145,9 +154,17 @@ function assertPublicRegistryAndTemplate(harness) {
     const entry = harness.state.GameAssist.handouts.entries['AlmanacAssist:worldpack-template'];
     assert.ok(entry?.id, 'template action must use a stable owned handout identity');
     const notes = harness.sandbox.getObj('handout', entry.id).get('notes');
-    const parsed = JSON.parse(notes);
-    assert.equal(parsed.format, 'GameAssist.AlmanacWorldPack', 'template handout must use canonical portable format');
+    assert.match(notes, /<!--\s*GameAssist Almanac WorldPack Worksheet\s*-->/i, 'blank template must use the documented human-editable worksheet envelope');
+    assert.match(notes, /Edit the single JSON block below/i, 'worksheet template must explain the safe authoring boundary in the handout itself');
+    const parsed = worksheetJson(notes);
+    assert.equal(parsed.format, 'GameAssist.AlmanacWorldPack', 'worksheet JSON block must use canonical portable format');
+    assert.equal(parsed.schemaVersion, 2, 'blank template must author against the latest palette-plus-geography package schema');
+    assert.ok(parsed.palette && typeof parsed.palette === 'object' && !Array.isArray(parsed.palette), 'blank v2 template must make reusable palette ownership explicit');
+    assert.ok(parsed.bindings && typeof parsed.bindings === 'object' && !Array.isArray(parsed.bindings), 'blank v2 template must make definition bindings explicit');
     assert.deepEqual(parsed.world, emptyWorld(), 'blank template must contain no named setting lore or runtime data');
+    const worksheetReview = harness.dispatchCommand(`!aa-worldpacks import --handout ${entry.id} --mode new`);
+    assert.match(worksheetReview[0].message, /WorldPack Import Preview/, 'the generated human-editable worksheet must round-trip through the same inert review path');
+    harness.dispatchCommand(`!aa-worldpacks cancel --grant ${grantId(harness)}`);
 }
 
 function assertValidationAndPreviewSafety(harness) {
@@ -163,6 +180,15 @@ function assertValidationAndPreviewSafety(harness) {
     assert.match(invalidResponse[0].message, /No text was executed/i, 'invalid JSON path must state inert-text safety');
     assert.equal(JSON.stringify(almanac.config.world), worldBefore, 'invalid data must not change Worldbuilding');
     assert.equal(JSON.stringify(almanac.config.worldPacks), registryBefore, 'invalid data must not change registry');
+
+    const malformedWorksheet = harness.sandbox.createObj('handout', {
+        name: 'Malformed WorldPack Worksheet', archived: false,
+        notes: '<!-- GameAssist Almanac WorldPack Worksheet -->\n```json\n{}\n```\n```json\n{}\n```'
+    });
+    const malformedWorksheetResponse = harness.dispatchCommand(`!aa-worldpacks import --handout ${malformedWorksheet.id} --mode new`);
+    assert.match(malformedWorksheetResponse[0].message, /exactly one non-empty fenced JSON block/i, 'worksheet parser must refuse ambiguous multiple JSON blocks before normalization');
+    assert.equal(JSON.stringify(almanac.config.world), worldBefore, 'ambiguous worksheet refusal must not change Worldbuilding');
+    assert.equal(JSON.stringify(almanac.config.worldPacks), registryBefore, 'ambiguous worksheet refusal must not change registry');
 
     const handout = createPackHandout(harness);
     const providerBefore = providerDigest(almanac);

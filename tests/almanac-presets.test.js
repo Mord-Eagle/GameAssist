@@ -254,7 +254,10 @@ function assertReviewRefusalAndMalformedSafety() {
     const boundedHarness = createHarness();
     installPresetWorld(boundedHarness);
     const boundedState = boundedHarness.state.GameAssist.AlmanacAssist;
-    boundedState.config.world.presets = Array.from({ length: 60 }, (_, index) => ({
+    // The setting-scale Worldbuilding policy intentionally permits 160 editable
+    // Session Presets; populate that exact declared campaign bound rather than
+    // the older starter-scale 60-record fixture.
+    boundedState.config.world.presets = Array.from({ length: 160 }, (_, index) => ({
         id: `campaign-preset-${index + 1}`, name: `Campaign Preset ${index + 1}`, description: '', tags: [],
         locationId: null, phenomenonIds: [], defaultPace: 'standard', sourcePresetId: null, sourcePresetVersion: null
     }));

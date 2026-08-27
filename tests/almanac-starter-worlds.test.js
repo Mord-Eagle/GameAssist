@@ -2,7 +2,7 @@
 // mechsuit:
 //   codename: "GAMEASSIST_ALMANAC_STARTER_WORLDS_TEST"
 //   project_version: "v2.0.0"
-//   purpose: "Exercise first-run AlmanacAssist onboarding, generic built-in starter worlds, world-library switching, and deferred Roll20 command-button prompts."
+//   purpose: "Exercise first-run AlmanacAssist onboarding, generic built-in starter worlds, world-library switching, deferred Roll20 command-button prompts, and complete bounded named editor pickers."
 //   order: ["artifact_identity","first_run_onboarding","deferred_prompt_contract","starter_world_install","world_switch_preservation"]
 //   env:
 //     required: ["NODE_RUNTIME"]
@@ -77,6 +77,21 @@ function allButtonTargets(message) {
     let match;
     while ((match = pattern.exec(String(message)))) targets.push(decodeNumericEntities(match[1]));
     return targets;
+}
+
+function firstDeferredQueryParts(target) {
+    const input = decodeNumericEntities(target);
+    const start = input.indexOf('?{');
+    assert.notEqual(start, -1, `expected a deferred Roll20 query in ${target}`);
+    let cursor = start + 2;
+    let depth = 1;
+    while (cursor < input.length && depth) {
+        if (input[cursor] === '{') depth++;
+        else if (input[cursor] === '}') depth--;
+        cursor++;
+    }
+    assert.equal(depth, 0, `the first deferred Roll20 query must close in ${target}`);
+    return input.slice(start + 2, cursor - 1).split('|');
 }
 
 function resolveDeferredPromptChoiceVariants(target) {
@@ -367,7 +382,7 @@ function assertStarterSessionScreensStayActionable() {
     assert.match(travelReview, /Review Start/, 'starter Travel must produce a reviewed start panel rather than a hidden command failure');
     const presetPreview = onePanel(harness, '!aa-presets preview --id ember-arrival');
     assert.match(presetPreview, /Session Preset Preview/, 'starter Session Presets must open a visible preview path');
-    assert.match(presetPreview, /Climate: Ember Coast via Location: Harbor Stead/, 'prepared Session Preset previews must disclose the same resolved local Climate source used by Scene and Weather');
+    assert.match(presetPreview, /Climate: Ember Coast via Location(?: Climate region)?: Harbor Stead/, 'prepared Session Preset previews must disclose the same resolved local Climate source used by Scene and Weather');
 }
 
 function assertLocationClimateKeepsClimateAndWeatherCoherent() {
@@ -383,7 +398,8 @@ function assertLocationClimateKeepsClimateAndWeatherCoherent() {
     const movedToMosswood = onePanel(harness, '!aa-location use --id mosswood-crossing');
     const locationClimateEvent = climateEvents.at(-1);
     assert.equal(locationClimateEvent.payload.current.regionId, 'ember-wood-climate', 'a Location change Climate event must expose the newly effective Scene baseline');
-    assert.equal(locationClimateEvent.payload.details.currentSceneClimateScope, 'location', 'a Location change Climate event must identify local precedence rather than imply a fallback rewrite');
+    assert.equal(locationClimateEvent.payload.details.currentSceneClimateScope, 'location', 'a Location change Climate event must preserve the stable coarse local-precedence contract rather than imply a fallback rewrite');
+    assert.equal(locationClimateEvent.payload.details.currentSceneClimateSourceKind, 'location-climate-region', 'a Location change Climate event must separately disclose the more specific resolved local source');
     assert.equal(locationClimateEvent.payload.details.campaignFallbackRegionId, 'ember-coast-climate', 'a Location change Climate event must retain the separately configured campaign fallback for integrations');
     assert.match(movedToMosswood, /Climate Context=Mosswood Interior — Temperate via Location: Mosswood Crossing/, 'a Location change must visibly identify the newly active Climate context while retaining Weather ownership');
     const climateAtMosswood = onePanel(harness, '!aa-climate');
@@ -438,7 +454,11 @@ function assertClimateInheritanceAndCampaignFallback() {
 
     const locationEditor = onePanel(harness, '!aa-world edit location --id mosswood-crossing');
     const locationClimateSelector = buttonTarget(locationEditor, 'Set Climate Region');
-    assert.match(locationClimateSelector, /\?\{Set Climate Region\|Current: Mosswood Interior,ember-wood-climate\|None,none\|Ember Coast,ember-coast-climate\}/, 'the ordinary Location editor must offer a visible None choice and named Climate regions');
+    assert.equal(locationClimateSelector, '!aa-world choose --type location --id mosswood-crossing --field climateRegionId --page 0', 'the ordinary Location editor must route Climate selection into the complete bounded named chooser');
+    const locationClimateChoices = onePanel(harness, locationClimateSelector);
+    assert.match(locationClimateChoices, /Current Selection=Mosswood Interior/, 'the Climate chooser must visibly identify the currently assigned named region');
+    assert.match(locationClimateChoices, /Ember Coast=\[Use This Choice\]\(!aa-world set location --id mosswood-crossing --field climateRegionId --value ember-coast-climate\)/, 'the Climate chooser must expose named alternatives without requiring a hidden ID');
+    assert.match(locationClimateChoices, /Clear Selection.*--value none/, 'the Climate chooser must retain a visible clear/inherit action');
     onePanel(harness, '!aa-world set location --id mosswood-crossing --field climateRegionId --value none');
     onePanel(harness, '!aa-world set ecoregion --id ember-coast-ecoregion --field climateRegionId --value ember-wood-climate');
 
@@ -452,7 +472,10 @@ function assertClimateInheritanceAndCampaignFallback() {
 
     const ecoregionEditor = onePanel(harness, '!aa-world edit ecoregion --id ember-coast-ecoregion --layer detailed');
     const ecoregionClimateSelector = buttonTarget(ecoregionEditor, 'Set Climate Region');
-    assert.match(ecoregionClimateSelector, /\?\{Set Climate Region\|Current: Mosswood Interior,ember-wood-climate\|None,none\|Ember Coast,ember-coast-climate\}/, 'the ordinary Ecoregion editor must offer the visible clear/inherit Climate selection');
+    assert.equal(ecoregionClimateSelector, '!aa-world choose --type ecoregion --id ember-coast-ecoregion --field climateRegionId --page 0', 'the ordinary Ecoregion editor must route visible clear/inherit Climate selection through the complete bounded chooser');
+    const ecoregionClimateChoices = onePanel(harness, ecoregionClimateSelector);
+    assert.match(ecoregionClimateChoices, /Current Selection=Mosswood Interior/, 'the Ecoregion Climate chooser must disclose the inherited active assignment before a change');
+    assert.match(ecoregionClimateChoices, /Clear Selection.*--value none/, 'the Ecoregion Climate chooser must retain a visible clear/inherit action');
     onePanel(harness, '!aa-world set ecoregion --id ember-coast-ecoregion --field climateRegionId --value none');
 
     const fallbackClimate = onePanel(harness, '!aa-climate');
@@ -502,10 +525,12 @@ function assertGuidedReferencesAvoidRawIds() {
 
     harness.sandbox.createObj('page', { _id: 'moonrise-page', name: 'Moonrise Landing' });
     const locationEditor = onePanel(harness, '!aa-world edit location --id harbor-stead');
-    assert.match(locationEditor, /Assign Roll20 Page/, 'Location editing must offer a page-picker control');
+    const pagePicker = buttonTarget(locationEditor, 'Assign Roll20 Page');
+    assert.equal(pagePicker, '!aa-world choose --type location --id harbor-stead --field pageId --page 0', 'Location editing must offer a bounded named page-picker control');
     assert.match(locationEditor, /Use Current Player Page/, 'Location editing must offer a direct current-page assignment action');
-    assert.match(locationEditor, /Moonrise Landing,moonrise-page/, 'Location page picker must include a visible named Roll20 page choice');
-    assert.doesNotMatch(locationEditor, /\[Page ID\]/, 'Location editing must not make a GM type a hidden Roll20 page ID');
+    const pageChoices = onePanel(harness, pagePicker);
+    assert.match(pageChoices, /Moonrise Landing=\[Use This Choice\]\(!aa-world set location --id harbor-stead --field pageId --value moonrise-page\)/, 'Location page picker must include a visible named Roll20 page choice');
+    assert.doesNotMatch(pageChoices, /\[Page ID\]/, 'Location editing must not make a GM type a hidden Roll20 page ID');
     const namedPageResult = onePanel(harness, '!aa-world set location --id harbor-stead --field pageId --value moonrise-page');
     assert.equal(worldState(harness).config.world.locations.find(location => location.id === 'harbor-stead').pageId, 'moonrise-page', 'a selected named Roll20 page must save through the ordinary setter');
     assert.match(namedPageResult, /Map: Moonrise Landing/, 'the setter result must visibly identify the assigned page rather than only hiding it inside the next query');
@@ -523,7 +548,10 @@ function assertGuidedReferencesAvoidRawIds() {
     const presetEditor = onePanel(harness, '!aa-world edit preset --id ember-arrival --layer detailed');
     assert.match(presetEditor, /Add Overlay/, 'Preset editing must offer a named overlay choice rather than a comma-separated identifier prompt');
     assert.doesNotMatch(presetEditor, /\[Set Phenomena\]/, 'Preset editing must not ask a GM to type Phenomenon identifiers');
-    assert.match(buttonTarget(presetEditor, 'Add Overlay'), /\?\{Add Prepared Phenomenon\|None,none\|Harbor Fog,ember-fog/, 'Preset overlay choices must be a complete named deferred query');
+    const overlayPicker = buttonTarget(presetEditor, 'Add Overlay');
+    assert.equal(overlayPicker, '!aa-world choose overlay --id ember-arrival --page 0', 'Preset overlay selection must use the complete bounded named chooser');
+    const overlayChoices = onePanel(harness, overlayPicker);
+    assert.match(overlayChoices, /Harbor Fog=\[Use This Choice\]\(!aa-world set preset --id ember-arrival --field phenomenonIds --value ember-fog\)/, 'Preset overlay chooser must submit the selected named Phenomenon through the normal setter');
     onePanel(harness, '!aa-world set preset --id ember-arrival --field phenomenonIds --value ember-fog');
     assert.deepEqual(Array.from(worldState(harness).config.world.presets.find(preset => preset.id === 'ember-arrival').phenomenonIds), ['ember-fog'], 'a named preset overlay selection must save through the normal setter');
     const updatedPreset = onePanel(harness, '!aa-world edit preset --id ember-arrival --layer detailed');
@@ -560,6 +588,47 @@ function assertGuidedReferencesAvoidRawIds() {
     assert.doesNotMatch(filteredWayfarerPicker, /WorldPack Template|Ember Coast Export/, 'Wayfarer picker must hide known-incompatible owned WorldPack handouts');
 }
 
+function assertHandoutPickerQueriesKeepEntitySyntaxInert() {
+    const harness = createHarness();
+    const eligible = [
+        { id: 'handout-plain', name: 'World Notes' },
+        { id: 'handout-numeric', name: 'Numeric &#124; injected &#44; value &#41;' },
+        { id: 'handout-named', name: 'Named &vert; pipe &comma; value &rpar;' },
+        { id: 'handout-percent', name: 'Percent %7C pipe %2C comma' },
+        { id: 'handout-nested', name: 'Nested &amp;#124; entity (close)' }
+    ];
+    eligible.forEach(handout => harness.sandbox.createObj('handout', { _id: handout.id, name: handout.name, notes: '' }));
+    // Roll20's opaque object IDs are expected to be safe. A malformed fixture
+    // must not become a query value merely because its visible name is harmless.
+    harness.sandbox.createObj('handout', { _id: 'unsafe|handout', name: 'Never List This Handout', notes: '' });
+
+    const assertPicker = (target, prompt) => {
+        const parts = firstDeferredQueryParts(target);
+        assert.equal(parts[0], prompt, 'the handout picker must retain its clear question');
+        const options = parts.slice(1);
+        assert.equal(options.length, eligible.length, 'entity-shaped delimiters must not create extra selectable handout options');
+        assert.deepEqual(options.map(option => option.slice(option.lastIndexOf(',') + 1)).sort(), eligible.map(handout => handout.id).sort(), 'each picker option must retain exactly its original safe Roll20 handout ID');
+        assert.doesNotMatch(options.join(' '), /Never List This Handout|unsafe\|handout/, 'a malformed Roll20 object ID must be omitted from the picker');
+        options.forEach(option => {
+            const separator = option.lastIndexOf(',');
+            assert.ok(separator > 0, 'each picker option must remain one visible label plus one ID');
+            const display = option.slice(0, separator);
+            const id = option.slice(separator + 1);
+            assert.doesNotMatch(display, /[|,?{}\[\]()&%#;<>~=+*^`$!@]/, 'a handout label must not retain raw, encoded, or Markdown query controls');
+            assert.match(id, /^[A-Za-z0-9_-]{1,128}$/, 'a picker value must remain one opaque Roll20-safe ID');
+        });
+    };
+
+    assertPicker(
+        buttonTarget(onePanel(harness, '!aa-worldpacks'), 'Review Handout Import'),
+        'Choose a WorldPack handout'
+    );
+    assertPicker(
+        buttonTarget(onePanel(harness, '!aa-wayfarer'), 'Review Handout Import'),
+        'Choose an editable calendar handout'
+    );
+}
+
 function assertExistingCampaignIsSavedBeforeSwitching() {
     const harness = createHarness();
     const almanac = worldState(harness);
@@ -594,12 +663,14 @@ function run() {
     assertClimateInheritanceAndCampaignFallback();
     assertWorldSwitchPreservesCurrentCampaignContext();
     assertGuidedReferencesAvoidRawIds();
+    assertHandoutPickerQueriesKeepEntitySyntaxInert();
     assertExistingCampaignIsSavedBeforeSwitching();
     process.stdout.write('PASS: AlmanacAssist starter-world and prompt regression checks\n');
 }
 
 run();
 // --- Notes & Comments ---
+// Changed (v2.0.0): verify that WorldPack and Wayfarer named-handout pickers neutralize literal, HTML-entity, percent-escape, and Markdown query controls without losing valid opaque Roll20 IDs.
 // Changed (v2.0.0): add focused evidence for generic built-in starter worlds, first-run guided controls, deferred prompt targets, and saved-world switching.
 // Decision log:
 //   CHOICE: inspect generated command targets after numeric-entity decoding — ALT: claim source strings alone prove prompt behavior; REJECTED: the live defect occurred at the rendered-button seam.

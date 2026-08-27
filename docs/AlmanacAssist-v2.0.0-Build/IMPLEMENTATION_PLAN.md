@@ -170,11 +170,14 @@ This gate has a v2.0.0 framework foundation: compact Current World/Scene present
 - [x] PresetRegistry: immutable generic versioned built-ins, Preview → reviewed Clone/Install → Customize, independent editable campaign clones, provenance, bounded references, and focused VM coverage.
 - [x] RulesAdvisor: optional profile-specific bounded SceneResolver-derived reminders, explicit on/off and profile controls, no provider/gameplay writes, and focused VM coverage.
 - [x] Complete Basic / Detailed / Technical layers for every generic Worldbuilding record editor through the shared `worldRecordEditorLayers()` contract; Technical adds provenance/stable identity and guarded removal without normal-panel JSON.
+- [x] Keep every Worldbuilding collection usable at setting scale: ordinary named catalog screens are name-sorted 12-entry pages with Previous/Next, name/tag Search, and direct Edit controls. Catalog browsing/search is read-only and never relies on a GM recalling a Technical stable ID; focused four-pack coverage reaches the final Location and Route pages.
+- [x] Keep dynamic editor selection usable at the same scale: Worldbuilding hierarchy/endpoints, Climate and named Roll20 pages, installed-palette profile bindings, Session Preset overlays, Route Leg Travel Profile/intermediate Location choices, and palette collection/default/cross-reference controls open complete name/tag-searchable 12-entry pickers. A picker is read-only until it delegates to the existing guarded setter or atomic split path; focused VM coverage reaches final profile and 640-Location choice pages and checks decoded rendered targets.
+- [x] Bound each reusable palette collection at 160 records on import, validation, and direct addition. Preserve multi-template Ecoregion Profile references as canonical arrays through the visible picker/save path.
 - [x] Keep built-in packs generic and owner-authored; no published setting pack data is bundled pending any separate provenance/licensing review.
 
 ## 6. Gate 4 — Portable world data and temporal contexts
 
-- [x] WorldPackService: separate PresetRegistry/WorldPack/runtime data classes; shared versioned editable handout/canonical-export schema; bounded documents/parser work; syntax/schema/semantic/reference/conflict/provenance validation; dependency report; Preview → stale-protected Confirm → atomic Worldbuilding/registry commit; New/Update/Copy; stable provenance; blank template; no imported-text execution; and focused VM coverage.
+- [x] WorldPackService: separate PresetRegistry/WorldPack/runtime data classes; shared versioned editable handout/canonical-export schema; bounded documents/parser work; syntax/schema/semantic/reference/conflict/provenance validation; dependency report; Preview → stale-protected Confirm → atomic Worldbuilding/registry commit; New/Update/Copy; stable provenance; blank template; no imported-text execution; visible immutable-source update/current-state controls with bounded conflict evidence and independent-copy recovery; and focused VM coverage.
 - [x] Temporal contexts: explicit immutable Prime/regional/planar time-rate contexts; Basic/Detailed/Technical editing; preview plus stale-protected reconciliation; no silent reversal of rests/effects/NPC history/combat/resources/real-world records; rules/lore presets distinct from mechanics; bounded `almanac.temporal.transition` events for EffectAssist and other consumers.
 
 ## 7. Acceptance strategy
@@ -197,7 +200,7 @@ This gate has a v2.0.0 framework foundation: compact Current World/Scene present
       and malformed-input tests cover the Almanac additions; final live restart/lifecycle proof remains deferred.
 - [x] Scene coherence tests prove one authoritative value per field with field-level
       provenance in the focused SceneResolver VM harness.
-- [x] WorldPack import/parser tests prove bounded failure, stale-preview refusal, no-overwrite behavior, update/copy provenance, and atomicity.
+- [x] WorldPack import/parser tests prove bounded failure, stale-preview refusal, no-overwrite behavior, immutable-source update/current/refusal/copy recovery, update/copy provenance, and atomicity.
 - [x] Temporal-context projection/reconciliation tests prove bounded failure, stale refusal, canonical-only atomic commits, event boundaries, and future-state preservation.
 - [x] Historical automated checkpoint: 11 Node VM suites ran as one consolidated checkpoint. No separate broader repository test runner exists. The live exploratory failure showed this does not establish first-run usability.
 - [x] Recovery test expansion: `tests/almanac-starter-worlds.test.js` now covers first-run actions, starter installation/switching, direct/Ecoregion/fallback Climate provenance, retained Weather mismatch/manual provenance, Location-default Environment parity, climate-removal guards, and a decoded ordinary-screen generated-target audit. It runs in the full focused suite. Rare/advanced flows still require continued audit plus final Roll20 rendering evidence.
@@ -215,6 +218,7 @@ This gate has a v2.0.0 framework foundation: compact Current World/Scene present
 - [ ] Nontrivial Wayfarer calendar via chat controls only.
 - [ ] Every generated button opens a complete prompt and produces a visible result.
 - [ ] Session Mode common actions within one or two screens.
+- [ ] Worldbuilding editor catalogs: with a full installed WorldPack, page Locations and Routes, search a named record, and open a distant record’s direct Edit control without typing a Technical stable ID; confirm compact rendered cards and no accidental state change while browsing.
 - [ ] Off/Descriptive/Detailed/Technical output and all presets.
 - [ ] Climate, weather, environment, temperature, precipitation, visibility, and
       moon visibility are coherent. In particular, verify direct Location Climate, Ecoregion-only inheritance, and campaign fallback; confirm a Location move retains and flags old-region Weather, then use both Generate and Set Manual Conditions to replace it. Before Weather is committed, confirm EnviroAlmanac matches the active Location default.
@@ -236,6 +240,7 @@ Only after the recovery-render checks pass may this list be treated as the forma
   invalid minute), #93 configured-state semantics, valid saved-state preservation,
   and case-insensitive close dashboard aliases.
 - The historical 2026-08-26 automated checkpoint passed `node --check GameAssist`, `node --check GameAssist.js`, `node --check < GameAssist-v2.0.0`, artifact comparison, `git diff --check`, and 11 focused Almanac Node VM suites: Gate 0, SceneResolver, Worldbuilding, Travel, Phenomena, Presets, RulesAdvisor, WorldPacks, Temporal Contexts, Wayfarer handout, and conservative migration (including future Worldbuilding runtime preservation). Those suites prove specific no-write, future-state, review-before-commit, and atomicity contracts; they did not prove fresh-GM Roll20 usability.
+- The current canonical-source regression sweep passed all 14 focused Almanac Node VM suites, including the four-pack 640-Location/860-Route catalog workload, Worldbuilding direct Edit paging/search, PresetRegistry bounds, RulesAdvisor no-provider-write behavior, and Climate scope compatibility. It deliberately skipped executable-identity assertions only because `GameAssist.js` and `GameAssist-v2.0.0` remain known stale mirrors under the deferred artifact-synchronization boundary. This is local regression evidence only; it does not replace the required Roll20 render/performance acceptance work.
 - `maximumWorldMinute` no longer appears anywhere in the source.
 - `getSubmoduleStatus()` now returns the explicit six-field configured-state
   object.

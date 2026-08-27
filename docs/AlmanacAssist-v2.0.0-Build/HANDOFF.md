@@ -17,10 +17,17 @@ This document is a practical restart/recovery guide for the AlmanacAssist **v2.0
 - Code implementation commit: `9c0a83a` — `feat(almanac): complete v2 world and temporal workflows`
 - Remote branch was pushed as: `origin/arena/01a03c75-gameassist`
 - The working implementation started from `ad5e0aa2eeb093b01349c530dbf050a1d096dc46`.
-- The three executable artifacts must remain byte-identical:
-  1. `GameAssist` — canonical source
+- The intended release artifact contract is byte-identical executables:
+  1. `GameAssist` — canonical active source
   2. `GameAssist.js` — executable mirror
   3. `GameAssist-v2.0.0` — executable mirror with no JavaScript filename extension
+
+  **Current recovery boundary:** the two mirrors are known stale and have broad
+  pre-existing differences. Do **not** synchronize them during the current
+  canonical-source recovery pass. Their identity guard is expected to fail until
+  an explicit artifact-convergence pass is planned; focused canonical VM checks
+  may bypass only that assertion locally and never treat the bypass as release
+  evidence.
 
 ### Tracker boundaries
 
@@ -105,7 +112,7 @@ Recovery work must prioritize the fresh-GM journey: World Library/Starter Worlds
 #### Climate, Weather, and Environment coherence recovery
 
 - The effective current-Scene Climate is explicit and read-only: direct active Location relation, then active Ecoregion relation, then campaign fallback. A Location move does not rewrite the Climate selector, committed Weather, or Environment owner state.
-- `!aa-climate`, Current Scene, dashboard/status, default `getClimate()`, and `almanac.climate.changed` events report that same effective baseline and carry the campaign fallback separately. Explicit `getClimate(region)` remains a named-region lookup.
+- `!aa-climate`, Current Scene, dashboard/status, default `getClimate()`, and `almanac.climate.changed` events report that same effective baseline and carry the campaign fallback separately. Their stable coarse scope remains `location`, `ecoregion`, or `campaign`; separate source-kind evidence distinguishes a direct Climate region from a WorldPack Climate Profile without breaking existing consumers. Explicit `getClimate(region)` remains a named-region lookup.
 - Generated and manual Weather record the effective source. If a Location move makes stored Weather old-region evidence, Weather and Scene Details retain/flag it until a GM chooses Generate or the visible **Set Manual Conditions** path.
 - Before any Weather is committed, EnviroAlmanac follows the active Location’s default context so Environment agrees with Scene. A Climate region referenced by active Worldbuilding cannot be removed until the named Location/Ecoregion relation is reassigned or cleared.
 - Focused source coverage includes direct Location, Ecoregion-only, and campaign-fallback Climate paths, manual provenance, retained mismatch, environment parity, semantic-event payloads, removal guards, and decoded ordinary-screen target checks. A real Roll20 renderer still has final authority.
@@ -114,7 +121,7 @@ Recovery work must prioritize the fresh-GM journey: World Library/Starter Worlds
 
 #### Worldbuilding Mode
 
-**Recovery addition in progress:** the branch now contains an owner-authored generic Starter World collection (Ember Coast, Sunward Expanse, Frostfall Marches, and Mirewood Basin), a World Library that saves/switches compatible active world context, first-run routing from Worldbuilding/Location/Travel/Scene, direct first-Location activation, climate-region selection, guided page/handout references, ordinary Weather manual/history controls, and a broad decoded target audit of ordinary starter screens. The audit now exercises each first-level visible query choice as well as defaults, requires a recovery control on generated refusal/no-change results, applies a bounded Almanac Home fallback when an otherwise actionless attention panel remains, keeps known-incompatible GameAssist-owned WorldPack and Wayfarer handouts out of each other’s picker, and covers selected-token Rest previews/confirmation. These are implementation repairs under focused regression coverage, **not** a claim of completed live usability or formal acceptance.
+**Recovery addition in progress:** the branch now contains an owner-authored generic Starter World collection (Ember Coast, Sunward Expanse, Frostfall Marches, and Mirewood Basin), a World Library that saves/switches compatible active world context, first-run routing from Worldbuilding/Location/Travel/Scene, direct first-Location activation, climate-region selection, guided page/handout references, ordinary Weather manual/history controls, and a broad decoded target audit of ordinary starter screens. The audit now exercises each first-level visible query choice as well as defaults, requires a recovery control on generated refusal/no-change results, applies a bounded Almanac Home fallback when an otherwise actionless attention panel remains, keeps known-incompatible GameAssist-owned WorldPack and Wayfarer handouts out of each other’s picker, constrains picker labels/IDs before Roll20 decodes query syntax, and covers selected-token Rest previews/confirmation. These are implementation repairs under focused regression coverage, **not** a claim of completed live usability or formal acceptance.
 
 - Added bounded generic owner-authored records for:
   - Region
@@ -131,6 +138,18 @@ Recovery work must prioritize the fresh-GM journey: World Library/Starter Worlds
   - Detailed exposes structured relationships and mechanics fields.
   - Technical exposes stable IDs, provenance, source-pack evidence, and guarded removal without normal-panel raw JSON.
 - Added active Location selection, Favorites, and bounded Recents.
+- Added complete setting-scale Worldbuilding catalog access for every record type:
+  ordinary named collection controls render a name-sorted 12-entry page with
+  Previous/Next, name/tag Search, and direct **Edit** actions. Browsing/searching
+  is read-only and does not require a GM to recover a Technical stable ID.
+- **Current canonical-source recovery addition:** editor relations now use the same
+  complete bounded named catalog rather than an inline Roll20 option query. This
+  covers Worldbuilding hierarchy/endpoints, Climate and Roll20 page assignment,
+  installed-palette profile bindings, Session Preset overlays, and Route Leg
+  Travel Profile/intermediate-Location choices. It prevents a distant record from
+  disappearing after the first twelve choices and avoids oversized dynamic links;
+  the picker itself is read-only and delegates any selection to the existing
+  guarded setter or atomic Route Leg split path.
 
 #### Prepared Destinations and Travel
 
@@ -157,7 +176,15 @@ Recovery work must prioritize the fresh-GM journey: World Library/Starter Worlds
 #### WorldPacks
 
 - Added a separate WorldPack data class with owned handout template/export/import workflows.
+- Added four immutable, original, legally distributable setting-scale sources:
+  **Asterfall Concord**, **Veyra Turning**, **Narthvale Compact**, and **Lumenfen Atlas**. Each installs as an editable campaign-owned clone with 160 Locations, 215 Routes, 24 Prepared Destinations, 24 Phenomena, hierarchical geography, and typed palette data; the compact Ember Coast/Sunward Expanse/Frostfall Marches/Mirewood Basin concepts remain subordinate local material rather than advertised full worlds.
 - Parser work is bounded and inert; imported text is never executed.
+- The installed-palette root summarizes typed collection counts and routes each
+  collection, default binding, and cross-palette reference through a separate
+  name/tag-searchable 12-entry picker. Every palette collection has an explicit
+  160-record state/import/addition boundary; an Ecoregion Profile's selected
+  Phenomenon Templates are retained canonically as an array rather than a
+  malformed one-value text field.
 - Validation covers syntax, document/schema shape, references, provenance, dependencies, conflicts, and policy bounds.
 - Imports stop at Preview → stale-protected Confirm → atomic Worldbuilding-plus-registry commit.
 - Supports New, Update, and Copy behavior:
@@ -227,18 +254,19 @@ This behavior is intentionally conservative. Do not replace it with a repair/nor
 | Path | Purpose |
 | --- | --- |
 | `GameAssist` | Canonical Roll20 source. Make all source changes here first. |
-| `GameAssist.js` | Mirror; copy canonical source here after every source change. |
-| `GameAssist-v2.0.0` | Mirror; copy canonical source here after every source change. Syntax must be checked via stdin because its filename extension is not `.js`. |
+| `GameAssist.js` | Known-stale executable mirror. Do not synchronize during the canonical recovery pass; identity is deferred to an explicit convergence gate. |
+| `GameAssist-v2.0.0` | Known-stale executable mirror. Do not synchronize during the canonical recovery pass; when convergence is authorized later, syntax must be checked via stdin because its filename extension is not `.js`. |
 | `tests/almanac-gate0.test.js` | Shared isolated Roll20-shaped VM harness plus Gate 0 checks. Its harness accepts a historical state fixture for migration testing. |
 | `tests/almanac-scene-resolver.test.js` | SceneResolver no-write/immutability/provenance coverage. |
 | `tests/almanac-worldbuilding.test.js` | Generic records, editor layers, future config/runtime preservation, and mutation-block checks. |
-| `tests/almanac-starter-worlds.test.js` | Fresh-GM onboarding, generic built-in starter worlds, saved-world switching, first-location activation, direct/Ecoregion/fallback Climate provenance, Weather/manual mismatch behavior, Location-default Environment parity, Climate event/removal guards, decoded ordinary-screen prompt targets plus each first-level visible choice, recovery controls for generated refusal/no-change panels, compatible named handout pickers, and no-hidden-ID reference controls. This is focused VM evidence only; a fresh real-Roll20 render/prompt pass remains required. |
+| `tests/almanac-starter-worlds.test.js` | Fresh-GM onboarding, generic built-in starter worlds, saved-world switching, first-location activation, direct/Ecoregion/fallback Climate provenance, Weather/manual mismatch behavior, Location-default Environment parity, Climate event/removal guards, decoded ordinary-screen prompt targets plus each first-level visible choice, recovery controls for generated refusal/no-change panels, compatible named handout pickers, entity/percent/Markdown-safe picker labels and IDs, and no-hidden-ID reference controls. This is focused VM evidence only; a fresh real-Roll20 render/prompt pass remains required. |
 | `tests/almanac-rest.test.js` | Selected linked 2014-PC Rest preview, accepted Long Rest sheet/time commit, stale-plan refusal, and player controller-boundary checks. |
 | `tests/almanac-travel.test.js` | Prepared Destination and reviewed Travel checks. |
 | `tests/almanac-phenomena.test.js` | Phenomena scope, expiry, review, cleanup, and preservation checks. |
 | `tests/almanac-presets.test.js` | PresetRegistry clone/install checks. |
 | `tests/almanac-rules-advisor.test.js` | Advisory-only RulesAdvisor checks. |
 | `tests/almanac-worldpacks.test.js` | Bounded WorldPack parser/review/atomicity/future-runtime/alias checks. |
+| `tests/almanac-worldpack-v2.test.js` | Four original setting-scale source workload, Scene/Travel palette inheritance, update/copy, and 640-Location/860-Route catalog paging/search checks. |
 | `tests/almanac-temporal-contexts.test.js` | Temporal context, Prime immutability, projection, transition, event, stale, and future-state checks. |
 | `tests/almanac-wayfarer-handout.test.js` | Inert Wayfarer handout export/import/review/atomicity checks. |
 | `tests/almanac-migration.test.js` | Historical fixture: additive migration, exact Wayfarer starter migration, and future config/runtime preservation. |
@@ -252,7 +280,7 @@ This behavior is intentionally conservative. Do not replace it with a repair/nor
 
 ## 6. Automated verification evidence and its limit
 
-The following are the historical focused checks plus the active recovery suite. They are necessary regression evidence, but the first live result proved they are not sufficient evidence of product usability:
+The following are the historical focused checks plus the active recovery suite. They are necessary regression evidence, but the first live result proved they are not sufficient evidence of product usability. The direct identity assertions and `cmp` commands are the **future artifact-convergence** sequence; while the mirrors remain deliberately stale, run the same canonical behavioral suites through a temporary local identity-skip copy and leave the real assertions unchanged:
 
 ```bash
 node tests/almanac-gate0.test.js
@@ -264,6 +292,7 @@ node tests/almanac-phenomena.test.js
 node tests/almanac-presets.test.js
 node tests/almanac-rules-advisor.test.js
 node tests/almanac-worldpacks.test.js
+node tests/almanac-worldpack-v2.test.js
 node tests/almanac-temporal-contexts.test.js
 node tests/almanac-wayfarer-handout.test.js
 node tests/almanac-migration.test.js
@@ -313,18 +342,14 @@ Do not mark the implementation as a live Roll20 release until those checks are a
 
 1. **Stay on the Arena branch.** Do not switch to, create, or push another branch.
 2. Confirm the remote branch contains the current recovery work as a descendant of `9c0a83a`; do not treat that historical commit as a completion marker.
-3. Confirm the three executable artifacts are identical before testing or committing source work.
-4. If changing canonical source:
+3. Confirm whether the current task is still under the deferred mirror boundary. It is at present: do not require identity or copy canonical source into either mirror before testing/committing canonical recovery work.
+4. If changing canonical source during the deferred boundary:
    ```bash
    node --check GameAssist
-   cp GameAssist GameAssist.js
-   cp GameAssist GameAssist-v2.0.0
-   node --check GameAssist.js
-   node --check < GameAssist-v2.0.0
-   cmp GameAssist GameAssist.js
-   cmp GameAssist GameAssist-v2.0.0
+   git diff --check
    ```
-5. Run the applicable focused suite(s), including `almanac-starter-worlds.test.js` for onboarding/UI work, then the full focused collection after any meaningful Almanac change.
+   Run relevant canonical behavioral suites with a temporary local identity-skip copy only; remove that copy immediately. When an explicit artifact-convergence pass is authorized later, synchronize all three artifacts, check both mirror syntaxes, and run the real identity guard before release work.
+5. Run the applicable focused suite(s), including `almanac-starter-worlds.test.js` for onboarding/UI work and `almanac-worldpack-v2.test.js` for setting-scale catalog/source work, then the full focused collection after any meaningful Almanac change.
 6. Preserve the future-state refusal policy. Add a focused test before changing a migration or normalization path.
 7. Do not restart formal live Roll20 acceptance until the documented fresh-GM recovery checks are green in source and a disposable campaign is ready.
 8. Do not modify Issue #95.
