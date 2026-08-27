@@ -423,6 +423,10 @@ function assertWorldPackSessionClockAndWeatherBoundary() {
     assert.match(timeControls[0].message, /World Context=<strong>Lumenfen Atlas<\/strong> — Full WorldPack \| Current Area: <strong>Reedmarket<\/strong>/, 'Time controls must retain the active setting and current area instead of dropping spatial context');
     assert.match(timeControls[0].message, /Campaign Clock=.*Local Clock=Lumenfen Atlas Local Measure: .*Quick advances and dawn\/dusk anchors use the Campaign Clock/, 'Time controls must distinguish a local display from the one authoritative clock before offering time actions');
     assert.match(timeControls[0].message, /\[Until Campaign Dawn\].*\[Until Campaign Dusk\]/, 'time-anchor actions must name their Campaign Clock authority when a local WorldPack projection differs');
+    const playerCurrentTime = harness.dispatchCommand('!time', 'player-1');
+    assert.match(playerCurrentTime[0].message, /Campaign Time=.*Local Time \(Lumenfen Atlas Local Measure\)=/, 'a player-facing current-time request must distinguish the shared Campaign Clock from the active area local clock');
+    assert.match(playerCurrentTime[0].message, /World Context=<strong>Lumenfen Atlas<\/strong> — Full WorldPack \| Current Area: <strong>Reedmarket<\/strong>/, 'a player-facing current-time request must retain readable setting and area context');
+    assert.doesNotMatch(playerCurrentTime[0].message, /Change Area|Ecoregion WorldPack Profile/, 'a player-facing clock response must not expose GM controls or WorldPack implementation provenance');
 
     const restMenu = harness.dispatchCommand('!aa-rest');
     assert.match(restMenu[0].message, /World Context=<strong>Lumenfen Atlas<\/strong> — Full WorldPack \| Current Area: <strong>Reedmarket<\/strong>/, 'Rest must retain compact setting context during an ordinary session action');

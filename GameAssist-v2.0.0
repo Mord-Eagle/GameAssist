@@ -25470,21 +25470,33 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function showCurrent(msg, focus = 'both') {
             const scene = resolveScene();
-            const moment = scene.time?.current;
+            const clock = sceneClockContext(scene);
+            const moment = clock.campaignMoment;
+            const worldContext = currentWorldSessionContext();
             if (!moment) {
                 sendPanel(msg, 'AlmanacAssist', [
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
                     { label: 'TimeAlmanac', value: 'Currently turned off or unavailable. Stored fictional time has been preserved.' },
                     { label: 'Next Step', value: playerIsGM(msg?.playerid) ? GameAssist.createButton('Open Almanac', '!Almanac-GM') : 'Ask the GM to enable TimeAlmanac.' }
                 ]);
                 return;
             }
-            const fields = [];
-            if (focus !== 'time') fields.push({ label: 'Date', value: _sanitize(displayDate(moment)) });
-            if (focus !== 'date') fields.push({ label: 'Time', value: _sanitize(displayTime(moment)) });
-            fields.push({ label: 'Season', value: _sanitize(moment.season) });
+            const localMoment = clock.hasDistinctLocalClock ? clock.localMoment : null;
+            const fields = [{ label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) }];
+            if (focus !== 'time') {
+                fields.push({ label: localMoment ? 'Campaign Date' : 'Date', value: _sanitize(displayDate(moment)) });
+                if (localMoment) fields.push({ label: `Local Date (${clock.temporal.name})`, value: _sanitize(displayDate(localMoment)) });
+            }
+            if (focus !== 'date') {
+                fields.push({ label: localMoment ? 'Campaign Time' : 'Time', value: _sanitize(displayTime(moment)) });
+                if (localMoment) fields.push({ label: `Local Time (${clock.temporal.name})`, value: _sanitize(displayTime(localMoment)) });
+            }
+            fields.push({ label: localMoment ? 'Campaign Season' : 'Season', value: _sanitize(moment.season) });
+            if (localMoment && localMoment.season !== moment.season) fields.push({ label: 'Local Calendar Season', value: _sanitize(localMoment.season) });
             if (scene.astronomy?.moons?.length) fields.push({ label: 'Moon Phases', value: _sanitize(announcementMoonSummary('detailed', scene.astronomy)) });
-            if (moment.holidays?.length) fields.push({ label: 'Holiday', value: moment.holidays.map(_sanitize).join(', ') });
-            fields.push({ label: 'Calendar', value: _sanitize(moment.calendarName) });
+            if (moment.holidays?.length) fields.push({ label: localMoment ? 'Campaign Holiday' : 'Holiday', value: moment.holidays.map(_sanitize).join(', ') });
+            fields.push({ label: localMoment ? 'Campaign Calendar' : 'Calendar', value: _sanitize(moment.calendarName) });
+            if (localMoment) fields.push({ label: `Local Calendar (${clock.temporal.name})`, value: _sanitize(localMoment.calendarName) });
             if (playerIsGM(msg?.playerid)) fields.push({ label: 'Actions', value: `${GameAssist.createButton('Advance Time', '!aa-time menu')} ${GameAssist.createButton('Current World', '!aa-scene')} ${GameAssist.createButton('Almanac Home', '!Almanac-GM')}` });
             sendPanel(msg, 'Campaign Date and Time', fields);
         }
@@ -29754,9 +29766,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!advisor) return;
             const world = worldConfigForPanel(msg);
             if (!world) return;
+            const worldContext = currentWorldSessionContext(world);
             const profile = rulesAdvisorProfile(world.rulesProfile);
             if (!advisor.enabled) {
                 return sendPanel(msg, 'Almanac / Rules Advisor', [
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
                     { label: 'Status', value: `Off | ${_sanitize(profile.name)}` },
                     { label: 'Optional Advice', value: 'RulesAdvisor is disabled. It never applies damage, exhaustion, movement, saves, conditions, markers, or tracker changes.' },
                     { label: 'Actions', value: `${GameAssist.createButton('Turn On', '!aa-rules on')} ${GameAssist.createButton('2014 Profile', '!aa-rules profile --value 2014')} ${GameAssist.createButton('2024 Profile', '!aa-rules profile --value 2024')} ${GameAssist.createButton('Custom Profile', '!aa-rules profile --value custom')}` },
@@ -29766,6 +29780,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const scene = resolveScene({ worldConfig: world });
             const notes = rulesAdvisorNotes(scene, profile.id);
             sendPanel(msg, 'Almanac / Rules Advisor', [
+                { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
                 { label: 'Rules Profile', value: `${_sanitize(profile.name)} | ${_sanitize(profile.framing)}` },
                 ...notes.map(note => ({ label: _sanitize(note.title), value: `${_sanitize(note.message)}${note.evidence.length ? `<br><em>Scene evidence: ${note.evidence.map(_sanitize).join(' | ')}</em>` : ''}` })),
                 { label: 'Safety Boundary', value: 'Advice only. RulesAdvisor does not apply damage, exhaustion, movement, saves, conditions, markers, tracker changes, Time changes, or provider-state writes.' },
