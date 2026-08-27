@@ -2,8 +2,8 @@
 ========================================
 GameAssist - Roll20 API Script
 Version: 2.0.0
-Last Updated: 2026-08-26 (America/New_York)
-Release scope: EffectAssist 2.5.4 duration-label repair, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.1 safe public result delivery, HealthService 1.1.1 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, InitiativeAssist 1.0.6 mixed-sheet actor repair, CombatAssist 1.2.1 encounter-ending repair, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist 2.0.2 reusable world profiles, seasonal weather, and reviewed travel, and regression repairs across the v2.0.0 module suite.
+Last Updated: 2026-08-27 (America/New_York)
+Release scope: EffectAssist 2.5.4 duration-label repair, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.1 safe public result delivery, HealthService 1.1.1 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, InitiativeAssist 1.0.6 mixed-sheet actor repair, CombatAssist 1.2.1 encounter-ending repair, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist 2.0.3 reusable world profiles, seasonal weather, and reviewed travel, and regression repairs across the v2.0.0 module suite.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -30,7 +30,7 @@ calls GameAssist.enqueue(). This development package contains fifteen configurab
 - EffectAssist 2.5.4 - Coordinates compact catalog-driven effects, exact caster-and-recipient identity, retained GM requests, GameAssist-owned 2014-sheet modifiers, verified token-specific concentration, ownership-safe cleanup, provider-specific duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
 - HealAssist 1.2.1 - Guides verified 2014 normal or maximum healing with direct single-recipient targeting, optional automatic application, visible PC targeting, private GM requests, safe public announcements, and HealthService verification.
 - AttackAssist 1.1.0 - Guides authorized 2014 repeating attacks through direct visible targeting, default sheet-mode submission, optional GM-enabled roll review, complete prompt-safe Classic-sheet expansion, private GM placement, crash-safe inline-roll validation, and visible one-use native-template rolls without applying damage.
-- AlmanacAssist 2.0.2 - Separates compact Session controls from Worldbuilding; supplies reusable climate, biome, geography, ecoregion, and seasonal palettes with editable campaign copies and named region controls; generates weather from the current place and calendar season; supports coherent scenes and reviewed travel with private encounter checks; and retains phenomena, local time, advanced Wayfarer editing, WorldPacks, six independently controlled systems, and transactional rests.
+- AlmanacAssist 2.0.3 - Separates compact Session controls from Worldbuilding; supplies reusable climate, biome, geography, ecoregion, and seasonal palettes with editable campaign copies and named region controls; generates weather from the current place and calendar season; supports coherent scenes and reviewed travel with private encounter checks; and retains phenomena, local time, advanced Wayfarer editing, WorldPacks, six independently controlled systems, and transactional rests.
 - HPAssist 0.3.0 - Rolls npc_hpformula and uses HealthService for verified writes to the selected shared NPC HP bar when available.
 - DebugTools 0.3.1 - Optional dry-run-first GM diagnostics with verified supported HP damage writes on the selected shared NPC HP bar.
 
@@ -23610,7 +23610,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   guarantees: ["Session Mode keeps current place, scene, time, travel, rest, weather, event, and announcement actions compact while Worldbuilding Mode owns durable definitions","Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows without becoming hidden prerequisites","One signed base chronology keeps Year 1 at elapsed minute zero for saved-campaign compatibility while allowing validated Year 0 dates","SceneResolver publishes one immutable coherent snapshot with field-level provenance for place, local time, climate, weather, environment, astronomy, and active phenomena","Geographies, biomes, ecoregions, locations, phenomena, quick actions, and local temporal contexts are bounded, validated, and dependency-aware","Prepared destinations and mileage-based travel change chronology or active location only after explicit review and confirmation","Travel encounter checks are private GM evidence derived from a selected interval and die, never encounter-content generation or automatic gameplay mutation","Immutable versioned presets install editable copies without replacing existing places","Wayfarer provides complete chat editors plus a versioned advanced handout whose stale-protected import changes only the saved draft","WorldPack import/export excludes runtime chronology and character state, validates the complete bounded definition graph before mutation, and records provenance","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Optional RulesAdvisor guidance is profile-specific, read-only, and never applies gameplay changes","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AlmanacAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "2.0.2", time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2, world_state_schema_version: 1, scene_schema_version: 1, worldpack_schema_version: 1, temporal_context_schema_version: 1, wayfarer_handout_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "2.0.3", time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2, world_state_schema_version: 1, scene_schema_version: 1, worldpack_schema_version: 1, temporal_context_schema_version: 1, wayfarer_handout_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // AlmanacAssist presents a compact Session Mode for live play and a separate
@@ -23624,7 +23624,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('AlmanacAssist', function() {
         const MODULE_NAME = 'AlmanacAssist';
-        const MODULE_VERSION = '2.0.2';
+        const MODULE_VERSION = '2.0.3';
         const TIME_STATE_SCHEMA_VERSION = 2;
         const WAYFARER_DRAFT_SCHEMA_VERSION = 3;
         const ANNOUNCEMENT_SCHEMA_VERSION = 4;
@@ -25072,8 +25072,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return worldPackFingerprint(JSON.stringify({ world: normalizeWorldConfig(), climate: normalizeClimateConfig() }));
         }
 
-        function paletteBack() {
-            return `${GameAssist.createButton('World Palettes', '!aa-palette')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}`;
+        function paletteBack(locationId = null) {
+            return `${GameAssist.createButton('World Palettes', `!aa-palette${locationId ? ` --location "${locationId}"` : ''}`)} ${GameAssist.createButton('Almanac Home', '!aa-gm')}`;
         }
 
         function paletteChoice(label, items, selected = null) {
@@ -25083,14 +25083,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return `?{${text(label)}|${ordered.map(item => `${text(item.name)},${item.id}`).join('|')}}`;
         }
 
-        function showPalette(msg, kind = '', page = 1) {
+        function showPalette(msg, kind = '', page = 1, requestedLocation = null) {
             if (!requireGm(msg)) return;
-            const place = currentWorldContext();
+            const place = currentWorldContext(requestedLocation);
+            const target = ` --location "${place.location.id}"`;
+            const isCurrent = place.location.id === normalizeWorldConfig().activeLocationId;
             if (!PALETTE_LABELS[kind]) return sendPanel(msg, 'World Palettes', [
-                { label: 'This Place', value: `${_sanitize(place.location.name)}<br>${_sanitize(place.region.name)} | ${_sanitize(weatherClimateContext(place).profileName)}<br>${_sanitize(place.biome.name)} | ${_sanitize(place.geography.name)}` },
-                { label: 'Choose Profiles', value: Object.entries(PALETTE_LABELS).map(([key, label]) => GameAssist.createButton(label, `!aa-palette ${key}`)).join(' ') },
-                { label: 'Places and Seasons', value: `${GameAssist.createButton('Regions', '!aa-climate regions')} ${GameAssist.createButton('Ecoregion Areas', '!aa-world ecoregions')} ${GameAssist.createButton('Seasons', '!aa-palette seasons')}` },
-                { label: 'Next', value: `${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Environment', '!enviro')}` },
+                { label: 'This Place', value: `${_sanitize(locationDisplayName(place.location))}<br>${_sanitize(weatherClimateContext(place).profileName)} | ${_sanitize(place.biome.name)} | ${_sanitize(place.geography.name)}` },
+                { label: 'Choose Profiles', value: Object.entries(PALETTE_LABELS).map(([key, label]) => GameAssist.createButton(label, `!aa-palette ${key}${target}`)).join(' ') },
+                { label: 'Places and Seasons', value: isCurrent ? `${GameAssist.createButton('Regions', '!aa-climate regions')} ${GameAssist.createButton('Ecoregion Areas', '!aa-world ecoregions')} ${GameAssist.createButton('Seasons', '!aa-palette seasons')}` : GameAssist.createButton('Location Context', `!aa-location details --id "${place.location.id}"`) },
+                { label: 'Next', value: isCurrent ? `${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Environment', '!enviro')}` : `${GameAssist.createButton('Location Settings', `!aa-location edit --id "${place.location.id}"`)} ${GameAssist.createButton('Move Party Here', `!aa-location preview --id "${place.location.id}"`)}` },
                 { label: 'Return', value: GameAssist.createButton('Almanac Home', '!aa-gm') }
             ]);
             const entries = paletteEntries(kind).sort((a, b) => a.item.name.localeCompare(b.item.name) || Number(a.saved) - Number(b.saved));
@@ -25098,19 +25100,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             page = Math.floor(clampNumber(page, 1, count, 1));
             const visible = entries.slice((page - 1) * POLICY.almanac.palettePageSize, page * POLICY.almanac.palettePageSize);
             sendPanel(msg, `Choose ${PALETTE_LABELS[kind]}`, [
-                { label: 'For', value: _sanitize(place.location.name) },
-                { label: 'Choices', value: visible.map(entry => GameAssist.createButton(`${entry.item.name}${entry.saved ? ' (saved)' : ''}`, `!aa-palette inspect --kind ${kind} --id ${entry.key}`)).join('<br>') },
-                { label: 'Pages', value: `${page} of ${count} ${page > 1 ? GameAssist.createButton('Previous', `!aa-palette ${kind} --page ${page - 1}`) : ''} ${page < count ? GameAssist.createButton('Next', `!aa-palette ${kind} --page ${page + 1}`) : ''}` },
+                { label: 'For', value: _sanitize(locationDisplayName(place.location)) },
+                { label: 'Choices', value: visible.map(entry => GameAssist.createButton(`${entry.item.name}${entry.saved ? ' (saved)' : ''}`, `!aa-palette inspect --kind ${kind} --id "${entry.key}"${target}`)).join('<br>') },
+                { label: 'Pages', value: `${page} of ${count} ${page > 1 ? GameAssist.createButton('Previous', `!aa-palette ${kind} --page ${page - 1}${target}`) : ''} ${page < count ? GameAssist.createButton('Next', `!aa-palette ${kind} --page ${page + 1}${target}`) : ''}` },
                 { label: 'Create', value: kind === 'climate' ? GameAssist.createButton('Custom Climate', '!aa-climate profile add --name "?{Climate name}" --temp ?{Baseline temperature F|58} --humidity ?{Humidity percent|55} --precip ?{Precipitation chance percent|35} --wind ?{Wind mph|8}') : GameAssist.createButton('Manage Saved Profiles', `!aa-world ${kind === 'geography' ? 'geographies' : kind === 'biome' ? 'biomes' : 'ecoprofiles'}`) },
-                { label: 'Return', value: paletteBack() }
+                { label: 'Return', value: paletteBack(place.location.id) }
             ]);
         }
 
-        function showPaletteProfile(msg, kind, key) {
+        function showPaletteProfile(msg, kind, key, requestedLocation = null) {
             const entry = paletteEntries(kind).find(value => value.key === key);
-            if (!entry) return showPalette(msg, kind);
+            if (!entry) return showPalette(msg, kind, 1, requestedLocation);
             const item = entry.item;
-            const place = currentWorldContext();
+            const place = currentWorldContext(requestedLocation);
             let description;
             if (kind === 'climate') description = `Baseline ${item.temperatureF} F | ${item.humidity}% humidity<br>${item.precipitationChance}% precipitation chance | ${item.windMph} mph wind`;
             if (kind === 'biome') description = `${_sanitize(item.vegetation)}<br>${_sanitize(item.aridity)} | ${_sanitize(item.ground)}<br>${_sanitize(item.water)}`;
@@ -25119,13 +25121,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const world = normalizeWorldConfig();
                 description = `${_sanitize(climateProfile(item.climateProfileId)?.name || item.climateProfileId)}<br>${_sanitize((entry.saved ? worldItem(world.biomes, item.biomeId) : BIOME_PALETTE.find(value => value.id === item.biomeId))?.name || item.biomeId)}<br>${_sanitize((entry.saved ? worldItem(world.geographies, item.geographyId) : GEOGRAPHY_PALETTE.find(value => value.id === item.geographyId))?.name || item.geographyId)}`;
             }
-            const actions = `${GameAssist.createButton('Use for This Location', `!aa-palette use --kind ${kind} --id ${key} --location ${place.location.id} --stamp ${paletteStamp()}`)} ${GameAssist.createButton('Create Editable Copy', `!aa-palette copy --kind ${kind} --id ${key} --name "?{Name for editable copy|${item.name}}"`)}`;
+            // Quote opaque identities: an all-digit fingerprint is still text, not a number.
+            const actions = `${GameAssist.createButton('Use for This Location', `!aa-palette use --kind ${kind} --id "${key}" --location "${place.location.id}" --stamp "${paletteStamp()}"`)} ${GameAssist.createButton('Create Editable Copy', `!aa-palette copy --kind ${kind} --id "${key}" --location "${place.location.id}" --name "?{Name for editable copy|${item.name}}"`)}`;
             sendPanel(msg, item.name, [
                 { label: 'Profile', value: description },
                 { label: 'Apply', value: actions },
-                ...(entry.saved ? [{ label: 'Customize', value: GameAssist.createButton('Edit Saved Profile', `!aa-palette edit --kind ${kind} --id ${key}`) }] : []),
-                { label: 'Scope', value: `Use changes ${_sanitize(place.location.name)} only. Existing weather is retained until you generate again; other places keep their settings.` },
-                { label: 'Return', value: `${GameAssist.createButton(PALETTE_LABELS[kind], `!aa-palette ${kind}`)} ${paletteBack()}` }
+                ...(entry.saved ? [{ label: 'Customize', value: GameAssist.createButton('Edit Saved Profile', `!aa-palette edit --kind ${kind} --id "${key}" --location "${place.location.id}"`) }] : []),
+                { label: 'Scope', value: `Use changes ${_sanitize(locationDisplayName(place.location))} only. Existing weather is retained until you generate again; other places keep their settings.` },
+                { label: 'Return', value: `${GameAssist.createButton(PALETTE_LABELS[kind], `!aa-palette ${kind} --location "${place.location.id}"`)} ${paletteBack(place.location.id)}` }
             ]);
         }
 
@@ -25192,10 +25195,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
-        function paletteEditButton(kind, item) {
+        function paletteEditButton(kind, item, locationId) {
             if (kind !== 'ecoregion') return null;
             const world = normalizeWorldConfig();
-            return GameAssist.createButton('Edit Profile', `!aa-palette edit --kind ecoregion --id saved:${item.id} --name "?{Profile name|${item.name}}" --climate ${paletteChoice('Climate', Object.values(climateProfileMap(normalizeClimateConfig())), item.climateProfileId)} --biome ${paletteChoice('Biome', world.biomes, item.biomeId)} --geography ${paletteChoice('Geography', world.geographies, item.geographyId)}`);
+            return GameAssist.createButton('Edit Profile', `!aa-palette edit --kind ecoregion --id "saved:${item.id}" --location "${locationId}" --name "?{Profile name|${item.name}}" --climate ${paletteChoice('Climate', Object.values(climateProfileMap(normalizeClimateConfig())), item.climateProfileId)} --biome ${paletteChoice('Biome', world.biomes, item.biomeId)} --geography ${paletteChoice('Geography', world.geographies, item.geographyId)}`);
         }
 
         function handlePalette(msg, content) {
@@ -25204,6 +25207,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const action = body.split(/\s+/)[0].toLowerCase();
             const args = _parseArgs(body).args;
             const fail = message => sendPanel(msg, 'World Palette Needs Attention', [{ label: 'Problem', value: _sanitize(message) }, { label: 'Next Step', value: paletteBack() }]);
+            const locationWorld = normalizeWorldConfig();
+            const requestedLocation = args.location === undefined ? locationWorld.activeLocationId : String(args.location);
+            if (!worldItem(locationWorld.locations, requestedLocation)) return fail('That location is no longer available. Open Locations and choose a saved place.');
             if (action === 'seasons') return showSeasonPalette(msg);
             if (action === 'season') {
                 const name = typeof args.name === 'string' ? boundedName(args.name) : '';
@@ -25218,40 +25224,43 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ensureAlmanacRuntime().climate.revision++;
                 return showSeasonPalette(msg);
             }
-            if (!['inspect', 'use', 'copy', 'edit'].includes(action)) return showPalette(msg, action, args.page);
-            const kind = String(args.kind || '');
+            if (!['inspect', 'use', 'copy', 'edit'].includes(action)) return showPalette(msg, action, args.page, requestedLocation);
+            const kind = String(args.kind || '').toLowerCase();
             if (!PALETTE_LABELS[kind]) return fail('Choose a climate, biome, geography, or ecoregion profile.');
-            const entry = paletteEntries(kind).find(item => item.key === args.id);
+            const entry = paletteEntries(kind).find(item => item.key === String(args.id ?? ''));
             if (!entry) return fail('That profile is no longer available. Open its palette again.');
             if (args.name !== undefined && (typeof args.name !== 'string' || !boundedName(args.name))) return fail('Enter a name before saving. Nothing was changed.');
-            if (action === 'inspect') return showPaletteProfile(msg, kind, entry.key);
+            if (action === 'inspect') return showPaletteProfile(msg, kind, entry.key, requestedLocation);
             if (action === 'edit') {
                 if (kind === 'geography' || kind === 'biome') return showWorldDefinitionEditor(msg, kind, entry.item.id);
                 if (kind === 'climate') return sendPanel(msg, 'Customize Climate', [
                     { label: 'Profile', value: _sanitize(entry.item.name) },
                     { label: 'Edit', value: GameAssist.createButton('Edit Values', `!aa-climate profile set --id ${entry.item.id} --temp ?{Baseline temperature F|${entry.item.temperatureF}} --humidity ?{Humidity percent|${entry.item.humidity}} --precip ?{Precipitation chance percent|${entry.item.precipitationChance}} --wind ?{Wind mph|${entry.item.windMph}} --seasonal ?{Season temperature strength 0 to 3|${entry.item.seasonalScale ?? 1}} --elevation ?{Baseline elevation in feet|${entry.item.referenceElevationFt ?? 500}}`) },
-                    { label: 'Return', value: paletteBack() }
+                    { label: 'Return', value: paletteBack(requestedLocation) }
                 ]);
                 if (!entry.saved) return fail('Create an editable copy before changing a built-in profile.');
-                if (args.name === undefined) return sendPanel(msg, 'Customize Ecoregion Profile', [{ label: 'Profile', value: _sanitize(entry.item.name) }, { label: 'Edit', value: paletteEditButton(kind, entry.item) }, { label: 'Applies To', value: 'Places following this saved ecoregion profile use its new settings next time weather is generated.' }, { label: 'Return', value: paletteBack() }]);
+                if (args.name === undefined) return sendPanel(msg, 'Customize Ecoregion Profile', [{ label: 'Profile', value: _sanitize(entry.item.name) }, { label: 'Edit', value: paletteEditButton(kind, entry.item, requestedLocation) }, { label: 'Applies To', value: 'Places following this saved ecoregion profile use its new settings next time weather is generated.' }, { label: 'Return', value: paletteBack(requestedLocation) }]);
                 const world = normalizeWorldConfig();
                 if (!boundedName(args.name) || !worldItem(world.biomes, args.biome) || !worldItem(world.geographies, args.geography) || !climateProfile(args.climate)) return fail('Choose a name and existing climate, biome, and geography. Nothing was changed.');
                 Object.assign(worldItem(world.ecoregionProfiles, entry.item.id), { name: boundedName(args.name), biomeId: args.biome, geographyId: args.geography, climateProfileId: args.climate });
                 modState.config.world = world;
                 ensureAlmanacRuntime().world.revision++;
-                return showPaletteProfile(msg, kind, entry.key);
+                return showPaletteProfile(msg, kind, entry.key, requestedLocation);
             }
-            if (action === 'use' && (args.stamp !== paletteStamp() || args.location !== normalizeWorldConfig().activeLocationId)) return fail('The location or its setup changed after this choice was opened. Choose the profile again.');
+            // Older buttons omitted the quotes; recover only the known eight-digit
+            // fingerprint shape so those valid choices survive numeric flag coercion.
+            const stamp = typeof args.stamp === 'number' ? String(args.stamp).padStart(8, '0') : args.stamp;
+            if (action === 'use' && (stamp !== paletteStamp() || args.location === undefined)) return fail('The location or its setup changed after this choice was opened. Choose the profile again.');
             const world = copy(normalizeWorldConfig());
             const climate = copy(normalizeClimateConfig());
             try {
                 const selected = action === 'copy' || (!entry.saved && kind !== 'climate') ? copyPaletteDefinition(kind, entry, world, climate, args.name) : entry.item;
-                const location = worldItem(world.locations, world.activeLocationId);
+                const location = worldItem(world.locations, requestedLocation);
                 if (action === 'use') {
                     if (kind === 'climate') location.climateProfileId = selected.id;
                     if (kind === 'biome' || kind === 'geography') {
                         // Freeze both effective values before departing from a shared profile.
-                        const current = currentWorldContext();
+                        const current = currentWorldContext(requestedLocation);
                         location.biomeId = current.biome.id;
                         location.geographyId = current.geography.id;
                         location.inheritEcoregion = false;
@@ -25270,12 +25279,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 modState.config.world = world;
                 modState.config.climate = climate;
                 ensureAlmanacRuntime().world.revision++;
-                if (action === 'copy') return showPaletteProfile(msg, kind, kind === 'climate' ? selected.id : `saved:${selected.id}`);
+                if (action === 'copy') return showPaletteProfile(msg, kind, kind === 'climate' ? selected.id : `saved:${selected.id}`, requestedLocation);
                 return sendPanel(msg, 'Location Profile Updated', [
-                    { label: 'Place', value: _sanitize(location.name) },
+                    { label: 'Place', value: _sanitize(locationDisplayName(location)) },
                     { label: 'Profile', value: _sanitize(selected.name) },
                     { label: 'Weather', value: 'Current weather was retained. Generate again to use the updated setup; locked weather stays locked.' },
-                    { label: 'Next', value: `${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${paletteBack()}` }
+                    { label: 'Next', value: `${location.id === world.activeLocationId ? GameAssist.createButton('Generate Weather', '!aa-weather generate') : GameAssist.createButton('Location Settings', `!aa-location edit --id "${location.id}"`)} ${paletteBack(location.id)}` }
                 ]);
             } catch (error) {
                 return fail(error.message);
@@ -26806,7 +26815,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 .map(value => locationIds.get(String(value || '').toLowerCase()))
                 .filter(Boolean))].slice(0, limit);
             const preparedDestinationIds = normalizeLocationIds(source.preparedDestinationIds, POLICY.almanac.maximumPreparedDestinations);
-            if (!preparedDestinationIds.length) preparedDestinationIds.push(activeLocationId);
+            // An explicitly empty prepared list is the GM's choice, not missing state.
+            if (!Array.isArray(source.preparedDestinationIds)) preparedDestinationIds.push(activeLocationId);
             const recentLocationIds = normalizeLocationIds(source.recentLocationIds, 10);
             if (!recentLocationIds.includes(activeLocationId)) recentLocationIds.unshift(activeLocationId);
 
@@ -28366,8 +28376,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }));
         }
 
+        function locationDisplayName(location) {
+            // Hide the shipped placeholder label without renaming or deleting saved data.
+            return location?.id === 'campaign-start' && location.name === 'Campaign Start' && !location.packId
+                ? 'Unnamed Starting Place' : (location?.name || 'Unassigned');
+        }
+
         function scenePath(scene) {
-            return [scene.region?.name, scene.ecoregion?.name, scene.location?.name].filter(Boolean).map(_sanitize).join(' &rsaquo; ');
+            const region = scene.region?.id === 'home' && ['Temperate Lowlands', 'Home Region', 'Campaign Default'].includes(scene.region.name) ? null : scene.region?.name;
+            const area = scene.ecoregion?.id === 'lowland-mosaic' && scene.ecoregion.name === 'Lowland Mosaic' ? null : scene.ecoregion?.name;
+            return [region, area, locationDisplayName(scene.location)].filter(Boolean).map(_sanitize).join(' &rsaquo; ');
         }
 
         function showScene(msg, technical = false) {
@@ -28416,7 +28434,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             // Persist the complete normalized branch before dependent providers read it.
             modState.config.world = world;
             const climate = normalizeClimateConfig();
-            if (climateRegion(next.regionId)) climate.activeRegionId = next.regionId;
+            if (climate.regions.some(region => region.id === next.regionId)) climate.activeRegionId = next.regionId;
             ensureAlmanacRuntime().world.revision++;
             regenerateWeatherForLocation(msg);
             const currentScene = resolveScene();
@@ -28426,34 +28444,43 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function locationChoiceRows(locations, currentId) {
             return locations.map(location => {
-                if (location.id === currentId) return `<strong>${_sanitize(location.name)} (current)</strong>`;
-                return GameAssist.createButton(location.name, `!aa-location preview --id ${location.id}`);
-            }).join(' ');
+                if (location.id === currentId) return `<strong>${_sanitize(locationDisplayName(location))} (current)</strong>`;
+                return GameAssist.createButton(locationDisplayName(location), `!aa-location preview --id "${location.id}"`);
+            }).join('<br>');
         }
 
         function locationManagementRows(locations, currentId) {
             return locations.map(location => {
                 const state = location.id === currentId ? ' <strong>(current)</strong>' : '';
-                return `${_sanitize(location.name)}${state} ${GameAssist.createButton('Edit', `!aa-location edit --id ${location.id}`)}`;
+                return `${_sanitize(locationDisplayName(location))}${state} ${GameAssist.createButton('Settings', `!aa-location edit --id "${location.id}"`)}`;
             }).join('<br>');
         }
 
-        function showLocationEditor(msg, requested) {
+        function showLocationEditor(msg, requested, details = false) {
             if (!requireGm(msg)) return;
             const world = normalizeWorldConfig();
             const location = worldItem(world.locations, requested);
             if (!location) return sendPanel(msg, 'Location Needs Attention', [{ label: 'Problem', value: 'That location was not found.' }, { label: 'Next Step', value: GameAssist.createButton('Manage Locations', '!aa-location manage') }]);
             const prepared = world.preparedDestinationIds.includes(location.id);
-            sendPanel(msg, `Edit Location: ${location.name}`, [
-                { label: 'World Context', value: `Region ${_sanitize(location.regionId)} | Ecoregion ${_sanitize(location.ecoregionId)} | Geography ${_sanitize(location.geographyId)} | Biome ${_sanitize(location.biomeId)}` },
-                { label: 'Local Context', value: `Environment ${_sanitize(location.environmentPresetId)} | Time ${_sanitize(location.temporalContextId)} | Temperature ${location.temperatureDeltaF >= 0 ? '+' : ''}${location.temperatureDeltaF} F | Wind ${location.windDeltaMph >= 0 ? '+' : ''}${location.windDeltaMph} mph` },
+            const place = currentWorldContext(location.id);
+            const fields = [
+                { label: 'Place', value: _sanitize(locationDisplayName(location)) },
+                { label: 'Profiles', value: `${_sanitize(weatherClimateContext(place).profileName)} | ${_sanitize(place.biome.name)}<br>${_sanitize(place.geography.name)}` },
+                { label: 'Actions', value: `${GameAssist.createButton('Rename', `!aa-location edit --id "${location.id}" --name "?{Location name}"`)} ${GameAssist.createButton('Choose World Profiles', `!aa-palette --location "${location.id}"`)} ${location.id !== world.activeLocationId ? GameAssist.createButton('Move Party Here', `!aa-location preview --id "${location.id}"`) : ''}` },
+                { label: 'More', value: GameAssist.createButton('Context and Notes', `!aa-location details --id "${location.id}"`) },
+                { label: 'Return', value: `${GameAssist.createButton('Locations', '!aa-location')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ];
+            if (!details) return sendPanel(msg, 'Location Settings', fields);
+            sendPanel(msg, `Location Details: ${locationDisplayName(location)}`, [
+                { label: 'World Context', value: `${_sanitize(place.region.name)} | ${_sanitize(place.ecoregion.name)}<br>${_sanitize(place.geography.name)} | ${_sanitize(place.biome.name)}` },
+                { label: 'Local Context', value: `${_sanitize(ENVIRONMENT_PRESETS[location.environmentPresetId].name)} | ${_sanitize(place.temporalContext.name)}<br>Temperature ${location.temperatureDeltaF >= 0 ? '+' : ''}${location.temperatureDeltaF} F | Wind ${location.windDeltaMph >= 0 ? '+' : ''}${location.windDeltaMph} mph` },
                 { label: 'Basic Details', value: GameAssist.createButton('Edit Name and Context', `!aa-location edit --id ${location.id} --name "?{Location name|${location.name}}" --region ${paletteChoice('Region', normalizeClimateConfig().regions, location.regionId)} --ecoregion ${paletteChoice('Ecoregion area', world.ecoregions, location.ecoregionId)} --geography ${paletteChoice('Geography', world.geographies, location.geographyId)} --biome ${paletteChoice('Biome', world.biomes, location.biomeId)} --environment ${paletteChoice('Default environment', Object.entries(ENVIRONMENT_PRESETS).map(([id, item]) => ({ id, name: item.name })), location.environmentPresetId)} --temporal ${paletteChoice('Local time', normalizeTemporalContexts(), location.temporalContextId)}`) },
-                ...(location.id === world.activeLocationId ? [{ label: 'Natural World', value: GameAssist.createButton('Choose Profiles', '!aa-palette') }] : []),
                 { label: 'Scene Modifiers', value: GameAssist.createButton('Edit Local Modifiers', `!aa-location local --id ${location.id} --temperature ?{Temperature adjustment F|${location.temperatureDeltaF}} --wind ?{Wind adjustment mph|${location.windDeltaMph}} --visibility "?{Visibility override; blank follows resolved context|${location.visibilityOverride}}" --ground "?{Ground override; blank follows resolved context|${location.groundOverride}}"`) },
                 { label: 'Map Pages and Notes', value: GameAssist.createButton('Edit Associations', `!aa-location associations --id ${location.id} --pages "?{Comma-separated Roll20 page ids|${location.pageIds.join(',')}}" --notes "?{Private GM notes|${location.notes}}"`) },
                 { label: 'Lists', value: `${GameAssist.createButton(prepared ? 'Remove from Prepared' : 'Add to Prepared', `!aa-location prepare --id ${location.id}`)} ${GameAssist.createButton(location.favorite ? 'Remove Favorite' : 'Mark Favorite', `!aa-location favorite --id ${location.id}`)}` },
+                { label: 'Handout Editing', value: `${GameAssist.createButton('WorldPack Handout', '!aa-worldpack')} - advanced export, edit, preview, and import of world definitions.` },
                 { label: 'Remove', value: location.id === world.activeLocationId ? 'The current location cannot be removed.' : GameAssist.createButton('Remove Location', `!aa-location remove --id ${location.id} --confirm ?{Remove ${location.name}? Other world definitions are preserved.|No,no|Yes,yes}`) },
-                { label: 'Return', value: `${GameAssist.createButton('Manage Locations', '!aa-location manage')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                { label: 'Return', value: `${GameAssist.createButton('Location Settings', `!aa-location edit --id "${location.id}"`)} ${GameAssist.createButton('Locations', '!aa-location')}` }
             ]);
         }
 
@@ -28479,42 +28506,46 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
-        function showLocations(msg, manage = false) {
+        function showLocations(msg, manage = false, page = 1, lists = false) {
             if (!requireGm(msg)) return;
             const world = normalizeWorldConfig();
             const current = worldItem(world.locations, world.activeLocationId);
-            const prepared = world.preparedDestinationIds.map(id => worldItem(world.locations, id)).filter(Boolean);
-            const recent = world.recentLocationIds.map(id => worldItem(world.locations, id)).filter(Boolean);
-            const favorites = world.locations.filter(location => location.favorite);
-            const prioritized = new Set([world.activeLocationId, ...world.preparedDestinationIds, ...favorites.map(location => location.id), ...recent.map(location => location.id)]);
-            const nearby = world.locations.filter(location => location.ecoregionId === current?.ecoregionId && !prioritized.has(location.id));
+            const choices = world.locations.filter(location => location.id !== current.id).sort((a, b) => a.name.localeCompare(b.name));
+            const count = Math.max(1, Math.ceil(choices.length / POLICY.almanac.palettePageSize));
+            page = Math.floor(clampNumber(page, 1, count, 1));
+            const visible = choices.slice((page - 1) * POLICY.almanac.palettePageSize, page * POLICY.almanac.palettePageSize);
+            const command = manage ? '!aa-location manage' : '!aa-location';
             const fields = [
-                { label: 'Current Location', value: _sanitize(current?.name || 'Unassigned') },
-                { label: 'Prepared Destinations', value: prepared.length ? locationChoiceRows(prepared, world.activeLocationId) : 'None prepared.' },
-                { label: 'Favorites', value: favorites.length ? locationChoiceRows(favorites, world.activeLocationId) : 'None marked.' },
-                { label: 'Recent', value: recent.length ? locationChoiceRows(recent, world.activeLocationId) : 'No recent locations.' },
-                { label: 'Nearby', value: nearby.length ? locationChoiceRows(nearby, world.activeLocationId) : 'No additional locations share the current ecoregion.' }
+                { label: 'Current Place', value: `${_sanitize(locationDisplayName(current))}<br>${GameAssist.createButton('Name This Place', `!aa-location edit --id "${current.id}" --name "?{Location name}"`)} ${GameAssist.createButton('Location Settings', `!aa-location edit --id "${current.id}"`)}` },
+                { label: 'Create', value: GameAssist.createButton('Create Location', '!aa-location add --name "?{Location name}"') },
+                { label: 'Saved Places', value: visible.length ? (manage ? locationManagementRows(visible, current.id) : locationChoiceRows(visible, current.id)) : 'No other places saved. Create a location when you need one.' }
             ];
-            if (manage) {
+            if (count > 1) fields.push({ label: 'Pages', value: `${page} of ${count} ${page > 1 ? GameAssist.createButton('Previous', `${command} --page ${page - 1}`) : ''} ${page < count ? GameAssist.createButton('Next', `${command} --page ${page + 1}`) : ''}` });
+            if (lists) {
+                // The current place is not a destination; do not repeat it in every list.
+                const prepared = choices.filter(item => world.preparedDestinationIds.includes(item.id));
+                const favorites = choices.filter(item => item.favorite);
+                const recent = world.recentLocationIds.map(id => worldItem(world.locations, id)).filter(item => item && item.id !== current.id);
                 fields.push(
-                    { label: 'All Locations', value: locationManagementRows(world.locations, world.activeLocationId) },
-                    { label: 'Add Location', value: GameAssist.createButton('Create Location', `!aa-location add --name "?{Location name}" --region ${paletteChoice('Region', normalizeClimateConfig().regions)} --ecoregion ${paletteChoice('Ecoregion area', world.ecoregions)} --geography ${paletteChoice('Geography', world.geographies)} --biome ${paletteChoice('Biome', world.biomes)} --environment ?{Default environment|Clear,clear|Blizzard,blizzard|Desert Terrain,desert|Swamp,swamp|Underwater,underwater}`) },
-                    { label: 'Manage', value: `${GameAssist.createButton('Prepared List', '!aa-location prepared')} ${GameAssist.createButton('World Setup', '!aa-world')}` }
+                    { label: 'Prepared Destinations', value: prepared.length ? locationChoiceRows(prepared, current.id) : 'None prepared.' },
+                    { label: 'Favorites', value: favorites.length ? locationChoiceRows(favorites, current.id) : 'None marked.' },
+                    { label: 'Recent', value: recent.length ? locationChoiceRows(recent, current.id) : 'No previous places.' }
                 );
-            } else {
-                fields.push({ label: 'More', value: GameAssist.createButton('Manage Locations', '!aa-location manage') });
             }
+            fields.push({ label: 'More', value: `${GameAssist.createButton(manage ? 'Choose Location' : 'Manage Locations', manage ? '!aa-location' : '!aa-location manage')} ${GameAssist.createButton('Travel Lists', '!aa-location lists')} ${GameAssist.createButton('World Setup', '!aa-world')}` });
             fields.push({ label: 'Return', value: GameAssist.createButton('Almanac Home', '!aa-gm') });
             sendPanel(msg, manage ? 'Manage Locations' : 'Change Location', fields);
         }
 
         function handleLocation(msg, content) {
             const body = content.replace(/^location\s*/i, '').trim();
-            if (!body || /^(menu|gm|dm|status)$/i.test(body)) return showLocations(msg, false);
             if (!requireGm(msg)) return;
             const lower = body.toLowerCase();
-            if (lower === 'manage' || lower === 'all') return showLocations(msg, true);
             const args = _parseArgs(body).args;
+            if (!body || /^(menu|gm|dm|status)(?:\s|$)/i.test(body) || body.startsWith('--')) return showLocations(msg, false, args.page);
+            if (/^(manage|all)(?:\s|$)/i.test(body)) return showLocations(msg, true, args.page);
+            if (lower === 'lists' || lower === 'prepared') return showLocations(msg, false, args.page, true);
+            if (/^details\b/i.test(body)) return showLocationEditor(msg, args.id, true);
             if (/^preview\b/i.test(body)) return showLocationPreview(msg, args.id || args.name);
             if (/^use\b/i.test(body)) {
                 if (String(args.confirm || '').toLowerCase() !== 'yes') return showLocations(msg, false);
@@ -28523,10 +28554,23 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return showScene(msg);
             }
             if (/^add\b/i.test(body)) {
-                const world = normalizeWorldConfig();
+                // Capture the effective current setup first: normalizers replace their
+                // saved objects, so mutation happens only on the final candidate below.
+                const place = currentWorldContext();
+                const world = copy(normalizeWorldConfig());
                 if (world.locations.length >= POLICY.almanac.maximumLocations) return sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: `The location limit of ${POLICY.almanac.maximumLocations} has been reached.` }]);
-                const name = boundedName(args.name);
+                const name = typeof args.name === 'string' ? boundedName(args.name) : '';
                 if (!name) return sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: 'Enter a location name.' }]);
+                const area = args.ecoregion === undefined ? place.ecoregion : worldItem(world.ecoregions, args.ecoregion);
+                const region = args.region === undefined ? (args.ecoregion === undefined ? place.region : climateRegion(area?.regionId)) : climateRegion(args.region);
+                const geography = args.geography === undefined ? (args.ecoregion === undefined ? place.geography : worldItem(world.geographies, area?.geographyId)) : worldItem(world.geographies, args.geography);
+                const biome = args.biome === undefined ? (args.ecoregion === undefined ? place.biome : worldItem(world.biomes, area?.biomeId)) : worldItem(world.biomes, args.biome);
+                const temporal = args.temporal === undefined ? place.temporalContext : worldItem(normalizeTemporalContexts(), args.temporal);
+                const environment = args.environment === undefined ? place.location.environmentPresetId : String(args.environment).toLowerCase();
+                if (!region || !area || !geography || !biome || !temporal || !Object.prototype.hasOwnProperty.call(ENVIRONMENT_PRESETS, environment)) return sendPanel(msg, 'Location Needs Attention', [
+                    { label: 'Problem', value: 'One of the chosen world settings is unavailable. No location was created.' },
+                    { label: 'Next Step', value: GameAssist.createButton('Locations', '!aa-location') }
+                ]);
                 const baseId = name.replace(/[^A-Za-z0-9_]+/g, '-').replace(/^-+|-+$/g, '') || `location-${world.locations.length + 1}`;
                 let id = baseId;
                 let suffix = 2;
@@ -28534,12 +28578,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 world.locations.push({
                     id,
                     name,
-                    regionId: climateRegion(args.region)?.id || normalizeClimateConfig().activeRegionId,
-                    ecoregionId: worldItem(world.ecoregions, args.ecoregion)?.id || world.ecoregions[0].id,
-                    geographyId: worldItem(world.geographies, args.geography)?.id || world.geographies[0].id,
-                    biomeId: worldItem(world.biomes, args.biome)?.id || world.biomes[0].id,
-                    environmentPresetId: Object.prototype.hasOwnProperty.call(ENVIRONMENT_PRESETS, String(args.environment || '').toLowerCase()) ? String(args.environment).toLowerCase() : 'clear',
-                    temporalContextId: temporalContext(args.temporal).id,
+                    regionId: region.id,
+                    ecoregionId: area.id,
+                    geographyId: geography.id,
+                    biomeId: biome.id,
+                    climateProfileId: args.region === undefined && args.ecoregion === undefined ? place.location.climateProfileId : null,
+                    useRegionClimate: args.region !== undefined || (args.ecoregion === undefined && place.location.useRegionClimate),
+                    inheritEcoregion: args.biome === undefined && args.geography === undefined && (args.ecoregion !== undefined || place.location.inheritEcoregion),
+                    environmentPresetId: environment,
+                    temporalContextId: temporal.id,
                     favorite: false,
                     notes: '',
                     pageIds: [],
@@ -28550,8 +28597,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     packId: null,
                     sourceId: null
                 });
+                modState.config.world = world;
                 ensureAlmanacRuntime().world.revision++;
-                return showLocations(msg, true);
+                return showLocationEditor(msg, id);
             }
             if (/^edit\b/i.test(body)) {
                 const world = normalizeWorldConfig();
@@ -28559,22 +28607,24 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (!location) return showLocationEditor(msg, args.id || args.name);
                 const hasChanges = ['name', 'region', 'ecoregion', 'geography', 'biome', 'environment', 'temporal'].some(key => args[key] !== undefined);
                 if (!hasChanges) return showLocationEditor(msg, location.id);
-                const region = climateRegion(args.region);
-                const ecoregion = worldItem(world.ecoregions, args.ecoregion);
-                const geography = worldItem(world.geographies, args.geography);
-                const biome = worldItem(world.biomes, args.biome);
-                const context = worldItem(normalizeTemporalContexts(), args.temporal);
-                const environment = String(args.environment || '').toLowerCase();
-                if (!boundedName(args.name) || !region || !ecoregion || !geography || !biome || !context || !Object.prototype.hasOwnProperty.call(ENVIRONMENT_PRESETS, environment)) {
+                const name = args.name === undefined ? location.name : typeof args.name === 'string' ? boundedName(args.name) : '';
+                const region = climateRegion(args.region === undefined ? location.regionId : args.region);
+                const ecoregion = worldItem(world.ecoregions, args.ecoregion === undefined ? location.ecoregionId : args.ecoregion);
+                const geography = worldItem(world.geographies, args.geography === undefined ? location.geographyId : args.geography);
+                const biome = worldItem(world.biomes, args.biome === undefined ? location.biomeId : args.biome);
+                const context = worldItem(normalizeTemporalContexts(), args.temporal === undefined ? location.temporalContextId : args.temporal);
+                const environment = String(args.environment === undefined ? location.environmentPresetId : args.environment).toLowerCase();
+                if (!name || !region || !ecoregion || !geography || !biome || !context || !Object.prototype.hasOwnProperty.call(ENVIRONMENT_PRESETS, environment)) {
                     return sendPanel(msg, 'Location Needs Attention', [{ label: 'Problem', value: 'Choose an existing region, ecoregion, geography, biome, environment, and temporal context. The location was not partially changed.' }, { label: 'Next Step', value: GameAssist.createButton('Edit Location', `!aa-location edit --id ${location.id}`) }]);
                 }
                 const changedContext = location.ecoregionId !== ecoregion.id || location.geographyId !== geography.id || location.biomeId !== biome.id;
+                const changedWeather = changedContext || location.regionId !== region.id || location.temporalContextId !== context.id || location.environmentPresetId !== environment;
                 if (changedContext) location.inheritEcoregion = false;
                 if (location.regionId !== region.id) Object.assign(location, { climateProfileId: null, useRegionClimate: true });
-                Object.assign(location, { name: boundedName(args.name), regionId: region.id, ecoregionId: ecoregion.id, geographyId: geography.id, biomeId: biome.id, environmentPresetId: environment, temporalContextId: context.id });
+                Object.assign(location, { name, regionId: region.id, ecoregionId: ecoregion.id, geographyId: geography.id, biomeId: biome.id, environmentPresetId: environment, temporalContextId: context.id });
                 modState.config.world = world;
                 ensureAlmanacRuntime().world.revision++;
-                if (location.id === world.activeLocationId) {
+                if (location.id === world.activeLocationId && changedWeather) {
                     normalizeClimateConfig().activeRegionId = region.id;
                     regenerateWeatherForLocation(msg);
                 }
@@ -30078,7 +30128,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h2>Climate and Astronomy</h2>',
                 '<p>ClimateAlmanac manages bounded regions, parent inheritance, editable built-in starting profiles, custom profiles, overrides, and a manual season fallback. AstronomyAlmanac calculates reproducible configurable moon phases, future phase/daylight forecasts, and deterministic season boundaries from TimeAlmanac when available or explicit manual context when it is not. Its bounded weighted rare-event catalog remains separate from deterministic results.</p>',
                 '<h3>Choose the Natural World</h3>',
-                '<p>Open <code>!aa-palette</code> from Almanac Home. Choose an <strong>Ecoregion Profile</strong> for a matching climate, biome, and geography together, or choose those three independently. The library contains 17 climate types, 16 biomes, 12 geographies, and 12 combined ecoregion profiles. Preview a choice, then use it for the current location. Generate weather to see the new context in action; a profile choice alone does not replace existing weather.</p>',
+                '<p>Open <code>!aa-palette</code> from Almanac Home. Choose an <strong>Ecoregion Profile</strong> for a matching climate, biome, and geography together, or choose those three independently. The library contains 17 climate types, 16 biomes, 12 geographies, and 12 combined ecoregion profiles. Preview a choice, then use it for the named location. Generate weather to see the new context in action; a profile choice alone does not replace existing weather.</p>',
+                '<p>Open <code>!aa-location</code> to <strong>Name This Place</strong>, <strong>Create Location</strong>, or choose a saved place. Creation asks only for a name and starts from the current physical setup without moving the party. Its <strong>Choose World Profiles</strong> button customizes that destination before visiting. <strong>Move Party Here</strong> opens a preview; only <strong>Move Party</strong> changes the active place. Renaming does not reroll weather.</p>',
+                '<p><strong>Context and Notes</strong> contains region and area choices, local adjustments, private notes, page associations, favorites, prepared destinations, and removal. <strong>Travel Lists</strong> separates prepared, favorite, and recent places from daily controls. For advanced handout editing, <strong>WorldPack Handout</strong> opens the existing JSON export, preview, and import workflow; it is not a separate location-note importer. Existing locations are preserved until the GM edits or explicitly removes them.</p>',
                 '<p><strong>Create Editable Copy</strong> saves a campaign version without changing the starter or another place. <strong>Edit Saved Profile</strong> customizes it. Places following the same saved profile share its future edits; choosing a different profile for one location leaves other places assigned as before. <strong>Regions</strong> are names you give actual places, with optional parent regions and local climate adjustments, not names for climate types.</p>',
                 '<p><strong>Seasons</strong> connects the active calendar names to Cold, Mild Wet, Warm, Cooling, Rainy, Dry, or Little Seasonal Change responses. Wayfarer seasons are already mapped. Custom seasons can choose a response or set temperature, humidity, precipitation-chance, and wind adjustments. Calendar season dates remain in the calendar editor.</p>',
                 '<h2>Weather and Environment</h2>',
@@ -30382,6 +30434,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'announcement', 'environment', 'rest', 'world', 'temporalContexts', 'worldPacks', 'rulesAdvisorEnabled', 'rulesAdvisorProfile']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced AlmanacAssist to 2.0.3; palette buttons preserve opaque numeric fingerprints and explicit destination identities from list to preview to apply. Saved places can be prepared without moving the party or generating weather there.
+    // Changed (v2.0.0): Location controls put naming, creation, and a bounded saved-place list first; travel lists and detailed context stay separate. Missing names and invalid explicit references are refused; rename-only edits preserve weather and other context; empty prepared lists remain empty after normalization and restart.
+    // Decision log:
+    //   CHOICE: Quote fingerprint/identity arguments and recover legacy numeric fingerprints locally - ALT: change the shared flag parser; REJECTED: unrelated modules rely on its established numeric coercion.
+    //   CHOICE: Retain saved starter data but omit its placeholder hierarchy from normal scene labels - ALT: delete old places automatically; REJECTED: the GM owns existing places and must choose what to rename or remove.
+    //   CHOICE: Expose the existing advanced WorldPack handout editor from location details - ALT: introduce another import format; REJECTED: one validated world-transfer contract already covers locations and their dependencies.
+    // Verification: .internal/almanac-palettes-locations-harness.js follows emitted category, page, profile, name, create, destination, and move buttons, including numeric fingerprints, stale choices, privacy, empty lists, and restart preservation. This is local command evidence, not a live Roll20 browser test.
+    // Refusal alignment: location setup remains GM-only; no new public sink, character write, calendar advance, or unrequested handout overwrite is introduced.
+    // Prior notes:
     // Changed (v2.0.0): Advanced AlmanacAssist to 2.0.2 with paginated climate/biome/geography/ecoregion palettes, editable copies, named region and location choices, seven reusable seasonal responses, and explicit calendar-season mapping. Generated weather follows the active place, elevation, coast, biome, local adjustments, and future forecast dates; incompatible prior conditions are not carried across contexts.
     // Changed (v2.0.0): Palette commits are stale-checked and capacity-checked before mutation; shared areas are cloned for location-only changes; saved custom climate ids outrank new starter ids; referenced profiles cannot be deleted; WorldPacks and audits validate optional palette references; manual weather and GM environment overrides remain preserved.
     // Decision log:

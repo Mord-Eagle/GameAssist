@@ -60,6 +60,28 @@ EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so exis
 - Sequences the Foundry edition after Roll20 v2.0.0 live acceptance and stabilization. It will be a Foundry-native sister implementation with its own codebase and release history, beginning with AlmanacAssist and atlas-scale WorldPack storage rather than a concurrent or line-by-line port.
 - No executable behavior, saved state, commands, or module versions change in this documentation and metadata checkpoint.
 
+### AlmanacAssist 2.0.3 palette buttons and location controls - 2026-08-27
+
+#### Palette repairs
+
+- Preserves palette change-check identifiers as text. Previously, an identifier containing only digits was converted to a number by argument parsing; an unchanged selection could then be rejected as stale. Quoted identifiers now retain leading zeros, and older unquoted buttons remain accepted when their original eight-character identifier can be recovered.
+- Carries the chosen location through category, pagination, profile preview, and apply controls. A saved destination can receive a climate, biome, geography, or combined ecoregion profile before the party travels there.
+- Preserves existing stale-choice checks, private GM permissions, current weather, and unrelated locations. Destination setup does not expose a misleading Generate Weather button for the party's different current location.
+
+#### Location management
+
+- Replaces the repeated current/prepared/favorite/recent/nearby overview with direct naming, one-prompt creation, and a paginated saved-place list. Travel lists and detailed settings remain separately accessible.
+- Adds rename-only editing that preserves world context and does not reroll weather. New places start from the current physical setup rather than unrelated first entries in the saved collections; explicit invalid references and missing names are refused before creating a place.
+- Keeps all saved location data. Unchanged starter labels are omitted from the ordinary scene hierarchy, and the starting placeholder is displayed as Unnamed Starting Place until named by the GM.
+- Preserves explicitly empty prepared-destination lists instead of automatically repopulating them. The current place is omitted from destination, favorite, and recent choice lists to avoid repetition.
+- Exposes the existing WorldPack handout workflow under Context and Notes for advanced JSON editing. Opening it does not write or replace a handout. No second location import format is introduced.
+- Corrects active-region persistence when a confirmed location change is committed. Movement still requires a separate preview and confirmation and respects locked/manual weather.
+
+#### Records and verification
+
+- Advances only AlmanacAssist from 2.0.2 to 2.0.3; GameAssist remains v2.0.0. Updates its inline explanations, section history, manual, README, command metadata, roadmap, and live smoke instructions while retaining previous changelog entries.
+- Adds focused local tests that follow emitted buttons, including an all-digit fingerprint regression, naming, creation, destination profile preparation, permissions, missing values, empty lists, pagination, and restart preservation. Local checks do not establish that the reported live Roll20 button problem is fully resolved; the updated click-through smoke tests remain required.
+
 ### AlmanacAssist 2.0.2 natural-world profiles and seasonal weather - 2026-08-27
 
 #### Reusable world palettes

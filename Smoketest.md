@@ -768,13 +768,13 @@ For the stale-confirmation check:
 
 ## Focused v2.0.0 Complete AlmanacAssist Acceptance
 
-**What this proves:** AlmanacAssist 2.0.2 provides a usable live-session dashboard, direct weather and event palettes, reviewed pace-and-mileage travel with private encounter checks, a separate worldbuilding workspace, one coherent current-scene authority, and independently usable Time, Climate, Astronomy, Weather, Environment, and Rest systems. It also verifies prepared destinations, local temporal contexts, phenomena, presets, advanced Wayfarer editing, and WorldPack transfer without turning optional context into hidden prerequisites.
+**What this proves:** AlmanacAssist 2.0.3 provides a usable live-session dashboard, direct weather and event palettes, reviewed pace-and-mileage travel with private encounter checks, a separate worldbuilding workspace, one coherent current-scene authority, and independently usable Time, Climate, Astronomy, Weather, Environment, and Rest systems. It also verifies prepared destinations, local temporal contexts, phenomena, presets, advanced Wayfarer editing, and WorldPack transfer without turning optional context into hidden prerequisites.
 
 **Why test it:** These checks verify the world controls a GM uses during play, the weather those choices produce, preserved campaign settings, and deliberate 2014-sheet rest writes.
 
 **Skip when:** Do not skip this section for v2.0.0 release acceptance. After release, campaigns that keep AlmanacAssist disabled may skip it. Within ordinary troubleshooting, test only the enabled internal system and any optional context provider involved.
 
-**Current non-live evidence:** The focused local harness passes 195 checks, including transaction rollback, stale-preview rejection, one-use mileage travel, bounded encounter checks, private roll evidence, and the d4 midpoint case. The checks below remain the required Roll20 live acceptance gate and are not recorded as passed merely because the local harness succeeded.
+**Current non-live evidence:** The focused local harness passes 195 checks, including transaction rollback, stale-preview rejection, one-use mileage travel, bounded encounter checks, private roll evidence, and the d4 midpoint case. An additional 48 palette/location checks cover emitted button paths, numeric identifiers, destination setup, permissions, and persistence. The checks below remain the required Roll20 live acceptance gate and are not recorded as passed merely because the local harness succeeded.
 
 ### Preparation and Master Controls
 
@@ -801,9 +801,9 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 
 **Skip when:** Only for ordinary troubleshooting when AlmanacAssist is disabled. Do not skip for this release's acceptance.
 
-Use a disposable location. Record its original setup before changing profiles.
+Use a disposable location. Record its original setup before changing profiles. Start from the buttons on `!aa-gm`, not only typed commands, so the complete click path is tested.
 
-1. Run `!aa-palette`. Confirm buttons for **Climates**, **Biomes**, **Geography**, **Ecoregion Profiles**, **Regions**, and **Seasons**. Each profile list has working Previous/Next controls with at most eight choices per page.
+1. Run `!aa-gm` and click **World Palettes**. Click each of **Climates**, **Biomes**, **Geography**, and **Ecoregion Profiles**, then Previous/Next and a named profile. Each must open the correct screen, with at most eight choices per page. **Regions** and **Seasons** must also open their controls.
 2. Open **Ecoregion Profiles**, choose **Hot Desert Basin**, and click **Use for This Location**. Confirm the current place is named in the result and existing weather has not changed yet.
 3. Click **Generate Weather**. Open `!aa-scene details` and `!weather`. Confirm the location uses a desert climate, sandy/stony ground, and dry weather with the unmodified preset. A cold season can lower desert temperature; do not expect one fixed number.
 4. Choose **Tropical River Forest** and generate again. Confirm the profile, biome, and geography all change. Rainfall is probable, not guaranteed. If rain is generated, visibility must not be Clear and the sky must not be cloudless.
@@ -825,12 +825,30 @@ Use a disposable location. Record its original setup before changing profiles.
 1. Run `!aa-scene`, note the place, time, temperature, precipitation, wind, visibility, terrain, ground, and moon visibility, then open `!aa-scene details`.
 2. Open `!aa-world`. Confirm **Places**, **Natural World**, **Local Context**, **Time & Sky**, **Gameplay**, and **Campaign Tools** are distinct groups with a return to Session Mode.
 3. Create one disposable geography, biome, ecoregion, and location through their guided controls. Give the location a local temperature adjustment, wind adjustment, visibility, ground, and one page association.
-4. Return to the location list. Confirm current, prepared, favorite, recent, nearby, and all-location choices are understandable and do not expose raw JSON.
+4. Return to `!aa-location`. Confirm **Name This Place**, **Create Location**, saved-place choices, and **Manage Locations** are easy to find. Prepared, favorite, and recent lists belong under **Travel Lists**, not repeated across the main screen.
 5. Prepare the disposable location. Confirm the preview shows the destination's resolved scene while the current active location remains unchanged.
 6. Confirm the destination. Reopen `!aa-scene`, Weather, Environment, and the announcement preview. Confirm each agrees on the active location and current conditions.
 7. Attempt to remove the geography, biome, or ecoregion while the location chain still uses it.
 
 **Pass when:** one immutable scene is reflected consistently across the UI; the detailed view identifies field-level sources and actionable coherence notes; location preparation is read-only; confirmation changes only the active place; local modifiers appear once rather than being double-applied; and referenced definitions cannot be removed until their dependents are reassigned or removed.
+
+### Location Setup And Preservation
+
+**What:** Name places and configure destinations before visiting them.
+
+**Why:** Editing a location should not move the party, replace another place, or reroll weather unexpectedly.
+
+**Skip when:** Only during unrelated troubleshooting. Required for this palette/location repair's live acceptance.
+
+1. Run `!aa-location`. Click **Name This Place**, enter a name, and check `!aa-gm`. The name must persist; current weather and time must be unchanged.
+2. Click **Create Location** and name it `Palette Test Camp`. It should ask only for a name and open **Location Settings**. The party must remain at its original location.
+3. Click **Choose World Profiles**, then **Ecoregion Profiles**, **Hot Desert Basin**, and **Use for This Location**. The result must name `Palette Test Camp`; the original place and its current weather must remain unchanged.
+4. Return to **Location Settings**, open **Context and Notes**, and check named context selectors, local modifiers, private notes, prepared/favorite controls, and **WorldPack Handout**. The handout button must open the existing transfer menu without exporting or overwriting anything by itself.
+5. Add the test camp to Prepared. Open **Travel Lists** and confirm it appears once. Remove it again; when the list is empty, reopen it and confirm it stays empty.
+6. Choose **Move Party Here**, cancel once, then repeat and confirm **Move Party**. Only confirmation should change the active place. Generated weather should then use the destination; locked or manual weather must remain preserved.
+7. Restart the sandbox and reopen the location and palette screens. Names, profiles, and list choices must persist. Use **Manage Locations** to remove the disposable place only after returning to the original location and reviewing the removal confirmation.
+
+**Pass when:** All named buttons respond, no placeholder is presented as a GM-created place, saved locations remain editable, and setup does not change the active encounter or unrelated campaign data.
 
 ### Prepared Travel
 
