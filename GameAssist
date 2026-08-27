@@ -28504,6 +28504,65 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return { definition, templates, warning: context.warning || null };
         }
 
+        /**
+         * showPhenomenonDefinitionCatalog - Keep Session Mode activation usable
+         * when a campaign retains more phenomena than fit on its compact root
+         * card. Selecting a row starts the existing reviewed activation flow;
+         * browsing and searching themselves do not write runtime state.
+         */
+        function showPhenomenonDefinitionCatalog(msg, config, { page = 0, search = '', searchRequested = false } = {}) {
+            return showBoundedChoiceCatalog(msg, {
+                title: 'Almanac / Phenomena / Definitions',
+                contextLabel: 'Activation',
+                contextValue: 'Choose a campaign-owned Phenomenon definition to review for activation. A choice never activates an overlay until the existing review is confirmed.',
+                selectedSummary: 'No overlay is activated by browsing this catalog.',
+                choiceLabel: 'Phenomenon Definitions',
+                buttonLabel: 'Review Activate',
+                records: config.phenomena,
+                page,
+                search,
+                searchRequested,
+                browseCommand: nextPage => `!aa-phenomena definitions --page ${nextPage}`,
+                searchCommand: (query, nextPage) => `!aa-phenomena definitions search --query "${query}" --page ${nextPage}`,
+                commandForRecord: record => `!aa-phenomena activate --id ${record.id}`,
+                emptyMessage: 'Add a campaign-owned Phenomenon definition in Worldbuilding before reviewing an overlay.',
+                actionButtons: `${GameAssist.createButton('Manage Definitions', '!aa-world phenomena --page 0')} ${GameAssist.createButton('Add Phenomenon', '!aa-world add phenomenon --name "?{Phenomenon name|New Phenomenon}"')}`,
+                navigation: `${GameAssist.createButton('Back to Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Worldbuilding', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}`
+            });
+        }
+
+        /**
+         * showPhenomenonTemplateCatalog - Offer complete access to the active
+         * location's immutable installed-template palette. The only mutation path
+         * remains the per-template expiring editable-clone review.
+         */
+        function showPhenomenonTemplateCatalog(msg, config, { page = 0, search = '', searchRequested = false } = {}) {
+            const context = worldPackPhenomenonTemplatesForConfig(config);
+            const contextValue = context.definition
+                ? `${_sanitize(context.definition.name)} supplies templates available to the current Location. Choose one to review an editable campaign-definition clone; nothing is activated automatically.`
+                : _sanitize(context.warning || 'No installed WorldPack palette is unambiguously available for the current Location.');
+            return showBoundedChoiceCatalog(msg, {
+                title: 'Almanac / Phenomena / Installed Templates',
+                contextLabel: 'Installed Template Source',
+                contextValue,
+                selectedSummary: 'No template is cloned by browsing this catalog.',
+                choiceLabel: 'Installed Phenomenon Templates',
+                buttonLabel: 'Review Editable Clone',
+                records: context.templates,
+                page,
+                search,
+                searchRequested,
+                browseCommand: nextPage => `!aa-phenomena templates --page ${nextPage}`,
+                searchCommand: (query, nextPage) => `!aa-phenomena templates search --query "${query}" --page ${nextPage}`,
+                commandForRecord: record => `!aa-phenomena template --id ${record.id}`,
+                emptyMessage: 'No immutable installed Phenomenon Templates are available for the current Location.',
+                actionButtons: context.definition
+                    ? GameAssist.createButton('Open Installed Palette', `!aa-worldpacks palette --pack ${context.definition.id}`)
+                    : GameAssist.createButton('WorldPacks', '!aa-worldpacks'),
+                navigation: `${GameAssist.createButton('Back to Phenomena', '!aa-phenomena')} ${GameAssist.createButton('WorldPacks', '!aa-worldpacks')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}`
+            });
+        }
+
         function showPhenomena(msg) {
             if (!requireGm(msg)) return;
             const config = worldConfigForPanel(msg);
@@ -28523,22 +28582,28 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     value: `${_sanitize(phenomenonScopeSummary(config, activation))}<br>${_sanitize(phenomenonExpirationSummary(activation, moment))}<br>${GameAssist.createButton('Review Deactivate', `!aa-phenomena deactivate --id ${activation.id}`)}`
                 };
             });
-            const availableRows = config.phenomena.slice(0, POLICY.almanac.worldListDisplayLimit).map(definition => ({
+            const representativeLimit = POLICY.almanac.worldSessionCategoryLimit;
+            const availableRows = config.phenomena.slice(0, representativeLimit).map(definition => ({
                 label: _sanitize(definition.name),
                 value: `${_sanitize(definition.category)} | Severity ${definition.severity}/5 | ${_sanitize(phenomenonScopeSummary(config, definition))} ${GameAssist.createButton('Review Activate', `!aa-phenomena activate --id ${definition.id}`)} ${GameAssist.createButton('Edit', `!aa-world edit phenomenon --id ${definition.id}`)}`
             }));
             const expired = moment ? active.filter(item => item.expiresWorldMinute !== null && item.expiresWorldMinute <= moment.worldMinute) : [];
             const templateContext = worldPackPhenomenonTemplatesForConfig(config);
-            const templateRows = templateContext.templates.slice(0, POLICY.almanac.worldListDisplayLimit).map(template =>
+            const templateRows = templateContext.templates.slice(0, representativeLimit).map(template =>
                 `<strong>${_sanitize(template.name)}</strong>: ${_sanitize(template.category)} | Severity ${template.severity}/5 ${GameAssist.createButton('Review Editable Clone', `!aa-phenomena template --id ${template.id}`)}`
             );
+            const definitionSearch = `!aa-phenomena definitions search --query "?{Search Phenomenon Definitions by name or tag|${roll20QueryText(config.phenomena[0]?.name, 'Name', POLICY.almanac.worldNameLength)}}" --page 0`;
+            const templateSearch = `!aa-phenomena templates search --query "?{Search installed Phenomenon Templates by name or tag|${roll20QueryText(templateContext.templates[0]?.name, 'Name', POLICY.almanac.worldNameLength)}}" --page 0`;
             sendPanel(msg, 'Almanac / Phenomena', [
                 { label: 'Scene Overlays', value: scene.phenomena.length ? scene.phenomena.map(item => `${_sanitize(item.name)} — ${_sanitize(item.category)}`).join('<br>') : 'No active Phenomena apply to the current Location.' },
                 ...(activeRows.length ? activeRows : [{ label: 'Active', value: 'No currently interpretable Phenomena are active.' }]),
                 ...(futureActiveCount ? [{ label: 'Newer Active Data', value: `${futureActiveCount} active Phenomenon record(s) use a newer schema and remain preserved without interpretation or cleanup.` }] : []),
                 ...(expired.length ? [{ label: 'Elapsed Durations', value: `${expired.length} expired overlay(s) remain recorded until the GM explicitly cleans them up. ${GameAssist.createButton('Clean Up Elapsed', '!aa-phenomena cleanup --confirm yes')}` }] : []),
-                { label: 'Definitions', value: availableRows.length ? availableRows.map(row => `<strong>${row.label}</strong>: ${row.value}`).join('<br>') : 'No Phenomena have been defined yet. Add a generic owner-authored overlay in Worldbuilding.' },
-                ...(templateRows.length ? [{ label: 'Installed Phenomena Templates', value: `${templateRows.join('<br>')}<br>Templates are immutable installed-palette sources. Review first to create one editable campaign definition; nothing is activated automatically.` }] : []),
+                { label: `Definitions (${config.phenomena.length})`, value: availableRows.length
+                    ? `${availableRows.map(row => `<strong>${row.label}</strong>: ${row.value}`).join('<br>')}${config.phenomena.length > availableRows.length ? `<br><em>Showing ${availableRows.length} representatives; use Browse All Definitions or Search for every campaign definition.</em>` : ''}`
+                    : 'No Phenomena have been defined yet. Add a generic owner-authored overlay in Worldbuilding.' },
+                ...(templateRows.length ? [{ label: `Installed Phenomena Templates (${templateContext.templates.length})`, value: `${templateRows.join('<br>')}${templateContext.templates.length > templateRows.length ? `<br><em>Showing ${templateRows.length} representatives; use Browse Installed Templates or Search for every available source.</em>` : ''}<br>Templates are immutable installed-palette sources. Review first to create one editable campaign definition; nothing is activated automatically.` }] : []),
+                { label: 'Find', value: `${GameAssist.createButton('Browse All Definitions', '!aa-phenomena definitions --page 0')} ${GameAssist.createButton('Search Definitions', definitionSearch)} ${templateContext.templates.length ? `${GameAssist.createButton('Browse Installed Templates', '!aa-phenomena templates --page 0')} ${GameAssist.createButton('Search Templates', templateSearch)}` : ''}`.trim() },
                 { label: 'Boundaries', value: 'Phenomena are explicit descriptive evidence. They can present visibility, terrain, and travel notes, but never overwrite Weather, Environment, Astronomy, Climate, or Time.' },
                 { label: 'Actions', value: `${GameAssist.createButton('Add Phenomenon', '!aa-world add phenomenon --name "?{Phenomenon name|New Phenomenon}"')} ${GameAssist.createButton('Manage Definitions', '!aa-world phenomena')} ${GameAssist.createButton('Current Scene', '!aa-scene')}` },
                 { label: 'Navigation', value: `${GameAssist.createButton('Back', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
@@ -28787,6 +28852,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!config) return;
             if (!worldRuntimeForPanel(msg, 'Almanac / Phenomena Needs Attention')) return;
             const args = _parseArgs(body).args;
+            if (/^definitions\s+search\b/i.test(body)) return showPhenomenonDefinitionCatalog(msg, config, { page: args.page, search: args.query || args.value || args.term || '', searchRequested: true });
+            if (/^definitions\b/i.test(body)) return showPhenomenonDefinitionCatalog(msg, config, { page: args.page });
+            if (/^templates\s+search\b/i.test(body)) return showPhenomenonTemplateCatalog(msg, config, { page: args.page, search: args.query || args.value || args.term || '', searchRequested: true });
+            if (/^templates\b/i.test(body)) return showPhenomenonTemplateCatalog(msg, config, { page: args.page });
             if (/^template\b/i.test(body)) return preparePhenomenonTemplateClone(msg, config, args);
             if (/^activate\b/i.test(body)) return preparePhenomenonActivation(msg, config, args);
             if (/^deactivate\b/i.test(body)) return preparePhenomenonDeactivation(msg, config, args);
@@ -28863,6 +28932,33 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
+        /**
+         * showCampaignPresetCatalog - Keep the Session Preset registry usable at
+         * its setting-scale campaign limit. This is a read-only name/tag index;
+         * a visible row opens the existing preview, whose edit controls remain the
+         * authoritative mutation path.
+         */
+        function showCampaignPresetCatalog(msg, config, { page = 0, search = '', searchRequested = false } = {}) {
+            return showBoundedChoiceCatalog(msg, {
+                title: 'Almanac / Presets / Campaign Catalog',
+                contextLabel: 'Campaign Session Presets',
+                contextValue: 'Choose a campaign-owned Session Preset to preview. Previewing and browsing never apply its prepared Location, Phenomena, or Travel defaults.',
+                selectedSummary: 'No Session Preset is applied automatically.',
+                choiceLabel: 'Campaign Session Presets',
+                buttonLabel: 'Preview',
+                records: config.presets,
+                page,
+                search,
+                searchRequested,
+                browseCommand: nextPage => `!aa-presets campaign --page ${nextPage}`,
+                searchCommand: (query, nextPage) => `!aa-presets campaign search --query "${query}" --page ${nextPage}`,
+                commandForRecord: record => `!aa-presets preview --id ${record.id}`,
+                emptyMessage: 'Install a generic template or add a campaign-authored Session Preset before browsing this catalog.',
+                actionButtons: `${GameAssist.createButton('Add Campaign Preset', '!aa-world add preset --name "?{Session Preset name|New Session Preset}"')} ${GameAssist.createButton('Manage in Worldbuilding', '!aa-world presets --page 0')}`,
+                navigation: `${GameAssist.createButton('Back to Presets', '!aa-presets')} ${GameAssist.createButton('Worldbuilding', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}`
+            });
+        }
+
         function showPresetRegistry(msg) {
             if (!requireGm(msg)) return;
             const config = worldConfigForPanel(msg);
@@ -28874,13 +28970,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 label: _sanitize(preset.name),
                 value: `Immutable generic template v${preset.version} | ${_sanitize(preset.description)} ${GameAssist.createButton('Preview', `!aa-presets preview --builtin ${preset.id}`)}`
             }));
-            const campaignRows = config.presets.slice(0, POLICY.almanac.worldListDisplayLimit).map(preset => ({
+            const representativeLimit = POLICY.almanac.worldSessionCategoryLimit;
+            const campaignRows = config.presets.slice(0, representativeLimit).map(preset => ({
                 label: _sanitize(preset.name),
                 value: `${worldRecordSummary(config, 'preset', preset)} ${GameAssist.createButton('Preview', `!aa-presets preview --id ${preset.id}`)} ${GameAssist.createButton('Edit', `!aa-world edit preset --id ${preset.id}`)}`
             }));
+            const campaignSearch = `!aa-presets campaign search --query "?{Search Campaign Session Presets by name or tag|${roll20QueryText(config.presets[0]?.name, 'Name', POLICY.almanac.worldNameLength)}}" --page 0`;
             sendPanel(msg, 'Almanac / Presets', [
                 { label: 'Built-in Templates', value: builtInRows.map(row => `<strong>${row.label}</strong>: ${row.value}`).join('<br>') },
-                { label: 'Campaign Session Presets', value: campaignRows.length ? campaignRows.map(row => `<strong>${row.label}</strong>: ${row.value}`).join('<br>') : 'No campaign Session Presets yet. Install a generic template or add a campaign-authored preset.' },
+                { label: `Campaign Session Presets (${config.presets.length})`, value: campaignRows.length
+                    ? `${campaignRows.map(row => `<strong>${row.label}</strong>: ${row.value}`).join('<br>')}${config.presets.length > campaignRows.length ? `<br><em>Showing ${campaignRows.length} representatives; use Browse Campaign Presets or Search for every campaign clone.</em>` : ''}`
+                    : 'No campaign Session Presets yet. Install a generic template or add a campaign-authored preset.' },
+                { label: 'Find', value: `${GameAssist.createButton('Browse Campaign Presets', '!aa-presets campaign --page 0')} ${GameAssist.createButton('Search Campaign Presets', campaignSearch)}` },
                 { label: 'How Presets Work', value: 'Preview an immutable generic built-in, review installation, then customize the resulting campaign clone. Built-ins contain no named setting data and campaign clones have stable editable IDs.' },
                 { label: 'Actions', value: `${GameAssist.createButton('Add Campaign Preset', '!aa-world add preset --name "?{Session Preset name|New Session Preset}"')} ${GameAssist.createButton('Manage World', '!aa-world presets')} ${GameAssist.createButton('Current Scene', '!aa-scene')}` },
                 { label: 'Navigation', value: `${GameAssist.createButton('Back', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
@@ -28963,6 +29064,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!config) return;
             if (!worldRuntimeForPanel(msg, 'Almanac / Presets Needs Attention')) return;
             const args = _parseArgs(body).args;
+            if (/^campaign\s+search\b/i.test(body)) return showCampaignPresetCatalog(msg, config, { page: args.page, search: args.query || args.value || args.term || '', searchRequested: true });
+            if (/^campaign\b/i.test(body)) return showCampaignPresetCatalog(msg, config, { page: args.page });
             if (/^preview\b/i.test(body)) {
                 const builtIn = args.builtin !== undefined ? builtInSessionPreset(args.builtin) : null;
                 const campaignPreset = builtIn ? null : worldRecordByReference(config.presets, args.id || args.name);

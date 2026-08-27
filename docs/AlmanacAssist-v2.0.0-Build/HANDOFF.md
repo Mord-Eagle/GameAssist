@@ -153,6 +153,14 @@ Recovery work must prioritize the fresh-GM journey: World Library/Starter Worlds
   four legs at a time (the generic chooser page remains twelve choices), and a
   Route with explicit legs replaces endpoint-change controls with a direct
   Route-Leg recovery path rather than offering a known refusal button.
+- **Current canonical-source recovery addition:** Phenomena and Presets Session
+  roots now disclose their complete campaign counts but retain only three compact
+  representative rows. Their direct **Browse**/**Search** catalogs retain every
+  campaign definition/preset in 12-entry name/tag pages, with the original
+  reviewed-activation or read-only-preview action still authoritative. The
+  active-location scoped installed Phenomenon Template list receives the same
+  bounded clone-review catalog; browsing alone does not create a definition or
+  activate an overlay.
 
 #### Prepared Destinations and Travel
 
@@ -272,8 +280,8 @@ This behavior is intentionally conservative. Do not replace it with a repair/nor
 | `tests/almanac-starter-worlds.test.js` | Fresh-GM onboarding, generic built-in starter worlds, saved-world switching, first-location activation, direct/Ecoregion/fallback Climate provenance, Weather/manual mismatch behavior, Location-default Environment parity, Climate event/removal guards, decoded ordinary-screen prompt targets plus each first-level visible choice, recovery controls for generated refusal/no-change panels, compatible named handout pickers, entity/percent/Markdown-safe picker labels and IDs, and no-hidden-ID reference controls. This is focused VM evidence only; a fresh real-Roll20 render/prompt pass remains required. |
 | `tests/almanac-rest.test.js` | Selected linked 2014-PC Rest preview, accepted Long Rest sheet/time commit, stale-plan refusal, and player controller-boundary checks. |
 | `tests/almanac-travel.test.js` | Prepared Destination and reviewed Travel checks. |
-| `tests/almanac-phenomena.test.js` | Phenomena scope, expiry, review, cleanup, and preservation checks. |
-| `tests/almanac-presets.test.js` | PresetRegistry clone/install checks. |
+| `tests/almanac-phenomena.test.js` | Phenomena scope, expiry, review, cleanup, preservation, and setting-scale campaign/template catalog checks. |
+| `tests/almanac-presets.test.js` | PresetRegistry clone/install and 160-record campaign-catalog checks. |
 | `tests/almanac-rules-advisor.test.js` | Advisory-only RulesAdvisor checks. |
 | `tests/almanac-worldpacks.test.js` | Bounded WorldPack parser/review/atomicity/future-runtime/alias checks. |
 | `tests/almanac-worldpack-v2.test.js` | Four original setting-scale source workload, Scene/Travel palette inheritance, update/copy, 24-clone installed-WorldPack catalog paging/search, and 640-Location/860-Route catalog paging/search checks. |

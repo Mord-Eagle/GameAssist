@@ -3,7 +3,7 @@
 //   codename: "GAMEASSIST_ALMANAC_PRESETS_TEST"
 //   project_version: "v2.0.0"
 //   purpose: "Exercise immutable generic PresetRegistry templates, reviewed campaign clone installation, and bounded editable Session Presets against the shipped executable."
-//   order: ["artifact_identity","registry_read","preview","reviewed_clone_install","campaign_customization","reference_safety","alias_contract"]
+//   order: ["artifact_identity","registry_read","preview","reviewed_clone_install","campaign_customization","reference_safety","alias_contract","setting_scale_campaign_catalog"]
 //   env:
 //     required: ["NODE_RUNTIME"]
 //     optional: []
@@ -278,6 +278,44 @@ function assertReviewRefusalAndMalformedSafety() {
     assert.equal(JSON.stringify(malformedState.config.world), JSON.stringify({ ...JSON.parse(futureBefore), schemaVersion: 999 }), 'future Worldbuilding data must remain byte-for-byte semantically unchanged');
 }
 
+/**
+ * Campaign Session Presets share the setting-scale Worldbuilding budget. Their
+ * Session panel must provide complete preview discovery without turning a
+ * 160-record campaign into a first-page-only root card.
+ */
+function assertCampaignPresetCatalogScale() {
+    const harness = createHarness();
+    installPresetWorld(harness);
+    const almanac = harness.state.GameAssist.AlmanacAssist;
+    almanac.config.world.presets = Array.from({ length: 160 }, (_, index) => {
+        const suffix = String(index + 1).padStart(3, '0');
+        return {
+            id: `catalog-preset-${suffix}`, name: `Catalog Preset ${suffix}`,
+            description: `Setting-scale campaign preset ${suffix}.`, tags: ['catalog', 'session'],
+            locationId: 'watch-camp', phenomenonIds: ['ashfall'], defaultPace: 'standard', sourcePresetId: null, sourcePresetVersion: null
+        };
+    });
+    const before = JSON.stringify({ world: almanac.config.world, runtime: almanac.runtime.world });
+
+    const root = harness.dispatchCommand('!aa-presets');
+    assert.match(root[0].message, /Campaign Session Presets \(160\)/, 'PresetRegistry root must disclose the complete campaign-preset count at the setting-scale bound');
+    assert.match(root[0].message, /Browse Campaign Presets/, 'PresetRegistry root must offer a visible complete campaign catalog');
+    assert.doesNotMatch(root[0].message, /Catalog Preset 160/, 'PresetRegistry root must remain a compact representative view');
+    assert.ok(root[0].message.length < 6000, 'PresetRegistry root must remain compact at the 160-record campaign-preset bound');
+
+    const first = harness.dispatchCommand('!aa-presets campaign --page 0');
+    assert.match(first[0].message, /Campaign Session Presets 1 of 14/, 'campaign-preset catalog must page the full 160-record setting-scale collection');
+    assert.equal((first[0].message.match(/\[Preview\]/g) || []).length, 12, 'campaign-preset catalog must retain the ordinary twelve-preview page bound');
+    const last = harness.dispatchCommand('!aa-presets campaign --page 13');
+    assert.match(last[0].message, /Campaign Session Presets 14 of 14/, 'campaign-preset catalog must retain access to its final page');
+    assert.match(last[0].message, /Catalog Preset 160/, 'campaign-preset catalog must expose a distant campaign preset by name');
+    const search = harness.dispatchCommand('!aa-presets campaign search --query "Catalog Preset 160" --page 0');
+    assert.match(search[0].message, /Search: catalog preset 160 1 of 1/, 'campaign-preset catalog search must resolve a distant campaign preset without a technical ID');
+    const preview = harness.dispatchCommand('!aa-presets preview --id catalog-preset-160');
+    assert.match(preview[0].message, /Catalog Preset 160/, 'catalog-visible campaign preset must retain the existing direct preview path');
+    assert.equal(JSON.stringify({ world: almanac.config.world, runtime: almanac.runtime.world }), before, 'campaign-preset browse/search/preview paths must remain read-only until an explicit edit or install confirmation');
+}
+
 function run() {
     assertExecutableArtifactsAreIdentical();
     const registryHarness = createHarness();
@@ -285,12 +323,13 @@ function run() {
     const safetyHarness = createHarness();
     assertReferenceSafetyAndAliases(safetyHarness);
     assertReviewRefusalAndMalformedSafety();
+    assertCampaignPresetCatalogScale();
     process.stdout.write('PASS: AlmanacAssist PresetRegistry focused regression checks\n');
 }
 
 run();
 // --- Notes & Comments ---
-// Changed (v2.0.0): add focused generic PresetRegistry clone/install and campaign-reference safety evidence.
+// Changed (v2.0.0): add focused generic PresetRegistry clone/install, campaign-reference safety, and complete 160-record campaign-catalog evidence.
 // Decision log:
 //   CHOICE: ship generic immutable templates only — ALT: embed named setting packs; REJECTED: published setting provenance and licensing are separate explicit gates.
 //   CHOICE: clone after a review — ALT: install a mutable built-in directly; REJECTED: campaign ownership and immutable built-in boundaries would become ambiguous.

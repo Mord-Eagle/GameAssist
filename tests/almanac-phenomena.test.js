@@ -3,7 +3,7 @@
 //   codename: "GAMEASSIST_ALMANAC_PHENOMENA_TEST"
 //   project_version: "v2.0.0"
 //   purpose: "Exercise bounded explicit Phenomena overlays, no-write SceneResolver composition, and reviewed Roll20 controls against the shipped executable."
-//   order: ["artifact_identity","read_only_scene_overlay","future_record_preservation","active_capacity_preservation","reviewed_activation","reviewed_deactivation","explicit_expiry_cleanup","worldbuilding_controls"]
+//   order: ["artifact_identity","read_only_scene_overlay","future_record_preservation","active_capacity_preservation","reviewed_activation","reviewed_deactivation","explicit_expiry_cleanup","worldbuilding_controls","setting_scale_catalogs"]
 //   env:
 //     required: ["NODE_RUNTIME"]
 //     optional: []
@@ -276,6 +276,86 @@ function assertWorldbuildingControls(harness) {
     assert.equal(harness.state.GameAssist.AlmanacAssist.config.world.phenomena.find(item => item.id === 'ashfall').severity, 4, 'severity must remain bounded editable definition data');
 }
 
+/**
+ * Session Mode must keep activation and installed-template discovery complete at
+ * their setting-scale bounds instead of exposing only whichever definitions fit
+ * on the first compact root card.
+ */
+function assertSettingScaleCatalogs() {
+    const harness = createHarness();
+    installPhenomenaWorld(harness);
+    const almanac = harness.state.GameAssist.AlmanacAssist;
+    const phenomena = Array.from({ length: 25 }, (_, index) => {
+        const suffix = String(index + 1).padStart(3, '0');
+        return {
+            id: `catalog-phenomenon-${suffix}`, name: `Catalog Phenomenon ${suffix}`,
+            description: `Setting-scale catalog definition ${suffix}.`, tags: ['catalog', 'overlay'],
+            locationId: index % 2 ? null : 'watch-camp', category: 'General', visibilityNote: '', terrainNote: '', travelNote: '',
+            severity: index % 6, defaultDurationHours: 0
+        };
+    });
+    const palette = {
+        climateProfiles: [], biomeProfiles: [], environmentProfiles: [], ecoregionProfiles: [], geographyProfiles: [], hydrologyProfiles: [],
+        weatherPolicies: [], travelProfiles: [], astronomyProfiles: [], calendars: [], temporalContexts: [],
+        phenomenonTemplates: Array.from({ length: 25 }, (_, index) => {
+            const suffix = String(index + 1).padStart(3, '0');
+            return {
+                id: `catalog-template-${suffix}`, name: `Catalog Template ${suffix}`,
+                description: `Setting-scale installed template ${suffix}.`, tags: ['catalog', 'template'],
+                category: 'General', visibilityNote: '', terrainNote: '', travelNote: '', severity: index % 6, defaultDurationHours: 0
+            };
+        })
+    };
+    almanac.config.world.phenomena = phenomena;
+    almanac.config.worldPackDefinitions = {
+        schemaVersion: 1, revision: 1, packs: [{
+            id: 'catalog-template-pack', name: 'Catalog Template Pack', version: 1, sourceSchemaVersion: 2, sourceDigest: null,
+            provenance: { type: 'owner-authored', origin: 'Test fixture', license: '' },
+            palette,
+            bindings: {
+                defaultClimateProfileId: null, defaultBiomeProfileId: null, defaultEnvironmentProfileId: null,
+                defaultEcoregionProfileId: null, defaultGeographyProfileId: null, defaultHydrologyProfileId: null,
+                defaultWeatherPolicyId: null, defaultTravelProfileId: null, defaultAstronomyProfileId: null,
+                defaultCalendarId: null, defaultTemporalContextId: null, defaultPhenomenonTemplateId: null
+            }
+        }]
+    };
+    const before = JSON.stringify({
+        world: almanac.config.world,
+        definitions: almanac.config.worldPackDefinitions,
+        runtime: almanac.runtime.world
+    });
+
+    const root = harness.dispatchCommand('!aa-phenomena');
+    assert.match(root[0].message, /Definitions \(25\)/, 'Phenomena root must disclose the full campaign-definition count rather than imply that its compact representatives are complete');
+    assert.match(root[0].message, /Installed Phenomena Templates \(25\)/, 'Phenomena root must disclose the complete active-location template count');
+    assert.match(root[0].message, /Browse All Definitions/, 'Phenomena root must offer a visible complete activation catalog');
+    assert.match(root[0].message, /Browse Installed Templates/, 'Phenomena root must offer a visible complete installed-template catalog');
+    assert.doesNotMatch(root[0].message, /Catalog Phenomenon 025/, 'Phenomena root must remain a compact representative view');
+    assert.ok(root[0].message.length < 6000, 'Phenomena root must remain compact with 25 campaign definitions and templates');
+
+    const definitionFirst = harness.dispatchCommand('!aa-phenomena definitions --page 0');
+    assert.match(definitionFirst[0].message, /Phenomenon Definitions 1 of 3/, 'Phenomenon activation catalog must page setting-scale definitions');
+    assert.equal((definitionFirst[0].message.match(/\[Review Activate\]/g) || []).length, 12, 'Phenomenon activation catalog must retain the ordinary twelve-action page bound');
+    const definitionLast = harness.dispatchCommand('!aa-phenomena definitions --page 2');
+    assert.match(definitionLast[0].message, /Catalog Phenomenon 025/, 'Phenomenon activation catalog must expose a distant campaign definition');
+    const definitionSearch = harness.dispatchCommand('!aa-phenomena definitions search --query "Catalog Phenomenon 025" --page 0');
+    assert.match(definitionSearch[0].message, /Search: catalog phenomenon 025 1 of 1/, 'Phenomenon activation catalog search must resolve a distant definition by name');
+
+    const templateFirst = harness.dispatchCommand('!aa-phenomena templates --page 0');
+    assert.match(templateFirst[0].message, /Installed Phenomenon Templates 1 of 3/, 'installed-template catalog must page the active-location palette');
+    assert.equal((templateFirst[0].message.match(/\[Review Editable Clone\]/g) || []).length, 12, 'installed-template catalog must retain the ordinary twelve-action page bound');
+    const templateLast = harness.dispatchCommand('!aa-phenomena templates --page 2');
+    assert.match(templateLast[0].message, /Catalog Template 025/, 'installed-template catalog must expose a distant active-location template');
+    const templateSearch = harness.dispatchCommand('!aa-phenomena templates search --query "Catalog Template 025" --page 0');
+    assert.match(templateSearch[0].message, /Search: catalog template 025 1 of 1/, 'installed-template catalog search must resolve a distant template by name');
+    assert.equal(JSON.stringify({
+        world: almanac.config.world,
+        definitions: almanac.config.worldPackDefinitions,
+        runtime: almanac.runtime.world
+    }), before, 'Phenomena catalog browsing/search must remain read-only until an explicit review action is chosen');
+}
+
 function run() {
     assertExecutableArtifactsAreIdentical();
 
@@ -297,12 +377,14 @@ function run() {
     const worldbuildingHarness = createHarness();
     assertWorldbuildingControls(worldbuildingHarness);
 
+    assertSettingScaleCatalogs();
+
     process.stdout.write('PASS: AlmanacAssist Phenomena focused regression checks\n');
 }
 
 run();
 // --- Notes & Comments ---
-// Changed (v2.0.0): add focused evidence for generic, explicit, reviewed Phenomena overlays, including capacity refusal that preserves opaque future-schema active records.
+// Changed (v2.0.0): add focused evidence for generic, explicit, reviewed Phenomena overlays, including capacity refusal that preserves opaque future-schema active records and complete setting-scale campaign/template action catalogs.
 // Decision log:
 //   CHOICE: make expiry cleanup explicit — ALT: silently prune during SceneResolver reads; REJECTED: a read-only resolver must not mutate gameplay-facing state.
 //   CHOICE: preserve newer overlay records without interpretation — ALT: coerce or delete unfamiliar shapes; REJECTED: forward data must remain warning-only and recoverable.

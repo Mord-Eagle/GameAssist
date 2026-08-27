@@ -370,6 +370,15 @@ compact root group, then uses 12-entry Search/All/Prepared pages for complete
 access. Location and Travel use the same name-first selector model; a Travel
 choice still opens the existing reviewed plan rather than moving the party.
 
+Phenomena and Session Presets follow the same session-facing disclosure rule.
+Their roots identify the complete campaign count while showing only three
+representatives. **Browse All Definitions** / **Browse Campaign Presets** open
+12-entry name/tag-searchable catalogs, so a distant Phenomenon can still begin
+its reviewed activation and a distant Session Preset can still open its preview
+without Technical-ID recall. Installed Phenomenon Templates receive an equivalent
+active-location scoped catalog; choosing one begins only the existing reviewed
+editable-clone flow and never activates it automatically.
+
 Worldbuilding management uses the same bounded-access rule without pretending that
 the first page is the whole setting. Each ordinary record collection (Regions,
 Geographies, Ecoregions, Biomes, Locations, Prepared Destinations, Routes,
@@ -409,6 +418,7 @@ Changed (v2.0.0): caps compact Location and Travel groups at three representativ
 Changed (v2.0.0): extends 12-entry name-first paging and direct Edit access to every Worldbuilding record collection, so setting-scale management does not depend on Technical stable-ID recall.
 Changed (v2.0.0): routes editor relations, palette cross-references/defaults, preset overlays, and Route Leg profile/split choices through complete 12-entry named catalogs; this replaces inline query lists that could silently omit distant records or exceed a safe chat-card size.
 Changed (v2.0.0): replaces the WorldPacks hub's silent first-eight installed-clone sample and all-installed palette query with a complete six-row installed catalog, name/provenance search, and per-clone direct palette access at the 24-pack bound.
+Changed (v2.0.0): replaces first-page-only Session Phenomena, installed-template, and campaign-preset samples with count-disclosing three-row roots plus complete 12-entry named catalogs for their actual Session actions.
 Prior notes:
   Changed (v2.0.0): makes setting-scale capacity and bounded selector behavior explicit acceptance engineering rather than a future data-size assumption.
 Decision log:
