@@ -357,6 +357,7 @@ function assertWorldPackFirstSessionOnboarding() {
     const start = harness.dispatchCommand('!aa-location use --id asterfall-concord-location-1-1');
     assert.match(start[0].message, /Session Area Ready/, 'choosing a first opening must clearly acknowledge that the campaign is now playable');
     assert.match(start[0].message, /Generate Weather/, 'first-area confirmation must offer a direct current-conditions follow-up');
+    assert.match(start[0].message, /View Climate/, 'first-area confirmation must expose the inherited Climate context without command recall');
     assert.match(start[0].message, /Plan Journey/, 'first-area confirmation must offer a direct Travel follow-up');
     assert.equal(almanac.config.world.activeLocationId, 'asterfall-concord-location-1-1', 'the selected opening must become the explicit Current Area');
 

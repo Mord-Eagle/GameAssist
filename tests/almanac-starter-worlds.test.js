@@ -3,7 +3,7 @@
 //   codename: "GAMEASSIST_ALMANAC_STARTER_WORLDS_TEST"
 //   project_version: "v2.0.0"
 //   purpose: "Exercise first-run AlmanacAssist onboarding, generic built-in starter worlds, world-library switching, deferred Roll20 command-button prompts, and complete bounded named editor pickers."
-//   order: ["artifact_identity","first_run_onboarding","deferred_prompt_contract","starter_world_install","world_switch_preservation","saved_world_catalog_scale"]
+//   order: ["artifact_identity","first_run_onboarding","blank_world_onboarding","deferred_prompt_contract","starter_world_install","world_switch_preservation","saved_world_catalog_scale"]
 //   env:
 //     required: ["NODE_RUNTIME"]
 //     optional: []
@@ -189,8 +189,48 @@ function assertFirstRunOnboardingAndPromptContract() {
     );
 
     const firstLocation = onePanel(harness, '!aa-world add location --name "Starting Point"');
-    assert.match(firstLocation, /Use During Play/, 'the first manually created Location editor must immediately expose live-play controls');
+    assert.match(firstLocation, /First Place Ready/, 'the first manually created Location must finish in a play-facing readiness panel rather than a framework editor');
+    assert.match(firstLocation, /Open Current Scene/, 'the first-place confirmation must expose a direct Scene action');
+    assert.match(firstLocation, /Generate Weather/, 'the first-place confirmation must expose a direct Weather action');
+    assert.match(firstLocation, /Adjust Climate/, 'the first-place confirmation must expose the current Climate control without requiring a command');
+    assert.match(firstLocation, /Add Another Location for Travel/, 'the first-place confirmation must accurately explain the next Travel prerequisite');
     assert.equal(worldState(harness).config.world.activeLocationId, 'starting-point', 'the first manually created Location must become current so Travel is no longer blocked');
+}
+
+/**
+ * A GM who deliberately chooses an empty campaign must not be sent through
+ * dead Scene/Travel links or told to create another empty world. The blank-world
+ * path needs the same visible one-place handoff as a full WorldPack install.
+ */
+function assertBlankWorldFirstPlaceOnboarding() {
+    const harness = createHarness();
+    const created = onePanel(harness, '!aa-world create --name "New Custom World"');
+    assert.match(created, /Blank World Ready/, 'creating an empty campaign must acknowledge the blank world rather than present zero-record framework counts');
+    assert.match(created, /Create First Location/, 'a blank world confirmation must make the first usable place its primary action');
+    assert.doesNotMatch(created, /\[Travel\]\(!aa-travel\)|\[Current Scene\]\(!aa-scene\)/, 'a blank world confirmation must not foreground links that cannot yet form a useful Scene or Travel flow');
+    const firstLocationTarget = buttonTarget(created, 'Create First Location');
+    assert.equal(firstLocationTarget, '!aa-world add location --name "?{Location name|Starting Location}"', 'blank-world onboarding must retain a complete one-click first-location prompt');
+
+    const blankHome = onePanel(harness, '!aa-gm');
+    assert.match(blankHome, /Create First Location/, 'Almanac Home must keep the selected blank campaign on a direct first-location action');
+    assert.doesNotMatch(blankHome, /\[Choose Current Area\]\(!aa-location\)/, 'Almanac Home must not foreground an empty Location picker before any Location exists');
+
+    const hub = onePanel(harness, '!aa-world');
+    assert.match(hub, /active blank campaign/i, 'Worldbuilding must recognize the selected blank world as the place to continue rather than a missing world');
+    assert.match(hub, /Create First Location/, 'Worldbuilding must keep the first-location action visible for the selected blank world');
+    assert.doesNotMatch(hub, /Create an Empty World/, 'Worldbuilding must not make a GM create a second blank world after one is already active');
+
+    const ready = onePanel(harness, '!aa-world add location --name "Hearthgate"');
+    assert.match(ready, /First Place Ready/, 'creating the first location in a blank campaign must return a play-facing confirmation');
+    assert.match(ready, /Current Area=.*Hearthgate/, 'the ready confirmation must visibly identify the new Current Area');
+    assert.match(ready, /Open Current Scene/, 'the ready confirmation must offer Scene without requiring command recall');
+    assert.match(ready, /Generate Weather/, 'the ready confirmation must offer current Weather without requiring command recall');
+    assert.match(ready, /Adjust Climate/, 'the ready confirmation must expose the active Climate control without command recall');
+    assert.match(ready, /Add Another Location for Travel/, 'the ready confirmation must offer the concrete next step for Travel');
+    assert.equal(worldState(harness).config.world.activeLocationId, 'hearthgate', 'the first custom place must be activated automatically and explicitly');
+
+    const home = onePanel(harness, '!aa-gm');
+    assert.match(home, /Session Mode=.*\[Current Scene\].*\[Generate Weather\]/, 'a custom first place must graduate the dashboard into usable Session Mode controls');
 }
 
 function installStarter(harness, starterId) {
@@ -701,6 +741,7 @@ function assertSavedWorldCatalogScale() {
 function run() {
     assertExecutableArtifactsAreIdentical();
     assertFirstRunOnboardingAndPromptContract();
+    assertBlankWorldFirstPlaceOnboarding();
     assertStarterWorldCollectionIsUsable();
     assertOrdinaryRenderedButtonPromptContract();
     assertGeneratedValidationRecoveryPaths();

@@ -26399,9 +26399,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Selected World', value: _sanitize(result.warning || 'That world could not be activated safely.') },
                 { label: 'Changes', value: 'None.' }
             ]);
+            const locationCount = entry.snapshot.world.locations.length;
+            if (!locationCount) {
+                return sendPanel(msg, 'Almanac / World Library / Blank World Ready', [
+                    { label: 'Current World', value: `<strong>${_sanitize(entry.name)}</strong> is now active.` },
+                    { label: 'First Place', value: 'This blank campaign is ready for its first named place. Add it once and it becomes the Current Area automatically, so Scene can use the campaign Climate fallback without requiring Region, Geography, Ecoregion, or map setup first.' },
+                    { label: 'Start Here', value: `${GameAssist.createButton('Create First Location', '!aa-world add location --name "?{Location name|Starting Location}"')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')}` },
+                    { label: 'Worldbuilding', value: GameAssist.createButton('Manage This World', '!aa-world') }
+                ]);
+            }
             return sendPanel(msg, 'Almanac / World Library / World Active', [
                 { label: 'Current World', value: `<strong>${_sanitize(entry.name)}</strong> is now active.` },
-                { label: 'Ready Now', value: `${entry.snapshot.world.locations.length} named locations, ${entry.snapshot.world.destinations.length} prepared destinations, ${entry.snapshot.world.routes.length} travel routes, and ${entry.snapshot.climate.regions.length} climate regions are ready to use.` },
+                { label: 'Ready Now', value: `${locationCount} named locations, ${entry.snapshot.world.destinations.length} prepared destinations, ${entry.snapshot.world.routes.length} travel routes, and ${entry.snapshot.climate.regions.length} climate regions are ready to use.` },
                 { label: 'Next Step', value: `${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Manage World', '!aa-world')}` }
             ]);
         }
@@ -26727,7 +26736,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     ? `No current area yet in ${_sanitize(packContext.singlePack.name)}. ${worldPackOpeningButton(packContext.singlePack)}`
                     : `Location unassigned. ${config.locations.length ? GameAssist.createButton('Choose Current Area', '!aa-location') : ''}`.trim());
             const startHere = hasNoWorld
-                ? `A new campaign needs a usable place before Travel and location-sensitive Scene context can begin. ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Create an Empty World', '!aa-world create --name "?{New world name|My Campaign World}"')}`
+                ? (activeWorld
+                    ? `<strong>${_sanitize(activeWorld.name)}</strong> is an active blank campaign. Create its first Location to make it the Current Area; Region, Geography, Ecoregion, and map details can wait until they are useful. ${GameAssist.createButton('Create First Location', '!aa-world add location --name "?{Location name|Starting Location}"')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')}`
+                    : `A new campaign needs a usable place before Travel and location-sensitive Scene context can begin. ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Create an Empty World', '!aa-world create --name "?{New world name|My Campaign World}"')}`)
                 : (needsCurrentArea
                     ? (packContext.installed.length
                         ? `Choose one opening area to make this setting usable in Session Mode. This sets only the Current Area; Weather and other providers remain under their own controls. ${openingActions} ${GameAssist.createButton('Change Location', '!aa-location')}`
@@ -27750,6 +27761,27 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
 
+        /**
+         * showFirstLocationReady - Finish the custom-world first-place flow in
+         * Session Mode instead of dropping a new GM into a generic record editor.
+         * The one explicit Location activation is already committed by the caller;
+         * this response only explains the usable next click and keeps richer place
+         * editing available behind an optional button.
+         */
+        function showFirstLocationReady(msg, location) {
+            const scene = resolveScene();
+            const climate = scene.climate?.baseline;
+            const climateText = climate
+                ? `${_sanitize(climate.regionName)} — ${_sanitize(climate.profileName)} via ${_sanitize(climate.contextSourceLabel || 'the campaign fallback')}.`
+                : 'No Climate baseline is resolved yet; Scene remains available while you set one later.';
+            sendPanel(msg, 'Almanac / First Place Ready', [
+                { label: 'Current Area', value: `<strong>${_sanitize(location.name)}</strong> is now the Current Area.` },
+                { label: 'Ready to Begin', value: 'Your first named Location is enough to begin a Scene. Region, Geography, Ecoregion, map, and local-detail fields are optional refinements, not a required setup checklist.' },
+                { label: 'Climate for Now', value: climateText },
+                { label: 'Next Step', value: `${GameAssist.createButton('Open Current Scene', '!aa-scene')} ${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Adjust Climate', '!aa-climate')} ${GameAssist.createButton('Add Another Location for Travel', '!aa-world add location --name "?{Location name|Next Location}"')} ${GameAssist.createButton('Add Details to This Location', `!aa-world edit location --id ${location.id}`)} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
         function handleWorld(msg, content) {
             const body = content.replace(/^world\s*/i, '').trim();
             const lower = body.toLowerCase();
@@ -27856,7 +27888,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const activatedFirstLocation = type === 'location' && !config.activeLocationId && collection.length === 1;
                 if (activatedFirstLocation) config.activeLocationId = id;
                 commitWorldConfig(config, previous, { action: activatedFirstLocation ? 'first-location-added-and-activated' : 'record-added', type, id }, msg);
-                if (activatedFirstLocation) recordRecentLocation(id);
+                if (activatedFirstLocation) {
+                    recordRecentLocation(id);
+                    return showFirstLocationReady(msg, collection.find(record => record.id === id));
+                }
                 return showWorldRecordEditor(msg, type, id);
             }
             const set = body.match(/^set\s+(region|geography|ecoregion|biome|location|destination|route|phenomenon|preset)\b/i);
@@ -28070,7 +28105,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         ? `${_sanitize(nextClimate.baseline.regionName)} — ${_sanitize(nextClimate.baseline.profileName)} via ${_sanitize(nextClimate.sourceLabel)}.`
                         : 'No Climate baseline is assigned to this Location; the campaign fallback remains available in ClimateAlmanac.' },
                     { label: 'Provider Boundaries', value: 'Weather and other current providers remain separately owned. Existing Weather is retained until the GM generates or sets a new condition.' },
-                    { label: 'Next Step', value: `${GameAssist.createButton('Open Current Scene', '!aa-scene')} ${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Plan Journey', '!aa-travel')} ${GameAssist.createButton('Change Area', '!aa-location')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                    { label: 'Next Step', value: `${GameAssist.createButton('Open Current Scene', '!aa-scene')} ${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('View Climate', '!aa-climate')} ${GameAssist.createButton('Plan Journey', '!aa-travel')} ${GameAssist.createButton('Change Area', '!aa-location')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
                 ]);
             }
             if (/^favorite\b/i.test(body)) {
@@ -32861,18 +32896,22 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         : 'Locations are ready, but no Current Area is selected. Choose one before using Scene or Travel.'))
                 : '';
             const sessionActions = !hasCurrentArea
-                ? `${chooseAreaAction} ${GameAssist.createButton('Open Current Scene', '!aa-scene')} ${noLocations ? GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library') : ''}`.trim()
+                ? (noLocations
+                    ? `${GameAssist.createButton(activeWorld ? 'Create First Location' : 'Create a Location', '!aa-world add location --name "?{Location name|Starting Location}"')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')}`
+                    : `${chooseAreaAction} ${GameAssist.createButton('Choose Any Location', '!aa-location')} ${GameAssist.createButton('Open Current Scene', '!aa-scene')}`)
                 : `${GameAssist.createButton('Current Scene', '!aa-scene')} ${scene.travel ? GameAssist.createButton('Open Journey', '!aa-travel') : GameAssist.createButton('Plan Journey', '!aa-travel')} ${scene.travel ? '' : GameAssist.createButton('Change Area', '!aa-location')} ${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')}`.trim();
             sendPanel(msg, 'Almanac Home — Current World', [
                 { label: 'Current World', value: sceneOverview(scene) },
-                ...(noLocations ? [{ label: 'First Campaign Step', value: `${activeWorld ? `<strong>${_sanitize(activeWorld.name)}</strong> is active but needs Locations.` : 'No playable world is selected yet.'} Start with a full original setting, a compact local starter, or your own first place. ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Create a Location', '!aa-world add location --name "?{Location name|Starting Location}"')}` }] : []),
+                ...(noLocations ? [{ label: 'First Campaign Step', value: activeWorld
+                    ? `<strong>${_sanitize(activeWorld.name)}</strong> is active but has no Locations yet. Create its first place to make it the Current Area; you do not need to set every worldbuilding field first. ${GameAssist.createButton('Create First Location', '!aa-world add location --name "?{Location name|Starting Location}"')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')}`
+                    : `No playable world is selected yet. Start with a full original setting, a compact local starter, or your own first place. ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Create a Location', '!aa-world add location --name "?{Location name|Starting Location}"')}` }] : []),
                 ...(unassignedSession ? [{ label: 'Choose a Session Area', value: `${unassignedSession} ${chooseAreaAction} ${GameAssist.createButton('Choose Any Location', '!aa-location')}`.trim() }] : []),
                 ...(scene.travel ? [{ label: 'Journey', value: `${_sanitize(scene.travel.originName)} &rarr; ${_sanitize(scene.travel.destinationName)} | ${formatTravelMiles(scene.travel.remainingMiles)} remaining | ${_sanitize(travelPace(scene.travel.paceId).name)} pace` }, { label: 'Journey Actions', value: journeyActions }] : []),
-                { label: 'Session Mode', value: sessionActions },
+                ...(hasCurrentArea ? [{ label: 'Session Mode', value: sessionActions }] : []),
                 { label: 'Advance Date & Time', value: timeButtons },
                 { label: 'Calendar', value: moment ? `${exactMomentButton(moment)} ${GameAssist.createButton('Choose Calendar', '!cal')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')} ${GameAssist.createButton('Time Controls', '!aa-time menu')}` : GameAssist.createButton('Choose Calendar', '!cal') },
-                { label: 'Session Support', value: `${GameAssist.createButton('Rules Advice', '!aa-rules')} ${GameAssist.createButton('Short Rest', '!aa-rest preview --type short')} ${GameAssist.createButton('Long Rest', '!aa-rest preview --type long')} ${GameAssist.createButton('Announcement Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')}` },
-                ...(rulesNotes.length ? [{ label: 'GM Notes', value: `${rulesNotes.map(note => _sanitize(note.message)).join('<br>')} ${GameAssist.createButton('Rules Details', '!aa-rules')}` }] : []),
+                ...(hasCurrentArea ? [{ label: 'Session Support', value: `${GameAssist.createButton('Climate', '!aa-climate')} ${GameAssist.createButton('Rules Advice', '!aa-rules')} ${GameAssist.createButton('Short Rest', '!aa-rest preview --type short')} ${GameAssist.createButton('Long Rest', '!aa-rest preview --type long')} ${GameAssist.createButton('Announcement Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` }] : []),
+                ...(hasCurrentArea && rulesNotes.length ? [{ label: 'GM Notes', value: `${rulesNotes.map(note => _sanitize(note.message)).join('<br>')} ${GameAssist.createButton('Rules Details', '!aa-rules')}` }] : []),
                 { label: 'World & Setup', value: `${GameAssist.createButton('Worldbuilding', '!aa-world')} ${GameAssist.createButton('Full WorldPacks', '!aa-worldpacks library')} ${GameAssist.createButton('World Library', '!aa-world library')} ${GameAssist.createButton('More Almanac Tools', '!aa-more')}` },
                 { label: 'Navigation', value: `${GameAssist.createButton('Almanac Guide', '!Almanac-Guide')} ${gameAssistHomeButton()}` }
             ]);
