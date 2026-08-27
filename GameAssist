@@ -3,7 +3,7 @@
 GameAssist - Roll20 API Script
 Version: 2.0.0
 Last Updated: 2026-08-26 (America/New_York)
-Release scope: EffectAssist 2.5.4 duration-label repair, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.1 safe public result delivery, HealthService 1.1.1 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, InitiativeAssist 1.0.6 mixed-sheet actor repair, CombatAssist 1.2.1 encounter-ending repair, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist 2.0.1 campaign-scale GM palettes and reviewed travel completion, and regression repairs across the v2.0.0 module suite.
+Release scope: EffectAssist 2.5.4 duration-label repair, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.1 safe public result delivery, HealthService 1.1.1 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, InitiativeAssist 1.0.6 mixed-sheet actor repair, CombatAssist 1.2.1 encounter-ending repair, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist 2.0.2 reusable world profiles, seasonal weather, and reviewed travel, and regression repairs across the v2.0.0 module suite.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -30,7 +30,7 @@ calls GameAssist.enqueue(). This development package contains fifteen configurab
 - EffectAssist 2.5.4 - Coordinates compact catalog-driven effects, exact caster-and-recipient identity, retained GM requests, GameAssist-owned 2014-sheet modifiers, verified token-specific concentration, ownership-safe cleanup, provider-specific duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
 - HealAssist 1.2.1 - Guides verified 2014 normal or maximum healing with direct single-recipient targeting, optional automatic application, visible PC targeting, private GM requests, safe public announcements, and HealthService verification.
 - AttackAssist 1.1.0 - Guides authorized 2014 repeating attacks through direct visible targeting, default sheet-mode submission, optional GM-enabled roll review, complete prompt-safe Classic-sheet expansion, private GM placement, crash-safe inline-roll validation, and visible one-use native-template rolls without applying damage.
-- AlmanacAssist 2.0.1 - Separates compact live Session controls from Worldbuilding mode; resolves one coherent provenance-bearing current scene; provides direct weather, time, travel, event, announcement, and setup palettes; supports reviewed pace-and-mileage travel with advisory road conditions and private encounter checks; and retains bounded places, phenomena, local time, presets, advanced Wayfarer editing, WorldPacks, six independently controlled systems, and transactional rests.
+- AlmanacAssist 2.0.2 - Separates compact Session controls from Worldbuilding; supplies reusable climate, biome, geography, ecoregion, and seasonal palettes with editable campaign copies and named region controls; generates weather from the current place and calendar season; supports coherent scenes and reviewed travel with private encounter checks; and retains phenomena, local time, advanced Wayfarer editing, WorldPacks, six independently controlled systems, and transactional rests.
 - HPAssist 0.3.0 - Rolls npc_hpformula and uses HealthService for verified writes to the selected shared NPC HP bar when available.
 - DebugTools 0.3.1 - Optional dry-run-first GM diagnostics with verified supported HP damage writes on the selected shared NPC HP bar.
 
@@ -470,6 +470,30 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             maximumRegions: 40,
             maximumRegionDepth: 4,
             maximumClimateProfiles: 20,
+            maximumSeasonRules: 32,
+            maximumEcoregionProfiles: 30,
+            palettePageSize: 8,
+            weatherModel: Object.freeze({
+                elevationCoolingFPer1000Ft: 3.5,
+                referenceElevationFt: 500,
+                temperatureSwingF: 10,
+                coastalSwingF: 7,
+                windSwingMph: 6,
+                coastalPrecipitationBonus: 5,
+                wetBiomePrecipitationBonus: 15,
+                dryBiomePrecipitationPenalty: 20,
+                persistencePercent: 35,
+                continuityHours: 24,
+                freezingF: 32,
+                heatwaveF: 100,
+                coldSnapF: 10,
+                windyMph: 25,
+                fogHumidity: 80,
+                fogChancePercent: 30,
+                stormWindMph: 25,
+                severePrecipitationPercent: 15,
+                maximumDurationHours: 20
+            }),
             maximumClimateTags: 12,
             minimumClimateTemperatureF: -150,
             maximumClimateTemperatureF: 150,
@@ -533,6 +557,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Bounded Almanac profile pages, reusable ecoregion profiles, seasonal rules, and the explicit game-weather model in POLICY for AlmanacAssist 2.0.2.
     // Changed (v2.0.0): Centralized mileage-travel pace defaults, input bounds, one-use review lifetime, encounter-check limits, and private roll-display limits for AlmanacAssist 2.0.1.
     // Changed (v2.0.0): Added bounded AlmanacAssist scene, place, phenomenon, travel, WorldPack, temporal-context, and preview limits; year zero is a supported fictional-calendar year across every profile.
     // Changed (v2.0.0): Added a bounded compiled command-matcher cache; command semantics are unchanged while repeated alias routing avoids rebuilding identical regular expressions.
@@ -23585,7 +23610,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   guarantees: ["Session Mode keeps current place, scene, time, travel, rest, weather, event, and announcement actions compact while Worldbuilding Mode owns durable definitions","Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows without becoming hidden prerequisites","One signed base chronology keeps Year 1 at elapsed minute zero for saved-campaign compatibility while allowing validated Year 0 dates","SceneResolver publishes one immutable coherent snapshot with field-level provenance for place, local time, climate, weather, environment, astronomy, and active phenomena","Geographies, biomes, ecoregions, locations, phenomena, quick actions, and local temporal contexts are bounded, validated, and dependency-aware","Prepared destinations and mileage-based travel change chronology or active location only after explicit review and confirmation","Travel encounter checks are private GM evidence derived from a selected interval and die, never encounter-content generation or automatic gameplay mutation","Immutable versioned presets install editable copies without replacing existing places","Wayfarer provides complete chat editors plus a versioned advanced handout whose stale-protected import changes only the saved draft","WorldPack import/export excludes runtime chronology and character state, validates the complete bounded definition graph before mutation, and records provenance","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Optional RulesAdvisor guidance is profile-specific, read-only, and never applies gameplay changes","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AlmanacAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "2.0.1", time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2, world_state_schema_version: 1, scene_schema_version: 1, worldpack_schema_version: 1, temporal_context_schema_version: 1, wayfarer_handout_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "2.0.2", time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2, world_state_schema_version: 1, scene_schema_version: 1, worldpack_schema_version: 1, temporal_context_schema_version: 1, wayfarer_handout_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // AlmanacAssist presents a compact Session Mode for live play and a separate
@@ -23599,7 +23624,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('AlmanacAssist', function() {
         const MODULE_NAME = 'AlmanacAssist';
-        const MODULE_VERSION = '2.0.1';
+        const MODULE_VERSION = '2.0.2';
         const TIME_STATE_SCHEMA_VERSION = 2;
         const WAYFARER_DRAFT_SCHEMA_VERSION = 3;
         const ANNOUNCEMENT_SCHEMA_VERSION = 4;
@@ -23714,8 +23739,79 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             tropical: Object.freeze({ name: 'Tropical', temperatureF: 82, humidity: 82, precipitationChance: 60, windMph: 7, tags: ['humid', 'tropical'] }),
             coastal: Object.freeze({ name: 'Coastal', temperatureF: 64, humidity: 70, precipitationChance: 45, windMph: 15, tags: ['coastal'] }),
             mountain: Object.freeze({ name: 'Mountain', temperatureF: 42, humidity: 48, precipitationChance: 38, windMph: 18, tags: ['mountain', 'high-altitude'] }),
-            swamp: Object.freeze({ name: 'Swamp', temperatureF: 72, humidity: 90, precipitationChance: 55, windMph: 4, tags: ['humid', 'swamp'] })
+            swamp: Object.freeze({ name: 'Swamp', temperatureF: 72, humidity: 90, precipitationChance: 55, windMph: 4, tags: ['humid', 'swamp'] }),
+            rainforest: Object.freeze({ name: 'Equatorial Rainforest', temperatureF: 81, humidity: 88, precipitationChance: 75, windMph: 5, seasonalScale: 0.15, tags: ['tropical', 'humid'] }),
+            monsoon: Object.freeze({ name: 'Tropical Monsoon', temperatureF: 82, humidity: 75, precipitationChance: 55, windMph: 9, seasonalScale: 0.2, tags: ['tropical', 'monsoon'] }),
+            savanna: Object.freeze({ name: 'Tropical Wet and Dry', temperatureF: 80, humidity: 55, precipitationChance: 30, windMph: 9, seasonalScale: 0.25, tags: ['tropical', 'seasonal'] }),
+            steppe: Object.freeze({ name: 'Semi-Arid Steppe', temperatureF: 60, humidity: 35, precipitationChance: 15, windMph: 13, tags: ['arid', 'continental'] }),
+            mediterranean: Object.freeze({ name: 'Mediterranean', temperatureF: 65, humidity: 55, precipitationChance: 30, windMph: 8, seasonalScale: 0.7, tags: ['dry-summer'] }),
+            oceanic: Object.freeze({ name: 'Temperate Maritime', temperatureF: 54, humidity: 76, precipitationChance: 55, windMph: 13, seasonalScale: 0.5, tags: ['maritime', 'humid'] }),
+            continental: Object.freeze({ name: 'Humid Continental', temperatureF: 50, humidity: 65, precipitationChance: 40, windMph: 10, seasonalScale: 1.5, tags: ['continental'] }),
+            subarctic: Object.freeze({ name: 'Subarctic', temperatureF: 28, humidity: 55, precipitationChance: 30, windMph: 10, seasonalScale: 1.3, tags: ['cold'] }),
+            tundra: Object.freeze({ name: 'Polar Tundra', temperatureF: 22, humidity: 55, precipitationChance: 25, windMph: 15, seasonalScale: 0.6, tags: ['cold', 'arctic'] }),
+            icecap: Object.freeze({ name: 'Polar Ice Cap', temperatureF: -15, humidity: 35, precipitationChance: 15, windMph: 18, seasonalScale: 0.5, tags: ['cold', 'arctic', 'dry'] })
         });
+        // EXEMPT: These editable game-world seed definitions are not measured climate
+        // normals. Runtime bounds and stochastic controls remain in POLICY.almanac.
+        const GEOGRAPHY_PALETTE = Object.freeze([
+            ['rolling-lowlands', 'Rolling Lowlands', 'Rolling hills and valleys', 500, false, 'Streams and groundwater'],
+            ['coastal-plain', 'Coastal Plain', 'Low coastal plain', 50, true, 'Estuaries and coastal aquifers'],
+            ['river-valley', 'River Valley', 'River valley and floodplain', 400, false, 'Perennial river and tributaries'],
+            ['high-plateau', 'High Plateau', 'Elevated plateau', 5000, false, 'Seasonal streams and escarpments'],
+            ['mountain-range', 'Mountain Range', 'Steep mountains and passes', 8000, false, 'Snowmelt streams and headwaters'],
+            ['rain-shadow', 'Rain-Shadow Basin', 'Sheltered inland basin', 2500, false, 'Seasonal channels and closed lakes'],
+            ['dune-field', 'Dune Field', 'Wind-shaped dunes', 500, false, 'Sparse aquifers and intermittent wadis'],
+            ['wetland-basin', 'Wetland Basin', 'Low basin and marsh channels', 100, false, 'Standing water and slow drainage'],
+            ['island-chain', 'Island Chain', 'Islands and exposed shores', 150, true, 'Short streams and saltwater channels'],
+            ['glacial-valley', 'Glacial Valley', 'Glacial valley and moraine', 4000, false, 'Meltwater and glacial lakes'],
+            ['karst', 'Karst and Caves', 'Limestone hills and sinkholes', 1000, false, 'Underground rivers and springs'],
+            ['volcanic-upland', 'Volcanic Upland', 'Lava slopes and crater ridges', 4500, false, 'Mineral springs and crater lakes']
+        ].map(([id, name, terrain, elevationFt, coastal, hydrology]) => Object.freeze({ id, name, terrain, elevationFt, coastal, hydrology })));
+        const BIOME_PALETTE = Object.freeze([
+            ['temperate-woodland', 'Temperate Woodland', 'Mixed woodland and grassland', 'Moderate', 'Woodland earth', 'Seasonal streams', ['temperate', 'woodland']],
+            ['temperate-rainforest', 'Temperate Rainforest', 'Dense evergreen canopy and moss', 'Wet', 'Damp forest soil', 'Frequent streams', ['temperate', 'rainforest', 'wet']],
+            ['tropical-rainforest', 'Tropical Rainforest', 'Dense broadleaf canopy', 'Wet', 'Leaf litter and roots', 'Frequent surface water', ['tropical', 'rainforest', 'wet']],
+            ['boreal-forest', 'Boreal Forest', 'Conifers and moss', 'Moderate', 'Needle litter and peat', 'Lakes and streams', ['cold', 'forest']],
+            ['grassland', 'Temperate Grassland', 'Grasses and scattered shrubs', 'Moderate', 'Turf and exposed soil', 'Seasonal creeks', ['grassland']],
+            ['dry-steppe', 'Dry Steppe', 'Short grasses and sparse scrub', 'Dry', 'Dry turf and bare earth', 'Scattered waterholes', ['arid', 'grassland']],
+            ['savanna', 'Savanna', 'Tall grasses and scattered trees', 'Seasonal', 'Grassland earth', 'Seasonal waterholes', ['tropical', 'grassland']],
+            ['hot-desert', 'Hot Desert', 'Sparse drought-tolerant plants', 'Arid', 'Sand and stony ground', 'Rare springs and wadis', ['arid', 'desert']],
+            ['cold-desert', 'Cold Desert', 'Sparse cold-tolerant scrub', 'Arid', 'Gravel and dry earth', 'Seasonal snowmelt', ['arid', 'cold']],
+            ['tundra', 'Tundra', 'Mosses lichens and low shrubs', 'Cold', 'Permafrost and seasonal bog', 'Thaw pools', ['cold', 'tundra']],
+            ['alpine', 'Alpine Meadow', 'Low herbs and hardy grasses', 'Cold', 'Thin soil and rock', 'Snowmelt', ['cold', 'alpine']],
+            ['wetland', 'Freshwater Wetland', 'Reeds sedges and wetland trees', 'Wet', 'Saturated mud and peat', 'Standing freshwater', ['wet', 'wetland']],
+            ['mangrove', 'Mangrove Coast', 'Salt-tolerant trees', 'Wet', 'Tidal mud', 'Brackish tidal channels', ['tropical', 'wet', 'coastal']],
+            ['shrubland', 'Mediterranean Shrubland', 'Hard-leaved shrubs and open scrub', 'Seasonal dry', 'Rocky soil', 'Seasonal streams', ['shrubland']],
+            ['ice-sheet', 'Permanent Ice', 'Little or no vegetation', 'Frozen', 'Ice and snow', 'Frozen water', ['cold', 'ice']],
+            ['fungal-cavern', 'Subterranean Fungal Habitat', 'Fungi and sparse subterranean growth', 'Sheltered', 'Rock and organic deposits', 'Seepage and underground pools', ['underground']]
+        ].map(([id, name, vegetation, aridity, ground, water, tags]) => Object.freeze({ id, name, vegetation, aridity, ground, water, tags: Object.freeze(tags) })));
+        const ECOREGION_PALETTE = Object.freeze([
+            ['wooded-lowlands', 'Temperate Wooded Lowlands', 'temperate', 'temperate-woodland', 'rolling-lowlands'],
+            ['wet-coastal-forest', 'Wet Coastal Woodland', 'oceanic', 'temperate-rainforest', 'coastal-plain'],
+            ['montane-conifer', 'Snowmelt Montane Conifer', 'continental', 'boreal-forest', 'mountain-range'],
+            ['continental-steppe', 'Dry Continental Steppe', 'steppe', 'dry-steppe', 'high-plateau'],
+            ['desert-basin', 'Hot Desert Basin', 'desert', 'hot-desert', 'rain-shadow'],
+            ['cold-desert-upland', 'Cold Desert Upland', 'steppe', 'cold-desert', 'high-plateau'],
+            ['tropical-river-forest', 'Tropical River Forest', 'rainforest', 'tropical-rainforest', 'river-valley'],
+            ['seasonal-savanna', 'Seasonal Savanna', 'savanna', 'savanna', 'rolling-lowlands'],
+            ['northern-peatland', 'Cold Peat Lowlands', 'subarctic', 'wetland', 'wetland-basin'],
+            ['polar-coast', 'Polar Tundra Coast', 'tundra', 'tundra', 'coastal-plain'],
+            ['dry-coastal-scrub', 'Dry-Summer Coastal Scrub', 'mediterranean', 'shrubland', 'coastal-plain'],
+            ['mangrove-estuary', 'Tropical Mangrove Estuary', 'tropical', 'mangrove', 'coastal-plain']
+        ].map(([id, name, climateProfileId, biomeId, geographyId]) => Object.freeze({ id, name, climateProfileId, biomeId, geographyId })));
+        const SEASON_PALETTE = Object.freeze([
+            ['winter', 'Cold Season', -18, 0, 0, 0], ['spring', 'Mild Wet Season', 0, 5, 10, 0],
+            ['summer', 'Warm Season', 18, 0, 0, 0], ['autumn', 'Cooling Season', 0, 0, 0, 0],
+            ['wet', 'Rainy Season', 0, 15, 30, 2], ['dry', 'Dry Season', 5, -20, -25, 0],
+            ['mild', 'Little Seasonal Change', 0, 0, 0, 0]
+        ].map(([id, name, temperatureBias, humidityDelta, precipitationDelta, windDelta]) => Object.freeze({ id, name, temperatureBias, humidityDelta, precipitationDelta, windDelta })));
+        const DEFAULT_SEASON_RULES = Object.freeze([
+            ['Winter', 'winter'], ['Spring', 'spring'], ['Summer', 'summer'], ['Autumn', 'autumn'],
+            ['Vernalrise', 'spring'], ['Summertide', 'summer'], ['Leafturn', 'autumn'], ['Frosthold', 'winter']
+        ].map(([name, profileId]) => {
+            const { id, ...rule } = SEASON_PALETTE.find(item => item.id === profileId);
+            return Object.freeze({ ...rule, name });
+        }));
         const DEFAULT_MOONS = Object.freeze([
             Object.freeze({ id: 'wayfarer-moon', name: 'Wayfarer Moon', cycleDays: 28, offsetDays: 0, phases: Object.freeze(['New', 'Waxing Crescent', 'First Quarter', 'Waxing Gibbous', 'Full', 'Waning Gibbous', 'Last Quarter', 'Waning Crescent']) })
         ]);
@@ -24962,11 +25058,235 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             else sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: GameAssist.createButton('Almanac Home', '!aa-gm') }]);
         }
 
+        const PALETTE_LABELS = Object.freeze({ climate: 'Climates', biome: 'Biomes', geography: 'Geography', ecoregion: 'Ecoregion Profiles' });
+
+        function paletteEntries(kind) {
+            const world = normalizeWorldConfig();
+            if (kind === 'climate') return Object.values(climateProfileMap(normalizeClimateConfig())).map(item => ({ key: item.id, item, saved: !item.builtIn }));
+            const seeds = { geography: GEOGRAPHY_PALETTE, biome: BIOME_PALETTE, ecoregion: ECOREGION_PALETTE }[kind] || [];
+            const saved = { geography: world.geographies, biome: world.biomes, ecoregion: world.ecoregionProfiles }[kind] || [];
+            return [...seeds.map(item => ({ key: `seed:${item.id}`, item, saved: false })), ...saved.map(item => ({ key: `saved:${item.id}`, item, saved: true }))];
+        }
+
+        function paletteStamp() {
+            return worldPackFingerprint(JSON.stringify({ world: normalizeWorldConfig(), climate: normalizeClimateConfig() }));
+        }
+
+        function paletteBack() {
+            return `${GameAssist.createButton('World Palettes', '!aa-palette')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}`;
+        }
+
+        function paletteChoice(label, items, selected = null) {
+            // Query punctuation in a campaign name is display text, never an extra option.
+            const text = value => String(value).replace(/[|{},"\r\n]/g, ' ');
+            const ordered = items.slice().sort((a, b) => (a.id === selected ? -1 : b.id === selected ? 1 : a.name.localeCompare(b.name)));
+            return `?{${text(label)}|${ordered.map(item => `${text(item.name)},${item.id}`).join('|')}}`;
+        }
+
+        function showPalette(msg, kind = '', page = 1) {
+            if (!requireGm(msg)) return;
+            const place = currentWorldContext();
+            if (!PALETTE_LABELS[kind]) return sendPanel(msg, 'World Palettes', [
+                { label: 'This Place', value: `${_sanitize(place.location.name)}<br>${_sanitize(place.region.name)} | ${_sanitize(weatherClimateContext(place).profileName)}<br>${_sanitize(place.biome.name)} | ${_sanitize(place.geography.name)}` },
+                { label: 'Choose Profiles', value: Object.entries(PALETTE_LABELS).map(([key, label]) => GameAssist.createButton(label, `!aa-palette ${key}`)).join(' ') },
+                { label: 'Places and Seasons', value: `${GameAssist.createButton('Regions', '!aa-climate regions')} ${GameAssist.createButton('Ecoregion Areas', '!aa-world ecoregions')} ${GameAssist.createButton('Seasons', '!aa-palette seasons')}` },
+                { label: 'Next', value: `${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Environment', '!enviro')}` },
+                { label: 'Return', value: GameAssist.createButton('Almanac Home', '!aa-gm') }
+            ]);
+            const entries = paletteEntries(kind).sort((a, b) => a.item.name.localeCompare(b.item.name) || Number(a.saved) - Number(b.saved));
+            const count = Math.max(1, Math.ceil(entries.length / POLICY.almanac.palettePageSize));
+            page = Math.floor(clampNumber(page, 1, count, 1));
+            const visible = entries.slice((page - 1) * POLICY.almanac.palettePageSize, page * POLICY.almanac.palettePageSize);
+            sendPanel(msg, `Choose ${PALETTE_LABELS[kind]}`, [
+                { label: 'For', value: _sanitize(place.location.name) },
+                { label: 'Choices', value: visible.map(entry => GameAssist.createButton(`${entry.item.name}${entry.saved ? ' (saved)' : ''}`, `!aa-palette inspect --kind ${kind} --id ${entry.key}`)).join('<br>') },
+                { label: 'Pages', value: `${page} of ${count} ${page > 1 ? GameAssist.createButton('Previous', `!aa-palette ${kind} --page ${page - 1}`) : ''} ${page < count ? GameAssist.createButton('Next', `!aa-palette ${kind} --page ${page + 1}`) : ''}` },
+                { label: 'Create', value: kind === 'climate' ? GameAssist.createButton('Custom Climate', '!aa-climate profile add --name "?{Climate name}" --temp ?{Baseline temperature F|58} --humidity ?{Humidity percent|55} --precip ?{Precipitation chance percent|35} --wind ?{Wind mph|8}') : GameAssist.createButton('Manage Saved Profiles', `!aa-world ${kind === 'geography' ? 'geographies' : kind === 'biome' ? 'biomes' : 'ecoprofiles'}`) },
+                { label: 'Return', value: paletteBack() }
+            ]);
+        }
+
+        function showPaletteProfile(msg, kind, key) {
+            const entry = paletteEntries(kind).find(value => value.key === key);
+            if (!entry) return showPalette(msg, kind);
+            const item = entry.item;
+            const place = currentWorldContext();
+            let description;
+            if (kind === 'climate') description = `Baseline ${item.temperatureF} F | ${item.humidity}% humidity<br>${item.precipitationChance}% precipitation chance | ${item.windMph} mph wind`;
+            if (kind === 'biome') description = `${_sanitize(item.vegetation)}<br>${_sanitize(item.aridity)} | ${_sanitize(item.ground)}<br>${_sanitize(item.water)}`;
+            if (kind === 'geography') description = `${_sanitize(item.terrain)} | ${item.elevationFt} ft<br>${_sanitize(item.hydrology)}${item.coastal ? '<br>Coastal influence' : ''}`;
+            if (kind === 'ecoregion') {
+                const world = normalizeWorldConfig();
+                description = `${_sanitize(climateProfile(item.climateProfileId)?.name || item.climateProfileId)}<br>${_sanitize((entry.saved ? worldItem(world.biomes, item.biomeId) : BIOME_PALETTE.find(value => value.id === item.biomeId))?.name || item.biomeId)}<br>${_sanitize((entry.saved ? worldItem(world.geographies, item.geographyId) : GEOGRAPHY_PALETTE.find(value => value.id === item.geographyId))?.name || item.geographyId)}`;
+            }
+            const actions = `${GameAssist.createButton('Use for This Location', `!aa-palette use --kind ${kind} --id ${key} --location ${place.location.id} --stamp ${paletteStamp()}`)} ${GameAssist.createButton('Create Editable Copy', `!aa-palette copy --kind ${kind} --id ${key} --name "?{Name for editable copy|${item.name}}"`)}`;
+            sendPanel(msg, item.name, [
+                { label: 'Profile', value: description },
+                { label: 'Apply', value: actions },
+                ...(entry.saved ? [{ label: 'Customize', value: GameAssist.createButton('Edit Saved Profile', `!aa-palette edit --kind ${kind} --id ${key}`) }] : []),
+                { label: 'Scope', value: `Use changes ${_sanitize(place.location.name)} only. Existing weather is retained until you generate again; other places keep their settings.` },
+                { label: 'Return', value: `${GameAssist.createButton(PALETTE_LABELS[kind], `!aa-palette ${kind}`)} ${paletteBack()}` }
+            ]);
+        }
+
+        /** Build only campaign-owned copies; capacity failure leaves all saved data intact. */
+        function copyPaletteDefinition(kind, entry, world, climate, requestedName = null) {
+            const collectionKey = { geography: 'geographies', biome: 'biomes', ecoregion: 'ecoregionProfiles' }[kind];
+            const items = kind === 'climate' ? climate.customProfiles : world[collectionKey];
+            const limit = { climate: POLICY.almanac.maximumClimateProfiles, geography: POLICY.almanac.maximumGeographies, biome: POLICY.almanac.maximumBiomes, ecoregion: POLICY.almanac.maximumEcoregionProfiles }[kind];
+            if (!items) throw new Error('That palette is unavailable.');
+            const source = copy(entry.item);
+            if (kind === 'climate') source.referenceElevationFt ??= source.id === 'mountain' ? 8000 : POLICY.almanac.weatherModel.referenceElevationFt;
+            if (kind === 'ecoregion' && !entry.saved) {
+                for (const dependency of ['biome', 'geography']) {
+                    const seed = (dependency === 'biome' ? BIOME_PALETTE : GEOGRAPHY_PALETTE).find(item => item.id === source[`${dependency}Id`]);
+                    const saved = world[dependency === 'biome' ? 'biomes' : 'geographies'];
+                    // Reuse an unchanged seed copy, never overwrite a GM-edited definition.
+                    const existing = saved.find(item => Object.entries(seed).every(([key, value]) => key === 'id' || JSON.stringify(item[key]) === JSON.stringify(value)));
+                    source[`${dependency}Id`] = existing?.id || copyPaletteDefinition(dependency, { item: seed, saved: false }, world, climate).id;
+                }
+            }
+            if (!requestedName) {
+                const existing = items.find(item => Object.entries(source).every(([key, value]) => ['id', 'builtIn', 'sourceId', 'packId'].includes(key) || JSON.stringify(item[key]) === JSON.stringify(value)));
+                if (existing) return existing;
+            }
+            if (items.length >= limit) throw new Error(`The saved ${kind} profile limit has been reached.`);
+            const name = boundedName(requestedName, source.name);
+            const baseId = `palette-${source.id}`.slice(0, POLICY.almanac.maximumNameLength - 4);
+            const occupied = kind === 'climate' ? [...Object.keys(CLIMATE_PROFILES).map(id => ({ id, name: id })), ...items] : items;
+            const id = nextPresetId(occupied, baseId);
+            const created = { ...source, id, name, sourceId: source.id, packId: null };
+            delete created.builtIn;
+            if (kind === 'climate') {
+                // Custom climate names are unique in the existing profile contract.
+                const names = new Set(Object.values(climateProfileMap(climate)).map(item => item.name.toLowerCase()));
+                let suffix = 2;
+                while (names.has(created.name.toLowerCase())) created.name = boundedName(`${name.slice(0, 30)} ${suffix++}`);
+            }
+            items.push(created);
+            return created;
+        }
+
+        function showSeasonPalette(msg) {
+            const profile = profileFor();
+            const names = [...new Set([currentSeason(), ...(profile.months || []).map(item => item.season), ...(profile.seasonRanges || []).map(item => item.name)].filter(name => name && name !== 'Unspecified'))];
+            const rules = normalizeClimateConfig().seasonRules;
+            const choices = SEASON_PALETTE.map(item => `${item.name},${item.id}`).join('|');
+            sendPanel(msg, 'Seasonal Weather', [
+                { label: 'Current Season', value: _sanitize(currentSeason()) },
+                { label: 'Calendar Seasons', value: names.map(name => {
+                    const rule = rules.find(item => item.name.toLowerCase() === name.toLowerCase());
+                    return `<strong>${_sanitize(name)}</strong>: ${rule ? `${rule.temperatureBias >= 0 ? '+' : ''}${rule.temperatureBias} F; ${rule.precipitationDelta >= 0 ? '+' : ''}${rule.precipitationDelta}% precipitation` : 'Base climate only; no response chosen'}<br>${GameAssist.createButton('Choose Response', `!aa-palette season --name "${name}" --profile ?{Seasonal behavior|${choices}}`)} ${GameAssist.createButton('Customize', `!aa-palette season --name "${name}" --temp ?{Temperature adjustment F|${rule?.temperatureBias ?? 0}} --humidity ?{Humidity adjustment percentage points|${rule?.humidityDelta ?? 0}} --precip ?{Precipitation adjustment percentage points|${rule?.precipitationDelta ?? 0}} --wind ?{Wind adjustment mph|${rule?.windDelta ?? 0}}`)}`;
+                }).join('<br>') },
+                { label: 'Calendar', value: `${GameAssist.createButton(profile.id === 'wayfarer' ? 'Edit Season Dates' : 'Custom Calendar', '!aa-wayfarer stage seasons')} ${timeAvailable() ? 'Season names and dates follow the active calendar.' : GameAssist.createButton('Choose Manual Season', `!aa-climate season "?{Season name|${currentSeason()}}"`)}` },
+                { label: 'Return', value: paletteBack() }
+            ]);
+        }
+
+        function showEcoregionProfiles(msg) {
+            const world = normalizeWorldConfig();
+            sendPanel(msg, 'Saved Ecoregion Profiles', [
+                { label: 'Profiles', value: world.ecoregionProfiles.map(item => GameAssist.createButton(item.name, `!aa-palette inspect --kind ecoregion --id saved:${item.id}`)).join('<br>') || 'Choose a built-in profile and create an editable copy.' },
+                { label: 'Browse', value: GameAssist.createButton('Ecoregion Palette', '!aa-palette ecoregion') },
+                { label: 'Return', value: paletteBack() }
+            ]);
+        }
+
+        function paletteEditButton(kind, item) {
+            if (kind !== 'ecoregion') return null;
+            const world = normalizeWorldConfig();
+            return GameAssist.createButton('Edit Profile', `!aa-palette edit --kind ecoregion --id saved:${item.id} --name "?{Profile name|${item.name}}" --climate ${paletteChoice('Climate', Object.values(climateProfileMap(normalizeClimateConfig())), item.climateProfileId)} --biome ${paletteChoice('Biome', world.biomes, item.biomeId)} --geography ${paletteChoice('Geography', world.geographies, item.geographyId)}`);
+        }
+
+        function handlePalette(msg, content) {
+            if (!requireGm(msg)) return;
+            const body = content.replace(/^palettes?\s*/i, '').trim();
+            const action = body.split(/\s+/)[0].toLowerCase();
+            const args = _parseArgs(body).args;
+            const fail = message => sendPanel(msg, 'World Palette Needs Attention', [{ label: 'Problem', value: _sanitize(message) }, { label: 'Next Step', value: paletteBack() }]);
+            if (action === 'seasons') return showSeasonPalette(msg);
+            if (action === 'season') {
+                const name = typeof args.name === 'string' ? boundedName(args.name) : '';
+                const seed = SEASON_PALETTE.find(item => item.id === args.profile);
+                const fields = { temperatureBias: args.temp, humidityDelta: args.humidity, precipitationDelta: args.precip, windDelta: args.wind };
+                if (!name || (!seed && Object.values(fields).some(value => !['string', 'number'].includes(typeof value) || String(value).trim() === '' || !Number.isFinite(Number(value)) || Number(value) < -100 || Number(value) > 100))) return fail('Choose a seasonal response or enter four adjustments between -100 and 100.');
+                const climate = normalizeClimateConfig();
+                const remaining = climate.seasonRules.filter(rule => rule.name.toLowerCase() !== name.toLowerCase());
+                if (remaining.length >= POLICY.almanac.maximumSeasonRules) return fail('The seasonal response limit has been reached.');
+                const response = seed || Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, Number(value)]));
+                climate.seasonRules = [...remaining, { ...response, name }];
+                ensureAlmanacRuntime().climate.revision++;
+                return showSeasonPalette(msg);
+            }
+            if (!['inspect', 'use', 'copy', 'edit'].includes(action)) return showPalette(msg, action, args.page);
+            const kind = String(args.kind || '');
+            if (!PALETTE_LABELS[kind]) return fail('Choose a climate, biome, geography, or ecoregion profile.');
+            const entry = paletteEntries(kind).find(item => item.key === args.id);
+            if (!entry) return fail('That profile is no longer available. Open its palette again.');
+            if (args.name !== undefined && (typeof args.name !== 'string' || !boundedName(args.name))) return fail('Enter a name before saving. Nothing was changed.');
+            if (action === 'inspect') return showPaletteProfile(msg, kind, entry.key);
+            if (action === 'edit') {
+                if (kind === 'geography' || kind === 'biome') return showWorldDefinitionEditor(msg, kind, entry.item.id);
+                if (kind === 'climate') return sendPanel(msg, 'Customize Climate', [
+                    { label: 'Profile', value: _sanitize(entry.item.name) },
+                    { label: 'Edit', value: GameAssist.createButton('Edit Values', `!aa-climate profile set --id ${entry.item.id} --temp ?{Baseline temperature F|${entry.item.temperatureF}} --humidity ?{Humidity percent|${entry.item.humidity}} --precip ?{Precipitation chance percent|${entry.item.precipitationChance}} --wind ?{Wind mph|${entry.item.windMph}} --seasonal ?{Season temperature strength 0 to 3|${entry.item.seasonalScale ?? 1}} --elevation ?{Baseline elevation in feet|${entry.item.referenceElevationFt ?? 500}}`) },
+                    { label: 'Return', value: paletteBack() }
+                ]);
+                if (!entry.saved) return fail('Create an editable copy before changing a built-in profile.');
+                if (args.name === undefined) return sendPanel(msg, 'Customize Ecoregion Profile', [{ label: 'Profile', value: _sanitize(entry.item.name) }, { label: 'Edit', value: paletteEditButton(kind, entry.item) }, { label: 'Applies To', value: 'Places following this saved ecoregion profile use its new settings next time weather is generated.' }, { label: 'Return', value: paletteBack() }]);
+                const world = normalizeWorldConfig();
+                if (!boundedName(args.name) || !worldItem(world.biomes, args.biome) || !worldItem(world.geographies, args.geography) || !climateProfile(args.climate)) return fail('Choose a name and existing climate, biome, and geography. Nothing was changed.');
+                Object.assign(worldItem(world.ecoregionProfiles, entry.item.id), { name: boundedName(args.name), biomeId: args.biome, geographyId: args.geography, climateProfileId: args.climate });
+                modState.config.world = world;
+                ensureAlmanacRuntime().world.revision++;
+                return showPaletteProfile(msg, kind, entry.key);
+            }
+            if (action === 'use' && (args.stamp !== paletteStamp() || args.location !== normalizeWorldConfig().activeLocationId)) return fail('The location or its setup changed after this choice was opened. Choose the profile again.');
+            const world = copy(normalizeWorldConfig());
+            const climate = copy(normalizeClimateConfig());
+            try {
+                const selected = action === 'copy' || (!entry.saved && kind !== 'climate') ? copyPaletteDefinition(kind, entry, world, climate, args.name) : entry.item;
+                const location = worldItem(world.locations, world.activeLocationId);
+                if (action === 'use') {
+                    if (kind === 'climate') location.climateProfileId = selected.id;
+                    if (kind === 'biome' || kind === 'geography') {
+                        // Freeze both effective values before departing from a shared profile.
+                        const current = currentWorldContext();
+                        location.biomeId = current.biome.id;
+                        location.geographyId = current.geography.id;
+                        location.inheritEcoregion = false;
+                        location[`${kind}Id`] = selected.id;
+                    }
+                    if (kind === 'ecoregion') {
+                        const exclusive = world.locations.filter(item => item.ecoregionId === location.ecoregionId).length === 1;
+                        if (!exclusive && world.ecoregions.length >= POLICY.almanac.maximumEcoregions) throw new Error('The ecoregion-area limit has been reached.');
+                        const id = exclusive ? location.ecoregionId : nextPresetId(world.ecoregions, `area-${location.id}`.slice(0, POLICY.almanac.maximumNameLength - 4));
+                        const area = { id, name: boundedName(`${location.name} Area`), regionId: location.regionId, profileId: selected.id, biomeId: selected.biomeId, geographyId: selected.geographyId };
+                        if (exclusive) Object.assign(worldItem(world.ecoregions, id), { ...area, name: worldItem(world.ecoregions, id).name });
+                        else world.ecoregions.push(area);
+                        Object.assign(location, { ecoregionId: id, biomeId: selected.biomeId, geographyId: selected.geographyId, inheritEcoregion: true, climateProfileId: null, useRegionClimate: false });
+                    }
+                }
+                modState.config.world = world;
+                modState.config.climate = climate;
+                ensureAlmanacRuntime().world.revision++;
+                if (action === 'copy') return showPaletteProfile(msg, kind, kind === 'climate' ? selected.id : `saved:${selected.id}`);
+                return sendPanel(msg, 'Location Profile Updated', [
+                    { label: 'Place', value: _sanitize(location.name) },
+                    { label: 'Profile', value: _sanitize(selected.name) },
+                    { label: 'Weather', value: 'Current weather was retained. Generate again to use the updated setup; locked weather stays locked.' },
+                    { label: 'Next', value: `${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${paletteBack()}` }
+                ]);
+            } catch (error) {
+                return fail(error.message);
+            }
+        }
+
         function showWorldMenu(msg) {
             if (!requireGm(msg)) return;
             sendPanel(msg, 'Manage World', [
                 { label: 'Places', value: `${GameAssist.createButton('Locations', '!aa-location manage')} ${GameAssist.createButton('Ecoregions', '!aa-world ecoregions')} ${GameAssist.createButton('Climate Regions', '!aa-climate regions')}` },
-                { label: 'Natural World', value: `${GameAssist.createButton('Geography', '!aa-world geographies')} ${GameAssist.createButton('Biomes', '!aa-world biomes')} ${GameAssist.createButton('Climate', '!clim')}` },
+                { label: 'Natural World', value: `${GameAssist.createButton('World Palettes', '!aa-palette')} ${GameAssist.createButton('Seasons', '!aa-palette seasons')} ${GameAssist.createButton('Saved Ecoregion Profiles', '!aa-world ecoprofiles')}` },
                 { label: 'Local Context', value: `${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')}` },
                 { label: 'Time and Sky', value: `${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('Wayfarer', '!aa-wayfarer')} ${GameAssist.createButton('Astronomy', '!astro')}` },
                 { label: 'Gameplay', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Rest', '!rest')} ${GameAssist.createButton('Rules Advisor', '!aa-rules')} ${GameAssist.createButton('Scene Details', '!aa-scene details')}` },
@@ -24995,7 +25315,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             sendPanel(msg, 'World Ecoregions', [
                 { label: 'Definitions', value: world.ecoregions.map(item => `<strong>${_sanitize(item.name)}</strong> [${_sanitize(item.id)}] - region ${_sanitize(item.regionId)}; geography ${_sanitize(item.geographyId)}; biome ${_sanitize(item.biomeId)} ${GameAssist.createButton('Edit', `!aa-world ecoregion-edit --id ${item.id}`)}`).join('<br>') },
-                { label: 'Add', value: GameAssist.createButton('Add Ecoregion', '!aa-world ecoregion-add --name "?{Name}" --region "?{Climate region id|home}" --geography "?{Geography id}" --biome "?{Biome id}"') },
+                { label: 'Add', value: GameAssist.createButton('Add Ecoregion', `!aa-world ecoregion-add --name "?{Name}" --region ${paletteChoice('Region', normalizeClimateConfig().regions)} --geography ${paletteChoice('Geography', world.geographies)} --biome ${paletteChoice('Biome', world.biomes)}`) },
+                { label: 'Reusable Profiles', value: GameAssist.createButton('Ecoregion Palette', '!aa-palette ecoregion') },
                 { label: 'Return', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
@@ -25007,14 +25328,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const item = worldItem(collection, requested);
             if (!item) return sendPanel(msg, 'World Setup Needs Attention', [{ label: 'Problem', value: `That ${kind} was not found.` }, { label: 'Next Step', value: GameAssist.createButton('Manage World', '!aa-world') }]);
             const usedBy = kind === 'geography'
-                ? world.locations.filter(location => location.geographyId === item.id).length + world.ecoregions.filter(ecoregion => ecoregion.geographyId === item.id).length
+                ? world.locations.filter(location => location.geographyId === item.id).length + world.ecoregions.filter(ecoregion => ecoregion.geographyId === item.id).length + world.ecoregionProfiles.filter(profile => profile.geographyId === item.id).length
                 : kind === 'biome'
-                    ? world.locations.filter(location => location.biomeId === item.id).length + world.ecoregions.filter(ecoregion => ecoregion.biomeId === item.id).length
+                    ? world.locations.filter(location => location.biomeId === item.id).length + world.ecoregions.filter(ecoregion => ecoregion.biomeId === item.id).length + world.ecoregionProfiles.filter(profile => profile.biomeId === item.id).length
                     : world.locations.filter(location => location.ecoregionId === item.id).length;
             let editButton;
             if (kind === 'geography') editButton = GameAssist.createButton('Edit Geography', `!aa-world geography-edit --id ${item.id} --name "?{Name|${item.name}}" --terrain "?{Terrain|${item.terrain}}" --topography "?{Topography|${item.topography}}" --latitude ?{Latitude -90 to 90|${item.latitudeDeg}} --elevation ?{Elevation in feet|${item.elevationFt}} --coastal ?{Coastal?|${item.coastal ? 'Yes,yes|No,no' : 'No,no|Yes,yes'}} --hydrology "?{Persistent hydrology|${item.hydrology}}"`);
             else if (kind === 'biome') editButton = GameAssist.createButton('Edit Biome', `!aa-world biome-edit --id ${item.id} --name "?{Name|${item.name}}" --vegetation "?{Vegetation|${item.vegetation}}" --aridity "?{Aridity|${item.aridity}}" --ground "?{Typical ground|${item.ground}}" --water "?{Typical water|${item.water}}" --seasonal "?{Seasonal response|${item.seasonalResponse}}" --tags "?{Comma-separated tags|${item.tags.join(',')}}"`);
-            else editButton = GameAssist.createButton('Edit Ecoregion', `!aa-world ecoregion-edit --id ${item.id} --name "?{Name|${item.name}}" --region "?{Climate region id|${item.regionId}}" --geography "?{Geography id|${item.geographyId}}" --biome "?{Biome id|${item.biomeId}}" --transition "?{Transition notes|${item.transitionNotes}}"`);
+            else editButton = GameAssist.createButton('Edit Ecoregion', `!aa-world ecoregion-edit --id ${item.id} --name "?{Name|${item.name}}" --region ${paletteChoice('Region', normalizeClimateConfig().regions, item.regionId)} --geography ${paletteChoice('Geography', world.geographies, item.geographyId)} --biome ${paletteChoice('Biome', world.biomes, item.biomeId)} --transition "?{Transition notes|${item.transitionNotes}}"`);
             sendPanel(msg, `Edit ${kind[0].toUpperCase()}${kind.slice(1)}`, [
                 { label: 'Definition', value: `<strong>${_sanitize(item.name)}</strong> [${_sanitize(item.id)}]` },
                 { label: 'Use', value: `${usedBy} dependent world reference${usedBy === 1 ? '' : 's'}` },
@@ -25045,6 +25366,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (lower === 'geographies' || lower === 'geography') return showWorldDefinitions(msg, 'geographies');
             if (lower === 'biomes' || lower === 'biome') return showWorldDefinitions(msg, 'biomes');
             if (lower === 'ecoregions' || lower === 'ecoregion') return showWorldDefinitions(msg, 'ecoregions');
+            if (lower === 'ecoprofiles') return showEcoregionProfiles(msg);
             const args = _parseArgs(body).args;
             const world = normalizeWorldConfig();
             let result = null;
@@ -25078,8 +25400,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     const geography = worldItem(world.geographies, args.geography);
                     const biome = worldItem(world.biomes, args.biome);
                     if (!region || !geography || !biome) return sendPanel(msg, 'World Setup Needs Attention', [{ label: 'Problem', value: 'Choose one existing climate region, geography, and biome. Nothing was changed.' }, { label: 'Next Step', value: GameAssist.createButton('Edit Ecoregion', `!aa-world ecoregion-edit --id ${item.id}`) }]);
-                    Object.assign(item, { name, regionId: region.id, geographyId: geography.id, biomeId: biome.id, transitionNotes: boundedWorldText(args.transition, '') });
+                    Object.assign(item, { name, regionId: region.id, geographyId: geography.id, biomeId: biome.id, profileId: null, transitionNotes: boundedWorldText(args.transition, '') });
                 }
+                modState.config.world = world;
                 ensureAlmanacRuntime().world.revision++;
                 return showWorldDefinitionEditor(msg, kind, item.id);
             }
@@ -25089,9 +25412,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const item = worldItem(world[collectionKey], args.id);
                 if (!item || String(args.confirm || '').toLowerCase() !== 'yes') return showWorldDefinitions(msg, collectionKey);
                 const used = kind === 'geography'
-                    ? world.locations.some(location => location.geographyId === item.id) || world.ecoregions.some(ecoregion => ecoregion.geographyId === item.id)
+                    ? world.locations.some(location => location.geographyId === item.id) || world.ecoregions.some(ecoregion => ecoregion.geographyId === item.id) || world.ecoregionProfiles.some(profile => profile.geographyId === item.id)
                     : kind === 'biome'
-                        ? world.locations.some(location => location.biomeId === item.id) || world.ecoregions.some(ecoregion => ecoregion.biomeId === item.id)
+                        ? world.locations.some(location => location.biomeId === item.id) || world.ecoregions.some(ecoregion => ecoregion.biomeId === item.id) || world.ecoregionProfiles.some(profile => profile.biomeId === item.id)
                         : world.locations.some(location => location.ecoregionId === item.id);
                 if (used) return sendPanel(msg, 'World Setup Needs Attention', [{ label: 'Problem', value: `That ${kind} still has dependent references. Reassign them before removal.` }, { label: 'Changes', value: 'None.' }]);
                 world[collectionKey] = world[collectionKey].filter(entry => entry.id !== item.id);
@@ -25130,7 +25453,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const region = climateRegion(args.region);
                 if (!geography || !biome || !region) result = { ok: false, message: 'Choose one existing climate region, geography, and biome.' };
                 else result = appendWorldDefinition(world.ecoregions, POLICY.almanac.maximumEcoregions, args.name, 'ecoregion', { regionId: region.id, geographyId: geography.id, biomeId: biome.id, transitionNotes: '', packId: null, sourceId: null });
-                if (result.ok) return showWorldDefinitions(msg, 'ecoregions');
+                if (result.ok) {
+                    modState.config.world = world;
+                    return showWorldDefinitions(msg, 'ecoregions');
+                }
             }
             sendPanel(msg, 'World Setup Needs Attention', [{ label: 'Problem', value: _sanitize(result?.message || 'That world command was not recognized.') }, { label: 'Next Step', value: GameAssist.createButton('Manage World', '!aa-world') }]);
         }
@@ -25273,7 +25599,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'World Today', value: `${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('Events & Omens', '!aa-events')}` },
                 { label: 'Share', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
                 ...(quickActions ? [{ label: 'Campaign Shortcuts', value: quickActions }] : []),
-                { label: 'Campaign Setup', value: `${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('More Tools', '!aa-more')}` },
+                { label: 'Campaign Setup', value: `${GameAssist.createButton('World Palettes', '!aa-palette')} ${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('More Tools', '!aa-more')}` },
                 { label: 'GameAssist', value: gameAssistHomeButton() }
             ]);
         }
@@ -26364,7 +26690,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function normalizeWorldConfig(raw = modState.config.world) {
             const source = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
-            const knownKeys = new Set(['schemaVersion', 'activeLocationId', 'geographies', 'biomes', 'ecoregions', 'locations', 'preparedDestinationIds', 'recentLocationIds', 'phenomena', 'quickActions']);
+            const knownKeys = new Set(['schemaVersion', 'activeLocationId', 'geographies', 'biomes', 'ecoregionProfiles', 'ecoregions', 'locations', 'preparedDestinationIds', 'recentLocationIds', 'phenomena', 'quickActions']);
             const unknown = Object.fromEntries(Object.entries(source).filter(([key]) => !knownKeys.has(key)));
             const geographyInput = Array.isArray(source.geographies) ? source.geographies : DEFAULT_WORLD.geographies;
             const geographies = uniqueWorldItems(geographyInput, POLICY.almanac.maximumGeographies, (item, index) => {
@@ -26406,12 +26732,22 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const regionIds = new Map(climateConfig.regions.map(region => [region.id.toLowerCase(), region.id]));
             const geographyIds = new Map(geographies.map(item => [item.id.toLowerCase(), item.id]));
             const biomeIds = new Map(biomes.map(item => [item.id.toLowerCase(), item.id]));
+            const ecoregionProfiles = uniqueWorldItems(source.ecoregionProfiles, POLICY.almanac.maximumEcoregionProfiles, (value, index) => ({
+                id: boundedWorldId(value?.id, `ecoprofile-${index + 1}`),
+                name: boundedName(value?.name, `Ecoregion Profile ${index + 1}`),
+                climateProfileId: boundedWorldId(value?.climateProfileId, null),
+                geographyId: boundedWorldId(value?.geographyId, null),
+                biomeId: boundedWorldId(value?.biomeId, null),
+                packId: boundedWorldId(value?.packId, null),
+                sourceId: boundedWorldId(value?.sourceId, null)
+            }));
             const ecoregionInput = Array.isArray(source.ecoregions) ? source.ecoregions : DEFAULT_WORLD.ecoregions;
             const ecoregions = uniqueWorldItems(ecoregionInput, POLICY.almanac.maximumEcoregions, (item, index) => {
                 const value = item && typeof item === 'object' && !Array.isArray(item) ? item : {};
                 return {
                     id: boundedWorldId(value.id, `ecoregion-${index + 1}`),
                     name: boundedName(value.name, `Ecoregion ${index + 1}`),
+                    profileId: boundedWorldId(value.profileId, null),
                     regionId: regionIds.get(String(value.regionId || '').toLowerCase()) || climateConfig.activeRegionId,
                     geographyId: geographyIds.get(String(value.geographyId || '').toLowerCase()) || geographies[0].id,
                     biomeId: biomeIds.get(String(value.biomeId || '').toLowerCase()) || biomes[0].id,
@@ -26435,6 +26771,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return {
                     id: boundedWorldId(value.id, `location-${index + 1}`),
                     name: boundedName(value.name, `Location ${index + 1}`),
+                    climateProfileId: boundedWorldId(value.climateProfileId, null),
+                    useRegionClimate: value.useRegionClimate === true,
+                    inheritEcoregion: value.inheritEcoregion === true,
                     regionId: regionIds.get(String(value.regionId || '').toLowerCase()) || ecoregion.regionId,
                     ecoregionId: ecoregionIds.get(String(value.ecoregionId || '').toLowerCase()) || ecoregion.id,
                     geographyId: geographyIds.get(String(value.geographyId || '').toLowerCase()) || ecoregion.geographyId,
@@ -26520,6 +26859,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 activeLocationId,
                 geographies,
                 biomes,
+                ecoregionProfiles,
                 ecoregions,
                 locations,
                 preparedDestinationIds,
@@ -26534,11 +26874,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const world = normalizeWorldConfig();
             const location = worldItem(world.locations, requestedLocation || world.activeLocationId) || world.locations[0];
             const ecoregion = worldItem(world.ecoregions, location.ecoregionId) || world.ecoregions[0];
-            const geography = worldItem(world.geographies, location.geographyId) || worldItem(world.geographies, ecoregion.geographyId) || world.geographies[0];
-            const biome = worldItem(world.biomes, location.biomeId) || worldItem(world.biomes, ecoregion.biomeId) || world.biomes[0];
+            const ecoregionProfile = worldItem(world.ecoregionProfiles, ecoregion.profileId);
+            const geography = worldItem(world.geographies, location.inheritEcoregion ? (ecoregionProfile?.geographyId || ecoregion.geographyId) : location.geographyId) || world.geographies[0];
+            const biome = worldItem(world.biomes, location.inheritEcoregion ? (ecoregionProfile?.biomeId || ecoregion.biomeId) : location.biomeId) || world.biomes[0];
             const region = climateRegion(location.regionId) || climateRegion(ecoregion.regionId) || climateRegion();
             const context = temporalContext(location.temporalContextId);
-            return Object.freeze(copy({ location, ecoregion, geography, biome, region, temporalContext: context }));
+            return Object.freeze(copy({ location, ecoregion, ecoregionProfile, geography, biome, region, temporalContext: context }));
         }
 
         function normalizeSeason(value, fallback = 'Spring') {
@@ -26565,6 +26906,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 humidity: clampNumber(source.humidity, 0, 100, fallback.humidity),
                 precipitationChance: clampNumber(source.precipitationChance, 0, 100, fallback.precipitationChance),
                 windMph: clampNumber(source.windMph, 0, POLICY.almanac.maximumClimateWindMph, fallback.windMph),
+                seasonalScale: clampNumber(source.seasonalScale, 0, 3, 1),
+                referenceElevationFt: clampNumber(source.referenceElevationFt, -2000, 40000, POLICY.almanac.weatherModel.referenceElevationFt),
                 tags: normalizeClimateTags(source.tags, fallback.tags)
             };
         }
@@ -26581,6 +26924,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (Number.isFinite(Number(input.precipitationChance))) next.precipitationChance = clampNumber(input.precipitationChance, 0, 100, CLIMATE_PROFILES[id].precipitationChance);
                 if (Number.isFinite(Number(input.windMph))) next.windMph = clampNumber(input.windMph, 0, POLICY.almanac.maximumClimateWindMph, CLIMATE_PROFILES[id].windMph);
                 if (Array.isArray(input.tags)) next.tags = normalizeClimateTags(input.tags, CLIMATE_PROFILES[id].tags);
+                if (Number.isFinite(input.seasonalScale)) next.seasonalScale = clampNumber(input.seasonalScale, 0, 3, 1);
+                if (Number.isFinite(input.referenceElevationFt)) next.referenceElevationFt = clampNumber(input.referenceElevationFt, -2000, 40000, POLICY.almanac.weatherModel.referenceElevationFt);
                 if (Object.keys(next).length) result[id] = next;
             });
             return result;
@@ -26628,17 +26973,20 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const source = modState.config.climate;
             const profileOverrides = normalizeBuiltInProfileOverrides(source.profileOverrides);
             const customProfiles = [];
-            const profileIds = new Set(Object.keys(CLIMATE_PROFILES));
-            const profileNames = new Set(Object.values(CLIMATE_PROFILES).map(profile => profile.name.toLowerCase()));
+            // Saved campaign profiles take precedence over newly introduced seed ids.
+            // An expanded starter library must never discard a GM's existing profile.
+            const customIds = new Set();
+            const profileNames = new Set();
             const customInput = Array.isArray(source.customProfiles) ? source.customProfiles : [];
             customInput.slice(0, POLICY.almanac.maximumClimateProfiles).forEach((item, index) => {
                 const profile = normalizeClimateProfile(item, index);
-                if (profileIds.has(profile.id) || profileNames.has(profile.name.toLowerCase())) return;
-                profileIds.add(profile.id);
+                if (customIds.has(profile.id) || profileNames.has(profile.name.toLowerCase())) return;
+                customIds.add(profile.id);
                 profileNames.add(profile.name.toLowerCase());
                 customProfiles.push(profile);
             });
             const input = Array.isArray(source.regions) ? source.regions : [];
+            const profileIds = new Set([...Object.keys(CLIMATE_PROFILES), ...customIds]);
             const regions = [];
             const ids = new Set();
             input.slice(0, POLICY.almanac.maximumRegions).forEach((item, index) => {
@@ -26679,7 +27027,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 : regions[0].id;
             modState.config.climate = {
                 activeRegionId,
-                manualSeason: normalizeSeason(source.manualSeason, 'Spring'),
+                manualSeason: boundedName(source.manualSeason, 'Spring'),
+                seasonRules: normalizeSeasonRules(source.seasonRules),
                 profileOverrides,
                 customProfiles,
                 regions
@@ -26723,7 +27072,24 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return timeAvailable() ? currentMoment().season : normalizeClimateConfig().manualSeason;
         }
 
-        function resolvedClimate(requestedRegion = null) {
+        /** Resolve a named calendar season without guessing from an unfamiliar name. */
+        function normalizeSeasonRules(raw) {
+            const rules = Array.isArray(raw) ? raw : DEFAULT_SEASON_RULES;
+            const seen = new Set();
+            return rules.slice(0, POLICY.almanac.maximumSeasonRules).flatMap(value => {
+                const name = boundedName(value?.name);
+                if (!name || seen.has(name.toLowerCase())) return [];
+                seen.add(name.toLowerCase());
+                return [{ name,
+                    temperatureBias: clampNumber(value.temperatureBias, -100, 100, 0),
+                    humidityDelta: clampNumber(value.humidityDelta, -100, 100, 0),
+                    precipitationDelta: clampNumber(value.precipitationDelta, -100, 100, 0),
+                    windDelta: clampNumber(value.windDelta, -100, 100, 0)
+                }];
+            });
+        }
+
+        function resolvedClimate(requestedRegion = null, season = currentSeason(), profileOverride = null) {
             const config = normalizeClimateConfig();
             const region = climateRegion(requestedRegion);
             if (!region) return null;
@@ -26752,20 +27118,31 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 (overrides.tags || []).forEach(tag => tags.add(tag));
             });
             if (!tags.size) (profile.tags || []).forEach(tag => tags.add(tag));
-            const season = currentSeason();
-            const seasonalOffset = { Winter: -18, Spring: 0, Summer: 18, Autumn: 0 }[season] || 0;
+            // A local ecological profile can override a broad regional climate without
+            // changing that region or every other place which belongs to it.
+            if (profileOverride && profiles[profileOverride]) {
+                profile = copy(profiles[profileOverride]);
+                tags.clear();
+                (profile.tags || []).forEach(tag => tags.add(tag));
+            }
+            const rule = config.seasonRules.find(item => item.name.toLowerCase() === String(season).toLowerCase());
+            const seasonalOffset = Number(rule?.temperatureBias || 0) * Number(profile.seasonalScale ?? 1);
+            const drySummer = tags.has('dry-summer') ? (Number(rule?.temperatureBias || 0) > 0 ? -20 : Number(rule?.temperatureBias || 0) < 0 ? 20 : 0) : 0;
             return Object.freeze({
                 stateSchemaVersion: CLIMATE_STATE_SCHEMA_VERSION,
                 regionId: region.id,
                 regionName: region.name,
                 ancestry: chain.map(item => item.name),
                 profileName: profile.name,
+                profileId: profile.id || region.profileId,
+                referenceElevationFt: profile.referenceElevationFt ?? (profile.id === 'mountain' ? 8000 : POLICY.almanac.weatherModel.referenceElevationFt),
                 season,
+                seasonMapped: Boolean(rule),
                 seasonAuthority: timeAvailable() ? 'TimeAlmanac' : 'ClimateAlmanac manual setting',
                 temperatureF: Math.round(profile.temperatureF + seasonalOffset),
-                humidity: Math.round(profile.humidity),
-                precipitationChance: Math.round(profile.precipitationChance),
-                windMph: Math.round(profile.windMph),
+                humidity: Math.round(clampNumber(profile.humidity + Number(rule?.humidityDelta || 0), 0, 100, profile.humidity)),
+                precipitationChance: Math.round(clampNumber(profile.precipitationChance + Number(rule?.precipitationDelta || 0) + drySummer, 0, 100, profile.precipitationChance)),
+                windMph: Math.round(clampNumber(profile.windMph + Number(rule?.windDelta || 0), 0, POLICY.almanac.maximumClimateWindMph, profile.windMph)),
                 tags: [...tags]
             });
         }
@@ -26776,12 +27153,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ['temp', 'temperatureF', POLICY.almanac.minimumClimateTemperatureF, POLICY.almanac.maximumClimateTemperatureF],
                 ['humidity', 'humidity', 0, 100],
                 ['precip', 'precipitationChance', 0, 100],
-                ['wind', 'windMph', 0, POLICY.almanac.maximumClimateWindMph]
+                ['wind', 'windMph', 0, POLICY.almanac.maximumClimateWindMph],
+                ['seasonal', 'seasonalScale', 0, 3],
+                ['elevation', 'referenceElevationFt', -2000, 40000]
             ];
             for (const [argument, field, minimum, maximum] of numericFields) {
                 if (args[argument] === undefined) continue;
                 const value = Number(args[argument]);
-                if (!Number.isFinite(value) || value < minimum || value > maximum) {
+                if (!['string', 'number'].includes(typeof args[argument]) || String(args[argument]).trim() === '' || !Number.isFinite(value) || value < minimum || value > maximum) {
                     return { ok: false, message: `${argument} must be a number from ${minimum} to ${maximum}.` };
                 }
                 changes[field] = value;
@@ -26800,57 +27179,86 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function showClimateProfiles(msg) {
-            if (!requireGm(msg)) return;
-            const config = normalizeClimateConfig();
-            const profiles = Object.values(climateProfileMap(config));
-            const rows = profiles.map(profile => `${_sanitize(profile.name)} [${_sanitize(profile.id)}] - ${profile.temperatureF} F, ${profile.humidity}% humidity, ${profile.precipitationChance}% precipitation, ${profile.windMph} mph wind${profile.builtIn ? ' (built-in)' : ' (custom)'}`).join('<br>');
-            sendPanel(msg, 'Climate Profiles', [
-                { label: 'Profiles', value: rows },
-                { label: 'Add', value: GameAssist.createButton('Add Custom Profile', '!aa-climate profile add --name "?{Profile name}" --temp ?{Typical temperature F|58} --humidity ?{Humidity percent|55} --precip ?{Precipitation percent|35} --wind ?{Wind mph|8} --tags "?{Comma-separated tags|temperate}"') },
-                { label: 'Edit', value: GameAssist.createButton('Edit Profile', '!aa-climate profile set --id "?{Profile id}" --temp ?{Typical temperature F} --humidity ?{Humidity percent} --precip ?{Precipitation percent} --wind ?{Wind mph} --tags "?{Comma-separated tags}"') },
-                { label: 'Restore or Remove', value: `${GameAssist.createButton('Reset Built-In', '!aa-climate profile reset --id "?{Built-in profile id}" --confirm ?{Restore its original values?|No,no|Yes,yes}')} ${GameAssist.createButton('Remove Custom', '!aa-climate profile remove --id "?{Custom profile id}" --confirm ?{Remove this unused profile?|No,no|Yes,yes}')}` },
-                { label: 'Return', value: GameAssist.createButton('Climate', '!clim') }
-            ]);
+            return showPalette(msg, 'climate');
         }
 
-        function showClimateRegions(msg) {
+        function showClimateRegions(msg, page = 1) {
             if (!requireGm(msg)) return;
             const config = normalizeClimateConfig();
             const profiles = climateProfileMap(config);
             const profileOptions = Object.values(profiles).map(profile => `${profile.name},${profile.id}`).join('|');
-            const rows = config.regions.map(region => {
+            const parentOptions = `No parent,none|${config.regions.map(region => `${region.name},${region.id}`).join('|')}`;
+            const regionPages = Math.max(1, Math.ceil(config.regions.length / POLICY.almanac.palettePageSize));
+            page = Math.floor(clampNumber(page, 1, regionPages, 1));
+            const regions = config.regions.slice().sort((a, b) => a.name.localeCompare(b.name)).slice((page - 1) * POLICY.almanac.palettePageSize, page * POLICY.almanac.palettePageSize);
+            const rows = regions.map(region => {
                 const parent = region.parentId ? config.regions.find(candidate => candidate.id === region.parentId) : null;
                 const climateType = region.profileId && profiles[region.profileId]
                     ? profiles[region.profileId].name
                     : (parent ? `Follows ${parent.name}` : 'Temperate');
                 const current = region.id === config.activeRegionId ? ' <strong>(current)</strong>' : '';
                 const use = region.id === config.activeRegionId ? '' : ` ${GameAssist.createButton('Use', `!aa-climate region use --id ${region.id}`)}`;
-                const adjust = ` ${GameAssist.createButton('Fine Tune', `!aa-climate region override --id ${region.id} --temp ?{Temperature adjustment in degrees; 0 keeps the climate type|0} --humidity ?{Humidity percent|50} --precip ?{Precipitation chance percent|30} --wind ?{Typical wind mph|5}`)}`;
+                const adjust = ` ${GameAssist.createButton('Settings', `!aa-climate region settings --id ${region.id}`)}`;
                 const remove = config.regions.length > 1
                     ? ` ${GameAssist.createButton('Remove', `!aa-climate region remove --id ${region.id} --confirm ?{Remove ${region.name}? Child regions become top-level regions.|No,no|Yes,yes}`)}`
                     : '';
-                return `<b>${_sanitize(region.name)}</b>${current}<br>${_sanitize(climateType)}${use}${adjust}${remove}`;
+                return `<b>${_sanitize(region.name)}</b>${current}<br>${parent ? `${_sanitize(parent.name)} &rsaquo; ` : ''}${_sanitize(climateType)}${use}${adjust}${remove}`;
             }).join('<hr>');
-            sendPanel(msg, 'Manage Climate Regions', [
+            sendPanel(msg, 'Regions and Subregions', [
                 { label: 'Regions', value: rows },
-                { label: 'Add A Region', value: GameAssist.createButton('Add Region', `!aa-climate region add --name "?{Region name}" --profile ?{Climate type|${profileOptions}} --parent "?{Parent region id; leave blank for none|}"`) },
+                { label: 'Pages', value: `${page} of ${regionPages} ${page > 1 ? GameAssist.createButton('Previous', `!aa-climate regions --page ${page - 1}`) : ''} ${page < regionPages ? GameAssist.createButton('Next', `!aa-climate regions --page ${page + 1}`) : ''}` },
+                { label: 'Add A Region', value: GameAssist.createButton('Add Region', `!aa-climate region add --name "?{Region name}" --profile ?{Climate type|${profileOptions}} --parent ?{Parent region|${parentOptions}}`) },
+                { label: 'Place Names', value: 'Name regions for your campaign. A region with a parent is a subregion; climates and biomes are reusable profiles, not place names.' },
                 { label: 'Climate Types', value: GameAssist.createButton('Manage Climate Types', '!aa-climate profiles') },
-                { label: 'Return', value: `${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Almanac', '!aa-gm')}` }
+                { label: 'Return', value: paletteBack() }
             ]);
+        }
+
+        function showRegionSettings(msg, region) {
+            const config = normalizeClimateConfig();
+            const profiles = [{ id: 'inherit', name: 'Follow parent' }, ...Object.values(climateProfileMap(config))];
+            const parents = [{ id: 'none', name: 'No parent' }, ...config.regions.filter(item => item.id !== region.id)];
+            const resolved = resolvedClimate(region.id, '');
+            sendPanel(msg, `${region.name}: Region Settings`, [
+                { label: 'Region', value: `${_sanitize(region.name)} | ${_sanitize(resolved.profileName)}` },
+                { label: 'Name and Climate', value: GameAssist.createButton('Edit Region', `!aa-climate region edit --id ${region.id} --name "?{Region name|${region.name}}" --profile ${paletteChoice('Climate profile', profiles, region.profileId || 'inherit')} --parent ${paletteChoice('Parent region', parents, region.parentId || 'none')}`) },
+                { label: 'Local Adjustments', value: GameAssist.createButton('Fine Tune', `!aa-climate region override --id ${region.id} --temp ?{Temperature adjustment F|${region.overrides.temperatureBias ?? 0}} --humidity ?{Typical humidity percent|${region.overrides.humidity ?? resolved.humidity}} --precip ?{Precipitation chance percent|${region.overrides.precipitationChance ?? resolved.precipitationChance}} --wind ?{Typical wind mph|${region.overrides.windMph ?? resolved.windMph}}`) },
+                { label: 'Restore Inheritance', value: GameAssist.createButton('Clear Local Adjustments', `!aa-climate region override --id ${region.id} --clear yes --confirm ?{Clear this region's local climate adjustments?|No,no|Yes,yes}`) },
+                { label: 'Return', value: `${GameAssist.createButton('Regions', '!aa-climate regions')} ${paletteBack()}` }
+            ]);
+        }
+
+        function assignCurrentRegion(regionId, climateConfig = normalizeClimateConfig()) {
+            const world = normalizeWorldConfig();
+            const location = worldItem(world.locations, world.activeLocationId);
+            const area = worldItem(world.ecoregions, location.ecoregionId);
+            if (area.regionId !== regionId) {
+                if (world.locations.filter(item => item.ecoregionId === area.id).length > 1) {
+                    if (world.ecoregions.length >= POLICY.almanac.maximumEcoregions) return false;
+                    const id = nextPresetId(world.ecoregions, `area-${location.id}`.slice(0, 35));
+                    world.ecoregions.push({ ...copy(area), id, name: boundedName(`${location.name} Area`), regionId });
+                    location.ecoregionId = id;
+                } else area.regionId = regionId;
+            }
+            Object.assign(location, { regionId, climateProfileId: null, useRegionClimate: true });
+            modState.config.world = world;
+            modState.config.climate = { ...climateConfig, activeRegionId: regionId };
+            ensureAlmanacRuntime().world.revision++;
+            return true;
         }
 
         function showClimate(msg) {
             if (!submoduleEnabled('climate')) return sendPanel(msg, 'ClimateAlmanac', [{ label: 'Status', value: 'Turned off; regions and settings are preserved.' }]);
-            const climate = resolvedClimate();
+            const climate = weatherClimateContext();
             const config = normalizeClimateConfig();
             sendPanel(msg, 'ClimateAlmanac', [
                 { label: 'Current Region', value: `${_sanitize(climate.regionName)} - ${_sanitize(climate.profileName)}` },
-                { label: 'At A Glance', value: `${_sanitize(climate.season)} | ${climate.temperatureF} F | ${climate.humidity}% humidity | ${climate.precipitationChance}% precipitation | ${climate.windMph} mph wind` },
+                { label: 'Seasonal Baseline', value: `${_sanitize(climate.season)} | ${climate.temperatureF} F | ${climate.humidity}% humidity | ${climate.precipitationChance}% precipitation chance | ${climate.windMph} mph wind` },
                 { label: 'Choose Region', value: config.regions.map(region => region.id === climate.regionId ? `<strong>${_sanitize(region.name)}</strong>` : (playerIsGM(msg?.playerid) ? GameAssist.createButton(region.name, `!aa-climate region use --id ${region.id}`) : _sanitize(region.name))).join(' ') },
                 ...(playerIsGM(msg?.playerid) ? [{ label: 'Season', value: timeAvailable()
                     ? `Following the active calendar: <strong>${_sanitize(climate.season)}</strong>`
                     : `${_sanitize(climate.season)} ${GameAssist.createButton('Change Season', '!aa-climate season ?{Season|Spring|Summer|Autumn|Winter}')}` }] : []),
-                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Manage Regions', '!aa-climate regions')} ${GameAssist.createButton('Climate Types', '!aa-climate profiles')} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` : GameAssist.createButton('Almanac', '!Almanac') }
+                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Manage Regions', '!aa-climate regions')} ${GameAssist.createButton('Climate Types', '!aa-climate profiles')} ${GameAssist.createButton('Seasons', '!aa-palette seasons')} ${GameAssist.createButton('World Palettes', '!aa-palette')}` : GameAssist.createButton('Almanac', '!Almanac') }
             ]);
         }
 
@@ -26867,11 +27275,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return showClimate(msg);
             }
             if (lower === 'profiles' || lower === 'profile') return showClimateProfiles(msg);
-            if (lower === 'regions' || lower === 'region') return showClimateRegions(msg);
+            if (/^regions(?:\s|$)/i.test(body) || lower === 'region') return showClimateRegions(msg, _parseArgs(body).args.page);
             const seasonMatch = body.match(/^season\s+(.+)$/i);
             if (seasonMatch) {
-                const season = normalizeSeason(seasonMatch[1], '');
-                if (!season) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'Choose Winter, Spring, Summer, or Autumn.' }]);
+                const season = boundedName(_parseArgs(`season --name ${seasonMatch[1]}`).args.name);
+                if (!season) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'Enter a season name, then assign its weather response in World Palettes.' }]);
                 normalizeClimateConfig().manualSeason = season;
                 ensureAlmanacRuntime().climate.revision++;
                 publishChange('almanac.climate.changed', null, resolvedClimate(), { action: 'manual-season' }, msg);
@@ -26935,8 +27343,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (String(args.confirm || '').toLowerCase() !== 'yes') return sendPanel(msg, 'ClimateAlmanac', [{ label: 'No Change Made', value: 'Removing a custom profile requires --confirm yes.' }]);
                 const profile = climateProfile(args.id || args.name, config);
                 if (!profile || profile.builtIn) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'Only a custom climate profile can be removed.' }]);
-                if (config.regions.some(region => region.profileId === profile.id)) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'That profile is still assigned to a region. Reassign the region before removing it.' }, { label: 'Changes', value: 'None.' }]);
+                const world = normalizeWorldConfig();
+                if (config.regions.some(region => region.profileId === profile.id) || world.locations.some(item => item.climateProfileId === profile.id) || world.ecoregionProfiles.some(item => item.climateProfileId === profile.id)) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'That profile is still assigned to a region, location, or ecoregion profile. Reassign it before removing it.' }, { label: 'Changes', value: 'None.' }]);
                 config.customProfiles = config.customProfiles.filter(candidate => candidate.id !== profile.id);
+                modState.config.climate = config;
                 ensureAlmanacRuntime().climate.revision++;
                 publishChange('almanac.climate.changed', null, resolvedClimate(), { action: 'profile-removed', profileId: profile.id }, msg);
                 return showClimateProfiles(msg);
@@ -26945,8 +27355,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (config.regions.length >= POLICY.almanac.maximumRegions) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'The region limit has been reached.' }]);
                 const args = _parseArgs(body).args;
                 const name = boundedName(args.name);
-                const parent = args.parent ? findConfiguredRegion(args.parent) : null;
-                if (args.parent && !parent) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'The requested parent region was not found.' }]);
+                const parent = args.parent && args.parent !== 'none' ? findConfiguredRegion(args.parent) : null;
+                if (args.parent && args.parent !== 'none' && !parent) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'The requested parent region was not found.' }]);
                 const profileRequest = String(args.profile || (parent ? 'inherit' : 'temperate')).toLowerCase();
                 const profileId = profileRequest === 'inherit' ? null : profileRequest;
                 if (!name || (profileId && !climateProfile(profileId, config))) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'Enter a name and a known climate profile, or choose inherit for a child region.' }]);
@@ -26957,8 +27367,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const baseId = id;
                 let suffix = 2;
                 while (config.regions.some(region => region.id === id)) id = `${baseId}-${suffix++}`;
-                config.regions.push({ id, name, parentId: parent?.id || null, profileId, overrides: {} });
-                config.activeRegionId = id;
+                const candidate = copy(config);
+                candidate.regions.push({ id, name, parentId: parent?.id || null, profileId, overrides: {} });
+                if (!assignCurrentRegion(id, candidate)) return sendPanel(msg, 'Regions', [{ label: 'Needs Attention', value: 'The ecoregion-area limit prevents creating and assigning this region. No region was added.' }, { label: 'Return', value: paletteBack() }]);
                 ensureAlmanacRuntime().climate.revision++;
                 publishChange('almanac.climate.changed', null, resolvedClimate(id), { action: 'region-added', regionId: id }, msg);
                 return showClimate(msg);
@@ -26968,16 +27379,38 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const requested = args.id || args.name || body.replace(/^region\s+use\s*/i, '').trim();
                 const region = findConfiguredRegion(requested);
                 if (!region) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'That region was not found.' }]);
-                config.activeRegionId = region.id;
+                if (!assignCurrentRegion(region.id, config)) return sendPanel(msg, 'Regions', [{ label: 'Needs Attention', value: 'The ecoregion-area limit prevents assigning this region to the current location. No assignment was changed.' }, { label: 'Return', value: paletteBack() }]);
                 ensureAlmanacRuntime().climate.revision++;
                 publishChange('almanac.climate.changed', null, resolvedClimate(region.id), { action: 'active-region', regionId: region.id }, msg);
                 return showClimate(msg);
+            }
+            if (/^region\s+settings\b/i.test(body)) {
+                const region = findConfiguredRegion(_parseArgs(body).args.id);
+                return region ? showRegionSettings(msg, region) : showClimateRegions(msg);
+            }
+            if (/^region\s+edit\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                const region = findConfiguredRegion(args.id);
+                const name = boundedName(args.name);
+                const parent = args.parent === 'none' ? null : findConfiguredRegion(args.parent);
+                const profile = args.profile === 'inherit' ? null : climateProfile(args.profile, config);
+                if (!region || !name || (args.parent !== 'none' && !parent) || (!profile && (args.profile !== 'inherit' || !parent)) || config.regions.some(item => item.id !== region.id && item.name.toLowerCase() === name.toLowerCase())) return sendPanel(msg, 'Regions', [{ label: 'Needs Attention', value: 'Choose a unique name, an existing parent or No parent, and a climate profile. Only subregions can follow a parent climate.' }, { label: 'Return', value: paletteBack() }]);
+                const candidate = copy(config.regions);
+                Object.assign(candidate.find(item => item.id === region.id), { name, parentId: parent?.id || null, profileId: profile?.id || null });
+                if (candidate.some(item => regionDepth(item, candidate) > POLICY.almanac.maximumRegionDepth)) return sendPanel(msg, 'Regions', [{ label: 'Needs Attention', value: 'That parent would create a cycle or exceed the region depth limit.' }, { label: 'Return', value: paletteBack() }]);
+                config.regions = candidate;
+                modState.config.climate = config;
+                ensureAlmanacRuntime().climate.revision++;
+                return showClimateRegions(msg);
             }
             if (/^region\s+override\b/i.test(body)) {
                 const args = _parseArgs(body).args;
                 const region = findConfiguredRegion(args.id || args.name || config.activeRegionId);
                 if (!region) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'That region was not found.' }]);
-                if (String(args.clear || '').toLowerCase() === 'yes') region.overrides = {};
+                if (String(args.clear || '').toLowerCase() === 'yes') {
+                    if (args.confirm !== undefined && args.confirm !== 'yes') return showRegionSettings(msg, region);
+                    region.overrides = {};
+                }
                 else {
                     const next = { ...region.overrides };
                     if (args.temp !== undefined) next.temperatureBias = clampNumber(args.temp, POLICY.almanac.minimumClimateTemperatureBias, POLICY.almanac.maximumClimateTemperatureBias, 0);
@@ -26995,9 +27428,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (String(args.confirm || '').toLowerCase() !== 'yes') return sendPanel(msg, 'ClimateAlmanac', [{ label: 'No Change Made', value: 'Removing a region requires --confirm yes.' }]);
                 const region = findConfiguredRegion(args.id || args.name);
                 if (!region || config.regions.length === 1) return sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'Keep at least one valid region.' }]);
+                const world = normalizeWorldConfig();
+                if (world.locations.some(item => item.regionId === region.id) || world.ecoregions.some(item => item.regionId === region.id) || world.phenomena.some(item => item.regionId === region.id)) return sendPanel(msg, 'Regions', [{ label: 'Needs Attention', value: 'Places or phenomena still use this region. Reassign them before removing it.' }, { label: 'Return', value: paletteBack() }]);
                 config.regions = config.regions.filter(candidate => candidate.id !== region.id);
                 config.regions.forEach(candidate => { if (candidate.parentId === region.id) candidate.parentId = null; });
                 if (config.activeRegionId === region.id) config.activeRegionId = config.regions[0].id;
+                modState.config.climate = config;
                 ensureAlmanacRuntime().climate.revision++;
                 publishChange('almanac.climate.changed', null, resolvedClimate(), { action: 'region-removed', regionId: region.id }, msg);
                 return showClimate(msg);
@@ -27326,16 +27762,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel(msg, 'AstronomyAlmanac Needs Attention', [{ label: 'Problem', value: 'That astronomy command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Astronomy', '!astro') }]);
         }
 
-        function weatherClimateContext() {
-            if (submoduleEnabled('climate')) return resolvedClimate();
-            const season = timeAvailable() ? currentMoment().season : 'Spring';
+        function weatherClimateContext(place = currentWorldContext(), worldMinute = ensureAlmanacRuntime().time.worldMinute) {
+            const season = timeAvailable() ? (contextualMoment(place, worldMinute).moment?.season || currentSeason()) : currentSeason();
+            const profileId = place.location?.climateProfileId || (place.location?.useRegionClimate ? null : place.ecoregionProfile?.climateProfileId) || null;
+            if (submoduleEnabled('climate')) return resolvedClimate(place.region?.id, season, profileId);
+            const rule = normalizeClimateConfig().seasonRules.find(item => item.name.toLowerCase() === String(season).toLowerCase());
             return {
                 regionId: null,
                 regionName: 'Manual Weather Context',
                 profileName: 'Temperate fallback',
                 season,
                 seasonAuthority: timeAvailable() ? 'TimeAlmanac' : 'WeatherAlmanac fallback',
-                temperatureF: { Winter: 40, Spring: 58, Summer: 76, Autumn: 58 }[season] || 58,
+                temperatureF: 58 + Number(rule?.temperatureBias || 0),
                 humidity: 55,
                 precipitationChance: 35,
                 windMph: 8,
@@ -27344,38 +27782,56 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function generateWeather(previous = null, forecastOffset = 0) {
-            const climate = weatherClimateContext();
+            const policy = POLICY.almanac.weatherModel;
             const place = currentWorldContext();
+            const baseMinute = ensureAlmanacRuntime().time.worldMinute;
+            const worldMinute = baseMinute + forecastOffset * calendarMinutesPerDay(profileFor());
+            const climate = weatherClimateContext(place, worldMinute);
             const biomeTags = new Set((place.biome?.tags || []).map(tag => String(tag).toLowerCase()));
-            const elevationAdjustment = Math.round(-3.5 * ((Number(place.geography?.elevationFt || 0) - 500) / 1000));
+            const contextKey = worldPackFingerprint(JSON.stringify({ climate, location: place.location, geography: place.geography, biome: place.biome }));
+            // Carry weather forward only inside the same physical/seasonal context.
+            // Moving to a desert or changing a profile cannot inherit a distant snowstorm.
+            const elapsed = worldMinute - Number(previous?.worldMinute);
+            const continuous = previous && previous.source !== 'Manual' && previous.contextKey === contextKey
+                && elapsed >= 0 && elapsed <= policy.continuityHours * calendarMinutesPerHour(profileFor());
+            const prior = continuous ? previous : null;
+            const elevationAdjustment = Math.round(-policy.elevationCoolingFPer1000Ft * ((Number(place.geography?.elevationFt || 0) - Number(climate.referenceElevationFt ?? policy.referenceElevationFt)) / 1000));
             const localTemperatureAdjustment = Number(place.location?.temperatureDeltaF || 0);
-            const variation = place.geography?.coastal ? 15 : 21;
+            const variation = 2 * (place.geography?.coastal ? policy.coastalSwingF : policy.temperatureSwingF) + 1;
             const randomTemperature = climate.temperatureF + elevationAdjustment + localTemperatureAdjustment + randomInteger(variation) - Math.ceil(variation / 2);
-            const temperatureF = previous
-                ? Math.round((Number(previous.temperatureF) * 2 + randomTemperature) / 3)
+            const temperatureF = prior
+                ? Math.round((Number(prior.temperatureF) * 2 + randomTemperature) / 3)
                 : Math.round(randomTemperature);
             const precipitationChance = Math.max(0, Math.min(100, climate.precipitationChance
-                + (place.geography?.coastal ? 5 : 0)
-                + (biomeTags.has('wet') || biomeTags.has('rainforest') ? 15 : 0)
-                - (biomeTags.has('arid') || biomeTags.has('desert') ? 20 : 0)));
+                + (place.geography?.coastal ? policy.coastalPrecipitationBonus : 0)
+                + (biomeTags.has('wet') || biomeTags.has('rainforest') ? policy.wetBiomePrecipitationBonus : 0)
+                - (biomeTags.has('arid') || biomeTags.has('desert') ? policy.dryBiomePrecipitationPenalty : 0)));
             const precipitationRoll = randomInteger(100);
             const cloudRoll = randomInteger(100);
-            const windVariation = randomInteger(13) - 7;
+            const windVariation = randomInteger(policy.windSwingMph * 2 + 1) - policy.windSwingMph - 1;
             const localWindAdjustment = Number(place.location?.windDeltaMph || 0) + (place.geography?.coastal ? 2 : 0);
-            const windMph = Math.max(0, Math.round((previous ? Number(previous.windMph) + climate.windMph : climate.windMph * 2) / 2 + windVariation + localWindAdjustment));
+            const targetWind = climate.windMph + localWindAdjustment;
+            let windMph = Math.max(0, Math.round((prior ? (Number(prior.windMph) + targetWind) / 2 : targetWind) + windVariation));
             const precipitation = precipitationRoll <= precipitationChance;
-            const severe = precipitation && randomInteger(100) <= Math.max(5, Math.round(precipitationChance / 5));
+            const severe = precipitation && randomInteger(100) <= policy.severePrecipitationPercent;
             let kind = 'clear';
-            if (precipitation && temperatureF <= 32) kind = severe ? 'blizzard' : 'snow';
+            // Game abstraction: without an atmospheric column, use the configured
+            // freezing threshold, not a claim to simulate real mixed precipitation.
+            if (precipitation && temperatureF <= policy.freezingF) kind = severe ? 'blizzard' : 'snow';
             else if (precipitation) kind = severe ? 'storm' : 'rain';
-            else if (cloudRoll <= Math.min(85, climate.humidity)) kind = 'cloudy';
-            else if (climate.humidity >= 80 && randomInteger(100) <= 30) kind = 'fog';
-            else if (windMph >= 25) kind = 'windy';
-            else if (temperatureF >= 100) kind = 'heatwave';
-            else if (temperatureF <= 10) kind = 'cold-snap';
-            if (previous && randomInteger(100) <= 35 && ['clear', 'cloudy', 'rain', 'snow', 'fog', 'windy'].includes(previous.kind)) {
-                kind = previous.kind;
+            else if (climate.humidity >= policy.fogHumidity && windMph < policy.windyMph && randomInteger(100) <= policy.fogChancePercent) kind = 'fog';
+            else if (windMph >= policy.windyMph) kind = 'windy';
+            else if (temperatureF >= policy.heatwaveF) kind = 'heatwave';
+            else if (temperatureF <= policy.coldSnapF) kind = 'cold-snap';
+            else if (cloudRoll <= climate.humidity) kind = 'cloudy';
+            const compatible = candidate => !(['rain', 'storm'].includes(candidate) && (temperatureF <= policy.freezingF || precipitationChance === 0))
+                && !(['snow', 'blizzard'].includes(candidate) && (temperatureF > policy.freezingF || precipitationChance === 0))
+                && !(candidate === 'fog' && (climate.humidity < policy.fogHumidity || windMph >= policy.windyMph))
+                && !(candidate === 'windy' && windMph < policy.windyMph);
+            if (prior && randomInteger(100) <= policy.persistencePercent && ['clear', 'cloudy', 'rain', 'snow', 'fog', 'windy'].includes(prior.kind) && compatible(prior.kind)) {
+                kind = prior.kind;
             }
+            if (kind === 'storm' || kind === 'blizzard') windMph = Math.max(windMph, policy.stormWindMph);
             const descriptions = {
                 clear: ['Clear', 'None', 'Clear', 0, ['clear']],
                 cloudy: ['Cloudy', 'None', 'Overcast', 1, ['cloud']],
@@ -27389,7 +27845,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 'cold-snap': ['Bitter cold', 'None', 'Clear', 3, ['cold']]
             };
             const [summary, precipitationText, cloud, severity, tags] = descriptions[kind];
-            const visibility = ['storm', 'snow'].includes(kind) ? 'Reduced' : (['blizzard', 'fog'].includes(kind) ? 'Heavily obscured' : 'Clear');
+            const visibility = ['rain', 'storm', 'snow'].includes(kind) ? 'Reduced' : (['blizzard', 'fog'].includes(kind) ? 'Heavily obscured' : 'Clear');
             return {
                 stateSchemaVersion: WEATHER_STATE_SCHEMA_VERSION,
                 id: `weather-${Date.now().toString(36)}-${randomInteger(9999)}`,
@@ -27401,7 +27857,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 cloud,
                 visibility,
                 severity,
-                durationHours: Math.max(1, randomInteger(12) + (severity * 2)),
+                durationHours: randomInteger(policy.maximumDurationHours),
+                contextKey,
+                precipitationChance,
                 tags: [...new Set([...(climate.tags || []), ...tags])],
                 regionId: climate.regionId,
                 regionName: climate.regionName,
@@ -27413,21 +27871,23 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 context: submoduleEnabled('climate') ? 'ClimateAlmanac' : (timeAvailable() ? 'TimeAlmanac plus fallback climate' : 'WeatherAlmanac fallback'),
                 forecastOffset,
                 generatedAt: isoNow(),
-                worldMinute: timeAvailable() ? ensureAlmanacRuntime().time.worldMinute : null,
+                worldMinute: timeAvailable() ? worldMinute : null,
                 source: forecastOffset ? 'Forecast' : 'Generated'
             };
         }
 
         function deriveEnvironment(weather, source = 'WeatherAlmanac') {
             const value = weather || generateWeather(null, 0);
+            const place = currentWorldContext();
             const temperature = value.temperatureF <= 0 ? 'Extreme cold'
                 : value.temperatureF <= 32 ? 'Freezing'
                     : value.temperatureF <= 50 ? 'Cold'
                         : value.temperatureF < 80 ? 'Mild'
                             : value.temperatureF < 100 ? 'Hot' : 'Extreme heat';
-            const ground = ['rain', 'storm'].includes(value.kind) ? 'Wet or muddy'
-                : ['snow', 'blizzard'].includes(value.kind) ? 'Snow-covered or icy'
-                    : value.kind === 'fog' ? 'Damp' : 'Firm';
+            const baseGround = place.biome?.ground || place.geography?.terrain || 'Natural ground';
+            const ground = ['rain', 'storm'].includes(value.kind) ? `${baseGround}; wet from rain`
+                : ['snow', 'blizzard'].includes(value.kind) ? `${baseGround}; snow-covered or icy`
+                    : value.kind === 'fog' ? `${baseGround}; damp` : baseGround;
             const exposure = value.severity >= 4 || ['Extreme cold', 'Extreme heat'].includes(temperature) ? 'Extreme'
                 : value.severity >= 2 ? 'Moderate' : 'Low';
             return {
@@ -27438,7 +27898,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 precipitation: value.precipitation,
                 wind: value.windMph >= 40 ? 'Severe' : value.windMph >= 20 ? 'Strong' : value.windMph >= 8 ? 'Moderate' : 'Light',
                 ground,
-                water: ['rain', 'storm', 'snow', 'blizzard'].includes(value.kind) ? 'Conditions may affect exposed water' : 'Normal',
+                water: `${place.biome?.water || 'Local water'}${['rain', 'storm', 'snow', 'blizzard'].includes(value.kind) ? '; exposed water affected by precipitation' : ''}`,
                 exposure,
                 severity: Math.max(value.severity, exposure === 'Extreme' ? 3 : 0),
                 tags: [...new Set([...(value.tags || []), ground.includes('muddy') ? 'mud' : '', ground.includes('icy') ? 'ice' : ''].filter(Boolean))],
@@ -27549,8 +28009,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     severity,
                     durationHours: Math.max(1, Math.round(clampNumber(args.duration, 1, 720, 8))),
                     tags: ['manual'],
-                    regionId: submoduleEnabled('climate') ? resolvedClimate()?.regionId : null,
-                    regionName: submoduleEnabled('climate') ? resolvedClimate()?.regionName : 'Manual Weather Context',
+                    regionId: weatherClimateContext().regionId,
+                    regionName: weatherClimateContext().regionName,
+                    locationId: currentWorldContext().location.id,
                     season: weatherClimateContext().season,
                     context: 'GM manual weather', forecastOffset: 0, generatedAt: isoNow(),
                     worldMinute: timeAvailable() ? runtime.time.worldMinute : null, source: 'Manual'
@@ -27749,7 +28210,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const astronomyAvailable = parentAvailable && submoduleEnabled('astronomy');
             const temporal = contextualMoment(context, runtime.time.worldMinute);
             const moment = temporal.moment || currentMoment();
-            const climate = climateAvailable ? resolvedClimate(context.region?.id) : null;
+            const climate = climateAvailable ? weatherClimateContext(context, runtime.time.worldMinute) : null;
             const storedWeather = weatherAvailable && active ? currentWeather() : null;
             const currentEnvironment = environmentAvailable && active
                 ? environmentContext()
@@ -27763,13 +28224,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!weatherAvailable) warnings.push('WeatherAlmanac is not effectively available; current atmospheric state falls back to local context.');
             if (!environmentAvailable) warnings.push('EnviroAlmanac is not effectively available; the location preset supplies local surroundings.');
             if (!astronomyAvailable) warnings.push('AstronomyAlmanac is not effectively available; no moon phase or celestial state is available.');
+            if (climate && !climate.seasonMapped) warnings.push(`No seasonal weather response is assigned to ${climate.season}. Choose Seasons in World Palettes; the base climate is being used.`);
+            if (context.ecoregion.profileId && !context.ecoregionProfile) warnings.push('The ecoregion profile is unavailable; the saved explicit geography and biome remain in use.');
+            if (active && runtime.environment.override) warnings.push('A GM environment override is active. Its local description is retained separately from atmospheric weather; use Follow Weather Again to clear it.');
+            if (storedWeather?.locationId && storedWeather.locationId !== context.location.id) warnings.push('Weather retained from another location is still active. Generate weather for this place when you are ready; a weather lock must be released first.');
             if (!temporal.moment) warnings.push(`The local time produced by ${temporal.context.name} falls outside the supported Year ${POLICY.almanac.minimumYear}-${POLICY.almanac.maximumYear} range; the base chronology is shown instead.`);
 
             let temperatureF = Number(storedWeather?.temperatureF);
             if (Number.isFinite(temperatureF)) provenance.temperature = ['Weather'];
             else if (Number.isFinite(Number(climate?.temperatureF))) {
-                temperatureF = Number(climate.temperatureF);
-                provenance.temperature = ['Climate', 'Season'];
+                const policy = POLICY.almanac.weatherModel;
+                temperatureF = Number(climate.temperatureF) - policy.elevationCoolingFPer1000Ft * ((Number(context.geography?.elevationFt || 0) - Number(climate.referenceElevationFt ?? policy.referenceElevationFt)) / 1000);
+                provenance.temperature = ['Climate', 'Season', 'Geography'];
             } else {
                 temperatureF = 60;
                 provenance.temperature = ['Almanac fallback'];
@@ -27823,7 +28289,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
             let ground = boundedWorldText(
                 active && runtime.environment.override ? currentEnvironment?.ground : context.location.groundOverride,
-                currentEnvironment?.ground || context.biome?.ground || context.geography?.terrain || 'Unspecified ground'
+                context.biome?.ground || context.geography?.terrain || currentEnvironment?.ground || 'Unspecified ground'
             );
             provenance.ground = [currentEnvironment ? 'Environment' : 'Biome', 'Geography'];
             if (!runtime.environment.override && context.location.groundOverride) provenance.ground.unshift(`Location:${context.location.name}`);
@@ -27833,6 +28299,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 provenance.ground.push(`Phenomenon:${groundPhenomenon.name}`);
             } else if (precipitation.toLowerCase().includes('rain') && !/mud|wet|flood|water/i.test(ground)) {
                 ground = `${ground}; wet from rain`;
+                provenance.ground.push('Weather');
+            } else if (precipitation.toLowerCase().includes('snow') && !/snow|ice|icy/i.test(ground)) {
+                ground = `${ground}; snow-covered or icy`;
                 provenance.ground.push('Weather');
             }
 
@@ -27925,7 +28394,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function regenerateWeatherForLocation(msg) {
             const runtime = ensureAlmanacRuntime();
-            if (!submoduleEnabled('weather') || runtime.weather.locked) return;
+            if (!submoduleEnabled('weather') || runtime.weather.locked || runtime.weather.current?.source === 'Manual') return;
             const previous = runtime.weather.current;
             const next = generateWeather(previous);
             runtime.weather.current = next;
@@ -27978,7 +28447,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel(msg, `Edit Location: ${location.name}`, [
                 { label: 'World Context', value: `Region ${_sanitize(location.regionId)} | Ecoregion ${_sanitize(location.ecoregionId)} | Geography ${_sanitize(location.geographyId)} | Biome ${_sanitize(location.biomeId)}` },
                 { label: 'Local Context', value: `Environment ${_sanitize(location.environmentPresetId)} | Time ${_sanitize(location.temporalContextId)} | Temperature ${location.temperatureDeltaF >= 0 ? '+' : ''}${location.temperatureDeltaF} F | Wind ${location.windDeltaMph >= 0 ? '+' : ''}${location.windDeltaMph} mph` },
-                { label: 'Basic Details', value: GameAssist.createButton('Edit Name and Context', `!aa-location edit --id ${location.id} --name "?{Location name|${location.name}}" --region "?{Climate region id|${location.regionId}}" --ecoregion "?{Ecoregion id|${location.ecoregionId}}" --geography "?{Geography id|${location.geographyId}}" --biome "?{Biome id|${location.biomeId}}" --environment ?{Default environment|Clear,clear|Blizzard,blizzard|Desert Terrain,desert|Swamp,swamp|Underwater,underwater} --temporal "?{Temporal context id|${location.temporalContextId}}"`) },
+                { label: 'Basic Details', value: GameAssist.createButton('Edit Name and Context', `!aa-location edit --id ${location.id} --name "?{Location name|${location.name}}" --region ${paletteChoice('Region', normalizeClimateConfig().regions, location.regionId)} --ecoregion ${paletteChoice('Ecoregion area', world.ecoregions, location.ecoregionId)} --geography ${paletteChoice('Geography', world.geographies, location.geographyId)} --biome ${paletteChoice('Biome', world.biomes, location.biomeId)} --environment ${paletteChoice('Default environment', Object.entries(ENVIRONMENT_PRESETS).map(([id, item]) => ({ id, name: item.name })), location.environmentPresetId)} --temporal ${paletteChoice('Local time', normalizeTemporalContexts(), location.temporalContextId)}`) },
+                ...(location.id === world.activeLocationId ? [{ label: 'Natural World', value: GameAssist.createButton('Choose Profiles', '!aa-palette') }] : []),
                 { label: 'Scene Modifiers', value: GameAssist.createButton('Edit Local Modifiers', `!aa-location local --id ${location.id} --temperature ?{Temperature adjustment F|${location.temperatureDeltaF}} --wind ?{Wind adjustment mph|${location.windDeltaMph}} --visibility "?{Visibility override; blank follows resolved context|${location.visibilityOverride}}" --ground "?{Ground override; blank follows resolved context|${location.groundOverride}}"`) },
                 { label: 'Map Pages and Notes', value: GameAssist.createButton('Edit Associations', `!aa-location associations --id ${location.id} --pages "?{Comma-separated Roll20 page ids|${location.pageIds.join(',')}}" --notes "?{Private GM notes|${location.notes}}"`) },
                 { label: 'Lists', value: `${GameAssist.createButton(prepared ? 'Remove from Prepared' : 'Add to Prepared', `!aa-location prepare --id ${location.id}`)} ${GameAssist.createButton(location.favorite ? 'Remove Favorite' : 'Mark Favorite', `!aa-location favorite --id ${location.id}`)}` },
@@ -28028,7 +28498,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (manage) {
                 fields.push(
                     { label: 'All Locations', value: locationManagementRows(world.locations, world.activeLocationId) },
-                    { label: 'Add Location', value: GameAssist.createButton('Create Location', '!aa-location add --name "?{Location name}" --region "?{Climate region id|home}" --ecoregion "?{Ecoregion id|lowland-mosaic}" --geography "?{Geography id|rolling-lowlands}" --biome "?{Biome id|temperate-woodland}" --environment ?{Default environment|Clear,clear|Blizzard,blizzard|Desert Terrain,desert|Swamp,swamp|Underwater,underwater}') },
+                    { label: 'Add Location', value: GameAssist.createButton('Create Location', `!aa-location add --name "?{Location name}" --region ${paletteChoice('Region', normalizeClimateConfig().regions)} --ecoregion ${paletteChoice('Ecoregion area', world.ecoregions)} --geography ${paletteChoice('Geography', world.geographies)} --biome ${paletteChoice('Biome', world.biomes)} --environment ?{Default environment|Clear,clear|Blizzard,blizzard|Desert Terrain,desert|Swamp,swamp|Underwater,underwater}`) },
                     { label: 'Manage', value: `${GameAssist.createButton('Prepared List', '!aa-location prepared')} ${GameAssist.createButton('World Setup', '!aa-world')}` }
                 );
             } else {
@@ -28098,7 +28568,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (!boundedName(args.name) || !region || !ecoregion || !geography || !biome || !context || !Object.prototype.hasOwnProperty.call(ENVIRONMENT_PRESETS, environment)) {
                     return sendPanel(msg, 'Location Needs Attention', [{ label: 'Problem', value: 'Choose an existing region, ecoregion, geography, biome, environment, and temporal context. The location was not partially changed.' }, { label: 'Next Step', value: GameAssist.createButton('Edit Location', `!aa-location edit --id ${location.id}`) }]);
                 }
+                const changedContext = location.ecoregionId !== ecoregion.id || location.geographyId !== geography.id || location.biomeId !== biome.id;
+                if (changedContext) location.inheritEcoregion = false;
+                if (location.regionId !== region.id) Object.assign(location, { climateProfileId: null, useRegionClimate: true });
                 Object.assign(location, { name: boundedName(args.name), regionId: region.id, ecoregionId: ecoregion.id, geographyId: geography.id, biomeId: biome.id, environmentPresetId: environment, temporalContextId: context.id });
+                modState.config.world = world;
                 ensureAlmanacRuntime().world.revision++;
                 if (location.id === world.activeLocationId) {
                     normalizeClimateConfig().activeRegionId = region.id;
@@ -28859,6 +29333,40 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
         }
 
+        function paletteReferenceProblems(world, climate) {
+            const problems = [];
+            if (['geographies', 'biomes', 'ecoregions', 'locations'].some(key => !Array.isArray(world[key])) || (climate.customProfiles !== undefined && !Array.isArray(climate.customProfiles))) return ['WorldPack place definitions and custom climate profiles must be lists.'];
+            if ([...world.geographies, ...world.biomes, ...world.ecoregions, ...world.locations, ...(climate.customProfiles || [])].some(item => !item || typeof item !== 'object' || Array.isArray(item))) return ['WorldPack definitions must be named objects, not empty or scalar entries.'];
+            const profiles = climateProfileMap(climate);
+            const entries = world.ecoregionProfiles === undefined ? [] : world.ecoregionProfiles;
+            if (!Array.isArray(entries) || entries.length > POLICY.almanac.maximumEcoregionProfiles) return ['Ecoregion profiles must be a bounded list.'];
+            const ids = new Set();
+            entries.forEach(item => {
+                if (!item || !boundedWorldId(item.id, null) || !boundedName(item.name) || ids.has(item.id)) {
+                    problems.push('Each ecoregion profile needs a unique id and a name.');
+                    return;
+                }
+                ids.add(item.id);
+                if (!profiles[item.climateProfileId] || !worldItem(world.geographies || [], item.geographyId) || !worldItem(world.biomes || [], item.biomeId)) problems.push(`Ecoregion profile ${item.name} has a missing climate, geography, or biome. Reassign it in World Palettes.`);
+            });
+            (world.ecoregions || []).forEach(item => {
+                if (item.profileId && !ids.has(item.profileId)) problems.push(`Ecoregion ${item.name} refers to a missing reusable profile.`);
+            });
+            (world.locations || []).forEach(item => {
+                if (item.climateProfileId && !profiles[item.climateProfileId]) problems.push(`Location ${item.name} refers to a missing climate profile.`);
+            });
+            if (climate.seasonRules !== undefined && (!Array.isArray(climate.seasonRules) || climate.seasonRules.length > POLICY.almanac.maximumSeasonRules)) problems.push('Season rules must be a bounded list.');
+            else {
+                const seasonNames = new Set();
+                (climate.seasonRules || []).forEach(rule => {
+                    const name = typeof rule?.name === 'string' ? boundedName(rule.name).toLowerCase() : '';
+                    if (!name || seasonNames.has(name) || ['temperatureBias', 'humidityDelta', 'precipitationDelta', 'windDelta'].some(key => typeof rule[key] !== 'number' || !Number.isFinite(rule[key]) || Math.abs(rule[key]) > 100)) problems.push('Each season rule needs a unique name and four numeric adjustments between -100 and 100.');
+                    seasonNames.add(name);
+                });
+            }
+            return problems;
+        }
+
         function validateWorldPackText(text) {
             if (text.length > POLICY.almanac.maximumWorldPackBytes) return { ok: false, message: `WorldPack text may not exceed ${POLICY.almanac.maximumWorldPackBytes} characters.` };
             let payload;
@@ -28879,6 +29387,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const data = payload.data && typeof payload.data === 'object' && !Array.isArray(payload.data) ? payload.data : null;
             const required = ['wayfarer', 'climate', 'astronomy', 'weather', 'environment', 'rest', 'world', 'temporalContexts'];
             if (!data || required.some(key => data[key] === undefined)) return { ok: false, message: `WorldPack data must include ${required.join(', ')}.` };
+            // Validate new optional references before normalization can repair a bad import.
+            // Older schema-1 packs without palettes remain valid and retain their defaults.
+            if (!data.world || !data.climate || typeof data.world !== 'object' || typeof data.climate !== 'object') return { ok: false, message: 'WorldPack world and climate must be objects.' };
+            const paletteProblems = paletteReferenceProblems(data.world, data.climate);
+            if (paletteProblems.length) return { ok: false, message: paletteProblems.join(' ') };
             const normalized = previewNormalizedWorldPack(data);
             if (!normalized.ok) return normalized;
             return {
@@ -28913,7 +29426,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 item.sourceId = boundedWorldId(item.sourceId || item.id, null);
                 item.packId = packId;
             });
-            ['geographies', 'biomes', 'ecoregions', 'locations', 'phenomena', 'quickActions'].forEach(key => tagItems(tagged.world?.[key]));
+            ['geographies', 'biomes', 'ecoregionProfiles', 'ecoregions', 'locations', 'phenomena', 'quickActions'].forEach(key => tagItems(tagged.world?.[key]));
             tagItems((tagged.temporalContexts || []).filter(context => String(context?.id || '').toLowerCase() !== 'material'));
             return tagged;
         }
@@ -29511,6 +30024,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const scene = resolveScene();
             if (!world.locations.length || !worldItem(world.locations, world.activeLocationId)) problems.push('The world model has no valid active location.');
             if (!world.ecoregions.length || !world.geographies.length || !world.biomes.length) problems.push('The world model is missing a required place definition.');
+            problems.push(...paletteReferenceProblems(world, climate));
             if (runtime.weather.forecast.length > POLICY.almanac.weatherForecastLimit) problems.push('Weather forecast exceeds policy bounds.');
             if (runtime.environment.override && !runtime.environment.override.name) problems.push('Environment override is malformed.');
             if (!audit) pruneRestGrants();
@@ -29563,8 +30077,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<p>A fresh Wayfarer draft starts with the campaign Wayfarer Calendar, including its 20-hour clock, 75-minute hours, named weekdays, twelve months, five festival periods, holidays, seasonal ranges, and documented daily rhythm. Use Start From A Copy to replace the draft with Standard, built-in Solamnic, Harptos, or the saved Wayfarer definition. The command <code>!aa-wayfarer reset-default --confirm yes</code> restores only the saved draft to this campaign default; it never changes the active calendar or fictional time. Wayfarer supports one repeating leap interval, so a Standard copy uses a four-year leap day and does not reproduce Gregorian century exceptions.</p>',
                 '<h2>Climate and Astronomy</h2>',
                 '<p>ClimateAlmanac manages bounded regions, parent inheritance, editable built-in starting profiles, custom profiles, overrides, and a manual season fallback. AstronomyAlmanac calculates reproducible configurable moon phases, future phase/daylight forecasts, and deterministic season boundaries from TimeAlmanac when available or explicit manual context when it is not. Its bounded weighted rare-event catalog remains separate from deterministic results.</p>',
+                '<h3>Choose the Natural World</h3>',
+                '<p>Open <code>!aa-palette</code> from Almanac Home. Choose an <strong>Ecoregion Profile</strong> for a matching climate, biome, and geography together, or choose those three independently. The library contains 17 climate types, 16 biomes, 12 geographies, and 12 combined ecoregion profiles. Preview a choice, then use it for the current location. Generate weather to see the new context in action; a profile choice alone does not replace existing weather.</p>',
+                '<p><strong>Create Editable Copy</strong> saves a campaign version without changing the starter or another place. <strong>Edit Saved Profile</strong> customizes it. Places following the same saved profile share its future edits; choosing a different profile for one location leaves other places assigned as before. <strong>Regions</strong> are names you give actual places, with optional parent regions and local climate adjustments, not names for climate types.</p>',
+                '<p><strong>Seasons</strong> connects the active calendar names to Cold, Mild Wet, Warm, Cooling, Rainy, Dry, or Little Seasonal Change responses. Wayfarer seasons are already mapped. Custom seasons can choose a response or set temperature, humidity, precipitation-chance, and wind adjustments. Calendar season dates remain in the calendar editor.</p>',
                 '<h2>Weather and Environment</h2>',
                 '<p>WeatherAlmanac can generate continuity-aware conditions without other submodules. Climate and Time improve its context when enabled. Locked or manually chosen weather is never silently replaced. EnviroAlmanac translates committed weather into readable visibility, temperature, wind, ground, water, exposure, severity, and tags; a GM override remains authoritative until cleared.</p>',
+                '<p>Generation uses the current location, its climate or region inheritance, calendar season, elevation, coast, biome wetness, and local adjustments. Forecasts use the season on their future dates. Conditions from another place or season are not carried across; generated rain and snow follow a simplified freezing threshold, and rain reduces visibility. Typical climate temperatures are background baselines, not a second current temperature. Ground retains its biome description under rain or snow. Explicit GM environment overrides remain separate, labeled local descriptions until cleared.</p>',
+                '<p>These are adjustable game-weather presets, not measured climate normals or a real atmospheric simulation. Latitude and descriptive topography are retained world information; no planetary circulation or mapped rain-shadow simulation is inferred from them.</p>',
                 '<h2>Travel</h2>',
                 '<p><code>!aa-travel</code> can review a route from pace and mileage before anything changes. The preview shows travel time, estimated arrival, current road and visibility guidance, and the number of private encounter checks created by the chosen interval. A GM then chooses whether to advance fictional time, roll checks, do both, or do neither. On each die, 1-2 is Negative, the mathematical midpoint rounded up is Neutral, the maximum is Positive, and every other result means No encounter. These are prompts only; AlmanacAssist never chooses encounter content or silently applies movement, damage, or conditions.</p>',
                 '<h2>Rest</h2>',
@@ -29736,6 +30256,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (lower === 'scene' || lower === 'scene menu' || lower === 'scene status') return showScene(msg, false);
             if (lower === 'scene details' || lower === 'scene audit' || lower === 'scene technical') return showScene(msg, true);
             if (lower === 'events' || lower === 'omens' || lower === 'events menu') return showEventMenu(msg);
+            if (lower === 'palette' || lower === 'palettes' || lower.startsWith('palette ') || lower.startsWith('palettes ')) return handlePalette(msg, input);
             if (lower === 'location' || lower.startsWith('location ')) return handleLocation(msg, input);
             if (lower === 'travel' || lower.startsWith('travel ')) return handleTravel(msg, input);
             if (lower === 'phenomena' || lower.startsWith('phenomena ')) return handlePhenomena(msg, input);
@@ -29832,7 +30353,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             },
             getClimate: region => {
                 if (!submoduleEnabled('climate')) return null;
-                const current = resolvedClimate(region);
+                const current = region ? resolvedClimate(region) : weatherClimateContext();
                 return current ? Object.freeze(copy(current)) : null;
             },
             getAstronomy: () => submoduleEnabled('astronomy') ? Object.freeze(copy(astronomyContext())) : null,
@@ -29861,6 +30382,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'announcement', 'environment', 'rest', 'world', 'temporalContexts', 'worldPacks', 'rulesAdvisorEnabled', 'rulesAdvisorProfile']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced AlmanacAssist to 2.0.2 with paginated climate/biome/geography/ecoregion palettes, editable copies, named region and location choices, seven reusable seasonal responses, and explicit calendar-season mapping. Generated weather follows the active place, elevation, coast, biome, local adjustments, and future forecast dates; incompatible prior conditions are not carried across contexts.
+    // Changed (v2.0.0): Palette commits are stale-checked and capacity-checked before mutation; shared areas are cloned for location-only changes; saved custom climate ids outrank new starter ids; referenced profiles cannot be deleted; WorldPacks and audits validate optional palette references; manual weather and GM environment overrides remain preserved.
+    // Decision log:
+    //   CHOICE: Keep built-in profile tables immutable and save editable campaign copies - ALT: edit starter constants; REJECTED: one GM customization must not alter unrelated places or future campaigns.
+    //   CHOICE: Use named seasonal responses and a POLICY-controlled game-weather approximation - ALT: infer unknown season meanings or simulate planetary circulation; REJECTED: homebrew seasons need explicit GM control and Roll20 scope remains campaign-scale.
+    //   CHOICE: Retain schema-1 formats with backward-compatible optional profile, reference, and response fields - ALT: require migration of unchanged exports; REJECTED: older valid worlds remain loadable without replacing saved chronology or runtime history.
+    // Prior notes:
     // Changed (v2.0.0): Advanced AlmanacAssist to 2.0.1; compacted the live-session dashboard, made weather generation and current conditions directly accessible, added an events-and-omens palette, and added stale-safe mileage travel previews with pace, arrival, road guidance, optional time advancement, and private interval-based encounter checks.
     // Changed (v2.0.0): Advanced AlmanacAssist to 2.0.0 with a compact Session Mode, separate Worldbuilding Mode, bounded geography/biome/ecoregion/location/phenomenon definitions, one authoritative SceneResolver, prepared destinations, reviewed travel, local temporal contexts, immutable presets, optional RulesAdvisor guidance, advanced Wayfarer handout editing, and atomic versioned WorldPack transfer.
     // Changed (v2.0.0): Added signed Year 0 chronology while retaining Year 1 as elapsed minute zero, preserving every existing saved campaign date across the chronology expansion.

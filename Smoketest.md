@@ -768,13 +768,13 @@ For the stale-confirmation check:
 
 ## Focused v2.0.0 Complete AlmanacAssist Acceptance
 
-**What this proves:** AlmanacAssist 2.0.1 provides a usable live-session dashboard, direct weather and event palettes, reviewed pace-and-mileage travel with private encounter checks, a separate worldbuilding workspace, one coherent current-scene authority, and independently usable Time, Climate, Astronomy, Weather, Environment, and Rest systems. It also verifies prepared destinations, local temporal contexts, phenomena, presets, advanced Wayfarer editing, and WorldPack transfer without turning optional context into hidden prerequisites.
+**What this proves:** AlmanacAssist 2.0.2 provides a usable live-session dashboard, direct weather and event palettes, reviewed pace-and-mileage travel with private encounter checks, a separate worldbuilding workspace, one coherent current-scene authority, and independently usable Time, Climate, Astronomy, Weather, Environment, and Rest systems. It also verifies prepared destinations, local temporal contexts, phenomena, presets, advanced Wayfarer editing, and WorldPack transfer without turning optional context into hidden prerequisites.
 
-**Why test it:** v2.0.0 must not publish a calendar shell while describing a world-management suite. This track proves the six systems, their boundaries, their shared navigation, and RestAlmanac's deliberate 2014-sheet writes inside the real Roll20 sandbox.
+**Why test it:** These checks verify the world controls a GM uses during play, the weather those choices produce, preserved campaign settings, and deliberate 2014-sheet rest writes.
 
 **Skip when:** Do not skip this section for v2.0.0 release acceptance. After release, campaigns that keep AlmanacAssist disabled may skip it. Within ordinary troubleshooting, test only the enabled internal system and any optional context provider involved.
 
-**Current non-live evidence:** The focused local harness passes 157 checks, including transaction rollback, stale-preview rejection, one-use mileage travel, bounded encounter checks, private roll evidence, and the d4 midpoint case. The checks below remain the required Roll20 live acceptance gate and are not recorded as passed merely because the local harness succeeded.
+**Current non-live evidence:** The focused local harness passes 195 checks, including transaction rollback, stale-preview rejection, one-use mileage travel, bounded encounter checks, private roll evidence, and the d4 midpoint case. The checks below remain the required Roll20 live acceptance gate and are not recorded as passed merely because the local harness succeeded.
 
 ### Preparation and Master Controls
 
@@ -792,6 +792,31 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 ```
 
 **Pass when:** AlmanacAssist begins disabled on a clean v2.0.0 state; enabling it starts all six saved-on systems; `!aa-gm` opens one compact private **Current World** screen with current conditions plus direct **Generate Weather**, time, date, travel, rest, weather, moons, environment, events, preview, announce, location, calendar, and setup actions; **More Tools** and **Manage World** open separate grouped workspaces; routine controls do not dump raw definition graphs, audit evidence, moon-cycle configuration, or complete calendar structure; Systems provides independent toggles; Status identifies configured versus effective availability; Audit explicitly changes nothing; Manual creates or updates one stable handout; and the bad command offers a useful route back.
+
+### World Profiles And Seasonal Weather
+
+**What:** Select and customize the world profiles that weather uses.
+
+**Why:** Menus alone are not sufficient; the chosen place and season must affect the result.
+
+**Skip when:** Only for ordinary troubleshooting when AlmanacAssist is disabled. Do not skip for this release's acceptance.
+
+Use a disposable location. Record its original setup before changing profiles.
+
+1. Run `!aa-palette`. Confirm buttons for **Climates**, **Biomes**, **Geography**, **Ecoregion Profiles**, **Regions**, and **Seasons**. Each profile list has working Previous/Next controls with at most eight choices per page.
+2. Open **Ecoregion Profiles**, choose **Hot Desert Basin**, and click **Use for This Location**. Confirm the current place is named in the result and existing weather has not changed yet.
+3. Click **Generate Weather**. Open `!aa-scene details` and `!weather`. Confirm the location uses a desert climate, sandy/stony ground, and dry weather with the unmodified preset. A cold season can lower desert temperature; do not expect one fixed number.
+4. Choose **Tropical River Forest** and generate again. Confirm the profile, biome, and geography all change. Rainfall is probable, not guaranteed. If rain is generated, visibility must not be Clear and the sky must not be cloudless.
+5. Choose the **Polar Ice Cap** climate and generate again. Confirm freezing conditions do not retain warm rain. Choose **Snowmelt Montane Conifer** to check elevation and mountain ground.
+6. Open a biome, choose **Create Editable Copy**, name it `Palette Test`, and use **Edit Saved Profile** to change its ground description. Apply the copy. Confirm the scene uses that text, the starter remains unchanged, and another location keeps its settings.
+7. Open **Regions**. Add a named region, then a subregion with **Follow parent**. Use **Settings** to find both **Edit Region** and **Fine Tune**. Confirm new-location and ecoregion editors offer named choices, not raw-ID text fields.
+8. With Wayfarer active, open `!aa-palette seasons`. Confirm Vernalrise, Summertide, Leafturn, and Frosthold have responses. Give a custom season a **Rainy Season** response or numeric adjustments. Confirm its spelling is preserved and it is no longer reported as unmapped.
+9. Lock weather, apply a different profile, and try Generate. Confirm weather remains unchanged. Unlock it before continuing. Enter manual weather, change location, and confirm that manual weather is retained.
+10. Choose an explicit environment override, generate weather, and confirm the override remains labeled rather than silently disappearing. Use **Follow Weather Again** to return to generated environmental conditions.
+11. Reuse an old **Use for This Location** button after changing locations or profiles. Confirm it asks you to reopen the choice rather than changing the wrong place. Repeat as a non-GM player and confirm no GM settings change.
+12. Restart the sandbox. Confirm edited copies, region assignments, season responses, chronology, and valid history remain. Export a WorldPack and confirm the reusable profiles and season responses are included; use the separate WorldPack checks below before importing.
+
+**Pass when:** Profiles are findable and editable, their assignments affect actual weather and ground, unrelated places remain intact, custom seasons work, stale buttons fail safely, and locks, manual overrides, permissions, and restart persistence hold.
 
 ### Current Scene And Worldbuilding
 

@@ -60,6 +60,34 @@ EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so exis
 - Sequences the Foundry edition after Roll20 v2.0.0 live acceptance and stabilization. It will be a Foundry-native sister implementation with its own codebase and release history, beginning with AlmanacAssist and atlas-scale WorldPack storage rather than a concurrent or line-by-line port.
 - No executable behavior, saved state, commands, or module versions change in this documentation and metadata checkpoint.
 
+### AlmanacAssist 2.0.2 natural-world profiles and seasonal weather - 2026-08-27
+
+#### Reusable world palettes
+
+- Adds the natural-world profile libraries that were absent from the earlier live-session action palettes: 17 climate types, 16 biomes, 12 geographies, 12 combined ecoregion profiles, and seven seasonal responses.
+- Adds `!aa-palette` and a direct **World Palettes** control on Almanac Home. Profile choices are paginated, previewable, and applicable to the current location without replacing current weather automatically.
+- Separates reusable ecoregion profiles from named ecoregion areas, regions, subregions, and playable locations. A combined profile supplies climate, biome, and geography together; individual palettes allow independent choices.
+- Provides editable campaign copies while retaining immutable starter definitions. Applying a different profile to one location preserves other locations, cloning a shared area when necessary. Editing a shared saved profile updates the places that still follow it.
+- Replaces raw-ID prompts in related place editors with named choices. Region settings retain parent inheritance, explicit climate selection, local adjustments, and removal safeguards.
+
+#### Weather behavior
+
+- Generates from the current location's resolved climate, calendar season, elevation, coastal influence, biome wetness, and local adjustments instead of relying only on the global active-region setting.
+- Maps Wayfarer's four named seasons to explicit responses. Custom names can choose Cold, Mild Wet, Warm, Cooling, Rainy, Dry, or Little Seasonal Change, or supply four bounded numeric adjustments. Unmapped names produce an actionable setup note rather than an inferred English-season meaning.
+- Resolves forecasts against their future calendar dates, including season boundaries. Carries prior weather forward only within a compatible place and seasonal context.
+- Prevents generated warm rain from persisting into a freezing context and snow from persisting into a warm one. Corrects fog selection order, keeps rain/cloud/visibility descriptions consistent, and avoids repeatedly accumulating local wind adjustments.
+- Retains biome ground beneath weather overlays instead of replacing the terrain with generic firm ground. Clearly distinguishes a seasonal climate baseline from current weather and labels explicit GM environment overrides.
+- Keeps locked weather protected and preserves manually entered weather on location changes. The GM can explicitly generate a replacement when unlocked.
+- Documents the weather model as adjustable game defaults, including a simplified rain/snow threshold, rather than measured climate normals or planetary simulation.
+
+#### Preservation and verification
+
+- Checks stale location/profile choices and collection capacity before applying palette changes. Invalid or missing values cannot silently create a profile named `true`.
+- Preserves campaign climate definitions whose identifiers overlap newly added starters. Adds dependency checks for reusable profiles and validates their WorldPack references before normalization.
+- Extends existing schema-1 records with optional profile and seasonal fields; older valid packs remain accepted, and active chronology and runtime history stay outside imports.
+- Updates the source inventory, module notes, inline explanations, manual, README, roadmap, commands, and focused Roll20 checks. GameAssist remains v2.0.0; AlmanacAssist advances from 2.0.1 to 2.0.2.
+- Passes 195 focused non-live Almanac checks, including emitted-button routing, context-driven weather, seasonal boundaries, invalid input, stale choices, capacity failures, permissions, WorldPack references, module reinitialization, and a fresh sandbox evaluation with persisted state. Live Roll20 acceptance is still pending.
+
 ### AlmanacAssist 2.0.1 campaign palettes and reviewed mileage travel - 2026-08-26
 
 #### Live-session controls

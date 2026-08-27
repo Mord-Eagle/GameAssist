@@ -1005,7 +1005,7 @@ Config keys: `enabled`, `allowPlayerAttacks`, and the protected `reviewBeforeRol
 
 ### 6.15 AlmanacAssist *(optional, GM-managed world context and deliberate rests)*
 
-> **Module version:** `2.0.1`<br>
+> **Module version:** `2.0.2`<br>
 > **Default:** Disabled<br>
 > **Launch sheet for RestAlmanac:** Official D&D 5E by Roll20 2014 PC sheet. Time, Climate, Astronomy, Weather, and Environment do not require a character sheet.
 
@@ -1043,6 +1043,8 @@ Main commands:
 * `!Almanac-Manual` → Create or update one stable AlmanacAssist user-manual handout.
 * `!aa-wayfarer` → Open the compact Wayfarer home for using the saved calendar, editing a draft, previewing, activating, copying, or recovering.
 * `!aa-world` → Open Worldbuilding Mode and its grouped definition tools.
+* `!aa-palette` → Choose climate, biome, geography, ecoregion, or seasonal profiles for the current place; create and customize reusable campaign copies.
+* `!aa-palette seasons` → Map calendar season names to weather responses without renaming your seasons.
 * `!aa-scene` → Review the one resolved current scene; `!aa-scene details` includes field-level provenance and coherence notes.
 * `!aa-location` → Review the current place, prepared destinations, favorites, recent places, nearby places, and the complete location list.
 * `!aa-travel` → Open current road guidance, plan travel from pace and mileage, privately roll interval-based encounter checks, or continue destination-based journeys.
@@ -1059,7 +1061,35 @@ Main commands:
 
 `!aa-gm` is the daily screen. It puts current conditions and direct weather generation first, followed by time/date, travel, rest, astronomy, environment, events, announcements, location, and calendar actions. Long definition lists, raw provenance, transfer tools, and diagnostics remain behind named buttons.
 
-`!aa-world` is the construction screen. Definitions form an explicit hierarchy: a **Geography** describes physical land and water; a **Biome** describes vegetation, aridity, ground, and seasonal response; an **Ecoregion** joins geography and biome with climate context; a **Location** supplies the playable place and local adjustments. Dependency checks prevent deleting a definition that another definition still uses.
+`!aa-world` is the construction screen. **Regions** and **subregions** are GM-named places. **Geography** describes physical land and water; a **Biome** describes vegetation, aridity, ground, and water availability. A reusable **Ecoregion Profile** combines a climate, biome, and geography; an **Ecoregion Area** places that combination within a region. A **Location** supplies the playable place and local adjustments. Dependency checks prevent deleting a definition that another definition still uses.
+
+### Choose World Profiles
+
+Open **World Palettes** from `!aa-gm`, or type `!aa-palette`. The quickest setup is to choose an **Ecoregion Profile**, preview it, and select **Use for This Location**. You can instead choose the climate, biome, and geography separately.
+
+| Palette | Built-in choices | Examples |
+| --- | --- | --- |
+| Climate | 17 | Desert, Equatorial Rainforest, Tropical Monsoon, Mediterranean, Temperate Maritime, Humid Continental, Polar Tundra, Polar Ice Cap |
+| Biome | 16 | Temperate Woodland, Tropical Rainforest, Grassland, Hot Desert, Wetland, Mangrove, Alpine |
+| Geography | 12 | Coastal Plain, River Valley, High Plateau, Mountain Range, Rain Shadow, Island Chain |
+| Ecoregion Profile | 12 | Temperate Wooded Lowlands, Hot Desert Basin, Tropical River Forest, Cold Peat Lowlands, Polar Tundra Coast |
+| Seasonal response | 7 | Cold, Mild Wet, Warm, Cooling, Rainy, Dry, Little Seasonal Change |
+
+Profile lists show eight choices per page. **Create Editable Copy** saves a campaign version; **Edit Saved Profile** changes that version without modifying the starter library. Choosing a profile affects only the current location. Editing a shared saved profile affects places that follow it; independently assigned local biome and geography choices remain independent.
+
+**Regions** provides names, parent/subregion choices, climate selection, and **Settings > Fine Tune** for local adjustments. Region, geography, biome, and local-time selectors display names rather than asking the GM to remember internal IDs.
+
+**Seasons** follows the active calendar. Wayfarer's Vernalrise, Summertide, Leafturn, and Frosthold already have responses. For a custom season, choose a response or customize its temperature, humidity, precipitation-chance, and wind adjustments. An unmapped season uses the base climate and shows a setup note; it is not silently treated as Spring. Season dates remain in the calendar editor.
+
+### Weather From Your Place
+
+After changing profiles, choose **Generate Weather**. Profile selection alone retains current weather. Generation uses the active location's climate, season, elevation, coast, biome wetness, and local adjustments. A location-specific climate takes precedence over its ecoregion profile, which takes precedence over regional inheritance; choosing a region explicitly restores that region's climate for the current location.
+
+Forecasts use the calendar season on their future dates. Continuity applies only within the same place and climate context, so changing from a rainforest to an ice cap cannot carry warm rain into freezing generated weather. Rain reduces visibility, and biome ground remains recognizable beneath rain or snow instead of becoming generic firm ground.
+
+Climate temperatures are seasonal baselines, not a second current temperature. Locked weather remains locked. Manually entered weather is preserved on location changes; explicit generation can replace it when unlocked. A GM environment override is retained and labeled separately until **Follow Weather Again** is chosen.
+
+The built-in numbers are editable game defaults, not measured climate normals. Rain/snow uses a simplified freezing threshold. Latitude and descriptive topography remain world information; this release does not simulate planetary circulation or infer mapped rain shadows.
 
 `GameAssist.AlmanacAssist.getScene()` is the single authority for the current resolved scene. It returns a defensive snapshot with provenance for every composed field. Active phenomena overlay the snapshot but never overwrite the saved location, climate, weather, or environment definition. If a subsystem is off or unavailable, the scene records that limitation instead of presenting stale data as current.
 
@@ -1073,7 +1103,7 @@ Local temporal contexts change how a place displays time. They do not create a s
 
 WorldPacks contain bounded world definitions, Almanac configuration, and an optional Wayfarer draft. They never contain the active fictional minute, travel runtime, preview grants, character data, or module runtime caches. Import validates syntax, schema, object limits, references, conflicts, and the complete definition graph before one atomic commit. Imported records retain their pack/source provenance, and an imported Wayfarer calendar remains an unreviewed draft until its separate activation workflow succeeds.
 
-Current policy permits 8 quick actions, 100 locations, 60 ecoregions, 40 biomes, 40 geographies, 30 phenomena, 30 prepared destinations, 20 page associations per location, 20 temporal contexts, 10 retained WorldPack manifests, and 50 travel-history entries. One reviewed mileage plan may contain at most 200 encounter checks, and chat shows at most 40 individual results while retaining the bounded record. A WorldPack handout is limited to 120,000 characters, 500 nested objects/arrays, and 8 levels of depth. These are validation boundaries, not recommended campaign targets; over-limit input is refused before mutation.
+Current policy permits 8 quick actions, 100 locations, 60 ecoregion areas, 30 reusable ecoregion profiles, 32 seasonal response rules, 40 biomes, 40 geographies, 30 phenomena, 30 prepared destinations, 20 page associations per location, 20 temporal contexts, 10 retained WorldPack manifests, and 50 travel-history entries. One reviewed mileage plan may contain at most 200 encounter checks, and chat shows at most 40 individual results while retaining the bounded record. A WorldPack handout is limited to 120,000 characters, 500 nested objects/arrays, and 8 levels of depth. These are validation boundaries, not recommended campaign targets; over-limit input is refused before mutation.
 
 ### Build A Custom Wayfarer Calendar
 
@@ -2652,7 +2682,7 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 | EffectAssist 2.5.4 | **v2.0.0 sandbox candidate** | Applies supported 2014-sheet rows through sheet workers, separates player caster selection from recipient count, keeps ordinary caster choices compact while disambiguating duplicate labels, offers Bless totals of 1-3 plus a higher-level 4-11 menu, identifies invalid recipients precisely, binds concentration to the chosen source token, and retains the established player, audit, repair, cast-proposal, and provider-specific duration workflows. Live Roll20 acceptance remains required. |
 | HealAssist 1.2.1 | **v2.0.0 sandbox candidate** | Disabled-by-default guided official-2014 healing includes direct target selection for one-recipient actions, recipient-count choices for multi-target actions, normal and maximum catalogs, review or automatic verified application, private automatic-failure diagnostics, authorized sources, visible-PC targeting, retained private placement requests, and safe module-speaker fallback for public results. |
 | AttackAssist 1.1.0 | **v2.0.0 sandbox candidate** | Disabled-by-default official-2014 repeating-attack guidance includes stable row identity, compact direct native targeting, immediate sheet-setting submission by default, optional sheet/normal/advantage/disadvantage review, complete prompt-safe Classic-sheet formula materialization, visible native sheet roll cards, preflight refusal for unresolved prompts, incomplete fields, and unsafe dice expressions, one-use rolls, and no damage or combat-state writes. |
-| AlmanacAssist 2.0.1 | **v2.0.0 automated gates passed; live acceptance pending** | Adds compact live-session weather, time, travel, event, announcement, and setup palettes to the coherent world engine; supports stale-safe mileage travel with road guidance and private encounter checks; and retains signed Year 0 compatibility, bounded definitions, prepared destinations, phenomena, local temporal contexts, presets, advanced Wayfarer transactions, WorldPacks, all six independently controlled systems, and transactional 2014-sheet rests. The 157-check focused non-live harness passes; Roll20 live acceptance remains required. |
+| AlmanacAssist 2.0.2 | **v2.0.0 automated gates passed; live acceptance pending** | Adds compact live-session weather, time, travel, event, announcement, and setup palettes to the coherent world engine; supports stale-safe mileage travel with road guidance and private encounter checks; and retains signed Year 0 compatibility, bounded definitions, prepared destinations, phenomena, local temporal contexts, presets, advanced Wayfarer transactions, WorldPacks, all six independently controlled systems, and transactional 2014-sheet rests. The 195-check focused non-live harness passes; Roll20 live acceptance remains required. |
 | InitiativeAssist 1.0.6 | **Implemented; repair verification pending** | Mixed 2014/2024 initiative, full-name and short command aliases, public and private GM/DM start pages, private NPC evidence, GM-layer NPC batches, selected-character batches, roll options, selective rerolls, encounter groups, status, audit, compact navigation, and a stable manual through the case-insensitive `!Init-` namespace. The current repair preserves the inspected sheet contract in classified actor rows. |
 | CombatAssist 1.2.1 | **v2.0.0 integration candidate** | The accepted optional native-tracker layer opens its control center from bare `!combat` or `!combatassist` and retains native round-counter authority, conservative fallback rounds, preserved-round roster/reroll adoption, recovery, guarded movement, timers, pings, Ready/Delay records, bounded health evidence, optional NPCAssist handoff, and GM/DM controls. TurnTrackerService remains its only baseline prerequisite. |
 | WelcomeAssist 0.1.6 | **Implemented and accepted** | Disabled-by-default post-bootstrap greeting with professional, built-in, campaign-custom, and mixed modes; private preview/configuration; bounded custom text; health-gated one-per-sandbox automatic output; shared Roll20-template controls; GM/DM status controls; a stable manual; short and full-name commands; and retained `!welcome-assist` compatibility. The public greeting card remains intentionally distinct from private controls. |
@@ -2665,7 +2695,7 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 
 ### 17.2 Current Candidate: v2.0.0 Gameplay and Campaign Foundations
 
-The v2.0.0 candidate keeps four disabled-by-default modules on one development line. EffectAssist 2.5.4 supplies source-aware 2014-sheet effects, compact caster choices with duplicate disambiguation, Bless support through eleven recipients, exact-token concentration ownership, compact `(GA)` owned rows, direct application with optional review, worker-safe projection cleanup, bounded Bless proposals, guarded Guidance consumption, provider-specific duration candidates, retained GM requests, and a direct GM casting surface. HealAssist 1.2.1 adds direct one-recipient targeting plus normal or maximum healing with review or optional automatic verified application and safe public-result fallback. AttackAssist 1.1.0 adds stable official-2014 repeating-attack selection, immediate sheet-setting submission by default, optional roll-mode review, complete prompt-safe Classic-sheet formula materialization, crash-safe final dice-expression validation, and visible native sheet roll cards without resolving damage. AlmanacAssist 2.0.1 completes the campaign-scale GM palettes and reviewed travel layer on the consolidated Issue #95 world engine and has passed its focused automated gates; complete Roll20 live acceptance is still required before v2.0.0 can ship.
+The v2.0.0 candidate keeps four disabled-by-default modules on one development line. EffectAssist 2.5.4 supplies source-aware 2014-sheet effects, compact caster choices with duplicate disambiguation, Bless support through eleven recipients, exact-token concentration ownership, compact `(GA)` owned rows, direct application with optional review, worker-safe projection cleanup, bounded Bless proposals, guarded Guidance consumption, provider-specific duration candidates, retained GM requests, and a direct GM casting surface. HealAssist 1.2.1 adds direct one-recipient targeting plus normal or maximum healing with review or optional automatic verified application and safe public-result fallback. AttackAssist 1.1.0 adds stable official-2014 repeating-attack selection, immediate sheet-setting submission by default, optional roll-mode review, complete prompt-safe Classic-sheet formula materialization, crash-safe final dice-expression validation, and visible native sheet roll cards without resolving damage. AlmanacAssist 2.0.2 adds reusable natural-world profile palettes and season-aware weather to the reviewed travel layer on the consolidated Issue #95 world engine and has passed its focused automated gates; complete Roll20 live acceptance is still required before v2.0.0 can ship.
 
 The six Almanac systems are independently toggleable and remain useful without hidden prerequisites. They exchange optional context through explicit APIs and semantic events, preserve valid settings while disabled, and keep fictional chronology separate from real-world GameAssist timestamps. RestAlmanac is the only initial Almanac sheet writer and supports verified official 2014 PC fields through preview, revalidation, confirmation, and rollback safeguards.
 
