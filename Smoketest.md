@@ -768,11 +768,30 @@ For the stale-confirmation check:
 
 ## Focused v2.0.0 Complete AlmanacAssist Acceptance
 
-**What this proves:** AlmanacAssist `1.6.2` on the `AlmanacAssist-v2.0.0-Build` line ships as one complete module whose action-first daily controls and Time, Climate, Astronomy, Weather, Environment, and Rest systems are independently usable, preserve valid state while disabled, and exchange optional context without turning one system into a hidden prerequisite for another. The Gate 0 repairs from Issues #92 and #93 are verified here as well.
+**What this proves (only after every unchecked item passes):** AlmanacAssist **v2.0.0** provides a genuinely usable Issue #96 product in a real Roll20 sandbox—not merely six systems and a framework. A fresh GM can start from included generic world content, reach an active Location and coherent Scene, configure Climate, use Prepared Destination/Travel, follow complete prompts and visible outcomes, and use advanced WorldPack/Wayfarer paths without raw identifiers. It must also preserve the six-system boundaries, disabled-state semantics, and Gate 0 #92/#93 contracts.
 
-**Why test it:** v2.0.0 must not publish a calendar shell while describing a world-management suite. This track proves the six systems, their boundaries, their shared navigation, and RestAlmanac's deliberate 2014-sheet writes inside the real Roll20 sandbox.
+**Why test it:** v2.0.0 must not publish a calendar shell while describing a world-management suite. An exploratory real Roll20 launch already found the prior framework insufficient: startup audit noise, an unassigned Location/blocked Travel path, insufficient starter-world onboarding, weak Climate profile setup, and a truncated Climate Add Region prompt. This checklist is therefore a recovery-first track, then formal acceptance—not proof that an earlier automated checkpoint completed the product.
 
-**Skip when:** Do not skip this section for v2.0.0 release acceptance. After release, campaigns that keep AlmanacAssist disabled may skip it. Within ordinary troubleshooting, test only the enabled internal system and any optional context provider involved.
+**When to run:** **Formal acceptance is currently blocked.** First complete the source recovery and its focused assertions, then run the **Fresh-GM Recovery Preflight** below in a disposable real Roll20 campaign. Only if that preflight passes may the remaining sections serve as the complete formal Almanac acceptance. No VM result or one panel opening marks a live item passed.
+
+**Skip when:** Do not skip this section for v2.0.0 release acceptance. A campaign that keeps AlmanacAssist disabled may omit it only for ordinary non-release troubleshooting.
+
+### Fresh-GM Recovery Preflight (must pass before the rest of this section)
+
+Use a brand-new disposable campaign state. Record the rendered chat result and the actual state change for each item.
+
+1. Enable AlmanacAssist and open `!aa-gm`, `!aa-world`, `!aa-location`, `!aa-travel`, and `!clim`. Confirm there is no false `Unexpected state branch: Core` startup/audit warning. If no active world or Location exists, each relevant screen must explain that state and offer a visible next-step button rather than requiring command memorization.
+2. Open **World Library**, preview and install a generic Starter World. Confirm the result visibly identifies the selected world and gives an active Location, named Climate region/profile, prepared destinations, routes, and a coherent `!aa-scene`. Repeat preview/install for the other starter choices; starter material must be generic owner-authored content, not copied setting lore.
+3. Start from the blank route instead. Create a first Location with its normal named controls. Confirm it becomes current, Scene reflects it, and Travel is no longer blocked. Use the Location editor to assign a named Roll20 page, use Current Player Page, and clear it; never type a page ID.
+4. Open Climate. Create a region with **Add Region**. Confirm the rendered deferred prompt asks for all required values (including a usable profile/region choice) and the submitted action creates a visibly named region rather than emitting a truncated `--name` command or a missing-profile refusal. Open **Fine Tune** for a region and confirm it opens a focused one-field editor; edit one value and confirm unrelated inherited values are not silently frozen.
+5. At a starter Location with a direct Climate relation, note `!aa-climate`, `!aa-scene`, `!weather`, `!enviro`, and `!Almanac-Status`. Clear the Location relation through its named editor and verify Ecoregion inheritance; clear that relation and verify the separate campaign fallback. Restore named relations as needed. Each view must identify the same source without raw IDs or contradictory current temperatures.
+6. From the current Location, create/use a Prepared Destination and a Travel Route. Start/review at least one journey. Confirm every action has a complete prompt or command, a visible outcome, and a back/recovery path.
+7. Open WorldPacks and Wayfarer. With no relevant handout, use their template/export path; with a handout, select it by visible name. Neither normal panel may ask the GM to discover or paste a raw Roll20 handout ID, and a WorldPack picker must not offer a known GameAssist Wayfarer export (or the reverse). Submit a missing/unavailable advanced import once and confirm its panel offers a direct named return/export recovery action.
+8. In a disposable campaign, preview/install at least one full original WorldPack and use ordinary **Worldbuilding** controls rather than typed IDs: page Locations beyond the first 12 entries, use Search for a visible name or tag, open a distant direct **Edit** action, and page Travel Routes to its final page. From an editor, open a named relation/page/profile chooser; after a second full pack is installed, also open a Route Leg **Split via Location** chooser and page it beyond its first 12 candidates. Open the installed WorldPack palette root, one typed collection, Default Bindings, and one cross-palette reference chooser. Confirm every card stays compact, each chooser exposes named **Previous/Next/Search/Clear** recovery where applicable, and browsing/searching does not move the active Location or alter provider/runtime state.
+9. Click representative generated actions across Session, Worldbuilding, Climate, Weather, Environment, Astronomy, Travel, Presets, WorldPacks, and Wayfarer, including one alternate named choice in a Climate, editor relation, Route Leg, or palette picker and one declined destructive confirmation. Confirm no button contains blank `--value`, literal `true`, incomplete `--period`, or missing required identifier after Roll20 renders/executes it; every visible refusal/no-change result must retain a named recovery control. On Weather, use **Set Manual Conditions** and **Recent Conditions** directly from the ordinary screen; both must give a complete prompt/result without a memorized command.
+10. Select one linked supported 2014 PC token, prepare a Long Rest, inspect the named sheet/time changes, then confirm it. Confirm a selected controller can prepare its own preview, an uncontrolled token is refused, and a changed sheet invalidates a pending preview without writes.
+
+**Preflight pass when:** a GM who knows only the visible panels can establish a playable generic world context and proceed through Scene/Climate/Location/Travel without dead ends, raw IDs, or broken prompts. Any failure returns the build to source recovery; do not proceed to or report the full acceptance track.
 
 ### Preparation and Master Controls
 
@@ -789,11 +808,11 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 !Almanac-Impossible
 ```
 
-**Pass when:** AlmanacAssist begins disabled on a clean v2.0.0 state; enabling it starts all six saved-on systems; `!aa-gm` opens one private, action-first dashboard with **Now**, **Advance Date & Time**, **Set or Change Calendar**, **Share**, **World Today**, and **More**; routine controls do not dump module health, audit evidence, moon-cycle configuration, or full calendar structure; Systems provides independent toggles; Status identifies every system; Audit explicitly changes nothing; Manual creates or updates one stable handout; and the bad command offers a useful route back.
+**Pass when:** AlmanacAssist begins disabled on a clean v2.0.0 state; enabling it starts all six saved-on systems; `!aa-gm` opens one private, action-first **Almanac Home — Current World** dashboard with the current-world summary, **Advance Date & Time**, **Session Actions** (Travel, Change Location, Scene, Weather, Rest), **Share**, and **Worldbuilding**; routine controls do not dump module health, audit evidence, moon-cycle configuration, or full calendar structure; Systems provides independent toggles; Status identifies every system; Audit explicitly changes nothing; Manual creates or updates one stable handout; and the bad command offers a useful route back.
 
 ### Issue #92 / #93 Foundation Repair Checks
 
-**Why:** The build line accepts two narrow foundation repairs before the larger SceneResolver work: removing a redundant full-range chronology pre-scan and making `getSubmoduleStatus()` report configured subsystem state consistently.
+**Why:** The build line first accepted two narrow foundation repairs—removing a redundant full-range chronology pre-scan and making `getSubmoduleStatus()` report configured subsystem state consistently—then added the read-only SceneResolver foundation, generic owner-authored Worldbuilding places, and accepted-only Prepared Destination/Travel workflows. The live track must now prove coherent Session Mode behavior.
 
 ```roll20chat
 !Almanac-Status
@@ -812,10 +831,10 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 
 1. Open `!aa-gm`. Use **+10 Minutes**, **+1 Hour**, and **+1 Day**. Then use **Choose Advance** with days, hours, and minutes together.
 2. Open **Set Date & Time**, cancel once, and confirm nothing changes. Submit a valid exact moment and confirm it changes only after the generated confirmation.
-3. Open `!cal`. Switch among Standard, Solamnic, and Harptos; confirm the displayed date changes but the underlying elapsed fictional moment is preserved.
+3. Open `!cal`. Switch among Standard, original Cinderturn, and original Tidebound; confirm the displayed date changes but the underlying elapsed fictional moment is preserved.
 4. Run `!aa-announcement-settings`. Choose **Off**, then run `!aa-announce`. Confirm no public announcement is sent and the GM receives a private **Announcement Not Sent** result.
 5. Open **Choose Announcement Information**. Set Time to Descriptive, Weather to Detailed, Climate to Technical, and at least one other field to Off. Preview and confirm each field independently follows its selected level. Then use **Restore Defaults** and confirm the saved campaign defaults return without changing fictional time or world state.
-6. Prepare manual weather with rain, an exact temperature, a wind speed, cloud cover, and visibility. Choose **Descriptive** and **Everything**, then preview. Confirm Wayfarer time is a named period rather than AM/PM; temperature and wind are words rather than measurements; visibility is explicitly labeled; the moon reports **Not Visible** when daylight or cloud cover blocks it; and no placeholder **Home Region** or **Campaign Default** region or second exact temperature appears. A clean state should identify the starter region as **Temperate Lowlands**.
+6. Prepare manual weather with rain, an exact temperature, a wind speed, cloud cover, and visibility. Choose **Descriptive** and **Everything**, then preview. Confirm Wayfarer time is a named period rather than AM/PM; temperature and wind are words rather than measurements; visibility is explicitly labeled; the moon reports **Not Visible** when daylight or cloud cover blocks it; and no placeholder **Home Region** or **Campaign Default** region or second exact temperature appears. The output must name the selected starter/assigned Climate region, or explicitly label it unassigned and link to Climate/World setup; it must not invent a generic region as though it were configured.
 7. Choose **Detailed** and preview. Confirm the current Weather row may show its exact temperature and wind, while Climate is background regional context and does not claim a simultaneous second current temperature.
 8. Choose **Technical** and preview. Confirm the deeper precipitation, cloud, climate-likelihood, and environment context appears without relabeling climate expectations as current measured weather.
 9. Choose **GM Only** and **Calendar**, preview again, then run `!aa-announce`. Confirm both messages remain private and include only the selected available fields.
@@ -831,9 +850,9 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 
 **What this proves:** A GM can use an already saved Wayfarer calendar directly, edit only the component that needs attention, reach teaching or technical detail deliberately, preview and activate a complete draft safely, see moon phases where requested, and recover without editing Roll20 state.
 
-**Skip when:** Skip during ordinary troubleshooting only when the campaign deliberately uses Standard, Solamnic, or Harptos. Do not skip for the v2.0.0 release acceptance.
+**Skip when:** Skip during ordinary troubleshooting only when the campaign deliberately uses Standard, Cinderturn, or Tidebound. Do not skip for the v2.0.0 release acceptance.
 
-1. Run `!aa-wayfarer`. Confirm the compact home clearly separates **Use Wayfarer Calendar**, **Choose Another Calendar**, **Edit Calendar**, **Preview Draft**, **Review & Activate**, **Guided Review**, **Start From a Copy**, **Details**, **Recovery**, and **Help**.
+1. Run `!aa-wayfarer`. Confirm the compact home clearly separates **Use Wayfarer Calendar**, **Choose Another Calendar**, **Edit Calendar**, **Preview Draft**, **Review & Activate**, **Guided Review**, **Start From a Copy**, **Export Editable Draft**, **Review Handout Import**, **Details**, **Recovery**, and **Help**.
 2. Confirm the home does **not** display the full period list, complete setup-progress evidence, moon-cycle configuration, rollback explanation, or worked examples.
 3. Note the current fictional moment. Click **Use Wayfarer Calendar**, decline confirmation once, then accept it. Confirm the saved Wayfarer definition becomes active without entering draft-review screens and the elapsed fictional moment is preserved.
 4. Open **Set Date & Time** while Wayfarer is active. Confirm the Roll20 prompts accept hours `1-20` and minutes `0-74`, matching its 20-hour day and 75-minute hour.
@@ -841,7 +860,7 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 6. Open **Edit Calendar**. Confirm it groups **Name, Clock & Start**, **Weekdays**, **Periods**, **Festival Days**, **Leap Rule**, **Holidays**, and **Seasons**, with Preview/Review and a clear return route.
 7. Open **Name, Clock & Start**. Confirm the page shows only the current values and relevant edit controls. Click **Explain This** and confirm the terminology, input boundaries, and example are available there instead of crowding the editor.
 8. Click **Change Name**, cancel the Roll20 query, and reopen the editor. Pass when the context prompt appears, the name is unchanged, and it is never set to `true`. Then use **Change Name and Starting Date** once and confirm the complete change is applied together or not at all.
-9. On a fresh default draft, open **Details** and confirm it reports **Wayfarer Calendar**, a 10-day week, 17 periods (**12 months + 5 festivals**), 460 ordinary-year days, a 20-hour day, 75-minute hours, current moon phases, validation progress, and rollback availability.
+9. On a fresh default draft, open **Details** and confirm it reports the original **Lantern Way Calendar**, a 10-day week, 17 periods (**12 ordinary periods + 5 feast periods**), 460 ordinary-year days, a 20-hour day, 75-minute hours, current moon phases, validation progress, and rollback availability.
 10. Build this disposable example through the focused component editors:
    - Name: `River Kingdom Calendar`
    - Starting date: Year `12`, `Deepwinter`, day `7`, hour `9`, minute `30`
@@ -858,11 +877,12 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 14. Submit an invalid period such as `Broken Month:0` or overlapping seasons. Confirm the prior valid draft and active calendar remain unchanged.
 15. Review every area, then activate. Confirm the calendar becomes active at the reviewed starting date and the prior calendar is retained as one rollback point.
 16. Change one period length and activate again. Confirm elapsed fictional time is preserved rather than replaced by the draft starting date.
-17. Use **Start From a Copy** with Harptos. Confirm only the saved draft changes. Open **Recovery**, use **Discard Draft**, and confirm the active calendar remains unchanged.
+17. Use **Start From a Copy** with Tidebound. Confirm only the saved draft changes. Open **Recovery**, use **Discard Draft**, and confirm the active calendar remains unchanged.
 18. Change the draft clock to fewer hours and fewer minutes than the saved starting time. Confirm the edit succeeds, the starting hour/minute are adjusted into the new valid bounds, and the result explains that adjustment instead of trapping the GM in a starting-date conflict loop.
 19. Run `!Weather-GM`, `!weather dm`, `!Weather-Status`, `!Weather-Help`, and `!Weather-Audit`. Confirm each opens the appropriate private Weather screen exactly once. Repeat one route with mixed capitalization.
-20. Run `!aa-wayfarer reset-default` without confirmation. Confirm no change is made and no reset button is offered. Then run `!aa-wayfarer reset-default --confirm yes`; confirm the draft returns to **Wayfarer Calendar** while the active calendar and fictional time remain unchanged.
-21. Create or update `!Almanac-Manual`. Confirm it explains the action-first dashboard, focused Wayfarer manager, Wayfarer Hour language, announcement controls, seasonal ranges, moon ownership, command-only draft reset, activation, rollback, and recovery.
+20. Run `!aa-wayfarer reset-default` without confirmation. Confirm no change is made and no reset button is offered. Then run `!aa-wayfarer reset-default --confirm yes`; confirm the draft returns to the original **Lantern Way Calendar** while the active calendar and fictional time remain unchanged.
+21. Choose **Export Editable Draft**. Open the owned handout, make one safe calendar-name change in its JSON only, then use **Review Handout Import** with its handout ID. Confirm the preview names the candidate, explains that imported stages start unreviewed, and has not changed the active calendar or fictional time. Confirm once; verify only the saved draft changed. Re-export/review, alter the handout after preview, and confirm the old button refuses rather than replacing the draft.
+22. Create or update `!Almanac-Manual`. Confirm it explains the action-first dashboard, focused Wayfarer manager, optional inert handout workflow, Wayfarer Hour language, announcement controls, seasonal ranges, moon ownership, command-only draft reset, activation, rollback, and recovery.
 
 **Pass when:** the common dashboard actions are direct; saved Wayfarer selection does not force draft setup; all calendar components are directly reachable; routine pages remain compact; explanations/details/recovery are available on demand; exact-time prompts follow the active calendar; the default matches the Wayfarer briefing; moon phases remain available through requested detail and Astronomy views; standardized Weather aliases work with either case and either a space or hyphen; draft edits survive navigation and restart; invalid input causes no partial change; activation and rollback preserve the described state; and the command-only default reset changes only the draft.
 
@@ -870,15 +890,16 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 
 **Why:** Weather needs optional regional context, but climate settings must also remain useful and understandable by themselves.
 
-1. Open `!clim`. Confirm the first screen names the current region and presents its useful climate at a glance without showing inheritance keys or raw configuration.
-2. Switch directly to another existing region, then return to the original region.
-3. Open **Manage Regions**, then **Climate Types**, and create one custom profile with a unique name.
-4. Create a parent region and one child that inherits its profile.
-5. Change the parent profile and confirm the inheriting child follows it.
-6. Add a child override and confirm only that value differs.
-7. Try a duplicate name and an invalid parent/depth.
+1. Open `!clim`. Confirm the first screen names the current Scene region and its source—direct Location, Ecoregion, or campaign fallback—and presents useful climate at a glance without inheritance keys or raw configuration.
+2. At a Location with a direct Climate relation, switch the campaign fallback to another existing region. Confirm **Campaign Fallback Region** changes but the current Scene baseline does not; use the named Location editor when the Scene baseline itself should change.
+3. Clear a Location relation through its named editor and confirm its Ecoregion relation becomes the active source. Clear the Ecoregion relation and confirm the separately configured campaign fallback becomes the active source. Restore each relation deliberately.
+4. Open **Manage Regions**, then **Climate Types**, and create one custom profile with a unique name.
+5. Create a parent region and one child that inherits its profile.
+6. Change the parent profile and confirm the inheriting child follows it.
+7. Open **Fine Tune** on a region. Change one named field, confirm only that override differs, then clear fine tuning. Opening the editor alone must not write or freeze inherited values.
+8. Try a duplicate name, an invalid parent/depth, and removal of a Climate region still selected by a Location/Ecoregion. Confirm removal is refused with links to the named relation; reassign/clear it before a successful removal.
 
-**Pass when:** built-in and custom profiles remain distinguishable; inheritance follows the current parent; an explicit override wins; invalid or ambiguous requests write nothing; and the focused audit identifies the active region and profile without changing them.
+**Pass when:** built-in and custom profiles remain distinguishable; direct Location, Ecoregion, and fallback precedence are visible and coherent; inheritance follows the current parent; an explicit override wins; invalid or ambiguous requests write nothing; and the focused audit identifies the active Scene region/source without changing them.
 
 ### AstronomyAlmanac
 
@@ -896,28 +917,63 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 
 **Why:** Current weather must evolve deliberately and remain operable even when optional Time or Climate context is absent.
 
-1. Open `!weather`, generate current weather twice, and review its structured summary.
+1. Open `!weather`, generate current weather twice, and review its structured summary and named Climate context.
 2. Generate a short forecast and confirm current weather does not change.
 3. Lock current weather, attempt to replace it, then unlock it.
-4. Choose a manual weather condition and review history.
-5. Turn Time and Climate off, then generate weather again.
+4. Use **Set Manual Conditions** from the normal Weather screen. Confirm every field has a complete prompt, the result visibly becomes current, and **Recent Conditions** includes it without a hidden audit command.
+5. Generate or set Weather at a Location with one direct Climate relation, then move to a Location with another. Confirm stored Weather is retained and explicitly says it was recorded for the old region while Scene Climate names the new source. Use both **Generate** and **Set Manual Conditions** to replace it; each new record must identify the active Location/Ecoregion/fallback source as appropriate.
+6. Turn Time and Climate off, then generate weather again.
 
-**Pass when:** generated entries include temperature, wind, precipitation, cloud, visibility, severity, duration, and tags; transitions are plausible rather than unrelated redraws; forecast is read-only; lock prevents silent replacement; manual weather stays explicit; and fallback operation still works without Time or Climate.
+**Pass when:** generated entries include temperature, wind, precipitation, cloud, visibility, severity, duration, and tags; transitions are plausible rather than unrelated redraws; forecast is read-only; lock prevents silent replacement; manual weather stays explicit and discoverable; retained old-location Weather is never silently relabeled; and fallback operation still works without Time or Climate.
 
 ### EnviroAlmanac
 
 **Why:** Other tools and the GM need structured environmental context without automatic penalties or surprise token/sheet changes.
 
-1. With current weather available, run `!enviro`. Confirm the first screen shows the current environment, where it came from, and the common actions without dumping every technical field or raw tag list.
-2. Apply one built-in option from **Quick Choices**.
-3. Open **Customize**, change one field, return to the main screen, and confirm only that field changed.
-4. Open **View Details** and confirm the complete visibility, temperature, precipitation, wind, ground, water, exposure, severity, and tags are available there.
-5. Generate new weather and confirm the custom override remains authoritative.
-6. While the override is active, reopen `!weather`. Confirm it shows the Environment override as **Current Scene**, the generated result as **Stored Weather**, and explains that stored weather resumes only after **Follow Weather Again**. A desert scene must not be presented as simultaneously having the stored rainy temperature.
-7. Choose **Follow Weather Again** through confirmation and confirm the derived result resumes.
-8. Turn Weather off and apply a manual preset again.
+1. Before committing any Weather, run `!enviro` at a starter Location with a default environment. Confirm it matches the Location context shown in Current Scene and identifies **Using the active Location default**, not an unrelated generic fallback.
+2. With current weather available, run `!enviro`. Confirm the first screen shows the current environment, where it came from, and the common actions without dumping every technical field or raw tag list.
+3. Apply one built-in option from **Quick Choices**.
+4. Open **Customize**, change one field, return to the main screen, and confirm only that field changed.
+5. Open **View Details** and confirm the complete visibility, temperature, precipitation, wind, ground, water, exposure, severity, and tags are available there.
+6. Generate new weather and confirm the custom override remains authoritative.
+7. While the override is active, reopen `!weather`. Confirm it shows the Environment override as **Current Scene**, the generated result as **Stored Weather**, and explains that stored weather resumes only after **Follow Weather Again**. A desert scene must not be presented as simultaneously having the stored rainy temperature.
+8. Choose **Follow Weather Again** through confirmation and confirm the derived result resumes.
+9. Turn Weather off and apply a manual preset again.
 
-**Pass when:** output identifies visibility, temperature, precipitation, wind, ground, water, exposure, severity, and tags; no token, marker, character, roll, or Turn Tracker state changes; the override persists until cleared; and manual Environment still works without Weather.
+**Pass when:** output identifies visibility, temperature, precipitation, wind, ground, water, exposure, severity, and tags; before Weather it matches the active Location default; no token, marker, character, roll, or Turn Tracker state changes; the override persists until cleared; and manual Environment still works without Weather.
+
+### Worldbuilding, Prepared Destinations, Reviewed Travel, and Phenomena
+
+**Why:** Session Mode must let a GM move among owner-authored places and explicit overlays without editing subsystem state in front of the table. Prepared destinations, Travel, and Phenomena must remain explicit reviews: selecting a route or overlay is not permission to advance fictional time, silently move the party, or replace another provider.
+
+1. Open `!aa-world`. In **Places**, add two generic Locations with distinct names. Open one record through **Basic**, **Detailed**, and **Technical** layers: confirm Basic keeps routine facts short, Detailed exposes relevant relation/mechanics fields, and Technical shows stable identity/provenance/guarded removal without raw JSON. Use the focused editors to give one a Region/Geography/Ecoregion/Biome relationship or default local context as desired; do not enter raw JSON.
+2. Add a **Prepared Destination**, assign its target Location, and choose a default travel pace. Return to `!aa-location` and confirm the prepared item appears after Current/Favorites/Recents.
+3. Select the first Location as current, generate or retain a recognizable current Weather/Environment state, then choose **Review Move** for the prepared destination. Before confirming, record the fictional time, active Location, Weather, Environment override, and Astronomy state.
+4. Confirm the move. Confirm only the active Location and its resolved parent context changes; the panel names the new effective Climate source. Fictional time, committed Weather, Environment override, and Astronomy state remain untouched. If the new Scene Climate differs from retained Weather, Weather and Scene Details must flag the mismatch until the GM deliberately generates or sets replacement Weather.
+5. In **Travel Routes**, add a route connecting the two Locations, give it a positive distance, a pace, and a short owner-authored terrain note. Return the active Location to the origin and run `!aa-travel` (also test direct `!travel`).
+6. Plan travel using the prepared destination or the route. Confirm **Review Start** shows origin, destination, route, distance, pace, expected travel, and a statement that starting changes neither Location nor fictional time. Cancel once and verify no state changed; then confirm **Start Journey**.
+7. Confirm the active **Journey** panel shows remaining distance, route/pace, current conditions, and short actions. Attempt ordinary **Change Location** and route editing while the journey is active; both must refuse rather than replacing the journey context.
+8. Choose **Travel 1 Hour**. Before confirming its review, verify fictional time, active Location, and remaining distance are unchanged. Confirm it; verify fictional time advances by the reviewed amount and a non-final segment leaves the active Location at the origin.
+9. Continue until the final segment. Before confirmation, verify the panel identifies arrival but has not moved the party. Confirm it; verify fictional time advances only by the required final segment, the active Location switches to the destination, the journey closes, and Current Scene/Dashboard show the arrival context.
+10. Start a second disposable journey and choose **Cancel Journey**. Decline once, then confirm. Verify cancellation preserves the current Location and does not reverse any already accepted fictional time.
+11. In **Worldbuilding → Phenomena**, add an owner-authored Phenomenon scoped to the current Location. Give it a category, a visibility note, a terrain note, a travel note, severity, and a short default fictional-time duration. Confirm normal cards show direct fields rather than raw JSON.
+12. Open `!aa-phenomena` (also test direct `!phenomena`). Choose **Review Activate**. Before confirmation, record fictional time, Location, current Weather, Environment override, Astronomy, Climate, and active Travel state. Confirm the review panel clearly states its provider boundaries; cancel once and verify no state changed, then review and confirm activation.
+13. Confirm Current World and `!aa-scene` show the active Phenomenon as separate evidence and that its terrain/travel notes are presentation-only. If a journey is active at the scoped Location, confirm its Journey card presents the travel note separately. Verify Weather, Environment, Astronomy, Climate, Time, terrain ownership, and travel progress remain unchanged.
+14. Review **Deactivate**. Verify the overlay remains active before confirmation, then confirm and verify it disappears without changing another provider. Activate a duration-bound overlay again, advance fictional time through an already reviewed normal time or Travel action until its expiry, and verify the Scene hides it while `!aa-phenomena` offers an explicit cleanup; confirm cleanup and verify retained active state is removed only then.
+15. Create a second Location-scoped Phenomenon, activate it, and switch the active Location through the normal reviewed flow. Confirm it is filtered outside its Location rather than copied into the other scene. Attempt to edit or remove an active Phenomenon definition and its scoped Location; confirm the card refuses until it is deactivated.
+
+**Pass when:** all generic Worldbuilding record editors have consistent Basic/Detailed/Technical layers and bounded direct fields with no ordinary raw JSON; prepared-destination review is location-bound and preserves independently owned providers; route planning/start/segment review causes no silent time or location change; every accepted segment advances only its displayed fictional time; arrival changes the Location only after accepted final travel; active journeys surface in Current World and Scene; Phenomena activation/deactivation is reviewed and stale-safe, scoped/expired overlay evidence is separate and read-only, and it never replaces Weather/Environment/Astronomy/Climate/Time/Travel authority; stale or changed reviews are refused; and cancel never reverses committed time.
+
+### WorldPacks and Temporal Contexts
+
+**Why:** Portable world data and different regional/planar local-time relationships must remain reviewable, bounded, and separate from the one authoritative chronology.
+
+1. Run `!aa-worldpacks`. Create a blank template, confirm its handout link opens and the chat panel does not dump JSON. Add one owner-authored Location to a disposable copy, then review it as **Install New**. Verify the preview reports validation/dependencies/provenance, confirmation changes only the stated Worldbuilding records and registry, and no Time, Weather, Astronomy, provider, gameplay, or active Location state changed. Edit the handout after another preview and confirm the stale action refuses.
+2. Run `!aa-temporal`. Confirm **Prime Context** is active at a 1:1 zero-offset projection and that the card describes one authoritative fictional-minute chronology. Add a disposable planar context with a 2:1 local-to-canonical rate and a nonzero offset. Open its Basic, Detailed, and Technical layers; verify the Technical panel exposes the formula rather than a second stored clock.
+3. Preview a transition to that context with a bounded canonical elapsed value. Before confirmation, record authoritative fictional time, Rest history, active Location, Weather, Astronomy, and any selected character resources. Confirm the preview identifies departure/destination projections, canonical elapsed time, reconciliation, expiry, and stale protection. Cancel once and verify no state changed; then confirm a fresh preview.
+4. Confirm only the authoritative fictional minute advanced by the reviewed amount and the active Temporal Context changed. Verify Rest/effects/NPC history/combat/resources/providers/Location/real-world timestamps did not reverse or change. Prepare a second transition, change normal Time before clicking its old confirmation, and verify the stale action is refused.
+
+**Pass when:** WorldPack handouts are inert and bounded, imports are previewed/stale-safe/atomic, and Temporal Contexts remain transparent local projections rather than a second clock. Every transition changes only its reviewed canonical time and active context, emits no hidden gameplay write, and refuses stale data.
 
 ### RestAlmanac
 

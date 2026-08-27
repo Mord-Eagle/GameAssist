@@ -3,7 +3,8 @@
 - Build branch: `AlmanacAssist-v2.0.0-Build`
 - Source baseline: duplicate of `75-v2.0.0-effectassist` (`e08cb36`)
 - Assessment date: 2026-08-26
-- Governing issue: **#95 — AlmanacAssist 2.0 implementation master: coherent world engine and live-play UX**
+- Source implementation master: **#95 — AlmanacAssist 2.0 implementation master: coherent world engine and live-play UX** (left unchanged)
+- Build tracking copy: **#96 — AlmanacAssist 2.0 implementation master: coherent world engine and live-play UX (Build tracking)**
 - Architectural destination: **#94 — AlmanacAssist redesign v2.0.0**
 
 ## 1. Purpose
@@ -18,7 +19,8 @@ or `main`.
 
 | Issue | Title | State | Category |
 | --- | --- | --- | --- |
-| #95 | AlmanacAssist 2.0 implementation master: coherent world engine and live-play UX | Open | Implementation master |
+| #95 | AlmanacAssist 2.0 implementation master: coherent world engine and live-play UX | Open | Source implementation master (left unchanged) |
+| #96 | AlmanacAssist 2.0 implementation master: coherent world engine and live-play UX (Build tracking) | Open | Build tracking copy of #95 |
 | #94 | AlmanacAssist redesign v2.0.0 | Open | Architectural destination |
 | #62 | AlmanacAssist master: Build six interoperable campaign-world submodules | Open | Original master |
 | #66 | AlmanacAssist Phase 1: Build TimeAlmanac | Open | Child of #62 |
@@ -42,7 +44,7 @@ The `75-v2.0.0-effectassist` branch contains:
 
 - A single Roll20 script implemented in `GameAssist`, `GameAssist.js`, and
   `GameAssist-v2.0.0` (all byte-identical at the branch head).
-- AlmanacAssist at **module version 1.6.1**, implemented as one GameAssist module
+- AlmanacAssist's **historical 1.6.1 source baseline** is retained for rollback; the active implementation version is **v2.0.0**, implemented as one GameAssist module
   with six independently toggleable internal systems:
   **Time, Climate, Astronomy, Weather, Environment, Rest**.
 - A complete Wayfarer custom-calendar manager, action-first GM dashboard,
@@ -50,15 +52,13 @@ The `75-v2.0.0-effectassist` branch contains:
   Off / Descriptive / Detailed / Technical control, direct calendar and moon
   editors, climate/region management, weather forecasts and locks, environment
   overrides, and transactional 2014-sheet Rest writes.
-- The `GameAssist.AlmanacAssist` public API: `version`, schema versions,
-  `isAvailable()`, `isTimeAvailable()`, `getSubmoduleStatus()`, `getTime()`,
-  `getClimate()`, `getAstronomy()`, `getWeather()`, `getEnvironment()`,
-  `getRestHistory()`, `observe(...)`, and `clearObservers(...)`.
+- The active build's `GameAssist.AlmanacAssist` public API: `version`, Scene/World/Travel/Phenomena and other schema versions,
+  `isAvailable()`, `isTimeAvailable()`, `getSubmoduleStatus()`, `getScene()`,
+  `getTime()`, `getClimate()` (effective current Scene baseline by default; explicit named-region lookup when supplied), `getAstronomy()`, `getWeather()`,
+  `getEnvironment()`, `getPresets()`, `getRulesAdvice()`, `getWorldPacks()`, `getTemporalContext()`, `getRestHistory()`, `observe(...)`, and
+  `clearObservers(...)`. The v2.0.0 API also exposes `presetRegistrySchemaVersion`, `rulesAdvisorSchemaVersion`, `worldPackSchemaVersion`, `temporalContextSchemaVersion`, and `wayfarerHandoutSchemaVersion`.
 
-AlmanacAssist is **not** yet at the #95 / #94 destination. It is a coherent
-six-system prototype; it is not yet a SceneResolver-centered engine with
-Region / Geography / Ecoregion / Biome / Location / Environment / Phenomena /
-Travel / PresetRegistry / WorldPackService / temporal contexts.
+AlmanacAssist **v2.0.0** contains substantial #96 framework implementation: generic owner-authored Region / Geography / Ecoregion / Biome / Location composition, Basic/Detailed/Technical Worldbuilding record editors, Location-bound Prepared Destinations, reviewed route/pace Travel, Phenomena overlays, PresetRegistry campaign clones, advisory-only RulesAdvisor reminders, bounded WorldPacks, Temporal Contexts, and a Wayfarer handout route. That inventory must **not** be summarized as a complete usable #96 product. An exploratory real Roll20 campaign surfaced a startup audit warning, empty first-run Location/Travel state, insufficient starter-world content and selection, weak climate/profile setup, and an incomplete rendered Climate Add Region prompt. The earlier VM/structural checkpoint is retained as regression evidence only. Recovery must make a fresh GM’s journey usable before a new formal live Roll20 acceptance phase is eligible.
 
 ## 4. Assessment by issue
 
@@ -76,9 +76,7 @@ narrow, independently verifiable repairs.
 - includes GameAssist guardrails and live Roll20 acceptance evidence;
 - keeps configuration/lifecycle semantics and state safety explicit.
 
-**Gap to close on the Build branch:** The branch must implement the gates in order,
-preserve the existing 1.6.1 rollback baseline, and never claim the broader
-2.0 program complete until the live Roll20 acceptance track passes.
+**Gap to close on the Build branch:** First repair the discovered live-product gap: included legally distributable generic starter worlds, obvious World Library/onboarding, an active usable Location → Prepared Destination → Travel path, selectable climate profiles/regions, complete deferred Roll20 prompts, named reference choices instead of hidden IDs, and removal/diagnosis of startup audit noise. Preserve the historical rollback baseline. Do not restart formal live acceptance until these flows have focused regression coverage and a fresh GM can use them in a real campaign.
 
 ### #94 — Redesign v2.0.0
 
@@ -98,7 +96,7 @@ patch; the SceneResolver authority is the central architectural requirement.
 **What they are:** The original modular contracts. Each child phase is narrowly
 scoped and independently toggleable; each is useful with the others disabled.
 
-**Assessment:** The current 1.6.1 source already satisfies a large share of these
+**Assessment:** The current v2.0.0 implementation already satisfies a large share of these
 contracts (independent toggles, bounded state, optional context, no hidden
 prerequisites, transactional Rest, preserved disabled state). #95 preserves these
 contracts. The Build branch must keep each system independently useful and should
@@ -110,19 +108,16 @@ or Location to be enabled before Time works).
 **What it is:** Guided Wayfarer setup, draft/active separation, preview,
 validation, elapsed-time preservation, rollback, and documentation.
 
-**Assessment:** The current source already implements the guided Wayfarer workflow
+**Assessment:** The current source implements the guided Wayfarer workflow
 with a persistent draft, staged setup, atomic activation, elapsed-time-preserving
-edits, and command-only reset. The live Roll20 acceptance track remains the
-remaining gate. #95 preserves these requirements under Gate 1.
+edits, command-only reset, and an optional advanced versioned handout export/edit/import route. The handout parser is bounded and inert, preview/confirmation are stale-protected, and confirmation replaces only the inactive draft. These source contracts remain useful, but they do not establish that the normal chat journey is complete. The live exploratory result requires prompt/button rendering and no-hidden-ID recovery coverage before Wayfarer can be considered usable. #95 preserves these requirements under Gate 1.
 
 ### #90 — Custom-calendar and world-context UX
 
 **What it is:** The live Roll20 usability gate for Wayfarer, announcements,
 climate/weather/environment authority, astronomy, rests, and recovery.
 
-**Assessment:** Partially implemented in 1.6.1; the live acceptance checks remain
-open. #95 uses #90 as the first release gate. The Build branch must not mark the
-world-context UX complete until the live sandbox runs pass.
+**Assessment:** The v2.0.0 framework and historical automated checkpoint are incomplete evidence, not completion. The exploratory actual-Roll20 campaign found its first-launch UX unacceptable. The Build branch must repair the fresh-GM world-context journey and must not mark the world-context UX release-complete until a new real sandbox pass proves the repaired flows.
 
 ### #92 — Remove redundant chronology pre-scan
 
@@ -178,7 +173,7 @@ AlmanacAssist requirement and is out of scope for the Build branch.
 ### #81 (PR) — Development PR
 
 **What it is:** The existing GameAssist v2.0.0 development PR that contains the
-current AlmanacAssist 1.6.1.
+historical AlmanacAssist 1.6.1 baseline and the active v2.0.0 implementation.
 
 **Assessment:** The Build branch duplicates this development line rather than
 pushing directly to PR #81. The release gate remains a live Roll20 acceptance
@@ -243,8 +238,8 @@ change on the Build branch must satisfy them.
 10. **No external runtime dependency.** AlmanacAssist must function inside the
     Roll20 Mod sandbox without Fantasy Calendar or another hosted service.
 11. **Roll20-supported interaction.** Commands and buttons use supported Roll20
-    syntax, avoid raw JSON on ordinary screens, keep cards narrow, avoid
-    horizontal scrolling, and are tested in the live sandbox.
+    syntax, avoid raw JSON or raw hidden identifiers on ordinary screens, keep cards narrow, avoid
+    horizontal scrolling, and supply complete deferred query targets. An exploratory live result already found violations; formal live-sandbox acceptance must wait until those recovery repairs are covered and ready.
 12. **No silent gameplay writes.** Other world systems remain descriptive. Only
     Rest performs Almanac-owned character-sheet writes, through verified sheet
     capabilities, with preview, revalidation, and transactional confirmation.
@@ -258,16 +253,16 @@ change on the Build branch must satisfy them.
       events only.
     - RestAlmanac consumes SheetCapabilities and HealthService where safe.
 14. **Conservative migration.** 1.6.1 remains the rollback baseline. Migrate only
-    data whose meaning remains trustworthy. Do not destructively reinterpret
-    legacy state in place. Unknown state remains warning-only.
+    data whose meaning remains trustworthy. The reviewed 2.0 additions are additive;
+    recognized Wayfarer predecessor data migrates only by exact structural match.
+    Future Worldbuilding configuration/runtime, WorldPack, Temporal, and import-runtime state is warning-only and
+    mutation-blocked rather than destructively normalized or expired.
 15. **Identifier literalism and metadata consistency.** Existing identifiers,
     MECHSUITS tags, canonical tree, section metadata, versions, and Notes &
     Comments change together when a meaningful change is made. Maintenance-only
     edits preserve `last_updated_version` and add a Maintenance footer entry.
 16. **Documentation and tests track accepted behavior.** README, roadmap, changelog,
-    smoke tests, MECHSUITS metadata, and One-Click metadata describe only
-    completed phases. Focused Almanac tests run before a consolidated GameAssist
-    regression pass.
+    smoke tests, MECHSUITS metadata, and One-Click metadata distinguish source contracts from actual usable behavior and identify v2.0.0 as the active implementation version. Focused VM evidence must explicitly say what it cannot prove; no consolidated checkpoint may be called “complete code” after an unaddressed live-product failure.
 
 ## 7. Build-branch scope and current status
 
@@ -275,16 +270,60 @@ change on the Build branch must satisfy them.
   `origin/75-v2.0.0-effectassist`.
 - **Gate 0 #92:** Implemented (redundant chronology pre-scan removed).
 - **Gate 0 #93:** Implemented (`getSubmoduleStatus()` reports configured state).
+- **Focused Gate 0 harness:** `tests/almanac-gate0.test.js` boots the shipped
+  artifact in an isolated Roll20-shaped Node VM and verifies artifact identity,
+  #92 boundaries, #93 configured state, saved-state preservation, and close
+  command aliases. It is not a substitute for live Roll20 acceptance.
 - **Assessment / plan documents:** Added under `docs/AlmanacAssist-v2.0.0-Build/`.
-- **Not yet implemented:** Gates 1–4, SceneResolver, the expanded world-domain
-  model, PresetRegistry, WorldPackService, temporal contexts, and the full live
-  Roll20 acceptance track.
+- **SceneResolver foundation:** Implemented during the historical `1.7.0` checkpoint and carried into v2.0.0: one deeply
+  immutable no-write snapshot with provider status, field provenance, bounded
+  warnings, Time/Climate/Weather/Environment/Astronomy/Rest boundaries, partial
+  terrain, distinct hydrology fields, and moon phase versus visibility. Dashboard,
+  Scene, announcements, and public weather announcement consume that snapshot.
+- **Focused SceneResolver harness:** `tests/almanac-scene-resolver.test.js` proves
+  immutability, no provider-state writes, disabled/parent-disabled behavior, manual
+  Time fallback, unusual Weather warnings, Scene presentation, and technical
+  announcement privacy in the isolated VM. It is not a substitute for Roll20.
+- **Worldbuilding foundation:** Implemented during the historical `1.8.0` checkpoint and carried into v2.0.0: bounded,
+  generic owner-authored Regions, Geography, Ecoregions, Biomes, and Locations;
+  active Location, favorites, recents, organized Worldbuilding chat controls,
+  field-owned terrain/hydrology composition, and warning-only future schema reads.
+  No named setting lore or published pack data is bundled.
+- **Prepared Destination and Travel foundation:** Implemented at AlmanacAssist
+  `1.9.0`: Location-bound prepared-destination review/apply, bounded generic
+  bidirectional Travel Routes, retained route/pace journeys, immutable scene
+  evidence, and stale-safe start/segment/arrival confirmation. Time advances only
+  after a confirmed segment; final Location changes only on confirmed arrival.
+  Weather, Environment overrides, Astronomy, and calendar ownership remain separate.
+- **Phenomena foundation:** Implemented during the historical `1.10.0` checkpoint and carried into v2.0.0: bounded generic
+  definitions with optional Location scope, descriptive visibility/terrain/travel
+  notes, severity, optional fictional-time expiry, actor-bound review-before-
+  activate/deactivate controls, explicit expiry cleanup, bounded history, and safe
+  active-definition/Location deletion constraints. SceneResolver filters scoped,
+  elapsed, unavailable, and newer-schema overlays without writes and presents
+  immutable provenance-marked overlay evidence without replacing Weather,
+  Environment, Astronomy, Climate, Time, or Travel authority.
+- **Focused harnesses:** `tests/almanac-worldbuilding.test.js` proves generic place
+  composition, `tests/almanac-travel.test.js` proves prepared-destination and
+  accepted-only Travel boundaries, and `tests/almanac-phenomena.test.js` proves
+  no-write scope/expiry filtering, forward-record preservation, reviewed overlay
+  state, explicit cleanup, aliases, and Worldbuilding cards in the isolated VM.
+  Neither replaces Roll20.
+- **PresetRegistry foundation:** Implemented in the v2.0.0 build: immutable generic versioned templates, preview/review/clone/customize workflow, independent campaign IDs and provenance, bounded references, and no provider-state application.
+- **RulesAdvisor foundation:** Implemented in the v2.0.0 build: optional profile-specific reminders derived from the immutable scene snapshot, explicit on/off and profile controls, bounded output, and an advisory-only no-provider/no-gameplay-write boundary.
+- **WorldPacks:** Implemented locally in the v2.0.0 build: separate data class, canonical raw-JSON exports plus a documented one-block human-editable worksheet template, bounded inert parser, syntax/schema/semantic/reference/provenance validation, explicit dependency report, Preview → stale-protected Confirm → atomic Worldbuilding/registry commit, New/Update/Copy, stable provenance, future-runtime warning-only preservation, and focused VM coverage. Verified older immutable-source clones now expose a visible Review Update path; current sources create no grant, update conflicts name bounded protected records, and an independent reviewed source copy remains available instead of overwriting campaign edits.
+- **Temporal Contexts:** Implemented locally in the v2.0.0 build: immutable Prime baseline plus bounded regional/planar rate-and-offset projections, Basic/Detailed/Technical controls, previewed/stale-protected canonical-time transitions, bounded reconciliation history, and committed semantic events. Contexts never create a second hidden clock or reverse unrelated state.
+- **Worldbuilding editor layers:** Implemented for every generic Worldbuilding record through one shared Basic/Detailed/Technical layer contract; Technical shows stable IDs, guarded removal, provenance, and WorldPack source evidence without normal-panel JSON.
+- **Setting-scale Worldbuilding catalog access:** Implemented locally for every generic record collection. The ordinary named collection screens are name-sorted 12-entry pages with Previous/Next, name/tag Search, and direct Edit controls; catalog inspection/search is read-only and does not require a GM to retrieve a Technical stable ID. The focused four-pack workload verifies first/final Location pages, named Location search, final Route access, all collection routes, bounded Edit controls, and no state mutation. This remains local VM evidence, not Roll20 render/performance acceptance.
+- **Setting-scale dynamic chooser recovery:** Implemented locally for editor hierarchy/endpoints, Climate and named pages, installed palette profiles, Preset overlays, Route Leg profiles/split Locations, and palette collection/default/cross-palette references. These surfaces now use complete 12-entry name/tag-searchable panels instead of an inline query that could omit distant choices or become too large. Palette collections have a 160-record import/addition boundary, and multi-template Ecoregion Profile references retain canonical arrays. Focused VM checks reach final profile/palette pages and the final 640-Location relation/Route Leg page, then decode rendered targets; this is still not live Roll20 rendering or acceptance evidence.
+- **Migration review:** Completed for the additive v2.0.0 branches. Known legacy Wayfarer starter/draft state is migrated only when it exactly matches the recognized predecessor; valid existing configuration remains intact; future Worldbuilding configuration/runtime, WorldPack, Temporal Context, Wayfarer-import, and transition-review schemas remain warning-only and are not normalized, expired, or reinterpreted by an older build.
+- **Live-product recovery:** Active. Source recovery now includes owner-authored generic Starter Worlds, World Library/onboarding, active-location recovery, prepared-destination/travel routes, climate profile/region controls, complete deferred queries, named Roll20 page/handout selectors, ordinary Weather manual/history controls, and a broad decoded-target audit of ordinary starter-world screens. These are focused VM evidence, not a fresh rendered Roll20 result.
+- **Climate/Weather/Environment coherence recovery:** Implemented in source and focused VM coverage. Effective Scene Climate resolves active Location direct relation → active Ecoregion relation → separately configured campaign fallback without mutating any provider. Scene, Climate, Weather generation/manual provenance, Environment's no-Weather Location default, status, public `getClimate()`, and climate semantic events agree on that context. The stable public Climate scope remains `location`, `ecoregion`, or `campaign`; a separate source-kind field identifies a direct Climate region versus a WorldPack Profile so richer provenance does not break existing consumers. A Location change retains committed Weather and labels any old-region mismatch until the GM generates or manually sets a replacement; an in-use Climate region cannot be removed until the named Location/Ecoregion relations are reassigned or cleared.
+- **Remaining release work:** finish the remaining source/prompt audit and record a fresh-GM real-Roll20 recovery pass; only then restart the complete formal acceptance track. The historical automated/structural checkpoint is not a release or implementation-completion claim.
 
 ## 8. Decisions and rationale
 
-- Keep the source version at `1.6.2` rather than claiming `2.0.0` before the
-  architectural work is complete. This avoids announcing an incomplete 2.0 engine
-  and preserves a trustworthy rollback baseline.
+- Use **AlmanacAssist v2.0.0** as the active implementation version throughout the full Issue #96 build. Historical 1.x checkpoint notes remain as rollback history only; v2.0.0 is not a claim that live release acceptance has occurred.
 - Keep all three executable artifacts byte-identical (`GameAssist`,
   `GameAssist.js`, `GameAssist-v2.0.0`) as required by the repo's guardrails.
 - Do not add a chronology cache in #92; the issue explicitly forbids it without
