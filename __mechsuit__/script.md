@@ -53,10 +53,12 @@ cannot be embedded in that artifact. It contains no campaign-specific records.
 - Release file: `GameAssist.js`, synchronized byte-for-byte with `GameAssist` and `GameAssist-v2.0.0`.
 - Description: user-facing Markdown stored as one JSON string. Keep limitations and optional dependencies explicit.
 - Verification: parse JSON; check version and script filename; reconcile advertised commands with the current router; compare all three release-file hashes.
-- AlmanacAssist 2.0.4 adds Current Settings, editable local influence profiles, and independent named-location snapshots while retaining the linked-world controls and saved data. The package remains GameAssist v2.0.0.
+- AlmanacAssist 2.0.5 provides named Climate/Biome choices, optional local layers, seasonal controls, Weather Breakdown, and independent saved-location snapshots. The package remains GameAssist v2.0.0.
 
 <!--
 Notes & Comments
+Changed (v2.0.0): Added layered Current Settings, seasonal response, daily submenu, and weather-control commands; aligned the description with named selectors and saved layer snapshots. Existing commands and the project version remain unchanged.
+Prior notes:
 Changed (v2.0.0): Added Current Settings commands and described baseline/profile adjustments with named-location save and recall. The existing command inventory and package version remain intact.
 Prior notes:
 Changed (v2.0.0): Added explicit location-management and destination-palette commands and described pre-travel location setup; no package version or release filename changed.

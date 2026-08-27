@@ -3,7 +3,7 @@
 GameAssist - Roll20 API Script
 Version: 2.0.0
 Last Updated: 2026-08-27 (America/New_York)
-Release scope: EffectAssist 2.5.4 duration-label repair, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.1 safe public result delivery, HealthService 1.1.1 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, InitiativeAssist 1.0.6 mixed-sheet actor repair, CombatAssist 1.2.1 encounter-ending repair, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist 2.0.4 Current Settings, saved-location snapshots, reusable world profiles, seasonal weather, and reviewed travel, and regression repairs across the v2.0.0 module suite.
+Release scope: EffectAssist 2.5.4 duration-label repair, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.1 safe public result delivery, HealthService 1.1.1 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, InitiativeAssist 1.0.6 mixed-sheet actor repair, CombatAssist 1.2.1 encounter-ending repair, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist 2.0.5 layered Current Settings, saved-location snapshots, compact world controls, seasonal weather, and reviewed travel, and regression repairs across the v2.0.0 module suite.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -30,7 +30,7 @@ calls GameAssist.enqueue(). This development package contains fifteen configurab
 - EffectAssist 2.5.4 - Coordinates compact catalog-driven effects, exact caster-and-recipient identity, retained GM requests, GameAssist-owned 2014-sheet modifiers, verified token-specific concentration, ownership-safe cleanup, provider-specific duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
 - HealAssist 1.2.1 - Guides verified 2014 normal or maximum healing with direct single-recipient targeting, optional automatic application, visible PC targeting, private GM requests, safe public announcements, and HealthService verification.
 - AttackAssist 1.1.0 - Guides authorized 2014 repeating attacks through direct visible targeting, default sheet-mode submission, optional GM-enabled roll review, complete prompt-safe Classic-sheet expansion, private GM placement, crash-safe inline-roll validation, and visible one-use native-template rolls without applying damage.
-- AlmanacAssist 2.0.4 - Separates compact Session controls from Worldbuilding; adds Current Settings with regional baselines, a twelve-profile influence matrix, and independent saved-location snapshots; retains reusable climate, biome, geography, ecoregion, and seasonal palettes with editable campaign copies and named region controls; generates weather from the current place and calendar season; supports coherent scenes and reviewed travel with private encounter checks; and retains phenomena, local time, advanced Wayfarer editing, WorldPacks, six independently controlled systems, and transactional rests.
+- AlmanacAssist 2.0.5 - Provides compact Session controls and layered Current Settings with direct Climate and Biome choices, twelve ecoregion starters, optional geography/terrain/environment/hydrology/vegetation influences, visible seasonal weather calculations, and independent saved-location snapshots; retains named regions, reusable definitions, coherent scenes, reviewed travel with private encounter checks, phenomena, local time, advanced Wayfarer editing, WorldPacks, six independently controlled systems, and transactional rests.
 - HPAssist 0.3.0 - Rolls npc_hpformula and uses HealthService for verified writes to the selected shared NPC HP bar when available.
 - DebugTools 0.3.1 - Optional dry-run-first GM diagnostics with verified supported HP damage writes on the selected shared NPC HP bar.
 
@@ -543,7 +543,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             maximumWorldPacks: 10,
             maximumWorldPackBytes: 120000,
             maximumWorldPackObjects: 500,
-            maximumWorldPackDepth: 8,
+            // Location snapshots can contain named layers and their tag lists.
+            maximumWorldPackDepth: 10,
             maximumTemporalContexts: 20,
             worldPackGrantLimit: 10,
             worldPackGrantMs: 1000 * 60 * 5
@@ -557,6 +558,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Allow ten bounded WorldPack levels for saved location
+    // layers; byte, object-count, unsafe-key, and schema checks remain unchanged.
+    // Prior notes:
     // Changed (v2.0.0): Bounded Almanac profile pages, reusable ecoregion profiles, seasonal rules, and the explicit game-weather model in POLICY for AlmanacAssist 2.0.2.
     // Changed (v2.0.0): Centralized mileage-travel pace defaults, input bounds, one-use review lifetime, encounter-check limits, and private roll-display limits for AlmanacAssist 2.0.1.
     // Changed (v2.0.0): Added bounded AlmanacAssist scene, place, phenomenon, travel, WorldPack, temporal-context, and preview limits; year zero is a supported fictional-calendar year across every profile.
@@ -23610,7 +23614,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   guarantees: ["Session Mode keeps current place, scene, time, travel, rest, weather, event, and announcement actions compact while Worldbuilding Mode owns durable definitions","Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows without becoming hidden prerequisites","One signed base chronology keeps Year 1 at elapsed minute zero for saved-campaign compatibility while allowing validated Year 0 dates","SceneResolver publishes one immutable coherent snapshot with field-level provenance for place, local time, climate, weather, environment, astronomy, and active phenomena","Geographies, biomes, ecoregions, locations, phenomena, quick actions, and local temporal contexts are bounded, validated, and dependency-aware","Prepared destinations and mileage-based travel change chronology or active location only after explicit review and confirmation","Travel encounter checks are private GM evidence derived from a selected interval and die, never encounter-content generation or automatic gameplay mutation","Immutable versioned presets install editable copies without replacing existing places","Wayfarer provides complete chat editors plus a versioned advanced handout whose stale-protected import changes only the saved draft","WorldPack import/export excludes runtime chronology and character state, validates the complete bounded definition graph before mutation, and records provenance","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Optional RulesAdvisor guidance is profile-specific, read-only, and never applies gameplay changes","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AlmanacAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "2.0.4", current_settings_schema_version: 1, time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2, world_state_schema_version: 1, scene_schema_version: 1, worldpack_schema_version: 1, temporal_context_schema_version: 1, wayfarer_handout_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "2.0.5", current_settings_schema_version: 1, time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2, world_state_schema_version: 1, scene_schema_version: 1, worldpack_schema_version: 1, temporal_context_schema_version: 1, wayfarer_handout_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // AlmanacAssist presents a compact Session Mode for live play and a separate
@@ -23621,15 +23625,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // without changing chronology or gameplay state merely because a preview was opened.
     // RestAlmanac remains the only sheet-writing surface and requires a fresh preview
     // and confirmation against verified D&D 5E by Roll20 2014 attributes.
-    // Current Settings supplies an independent regional baseline plus one local
-    // influence profile and explicit GM adjustments. Named locations retain value
+    // Current Settings supplies a climate baseline, replaceable biome/geography
+    // layers, optional local influences, and explicit GM adjustments. Seasonal
+    // contributions are visible separately from generated weather. Named places retain value
     // snapshots, not shared mutable references or the weather/date of a past visit.
     // The existing resolver and generator consume that context without applying
     // the old geography/biome adjustments twice; legacy locations keep their path.
     // -------------------------------------------------------------------------
     GameAssist.register('AlmanacAssist', function() {
         const MODULE_NAME = 'AlmanacAssist';
-        const MODULE_VERSION = '2.0.4';
+        const MODULE_VERSION = '2.0.5';
         const TIME_STATE_SCHEMA_VERSION = 2;
         const WAYFARER_DRAFT_SCHEMA_VERSION = 3;
         const ANNOUNCEMENT_SCHEMA_VERSION = 4;
@@ -24666,7 +24671,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (playerIsGM(msg?.playerid)) return true;
             sendPanel(msg, 'AlmanacAssist', [
                 { label: 'Game Master Action', value: 'Only the GM can change fictional world time or calendar configuration.' },
-                { label: 'Available', value: `${GameAssist.createButton('Current Date', '!date')} ${GameAssist.createButton('Current Time', '!time')}` }
+                { label: 'Available', value: `${almanacButton('Current Date', '!date')} ${almanacButton('Current Time', '!time')}` }
             ]);
             return false;
         }
@@ -24722,7 +24727,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!timeAvailable()) {
                 sendPanel(msg, 'AlmanacAssist', [
                     { label: 'TimeAlmanac', value: 'Currently turned off. Stored fictional time has been preserved.' },
-                    { label: 'Next Step', value: playerIsGM(msg?.playerid) ? GameAssist.createButton('Open Almanac', '!Almanac-GM') : 'Ask the GM to enable TimeAlmanac.' }
+                    { label: 'Next Step', value: playerIsGM(msg?.playerid) ? almanacButton('Open Almanac', '!Almanac-GM') : 'Ask the GM to enable TimeAlmanac.' }
                 ]);
                 return;
             }
@@ -24734,7 +24739,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (submoduleEnabled('astronomy')) fields.push({ label: 'Moon Phases', value: _sanitize(currentMoonSummary()) });
             if (moment.holidays?.length) fields.push({ label: 'Holiday', value: moment.holidays.map(_sanitize).join(', ') });
             fields.push({ label: 'Calendar', value: _sanitize(moment.calendarName) });
-            if (playerIsGM(msg?.playerid)) fields.push({ label: 'Actions', value: `${GameAssist.createButton('Advance Time', '!aa-time menu')} ${GameAssist.createButton('Open Almanac', '!Almanac-GM')}` });
+            if (playerIsGM(msg?.playerid)) fields.push({ label: 'Actions', value: `${almanacButton('Advance Time', '!aa-time menu')} ${almanacButton('Open Almanac', '!Almanac-GM')}` });
             sendPanel(msg, 'Campaign Date and Time', fields);
         }
 
@@ -24793,7 +24798,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const hourPrompt = wayfarerClock
                 ? `?{Hour of day 1-${maximumHour + 1}|${moment.hour + 1}}`
                 : `?{Hour 0-${maximumHour}|${moment.hour}}`;
-            return GameAssist.createButton(label, `!aa-time set --year ?{Year|${moment.year}} --period ?{Period name or number|${moment.periodName}} --day ?{Day|${moment.day}} --hour ${hourPrompt} --minute ?{Minute 0-${maximumMinute}|${moment.minute}}${wayfarerClock ? ' --one-based-hour yes' : ''} --confirm ?{Set this fictional date and time?|No,no|Yes,yes}`);
+            return almanacButton(label, `!aa-time set --year ?{Year|${moment.year}} --period ?{Period name or number|${moment.periodName}} --day ?{Day|${moment.day}} --hour ${hourPrompt} --minute ?{Minute 0-${maximumMinute}|${moment.minute}}${wayfarerClock ? ' --one-based-hour yes' : ''} --confirm ?{Set this fictional date and time?|No,no|Yes,yes}`);
         }
 
         function descriptiveTime(moment) {
@@ -24926,14 +24931,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!config.enabled) {
                 return sendPanel(msg, preview ? 'Almanac Announcement Preview' : 'Announcement Not Sent', [
                     { label: 'Announcements', value: 'Off. No public or GM announcement was sent.' },
-                    { label: 'Actions', value: `${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')} ${GameAssist.createButton('Almanac', '!aa-gm')}` }
+                    { label: 'Actions', value: `${almanacButton('Announcement Settings', '!aa-announcement-settings')} ${almanacButton('Almanac', '!aa-gm')}` }
                 ]);
             }
             const fields = announcementFields(config);
             if (!fields.length) {
                 return sendPanel(msg, preview ? 'Almanac Announcement Preview' : 'Announcement Not Sent', [
                     { label: 'Information', value: 'Every announcement detail is off. Choose at least one detail or restore the announcement defaults.' },
-                    { label: 'Actions', value: `${GameAssist.createButton('Choose Information', '!aa-announcement-fields')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` }
+                    { label: 'Actions', value: `${almanacButton('Choose Information', '!aa-announcement-fields')} ${almanacButton('Announcement Settings', '!aa-announcement-settings')}` }
                 ]);
             }
             if (preview) {
@@ -24943,7 +24948,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 });
                 fields.push({
                     label: 'Actions',
-                    value: `${GameAssist.createButton('Announce Now', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')} ${GameAssist.createButton('Almanac', '!aa-gm')}`
+                    value: `${almanacButton('Announce Now', '!aa-announce')} ${almanacButton('Announcement Settings', '!aa-announcement-settings')} ${almanacButton('Almanac', '!aa-gm')}`
                 });
                 return sendPanel(msg, `${config.header} - Preview`, fields);
             }
@@ -24953,7 +24958,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function showAnnouncementFields(msg) {
             if (!requireGm(msg)) return;
             const config = normalizedAnnouncementConfig();
-            const choice = (label, active, command) => active ? `<strong>${label}</strong>` : GameAssist.createButton(label, command);
+            const choice = (label, active, command) => active ? `<strong>${label}</strong>` : almanacButton(label, command);
             const fieldButtons = Object.entries(ANNOUNCEMENT_FIELD_LABELS).map(([key, label]) => ({
                 label,
                 value: [
@@ -24966,7 +24971,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel(msg, 'Choose Announcement Information', [
                 ...fieldButtons,
                 { label: 'How This Works', value: 'Each detail may be hidden or shown at its own descriptive, detailed, or technical level. Unavailable systems are quietly omitted.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')} ${GameAssist.createButton('Almanac', '!aa-gm')}` }
+                { label: 'Actions', value: `${almanacButton('Preview', '!aa-preview')} ${almanacButton('Announcement Settings', '!aa-announcement-settings')} ${almanacButton('Almanac', '!aa-gm')}` }
             ]);
         }
 
@@ -24974,7 +24979,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!requireGm(msg)) return;
             const config = normalizedAnnouncementConfig();
             const queryHeader = String(config.header).replace(/["|{}?]/g, ' ').replace(/\s+/g, ' ').trim();
-            const choice = (label, active, command) => active ? `<strong>${_sanitize(label)}</strong>` : GameAssist.createButton(label, command);
+            const choice = (label, active, command) => active ? `<strong>${_sanitize(label)}</strong>` : almanacButton(label, command);
             sendPanel(msg, 'Almanac Announcement Settings', [
                 {
                     label: 'Presentation',
@@ -24989,18 +24994,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     label: 'Information Preset',
                     value: `${choice('Quick', config.preset === 'quick', '!aa-announcement preset quick')} ${choice('Calendar', config.preset === 'calendar', '!aa-announcement preset calendar')} ${choice('Travel', config.preset === 'travel', '!aa-announcement preset travel')} ${choice('Everything', config.preset === 'full', '!aa-announcement preset full')}`
                 },
-                { label: 'Custom Information', value: `${config.preset === 'custom' ? '<strong>Custom selection active</strong> ' : ''}${GameAssist.createButton('Choose Announcement Information', '!aa-announcement-fields')}` },
-                { label: 'Heading', value: `${_sanitize(config.header)} ${GameAssist.createButton('Change Heading', `!aa-announcement header --value "?{Announcement heading|${queryHeader}}"`)}` },
-                { label: 'Actions', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce Now', '!aa-announce')} ${GameAssist.createButton('Restore Defaults', '!aa-announcement reset --confirm ?{Restore the default descriptive Quick announcement?|No,no|Yes,yes}')} ${GameAssist.createButton('Almanac', '!aa-gm')}` }
+                { label: 'Custom Information', value: `${config.preset === 'custom' ? '<strong>Custom selection active</strong> ' : ''}${almanacButton('Choose Announcement Information', '!aa-announcement-fields')}` },
+                { label: 'Heading', value: `${_sanitize(config.header)} ${almanacButton('Change Heading', `!aa-announcement header --value "?{Announcement heading|${queryHeader}}"`)}` },
+                { label: 'Actions', value: `${almanacButton('Preview', '!aa-preview')} ${almanacButton('Announce Now', '!aa-announce')} ${almanacButton('Restore Defaults', '!aa-announcement reset --confirm ?{Restore the default descriptive Quick announcement?|No,no|Yes,yes}')} ${almanacButton('Almanac', '!aa-gm')}` }
             ]);
         }
 
         function quickActionButton(action) {
             if (action.kind === 'advance') {
-                return GameAssist.createButton(action.label, `!aa-time advance --days ${action.days || 0} --hours ${action.hours || 0} --minutes ${action.minutes || 0}`);
+                return almanacButton(action.label, `!aa-time advance --days ${action.days || 0} --hours ${action.hours || 0} --minutes ${action.minutes || 0}`);
             }
-            if (action.kind === 'landmark') return GameAssist.createButton(action.label, `!aa-quick --id ${action.id}`);
-            if (action.kind === 'rest' && action.restType) return GameAssist.createButton(action.label, `!aa-rest preview --type ${action.restType}`);
+            if (action.kind === 'landmark') return almanacButton(action.label, `!aa-quick --id ${action.id}`);
+            if (action.kind === 'rest' && action.restType) return almanacButton(action.label, `!aa-rest preview --type ${action.restType}`);
             return '';
         }
 
@@ -25009,13 +25014,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const body = content.replace(/^quick\s*/i, '').trim();
             const world = normalizeWorldConfig();
             if (!body || /^(menu|manage|gm|dm|status)$/i.test(body)) {
-                const rows = world.quickActions.map(action => `${quickActionButton(action)} ${GameAssist.createButton('Remove', `!aa-quick remove --id ${action.id}`)}`).join('<br>');
+                const rows = world.quickActions.map(action => `${quickActionButton(action)} ${almanacButton('Remove', `!aa-quick remove --id ${action.id}`)}`).join('<br>');
                 return sendPanel(msg, 'Almanac Quick Actions', [
                     { label: 'Current', value: rows || 'No quick actions configured.' },
-                    { label: 'Add Time', value: GameAssist.createButton('Add Time Advance', '!aa-quick add --kind advance --label "?{Button label|+2 Hours}" --days ?{Days|0} --hours ?{Hours|2} --minutes ?{Minutes|0}') },
-                    { label: 'Add Landmark', value: `${GameAssist.createButton('Add Until Dawn', '!aa-quick add --kind landmark --label "Until Dawn" --landmark dawn')} ${GameAssist.createButton('Add Until Dusk', '!aa-quick add --kind landmark --label "Until Dusk" --landmark dusk')}` },
-                    { label: 'Add Rest', value: GameAssist.createButton('Add Rest', '!aa-quick add --kind rest --label "?{Button label|Short Rest}" --rest ?{Rest type|Short,short|Long,long|Extended,extended}') },
-                    { label: 'Return', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                    { label: 'Add Time', value: almanacButton('Add Time Advance', '!aa-quick add --kind advance --label "?{Button label|+2 Hours}" --days ?{Days|0} --hours ?{Hours|2} --minutes ?{Minutes|0}') },
+                    { label: 'Add Landmark', value: `${almanacButton('Add Until Dawn', '!aa-quick add --kind landmark --label "Until Dawn" --landmark dawn')} ${almanacButton('Add Until Dusk', '!aa-quick add --kind landmark --label "Until Dusk" --landmark dusk')}` },
+                    { label: 'Add Rest', value: almanacButton('Add Rest', '!aa-quick add --kind rest --label "?{Button label|Short Rest}" --rest ?{Rest type|Short,short|Long,long|Extended,extended}') },
+                    { label: 'Return', value: `${almanacButton('Manage World', '!aa-world')} ${almanacButton('Almanac Home', '!aa-gm')}` }
                 ]);
             }
             const args = _parseArgs(body).args;
@@ -25044,9 +25049,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ensureAlmanacRuntime().world.revision++;
                 return handleQuickAction(msg, 'quick manage');
             }
-            if (!timeAvailable()) return sendPanel(msg, 'Quick Action Needs Attention', [{ label: 'Problem', value: 'TimeAlmanac is not effectively available, so this time shortcut cannot run.' }, { label: 'Next Step', value: GameAssist.createButton('Almanac Systems', '!Almanac-Systems') }]);
+            if (!timeAvailable()) return sendPanel(msg, 'Quick Action Needs Attention', [{ label: 'Problem', value: 'TimeAlmanac is not effectively available, so this time shortcut cannot run.' }, { label: 'Next Step', value: almanacButton('Almanac Systems', '!Almanac-Systems') }]);
             const action = worldItem(world.quickActions, args.id);
-            if (!action) return sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: 'That quick action was not found.' }, { label: 'Next Step', value: GameAssist.createButton('Almanac Home', '!aa-gm') }]);
+            if (!action) return sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: 'That quick action was not found.' }, { label: 'Next Step', value: almanacButton('Almanac Home', '!aa-gm') }]);
             if (action.kind !== 'landmark') return showMaster(msg);
             const moment = currentMoment();
             const profile = profileFor();
@@ -25060,7 +25065,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (delta <= 0) delta += minutesPerDay;
             const result = commitWorldMinute(ensureAlmanacRuntime().time.worldMinute + delta, `Advanced until ${action.landmark}`, msg);
             if (result.ok) showMaster(msg);
-            else sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: GameAssist.createButton('Almanac Home', '!aa-gm') }]);
+            else sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: almanacButton('Almanac Home', '!aa-gm') }]);
         }
 
         // EXEMPT: These editable setting seeds are game abstractions, not climate
@@ -25087,6 +25092,116 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ground: biome.ground, water: biome.water, vegetation: biome.vegetation, tags: copy(biome.tags) });
         }));
         const CURRENT_SETTING_FIELDS = Object.freeze({ temperatureDeltaF: 'Temperature adjustment (F)', humidityDelta: 'Humidity adjustment (points)', precipitationDelta: 'Precipitation adjustment (points)', windDeltaMph: 'Wind adjustment (mph)' });
+
+        // EXEMPT: Palette values are editable tabletop approximations, not a physical
+        // simulation. Each dimension contributes once; selecting a new value replaces
+        // that dimension. The four columns are F, humidity points, rain points, mph.
+        const CURRENT_LAYER_LABELS = Object.freeze({ biome: 'Biome', geography: 'Geography', terrain: 'Terrain', environment: 'Environment', hydrology: 'Hydrology', vegetation: 'Vegetation' });
+        const CURRENT_LAYER_SEEDS = Object.freeze({
+            biome: [
+                ['temperate-woodland', 0, 5, 0, -2], ['temperate-rainforest', -2, 12, 15, -3],
+                ['tropical-rainforest', 3, 20, 20, -3], ['boreal-forest', -5, 0, 5, -2],
+                ['grassland', 0, -5, -5, 2], ['dry-steppe', 0, -15, -15, 4],
+                ['savanna', 5, -5, -5, 2], ['hot-desert', 10, -25, -25, 2],
+                ['cold-desert', -10, -20, -20, 5], ['tundra', -15, 0, 0, 4],
+                ['alpine', -15, -5, 0, 5], ['wetland', -5, 15, 10, -2],
+                ['mangrove', 3, 17, 10, -4], ['shrubland', 2, -13, -15, 1],
+                ['ice-sheet', -25, -15, -10, 6], ['fungal-cavern', -5, 15, 0, -5]
+            ],
+            geography: [
+                ['rolling-lowlands', 0, 0, 0, 0], ['coastal-plain', 0, 3, 5, 2],
+                ['river-valley', 0, 3, 0, -1], ['high-plateau', -5, -3, 0, 3],
+                ['mountain-range', -10, 0, 0, 5], ['rain-shadow', 2, -5, -8, 1],
+                ['dune-field', 2, -5, -5, 2], ['wetland-basin', 0, 5, 5, -1],
+                ['island-chain', 0, 5, 8, 4], ['glacial-valley', -8, 0, 0, 2],
+                ['karst', 0, 0, 0, 0], ['volcanic-upland', -5, -2, 0, 3]
+            ],
+            terrain: [
+                ['level', 'Level Ground', 0, 0, 0, 0, { terrain: 'Level ground', ground: 'Firm, even ground' }],
+                ['hills', 'Rolling Hills', -1, 0, 0, 2, { terrain: 'Rolling hills', ground: 'Sloping ground' }],
+                ['steep', 'Steep Slopes', -3, 0, 0, 3, { terrain: 'Steep slopes', ground: 'Steep, uneven ground' }],
+                ['rocky', 'Rocky Ground', 0, 0, 0, 1, { terrain: 'Rocky ground', ground: 'Loose stones and uneven rock' }],
+                ['sand', 'Loose Sand', 2, -3, 0, 0, { terrain: 'Sandy ground', ground: 'Loose sand' }],
+                ['mud', 'Soft Mud', -1, 5, 0, 0, { terrain: 'Muddy ground', ground: 'Soft mud' }],
+                ['snow', 'Snow Cover', -5, 0, 0, 0, { ground: 'Snow-covered ground' }],
+                ['road', 'Maintained Road', 0, 0, 0, 0, { ground: 'Maintained road' }]
+            ],
+            environment: [
+                ['open', 'Open Country', 0, 0, 0, 2, {}],
+                ['exposed', 'Exposed Ridge', -2, -2, 0, 5, {}],
+                ['sheltered', 'Sheltered Hollow', 1, 3, 0, -4, {}],
+                ['settlement', 'Built-Up Settlement', 2, -2, 0, -2, {}],
+                ['ruins', 'Open-Air Ruins', 0, 0, 0, -1, { ground: 'Broken paving and rubble' }]
+            ],
+            hydrology: [
+                ['dry', 'Little Surface Water', 1, -5, -3, 0, { water: 'Little surface water' }],
+                ['stream', 'Streams', 0, 3, 0, 0, { water: 'Streams and small pools' }],
+                ['river', 'River', -1, 5, 0, 0, { water: 'River channels and banks' }],
+                ['lake', 'Lake', -1, 7, 2, 0, { water: 'Lake and shoreline' }],
+                ['marsh', 'Marsh', 0, 10, 3, -1, { water: 'Standing water and saturated ground', ground: 'Waterlogged ground' }],
+                ['estuary', 'Estuary', 0, 8, 3, 1, { water: 'Tidal channels and brackish water', coastal: true }],
+                ['coast', 'Open Coast', 0, 5, 3, 3, { water: 'Open sea and shoreline', coastal: true }],
+                ['frozen', 'Frozen Waterways', -4, -2, 0, 0, { water: 'Frozen channels and ice-covered pools' }]
+            ],
+            vegetation: [
+                ['bare', 'Bare Ground', 1, -5, 0, 2, { vegetation: 'Bare ground with little vegetation' }],
+                ['grass', 'Grasses', 0, 0, 0, 0, { vegetation: 'Grasses and low plants' }],
+                ['scrub', 'Scrub', 0, -2, 0, -1, { vegetation: 'Scrub and scattered shrubs' }],
+                ['woodland', 'Open Woodland', -1, 3, 0, -2, { vegetation: 'Open woodland' }],
+                ['forest', 'Dense Forest', -2, 6, 2, -4, { vegetation: 'Dense forest canopy' }],
+                ['reeds', 'Reeds and Marsh Plants', 0, 5, 0, -1, { vegetation: 'Reeds and marsh plants' }],
+                ['farmland', 'Cultivated Fields', 0, 1, 0, 0, { vegetation: 'Cultivated fields and hedges' }],
+                ['fungi', 'Fungal Growth', 0, 5, 0, 0, { vegetation: 'Fungal growth' }]
+            ]
+        });
+
+        function currentLayerChoices(kind) {
+            return (CURRENT_LAYER_SEEDS[kind] || []).map(row => {
+                const [id, ...values] = row;
+                const source = kind === 'biome' ? BIOME_PALETTE.find(item => item.id === id) : kind === 'geography' ? GEOGRAPHY_PALETTE.find(item => item.id === id) : null;
+                const [temperatureDeltaF, humidityDelta, precipitationDelta, windDeltaMph] = source ? values : values.slice(1);
+                const detail = kind === 'biome' ? { ground: source.ground, water: source.water, vegetation: source.vegetation, tags: copy(source.tags) }
+                    : kind === 'geography' ? { terrain: source.terrain, elevationFt: source.elevationFt, coastal: source.coastal }
+                    : values[5];
+                return { id, name: source?.name || values[0], temperatureDeltaF, humidityDelta, precipitationDelta, windDeltaMph, ...detail };
+            });
+        }
+
+        // Only this module's links change: quoted query answers must survive the
+        // Markdown-to-HTML boundary rather than become link titles or close hrefs.
+        function almanacButton(label, command) {
+            return GameAssist.createButton(label, command).replace(/"/g, '&#34;');
+        }
+
+        function currentSettingsContributions(settings) {
+            return [{ name: settings.profile.name, ...settings.profile }, ...Object.entries(settings.layers || {}).map(([kind, layer]) => ({ ...layer, name: `${CURRENT_LAYER_LABELS[kind]}: ${layer.name}` }))];
+        }
+
+        function currentSettingsLandscape(settings) {
+            const result = copy(settings.profile);
+            // Broader choices establish context; specific choices and GM descriptions
+            // override it. No second weather adjustment is derived from these labels.
+            ['biome', 'geography', 'terrain', 'environment', 'hydrology', 'vegetation'].forEach(kind => {
+                const layer = settings.layers?.[kind];
+                if (!layer) return;
+                ['terrain', 'ground', 'water', 'vegetation', 'elevationFt', 'coastal'].forEach(key => { if (layer[key] !== undefined) result[key] = layer[key]; });
+            });
+            Object.assign(result, settings.descriptionOverrides || {});
+            result.tags = [...new Set([...(settings.layers?.biome?.tags || settings.profile.tags || []), ...Object.entries(settings.layers || {}).filter(([kind]) => kind !== 'biome').flatMap(([, layer]) => layer.tags || [])])].slice(0, POLICY.almanac.maximumClimateTags);
+            return result;
+        }
+
+        function splitCurrentProfile(settings) {
+            if (settings.layers !== undefined) return;
+            settings.layers = {};
+            const seed = ECOREGION_PALETTE.find(item => item.id === settings.profile.id);
+            if (!seed) return; // Preserve unrecognized/custom legacy influences verbatim.
+            ['biome', 'geography'].forEach(kind => {
+                const layer = currentLayerChoices(kind).find(item => item.id === seed[`${kind}Id`]);
+                settings.layers[kind] = copy(layer);
+                Object.keys(CURRENT_SETTING_FIELDS).forEach(key => { settings.profile[key] -= layer[key]; });
+            });
+        }
 
         /** Validate a portable settings snapshot without resolving world references.
          * Missing or malformed fields are refused, not coerced to true/zero. The
@@ -25126,6 +25241,29 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     visibilityOverride: text(source.visibilityOverride, true), groundOverride: text(source.groundOverride, true)
                 };
                 if (!Object.prototype.hasOwnProperty.call(ENVIRONMENT_PRESETS, settings.environmentPresetId)) throw new Error('Choose an existing environment preset.');
+                if (source.layers !== undefined) {
+                    settings.layers = {};
+                    Object.entries(object(source.layers)).forEach(([kind, rawLayer]) => {
+                        if (!Object.prototype.hasOwnProperty.call(CURRENT_LAYER_LABELS, kind)) throw new Error('This settings layer is not supported. The saved setup was not changed.');
+                        const layer = object(rawLayer);
+                        const validated = { id: text(layer.id), name: text(layer.name), ...deltas(layer) };
+                        ['terrain', 'ground', 'water', 'vegetation'].forEach(key => { if (layer[key] !== undefined) validated[key] = text(layer[key]); });
+                        if (layer.elevationFt !== undefined) validated.elevationFt = number(layer.elevationFt, -2000, 40000);
+                        if (layer.coastal !== undefined) {
+                            if (typeof layer.coastal !== 'boolean') throw new Error('Coastal influence must be true or false.');
+                            validated.coastal = layer.coastal;
+                        }
+                        if (layer.tags !== undefined) validated.tags = tags(layer.tags);
+                        settings.layers[kind] = validated;
+                    });
+                }
+                if (source.descriptionOverrides !== undefined) {
+                    settings.descriptionOverrides = {};
+                    Object.entries(object(source.descriptionOverrides)).forEach(([key, value]) => {
+                        if (!['terrain', 'ground', 'water', 'vegetation'].includes(key)) throw new Error('That landscape description is not supported.');
+                        settings.descriptionOverrides[key] = text(value);
+                    });
+                }
                 return { ok: true, settings };
             } catch (error) { return { ok: false, message: error.message }; }
         }
@@ -25146,11 +25284,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 schemaVersion: 1,
                 baseline: { id: base.profileId || 'regional', name: base.profileName, temperatureF: base.temperatureF, humidity: base.humidity,
                     precipitationChance: base.precipitationChance, windMph: base.windMph, seasonalScale: configured?.seasonalScale ?? 1, tags: copy(base.tags) },
-                profile: { id: 'captured-context', name: 'Current local influences',
-                    temperatureDeltaF: clampNumber(Math.round(-policy.elevationCoolingFPer1000Ft * (place.geography.elevationFt - base.referenceElevationFt) / 1000), -100, 100, 0),
-                    humidityDelta: 0, precipitationDelta: (place.geography.coastal ? policy.coastalPrecipitationBonus : 0) + (wet ? policy.wetBiomePrecipitationBonus : 0) - (dry ? policy.dryBiomePrecipitationPenalty : 0),
-                    windDeltaMph: place.geography.coastal ? 2 : 0, terrain: place.geography.terrain, elevationFt: place.geography.elevationFt, coastal: place.geography.coastal,
+                profile: { id: 'captured-context', name: 'Local profile adjustments',
+                    temperatureDeltaF: 0, humidityDelta: 0, precipitationDelta: 0, windDeltaMph: 0,
+                    terrain: place.geography.terrain, elevationFt: place.geography.elevationFt, coastal: place.geography.coastal,
                     ground: place.biome.ground, water: place.biome.water, vegetation: place.biome.vegetation, tags: copy(place.biome.tags) },
+                layers: {
+                    biome: { id: place.biome.id, name: place.biome.name, temperatureDeltaF: 0, humidityDelta: 0,
+                        precipitationDelta: (wet ? policy.wetBiomePrecipitationBonus : 0) - (dry ? policy.dryBiomePrecipitationPenalty : 0), windDeltaMph: 0,
+                        ground: place.biome.ground, water: place.biome.water, vegetation: place.biome.vegetation, tags: copy(place.biome.tags) },
+                    geography: { id: place.geography.id, name: place.geography.name,
+                        temperatureDeltaF: clampNumber(Math.round(-policy.elevationCoolingFPer1000Ft * (place.geography.elevationFt - base.referenceElevationFt) / 1000), -100, 100, 0),
+                        humidityDelta: 0, precipitationDelta: place.geography.coastal ? policy.coastalPrecipitationBonus : 0, windDeltaMph: place.geography.coastal ? 2 : 0,
+                        terrain: place.geography.terrain, elevationFt: place.geography.elevationFt, coastal: place.geography.coastal }
+                },
                 adjustments: { temperatureDeltaF: place.location.temperatureDeltaF, humidityDelta: 0, precipitationDelta: 0, windDeltaMph: place.location.windDeltaMph },
                 environmentPresetId: place.location.environmentPresetId, temporalContextId: place.location.temporalContextId,
                 visibilityOverride: place.location.visibilityOverride, groundOverride: place.location.groundOverride
@@ -25170,24 +25316,40 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function currentSettingsStamp(settings = currentSettingsRecord()) {
             // A nonnumeric prefix prevents the shared argument parser changing this id.
-            return `s${worldPackFingerprint(JSON.stringify({ settings, world: normalizeWorldConfig(), climate: normalizeClimateConfig() }))}`;
+            return `s${worldPackFingerprint(JSON.stringify({ settings, world: normalizeWorldConfig(), climate: normalizeClimateConfig(), seasons: currentSettingsSeasonNames(settings) }))}`;
         }
 
         function currentSettingsButton(label, action = '', settings = currentSettingsRecord()) {
-            return GameAssist.createButton(label, `!aa current ${action}${action ? ` --stamp ${currentSettingsStamp(settings)}` : ''}`.trim());
+            return almanacButton(label, `!aa current ${action}${action ? ` --stamp ${currentSettingsStamp(settings)}` : ''}`.trim());
+        }
+
+        function currentSettingsSeason(settings) {
+            return timeAvailable() ? contextualMoment({ temporalContext: temporalContext(settings.temporalContextId) }, ensureAlmanacRuntime().time.worldMinute).moment?.season || currentSeason() : currentSeason();
+        }
+
+        function currentSettingsSeasonNames(settings) {
+            const calendar = profileFor();
+            return [...new Set([currentSettingsSeason(settings), ...(calendar.months || []).map(item => item.season), ...(calendar.seasonRanges || []).map(item => item.name)].filter(name => name && name !== 'Unspecified'))];
+        }
+
+        function currentSettingsSeasonInfluence(settings, season) {
+            const rule = normalizeClimateConfig().seasonRules.find(item => item.name.toLowerCase() === String(season).toLowerCase());
+            const drySummer = settings.baseline.tags.includes('dry-summer') ? (Number(rule?.temperatureBias || 0) > 0 ? -20 : Number(rule?.temperatureBias || 0) < 0 ? 20 : 0) : 0;
+            return { name: season || 'Unspecified', mapped: Boolean(rule), temperatureDeltaF: Number(rule?.temperatureBias || 0) * settings.baseline.seasonalScale,
+                humidityDelta: Number(rule?.humidityDelta || 0), precipitationDelta: Number(rule?.precipitationDelta || 0) + drySummer, windDeltaMph: Number(rule?.windDelta || 0) };
         }
 
         function currentSettingsClimate(settings, season) {
-            const { baseline: base, profile, adjustments } = settings;
-            const rule = normalizeClimateConfig().seasonRules.find(item => item.name.toLowerCase() === String(season).toLowerCase());
-            const drySummer = base.tags.includes('dry-summer') ? (Number(rule?.temperatureBias || 0) > 0 ? -20 : Number(rule?.temperatureBias || 0) < 0 ? 20 : 0) : 0;
-            return { model: 'matrix', profileId: base.id, profileName: base.name, season, seasonMapped: Boolean(rule),
+            const base = settings.baseline, seasonal = currentSettingsSeasonInfluence(settings, season);
+            const contributions = [...currentSettingsContributions(settings), settings.adjustments, seasonal];
+            const sum = key => contributions.reduce((total, part) => total + part[key], 0);
+            return { model: 'matrix', profileId: base.id, profileName: base.name, season, seasonMapped: seasonal.mapped,
                 seasonAuthority: timeAvailable() ? 'TimeAlmanac' : 'ClimateAlmanac manual setting',
-                temperatureF: Math.round(clampNumber(base.temperatureF + profile.temperatureDeltaF + adjustments.temperatureDeltaF + Number(rule?.temperatureBias || 0) * base.seasonalScale, POLICY.almanac.minimumClimateTemperatureF, POLICY.almanac.maximumClimateTemperatureF, base.temperatureF)),
-                humidity: clampNumber(base.humidity + profile.humidityDelta + adjustments.humidityDelta + Number(rule?.humidityDelta || 0), 0, 100, base.humidity),
-                precipitationChance: clampNumber(base.precipitationChance + profile.precipitationDelta + adjustments.precipitationDelta + Number(rule?.precipitationDelta || 0) + drySummer, 0, 100, base.precipitationChance),
-                windMph: clampNumber(base.windMph + profile.windDeltaMph + adjustments.windDeltaMph + Number(rule?.windDelta || 0), 0, POLICY.almanac.maximumClimateWindMph, base.windMph),
-                tags: [...new Set([...base.tags, ...profile.tags])].slice(0, POLICY.almanac.maximumClimateTags) };
+                temperatureF: Math.round(clampNumber(base.temperatureF + sum('temperatureDeltaF'), POLICY.almanac.minimumClimateTemperatureF, POLICY.almanac.maximumClimateTemperatureF, base.temperatureF)),
+                humidity: clampNumber(base.humidity + sum('humidityDelta'), 0, 100, base.humidity),
+                precipitationChance: clampNumber(base.precipitationChance + sum('precipitationDelta'), 0, 100, base.precipitationChance),
+                windMph: clampNumber(base.windMph + sum('windDeltaMph'), 0, POLICY.almanac.maximumClimateWindMph, base.windMph),
+                tags: [...new Set([...base.tags, ...currentSettingsLandscape(settings).tags])].slice(0, POLICY.almanac.maximumClimateTags) };
         }
 
         function storeCurrentSettings(settings) {
@@ -25205,18 +25367,41 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const location = worldItem(world.locations, world.activeLocationId);
             const baseline = validateCurrentSettings(location.settingsSnapshot || captureCurrentSettings(location.id)).settings;
             const changed = JSON.stringify(settings) !== JSON.stringify(baseline);
-            const season = timeAvailable() ? contextualMoment({ temporalContext: temporalContext(settings.temporalContextId) }, ensureAlmanacRuntime().time.worldMinute).moment?.season : currentSeason();
-            const climate = currentSettingsClimate(settings, season || currentSeason());
+            const climate = currentSettingsClimate(settings, currentSettingsSeason(settings));
+            const display = copy(settings);
+            splitCurrentProfile(display);
             sendPanel(msg, 'Current Settings', [
                 ...(note ? [{ label: 'Result', value: _sanitize(note) }] : []),
                 { label: 'Place', value: `${_sanitize(locationDisplayName(location))}${changed ? '<br>Unsaved settings; the saved place is unchanged.' : ''}` },
-                { label: 'Regional Baseline', value: `${_sanitize(settings.baseline.name)} ${currentSettingsButton('Choose Baseline', 'baselines', settings)}` },
-                { label: 'Local Profile', value: `${_sanitize(settings.profile.name)} ${currentSettingsButton('Choose Ecoregion', 'profiles', settings)}` },
-                { label: 'Weather Starting Point', value: `${climate.temperatureF} F | ${climate.humidity}% humidity<br>${climate.precipitationChance}% precipitation chance | ${climate.windMph} mph wind<br>Season: ${_sanitize(climate.season)}` },
+                { label: 'Climate', value: `${_sanitize(settings.baseline.name)} ${currentSettingsButton('Choose Climate', 'baselines', settings)}` },
+                { label: 'Biome', value: `${_sanitize(display.layers.biome?.name || 'Existing landscape')} ${currentSettingsButton('Choose Biome', 'layer --kind biome', settings)}` },
+                { label: 'Build Your Setting', value: `${currentSettingsButton('Ecoregion Starters', 'profiles', settings)} ${currentSettingsButton('Local Details', 'details', settings)}` },
+                { label: 'Season', value: `${_sanitize(climate.season || 'Unspecified')}${climate.seasonMapped ? '' : ' (weather response not set)'} ${currentSettingsButton('Seasons', 'seasons', settings)}` },
                 ...(!submoduleEnabled('climate') ? [{ label: 'Climate Is Off', value: 'Weather uses its fallback until Climate is enabled. Your settings are preserved.' }] : []),
-                { label: 'Actions', value: `${currentSettingsButton('Generate Weather', 'generate', settings)} ${currentSettingsButton('Adjust Settings', 'adjust', settings)}` },
+                { label: 'Weather', value: `${currentSettingsButton('Generate Weather', 'generate', settings)} ${currentSettingsButton('Weather Breakdown', 'breakdown', settings)}` },
                 { label: 'Locations', value: `${currentSettingsButton('Save Current Settings', 'save-menu', settings)} ${currentSettingsButton('Recall Location', 'locations', settings)}` },
-                { label: 'Return', value: `${GameAssist.createButton('Almanac Home', '!aa-gm')} ${currentSettingsButton('How This Works', 'help', settings)}` }
+                { label: 'More', value: `${currentSettingsButton('Fine-Tune Values', 'adjust', settings)} ${currentSettingsButton('How This Works', 'help', settings)} ${almanacButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function currentInfluenceText(value) {
+            const signed = number => `${number >= 0 ? '+' : ''}${Math.round(number * 10) / 10}`;
+            return `${signed(value.temperatureDeltaF)} F | ${signed(value.humidityDelta)} humidity points<br>${signed(value.precipitationDelta)} precipitation points | ${signed(value.windDeltaMph)} mph`;
+        }
+
+        function showCurrentBreakdown(msg, settings) {
+            const season = currentSettingsSeasonInfluence(settings, currentSettingsSeason(settings));
+            const climate = currentSettingsClimate(settings, season.name), base = settings.baseline;
+            const format = value => `${value.temperatureF} F | ${value.humidity}% humidity<br>${value.precipitationChance}% precipitation chance | ${value.windMph} mph`;
+            sendPanel(msg, 'Weather Breakdown', [
+                { label: 'Climate Baseline', value: `${_sanitize(base.name)}<br>${format(base)}` },
+                ...currentSettingsContributions(settings).map(part => ({ label: part.name, value: currentInfluenceText(part) })),
+                { label: 'GM Adjustments', value: currentInfluenceText(settings.adjustments) },
+                { label: `Season: ${season.name}`, value: `${season.mapped ? currentInfluenceText(season) : 'No weather response assigned; no seasonal adjustment.'}<br>Temperature response strength: ${base.seasonalScale}` },
+                { label: 'Next Roll Starts From', value: format(climate) },
+                { label: 'Reading This', value: 'Each influence is added once. Percentages stay within 0-100; wind cannot fall below zero. Generated weather varies around this starting point. Existing weather stays unchanged until you generate again.' },
+                ...(!submoduleEnabled('climate') ? [{ label: 'Climate Is Off', value: 'These values are a preview only. Weather currently uses its fallback.' }] : []),
+                { label: 'Actions', value: `${currentSettingsButton('Generate Weather', 'generate', settings)} ${currentSettingsButton('Seasons', 'seasons', settings)} ${currentSettingsButton('Current Settings', '', settings)}` }
             ]);
         }
 
@@ -25230,6 +25415,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             try {
                 const body = input.replace(/^current(?:-|\s)*/i, '').trim();
                 const action = body.split(/\s+/)[0].toLowerCase() || 'menu';
+                // Refuse unconsumed text instead of letting the shared parser save
+                // only the first word or the prefix before an embedded double quote.
+                const argumentText = body.replace(/^\S+/, '');
+                if (!/^(?:\s+--[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*(?:\s+(?!--)(?:"[^"]*"|[^\s"]+))?)*\s*$/.test(argumentText)) throw new Error('The entry could not be read completely. Use the menu again; leave double quotation marks out of names and descriptions. Nothing was changed.');
                 const args = _parseArgs(body).args;
                 if (action === 'discard') {
                     if (String(args.confirm).toLowerCase() !== 'yes') return showCurrentSettings(msg, 'Working settings unchanged.');
@@ -25247,10 +25436,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const paginate = (items, title, row) => {
                     const count = Math.max(1, Math.ceil(items.length / POLICY.almanac.palettePageSize));
                     const page = Math.floor(clampNumber(args.page, 1, count, 1));
-                    sendPanel(msg, title, [...items.slice((page - 1) * POLICY.almanac.palettePageSize, page * POLICY.almanac.palettePageSize).map(row),
-                        { label: 'Pages', value: `${page} of ${count} ${page > 1 ? currentSettingsButton('Previous', `${action} --page ${page - 1}`) : ''} ${page < count ? currentSettingsButton('Next', `${action} --page ${page + 1}`) : ''}` },
+                    const start = (page - 1) * POLICY.almanac.palettePageSize;
+                    const choices = items.slice(start, page * POLICY.almanac.palettePageSize).map((item, index) => row(item, start + index));
+                    const rows = [];
+                    for (let index = 0; index < choices.length; index += 2) rows.push({ label: `Choices ${start + index + 1}-${start + Math.min(index + 2, choices.length)}`, value: choices.slice(index, index + 2).join('<br>') });
+                    const route = `${action}${args.kind && CURRENT_LAYER_LABELS[args.kind] ? ` --kind ${args.kind}` : ''}`;
+                    sendPanel(msg, title, [...rows,
+                        ...(count > 1 ? [{ label: 'Pages', value: `${page} of ${count} ${page > 1 ? currentSettingsButton('Previous', `${route} --page ${page - 1}`) : ''} ${page < count ? currentSettingsButton('Next', `${route} --page ${page + 1}`) : ''}` }] : []),
                         { label: 'Return', value: back() }]);
                 };
+                // Numbered choices carry no quoted IDs through Roll20's link parser.
+                // The settings/library stamp prevents an old index selecting new data.
+                const chosen = items => Number.isInteger(args.choice) && args.choice >= 0 ? items[args.choice] : undefined;
                 const profiles = () => {
                     const saved = normalizeWorldConfig().currentSettingProfiles || [];
                     if (!Array.isArray(saved) || saved.length > POLICY.almanac.maximumEcoregionProfiles) throw new Error('The custom setting profiles need repair in World Setup.');
@@ -25258,50 +25455,127 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 };
                 if (['menu', 'gm', 'dm', 'status'].includes(action)) return showCurrentSettings(msg);
                 if (action === 'help') return sendPanel(msg, 'Current Settings Quick Guide', [
-                    { label: 'Prepare', value: 'Choose a regional baseline, then an ecoregion. Adjust the numbers or descriptions when your setting needs something different.' },
+                    { label: 'Start Simply', value: 'Choose Climate for the regional weather pattern and Biome for the landscape. Ecoregion Starters set a matching biome and geography in one choice; your climate stays yours.' },
+                    { label: 'Add Detail', value: 'Local Details offers optional geography, terrain, environment, water, and vegetation. Each choice replaces that layer, rather than stacking repeated clicks. Weather Breakdown shows the actual adjustments.' },
                     { label: 'Generate', value: 'Generate Weather uses this setup with the current calendar season. Profile changes do not replace existing weather by themselves.' },
                     { label: 'Keep', value: 'Save Current Settings records a named location. Recall restores its setup, not an old date or weather roll. Updating an existing place requires confirmation.' },
-                    { label: 'Customize', value: 'Adjust Settings can change the baseline, local influences, and your extra adjustments. Save Custom Profile keeps the edited local influences for reuse.' },
+                    { label: 'Customize', value: 'Fine-Tune Values changes individual influences or your extra adjustments. Save Custom Profile keeps the local layers for reuse. These are tabletop weather guidelines, not a climate simulation; indoor weather and underground microclimates need GM overrides.' },
                     { label: 'Return', value: back() }
                 ]);
-                if (action === 'baselines') return paginate(Object.values(climateProfileMap(normalizeClimateConfig())), 'Choose Regional Baseline', profile => ({
-                    label: profile.name, value: `${profile.temperatureF} F | ${profile.humidity}% humidity<br>${profile.precipitationChance}% precipitation | ${profile.windMph} mph ${currentSettingsButton('Use Baseline', `baseline --id "${profile.id}"`)}`
-                }));
+                if (action === 'breakdown') return showCurrentBreakdown(msg, settings);
+                if (['baselines', 'climates'].includes(action)) return paginate(Object.values(climateProfileMap(normalizeClimateConfig())), 'Choose Climate', (profile, index) => currentSettingsButton(profile.name, `baseline --choice ${index}`));
                 if (action === 'baseline') {
-                    const base = climateProfile(String(args.id || ''));
-                    if (!base) throw new Error('Choose a baseline from the list.');
+                    const base = args.choice !== undefined ? chosen(Object.values(climateProfileMap(normalizeClimateConfig()))) : typeof args.id === 'string' ? climateProfile(args.id) : null;
+                    if (!base) throw new Error('No climate was selected. Open Choose Climate and click a named climate.');
                     settings.baseline = { id: base.id, name: base.name, temperatureF: base.temperatureF, humidity: base.humidity, precipitationChance: base.precipitationChance,
                         windMph: base.windMph, seasonalScale: base.seasonalScale ?? 1, tags: copy(base.tags || []) };
                     storeCurrentSettings(settings);
-                    return showCurrentSettings(msg, 'Baseline changed. Saved locations and current weather are unchanged.');
+                    return showCurrentSettings(msg, 'Climate baseline changed. Saved locations and current weather are unchanged.');
                 }
-                if (action === 'profiles') return paginate(profiles(), 'Ecoregion Influence Matrix', entry => ({ label: entry.profile.name,
-                    value: `Temperature ${entry.profile.temperatureDeltaF >= 0 ? '+' : ''}${entry.profile.temperatureDeltaF} F | Humidity ${entry.profile.humidityDelta}<br>Precipitation ${entry.profile.precipitationDelta} points | Wind ${entry.profile.windDeltaMph} mph ${currentSettingsButton('Use Profile', `profile --id "${entry.key}"`)}` }));
+                if (action === 'profiles') return paginate(profiles(), 'Ecoregion Starters', (entry, index) => currentSettingsButton(entry.profile.name, `profile --choice ${index}`));
                 if (action === 'profile') {
-                    const entry = profiles().find(item => item.key === args.id);
+                    const entry = args.choice !== undefined ? chosen(profiles()) : profiles().find(item => item.key === args.id);
                     if (!entry) throw new Error('Choose an ecoregion from the matrix.');
                     settings.profile = copy(entry.profile);
+                    const savedLayers = settings.profile.components;
+                    const savedDescriptions = settings.profile.descriptionOverrides;
+                    delete settings.profile.components;
+                    delete settings.profile.descriptionOverrides;
+                    // A starter replaces the biome/geography pair; other chosen local
+                    // details survive. Saved custom profiles restore their own layers.
+                    const extras = Object.fromEntries(Object.entries(settings.layers || {}).filter(([kind]) => !['biome', 'geography'].includes(kind)));
+                    delete settings.layers;
+                    splitCurrentProfile(settings);
+                    settings.layers = savedLayers !== undefined ? copy(savedLayers) : { ...settings.layers, ...extras };
+                    if (savedDescriptions !== undefined) settings.descriptionOverrides = copy(savedDescriptions);
                     storeCurrentSettings(settings);
                     return showCurrentSettings(msg, 'Local influences replaced. Earlier profile adjustments were not stacked.');
+                }
+                if (action === 'details') {
+                    const display = copy(settings);
+                    splitCurrentProfile(display);
+                    return sendPanel(msg, 'Local Details', [
+                        ...Object.entries(CURRENT_LAYER_LABELS).filter(([kind]) => kind !== 'biome').map(([kind, label]) => ({ label,
+                            value: `${_sanitize(display.layers[kind]?.name || 'No extra influence')}<br>${currentSettingsButton(`Choose ${label}`, `layer --kind ${kind}`)}${display.layers[kind] ? ` ${currentSettingsButton('Remove', `remove-layer --kind ${kind}`)}` : ''}` })),
+                        { label: 'Adjust', value: `${currentSettingsButton('Fine-Tune Values', 'adjust')} ${currentSettingsButton('Weather Breakdown', 'breakdown')}` },
+                        { label: 'Return', value: back() }
+                    ]);
+                }
+                if (['layer', 'choose-layer', 'remove-layer'].includes(action)) {
+                    if (!Object.prototype.hasOwnProperty.call(CURRENT_LAYER_LABELS, args.kind)) throw new Error('Choose a category from Local Details.');
+                    const choices = currentLayerChoices(args.kind);
+                    if (action === 'layer') return paginate(choices, `Choose ${CURRENT_LAYER_LABELS[args.kind]}`, (layer, index) => currentSettingsButton(layer.name, `choose-layer --kind ${args.kind} --choice ${index}`));
+                    const layer = chosen(choices);
+                    if (action !== 'remove-layer' && !layer) throw new Error('Choose an option from the current list.');
+                    splitCurrentProfile(settings);
+                    if (action === 'remove-layer') delete settings.layers[args.kind];
+                    else settings.layers[args.kind] = copy(layer);
+                    storeCurrentSettings(settings);
+                    const masked = Object.keys(settings.descriptionOverrides || {}).filter(key => layer?.[key] !== undefined);
+                    return showCurrentSettings(msg, `${CURRENT_LAYER_LABELS[args.kind]} ${action === 'remove-layer' ? 'extra influence removed' : 'changed'}. Current weather is unchanged.${masked.length ? ` Your custom ${masked.join(', ')} description still takes precedence; clear it in Fine-Tune Values to use the new description.` : ''}${layer?.id === 'fungal-cavern' ? ' Underground weather is not modeled; use Environment Override for indoor conditions.' : ''}`);
+                }
+                if (['seasons', 'season', 'season-set'].includes(action)) {
+                    const calendar = profileFor();
+                    const names = currentSettingsSeasonNames(settings);
+                    if (action === 'seasons') return sendPanel(msg, 'Seasons and Weather', [
+                        { label: 'Now', value: `${_sanitize(currentSettingsSeason(settings))}<br>${timeAvailable() ? 'Follows the calendar and local date.' : 'Uses your manual season.'}` },
+                        { label: 'Weather Response', value: names.map((name, index) => currentSettingsButton(name, `season --choice ${index}`)).join(' ') || 'Set the calendar season first.' },
+                        { label: 'Scope', value: 'Responses apply wherever that season name is used. Climate temperature strength scales the seasonal temperature change; 0 means no seasonal temperature change.' },
+                        { label: 'Calendar', value: timeAvailable() ? almanacButton(calendar.id === 'wayfarer' ? 'Season Dates' : 'Custom Calendar', '!aa-wayfarer stage seasons') : almanacButton('Set Season', '!aa-climate season "?{Season name}"') },
+                        { label: 'Return', value: `${currentSettingsButton('Weather Breakdown', 'breakdown')} ${back()}` }
+                    ]);
+                    const name = chosen(names);
+                    if (!name) throw new Error('Open Seasons and choose a current calendar season.');
+                    const rule = normalizeClimateConfig().seasonRules.find(item => item.name.toLowerCase() === name.toLowerCase());
+                    const confirm = '--confirm ?{Update this seasonal response for every location using it?|No,no|Yes,yes}';
+                    if (action === 'season') return sendPanel(msg, `${name}: Weather Response`, [
+                        { label: 'Current Response', value: rule ? currentInfluenceText({ temperatureDeltaF: rule.temperatureBias, humidityDelta: rule.humidityDelta, precipitationDelta: rule.precipitationDelta, windDeltaMph: rule.windDelta }) : 'No response assigned. Choose one below.' },
+                        { label: 'Choose Response', value: SEASON_PALETTE.map(seed => currentSettingsButton(seed.name, `season-set --choice ${args.choice} --response ${seed.id} ${confirm}`)).join('<br>') },
+                        { label: 'Custom', value: currentSettingsButton('Enter Four Adjustments', `season-set --choice ${args.choice} --temp ?{Temperature adjustment F|${rule?.temperatureBias ?? 0}} --humidity ?{Humidity adjustment points|${rule?.humidityDelta ?? 0}} --precip ?{Precipitation adjustment points|${rule?.precipitationDelta ?? 0}} --wind ?{Wind adjustment mph|${rule?.windDelta ?? 0}} ${confirm}`) },
+                        { label: 'Return', value: currentSettingsButton('Seasons', 'seasons') }
+                    ]);
+                    if (String(args.confirm).toLowerCase() !== 'yes') return showCurrentSettings(msg, 'Seasonal responses unchanged.');
+                    const seed = SEASON_PALETTE.find(item => item.id === args.response);
+                    const response = seed ? { temperatureBias: seed.temperatureBias, humidityDelta: seed.humidityDelta, precipitationDelta: seed.precipitationDelta, windDelta: seed.windDelta }
+                        : { temperatureBias: args.temp, humidityDelta: args.humidity, precipitationDelta: args.precip, windDelta: args.wind };
+                    if (Object.values(response).some(value => !['string', 'number'].includes(typeof value) || String(value).trim() === '' || !Number.isFinite(Number(value)) || Number(value) < -100 || Number(value) > 100)) throw new Error('Enter four seasonal adjustments from -100 to 100. Nothing was changed.');
+                    const climate = normalizeClimateConfig(), remaining = climate.seasonRules.filter(item => item.name.toLowerCase() !== name.toLowerCase());
+                    if (remaining.length >= POLICY.almanac.maximumSeasonRules) throw new Error('The seasonal response limit has been reached.');
+                    climate.seasonRules = [...remaining, { name, ...Object.fromEntries(Object.entries(response).map(([key, value]) => [key, Number(value)])) }];
+                    ensureAlmanacRuntime().climate.revision++;
+                    ensureAlmanacRuntime().weather.forecast = [];
+                    return showCurrentSettings(msg, `Weather response updated for ${name}. Generate weather to use it now.`);
                 }
                 if (action === 'adjust') return sendPanel(msg, 'Adjust Current Settings', [
                     { label: 'Regional Baseline', value: currentSettingsButton('Edit Baseline Values', 'edit --group baseline') },
                     { label: 'Local Profile', value: currentSettingsButton('Edit Profile Influences', 'edit --group profile') },
                     { label: 'Extra Adjustments', value: currentSettingsButton('Edit GM Adjustments', 'edit --group adjustments') },
+                    ...(settings.layers ? [{ label: 'Layer Values', value: Object.entries(settings.layers).map(([kind, layer]) => currentSettingsButton(layer.name, `edit --group layer --kind ${kind}`)).join(' ') || 'No extra layers selected.' }] : []),
                     { label: 'Descriptions', value: ['terrain', 'ground', 'water', 'vegetation'].map(field => currentSettingsButton(`Change ${field}`, `set --group profile --field ${field} --value "?{New ${field} description}"`)).join(' ') },
+                    ...(Object.keys(settings.descriptionOverrides || {}).length ? [{ label: 'Custom Descriptions', value: Object.entries(settings.descriptionOverrides).map(([field, value]) => `${_sanitize(field)}: ${_sanitize(value)} ${currentSettingsButton('Use Layer Description', `clear-description --field ${field}`)}`).join('<br>') }] : []),
                     { label: 'Reuse', value: currentSettingsButton('Save Custom Profile', 'save-profile --name "?{Custom profile name}"') },
                     { label: 'Saved Setup', value: currentSettingsButton('Discard Working Changes', 'discard --confirm ?{Discard working changes and use the saved location settings?|No,no|Yes,yes}') },
                     { label: 'Return', value: back() }
                 ]);
+                if (action === 'clear-description') {
+                    if (!['terrain', 'ground', 'water', 'vegetation'].includes(args.field)) throw new Error('Choose a description in Fine-Tune Values.');
+                    if (settings.descriptionOverrides) delete settings.descriptionOverrides[args.field];
+                    storeCurrentSettings(settings);
+                    return showCurrentSettings(msg, 'Custom description removed; the selected landscape supplies that description again.');
+                }
                 if (action === 'edit') {
-                    if (!['baseline', 'profile', 'adjustments'].includes(args.group)) throw new Error('Choose which settings to adjust.');
+                    if (!['baseline', 'profile', 'adjustments', 'layer'].includes(args.group) || (args.group === 'layer' && !settings.layers?.[args.kind])) throw new Error('Choose which settings to adjust.');
                     const fields = args.group === 'baseline' ? { temperatureF: 'Baseline temperature (F)', humidity: 'Humidity (%)', precipitationChance: 'Precipitation chance (%)', windMph: 'Wind (mph)', seasonalScale: 'Season temperature strength (0-3)' } : CURRENT_SETTING_FIELDS;
-                    return sendPanel(msg, 'Edit Settings Values', Object.entries(fields).map(([key, label]) => ({ label, value: `${settings[args.group][key]} ${currentSettingsButton('Change', `set --group ${args.group} --field ${key} --value ?{${label}|${settings[args.group][key]}}`)}` })).concat([{ label: 'Return', value: currentSettingsButton('Adjust Settings', 'adjust') }]));
+                    const values = args.group === 'layer' ? settings.layers[args.kind] : settings[args.group];
+                    return sendPanel(msg, 'Edit Settings Values', Object.entries(fields).map(([key, label]) => ({ label, value: `${values[key]} ${currentSettingsButton('Change', `set --group ${args.group}${args.group === 'layer' ? ` --kind ${args.kind}` : ''} --field ${key} --value ?{${label}|${values[key]}}`)}` })).concat([{ label: 'Return', value: currentSettingsButton('Adjust Settings', 'adjust') }]));
                 }
                 if (action === 'set') {
-                    const fields = args.group === 'baseline' ? ['temperatureF', 'humidity', 'precipitationChance', 'windMph', 'seasonalScale'] : args.group === 'profile' ? [...Object.keys(CURRENT_SETTING_FIELDS), 'terrain', 'ground', 'water', 'vegetation'] : args.group === 'adjustments' ? Object.keys(CURRENT_SETTING_FIELDS) : [];
+                    const fields = args.group === 'baseline' ? ['temperatureF', 'humidity', 'precipitationChance', 'windMph', 'seasonalScale'] : args.group === 'profile' ? [...Object.keys(CURRENT_SETTING_FIELDS), 'terrain', 'ground', 'water', 'vegetation'] : args.group === 'adjustments' || (args.group === 'layer' && settings.layers?.[args.kind]) ? Object.keys(CURRENT_SETTING_FIELDS) : [];
                     if (!fields.includes(args.field) || !['number', 'string'].includes(typeof args.value) || String(args.value).trim() === '') throw new Error('Enter a value using Adjust Settings. Nothing was changed.');
-                    settings[args.group][args.field] = ['terrain', 'ground', 'water', 'vegetation'].includes(args.field) ? String(args.value) : Number(args.value);
+                    const values = args.group === 'layer' ? settings.layers[args.kind] : settings[args.group];
+                    const description = ['terrain', 'ground', 'water', 'vegetation'].includes(args.field);
+                    values[args.field] = description ? String(args.value) : Number(args.value);
+                    if (description) settings.descriptionOverrides = { ...(settings.descriptionOverrides || {}), [args.field]: String(args.value) };
                     storeCurrentSettings(settings);
                     return showCurrentSettings(msg, 'Working settings updated. Saved places are unchanged.');
                 }
@@ -25311,7 +25585,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     const world = copy(normalizeWorldConfig()), saved = world.currentSettingProfiles || [];
                     if (!Array.isArray(saved) || saved.length >= POLICY.almanac.maximumEcoregionProfiles) throw new Error('The custom profile limit has been reached.');
                     if (saved.some(item => item.name.toLowerCase() === name.toLowerCase())) throw new Error('That profile name is already saved. Use a different name; the existing profile was not replaced.');
-                    const profile = { ...copy(settings.profile), id: nextPresetId(saved, 'setting-profile'), name };
+                    const profile = { ...copy(settings.profile), id: nextPresetId(saved, 'setting-profile'), name,
+                        ...(settings.layers !== undefined ? { components: copy(settings.layers) } : {}),
+                        ...(settings.descriptionOverrides !== undefined ? { descriptionOverrides: copy(settings.descriptionOverrides) } : {}) };
                     world.currentSettingProfiles = [...saved, profile];
                     modState.config.world = world;
                     settings.profile = profile;
@@ -25358,9 +25634,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     ensureAlmanacRuntime().weather.forecast = [];
                     return showCurrentSettings(msg, `Settings saved for ${target.name}. Calendar and weather history were preserved.`);
                 }
-                if (action === 'locations') return paginate(normalizeWorldConfig().locations, 'Recall Location Settings', location => ({ label: locationDisplayName(location), value: currentSettingsButton('Recall', `load --id "${location.id}"`) }));
+                if (action === 'locations') return paginate(normalizeWorldConfig().locations, 'Recall Location Settings', (location, index) => currentSettingsButton(locationDisplayName(location), `load --choice ${index}`));
                 if (action === 'load') {
-                    const world = copy(normalizeWorldConfig()), target = worldItem(world.locations, args.id);
+                    const world = copy(normalizeWorldConfig()), target = args.choice !== undefined ? chosen(world.locations) : worldItem(world.locations, args.id);
                     if (!target) throw new Error('That saved location is no longer available.');
                     const runtime = ensureAlmanacRuntime();
                     if (runtime.world.travel) throw new Error('Finish or cancel the active journey in Travel before recalling another location.');
@@ -25384,7 +25660,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 throw new Error('That Current Settings command was not recognized. Open Current Settings to choose an action.');
             } catch (error) {
                 sendPanel(msg, 'Current Settings Needs Attention', [{ label: 'Problem', value: _sanitize(error.message) },
-                    { label: 'Next Step', value: `${GameAssist.createButton('Current Settings', '!aa current')} ${GameAssist.createButton('Almanac Audit', '!Almanac-Audit')} ${GameAssist.createButton('Use Saved Setup', '!aa current discard --confirm ?{Discard working changes and use the saved location settings?|No,no|Yes,yes}')}` }]);
+                    { label: 'Next Step', value: `${almanacButton('Current Settings', '!aa current')} ${almanacButton('Almanac Audit', '!Almanac-Audit')} ${almanacButton('Use Saved Setup', '!aa current discard --confirm ?{Discard working changes and use the saved location settings?|No,no|Yes,yes}')}` }]);
             }
         }
 
@@ -25403,7 +25679,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function paletteBack(locationId = null) {
-            return `${GameAssist.createButton('World Palettes', `!aa-palette${locationId ? ` --location "${locationId}"` : ''}`)} ${GameAssist.createButton('Almanac Home', '!aa-gm')}`;
+            return `${almanacButton('World Palettes', `!aa-palette${locationId ? ` --location "${locationId}"` : ''}`)} ${almanacButton('Almanac Home', '!aa-gm')}`;
         }
 
         function paletteChoice(label, items, selected = null) {
@@ -25420,10 +25696,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const isCurrent = place.location.id === normalizeWorldConfig().activeLocationId;
             if (!PALETTE_LABELS[kind]) return sendPanel(msg, 'World Palettes', [
                 { label: 'This Place', value: `${_sanitize(locationDisplayName(place.location))}<br>${_sanitize(weatherClimateContext(place).profileName)} | ${_sanitize(place.biome.name)} | ${_sanitize(place.geography.name)}` },
-                { label: 'Choose Profiles', value: Object.entries(PALETTE_LABELS).map(([key, label]) => GameAssist.createButton(label, `!aa-palette ${key}${target}`)).join(' ') },
-                { label: 'Places and Seasons', value: isCurrent ? `${GameAssist.createButton('Regions', '!aa-climate regions')} ${GameAssist.createButton('Ecoregion Areas', '!aa-world ecoregions')} ${GameAssist.createButton('Seasons', '!aa-palette seasons')}` : GameAssist.createButton('Location Context', `!aa-location details --id "${place.location.id}"`) },
-                { label: 'Next', value: isCurrent ? `${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Environment', '!enviro')}` : `${GameAssist.createButton('Location Settings', `!aa-location edit --id "${place.location.id}"`)} ${GameAssist.createButton('Move Party Here', `!aa-location preview --id "${place.location.id}"`)}` },
-                { label: 'Return', value: GameAssist.createButton('Almanac Home', '!aa-gm') }
+                { label: 'Choose Profiles', value: Object.entries(PALETTE_LABELS).map(([key, label]) => almanacButton(label, `!aa-palette ${key}${target}`)).join(' ') },
+                { label: 'Places and Seasons', value: isCurrent ? `${almanacButton('Regions', '!aa-climate regions')} ${almanacButton('Ecoregion Areas', '!aa-world ecoregions')} ${almanacButton('Seasons', '!aa-palette seasons')}` : almanacButton('Location Context', `!aa-location details --id "${place.location.id}"`) },
+                { label: 'Next', value: isCurrent ? `${almanacButton('Generate Weather', '!aa-weather generate')} ${almanacButton('Change Location', '!aa-location')} ${almanacButton('Environment', '!enviro')}` : `${almanacButton('Location Settings', `!aa-location edit --id "${place.location.id}"`)} ${almanacButton('Move Party Here', `!aa-location preview --id "${place.location.id}"`)}` },
+                { label: 'Return', value: almanacButton('Almanac Home', '!aa-gm') }
             ]);
             const entries = paletteEntries(kind).sort((a, b) => a.item.name.localeCompare(b.item.name) || Number(a.saved) - Number(b.saved));
             const count = Math.max(1, Math.ceil(entries.length / POLICY.almanac.palettePageSize));
@@ -25431,9 +25707,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const visible = entries.slice((page - 1) * POLICY.almanac.palettePageSize, page * POLICY.almanac.palettePageSize);
             sendPanel(msg, `Choose ${PALETTE_LABELS[kind]}`, [
                 { label: 'For', value: _sanitize(locationDisplayName(place.location)) },
-                { label: 'Choices', value: visible.map(entry => GameAssist.createButton(`${entry.item.name}${entry.saved ? ' (saved)' : ''}`, `!aa-palette inspect --kind ${kind} --id "${entry.key}"${target}`)).join('<br>') },
-                { label: 'Pages', value: `${page} of ${count} ${page > 1 ? GameAssist.createButton('Previous', `!aa-palette ${kind} --page ${page - 1}${target}`) : ''} ${page < count ? GameAssist.createButton('Next', `!aa-palette ${kind} --page ${page + 1}${target}`) : ''}` },
-                { label: 'Create', value: kind === 'climate' ? GameAssist.createButton('Custom Climate', '!aa-climate profile add --name "?{Climate name}" --temp ?{Baseline temperature F|58} --humidity ?{Humidity percent|55} --precip ?{Precipitation chance percent|35} --wind ?{Wind mph|8}') : GameAssist.createButton('Manage Saved Profiles', `!aa-world ${kind === 'geography' ? 'geographies' : kind === 'biome' ? 'biomes' : 'ecoprofiles'}`) },
+                { label: 'Choices', value: visible.map(entry => almanacButton(`${entry.item.name}${entry.saved ? ' (saved)' : ''}`, `!aa-palette inspect --kind ${kind} --id "${entry.key}"${target}`)).join('<br>') },
+                { label: 'Pages', value: `${page} of ${count} ${page > 1 ? almanacButton('Previous', `!aa-palette ${kind} --page ${page - 1}${target}`) : ''} ${page < count ? almanacButton('Next', `!aa-palette ${kind} --page ${page + 1}${target}`) : ''}` },
+                { label: 'Create', value: kind === 'climate' ? almanacButton('Custom Climate', '!aa-climate profile add --name "?{Climate name}" --temp ?{Baseline temperature F|58} --humidity ?{Humidity percent|55} --precip ?{Precipitation chance percent|35} --wind ?{Wind mph|8}') : almanacButton('Manage Saved Profiles', `!aa-world ${kind === 'geography' ? 'geographies' : kind === 'biome' ? 'biomes' : 'ecoprofiles'}`) },
                 { label: 'Return', value: paletteBack(place.location.id) }
             ]);
         }
@@ -25452,13 +25728,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 description = `${_sanitize(climateProfile(item.climateProfileId)?.name || item.climateProfileId)}<br>${_sanitize((entry.saved ? worldItem(world.biomes, item.biomeId) : BIOME_PALETTE.find(value => value.id === item.biomeId))?.name || item.biomeId)}<br>${_sanitize((entry.saved ? worldItem(world.geographies, item.geographyId) : GEOGRAPHY_PALETTE.find(value => value.id === item.geographyId))?.name || item.geographyId)}`;
             }
             // Quote opaque identities: an all-digit fingerprint is still text, not a number.
-            const actions = `${GameAssist.createButton('Use for This Location', `!aa-palette use --kind ${kind} --id "${key}" --location "${place.location.id}" --stamp "${paletteStamp()}"`)} ${GameAssist.createButton('Create Editable Copy', `!aa-palette copy --kind ${kind} --id "${key}" --location "${place.location.id}" --name "?{Name for editable copy|${item.name}}"`)}`;
+            const actions = `${almanacButton('Use for This Location', `!aa-palette use --kind ${kind} --id "${key}" --location "${place.location.id}" --stamp "${paletteStamp()}"`)} ${almanacButton('Create Editable Copy', `!aa-palette copy --kind ${kind} --id "${key}" --location "${place.location.id}" --name "?{Name for editable copy|${item.name}}"`)}`;
             sendPanel(msg, item.name, [
                 { label: 'Profile', value: description },
                 { label: 'Apply', value: actions },
-                ...(entry.saved ? [{ label: 'Customize', value: GameAssist.createButton('Edit Saved Profile', `!aa-palette edit --kind ${kind} --id "${key}" --location "${place.location.id}"`) }] : []),
+                ...(entry.saved ? [{ label: 'Customize', value: almanacButton('Edit Saved Profile', `!aa-palette edit --kind ${kind} --id "${key}" --location "${place.location.id}"`) }] : []),
                 { label: 'Scope', value: `Use changes ${_sanitize(locationDisplayName(place.location))} only. Existing weather is retained until you generate again; other places keep their settings.` },
-                { label: 'Return', value: `${GameAssist.createButton(PALETTE_LABELS[kind], `!aa-palette ${kind} --location "${place.location.id}"`)} ${paletteBack(place.location.id)}` }
+                { label: 'Return', value: `${almanacButton(PALETTE_LABELS[kind], `!aa-palette ${kind} --location "${place.location.id}"`)} ${paletteBack(place.location.id)}` }
             ]);
         }
 
@@ -25509,9 +25785,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Current Season', value: _sanitize(currentSeason()) },
                 { label: 'Calendar Seasons', value: names.map(name => {
                     const rule = rules.find(item => item.name.toLowerCase() === name.toLowerCase());
-                    return `<strong>${_sanitize(name)}</strong>: ${rule ? `${rule.temperatureBias >= 0 ? '+' : ''}${rule.temperatureBias} F; ${rule.precipitationDelta >= 0 ? '+' : ''}${rule.precipitationDelta}% precipitation` : 'Base climate only; no response chosen'}<br>${GameAssist.createButton('Choose Response', `!aa-palette season --name "${name}" --profile ?{Seasonal behavior|${choices}}`)} ${GameAssist.createButton('Customize', `!aa-palette season --name "${name}" --temp ?{Temperature adjustment F|${rule?.temperatureBias ?? 0}} --humidity ?{Humidity adjustment percentage points|${rule?.humidityDelta ?? 0}} --precip ?{Precipitation adjustment percentage points|${rule?.precipitationDelta ?? 0}} --wind ?{Wind adjustment mph|${rule?.windDelta ?? 0}}`)}`;
+                    return `<strong>${_sanitize(name)}</strong>: ${rule ? `${rule.temperatureBias >= 0 ? '+' : ''}${rule.temperatureBias} F; ${rule.precipitationDelta >= 0 ? '+' : ''}${rule.precipitationDelta}% precipitation` : 'Base climate only; no response chosen'}<br>${almanacButton('Choose Response', `!aa-palette season --name "${name}" --profile ?{Seasonal behavior|${choices}}`)} ${almanacButton('Customize', `!aa-palette season --name "${name}" --temp ?{Temperature adjustment F|${rule?.temperatureBias ?? 0}} --humidity ?{Humidity adjustment percentage points|${rule?.humidityDelta ?? 0}} --precip ?{Precipitation adjustment percentage points|${rule?.precipitationDelta ?? 0}} --wind ?{Wind adjustment mph|${rule?.windDelta ?? 0}}`)}`;
                 }).join('<br>') },
-                { label: 'Calendar', value: `${GameAssist.createButton(profile.id === 'wayfarer' ? 'Edit Season Dates' : 'Custom Calendar', '!aa-wayfarer stage seasons')} ${timeAvailable() ? 'Season names and dates follow the active calendar.' : GameAssist.createButton('Choose Manual Season', `!aa-climate season "?{Season name|${currentSeason()}}"`)}` },
+                { label: 'Calendar', value: `${almanacButton(profile.id === 'wayfarer' ? 'Edit Season Dates' : 'Custom Calendar', '!aa-wayfarer stage seasons')} ${timeAvailable() ? 'Season names and dates follow the active calendar.' : almanacButton('Choose Manual Season', `!aa-climate season "?{Season name|${currentSeason()}}"`)}` },
                 { label: 'Return', value: paletteBack() }
             ]);
         }
@@ -25519,8 +25795,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function showEcoregionProfiles(msg) {
             const world = normalizeWorldConfig();
             sendPanel(msg, 'Saved Ecoregion Profiles', [
-                { label: 'Profiles', value: world.ecoregionProfiles.map(item => GameAssist.createButton(item.name, `!aa-palette inspect --kind ecoregion --id saved:${item.id}`)).join('<br>') || 'Choose a built-in profile and create an editable copy.' },
-                { label: 'Browse', value: GameAssist.createButton('Ecoregion Palette', '!aa-palette ecoregion') },
+                { label: 'Profiles', value: world.ecoregionProfiles.map(item => almanacButton(item.name, `!aa-palette inspect --kind ecoregion --id saved:${item.id}`)).join('<br>') || 'Choose a built-in profile and create an editable copy.' },
+                { label: 'Browse', value: almanacButton('Ecoregion Palette', '!aa-palette ecoregion') },
                 { label: 'Return', value: paletteBack() }
             ]);
         }
@@ -25528,7 +25804,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function paletteEditButton(kind, item, locationId) {
             if (kind !== 'ecoregion') return null;
             const world = normalizeWorldConfig();
-            return GameAssist.createButton('Edit Profile', `!aa-palette edit --kind ecoregion --id "saved:${item.id}" --location "${locationId}" --name "?{Profile name|${item.name}}" --climate ${paletteChoice('Climate', Object.values(climateProfileMap(normalizeClimateConfig())), item.climateProfileId)} --biome ${paletteChoice('Biome', world.biomes, item.biomeId)} --geography ${paletteChoice('Geography', world.geographies, item.geographyId)}`);
+            return almanacButton('Edit Profile', `!aa-palette edit --kind ecoregion --id "saved:${item.id}" --location "${locationId}" --name "?{Profile name|${item.name}}" --climate ${paletteChoice('Climate', Object.values(climateProfileMap(normalizeClimateConfig())), item.climateProfileId)} --biome ${paletteChoice('Biome', world.biomes, item.biomeId)} --geography ${paletteChoice('Geography', world.geographies, item.geographyId)}`);
         }
 
         function handlePalette(msg, content) {
@@ -25542,7 +25818,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!worldItem(locationWorld.locations, requestedLocation)) return fail('That location is no longer available. Open Locations and choose a saved place.');
             if (action === 'use' && worldItem(locationWorld.locations, requestedLocation).settingsSnapshot) return sendPanel(msg, 'Saved Location Settings', [
                 { label: 'Next Step', value: 'This place uses a saved Current Settings snapshot. Recall it, choose a profile there, then save the updated location.' },
-                { label: 'Actions', value: GameAssist.createButton('Current Settings', '!aa current') }
+                { label: 'Actions', value: almanacButton('Current Settings', '!aa current') }
             ]);
             if (action === 'seasons') return showSeasonPalette(msg);
             if (action === 'season') {
@@ -25569,7 +25845,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (kind === 'geography' || kind === 'biome') return showWorldDefinitionEditor(msg, kind, entry.item.id);
                 if (kind === 'climate') return sendPanel(msg, 'Customize Climate', [
                     { label: 'Profile', value: _sanitize(entry.item.name) },
-                    { label: 'Edit', value: GameAssist.createButton('Edit Values', `!aa-climate profile set --id ${entry.item.id} --temp ?{Baseline temperature F|${entry.item.temperatureF}} --humidity ?{Humidity percent|${entry.item.humidity}} --precip ?{Precipitation chance percent|${entry.item.precipitationChance}} --wind ?{Wind mph|${entry.item.windMph}} --seasonal ?{Season temperature strength 0 to 3|${entry.item.seasonalScale ?? 1}} --elevation ?{Baseline elevation in feet|${entry.item.referenceElevationFt ?? 500}}`) },
+                    { label: 'Edit', value: almanacButton('Edit Values', `!aa-climate profile set --id ${entry.item.id} --temp ?{Baseline temperature F|${entry.item.temperatureF}} --humidity ?{Humidity percent|${entry.item.humidity}} --precip ?{Precipitation chance percent|${entry.item.precipitationChance}} --wind ?{Wind mph|${entry.item.windMph}} --seasonal ?{Season temperature strength 0 to 3|${entry.item.seasonalScale ?? 1}} --elevation ?{Baseline elevation in feet|${entry.item.referenceElevationFt ?? 500}}`) },
                     { label: 'Return', value: paletteBack(requestedLocation) }
                 ]);
                 if (!entry.saved) return fail('Create an editable copy before changing a built-in profile.');
@@ -25618,7 +25894,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     { label: 'Place', value: _sanitize(locationDisplayName(location)) },
                     { label: 'Profile', value: _sanitize(selected.name) },
                     { label: 'Weather', value: 'Current weather was retained. Generate again to use the updated setup; locked weather stays locked.' },
-                    { label: 'Next', value: `${location.id === world.activeLocationId ? GameAssist.createButton('Generate Weather', '!aa-weather generate') : GameAssist.createButton('Location Settings', `!aa-location edit --id "${location.id}"`)} ${paletteBack(location.id)}` }
+                    { label: 'Next', value: `${location.id === world.activeLocationId ? almanacButton('Generate Weather', '!aa-weather generate') : almanacButton('Location Settings', `!aa-location edit --id "${location.id}"`)} ${paletteBack(location.id)}` }
                 ]);
             } catch (error) {
                 return fail(error.message);
@@ -25628,14 +25904,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function showWorldMenu(msg) {
             if (!requireGm(msg)) return;
             sendPanel(msg, 'Manage World', [
-                { label: 'Places', value: `${GameAssist.createButton('Locations', '!aa-location manage')} ${GameAssist.createButton('Ecoregions', '!aa-world ecoregions')} ${GameAssist.createButton('Climate Regions', '!aa-climate regions')}` },
-                { label: 'Natural World', value: `${GameAssist.createButton('World Palettes', '!aa-palette')} ${GameAssist.createButton('Seasons', '!aa-palette seasons')} ${GameAssist.createButton('Saved Ecoregion Profiles', '!aa-world ecoprofiles')}` },
-                { label: 'Local Context', value: `${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')}` },
-                { label: 'Time and Sky', value: `${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('Wayfarer', '!aa-wayfarer')} ${GameAssist.createButton('Astronomy', '!astro')}` },
-                { label: 'Gameplay', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Rest', '!rest')} ${GameAssist.createButton('Rules Advisor', '!aa-rules')} ${GameAssist.createButton('Scene Details', '!aa-scene details')}` },
-                { label: 'Campaign Tools', value: `${GameAssist.createButton('Presets', '!aa-presets')} ${GameAssist.createButton('WorldPacks', '!aa-worldpack')} ${GameAssist.createButton('Temporal Contexts', '!aa-temporal')} ${GameAssist.createButton('Systems', '!Almanac-Systems')} ${GameAssist.createButton('Audit', '!Almanac-Audit')}` },
-                { label: 'Session Shortcuts', value: GameAssist.createButton('Quick Actions', '!aa-quick manage') },
-                { label: 'Return', value: `${GameAssist.createButton('Almanac Home', '!aa-gm')} ${gameAssistHomeButton()}` }
+                { label: 'Places', value: `${almanacButton('Locations', '!aa-location manage')} ${almanacButton('Ecoregions', '!aa-world ecoregions')} ${almanacButton('Climate Regions', '!aa-climate regions')}` },
+                { label: 'Natural World', value: `${almanacButton('World Palettes', '!aa-palette')} ${almanacButton('Seasons', '!aa-palette seasons')} ${almanacButton('Saved Ecoregion Profiles', '!aa-world ecoprofiles')}` },
+                { label: 'Local Context', value: `${almanacButton('Current Scene', '!aa-scene')} ${almanacButton('Weather', '!weather')} ${almanacButton('Environment', '!enviro')} ${almanacButton('Phenomena', '!aa-phenomena')}` },
+                { label: 'Time and Sky', value: `${almanacButton('Calendar', '!cal')} ${almanacButton('Wayfarer', '!aa-wayfarer')} ${almanacButton('Astronomy', '!astro')}` },
+                { label: 'Gameplay', value: `${almanacButton('Travel', '!aa-travel')} ${almanacButton('Rest', '!rest')} ${almanacButton('Rules Advisor', '!aa-rules')} ${almanacButton('Scene Details', '!aa-scene details')}` },
+                { label: 'Campaign Tools', value: `${almanacButton('Presets', '!aa-presets')} ${almanacButton('WorldPacks', '!aa-worldpack')} ${almanacButton('Temporal Contexts', '!aa-temporal')} ${almanacButton('Systems', '!Almanac-Systems')} ${almanacButton('Audit', '!Almanac-Audit')}` },
+                { label: 'Session Shortcuts', value: almanacButton('Quick Actions', '!aa-quick manage') },
+                { label: 'Return', value: `${almanacButton('Almanac Home', '!aa-gm')} ${gameAssistHomeButton()}` }
             ]);
         }
 
@@ -25644,23 +25920,23 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const world = normalizeWorldConfig();
             if (kind === 'geographies') {
                 return sendPanel(msg, 'World Geography', [
-                    { label: 'Definitions', value: world.geographies.map(item => `<strong>${_sanitize(item.name)}</strong> [${_sanitize(item.id)}] - ${_sanitize(item.terrain)}; ${item.elevationFt} ft; ${_sanitize(item.hydrology)} ${GameAssist.createButton('Edit', `!aa-world geography-edit --id ${item.id}`)}`).join('<br>') },
-                    { label: 'Add', value: GameAssist.createButton('Add Geography', '!aa-world geography-add --name "?{Name}" --terrain "?{Terrain}" --elevation ?{Elevation in feet|0} --coastal ?{Coastal?|No,no|Yes,yes} --hydrology "?{Persistent hydrology}"') },
-                    { label: 'Return', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                    { label: 'Definitions', value: world.geographies.map(item => `<strong>${_sanitize(item.name)}</strong> [${_sanitize(item.id)}] - ${_sanitize(item.terrain)}; ${item.elevationFt} ft; ${_sanitize(item.hydrology)} ${almanacButton('Edit', `!aa-world geography-edit --id ${item.id}`)}`).join('<br>') },
+                    { label: 'Add', value: almanacButton('Add Geography', '!aa-world geography-add --name "?{Name}" --terrain "?{Terrain}" --elevation ?{Elevation in feet|0} --coastal ?{Coastal?|No,no|Yes,yes} --hydrology "?{Persistent hydrology}"') },
+                    { label: 'Return', value: `${almanacButton('Manage World', '!aa-world')} ${almanacButton('Almanac Home', '!aa-gm')}` }
                 ]);
             }
             if (kind === 'biomes') {
                 return sendPanel(msg, 'World Biomes', [
-                    { label: 'Definitions', value: world.biomes.map(item => `<strong>${_sanitize(item.name)}</strong> [${_sanitize(item.id)}] - ${_sanitize(item.vegetation)}; ${_sanitize(item.aridity)}; ${_sanitize(item.ground)} ${GameAssist.createButton('Edit', `!aa-world biome-edit --id ${item.id}`)}`).join('<br>') },
-                    { label: 'Add', value: GameAssist.createButton('Add Biome', '!aa-world biome-add --name "?{Name}" --vegetation "?{Vegetation}" --aridity "?{Aridity}" --ground "?{Typical ground}" --water "?{Typical water availability}" --tags "?{Comma-separated tags}"') },
-                    { label: 'Return', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                    { label: 'Definitions', value: world.biomes.map(item => `<strong>${_sanitize(item.name)}</strong> [${_sanitize(item.id)}] - ${_sanitize(item.vegetation)}; ${_sanitize(item.aridity)}; ${_sanitize(item.ground)} ${almanacButton('Edit', `!aa-world biome-edit --id ${item.id}`)}`).join('<br>') },
+                    { label: 'Add', value: almanacButton('Add Biome', '!aa-world biome-add --name "?{Name}" --vegetation "?{Vegetation}" --aridity "?{Aridity}" --ground "?{Typical ground}" --water "?{Typical water availability}" --tags "?{Comma-separated tags}"') },
+                    { label: 'Return', value: `${almanacButton('Manage World', '!aa-world')} ${almanacButton('Almanac Home', '!aa-gm')}` }
                 ]);
             }
             sendPanel(msg, 'World Ecoregions', [
-                { label: 'Definitions', value: world.ecoregions.map(item => `<strong>${_sanitize(item.name)}</strong> [${_sanitize(item.id)}] - region ${_sanitize(item.regionId)}; geography ${_sanitize(item.geographyId)}; biome ${_sanitize(item.biomeId)} ${GameAssist.createButton('Edit', `!aa-world ecoregion-edit --id ${item.id}`)}`).join('<br>') },
-                { label: 'Add', value: GameAssist.createButton('Add Ecoregion', `!aa-world ecoregion-add --name "?{Name}" --region ${paletteChoice('Region', normalizeClimateConfig().regions)} --geography ${paletteChoice('Geography', world.geographies)} --biome ${paletteChoice('Biome', world.biomes)}`) },
-                { label: 'Reusable Profiles', value: GameAssist.createButton('Ecoregion Palette', '!aa-palette ecoregion') },
-                { label: 'Return', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                { label: 'Definitions', value: world.ecoregions.map(item => `<strong>${_sanitize(item.name)}</strong> [${_sanitize(item.id)}] - region ${_sanitize(item.regionId)}; geography ${_sanitize(item.geographyId)}; biome ${_sanitize(item.biomeId)} ${almanacButton('Edit', `!aa-world ecoregion-edit --id ${item.id}`)}`).join('<br>') },
+                { label: 'Add', value: almanacButton('Add Ecoregion', `!aa-world ecoregion-add --name "?{Name}" --region ${paletteChoice('Region', normalizeClimateConfig().regions)} --geography ${paletteChoice('Geography', world.geographies)} --biome ${paletteChoice('Biome', world.biomes)}`) },
+                { label: 'Reusable Profiles', value: almanacButton('Ecoregion Palette', '!aa-palette ecoregion') },
+                { label: 'Return', value: `${almanacButton('Manage World', '!aa-world')} ${almanacButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
 
@@ -25669,22 +25945,22 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const world = normalizeWorldConfig();
             const collection = kind === 'geography' ? world.geographies : kind === 'biome' ? world.biomes : world.ecoregions;
             const item = worldItem(collection, requested);
-            if (!item) return sendPanel(msg, 'World Setup Needs Attention', [{ label: 'Problem', value: `That ${kind} was not found.` }, { label: 'Next Step', value: GameAssist.createButton('Manage World', '!aa-world') }]);
+            if (!item) return sendPanel(msg, 'World Setup Needs Attention', [{ label: 'Problem', value: `That ${kind} was not found.` }, { label: 'Next Step', value: almanacButton('Manage World', '!aa-world') }]);
             const usedBy = kind === 'geography'
                 ? world.locations.filter(location => location.geographyId === item.id).length + world.ecoregions.filter(ecoregion => ecoregion.geographyId === item.id).length + world.ecoregionProfiles.filter(profile => profile.geographyId === item.id).length
                 : kind === 'biome'
                     ? world.locations.filter(location => location.biomeId === item.id).length + world.ecoregions.filter(ecoregion => ecoregion.biomeId === item.id).length + world.ecoregionProfiles.filter(profile => profile.biomeId === item.id).length
                     : world.locations.filter(location => location.ecoregionId === item.id).length;
             let editButton;
-            if (kind === 'geography') editButton = GameAssist.createButton('Edit Geography', `!aa-world geography-edit --id ${item.id} --name "?{Name|${item.name}}" --terrain "?{Terrain|${item.terrain}}" --topography "?{Topography|${item.topography}}" --latitude ?{Latitude -90 to 90|${item.latitudeDeg}} --elevation ?{Elevation in feet|${item.elevationFt}} --coastal ?{Coastal?|${item.coastal ? 'Yes,yes|No,no' : 'No,no|Yes,yes'}} --hydrology "?{Persistent hydrology|${item.hydrology}}"`);
-            else if (kind === 'biome') editButton = GameAssist.createButton('Edit Biome', `!aa-world biome-edit --id ${item.id} --name "?{Name|${item.name}}" --vegetation "?{Vegetation|${item.vegetation}}" --aridity "?{Aridity|${item.aridity}}" --ground "?{Typical ground|${item.ground}}" --water "?{Typical water|${item.water}}" --seasonal "?{Seasonal response|${item.seasonalResponse}}" --tags "?{Comma-separated tags|${item.tags.join(',')}}"`);
-            else editButton = GameAssist.createButton('Edit Ecoregion', `!aa-world ecoregion-edit --id ${item.id} --name "?{Name|${item.name}}" --region ${paletteChoice('Region', normalizeClimateConfig().regions, item.regionId)} --geography ${paletteChoice('Geography', world.geographies, item.geographyId)} --biome ${paletteChoice('Biome', world.biomes, item.biomeId)} --transition "?{Transition notes|${item.transitionNotes}}"`);
+            if (kind === 'geography') editButton = almanacButton('Edit Geography', `!aa-world geography-edit --id ${item.id} --name "?{Name|${item.name}}" --terrain "?{Terrain|${item.terrain}}" --topography "?{Topography|${item.topography}}" --latitude ?{Latitude -90 to 90|${item.latitudeDeg}} --elevation ?{Elevation in feet|${item.elevationFt}} --coastal ?{Coastal?|${item.coastal ? 'Yes,yes|No,no' : 'No,no|Yes,yes'}} --hydrology "?{Persistent hydrology|${item.hydrology}}"`);
+            else if (kind === 'biome') editButton = almanacButton('Edit Biome', `!aa-world biome-edit --id ${item.id} --name "?{Name|${item.name}}" --vegetation "?{Vegetation|${item.vegetation}}" --aridity "?{Aridity|${item.aridity}}" --ground "?{Typical ground|${item.ground}}" --water "?{Typical water|${item.water}}" --seasonal "?{Seasonal response|${item.seasonalResponse}}" --tags "?{Comma-separated tags|${item.tags.join(',')}}"`);
+            else editButton = almanacButton('Edit Ecoregion', `!aa-world ecoregion-edit --id ${item.id} --name "?{Name|${item.name}}" --region ${paletteChoice('Region', normalizeClimateConfig().regions, item.regionId)} --geography ${paletteChoice('Geography', world.geographies, item.geographyId)} --biome ${paletteChoice('Biome', world.biomes, item.biomeId)} --transition "?{Transition notes|${item.transitionNotes}}"`);
             sendPanel(msg, `Edit ${kind[0].toUpperCase()}${kind.slice(1)}`, [
                 { label: 'Definition', value: `<strong>${_sanitize(item.name)}</strong> [${_sanitize(item.id)}]` },
                 { label: 'Use', value: `${usedBy} dependent world reference${usedBy === 1 ? '' : 's'}` },
                 { label: 'Edit', value: editButton },
-                { label: 'Remove', value: usedBy ? 'Reassign dependent definitions and locations before removal.' : GameAssist.createButton(`Remove ${kind}`, `!aa-world ${kind}-remove --id ${item.id} --confirm ?{Remove ${item.name}?|No,no|Yes,yes}`) },
-                { label: 'Return', value: `${GameAssist.createButton(`All ${kind === 'geography' ? 'Geographies' : kind === 'biome' ? 'Biomes' : 'Ecoregions'}`, `!aa-world ${kind === 'geography' ? 'geographies' : `${kind}s`}`)} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                { label: 'Remove', value: usedBy ? 'Reassign dependent definitions and locations before removal.' : almanacButton(`Remove ${kind}`, `!aa-world ${kind}-remove --id ${item.id} --confirm ?{Remove ${item.name}?|No,no|Yes,yes}`) },
+                { label: 'Return', value: `${almanacButton(`All ${kind === 'geography' ? 'Geographies' : kind === 'biome' ? 'Biomes' : 'Ecoregions'}`, `!aa-world ${kind === 'geography' ? 'geographies' : `${kind}s`}`)} ${almanacButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
 
@@ -25719,7 +25995,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const item = worldItem(collection, args.id);
                 if (!item || args.name === undefined) return showWorldDefinitionEditor(msg, kind, args.id);
                 const name = boundedName(args.name);
-                if (!name) return sendPanel(msg, 'World Setup Needs Attention', [{ label: 'Problem', value: `Enter a ${kind} name. Nothing was changed.` }, { label: 'Next Step', value: GameAssist.createButton(`Edit ${kind}`, `!aa-world ${kind}-edit --id ${item.id}`) }]);
+                if (!name) return sendPanel(msg, 'World Setup Needs Attention', [{ label: 'Problem', value: `Enter a ${kind} name. Nothing was changed.` }, { label: 'Next Step', value: almanacButton(`Edit ${kind}`, `!aa-world ${kind}-edit --id ${item.id}`) }]);
                 if (kind === 'geography') Object.assign(item, {
                     name,
                     terrain: boundedWorldText(args.terrain, item.terrain),
@@ -25742,7 +26018,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     const region = climateRegion(args.region);
                     const geography = worldItem(world.geographies, args.geography);
                     const biome = worldItem(world.biomes, args.biome);
-                    if (!region || !geography || !biome) return sendPanel(msg, 'World Setup Needs Attention', [{ label: 'Problem', value: 'Choose one existing climate region, geography, and biome. Nothing was changed.' }, { label: 'Next Step', value: GameAssist.createButton('Edit Ecoregion', `!aa-world ecoregion-edit --id ${item.id}`) }]);
+                    if (!region || !geography || !biome) return sendPanel(msg, 'World Setup Needs Attention', [{ label: 'Problem', value: 'Choose one existing climate region, geography, and biome. Nothing was changed.' }, { label: 'Next Step', value: almanacButton('Edit Ecoregion', `!aa-world ecoregion-edit --id ${item.id}`) }]);
                     Object.assign(item, { name, regionId: region.id, geographyId: geography.id, biomeId: biome.id, profileId: null, transitionNotes: boundedWorldText(args.transition, '') });
                 }
                 modState.config.world = world;
@@ -25801,7 +26077,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     return showWorldDefinitions(msg, 'ecoregions');
                 }
             }
-            sendPanel(msg, 'World Setup Needs Attention', [{ label: 'Problem', value: _sanitize(result?.message || 'That world command was not recognized.') }, { label: 'Next Step', value: GameAssist.createButton('Manage World', '!aa-world') }]);
+            sendPanel(msg, 'World Setup Needs Attention', [{ label: 'Problem', value: _sanitize(result?.message || 'That world command was not recognized.') }, { label: 'Next Step', value: almanacButton('Manage World', '!aa-world') }]);
         }
 
         function nextPresetId(items, requested) {
@@ -25861,14 +26137,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     { label: 'Preset', value: `<strong>${_sanitize(preset.name)}</strong> | ${_sanitize(preset.version)}<br>${_sanitize(preset.description)}` },
                     { label: 'Contents', value: `${preset.world.locations.length} location | ${preset.world.ecoregions.length} ecoregion | ${preset.world.geographies.length} geography | ${preset.world.biomes.length} biome` },
                     { label: 'Install Behavior', value: 'Built-in definitions remain immutable. Installation creates editable campaign copies and does not replace existing places.' },
-                    { label: 'Actions', value: `${GameAssist.createButton('Clone and Install', `!aa-presets install --id ${preset.id} --confirm yes`)} ${GameAssist.createButton('Cancel', '!aa-presets')}` }
+                    { label: 'Actions', value: `${almanacButton('Clone and Install', `!aa-presets install --id ${preset.id} --confirm yes`)} ${almanacButton('Cancel', '!aa-presets')}` }
                 ]);
             }
             sendPanel(msg, 'World Presets', [
-                { label: 'Built-In Starters', value: Object.values(WORLD_PRESETS).map(item => GameAssist.createButton(item.name, `!aa-presets preview --id ${item.id}`)).join(' ') },
+                { label: 'Built-In Starters', value: Object.values(WORLD_PRESETS).map(item => almanacButton(item.name, `!aa-presets preview --id ${item.id}`)).join(' ') },
                 { label: 'How Presets Work', value: 'Preview, clone, then customize. Built-ins are never edited or used to overwrite campaign definitions.' },
                 { label: 'Setting Packs', value: 'Published-setting packs are not bundled without a separate provenance and licensing review.' },
-                { label: 'Return', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                { label: 'Return', value: `${almanacButton('Manage World', '!aa-world')} ${almanacButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
 
@@ -25881,11 +26157,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (/^preview\b/i.test(body)) return preset ? showWorldPresets(msg, preset.id) : showWorldPresets(msg);
             if (/^install\b/i.test(body) && String(args.confirm || '').toLowerCase() === 'yes' && preset) {
                 const result = installWorldPreset(msg, preset);
-                if (!result.ok) return sendPanel(msg, 'World Preset Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Changes', value: 'None.' }, { label: 'Next Step', value: GameAssist.createButton('World Presets', '!aa-presets') }]);
+                if (!result.ok) return sendPanel(msg, 'World Preset Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Changes', value: 'None.' }, { label: 'Next Step', value: almanacButton('World Presets', '!aa-presets') }]);
                 return sendPanel(msg, 'World Preset Installed', [
                     { label: 'Preset', value: _sanitize(preset.name) },
                     { label: 'Created', value: `${result.locationIds.length} editable prepared location${result.locationIds.length === 1 ? '' : 's'}. Existing world definitions were preserved.` },
-                    { label: 'Actions', value: `${GameAssist.createButton('Locations', '!aa-location manage')} ${GameAssist.createButton('Manage World', '!aa-world')}` }
+                    { label: 'Actions', value: `${almanacButton('Locations', '!aa-location manage')} ${almanacButton('Manage World', '!aa-world')}` }
                 ]);
             }
             showWorldPresets(msg);
@@ -25909,11 +26185,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const profile = ['dnd5e2014', 'system-neutral'].includes(modState.config.rulesAdvisorProfile) ? modState.config.rulesAdvisorProfile : 'dnd5e2014';
             const advice = rulesAdvice();
             sendPanel(msg, 'Almanac Rules Advisor', [
-                { label: 'Status', value: `${enabled ? 'On' : 'Off'} ${GameAssist.createButton(enabled ? 'Turn Off' : 'Turn On', `!aa-rules ${enabled ? 'off' : 'on'}`)}` },
-                { label: 'Rules Profile', value: `${profile === 'dnd5e2014' ? '<strong>D&D 5E (2014)</strong>' : GameAssist.createButton('D&D 5E (2014)', '!aa-rules profile dnd5e2014')} ${profile === 'system-neutral' ? '<strong>System Neutral</strong>' : GameAssist.createButton('System Neutral', '!aa-rules profile system-neutral')}` },
+                { label: 'Status', value: `${enabled ? 'On' : 'Off'} ${almanacButton(enabled ? 'Turn Off' : 'Turn On', `!aa-rules ${enabled ? 'off' : 'on'}`)}` },
+                { label: 'Rules Profile', value: `${profile === 'dnd5e2014' ? '<strong>D&D 5E (2014)</strong>' : almanacButton('D&D 5E (2014)', '!aa-rules profile dnd5e2014')} ${profile === 'system-neutral' ? '<strong>System Neutral</strong>' : almanacButton('System Neutral', '!aa-rules profile system-neutral')}` },
                 { label: 'Current Advice', value: enabled ? (advice.length ? advice.map(_sanitize).join('<br>') : 'No current scene condition needs a general rules reminder.') : 'Rules advice is disabled. Scene simulation remains available.' },
                 { label: 'Authority', value: 'Advice is informational. It never applies damage, exhaustion, conditions, movement, markers, lighting, or tracker changes.' },
-                { label: 'Return', value: `${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Manage World', '!aa-world')}` }
+                { label: 'Return', value: `${almanacButton('Current Scene', '!aa-scene')} ${almanacButton('Manage World', '!aa-world')}` }
             ]);
         }
 
@@ -25937,12 +26213,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel(msg, 'Almanac', [
                 { label: 'Current World', value: `${scenePath(scene)}<br>${scene.time ? _sanitize(displayMoment(scene.time)) : 'Fictional time unavailable'}` },
                 { label: 'Conditions', value: `${_sanitize(scene.scene.precipitation)} | ${_sanitize(descriptiveTemperature(scene.scene.temperatureF))} | ${_sanitize(descriptiveWind(scene.scene.windMph))}<br>${_sanitize(descriptiveVisibility(scene.scene.visibility))} | ${_sanitize(scene.scene.ground)}` },
-                ...(travel ? [{ label: 'Journey', value: `${_sanitize(travel.fromName)} &rarr; ${_sanitize(travel.toName)} | ${Math.max(0, travel.plannedHours - travel.travelledHours)} hours remaining ${GameAssist.createButton('Continue', '!aa-travel')}` }] : []),
-                { label: 'Session Actions', value: `${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Advance Time', '!aa-time menu')} ${GameAssist.createButton('Advance Date', '!aa-time advance --days ?{Days|1}')} ${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Rest', '!rest')}` },
-                { label: 'World Today', value: `${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('Events & Omens', '!aa-events')}` },
-                { label: 'Share', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
+                ...(travel ? [{ label: 'Journey', value: `${_sanitize(travel.fromName)} &rarr; ${_sanitize(travel.toName)} | ${Math.max(0, travel.plannedHours - travel.travelledHours)} hours remaining ${almanacButton('Continue', '!aa-travel')}` }] : []),
+                { label: 'Session Actions', value: `${almanacButton('Generate Weather', '!aa-weather generate')} ${almanacButton('Advance Time', '!aa-time menu')} ${almanacButton('Advance Date', '!aa-time advance --days ?{Days|1}')} ${almanacButton('Travel', '!aa-travel')} ${almanacButton('Rest', '!rest')}` },
+                { label: 'Explore Today', value: `${almanacButton('Weather', '!weather')} ${almanacButton('Moons & Events', '!aa-today')}` },
+                { label: 'Share', value: `${almanacButton('Preview', '!aa-preview')} ${almanacButton('Announce', '!aa-announce')} ${almanacButton('Announcement Settings', '!aa-announcement-settings')}` },
                 ...(quickActions ? [{ label: 'Campaign Shortcuts', value: quickActions }] : []),
-                { label: 'Campaign Setup', value: `${GameAssist.createButton('Current Settings', '!aa current')} ${GameAssist.createButton('Recall Location', '!aa current locations')} ${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('More Tools', '!aa-more')}` },
+                { label: 'World Setup', value: `${almanacButton('Current Settings', '!aa current')} ${almanacButton('Recall Location', '!aa current locations')} ${almanacButton('Calendar', '!cal')}` },
+                { label: 'Tools', value: `${almanacButton('More Tools', '!aa-more')} ${almanacButton('Quick Guide', '!Almanac-Guide')}` },
                 { label: 'GameAssist', value: gameAssistHomeButton() }
             ]);
         }
@@ -25950,12 +26227,23 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function showMoreMenu(msg) {
             if (!requireGm(msg)) return;
             sendPanel(msg, 'More Almanac Tools', [
-                { label: 'Calendar', value: `${GameAssist.createButton('Time Controls', '!aa-time menu')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')} ${GameAssist.createButton('Choose Calendar', '!cal')}` },
-                { label: 'Current World', value: `${GameAssist.createButton('Scene Details', '!aa-scene')} ${GameAssist.createButton('Locations', '!aa-location')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Events & Omens', '!aa-events')}` },
-                { label: 'Worldbuilding', value: `${GameAssist.createButton('World Palettes', '!aa-palette')} ${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('WorldPacks', '!aa-worldpack')}` },
-                { label: 'Systems', value: `${GameAssist.createButton('Turn Systems On or Off', '!Almanac-Systems')} ${GameAssist.createButton('Status', '!Almanac-Status')} ${GameAssist.createButton('Audit', '!Almanac-Audit')}` },
-                { label: 'Reference', value: `${GameAssist.createButton('Quick Guide', '!Almanac-Guide')} ${GameAssist.createButton('Full Manual', '!Almanac-Manual')}` },
-                { label: 'Return', value: `${GameAssist.createButton('Almanac', '!aa-gm')} ${gameAssistHomeButton()}` }
+                { label: 'Calendar', value: `${almanacButton('Time Controls', '!aa-time menu')} ${almanacButton('Wayfarer Calendar', '!aa-wayfarer')} ${almanacButton('Choose Calendar', '!cal')}` },
+                { label: 'Place and Weather', value: `${almanacButton('Current Settings', '!aa current')} ${almanacButton('Seasons', '!aa current seasons')} ${almanacButton('Weather Breakdown', '!aa current breakdown')}` },
+                { label: 'Scene', value: `${almanacButton('Scene Details', '!aa-scene')} ${almanacButton('Environment Override', '!enviro')} ${almanacButton('Events & Omens', '!aa-events')}` },
+                { label: 'Advanced Worldbuilding', value: `${almanacButton('World Records', '!aa-world')} ${almanacButton('Reusable Definitions', '!aa-palette')} ${almanacButton('Manage Regions', '!aa-climate regions')} ${almanacButton('Phenomena', '!aa-phenomena')} ${almanacButton('WorldPacks', '!aa-worldpack')}` },
+                { label: 'Systems', value: `${almanacButton('Turn Systems On or Off', '!Almanac-Systems')} ${almanacButton('Status', '!Almanac-Status')} ${almanacButton('Audit', '!Almanac-Audit')}` },
+                { label: 'Reference', value: `${almanacButton('Quick Guide', '!Almanac-Guide')} ${almanacButton('Full Manual', '!Almanac-Manual')}` },
+                { label: 'Return', value: `${almanacButton('Almanac', '!aa-gm')} ${gameAssistHomeButton()}` }
+            ]);
+        }
+
+        function showTodayMenu(msg) {
+            if (!requireGm(msg)) return;
+            sendPanel(msg, 'Explore Today', [
+                { label: 'Sky', value: `${almanacButton('Moon Phases', '!astro')} ${almanacButton('Events & Omens', '!aa-events')}` },
+                { label: 'Surroundings', value: `${almanacButton('Weather', '!weather')} ${almanacButton('Environment', '!enviro')} ${almanacButton('Scene Details', '!aa-scene')}` },
+                { label: 'Share', value: `${almanacButton('Preview', '!aa-preview')} ${almanacButton('Announce', '!aa-announce')}` },
+                { label: 'Return', value: almanacButton('Almanac Home', '!aa-gm') }
             ]);
         }
 
@@ -25972,10 +26260,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel(msg, 'Almanac Systems', [
                 ...systems.map(([name, route, enabled]) => ({
                     label: name,
-                    value: `${enabled ? 'On' : 'Off'} ${GameAssist.createButton(enabled ? 'Turn Off' : 'Turn On', `!aa-${route} ${enabled ? 'off' : 'on'}`)}`
+                    value: `${enabled ? 'On' : 'Off'} ${almanacButton(enabled ? 'Turn Off' : 'Turn On', `!aa-${route} ${enabled ? 'off' : 'on'}`)}`
                 })),
                 { label: 'Saved Settings', value: 'Turning a system off preserves its settings and history. Other Almanac systems remain available.' },
-                { label: 'Return', value: `${GameAssist.createButton('More Almanac Tools', '!aa-more')} ${GameAssist.createButton('Almanac', '!aa-gm')}` }
+                { label: 'Return', value: `${almanacButton('More Almanac Tools', '!aa-more')} ${almanacButton('Almanac', '!aa-gm')}` }
             ]);
         }
 
@@ -25984,12 +26272,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const moment = currentMoment();
             sendPanel(msg, 'Date and Time Controls', [
                 { label: 'Now', value: _sanitize(displayMoment(moment)) },
-                { label: 'Quick Advance', value: `${GameAssist.createButton('+10 Minutes', '!aa-time advance --minutes 10')} ${GameAssist.createButton('+1 Hour', '!aa-time advance --hours 1')} ${GameAssist.createButton('+8 Hours', '!aa-time advance --hours 8')} ${GameAssist.createButton('+1 Day', '!aa-time advance --days 1')}` },
-                { label: 'Choose Advance', value: `${GameAssist.createButton('Advance Date', '!aa-time advance --days ?{Days|1}')} ${GameAssist.createButton('Advance Date & Time', '!aa-time advance --days ?{Days|0} --hours ?{Hours|0} --minutes ?{Minutes|0}')}` },
+                { label: 'Quick Advance', value: `${almanacButton('+10 Minutes', '!aa-time advance --minutes 10')} ${almanacButton('+1 Hour', '!aa-time advance --hours 1')} ${almanacButton('+8 Hours', '!aa-time advance --hours 8')} ${almanacButton('+1 Day', '!aa-time advance --days 1')}` },
+                { label: 'Choose Advance', value: `${almanacButton('Advance Date', '!aa-time advance --days ?{Days|1}')} ${almanacButton('Advance Date & Time', '!aa-time advance --days ?{Days|0} --hours ?{Hours|0} --minutes ?{Minutes|0}')}` },
                 { label: 'Set Exact Moment', value: exactMomentButton(moment) },
-                { label: 'Share', value: `${GameAssist.createButton('Preview Announcement', '!aa-preview')} ${GameAssist.createButton('Announce Now', '!aa-announce')} ${GameAssist.createButton('Settings', '!aa-announcement-settings')}` },
-                { label: 'Advanced', value: GameAssist.createButton('Move Time Backward', '!aa-time retreat --days ?{Days|0} --hours ?{Hours|0} --minutes ?{Minutes|0} --confirm ?{Moving time backward never reverses rests, effects, combat, or history. Continue?|No,no|Yes,yes}') },
-                { label: 'Return', value: GameAssist.createButton('Almanac', '!aa-gm') }
+                { label: 'Share', value: `${almanacButton('Preview Announcement', '!aa-preview')} ${almanacButton('Announce Now', '!aa-announce')} ${almanacButton('Settings', '!aa-announcement-settings')}` },
+                { label: 'Advanced', value: almanacButton('Move Time Backward', '!aa-time retreat --days ?{Days|0} --hours ?{Hours|0} --minutes ?{Minutes|0} --confirm ?{Moving time backward never reverses rests, effects, combat, or history. Continue?|No,no|Yes,yes}') },
+                { label: 'Return', value: almanacButton('Almanac', '!aa-gm') }
             ]);
         }
 
@@ -26002,7 +26290,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const profile = profileFor(id);
                 if (id === current.id) return `<strong>Current: ${_sanitize(profile.name)}</strong>`;
                 if (!isGm) return _sanitize(profile.name);
-                return GameAssist.createButton(`Use ${profile.name}`, `!aa-time profile ${id} --confirm ?{Please confirm the change of the calendar display to ${profile.name}? Elapsed calendar time is preserved.|No,no|Yes,yes}`);
+                return almanacButton(`Use ${profile.name}`, `!aa-time profile ${id} --confirm ?{Please confirm the change of the calendar display to ${profile.name}? Elapsed calendar time is preserved.|No,no|Yes,yes}`);
             }).join(' ');
             const fields = [
                 { label: 'Current Calendar', value: `${_sanitize(current.name)}<br>${_sanitize(displayDate(moment))}` },
@@ -26011,10 +26299,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (isGm) {
                 fields.push({
                     label: 'Wayfarer',
-                    value: `${GameAssist.createButton('Manage Wayfarer Calendar', '!aa-wayfarer')} <span style="font-size:smaller;">The Wayfarer button above uses the last saved Wayfarer calendar immediately; draft edits remain separate until activated.</span>`
+                    value: `${almanacButton('Manage Wayfarer Calendar', '!aa-wayfarer')} <span style="font-size:smaller;">The Wayfarer button above uses the last saved Wayfarer calendar immediately; draft edits remain separate until activated.</span>`
                 });
             }
-            fields.push({ label: 'Return', value: GameAssist.createButton(isGm ? 'Almanac' : 'Current Date', isGm ? '!aa-gm' : '!date') });
+            fields.push({ label: 'Return', value: almanacButton(isGm ? 'Almanac' : 'Current Date', isGm ? '!aa-gm' : '!date') });
             sendPanel(msg, 'Choose Campaign Calendar', fields);
         }
 
@@ -26048,10 +26336,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const index = WAYFARER_STAGES.indexOf(stage);
             const next = index < WAYFARER_STAGES.length - 1 ? WAYFARER_STAGES[index + 1] : 'review';
             return [
-                GameAssist.createButton('Edit Calendar', '!aa-wayfarer edit'),
-                GameAssist.createButton('Preview Draft', '!aa-wayfarer preview'),
-                GameAssist.createButton('Explain This', `!aa-wayfarer explain ${stage}`),
-                GameAssist.createButton(next === 'review' ? 'Review & Activate' : 'Next Area', `!aa-wayfarer stage ${next} --review ${stage}`)
+                almanacButton('Edit Calendar', '!aa-wayfarer edit'),
+                almanacButton('Preview Draft', '!aa-wayfarer preview'),
+                almanacButton('Explain This', `!aa-wayfarer explain ${stage}`),
+                almanacButton(next === 'review' ? 'Review & Activate' : 'Next Area', `!aa-wayfarer stage ${next} --review ${stage}`)
             ].join(' ');
         }
 
@@ -26065,15 +26353,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const savedWayfarer = profileFor('wayfarer');
             const useSaved = active.id === 'wayfarer'
                 ? `<strong>${_sanitize(active.name)} is active</strong>`
-                : GameAssist.createButton(`Use ${savedWayfarer.name}`, `!aa-time profile wayfarer --confirm ?{Please confirm the change of the calendar display to ${savedWayfarer.name}? Elapsed calendar time is preserved.|No,no|Yes,yes}`);
+                : almanacButton(`Use ${savedWayfarer.name}`, `!aa-time profile wayfarer --confirm ?{Please confirm the change of the calendar display to ${savedWayfarer.name}? Elapsed calendar time is preserved.|No,no|Yes,yes}`);
             sendPanel(msg, 'Wayfarer Calendar', [
                 { label: 'Active Calendar', value: `${_sanitize(active.name)}<br>${current ? _sanitize(displayMoment(current)) : 'Fictional date unavailable'}` },
-                { label: 'Use Wayfarer', value: `${useSaved} ${GameAssist.createButton('Choose Another Calendar', '!cal')}` },
+                { label: 'Use Wayfarer', value: `${useSaved} ${almanacButton('Choose Another Calendar', '!cal')}` },
                 { label: 'Draft', value: `${_sanitize(draft.definition.name)} | ${draftMatchesActive(draft) ? 'matches the saved Wayfarer calendar' : 'has changes not yet activated'}` },
-                { label: 'Edit or Activate', value: `${GameAssist.createButton('Edit Calendar', '!aa-wayfarer edit')} ${GameAssist.createButton('Preview Draft', '!aa-wayfarer preview')} ${GameAssist.createButton('Review & Activate', '!aa-wayfarer review')}` },
-                { label: 'Optional Setup', value: `${GameAssist.createButton('Continue Guided Review', `!aa-wayfarer stage ${nextStage}`)} ${GameAssist.createButton('Start From a Copy', '!aa-wayfarer copies')}` },
-                { label: 'More', value: `${GameAssist.createButton('Calendar Details', '!aa-wayfarer details')} ${GameAssist.createButton('Advanced Handout', '!aa-wayfarer handout')} ${GameAssist.createButton('Recovery Options', '!aa-wayfarer recovery')} ${GameAssist.createButton('Help', '!aa-wayfarer help')}` },
-                { label: 'Return', value: GameAssist.createButton('Almanac', '!aa-gm') }
+                { label: 'Edit or Activate', value: `${almanacButton('Edit Calendar', '!aa-wayfarer edit')} ${almanacButton('Preview Draft', '!aa-wayfarer preview')} ${almanacButton('Review & Activate', '!aa-wayfarer review')}` },
+                { label: 'Optional Setup', value: `${almanacButton('Continue Guided Review', `!aa-wayfarer stage ${nextStage}`)} ${almanacButton('Start From a Copy', '!aa-wayfarer copies')}` },
+                { label: 'More', value: `${almanacButton('Calendar Details', '!aa-wayfarer details')} ${almanacButton('Advanced Handout', '!aa-wayfarer handout')} ${almanacButton('Recovery Options', '!aa-wayfarer recovery')} ${almanacButton('Help', '!aa-wayfarer help')}` },
+                { label: 'Return', value: almanacButton('Almanac', '!aa-gm') }
             ]);
         }
 
@@ -26082,10 +26370,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const draft = ensureWayfarerDraft();
             sendPanel(msg, 'Edit Wayfarer Calendar', [
                 { label: 'Draft', value: _sanitize(draft.definition.name) },
-                { label: 'Calendar Basics', value: `${GameAssist.createButton('Name, Clock & Start', '!aa-wayfarer stage identity')} ${GameAssist.createButton('Weekdays', '!aa-wayfarer stage weekdays')} ${GameAssist.createButton('Periods', '!aa-wayfarer stage months')}` },
-                { label: 'Special Dates', value: `${GameAssist.createButton('Festival Days', '!aa-wayfarer stage intercalary')} ${GameAssist.createButton('Leap Rule', '!aa-wayfarer stage leap')} ${GameAssist.createButton('Holidays', '!aa-wayfarer stage holidays')} ${GameAssist.createButton('Seasons', '!aa-wayfarer stage seasons')}` },
-                { label: 'Review', value: `${GameAssist.createButton('Preview Draft', '!aa-wayfarer preview')} ${GameAssist.createButton('Review & Activate', '!aa-wayfarer review')}` },
-                { label: 'Return', value: GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer') }
+                { label: 'Calendar Basics', value: `${almanacButton('Name, Clock & Start', '!aa-wayfarer stage identity')} ${almanacButton('Weekdays', '!aa-wayfarer stage weekdays')} ${almanacButton('Periods', '!aa-wayfarer stage months')}` },
+                { label: 'Special Dates', value: `${almanacButton('Festival Days', '!aa-wayfarer stage intercalary')} ${almanacButton('Leap Rule', '!aa-wayfarer stage leap')} ${almanacButton('Holidays', '!aa-wayfarer stage holidays')} ${almanacButton('Seasons', '!aa-wayfarer stage seasons')}` },
+                { label: 'Review', value: `${almanacButton('Preview Draft', '!aa-wayfarer preview')} ${almanacButton('Review & Activate', '!aa-wayfarer review')}` },
+                { label: 'Return', value: almanacButton('Wayfarer Calendar', '!aa-wayfarer') }
             ]);
         }
 
@@ -26093,9 +26381,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!requireGm(msg)) return;
             const active = profileFor();
             sendPanel(msg, 'Choose a Wayfarer Starting Point', [
-                { label: 'Copy a Calendar', value: `${GameAssist.createButton('Standard', '!aa-wayfarer duplicate --profile standard --confirm ?{Replace the saved draft with a Standard calendar copy? The active calendar will not change.|No,no|Yes,yes}')} ${GameAssist.createButton('Solamnic', '!aa-wayfarer duplicate --profile solamnic --confirm ?{Replace the saved draft with a Solamnic calendar copy? The active calendar will not change.|No,no|Yes,yes}')} ${GameAssist.createButton('Harptos', '!aa-wayfarer duplicate --profile harptos --confirm ?{Replace the saved draft with a Harptos calendar copy? The active calendar will not change.|No,no|Yes,yes}')} ${GameAssist.createButton(active.id === 'wayfarer' ? 'Active Wayfarer' : 'Saved Wayfarer', '!aa-wayfarer duplicate --profile wayfarer --confirm ?{Replace the saved draft with the saved Wayfarer definition? The active calendar will not change.|No,no|Yes,yes}')}` },
+                { label: 'Copy a Calendar', value: `${almanacButton('Standard', '!aa-wayfarer duplicate --profile standard --confirm ?{Replace the saved draft with a Standard calendar copy? The active calendar will not change.|No,no|Yes,yes}')} ${almanacButton('Solamnic', '!aa-wayfarer duplicate --profile solamnic --confirm ?{Replace the saved draft with a Solamnic calendar copy? The active calendar will not change.|No,no|Yes,yes}')} ${almanacButton('Harptos', '!aa-wayfarer duplicate --profile harptos --confirm ?{Replace the saved draft with a Harptos calendar copy? The active calendar will not change.|No,no|Yes,yes}')} ${almanacButton(active.id === 'wayfarer' ? 'Active Wayfarer' : 'Saved Wayfarer', '!aa-wayfarer duplicate --profile wayfarer --confirm ?{Replace the saved draft with the saved Wayfarer definition? The active calendar will not change.|No,no|Yes,yes}')}` },
                 { label: 'What Changes', value: 'Only the editable draft is replaced. The calendar in use and the current fictional date remain unchanged until activation.' },
-                { label: 'Return', value: `${GameAssist.createButton('Edit Calendar', '!aa-wayfarer edit')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')}` }
+                { label: 'Return', value: `${almanacButton('Edit Calendar', '!aa-wayfarer edit')} ${almanacButton('Wayfarer Calendar', '!aa-wayfarer')}` }
             ]);
         }
 
@@ -26108,9 +26396,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Draft Structure', value: wayfarerOverview(draft) },
                 { label: 'Starting Date', value: formatWayfarerStart(draft.startDate) },
                 { label: 'Review Progress', value: `${status.reviewedCount}/${WAYFARER_STAGES.length} areas reviewed | ${status.errors.length ? _sanitize(status.errors.join(' ')) : 'No validation errors found'}` },
-                { label: 'Moon Phases', value: `${_sanitize(currentMoonSummary())}<br>${GameAssist.createButton('Open Astronomy', '!astro')}` },
+                { label: 'Moon Phases', value: `${_sanitize(currentMoonSummary())}<br>${almanacButton('Open Astronomy', '!astro')}` },
                 { label: 'Rollback', value: backup ? 'One previous Wayfarer activation is available in Recovery Options.' : 'No previous Wayfarer activation is stored.' },
-                { label: 'Return', value: `${GameAssist.createButton('Edit Calendar', '!aa-wayfarer edit')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')}` }
+                { label: 'Return', value: `${almanacButton('Edit Calendar', '!aa-wayfarer edit')} ${almanacButton('Wayfarer Calendar', '!aa-wayfarer')}` }
             ]);
         }
 
@@ -26118,10 +26406,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!requireGm(msg)) return;
             const backup = normalizeWayfarerBackup(ensureAlmanacRuntime().time.wayfarerBackup);
             sendPanel(msg, 'Wayfarer Recovery Options', [
-                { label: 'Draft', value: `${GameAssist.createButton('Save Draft', '!aa-wayfarer save')} ${GameAssist.createButton('Discard Draft Changes', '!aa-wayfarer cancel --confirm ?{Discard the saved draft and begin again from the saved Wayfarer definition?|No,no|Yes,yes}')}` },
-                { label: 'Previous Activation', value: backup ? GameAssist.createButton('Restore Previous Activation', '!aa-wayfarer restore --confirm ?{Restore the calendar and fictional time saved before the latest Wayfarer activation?|No,no|Yes,yes}') : 'No previous activation is available.' },
+                { label: 'Draft', value: `${almanacButton('Save Draft', '!aa-wayfarer save')} ${almanacButton('Discard Draft Changes', '!aa-wayfarer cancel --confirm ?{Discard the saved draft and begin again from the saved Wayfarer definition?|No,no|Yes,yes}')}` },
+                { label: 'Previous Activation', value: backup ? almanacButton('Restore Previous Activation', '!aa-wayfarer restore --confirm ?{Restore the calendar and fictional time saved before the latest Wayfarer activation?|No,no|Yes,yes}') : 'No previous activation is available.' },
                 { label: 'Campaign Default', value: 'To replace only the draft with the campaign default, use <code>!aa-wayfarer reset-default --confirm yes</code>. The active calendar and fictional time will not change.' },
-                { label: 'Return', value: GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer') }
+                { label: 'Return', value: almanacButton('Wayfarer Calendar', '!aa-wayfarer') }
             ]);
         }
 
@@ -26132,7 +26420,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Normal Use', value: 'Open the manager, edit only the calendar component you need, preview the complete draft, then activate it.' },
                 { label: 'Moons', value: 'Moon cycles and phase names are managed in Astronomy because they continue across calendar-display changes.' },
                 { label: 'Default Recovery', value: 'The command <code>!aa-wayfarer reset-default --confirm yes</code> replaces only the saved draft with the campaign default. It is intentionally not a button, and it does not change the active calendar.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Wayfarer Manager', '!aa-wayfarer')} ${GameAssist.createButton('Full Almanac Manual', '!Almanac-Manual')}` }
+                { label: 'Actions', value: `${almanacButton('Wayfarer Manager', '!aa-wayfarer')} ${almanacButton('Full Almanac Manual', '!Almanac-Manual')}` }
             ]);
         }
 
@@ -26180,7 +26468,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel(msg, `Wayfarer Help: ${info.title}`, [
                 { label: 'What This Controls', value: info.purpose },
                 { label: 'How to Enter It', value: info.format },
-                { label: 'Return', value: `${GameAssist.createButton(`Back to ${info.title}`, `!aa-wayfarer stage ${topic}`)} ${GameAssist.createButton('Edit Calendar', '!aa-wayfarer edit')}` }
+                { label: 'Return', value: `${almanacButton(`Back to ${info.title}`, `!aa-wayfarer stage ${topic}`)} ${almanacButton('Edit Calendar', '!aa-wayfarer edit')}` }
             ]);
         }
 
@@ -26194,40 +26482,40 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (notice) fields.unshift({ label: 'Updated', value: _sanitize(notice) });
             if (stage === 'identity') {
                 fields.push(
-                    { label: 'Calendar Name', value: `${_sanitize(definition.name)} ${GameAssist.createButton('Change Name', wayfarerNameCommand(definition))}` },
-                    { label: 'Clock', value: `${definition.hoursPerDay} hours per day; ${definition.minutesPerHour} minutes per hour<br>${GameAssist.createButton('Change Clock', `!aa-wayfarer clock --hours ?{Hours per day 1-48|${definition.hoursPerDay}} --minutes ?{Minutes per hour 1-120|${definition.minutesPerHour}}`)}` },
-                    { label: 'Starting Date', value: `${formatWayfarerStart(draft.startDate)}<br>${GameAssist.createButton('Change Starting Date', wayfarerStartCommand(draft, definition))}` },
-                    { label: 'Change Both', value: GameAssist.createButton('Change Name and Starting Date', wayfarerIdentityCommand(draft, definition)) }
+                    { label: 'Calendar Name', value: `${_sanitize(definition.name)} ${almanacButton('Change Name', wayfarerNameCommand(definition))}` },
+                    { label: 'Clock', value: `${definition.hoursPerDay} hours per day; ${definition.minutesPerHour} minutes per hour<br>${almanacButton('Change Clock', `!aa-wayfarer clock --hours ?{Hours per day 1-48|${definition.hoursPerDay}} --minutes ?{Minutes per hour 1-120|${definition.minutesPerHour}}`)}` },
+                    { label: 'Starting Date', value: `${formatWayfarerStart(draft.startDate)}<br>${almanacButton('Change Starting Date', wayfarerStartCommand(draft, definition))}` },
+                    { label: 'Change Both', value: almanacButton('Change Name and Starting Date', wayfarerIdentityCommand(draft, definition)) }
                 );
             } else if (stage === 'weekdays') {
                 fields.push(
                     { label: 'Weekdays', value: _sanitize(definition.weekdays.map((name, index) => `${index + 1}. ${name}`).join(' | ')) },
-                    { label: 'Edit', value: GameAssist.createButton('Replace Weekday Names', `!aa-wayfarer weekdays --value "?{Weekday names separated by commas|${definition.weekdays.join(',')}}"`) }
+                    { label: 'Edit', value: almanacButton('Replace Weekday Names', `!aa-wayfarer weekdays --value "?{Weekday names separated by commas|${definition.weekdays.join(',')}}"`) }
                 );
             } else if (stage === 'months') {
                 fields.push(
                     { label: 'Calendar Periods', value: definition.months.map((month, index) => `${index + 1}. ${_sanitize(month.name)} (${month.days} days${month.skipWeekday ? '; feast days do not advance the weekday' : ''})`).join('<br>') },
-                    { label: 'Edit', value: GameAssist.createButton('Replace Periods', `!aa-wayfarer months --value "?{Use Name:Days or Name:Days:Feast entries separated by commas|${definition.months.map(month => `${month.name}:${month.days}${month.skipWeekday ? ':Feast' : ''}`).join(',')}}"`) }
+                    { label: 'Edit', value: almanacButton('Replace Periods', `!aa-wayfarer months --value "?{Use Name:Days or Name:Days:Feast entries separated by commas|${definition.months.map(month => `${month.name}:${month.days}${month.skipWeekday ? ':Feast' : ''}`).join(',')}}"`) }
                 );
             } else if (stage === 'intercalary') {
                 fields.push(
                     { label: 'Festival Days', value: definition.intercalary.length ? definition.intercalary.map(day => `${_sanitize(day.name)} after ${_sanitize(definition.months[day.afterMonth]?.name || `period ${day.afterMonth + 1}`)}`).join('<br>') : 'None' },
-                    { label: 'Edit', value: GameAssist.createButton('Replace Festival Days', `!aa-wayfarer intercalary --value "?{Use Name:AfterPeriodNumber entries separated by commas; leave blank for none|${definition.intercalary.map(day => `${day.name}:${day.afterMonth + 1}`).join(',')}}"`) }
+                    { label: 'Edit', value: almanacButton('Replace Festival Days', `!aa-wayfarer intercalary --value "?{Use Name:AfterPeriodNumber entries separated by commas; leave blank for none|${definition.intercalary.map(day => `${day.name}:${day.afterMonth + 1}`).join(',')}}"`) }
                 );
             } else if (stage === 'leap') {
                 fields.push(
                     { label: 'Leap Rule', value: definition.leapEvery ? `${_sanitize(definition.leapName)} follows ${_sanitize(definition.months[definition.leapAfterMonth]?.name)} every ${definition.leapEvery} years.` : 'Off' },
-                    { label: 'Edit', value: GameAssist.createButton('Configure Leap Day', `!aa-wayfarer leap --every ?{Every how many years? Use 0 for off|${definition.leapEvery}} --name "?{Leap day name|${definition.leapName}}" --after ?{After period number|${definition.leapAfterMonth + 1}}`) }
+                    { label: 'Edit', value: almanacButton('Configure Leap Day', `!aa-wayfarer leap --every ?{Every how many years? Use 0 for off|${definition.leapEvery}} --name "?{Leap day name|${definition.leapName}}" --after ?{After period number|${definition.leapAfterMonth + 1}}`) }
                 );
             } else if (stage === 'holidays') {
                 fields.push(
                     { label: 'Holidays', value: definition.holidays.length ? definition.holidays.map(holiday => `${_sanitize(holiday.name)}: ${_sanitize(definition.months[holiday.monthIndex]?.name)} ${holiday.day}`).join('<br>') : 'None' },
-                    { label: 'Edit', value: GameAssist.createButton('Replace Holidays', `!aa-wayfarer holidays --value "?{Use Name:PeriodNumber:Day entries separated by commas; leave blank for none|${definition.holidays.map(holiday => `${holiday.name}:${holiday.monthIndex + 1}:${holiday.day}`).join(',')}}"`) }
+                    { label: 'Edit', value: almanacButton('Replace Holidays', `!aa-wayfarer holidays --value "?{Use Name:PeriodNumber:Day entries separated by commas; leave blank for none|${definition.holidays.map(holiday => `${holiday.name}:${holiday.monthIndex + 1}:${holiday.day}`).join(',')}}"`) }
                 );
             } else if (stage === 'seasons') {
                 fields.push(
                     { label: 'Seasonal Ranges', value: seasonRangeDescription(definition) },
-                    { label: 'Edit', value: GameAssist.createButton('Replace Seasonal Ranges', `!aa-wayfarer seasons --value "?{Use Name:StartPeriod:StartDay:EndPeriod:EndDay entries separated by commas; leave blank to use period labels|${seasonRangeInput(definition)}}"`) }
+                    { label: 'Edit', value: almanacButton('Replace Seasonal Ranges', `!aa-wayfarer seasons --value "?{Use Name:StartPeriod:StartDay:EndPeriod:EndDay entries separated by commas; leave blank to use period labels|${seasonRangeInput(definition)}}"`) }
                 );
             }
             fields.push({ label: 'Navigation', value: wayfarerStageControls(stage) });
@@ -26252,8 +26540,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const incomplete = WAYFARER_STAGES.filter(stage => draft.reviewed?.[stage] !== true);
             const activeEdit = modState.config.profileId === 'wayfarer';
             const action = status.complete
-                ? GameAssist.createButton(activeEdit ? 'Activate and Preserve Elapsed Time' : 'Activate at Starting Date', `!aa-wayfarer activate --confirm ?{Activate this Wayfarer calendar? ${activeEdit ? 'Elapsed fictional time will be preserved.' : 'Fictional time will move to the draft starting date.'}|No,no|Yes,yes}`)
-                : GameAssist.createButton('Continue Setup', `!aa-wayfarer stage ${incomplete[0] || 'identity'}`);
+                ? almanacButton(activeEdit ? 'Activate and Preserve Elapsed Time' : 'Activate at Starting Date', `!aa-wayfarer activate --confirm ?{Activate this Wayfarer calendar? ${activeEdit ? 'Elapsed fictional time will be preserved.' : 'Fictional time will move to the draft starting date.'}|No,no|Yes,yes}`)
+                : almanacButton('Continue Setup', `!aa-wayfarer stage ${incomplete[0] || 'identity'}`);
             sendPanel(msg, activationReview ? 'Review Wayfarer Draft' : 'Wayfarer Draft Preview', [
                 { label: 'Draft', value: wayfarerOverview(draft) },
                 { label: 'Starting Date Preview', value: sample ? _sanitize(displayMoment(sample)) : 'Invalid starting date' },
@@ -26263,7 +26551,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Seasons', value: seasonRangeDescription(definition) },
                 { label: 'Moon Phases', value: `${_sanitize(currentMoonSummary())} Moon configuration is managed in Astronomy and is not changed by activating this draft.` },
                 { label: 'Setup Check', value: status.errors.length ? _sanitize(status.errors.join(' ')) : (incomplete.length ? `Review these areas before activation: ${_sanitize(incomplete.join(', '))}.` : 'Ready to activate. The active calendar has not changed yet.') },
-                { label: 'Actions', value: `${action} ${GameAssist.createButton('Wayfarer Manager', '!aa-wayfarer')} ${GameAssist.createButton('Save Draft', '!aa-wayfarer save')}` }
+                { label: 'Actions', value: `${action} ${almanacButton('Wayfarer Manager', '!aa-wayfarer')} ${almanacButton('Save Draft', '!aa-wayfarer save')}` }
             ]);
         }
 
@@ -26287,12 +26575,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function handleAdvance(msg, content, direction) {
             if (!requireGm(msg) || !timeAvailable()) return;
             const amount = parseAmount(content);
-            if (!amount.ok) return sendPanel(msg, 'TimeAlmanac Needs Attention', [{ label: 'Problem', value: _sanitize(amount.message) }, { label: 'Next Step', value: GameAssist.createButton('Advance Time', '!aa-time menu') }]);
+            if (!amount.ok) return sendPanel(msg, 'TimeAlmanac Needs Attention', [{ label: 'Problem', value: _sanitize(amount.message) }, { label: 'Next Step', value: almanacButton('Advance Time', '!aa-time menu') }]);
             const args = _parseArgs(content).args;
             if (direction < 0 && String(args.confirm || '').toLowerCase() !== 'yes') {
                 return sendPanel(msg, 'Move Fictional Time Backward', [
                     { label: 'Important', value: 'This changes the calendar only. It does not reverse rests, effects, combat, NPC history, character resources, or other campaign state.' },
-                    { label: 'Next Step', value: GameAssist.createButton('Choose Backward Amount', '!aa-time menu') }
+                    { label: 'Next Step', value: almanacButton('Choose Backward Amount', '!aa-time menu') }
                 ]);
             }
             const runtime = ensureAlmanacRuntime();
@@ -26302,8 +26590,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Previous', value: _sanitize(displayMoment(result.previous)) },
                 { label: 'Current', value: _sanitize(displayMoment(result.current)) },
                 { label: 'Elapsed Change', value: `${direction > 0 ? '+' : '-'}${amount.totalMinutes} minutes` },
-                { label: 'Actions', value: `${GameAssist.createButton('Announce Current Time', '!aa-time announce')} ${GameAssist.createButton('Continue', '!aa-time menu')}` }
-            ] : [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: GameAssist.createButton('Advance Time', '!aa-time menu') }]);
+                { label: 'Actions', value: `${almanacButton('Announce Current Time', '!aa-time announce')} ${almanacButton('Continue', '!aa-time menu')}` }
+            ] : [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: almanacButton('Advance Time', '!aa-time menu') }]);
         }
 
         function handleSet(msg, content) {
@@ -26312,7 +26600,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (String(args.confirm || '').toLowerCase() !== 'yes') {
                 return sendPanel(msg, 'Set Fictional Date and Time', [
                     { label: 'No Change Made', value: 'Setting an exact date requires confirmation.' },
-                    { label: 'Next Step', value: GameAssist.createButton('Open Time Controls', '!aa-time menu') }
+                    { label: 'Next Step', value: almanacButton('Open Time Controls', '!aa-time menu') }
                 ]);
             }
             const profile = profileFor();
@@ -26326,12 +26614,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 hour: requestedHour,
                 minute: args.minute
             });
-            if (!result.ok) return sendPanel(msg, 'TimeAlmanac Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: GameAssist.createButton('Open Time Controls', '!aa-time menu') }]);
+            if (!result.ok) return sendPanel(msg, 'TimeAlmanac Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: almanacButton('Open Time Controls', '!aa-time menu') }]);
             const committed = commitWorldMinute(result.worldMinute, 'Fictional date and time set', msg);
             sendPanel(msg, committed.ok ? 'World Time Updated' : 'TimeAlmanac Needs Attention', committed.ok ? [
                 { label: 'Previous', value: _sanitize(displayMoment(committed.previous)) },
                 { label: 'Current', value: _sanitize(displayMoment(committed.current)) },
-                { label: 'Actions', value: `${GameAssist.createButton('Announce Current Time', '!aa-time announce')} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` }
+                { label: 'Actions', value: `${almanacButton('Announce Current Time', '!aa-time announce')} ${almanacButton('Almanac', '!Almanac-GM')}` }
             ] : [{ label: 'Problem', value: _sanitize(committed.message) }]);
         }
 
@@ -26340,7 +26628,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const match = content.match(/profile\s+([a-z0-9_-]+)/i);
             const requested = String(match?.[1] || '').toLowerCase();
             if (!['standard', 'solamnic', 'harptos', 'wayfarer'].includes(requested)) {
-                return sendPanel(msg, 'AlmanacAssist', [{ label: 'Needs Attention', value: 'Choose Standard, Solamnic, Harptos, or Wayfarer.' }, { label: 'Next Step', value: GameAssist.createButton('Calendar', '!cal') }]);
+                return sendPanel(msg, 'AlmanacAssist', [{ label: 'Needs Attention', value: 'Choose Standard, Solamnic, Harptos, or Wayfarer.' }, { label: 'Next Step', value: almanacButton('Calendar', '!cal') }]);
             }
             const args = _parseArgs(content).args;
             if (String(args.confirm || '').toLowerCase() !== 'yes') return showCalendarMenu(msg);
@@ -26360,7 +26648,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Calendar', value: `${_sanitize(previousProfile.name)} to ${_sanitize(nextProfile.name)}` },
                 { label: 'Elapsed Time', value: 'Preserved' },
                 { label: 'Current Date', value: _sanitize(displayDate(current)) },
-                { label: 'Next Step', value: GameAssist.createButton('Calendar', '!cal') }
+                { label: 'Next Step', value: almanacButton('Calendar', '!cal') }
             ]);
         }
 
@@ -26588,9 +26876,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel(msg, 'Wayfarer Advanced Handout', [
                 { label: 'Purpose', value: 'Bulk-edit a complete calendar definition in one owned GM handout. The ordinary chat manager remains the complete basic path.' },
                 { label: 'Workflow', value: 'Export Draft, edit the JSON, Preview Import, then confirm the exact preview. A changed or expired preview cannot be committed.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Export Draft', '!aa-wayfarer handout-export')} ${GameAssist.createButton('Preview Import', '!aa-wayfarer handout-preview')}` },
+                { label: 'Actions', value: `${almanacButton('Export Draft', '!aa-wayfarer handout-export')} ${almanacButton('Preview Import', '!aa-wayfarer handout-preview')}` },
                 { label: 'Safety', value: 'Import updates only the saved draft and is bounded, validated, previewed, stale-protected, and atomic. It never changes the active calendar or fictional time directly.' },
-                { label: 'Return', value: `${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                { label: 'Return', value: `${almanacButton('Wayfarer Calendar', '!aa-wayfarer')} ${almanacButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
 
@@ -26601,7 +26889,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const result = writeWayfarerTransferHandout();
                 return sendPanel(msg, result.ok ? 'Wayfarer Draft Exported' : 'Wayfarer Export Needs Attention', [
                     { label: result.ok ? 'Handout' : 'Problem', value: result.ok ? 'GameAssist Wayfarer Calendar was created or updated.' : _sanitize(result.message) },
-                    { label: 'Next Step', value: result.ok ? `${GameAssist.createButton('Preview Import', '!aa-wayfarer handout-preview')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')}` : GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer') }
+                    { label: 'Next Step', value: result.ok ? `${almanacButton('Preview Import', '!aa-wayfarer handout-preview')} ${almanacButton('Wayfarer Calendar', '!aa-wayfarer')}` : almanacButton('Wayfarer Calendar', '!aa-wayfarer') }
                 ]);
             }
             if (action === 'preview') {
@@ -26615,7 +26903,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         { label: 'Calendar', value: wayfarerOverview({ definition: validation.definition }) },
                         { label: 'Starting Date', value: formatWayfarerStart(validation.startDate) },
                         { label: 'Changes', value: 'Confirmation replaces only the saved draft. The active calendar and fictional chronology stay unchanged until ordinary activation.' },
-                        { label: 'Actions', value: `${GameAssist.createButton('Replace Saved Draft', `!aa-wayfarer handout-commit --grant ${grantId}`)} ${GameAssist.createButton('Cancel', '!aa-wayfarer handout')}` }
+                        { label: 'Actions', value: `${almanacButton('Replace Saved Draft', `!aa-wayfarer handout-commit --grant ${grantId}`)} ${almanacButton('Cancel', '!aa-wayfarer handout')}` }
                     ]);
                 });
             }
@@ -26671,7 +26959,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     return sendPanel(msg, 'Reset Wayfarer Draft', [
                         { label: 'No Change Made', value: 'Resetting the saved draft requires the exact command <code>!aa-wayfarer reset-default --confirm yes</code>.' },
                         { label: 'Important', value: 'This command resets only the saved draft to the campaign Wayfarer default. The active calendar and fictional time remain unchanged.' },
-                        { label: 'Return', value: GameAssist.createButton('Wayfarer Manager', '!aa-wayfarer') }
+                        { label: 'Return', value: almanacButton('Wayfarer Manager', '!aa-wayfarer') }
                     ]);
                 }
                 const definition = normalizeWayfarer(copy(DEFAULT_WAYFARER));
@@ -26686,7 +26974,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return sendPanel(msg, 'Wayfarer Draft Reset', [
                     { label: 'Saved Draft', value: 'Restored to the campaign Wayfarer Calendar default.' },
                     { label: 'Active Calendar', value: 'Unchanged.' },
-                    { label: 'Next Step', value: GameAssist.createButton('Open Wayfarer Manager', '!aa-wayfarer') }
+                    { label: 'Next Step', value: almanacButton('Open Wayfarer Manager', '!aa-wayfarer') }
                 ]);
             }
             if (action === 'stage') {
@@ -26708,7 +26996,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return sendPanel(msg, 'Wayfarer Draft Saved', [
                     { label: 'Saved Draft', value: wayfarerOverview(draft) },
                     { label: 'Active Calendar', value: 'Unchanged' },
-                    { label: 'Continue', value: `${GameAssist.createButton('Setup Home', '!aa-wayfarer')} ${GameAssist.createButton('Preview Draft', '!aa-wayfarer preview')}` }
+                    { label: 'Continue', value: `${almanacButton('Setup Home', '!aa-wayfarer')} ${almanacButton('Preview Draft', '!aa-wayfarer preview')}` }
                 ]);
             }
             if (action === 'cancel') {
@@ -26717,13 +27005,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return sendPanel(msg, 'Wayfarer Draft Discarded', [
                     { label: 'Active Calendar', value: 'Unchanged' },
                     { label: 'New Draft', value: 'A fresh draft now matches the saved Wayfarer definition.' },
-                    { label: 'Continue', value: GameAssist.createButton('Open Setup', '!aa-wayfarer') }
+                    { label: 'Continue', value: almanacButton('Open Setup', '!aa-wayfarer') }
                 ]);
             }
             if (action === 'duplicate') {
                 const source = String(args.profile || '').toLowerCase();
                 if (!['standard', 'solamnic', 'harptos', 'wayfarer'].includes(source)) {
-                    return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'Choose Standard, Solamnic, Harptos, or the active Wayfarer definition.' }, { label: 'Next Step', value: GameAssist.createButton('Setup Home', '!aa-wayfarer') }]);
+                    return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'Choose Standard, Solamnic, Harptos, or the active Wayfarer definition.' }, { label: 'Next Step', value: almanacButton('Setup Home', '!aa-wayfarer') }]);
                 }
                 if (String(args.confirm || '').toLowerCase() !== 'yes') return showWayfarer(msg);
                 modState.config.wayfarerDraft = createWayfarerDraft(source, true);
@@ -26734,7 +27022,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     { label: 'Starting Point', value: `${_sanitize(profileFor(source).name)} was copied into the saved draft.` },
                     { label: 'Copy Note', value: copyNote },
                     { label: 'Active Calendar', value: 'Unchanged' },
-                    { label: 'Continue', value: `${GameAssist.createButton('Edit Draft', '!aa-wayfarer stage identity')} ${GameAssist.createButton('Review Draft', '!aa-wayfarer stage review')}` }
+                    { label: 'Continue', value: `${almanacButton('Edit Draft', '!aa-wayfarer stage identity')} ${almanacButton('Review Draft', '!aa-wayfarer stage review')}` }
                 ]);
             }
             if (action === 'activate') {
@@ -26746,7 +27034,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     return sendPanel(msg, 'Wayfarer Needs Attention', [
                         { label: 'Draft Not Ready', value: _sanitize(status.errors.join(' ') || `Review these setup stages: ${incomplete.join(', ')}.`) },
                         { label: 'Active Calendar', value: 'Unchanged; the saved draft was preserved.' },
-                        { label: 'Next Step', value: GameAssist.createButton('Continue Setup', `!aa-wayfarer stage ${incomplete[0] || 'identity'}`) }
+                        { label: 'Next Step', value: almanacButton('Continue Setup', `!aa-wayfarer stage ${incomplete[0] || 'identity'}`) }
                     ]);
                 }
                 const runtime = ensureAlmanacRuntime();
@@ -26760,14 +27048,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     return sendPanel(msg, 'Wayfarer Needs Attention', [
                         { label: 'Elapsed Time Cannot Be Preserved', value: 'The current elapsed fictional time falls outside the supported range of this draft calendar.' },
                         { label: 'No Change Made', value: 'The active calendar, fictional date, and saved draft were preserved.' },
-                        { label: 'Choices', value: `${GameAssist.createButton('Return To Draft', '!aa-wayfarer stage review')} ${GameAssist.createButton('Activate At Draft Start', '!aa-wayfarer activate --confirm yes --reset yes')}` }
+                        { label: 'Choices', value: `${almanacButton('Return To Draft', '!aa-wayfarer stage review')} ${almanacButton('Activate At Draft Start', '!aa-wayfarer activate --confirm yes --reset yes')}` }
                     ]);
                 }
                 if (!nextMoment) {
                     return sendPanel(msg, 'Wayfarer Needs Attention', [
                         { label: 'Starting Date', value: _sanitize(status.startResult.message || 'The starting date could not be represented by this calendar.') },
                         { label: 'No Change Made', value: 'The active calendar, fictional date, and saved draft were preserved.' },
-                        { label: 'Next Step', value: GameAssist.createButton('Edit Starting Date', '!aa-wayfarer stage identity') }
+                        { label: 'Next Step', value: almanacButton('Edit Starting Date', '!aa-wayfarer stage identity') }
                     ]);
                 }
                 // CHOICE: save one complete pre-activation checkpoint - ALT: retain an unbounded calendar history; REJECTED: rollback must be useful without duplicating the bounded chronology ledger.
@@ -26811,18 +27099,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     { label: 'Current Date', value: _sanitize(displayMoment(nextMoment)) },
                     { label: 'Elapsed Time', value: preserving ? 'Preserved' : 'Moved to the reviewed starting date' },
                     { label: 'Rollback', value: 'The previous calendar and fictional time are available from Wayfarer Setup until the next activation.' },
-                    { label: 'Continue', value: `${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('Wayfarer Setup', '!aa-wayfarer')}` }
+                    { label: 'Continue', value: `${almanacButton('Calendar', '!cal')} ${almanacButton('Wayfarer Setup', '!aa-wayfarer')}` }
                 ]);
             }
             if (action === 'restore') {
                 const runtime = ensureAlmanacRuntime();
                 const backup = normalizeWayfarerBackup(runtime.time.wayfarerBackup);
-                if (!backup) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'No previous Wayfarer activation is available to restore.' }, { label: 'Next Step', value: GameAssist.createButton('Setup Home', '!aa-wayfarer') }]);
+                if (!backup) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'No previous Wayfarer activation is available to restore.' }, { label: 'Next Step', value: almanacButton('Setup Home', '!aa-wayfarer') }]);
                 if (String(args.confirm || '').toLowerCase() !== 'yes') return showWayfarer(msg);
                 const previous = currentMoment();
                 const restoredProfile = backup.profileId === 'wayfarer' ? wayfarerProfile(backup.definition) : profileFor(backup.profileId);
                 const restoredMoment = resolveWorldMinute(restoredProfile, backup.worldMinute);
-                if (!restoredMoment) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'The saved rollback point is no longer valid. No calendar or time was changed.' }, { label: 'Next Step', value: GameAssist.createButton('Setup Home', '!aa-wayfarer') }]);
+                if (!restoredMoment) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'The saved rollback point is no longer valid. No calendar or time was changed.' }, { label: 'Next Step', value: almanacButton('Setup Home', '!aa-wayfarer') }]);
                 modState.config.wayfarer = backup.definition;
                 modState.config.profileId = backup.profileId;
                 runtime.time.worldMinute = backup.worldMinute;
@@ -26836,7 +27124,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return sendPanel(msg, 'Previous Calendar Restored', [
                     { label: 'Calendar', value: _sanitize(restoredProfile.name) },
                     { label: 'Fictional Date', value: _sanitize(displayMoment(restoredMoment)) },
-                    { label: 'Continue', value: `${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('Wayfarer Setup', '!aa-wayfarer')}` }
+                    { label: 'Continue', value: `${almanacButton('Calendar', '!cal')} ${almanacButton('Wayfarer Setup', '!aa-wayfarer')}` }
                 ]);
             }
             const draft = copy(ensureWayfarerDraft());
@@ -26858,7 +27146,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (!name || !result.ok) return sendPanel(msg, 'Wayfarer Needs Attention', [
                     { label: 'Problem', value: _sanitize(!name ? 'Enter a calendar name.' : result.message) },
                     { label: 'Saved Draft', value: 'Preserved without partial changes.' },
-                    { label: 'Try Again', value: GameAssist.createButton('Change Name and Starting Date', wayfarerIdentityCommand(draft, wayfarer)) }
+                    { label: 'Try Again', value: almanacButton('Change Name and Starting Date', wayfarerIdentityCommand(draft, wayfarer)) }
                 ]);
                 wayfarer.name = name;
                 draft.startDate = { year: Math.floor(Number(args.year)), period: String(args.period).trim(), day: Math.floor(Number(args.day)), hour: Math.floor(Number(requestedHour)), minute: Math.floor(Number(args.minute)) };
@@ -26888,7 +27176,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     : args.hour;
                 const requested = { year: args.year, period: args.period, day: args.day, hour: requestedHour, minute: args.minute };
                 const result = minuteForDate(wayfarerProfile(wayfarer), requested);
-                if (!result.ok) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Saved Draft', value: 'Preserved without partial changes.' }, { label: 'Next Step', value: GameAssist.createButton('Name and Starting Date', '!aa-wayfarer stage identity') }]);
+                if (!result.ok) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Saved Draft', value: 'Preserved without partial changes.' }, { label: 'Next Step', value: almanacButton('Name and Starting Date', '!aa-wayfarer stage identity') }]);
                 draft.startDate = { year: Math.floor(Number(args.year)), period: String(args.period).trim(), day: Math.floor(Number(args.day)), hour: Math.floor(Number(requestedHour)), minute: Math.floor(Number(args.minute)) };
                 editedStage = 'identity';
             } else if (action === 'weekdays') {
@@ -26949,7 +27237,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 wayfarer.leapAfterMonth = after - 1;
                 editedStage = 'leap';
             } else {
-                return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'That Wayfarer setting was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Edit Wayfarer', '!aa-wayfarer') }]);
+                return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: 'That Wayfarer setting was not recognized.' }, { label: 'Next Step', value: almanacButton('Edit Wayfarer', '!aa-wayfarer') }]);
             }
             const inspection = inspectWayfarerDefinition(wayfarer);
             if (!inspection.ok) return sendPanel(msg, 'Wayfarer Needs Attention', [{ label: 'Problem', value: _sanitize(inspection.errors.join(' ')) }, { label: 'Saved Draft', value: 'Preserved without partial changes.' }]);
@@ -26957,7 +27245,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!startInspection.ok) return sendPanel(msg, 'Wayfarer Needs Attention', [
                 { label: 'Starting Date Conflict', value: _sanitize(startInspection.message) },
                 { label: 'Saved Draft', value: 'Preserved without partial changes. Adjust the starting date or dependent calendar stage first.' },
-                { label: 'Next Step', value: `${GameAssist.createButton('Change Name and Starting Date', wayfarerIdentityCommand(draft, inspection.definition))} ${GameAssist.createButton('Open Editor', '!aa-wayfarer stage identity')}` }
+                { label: 'Next Step', value: `${almanacButton('Change Name and Starting Date', wayfarerIdentityCommand(draft, inspection.definition))} ${almanacButton('Open Editor', '!aa-wayfarer stage identity')}` }
             ]);
             draft.definition = inspection.definition;
             draft.reviewed[editedStage] = true;
@@ -27230,7 +27518,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const candidate = !requestedLocation && working?.locationId === location.id ? working.settings : location.settingsSnapshot;
             const validated = candidate === undefined ? null : validateCurrentSettings(candidate);
             if (validated?.ok) {
-                const settings = validated.settings, profile = settings.profile;
+                const settings = validated.settings, profile = currentSettingsLandscape(settings);
                 // Matrix values already contain the local influences; legacy weather
                 // must not add elevation, coast, or location adjustments a second time.
                 return Object.freeze(copy({ location: { ...location, temperatureDeltaF: 0, windDeltaMph: 0,
@@ -27558,19 +27846,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     ? profiles[region.profileId].name
                     : (parent ? `Follows ${parent.name}` : 'Temperate');
                 const current = region.id === config.activeRegionId ? ' <strong>(current)</strong>' : '';
-                const use = region.id === config.activeRegionId ? '' : ` ${GameAssist.createButton('Use', `!aa-climate region use --id ${region.id}`)}`;
-                const adjust = ` ${GameAssist.createButton('Settings', `!aa-climate region settings --id ${region.id}`)}`;
+                const use = region.id === config.activeRegionId ? '' : ` ${almanacButton('Use', `!aa-climate region use --id ${region.id}`)}`;
+                const adjust = ` ${almanacButton('Settings', `!aa-climate region settings --id ${region.id}`)}`;
                 const remove = config.regions.length > 1
-                    ? ` ${GameAssist.createButton('Remove', `!aa-climate region remove --id ${region.id} --confirm ?{Remove ${region.name}? Child regions become top-level regions.|No,no|Yes,yes}`)}`
+                    ? ` ${almanacButton('Remove', `!aa-climate region remove --id ${region.id} --confirm ?{Remove ${region.name}? Child regions become top-level regions.|No,no|Yes,yes}`)}`
                     : '';
                 return `<b>${_sanitize(region.name)}</b>${current}<br>${parent ? `${_sanitize(parent.name)} &rsaquo; ` : ''}${_sanitize(climateType)}${use}${adjust}${remove}`;
             }).join('<hr>');
             sendPanel(msg, 'Regions and Subregions', [
                 { label: 'Regions', value: rows },
-                { label: 'Pages', value: `${page} of ${regionPages} ${page > 1 ? GameAssist.createButton('Previous', `!aa-climate regions --page ${page - 1}`) : ''} ${page < regionPages ? GameAssist.createButton('Next', `!aa-climate regions --page ${page + 1}`) : ''}` },
-                { label: 'Add A Region', value: GameAssist.createButton('Add Region', `!aa-climate region add --name "?{Region name}" --profile ?{Climate type|${profileOptions}} --parent ?{Parent region|${parentOptions}}`) },
+                { label: 'Pages', value: `${page} of ${regionPages} ${page > 1 ? almanacButton('Previous', `!aa-climate regions --page ${page - 1}`) : ''} ${page < regionPages ? almanacButton('Next', `!aa-climate regions --page ${page + 1}`) : ''}` },
+                { label: 'Add A Region', value: almanacButton('Add Region', `!aa-climate region add --name "?{Region name}" --profile ?{Climate type|${profileOptions}} --parent ?{Parent region|${parentOptions}}`) },
                 { label: 'Place Names', value: 'Name regions for your campaign. A region with a parent is a subregion; climates and biomes are reusable profiles, not place names.' },
-                { label: 'Climate Types', value: GameAssist.createButton('Manage Climate Types', '!aa-climate profiles') },
+                { label: 'Climate Types', value: almanacButton('Manage Climate Types', '!aa-climate profiles') },
                 { label: 'Return', value: paletteBack() }
             ]);
         }
@@ -27582,10 +27870,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const resolved = resolvedClimate(region.id, '');
             sendPanel(msg, `${region.name}: Region Settings`, [
                 { label: 'Region', value: `${_sanitize(region.name)} | ${_sanitize(resolved.profileName)}` },
-                { label: 'Name and Climate', value: GameAssist.createButton('Edit Region', `!aa-climate region edit --id ${region.id} --name "?{Region name|${region.name}}" --profile ${paletteChoice('Climate profile', profiles, region.profileId || 'inherit')} --parent ${paletteChoice('Parent region', parents, region.parentId || 'none')}`) },
-                { label: 'Local Adjustments', value: GameAssist.createButton('Fine Tune', `!aa-climate region override --id ${region.id} --temp ?{Temperature adjustment F|${region.overrides.temperatureBias ?? 0}} --humidity ?{Typical humidity percent|${region.overrides.humidity ?? resolved.humidity}} --precip ?{Precipitation chance percent|${region.overrides.precipitationChance ?? resolved.precipitationChance}} --wind ?{Typical wind mph|${region.overrides.windMph ?? resolved.windMph}}`) },
-                { label: 'Restore Inheritance', value: GameAssist.createButton('Clear Local Adjustments', `!aa-climate region override --id ${region.id} --clear yes --confirm ?{Clear this region's local climate adjustments?|No,no|Yes,yes}`) },
-                { label: 'Return', value: `${GameAssist.createButton('Regions', '!aa-climate regions')} ${paletteBack()}` }
+                { label: 'Name and Climate', value: almanacButton('Edit Region', `!aa-climate region edit --id ${region.id} --name "?{Region name|${region.name}}" --profile ${paletteChoice('Climate profile', profiles, region.profileId || 'inherit')} --parent ${paletteChoice('Parent region', parents, region.parentId || 'none')}`) },
+                { label: 'Local Adjustments', value: almanacButton('Fine Tune', `!aa-climate region override --id ${region.id} --temp ?{Temperature adjustment F|${region.overrides.temperatureBias ?? 0}} --humidity ?{Typical humidity percent|${region.overrides.humidity ?? resolved.humidity}} --precip ?{Precipitation chance percent|${region.overrides.precipitationChance ?? resolved.precipitationChance}} --wind ?{Typical wind mph|${region.overrides.windMph ?? resolved.windMph}}`) },
+                { label: 'Restore Inheritance', value: almanacButton('Clear Local Adjustments', `!aa-climate region override --id ${region.id} --clear yes --confirm ?{Clear this region's local climate adjustments?|No,no|Yes,yes}`) },
+                { label: 'Return', value: `${almanacButton('Regions', '!aa-climate regions')} ${paletteBack()}` }
             ]);
         }
 
@@ -27612,14 +27900,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!submoduleEnabled('climate')) return sendPanel(msg, 'ClimateAlmanac', [{ label: 'Status', value: 'Turned off; regions and settings are preserved.' }]);
             const climate = weatherClimateContext();
             const config = normalizeClimateConfig();
+            if (playerIsGM(msg?.playerid)) return sendPanel(msg, 'Climate', [
+                { label: 'Current Climate', value: `${_sanitize(climate.profileName)} | ${_sanitize(climate.season)}` },
+                { label: 'Change', value: `${almanacButton('Choose Climate', '!aa current baselines')} ${almanacButton('Choose Biome', '!aa current layer --kind biome')} ${almanacButton('Seasons', '!aa current seasons')}` },
+                { label: 'Weather', value: `${almanacButton('Generate Weather', '!aa current generate')} ${almanacButton('Weather Breakdown', '!aa current breakdown')}` },
+                { label: 'Advanced', value: `${almanacButton('Manage Regions', '!aa-climate regions')} ${almanacButton('Reusable Climate Profiles', '!aa-climate profiles')}` },
+                { label: 'Return', value: `${almanacButton('Current Settings', '!aa current')} ${almanacButton('Almanac Home', '!aa-gm')}` }
+            ]);
             sendPanel(msg, 'ClimateAlmanac', [
                 { label: 'Current Region', value: `${_sanitize(climate.regionName)} - ${_sanitize(climate.profileName)}` },
                 { label: 'Seasonal Baseline', value: `${_sanitize(climate.season)} | ${climate.temperatureF} F | ${climate.humidity}% humidity | ${climate.precipitationChance}% precipitation chance | ${climate.windMph} mph wind` },
-                { label: 'Choose Region', value: config.regions.map(region => region.id === climate.regionId ? `<strong>${_sanitize(region.name)}</strong>` : (playerIsGM(msg?.playerid) ? GameAssist.createButton(region.name, `!aa-climate region use --id ${region.id}`) : _sanitize(region.name))).join(' ') },
+                { label: 'Choose Region', value: config.regions.map(region => region.id === climate.regionId ? `<strong>${_sanitize(region.name)}</strong>` : (playerIsGM(msg?.playerid) ? almanacButton(region.name, `!aa-climate region use --id ${region.id}`) : _sanitize(region.name))).join(' ') },
                 ...(playerIsGM(msg?.playerid) ? [{ label: 'Season', value: timeAvailable()
                     ? `Following the active calendar: <strong>${_sanitize(climate.season)}</strong>`
-                    : `${_sanitize(climate.season)} ${GameAssist.createButton('Change Season', '!aa-climate season ?{Season|Spring|Summer|Autumn|Winter}')}` }] : []),
-                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Manage Regions', '!aa-climate regions')} ${GameAssist.createButton('Climate Types', '!aa-climate profiles')} ${GameAssist.createButton('Seasons', '!aa-palette seasons')} ${GameAssist.createButton('World Palettes', '!aa-palette')}` : GameAssist.createButton('Almanac', '!Almanac') }
+                    : `${_sanitize(climate.season)} ${almanacButton('Change Season', '!aa-climate season ?{Season|Spring|Summer|Autumn|Winter}')}` }] : []),
+                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${almanacButton('Manage Regions', '!aa-climate regions')} ${almanacButton('Climate Types', '!aa-climate profiles')} ${almanacButton('Seasons', '!aa-palette seasons')} ${almanacButton('World Palettes', '!aa-palette')}` : almanacButton('Almanac', '!Almanac') }
             ]);
         }
 
@@ -27799,7 +28094,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 publishChange('almanac.climate.changed', null, resolvedClimate(), { action: 'region-removed', regionId: region.id }, msg);
                 return showClimate(msg);
             }
-            sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'That climate command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Climate', '!clim') }]);
+            sendPanel(msg, 'ClimateAlmanac Needs Attention', [{ label: 'Problem', value: 'That climate command was not recognized.' }, { label: 'Next Step', value: almanacButton('Climate', '!clim') }]);
         }
 
         function normalizeAstronomyConfig() {
@@ -27969,7 +28264,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Season and Daylight', value: `${_sanitize(context.season)} | about ${context.daylightHours} hours | sunrise ${context.sunriseHour}, sunset ${context.sunsetHour}` },
                 { label: 'Deterministic Event', value: context.seasonalEvent ? _sanitize(context.seasonalEvent) : 'No season boundary today.' },
                 { label: 'Moons', value: moonRows || 'None configured.' },
-                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Forecast', '!aa-astro forecast --days ?{Days|7}')} ${GameAssist.createButton('Setup', '!aa-astro setup')} ${GameAssist.createButton('Generate Rare Event', '!aa-astro rare')} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` : GameAssist.createButton('Almanac', '!Almanac') }
+                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${almanacButton('Forecast', '!aa-astro forecast --days ?{Days|7}')} ${almanacButton('Setup', '!aa-astro setup')} ${almanacButton('Generate Rare Event', '!aa-astro rare')} ${almanacButton('Almanac', '!Almanac-GM')}` : almanacButton('Almanac', '!Almanac') }
             ]);
         }
 
@@ -27986,7 +28281,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Authority', value: timeAvailable() ? 'TimeAlmanac future dates' : 'Manual astronomy day with the current manual season' },
                 { label: 'Forecast', value: rows.length ? rows.map(_sanitize).join('<br>') : 'The requested dates exceed the supported calendar range.' },
                 { label: 'Changes', value: 'None. Forecasting is read-only.' },
-                { label: 'Return', value: GameAssist.createButton('Astronomy', '!astro') }
+                { label: 'Return', value: almanacButton('Astronomy', '!astro') }
             ]);
         }
 
@@ -27995,19 +28290,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const config = normalizeAstronomyConfig();
             const moonRows = config.moons.map(moon => {
                 const phases = moon.phases.join(';');
-                const edit = GameAssist.createButton('Edit', `!aa-astro moon set --id ${moon.id} --name "?{Moon name|${moon.name}}" --cycle ?{Cycle in days|${moon.cycleDays}} --offset ?{Offset in days|${moon.offsetDays}} --phases "?{Semicolon-separated phases|${phases}}"`);
+                const edit = almanacButton('Edit', `!aa-astro moon set --id ${moon.id} --name "?{Moon name|${moon.name}}" --cycle ?{Cycle in days|${moon.cycleDays}} --offset ?{Offset in days|${moon.offsetDays}} --phases "?{Semicolon-separated phases|${phases}}"`);
                 const remove = config.moons.length > 1
-                    ? GameAssist.createButton('Remove', `!aa-astro moon remove --id ${moon.id} --confirm ?{Remove ${moon.name}?|No,no|Yes,yes}`)
+                    ? almanacButton('Remove', `!aa-astro moon remove --id ${moon.id} --confirm ?{Remove ${moon.name}?|No,no|Yes,yes}`)
                     : '';
                 return `<strong>${_sanitize(moon.name)}</strong> - ${moon.cycleDays} days; offset ${moon.offsetDays}; ${moon.phases.length} phases<br>${edit}${remove ? ` ${remove}` : ''}`;
             }).join('<hr>');
-            const eventRows = config.rareEvents.map(event => `${_sanitize(event.name)} - weight ${event.weight}<br>${GameAssist.createButton('Edit', `!aa-astro event set --id ${event.id} --name "?{Event name|${event.name}}" --weight ?{Relative weight|${event.weight}}`)} ${config.rareEvents.length > 1 ? GameAssist.createButton('Remove', `!aa-astro event remove --id ${event.id} --confirm ?{Remove ${event.name}?|No,no|Yes,yes}`) : ''}`).join('<hr>');
+            const eventRows = config.rareEvents.map(event => `${_sanitize(event.name)} - weight ${event.weight}<br>${almanacButton('Edit', `!aa-astro event set --id ${event.id} --name "?{Event name|${event.name}}" --weight ?{Relative weight|${event.weight}}`)} ${config.rareEvents.length > 1 ? almanacButton('Remove', `!aa-astro event remove --id ${event.id} --confirm ?{Remove ${event.name}?|No,no|Yes,yes}`) : ''}`).join('<hr>');
             sendPanel(msg, 'Astronomy Setup', [
                 { label: 'Moons', value: moonRows || 'None configured.' },
-                { label: 'Add A Moon', value: GameAssist.createButton('Add Moon', '!aa-astro moon add --name "?{Moon name|New Moon}" --cycle ?{Cycle in days|28} --offset ?{Offset in days|0} --phases "?{Semicolon-separated phases|New;Waxing;Full;Waning}"') },
+                { label: 'Add A Moon', value: almanacButton('Add Moon', '!aa-astro moon add --name "?{Moon name|New Moon}" --cycle ?{Cycle in days|28} --offset ?{Offset in days|0} --phases "?{Semicolon-separated phases|New;Waxing;Full;Waning}"') },
                 { label: 'Rare Events', value: eventRows || 'None configured.' },
-                { label: 'Add A Rare Event', value: GameAssist.createButton('Add Event', '!aa-astro event add --name "?{Event name|Celestial Event}" --weight ?{Relative weight|1}') },
-                { label: 'Return', value: GameAssist.createButton('Astronomy', '!astro') }
+                { label: 'Add A Rare Event', value: almanacButton('Add Event', '!aa-astro event add --name "?{Event name|Celestial Event}" --weight ?{Relative weight|1}') },
+                { label: 'Return', value: almanacButton('Astronomy', '!astro') }
             ]);
         }
 
@@ -28117,10 +28412,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return sendPanel(msg, 'Generated Celestial Event', [
                     { label: 'Event', value: _sanitize(entry.name) },
                     { label: 'Important', value: 'This is a generated rare event, not a deterministic calendar or moon result.' },
-                    { label: 'Return', value: GameAssist.createButton('Astronomy', '!astro') }
+                    { label: 'Return', value: almanacButton('Astronomy', '!astro') }
                 ]);
             }
-            sendPanel(msg, 'AstronomyAlmanac Needs Attention', [{ label: 'Problem', value: 'That astronomy command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Astronomy', '!astro') }]);
+            sendPanel(msg, 'AstronomyAlmanac Needs Attention', [{ label: 'Problem', value: 'That astronomy command was not recognized.' }, { label: 'Next Step', value: almanacButton('Astronomy', '!astro') }]);
         }
 
         function weatherClimateContext(place = currentWorldContext(), worldMinute = ensureAlmanacRuntime().time.worldMinute) {
@@ -28307,7 +28602,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const weather = runtime.weather.current;
             const sceneOverride = runtime.environment.override;
             const forecast = runtime.weather.forecast.length
-                ? runtime.weather.forecast.map((item, index) => `+${index + 1}: ${_sanitize(item.summary)}, ${item.temperatureF} F`).join('<br>')
+                ? `${runtime.weather.forecast.length} days prepared.${playerIsGM(msg?.playerid) ? ` ${almanacButton('View Forecast', '!aa-weather forecast-view')}` : ''}`
                 : 'No forecast prepared.';
             sendPanel(msg, 'WeatherAlmanac', [
                 ...(sceneOverride ? [{ label: 'Current Scene', value: `${_sanitize(sceneOverride.name)} | ${_sanitize(sceneOverride.temperature)} | ${_sanitize(sceneOverride.wind)} wind | ${_sanitize(sceneOverride.visibility)}` }] : []),
@@ -28315,9 +28610,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ...(sceneOverride ? [{ label: 'Relationship', value: 'The GM scene override is currently authoritative. Stored WeatherAlmanac conditions resume when Follow Weather Again is chosen in EnviroAlmanac.' }] : []),
                 { label: 'Context', value: weather ? `${_sanitize(weather.regionName || 'Current region')} | ${_sanitize(weather.season)}` : _sanitize(weatherClimateContext().season || 'Current season') },
                 { label: 'Forecast', value: forecast },
-                { label: 'Lock', value: `${runtime.weather.locked ? 'On' : 'Off'} ${playerIsGM(msg?.playerid) ? GameAssist.createButton(runtime.weather.locked ? 'Unlock' : 'Lock', `!aa-weather ${runtime.weather.locked ? 'unlock' : 'lock'}`) : ''}` },
-                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton(weather ? 'Regenerate Weather' : 'Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Forecast', '!aa-weather forecast --days ?{Days|3}')} ${GameAssist.createButton('Enter Weather', '!aa-weather manual --summary "?{Weather description|Clear}" --temp ?{Temperature F|60} --wind ?{Wind mph|5} --precipitation "?{Precipitation|None}" --visibility "?{Visibility|Clear}" --duration ?{Expected duration in hours|8}')} ${GameAssist.createButton('Announce', '!aa-weather announce')}` : GameAssist.createButton('Almanac', '!Almanac') },
-                { label: 'Return', value: playerIsGM(msg?.playerid) ? GameAssist.createButton('Almanac Home', '!aa-gm') : GameAssist.createButton('Almanac', '!Almanac') }
+                { label: 'Lock', value: `${runtime.weather.locked ? 'On' : 'Off'} ${playerIsGM(msg?.playerid) ? almanacButton(runtime.weather.locked ? 'Unlock' : 'Lock', `!aa-weather ${runtime.weather.locked ? 'unlock' : 'lock'}`) : ''}` },
+                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${almanacButton(weather ? 'Regenerate Weather' : 'Generate Weather', '!aa-weather generate')} ${almanacButton('Announce', '!aa-weather announce')} ${almanacButton('More Weather Controls', '!aa-weather controls')}` : almanacButton('Almanac', '!Almanac') },
+                ...(playerIsGM(msg?.playerid) ? [{ label: 'Setup', value: `${almanacButton('Current Settings', '!aa current')} ${almanacButton('Weather Breakdown', '!aa current breakdown')}` }] : []),
+                { label: 'Return', value: playerIsGM(msg?.playerid) ? almanacButton('Almanac Home', '!aa-gm') : almanacButton('Almanac', '!Almanac') }
             ]);
         }
 
@@ -28326,6 +28622,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!body || /^(menu|status)$/i.test(body)) return showWeather(msg);
             if (!requireGm(msg)) return;
             const lower = body.toLowerCase();
+            if (lower === 'controls') return sendPanel(msg, 'Weather Controls', [
+                { label: 'Prepare', value: almanacButton('Forecast', '!aa-weather forecast --days ?{Days|3}') },
+                { label: 'GM Override', value: almanacButton('Enter Weather', '!aa-weather manual --summary "?{Weather description|Clear}" --temp ?{Temperature F|60} --wind ?{Wind mph|5} --precipitation "?{Precipitation|None}" --visibility "?{Visibility|Clear}" --duration ?{Expected duration in hours|8}') },
+                { label: 'Customize Generation', value: `${almanacButton('Choose Climate', '!aa current baselines')} ${almanacButton('Local Details', '!aa current details')} ${almanacButton('Seasons', '!aa current seasons')}` },
+                { label: 'Return', value: `${almanacButton('Weather', '!weather')} ${almanacButton('Almanac Home', '!aa-gm')}` }
+            ]);
+            if (lower === 'forecast-view') return !submoduleEnabled('weather') ? showWeather(msg) : sendPanel(msg, 'Weather Forecast', [
+                ...ensureAlmanacRuntime().weather.forecast.map((item, index) => ({ label: `Day +${index + 1}`, value: `${_sanitize(item.season)} | ${_sanitize(item.summary)}<br>${item.temperatureF} F | ${item.windMph} mph wind` })),
+                { label: 'Actions', value: `${almanacButton('New Forecast', '!aa-weather forecast --days ?{Days|3}')} ${almanacButton('Weather', '!weather')}` }
+            ]);
             if (lower === 'audit') return showFocusedAudit(msg, 'weather');
             if (lower === 'manual' || lower === 'help') return showManual(msg);
             if (lower === 'setup') return showWeather(msg);
@@ -28341,7 +28647,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             }
             if (/^generate\b/i.test(body)) {
                 const args = _parseArgs(body).args;
-                if (runtime.weather.locked && String(args.force || '').toLowerCase() !== 'yes') return sendPanel(msg, 'WeatherAlmanac', [{ label: 'Locked', value: 'Current weather expresses GM intent and was not replaced.' }, { label: 'Next Step', value: GameAssist.createButton('Weather', '!weather') }]);
+                if (runtime.weather.locked && String(args.force || '').toLowerCase() !== 'yes') return sendPanel(msg, 'WeatherAlmanac', [{ label: 'Locked', value: 'Current weather expresses GM intent and was not replaced.' }, { label: 'Next Step', value: almanacButton('Weather', '!weather') }]);
                 commitWeather(generateWeather(runtime.weather.current), msg, 'Weather generated');
                 return showWeather(msg);
             }
@@ -28393,7 +28699,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     { label: 'Region', value: _sanitize(weather.regionName) }
                 ], { publicMessage: true });
             }
-            sendPanel(msg, 'WeatherAlmanac Needs Attention', [{ label: 'Problem', value: 'That weather command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Weather', '!weather') }]);
+            sendPanel(msg, 'WeatherAlmanac Needs Attention', [{ label: 'Problem', value: 'That weather command was not recognized.' }, { label: 'Next Step', value: almanacButton('Weather', '!weather') }]);
         }
 
         function environmentContext() {
@@ -28423,8 +28729,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel(msg, 'EnviroAlmanac', [
                 { label: 'Current Environment', value: `<strong>${_sanitize(environment.name)}</strong><br>${_sanitize(environment.visibility)} | ${_sanitize(environment.ground)} | ${_sanitize(environment.temperature)}` },
                 { label: 'Source', value: overridden ? 'Chosen by the GM' : (environment.source === 'WeatherAlmanac' ? 'Following current weather' : 'Using the current Almanac context') },
-                { label: 'Scene Overrides', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Clear Ground', '!aa-enviro preset clear')} ${GameAssist.createButton('Blizzard', '!aa-enviro preset blizzard')} ${GameAssist.createButton('Desert Terrain', '!aa-enviro preset desert')} ${GameAssist.createButton('Swamp', '!aa-enviro preset swamp')} ${GameAssist.createButton('Underwater', '!aa-enviro preset underwater')}` : 'The GM manages environmental context.' },
-                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Customize', '!aa-enviro edit')} ${GameAssist.createButton('View Details', '!aa-enviro details')} ${overridden ? GameAssist.createButton('Follow Weather Again', '!aa-enviro clear --confirm yes') : ''} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` : `${GameAssist.createButton('View Details', '!aa-enviro details')} ${GameAssist.createButton('Almanac', '!Almanac')}` }
+                { label: 'Scene Overrides', value: playerIsGM(msg?.playerid) ? `${almanacButton('Clear Ground', '!aa-enviro preset clear')} ${almanacButton('Blizzard', '!aa-enviro preset blizzard')} ${almanacButton('Desert Terrain', '!aa-enviro preset desert')} ${almanacButton('Swamp', '!aa-enviro preset swamp')} ${almanacButton('Underwater', '!aa-enviro preset underwater')}` : 'The GM manages environmental context.' },
+                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${almanacButton('Customize', '!aa-enviro edit')} ${almanacButton('View Details', '!aa-enviro details')} ${overridden ? almanacButton('Follow Weather Again', '!aa-enviro clear --confirm yes') : ''} ${almanacButton('Almanac', '!Almanac-GM')}` : `${almanacButton('View Details', '!aa-enviro details')} ${almanacButton('Almanac', '!Almanac')}` }
             ]);
         }
 
@@ -28436,20 +28742,20 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Precipitation and Water', value: `${_sanitize(environment.precipitation)} | ${_sanitize(environment.water)}` },
                 { label: 'Severity', value: String(environment.severity) },
                 { label: 'Tags', value: (environment.tags || []).map(_sanitize).join(', ') || 'None' },
-                { label: 'Return', value: `${GameAssist.createButton('Environment', '!enviro')} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Customize', '!aa-enviro edit') : ''}` }
+                { label: 'Return', value: `${almanacButton('Environment', '!enviro')} ${playerIsGM(msg?.playerid) ? almanacButton('Customize', '!aa-enviro edit') : ''}` }
             ]);
         }
 
         function showEnvironmentEditor(msg) {
             if (!requireGm(msg)) return;
             const environment = environmentContext();
-            const editButton = (label, field, value) => GameAssist.createButton(label, `!aa-enviro set --field ${field} --value "?{${label}|${value}}"`);
+            const editButton = (label, field, value) => almanacButton(label, `!aa-enviro set --field ${field} --value "?{${label}|${value}}"`);
             sendPanel(msg, 'Customize Environment', [
                 { label: 'Description', value: `${editButton('Name', 'name', environment.name)} ${editButton('Visibility', 'visibility', environment.visibility)} ${editButton('Ground', 'ground', environment.ground)}` },
                 { label: 'Conditions', value: `${editButton('Temperature', 'temperature', environment.temperature)} ${editButton('Precipitation', 'precipitation', environment.precipitation)} ${editButton('Wind', 'wind', environment.wind)}` },
-                { label: 'Exposure', value: `${editButton('Water', 'water', environment.water)} ${editButton('Exposure', 'exposure', environment.exposure)} ${GameAssist.createButton('Severity', `!aa-enviro set --field severity --value ?{Severity 0-5|${environment.severity}}`)}` },
-                { label: 'Tags', value: GameAssist.createButton('Change Tags', `!aa-enviro set --field tags --value "?{Comma-separated tags|${(environment.tags || []).join(',')}}"`) },
-                { label: 'Return', value: `${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('Almanac', '!aa-gm')}` }
+                { label: 'Exposure', value: `${editButton('Water', 'water', environment.water)} ${editButton('Exposure', 'exposure', environment.exposure)} ${almanacButton('Severity', `!aa-enviro set --field severity --value ?{Severity 0-5|${environment.severity}}`)}` },
+                { label: 'Tags', value: almanacButton('Change Tags', `!aa-enviro set --field tags --value "?{Comma-separated tags|${(environment.tags || []).join(',')}}"`) },
+                { label: 'Return', value: `${almanacButton('Environment', '!enviro')} ${almanacButton('Almanac', '!aa-gm')}` }
             ]);
         }
 
@@ -28529,7 +28835,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 commitEnvironmentOverride(null, msg, 'GM override cleared');
                 return showEnvironment(msg);
             }
-            sendPanel(msg, 'EnviroAlmanac Needs Attention', [{ label: 'Problem', value: 'That environment command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Environment', '!enviro') }]);
+            sendPanel(msg, 'EnviroAlmanac Needs Attention', [{ label: 'Problem', value: 'That environment command was not recognized.' }, { label: 'Next Step', value: almanacButton('Environment', '!enviro') }]);
         }
 
         function activePhenomena(context, worldMinute) {
@@ -28751,7 +29057,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Conditions', value: `${_sanitize(descriptiveTemperature(scene.scene.temperatureF))} | ${_sanitize(scene.scene.precipitation)} | ${_sanitize(descriptiveWind(scene.scene.windMph))}` },
                 { label: 'Terrain', value: `${_sanitize(scene.scene.terrain)} | ${_sanitize(scene.scene.ground)}` },
                 { label: 'Sky', value: scene.scene.moons.length ? scene.scene.moons.map(moon => `${_sanitize(moon.name)}: ${_sanitize(moon.phase)} - ${_sanitize(moon.visibilityReason)}`).join('<br>') : 'No moons configured' },
-                { label: 'Actions', value: `${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                { label: 'Actions', value: `${almanacButton('Announce', '!aa-announce')} ${almanacButton('Weather', '!weather')} ${almanacButton('Change Location', '!aa-location')} ${almanacButton('Almanac Home', '!aa-gm')}` }
             ];
             if (technical) {
                 fields.splice(fields.length - 1, 0,
@@ -28760,7 +29066,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     { label: 'Warnings', value: scene.warnings.length ? scene.warnings.map(_sanitize).join('<br>') : 'None' }
                 );
             } else if (scene.warnings.length) {
-                fields.splice(fields.length - 1, 0, { label: 'Needs Attention', value: `${scene.warnings.length} coherence note${scene.warnings.length === 1 ? '' : 's'}. ${GameAssist.createButton('View Details', '!aa-scene details')}` });
+                fields.splice(fields.length - 1, 0, { label: 'Needs Attention', value: `${scene.warnings.length} coherence note${scene.warnings.length === 1 ? '' : 's'}. ${almanacButton('View Details', '!aa-scene details')}` });
             }
             sendPanel(msg, technical ? 'Current Scene Details' : 'Current Scene', fields);
         }
@@ -28801,14 +29107,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function locationChoiceRows(locations, currentId) {
             return locations.map(location => {
                 if (location.id === currentId) return `<strong>${_sanitize(locationDisplayName(location))} (current)</strong>`;
-                return GameAssist.createButton(locationDisplayName(location), `!aa-location preview --id "${location.id}"`);
+                return almanacButton(locationDisplayName(location), `!aa-location preview --id "${location.id}"`);
             }).join('<br>');
         }
 
         function locationManagementRows(locations, currentId) {
             return locations.map(location => {
                 const state = location.id === currentId ? ' <strong>(current)</strong>' : '';
-                return `${_sanitize(locationDisplayName(location))}${state} ${GameAssist.createButton('Settings', `!aa-location edit --id "${location.id}"`)}`;
+                return `${_sanitize(locationDisplayName(location))}${state} ${almanacButton('Settings', `!aa-location edit --id "${location.id}"`)}`;
             }).join('<br>');
         }
 
@@ -28816,27 +29122,27 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!requireGm(msg)) return;
             const world = normalizeWorldConfig();
             const location = worldItem(world.locations, requested);
-            if (!location) return sendPanel(msg, 'Location Needs Attention', [{ label: 'Problem', value: 'That location was not found.' }, { label: 'Next Step', value: GameAssist.createButton('Manage Locations', '!aa-location manage') }]);
+            if (!location) return sendPanel(msg, 'Location Needs Attention', [{ label: 'Problem', value: 'That location was not found.' }, { label: 'Next Step', value: almanacButton('Manage Locations', '!aa-location manage') }]);
             const prepared = world.preparedDestinationIds.includes(location.id);
             const place = currentWorldContext(location.id);
             const fields = [
                 { label: 'Place', value: _sanitize(locationDisplayName(location)) },
                 { label: 'Profiles', value: `${_sanitize(weatherClimateContext(place).profileName)} | ${_sanitize(place.biome.name)}<br>${_sanitize(place.geography.name)}` },
-                { label: 'Actions', value: `${GameAssist.createButton('Rename', `!aa-location edit --id "${location.id}" --name "?{Location name}"`)} ${GameAssist.createButton('Choose World Profiles', `!aa-palette --location "${location.id}"`)} ${location.id !== world.activeLocationId ? GameAssist.createButton('Move Party Here', `!aa-location preview --id "${location.id}"`) : ''}` },
-                { label: 'More', value: GameAssist.createButton('Context and Notes', `!aa-location details --id "${location.id}"`) },
-                { label: 'Return', value: `${GameAssist.createButton('Locations', '!aa-location')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                { label: 'Actions', value: `${almanacButton('Rename', `!aa-location edit --id "${location.id}" --name "?{Location name}"`)} ${almanacButton('Choose World Profiles', `!aa-palette --location "${location.id}"`)} ${location.id !== world.activeLocationId ? almanacButton('Move Party Here', `!aa-location preview --id "${location.id}"`) : ''}` },
+                { label: 'More', value: almanacButton('Context and Notes', `!aa-location details --id "${location.id}"`) },
+                { label: 'Return', value: `${almanacButton('Locations', '!aa-location')} ${almanacButton('Almanac Home', '!aa-gm')}` }
             ];
             if (!details) return sendPanel(msg, 'Location Settings', fields);
             sendPanel(msg, `Location Details: ${locationDisplayName(location)}`, [
                 { label: 'World Context', value: `${_sanitize(place.region.name)} | ${_sanitize(place.ecoregion.name)}<br>${_sanitize(place.geography.name)} | ${_sanitize(place.biome.name)}` },
                 { label: 'Local Context', value: `${_sanitize(ENVIRONMENT_PRESETS[location.environmentPresetId].name)} | ${_sanitize(place.temporalContext.name)}<br>Temperature ${location.temperatureDeltaF >= 0 ? '+' : ''}${location.temperatureDeltaF} F | Wind ${location.windDeltaMph >= 0 ? '+' : ''}${location.windDeltaMph} mph` },
-                { label: 'Basic Details', value: GameAssist.createButton('Edit Name and Context', `!aa-location edit --id ${location.id} --name "?{Location name|${location.name}}" --region ${paletteChoice('Region', normalizeClimateConfig().regions, location.regionId)} --ecoregion ${paletteChoice('Ecoregion area', world.ecoregions, location.ecoregionId)} --geography ${paletteChoice('Geography', world.geographies, location.geographyId)} --biome ${paletteChoice('Biome', world.biomes, location.biomeId)} --environment ${paletteChoice('Default environment', Object.entries(ENVIRONMENT_PRESETS).map(([id, item]) => ({ id, name: item.name })), location.environmentPresetId)} --temporal ${paletteChoice('Local time', normalizeTemporalContexts(), location.temporalContextId)}`) },
-                { label: 'Scene Modifiers', value: GameAssist.createButton('Edit Local Modifiers', `!aa-location local --id ${location.id} --temperature ?{Temperature adjustment F|${location.temperatureDeltaF}} --wind ?{Wind adjustment mph|${location.windDeltaMph}} --visibility "?{Visibility override; blank follows resolved context|${location.visibilityOverride}}" --ground "?{Ground override; blank follows resolved context|${location.groundOverride}}"`) },
-                { label: 'Map Pages and Notes', value: GameAssist.createButton('Edit Associations', `!aa-location associations --id ${location.id} --pages "?{Comma-separated Roll20 page ids|${location.pageIds.join(',')}}" --notes "?{Private GM notes|${location.notes}}"`) },
-                { label: 'Lists', value: `${GameAssist.createButton(prepared ? 'Remove from Prepared' : 'Add to Prepared', `!aa-location prepare --id ${location.id}`)} ${GameAssist.createButton(location.favorite ? 'Remove Favorite' : 'Mark Favorite', `!aa-location favorite --id ${location.id}`)}` },
-                { label: 'Handout Editing', value: `${GameAssist.createButton('WorldPack Handout', '!aa-worldpack')} - advanced export, edit, preview, and import of world definitions.` },
-                { label: 'Remove', value: location.id === world.activeLocationId ? 'The current location cannot be removed.' : GameAssist.createButton('Remove Location', `!aa-location remove --id ${location.id} --confirm ?{Remove ${location.name}? Other world definitions are preserved.|No,no|Yes,yes}`) },
-                { label: 'Return', value: `${GameAssist.createButton('Location Settings', `!aa-location edit --id "${location.id}"`)} ${GameAssist.createButton('Locations', '!aa-location')}` }
+                { label: 'Basic Details', value: almanacButton('Edit Name and Context', `!aa-location edit --id ${location.id} --name "?{Location name|${location.name}}" --region ${paletteChoice('Region', normalizeClimateConfig().regions, location.regionId)} --ecoregion ${paletteChoice('Ecoregion area', world.ecoregions, location.ecoregionId)} --geography ${paletteChoice('Geography', world.geographies, location.geographyId)} --biome ${paletteChoice('Biome', world.biomes, location.biomeId)} --environment ${paletteChoice('Default environment', Object.entries(ENVIRONMENT_PRESETS).map(([id, item]) => ({ id, name: item.name })), location.environmentPresetId)} --temporal ${paletteChoice('Local time', normalizeTemporalContexts(), location.temporalContextId)}`) },
+                { label: 'Scene Modifiers', value: almanacButton('Edit Local Modifiers', `!aa-location local --id ${location.id} --temperature ?{Temperature adjustment F|${location.temperatureDeltaF}} --wind ?{Wind adjustment mph|${location.windDeltaMph}} --visibility "?{Visibility override; blank follows resolved context|${location.visibilityOverride}}" --ground "?{Ground override; blank follows resolved context|${location.groundOverride}}"`) },
+                { label: 'Map Pages and Notes', value: almanacButton('Edit Associations', `!aa-location associations --id ${location.id} --pages "?{Comma-separated Roll20 page ids|${location.pageIds.join(',')}}" --notes "?{Private GM notes|${location.notes}}"`) },
+                { label: 'Lists', value: `${almanacButton(prepared ? 'Remove from Prepared' : 'Add to Prepared', `!aa-location prepare --id ${location.id}`)} ${almanacButton(location.favorite ? 'Remove Favorite' : 'Mark Favorite', `!aa-location favorite --id ${location.id}`)}` },
+                { label: 'Handout Editing', value: `${almanacButton('WorldPack Handout', '!aa-worldpack')} - advanced export, edit, preview, and import of world definitions.` },
+                { label: 'Remove', value: location.id === world.activeLocationId ? 'The current location cannot be removed.' : almanacButton('Remove Location', `!aa-location remove --id ${location.id} --confirm ?{Remove ${location.name}? Other world definitions are preserved.|No,no|Yes,yes}`) },
+                { label: 'Return', value: `${almanacButton('Location Settings', `!aa-location edit --id "${location.id}"`)} ${almanacButton('Locations', '!aa-location')}` }
             ]);
         }
 
@@ -28844,7 +29150,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!requireGm(msg)) return;
             const world = normalizeWorldConfig();
             const location = worldItem(world.locations, requested);
-            if (!location) return sendPanel(msg, 'Location Needs Attention', [{ label: 'Problem', value: 'That location was not found.' }, { label: 'Next Step', value: GameAssist.createButton('Locations', '!aa-location') }]);
+            if (!location) return sendPanel(msg, 'Location Needs Attention', [{ label: 'Problem', value: 'That location was not found.' }, { label: 'Next Step', value: almanacButton('Locations', '!aa-location') }]);
             const current = resolveScene();
             const destination = resolveScene(location.id);
             const timeChange = destination.temporalContext.context.id === current.temporalContext.context.id
@@ -28858,7 +29164,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Local Time', value: _sanitize(timeChange).replace(/&lt;br&gt;/g, '<br>') },
                 { label: 'Weather', value: weatherPolicy },
                 { label: 'Destination Scene', value: `${_sanitize(descriptiveTemperature(destination.scene.temperatureF))} | ${_sanitize(destination.scene.terrain)} | ${_sanitize(destination.scene.ground)}` },
-                { label: 'Actions', value: `${GameAssist.createButton('Move Party', `!aa-location use --id ${location.id} --confirm yes`)} ${GameAssist.createButton('Cancel', '!aa-location')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                { label: 'Actions', value: `${almanacButton('Move Party', `!aa-location use --id ${location.id} --confirm yes`)} ${almanacButton('Cancel', '!aa-location')} ${almanacButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
 
@@ -28872,11 +29178,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const visible = choices.slice((page - 1) * POLICY.almanac.palettePageSize, page * POLICY.almanac.palettePageSize);
             const command = manage ? '!aa-location manage' : '!aa-location';
             const fields = [
-                { label: 'Current Place', value: `${_sanitize(locationDisplayName(current))}<br>${GameAssist.createButton('Name This Place', `!aa-location edit --id "${current.id}" --name "?{Location name}"`)} ${GameAssist.createButton('Location Settings', `!aa-location edit --id "${current.id}"`)}` },
-                { label: 'Create', value: GameAssist.createButton('Create Location', '!aa-location add --name "?{Location name}"') },
+                { label: 'Current Place', value: `${_sanitize(locationDisplayName(current))}<br>${almanacButton('Name This Place', `!aa-location edit --id "${current.id}" --name "?{Location name}"`)} ${almanacButton('Location Settings', `!aa-location edit --id "${current.id}"`)}` },
+                { label: 'Create', value: almanacButton('Create Location', '!aa-location add --name "?{Location name}"') },
                 { label: 'Saved Places', value: visible.length ? (manage ? locationManagementRows(visible, current.id) : locationChoiceRows(visible, current.id)) : 'No other places saved. Create a location when you need one.' }
             ];
-            if (count > 1) fields.push({ label: 'Pages', value: `${page} of ${count} ${page > 1 ? GameAssist.createButton('Previous', `${command} --page ${page - 1}`) : ''} ${page < count ? GameAssist.createButton('Next', `${command} --page ${page + 1}`) : ''}` });
+            if (count > 1) fields.push({ label: 'Pages', value: `${page} of ${count} ${page > 1 ? almanacButton('Previous', `${command} --page ${page - 1}`) : ''} ${page < count ? almanacButton('Next', `${command} --page ${page + 1}`) : ''}` });
             if (lists) {
                 // The current place is not a destination; do not repeat it in every list.
                 const prepared = choices.filter(item => world.preparedDestinationIds.includes(item.id));
@@ -28888,8 +29194,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     { label: 'Recent', value: recent.length ? locationChoiceRows(recent, current.id) : 'No previous places.' }
                 );
             }
-            fields.push({ label: 'More', value: `${GameAssist.createButton(manage ? 'Choose Location' : 'Manage Locations', manage ? '!aa-location' : '!aa-location manage')} ${GameAssist.createButton('Travel Lists', '!aa-location lists')} ${GameAssist.createButton('World Setup', '!aa-world')}` });
-            fields.push({ label: 'Return', value: GameAssist.createButton('Almanac Home', '!aa-gm') });
+            fields.push({ label: 'More', value: `${almanacButton(manage ? 'Choose Location' : 'Manage Locations', manage ? '!aa-location' : '!aa-location manage')} ${almanacButton('Travel Lists', '!aa-location lists')} ${almanacButton('World Setup', '!aa-world')}` });
+            fields.push({ label: 'Return', value: almanacButton('Almanac Home', '!aa-gm') });
             sendPanel(msg, manage ? 'Manage Locations' : 'Change Location', fields);
         }
 
@@ -28906,7 +29212,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (/^use\b/i.test(body)) {
                 if (String(args.confirm || '').toLowerCase() !== 'yes') return showLocations(msg, false);
                 const result = commitLocation(msg, args.id || args.name);
-                if (!result.ok) return sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: GameAssist.createButton('Locations', '!aa-location') }]);
+                if (!result.ok) return sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: almanacButton('Locations', '!aa-location') }]);
                 return showScene(msg);
             }
             if (/^add\b/i.test(body)) {
@@ -28925,7 +29231,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const environment = args.environment === undefined ? place.location.environmentPresetId : String(args.environment).toLowerCase();
                 if (!region || !area || !geography || !biome || !temporal || !Object.prototype.hasOwnProperty.call(ENVIRONMENT_PRESETS, environment)) return sendPanel(msg, 'Location Needs Attention', [
                     { label: 'Problem', value: 'One of the chosen world settings is unavailable. No location was created.' },
-                    { label: 'Next Step', value: GameAssist.createButton('Locations', '!aa-location') }
+                    { label: 'Next Step', value: almanacButton('Locations', '!aa-location') }
                 ]);
                 const baseId = name.replace(/[^A-Za-z0-9_]+/g, '-').replace(/^-+|-+$/g, '') || `location-${world.locations.length + 1}`;
                 let id = baseId;
@@ -28965,7 +29271,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (!hasChanges) return showLocationEditor(msg, location.id);
                 if (location.settingsSnapshot && ['region', 'ecoregion', 'geography', 'biome', 'environment', 'temporal'].some(key => args[key] !== undefined)) return sendPanel(msg, 'Saved Location Settings', [
                     { label: 'Next Step', value: 'Recall this location in Current Settings to change its setup. Its saved snapshot was not modified.' },
-                    { label: 'Actions', value: GameAssist.createButton('Recall Location', '!aa current locations') }
+                    { label: 'Actions', value: almanacButton('Recall Location', '!aa current locations') }
                 ]);
                 const name = args.name === undefined ? location.name : typeof args.name === 'string' ? boundedName(args.name) : '';
                 const region = climateRegion(args.region === undefined ? location.regionId : args.region);
@@ -28975,7 +29281,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const context = worldItem(normalizeTemporalContexts(), args.temporal === undefined ? location.temporalContextId : args.temporal);
                 const environment = String(args.environment === undefined ? location.environmentPresetId : args.environment).toLowerCase();
                 if (!name || !region || !ecoregion || !geography || !biome || !context || !Object.prototype.hasOwnProperty.call(ENVIRONMENT_PRESETS, environment)) {
-                    return sendPanel(msg, 'Location Needs Attention', [{ label: 'Problem', value: 'Choose an existing region, ecoregion, geography, biome, environment, and temporal context. The location was not partially changed.' }, { label: 'Next Step', value: GameAssist.createButton('Edit Location', `!aa-location edit --id ${location.id}`) }]);
+                    return sendPanel(msg, 'Location Needs Attention', [{ label: 'Problem', value: 'Choose an existing region, ecoregion, geography, biome, environment, and temporal context. The location was not partially changed.' }, { label: 'Next Step', value: almanacButton('Edit Location', `!aa-location edit --id ${location.id}`) }]);
                 }
                 const changedContext = location.ecoregionId !== ecoregion.id || location.geographyId !== geography.id || location.biomeId !== biome.id;
                 const changedWeather = changedContext || location.regionId !== region.id || location.temporalContextId !== context.id || location.environmentPresetId !== environment;
@@ -29035,7 +29341,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ensureAlmanacRuntime().world.revision++;
                 return showLocations(msg, true);
             }
-            sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: 'That location command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Locations', '!aa-location') }]);
+            sendPanel(msg, 'AlmanacAssist Needs Attention', [{ label: 'Problem', value: 'That location command was not recognized.' }, { label: 'Next Step', value: almanacButton('Locations', '!aa-location') }]);
         }
 
         function showTravel(msg) {
@@ -29049,8 +29355,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return sendPanel(msg, 'Travel in Progress', [
                     { label: 'Journey', value: `${_sanitize(active.fromName)} &rarr; ${_sanitize(destination?.name || active.toName)}` },
                     { label: 'Progress', value: `${active.travelledHours} of ${active.plannedHours} hours | ${remaining} remaining | ${_sanitize(active.pace)} pace` },
-                    { label: 'Continue', value: `${GameAssist.createButton('Travel 1 Hour', '!aa-travel advance --hours 1')} ${GameAssist.createButton('Travel 4 Hours', '!aa-travel advance --hours 4')} ${GameAssist.createButton('Travel Remaining', `!aa-travel advance --hours ${remaining}`)}` },
-                    { label: 'Actions', value: `${GameAssist.createButton('Arrive Now', '!aa-travel complete --confirm ?{Complete this journey and move to the destination?|No,no|Yes,yes}')} ${GameAssist.createButton('Cancel Journey', '!aa-travel cancel --confirm ?{Cancel this journey without moving the party?|No,no|Yes,yes}')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                    { label: 'Continue', value: `${almanacButton('Travel 1 Hour', '!aa-travel advance --hours 1')} ${almanacButton('Travel 4 Hours', '!aa-travel advance --hours 4')} ${almanacButton('Travel Remaining', `!aa-travel advance --hours ${remaining}`)}` },
+                    { label: 'Actions', value: `${almanacButton('Arrive Now', '!aa-travel complete --confirm ?{Complete this journey and move to the destination?|No,no|Yes,yes}')} ${almanacButton('Cancel Journey', '!aa-travel cancel --confirm ?{Cancel this journey without moving the party?|No,no|Yes,yes}')} ${almanacButton('Almanac Home', '!aa-gm')}` }
                 ]);
             }
             const destinations = world.preparedDestinationIds.map(id => worldItem(world.locations, id)).filter(location => location && location.id !== world.activeLocationId);
@@ -29061,10 +29367,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel(msg, 'Travel', [
                 { label: 'Starting Point', value: _sanitize(worldItem(world.locations, world.activeLocationId)?.name || 'Current location') },
                 { label: 'Road Conditions', value: `${_sanitize(road.ground)} | ${_sanitize(road.visibility)}<br>${_sanitize(road.guidance)}` },
-                { label: 'Plan by Pace and Miles', value: `${GameAssist.createButton('Slow', `!aa-travel plan --pace slow ${commonPrompt}`)} ${GameAssist.createButton('Normal', `!aa-travel plan --pace normal ${commonPrompt}`)} ${GameAssist.createButton('Fast', `!aa-travel plan --pace fast ${commonPrompt}`)} ${GameAssist.createButton('Custom', '!aa-travel plan --pace custom --mph ?{Miles per hour|3} --miles ?{Miles to travel|10} --interval ?{Minutes between encounter checks|60} --die ?{Encounter die sides (4-100)|6}')}` },
-                { label: 'Prepared Destinations', value: destinations.length ? GameAssist.createButton(`Choose Destination (${destinations.length})`, '!aa-travel destinations') : `${GameAssist.createButton('Prepare Locations', '!aa-location manage')} to create destination-based journeys.` },
+                { label: 'Plan by Pace and Miles', value: `${almanacButton('Slow', `!aa-travel plan --pace slow ${commonPrompt}`)} ${almanacButton('Normal', `!aa-travel plan --pace normal ${commonPrompt}`)} ${almanacButton('Fast', `!aa-travel plan --pace fast ${commonPrompt}`)} ${almanacButton('Custom', '!aa-travel plan --pace custom --mph ?{Miles per hour|3} --miles ?{Miles to travel|10} --interval ?{Minutes between encounter checks|60} --die ?{Encounter die sides (4-100)|6}')}` },
+                { label: 'Prepared Destinations', value: destinations.length ? almanacButton(`Choose Destination (${destinations.length})`, '!aa-travel destinations') : `${almanacButton('Prepare Locations', '!aa-location manage')} to create destination-based journeys.` },
                 { label: 'Important', value: 'Road guidance and encounter categories are advisory. Travel never applies movement penalties, damage, conditions, or encounter content.' },
-                { label: 'Return', value: GameAssist.createButton('Almanac Home', '!aa-gm') }
+                { label: 'Return', value: almanacButton('Almanac Home', '!aa-gm') }
             ]);
         }
 
@@ -29076,10 +29382,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel(msg, 'Prepared Travel Destinations', [
                 { label: 'From', value: _sanitize(worldItem(world.locations, world.activeLocationId)?.name || 'Current location') },
                 { label: 'Choose Destination', value: destinations.length
-                    ? destinations.map(location => GameAssist.createButton(location.name, `!aa-travel preview --to ${location.id} --hours ?{Expected travel hours|8} --pace ?{Pace|Normal,normal|Slow,slow|Fast,fast}`)).join(' ')
+                    ? destinations.map(location => almanacButton(location.name, `!aa-travel preview --to ${location.id} --hours ?{Expected travel hours|8} --pace ?{Pace|Normal,normal|Slow,slow|Fast,fast}`)).join(' ')
                     : 'No other prepared destination is available.' },
-                { label: 'Setup', value: GameAssist.createButton('Manage Locations', '!aa-location manage') },
-                { label: 'Return', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                { label: 'Setup', value: almanacButton('Manage Locations', '!aa-location manage') },
+                { label: 'Return', value: `${almanacButton('Travel', '!aa-travel')} ${almanacButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
 
@@ -29206,7 +29512,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 : null;
             const neutral = Math.ceil((plan.dieSides + 1) / 2);
             const advanceAndRoll = arrival
-                ? `${GameAssist.createButton('Advance Time & Roll', `!aa-travel apply --grant ${grantId} --time yes --roll yes`)} ${GameAssist.createButton('Advance Time Only', `!aa-travel apply --grant ${grantId} --time yes --roll no`)}`
+                ? `${almanacButton('Advance Time & Roll', `!aa-travel apply --grant ${grantId} --time yes --roll yes`)} ${almanacButton('Advance Time Only', `!aa-travel apply --grant ${grantId} --time yes --roll no`)}`
                 : 'Fictional time cannot advance until TimeAlmanac and the calendar range can support this plan.';
             sendPanel(msg, 'Review Travel Plan', [
                 { label: 'Plan', value: `${Number(plan.miles.toFixed(2))} miles at ${Number(plan.mph.toFixed(2))} mph (${_sanitize(plan.paceName)} pace)` },
@@ -29214,9 +29520,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Estimated Arrival', value: arrival ? _sanitize(displayMoment(arrival)) : 'TimeAlmanac is unavailable or the calendar limit would be exceeded.' },
                 { label: 'Road Conditions', value: `${_sanitize(road.ground)} | ${_sanitize(road.visibility)}<br>${_sanitize(road.guidance)}` },
                 { label: 'Encounter Checks', value: `${plan.encounterChecks}d${plan.dieSides}, rolled separately every ${plan.intervalMinutes} campaign minute${plan.intervalMinutes === 1 ? '' : 's'}<br>1-2 Negative | ${neutral} Neutral | ${plan.dieSides} Positive | all other results No encounter` },
-                { label: 'Choose What Happens', value: `${advanceAndRoll} ${GameAssist.createButton('Roll Checks Only', `!aa-travel apply --grant ${grantId} --time no --roll yes`)}` },
+                { label: 'Choose What Happens', value: `${advanceAndRoll} ${almanacButton('Roll Checks Only', `!aa-travel apply --grant ${grantId} --time no --roll yes`)}` },
                 { label: 'Important', value: 'This review changes nothing. Mileage travel leaves the named location unchanged; prepared journeys move it. Encounter results are GM-private prompts, not automatic encounters or rules.' },
-                { label: 'Return', value: `${GameAssist.createButton('Change Plan', '!aa-travel')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                { label: 'Return', value: `${almanacButton('Change Plan', '!aa-travel')} ${almanacButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
 
@@ -29234,16 +29540,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const grant = runtime.world.travelGrants[grantId];
             if (grant) delete runtime.world.travelGrants[grantId];
             if (!grant || Number(grant.expiresAt) <= Date.now()) {
-                return sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: 'That travel review expired or was already used.' }, { label: 'Next Step', value: GameAssist.createButton('Review a New Plan', '!aa-travel') }]);
+                return sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: 'That travel review expired or was already used.' }, { label: 'Next Step', value: almanacButton('Review a New Plan', '!aa-travel') }]);
             }
             if (grant.fingerprint !== travelSceneFingerprint()) {
-                return sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: 'The time, place, weather, or road conditions changed after that review.' }, { label: 'Changes', value: 'No time was advanced and no encounter checks were rolled.' }, { label: 'Next Step', value: GameAssist.createButton('Review the Current Route', '!aa-travel') }]);
+                return sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: 'The time, place, weather, or road conditions changed after that review.' }, { label: 'Changes', value: 'No time was advanced and no encounter checks were rolled.' }, { label: 'Next Step', value: almanacButton('Review the Current Route', '!aa-travel') }]);
             }
             const advanceTime = String(args.time || '').toLowerCase() === 'yes';
             const rollChecks = String(args.roll || '').toLowerCase() === 'yes';
             if (!advanceTime && !rollChecks) return showTravel(msg);
             if (advanceTime && !timeAvailable()) {
-                return sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: 'TimeAlmanac is off, so this plan cannot advance fictional time.' }, { label: 'Changes', value: 'No time was advanced and no encounter checks were rolled.' }, { label: 'Next Step', value: GameAssist.createButton('Travel', '!aa-travel') }]);
+                return sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: 'TimeAlmanac is off, so this plan cannot advance fictional time.' }, { label: 'Changes', value: 'No time was advanced and no encounter checks were rolled.' }, { label: 'Next Step', value: almanacButton('Travel', '!aa-travel') }]);
             }
             const beforeMinute = runtime.time.worldMinute;
             if (advanceTime) {
@@ -29284,7 +29590,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Encounter Summary', value: rollChecks ? `Negative ${counts.Negative || 0} | Neutral ${counts.Neutral || 0} | Positive ${counts.Positive || 0} | No encounter ${counts['No encounter'] || 0}` : 'No encounter checks were requested.' },
                 ...(rollChecks ? [{ label: 'Private Roll Evidence', value: `${shown}${omitted ? `<br>${omitted} additional rolls are included in the summary; individual chat evidence is limited to ${POLICY.almanac.maximumTravelRollsShown}.` : ''}` }] : []),
                 { label: 'Authority', value: 'These categories are prompts for the GM. AlmanacAssist did not choose an encounter or apply movement, damage, conditions, or other rules.' },
-                { label: 'Continue', value: `${GameAssist.createButton('Plan More Travel', '!aa-travel')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                { label: 'Continue', value: `${almanacButton('Plan More Travel', '!aa-travel')} ${almanacButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
 
@@ -29302,7 +29608,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Destination', value: `${scenePath(toScene)}<br>${_sanitize(descriptiveTemperature(toScene.scene.temperatureF))} | ${_sanitize(toScene.scene.terrain)} | ${_sanitize(toScene.scene.ground)}` },
                 { label: 'Temporal Context', value: temporal },
                 { label: 'Chronology', value: timeAvailable() ? 'Accepted progress advances the one authoritative fictional chronology.' : 'TimeAlmanac is off. Journey progress can still be recorded, but fictional time will not advance.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Start Journey', `!aa-travel start --to ${destination.id} --hours ${hours} --pace ${pace} --confirm yes`)} ${GameAssist.createButton('Cancel', '!aa-travel')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                { label: 'Actions', value: `${almanacButton('Start Journey', `!aa-travel start --to ${destination.id} --hours ${hours} --pace ${pace} --confirm yes`)} ${almanacButton('Cancel', '!aa-travel')} ${almanacButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
 
@@ -29331,7 +29637,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (/^plan\b/i.test(body)) {
                 if (runtime.world.travel) return showTravel(msg);
                 const result = normalizedTravelPlan(args);
-                if (!result.ok) return sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: GameAssist.createButton('Travel', '!aa-travel') }]);
+                if (!result.ok) return sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: almanacButton('Travel', '!aa-travel') }]);
                 return showMileageTravelPreview(msg, result.plan);
             }
             if (/^apply\b/i.test(body)) return applyMileageTravel(msg, args);
@@ -29341,7 +29647,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const origin = worldItem(world.locations, world.activeLocationId);
                 const hours = Math.round(clampNumber(args.hours, 1, POLICY.almanac.maximumRestHours, 8));
                 const pace = ['slow', 'normal', 'fast'].includes(String(args.pace || '').toLowerCase()) ? String(args.pace).toLowerCase() : 'normal';
-                if (!destination || destination.id === origin?.id) return sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: 'Choose a prepared destination other than the current location.' }, { label: 'Next Step', value: GameAssist.createButton('Travel', '!aa-travel') }]);
+                if (!destination || destination.id === origin?.id) return sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: 'Choose a prepared destination other than the current location.' }, { label: 'Next Step', value: almanacButton('Travel', '!aa-travel') }]);
                 return showTravelPreview(msg, destination, hours, pace);
             }
             if (/^start\b/i.test(body)) {
@@ -29398,7 +29704,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (previous) publishChange('almanac.travel.cancelled', previous, null, { reason: 'GM cancelled journey' }, msg);
                 return showTravel(msg);
             }
-            sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: 'That travel command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Travel', '!aa-travel') }]);
+            sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: 'That travel command was not recognized.' }, { label: 'Next Step', value: almanacButton('Travel', '!aa-travel') }]);
         }
 
         function showEventMenu(msg) {
@@ -29407,10 +29713,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const active = scene.phenomena.map(item => _sanitize(item.name)).join(', ') || 'None';
             sendPanel(msg, 'Events and Omens', [
                 { label: 'Active Phenomena', value: active },
-                { label: 'Generate', value: `${GameAssist.createButton('Celestial Omen', '!aa-astro rare')} ${GameAssist.createButton('Travel Encounter Checks', '!aa-travel')}` },
-                { label: 'Campaign Events', value: `${GameAssist.createButton('Manage Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Astronomy', '!astro')}` },
+                { label: 'Generate', value: `${almanacButton('Celestial Omen', '!aa-astro rare')} ${almanacButton('Travel Encounter Checks', '!aa-travel')}` },
+                { label: 'Campaign Events', value: `${almanacButton('Manage Phenomena', '!aa-phenomena')} ${almanacButton('Astronomy', '!astro')}` },
                 { label: 'Important', value: 'Generated omens and travel outcomes are GM prompts. They do not create encounters or silently change campaign rules.' },
-                { label: 'Return', value: GameAssist.createButton('Almanac Home', '!aa-gm') }
+                { label: 'Return', value: almanacButton('Almanac Home', '!aa-gm') }
             ]);
         }
 
@@ -29421,13 +29727,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const rows = world.phenomena.length
                 ? world.phenomena.map(item => {
                     const active = scene.phenomena.some(candidate => candidate.id === item.id);
-                    return `${active ? '<strong>Active:</strong> ' : ''}${_sanitize(item.name)} [${_sanitize(item.id)}] - ${_sanitize(item.description)} ${GameAssist.createButton('Edit', `!aa-phenomena edit --id ${item.id}`)} ${GameAssist.createButton(active ? 'End' : 'Begin', `!aa-phenomena ${active ? 'end' : 'begin'} --id ${item.id}`)} ${GameAssist.createButton('Remove', `!aa-phenomena remove --id ${item.id} --confirm ?{Remove ${item.name}?|No,no|Yes,yes}`)}`;
+                    return `${active ? '<strong>Active:</strong> ' : ''}${_sanitize(item.name)} [${_sanitize(item.id)}] - ${_sanitize(item.description)} ${almanacButton('Edit', `!aa-phenomena edit --id ${item.id}`)} ${almanacButton(active ? 'End' : 'Begin', `!aa-phenomena ${active ? 'end' : 'begin'} --id ${item.id}`)} ${almanacButton('Remove', `!aa-phenomena remove --id ${item.id} --confirm ?{Remove ${item.name}?|No,no|Yes,yes}`)}`;
                 }).join('<br>')
                 : 'No phenomena configured.';
             sendPanel(msg, 'World Phenomena', [
                 { label: 'Configured', value: rows },
-                { label: 'Add', value: GameAssist.createButton('Add Phenomenon', '!aa-phenomena add --name "?{Name}" --description "?{Description}" --location "?{Location id; blank means any|}" --severity ?{Severity 0-5|1} --temperature ?{Temperature change F|0} --precipitation "?{Precipitation override; blank means none|}" --visibility "?{Visibility override; blank means none|}" --ground "?{Ground override; blank means none|}"') },
-                { label: 'Return', value: `${GameAssist.createButton('World Setup', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                { label: 'Add', value: almanacButton('Add Phenomenon', '!aa-phenomena add --name "?{Name}" --description "?{Description}" --location "?{Location id; blank means any|}" --severity ?{Severity 0-5|1} --temperature ?{Temperature change F|0} --precipitation "?{Precipitation override; blank means none|}" --visibility "?{Visibility override; blank means none|}" --ground "?{Ground override; blank means none|}"') },
+                { label: 'Return', value: `${almanacButton('World Setup', '!aa-world')} ${almanacButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
 
@@ -29469,8 +29775,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (!item) return sendPanel(msg, 'Phenomena Needs Attention', [{ label: 'Problem', value: 'That phenomenon was not found.' }]);
                 if (args.name === undefined) return sendPanel(msg, `Edit Phenomenon: ${item.name}`, [
                     { label: 'Current', value: `${_sanitize(item.description)} | severity ${item.severity}` },
-                    { label: 'Edit', value: GameAssist.createButton('Edit Details', `!aa-phenomena edit --id ${item.id} --name "?{Name|${item.name}}" --description "?{Description|${item.description}}" --location "?{Location id; blank means any|${item.locationId || ''}}" --region "?{Region id; blank means any|${item.regionId || ''}}" --severity ?{Severity 0-5|${item.severity}} --temperature ?{Temperature change F|${item.temperatureDeltaF}} --precipitation "?{Precipitation override; blank means none|${item.precipitation}}" --visibility "?{Visibility override; blank means none|${item.visibility}}" --ground "?{Ground override; blank means none|${item.ground}}" --tags "?{Comma-separated tags|${item.tags.join(',')}}"`) },
-                    { label: 'Return', value: `${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                    { label: 'Edit', value: almanacButton('Edit Details', `!aa-phenomena edit --id ${item.id} --name "?{Name|${item.name}}" --description "?{Description|${item.description}}" --location "?{Location id; blank means any|${item.locationId || ''}}" --region "?{Region id; blank means any|${item.regionId || ''}}" --severity ?{Severity 0-5|${item.severity}} --temperature ?{Temperature change F|${item.temperatureDeltaF}} --precipitation "?{Precipitation override; blank means none|${item.precipitation}}" --visibility "?{Visibility override; blank means none|${item.visibility}}" --ground "?{Ground override; blank means none|${item.ground}}" --tags "?{Comma-separated tags|${item.tags.join(',')}}"`) },
+                    { label: 'Return', value: `${almanacButton('Phenomena', '!aa-phenomena')} ${almanacButton('Almanac Home', '!aa-gm')}` }
                 ]);
                 const name = boundedName(args.name);
                 if (!name) return sendPanel(msg, 'Phenomena Needs Attention', [{ label: 'Problem', value: 'Enter a phenomenon name. Nothing was changed.' }]);
@@ -29510,7 +29816,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ensureAlmanacRuntime().world.revision++;
                 return showPhenomena(msg);
             }
-            sendPanel(msg, 'Phenomena Needs Attention', [{ label: 'Problem', value: 'That phenomena command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Phenomena', '!aa-phenomena') }]);
+            sendPanel(msg, 'Phenomena Needs Attention', [{ label: 'Problem', value: 'That phenomena command was not recognized.' }, { label: 'Next Step', value: almanacButton('Phenomena', '!aa-phenomena') }]);
         }
 
         function showTemporalContexts(msg) {
@@ -29520,16 +29826,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const rows = contexts.map(context => {
                 const used = world.locations.filter(location => location.temporalContextId === context.id).length;
                 const rate = context.rateNumerator === context.rateDenominator ? 'normal rate' : `${context.rateNumerator}:${context.rateDenominator} rate`;
-                const edit = context.id === 'material' ? '' : ` ${GameAssist.createButton('Edit', `!aa-temporal edit --id ${context.id} --name "?{Context name|${context.name}}" --rate-numerator ?{Local minutes numerator|${context.rateNumerator}} --rate-denominator ?{Base minutes denominator|${context.rateDenominator}} --offset ?{Local offset in minutes|${context.offsetMinutes}}`)}`;
+                const edit = context.id === 'material' ? '' : ` ${almanacButton('Edit', `!aa-temporal edit --id ${context.id} --name "?{Context name|${context.name}}" --rate-numerator ?{Local minutes numerator|${context.rateNumerator}} --rate-denominator ?{Base minutes denominator|${context.rateDenominator}} --offset ?{Local offset in minutes|${context.offsetMinutes}}`)}`;
                 return `<strong>${_sanitize(context.name)}</strong> [${_sanitize(context.id)}] - ${rate}; offset ${context.offsetMinutes} minutes; ${used} location${used === 1 ? '' : 's'}${edit}`;
             }).join('<br>');
             sendPanel(msg, 'Temporal Contexts', [
                 { label: 'Contexts', value: rows },
-                { label: 'Add', value: GameAssist.createButton('Add Temporal Context', '!aa-temporal add --name "?{Context name}" --rate-numerator ?{Local minutes numerator|1} --rate-denominator ?{Base minutes denominator|1} --offset ?{Local offset in minutes|0}') },
-                { label: 'Assign', value: GameAssist.createButton('Assign to Location', '!aa-temporal preview --location "?{Location id}" --context "?{Temporal context id|material}"') },
-                { label: 'Remove', value: GameAssist.createButton('Remove Unused Context', '!aa-temporal remove --id "?{Temporal context id}" --confirm ?{Remove this unused temporal context?|No,no|Yes,yes}') },
+                { label: 'Add', value: almanacButton('Add Temporal Context', '!aa-temporal add --name "?{Context name}" --rate-numerator ?{Local minutes numerator|1} --rate-denominator ?{Base minutes denominator|1} --offset ?{Local offset in minutes|0}') },
+                { label: 'Assign', value: almanacButton('Assign to Location', '!aa-temporal preview --location "?{Location id}" --context "?{Temporal context id|material}"') },
+                { label: 'Remove', value: almanacButton('Remove Unused Context', '!aa-temporal remove --id "?{Temporal context id}" --confirm ?{Remove this unused temporal context?|No,no|Yes,yes}') },
                 { label: 'Important', value: 'Temporal contexts change local scene display only. The one base fictional chronology remains authoritative, and no rest, effect, combat, NPC history, or character resource is reversed automatically.' },
-                { label: 'Return', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                { label: 'Return', value: `${almanacButton('Manage World', '!aa-world')} ${almanacButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
 
@@ -29543,7 +29849,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (/^preview\b/i.test(body)) {
                 const location = worldItem(world.locations, args.location);
                 const context = worldItem(contexts, args.context);
-                if (!location || !context) return sendPanel(msg, 'Temporal Contexts Need Attention', [{ label: 'Problem', value: 'Choose one existing location and temporal context.' }, { label: 'Next Step', value: GameAssist.createButton('Temporal Contexts', '!aa-temporal') }]);
+                if (!location || !context) return sendPanel(msg, 'Temporal Contexts Need Attention', [{ label: 'Problem', value: 'Choose one existing location and temporal context.' }, { label: 'Next Step', value: almanacButton('Temporal Contexts', '!aa-temporal') }]);
                 const before = resolveScene(location.id);
                 const originalWorld = copy(modState.config.world);
                 let after;
@@ -29560,7 +29866,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     { label: 'Before', value: `${_sanitize(before.temporalContext.context.name)} | ${_sanitize(displayMoment(before.time))}` },
                     { label: 'After', value: `${_sanitize(after.temporalContext.context.name)} | ${_sanitize(displayMoment(after.time))}` },
                     { label: 'Unchanged', value: 'The base fictional chronology, rests, effects, combat, NPC history, and character resources are not rewritten.' },
-                    { label: 'Actions', value: `${GameAssist.createButton('Assign Context', `!aa-temporal assign --location ${location.id} --context ${context.id} --confirm yes`)} ${GameAssist.createButton('Cancel', '!aa-temporal')}` }
+                    { label: 'Actions', value: `${almanacButton('Assign Context', `!aa-temporal assign --location ${location.id} --context ${context.id} --confirm yes`)} ${almanacButton('Cancel', '!aa-temporal')}` }
                 ]);
             }
             if (/^add\b/i.test(body)) {
@@ -29619,7 +29925,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ensureAlmanacRuntime().world.revision++;
                 return showTemporalContexts(msg);
             }
-            sendPanel(msg, 'Temporal Contexts Need Attention', [{ label: 'Problem', value: 'That temporal-context command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Temporal Contexts', '!aa-temporal') }]);
+            sendPanel(msg, 'Temporal Contexts Need Attention', [{ label: 'Problem', value: 'That temporal-context command was not recognized.' }, { label: 'Next Step', value: almanacButton('Temporal Contexts', '!aa-temporal') }]);
         }
 
         function worldPackFingerprint(text) {
@@ -29784,6 +30090,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     list.forEach(profile => {
                         const validation = validateCurrentSettings({ schemaVersion: 1,
                             baseline: { ...copy(CLIMATE_PROFILES.temperate), id: 'temperate', seasonalScale: 1 }, profile,
+                            ...(profile?.components !== undefined ? { layers: profile.components } : {}),
+                            ...(profile?.descriptionOverrides !== undefined ? { descriptionOverrides: profile.descriptionOverrides } : {}),
                             adjustments: Object.fromEntries(Object.keys(CURRENT_SETTING_FIELDS).map(key => [key, 0])),
                             environmentPresetId: 'clear', temporalContextId: 'material', visibilityOverride: '', groundOverride: '' });
                         if (!validation.ok || used.has(profile?.id)) problems.push('Each custom setting profile needs a unique id and valid influence values.');
@@ -29848,10 +30156,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel(msg, 'Almanac WorldPacks', [
                 { label: 'Installed', value: installed },
                 { label: 'Handout', value: 'One owned handout is the editable authoring surface. Export or create a blank template, edit the JSON, then preview before importing.' },
-                { label: 'Create or Export', value: `${GameAssist.createButton('Export Current World', '!aa-worldpack export')} ${GameAssist.createButton('Create Blank Template', '!aa-worldpack blank --confirm ?{Replace the WorldPack handout with a blank starter template?|No,no|Yes,yes}')}` },
-                { label: 'Import', value: GameAssist.createButton('Preview Handout Import', '!aa-worldpack preview --mode ?{Import mode|Install New,install|Update Existing,update|Import as Copy,copy}') },
+                { label: 'Create or Export', value: `${almanacButton('Export Current World', '!aa-worldpack export')} ${almanacButton('Create Blank Template', '!aa-worldpack blank --confirm ?{Replace the WorldPack handout with a blank starter template?|No,no|Yes,yes}')}` },
+                { label: 'Import', value: almanacButton('Preview Handout Import', '!aa-worldpack preview --mode ?{Import mode|Install New,install|Update Existing,update|Import as Copy,copy}') },
                 { label: 'Safety', value: 'Imports are bounded, validated, previewed, re-read at confirmation, and committed atomically. Runtime chronology, forecasts, histories, grants, and character data are never imported.' },
-                { label: 'Return', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                { label: 'Return', value: `${almanacButton('Manage World', '!aa-world')} ${almanacButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
 
@@ -29932,7 +30240,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return sendPanel(msg, result.ok ? 'WorldPack Exported' : 'WorldPack Needs Attention', result.ok ? [
                     { label: 'Handout', value: `[Open WorldPack](https://journal.roll20.net/handout/${result.id})` },
                     { label: 'Contents', value: 'Current definitions only; runtime chronology and campaign activity were excluded.' },
-                    { label: 'Return', value: GameAssist.createButton('WorldPacks', '!aa-worldpack') }
+                    { label: 'Return', value: almanacButton('WorldPacks', '!aa-worldpack') }
                 ] : [{ label: 'Problem', value: _sanitize(result.message) }]);
             }
             if (lowerBody.startsWith('blank')) {
@@ -29941,7 +30249,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return sendPanel(msg, result.ok ? 'WorldPack Template Created' : 'WorldPack Needs Attention', result.ok ? [
                     { label: 'Handout', value: `[Open WorldPack](https://journal.roll20.net/handout/${result.id})` },
                     { label: 'Next Step', value: 'Edit the JSON, then return to WorldPacks and preview the import.' },
-                    { label: 'Return', value: GameAssist.createButton('WorldPacks', '!aa-worldpack') }
+                    { label: 'Return', value: almanacButton('WorldPacks', '!aa-worldpack') }
                 ] : [{ label: 'Problem', value: _sanitize(result.message) }]);
             }
             if (lowerBody.startsWith('preview')) {
@@ -29949,13 +30257,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return readWorldPackHandout(read => {
                     if (!read.ok) return sendPanel(msg, 'WorldPack Needs Attention', [{ label: 'Problem', value: _sanitize(read.message) }]);
                     const validation = validateWorldPackText(read.text);
-                    if (!validation.ok) return sendPanel(msg, 'WorldPack Needs Attention', [{ label: 'Problem', value: _sanitize(validation.message) }, { label: 'Changes', value: 'None.' }, { label: 'Return', value: GameAssist.createButton('WorldPacks', '!aa-worldpack') }]);
+                    if (!validation.ok) return sendPanel(msg, 'WorldPack Needs Attention', [{ label: 'Problem', value: _sanitize(validation.message) }, { label: 'Changes', value: 'None.' }, { label: 'Return', value: almanacButton('WorldPacks', '!aa-worldpack') }]);
                     const exists = modState.config.worldPacks.some(pack => String(pack.id).toLowerCase() === validation.pack.id.toLowerCase());
                     if ((mode === 'install' && exists) || (mode === 'update' && !exists)) {
                         const problem = exists
                             ? 'That pack id is already installed. Preview Update Existing or Import as Copy instead.'
                             : 'That pack id is not installed. Preview Install New or Import as Copy instead.';
-                        return sendPanel(msg, 'WorldPack Conflict', [{ label: 'Problem', value: problem }, { label: 'Changes', value: 'None.' }, { label: 'Next Step', value: GameAssist.createButton('WorldPacks', '!aa-worldpack') }]);
+                        return sendPanel(msg, 'WorldPack Conflict', [{ label: 'Problem', value: problem }, { label: 'Changes', value: 'None.' }, { label: 'Next Step', value: almanacButton('WorldPacks', '!aa-worldpack') }]);
                     }
                     if (mode !== 'update' && modState.config.worldPacks.length >= POLICY.almanac.maximumWorldPacks) {
                         return sendPanel(msg, 'WorldPack Conflict', [{ label: 'Problem', value: `The installed-pack limit of ${POLICY.almanac.maximumWorldPacks} has been reached.` }, { label: 'Changes', value: 'None.' }]);
@@ -29970,7 +30278,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         { label: 'Calendar', value: 'The imported Wayfarer definition becomes a saved draft. It does not change the active calendar until the separate Wayfarer activation review.' },
                         ...(runtime.world.currentSettings ? [{ label: 'Current Settings', value: 'Importing replaces the working setup with the imported location settings. Save any working changes as a location and export them first if you want to keep them.' }] : []),
                         { label: 'Safety', value: 'The handout will be re-read. Any edit after this preview makes this confirmation stale.' },
-                        { label: 'Actions', value: `${GameAssist.createButton('Import WorldPack', `!aa-worldpack confirm --grant ${grantId}`)} ${GameAssist.createButton('Cancel', '!aa-worldpack')}` }
+                        { label: 'Actions', value: `${almanacButton('Import WorldPack', `!aa-worldpack confirm --grant ${grantId}`)} ${almanacButton('Cancel', '!aa-worldpack')}` }
                     ]);
                 });
             }
@@ -29983,16 +30291,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     if (!read.ok) return sendPanel(msg, 'WorldPack Needs Attention', [{ label: 'Problem', value: _sanitize(read.message) }]);
                     const validation = validateWorldPackText(read.text);
                     if (!validation.ok) return sendPanel(msg, 'WorldPack Needs Attention', [{ label: 'Problem', value: _sanitize(validation.message) }, { label: 'Changes', value: 'None.' }]);
-                    if (validation.fingerprint !== grant.fingerprint || validation.pack.id !== grant.packId) return sendPanel(msg, 'WorldPack Needs Attention', [{ label: 'Problem', value: 'The handout changed after preview. No data was imported.' }, { label: 'Next Step', value: GameAssist.createButton('Preview Again', `!aa-worldpack preview --mode ${grant.mode}`) }]);
+                    if (validation.fingerprint !== grant.fingerprint || validation.pack.id !== grant.packId) return sendPanel(msg, 'WorldPack Needs Attention', [{ label: 'Problem', value: 'The handout changed after preview. No data was imported.' }, { label: 'Next Step', value: almanacButton('Preview Again', `!aa-worldpack preview --mode ${grant.mode}`) }]);
                     const result = commitWorldPack(msg, grant, validation);
                     return sendPanel(msg, result.ok ? 'WorldPack Imported' : 'WorldPack Needs Attention', result.ok ? [
                         { label: 'Installed', value: `${_sanitize(result.record.name)} [${_sanitize(result.record.id)}]` },
                         { label: 'Result', value: 'World definitions were committed atomically with pack provenance. The imported Wayfarer calendar is a saved draft pending its separate activation review. Runtime chronology and campaign activity were not replaced.' },
-                        { label: 'Actions', value: `${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('WorldPacks', '!aa-worldpack')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                        { label: 'Actions', value: `${almanacButton('Current Scene', '!aa-scene')} ${almanacButton('WorldPacks', '!aa-worldpack')} ${almanacButton('Almanac Home', '!aa-gm')}` }
                     ] : [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Changes', value: 'None.' }]);
                 });
             }
-            sendPanel(msg, 'WorldPack Needs Attention', [{ label: 'Problem', value: 'That WorldPack command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('WorldPacks', '!aa-worldpack') }]);
+            sendPanel(msg, 'WorldPack Needs Attention', [{ label: 'Problem', value: 'That WorldPack command was not recognized.' }, { label: 'Next Step', value: almanacButton('WorldPacks', '!aa-worldpack') }]);
         }
 
         function normalizeRestConfig() {
@@ -30153,9 +30461,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function createRestPreview(msg, requestedType) {
             if (!submoduleEnabled('rest')) return sendPanel(msg, 'RestAlmanac', [{ label: 'Status', value: 'Turned off; rest definitions and history are preserved.' }]);
             const definition = restDefinition(requestedType);
-            if (!definition) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'That rest type is unavailable.' }, { label: 'Next Step', value: GameAssist.createButton('Rest', '!rest') }]);
+            if (!definition) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'That rest type is unavailable.' }, { label: 'Next Step', value: almanacButton('Rest', '!rest') }]);
             const subjects = selectedRestSubjects(msg);
-            if (!subjects.length) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'Select at least one linked 2014 PC token you control.' }, { label: 'Next Step', value: GameAssist.createButton('Rest', '!rest') }]);
+            if (!subjects.length) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'Select at least one linked 2014 PC token you control.' }, { label: 'Next Step', value: almanacButton('Rest', '!rest') }]);
             const plans = subjects.map(subject => planRestForCharacter(subject, definition));
             const failure = plans.find(plan => !plan.ok);
             if (failure) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: _sanitize(failure.message) }, { label: 'Changes', value: 'None. Every selected character must validate before a rest can be confirmed.' }]);
@@ -30178,8 +30486,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Characters', value: summary },
                 { label: 'Sheet Changes', value: `${totalWrites} verified change(s). No change has been made yet.` },
                 { label: 'World Time', value: advanceTime ? `Advance ${definition.hours} hour(s) after successful sheet changes.` : 'No automatic fictional-time change.' },
-                { label: 'Confirm', value: GameAssist.createButton('Complete Rest', `!aa-rest confirm --grant ${id}`) },
-                { label: 'Cancel', value: GameAssist.createButton('Rest Menu', '!rest') }
+                { label: 'Confirm', value: almanacButton('Complete Rest', `!aa-rest confirm --grant ${id}`) },
+                { label: 'Cancel', value: almanacButton('Rest Menu', '!rest') }
             ]);
         }
 
@@ -30216,7 +30524,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             pruneRestGrants();
             const runtime = ensureAlmanacRuntime();
             const grant = runtime.rest.grants[String(grantId || '')];
-            if (!grant) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'That rest preview expired or was already used.' }, { label: 'Next Step', value: GameAssist.createButton('Prepare New Preview', '!rest') }]);
+            if (!grant) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'That rest preview expired or was already used.' }, { label: 'Next Step', value: almanacButton('Prepare New Preview', '!rest') }]);
             if (!playerIsGM(msg?.playerid) && String(msg?.playerid) !== grant.actorId) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'That rest preview belongs to another player.' }]);
             const writes = [];
             for (const plan of grant.plans) {
@@ -30289,7 +30597,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Characters', value: record.characterNames.map(_sanitize).join(', ') },
                 { label: 'Sheet Changes', value: `${record.writes} verified change(s) completed.` },
                 { label: 'World Time', value: record.advancedMinutes ? `Advanced ${record.advancedMinutes} fictional minute(s).` : 'Not changed.' },
-                { label: 'Continue', value: `${GameAssist.createButton('Rest', '!rest')} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` }
+                { label: 'Continue', value: `${almanacButton('Rest', '!rest')} ${almanacButton('Almanac', '!Almanac-GM')}` }
             ]);
         }
 
@@ -30297,15 +30605,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!submoduleEnabled('rest')) return sendPanel(msg, 'RestAlmanac', [{ label: 'Status', value: 'Turned off; rest definitions and history are preserved.' }]);
             const config = normalizeRestConfig();
             const runtime = ensureAlmanacRuntime();
-            const custom = config.customTypes.length ? config.customTypes.map(type => `${GameAssist.createButton(type.name, `!aa-rest preview --type ${type.id}`)} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Remove', `!aa-rest custom remove --id ${type.id} --confirm ?{Remove ${type.name}?|No,no|Yes,yes}`) : ''}`).join('<br>') : 'None';
+            const custom = config.customTypes.length ? config.customTypes.map(type => `${almanacButton(type.name, `!aa-rest preview --type ${type.id}`)} ${playerIsGM(msg?.playerid) ? almanacButton('Remove', `!aa-rest custom remove --id ${type.id} --confirm ?{Remove ${type.name}?|No,no|Yes,yes}`) : ''}`).join('<br>') : 'None';
             sendPanel(msg, 'RestAlmanac', [
                 { label: 'How To Use', value: 'Select linked 2014 PC token(s), then prepare a preview. Nothing changes until confirmation.' },
-                { label: 'Rest Types', value: `${GameAssist.createButton(`Short Rest (${restDuration(config.shortHours)})`, '!aa-rest preview --type short')} ${GameAssist.createButton(`Long Rest (${restDuration(config.longHours)})`, '!aa-rest preview --type long')} ${config.extendedEnabled ? GameAssist.createButton(`Extended Rest (${restDuration(config.extendedHours)})`, '!aa-rest preview --type extended') : ''}` },
-                { label: 'Rest Pace', value: `${config.pace === 'heroic' ? 'Heroic (Epic Heroism)' : config.pace.charAt(0).toUpperCase() + config.pace.slice(1)} ${playerIsGM(msg?.playerid) ? GameAssist.createButton('Change Rest Rules', '!aa-rest rules') : ''}` },
+                { label: 'Rest Types', value: `${almanacButton(`Short Rest (${restDuration(config.shortHours)})`, '!aa-rest preview --type short')} ${almanacButton(`Long Rest (${restDuration(config.longHours)})`, '!aa-rest preview --type long')} ${config.extendedEnabled ? almanacButton(`Extended Rest (${restDuration(config.extendedHours)})`, '!aa-rest preview --type extended') : ''}` },
+                { label: 'Rest Pace', value: `${config.pace === 'heroic' ? 'Heroic (Epic Heroism)' : config.pace.charAt(0).toUpperCase() + config.pace.slice(1)} ${playerIsGM(msg?.playerid) ? almanacButton('Change Rest Rules', '!aa-rest rules') : ''}` },
                 { label: 'Custom Rest Types', value: custom },
                 { label: 'Time Advancement', value: config.advanceTime ? 'On when TimeAlmanac is available' : 'Off' },
                 { label: 'Recent Completions', value: String(runtime.rest.history.length) },
-                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Add House-Rule Rest', '!aa-rest custom add --name "?{Rest name|Breather}" --hours ?{Duration in hours|2} --base ?{Recovery behavior|Record only,record|Short Rest,short|Long Rest,long|Extended Rest,extended}')} ${GameAssist.createButton(config.advanceTime ? 'Do Not Advance Time' : 'Advance Time', `!aa-rest time ${config.advanceTime ? 'off' : 'on'}`)} ${GameAssist.createButton(config.extendedEnabled ? 'Disable Extended Rest' : 'Enable Extended Rest', `!aa-rest extended ${config.extendedEnabled ? 'off' : 'on'}`)} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` : GameAssist.createButton('Almanac', '!Almanac') }
+                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${almanacButton('Add House-Rule Rest', '!aa-rest custom add --name "?{Rest name|Breather}" --hours ?{Duration in hours|2} --base ?{Recovery behavior|Record only,record|Short Rest,short|Long Rest,long|Extended Rest,extended}')} ${almanacButton(config.advanceTime ? 'Do Not Advance Time' : 'Advance Time', `!aa-rest time ${config.advanceTime ? 'off' : 'on'}`)} ${almanacButton(config.extendedEnabled ? 'Disable Extended Rest' : 'Enable Extended Rest', `!aa-rest extended ${config.extendedEnabled ? 'off' : 'on'}`)} ${almanacButton('Almanac', '!Almanac-GM')}` : almanacButton('Almanac', '!Almanac') }
             ]);
         }
 
@@ -30314,12 +30622,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const config = normalizeRestConfig();
             sendPanel(msg, 'Rest Rules', [
                 { label: 'Current Pace', value: `${config.pace === 'heroic' ? 'Heroic (Epic Heroism)' : config.pace.charAt(0).toUpperCase() + config.pace.slice(1)} | Short ${restDuration(config.shortHours)} | Long ${restDuration(config.longHours)}` },
-                { label: 'Choose A Pace', value: `${GameAssist.createButton('Standard', '!aa-rest pace standard')} ${GameAssist.createButton('Heroic', '!aa-rest pace heroic')} ${GameAssist.createButton('Gritty', '!aa-rest pace gritty')} ${GameAssist.createButton('Custom', `!aa-rest pace custom --short ?{Short Rest hours|${config.shortHours}} --long ?{Long Rest hours|${config.longHours}} --extended ?{Extended Rest hours|${config.extendedHours}}`)}` },
+                { label: 'Choose A Pace', value: `${almanacButton('Standard', '!aa-rest pace standard')} ${almanacButton('Heroic', '!aa-rest pace heroic')} ${almanacButton('Gritty', '!aa-rest pace gritty')} ${almanacButton('Custom', `!aa-rest pace custom --short ?{Short Rest hours|${config.shortHours}} --long ?{Long Rest hours|${config.longHours}} --extended ?{Extended Rest hours|${config.extendedHours}}`)}` },
                 { label: 'Standard', value: 'Short Rest: 1 hour. Long Rest: 8 hours.' },
                 { label: 'Heroic', value: 'Short Rest: 5 minutes. Long Rest: 1 hour.' },
                 { label: 'Gritty', value: 'Short Rest: 8 hours. Long Rest: 7 days.' },
                 { label: 'Important', value: 'The pace changes fictional duration. Recovery remains based on the selected Short, Long, Extended, or record-only rest behavior.' },
-                { label: 'Return', value: `${GameAssist.createButton('Rest', '!rest')} ${GameAssist.createButton('Almanac', '!aa-gm')}` }
+                { label: 'Return', value: `${almanacButton('Rest', '!rest')} ${almanacButton('Almanac', '!aa-gm')}` }
             ]);
         }
 
@@ -30369,7 +30677,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     const longHours = Number(args.long);
                     const extendedHours = Number(args.extended);
                     const valid = [shortHours, longHours, extendedHours].every(value => Number.isFinite(value) && value >= 0 && value <= POLICY.almanac.maximumRestHours);
-                    if (!valid) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: `Custom rest durations must be between 0 and ${POLICY.almanac.maximumRestHours} hours.` }, { label: 'Changes', value: 'None.' }, { label: 'Next Step', value: GameAssist.createButton('Rest Rules', '!aa-rest rules') }]);
+                    if (!valid) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: `Custom rest durations must be between 0 and ${POLICY.almanac.maximumRestHours} hours.` }, { label: 'Changes', value: 'None.' }, { label: 'Next Step', value: almanacButton('Rest Rules', '!aa-rest rules') }]);
                     config.pace = 'custom';
                     config.shortHours = shortHours;
                     config.longHours = longHours;
@@ -30405,7 +30713,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 if (config.customTypes.length === before) return sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'That custom rest type was not found.' }]);
                 return showRest(msg);
             }
-            sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'That rest command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Rest', '!rest') }]);
+            sendPanel(msg, 'RestAlmanac Needs Attention', [{ label: 'Problem', value: 'That rest command was not recognized.' }, { label: 'Next Step', value: almanacButton('Rest', '!rest') }]);
         }
 
         function showFocusedAudit(msg, system) {
@@ -30442,7 +30750,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ...rows,
                 { label: 'Audit Result', value: 'No known bounded-state or configuration problem was found.' },
                 { label: 'Changes', value: 'None. Audit is read-only.' },
-                { label: 'Return', value: GameAssist.createButton('Almanac', '!Almanac-GM') }
+                { label: 'Return', value: almanacButton('Almanac', '!Almanac-GM') }
             ]);
         }
 
@@ -30489,7 +30797,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Retained History', value: `Time ${runtime.history.length}/${POLICY.almanac.historyLimit} | Weather ${runtime.weather.history.length}/${POLICY.almanac.weatherHistoryLimit} | Rest ${runtime.rest.history.length}/${POLICY.almanac.restHistoryLimit}` },
                 ...(scene.warnings.length ? [{ label: 'Scene Notes', value: scene.warnings.map(_sanitize).join('<br>') }] : []),
                 { label: audit ? 'Audit Result' : 'Health', value: problems.length ? _sanitize(problems.join(' ')) : 'No known Almanac configuration, chronology, or retained-state problems.' },
-                { label: audit ? 'Changes' : 'Actions', value: audit ? 'None. Audit is read-only.' : `${GameAssist.createButton('Almanac', '!Almanac-GM')} ${GameAssist.createButton('Audit', '!Almanac-Audit')}` }
+                { label: audit ? 'Changes' : 'Actions', value: audit ? 'None. Audit is read-only.' : `${almanacButton('Almanac', '!Almanac-GM')} ${almanacButton('Audit', '!Almanac-Audit')}` }
             ]);
         }
 
@@ -30519,11 +30827,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<p>A fresh Wayfarer draft starts with the campaign Wayfarer Calendar, including its 20-hour clock, 75-minute hours, named weekdays, twelve months, five festival periods, holidays, seasonal ranges, and documented daily rhythm. Use Start From A Copy to replace the draft with Standard, built-in Solamnic, Harptos, or the saved Wayfarer definition. The command <code>!aa-wayfarer reset-default --confirm yes</code> restores only the saved draft to this campaign default; it never changes the active calendar or fictional time. Wayfarer supports one repeating leap interval, so a Standard copy uses a four-year leap day and does not reproduce Gregorian century exceptions.</p>',
                 '<h2>Climate and Astronomy</h2>',
                 '<h3>Current Settings and Saved Places</h3>',
-                '<p>Open <strong>Current Settings</strong> from <code>!aa-gm</code>, or use <code>!aa current</code>. Choose a regional baseline, choose one ecoregion influence profile, then adjust its values or terrain descriptions if needed. The matrix shows temperature, humidity, precipitation, and wind adjustments. Choosing a different profile replaces the previous local influences; it does not stack them.</p>',
-                '<p><strong>Generate Weather</strong> uses these settings with the current season. <strong>Save Current Settings</strong> creates an independent named place, or updates the active place after confirmation. <strong>Recall Location</strong> restores its setup without advancing time or restoring an old weather roll. Subsequent edits remain a working copy until saved. <strong>Adjust Settings</strong> also provides reusable custom profiles and confirmed discard. Weather locks and explicit environment overrides remain in force.</p>',
+                '<p>Open <strong>Current Settings</strong> from <code>!aa-gm</code>, or use <code>!aa current</code>. Choose <strong>Climate</strong> for the regional weather pattern and <strong>Biome</strong> for the landscape. <strong>Ecoregion Starters</strong> set a biome and geography together without changing your climate. Choices have named buttons, with up to eight per page.</p>',
+                '<p><strong>Local Details</strong> adds optional geography, terrain, environment, hydrology, and vegetation. Each layer replaces its previous choice. <strong>Fine-Tune Values</strong> edits the climate, local profile adjustments, individual layers, GM adjustments, and descriptions. <strong>Save Custom Profile</strong> retains the local layers for reuse; it does not copy the climate or GM adjustments.</p>',
+                '<p><strong>Seasons</strong> follows the local calendar date, or the manual season when Time is off. Choose a named season to set Cold, Mild Wet, Warm, Cooling, Rainy, Dry, or Little Seasonal Change, or enter four adjustments. Changing a response affects every location using that season name and requires confirmation. An unmapped season is explicitly reported. Climate temperature strength scales the seasonal temperature contribution.</p>',
+                '<p><strong>Weather Breakdown</strong> lists climate values, each local influence, GM adjustments, the season, and the final starting point for the next weather roll. These are editable tabletop approximations, not climate simulation. Indoor weather and underground microclimates need an explicit GM override. <strong>Generate Weather</strong> uses the current season; a forecast uses its future dates. Settings changes alone retain existing weather.</p>',
+                '<p><strong>Save Current Settings</strong> creates an independent named place, or updates the active place after confirmation. <strong>Recall Location</strong> restores its complete setup without advancing time or restoring an old weather roll. Subsequent edits remain a working copy until saved. <strong>Fine-Tune Values</strong> includes confirmed discard. Weather locks and explicit environment overrides remain in force. Saved places and custom local profiles transfer through WorldPacks; unsaved working settings do not.</p>',
                 '<p>ClimateAlmanac manages bounded regions, parent inheritance, editable built-in starting profiles, custom profiles, overrides, and a manual season fallback. AstronomyAlmanac calculates reproducible configurable moon phases, future phase/daylight forecasts, and deterministic season boundaries from TimeAlmanac when available or explicit manual context when it is not. Its bounded weighted rare-event catalog remains separate from deterministic results.</p>',
                 '<h3>Choose the Natural World</h3>',
-                '<p>The linked-world controls remain under <strong>More Tools > World Palettes</strong>, or <code>!aa-palette</code>. Choose an <strong>Ecoregion Profile</strong> for a matching climate, biome, and geography together, or choose those three independently. The library contains 17 climate types, 16 biomes, 12 geographies, and 12 combined ecoregion profiles. Preview a choice, then use it for the named location. Places saved through Current Settings are edited there instead, because their snapshots keep independent values. A profile choice alone does not replace existing weather.</p>',
+                '<p>The linked-world controls remain under <strong>More Tools > Reusable Definitions</strong>, or <code>!aa-palette</code>. In this advanced workflow, an <strong>Ecoregion Profile</strong> combines climate, biome, and geography for a named location. The library contains 17 climates, 16 biomes, 12 geographies, and 12 combined profiles. Places saved through Current Settings are edited there instead, because their snapshots keep independent values. A profile choice alone does not replace existing weather.</p>',
                 '<p>Open <code>!aa-location</code> to <strong>Name This Place</strong>, <strong>Create Location</strong>, or choose a saved place. Creation asks only for a name and starts from the current physical setup without moving the party. Its <strong>Choose World Profiles</strong> button customizes that destination before visiting. <strong>Move Party Here</strong> opens a preview; only <strong>Move Party</strong> changes the active place. Renaming does not reroll weather.</p>',
                 '<p><strong>Context and Notes</strong> contains region and area choices, local adjustments, private notes, page associations, favorites, prepared destinations, and removal. <strong>Travel Lists</strong> separates prepared, favorite, and recent places from daily controls. For advanced handout editing, <strong>WorldPack Handout</strong> opens the existing JSON export, preview, and import workflow; it is not a separate location-note importer. Existing locations are preserved until the GM edits or explicitly removes them.</p>',
                 '<p><strong>Create Editable Copy</strong> saves a campaign version without changing the starter or another place. <strong>Edit Saved Profile</strong> customizes it. Places following the same saved profile share its future edits; choosing a different profile for one location leaves other places assigned as before. <strong>Regions</strong> are names you give actual places, with optional parent regions and local climate adjustments, not names for climate types.</p>',
@@ -30546,16 +30857,17 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function showGuide(msg) {
             const isGm = playerIsGM(msg?.playerid);
             sendPanel(msg, 'AlmanacAssist Quick Guide', isGm ? [
-                { label: 'Start Here', value: GameAssist.createButton('Open Almanac Controls', '!aa-gm') },
-                { label: 'Date and Time', value: `${GameAssist.createButton('Current Date', '!date')} ${GameAssist.createButton('Advance or Set Time', '!aa-time menu')} ${GameAssist.createButton('Choose Calendar', '!cal')}` },
-                { label: 'Share With The Table', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
-                { label: 'World Today', value: `${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Environment', '!enviro')}` },
-                { label: 'Travel and Events', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Events & Omens', '!aa-events')}` },
-                { label: 'Calendar Setup', value: GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer') },
-                { label: 'Full Reference', value: GameAssist.createButton('Create or Update Manual', '!Almanac-Manual') }
+                { label: 'Start Here', value: almanacButton('Open Almanac Controls', '!aa-gm') },
+                { label: 'Date and Time', value: `${almanacButton('Current Date', '!date')} ${almanacButton('Advance or Set Time', '!aa-time menu')} ${almanacButton('Choose Calendar', '!cal')}` },
+                { label: 'Share With The Table', value: `${almanacButton('Preview', '!aa-preview')} ${almanacButton('Announce', '!aa-announce')} ${almanacButton('Announcement Settings', '!aa-announcement-settings')}` },
+                { label: 'Prepare a Place', value: `${almanacButton('Current Settings', '!aa current')} ${almanacButton('How Setup Works', '!aa current help')} ${almanacButton('Recall Location', '!aa current locations')}` },
+                { label: 'World Today', value: `${almanacButton('Weather', '!weather')} ${almanacButton('Moons & Events', '!aa-today')} ${almanacButton('Environment Override', '!enviro')}` },
+                { label: 'Travel and Events', value: `${almanacButton('Travel', '!aa-travel')} ${almanacButton('Events & Omens', '!aa-events')}` },
+                { label: 'Calendar Setup', value: almanacButton('Wayfarer Calendar', '!aa-wayfarer') },
+                { label: 'Full Reference', value: almanacButton('Create or Update Manual', '!Almanac-Manual') }
             ] : [
-                { label: 'Campaign World', value: `${GameAssist.createButton('Current Date', '!date')} ${GameAssist.createButton('Current Time', '!time')} ${GameAssist.createButton('Calendar', '!cal')}` },
-                { label: 'Current Conditions', value: `${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Environment', '!enviro')}` },
+                { label: 'Campaign World', value: `${almanacButton('Current Date', '!date')} ${almanacButton('Current Time', '!time')} ${almanacButton('Calendar', '!cal')}` },
+                { label: 'Current Conditions', value: `${almanacButton('Weather', '!weather')} ${almanacButton('Moons', '!astro')} ${almanacButton('Environment', '!enviro')}` },
                 { label: 'Changes', value: 'The GM controls persistent calendar and world changes.' }
             ]);
         }
@@ -30566,8 +30878,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sendPanel(msg, result.ok ? 'AlmanacAssist Manual' : 'AlmanacAssist Needs Attention', result.ok ? [
                 { label: 'Handout', value: result.link },
                 { label: 'Result', value: `${_sanitize(result.name)} was ${result.created ? 'created' : 'updated'}.` },
-                { label: 'Continue', value: `${GameAssist.createButton('Open Almanac', '!Almanac-GM')} ${GameAssist.createButton('Whisper Quick Guide', '!Almanac-Guide')}` }
-            ] : [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: GameAssist.createButton('Quick Guide', '!Almanac-Guide') }]);
+                { label: 'Continue', value: `${almanacButton('Open Almanac', '!Almanac-GM')} ${almanacButton('Whisper Quick Guide', '!Almanac-Guide')}` }
+            ] : [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: almanacButton('Quick Guide', '!Almanac-Guide') }]);
         }
 
         /**
@@ -30641,6 +30953,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (lower === 'audit') return showStatus(msg, true);
             if (lower === 'systems' || lower === 'settings' || lower === 'setup') return showSystems(msg);
             if (lower === 'more' || lower === 'tools') return showMoreMenu(msg);
+            if (lower === 'today') return showTodayMenu(msg);
             if (lower === 'preview' || lower === 'time preview') return showAnnouncement(msg, true);
             if (lower === 'announce' || lower === 'time announce') return showAnnouncement(msg, false);
             if (lower === 'announcement-settings' || lower === 'announcements') return showAnnouncementSettings(msg);
@@ -30737,7 +31050,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (lower.startsWith('time profile')) return handleProfile(msg, input);
             sendPanel(msg, 'AlmanacAssist', [
                 { label: 'Needs Attention', value: 'That AlmanacAssist command was not recognized.' },
-                { label: 'Next Step', value: GameAssist.createButton('Open Guide', '!Almanac-Guide') }
+                { label: 'Next Step', value: almanacButton('Open Guide', '!Almanac-Guide') }
             ]);
         }
 
@@ -30830,6 +31143,26 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'announcement', 'environment', 'rest', 'world', 'temporalContexts', 'worldPacks', 'rulesAdvisorEnabled', 'rulesAdvisorProfile']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced AlmanacAssist to 2.0.5. Named Climate/Biome
+    // selectors and ecoregion starters now use numbered, stale-checked choices;
+    // the module-local button adapter defers double quotes through HTML transport.
+    // Changed (v2.0.0): Added optional biome/geography/terrain/environment/hydrology/
+    // vegetation layers and explicit seasonal controls. Weather Breakdown exposes
+    // every contribution; the existing generator applies their sum once and retains
+    // its bounded variation, weather locks, and manual scene-override ownership.
+    // Changed (v2.0.0): Optional schema-1 layer and description fields are validated
+    // on save, recall, and import. Old snapshots remain readable without migration.
+    // Custom local profiles capture their layers; location snapshots remain isolated.
+    // Decision log:
+    //   CHOICE: Separate layers and retain a residual ecoregion adjustment - ALT: reapply all legacy and new modifiers; REJECTED: decomposition must preserve old totals and avoid double counting.
+    //   CHOICE: Keep climate unchanged when choosing an ecoregion starter - ALT: overwrite the regional baseline; REJECTED: local influences should remain usable with the GM's chosen climate.
+    //   CHOICE: Scope quote deferral to Almanac links - ALT: change the shared suite renderer; REJECTED: other modules are outside this repair.
+    //   CHOICE: Keep optional numerical seeds beside named palettes as EXEMPT game content - ALT: build a physical climate engine; REJECTED: Roll20 needs bounded, editable campaign tools.
+    // Verification: .internal/almanac-matrix-ui-harness.js follows every emitted
+    // matrix choice through a local browser HTML boundary and checks seasons,
+    // replacement, malformed input, permissions, and persistence. This converter
+    // is not Roll20's renderer; live query/button acceptance remains required.
+    // Prior notes:
     // Changed (v2.0.0): Advanced AlmanacAssist to 2.0.4 with Current Settings, a
     // twelve-row editable ecoregion influence matrix, regional baselines, separate
     // GM adjustments, reusable custom profiles, and confirmed named-location updates.

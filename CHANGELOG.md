@@ -60,6 +60,31 @@ EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so exis
 - Sequences the Foundry edition after Roll20 v2.0.0 live acceptance and stabilization. It will be a Foundry-native sister implementation with its own codebase and release history, beginning with AlmanacAssist and atlas-scale WorldPack storage rather than a concurrent or line-by-line port.
 - No executable behavior, saved state, commands, or module versions change in this documentation and metadata checkpoint.
 
+### AlmanacAssist 2.0.5 layered weather setup and menu repair - 2026-08-27
+
+#### Selection controls and navigation
+
+- Repairs the Current Settings selection path that could report "Choose a baseline from the list" after a button click. Climate, ecoregion, and location lists now send numbered choices with a current-settings check instead of embedding quoted identifiers. Almanac's button adapter also defers double quotes through the chat-link HTML boundary. Existing direct commands and identifiers are preserved.
+- Rebuilds Current Settings around **Choose Climate**, **Choose Biome**, **Ecoregion Starters**, **Local Details**, **Seasons**, **Weather Breakdown**, **Generate Weather**, and named-location save/recall. Profile choices use their names as buttons, with at most eight choices per page. Calculation details are no longer repeated on every ordinary selection screen.
+- Groups moon and event actions in **Moons & Events** and moves forecast/manual weather entry into **More Weather Controls**. Prepared forecasts show a short count and **View Forecast** instead of occupying the regular weather panel. **More Tools** separates scene controls, advanced world records, reusable definitions, system switches, and manuals.
+- Refuses incomplete or malformed Current Settings arguments before mutation. Names with spaces and apostrophes are accepted; embedded double quotation marks receive an explanation instead of silently saving only part of the name.
+
+#### Layered matrix and seasonal weather
+
+- Exposes 17 climates and 16 biomes directly. The twelve ecoregion starters supply a biome/geography combination and local adjustments while retaining the GM's chosen regional climate.
+- Adds independently replaceable optional layers: 12 geographies, 8 terrain choices, 5 outdoor environment choices, 8 hydrology choices, and 8 vegetation choices. Local Details shows the selected values and provides removal controls. Fine-Tune Values edits their four weather adjustments and supports explicit landscape descriptions with a return to layer-provided wording.
+- Decomposes known earlier ecoregion totals into biome, geography, and residual adjustments without changing their combined effect. Each layer contributes once; reselection does not accumulate modifiers, and the older elevation/coast/biome calculation is not applied again. Existing custom influences are retained rather than inferred or discarded.
+- Adds **Weather Breakdown** showing the climate baseline, individual local contributions, GM adjustments, season, and bounded final starting point. Generated weather still varies around those inputs, rather than promising the same condition on every roll.
+- Makes seasonal responses directly editable from Current Settings. Named calendar seasons can use Cold, Mild Wet, Warm, Cooling, Rainy, Dry, or Little Seasonal Change, or four custom adjustments. Shared response changes require confirmation; unknown seasons are flagged rather than assigned an invented meaning. Temperature response strength is visible, and forecasts resolve the season on their own future dates.
+- Keeps the matrix a bounded tabletop approximation. Environment layers describe outdoor exposure and shelter; indoor weather and underground microclimates require an explicit GM override. No terrain penalties, character writes, or automatic time advancement are introduced.
+
+#### Saved data and verification
+
+- Extends schema-1 settings with optional validated layers and description overrides. Saved places retain independent copies of the complete setup; reusable local profiles retain their layers without copying the regional climate or extra GM adjustments. Existing snapshots without these fields remain readable.
+- Includes the expanded setup in WorldPack export/import. The depth limit increases from eight to ten levels for nested layer/tag records; byte, object-count, unsafe-key, reference, and schema checks remain in place. Malformed imports produce no partial writes.
+- Preserves weather locks, manual environment overrides, calendar chronology, unrelated module behavior, and all previous changelog entries. AlmanacAssist advances from 2.0.4 to 2.0.5; the project remains GameAssist v2.0.0.
+- Adds local browser HTML-boundary checks for every matrix choice, plus layer replacement, seasonal generation, future-date forecasts, stale controls, custom profiles, location recall, imports, permissions, and restart checks. The local HTML converter is not Roll20's renderer; live acceptance remains documented under **Current Settings And Location Recall** and **Local Layers And Seasonal Influence**.
+
 ### AlmanacAssist 2.0.4 Current Settings and location snapshots - 2026-08-27
 
 #### Direct weather setup
