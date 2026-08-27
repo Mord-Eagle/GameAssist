@@ -47,7 +47,7 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ### Release definition
 
-GameAssist v2.0.0 remains one active development line in PR #81. EffectAssist 2.5.4 coordinates the focused official-2014 effect catalog with compact caster choices, exact duplicate disambiguation, concentration-linked cleanup, retained GM requests, bounded Bless proposals, guarded Guidance consumption, worker-safe projections, and optional duration review. HealAssist 1.2.1 provides guided normal or maximum healing with direct single-recipient targeting, review, and optional verified automatic application. AttackAssist 1.1.0 provides compact official-2014 repeating-attack selection, prompt-safe Classic-sheet materialization, native visible targeting, immediate sheet-setting submission by default, optional roll-mode review, visible one-use sheet rolls, and no automatic attack consequences. TokenAssist 1.3.0 retains longest-name-first aliases, an organized action library, advanced MarkerService expressions, controller/report routing, computed reports, relative visual controls, multi-sided selection, and duplicate-install protection. AlmanacAssist 2.0.0 implements the consolidated Issue #95 campaign-world engine described below. HealthService 1.1.1 provides the canonical supported HP observation/write boundary and shared NPC HP-bar controls. ConcentrationAssist 0.6.0 uses that evidence for optional private check offers. CombatAssist 1.2.1 supplies accepted encounter progression, native round-counter handling, timers, pings, recovery, held actions, and optional integrations without replacing Roll20's Turn Tracker. Shared SemanticEvents remain immutable, in-sandbox, and non-replayed.
+GameAssist v2.0.0 remains one active development line in PR #81. EffectAssist 2.5.4 coordinates the focused official-2014 effect catalog with compact caster choices, exact duplicate disambiguation, concentration-linked cleanup, retained GM requests, bounded Bless proposals, guarded Guidance consumption, worker-safe projections, and optional duration review. HealAssist 1.2.1 provides guided normal or maximum healing with direct single-recipient targeting, review, and optional verified automatic application. AttackAssist 1.1.0 provides compact official-2014 repeating-attack selection, prompt-safe Classic-sheet materialization, native visible targeting, immediate sheet-setting submission by default, optional roll-mode review, visible one-use sheet rolls, and no automatic attack consequences. TokenAssist 1.3.0 retains longest-name-first aliases, an organized action library, advanced MarkerService expressions, controller/report routing, computed reports, relative visual controls, multi-sided selection, and duplicate-install protection. AlmanacAssist 2.0.1 completes the campaign-scale GM palettes and reviewed travel layer on the consolidated Issue #95 campaign-world engine described below. HealthService 1.1.1 provides the canonical supported HP observation/write boundary and shared NPC HP-bar controls. ConcentrationAssist 0.6.0 uses that evidence for optional private check offers. CombatAssist 1.2.1 supplies accepted encounter progression, native round-counter handling, timers, pings, recovery, held actions, and optional integrations without replacing Roll20's Turn Tracker. Shared SemanticEvents remain immutable, in-sandbox, and non-replayed.
 
 EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so existing campaigns upgrade without receiving new markers, conditions, HP writes, other sheet writes, attack rolls, fictional chronology, weather, or chat output until the GM deliberately enables them.
 
@@ -59,6 +59,30 @@ EffectAssist, HealAssist, AttackAssist, and AlmanacAssist start disabled so exis
 - Defines Roll20 v2.0.0 as a bounded campaign-scale release. Its editable world definitions and WorldPacks must remain within Roll20 Mod sandbox limits; a full atlas-scale content architecture is not a Roll20 release requirement.
 - Sequences the Foundry edition after Roll20 v2.0.0 live acceptance and stabilization. It will be a Foundry-native sister implementation with its own codebase and release history, beginning with AlmanacAssist and atlas-scale WorldPack storage rather than a concurrent or line-by-line port.
 - No executable behavior, saved state, commands, or module versions change in this documentation and metadata checkpoint.
+
+### AlmanacAssist 2.0.1 campaign palettes and reviewed mileage travel - 2026-08-26
+
+#### Live-session controls
+
+- Reorders `!aa-gm` around current conditions and the actions most likely to be used during play: weather generation, time/date advancement, travel, rest, astronomy, environment, events, announcements, location, and calendar controls.
+- Keeps campaign definitions, transfer tools, diagnostics, system toggles, and full reference material behind the focused **More Tools** and Worldbuilding screens.
+- Makes WeatherAlmanac show precipitation, temperature, wind, and visibility together, distinguishes generated weather from a GM environment override, and provides direct Generate/Regenerate, Forecast, Enter Weather, Announce, and Home actions.
+- Adds a compact **Events and Omens** palette for weighted celestial prompts, travel encounter checks, and explicit campaign phenomena without presenting generated prompts as rules or encounter content.
+
+#### Mileage travel
+
+- Adds Slow (2 mph), Normal (3 mph), Fast (4 mph), and bounded custom pace choices with GM-entered mileage, encounter interval, and die size.
+- Reviews travel duration, estimated arrival, current road and visibility guidance, and encounter-check volume before offering separate **Advance Time & Roll**, **Advance Time Only**, and **Roll Checks Only** actions.
+- Derives advisory road wording from the authoritative current scene, including precipitation, temperature, ground, terrain, wind, and visibility, without silently applying movement penalties, damage, conditions, or token changes.
+- Uses one check for every started interval. Rolls of 1-2 are Negative, the mathematical midpoint rounded up is Neutral, the die maximum is Positive, and other values are No encounter. A d4 therefore uses 1-2 Negative, 3 Neutral, and 4 Positive.
+- Keeps encounter evidence GM-private, never selects creatures or event content, shows at most 40 individual results in chat, retains bounded history, and refuses plans above 200 checks before creating a review grant.
+
+#### Safety and verification
+
+- Binds each reviewed mileage plan to the current chronology, place, weather, environment, and road evidence. A changed scene, expired review, or reused button cannot advance time or roll checks.
+- Preserves the established prepared-destination journey workflow, one base chronology, Worldbuilding definitions, Wayfarer and WorldPack transactions, phenomena, temporal contexts, and optional subsystem boundaries.
+- Advances the AlmanacAssist module version from 2.0.0 to 2.0.1 while GameAssist remains the unreleased v2.0.0 candidate.
+- Passes 157 focused non-live Almanac checks. Roll20 live acceptance remains required for chat layout, context prompts, private delivery, restart behavior, and end-to-end table use.
 
 ### AlmanacAssist 2.0 coherent world engine - 2026-08-26
 

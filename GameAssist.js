@@ -3,7 +3,7 @@
 GameAssist - Roll20 API Script
 Version: 2.0.0
 Last Updated: 2026-08-26 (America/New_York)
-Release scope: EffectAssist 2.5.4 duration-label repair, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.1 safe public result delivery, HealthService 1.1.1 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, InitiativeAssist 1.0.6 mixed-sheet actor repair, CombatAssist 1.2.1 encounter-ending repair, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist 2.0.0 coherent campaign-world engine, and regression repairs across the v2.0.0 module suite.
+Release scope: EffectAssist 2.5.4 duration-label repair, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.1 safe public result delivery, HealthService 1.1.1 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, InitiativeAssist 1.0.6 mixed-sheet actor repair, CombatAssist 1.2.1 encounter-ending repair, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist 2.0.1 campaign-scale GM palettes and reviewed travel completion, and regression repairs across the v2.0.0 module suite.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -30,7 +30,7 @@ calls GameAssist.enqueue(). This development package contains fifteen configurab
 - EffectAssist 2.5.4 - Coordinates compact catalog-driven effects, exact caster-and-recipient identity, retained GM requests, GameAssist-owned 2014-sheet modifiers, verified token-specific concentration, ownership-safe cleanup, provider-specific duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
 - HealAssist 1.2.1 - Guides verified 2014 normal or maximum healing with direct single-recipient targeting, optional automatic application, visible PC targeting, private GM requests, safe public announcements, and HealthService verification.
 - AttackAssist 1.1.0 - Guides authorized 2014 repeating attacks through direct visible targeting, default sheet-mode submission, optional GM-enabled roll review, complete prompt-safe Classic-sheet expansion, private GM placement, crash-safe inline-roll validation, and visible one-use native-template rolls without applying damage.
-- AlmanacAssist 2.0.0 - Separates live Session and Worldbuilding modes; resolves one coherent provenance-bearing current scene; supports bounded places, natural-world definitions, travel, phenomena, local time, presets, advanced Wayfarer editing, and WorldPacks; and retains six independently controlled Almanac systems and transactional rests.
+- AlmanacAssist 2.0.1 - Separates compact live Session controls from Worldbuilding mode; resolves one coherent provenance-bearing current scene; provides direct weather, time, travel, event, announcement, and setup palettes; supports reviewed pace-and-mileage travel with advisory road conditions and private encounter checks; and retains bounded places, phenomena, local time, presets, advanced Wayfarer editing, WorldPacks, six independently controlled systems, and transactional rests.
 - HPAssist 0.3.0 - Rolls npc_hpformula and uses HealthService for verified writes to the selected shared NPC HP bar when available.
 - DebugTools 0.3.1 - Optional dry-run-first GM diagnostics with verified supported HP damage writes on the selected shared NPC HP bar.
 
@@ -99,7 +99,7 @@ MODULE COMMANDS
   !Attack-Status, !Attack-Audit, !Attack-Requests, and !Attack-Players
 - AlmanacAssist: !Almanac, !aa, !cal, !date, !time, !clim, !astro,
   !weather, !enviro, !rest, !aa-time, !aa-climate, !aa-astro,
-  !aa-weather, !aa-enviro, !aa-rest, !aa-wayfarer, !aa-preview, !aa-announce,
+  !aa-weather, !aa-enviro, !aa-rest, !aa-wayfarer, !aa-travel, !aa-events, !aa-preview, !aa-announce,
   !aa-announcement-settings, focused role/help/status/audit aliases,
   !aa-wayfarer reset-default --confirm yes, !Almanac-GM, !Almanac-DM,
   !Almanac-Status, !Almanac-Audit
@@ -500,6 +500,22 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             maximumPreparedDestinations: 30,
             maximumPageAssociations: 20,
             travelHistoryLimit: 50,
+            travelGrantLimit: 20,
+            travelGrantMs: 1000 * 60 * 5,
+            minimumTravelMiles: 0.1,
+            maximumTravelMiles: 10000,
+            minimumTravelPaceMph: 0.1,
+            maximumTravelPaceMph: 100,
+            maximumTravelIntervalMinutes: 10080,
+            minimumTravelEncounterDie: 4,
+            maximumTravelEncounterDie: 100,
+            maximumTravelEncounterChecks: 200,
+            maximumTravelRollsShown: 40,
+            travelPaces: Object.freeze({
+                slow: Object.freeze({ name: 'Slow', mph: 2 }),
+                normal: Object.freeze({ name: 'Normal', mph: 3 }),
+                fast: Object.freeze({ name: 'Fast', mph: 4 })
+            }),
             maximumWorldPacks: 10,
             maximumWorldPackBytes: 120000,
             maximumWorldPackObjects: 500,
@@ -517,6 +533,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Centralized mileage-travel pace defaults, input bounds, one-use review lifetime, encounter-check limits, and private roll-display limits for AlmanacAssist 2.0.1.
     // Changed (v2.0.0): Added bounded AlmanacAssist scene, place, phenomenon, travel, WorldPack, temporal-context, and preview limits; year zero is a supported fictional-calendar year across every profile.
     // Changed (v2.0.0): Added a bounded compiled command-matcher cache; command semantics are unchanged while repeated alias routing avoids rebuilding identical regular expressions.
     // Changed (v2.0.0): Added bounded AttackAssist source, row, request, submission, rollbase, and interaction limits alongside the existing HealAssist, HealthService, EffectAssist, AlmanacAssist, and concentration limits; rollback: disable the affected optional module while retaining native sheet workflows.
@@ -23565,10 +23582,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: AlmanacAssist campaign world engine
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:ALMANACASSIST", title: "AlmanacAssist",
-    //   guarantees: ["Session Mode keeps current place, scene, time, travel, rest, weather, and announcement actions compact while Worldbuilding Mode owns durable definitions","Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows without becoming hidden prerequisites","One signed base chronology keeps Year 1 at elapsed minute zero for saved-campaign compatibility while allowing validated Year 0 dates","SceneResolver publishes one immutable coherent snapshot with field-level provenance for place, local time, climate, weather, environment, astronomy, and active phenomena","Geographies, biomes, ecoregions, locations, phenomena, quick actions, and local temporal contexts are bounded, validated, and dependency-aware","Prepared destinations and travel change chronology or active location only after explicit review and confirmation","Immutable versioned presets install editable copies without replacing existing places","Wayfarer provides complete chat editors plus a versioned advanced handout whose stale-protected import changes only the saved draft","WorldPack import/export excludes runtime chronology and character state, validates the complete bounded definition graph before mutation, and records provenance","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Optional RulesAdvisor guidance is profile-specific, read-only, and never applies gameplay changes","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
+    //   guarantees: ["Session Mode keeps current place, scene, time, travel, rest, weather, event, and announcement actions compact while Worldbuilding Mode owns durable definitions","Six independently toggleable internal submodules provide fictional time, climate, astronomy, weather, environment, and deliberate rest workflows without becoming hidden prerequisites","One signed base chronology keeps Year 1 at elapsed minute zero for saved-campaign compatibility while allowing validated Year 0 dates","SceneResolver publishes one immutable coherent snapshot with field-level provenance for place, local time, climate, weather, environment, astronomy, and active phenomena","Geographies, biomes, ecoregions, locations, phenomena, quick actions, and local temporal contexts are bounded, validated, and dependency-aware","Prepared destinations and mileage-based travel change chronology or active location only after explicit review and confirmation","Travel encounter checks are private GM evidence derived from a selected interval and die, never encounter-content generation or automatic gameplay mutation","Immutable versioned presets install editable copies without replacing existing places","Wayfarer provides complete chat editors plus a versioned advanced handout whose stale-protected import changes only the saved draft","WorldPack import/export excludes runtime chronology and character state, validates the complete bounded definition graph before mutation, and records provenance","TimeAlmanac owns fictional world time without changing real-world GameAssist timestamps, NPCAssist Session dates, CombatAssist rounds, or EffectAssist duration ownership","Committed changes publish bounded immutable semantic events rather than replaying every elapsed minute","Backward movement requires explicit confirmation and never reverses unrelated campaign state","RestAlmanac previews and revalidates verified 2014-sheet writes before mutation and supports standard, heroic, gritty, and bounded custom durations","Wayfarer presents its 20-hour clock as ordinal Hours and named daily periods rather than imposing a twelve-hour AM/PM clock","Announcement preview and delivery use bounded GM-selected audience, heading, preset, field, and descriptive/detailed/technical presentation settings","Optional RulesAdvisor guidance is profile-specific, read-only, and never applies gameplay changes","Focused Almanac role and reference commands are case-insensitive and accept spaces or hyphens"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:SEMANTICEVENTS]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.AlmanacAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "2.0.0", time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2, world_state_schema_version: 1, scene_schema_version: 1, worldpack_schema_version: 1, temporal_context_schema_version: 1, wayfarer_handout_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "2.0.1", time_state_schema_version: 2, wayfarer_draft_schema_version: 3, announcement_schema_version: 4, climate_state_schema_version: 1, astronomy_state_schema_version: 1, weather_state_schema_version: 1, environment_state_schema_version: 2, rest_state_schema_version: 2, world_state_schema_version: 1, scene_schema_version: 1, worldpack_schema_version: 1, temporal_context_schema_version: 1, wayfarer_handout_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // AlmanacAssist presents a compact Session Mode for live play and a separate
@@ -23582,7 +23599,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // -------------------------------------------------------------------------
     GameAssist.register('AlmanacAssist', function() {
         const MODULE_NAME = 'AlmanacAssist';
-        const MODULE_VERSION = '2.0.0';
+        const MODULE_VERSION = '2.0.1';
         const TIME_STATE_SCHEMA_VERSION = 2;
         const WAYFARER_DRAFT_SCHEMA_VERSION = 3;
         const ANNOUNCEMENT_SCHEMA_VERSION = 4;
@@ -23732,6 +23749,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             heroic: Object.freeze({ name: 'Heroic', shortHours: 5 / 60, longHours: 1 }),
             gritty: Object.freeze({ name: 'Gritty', shortHours: 8, longHours: 168 })
         });
+        const TRAVEL_PACES = POLICY.almanac.travelPaces;
         const DEFAULT_WORLD = Object.freeze({
             activeLocationId: 'campaign-start',
             geographies: Object.freeze([
@@ -24153,6 +24171,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             runtime.world.travelHistory = Array.isArray(runtime.world.travelHistory)
                 ? runtime.world.travelHistory.slice(-POLICY.almanac.travelHistoryLimit)
                 : [];
+            runtime.world.travelGrants = runtime.world.travelGrants && typeof runtime.world.travelGrants === 'object' && !Array.isArray(runtime.world.travelGrants)
+                ? runtime.world.travelGrants
+                : {};
+            runtime.world.travelGrants = Object.fromEntries(Object.entries(runtime.world.travelGrants)
+                .filter(([, grant]) => grant && typeof grant === 'object' && Number(grant.expiresAt) > Date.now())
+                .slice(-POLICY.almanac.travelGrantLimit));
             runtime.world.worldPackGrants = runtime.world.worldPackGrants && typeof runtime.world.worldPackGrants === 'object' && !Array.isArray(runtime.world.worldPackGrants)
                 ? runtime.world.worldPackGrants
                 : {};
@@ -25243,13 +25267,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const quickActions = normalizeWorldConfig().quickActions.map(quickActionButton).filter(Boolean).join(' ');
             sendPanel(msg, 'Almanac', [
                 { label: 'Current World', value: `${scenePath(scene)}<br>${scene.time ? _sanitize(displayMoment(scene.time)) : 'Fictional time unavailable'}` },
-                { label: 'Conditions', value: `${_sanitize(descriptiveTemperature(scene.scene.temperatureF))} | ${_sanitize(scene.scene.precipitation)} | ${_sanitize(descriptiveWind(scene.scene.windMph))}<br>${_sanitize(scene.scene.terrain)} | ${_sanitize(scene.scene.ground)}` },
+                { label: 'Conditions', value: `${_sanitize(scene.scene.precipitation)} | ${_sanitize(descriptiveTemperature(scene.scene.temperatureF))} | ${_sanitize(descriptiveWind(scene.scene.windMph))}<br>${_sanitize(descriptiveVisibility(scene.scene.visibility))} | ${_sanitize(scene.scene.ground)}` },
                 ...(travel ? [{ label: 'Journey', value: `${_sanitize(travel.fromName)} &rarr; ${_sanitize(travel.toName)} | ${Math.max(0, travel.plannedHours - travel.travelledHours)} hours remaining ${GameAssist.createButton('Continue', '!aa-travel')}` }] : []),
-                { label: 'Do Something', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Advance Time', '!aa-time menu')} ${GameAssist.createButton('Advance Date', '!aa-time advance --days ?{Days|1}')} ${GameAssist.createButton('Rest', '!rest')}` },
-                { label: 'Explore', value: `${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Change Location', '!aa-location')}` },
-                { label: 'Share', value: `${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Settings', '!aa-announcement-settings')}` },
-                { label: 'Quick Actions', value: quickActions || 'No quick actions configured.' },
-                { label: 'Worldbuilding', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Guide', '!Almanac-Guide')}` },
+                { label: 'Session Actions', value: `${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Advance Time', '!aa-time menu')} ${GameAssist.createButton('Advance Date', '!aa-time advance --days ?{Days|1}')} ${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Rest', '!rest')}` },
+                { label: 'World Today', value: `${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Environment', '!enviro')} ${GameAssist.createButton('Events & Omens', '!aa-events')}` },
+                { label: 'Share', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
+                ...(quickActions ? [{ label: 'Campaign Shortcuts', value: quickActions }] : []),
+                { label: 'Campaign Setup', value: `${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('More Tools', '!aa-more')}` },
                 { label: 'GameAssist', value: gameAssistHomeButton() }
             ]);
         }
@@ -25258,7 +25282,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (!requireGm(msg)) return;
             sendPanel(msg, 'More Almanac Tools', [
                 { label: 'Calendar', value: `${GameAssist.createButton('Time Controls', '!aa-time menu')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')} ${GameAssist.createButton('Choose Calendar', '!cal')}` },
-                { label: 'Current World', value: `${GameAssist.createButton('Scene', '!aa-scene')} ${GameAssist.createButton('Locations', '!aa-location')} ${GameAssist.createButton('Travel', '!aa-travel')}` },
+                { label: 'Current World', value: `${GameAssist.createButton('Scene Details', '!aa-scene')} ${GameAssist.createButton('Locations', '!aa-location')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Events & Omens', '!aa-events')}` },
+                { label: 'Worldbuilding', value: `${GameAssist.createButton('Manage World', '!aa-world')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')} ${GameAssist.createButton('WorldPacks', '!aa-worldpack')}` },
                 { label: 'Systems', value: `${GameAssist.createButton('Turn Systems On or Off', '!Almanac-Systems')} ${GameAssist.createButton('Status', '!Almanac-Status')} ${GameAssist.createButton('Audit', '!Almanac-Audit')}` },
                 { label: 'Reference', value: `${GameAssist.createButton('Quick Guide', '!Almanac-Guide')} ${GameAssist.createButton('Full Manual', '!Almanac-Manual')}` },
                 { label: 'Return', value: `${GameAssist.createButton('Almanac', '!aa-gm')} ${gameAssistHomeButton()}` }
@@ -27461,12 +27486,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 : 'No forecast prepared.';
             sendPanel(msg, 'WeatherAlmanac', [
                 ...(sceneOverride ? [{ label: 'Current Scene', value: `${_sanitize(sceneOverride.name)} | ${_sanitize(sceneOverride.temperature)} | ${_sanitize(sceneOverride.wind)} wind | ${_sanitize(sceneOverride.visibility)}` }] : []),
-                { label: sceneOverride ? 'Stored Weather' : 'Current', value: weather ? `${_sanitize(weather.summary)} | ${weather.temperatureF} F | ${weather.windMph} mph wind | ${_sanitize(weather.visibility)}` : 'No weather has been committed yet.' },
+                { label: sceneOverride ? 'Stored Weather' : 'Current Weather', value: weather ? `${_sanitize(weather.summary)} | ${_sanitize(weather.precipitation)}<br>${weather.temperatureF} F | ${weather.windMph} mph wind | ${_sanitize(weather.visibility)} visibility` : 'No weather has been generated yet.' },
                 ...(sceneOverride ? [{ label: 'Relationship', value: 'The GM scene override is currently authoritative. Stored WeatherAlmanac conditions resume when Follow Weather Again is chosen in EnviroAlmanac.' }] : []),
-                { label: 'Context', value: weather ? `${_sanitize(weather.regionName)} | ${_sanitize(weather.season)} | ${_sanitize(weather.context)}` : _sanitize(weatherClimateContext().context || weatherClimateContext().regionName) },
+                { label: 'Context', value: weather ? `${_sanitize(weather.regionName || 'Current region')} | ${_sanitize(weather.season)}` : _sanitize(weatherClimateContext().season || 'Current season') },
                 { label: 'Forecast', value: forecast },
                 { label: 'Lock', value: `${runtime.weather.locked ? 'On' : 'Off'} ${playerIsGM(msg?.playerid) ? GameAssist.createButton(runtime.weather.locked ? 'Unlock' : 'Lock', `!aa-weather ${runtime.weather.locked ? 'unlock' : 'lock'}`) : ''}` },
-                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Generate', '!aa-weather generate')} ${GameAssist.createButton('Forecast', '!aa-weather forecast --days ?{Days|3}')} ${GameAssist.createButton('Announce', '!aa-weather announce')} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` : GameAssist.createButton('Almanac', '!Almanac') }
+                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton(weather ? 'Regenerate Weather' : 'Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Forecast', '!aa-weather forecast --days ?{Days|3}')} ${GameAssist.createButton('Enter Weather', '!aa-weather manual --summary "?{Weather description|Clear}" --temp ?{Temperature F|60} --wind ?{Wind mph|5} --precipitation "?{Precipitation|None}" --visibility "?{Visibility|Clear}" --duration ?{Expected duration in hours|8}')} ${GameAssist.createButton('Announce', '!aa-weather announce')}` : GameAssist.createButton('Almanac', '!Almanac') },
+                { label: 'Return', value: playerIsGM(msg?.playerid) ? GameAssist.createButton('Almanac Home', '!aa-gm') : GameAssist.createButton('Almanac', '!Almanac') }
             ]);
         }
 
@@ -28144,10 +28170,237 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ]);
             }
             const destinations = world.preparedDestinationIds.map(id => worldItem(world.locations, id)).filter(location => location && location.id !== world.activeLocationId);
-            sendPanel(msg, 'Start Travel', [
+            const scene = resolveScene();
+            const road = travelRoadAssessment(scene);
+            const minutesPerHour = calendarMinutesPerHour(profileFor());
+            const commonPrompt = `--miles ?{Miles to travel|10} --interval ?{Encounter checks|Every 30 minutes,30|Every 1 hour,${minutesPerHour}|Every 2 hours,${minutesPerHour * 2}|Every 4 hours,${minutesPerHour * 4}|Every 8 hours,${minutesPerHour * 8}} --die ?{Encounter die|d4,4|d6,6|d8,8|d10,10|d12,12|d20,20}`;
+            sendPanel(msg, 'Travel', [
+                { label: 'Starting Point', value: _sanitize(worldItem(world.locations, world.activeLocationId)?.name || 'Current location') },
+                { label: 'Road Conditions', value: `${_sanitize(road.ground)} | ${_sanitize(road.visibility)}<br>${_sanitize(road.guidance)}` },
+                { label: 'Plan by Pace and Miles', value: `${GameAssist.createButton('Slow', `!aa-travel plan --pace slow ${commonPrompt}`)} ${GameAssist.createButton('Normal', `!aa-travel plan --pace normal ${commonPrompt}`)} ${GameAssist.createButton('Fast', `!aa-travel plan --pace fast ${commonPrompt}`)} ${GameAssist.createButton('Custom', '!aa-travel plan --pace custom --mph ?{Miles per hour|3} --miles ?{Miles to travel|10} --interval ?{Minutes between encounter checks|60} --die ?{Encounter die sides (4-100)|6}')}` },
+                { label: 'Prepared Destinations', value: destinations.length ? GameAssist.createButton(`Choose Destination (${destinations.length})`, '!aa-travel destinations') : `${GameAssist.createButton('Prepare Locations', '!aa-location manage')} to create destination-based journeys.` },
+                { label: 'Important', value: 'Road guidance and encounter categories are advisory. Travel never applies movement penalties, damage, conditions, or encounter content.' },
+                { label: 'Return', value: GameAssist.createButton('Almanac Home', '!aa-gm') }
+            ]);
+        }
+
+        function showTravelDestinations(msg) {
+            if (!requireGm(msg)) return;
+            const world = normalizeWorldConfig();
+            const destinations = world.preparedDestinationIds.map(id => worldItem(world.locations, id))
+                .filter(location => location && location.id !== world.activeLocationId);
+            sendPanel(msg, 'Prepared Travel Destinations', [
                 { label: 'From', value: _sanitize(worldItem(world.locations, world.activeLocationId)?.name || 'Current location') },
-                { label: 'Prepared Destinations', value: destinations.length ? destinations.map(location => GameAssist.createButton(location.name, `!aa-travel preview --to ${location.id} --hours ?{Expected travel hours|8} --pace ?{Pace|Normal,normal|Slow,slow|Fast,fast}`)).join(' ') : 'Prepare another location before starting travel.' },
-                { label: 'Actions', value: `${GameAssist.createButton('Locations', '!aa-location manage')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                { label: 'Choose Destination', value: destinations.length
+                    ? destinations.map(location => GameAssist.createButton(location.name, `!aa-travel preview --to ${location.id} --hours ?{Expected travel hours|8} --pace ?{Pace|Normal,normal|Slow,slow|Fast,fast}`)).join(' ')
+                    : 'No other prepared destination is available.' },
+                { label: 'Setup', value: GameAssist.createButton('Manage Locations', '!aa-location manage') },
+                { label: 'Return', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function travelRoadAssessment(scene = resolveScene()) {
+            const conditions = scene?.scene || {};
+            const precipitation = String(conditions.precipitation || 'None');
+            const ground = String(conditions.ground || 'Firm');
+            const terrain = String(conditions.terrain || 'Unspecified terrain');
+            const combined = `${precipitation} ${ground} ${terrain}`.toLowerCase();
+            const temperatureF = Number(conditions.temperatureF);
+            let road = ground;
+            if (/flood|submerged|deep water/.test(combined)) road = 'Flooded or water-covered';
+            else if (Number.isFinite(temperatureF) && temperatureF <= 32 && /rain|wet|mud|snow|ice|sleet/.test(combined)) road = /snow/.test(combined) ? 'Snow-covered or icy' : 'Icy or slick';
+            else if (/blizzard|heavy snow|deep snow/.test(combined)) road = 'Deep snow';
+            else if (/snow/.test(combined)) road = 'Snow-covered';
+            else if (/rain|storm|wet|mud|swamp|waterlogged/.test(combined)) road = 'Wet or muddy';
+            else if (/desert|sand|dust/.test(combined) || (Number.isFinite(temperatureF) && temperatureF >= 95 && Number(conditions.windMph) >= 15)) road = 'Dry, dusty, or loose';
+            const visibility = descriptiveVisibility(conditions.visibility || 'Clear');
+            const cautions = [];
+            if (/flood|deep snow|icy|slick|muddy|loose/.test(road.toLowerCase())) cautions.push('The route may slow travel under the campaign rules.');
+            if (/poor|obscured|limited|whiteout/.test(visibility.toLowerCase())) cautions.push('Navigation or sight may need a table ruling.');
+            if (Number(conditions.windMph) >= 25) cautions.push('Strong wind may affect exposed travel.');
+            return {
+                ground: road,
+                visibility,
+                guidance: cautions.join(' ') || 'No general road warning is indicated by the current scene.',
+                temperatureF: Number.isFinite(temperatureF) ? temperatureF : null,
+                precipitation,
+                windMph: Number(conditions.windMph) || 0
+            };
+        }
+
+        function travelSceneFingerprint() {
+            const runtime = ensureAlmanacRuntime();
+            const scene = resolveScene();
+            return JSON.stringify({
+                worldMinute: runtime.time.worldMinute,
+                timeRevision: runtime.time.revision,
+                worldRevision: runtime.world.revision,
+                locationId: scene.location?.id || null,
+                weatherId: runtime.weather.current?.id || null,
+                environmentUpdatedAt: runtime.environment.override?.updatedAt || runtime.environment.current?.updatedAt || null,
+                activeJourneyId: runtime.world.travel?.id || null,
+                profileId: modState.config.profileId,
+                minutesPerHour: calendarMinutesPerHour(profileFor()),
+                temperatureF: scene.scene.temperatureF,
+                precipitation: scene.scene.precipitation,
+                windMph: scene.scene.windMph,
+                visibility: scene.scene.visibility,
+                ground: scene.scene.ground,
+                terrain: scene.scene.terrain
+            });
+        }
+
+        function normalizedTravelPlan(args) {
+            const paceId = String(args.pace || 'normal').toLowerCase();
+            if (paceId !== 'custom' && !Object.prototype.hasOwnProperty.call(TRAVEL_PACES, paceId)) {
+                return { ok: false, message: 'Choose Slow, Normal, Fast, or Custom travel pace.' };
+            }
+            const pace = TRAVEL_PACES[paceId] || null;
+            const numeric = value => ['string', 'number'].includes(typeof value) && String(value).trim() !== '' ? Number(value) : NaN;
+            const mph = pace ? pace.mph : numeric(args.mph);
+            const miles = numeric(args.miles);
+            const intervalMinutes = numeric(args.interval);
+            const dieSides = numeric(args.die);
+            if (!Number.isFinite(miles) || miles < POLICY.almanac.minimumTravelMiles || miles > POLICY.almanac.maximumTravelMiles
+                || !Number.isFinite(mph) || mph < POLICY.almanac.minimumTravelPaceMph || mph > POLICY.almanac.maximumTravelPaceMph
+                || !Number.isInteger(intervalMinutes) || intervalMinutes < 1 || intervalMinutes > POLICY.almanac.maximumTravelIntervalMinutes
+                || !Number.isInteger(dieSides) || dieSides < POLICY.almanac.minimumTravelEncounterDie || dieSides > POLICY.almanac.maximumTravelEncounterDie) {
+                return { ok: false, message: `Enter positive miles (${POLICY.almanac.minimumTravelMiles}-${POLICY.almanac.maximumTravelMiles}) and pace (${POLICY.almanac.minimumTravelPaceMph}-${POLICY.almanac.maximumTravelPaceMph} mph), a whole-minute interval (1-${POLICY.almanac.maximumTravelIntervalMinutes}), and a whole die size from ${POLICY.almanac.minimumTravelEncounterDie} to ${POLICY.almanac.maximumTravelEncounterDie}.` };
+            }
+            const minutesPerHour = calendarMinutesPerHour(profileFor());
+            const durationMinutes = Math.max(1, Math.ceil((miles / mph) * minutesPerHour));
+            const encounterChecks = Math.max(1, Math.ceil(durationMinutes / intervalMinutes));
+            if (encounterChecks > POLICY.almanac.maximumTravelEncounterChecks) {
+                return { ok: false, message: `That plan would create ${encounterChecks} encounter checks. Increase the interval so the plan uses no more than ${POLICY.almanac.maximumTravelEncounterChecks}.` };
+            }
+            return {
+                ok: true,
+                plan: {
+                    paceId,
+                    paceName: pace ? pace.name : 'Custom',
+                    mph,
+                    miles,
+                    durationMinutes,
+                    intervalMinutes,
+                    encounterChecks,
+                    dieSides,
+                    createdAt: isoNow()
+                }
+            };
+        }
+
+        function travelDurationText(durationMinutes) {
+            const minutesPerHour = calendarMinutesPerHour(profileFor());
+            const hours = Math.floor(durationMinutes / minutesPerHour);
+            const minutes = durationMinutes % minutesPerHour;
+            return `${hours ? `${hours} hour${hours === 1 ? '' : 's'}` : ''}${hours && minutes ? ', ' : ''}${minutes ? `${minutes} minute${minutes === 1 ? '' : 's'}` : ''}` || 'Less than one minute';
+        }
+
+        function storeTravelGrant(plan) {
+            const runtime = ensureAlmanacRuntime();
+            const id = `travel-plan-${Date.now().toString(36)}-${randomInteger(9999)}`;
+            // CHOICE: resolve the fingerprint before assigning into the normalized
+            // grant map because normalization replaces the map object by design.
+            const fingerprint = travelSceneFingerprint();
+            runtime.world.travelGrants[id] = {
+                id,
+                plan: copy(plan),
+                fingerprint,
+                expiresAt: Date.now() + POLICY.almanac.travelGrantMs
+            };
+            const ids = Object.keys(runtime.world.travelGrants);
+            ids.slice(0, Math.max(0, ids.length - POLICY.almanac.travelGrantLimit)).forEach(oldId => delete runtime.world.travelGrants[oldId]);
+            return id;
+        }
+
+        function showMileageTravelPreview(msg, plan) {
+            const scene = resolveScene();
+            const road = travelRoadAssessment(scene);
+            const grantId = storeTravelGrant(plan);
+            const arrival = timeAvailable()
+                ? resolveWorldMinute(profileFor(), ensureAlmanacRuntime().time.worldMinute + plan.durationMinutes)
+                : null;
+            const neutral = Math.ceil((plan.dieSides + 1) / 2);
+            const advanceAndRoll = arrival
+                ? `${GameAssist.createButton('Advance Time & Roll', `!aa-travel apply --grant ${grantId} --time yes --roll yes`)} ${GameAssist.createButton('Advance Time Only', `!aa-travel apply --grant ${grantId} --time yes --roll no`)}`
+                : 'Fictional time cannot advance until TimeAlmanac and the calendar range can support this plan.';
+            sendPanel(msg, 'Review Travel Plan', [
+                { label: 'Plan', value: `${Number(plan.miles.toFixed(2))} miles at ${Number(plan.mph.toFixed(2))} mph (${_sanitize(plan.paceName)} pace)` },
+                { label: 'Travel Time', value: travelDurationText(plan.durationMinutes) },
+                { label: 'Estimated Arrival', value: arrival ? _sanitize(displayMoment(arrival)) : 'TimeAlmanac is unavailable or the calendar limit would be exceeded.' },
+                { label: 'Road Conditions', value: `${_sanitize(road.ground)} | ${_sanitize(road.visibility)}<br>${_sanitize(road.guidance)}` },
+                { label: 'Encounter Checks', value: `${plan.encounterChecks}d${plan.dieSides}, rolled separately every ${plan.intervalMinutes} campaign minute${plan.intervalMinutes === 1 ? '' : 's'}<br>1-2 Negative | ${neutral} Neutral | ${plan.dieSides} Positive | all other results No encounter` },
+                { label: 'Choose What Happens', value: `${advanceAndRoll} ${GameAssist.createButton('Roll Checks Only', `!aa-travel apply --grant ${grantId} --time no --roll yes`)}` },
+                { label: 'Important', value: 'This review changes nothing. Mileage travel leaves the named location unchanged; prepared journeys move it. Encounter results are GM-private prompts, not automatic encounters or rules.' },
+                { label: 'Return', value: `${GameAssist.createButton('Change Plan', '!aa-travel')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function travelEncounterOutcome(roll, dieSides) {
+            if (roll <= 2) return 'Negative';
+            // The midpoint is the center of 1..N, so a d4 uses ceil(2.5) = 3.
+            if (roll === Math.ceil((dieSides + 1) / 2)) return 'Neutral';
+            if (roll === dieSides) return 'Positive';
+            return 'No encounter';
+        }
+
+        function applyMileageTravel(msg, args) {
+            const runtime = ensureAlmanacRuntime();
+            const grantId = String(args.grant || '');
+            const grant = runtime.world.travelGrants[grantId];
+            if (grant) delete runtime.world.travelGrants[grantId];
+            if (!grant || Number(grant.expiresAt) <= Date.now()) {
+                return sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: 'That travel review expired or was already used.' }, { label: 'Next Step', value: GameAssist.createButton('Review a New Plan', '!aa-travel') }]);
+            }
+            if (grant.fingerprint !== travelSceneFingerprint()) {
+                return sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: 'The time, place, weather, or road conditions changed after that review.' }, { label: 'Changes', value: 'No time was advanced and no encounter checks were rolled.' }, { label: 'Next Step', value: GameAssist.createButton('Review the Current Route', '!aa-travel') }]);
+            }
+            const advanceTime = String(args.time || '').toLowerCase() === 'yes';
+            const rollChecks = String(args.roll || '').toLowerCase() === 'yes';
+            if (!advanceTime && !rollChecks) return showTravel(msg);
+            if (advanceTime && !timeAvailable()) {
+                return sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: 'TimeAlmanac is off, so this plan cannot advance fictional time.' }, { label: 'Changes', value: 'No time was advanced and no encounter checks were rolled.' }, { label: 'Next Step', value: GameAssist.createButton('Travel', '!aa-travel') }]);
+            }
+            const beforeMinute = runtime.time.worldMinute;
+            if (advanceTime) {
+                const result = commitWorldMinute(beforeMinute + grant.plan.durationMinutes, `Travel advanced ${travelDurationText(grant.plan.durationMinutes)}`, msg);
+                if (!result.ok) return sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Changes', value: 'No encounter checks were rolled.' }]);
+            }
+            const rolls = rollChecks
+                ? Array.from({ length: grant.plan.encounterChecks }, () => {
+                    const roll = randomInteger(grant.plan.dieSides);
+                    return { roll, outcome: travelEncounterOutcome(roll, grant.plan.dieSides) };
+                })
+                : [];
+            const counts = rolls.reduce((result, item) => {
+                result[item.outcome] = (result[item.outcome] || 0) + 1;
+                return result;
+            }, {});
+            const record = {
+                id: `travel-${Date.now().toString(36)}-${randomInteger(9999)}`,
+                kind: 'mileage-plan',
+                ...copy(grant.plan),
+                advancedTime: advanceTime,
+                rolledEncounters: rollChecks,
+                startedAtWorldMinute: beforeMinute,
+                completedAtWorldMinute: runtime.time.worldMinute,
+                results: rolls,
+                completedAt: isoNow()
+            };
+            runtime.world.travelHistory.push(record);
+            if (runtime.world.travelHistory.length > POLICY.almanac.travelHistoryLimit) runtime.world.travelHistory.shift();
+            publishChange('almanac.travel.progressed', null, record, { mileagePlan: true, advancedTime: advanceTime, rolledEncounters: rollChecks }, msg);
+            const shown = rolls.slice(0, POLICY.almanac.maximumTravelRollsShown)
+                .map((item, index) => `${index + 1}. d${grant.plan.dieSides} &rarr; ${item.roll}: ${item.outcome}`)
+                .join('<br>');
+            const omitted = Math.max(0, rolls.length - POLICY.almanac.maximumTravelRollsShown);
+            sendPanel(msg, 'Travel Resolved', [
+                { label: 'Route', value: `${Number(grant.plan.miles.toFixed(2))} miles | ${travelDurationText(grant.plan.durationMinutes)} | ${_sanitize(grant.plan.paceName)} pace` },
+                { label: 'Fictional Time', value: advanceTime ? `Advanced to ${_sanitize(displayMoment(currentMoment()))}.` : 'Unchanged.' },
+                { label: 'Encounter Summary', value: rollChecks ? `Negative ${counts.Negative || 0} | Neutral ${counts.Neutral || 0} | Positive ${counts.Positive || 0} | No encounter ${counts['No encounter'] || 0}` : 'No encounter checks were requested.' },
+                ...(rollChecks ? [{ label: 'Private Roll Evidence', value: `${shown}${omitted ? `<br>${omitted} additional rolls are included in the summary; individual chat evidence is limited to ${POLICY.almanac.maximumTravelRollsShown}.` : ''}` }] : []),
+                { label: 'Authority', value: 'These categories are prompts for the GM. AlmanacAssist did not choose an encounter or apply movement, damage, conditions, or other rules.' },
+                { label: 'Continue', value: `${GameAssist.createButton('Plan More Travel', '!aa-travel')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
 
@@ -28190,6 +28443,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const runtime = ensureAlmanacRuntime();
             const world = normalizeWorldConfig();
             const args = _parseArgs(body).args;
+            if (/^destinations\b/i.test(body)) return showTravelDestinations(msg);
+            if (/^plan\b/i.test(body)) {
+                if (runtime.world.travel) return showTravel(msg);
+                const result = normalizedTravelPlan(args);
+                if (!result.ok) return sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: _sanitize(result.message) }, { label: 'Next Step', value: GameAssist.createButton('Travel', '!aa-travel') }]);
+                return showMileageTravelPreview(msg, result.plan);
+            }
+            if (/^apply\b/i.test(body)) return applyMileageTravel(msg, args);
             if (/^preview\b/i.test(body)) {
                 if (runtime.world.travel) return showTravel(msg);
                 const destination = worldItem(world.locations, args.to);
@@ -28254,6 +28515,19 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 return showTravel(msg);
             }
             sendPanel(msg, 'Travel Needs Attention', [{ label: 'Problem', value: 'That travel command was not recognized.' }, { label: 'Next Step', value: GameAssist.createButton('Travel', '!aa-travel') }]);
+        }
+
+        function showEventMenu(msg) {
+            if (!requireGm(msg)) return;
+            const scene = resolveScene();
+            const active = scene.phenomena.map(item => _sanitize(item.name)).join(', ') || 'None';
+            sendPanel(msg, 'Events and Omens', [
+                { label: 'Active Phenomena', value: active },
+                { label: 'Generate', value: `${GameAssist.createButton('Celestial Omen', '!aa-astro rare')} ${GameAssist.createButton('Travel Encounter Checks', '!aa-travel')}` },
+                { label: 'Campaign Events', value: `${GameAssist.createButton('Manage Phenomena', '!aa-phenomena')} ${GameAssist.createButton('Astronomy', '!astro')}` },
+                { label: 'Important', value: 'Generated omens and travel outcomes are GM prompts. They do not create encounters or silently change campaign rules.' },
+                { label: 'Return', value: GameAssist.createButton('Almanac Home', '!aa-gm') }
+            ]);
         }
 
         function showPhenomena(msg) {
@@ -29270,7 +29544,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h2>Purpose</h2>',
                 '<p>AlmanacAssist combines fictional time, regional climate, astronomy, weather, environmental context, and deliberate rest workflows. Each internal system can be turned off without erasing its valid settings or disabling unrelated Almanac features.</p>',
                 '<h2>Everyday Use</h2>',
-                '<p><code>!aa-gm</code>, <code>!aa-dm</code>, <code>!Almanac</code>, or <code>!aa</code> opens the action-first GM dashboard. It keeps the current date, common advances, exact date/time changes, calendar selection, announcement controls, and today\'s world context together. <code>!date</code>, <code>!time</code>, <code>!cal</code>, <code>!clim</code>, <code>!astro</code>, <code>!weather</code>, <code>!enviro</code>, and <code>!rest</code> open focused views.</p>',
+                '<p><code>!aa-gm</code>, <code>!aa-dm</code>, <code>!Almanac</code>, or <code>!aa</code> opens the action-first GM dashboard. It keeps current conditions, weather generation, time, travel, rest, world events, announcements, and campaign setup within one or two choices. <code>!date</code>, <code>!time</code>, <code>!cal</code>, <code>!clim</code>, <code>!astro</code>, <code>!weather</code>, <code>!enviro</code>, <code>!rest</code>, and <code>!aa-travel</code> open focused views.</p>',
                 '<h2>Calendars</h2>',
                 '<p>Standard provides familiar months and Gregorian leap years. Solamnic provides the built-in twelve 28-day profile and seven named weekdays. Harptos provides twelve 30-day months, five annual festival days, and Shieldmeet every four years. Wayfarer is campaign-editable through chat controls, including its clock, weekdays, calendar periods, feast periods, festival days, dated holidays, seasonal ranges, and leap rules.</p>',
                 '<h3>Default Wayfarer Calendar</h3>',
@@ -29291,6 +29565,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<p>ClimateAlmanac manages bounded regions, parent inheritance, editable built-in starting profiles, custom profiles, overrides, and a manual season fallback. AstronomyAlmanac calculates reproducible configurable moon phases, future phase/daylight forecasts, and deterministic season boundaries from TimeAlmanac when available or explicit manual context when it is not. Its bounded weighted rare-event catalog remains separate from deterministic results.</p>',
                 '<h2>Weather and Environment</h2>',
                 '<p>WeatherAlmanac can generate continuity-aware conditions without other submodules. Climate and Time improve its context when enabled. Locked or manually chosen weather is never silently replaced. EnviroAlmanac translates committed weather into readable visibility, temperature, wind, ground, water, exposure, severity, and tags; a GM override remains authoritative until cleared.</p>',
+                '<h2>Travel</h2>',
+                '<p><code>!aa-travel</code> can review a route from pace and mileage before anything changes. The preview shows travel time, estimated arrival, current road and visibility guidance, and the number of private encounter checks created by the chosen interval. A GM then chooses whether to advance fictional time, roll checks, do both, or do neither. On each die, 1-2 is Negative, the mathematical midpoint rounded up is Neutral, the maximum is Positive, and every other result means No encounter. These are prompts only; AlmanacAssist never chooses encounter content or silently applies movement, damage, or conditions.</p>',
                 '<h2>Rest</h2>',
                 '<p>RestAlmanac uses selected linked D&amp;D 5E by Roll20 2014 PC tokens. Every rest is previewed and revalidated before confirmation. Long Rest restores only verified HP, Hit Dice, and remaining spell-slot fields. Short Rest leaves Hit Dice spending on the character sheet. Other class resources remain unchanged unless a later verified adapter explicitly owns them.</p>',
                 '<h2>Safety</h2>',
@@ -29307,6 +29583,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Date and Time', value: `${GameAssist.createButton('Current Date', '!date')} ${GameAssist.createButton('Advance or Set Time', '!aa-time menu')} ${GameAssist.createButton('Choose Calendar', '!cal')}` },
                 { label: 'Share With The Table', value: `${GameAssist.createButton('Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` },
                 { label: 'World Today', value: `${GameAssist.createButton('Weather', '!weather')} ${GameAssist.createButton('Moons', '!astro')} ${GameAssist.createButton('Climate', '!clim')} ${GameAssist.createButton('Environment', '!enviro')}` },
+                { label: 'Travel and Events', value: `${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Events & Omens', '!aa-events')}` },
                 { label: 'Calendar Setup', value: GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer') },
                 { label: 'Full Reference', value: GameAssist.createButton('Create or Update Manual', '!Almanac-Manual') }
             ] : [
@@ -29458,6 +29735,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (lower === 'calendar' || lower === 'cal') return showCalendarMenu(msg);
             if (lower === 'scene' || lower === 'scene menu' || lower === 'scene status') return showScene(msg, false);
             if (lower === 'scene details' || lower === 'scene audit' || lower === 'scene technical') return showScene(msg, true);
+            if (lower === 'events' || lower === 'omens' || lower === 'events menu') return showEventMenu(msg);
             if (lower === 'location' || lower.startsWith('location ')) return handleLocation(msg, input);
             if (lower === 'travel' || lower.startsWith('travel ')) return handleTravel(msg, input);
             if (lower === 'phenomena' || lower.startsWith('phenomena ')) return handlePhenomena(msg, input);
@@ -29575,7 +29853,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             clearObservers: owner => GameAssist.SemanticEvents.clearObservers(owner)
         });
 
-        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: Session Mode, Worldbuilding Mode, coherent scene resolution, reviewed travel, Wayfarer and WorldPack handouts, and all six independently controlled Almanac systems are available through !Almanac; the module starts disabled.`, 'INFO', { startup: true });
+        GameAssist.log(MODULE_NAME, `v${MODULE_VERSION} Ready: compact Session controls, coherent scene resolution, reviewed destination and mileage travel, private encounter checks, Worldbuilding Mode, Wayfarer and WorldPack handouts, and all six independently controlled Almanac systems are available through !Almanac; the module starts disabled.`, 'INFO', { startup: true });
     }, {
         enabled: false,
         prefixes: ['!Almanac', '!Almanac-', '!AlmanacAssist', '!AlmanacAssist-', '!aa', '!aa-', '!cal', '!calendar', '!calendar-', '!date', '!time', '!time-', '!wayfarer', '!wayfarer-', '!clim', '!clim-', '!climate', '!climate-', '!weather', '!weather-', '!enviro', '!enviro-', '!environment', '!environment-', '!astro', '!astro-', '!astronomy', '!astronomy-', '!rest', '!rest-'],
@@ -29583,6 +29861,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'announcement', 'environment', 'rest', 'world', 'temporalContexts', 'worldPacks', 'rulesAdvisorEnabled', 'rulesAdvisorProfile']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced AlmanacAssist to 2.0.1; compacted the live-session dashboard, made weather generation and current conditions directly accessible, added an events-and-omens palette, and added stale-safe mileage travel previews with pace, arrival, road guidance, optional time advancement, and private interval-based encounter checks.
     // Changed (v2.0.0): Advanced AlmanacAssist to 2.0.0 with a compact Session Mode, separate Worldbuilding Mode, bounded geography/biome/ecoregion/location/phenomenon definitions, one authoritative SceneResolver, prepared destinations, reviewed travel, local temporal contexts, immutable presets, optional RulesAdvisor guidance, advanced Wayfarer handout editing, and atomic versioned WorldPack transfer.
     // Changed (v2.0.0): Added signed Year 0 chronology while retaining Year 1 as elapsed minute zero, preserving every existing saved campaign date across the chronology expansion.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.6.1; bare and spaced !AlmanacAssist commands now share the established Almanac command handler.
@@ -29595,6 +29874,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Changed (v2.0.0): Added the standard GameAssist Home return to the AlmanacAssist GM control screen.
     // Changed (v2.0.0): Advanced AlmanacAssist to 1.1.0 with persistent Wayfarer drafts, staged setup and previews, safe profile duplication, atomic activation, elapsed-time preservation, explicit reset fallback, one activation rollback point, and a complete custom-calendar manual.
     // Decision log:
+    //   CHOICE: Treat a mileage plan as a one-use reviewed action with independent time and encounter-roll choices - ALT: advance time as soon as the GM enters miles; REJECTED: arrival, road conditions, and check volume must be visible before chronology changes.
+    //   CHOICE: Classify interval rolls without generating encounter content or applying travel mechanics - ALT: select creatures, impose pace penalties, or mutate tokens automatically; REJECTED: campaign encounter design and table rulings remain GM-owned.
+    //   CHOICE: Count every started encounter interval with a ceiling calculation - ALT: ignore the final partial interval; REJECTED: an exposed partial interval still represents travel time the GM asked the route to check.
     //   CHOICE: Resolve every public world view through one immutable SceneResolver snapshot with field-level provenance - ALT: let each panel independently combine climate, weather, environment, and astronomy; REJECTED: duplicate composition produced contradictory current conditions.
     //   CHOICE: Separate daily Session Mode from durable Worldbuilding Mode - ALT: expose every definition and diagnostic on the primary GM panel; REJECTED: live play needs a short action-first path while campaign construction needs complete controls.
     //   CHOICE: Preserve Year 1 as elapsed minute zero and represent Year 0 with signed minutes - ALT: shift every existing chronology forward by one year; REJECTED: enabling Year 0 must not silently change saved campaign dates.

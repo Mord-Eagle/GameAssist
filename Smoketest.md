@@ -768,13 +768,13 @@ For the stale-confirmation check:
 
 ## Focused v2.0.0 Complete AlmanacAssist Acceptance
 
-**What this proves:** AlmanacAssist 2.0.0 provides a usable live-session dashboard, a separate worldbuilding workspace, one coherent current-scene authority, and independently usable Time, Climate, Astronomy, Weather, Environment, and Rest systems. It also verifies prepared destinations, reviewed travel, local temporal contexts, phenomena, presets, advanced Wayfarer editing, and WorldPack transfer without turning optional context into hidden prerequisites.
+**What this proves:** AlmanacAssist 2.0.1 provides a usable live-session dashboard, direct weather and event palettes, reviewed pace-and-mileage travel with private encounter checks, a separate worldbuilding workspace, one coherent current-scene authority, and independently usable Time, Climate, Astronomy, Weather, Environment, and Rest systems. It also verifies prepared destinations, local temporal contexts, phenomena, presets, advanced Wayfarer editing, and WorldPack transfer without turning optional context into hidden prerequisites.
 
 **Why test it:** v2.0.0 must not publish a calendar shell while describing a world-management suite. This track proves the six systems, their boundaries, their shared navigation, and RestAlmanac's deliberate 2014-sheet writes inside the real Roll20 sandbox.
 
 **Skip when:** Do not skip this section for v2.0.0 release acceptance. After release, campaigns that keep AlmanacAssist disabled may skip it. Within ordinary troubleshooting, test only the enabled internal system and any optional context provider involved.
 
-**Current non-live evidence:** The focused local harness passes 141 checks, including transaction rollback and stale-preview cases. The checks below remain the required Roll20 live acceptance gate and are not recorded as passed merely because the local harness succeeded.
+**Current non-live evidence:** The focused local harness passes 157 checks, including transaction rollback, stale-preview rejection, one-use mileage travel, bounded encounter checks, private roll evidence, and the d4 midpoint case. The checks below remain the required Roll20 live acceptance gate and are not recorded as passed merely because the local harness succeeded.
 
 ### Preparation and Master Controls
 
@@ -791,7 +791,7 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 !Almanac-Impossible
 ```
 
-**Pass when:** AlmanacAssist begins disabled on a clean v2.0.0 state; enabling it starts all six saved-on systems; `!aa-gm` opens one compact private **Current World** screen with the active place and scene plus direct time, date, travel, rest, weather, preview, announce, location, and settings actions; **Manage World** opens a separate grouped workspace; routine controls do not dump raw definition graphs, audit evidence, moon-cycle configuration, or complete calendar structure; Systems provides independent toggles; Status identifies configured versus effective availability; Audit explicitly changes nothing; Manual creates or updates one stable handout; and the bad command offers a useful route back.
+**Pass when:** AlmanacAssist begins disabled on a clean v2.0.0 state; enabling it starts all six saved-on systems; `!aa-gm` opens one compact private **Current World** screen with current conditions plus direct **Generate Weather**, time, date, travel, rest, weather, moons, environment, events, preview, announce, location, calendar, and setup actions; **More Tools** and **Manage World** open separate grouped workspaces; routine controls do not dump raw definition graphs, audit evidence, moon-cycle configuration, or complete calendar structure; Systems provides independent toggles; Status identifies configured versus effective availability; Audit explicitly changes nothing; Manual creates or updates one stable handout; and the bad command offers a useful route back.
 
 ### Current Scene And Worldbuilding
 
@@ -819,6 +819,25 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 6. Start another disposable journey, cancel it, and confirm the current place remains unchanged.
 
 **Pass when:** previews make no mutation; acceptance starts exactly the reviewed journey; each progress action advances only the one base chronology; completion changes place once; cancel is explicit; and recent journey evidence remains readable without exposing raw state.
+
+### Mileage Travel, Road Guidance, And Encounter Checks
+
+**Why:** A GM should be able to estimate ordinary travel and privately check for encounter opportunities without preparing a destination or surrendering control of the campaign rules.
+
+1. Open `!aa-travel`. Confirm the first screen shows current road conditions, **Slow**, **Normal**, **Fast**, **Custom**, prepared-destination access, and a return to Almanac Home.
+2. Choose **Normal**, enter `6` miles, choose **Every 1 hour**, and choose `d4`.
+3. Confirm the review shows 2 hours of travel, an estimated arrival, current road and visibility guidance, and `2d4` encounter checks. It must state `1-2 Negative`, `3 Neutral`, and `4 Positive`.
+4. Change the current weather before using the old review button, then click **Advance Time & Roll** from that old review.
+5. Confirm the stale review is refused, fictional time is unchanged, and no encounter dice are rolled.
+6. Build the same plan again and choose **Roll Checks Only**. Confirm the results are whispered only to the GM, fictional time is unchanged, and every check is labeled Negative, Neutral, Positive, or No encounter without naming a creature or applying a rule.
+7. Build it a third time and choose **Advance Time Only**. Confirm fictional time advances by exactly two campaign hours and no encounter results are produced.
+8. Build a short plan and choose **Advance Time & Roll**. Confirm both actions occur once, then click the same button again.
+9. Confirm the reused button is refused and cannot advance time or roll again.
+10. Use **Custom** with an extremely slow pace, long distance, and one-minute interval. Confirm a plan above the 200-check boundary is refused before any grant, time change, or roll.
+11. Reopen `!aa-travel`, then `!aa-events`. Confirm **Travel Encounter Checks**, **Celestial Omen**, and **Manage Phenomena** are easy to find and the screen explains that results are GM prompts rather than automatic encounter content.
+12. With the default Wayfarer calendar active, repeat a 6-mile Normal-pace preview with hourly checks. Confirm it still shows 2 hours and 2 checks, while the underlying clock advances 150 campaign minutes only if the GM accepts the time change.
+
+**Pass when:** travel calculation follows pace and mileage; every started interval receives one check; d4 uses midpoint 3; previews change nothing; changed context invalidates old buttons; time advancement and encounter rolling are independently chosen; roll evidence remains GM-private; reused buttons fail safely; large result floods are bounded; and AlmanacAssist never applies movement, damage, conditions, tokens, or encounter content.
 
 ### Temporal Contexts And Phenomena
 
