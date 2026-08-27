@@ -259,8 +259,34 @@ function assertPresetLibrarySafetyAndRestart() {
     const library = harness.dispatchCommand('!aa-worldpacks library');
     assert.match(library[0].message, /Asterfall Concord/, 'library must list a shipped full source');
     assert.match(library[0].message, /160 Locations/, 'library must disclose setting-scale content rather than hide a starter-sized package');
+    assert.match(library[0].message, /\[Explore Fronts\]/, 'the WorldPack library must offer a guided source-front tour before a GM starts installation');
     assert.match(library[0].message, /\[Back\]/, 'WorldPack Library panels must retain a compact Back recovery control');
     assert.match(library[0].message, /\[Almanac Home\]/, 'WorldPack Library panels must retain an Almanac Home recovery control');
+    const beforeSourceTour = JSON.stringify({
+        world: almanac.config.world,
+        registry: almanac.config.worldPacks,
+        definitions: almanac.config.worldPackDefinitions,
+        runtime: almanac.runtime.world
+    });
+    const sourceTour = harness.dispatchCommand('!aa-worldpacks preset fronts --id asterfall-concord --page 0');
+    assert.match(sourceTour[0].message, /WorldPack Library \/ Asterfall Concord \/ Campaign Fronts/, 'a built-in source tour must have a compact explicit WorldPack hierarchy');
+    assert.match(sourceTour[0].message, /Campaign Fronts 1 of 2/, 'the source tour must page its eight campaign fronts instead of dumping every front at once');
+    assert.match(sourceTour[0].message, /Ember Coast — Harbor Stead/, 'the source tour must show a concrete front and opening Location before installation');
+    assert.match(sourceTour[0].message, /Dock councils seek neutral guides for a disputed convoy/, 'the source tour must reveal the authored opening hook rather than only package architecture');
+    assert.match(sourceTour[0].message, /20 named Locations \| 3 Prepared Destinations \| 26 local Routes/, 'the source tour must make each front’s immediately usable regional workload visible');
+    assert.equal((sourceTour[0].message.match(/Opening cue:/g) || []).length, 6, 'the source tour must retain its six-front compact page bound');
+    assert.match(sourceTour[0].message, /More Fronts/, 'the source tour must retain a paged route to the remaining campaign fronts');
+    assert.doesNotMatch(sourceTour[0].message, /\[Start Here\]/, 'an immutable source tour must not misrepresent preview data as a live Current Area');
+    assertBoundedRenderedTargets(sourceTour[0].message, 'built-in WorldPack source tour');
+    assert.equal(JSON.stringify({
+        world: almanac.config.world,
+        registry: almanac.config.worldPacks,
+        definitions: almanac.config.worldPackDefinitions,
+        runtime: almanac.runtime.world
+    }), beforeSourceTour, 'touring immutable campaign fronts must not install, select, or mutate campaign state');
+    const sourceTourPageTwo = harness.dispatchCommand('!aa-worldpacks preset fronts --id asterfall-concord --page 1');
+    assert.match(sourceTourPageTwo[0].message, /Campaign Fronts 2 of 2/, 'the source tour’s second page must remain reachable through a bounded explicit route');
+    assert.match(sourceTourPageTwo[0].message, /Cloudstep Reach — Cloudstep Lift/, 'the source tour must retain later authored fronts beyond the first compact page');
     const player = harness.dispatchCommand('!aa-worldpacks library', 'player-1');
     assert.doesNotMatch(player[0].message, /Asterfall Concord/, 'player command must not expose GM-only preset installation controls');
 

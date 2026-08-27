@@ -30474,6 +30474,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (/^installed\b/i.test(body)) return showInstalledWorldPackCatalog(msg, { page: args.page });
             if (/^(start|openings?)\b/i.test(body)) return showWorldPackOpeningAreas(msg, args.pack || args.id || args.name, { page: args.page });
             if (/^(library|catalog|builtins?)\b/i.test(body)) return showBuiltInWorldPackRegistry(msg);
+            if (/^preset\s+(?:fronts|tour|campaign-fronts)\b/i.test(body)) return showBuiltInWorldPackFrontTour(msg, args.id || args.name, { page: args.page });
             if (/^preset\s+preview\b/i.test(body)) return showBuiltInWorldPackRegistry(msg, args.id || args.name);
             if (/^preset\s+update\b/i.test(body)) return prepareBuiltInWorldPackInstall(msg, args.id || args.name, 'update');
             if (/^preset\s+copy\b/i.test(body)) return prepareBuiltInWorldPackInstall(msg, args.id || args.name, 'copy');
@@ -31949,6 +31950,48 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         /**
+         * builtInWorldPackFrontEntries - Read one concrete campaign-front opening
+         * per Region from an immutable built-in source. It deliberately mirrors
+         * the installed-clone opening order without treating source data as live
+         * campaign state or exposing a raw source graph to chat.
+         */
+        function builtInWorldPackFrontEntries(source) {
+            const world = source?.world || {};
+            const locations = Array.isArray(world.locations) ? world.locations : [];
+            const destinations = Array.isArray(world.destinations) ? world.destinations : [];
+            const locationsById = new Map(locations.map(location => [location.id, location]));
+            const regionsById = new Map((world.regions || []).map(region => [region.id, region]));
+            const entries = [];
+            const seenRegions = new Set();
+            const append = (location, destination = null) => {
+                if (!location) return;
+                const regionId = worldReference(location.regionId) || `location:${location.id}`;
+                if (seenRegions.has(regionId)) return;
+                seenRegions.add(regionId);
+                entries.push({ location, destination, region: regionsById.get(location.regionId) || null });
+            };
+            destinations.forEach(destination => append(locationsById.get(destination.locationId), destination));
+            locations.forEach(location => append(location));
+            return entries;
+        }
+
+        function builtInWorldPackFrontMetrics(source, entry) {
+            const world = source?.world || {};
+            const regionId = worldReference(entry?.location?.regionId);
+            const locations = (world.locations || []).filter(location => worldReference(location.regionId) === regionId);
+            const locationIds = new Set(locations.map(location => location.id));
+            const routes = (world.routes || []).filter(route => locationIds.has(route.fromLocationId) && locationIds.has(route.toLocationId));
+            const connectors = (world.routes || []).filter(route => {
+                const fromHere = locationIds.has(route.fromLocationId);
+                const toHere = locationIds.has(route.toLocationId);
+                return fromHere !== toHere;
+            });
+            const destinations = (world.destinations || []).filter(destination => locationIds.has(destination.locationId));
+            const phenomena = (world.phenomena || []).filter(phenomenon => locationIds.has(phenomenon.locationId));
+            return { locationCount: locations.length, routeCount: routes.length, connectorCount: connectors.length, destinationCount: destinations.length, phenomenonCount: phenomena.length };
+        }
+
+        /**
          * builtInWorldPackSourceState - Compare one immutable source to its
          * campaign-owned registry entry without changing either data boundary.
          * Outputs deliberately distinguish an updateable preset clone from an ID
@@ -31978,6 +32021,57 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return GameAssist.createButton('Review as Independent Copy', `!aa-worldpacks preset copy --id ${source.id}`);
         }
 
+        /**
+         * showBuiltInWorldPackFrontTour - Help a GM choose a complete setting by
+         * showing its authored campaign fronts before the installation review.
+         * The tour is a paged immutable-source preview only: it cannot install a
+         * package, select a Current Area, or change any runtime/provider state.
+         */
+        function showBuiltInWorldPackFrontTour(msg, requested, { page = 0 } = {}) {
+            const source = builtInWorldPackPreset(requested);
+            if (!source) return sendPanel(msg, 'Almanac / WorldPack Library Needs Attention', [
+                { label: 'Built-in WorldPack', value: 'Choose one included original WorldPack before opening its campaign-front tour.' },
+                { label: 'Navigation', value: `${GameAssist.createButton('WorldPack Library', '!aa-worldpacks library')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+            const entries = builtInWorldPackFrontEntries(source);
+            const perPage = POLICY.almanac.worldPackListDisplayLimit;
+            const pageCount = Math.max(1, Math.ceil(entries.length / perPage));
+            const safePage = Math.min(Math.max(0, Math.floor(Number(page) || 0)), pageCount - 1);
+            const visible = entries.slice(safePage * perPage, (safePage + 1) * perPage);
+            const controls = [
+                safePage > 0 ? GameAssist.createButton('Previous Fronts', `!aa-worldpacks preset fronts --id ${source.id} --page ${safePage - 1}`) : '',
+                safePage + 1 < pageCount ? GameAssist.createButton('More Fronts', `!aa-worldpacks preset fronts --id ${source.id} --page ${safePage + 1}`) : ''
+            ].filter(Boolean).join(' ');
+            const registryResult = worldPackConfigResult(modState.config.worldPacks, { persist: false });
+            const registry = registryResult.ok ? registryResult.config : null;
+            const sourceState = registry ? builtInWorldPackSourceState(source, registry) : null;
+            const installedAction = sourceState?.installed
+                ? worldPackOpeningButton(sourceState.installed, 'Open Installed Opening Areas')
+                : '';
+            const installAction = registry
+                ? builtInWorldPackSourceAction(source, registry)
+                : GameAssist.createButton('Open WorldPacks', '!aa-worldpacks');
+            sendPanel(msg, `Almanac / WorldPack Library / ${_sanitize(source.name)} / Campaign Fronts`, [
+                { label: 'Source Tour', value: `${_sanitize(source.description)} These are authored campaign fronts from the immutable original source; installing later creates a separately editable campaign-owned clone.` },
+                { label: `Campaign Fronts ${safePage + 1} of ${pageCount}`, value: `Each front is a ready regional web rather than a starter-area placeholder. Browse one page at a time; no Current Area is chosen here.` },
+                ...visible.map(entry => {
+                    const metrics = builtInWorldPackFrontMetrics(source, entry);
+                    const regionName = entry.region?.name || 'Campaign Front';
+                    const regionDescription = entry.region?.description || 'An authored regional front.';
+                    const openingDescription = entry.location?.description || 'A ready-to-use opening Location.';
+                    const network = `${metrics.locationCount} named Locations | ${metrics.destinationCount} Prepared Destinations | ${metrics.routeCount} local Routes${metrics.connectorCount ? ` | ${metrics.connectorCount} setting connector${metrics.connectorCount === 1 ? '' : 's'}` : ''} | ${metrics.phenomenonCount} ready Phenomena`;
+                    return {
+                        label: `${_sanitize(regionName)} — ${_sanitize(entry.location?.name || 'Opening Location')}`,
+                        value: `${_sanitize(regionDescription)}<br><strong>Opening cue:</strong> ${_sanitize(openingDescription)}<br><em>${_sanitize(network)}</em>`
+                    };
+                }),
+                ...(controls ? [{ label: 'More Campaign Fronts', value: controls }] : []),
+                { label: 'Next', value: [installAction, installedAction, GameAssist.createButton('Back to Source', `!aa-worldpacks preset preview --id ${source.id}`)].filter(Boolean).join(' ') },
+                { label: 'Safety', value: 'This source tour is read-only. It does not install or update a WorldPack, choose an opening area, or alter Worldbuilding, Time, Weather, Travel, Phenomena, or provider state.' },
+                { label: 'Navigation', value: `${GameAssist.createButton('WorldPack Library', '!aa-worldpacks library')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
         function showBuiltInWorldPackRegistry(msg, requested = null) {
             const sources = BUILT_IN_WORLD_PACK_PRESET_REGISTRY.sources || [];
             const registryResult = worldPackConfigResult(modState.config.worldPacks, { persist: false });
@@ -32000,7 +32094,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                         if (state.kind === 'current') return `Installed clone v${state.installed.version} is current with this source.`;
                         return 'An installed pack has this ID but does not carry matching built-in-source provenance; it is protected from a preset update.';
                     })()) : 'Campaign registry status is unavailable; open WorldPacks to inspect it.' },
-                    { label: 'Actions', value: `${builtInWorldPackSourceAction(selected, registry)} ${builtInWorldPackSourceCopyAction(selected)} ${GameAssist.createButton('Back to Library', '!aa-worldpacks library')} ${GameAssist.createButton('WorldPacks', '!aa-worldpacks')}` },
+                    { label: 'Actions', value: `${GameAssist.createButton('Explore Campaign Fronts', `!aa-worldpacks preset fronts --id ${selected.id} --page 0`)} ${builtInWorldPackSourceAction(selected, registry)} ${builtInWorldPackSourceCopyAction(selected)} ${GameAssist.createButton('Back to Library', '!aa-worldpacks library')} ${GameAssist.createButton('WorldPacks', '!aa-worldpacks')}` },
                     { label: 'Navigation', value: `${GameAssist.createButton('Worldbuilding', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
                 ]);
             }
@@ -32008,7 +32102,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const summary = worldPackPresetSummary(source);
                 return {
                     label: _sanitize(summary.name),
-                    value: `${_sanitize(summary.description)}<br><strong>${summary.regionCount} Regions | ${summary.locationCount} Locations | ${summary.routeCount} Routes | ${summary.phenomenonCount} Phenomena</strong><br>${GameAssist.createButton('Details', `!aa-worldpacks preset preview --id ${summary.id}`)} ${builtInWorldPackSourceAction(source, registry, 'Review Install')}`
+                    value: `${_sanitize(summary.description)}<br><strong>${summary.regionCount} Regions | ${summary.locationCount} Locations | ${summary.routeCount} Routes | ${summary.phenomenonCount} Phenomena</strong><br>${GameAssist.createButton('Explore Fronts', `!aa-worldpacks preset fronts --id ${summary.id} --page 0`)} ${GameAssist.createButton('Details', `!aa-worldpacks preset preview --id ${summary.id}`)} ${builtInWorldPackSourceAction(source, registry, 'Review Install')}`
                 };
             });
             sendPanel(msg, 'Almanac / WorldPack Library', [
@@ -38086,7 +38180,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 '<h2>Worldbuilding Mode</h2>',
                 '<p>For a new campaign, open <code>!aa-world</code> and choose <strong>World Library</strong>. Preview and start one included generic Starter World, or create an empty campaign world and add its first Location. A starter immediately supplies named Locations, climate regions, Prepared Destinations, routes, phenomena, and a Session Preset; it is owner-authored generic material, not published-setting lore. The current generic place model manages Regions, Geography, Ecoregions, Biomes, Locations, Prepared Destinations, Travel Routes, and Phenomena with bounded chat editors. At setting scale, each Worldbuilding collection is name-first and paged to 12 direct Edit controls: open its ordinary button, use Previous or Next, or choose Search to find a name or tag; no Technical stable ID is needed just to reach a record. Every generic record has Basic, Detailed, and Technical layers: Basic keeps routine edits compact, Detailed opens structured relationships/mechanics, and Technical shows stable identity, guarded removal, provenance, and source-pack evidence without dumping raw JSON. Use <code>!aa-location</code> to choose the current Location, favorite repeated destinations, use recently visited places, assign a named Roll20 page, or review a Prepared Destination. A Location climate relation supplies the current Scene baseline; the campaign Climate fallback remains separate. Changing Location does not silently replace committed Weather, so Weather explicitly identifies a retained old-region result until the GM generates a new one.</p>',
                 '<h2>WorldPacks</h2>',
-                '<p><code>!aa-worldpacks</code> manages portable Worldbuilding components in editable handouts and four original immutable built-in sources. Create a blank documented worksheet with one editable JSON block, or export the current Worldbuilding records as canonical JSON. A GM reviews either representation as Install New, Update Existing Pack, or Import as Copy; AlmanacAssist parses only bounded inert JSON, validates syntax, schema, references, provenance, dependencies, and conflicts, then issues an expiring preview. Confirmation rechecks the handout and campaign revisions before atomically committing Worldbuilding records and one provenance registry entry. New and Copy never overwrite existing records. Update requires a higher pack version and refuses any imported record changed by campaign customization. When a verified installed built-in clone has an older source version, its Library and Installed WorldPacks controls offer Review Update; a refusal identifies protected records and offers a separate reviewed Independent Copy rather than overwriting them. Packs never import PresetRegistry templates, runtime state, providers, time, weather, astronomy, or gameplay consequences.</p>',
+                '<p><code>!aa-worldpacks</code> manages portable Worldbuilding components in editable handouts and four original immutable built-in sources. Use <strong>Explore Campaign Fronts</strong> to compare each source’s paged opening cues and regional networks before beginning an installation review. Create a blank documented worksheet with one editable JSON block, or export the current Worldbuilding records as canonical JSON. A GM reviews either representation as Install New, Update Existing Pack, or Import as Copy; AlmanacAssist parses only bounded inert JSON, validates syntax, schema, references, provenance, dependencies, and conflicts, then issues an expiring preview. Confirmation rechecks the handout and campaign revisions before atomically committing Worldbuilding records and one provenance registry entry. New and Copy never overwrite existing records. Update requires a higher pack version and refuses any imported record changed by campaign customization. When a verified installed built-in clone has an older source version, its Library and Installed WorldPacks controls offer Review Update; a refusal identifies protected records and offers a separate reviewed Independent Copy rather than overwriting them. Packs never import PresetRegistry templates, runtime state, providers, time, weather, astronomy, or gameplay consequences.</p>',
                 '<h2>Temporal Contexts</h2>',
                 '<p>Open <code>!aa-temporal</code> to manage the immutable 1:1 zero-offset Prime Context and bounded owner-authored regional or planar contexts. Each context stores only a local-to-canonical rate and epoch offset. A transition preview shows departure and destination local projections, the one canonical elapsed-minute amount, reconciliation, expiry, and stale checks. Confirmation advances only the canonical fictional minute, selects the destination context, retains bounded reconciliation history, and publishes a committed event. It never reverses or writes Rest, effects, NPC history, combat, resources, providers, Location, or real-world records.</p>',
                 '<h2>Prepared Destinations and Travel</h2>',
