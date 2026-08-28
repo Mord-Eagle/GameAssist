@@ -6,6 +6,16 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ---
 
+## v2.0.0 Module Reactivation And Token Colors - 2026-08-28
+
+- **CombatAssist 1.2.2:** Turning the module off and back on restores native turn tracking, combat HP history, its public API, and eligible turn timers without a sandbox restart. The saved encounter is checked against the current tracker before continuing; missed movement requires review rather than guessed turns or rounds.
+- **InitiativeAssist 1.0.7:** Re-enabling restores its tracker observer while preserving saved groups. Both tracker modules also recover after TurnTrackerService is disabled and re-enabled in dependency order.
+- **Module lifecycle:** Adds a dedicated reactivation callback for resources removed during shutdown. Existing chat and event handlers remain registered once, preventing duplicate behavior across repeated toggles.
+- **TokenAssist 1.3.1:** Fixes relative tint and aura color changes that failed with `clamp is not defined`. Color channels remain bounded and existing alpha values are preserved.
+- Updates the affected module versions, developer contracts, and focused smoke tests. The package remains v2.0.0; unrelated modules, commands, saved configuration, and archived releases are unchanged.
+
+---
+
 ## v2.0.0 Launch Copy And Healing Defaults - 2026-08-28
 
 ### Testing Status And One-Click Presentation

@@ -2424,6 +2424,25 @@ Pass when:
 
 Restore the token's original name, bar 3 value, and name-visibility setting after the check.
 
+### Relative Tint And Aura Colors
+
+**Purpose:** Check that relative color changes work without an exception and preserve unrelated token properties. Skip only if TokenAssist is disabled and will remain unused.
+
+Select one disposable token and run each command separately:
+
+```roll20chat
+!ta-set tint_color|#808080
+!ta-set tint_color|+10%
+!ta-set aura1_color|#112233
+!ta-set aura1_color|+10
+!ta-set aura2_color|#11223380
+!ta-set aura2_color|-10
+```
+
+Pass when the token's tint becomes `#9a9a9a`, aura 1 becomes `#1b2c3d`, and aura 2 becomes `#07182980` with its alpha unchanged. Inspect the color fields in token settings; an aura does not need to be visible for its stored color to change. No `clamp is not defined` error should appear.
+
+Then run `!ta-set tint_color|/0`. Pass when the operation is refused and the tint is unchanged. Restore the original colors afterward.
+
 ### Full Issue #27 Acceptance Test
 
 Use a disposable page and keep standalone TokenMod absent except during the dedicated collision check. Record the initial TokenAssist setting:
@@ -2585,7 +2604,7 @@ Select a disposable token whose name visibility is off, then run:
 !token-assist --set imgsrc|ignored --on showname
 ```
 
-Pass when TokenAssist refuses the unsupported image-side property, explains that this feature is outside TokenAssist 1.1.0, and leaves name visibility unchanged. TokenAssist also does not claim default-token writes, computed or name-resolved attributes, advanced controller-list editing, advanced color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, exact TokenMod report-recipient distinctions, duplicate-index marker editing, conditional marker counts, or TokenMod help-handout rebuilding.
+Pass when TokenAssist refuses the unsupported image-side property, explains the limitation, and leaves name visibility unchanged. Image-side stack editing, default-token writes, exact TokenMod help-handout rebuilding, and a global TokenMod compatibility object remain outside TokenAssist 1.3.1. Color arithmetic, computed-value reports, controller editing, multi-sided selection, and advanced marker expressions are supported and must not be reported as missing.
 
 #### T12. Restore Campaign Settings
 
@@ -3059,6 +3078,7 @@ Pass when TurnTrackerService disables CombatAssist and InitiativeAssist, unrelat
 
 ```roll20chat
 !ga-enable TurnTrackerService
+!ga-enable InitiativeAssist
 !ga-enable CombatAssist
 !Combat-Status
 ```
@@ -3075,6 +3095,19 @@ Record the native tracker and the enabled state of InitiativeAssist and several 
 ```
 
 Pass when only CombatAssist is disabled, Roll20's tracker remains unchanged and usable through its native arrows, and InitiativeAssist plus every unrelated module retains its prior configuration. CombatAssist's baseline requires TurnTrackerService, but no other baseline module requires CombatAssist. Any future optional interoperability action must clearly name its prerequisite and disable only that action when the prerequisite is unavailable.
+
+#### Re-enable Without A Sandbox Restart
+
+**Purpose:** Check that turning the modules back on restores native tracker following, combat health history, and optional timers without duplicate actions. Skip only if both InitiativeAssist and CombatAssist will remain disabled.
+
+1. Enable InitiativeAssist and CombatAssist on a disposable page. Put three distinct tokens into the native tracker, run `!Combat-Start`, and note the current round.
+2. Run `!ga-disable CombatAssist`, `!ga-enable CombatAssist`, `!ga-disable InitiativeAssist`, and `!ga-enable InitiativeAssist`, waiting for each response. Do not restart the sandbox.
+3. Click Roll20's native next-turn arrow. Run `!Combat-Status` and `!Init-Status`. Pass when the current actor matches the tracker and the saved encounter continues; complete one forward cycle and confirm the round increases once.
+4. Reduce a linked 2014 PC's HP once, then run `!Combat-Timeline`. Pass when that HP change appears once. Skip this step if HealthService is disabled.
+5. Run `!Combat-Next` once. Pass when the tracker moves exactly one turn. Repeat steps 2-5 twice to check for duplicate listeners.
+6. If turn timers are enabled, confirm that disabling CombatAssist stops its old reminders and re-enabling restores one timer for the validated current turn. No reminder should refer to an already-finished turn.
+7. Disable CombatAssist, advance the native tracker, and re-enable it. Pass when the preserved encounter requires attention rather than inventing missed turns or rounds.
+8. Repeat **C13. TurnTrackerService Cascade and Reload** to verify recovery after disabling the shared service. Restore the original settings after testing.
 
 ### CombatAssist Failure Evidence
 

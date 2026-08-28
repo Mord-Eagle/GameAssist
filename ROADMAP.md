@@ -10,6 +10,10 @@ Use this document for durable release boundaries, sequencing, and completion gat
 
 ---
 
+## Release Review Fixes
+
+TokenAssist 1.3.1 restores relative tint/aura color updates. InitiativeAssist 1.0.7 and CombatAssist 1.2.2 restore their live observer/API/timer behavior after re-enabling. Focused local regression checks cover repeated toggles, dependency cascades, retained encounters, stale timers, and color arithmetic. Their targeted Roll20 checks remain separate from local validation; AlmanacAssist is unchanged.
+
 ## Current Almanac Status
 
 **AlmanacAssist 2.0.5: Alpha Testing.** **Current Settings** provides direct Climate and Biome choices, twelve ecoregion starters, and optional Geography, Terrain, Environment, Hydrology, and Vegetation layers. Named buttons are paginated; Seasons and Weather Breakdown expose the actual influence on generation. Saved locations and custom local profiles retain the layered setup without changing time or restoring an old weather roll. Existing linked-world controls and saved data remain available under advanced tools. All six internal systems are included; the alpha remains optional and disabled by default while broader campaign testing continues.
