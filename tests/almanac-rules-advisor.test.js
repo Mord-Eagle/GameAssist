@@ -80,8 +80,8 @@ function installAdvisorWorld(harness) {
     };
     almanac.runtime.world = {
         schemaVersion: 4,
-        revision: 4,
         recentLocationIds: [],
+        revision: 4,
         destinationGrants: {},
         travel: { schemaVersion: 1, revision: 0, journey: null, grants: {}, history: [] },
         phenomenonGrants: {},
@@ -90,7 +90,26 @@ function installAdvisorWorld(harness) {
             activatedAt: '2026-01-01T00:00:00.000Z', expiresWorldMinute: null
         }],
         phenomenaHistory: [],
-        presetGrants: {}
+        presetGrants: {},
+        currentSettings: {
+            schemaVersion: 1,
+            baseClimateRegionId: null,
+            biomeId: null,
+            ecoregionId: null,
+            geographyId: null,
+            regionId: null,
+            presetId: null,
+            temperatureBias: 0,
+            humidityBias: 0,
+            precipitationBias: 0,
+            windBias: 0,
+            ground: null,
+            water: null,
+            visibility: null,
+            environmentName: null
+        },
+        sceneDetailLevel: 'basic',
+        detailLevel: 'basic'
     };
     almanac.runtime.weather.current = {
         id: 'severe-snow', summary: 'Severe snow', temperatureF: 14, windMph: 28,

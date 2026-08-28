@@ -100,7 +100,8 @@ MODULE COMMANDS
 - AlmanacAssist: !Almanac, !aa, !cal, !date, !time, !clim, !astro,
   !weather, !enviro, !rest, !aa-time, !aa-climate, !aa-astro,
   !aa-weather, !aa-enviro, !aa-rest, !aa-wayfarer, !aa-world, !aa-worldpacks,
-  !aa-temporal, !aa-rules, !aa-preview, !aa-announce,
+  !aa-temporal, !aa-rules, !aa-preview, !aa-announce, !aa-scene, !aa-location,
+  !aa-travel, !aa-phenomena, !aa-presets, !aa-more, !world,
   !aa-announcement-settings, focused role/help/status/audit aliases,
   !aa-wayfarer reset-default --confirm yes, !Almanac-GM, !Almanac-DM,
   !Almanac-Status, !Almanac-Audit
@@ -486,6 +487,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             astronomyHistoryLimit: 30,
             weatherHistoryLimit: 30,
             weatherForecastLimit: 14,
+            weatherFrontHistoryLimit: 30,
+            weatherFrontStageLimit: 6,
+            weatherFrontDurationMinHours: 2,
+            weatherFrontDurationMaxHours: 12,
             environmentHistoryLimit: 30,
             restHistoryLimit: 50,
             restGrantLimit: 30,
@@ -578,6 +583,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         })
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added bounded Weather front lifecycle limits (weatherFrontHistoryLimit, weatherFrontStageLimit, duration min/max) to support synoptic front continuity and forecast decay without unbounded growth.
     // Changed (v2.0.0): Added bounded AlmanacAssist Worldbuilding limits for generic Regions, Geography, Ecoregions, Biomes, Locations, favorites, recents, display rows, names, descriptions, and tags; later checkpoints add bounded prepared destinations, routes, travel reviews, and journey history without changing the six-system policy limits.
     // Changed (v2.0.0): Added AlmanacAssist.sceneWarningLimit (24) so a read-only SceneResolver can report unavailable, disabled, partial, and unusual-provider evidence without unbounded chat/API payload growth; rollback: use the prior bounded six-system displays while retaining saved provider state.
     // Changed (v2.0.0): Added bounded AttackAssist source, row, request, submission, rollbase, and interaction limits alongside the existing HealAssist, HealthService, EffectAssist, AlmanacAssist, and concentration limits; rollback: disable the affected optional module while retaining native sheet workflows.
@@ -23632,6 +23638,30 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         const CLIMATE_STATE_SCHEMA_VERSION = 1;
         const ASTRONOMY_STATE_SCHEMA_VERSION = 1;
         const WEATHER_STATE_SCHEMA_VERSION = 1;
+        const WEATHER_FRONT_STAGE_ORDER = Object.freeze(['forming', 'approaching', 'strengthening', 'mature', 'weakening', 'clearing']);
+        const WEATHER_FRONT_STAGE_LABELS = Object.freeze({
+            forming: 'Forming',
+            approaching: 'Approaching',
+            strengthening: 'Strengthening',
+            mature: 'Mature',
+            weakening: 'Weakening',
+            clearing: 'Clearing'
+        });
+        const WEATHER_FRONT_TYPES = Object.freeze([
+            Object.freeze({ id: 'clear-high', name: 'Clear High', summary: 'High pressure, settled and mostly clear', temperatureBias: 2, windBias: -2, precipitationBias: -30, humidityBias: -20, severityBase: 0, tags: ['clear', 'settled'], kindBias: Object.freeze({ clear: 45, cloudy: 20, fog: 10, windy: 5, rain: 5, heatwave: 10, 'cold-snap': 5 }) }),
+            Object.freeze({ id: 'warm-front', name: 'Warm Front', summary: 'Gradual warming with thickening cloud and steady precipitation', temperatureBias: 5, windBias: 1, precipitationBias: 25, humidityBias: 25, severityBase: 1, tags: ['warm', 'front', 'wet'], kindBias: Object.freeze({ cloudy: 30, rain: 30, fog: 15, storm: 10, clear: 5, windy: 10 }) }),
+            Object.freeze({ id: 'cold-front', name: 'Cold Front', summary: 'Sharp temperature drop with gusty winds and showers', temperatureBias: -8, windBias: 6, precipitationBias: 20, humidityBias: 5, severityBase: 2, tags: ['cold', 'front', 'wind'], kindBias: Object.freeze({ windy: 25, rain: 20, storm: 15, cloudy: 20, snow: 10, clear: 10 }) }),
+            Object.freeze({ id: 'occluded-storm', name: 'Occluded Storm', summary: 'Occluded low with persistent heavy precipitation and low visibility', temperatureBias: -2, windBias: 8, precipitationBias: 45, humidityBias: 35, severityBase: 3, tags: ['storm', 'occluded', 'heavy'], kindBias: Object.freeze({ storm: 35, rain: 25, blizzard: 10, snow: 10, windy: 10, cloudy: 10 }) }),
+            Object.freeze({ id: 'maritime-gale', name: 'Maritime Gale', summary: 'Sea-driven gale with strong winds, rain, and reduced visibility', temperatureBias: 0, windBias: 12, precipitationBias: 30, humidityBias: 30, severityBase: 3, tags: ['gale', 'maritime', 'wind', 'wet'], kindBias: Object.freeze({ windy: 30, storm: 20, rain: 25, cloudy: 15, fog: 10 }) }),
+            Object.freeze({ id: 'continental-freeze', name: 'Continental Freeze', summary: 'Arctic air outbreak with bitter cold and snow risk', temperatureBias: -18, windBias: 4, precipitationBias: 15, humidityBias: -10, severityBase: 2, tags: ['cold', 'freeze', 'arctic'], kindBias: Object.freeze({ 'cold-snap': 30, snow: 25, blizzard: 15, clear: 15, cloudy: 15 }) }),
+            Object.freeze({ id: 'heat-dome', name: 'Heat Dome', summary: 'Persistent high heat with clear skies and extreme exposure', temperatureBias: 18, windBias: -3, precipitationBias: -40, humidityBias: -25, severityBase: 2, tags: ['heat', 'dome', 'extreme'], kindBias: Object.freeze({ heatwave: 40, clear: 35, cloudy: 10, windy: 5, fog: 10 }) }),
+            Object.freeze({ id: 'monsoon-surge', name: 'Monsoon Surge', summary: 'Deep moisture surge with prolonged rain and thunderstorms', temperatureBias: 3, windBias: 3, precipitationBias: 55, humidityBias: 45, severityBase: 3, tags: ['monsoon', 'wet', 'storm'], kindBias: Object.freeze({ rain: 30, storm: 30, cloudy: 20, fog: 10, windy: 10 }) })
+        ]);
+        const WEATHER_FRONT_TYPE_MAP = (() => {
+            const map = {};
+            WEATHER_FRONT_TYPES.forEach(type => { map[type.id] = type; });
+            return Object.freeze(map);
+        })();
         const ENVIRONMENT_STATE_SCHEMA_VERSION = 2;
         const REST_STATE_SCHEMA_VERSION = 2;
         const DEFAULT_WORLD_MINUTE = 8 * 60;
@@ -23744,6 +23774,45 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             mountain: Object.freeze({ name: 'Mountain', temperatureF: 42, humidity: 48, precipitationChance: 38, windMph: 18, tags: ['mountain', 'high-altitude'] }),
             swamp: Object.freeze({ name: 'Swamp', temperatureF: 72, humidity: 90, precipitationChance: 55, windMph: 4, tags: ['humid', 'swamp'] })
         });
+        // Generic ecoregion modifier matrix — vague, reusable in any setting.
+        // Each profile influences a base regional climate profile via simple biases.
+        const BUILT_IN_ECOREGION_PROFILES = Object.freeze([
+            Object.freeze({ id: 'coastal-bluff', name: 'Coastal Bluff', description: 'Exposed windward coast, salty air, frequent cloud and maritime gales possible.', temperatureBias: 0, humidityBias: 10, windBias: 6, precipitationBias: 5, visibility: 'Open sea view', terrain: 'Cliffs and pebbled shore', elevation: 'Low 0-100m', roadType: 'Coastal road, firm when dry', environment: 'Salt-tolerant scrub and pines', tags: Object.freeze(['coastal', 'bluff']) }),
+            Object.freeze({ id: 'windward-shore', name: 'Windward Shore', description: 'Sheltered tidal inlets and harbor. Milder, damp, maritime front corridor.', temperatureBias: 2, humidityBias: 12, windBias: 4, precipitationBias: 8, visibility: 'Harbor open, inlets misty', terrain: 'Harbor, tidal flats, grassy bluffs', elevation: 'Sea level', roadType: 'Stone quay and lane', environment: 'Harbor settlement and salt marsh', tags: Object.freeze(['coastal', 'harbor']) }),
+            Object.freeze({ id: 'temperate-forest', name: 'Temperate Forest', description: 'Deciduous interior, cooler and damp, sheltered from wind.', temperatureBias: -3, humidityBias: 10, windBias: -3, precipitationBias: 8, visibility: 'Canopy-filtered', terrain: 'Forest trail and mossy stone', elevation: 'Low hills 100-300m', roadType: 'Rooted forest track', environment: 'Oak and maple with mossy understory', tags: Object.freeze(['forest', 'temperate']) }),
+            Object.freeze({ id: 'deep-woodland', name: 'Deep Woodland', description: 'Dense old wood, very sheltered, high humidity.', temperatureBias: -4, humidityBias: 15, windBias: -6, precipitationBias: 10, visibility: 'Dim under canopy', terrain: 'Leaf litter and root tangles', elevation: 'Low hills', roadType: 'Old footpath, slow for carts', environment: 'Deep deciduous with fern', tags: Object.freeze(['forest', 'deep']) }),
+            Object.freeze({ id: 'grassland-steppe', name: 'Grassland Steppe', description: 'Open grass, semi-arid, windy, wide visibility.', temperatureBias: 1, humidityBias: -10, windBias: 3, precipitationBias: -5, visibility: 'Wide horizon', terrain: 'Short grass and firm loam', elevation: 'Plains 200-400m', roadType: 'Open dirt road, good for travel', environment: 'Grassland with scattered scrub', tags: Object.freeze(['grassland', 'plains']) }),
+            Object.freeze({ id: 'arid-basin', name: 'Arid Basin', description: 'Sunward desert plain, hot days, rapid night cooling, very dry. No maritime gales.', temperatureBias: 10, humidityBias: -25, windBias: 2, precipitationBias: -12, visibility: 'Far desert view', terrain: 'Packed salt, gravel, dry wash', elevation: 'Basin 200-400m', roadType: 'Marked desert trail, needs wells', environment: 'Thorn scrub and salt grass', tags: Object.freeze(['desert', 'arid', 'basin']) }),
+            Object.freeze({ id: 'oasis-borderlands', name: 'Oasis Borderlands', description: 'Desert edge near water. Cooler than open desert, still dry but life-supporting.', temperatureBias: 2, humidityBias: -5, windBias: -1, precipitationBias: -2, visibility: 'Palm-filtered', terrain: 'Damp sand and palm shade', elevation: 'Low basin near water', roadType: 'Maintained oasis path', environment: 'Palms, cistern, and date grove', tags: Object.freeze(['desert', 'oasis']) }),
+            Object.freeze({ id: 'red-mesa', name: 'Red Mesa', description: 'High desert mesa, exposed to sun and wind, great visibility.', temperatureBias: 3, humidityBias: -15, windBias: 5, precipitationBias: -8, visibility: 'Far desert and basin', terrain: 'Red stone and gravel', elevation: 'Mesa 600m', roadType: 'Gravel mesa approach, steep last mile', environment: 'Dry mesa top with sparse scrub', tags: Object.freeze(['desert', 'mesa']) }),
+            Object.freeze({ id: 'alpine-pass', name: 'Alpine Pass', description: 'High mountain pass, cold, windy, snow risk. No heat dome.', temperatureBias: -15, humidityBias: -5, windBias: 10, precipitationBias: 5, visibility: 'Long views, whiteout in storm', terrain: 'Granite, snowfields, narrow trail', elevation: 'High pass 1200-1800m', roadType: 'Switchback pass road, can drift shut', environment: 'Spruce, larch, and alpine moss', tags: Object.freeze(['mountain', 'alpine', 'pass']) }),
+            Object.freeze({ id: 'snowline-frontier', name: 'Snowline Frontier', description: 'Foothill to highland transition, cool and sheltered compared to pass.', temperatureBias: -6, humidityBias: 0, windBias: 1, precipitationBias: 4, visibility: 'Sheltered among pines', terrain: 'Conifer valley and timbered slopes', elevation: 'Foothills 600-1000m', roadType: 'Timbered mountain road', environment: 'Conifer forest and snowmelt streams', tags: Object.freeze(['mountain', 'foothill']) }),
+            Object.freeze({ id: 'river-marsh', name: 'River Marsh', description: 'Warm river basin, humid, foggy mornings, monsoon surge possible.', temperatureBias: 2, humidityBias: 20, windBias: -4, precipitationBias: 15, visibility: 'Misty mornings', terrain: 'Reed marsh and boardwalk', elevation: 'Low basin 0-50m', roadType: 'Boardwalk easy, off-levee slow', environment: 'Reeds, willow, and marsh grass', tags: Object.freeze(['wetland', 'marsh', 'river']) }),
+            Object.freeze({ id: 'reedwater-fen', name: 'Reedwater Fen', description: 'Deep wetland, very humid, waterlogged, slow travel off levee.', temperatureBias: 1, humidityBias: 25, windBias: -5, precipitationBias: 18, visibility: 'Fog-prone', terrain: 'Waterlogged peat and braided channels', elevation: 'Low wetland', roadType: 'Levee road firm, marsh demanding', environment: 'Dense reeds and stagnant channels', tags: Object.freeze(['wetland', 'fen', 'swamp']) })
+        ]);
+        function builtInEcoregionProfile(requested) {
+            const key = String(requested || '').trim().toLowerCase();
+            if (!key) return null;
+            return BUILT_IN_ECOREGION_PROFILES.find(p => p.id === key || p.name.toLowerCase() === key) || null;
+        }
+
+        function ecoregionProfileForLocation(location) {
+            if (!location) return null;
+            const explicitId = String(location.ecoregionProfileId || location.ecoregionProfile || '').trim().toLowerCase();
+            if (explicitId) {
+                const built = builtInEcoregionProfile(explicitId);
+                if (built) return built;
+            }
+            // Fallback: try to infer from location's ecoregionId or tags
+            const tagText = ((location.tags || []).join(' ') + ' ' + String(location.ecoregionId || '')).toLowerCase();
+            if (tagText.includes('coast') || tagText.includes('shore')) return builtInEcoregionProfile('coastal-bluff');
+            if (tagText.includes('forest') || tagText.includes('wood')) return builtInEcoregionProfile('temperate-forest');
+            if (tagText.includes('desert') || tagText.includes('basin')) return builtInEcoregionProfile('arid-basin');
+            if (tagText.includes('mountain') || tagText.includes('alpine') || tagText.includes('pass')) return builtInEcoregionProfile('alpine-pass');
+            if (tagText.includes('marsh') || tagText.includes('wetland') || tagText.includes('swamp')) return builtInEcoregionProfile('river-marsh');
+            return null;
+        }
+
         const DEFAULT_MOONS = Object.freeze([
             Object.freeze({ id: 'wayfarer-moon', name: 'Wayfarer Moon', cycleDays: 28, offsetDays: 0, phases: Object.freeze(['New', 'Waxing Crescent', 'First Quarter', 'Waxing Gibbous', 'Full', 'Waning Gibbous', 'Last Quarter', 'Waning Crescent']) })
         ]);
@@ -23782,6 +23851,105 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             standard: Object.freeze({ id: 'standard', name: 'Standard', milesPerHour: 3 }),
             swift: Object.freeze({ id: 'swift', name: 'Swift', milesPerHour: 4 })
         });
+        const CURRENT_SETTINGS_PRESETS = Object.freeze([
+            Object.freeze({
+                id: 'temperate-coastal-forest',
+                name: 'Temperate Coastal Forest',
+                description: 'Windward coast with mossy interior forest. Cool, damp, sheltered.',
+                climateTag: 'coastal',
+                biomeTag: 'forest',
+                geographyTag: 'coast',
+                ecoregionTag: 'coastal',
+                temperatureBias: -2,
+                humidityBias: 10,
+                precipitationBias: 10,
+                windBias: -1,
+                ground: 'Mossy stone and rooted trail',
+                water: 'Clear stream beside bridge',
+                visibility: 'Canopy-filtered'
+            }),
+            Object.freeze({
+                id: 'temperate-inland-woodland',
+                name: 'Temperate Inland Woodland',
+                description: 'Old roads through wet woodland. Temperate seasonal baseline.',
+                climateTag: 'temperate',
+                biomeTag: 'forest',
+                geographyTag: 'forest',
+                ecoregionTag: 'forest',
+                temperatureBias: -3,
+                humidityBias: 5,
+                precipitationBias: 5,
+                windBias: -2,
+                ground: 'Rooted trail and mossy stone',
+                water: 'Orchard well',
+                visibility: 'Filtered by trees'
+            }),
+            Object.freeze({
+                id: 'arid-desert-basin',
+                name: 'Arid Desert Basin',
+                description: 'Sunward basin with caravan stops and oasis. Hot, dry, exposed.',
+                climateTag: 'desert',
+                biomeTag: 'desert',
+                geographyTag: 'desert',
+                ecoregionTag: 'desert',
+                temperatureBias: 8,
+                humidityBias: -20,
+                precipitationBias: -20,
+                windBias: 2,
+                ground: 'Packed sand and stone',
+                water: 'Deep well and cistern',
+                visibility: 'Wide horizon'
+            }),
+            Object.freeze({
+                id: 'highland-mountain-pass',
+                name: 'Highland Mountain Pass',
+                description: 'Frost-capped highland passes. Cold, windy, exposed.',
+                climateTag: 'mountain',
+                biomeTag: 'mountain',
+                geographyTag: 'mountain',
+                ecoregionTag: 'mountain',
+                temperatureBias: -10,
+                humidityBias: 0,
+                precipitationBias: 5,
+                windBias: 8,
+                ground: 'Snow, ice, and exposed rock',
+                water: 'Frozen runoff',
+                visibility: 'Long views but frequent blowing snow'
+            }),
+            Object.freeze({
+                id: 'warm-river-wetland',
+                name: 'Warm River Wetland',
+                description: 'Warm river marsh with ferry and observatory. Warm, humid, misty.',
+                climateTag: 'swamp',
+                biomeTag: 'wetland',
+                geographyTag: 'wetland',
+                ecoregionTag: 'wetland',
+                temperatureBias: 4,
+                humidityBias: 15,
+                precipitationBias: 15,
+                windBias: -2,
+                ground: 'Boardwalk and packed peat',
+                water: 'Canal beside market',
+                visibility: 'Misty in mornings'
+            }),
+            Object.freeze({
+                id: 'arctic-tundra',
+                name: 'Arctic Tundra',
+                description: 'Frozen expanse. Extreme cold, dry, windy.',
+                climateTag: 'arctic',
+                biomeTag: 'tundra',
+                geographyTag: 'tundra',
+                ecoregionTag: 'arctic',
+                temperatureBias: -25,
+                humidityBias: -10,
+                precipitationBias: -5,
+                windBias: 5,
+                ground: 'Snow-covered and icy',
+                water: 'Frozen',
+                visibility: 'Clear but blowing snow'
+            })
+        ]);
+
         const BUILT_IN_SESSION_PRESETS = Object.freeze([
             Object.freeze({
                 id: 'blank-session-context', version: 1, family: 'session', name: 'Blank Session Context',
@@ -23893,165 +24061,117 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         // They provide immediately usable locations, climate regions, destinations,
         // travel routes, phenomena, and session presets without copying a published
         // campaign setting or requiring a WorldPack import.
+        // These are deliberately compact, owner-authored generic starting worlds.
+        // They provide immediately usable locations, climate regions, destinations,
+        // travel routes, phenomena, and session presets without copying a published
+        // campaign setting or requiring a WorldPack import.
         const BUILT_IN_STARTER_WORLDS = Object.freeze([
             Object.freeze({
-                id: 'ember-coast', version: 1, name: 'Ember Coast',
-                description: 'A temperate coast with a working harbor, an old road through wet woodland, and a cliff beacon.',
-                tags: Object.freeze(['coastal', 'temperate', 'starter']),
-                provenance: Object.freeze({ type: 'owner-authored', label: 'Included generic starter world', note: 'Original GameAssist generic content; no published setting lore.' }),
+                id: 'aurelian-reach', version: 2, name: 'Aurelian Reach',
+                description: 'A north-to-south continent transect: temperate windward coast with harbor and beacon, mossy interior forest with old roads, sunward desert basin with caravan stops and oasis, frost-capped highland passes, and warm river marsh with ferry and observatory. Five climate regions, six biomes, and five ecoregions demonstrate coherent weather, travel, and ecology.',
+                tags: Object.freeze(['continent', 'multi-biome', 'starter', 'aurelian', 'coastal', 'desert', 'mountain', 'wetland']),
+                provenance: Object.freeze({ type: 'owner-authored', label: 'Included continent starter (MVP)', note: 'Original GameAssist continent demonstrating multiple climates, biomes, ecoregions, and coherent weather. No published setting lore.' }),
                 climate: Object.freeze({
-                    activeRegionId: 'ember-coast-climate', manualSeason: 'Spring', profileOverrides: Object.freeze({}), customProfiles: Object.freeze([]),
+                    activeRegionId: 'aurelian-coast-climate', manualSeason: 'Spring', profileOverrides: Object.freeze({}), customProfiles: Object.freeze([]),
                     regions: Object.freeze([
-                        Object.freeze({ id: 'ember-coast-climate', name: 'Ember Coast', parentId: null, profileId: 'coastal', overrides: Object.freeze({}) }),
-                        Object.freeze({ id: 'ember-wood-climate', name: 'Mosswood Interior', parentId: 'ember-coast-climate', profileId: 'temperate', overrides: Object.freeze({ temperatureBias: -3 }) })
+                        Object.freeze({ id: 'aurelian-coast-climate', name: 'Windward Coast', parentId: null, profileId: 'coastal', overrides: Object.freeze({}) }),
+                        Object.freeze({ id: 'aurelian-wood-climate', name: 'Mosswood Interior', parentId: 'aurelian-coast-climate', profileId: 'temperate', overrides: Object.freeze({ temperatureBias: -3, humidity: 10 }) }),
+                        Object.freeze({ id: 'aurelian-desert-climate', name: 'Sunward Basin', parentId: null, profileId: 'desert', overrides: Object.freeze({}) }),
+                        Object.freeze({ id: 'aurelian-highland-climate', name: 'Frostfall Highlands', parentId: null, profileId: 'mountain', overrides: Object.freeze({}) }),
+                        Object.freeze({ id: 'aurelian-marsh-climate', name: 'Mirewood Basin', parentId: null, profileId: 'swamp', overrides: Object.freeze({}) })
                     ])
                 }),
                 world: Object.freeze({
                     schemaVersion: WORLD_STATE_SCHEMA_VERSION, revision: 0,
-                    regions: Object.freeze([{ id: 'ember-coast-region', name: 'Ember Coast', description: 'A generic coastal frontier region.', tags: ['coastal', 'starter'] }]),
-                    geographies: Object.freeze([{ id: 'ember-coast-geography', name: 'Windward Shore', regionId: 'ember-coast-region', latitudeBand: 'Mild temperate', elevation: 'Low coast and rolling bluffs', terrain: 'Pebbled shore, grass, and weathered road', coast: 'Tidal coast', hydrology: 'Freshwater streams meet sheltered inlets', roughness: 'Mostly gentle with steep cliff paths', tags: ['coast'] }]),
-                    biomes: Object.freeze([{ id: 'ember-coast-biome', name: 'Salt Pine Woodland', vegetation: 'Salt-tolerant pines, alder, and heath', aridity: 'Moist', ground: 'Needles, grass, and firm trail', water: 'Frequent streams and tidal inlets', seasonalResponse: 'Stormier autumn and winter shores', tags: ['woodland', 'coast'] }]),
-                    ecoregions: Object.freeze([{ id: 'ember-coast-ecoregion', name: 'Shorewood Fringe', regionId: 'ember-coast-region', geographyId: 'ember-coast-geography', biomeId: 'ember-coast-biome', climateRegionId: 'ember-coast-climate', waterRegime: 'Tidal inlets and shallow streams', transition: 'Coast gives way to damp woodland', tags: ['shorewood'] }]),
-                    locations: Object.freeze([
-                        { id: 'harbor-stead', name: 'Harbor Stead', regionId: 'ember-coast-region', geographyId: 'ember-coast-geography', ecoregionId: 'ember-coast-ecoregion', biomeId: 'ember-coast-biome', climateRegionId: 'ember-coast-climate', environmentName: 'Busy stone quay', environmentGround: 'Wet cobbles and dock planks', environmentWater: 'Protected saltwater harbor', modifiers: { temperatureBias: 1, windBias: 2, visibility: 'Open across the harbor' }, description: 'A compact harbor settlement and ready campaign starting point.', tags: ['harbor', 'settlement'] },
-                        { id: 'mosswood-crossing', name: 'Mosswood Crossing', regionId: 'ember-coast-region', geographyId: 'ember-coast-geography', ecoregionId: 'ember-coast-ecoregion', biomeId: 'ember-coast-biome', climateRegionId: 'ember-wood-climate', environmentName: 'Old bridge in wet woodland', environmentGround: 'Rooted trail and mossy stone', environmentWater: 'Clear stream beside the bridge', modifiers: { temperatureBias: -3, windBias: -2, visibility: 'Canopy-filtered' }, description: 'A road crossing where the coast road enters the interior woods.', tags: ['woodland', 'crossing'] },
-                        { id: 'beacon-cliffs', name: 'Beacon Cliffs', regionId: 'ember-coast-region', geographyId: 'ember-coast-geography', ecoregionId: 'ember-coast-ecoregion', biomeId: 'ember-coast-biome', climateRegionId: 'ember-coast-climate', environmentName: 'Exposed cliff path', environmentGround: 'Rock ledges and short grass', environmentWater: 'Rain cistern at the beacon', modifiers: { temperatureBias: -2, windBias: 8, visibility: 'Far sea view when clear' }, description: 'A high coastal beacon with exposed paths and long views.', tags: ['cliff', 'beacon'] }
-                    ]),
-                    destinations: Object.freeze([
-                        { id: 'to-harbor-stead', name: 'Return to Harbor Stead', locationId: 'harbor-stead', defaultPace: 'standard', description: 'Prepared return to the harbor.', tags: ['home'] },
-                        { id: 'to-mosswood-crossing', name: 'Road to Mosswood', locationId: 'mosswood-crossing', defaultPace: 'standard', description: 'Prepared woodland crossing.', tags: ['road'] },
-                        { id: 'to-beacon-cliffs', name: 'Walk to the Beacon', locationId: 'beacon-cliffs', defaultPace: 'cautious', description: 'Prepared exposed cliff route.', tags: ['cliff'] }
-                    ]),
-                    routes: Object.freeze([
-                        { id: 'harbor-mosswood-road', name: 'Harbor Road', fromLocationId: 'harbor-stead', toLocationId: 'mosswood-crossing', distanceMiles: 8, defaultPace: 'standard', terrainNote: 'Firm road becomes a rooted woodland track.', description: 'A short road from harbor to crossing.', tags: ['road'] },
-                        { id: 'harbor-beacon-path', name: 'Beacon Path', fromLocationId: 'harbor-stead', toLocationId: 'beacon-cliffs', distanceMiles: 5, defaultPace: 'cautious', terrainNote: 'Narrow cliff path exposed to wind.', description: 'A coastal path to the beacon.', tags: ['coast'] }
-                    ]),
-                    phenomena: Object.freeze([
-                        { id: 'ember-fog', name: 'Harbor Fog', locationId: 'harbor-stead', category: 'Weatherlike', visibilityNote: 'Fog can soften sight lines across the water.', terrainNote: 'Slick dock planks after damp weather.', travelNote: 'Ships and small boats slow until visibility improves.', severity: 1, defaultDurationHours: 4, description: 'A common low coastal fog.', tags: ['fog', 'coast'] },
-                        { id: 'tide-lights', name: 'Tide Lights', locationId: 'beacon-cliffs', category: 'Celestial', visibilityNote: 'Pale lights may be seen along wet rocks after dusk.', terrainNote: '', travelNote: 'No automatic travel change; use as a scene cue.', severity: 0, defaultDurationHours: 2, description: 'A harmless coastal light display.', tags: ['night', 'coast'] }
-                    ]),
-                    presets: Object.freeze([{ id: 'ember-arrival', name: 'Harbor Arrival', locationId: 'harbor-stead', phenomenonIds: [], defaultPace: 'standard', description: 'Start a session at the harbor.', tags: ['starter'], sourcePresetId: null, sourcePresetVersion: null }]),
-                    activeLocationId: 'harbor-stead', favoriteLocationIds: Object.freeze(['harbor-stead']), rulesProfile: '2014'
-                })
-            }),
-            Object.freeze({
-                id: 'sunward-expanse', version: 1, name: 'Sunward Expanse',
-                description: 'A dry inland route connecting a caravan stop, a shaded oasis, and a high red mesa.',
-                tags: Object.freeze(['desert', 'travel', 'starter']),
-                provenance: Object.freeze({ type: 'owner-authored', label: 'Included generic starter world', note: 'Original GameAssist generic content; no published setting lore.' }),
-                climate: Object.freeze({
-                    activeRegionId: 'sunward-desert-climate', manualSeason: 'Summer', profileOverrides: Object.freeze({}), customProfiles: Object.freeze([]),
                     regions: Object.freeze([
-                        Object.freeze({ id: 'sunward-desert-climate', name: 'Sunward Expanse', parentId: null, profileId: 'desert', overrides: Object.freeze({}) }),
-                        Object.freeze({ id: 'sunward-oasis-climate', name: 'Oasis Margin', parentId: 'sunward-desert-climate', profileId: 'desert', overrides: Object.freeze({ temperatureBias: -8, humidity: 32 }) })
-                    ])
-                }),
-                world: Object.freeze({
-                    schemaVersion: WORLD_STATE_SCHEMA_VERSION, revision: 0,
-                    regions: Object.freeze([{ id: 'sunward-region', name: 'Sunward Expanse', description: 'A generic dry interior region shaped by caravan roads and scarce water.', tags: ['desert', 'starter'] }]),
-                    geographies: Object.freeze([{ id: 'sunward-geography', name: 'Red Salt Plain', regionId: 'sunward-region', latitudeBand: 'Warm subtropical', elevation: 'Broad low basin with isolated mesas', terrain: 'Packed salt, red gravel, and dry washes', coast: 'Inland', hydrology: 'Seasonal wash and spring-fed oasis', roughness: 'Open plain with broken mesa approaches', tags: ['desert'] }]),
-                    biomes: Object.freeze([{ id: 'sunward-biome', name: 'Dry Scrubland', vegetation: 'Thorn scrub, salt grass, and date palms near water', aridity: 'Arid', ground: 'Gravel, salt crust, and hardpan', water: 'Scarce except at maintained wells', seasonalResponse: 'Brief green growth after rare rain', tags: ['dry', 'scrub'] }]),
-                    ecoregions: Object.freeze([{ id: 'sunward-ecoregion', name: 'Oasis Borderlands', regionId: 'sunward-region', geographyId: 'sunward-geography', biomeId: 'sunward-biome', climateRegionId: 'sunward-desert-climate', waterRegime: 'Wells, cisterns, and one spring-fed pool', transition: 'Dry plain gathers around rare water', tags: ['oasis'] }]),
+                        { id: 'aurelian-coast-region', name: 'Windward Coast', description: 'Temperate windward coast where tidal inlets meet grassy bluffs and a working harbor. Prevailing westerlies bring frequent cloud and occasional maritime gales.', tags: ['coastal', 'temperate', 'starter'] },
+                        { id: 'aurelian-wood-region', name: 'Mosswood Interior', description: 'Mossy interior woodland where the coast road enters old forest. Cooler, damp, and sheltered; transitions from coastal scrub to deciduous forest.', tags: ['forest', 'temperate', 'interior'] },
+                        { id: 'aurelian-desert-region', name: 'Sunward Basin', description: 'Sunward arid basin of salt flats, red mesas, and scarce wells. Extreme heat by day, rapid cooling at night, very low humidity. Maritime weather cannot reach here.', tags: ['desert', 'arid', 'basin'] },
+                        { id: 'aurelian-highland-region', name: 'Frostfall Highlands', description: 'Frost-capped highland of granite ridges, narrow passes, and conifer valleys. Cold, windy, with snow risk in winter and clear high visibility.', tags: ['mountain', 'alpine', 'highland'] },
+                        { id: 'aurelian-marsh-region', name: 'Mirewood Basin', description: 'Warm river basin of reed towns, ferry landings, and raised observatories. Humid, wet, with frequent fog and monsoon surge potential in summer.', tags: ['wetland', 'swamp', 'river'] }
+                    ]),
+                    geographies: Object.freeze([
+                        { id: 'aurelian-coast-geography', name: 'Windward Shore', regionId: 'aurelian-coast-region', latitudeBand: 'Mild temperate 45N', elevation: 'Low coast and rolling bluffs 0-100m', terrain: 'Pebbled shore, grass, and weathered road', coast: 'Tidal coast with sheltered inlets', hydrology: 'Freshwater streams meet sheltered inlets', roughness: 'Mostly gentle with steep cliff paths', tags: ['coast'] },
+                        { id: 'aurelian-wood-geography', name: 'Mosswood Shelf', regionId: 'aurelian-wood-region', latitudeBand: 'Mild temperate 46N', elevation: 'Low hills 100-300m', terrain: 'Deciduous forest, mossy stone, and old road', coast: 'Inland', hydrology: 'Clear streams and spring-fed pools', roughness: 'Rooted trails, moderate', tags: ['forest'] },
+                        { id: 'aurelian-desert-geography', name: 'Red Salt Plain', regionId: 'aurelian-desert-region', latitudeBand: 'Warm subtropical 32N', elevation: 'Broad low basin 200-400m with isolated mesas 600m', terrain: 'Packed salt, red gravel, and dry washes', coast: 'Inland', hydrology: 'Seasonal wash and spring-fed oasis', roughness: 'Open plain with broken mesa approaches', tags: ['desert'] },
+                        { id: 'aurelian-highland-geography', name: 'Stoneback Range', regionId: 'aurelian-highland-region', latitudeBand: 'Cool temperate highland 50N', elevation: 'High passes 1200-1800m above a cold lake', terrain: 'Granite ridges, snowfields, and conifer valleys', coast: 'Inland', hydrology: 'Snowmelt streams and a frozen lake', roughness: 'Steep with one maintained pass', tags: ['mountain'] },
+                        { id: 'aurelian-marsh-geography', name: 'Reedwater Lowlands', regionId: 'aurelian-marsh-region', latitudeBand: 'Warm temperate 38N', elevation: 'Low basin 0-50m', terrain: 'Reed marsh, raised boardwalk, and levee roads', coast: 'Inland river mouth', hydrology: 'Braided channels and spring-fed marsh', roughness: 'Boardwalk easy, off-levee demanding', tags: ['wetland'] }
+                    ]),
+                    biomes: Object.freeze([
+                        { id: 'aurelian-coast-biome', name: 'Salt Pine Woodland', vegetation: 'Salt-tolerant pines, alder, and heath', aridity: 'Moist', ground: 'Needles, grass, and firm trail', water: 'Frequent streams and tidal inlets', seasonalResponse: 'Stormier autumn and winter shores', tags: ['woodland', 'coast'] },
+                        { id: 'aurelian-wood-biome', name: 'Temperate Deciduous Forest', vegetation: 'Oak, maple, mossy understory, and fern', aridity: 'Moist', ground: 'Leaf litter and mossy stone', water: 'Clear streams', seasonalResponse: 'Green spring, dense summer canopy, leaf fall in autumn', tags: ['forest', 'temperate'] },
+                        { id: 'aurelian-desert-biome', name: 'Dry Scrubland', vegetation: 'Thorn scrub, salt grass, and date palms near water', aridity: 'Arid', ground: 'Gravel, salt crust, and hardpan', water: 'Scarce except at maintained wells', seasonalResponse: 'Brief green growth after rare rain', tags: ['dry', 'scrub', 'desert'] },
+                        { id: 'aurelian-highland-biome', name: 'Alpine Conifer', vegetation: 'Spruce, larch, and hardy moss', aridity: 'Moist snow climate', ground: 'Needles, stone, and seasonal snow', water: 'Cold streams and meltwater', seasonalResponse: 'Deep snow closes minor trails in winter', tags: ['conifer', 'snow', 'mountain'] },
+                        { id: 'aurelian-marsh-biome', name: 'Riverine Marsh', vegetation: 'Reeds, willow, and marsh grass', aridity: 'Humid', ground: 'Waterlogged peat and boardwalk', water: 'Braided channels', seasonalResponse: 'High water in spring, misty mornings in autumn', tags: ['marsh', 'wetland'] },
+                        { id: 'aurelian-steppe-biome', name: 'Grassland Steppe', vegetation: 'Short grass and scattered scrub', aridity: 'Semi-arid', ground: 'Firm loam and dry grass', water: 'Seasonal pools', seasonalResponse: 'Dry summer, green after rain', tags: ['grassland', 'transition'] }
+                    ]),
+                    ecoregions: Object.freeze([
+                        { id: 'aurelian-coast-ecoregion', name: 'Shorewood Fringe', regionId: 'aurelian-coast-region', geographyId: 'aurelian-coast-geography', biomeId: 'aurelian-coast-biome', climateRegionId: 'aurelian-coast-climate', waterRegime: 'Tidal inlets and shallow streams', transition: 'Coast gives way to damp woodland', tags: ['shorewood'] },
+                        { id: 'aurelian-wood-ecoregion', name: 'Mosswood Hollow', regionId: 'aurelian-wood-region', geographyId: 'aurelian-wood-geography', biomeId: 'aurelian-wood-biome', climateRegionId: 'aurelian-wood-climate', waterRegime: 'Clear streams and spring pools', transition: 'Forest thins into scrub before desert', tags: ['hollow'] },
+                        { id: 'aurelian-desert-ecoregion', name: 'Oasis Borderlands', regionId: 'aurelian-desert-region', geographyId: 'aurelian-desert-geography', biomeId: 'aurelian-desert-biome', climateRegionId: 'aurelian-desert-climate', waterRegime: 'Wells, cisterns, and one spring-fed pool', transition: 'Dry plain gathers around rare water', tags: ['oasis'] },
+                        { id: 'aurelian-highland-ecoregion', name: 'Snowline Frontier', regionId: 'aurelian-highland-region', geographyId: 'aurelian-highland-geography', biomeId: 'aurelian-highland-biome', climateRegionId: 'aurelian-highland-climate', waterRegime: 'Snowmelt streams and ice-bound lake edge', transition: 'Forest thins into exposed pass country', tags: ['snowline'] },
+                        { id: 'aurelian-marsh-ecoregion', name: 'Reedwater Fen', regionId: 'aurelian-marsh-region', geographyId: 'aurelian-marsh-geography', biomeId: 'aurelian-marsh-biome', climateRegionId: 'aurelian-marsh-climate', waterRegime: 'Braided channels and reed beds', transition: 'Marsh rises to levee roads then highland', tags: ['fen'] }
+                    ]),
                     locations: Object.freeze([
-                        { id: 'dawn-caravanserai', name: 'Dawn Caravanserai', regionId: 'sunward-region', geographyId: 'sunward-geography', ecoregionId: 'sunward-ecoregion', biomeId: 'sunward-biome', climateRegionId: 'sunward-desert-climate', environmentName: 'Walled caravan yard', environmentGround: 'Packed sand and shaded stone', environmentWater: 'Guarded cistern', modifiers: { temperatureBias: 2, windBias: -3, visibility: 'Clear above courtyard walls' }, description: 'A practical road stop with shelter and water.', tags: ['caravan', 'settlement'] },
-                        { id: 'glasswind-oasis', name: 'Glasswind Oasis', regionId: 'sunward-region', geographyId: 'sunward-geography', ecoregionId: 'sunward-ecoregion', biomeId: 'sunward-biome', climateRegionId: 'sunward-oasis-climate', environmentName: 'Palm-shaded spring', environmentGround: 'Damp sand and roots', environmentWater: 'Fresh spring pool', modifiers: { temperatureBias: -8, windBias: -4, visibility: 'Reeds and palms break long views' }, description: 'A small, dependable oasis at a road bend.', tags: ['oasis', 'water'] },
-                        { id: 'red-mesa-watch', name: 'Red Mesa Watch', regionId: 'sunward-region', geographyId: 'sunward-geography', ecoregionId: 'sunward-ecoregion', biomeId: 'sunward-biome', climateRegionId: 'sunward-desert-climate', environmentName: 'Mesa overlook', environmentGround: 'Loose red stone', environmentWater: 'Collected rain barrel', modifiers: { temperatureBias: -1, windBias: 7, visibility: 'Wide open horizon' }, description: 'A high lookout above the caravan route.', tags: ['mesa', 'watch'] }
+                        { id: 'harbor-stead', name: 'Harbor Stead', regionId: 'aurelian-coast-region', geographyId: 'aurelian-coast-geography', ecoregionId: 'aurelian-coast-ecoregion', biomeId: 'aurelian-coast-biome', climateRegionId: 'aurelian-coast-climate', environmentName: 'Busy stone quay', environmentGround: 'Wet cobbles and dock planks', environmentWater: 'Protected saltwater harbor', modifiers: { temperatureBias: 1, windBias: 2, visibility: 'Open across the harbor' }, description: 'A compact harbor settlement and ready campaign starting point on the windward coast.', tags: ['harbor', 'settlement', 'coastal'] },
+                        { id: 'beacon-cliffs', name: 'Beacon Cliffs', regionId: 'aurelian-coast-region', geographyId: 'aurelian-coast-geography', ecoregionId: 'aurelian-coast-ecoregion', biomeId: 'aurelian-coast-biome', climateRegionId: 'aurelian-coast-climate', environmentName: 'Exposed cliff path', environmentGround: 'Rock ledges and short grass', environmentWater: 'Rain cistern at the beacon', modifiers: { temperatureBias: -2, windBias: 8, visibility: 'Far sea view when clear' }, description: 'A high coastal beacon with exposed paths and long views. Maritime gales are possible here.', tags: ['cliff', 'beacon', 'coastal'] },
+                        { id: 'tideglass-chapel', name: 'Tideglass Chapel', regionId: 'aurelian-coast-region', geographyId: 'aurelian-coast-geography', ecoregionId: 'aurelian-coast-ecoregion', biomeId: 'aurelian-coast-biome', climateRegionId: 'aurelian-coast-climate', environmentName: 'Open shrine above tide', environmentGround: 'Salt-worn stone', environmentWater: 'Tidal pool', modifiers: { temperatureBias: 0, windBias: 4, visibility: 'Open' }, description: 'A shrine where tide charts are kept.', tags: ['shrine', 'coastal'] },
+                        { id: 'mosswood-crossing', name: 'Mosswood Crossing', regionId: 'aurelian-wood-region', geographyId: 'aurelian-wood-geography', ecoregionId: 'aurelian-wood-ecoregion', biomeId: 'aurelian-wood-biome', climateRegionId: 'aurelian-wood-climate', environmentName: 'Old bridge in wet woodland', environmentGround: 'Rooted trail and mossy stone', environmentWater: 'Clear stream beside the bridge', modifiers: { temperatureBias: -3, windBias: -2, visibility: 'Canopy-filtered' }, description: 'A road crossing where the coast road enters the interior woods.', tags: ['woodland', 'crossing', 'forest'] },
+                        { id: 'cider-crown', name: 'Cider Crown', regionId: 'aurelian-wood-region', geographyId: 'aurelian-wood-geography', ecoregionId: 'aurelian-wood-ecoregion', biomeId: 'aurelian-wood-biome', climateRegionId: 'aurelian-wood-climate', environmentName: 'Orchard village', environmentGround: 'Packed earth and grass', environmentWater: 'Orchard well', modifiers: { temperatureBias: -2, windBias: -1, visibility: 'Filtered by trees' }, description: 'An orchard hamlet that marks the transition from coast to interior.', tags: ['orchard', 'village', 'forest'] },
+                        { id: 'rootbridge', name: 'Rootbridge', regionId: 'aurelian-wood-region', geographyId: 'aurelian-wood-geography', ecoregionId: 'aurelian-wood-ecoregion', biomeId: 'aurelian-steppe-biome', climateRegionId: 'aurelian-wood-climate', environmentName: 'Covered bridge over dry wash', environmentGround: 'Wood planks and dry earth', environmentWater: 'Seasonal stream', modifiers: { temperatureBias: 0, windBias: 0, visibility: 'Clear along road' }, description: 'Where forest thins into grassland before the desert.', tags: ['bridge', 'transition'] },
+                        { id: 'dawn-caravanserai', name: 'Dawn Caravanserai', regionId: 'aurelian-desert-region', geographyId: 'aurelian-desert-geography', ecoregionId: 'aurelian-desert-ecoregion', biomeId: 'aurelian-desert-biome', climateRegionId: 'aurelian-desert-climate', environmentName: 'Walled caravan yard', environmentGround: 'Packed sand and stone', environmentWater: 'Deep well and cistern', modifiers: { temperatureBias: 2, windBias: 1, visibility: 'Wide horizon' }, description: 'A walled caravan stop at the edge of the Sunward Basin. Maritime gales cannot occur here; heat dome and clear high dominate.', tags: ['caravanserai', 'desert', 'trade'] },
+                        { id: 'glasswind-oasis', name: 'Glasswind Oasis', regionId: 'aurelian-desert-region', geographyId: 'aurelian-desert-geography', ecoregionId: 'aurelian-desert-ecoregion', biomeId: 'aurelian-desert-biome', climateRegionId: 'aurelian-desert-climate', environmentName: 'Shaded palm oasis', environmentGround: 'Damp sand and palm shade', environmentWater: 'Spring-fed pool', modifiers: { temperatureBias: -4, windBias: -2, visibility: 'Palm-filtered' }, description: 'A rare permanent water source in the basin.', tags: ['oasis', 'desert'] },
+                        { id: 'red-mesa-watch', name: 'Red Mesa Watch', regionId: 'aurelian-desert-region', geographyId: 'aurelian-desert-geography', ecoregionId: 'aurelian-desert-ecoregion', biomeId: 'aurelian-desert-biome', climateRegionId: 'aurelian-desert-climate', environmentName: 'High red mesa', environmentGround: 'Red stone and gravel', environmentWater: 'Cistern', modifiers: { temperatureBias: 1, windBias: 5, visibility: 'Far desert view' }, description: 'A watch point atop a red mesa. Extreme heat possible, but no maritime weather.', tags: ['mesa', 'watch', 'desert'] },
+                        { id: 'brasswell', name: 'Brasswell', regionId: 'aurelian-desert-region', geographyId: 'aurelian-desert-geography', ecoregionId: 'aurelian-desert-ecoregion', biomeId: 'aurelian-steppe-biome', climateRegionId: 'aurelian-desert-climate', environmentName: 'Community well', environmentGround: 'Worn stones', environmentWater: 'Deep managed well', modifiers: { temperatureBias: 0, windBias: 0, visibility: 'Open' }, description: 'A community well where desert meets foothills.', tags: ['well', 'desert', 'foothill'] },
+                        { id: 'pinegate-lodge', name: 'Pinegate Lodge', regionId: 'aurelian-highland-region', geographyId: 'aurelian-highland-geography', ecoregionId: 'aurelian-highland-ecoregion', biomeId: 'aurelian-highland-biome', climateRegionId: 'aurelian-highland-climate', environmentName: 'Timbered mountain lodge', environmentGround: 'Packed snow and rough boards', environmentWater: 'Meltwater barrel', modifiers: { temperatureBias: 4, windBias: -5, visibility: 'Sheltered among tall pines' }, description: 'A warm roadside lodge at the foot of the highlands.', tags: ['lodge', 'mountain', 'shelter'] },
+                        { id: 'icefall-pass', name: 'Icefall Pass', regionId: 'aurelian-highland-region', geographyId: 'aurelian-highland-geography', ecoregionId: 'aurelian-highland-ecoregion', biomeId: 'aurelian-highland-biome', climateRegionId: 'aurelian-highland-climate', environmentName: 'Narrow icebound pass', environmentGround: 'Snow, ice, and exposed rock', environmentWater: 'Frozen runoff', modifiers: { temperatureBias: -10, windBias: 10, visibility: 'Long views but frequent blowing snow' }, description: 'A narrow pass where weather makes travel a real choice. Continental freeze possible in winter.', tags: ['pass', 'ice', 'mountain'] },
+                        { id: 'lantern-keep', name: 'Lantern Keep', regionId: 'aurelian-highland-region', geographyId: 'aurelian-highland-geography', ecoregionId: 'aurelian-highland-ecoregion', biomeId: 'aurelian-highland-biome', climateRegionId: 'aurelian-highland-climate', environmentName: 'Stone keep above the lake', environmentGround: 'Icy flagstones', environmentWater: 'Deep cold lake below', modifiers: { temperatureBias: 0, windBias: 3, visibility: 'Clear lake and valley view' }, description: 'A small keep marked by a reliable lantern signal.', tags: ['keep', 'lake', 'mountain'] },
+                        { id: 'quarry-nine', name: 'Quarry Nine', regionId: 'aurelian-highland-region', geographyId: 'aurelian-highland-geography', ecoregionId: 'aurelian-highland-ecoregion', biomeId: 'aurelian-highland-biome', climateRegionId: 'aurelian-highland-climate', environmentName: 'Stone quarry shelf', environmentGround: 'Cut stone and gravel', environmentWater: 'Quarry sump', modifiers: { temperatureBias: -2, windBias: 2, visibility: 'Open quarry' }, description: 'A highland quarry town.', tags: ['quarry', 'mountain'] },
+                        { id: 'reedmarket', name: 'Reedmarket', regionId: 'aurelian-marsh-region', geographyId: 'aurelian-marsh-geography', ecoregionId: 'aurelian-marsh-ecoregion', biomeId: 'aurelian-marsh-biome', climateRegionId: 'aurelian-marsh-climate', environmentName: 'Raised market town', environmentGround: 'Boardwalk and packed peat', environmentWater: 'Canal beside market', modifiers: { temperatureBias: 1, windBias: -2, visibility: 'Misty in mornings' }, description: 'A raised market town in the warm river basin. Monsoon surge and warm fronts possible.', tags: ['market', 'wetland'] },
+                        { id: 'willow-ferry', name: 'Willow Ferry', regionId: 'aurelian-marsh-region', geographyId: 'aurelian-marsh-geography', ecoregionId: 'aurelian-marsh-ecoregion', biomeId: 'aurelian-marsh-biome', climateRegionId: 'aurelian-marsh-climate', environmentName: 'Ferry landing', environmentGround: 'Wet boards', environmentWater: 'Slow river', modifiers: { temperatureBias: 0, windBias: -1, visibility: 'River mist' }, description: 'A ferry crossing in the marsh.', tags: ['ferry', 'wetland'] },
+                        { id: 'heron-observatory', name: 'Heron Observatory', regionId: 'aurelian-marsh-region', geographyId: 'aurelian-marsh-geography', ecoregionId: 'aurelian-marsh-ecoregion', biomeId: 'aurelian-marsh-biome', climateRegionId: 'aurelian-marsh-climate', environmentName: 'Raised watch tower', environmentGround: 'Boardwalk and stilts', environmentWater: 'Marsh channel below', modifiers: { temperatureBias: 0, windBias: 2, visibility: 'Wide marsh view' }, description: 'An observatory above the wetlands.', tags: ['tower', 'wetland'] },
+                        { id: 'mire-gate', name: 'Mire Gate', regionId: 'aurelian-marsh-region', geographyId: 'aurelian-marsh-geography', ecoregionId: 'aurelian-marsh-ecoregion', biomeId: 'aurelian-marsh-biome', climateRegionId: 'aurelian-marsh-climate', environmentName: 'Levee gate', environmentGround: 'Levee road', environmentWater: 'Gate cistern', modifiers: { temperatureBias: 0, windBias: 0, visibility: 'Levee road clear' }, description: 'A levee gate where marsh meets higher ground.', tags: ['gate', 'wetland'] }
                     ]),
                     destinations: Object.freeze([
-                        { id: 'to-dawn-caravanserai', name: 'Return to Dawn Caravanserai', locationId: 'dawn-caravanserai', defaultPace: 'standard', description: 'Prepared caravan stop.', tags: ['home'] },
-                        { id: 'to-glasswind-oasis', name: 'Find Glasswind Oasis', locationId: 'glasswind-oasis', defaultPace: 'cautious', description: 'Prepared oasis destination.', tags: ['water'] },
-                        { id: 'to-red-mesa-watch', name: 'Climb to Red Mesa Watch', locationId: 'red-mesa-watch', defaultPace: 'cautious', description: 'Prepared mesa destination.', tags: ['watch'] }
+                        { id: 'to-harbor-stead', name: 'Return to Harbor Stead', locationId: 'harbor-stead', defaultPace: 'standard', description: 'Prepared return to the windward harbor. Temperate coastal climate, maritime gales possible.', tags: ['home', 'coastal'] },
+                        { id: 'to-mosswood-crossing', name: 'Road to Mosswood', locationId: 'mosswood-crossing', defaultPace: 'standard', description: 'Prepared interior woodland crossing. Cooler and damp.', tags: ['road', 'forest'] },
+                        { id: 'to-dawn-caravanserai', name: 'Caravan Road Start', locationId: 'dawn-caravanserai', defaultPace: 'standard', description: 'Start a desert travel session. Arid, hot, no maritime weather.', tags: ['desert', 'travel'] },
+                        { id: 'to-pinegate-lodge', name: 'Lodge Before the Pass', locationId: 'pinegate-lodge', defaultPace: 'cautious', description: 'Prepared warm shelter before highland pass. Cold fronts and freeze possible.', tags: ['mountain', 'shelter'] },
+                        { id: 'to-reedmarket', name: 'Market Morning', locationId: 'reedmarket', defaultPace: 'standard', description: 'Start in the raised market town. Humid, fog and monsoon surge possible.', tags: ['wetland', 'market'] }
                     ]),
                     routes: Object.freeze([
-                        { id: 'caravan-oasis-track', name: 'Oasis Track', fromLocationId: 'dawn-caravanserai', toLocationId: 'glasswind-oasis', distanceMiles: 12, defaultPace: 'standard', terrainNote: 'Marked hardpan trail with little shade.', description: 'A maintained caravan track.', tags: ['road'] },
-                        { id: 'oasis-mesa-trail', name: 'Mesa Trail', fromLocationId: 'glasswind-oasis', toLocationId: 'red-mesa-watch', distanceMiles: 7, defaultPace: 'cautious', terrainNote: 'Loose stone rises sharply near the mesa.', description: 'A steep trail to the overlook.', tags: ['mesa'] }
+                        { id: 'harbor-beacon-path', name: 'Beacon Path', fromLocationId: 'harbor-stead', toLocationId: 'beacon-cliffs', distanceMiles: 5, defaultPace: 'cautious', terrainNote: 'Narrow cliff path exposed to wind. Coastal.', description: 'A coastal path to the beacon.', tags: ['coast'] },
+                        { id: 'harbor-chapel-lane', name: 'Chapel Lane', fromLocationId: 'harbor-stead', toLocationId: 'tideglass-chapel', distanceMiles: 3, defaultPace: 'standard', terrainNote: 'Firm road along tidal inlets.', description: 'Short lane to the shrine.', tags: ['coast'] },
+                        { id: 'beacon-mosswood-road', name: 'Old Coast Road', fromLocationId: 'beacon-cliffs', toLocationId: 'mosswood-crossing', distanceMiles: 8, defaultPace: 'standard', terrainNote: 'Firm road becomes a rooted woodland track. Transition coastal to forest.', description: 'Coast road enters interior woods.', tags: ['road', 'transition'] },
+                        { id: 'mosswood-cider-lane', name: 'Orchard Lane', fromLocationId: 'mosswood-crossing', toLocationId: 'cider-crown', distanceMiles: 4, defaultPace: 'standard', terrainNote: 'Leaf-littered lane through orchard.', description: 'Woodland orchard connection.', tags: ['forest'] },
+                        { id: 'cider-rootbridge-road', name: 'Rootbridge Road', fromLocationId: 'cider-crown', toLocationId: 'rootbridge', distanceMiles: 3, defaultPace: 'standard', terrainNote: 'Covered bridge over seasonal wash.', description: 'Forest thins to grassland.', tags: ['forest', 'transition'] },
+                        { id: 'rootbridge-caravanserai-road', name: 'Forest to Desert Road', fromLocationId: 'rootbridge', toLocationId: 'dawn-caravanserai', distanceMiles: 12, defaultPace: 'standard', terrainNote: 'Forest gives way to packed sand and gravel. Temperature rises sharply.', description: 'Ecotone transition from temperate forest to arid basin.', tags: ['transition', 'trade'] },
+                        { id: 'caravanserai-oasis-trail', name: 'Oasis Trail', fromLocationId: 'dawn-caravanserai', toLocationId: 'glasswind-oasis', distanceMiles: 6, defaultPace: 'standard', terrainNote: 'Marked desert trail to permanent water.', description: 'Caravan trail to oasis.', tags: ['desert'] },
+                        { id: 'oasis-mesa-trail', name: 'Mesa Trail', fromLocationId: 'glasswind-oasis', toLocationId: 'red-mesa-watch', distanceMiles: 7, defaultPace: 'cautious', terrainNote: 'Steep climb to red mesa, exposed to sun.', description: 'Oasis to mesa watch.', tags: ['desert'] },
+                        { id: 'mesa-brasswell-path', name: 'High Desert Path', fromLocationId: 'red-mesa-watch', toLocationId: 'brasswell', distanceMiles: 5, defaultPace: 'standard', terrainNote: 'Gravel plain with good visibility.', description: 'Mesa to community well.', tags: ['desert'] },
+                        { id: 'caravanserai-brasswell-road', name: 'Caravan Loop', fromLocationId: 'dawn-caravanserai', toLocationId: 'brasswell', distanceMiles: 8, defaultPace: 'standard', terrainNote: 'Packed sand, maintained cistern chain.', description: 'Desert caravan loop.', tags: ['desert', 'trade'] },
+                        { id: 'brasswell-pinegate-road', name: 'Foothill Road', fromLocationId: 'brasswell', toLocationId: 'pinegate-lodge', distanceMiles: 15, defaultPace: 'standard', terrainNote: 'Desert rises to foothills, temperature drops, vegetation returns.', description: 'Transition from arid basin to mountain foothills.', tags: ['transition', 'mountain'] },
+                        { id: 'pinegate-icefall-road', name: 'Pinegate Pass Road', fromLocationId: 'pinegate-lodge', toLocationId: 'icefall-pass', distanceMiles: 6, defaultPace: 'cautious', terrainNote: 'Switchbacks can drift closed after snow. Mountain.', description: 'Maintained but exposed pass road.', tags: ['mountain', 'pass'] },
+                        { id: 'pinegate-quarry-road', name: 'Quarry Road', fromLocationId: 'pinegate-lodge', toLocationId: 'quarry-nine', distanceMiles: 4, defaultPace: 'standard', terrainNote: 'Quarry access road.', description: 'Lodge to quarry.', tags: ['mountain'] },
+                        { id: 'quarry-keep-road', name: 'High Quarry Road', fromLocationId: 'quarry-nine', toLocationId: 'lantern-keep', distanceMiles: 5, defaultPace: 'standard', terrainNote: 'High shelf road with lake view.', description: 'Quarry to keep.', tags: ['mountain'] },
+                        { id: 'icefall-keep-road', name: 'Lantern Road', fromLocationId: 'icefall-pass', toLocationId: 'lantern-keep', distanceMiles: 9, defaultPace: 'cautious', terrainNote: 'Forest road descends toward frozen lake.', description: 'High pass to keep.', tags: ['mountain'] },
+                        { id: 'keep-reedmarket-road', name: 'River Road Down', fromLocationId: 'lantern-keep', toLocationId: 'reedmarket', distanceMiles: 14, defaultPace: 'standard', terrainNote: 'Mountain road descends to warm river basin. Snowmelt feeds marsh.', description: 'Highland to wetland descent.', tags: ['transition', 'river'] },
+                        { id: 'reedmarket-ferry-lane', name: 'Market Ferry Lane', fromLocationId: 'reedmarket', toLocationId: 'willow-ferry', distanceMiles: 2, defaultPace: 'standard', terrainNote: 'Boardwalk to ferry.', description: 'Market to ferry.', tags: ['wetland'] },
+                        { id: 'ferry-observatory-boardwalk', name: 'Observatory Boardwalk', fromLocationId: 'willow-ferry', toLocationId: 'heron-observatory', distanceMiles: 3, defaultPace: 'standard', terrainNote: 'Raised boardwalk over marsh.', description: 'Ferry to observatory.', tags: ['wetland'] },
+                        { id: 'observatory-gate-levee', name: 'Levee Road', fromLocationId: 'heron-observatory', toLocationId: 'mire-gate', distanceMiles: 3, defaultPace: 'standard', terrainNote: 'Levee road, firm when dry.', description: 'Observatory to gate.', tags: ['wetland'] },
+                        { id: 'reedmarket-gate-road', name: 'Mire Gate Road', fromLocationId: 'reedmarket', toLocationId: 'mire-gate', distanceMiles: 4, defaultPace: 'standard', terrainNote: 'Levee road around marsh.', description: 'Market loop to gate.', tags: ['wetland'] },
+                        { id: 'harbor-mosswood-direct', name: 'Harbor to Mosswood Direct', fromLocationId: 'harbor-stead', toLocationId: 'mosswood-crossing', distanceMiles: 8, defaultPace: 'standard', terrainNote: 'Old road through wet woodland. Transition coastal to forest.', description: 'Direct road from harbor to woodland crossing for first-session travel.', tags: ['road', 'coastal'] },
+                        { id: 'harbor-caravanserai-trade-road', name: 'Coast to Basin Trade Road', fromLocationId: 'harbor-stead', toLocationId: 'dawn-caravanserai', distanceMiles: 20, defaultPace: 'standard', terrainNote: 'Long trade road crossing woodland and steppe. Climate shifts from coastal to arid.', description: 'Major continent trade artery.', tags: ['trade', 'continent'] }
                     ]),
                     phenomena: Object.freeze([
-                        { id: 'sunward-heat-haze', name: 'Heat Haze', locationId: 'dawn-caravanserai', category: 'Weatherlike', visibilityNote: 'Distance and landmarks shimmer in afternoon heat.', terrainNote: 'Surface heat drains stamina by table ruling only.', travelNote: 'Consider a cautious pace during the hottest hours.', severity: 2, defaultDurationHours: 5, description: 'A common desert afternoon condition.', tags: ['heat', 'desert'] },
-                        { id: 'glasswind-whistle', name: 'Glasswind Whistle', locationId: 'red-mesa-watch', category: 'Terrain', visibilityNote: 'Dust can briefly obscure the lower trail.', terrainNote: 'Wind cuts across exposed ledges.', travelNote: 'Use as a caution cue on the mesa trail.', severity: 1, defaultDurationHours: 2, description: 'Wind passing through narrow red-stone gaps.', tags: ['wind', 'mesa'] }
+                        { id: 'harbor-fog', name: 'Harbor Fog', locationId: 'harbor-stead', category: 'Weatherlike', visibilityNote: 'Fog can soften sight lines across the water.', terrainNote: 'Slick dock planks after damp weather.', travelNote: 'Ships and small boats slow until visibility improves.', severity: 1, defaultDurationHours: 4, description: 'Common low coastal fog. Occurs in coastal climate only.', tags: ['fog', 'coast'] },
+                        { id: 'forest-drizzle', name: 'Canopy Drizzle', locationId: 'mosswood-crossing', category: 'Weatherlike', visibilityNote: 'Drizzle under canopy.', terrainNote: 'Mossy stone slick.', travelNote: 'Woodland travel slower.', severity: 1, defaultDurationHours: 6, description: 'Temperate forest drizzle.', tags: ['rain', 'forest'] },
+                        { id: 'heat-haze', name: 'Heat Haze', locationId: 'dawn-caravanserai', category: 'Weatherlike', visibilityNote: 'Distance shimmers in afternoon heat.', terrainNote: 'Surface heat drains stamina by table ruling only.', travelNote: 'Consider cautious pace during hottest hours.', severity: 2, defaultDurationHours: 5, description: 'Common desert afternoon condition. Desert climate only; no maritime gale.', tags: ['heat', 'desert'] },
+                        { id: 'blowing-snow', name: 'Blowing Snow', locationId: 'icefall-pass', category: 'Weatherlike', visibilityNote: 'Snow can erase pass markers.', terrainNote: 'Ice and drifted snow complicate footing.', travelNote: 'Use as reason to slow, shelter, or turn back.', severity: 3, defaultDurationHours: 3, description: 'High-pass whiteout. Mountain climate only.', tags: ['snow', 'mountain'] },
+                        { id: 'river-mist', name: 'River Mist', locationId: 'reedmarket', category: 'Weatherlike', visibilityNote: 'Morning mist blurs far bank.', terrainNote: 'Damp boards may be slippery.', travelNote: 'Ferry crossings slower until mist lifts.', severity: 1, defaultDurationHours: 3, description: 'Routine river-morning condition. Wetland climate, monsoon surge possible.', tags: ['mist', 'wetland'] }
                     ]),
-                    presets: Object.freeze([{ id: 'sunward-road-start', name: 'Caravan Road Start', locationId: 'dawn-caravanserai', phenomenonIds: [], defaultPace: 'standard', description: 'Start a travel-focused session at the caravanserai.', tags: ['starter', 'travel'], sourcePresetId: null, sourcePresetVersion: null }]),
-                    activeLocationId: 'dawn-caravanserai', favoriteLocationIds: Object.freeze(['dawn-caravanserai']), rulesProfile: '2014'
-                })
-            }),
-            Object.freeze({
-                id: 'frostfall-marches', version: 1, name: 'Frostfall Marches',
-                description: 'A highland frontier with a lodge, a narrow pass, and a lantern-lit keep above a frozen lake.',
-                tags: Object.freeze(['mountain', 'arctic', 'starter']),
-                provenance: Object.freeze({ type: 'owner-authored', label: 'Included generic starter world', note: 'Original GameAssist generic content; no published setting lore.' }),
-                climate: Object.freeze({
-                    activeRegionId: 'frostfall-highland-climate', manualSeason: 'Winter', profileOverrides: Object.freeze({}), customProfiles: Object.freeze([]),
-                    regions: Object.freeze([
-                        Object.freeze({ id: 'frostfall-highland-climate', name: 'Frostfall Highlands', parentId: null, profileId: 'mountain', overrides: Object.freeze({}) }),
-                        Object.freeze({ id: 'frostfall-icefield-climate', name: 'Icefall Pass', parentId: 'frostfall-highland-climate', profileId: 'arctic', overrides: Object.freeze({ temperatureBias: -10, windMph: 24 }) })
-                    ])
-                }),
-                world: Object.freeze({
-                    schemaVersion: WORLD_STATE_SCHEMA_VERSION, revision: 0,
-                    regions: Object.freeze([{ id: 'frostfall-region', name: 'Frostfall Marches', description: 'A generic mountain frontier of forests, ice, and narrow roads.', tags: ['mountain', 'starter'] }]),
-                    geographies: Object.freeze([{ id: 'frostfall-geography', name: 'Stoneback Range', regionId: 'frostfall-region', latitudeBand: 'Cool temperate highland', elevation: 'High passes above a cold lake', terrain: 'Granite ridges, snowfields, and conifer valleys', coast: 'Inland', hydrology: 'Snowmelt streams and a frozen lake', roughness: 'Steep with one maintained pass', tags: ['mountain'] }]),
-                    biomes: Object.freeze([{ id: 'frostfall-biome', name: 'Highland Conifer', vegetation: 'Spruce, larch, and hardy moss', aridity: 'Moist snow climate', ground: 'Needles, stone, and seasonal snow', water: 'Cold streams and meltwater', seasonalResponse: 'Deep snow closes minor trails', tags: ['conifer', 'snow'] }]),
-                    ecoregions: Object.freeze([{ id: 'frostfall-ecoregion', name: 'Snowline Frontier', regionId: 'frostfall-region', geographyId: 'frostfall-geography', biomeId: 'frostfall-biome', climateRegionId: 'frostfall-highland-climate', waterRegime: 'Snowmelt streams and ice-bound lake edge', transition: 'Forest thins into exposed pass country', tags: ['snowline'] }]),
-                    locations: Object.freeze([
-                        { id: 'pinegate-lodge', name: 'Pinegate Lodge', regionId: 'frostfall-region', geographyId: 'frostfall-geography', ecoregionId: 'frostfall-ecoregion', biomeId: 'frostfall-biome', climateRegionId: 'frostfall-highland-climate', environmentName: 'Timbered mountain lodge', environmentGround: 'Packed snow and rough boards', environmentWater: 'Meltwater barrel', modifiers: { temperatureBias: 4, windBias: -5, visibility: 'Sheltered among tall pines' }, description: 'A warm roadside lodge and clear highland starting point.', tags: ['lodge', 'shelter'] },
-                        { id: 'icefall-pass', name: 'Icefall Pass', regionId: 'frostfall-region', geographyId: 'frostfall-geography', ecoregionId: 'frostfall-ecoregion', biomeId: 'frostfall-biome', climateRegionId: 'frostfall-icefield-climate', environmentName: 'Narrow icebound pass', environmentGround: 'Snow, ice, and exposed rock', environmentWater: 'Frozen runoff', modifiers: { temperatureBias: -10, windBias: 10, visibility: 'Long views but frequent blowing snow' }, description: 'A narrow pass where weather makes travel a real choice.', tags: ['pass', 'ice'] },
-                        { id: 'lantern-keep', name: 'Lantern Keep', regionId: 'frostfall-region', geographyId: 'frostfall-geography', ecoregionId: 'frostfall-ecoregion', biomeId: 'frostfall-biome', climateRegionId: 'frostfall-highland-climate', environmentName: 'Stone keep above the lake', environmentGround: 'Icy flagstones', environmentWater: 'Deep cold lake below', modifiers: { temperatureBias: 0, windBias: 3, visibility: 'Clear lake and valley view' }, description: 'A small keep marked by a reliable lantern signal.', tags: ['keep', 'lake'] }
-                    ]),
-                    destinations: Object.freeze([
-                        { id: 'to-pinegate-lodge', name: 'Return to Pinegate Lodge', locationId: 'pinegate-lodge', defaultPace: 'standard', description: 'Prepared warm shelter.', tags: ['home'] },
-                        { id: 'to-icefall-pass', name: 'Cross Icefall Pass', locationId: 'icefall-pass', defaultPace: 'cautious', description: 'Prepared high-pass destination.', tags: ['pass'] },
-                        { id: 'to-lantern-keep', name: 'Travel to Lantern Keep', locationId: 'lantern-keep', defaultPace: 'standard', description: 'Prepared lake overlook destination.', tags: ['keep'] }
-                    ]),
-                    routes: Object.freeze([
-                        { id: 'lodge-pass-road', name: 'Pinegate Pass Road', fromLocationId: 'pinegate-lodge', toLocationId: 'icefall-pass', distanceMiles: 6, defaultPace: 'cautious', terrainNote: 'Switchbacks can drift closed after snow.', description: 'A maintained but exposed pass road.', tags: ['pass'] },
-                        { id: 'lodge-keep-road', name: 'Lantern Road', fromLocationId: 'pinegate-lodge', toLocationId: 'lantern-keep', distanceMiles: 9, defaultPace: 'standard', terrainNote: 'Forest road descends toward the frozen lake.', description: 'A lower road to the keep.', tags: ['road'] }
-                    ]),
-                    phenomena: Object.freeze([
-                        { id: 'frostfall-whiteout', name: 'Blowing Snow', locationId: 'icefall-pass', category: 'Weatherlike', visibilityNote: 'Snow can erase the pass markers.', terrainNote: 'Ice and drifted snow complicate footing.', travelNote: 'Use as a reason to slow, shelter, or turn back by table judgment.', severity: 3, defaultDurationHours: 3, description: 'A short high-pass whiteout.', tags: ['snow', 'wind'] },
-                        { id: 'frostfall-lantern-halo', name: 'Lantern Halo', locationId: 'lantern-keep', category: 'Celestial', visibilityNote: 'Ice crystals circle the keep lantern at night.', terrainNote: '', travelNote: 'No automatic travel change; use as an atmospheric cue.', severity: 0, defaultDurationHours: 4, description: 'A quiet cold-night visual phenomenon.', tags: ['night', 'ice'] }
-                    ]),
-                    presets: Object.freeze([{ id: 'frostfall-lodge-start', name: 'Lodge Before the Pass', locationId: 'pinegate-lodge', phenomenonIds: [], defaultPace: 'cautious', description: 'Start a highland travel session from shelter.', tags: ['starter', 'travel'], sourcePresetId: null, sourcePresetVersion: null }]),
-                    activeLocationId: 'pinegate-lodge', favoriteLocationIds: Object.freeze(['pinegate-lodge']), rulesProfile: '2014'
-                })
-            }),
-            Object.freeze({
-                id: 'mirewood-basin', version: 1, name: 'Mirewood Basin',
-                description: 'A warm river basin with a reed town, a ferry landing, and a raised observatory above the wetlands.',
-                tags: Object.freeze(['tropical', 'swamp', 'starter']),
-                provenance: Object.freeze({ type: 'owner-authored', label: 'Included generic starter world', note: 'Original GameAssist generic content; no published setting lore.' }),
-                climate: Object.freeze({
-                    activeRegionId: 'mirewood-basin-climate', manualSeason: 'Summer', profileOverrides: Object.freeze({}), customProfiles: Object.freeze([]),
-                    regions: Object.freeze([
-                        Object.freeze({ id: 'mirewood-basin-climate', name: 'Mirewood Basin', parentId: null, profileId: 'tropical', overrides: Object.freeze({}) }),
-                        Object.freeze({ id: 'mirewood-marsh-climate', name: 'Reed Marsh', parentId: 'mirewood-basin-climate', profileId: 'swamp', overrides: Object.freeze({ humidity: 94 }) })
-                    ])
-                }),
-                world: Object.freeze({
-                    schemaVersion: WORLD_STATE_SCHEMA_VERSION, revision: 0,
-                    regions: Object.freeze([{ id: 'mirewood-region', name: 'Mirewood Basin', description: 'A generic warm river basin of boardwalks, reed beds, and raised dry ground.', tags: ['wetland', 'starter'] }]),
-                    geographies: Object.freeze([{ id: 'mirewood-geography', name: 'Broadwater Basin', regionId: 'mirewood-region', latitudeBand: 'Warm subtropical', elevation: 'Low floodplain with isolated rises', terrain: 'Mud flats, reed beds, and raised boardwalks', coast: 'Inland', hydrology: 'Slow river, seasonal flood channels, and shallow marsh', roughness: 'Easy by water, uneven on foot', tags: ['wetland'] }]),
-                    biomes: Object.freeze([{ id: 'mirewood-biome', name: 'Reed Marsh', vegetation: 'Tall reeds, cypress, and floating lilies', aridity: 'Saturated', ground: 'Mud, roots, and planked walkways', water: 'River channels and shallow standing water', seasonalResponse: 'Floodwater broadens paths in the wet season', tags: ['swamp', 'river'] }]),
-                    ecoregions: Object.freeze([{ id: 'mirewood-ecoregion', name: 'Floodplain Reaches', regionId: 'mirewood-region', geographyId: 'mirewood-geography', biomeId: 'mirewood-biome', climateRegionId: 'mirewood-basin-climate', waterRegime: 'Slow river channels and seasonal floodwater', transition: 'Raised ground gives way to dense reed beds', tags: ['floodplain'] }]),
-                    locations: Object.freeze([
-                        { id: 'reedmarket', name: 'Reedmarket', regionId: 'mirewood-region', geographyId: 'mirewood-geography', ecoregionId: 'mirewood-ecoregion', biomeId: 'mirewood-biome', climateRegionId: 'mirewood-basin-climate', environmentName: 'Raised reed-market boardwalk', environmentGround: 'Weathered planks and packed reeds', environmentWater: 'Canal beside the market', modifiers: { temperatureBias: 1, windBias: 1, visibility: 'Open across market channels' }, description: 'A stilted market town and accessible starting location.', tags: ['market', 'settlement'] },
-                        { id: 'willow-ferry', name: 'Willow Ferry', regionId: 'mirewood-region', geographyId: 'mirewood-geography', ecoregionId: 'mirewood-ecoregion', biomeId: 'mirewood-biome', climateRegionId: 'mirewood-marsh-climate', environmentName: 'Low ferry landing', environmentGround: 'Mud, roots, and damp planks', environmentWater: 'Slow river crossing', modifiers: { temperatureBias: 0, windBias: -2, visibility: 'Reeds limit shore views' }, description: 'A practical river crossing at the edge of denser marsh.', tags: ['ferry', 'river'] },
-                        { id: 'heron-observatory', name: 'Heron Observatory', regionId: 'mirewood-region', geographyId: 'mirewood-geography', ecoregionId: 'mirewood-ecoregion', biomeId: 'mirewood-biome', climateRegionId: 'mirewood-basin-climate', environmentName: 'Raised wooden observatory', environmentGround: 'Dry platform and ladder', environmentWater: 'Rain tank and distant river', modifiers: { temperatureBias: -1, windBias: 4, visibility: 'High view above the reeds' }, description: 'A raised platform used for sky watching and river signals.', tags: ['observatory', 'tower'] }
-                    ]),
-                    destinations: Object.freeze([
-                        { id: 'to-reedmarket', name: 'Return to Reedmarket', locationId: 'reedmarket', defaultPace: 'standard', description: 'Prepared market-town return.', tags: ['home'] },
-                        { id: 'to-willow-ferry', name: 'Take Willow Ferry', locationId: 'willow-ferry', defaultPace: 'cautious', description: 'Prepared river crossing.', tags: ['ferry'] },
-                        { id: 'to-heron-observatory', name: 'Climb to Heron Observatory', locationId: 'heron-observatory', defaultPace: 'standard', description: 'Prepared raised-platform destination.', tags: ['tower'] }
-                    ]),
-                    routes: Object.freeze([
-                        { id: 'market-ferry-boardwalk', name: 'Reedwalk Boardwalk', fromLocationId: 'reedmarket', toLocationId: 'willow-ferry', distanceMiles: 4, defaultPace: 'cautious', terrainNote: 'Boardwalk sections can be slick or partly flooded.', description: 'A short wetland boardwalk.', tags: ['boardwalk'] },
-                        { id: 'market-observatory-trail', name: 'Heron Rise Trail', fromLocationId: 'reedmarket', toLocationId: 'heron-observatory', distanceMiles: 3, defaultPace: 'standard', terrainNote: 'Raised trail climbs gradually above the floodplain.', description: 'A dry approach to the observatory.', tags: ['trail'] }
-                    ]),
-                    phenomena: Object.freeze([
-                        { id: 'mirewood-fireflies', name: 'Marsh Fireflies', locationId: 'willow-ferry', category: 'Natural', visibilityNote: 'Warm-night lights drift over the reeds.', terrainNote: '', travelNote: 'No automatic travel change; use as a night scene cue.', severity: 0, defaultDurationHours: 3, description: 'Harmless lights over wetland water.', tags: ['night', 'wetland'] },
-                        { id: 'mirewood-river-mist', name: 'River Mist', locationId: 'reedmarket', category: 'Weatherlike', visibilityNote: 'Morning mist blurs far bank and canal signs.', terrainNote: 'Damp boards may be slippery.', travelNote: 'Ferry crossings may be slower until the mist lifts.', severity: 1, defaultDurationHours: 3, description: 'A routine river-morning condition.', tags: ['mist', 'river'] }
-                    ]),
-                    presets: Object.freeze([{ id: 'mirewood-market-start', name: 'Market Morning', locationId: 'reedmarket', phenomenonIds: [], defaultPace: 'standard', description: 'Start a session in the raised market town.', tags: ['starter'], sourcePresetId: null, sourcePresetVersion: null }]),
-                    activeLocationId: 'reedmarket', favoriteLocationIds: Object.freeze(['reedmarket']), rulesProfile: '2014'
+                    presets: Object.freeze([{ id: 'aurelian-arrival', name: 'Aurelian Arrival', locationId: 'harbor-stead', phenomenonIds: [], defaultPace: 'standard', description: 'Start a continent-spanning session at the windward harbor. Travel through forest, desert, highland, and marsh with coherent climate and weather.', tags: ['starter', 'continent'], sourcePresetId: null, sourcePresetVersion: null }]),
+                    activeLocationId: 'harbor-stead', favoriteLocationIds: Object.freeze(['harbor-stead', 'dawn-caravanserai', 'pinegate-lodge']), rulesProfile: '2014'
                 })
             })
         ]);
@@ -24419,7 +24539,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             sources: [
                 originalWorldPackSource({
                     id: 'asterfall-concord', name: 'Asterfall Concord', rootRegion: 'The Asterfall Concord',
-                    description: 'A coastal-and-upland concord rebuilding its roads after a harmless starfall changed trade, navigation, and local rivalries. It supports harbor politics, frontier expeditions, river travel, skywatching, and eight connected regional fronts.',
+                    description: 'A coastal-and-upland concord rebuilding its roads after a harmless starfall changed trade, navigation, and local rivalries. It supports harbor politics, frontier expeditions, river travel, skywatching, and six connected regional fronts.',
                     rootDescription: 'An original setting-scale concord of independent towns, highland wardens, and river councils bound by a recently renewed road compact.',
                     climateLabel: 'wind-tempered coastal', climateTag: 'coastal', biomeTag: 'mixed-land', terrainTag: 'roadland', waterTag: 'river',
                     temperatureF: 60, humidity: 63, precipitationChance: 42, windMph: 11, vegetation: 'Pine groves, orchard belts, reed banks, and meadow hedges', aridity: 'Moist', ground: 'Firm road, grass, stone, and seasonal mud', water: 'Streams, canals, and sheltered inlets', seasonalResponse: 'Spring floods refresh low roads; autumn winds trouble high crossings.',
@@ -24429,18 +24549,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     templateName: 'Asterfall Skyglow', templateCategory: 'Natural', templateVisibility: 'Fine silver motes remain visible above open water after dusk.', templateTerrain: 'No automatic terrain change; damp stone may gleam under the light.', templateTravel: 'Useful as a navigational scene cue along marked roads.', templateSeverity: 1, templateDuration: 4, phenomenonSuffix: 'Skyglow',
                     regions: [
                         { name: 'Ember Coast', tag: 'ember-coast', description: 'The original Ember Coast survives here as one harborward district, not a complete setting.', terrain: 'Pebbled shore and bluff road', hydrology: 'Tidal inlets and freshwater streams', locations: [{ name: 'Harbor Stead', role: 'Working harbor', tag: 'harbor' }, { name: 'Beaconstairs', role: 'Cliff signal tower', tag: 'beacon' }, { name: 'Cinder Quay', role: 'Warehouse lane', tag: 'trade' }, { name: 'Mosswood Crossing', role: 'Stone bridge', tag: 'crossing' }, { name: 'Tideglass Chapel', role: 'Open shrine', tag: 'shrine' }], hook: 'Dock councils seek neutral guides for a disputed convoy.' },
-                        { name: 'Sable Ridge', tag: 'sable-ridge', description: 'A high road district of slate cuts, sheep paths, and watchfire stations.', terrain: 'Slate ridges and switchback roads', locations: [{ name: 'Nine Cairns', role: 'Waystone field', tag: 'cairn' }, { name: 'Rook Ladder', role: 'Ridge stair', tag: 'stair' }, { name: 'Sable Watch', role: 'Hill fort', tag: 'watch' }, { name: 'Hearthcut Inn', role: 'Road inn', tag: 'inn' }, { name: 'Windmill Fold', role: 'Terraced farm', tag: 'farm' }], hook: 'A missing road survey has left three villages arguing over a new boundary.' },
-                        { name: 'Lantern Plains', tag: 'lantern-plains', description: 'Grain country where night lamps mark irrigation channels and caravan lanes.', terrain: 'Open fields and canal banks', locations: [{ name: 'Bellwheat Market', role: 'Market square', tag: 'market' }, { name: 'Guilder Ford', role: 'Shallow ford', tag: 'ford' }, { name: 'Lampfield Manor', role: 'Council estate', tag: 'manor' }, { name: 'Rillhouse', role: 'Canal lock', tag: 'lock' }, { name: 'South Furrow', role: 'Farm hamlet', tag: 'hamlet' }], hook: 'A canal schedule has been altered, threatening the seasonal grain run.' },
-                        { name: 'Glasswater Delta', tag: 'glasswater-delta', description: 'A many-channel delta of ferry villages, salt gardens, and reed islands.', terrain: 'Reed islands and raised causeways', hydrology: 'Braided river mouths', locations: [{ name: 'Mirror Ferry', role: 'Ferry landing', tag: 'ferry' }, { name: 'Salt Reed Hall', role: 'River council hall', tag: 'council' }, { name: 'Dovecurrent', role: 'Canal village', tag: 'village' }, { name: 'Low Tide Archive', role: 'Stilted archive', tag: 'archive' }, { name: 'Wicker Point', role: 'Causeway outpost', tag: 'outpost' }], hook: 'An archive ledger names a route no modern ferry captain admits to using.' },
-                        { name: 'Kite March', tag: 'kite-march', description: 'A breezy borderland where messenger kites and mounted couriers share the same open road.', terrain: 'Rolling grass and marker posts', locations: [{ name: 'Kitegate', role: 'Border gate', tag: 'gate' }, { name: 'Pennywind Camp', role: 'Courier camp', tag: 'camp' }, { name: 'Blue Post', role: 'Signal post', tag: 'signal' }, { name: 'Morrow Field', role: 'Mustering ground', tag: 'field' }, { name: 'Hareline Well', role: 'Road well', tag: 'well' }], hook: 'A courier’s sealed map arrived with its destination name scratched away.' },
-                        { name: 'Hollowvine', tag: 'hollowvine', description: 'A damp woodland district built around hollow trees, cider yards, and forgotten culverts.', terrain: 'Woodland hollow and damp lanes', locations: [{ name: 'Cider Crown', role: 'Orchard village', tag: 'orchard' }, { name: 'Hollow Bell', role: 'Tree shrine', tag: 'shrine' }, { name: 'Rootbridge', role: 'Covered bridge', tag: 'bridge' }, { name: 'Vinewarden Lodge', role: 'Ranger lodge', tag: 'lodge' }, { name: 'Mothmere', role: 'Forest pond', tag: 'pond' }], hook: 'The seasonal cider tally hides a message from an earlier road compact.' },
-                        { name: 'Cloudstep Reach', tag: 'cloudstep-reach', description: 'A high escarpment of rope lifts, quarry towns, and storm shelters.', terrain: 'Escarpments and quarry shelves', elevation: 'High upland', locations: [{ name: 'Cloudstep Lift', role: 'Rope lift station', tag: 'lift' }, { name: 'Quarry Nine', role: 'Stone quarry', tag: 'quarry' }, { name: 'Rainshelf', role: 'Storm shelter', tag: 'shelter' }, { name: 'Gullspan', role: 'High bridge', tag: 'bridge' }, { name: 'Upper Tern', role: 'Cliff hamlet', tag: 'hamlet' }], hook: 'A lift crew refuses a routine cargo after hearing voices in the empty counterweight shaft.' },
-                        { name: 'Starfall Basin', tag: 'starfall-basin', description: 'A lake basin where surveyors, glassworkers, and gardeners debate what the falling lights changed.', terrain: 'Lake basin and mineral gardens', hydrology: 'Clear basin lakes', locations: [{ name: 'Aster Well', role: 'Survey station', tag: 'survey' }, { name: 'Blueglass Row', role: 'Glassworker lane', tag: 'craft' }, { name: 'Comet Orchard', role: 'Experimental orchard', tag: 'orchard' }, { name: 'Basin Gate', role: 'Lake gate', tag: 'gate' }, { name: 'Night Survey Camp', role: 'Field camp', tag: 'camp' }], hook: 'A harmless skyfall specimen has gone missing before a public council demonstration.' }
+                                                { name: 'Sable Ridge', tag: 'sable-ridge', description: 'A high road district of slate cuts, sheep paths, and watchfire stations.', terrain: 'Slate ridges and switchback roads', locations: [{ name: 'Nine Cairns', role: 'Waystone field', tag: 'cairn' }, { name: 'Rook Ladder', role: 'Ridge stair', tag: 'stair' }, { name: 'Sable Watch', role: 'Hill fort', tag: 'watch' }, { name: 'Hearthcut Inn', role: 'Road inn', tag: 'inn' }, { name: 'Windmill Fold', role: 'Terraced farm', tag: 'farm' }], hook: 'A missing road survey has left three villages arguing over a new boundary.' },
+                                                { name: 'Lantern Plains', tag: 'lantern-plains', description: 'Grain country where night lamps mark irrigation channels and caravan lanes.', terrain: 'Open fields and canal banks', locations: [{ name: 'Bellwheat Market', role: 'Market square', tag: 'market' }, { name: 'Guilder Ford', role: 'Shallow ford', tag: 'ford' }, { name: 'Lampfield Manor', role: 'Council estate', tag: 'manor' }, { name: 'Rillhouse', role: 'Canal lock', tag: 'lock' }, { name: 'South Furrow', role: 'Farm hamlet', tag: 'hamlet' }], hook: 'A canal schedule has been altered, threatening the seasonal grain run.' },
+                                                { name: 'Glasswater Delta', tag: 'glasswater-delta', description: 'A many-channel delta of ferry villages, salt gardens, and reed islands.', terrain: 'Reed islands and raised causeways', hydrology: 'Braided river mouths', locations: [{ name: 'Mirror Ferry', role: 'Ferry landing', tag: 'ferry' }, { name: 'Salt Reed Hall', role: 'River council hall', tag: 'council' }, { name: 'Dovecurrent', role: 'Canal village', tag: 'village' }, { name: 'Low Tide Archive', role: 'Stilted archive', tag: 'archive' }, { name: 'Wicker Point', role: 'Causeway outpost', tag: 'outpost' }], hook: 'An archive ledger names a route no modern ferry captain admits to using.' },
+                                                { name: 'Kite March', tag: 'kite-march', description: 'A breezy borderland where messenger kites and mounted couriers share the same open road.', terrain: 'Rolling grass and marker posts', locations: [{ name: 'Kitegate', role: 'Border gate', tag: 'gate' }, { name: 'Pennywind Camp', role: 'Courier camp', tag: 'camp' }, { name: 'Blue Post', role: 'Signal post', tag: 'signal' }, { name: 'Morrow Field', role: 'Mustering ground', tag: 'field' }, { name: 'Hareline Well', role: 'Road well', tag: 'well' }], hook: 'A courier’s sealed map arrived with its destination name scratched away.' },
+                                                { name: 'Hollowvine', tag: 'hollowvine', description: 'A damp woodland district built around hollow trees, cider yards, and forgotten culverts.', terrain: 'Woodland hollow and damp lanes', locations: [{ name: 'Cider Crown', role: 'Orchard village', tag: 'orchard' }, { name: 'Hollow Bell', role: 'Tree shrine', tag: 'shrine' }, { name: 'Rootbridge', role: 'Covered bridge', tag: 'bridge' }, { name: 'Vinewarden Lodge', role: 'Ranger lodge', tag: 'lodge' }, { name: 'Mothmere', role: 'Forest pond', tag: 'pond' }], hook: 'The seasonal cider tally hides a message from an earlier road compact.' }
                     ]
                 }),
                 originalWorldPackSource({
                     id: 'veyra-turning', name: 'Veyra Turning', rootRegion: 'The Turning Lands',
-                    description: 'A vast inland cycle of caravan cities, sun gardens, seasonal rivers, and treaty passes. It supports migration politics, mercantile play, ruins, weathered roads, and a broad route network without borrowing any published world.',
+                    description: 'A vast inland cycle of caravan cities, sun gardens, seasonal rivers, and treaty passes. It supports migration politics, mercantile play, ruins, weathered roads, seven connected regional fronts, and a broad route network without borrowing any published world.',
                     rootDescription: 'An original setting-scale land of rotating market charters; each district holds a different season of trade, pilgrimage, and local authority.',
                     climateLabel: 'sunlit continental', climateTag: 'continental', biomeTag: 'steppe-land', terrainTag: 'caravan-road', waterTag: 'well',
                     temperatureF: 71, humidity: 36, precipitationChance: 20, windMph: 13, vegetation: 'Sun grass, thorn hedges, date palms, and irrigated garden strips', aridity: 'Dry to seasonal', ground: 'Packed earth, stone paving, gravel, and loose sand', water: 'Wells, caravan cisterns, and seasonal rivers', seasonalResponse: 'Spring river runs open new market roads; late summer heat favors night caravans.',
@@ -24450,13 +24568,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     templateName: 'Veyran Dust Bloom', templateCategory: 'Weatherlike', templateVisibility: 'Fine amber dust catches low sun beyond the road markers.', templateTerrain: 'Loose dust gathers at the edges of paving and shallow ruts.', templateTravel: 'Use as a descriptive reason to favor well-marked routes and rests.', templateSeverity: 1, templateDuration: 3, phenomenonSuffix: 'Dust Bloom',
                     regions: [
                         { name: 'Sunward Expanse', tag: 'sunward-expanse', description: 'The original Sunward Expanse is one caravanward district within the larger Turning Lands.', terrain: 'Sun flats and marked caravan roads', locations: [{ name: 'Brasswell', role: 'Caravan well', tag: 'well' }, { name: 'Sunpost', role: 'Road station', tag: 'post' }, { name: 'Hearthshade', role: 'Travel court', tag: 'court' }, { name: 'Amber Mile', role: 'Marker road', tag: 'road' }, { name: 'Nettle Oasis', role: 'Garden oasis', tag: 'oasis' }], hook: 'A traveling charter has assigned the same well to two rival caravans.' },
-                        { name: 'Copperfield', tag: 'copperfield', description: 'Irrigated fields and small foundries ring an old copper-rich hill.', terrain: 'Irrigated fields and low foundry hills', locations: [{ name: 'Copper Bell', role: 'Foundry square', tag: 'forge' }, { name: 'Canal Hearth', role: 'Lock village', tag: 'canal' }, { name: 'Red Furrow', role: 'Farm terrace', tag: 'farm' }, { name: 'Sparrow Mill', role: 'Grain mill', tag: 'mill' }, { name: 'Kiln Road', role: 'Trade lane', tag: 'trade' }], hook: 'A shipment of common tools has vanished between the kiln and the market.' },
-                        { name: 'Saltwheel Coast', tag: 'saltwheel-coast', description: 'A dry inland shore on a shallow salt sea where wind carts run between pans and piers.', terrain: 'Salt pans and wind-cart tracks', hydrology: 'Shallow saline sea', locations: [{ name: 'Wheel Pier', role: 'Salt pier', tag: 'pier' }, { name: 'Whitepan Camp', role: 'Salt camp', tag: 'camp' }, { name: 'Kite Saltworks', role: 'Evaporation works', tag: 'works' }, { name: 'Brine Market', role: 'Trade market', tag: 'market' }, { name: 'Low Beacon', role: 'Shore marker', tag: 'beacon' }], hook: 'The salt fleet has returned early with a passenger who refuses to name their origin.' },
-                        { name: 'Tenfold Pass', tag: 'tenfold-pass', description: 'A ladder of high passes where each gate collects a different kind of toll or promise.', terrain: 'Stone pass and switchback trail', elevation: 'High pass', locations: [{ name: 'First Gate', role: 'Toll gate', tag: 'gate' }, { name: 'Third Shelter', role: 'Stone shelter', tag: 'shelter' }, { name: 'Sixth Echo', role: 'Pass shrine', tag: 'shrine' }, { name: 'Ninth Turn', role: 'Switchback', tag: 'turn' }, { name: 'Tenth Market', role: 'Pass market', tag: 'market' }], hook: 'A gatekeeper has accepted a promise that nobody remembers making.' },
-                        { name: 'Ashwillow Vale', tag: 'ashwillow-vale', description: 'A cool vale of ash trees, pools, and quiet crafts between the hotter routes.', terrain: 'Willow vale and shallow pools', locations: [{ name: 'Ash Pool', role: 'Spring pool', tag: 'spring' }, { name: 'Willow Court', role: 'Craft court', tag: 'craft' }, { name: 'Stone Basket', role: 'Bridge', tag: 'bridge' }, { name: 'Hush Orchard', role: 'Orchard', tag: 'orchard' }, { name: 'Vale Ledger', role: 'Record house', tag: 'archive' }], hook: 'A ledger dispute threatens to close the only shaded route before high summer.' },
-                        { name: 'Rainbell Canopy', tag: 'rainbell-canopy', description: 'A rare high-rain forest whose suspended bells announce changing water levels.', terrain: 'Canopy paths and rain-fed ravines', locations: [{ name: 'Bellroot', role: 'Canopy village', tag: 'village' }, { name: 'Rain Ladder', role: 'Tree stair', tag: 'stair' }, { name: 'Moss Bell', role: 'Signal grove', tag: 'signal' }, { name: 'Dripstone Hall', role: 'Ravine hall', tag: 'hall' }, { name: 'Green Rope', role: 'Suspension bridge', tag: 'bridge' }], hook: 'The bells have begun ringing in a sequence no waterkeeper recognizes.' },
-                        { name: 'Northgate Steppe', tag: 'northgate-steppe', description: 'Open grass and distant gate towers mark the northern edge of the charter roads.', terrain: 'Open steppe and watch towers', locations: [{ name: 'Northgate', role: 'Stone gate', tag: 'gate' }, { name: 'Hawk Camp', role: 'Rider camp', tag: 'camp' }, { name: 'Long Marker', role: 'Road marker', tag: 'marker' }, { name: 'Drybridge', role: 'Seasonal bridge', tag: 'bridge' }, { name: 'Tallow Field', role: 'Grazing ground', tag: 'field' }], hook: 'A rider has found a fresh charter seal far beyond its assigned route.' },
-                        { name: 'Dawnbarrow', tag: 'dawnbarrow', description: 'Ancient burial mounds, new observatories, and a public dawn market share one low ridge.', terrain: 'Low ridge and mound fields', locations: [{ name: 'Dawn Steps', role: 'Market stair', tag: 'market' }, { name: 'Barrow Ring', role: 'Mound circle', tag: 'ruin' }, { name: 'New Lens', role: 'Observatory', tag: 'sky' }, { name: 'Candle Gate', role: 'Ridge gate', tag: 'gate' }, { name: 'Morning Yard', role: 'Public yard', tag: 'yard' }], hook: 'An observatory assistant has charted a route that appears only at dawn.' }
+                                                { name: 'Copperfield', tag: 'copperfield', description: 'Irrigated fields and small foundries ring an old copper-rich hill.', terrain: 'Irrigated fields and low foundry hills', locations: [{ name: 'Copper Bell', role: 'Foundry square', tag: 'forge' }, { name: 'Canal Hearth', role: 'Lock village', tag: 'canal' }, { name: 'Red Furrow', role: 'Farm terrace', tag: 'farm' }, { name: 'Sparrow Mill', role: 'Grain mill', tag: 'mill' }, { name: 'Kiln Road', role: 'Trade lane', tag: 'trade' }], hook: 'A shipment of common tools has vanished between the kiln and the market.' },
+                                                { name: 'Saltwheel Coast', tag: 'saltwheel-coast', description: 'A dry inland shore on a shallow salt sea where wind carts run between pans and piers.', terrain: 'Salt pans and wind-cart tracks', hydrology: 'Shallow saline sea', locations: [{ name: 'Wheel Pier', role: 'Salt pier', tag: 'pier' }, { name: 'Whitepan Camp', role: 'Salt camp', tag: 'camp' }, { name: 'Kite Saltworks', role: 'Evaporation works', tag: 'works' }, { name: 'Brine Market', role: 'Trade market', tag: 'market' }, { name: 'Low Beacon', role: 'Shore marker', tag: 'beacon' }], hook: 'The salt fleet has returned early with a passenger who refuses to name their origin.' },
+                                                { name: 'Tenfold Pass', tag: 'tenfold-pass', description: 'A ladder of high passes where each gate collects a different kind of toll or promise.', terrain: 'Stone pass and switchback trail', elevation: 'High pass', locations: [{ name: 'First Gate', role: 'Toll gate', tag: 'gate' }, { name: 'Third Shelter', role: 'Stone shelter', tag: 'shelter' }, { name: 'Sixth Echo', role: 'Pass shrine', tag: 'shrine' }, { name: 'Ninth Turn', role: 'Switchback', tag: 'turn' }, { name: 'Tenth Market', role: 'Pass market', tag: 'market' }], hook: 'A gatekeeper has accepted a promise that nobody remembers making.' },
+                                                { name: 'Ashwillow Vale', tag: 'ashwillow-vale', description: 'A cool vale of ash trees, pools, and quiet crafts between the hotter routes.', terrain: 'Willow vale and shallow pools', locations: [{ name: 'Ash Pool', role: 'Spring pool', tag: 'spring' }, { name: 'Willow Court', role: 'Craft court', tag: 'craft' }, { name: 'Stone Basket', role: 'Bridge', tag: 'bridge' }, { name: 'Hush Orchard', role: 'Orchard', tag: 'orchard' }, { name: 'Vale Ledger', role: 'Record house', tag: 'archive' }], hook: 'A ledger dispute threatens to close the only shaded route before high summer.' },
+                                                { name: 'Rainbell Canopy', tag: 'rainbell-canopy', description: 'A rare high-rain forest whose suspended bells announce changing water levels.', terrain: 'Canopy paths and rain-fed ravines', locations: [{ name: 'Bellroot', role: 'Canopy village', tag: 'village' }, { name: 'Rain Ladder', role: 'Tree stair', tag: 'stair' }, { name: 'Moss Bell', role: 'Signal grove', tag: 'signal' }, { name: 'Dripstone Hall', role: 'Ravine hall', tag: 'hall' }, { name: 'Green Rope', role: 'Suspension bridge', tag: 'bridge' }], hook: 'The bells have begun ringing in a sequence no waterkeeper recognizes.' },
+                                                { name: 'Northgate Steppe', tag: 'northgate-steppe', description: 'Open grass and distant gate towers mark the northern edge of the charter roads.', terrain: 'Open steppe and watch towers', locations: [{ name: 'Northgate', role: 'Stone gate', tag: 'gate' }, { name: 'Hawk Camp', role: 'Rider camp', tag: 'camp' }, { name: 'Long Marker', role: 'Road marker', tag: 'marker' }, { name: 'Drybridge', role: 'Seasonal bridge', tag: 'bridge' }, { name: 'Tallow Field', role: 'Grazing ground', tag: 'field' }], hook: 'A rider has found a fresh charter seal far beyond its assigned route.' }
                     ]
                 }),
                 originalWorldPackSource({
@@ -24482,7 +24599,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 }),
                 originalWorldPackSource({
                     id: 'lumenfen-atlas', name: 'Lumenfen Atlas', rootRegion: 'The Lumenfen Atlas',
-                    description: 'A wetland-and-highland atlas of reed cities, island routes, thunder roads, salt flats, and public map houses. It supports exploration, civic mapping, river politics, storm travel, and eight linked regional fronts.',
+                    description: 'A wetland-and-highland atlas of reed cities, island routes, thunder roads, salt flats, and public map houses. It supports exploration, civic mapping, river politics, storm travel, and nine linked regional fronts.',
                     rootDescription: 'An original setting-scale atlas whose communities maintain public maps because water, weather, and roads routinely redraw the practical borders.',
                     climateLabel: 'storm-fed wetland', climateTag: 'wetland', biomeTag: 'marsh-highland', terrainTag: 'waterway', waterTag: 'marsh',
                     temperatureF: 67, humidity: 76, precipitationChance: 55, windMph: 9, vegetation: 'Reeds, willow, marsh grass, upland fern, and island fruit trees', aridity: 'Humid', ground: 'Boardwalk, wet soil, stone shelf, and grassed levee', water: 'Canals, marsh channels, rain cisterns, and island coves', seasonalResponse: 'Storm season shifts channels; dry weeks reveal forgotten causeways.',
@@ -24492,13 +24609,14 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     templateName: 'Lumenfen Lantern Drift', templateCategory: 'Natural', templateVisibility: 'Warm lantern insects drift over still channel water after rain.', templateTerrain: 'Wet boards glint and may look slick under reflected light.', templateTravel: 'A gentle scene cue for night ferries and quiet boardwalk travel.', templateSeverity: 0, templateDuration: 4, phenomenonSuffix: 'Lantern Drift',
                     regions: [
                         { name: 'Mirewood Basin', tag: 'mirewood-basin', description: 'The original Mirewood Basin is a subordinate basin district inside the larger Lumenfen Atlas.', terrain: 'Reed marsh and raised boardwalk', locations: [{ name: 'Reedmarket', role: 'Raised market', tag: 'market' }, { name: 'Willow Ferry', role: 'Ferry landing', tag: 'ferry' }, { name: 'Heron Observatory', role: 'Watch tower', tag: 'tower' }, { name: 'Mire Gate', role: 'Levee gate', tag: 'gate' }, { name: 'Rootwalk', role: 'Boardwalk crossing', tag: 'boardwalk' }], hook: 'A newly exposed boardwalk points toward a market no current chart includes.' },
-                        { name: 'Reedglass Coast', tag: 'reedglass-coast', description: 'A shore district of glass reeds, tide workshops, and map-lamp docks.', terrain: 'Glass reed shore and low workshops', locations: [{ name: 'Glassreed Dock', role: 'Map dock', tag: 'dock' }, { name: 'Tide Workshop', role: 'Craft shed', tag: 'craft' }, { name: 'Blue Levee', role: 'Flood levee', tag: 'levee' }, { name: 'Cove Ledger', role: 'Map house', tag: 'map' }, { name: 'Salt Lantern', role: 'Shore beacon', tag: 'beacon' }], hook: 'A public map has gained an unsigned route during a night storm.' },
-                        { name: 'Thunderlace Highlands', tag: 'thunderlace-highlands', description: 'Basalt highlands cut by lightning gullies and carefully maintained storm roads.', terrain: 'Basalt shelves and storm gullies', elevation: 'Storm-cut highland', locations: [{ name: 'Thunder Stair', role: 'Basalt stair', tag: 'stair' }, { name: 'Lace Bridge', role: 'Gully bridge', tag: 'bridge' }, { name: 'Storm House', role: 'Shelter house', tag: 'shelter' }, { name: 'Black Rain Yard', role: 'Road yard', tag: 'yard' }, { name: 'High Current', role: 'Signal point', tag: 'signal' }], hook: 'A storm road has been marked closed by someone with no authority to close it.' },
-                        { name: 'Umber Prairie', tag: 'umber-prairie', description: 'Dry grassland between wet districts where seasonal map fairs convene.', terrain: 'Dark grass prairie and shallow channels', locations: [{ name: 'Umber Fair', role: 'Map fair', tag: 'fair' }, { name: 'Low Grass Gate', role: 'Road gate', tag: 'gate' }, { name: 'Ink Well', role: 'Travel well', tag: 'well' }, { name: 'Prairie Tent', role: 'Survey camp', tag: 'camp' }, { name: 'Duneline', role: 'Levee road', tag: 'road' }], hook: 'A mapmaker has sold the same exclusive route to two exploration teams.' },
-                        { name: 'Crownwater Isles', tag: 'crownwater-isles', description: 'Fruit-growing islands connected by ferries, bell towers, and narrow coves.', terrain: 'Island coves and orchard rises', hydrology: 'Island ferry channels', locations: [{ name: 'Crown Ferry', role: 'Ferry pier', tag: 'ferry' }, { name: 'Pearl Orchard', role: 'Island orchard', tag: 'orchard' }, { name: 'Bell Cove', role: 'Signal cove', tag: 'signal' }, { name: 'Low Crown Dock', role: 'Trade dock', tag: 'dock' }, { name: 'Island Ledger', role: 'Map archive', tag: 'archive' }], hook: 'A ferry bell rings for an island route nobody has scheduled.' },
-                        { name: 'Bramble Gate', tag: 'bramble-gate', description: 'A tangled hedge country where levees become dry roads and hidden gardens.', terrain: 'Bramble hedges and raised dry roads', locations: [{ name: 'Bramble Gate', role: 'Hedge gate', tag: 'gate' }, { name: 'Rose Levee', role: 'Raised road', tag: 'levee' }, { name: 'Hidden Garden', role: 'Garden court', tag: 'garden' }, { name: 'Thorn Bridge', role: 'Covered bridge', tag: 'bridge' }, { name: 'Gatehouse Three', role: 'Roadhouse', tag: 'inn' }], hook: 'A gardener’s private path has become the only dry route after a flood.' },
-                        { name: 'Echo Salt Flats', tag: 'echo-salt-flats', description: 'A bright dry basin of salt mirrors, rain collectors, and long-distance signal frames.', terrain: 'Salt flats and rain collector roads', locations: [{ name: 'Echo Frame', role: 'Signal frame', tag: 'signal' }, { name: 'Salt Mirror', role: 'Survey flat', tag: 'survey' }, { name: 'Raincatch Yard', role: 'Collector yard', tag: 'water' }, { name: 'White Road Post', role: 'Road post', tag: 'post' }, { name: 'Flat Lantern', role: 'Night shelter', tag: 'shelter' }], hook: 'A reflected signal repeats a warning from a storm that has not yet arrived.' },
-                        { name: 'Moonreed Wilds', tag: 'moonreed-wilds', description: 'A broad unchanneled wetland where field crews test new map methods and old paths return.', terrain: 'Unchanneled reeds and hidden stone paths', locations: [{ name: 'Moonreed Camp', role: 'Survey camp', tag: 'camp' }, { name: 'Old Causeway', role: 'Stone path', tag: 'causeway' }, { name: 'Heron Ring', role: 'Reed clearing', tag: 'clearing' }, { name: 'Stillwater Post', role: 'Field post', tag: 'post' }, { name: 'Wild Map House', role: 'Temporary archive', tag: 'map' }], hook: 'A field crew asks for escorts after finding a perfectly accurate map of paths that vanished decades ago.' }
+                                                { name: 'Reedglass Coast', tag: 'reedglass-coast', description: 'A shore district of glass reeds, tide workshops, and map-lamp docks.', terrain: 'Glass reed shore and low workshops', locations: [{ name: 'Glassreed Dock', role: 'Map dock', tag: 'dock' }, { name: 'Tide Workshop', role: 'Craft shed', tag: 'craft' }, { name: 'Blue Levee', role: 'Flood levee', tag: 'levee' }, { name: 'Cove Ledger', role: 'Map house', tag: 'map' }, { name: 'Salt Lantern', role: 'Shore beacon', tag: 'beacon' }], hook: 'A public map has gained an unsigned route during a night storm.' },
+                                                { name: 'Thunderlace Highlands', tag: 'thunderlace-highlands', description: 'Basalt highlands cut by lightning gullies and carefully maintained storm roads.', terrain: 'Basalt shelves and storm gullies', elevation: 'Storm-cut highland', locations: [{ name: 'Thunder Stair', role: 'Basalt stair', tag: 'stair' }, { name: 'Lace Bridge', role: 'Gully bridge', tag: 'bridge' }, { name: 'Storm House', role: 'Shelter house', tag: 'shelter' }, { name: 'Black Rain Yard', role: 'Road yard', tag: 'yard' }, { name: 'High Current', role: 'Signal point', tag: 'signal' }], hook: 'A storm road has been marked closed by someone with no authority to close it.' },
+                                                { name: 'Umber Prairie', tag: 'umber-prairie', description: 'Dry grassland between wet districts where seasonal map fairs convene.', terrain: 'Dark grass prairie and shallow channels', locations: [{ name: 'Umber Fair', role: 'Map fair', tag: 'fair' }, { name: 'Low Grass Gate', role: 'Road gate', tag: 'gate' }, { name: 'Ink Well', role: 'Travel well', tag: 'well' }, { name: 'Prairie Tent', role: 'Survey camp', tag: 'camp' }, { name: 'Duneline', role: 'Levee road', tag: 'road' }], hook: 'A mapmaker has sold the same exclusive route to two exploration teams.' },
+                                                { name: 'Crownwater Isles', tag: 'crownwater-isles', description: 'Fruit-growing islands connected by ferries, bell towers, and narrow coves.', terrain: 'Island coves and orchard rises', hydrology: 'Island ferry channels', locations: [{ name: 'Crown Ferry', role: 'Ferry pier', tag: 'ferry' }, { name: 'Pearl Orchard', role: 'Island orchard', tag: 'orchard' }, { name: 'Bell Cove', role: 'Signal cove', tag: 'signal' }, { name: 'Low Crown Dock', role: 'Trade dock', tag: 'dock' }, { name: 'Island Ledger', role: 'Map archive', tag: 'archive' }], hook: 'A ferry bell rings for an island route nobody has scheduled.' },
+                                                { name: 'Bramble Gate', tag: 'bramble-gate', description: 'A tangled hedge country where levees become dry roads and hidden gardens.', terrain: 'Bramble hedges and raised dry roads', locations: [{ name: 'Bramble Gate', role: 'Hedge gate', tag: 'gate' }, { name: 'Rose Levee', role: 'Raised road', tag: 'levee' }, { name: 'Hidden Garden', role: 'Garden court', tag: 'garden' }, { name: 'Thorn Bridge', role: 'Covered bridge', tag: 'bridge' }, { name: 'Gatehouse Three', role: 'Roadhouse', tag: 'inn' }], hook: 'A gardener’s private path has become the only dry route after a flood.' },
+                                                { name: 'Echo Salt Flats', tag: 'echo-salt-flats', description: 'A bright dry basin of salt mirrors, rain collectors, and long-distance signal frames.', terrain: 'Salt flats and rain collector roads', locations: [{ name: 'Echo Frame', role: 'Signal frame', tag: 'signal' }, { name: 'Salt Mirror', role: 'Survey flat', tag: 'survey' }, { name: 'Raincatch Yard', role: 'Collector yard', tag: 'water' }, { name: 'White Road Post', role: 'Road post', tag: 'post' }, { name: 'Flat Lantern', role: 'Night shelter', tag: 'shelter' }], hook: 'A reflected signal repeats a warning from a storm that has not yet arrived.' },
+                                                { name: 'Moonreed Wilds', tag: 'moonreed-wilds', description: 'A broad unchanneled wetland where field crews test new map methods and old paths return.', terrain: 'Unchanneled reeds and hidden stone paths', locations: [{ name: 'Moonreed Camp', role: 'Survey camp', tag: 'camp' }, { name: 'Old Causeway', role: 'Stone path', tag: 'causeway' }, { name: 'Heron Ring', role: 'Reed clearing', tag: 'clearing' }, { name: 'Stillwater Post', role: 'Field post', tag: 'post' }, { name: 'Wild Map House', role: 'Temporary archive', tag: 'map' }], hook: 'A field crew asks for escorts after finding a perfectly accurate map of paths that vanished decades ago.' },
+                        { name: 'High Lumen Ridge', tag: 'high-lumen-ridge', description: 'A windswept ridge where map houses keep their highest signal frames above flood level.', terrain: 'High ridge and signal frames', locations: [{ name: 'Lumen Signal', role: 'High signal frame', tag: 'signal' }, { name: 'Ridge Archive', role: 'Elevated map archive', tag: 'archive' }, { name: 'Windward Post', role: 'Wind post', tag: 'post' }, { name: 'High Cistern', role: 'Rain cistern', tag: 'cistern' }, { name: 'Ridge Lantern', role: 'Night beacon', tag: 'beacon' }], hook: 'A ridge signal repeats a ferry schedule that has not yet been posted.' }
                     ]
                 })
             ]
@@ -24908,6 +25026,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             runtime.weather.history = Array.isArray(runtime.weather.history)
                 ? runtime.weather.history.slice(-POLICY.almanac.weatherHistoryLimit)
                 : [];
+            runtime.weather.frontHistory = Array.isArray(runtime.weather.frontHistory)
+                ? runtime.weather.frontHistory.slice(-POLICY.almanac.weatherFrontHistoryLimit)
+                : [];
             runtime.weather.locked = runtime.weather.locked === true;
             if (!runtime.environment || typeof runtime.environment !== 'object' || Array.isArray(runtime.environment)) runtime.environment = {};
             runtime.environment.schemaVersion = ENVIRONMENT_STATE_SCHEMA_VERSION;
@@ -24968,7 +25089,27 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             // reconstructing a plausible-looking older branch.
             const storedWorld = sceneRecord(runtime.world) ? runtime.world : {};
             const worldRuntimeSchema = Number(storedWorld.schemaVersion || 0);
-            const worldKnown = ['schemaVersion', 'recentLocationIds', 'revision', 'destinationGrants', 'travel', 'phenomenonGrants', 'activePhenomena', 'phenomenaHistory', 'presetGrants'];
+            const worldKnown = ['schemaVersion', 'recentLocationIds', 'revision', 'destinationGrants', 'travel', 'phenomenonGrants', 'activePhenomena', 'phenomenaHistory', 'presetGrants', 'currentSettings', 'sceneDetailLevel', 'detailLevel'];
+            const normalizedCurrentSettings = (() => {
+                const raw = sceneRecord(storedWorld.currentSettings) ? storedWorld.currentSettings : {};
+                return {
+                    schemaVersion: 1,
+                    baseClimateRegionId: worldReference(raw.baseClimateRegionId) || null,
+                    biomeId: worldReference(raw.biomeId) || null,
+                    ecoregionId: worldReference(raw.ecoregionId) || null,
+                    geographyId: worldReference(raw.geographyId) || null,
+                    regionId: worldReference(raw.regionId) || null,
+                    presetId: worldReference(raw.presetId) || (typeof raw.presetId === 'string' ? raw.presetId.slice(0, 80) : null),
+                    temperatureBias: Number.isFinite(Number(raw.temperatureBias)) ? Math.max(-50, Math.min(50, Math.round(Number(raw.temperatureBias)))) : 0,
+                    humidityBias: Number.isFinite(Number(raw.humidityBias)) ? Math.max(-50, Math.min(50, Math.round(Number(raw.humidityBias)))) : 0,
+                    precipitationBias: Number.isFinite(Number(raw.precipitationBias)) ? Math.max(-50, Math.min(50, Math.round(Number(raw.precipitationBias)))) : 0,
+                    windBias: Number.isFinite(Number(raw.windBias)) ? Math.max(-30, Math.min(30, Math.round(Number(raw.windBias)))) : 0,
+                    ground: typeof raw.ground === 'string' ? raw.ground.slice(0, 200) : null,
+                    water: typeof raw.water === 'string' ? raw.water.slice(0, 200) : null,
+                    visibility: typeof raw.visibility === 'string' ? raw.visibility.slice(0, 200) : null,
+                    environmentName: typeof raw.environmentName === 'string' ? raw.environmentName.slice(0, 200) : null
+                };
+            })();
             runtime.world = Number.isFinite(worldRuntimeSchema) && worldRuntimeSchema > WORLD_RUNTIME_SCHEMA_VERSION
                 ? storedWorld
                 : {
@@ -24982,7 +25123,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     phenomenonGrants: boundedWorldGrantMap(storedWorld.phenomenonGrants, POLICY.almanac.phenomenonGrantLimit),
                     activePhenomena: boundedActivePhenomena(storedWorld.activePhenomena),
                     phenomenaHistory: (Array.isArray(storedWorld.phenomenaHistory) ? storedWorld.phenomenaHistory : []).filter(sceneRecord).slice(-POLICY.almanac.phenomenonHistoryLimit).map(copy),
-                    presetGrants: boundedWorldGrantMap(storedWorld.presetGrants, POLICY.almanac.presetGrantLimit)
+                    presetGrants: boundedWorldGrantMap(storedWorld.presetGrants, POLICY.almanac.presetGrantLimit),
+                    currentSettings: normalizedCurrentSettings,
+                    sceneDetailLevel: ['basic','detailed','technical'].includes(String(storedWorld.sceneDetailLevel||'').toLowerCase()) ? String(storedWorld.sceneDetailLevel).toLowerCase() : 'basic',
+                    detailLevel: ['basic','detailed','technical'].includes(String(storedWorld.detailLevel||'').toLowerCase()) ? String(storedWorld.detailLevel).toLowerCase() : 'basic'
                 };
             return runtime;
         }
@@ -25990,16 +26134,22 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
          * Outputs: a compact Current World screen with descriptive data first and provenance/warnings only when deliberately opened by a GM.
          * Invariant: the screen never mutates provider state and always exposes an Almanac Home return.
          */
-        function showScene(msg, technical = false) {
+        function showScene(msg, technical = false, { detail = null } = {}) {
             const isGm = playerIsGM(msg?.playerid);
             const scene = resolveScene();
             const clock = sceneClockContext(scene);
             const moment = clock.campaignMoment;
             const astronomy = scene.astronomy;
-            const environment = scene.environment?.current;
             const worldContext = currentWorldSessionContext();
             const worldResult = isGm ? worldConfigResult(modState.config.world, { persist: false }) : null;
             const sessionPacks = worldResult?.ok ? worldPackSessionContext(worldResult.config) : null;
+            const runtime = ensureAlmanacRuntime();
+            const requestedDetail = String(detail || (technical ? 'technical' : (runtime.world.sceneDetailLevel || 'basic'))).toLowerCase();
+            const detailLevel = ['basic','detailed','technical'].includes(requestedDetail) ? requestedDetail : (technical ? 'technical' : 'basic');
+            if (detail && detail !== runtime.world.sceneDetailLevel) {
+                runtime.world.sceneDetailLevel = detailLevel;
+            }
+            const detailButtons = `${GameAssist.createButton('Basic', '!aa-scene basic')} ${GameAssist.createButton('Detailed', '!aa-scene detailed')} ${GameAssist.createButton('Technical', '!aa-scene technical')}`;
             const missingLocationMessage = (() => {
                 if (!isGm) return 'Unassigned. The GM has not prepared a named location yet.';
                 if (worldResult?.ok && worldResult.config.locations.length) {
@@ -26013,40 +26163,88 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 }
                 return `Unassigned. ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Create a Location', '!aa-world add location --name "?{Location name|Starting Location}"')}`;
             })();
-            const temporalFields = (() => {
+            const whereWhen = `${scene.location ? `<strong>${_sanitize(scene.location.name)}</strong>` : 'No Current Area'}<br>${moment ? _sanitize(displayMoment(moment)) + ' | ' + _sanitize(moment.season) : 'Time unavailable'}${clock.hasDistinctLocalClock && clock.localMoment ? `<br>Local Clock (${_sanitize(clock.temporal.name)}): ${_sanitize(displayMoment(clock.localMoment))}` : ''}`;
+            const weatherBrief = _sanitize(sceneWeatherSummary(scene, { detailed: detailLevel !== 'basic' }));
+            const climateBaseline = _sanitize(sceneClimateSummary(scene, { detailed: detailLevel !== 'basic', technical: detailLevel === 'technical' && isGm }));
+            const playerFacing = `${weatherBrief}<br>${climateBaseline}`;
+            const temporalFieldsBasic = (() => {
                 if (!scene.temporal) return [];
-                if (technical && isGm) return [{
-                    label: 'Temporal Context',
-                    value: `${_sanitize(scene.temporal.name)} | ${_sanitize(temporalRateLabel(scene.temporal))} | Local Clock: ${_sanitize(scene.temporal.projection.label)} ${GameAssist.createButton('Manage', '!aa-temporal')}`
+                if (clock.hasDistinctLocalClock) return [{ label: 'Local Clock', value: `${_sanitize(scene.temporal.name)}: ${_sanitize(scene.temporal.projection.label)}. The Campaign Clock remains the one elapsed-fictional-time authority.` }];
+                return [{ label: 'Temporal Context', value: `${_sanitize(scene.temporal.name)} follows the Campaign Clock.` }];
+            })();
+            const temporalFieldsDetailed = (() => {
+                if (!scene.temporal) return [];
+                if (detailLevel === 'technical' && isGm) return [{
+                    label: 'Temporal Context', value: `${_sanitize(scene.temporal.name)} | ${_sanitize(temporalRateLabel(scene.temporal))} | Local Clock: ${_sanitize(scene.temporal.projection.label)} ${GameAssist.createButton('Manage', '!aa-temporal')}`
                 }];
                 if (clock.hasDistinctLocalClock) return [{
-                    label: 'Local Clock',
-                    value: `${_sanitize(scene.temporal.name)}: ${_sanitize(scene.temporal.projection.label)}. The Campaign Clock remains the one elapsed-fictional-time authority.${isGm ? ` ${GameAssist.createButton('Manage', '!aa-temporal')}` : ''}`
+                    label: 'Local Clock', value: `${_sanitize(scene.temporal.name)}: ${_sanitize(scene.temporal.projection.label)}. The Campaign Clock remains the one elapsed-fictional-time authority.${isGm ? ` ${GameAssist.createButton('Manage', '!aa-temporal')}` : ''}`
                 }];
-                return isGm ? [{
-                    label: 'Temporal Context',
-                    value: `${_sanitize(scene.temporal.name)} follows the Campaign Clock. ${GameAssist.createButton('Manage', '!aa-temporal')}`
-                }] : [];
+                return isGm ? [{ label: 'Temporal Context', value: `${_sanitize(scene.temporal.name)} follows the Campaign Clock. ${GameAssist.createButton('Manage', '!aa-temporal')}` }] : [];
             })();
-            const technicalFields = technical && isGm ? [
+            const technicalFields = detailLevel === 'technical' && isGm ? [
                 { label: 'Provider Status', value: Object.entries(scene.providers).map(([key, provider]) => `${_sanitize(provider.authority)}: ${_sanitize(provider.status)}`).join(' | ') },
                 { label: 'Provenance', value: Object.entries(scene.provenance).map(([field, evidence]) => `${_sanitize(field)} = ${_sanitize(evidence.authority)} (${_sanitize(evidence.source)})`).join('<br>') || 'No resolved fields.' },
                 { label: 'Warnings', value: scene.warnings.length ? scene.warnings.map(warning => _sanitize(warning.message)).join('<br>') : 'No SceneResolver warnings.' }
             ] : [];
-            sendPanel(msg, technical && isGm ? 'Almanac / Current World / Scene Details' : 'Almanac / Current World / Scene', [
+            const isTechnical = detailLevel === 'technical';
+            // Basic: compact, 2-clicks to core actions - intuitive order: World Context, Where/When, Current, Experience, Environment, Actions
+            if (detailLevel === 'basic') {
+                const locationRow = scene.location ? _sanitize(scene.location.name) : missingLocationMessage;
+                const campaignClockAndSeason = moment ? `${_sanitize(displayMoment(moment))} | ${_sanitize(moment.season)}` : 'TimeAlmanac is unavailable.';
+                sendPanel(msg, 'Almanac / Current World / Scene', [
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Where and When', value: whereWhen },
+                    { label: 'Campaign Clock and Season', value: campaignClockAndSeason },
+                    { label: 'Current', value: playerFacing },
+                    { label: 'Climate Baseline', value: climateBaseline },
+                    { label: 'What Players Experience', value: _sanitize(sceneWeatherSummary(scene, { detailed: false })) },
+                    { label: 'Immediate Environment', value: _sanitize(sceneEnvironmentSummary(scene, { detailed: false })) },
+                    { label: 'Location', value: locationRow },
+                    ...temporalFieldsBasic,
+                    ...(scene.travel ? [{ label: 'Journey', value: `${_sanitize(scene.travel.destinationName)} via ${_sanitize(scene.travel.routeName)} | ${formatTravelMiles(scene.travel.remainingMiles)} left` }] : []),
+                    { label: 'Actions', value: `${isGm && scene.location ? GameAssist.createButton('Area Brief', `!aa-location view --id ${scene.location.id}`) : ''} ${GameAssist.createButton('Weather', '!aa-weather')} ${GameAssist.createButton('Current Settings', '!aa-current')} ${GameAssist.createButton('World Palettes', '!aa-world palettes')} ${GameAssist.createButton('Change Area', '!aa-location')} ${scene.travel ? GameAssist.createButton('Journey', '!aa-travel') : GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Announce', '!aa-announce')}`.trim() },
+                    { label: 'View', value: detailButtons },
+                    { label: 'Navigation', value: `${GameAssist.createButton('Almanac Home', '!aa-gm')} ${GameAssist.createButton('Back', '!aa-gm')}`.trim() }
+                ]);
+                return;
+            }
+            // Detailed: adds environment, phenomena, sky
+            if (detailLevel === 'detailed') {
+                sendPanel(msg, 'Almanac / Current World / Scene - Detailed', [
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Where and When', value: whereWhen },
+                    { label: 'Current', value: playerFacing },
+                    { label: 'What Players Experience', value: _sanitize(sceneWeatherSummary(scene, { detailed: true })) },
+                    { label: 'Immediate Environment', value: _sanitize(sceneEnvironmentSummary(scene, { detailed: true })) },
+                    { label: 'Phenomena', value: _sanitize(scenePhenomenaSummary(scene, { detailed: true })) },
+                    { label: 'Sky', value: astronomy?.moons?.length ? _sanitize(announcementMoonSummary('detailed', astronomy)) : 'Astronomy context unavailable.' },
+                    { label: 'Climate Baseline', value: `${climateBaseline}${isGm ? ` ${GameAssist.createButton('Climate', '!aa-climate')}` : ''}` },
+                    { label: 'Location', value: scene.location ? _sanitize(scene.location.name) : missingLocationMessage },
+                    ...temporalFieldsDetailed,
+                    ...(scene.travel ? [{ label: 'Journey', value: `${_sanitize(scene.travel.destinationName)} via ${_sanitize(scene.travel.routeName)} | ${formatTravelMiles(scene.travel.remainingMiles)} remaining ${GameAssist.createButton('Open Travel', '!aa-travel')}` }] : []),
+                    { label: 'View', value: detailButtons },
+                    { label: 'Navigation', value: `${isGm && scene.location ? GameAssist.createButton('Area Brief', `!aa-location view --id ${scene.location.id}`) : ''} ${GameAssist.createButton('Almanac Home', '!aa-gm')} ${GameAssist.createButton('Back', '!aa-gm')}`.trim() }
+                ]);
+                return;
+            }
+            // Technical: full provenance
+            sendPanel(msg, 'Almanac / Current World / Scene Details', [
                 { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
-                { label: 'Current World', value: sceneOverview(scene, { technical: technical && isGm }) },
-                { label: clock.hasDistinctLocalClock ? 'Campaign Clock & Season' : 'Time & Season', value: moment ? `${_sanitize(displayMoment(moment))} | ${_sanitize(moment.season)}` : 'TimeAlmanac is unavailable.' },
-                ...temporalFields,
+                { label: 'Where and When', value: whereWhen },
+                { label: 'Current World', value: sceneOverview(scene, { technical: true }) },
+                { label: 'Campaign Clock and Season', value: moment ? `${_sanitize(displayMoment(moment))} | ${_sanitize(moment.season)}` : 'TimeAlmanac is unavailable.' },
+                ...temporalFieldsDetailed,
                 { label: 'Weather', value: _sanitize(sceneWeatherSummary(scene, { detailed: true })) },
-                { label: 'Climate Baseline', value: `${_sanitize(sceneClimateSummary(scene, { detailed: true, technical: technical && isGm }))}${isGm ? ` ${GameAssist.createButton('Climate', '!aa-climate')}` : ''}` },
+                { label: 'Climate Baseline', value: `${_sanitize(sceneClimateSummary(scene, { detailed: true, technical: true }))}${isGm ? ` ${GameAssist.createButton('Climate', '!aa-climate')}` : ''}` },
                 { label: 'Immediate Environment', value: _sanitize(sceneEnvironmentSummary(scene, { detailed: true })) },
                 { label: 'Phenomena', value: _sanitize(scenePhenomenaSummary(scene, { detailed: true })) },
                 { label: 'Sky', value: astronomy?.moons?.length ? _sanitize(announcementMoonSummary('detailed', astronomy)) : 'Astronomy context unavailable.' },
                 { label: 'Location', value: scene.location ? _sanitize(scene.location.name) : missingLocationMessage },
                 ...(scene.travel ? [{ label: 'Journey', value: `${_sanitize(scene.travel.destinationName)} via ${_sanitize(scene.travel.routeName)} | ${formatTravelMiles(scene.travel.remainingMiles)} remaining ${GameAssist.createButton('Open Travel', '!aa-travel')}` }] : []),
                 ...technicalFields,
-                { label: 'Navigation', value: `${isGm && scene.location ? GameAssist.createButton('Area Brief', `!aa-location view --id ${scene.location.id}`) : ''} ${isGm && !technical ? GameAssist.createButton('Scene Details', '!aa-scene technical') : ''} ${GameAssist.createButton('Back', '!aa-gm')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}`.trim() }
+                { label: 'View', value: detailButtons },
+                { label: 'Navigation', value: `${isGm && scene.location ? GameAssist.createButton('Area Brief', `!aa-location view --id ${scene.location.id}`) : ''} ${GameAssist.createButton('Back', '!aa-gm')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}`.trim() }
             ]);
         }
 
@@ -26076,6 +26274,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 current: null,
                 forecast: [],
                 history: [],
+                frontHistory: [],
                 locked: false
             };
         }
@@ -26507,8 +26706,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                             : (packContext.installed.length > 1
                                 ? `${packContext.installed.length} full WorldPacks are installed; choose a current area to enter one. ${worldPackOpeningActions(packContext)}`
                                 : (worldConfigIsEmpty(current) ? 'No world selected yet.' : 'Current campaign world is active but has not been saved to the World Library yet.')))) },
-                { label: 'Full Original WorldPacks', value: `Four immutable, legally distributable, setting-scale sources are ready to review and install as editable campaign clones. ${GameAssist.createButton('Browse Full WorldPacks', '!aa-worldpacks library')}` },
-                { label: 'Quick Local Starters', value: `These compact local play surfaces remain available for a fast one-area start; they are not substitutes for a full WorldPack.<br>${starterRows.join('<hr>')}` },
+                { label: 'Setting-Scale WorldPacks (Examples)', value: `Four original, independently installable examples with varied sizes: 6 to 9 regions, 120 to 180 locations, and distinct route networks. They are reference workloads for large-campaign operation, not identical worlds. ${GameAssist.createButton('Browse WorldPacks', '!aa-worldpacks library')}` },
+                { label: 'Continent Starter — Aurelian Reach (MVP)', value: `One continent transect built for MVP viability: temperate windward coast, mossy interior forest, sunward arid basin, frost-capped highland, and warm river marsh. Five climate regions (coastal, temperate, desert, mountain, swamp), six biomes, and five ecoregions follow real-world logic and inform weather generation — maritime gales cannot occur in desert, heat domes cannot occur in alpine winter, etc.<br>${starterRows.join('<hr>')}` },
                 { label: `Saved Worlds (${library.worlds.length})`, value: savedRows },
                 { label: 'Find Saved Worlds', value: `${GameAssist.createButton('Browse Saved Worlds', '!aa-world library saved --page 0')} ${GameAssist.createButton('Search Saved Worlds', savedSearch)}` },
                 { label: 'Create From Scratch', value: GameAssist.createButton('Create Empty World', '!aa-world create --name "?{New world name|My Campaign World}"') },
@@ -27498,17 +27697,29 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             });
             const landscape = [
                 place.region?.name ? `Campaign Front: ${place.region.name}` : null,
-                place.geography?.terrain ? `Terrain: ${place.geography.terrain}` : null,
+                place.geography?.terrain ? `Geography Terrain: ${place.geography.terrain}` : null,
+                place.geography?.elevation ? `Geo Elev: ${place.geography.elevation}` : null,
                 place.geography?.hydrology ? `Water: ${place.geography.hydrology}` : null,
                 place.biome?.vegetation ? `Biome: ${place.biome.vegetation}` : null,
-                location.environmentName ? `Immediate setting: ${location.environmentName}` : null
-            ].filter(Boolean).map(_sanitize).join(' | ');
+                location.environmentName ? `Immediate: ${location.environmentName}` : null,
+                location.terrain ? `Terrain: ${location.terrain}` : null,
+                location.elevation ? `Elevation: ${location.elevation}` : null,
+                location.roadType ? `Road: ${location.roadType}` : null,
+                location.environmentDetail ? `Env Detail: ${location.environmentDetail}` : null,
+                location.environmentGround ? `Ground: ${location.environmentGround}` : null,
+                location.environmentWater ? `Water: ${location.environmentWater}` : null,
+                location.modifiers?.ecoregionName ? `Ecoregion: ${location.modifiers.ecoregionName}` : null
+            ].filter(Boolean).map(_sanitize).join('<br>');
+            const weatherForImpact = isCurrent ? (resolveScene().weather?.current || null) : null;
+            const impactForBrief = weatherForImpact ? travelWeatherImpact(weatherForImpact, null, location, resolveScene().environment?.current) : 'Generate weather for this Current Area to see impact suggestions.';
             const actionButtons = [
                 !isCurrent && !travelTarget ? locationActionButton(location, 'Make Current Area') : '',
                 travelTarget ? GameAssist.createButton('Review Travel Here', travelReviewCommand) : '',
                 isCurrent ? GameAssist.createButton('Open Current Scene', '!aa-scene') : '',
                 isCurrent ? GameAssist.createButton('Generate Weather', '!aa-weather generate') : '',
                 isCurrent ? GameAssist.createButton('Plan Journey', '!aa-travel') : '',
+                GameAssist.createButton('Save Current to This Location', `!aa-location save-current --id ${location.id}`),
+                GameAssist.createButton('Ecoregion Profiles', '!aa-world ecoregion-profiles'),
                 travelTarget ? '' : GameAssist.createButton('Change Area', '!aa-location')
             ].filter(Boolean).join(' ');
             const candidateLabel = travelTarget ? 'Candidate Destination' : 'Candidate Area';
@@ -27521,8 +27732,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ...(showCandidateSetting ? [{ label: 'Candidate Setting', value: `<strong>${_sanitize(candidatePack.name)}</strong> — Full WorldPack; this brief is for one of its campaign-front Locations.` }] : []),
                 { label: isCurrent ? 'Current Area' : candidateLabel, value: `<strong>${_sanitize(location.name)}</strong>${isCurrent ? ' is the Current Area for this Session.' : ' has not been selected; this brief does not change the Current Area.'}` },
                 { label: 'Opening Cue', value: _sanitize(location.description || 'No opening cue is recorded for this Location yet.') },
-                { label: 'Landscape', value: landscape || 'No linked landscape details are recorded yet.' },
+                { label: 'Landscape & Terrain', value: landscape || 'No linked landscape details are recorded yet.' },
                 { label: 'Seasonal Climate', value: climate ? _sanitize(climateSeasonalContextSummary(climate)) : 'No Climate baseline is resolved for this Location.' },
+                ...(isCurrent ? [{ label: 'Weather Impact', value: impactForBrief }] : []),
                 { label: `${routeLabel}${allDirectRoutes.length > routeLimit ? ` (first ${routeLimit})` : (directRoutes.length ? '' : ' (none prepared)')}`, value: routeRows.length
                     ? `${routeRows.join('<br>')}${allDirectRoutes.length > directRoutes.length ? `<br><em>${allDirectRoutes.length - directRoutes.length} more prepared route${allDirectRoutes.length - directRoutes.length === 1 ? '' : 's'}: open Travel to browse them.</em>` : ''}${routeInstruction}`
                     : `No prepared Route directly connects this Location.${travelTarget ? ' Review Travel Here to select an available route from the Current Area.' : ' Use Travel to enter a reviewed direct estimate.'}` },
@@ -27553,7 +27765,15 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const compactLimit = POLICY.almanac.worldSessionCategoryLimit;
             const featured = new Set([current?.id, ...index.favorites.map(item => item.id), ...index.recents.map(item => item.id), ...index.nearby.map(item => item.id)].filter(Boolean));
             const defaultAll = config.locations.filter(location => !featured.has(location.id));
-            const compactLabel = (label, count) => count > compactLimit ? `${label} (first ${compactLimit})` : label;
+            const compactLabel = (label, count) => {
+                if (count <= compactLimit) return label;
+                const trimmed = String(label).replace(/^All\s+/i, '');
+                if (trimmed.toLowerCase() !== String(label).toLowerCase()) {
+                    // Avoid oxymoron like 'All Destinations (first 3)'
+                    return `${trimmed} (first ${compactLimit})`;
+                }
+                return `${label} (first ${compactLimit})`;
+            };
             const locationDetailsButton = location => GameAssist.createButton('Details', `!aa-location view --id ${location.id}`);
             const locationRowValue = (location, includeFavorite) => {
                 const summary = sessionLocationPickerSummary(config, location);
@@ -27570,7 +27790,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const preparedRow = (entries = index.prepared, limit = compactLimit) => entries.length
                 ? entries.slice(0, limit).map(({ destination, location }) => {
                     const summary = sessionLocationPickerSummary(config, location);
-                    return `<strong>${_sanitize(destination.name)}</strong> &mdash; ${_sanitize(location.name)}${summary ? ` (${_sanitize(summary)})` : ''} ${locationDetailsButton(location)} ${GameAssist.createButton('Review Move', `!aa-location destination --id ${destination.id}`)}`;
+                    // Main button does the thing directly; Details is review
+                    return `<strong>${_sanitize(destination.name)}</strong> &mdash; ${_sanitize(location.name)}${summary ? ` (${_sanitize(summary)})` : ''} ${GameAssist.createButton('Go Here', `!aa-location destination --id ${destination.id}`)} ${locationDetailsButton(location)} ${GameAssist.createButton('Inspect', `!aa-location view --id ${location.id}`)}`;
                 }).join('<br>')
                 : 'No prepared destinations yet. Prepare a Location bundle in Worldbuilding for fast, reviewed switching.';
             const hasNoLocations = config.locations.length === 0;
@@ -27610,7 +27831,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     { label: compactLabel('Prepared', index.prepared.length), value: preparedRow() },
                     row('Favorites', index.favorites, 'No favorite locations yet.'),
                     row('Recent', index.recents, 'No locations have been visited yet.'),
-                    row('All (first compact view)', defaultAll, hasNoLocations ? 'Install a full WorldPack, choose a quick local starter, or create the first Location with the button above.' : 'All available locations are already represented above.')
+                    row('Other Locations', defaultAll, hasNoLocations ? 'Install a full WorldPack, choose a quick local starter, or create the first Location with the button above.' : 'All available locations are already represented above.')
                 );
             }
             const searchExample = roll20QueryText(config.locations.slice().sort((left, right) => left.name.localeCompare(right.name))[0]?.name, 'Location', POLICY.almanac.worldNameLength);
@@ -28176,6 +28397,13 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const lower = body.toLowerCase();
             if (!body || /^(menu|manage|status)$/i.test(body)) return showWorldbuilding(msg);
             const libraryCatalogArgs = _parseArgs(body).args;
+            if (/^ecoregion-profiles\b/i.test(body) || /^ecoregion\s+profiles\b/i.test(body) || /^ecoregions\s+profiles\b/i.test(body)) {
+                const args = _parseArgs(body).args;
+                if (/^search\b/i.test(body.replace(/^ecoregion-profiles\s*/i, '').trim()) || args.query) {
+                    return showEcoregionProfiles(msg, { search: args.query || args.value || args.term || '' });
+                }
+                return showEcoregionProfiles(msg, { search: '' });
+            }
             if (/^library\s+saved\s+search\b/i.test(body)) return showSavedWorldLibraryCatalog(msg, { page: libraryCatalogArgs.page, search: libraryCatalogArgs.query || libraryCatalogArgs.value || libraryCatalogArgs.term || '', searchRequested: true });
             if (/^library\s+saved\b/i.test(body)) return showSavedWorldLibraryCatalog(msg, { page: libraryCatalogArgs.page });
             if (lower === 'starters' || lower === 'starter worlds' || lower === 'library' || lower === 'world library') return showWorldLibrary(msg);
@@ -28384,7 +28612,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return phenomenonId ? active.filter(item => item.phenomenonId === phenomenonId) : active;
         }
 
-        function showPreparedDestinationReview(msg, config, requested) {
+        function showPreparedDestinationReview(msg, config, requested, directArgs = null) {
             const sessionWorldContext = currentWorldSessionContext(config);
             const destination = worldRecordByReference(config.destinations, requested);
             if (!destination || !destination.locationId) return sendPanel(msg, 'Almanac / Prepared Destination Needs Attention', [
@@ -28408,6 +28636,21 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Changes', value: 'None.' },
                 { label: 'Navigation', value: `${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
             ]);
+            const isDirect = directArgs && (String(directArgs.direct || directArgs.now || directArgs.go || '').toLowerCase() === 'yes' || directArgs.direct === true);
+            if (isDirect) {
+                const previous = copy(config);
+                config.activeLocationId = target.id;
+                const nextClimate = effectiveClimateContext({ worldConfig: config });
+                commitWorldConfig(config, previous, { action: 'prepared-destination-applied-direct', destinationId: destination.id, locationId: target.id }, msg);
+                recordRecentLocation(target.id);
+                return sendPanel(msg, 'Almanac / Change Location / Moved', [
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, sessionWorldContext) },
+                    { label: 'Current Location', value: `${_sanitize(target.name)} is now active.` },
+                    { label: 'Climate Context', value: nextClimate.baseline ? `${_sanitize(climateSeasonalContextSummary(nextClimate.baseline))}.` : 'No Climate baseline assigned.' },
+                    { label: 'Provider Boundaries', value: 'Weather and other providers remain separately owned. Existing Weather retained until new generation.' },
+                    { label: 'Next Step', value: `${GameAssist.createButton('Open Area Brief', `!aa-location view --id ${target.id}`)} ${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Travel', '!aa-travel')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                ]);
+            }
             const candidate = copy(config);
             candidate.activeLocationId = target.id;
             const before = resolveScene();
@@ -28435,6 +28678,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: 'Provider Boundaries', value: 'This applies only the selected Location and its Worldbuilding parents. Current Weather, Environment overrides, Astronomy, and fictional time remain separately owned and unchanged.' },
                 { label: 'Changes', value: 'None yet. Confirm this reviewed location switch to apply it.' },
                 { label: 'Confirm', value: GameAssist.createButton('Move Party Here', `!aa-location destination confirm --grant ${id}`) },
+                { label: 'Direct', value: `${GameAssist.createButton('Go Here Now (No Review)', `!aa-location destination --id ${destination.id} --direct yes`)} — main action bypasses review` },
                 { label: 'Cancel', value: `${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
@@ -28480,6 +28724,91 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
+        function saveCurrentSettingsToLocation(msg, config, targetLocation) {
+            const scene = resolveScene();
+            const weatherCtx = weatherClimateContext();
+            const ecoregionProfile = weatherCtx.ecoregionProfile || ecoregionProfileForLocation(scene.location) || null;
+            const env = scene.environment?.current || null;
+            const weather = scene.weather?.current || null;
+            const previous = copy(config);
+            // Save ecoregion profile id and modifiers to location
+            if (ecoregionProfile) {
+                targetLocation.ecoregionProfileId = ecoregionProfile.id;
+            }
+            // Merge current environment into location defaults
+            if (env) {
+                if (env.name) targetLocation.environmentName = boundedWorldText(env.name, targetLocation.environmentName || '', POLICY.almanac.worldNameLength) || targetLocation.environmentName;
+                if (env.ground) targetLocation.environmentGround = boundedWorldText(env.ground, targetLocation.environmentGround || '', POLICY.almanac.worldNameLength) || targetLocation.environmentGround;
+                // Preserve water if exists
+                if (env.water) targetLocation.environmentWater = boundedWorldText(env.water, targetLocation.environmentWater || '', POLICY.almanac.worldNameLength) || targetLocation.environmentWater;
+            }
+            // Save current weather biases as location modifiers for recall
+            const mods = targetLocation.modifiers || {};
+            if (ecoregionProfile) {
+                mods.temperatureBias = ecoregionProfile.temperatureBias;
+                mods.windBias = ecoregionProfile.windBias;
+                mods.visibility = ecoregionProfile.visibility || mods.visibility;
+                mods.ecoregionProfileId = ecoregionProfile.id;
+                mods.ecoregionName = ecoregionProfile.name;
+            }
+            // Also preserve any explicit terrain/elevation/roadType/environment from ecoregion profile into location extras
+            if (ecoregionProfile) {
+                targetLocation.terrain = targetLocation.terrain || ecoregionProfile.terrain || '';
+                targetLocation.elevation = targetLocation.elevation || ecoregionProfile.elevation || '';
+                targetLocation.roadType = targetLocation.roadType || ecoregionProfile.roadType || '';
+                targetLocation.environmentDetail = targetLocation.environmentDetail || ecoregionProfile.environment || '';
+            }
+            // Store last saved weather snapshot for recall
+            if (weather) {
+                targetLocation.lastWeather = {
+                    summary: weather.summary,
+                    temperatureF: weather.temperatureF,
+                    windMph: weather.windMph,
+                    kind: weather.kind,
+                    frontType: weather.front?.type || null,
+                    frontStage: weather.front?.stage || null,
+                    savedAt: isoNow()
+                };
+            }
+            targetLocation.modifiers = mods;
+            targetLocation.lastSavedAt = isoNow();
+            commitWorldConfig(config, previous, { action: 'location-current-saved', locationId: targetLocation.id, ecoregionProfileId: ecoregionProfile?.id || null }, msg);
+            return sendPanel(msg, 'Almanac / Location / Current Settings Saved', [
+                { label: 'Location', value: `<strong>${_sanitize(targetLocation.name)}</strong> now stores current settings for recall when party returns.` },
+                { label: 'Saved Ecoregion', value: ecoregionProfile ? `${_sanitize(ecoregionProfile.name)} — ${_sanitize(ecoregionProfile.description)} | Temp ${ecoregionProfile.temperatureBias>=0?'+':''}${ecoregionProfile.temperatureBias}F, Hum ${ecoregionProfile.humidityBias>=0?'+':''}${ecoregionProfile.humidityBias}%, Wind ${ecoregionProfile.windBias>=0?'+':''}${ecoregionProfile.windBias} mph, Precip ${ecoregionProfile.precipitationBias>=0?'+':''}${ecoregionProfile.precipitationBias}%` : 'No ecoregion profile active; location retains previous.' },
+                { label: 'Saved Environment', value: `${_sanitize(targetLocation.environmentName || '—')} | Ground: ${_sanitize(targetLocation.environmentGround || '—')} | Water: ${_sanitize(targetLocation.environmentWater || '—')}` },
+                { label: 'Saved Terrain Details', value: `${_sanitize(targetLocation.terrain || '—')} | Elevation: ${_sanitize(targetLocation.elevation || '—')} | Road: ${_sanitize(targetLocation.roadType || '—')} | Env: ${_sanitize(targetLocation.environmentDetail || targetLocation.environmentName || '—')}` },
+                { label: 'Weather Snapshot', value: weather ? `${_sanitize(weather.summary)} ${weather.temperatureF}F ${weather.windMph}mph ${weather.front ? `${_sanitize(weather.front.typeName||weather.front.type)} ${weather.front.stageName||''}` : ''}` : 'No weather to save yet — generate weather first.' },
+                { label: 'Next', value: `${GameAssist.createButton('Open Area Brief', `!aa-location view --id ${targetLocation.id}`)} ${GameAssist.createButton('Change Location', '!aa-location')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function showEcoregionProfiles(msg, { search = '' } = {}) {
+            const query = String(search || '').trim().toLowerCase();
+            const filtered = query
+                ? BUILT_IN_ECOREGION_PROFILES.filter(p => `${p.name} ${p.description} ${p.tags.join(' ')}`.toLowerCase().includes(query))
+                : BUILT_IN_ECOREGION_PROFILES;
+            const scene = resolveScene();
+            const worldContext = currentWorldSessionContext();
+            const currentProfile = weatherClimateContext().ecoregionProfile || null;
+            const rows = filtered.map(profile => {
+                const isCurrent = currentProfile && currentProfile.id === profile.id;
+                const bias = `Temp ${profile.temperatureBias>=0?'+':''}${profile.temperatureBias}F, Hum ${profile.humidityBias>=0?'+':''}${profile.humidityBias}%, Wind ${profile.windBias>=0?'+':''}${profile.windBias} mph, Precip ${profile.precipitationBias>=0?'+':''}${profile.precipitationBias}%`;
+                const terrain = `${_sanitize(profile.terrain)} | Elev: ${_sanitize(profile.elevation)} | Road: ${_sanitize(profile.roadType)}`;
+                return `<strong>${_sanitize(profile.name)}</strong>${isCurrent ? ' (Current)' : ''} — ${_sanitize(profile.description)}<br><em>${bias}</em><br>${terrain}<br>Env: ${_sanitize(profile.environment)} | Tags: ${profile.tags.map(_sanitize).join(', ')}<br>${GameAssist.createButton('Apply to Current Area', `!aa-location ecoregion --id ${profile.id}`)} ${GameAssist.createButton('Save Current to Location', `!aa-location save-current --id ${scene.location?.id || ''}`)}`;
+            }).join('<hr>');
+            const searchCommand = `!aa-world ecoregion-profiles search --query "?{Search ecoregion profiles|forest}"`;
+            sendPanel(msg, 'Almanac / Ecoregion Profiles — Generic Modifier Matrix', [
+                { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                { label: 'Current Area', value: scene.location ? `${_sanitize(scene.location.name)} — Current ecoregion: ${currentProfile ? _sanitize(currentProfile.name) : 'None (inferred or unassigned)'}` : 'No Current Area selected — choose one to apply profiles.' },
+                { label: 'Matrix — How It Influences Base Regional Profile', value: 'Each profile is a generic, vague, reusable modifier that influences the base Climate Region (Temperate, Desert, etc.) via simple biases: temperature, humidity, wind, precipitation. No full engine, usable in any setting. When applied to a Location, its biases are added to the base region for weather generation, and its terrain/elevation/road/environment are surfaced in travel.' },
+                { label: `Profiles (${filtered.length} of ${BUILT_IN_ECOREGION_PROFILES.length})`, value: rows || 'No profiles matched that search.' },
+                { label: 'Find', value: `${GameAssist.createButton('Search', searchCommand)} ${GameAssist.createButton('Show All', '!aa-world ecoregion-profiles')} ${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Change Location', '!aa-location')}` },
+                { label: 'Save Current', value: `When you like current weather/ecoregion/environment, save it to a Location so you can recall it when party returns: ${GameAssist.createButton('Save Current to Active Area', `!aa-location save-current --id ${scene.location?.id || ''}`)} ${GameAssist.createButton('Choose Location to Save To', '!aa-location')}` },
+                { label: 'Navigation', value: `${GameAssist.createButton('Almanac Home', '!aa-gm')} ${GameAssist.createButton('Worldbuilding', '!aa-world')} ${GameAssist.createButton('Climate', '!aa-climate')}` }
+            ]);
+        }
+
         function handleLocation(msg, content) {
             const body = content.replace(/^location\s*/i, '').trim();
             const lower = body.toLowerCase();
@@ -28488,12 +28817,48 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const args = _parseArgs(body).args;
             if (/^search\b/i.test(body)) return showLocationPicker(msg, { search: args.query || args.value || args.term || '' });
             if (/^all\b/i.test(body)) return showLocationPicker(msg, { allPage: args.page });
+            if (/^ecoregion\b/i.test(body)) {
+                const config = worldConfigForPanel(msg);
+                if (!config) return;
+                const profile = builtInEcoregionProfile(args.id || args.name);
+                if (!profile) return showEcoregionProfiles(msg, { search: args.query || args.value || '' });
+                const loc = worldRecordByReference(config.locations, config.activeLocationId) || worldRecordByReference(config.locations, args.location || args.target || '');
+                if (!loc) return sendPanel(msg, 'Almanac / Ecoregion Needs Attention', [
+                    { label: 'Location', value: 'Choose a Current Area before applying an ecoregion profile, or specify --location <id>.' },
+                    { label: 'Next', value: `${GameAssist.createButton('Ecoregion Profiles', '!aa-world ecoregion-profiles')} ${GameAssist.createButton('Change Location', '!aa-location')}` }
+                ]);
+                const previous = copy(config);
+                loc.ecoregionProfileId = profile.id;
+                loc.modifiers = { ...(loc.modifiers || {}), temperatureBias: profile.temperatureBias, windBias: profile.windBias, visibility: profile.visibility, ecoregionProfileId: profile.id, ecoregionName: profile.name };
+                loc.terrain = profile.terrain;
+                loc.elevation = profile.elevation;
+                loc.roadType = profile.roadType;
+                loc.environmentDetail = profile.environment;
+                commitWorldConfig(config, previous, { action: 'ecoregion-profile-applied', locationId: loc.id, ecoregionProfileId: profile.id }, msg);
+                return sendPanel(msg, 'Almanac / Ecoregion Profile Applied', [
+                    { label: 'Location', value: `<strong>${_sanitize(loc.name)}</strong> now uses <strong>${_sanitize(profile.name)}</strong>.` },
+                    { label: 'Biases Applied to Base Region', value: `Temp ${profile.temperatureBias>=0?'+':''}${profile.temperatureBias}F, Hum ${profile.humidityBias>=0?'+':''}${profile.humidityBias}%, Wind ${profile.windBias>=0?'+':''}${profile.windBias} mph, Precip ${profile.precipitationBias>=0?'+':''}${profile.precipitationBias}% — added to base Climate Region for weather generation.` },
+                    { label: 'Terrain Surfaced for Travel', value: `${_sanitize(profile.terrain)} | Elev: ${_sanitize(profile.elevation)} | Road: ${_sanitize(profile.roadType)} | Env: ${_sanitize(profile.environment)}` },
+                    { label: 'Next', value: `${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Area Brief', `!aa-location view --id ${loc.id}`)} ${GameAssist.createButton('Ecoregion Profiles', '!aa-world ecoregion-profiles')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                ]);
+            }
+            if (/^save-current\b/i.test(body) || /^save_current\b/i.test(body)) {
+                const config = worldConfigForPanel(msg);
+                if (!config) return;
+                const targetId = args.id || args.location || config.activeLocationId;
+                const target = worldRecordByReference(config.locations, targetId);
+                if (!target) return sendPanel(msg, 'Almanac / Save Current Needs Attention', [
+                    { label: 'Location', value: 'Specify a Location to save current settings to, or make a Current Area active first.' },
+                    { label: 'Next', value: `${GameAssist.createButton('Choose Location', '!aa-location')} ${GameAssist.createButton('Ecoregion Profiles', '!aa-world ecoregion-profiles')}` }
+                ]);
+                return saveCurrentSettingsToLocation(msg, config, target);
+            }
             const config = worldConfigForPanel(msg);
             if (!config) return;
             if (!worldRuntimeForPanel(msg, 'Almanac / Change Location Needs Attention')) return;
             if (/^(?:view|details|inspect)\b/i.test(body)) return showLocationBrief(msg, config, args.id || args.name);
             if (/^destination\s+confirm\b/i.test(body)) return confirmPreparedDestination(msg, config, args.grant);
-            if (/^destination\b/i.test(body)) return showPreparedDestinationReview(msg, config, args.id || args.name);
+            if (/^destination\b/i.test(body)) return showPreparedDestinationReview(msg, config, args.id || args.name, args);
             const location = worldRecordByReference(config.locations, args.id || args.name);
             if (!location) return sendPanel(msg, 'Almanac / Change Location Needs Attention', [{ label: 'Location', value: 'That location was not found or its name is ambiguous.' }, { label: 'Changes', value: 'None.' }]);
             if (/^use\b/i.test(body)) {
@@ -28509,6 +28874,28 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 const nextClimate = effectiveClimateContext({ worldConfig: config });
                 commitWorldConfig(config, previous, { action: 'location-activated', locationId: location.id }, msg);
                 recordRecentLocation(location.id);
+                // Update Current Settings from location - preserve profile choices, not freeze weather
+                try {
+                    const runtime = ensureAlmanacRuntime();
+                    const mods = location.modifiers || {};
+                    runtime.world.currentSettings = {
+                        schemaVersion: 1,
+                        baseClimateRegionId: location.climateRegionId || runtime.world.currentSettings.baseClimateRegionId || null,
+                        biomeId: location.biomeId || runtime.world.currentSettings.biomeId || null,
+                        ecoregionId: location.ecoregionId || mods.ecoregionProfileId || runtime.world.currentSettings.ecoregionId || null,
+                        geographyId: location.geographyId || runtime.world.currentSettings.geographyId || null,
+                        regionId: location.regionId || runtime.world.currentSettings.regionId || null,
+                        presetId: null,
+                        temperatureBias: Number.isFinite(Number(mods.temperatureBias)) ? Number(mods.temperatureBias) : (Number.isFinite(Number(mods.temperatureBias)) ? Number(mods.temperatureBias) : runtime.world.currentSettings.temperatureBias || 0),
+                        humidityBias: Number.isFinite(Number(mods.humidityBias)) ? Number(mods.humidityBias) : runtime.world.currentSettings.humidityBias || 0,
+                        precipitationBias: Number.isFinite(Number(mods.precipitationBias)) ? Number(mods.precipitationBias) : runtime.world.currentSettings.precipitationBias || 0,
+                        windBias: Number.isFinite(Number(mods.windBias)) ? Number(mods.windBias) : runtime.world.currentSettings.windBias || 0,
+                        ground: location.environmentGround || mods.ground || runtime.world.currentSettings.ground || null,
+                        water: location.environmentWater || mods.water || runtime.world.currentSettings.water || null,
+                        visibility: location.visibility || mods.visibility || runtime.world.currentSettings.visibility || null,
+                        environmentName: location.environmentName || runtime.world.currentSettings.environmentName || null
+                    };
+                } catch(e) {}
                 const sessionWorldContext = currentWorldSessionContext(config);
                 return sendPanel(msg, selectedFirstSessionArea ? 'Almanac / Session Area Ready' : 'Almanac / Change Location', [
                     { label: 'World Context', value: sessionWorldContextPanelValue(msg, sessionWorldContext) },
@@ -28653,15 +29040,16 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const choices = routes.map(route => {
                 const profile = worldPackTravelProfileForRoute(config, route).profile;
                 const pace = worldPackTravelPace(travelPace(route.defaultPace || profile?.defaultPace), profile);
-                return `${_sanitize(route.name)} &mdash; ${formatTravelMiles(route.distanceMiles)} | ${_sanitize(pace.name)} ${GameAssist.createButton('Review This Route', `!aa-travel plan ${targetArgs} --route ${route.id}`)}`;
+                // Main button does the thing directly; Review is secondary
+                return `${_sanitize(route.name)} &mdash; ${formatTravelMiles(route.distanceMiles)} | ${_sanitize(pace.name)} ${GameAssist.createButton('Travel Now', `!aa-travel start ${targetArgs} --route ${route.id} --direct yes`)} ${GameAssist.createButton('Review', `!aa-travel plan ${targetArgs} --route ${route.id}`)}`;
             }).join('<br>');
             const defaultPace = destination?.defaultPace || 'standard';
             sendPanel(msg, 'Almanac / Travel / Choose Route', [
                 { label: 'World Context', value: sessionWorldContextPanelValue(msg, sessionWorldContext) },
                 { label: 'Journey', value: `${_sanitize(origin.name)} &rarr; ${_sanitize(target.name)}` },
                 { label: 'Prepared Routes', value: choices || 'No prepared route connects these locations.' },
-                { label: 'Direct Estimate', value: `${GameAssist.createButton('Enter Distance', `!aa-travel plan ${targetArgs} --distance "?{Distance in miles|10}" --pace "${travelPaceQuery('Travel pace', defaultPace)}"`)}` },
-                { label: 'Changes', value: 'None. Choosing a route opens a reviewed start plan.' },
+                { label: 'Direct Estimate', value: `${GameAssist.createButton('Travel Direct', `!aa-travel start ${targetArgs} --distance "?{Distance in miles|10}" --pace "${travelPaceQuery('Travel pace', defaultPace)}" --direct yes`)} ${GameAssist.createButton('Enter Distance (Review)', `!aa-travel plan ${targetArgs} --distance "?{Distance in miles|10}" --pace "${travelPaceQuery('Travel pace', defaultPace)}"`)}` },
+                { label: 'Changes', value: 'None. Main buttons start travel directly; Review opens the detailed preview.' },
                 { label: 'Navigation', value: `${GameAssist.createButton('Back', '!aa-travel')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
@@ -28752,6 +29140,33 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             // resolved installed Travel Profile supplies the terrain-aware speed.
             const pace = args.pace === undefined ? worldPackTravelPace(travelPace(requestedPace), profile) : travelPace(requestedPace);
             const terrainNote = route?.terrainNote || profile?.terrainNote || '';
+            // Direct travel bypasses the grant/review step for MVP UX: main button does the thing.
+            const isDirect = String(args.direct || args.now || args.go || '').toLowerCase() === 'yes' || args.direct === true;
+            if (isDirect) {
+                const runtime = ensureWorldRuntime();
+                if (activeTravelForWorld(config)) return sendPanel(msg, 'Almanac / Travel Needs Attention', [{ label: 'Journey Active', value: 'Another journey is already active. Finish or cancel it before starting a new one.' }, { label: 'Changes', value: 'None.' }]);
+                runtime.travel.revision += 1;
+                runtime.travel.journey = {
+                    id: worldInteractionId('journey'),
+                    originLocationId: origin.id,
+                    destinationLocationId: target.id,
+                    routeId: route?.id || null,
+                    routeName: route?.name || 'Direct estimate',
+                    terrainNote: route?.terrainNote || terrainNote || '',
+                    totalMiles: boundedTravelMiles(distanceMiles),
+                    remainingMiles: boundedTravelMiles(distanceMiles),
+                    paceId: pace.id,
+                    paceName: pace.name,
+                    travelProfileId: pace.sourceProfileId || null,
+                    milesPerHour: pace.milesPerHour,
+                    startWorldMinute: moment.worldMinute,
+                    startedAt: isoNow(),
+                    updatedAt: isoNow()
+                };
+                publishTravelChange(null, runtime.travel.journey, { action: 'journey-started-direct', routeId: route?.id || null }, msg);
+                GameAssist.recordMetric('almanac_travel_change', { mod: MODULE_NAME, note: 'journey-started-direct' });
+                return showTravelJourney(msg, config, activeTravelForWorld(config));
+            }
             return showTravelStartReview(msg, config, { origin, target, destination, route, distanceMiles, pace, terrainNote, moment, worldPackDefinitionRevision: profileResult.definitionRevision });
         }
 
@@ -28974,6 +29389,51 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             ]);
         }
 
+        function travelWeatherImpact(weather, route, location, environment) {
+            if (!weather) return 'No current weather — generate weather to get impact suggestions.';
+            const parts = [];
+            const kind = String(weather.kind || '').toLowerCase();
+            const frontType = String(weather.front?.type || weather.frontType || '').toLowerCase();
+            const wind = Number(weather.windMph) || 0;
+            const temp = Number(weather.temperatureF) || 60;
+            const ecoForLoc = ecoregionProfileForLocation(location);
+            const terrain = String(location?.terrain || ecoForLoc?.terrain || route?.terrainNote || location?.environmentGround || '').toLowerCase();
+            const elevation = String(location?.elevation || ecoForLoc?.elevation || '').toLowerCase();
+            const road = String(location?.roadType || ecoForLoc?.roadType || route?.defaultPace || '').toLowerCase();
+            const envDetail = String(environment?.ground || location?.environmentDetail || ecoForLoc?.environment || location?.environmentName || '').toLowerCase();
+            // Weather-based suggestions
+            if (['rain', 'storm'].includes(kind)) {
+                parts.push('Rain: tracks may be muddy, visibility reduced. Consider cautious pace, especially on ' + (terrain.includes('clay') || terrain.includes('mud') ? 'clay/muddy ground' : 'unpaved roads') + '.');
+            } else if (['snow', 'blizzard'].includes(kind)) {
+                parts.push('Snow/Ice: footing uncertain, passes may drift shut. Elevation ' + (location?.elevation || 'high') + ' increases risk. Cautious pace recommended.');
+            } else if (kind === 'fog') {
+                parts.push('Fog: navigation harder, far views obscured. Road type ' + (location?.roadType || 'unknown') + ' may be hard to follow.');
+            } else if (wind >= 25) {
+                parts.push(`Strong winds ${wind} mph: exposed terrain ${location?.terrain || 'open'} and elevation ${location?.elevation || ''} increase exposure. Shelter may be needed.`);
+            } else if (temp >= 90) {
+                parts.push(`Heat ${temp}F: desert terrain ${terrain || 'open'} drains stamina. Travel early/late, use shade and water sources (${location?.environmentWater || 'check water'}).`);
+            } else if (temp <= 20) {
+                parts.push(`Cold ${temp}F: ${elevation || 'high elevation'} and wind ${wind} mph increase exposure risk. Warm shelter and layered travel advised.`);
+            } else {
+                parts.push('Weather is moderate for travel; terrain and road type are the primary factors.');
+            }
+            // Terrain/elevation/road/environment surfacing
+            const surfacing = [];
+            if (location?.terrain) surfacing.push(`Terrain: ${location.terrain}`);
+            if (location?.elevation) surfacing.push(`Elevation: ${location.elevation}`);
+            if (location?.roadType) surfacing.push(`Road: ${location.roadType}`);
+            if (location?.environmentDetail || location?.environmentName) surfacing.push(`Environment: ${location.environmentDetail || location.environmentName}`);
+            if (location?.environmentGround) surfacing.push(`Ground: ${location.environmentGround}`);
+            if (location?.environmentWater) surfacing.push(`Water: ${location.environmentWater}`);
+            if (route?.terrainNote) surfacing.push(`Route Note: ${route.terrainNote}`);
+            if (surfacing.length) parts.push(surfacing.join(' | '));
+            // Front lifecycle hint
+            if (weather.front) {
+                parts.push(`Front: ${weather.front.typeName || weather.front.type} — ${weather.front.stageName || weather.front.stage} | ${weather.front.description || ''} — confidence decays with forecast distance.`);
+            }
+            return parts.map(_sanitize).join('<br>');
+        }
+
         function showTravelJourney(msg, config, journey = activeTravelForWorld(config)) {
             if (!journey) return showTravel(msg);
             const sessionWorldContext = currentWorldSessionContext(config);
@@ -28981,6 +29441,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const clock = sceneClockContext(scene);
             const moment = scene.time?.current;
             const pace = travelJourneyPace(journey);
+            const originLoc = worldRecordByReference(config.locations, journey.originLocationId);
+            const destLoc = worldRecordByReference(config.locations, journey.destinationLocationId);
+            const routeRec = journey.routeId ? worldRecordByReference(config.routes, journey.routeId) : null;
+            const weather = scene.weather?.current || null;
+            const impact = travelWeatherImpact(weather, routeRec, destLoc || originLoc, scene.environment?.current);
             sendPanel(msg, 'Almanac / Travel / Journey', [
                 { label: 'World Context', value: sessionWorldContextPanelValue(msg, sessionWorldContext) },
                 { label: 'Journey', value: `<strong>${_sanitize(journey.originName)}</strong> &rarr; <strong>${_sanitize(journey.destinationName)}</strong>` },
@@ -28989,6 +29454,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: clock.hasDistinctLocalClock ? 'Campaign Clock' : 'Current Time', value: moment ? _sanitize(displayMoment(moment)) : 'Fictional time unavailable.' },
                 ...(clock.hasDistinctLocalClock ? [{ label: 'Local Clock', value: `${_sanitize(clock.temporal.name)}: ${_sanitize(clock.temporal.projection.label)}. Travel advances the Campaign Clock only after each review is confirmed.` }] : []),
                 { label: 'Current Conditions', value: `${_sanitize(sceneWeatherSummary(scene))}<br>${_sanitize(sceneEnvironmentSummary(scene))}` },
+                { label: 'Weather Impact on Travel — Suggestions', value: impact },
+                { label: 'Destination Terrain & Environment', value: destLoc ? `${_sanitize(destLoc.terrain || destLoc.environmentGround || '—')} | Elev: ${_sanitize(destLoc.elevation || '—')} | Road: ${_sanitize(destLoc.roadType || '—')} | Env: ${_sanitize(destLoc.environmentDetail || destLoc.environmentName || '—')} | Ground: ${_sanitize(destLoc.environmentGround || '—')} | Water: ${_sanitize(destLoc.environmentWater || '—')}` : 'No destination details.' },
                 ...(scene.phenomena?.length ? [{ label: 'Phenomena Along This Journey', value: scene.phenomena.map(item => `${_sanitize(item.name)}${item.travelNote ? ` — ${_sanitize(item.travelNote)}` : ''}`).join('<br>') }] : []),
                 { label: 'Travel', value: `${GameAssist.createButton('Travel 1 Hour', '!aa-travel continue --hours 1')} ${GameAssist.createButton('Travel 4 Hours', '!aa-travel continue --hours 4')} ${moment ? GameAssist.createButton(clock.hasDistinctLocalClock ? 'Until Campaign Dusk' : 'Until Dusk', '!aa-travel continue --until dusk') : ''} ${GameAssist.createButton('Choose Hours', '!aa-travel continue --hours "?{Fictional hours|1}"')}` },
                 { label: 'Actions', value: `${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Make Camp / Rest', '!rest')} ${GameAssist.createButton('Cancel Journey', '!aa-travel cancel')}` },
@@ -29020,17 +29487,25 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const prepared = index.prepared.filter(item => item.location.id !== origin.id);
             const searchExample = roll20QueryText(destinations.slice().sort((left, right) => left.name.localeCompare(right.name))[0]?.name, 'Destination', POLICY.almanac.worldNameLength);
             const searchCommand = `!aa-travel search --query "?{Search destinations by name or tag|${searchExample}}"`;
-            const compactLabel = (label, count) => count > categoryLimit ? `${label} (first ${categoryLimit})` : label;
+            const compactLabel = (label, count) => {
+                if (count <= categoryLimit) return label;
+                const trimmed = String(label).replace(/^All\s+/i, '');
+                if (trimmed.toLowerCase() !== String(label).toLowerCase()) {
+                    return `${trimmed} (first ${categoryLimit})`;
+                }
+                return `${label} (first ${categoryLimit})`;
+            };
             const locationRows = (locations, empty, limit = perPage) => locations.length
                 ? locations.slice(0, limit).map(location => {
                     const summary = sessionLocationPickerSummary(config, location);
-                    return `<strong>${_sanitize(location.name)}</strong>${summary ? ` — ${_sanitize(summary)}` : ''} ${GameAssist.createButton('Inspect', `!aa-travel inspect --location ${location.id}`)} ${GameAssist.createButton('Plan Travel', `!aa-travel plan --location ${location.id}`)}`;
+                    // Main button does the thing directly; Inspect/Plan are review options
+                    return `<strong>${_sanitize(location.name)}</strong>${summary ? ` — ${_sanitize(summary)}` : ''} ${GameAssist.createButton('Go Here', `!aa-location use --id ${location.id}`)} ${GameAssist.createButton('Travel Now', `!aa-travel start --location ${location.id} --direct yes`)} ${GameAssist.createButton('Inspect', `!aa-travel inspect --location ${location.id}`)} ${GameAssist.createButton('Plan Travel', `!aa-travel plan --location ${location.id}`)}`;
                 }).join('<br>')
                 : empty;
             const preparedRows = (entries, empty, limit = perPage) => entries.length
                 ? entries.slice(0, limit).map(({ destination, location }) => {
                     const summary = sessionLocationPickerSummary(config, location);
-                    return `<strong>${_sanitize(destination.name)}</strong> &mdash; ${_sanitize(location.name)}${summary ? ` (${_sanitize(summary)})` : ''} ${GameAssist.createButton('Inspect', `!aa-travel inspect --destination ${destination.id}`)} ${GameAssist.createButton('Plan Travel', `!aa-travel plan --destination ${destination.id}`)}`;
+                    return `<strong>${_sanitize(destination.name)}</strong> &mdash; ${_sanitize(location.name)}${summary ? ` (${_sanitize(summary)})` : ''} ${GameAssist.createButton('Go Here', `!aa-location destination --id ${destination.id}`)} ${GameAssist.createButton('Travel Now', `!aa-travel start --destination ${destination.id} --direct yes`)} ${GameAssist.createButton('Inspect', `!aa-travel inspect --destination ${destination.id}`)} ${GameAssist.createButton('Plan Travel', `!aa-travel plan --destination ${destination.id}`)}`;
                 }).join('<br>')
                 : empty;
             const pageNumber = Math.max(0, Math.floor(Number(page) || 0));
@@ -29083,8 +29558,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 { label: compactLabel('All Destinations', allCompact.length), value: locationRows(allCompact, destinations.length
                     ? 'All available destinations are already listed above.'
                     : 'Add another Location in Worldbuilding before planning Travel.', categoryLimit) },
-                { label: 'Find', value: `${GameAssist.createButton('Search', searchCommand)} ${GameAssist.createButton('Browse All', '!aa-travel all --page 0')} ${prepared.length > perPage ? GameAssist.createButton('Browse Prepared', '!aa-travel prepared --page 0') : ''} — results remain bounded to ${perPage} entries per view.`.trim() },
-                { label: 'Setup', value: `${GameAssist.createButton('Travel Routes', '!aa-world routes')} ${GameAssist.createButton('Prepared Destinations', '!aa-world destinations')}` },
+                { label: 'Find', value: `${GameAssist.createButton('Search', searchCommand)} ${GameAssist.createButton('Browse All', '!aa-travel all --page 0')} ${prepared.length > perPage ? GameAssist.createButton('Browse Prepared', '!aa-travel prepared --page 0') : ''}` },
                 { label: 'Navigation', value: `${GameAssist.createButton('Back', '!aa-gm')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
             ]);
         }
@@ -29147,7 +29621,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 });
             }
             if (/^plan\b/i.test(body)) return prepareTravel(msg, config, args);
-            if (/^start\b/i.test(body)) return confirmTravelStart(msg, config, args.grant);
+            if (/^start\b/i.test(body)) {
+                if (args.grant) return confirmTravelStart(msg, config, args.grant);
+                // Direct start bypasses review: main button does the thing
+                return prepareTravel(msg, config, { ...args, direct: 'yes' });
+            }
             if (/^continue\b/i.test(body)) return prepareTravelSegment(msg, config, args);
             if (/^confirm\b/i.test(body)) return confirmTravelSegment(msg, config, args.grant);
             if (/^cancel\b/i.test(body)) return cancelTravel(msg, config, String(args.confirm || '').toLowerCase() === 'yes');
@@ -31170,7 +31648,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
          * Invariant: malformed/future registry reads do not rewrite campaign data.
          */
         function worldPackConfigResult(sourceInput = modState.config.worldPacks, { persist = sourceInput === modState.config.worldPacks } = {}) {
-            if (!sceneRecord(sourceInput)) return { ok: false, config: null, warning: 'WorldPack registry is absent or not an object; it was left unchanged.' };
+            if (!sceneRecord(sourceInput)) {
+                const empty = copy(DEFAULT_WORLD_PACK_CONFIG);
+                if (persist) modState.config.worldPacks = empty;
+                return { ok: true, config: empty, warning: null };
+            }
             const savedSchema = Number(sourceInput.schemaVersion || 0);
             if (Number.isFinite(savedSchema) && savedSchema > WORLD_PACK_REGISTRY_SCHEMA_VERSION) {
                 return { ok: false, config: null, warning: `WorldPack registry schema ${savedSchema} is newer than this AlmanacAssist version; it was left unchanged.` };
@@ -32143,7 +32625,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 };
             });
             sendPanel(msg, 'Almanac / WorldPack Library', [
-                { label: 'Purpose', value: 'Four original, independently installable, setting-scale WorldPacks. They are reference workloads for large campaign operation—not copied published settings, lore, maps, calendars, astronomy data, or mechanics.' },
+                { label: 'Purpose', value: 'Four original, independently installable, setting-scale WorldPacks with varied sizes (6-9 regions, 120-180 locations, 156-234 routes). They are reference workloads for large campaign operation with distinct ecological and route counts—not identical worlds, and not copied published settings, lore, maps, calendars, astronomy data, or mechanics.' },
                 ...rows,
                 { label: 'Source Boundary', value: 'PresetRegistry sources are immutable data. A campaign receives editable installed clones only after review and confirmation; runtime state stays outside every source package.' },
                 { label: 'Navigation', value: `${GameAssist.createButton('WorldPacks', '!aa-worldpacks')} ${GameAssist.createButton('Worldbuilding', '!aa-world')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
@@ -33427,7 +33909,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return showTemporalContexts(msg, 'Choose a temporal context action from the available controls.');
         }
 
-        function showMaster(msg) {
+        function showMaster(msg, { detail = null } = {}) {
             if (!playerIsGM(msg?.playerid)) return showCurrent(msg);
             const scene = resolveScene();
             const clock = sceneClockContext(scene);
@@ -33440,6 +33922,41 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const worldContext = currentWorldSessionContext(world.ok ? world.config : modState.config.world);
             const rulesNotes = rulesAdvisorDashboardNotes(scene);
             const moment = scene.time?.current;
+            const campaignMoment = clock.campaignMoment;
+            const runtime = ensureAlmanacRuntime();
+            const requestedDetail = String(detail || runtime.world.detailLevel || 'basic').toLowerCase();
+            const detailLevel = ['basic','detailed','technical'].includes(requestedDetail) ? requestedDetail : 'basic';
+            if (detail && detail !== runtime.world.detailLevel) {
+                runtime.world.detailLevel = detailLevel;
+            }
+            const detailButtons = `${GameAssist.createButton('Basic', '!aa-gm basic')} ${GameAssist.createButton('Detailed', '!aa-gm detailed')} ${GameAssist.createButton('Technical', '!aa-gm technical')}`;
+            const whereYouAre = scene.location ? _sanitize(scene.location.name) : 'Unassigned';
+            const whenYouAre = campaignMoment ? _sanitize(displayMoment(campaignMoment)) : 'Time unavailable';
+            const campaignClockLine = campaignMoment ? `Campaign Clock: ${_sanitize(displayMoment(campaignMoment))}` : 'Campaign Clock: unavailable';
+            const localClockLine = clock.hasDistinctLocalClock && clock.localMoment ? `Local Clock (${_sanitize(clock.temporal.name)}): ${_sanitize(displayMoment(clock.localMoment))}` : null;
+            const weather = scene.weather?.current || null;
+            const weatherDisplay = weather
+                ? `${_sanitize(weather.summary)} ${weather.temperatureF}F ${weather.windMph} mph`
+                : (hasCurrentArea ? 'No weather yet.' : 'Choose a Current Area.');
+            const climateBaseline = world.ok ? effectiveClimateContext({ worldConfig: world.config }).baseline : null;
+            const climateLine = climateBaseline ? _sanitize(climateSeasonalContextSummary(climateBaseline)) : _sanitize(sceneClimateSummary(scene, { detailed: false }));
+            const currentWorldRow = localClockLine
+                ? `${whereYouAre}<br>${campaignClockLine}<br>${localClockLine}<br>Weather: ${weatherDisplay}<br>Climate: ${climateLine}`
+                : `${whereYouAre}<br>${whenYouAre}<br>Weather: ${weatherDisplay}<br>Climate: ${climateLine}`;
+            const openingActions = world.ok ? worldPackOpeningActions(packContext) : '';
+            const chooseAreaAction = openingActions || GameAssist.createButton('Choose Current Area', '!aa-location');
+            const unassignedSession = !noLocations && !hasCurrentArea
+                ? (packContext?.singlePack
+                    ? `${_sanitize(packContext.singlePack.name)} is installed with ${world.config.locations.filter(location => location.sourcePackId === packContext.singlePack.id).length} playable Locations, but no Current Area is selected.`
+                    : (packContext?.installed.length
+                        ? `${packContext.installed.length} full WorldPacks are installed, but no Current Area is selected.`
+                        : 'Locations are ready, but no Current Area is selected.'))
+                : '';
+            const sessionActions = !hasCurrentArea
+                ? (noLocations
+                    ? `${GameAssist.createButton(activeWorld ? 'Create First Location' : 'Create a Location', '!aa-world add location --name "?{Location name|Starting Location}"')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')}`
+                    : `${chooseAreaAction} ${GameAssist.createButton('Choose Any Location', '!aa-location')} ${GameAssist.createButton('Open Current Scene', '!aa-scene')}`)
+                : `${GameAssist.createButton('Area Brief', `!aa-location view --id ${scene.location.id}`)} ${GameAssist.createButton('Current Scene', '!aa-scene')} ${scene.travel ? GameAssist.createButton('Open Journey', '!aa-travel') : GameAssist.createButton('Plan Journey', '!aa-travel')} ${scene.travel ? '' : GameAssist.createButton('Change Area', '!aa-location')} ${GameAssist.createButton('Generate Weather', '!aa-weather generate')}`.trim();
             const dawnCommand = sceneAnchorAdvanceCommand(moment, { standardHour: 6, wayfarerHour: 1 });
             const duskCommand = sceneAnchorAdvanceCommand(moment, { standardHour: 18, wayfarerHour: 11 });
             const campaignAnchorSuffix = clock.hasDistinctLocalClock ? 'Campaign ' : '';
@@ -33449,39 +33966,45 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const journeyActions = scene.travel
                 ? `${GameAssist.createButton('Travel 1 Hour', '!aa-travel continue --hours 1')} ${GameAssist.createButton('Travel 4 Hours', '!aa-travel continue --hours 4')} ${GameAssist.createButton(`Until ${campaignAnchorSuffix}Dusk`, '!aa-travel continue --until dusk')} ${GameAssist.createButton('Journey', '!aa-travel')}`
                 : null;
-            const openingActions = world.ok ? worldPackOpeningActions(packContext) : '';
-            const chooseAreaAction = openingActions || GameAssist.createButton('Choose Current Area', '!aa-location');
-            const unassignedSession = !noLocations && !hasCurrentArea
-                ? (packContext?.singlePack
-                    ? `<strong>${_sanitize(packContext.singlePack.name)}</strong> is installed with ${world.config.locations.filter(location => location.sourcePackId === packContext.singlePack.id).length} playable Locations, but no Current Area is selected. Choose one campaign-front opening and Session Mode will have a coherent place to use.`
-                    : (packContext?.installed.length
-                        ? `${packContext.installed.length} full WorldPacks are installed, but no Current Area is selected. Choose an opening area before using Scene or Travel.`
-                        : 'Locations are ready, but no Current Area is selected. Choose one before using Scene or Travel.'))
-                : '';
-            const sessionActions = !hasCurrentArea
-                ? (noLocations
-                    ? `${GameAssist.createButton(activeWorld ? 'Create First Location' : 'Create a Location', '!aa-world add location --name "?{Location name|Starting Location}"')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')}`
-                    : `${chooseAreaAction} ${GameAssist.createButton('Choose Any Location', '!aa-location')} ${GameAssist.createButton('Open Current Scene', '!aa-scene')}`)
-                : `${GameAssist.createButton('Area Brief', `!aa-location view --id ${scene.location.id}`)} ${GameAssist.createButton('Current Scene', '!aa-scene')} ${scene.travel ? GameAssist.createButton('Open Journey', '!aa-travel') : GameAssist.createButton('Plan Journey', '!aa-travel')} ${scene.travel ? '' : GameAssist.createButton('Change Area', '!aa-location')} ${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')}`.trim();
-            sendPanel(msg, 'Almanac Home — Current World', [
+            // Basic: compact, 2-clicks to core actions
+            if (detailLevel === 'basic') {
+                sendPanel(msg, 'Almanac Home — Current World', [
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Current World', value: currentWorldRow },
+                    ...(noLocations ? [{ label: 'First Campaign Step', value: activeWorld
+                        ? `${_sanitize(activeWorld.name)} is active but has no Locations yet. ${GameAssist.createButton('Create First Location', '!aa-world add location --name "?{Location name|Starting Location}"')}`
+                        : `No playable world is selected yet. ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')}` }] : []),
+                    ...(unassignedSession ? [{ label: 'Choose a Session Area', value: `${unassignedSession} ${chooseAreaAction}`.trim() }] : []),
+                    ...(scene.travel ? [{ label: 'Journey', value: `${_sanitize(scene.travel.originName)} to ${_sanitize(scene.travel.destinationName)} | ${formatTravelMiles(scene.travel.remainingMiles)} left` }] : []),
+                    { label: 'Session Mode', value: sessionActions },
+                    { label: 'Advance Date and Time', value: timeButtons },
+                    { label: 'Weather and Climate', value: `${GameAssist.createButton('Weather', '!aa-weather')} ${GameAssist.createButton('Current Settings', '!aa-current')} ${GameAssist.createButton('World Palettes', '!aa-world palettes')} ${GameAssist.createButton('Climate', '!aa-climate')} ${GameAssist.createButton('Forecast', '!aa-weather forecast --days ?{Days|3}')}` },
+                    ...(hasCurrentArea && rulesNotes.length ? [{ label: 'GM Notes', value: `${rulesNotes.map(note => _sanitize(note.message)).join('<br>')} ${GameAssist.createButton('Rules Details', '!aa-rules')}` }] : []),
+                    { label: 'View', value: detailButtons },
+                    { label: 'Navigation', value: `${GameAssist.createButton('Guide', '!Almanac-Guide')} ${gameAssistHomeButton()}` }
+                ]);
+                return;
+            }
+            // Detailed and Technical add more context but keep same core
+            sendPanel(msg, 'Almanac Home - Detailed', [
                 { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
-                { label: 'Current World', value: sceneOverview(scene) },
+                { label: 'Current World', value: `${currentWorldRow}<br><em>${_sanitize(sceneOverview(scene))}</em>` },
                 ...(noLocations ? [{ label: 'First Campaign Step', value: activeWorld
-                    ? `<strong>${_sanitize(activeWorld.name)}</strong> is active but has no Locations yet. Create its first place to make it the Current Area; you do not need to set every worldbuilding field first. ${GameAssist.createButton('Create First Location', '!aa-world add location --name "?{Location name|Starting Location}"')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')}`
-                    : `No playable world is selected yet. Start with a full original setting, a compact local starter, or your own first place. ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Create a Location', '!aa-world add location --name "?{Location name|Starting Location}"')}` }] : []),
+                    ? `${_sanitize(activeWorld.name)} is active but has no Locations yet. Create its first place. ${GameAssist.createButton('Create First Location', '!aa-world add location --name "?{Location name|Starting Location}"')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')}`
+                    : `No playable world is selected yet. ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Create a Location', '!aa-world add location --name "?{Location name|Starting Location}"')}` }] : []),
                 ...(unassignedSession ? [{ label: 'Choose a Session Area', value: `${unassignedSession} ${chooseAreaAction} ${GameAssist.createButton('Choose Any Location', '!aa-location')}`.trim() }] : []),
-                ...(scene.travel ? [{ label: 'Journey', value: `${_sanitize(scene.travel.originName)} &rarr; ${_sanitize(scene.travel.destinationName)} | ${formatTravelMiles(scene.travel.remainingMiles)} remaining | ${_sanitize(travelPace(scene.travel.paceId).name)} pace` }, { label: 'Journey Actions', value: journeyActions }] : []),
-                ...(hasCurrentArea ? [{ label: 'Session Mode', value: sessionActions }] : []),
-                { label: 'Advance Date & Time', value: timeButtons },
-                { label: 'Calendar', value: moment ? `${exactMomentButton(moment)} ${GameAssist.createButton('Choose Calendar', '!cal')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')} ${GameAssist.createButton('Time Controls', '!aa-time menu')}` : GameAssist.createButton('Choose Calendar', '!cal') },
-                ...(hasCurrentArea ? [{ label: 'Session Support', value: `${GameAssist.createButton('Climate', '!aa-climate')} ${GameAssist.createButton('Rules Advice', '!aa-rules')} ${GameAssist.createButton('Short Rest', '!aa-rest preview --type short')} ${GameAssist.createButton('Long Rest', '!aa-rest preview --type long')} ${GameAssist.createButton('Announcement Preview', '!aa-preview')} ${GameAssist.createButton('Announce', '!aa-announce')} ${GameAssist.createButton('Announcement Settings', '!aa-announcement-settings')}` }] : []),
-                ...(hasCurrentArea && rulesNotes.length ? [{ label: 'GM Notes', value: `${rulesNotes.map(note => _sanitize(note.message)).join('<br>')} ${GameAssist.createButton('Rules Details', '!aa-rules')}` }] : []),
-                { label: 'World & Setup', value: `${GameAssist.createButton('Worldbuilding', '!aa-world')} ${GameAssist.createButton('Full WorldPacks', '!aa-worldpacks library')} ${GameAssist.createButton('World Library', '!aa-world library')} ${GameAssist.createButton('More Almanac Tools', '!aa-more')}` },
-                { label: 'Navigation', value: `${GameAssist.createButton('Almanac Guide', '!Almanac-Guide')} ${gameAssistHomeButton()}` }
+                ...(scene.travel ? [{ label: 'Journey', value: `${_sanitize(scene.travel.originName)} to ${_sanitize(scene.travel.destinationName)} | ${formatTravelMiles(scene.travel.remainingMiles)} remaining` }, { label: 'Journey Actions', value: journeyActions }] : []),
+                { label: 'Session Mode', value: sessionActions },
+                { label: 'Advance Date and Time', value: timeButtons },
+                { label: 'Time and Calendar', value: moment ? `${_sanitize(displayMoment(moment))} ${exactMomentButton(moment)} ${GameAssist.createButton('Calendar', '!cal')} ${GameAssist.createButton('Time', '!aa-time menu')}` : GameAssist.createButton('Choose Calendar', '!cal') },
+                ...(hasCurrentArea && rulesNotes.length ? [{ label: 'GM Notes', value: `${rulesNotes.map(note => `${_sanitize(note.title)}: ${_sanitize(note.message)}`).join('<br>')} ${GameAssist.createButton('Rules Details', '!aa-rules')}` }] : []),
+                { label: 'World and Setup', value: `${GameAssist.createButton('Worldbuilding', '!aa-world')} ${GameAssist.createButton('WorldPacks', '!aa-worldpacks library')}` },
+                { label: 'View', value: detailButtons },
+                { label: 'Navigation', value: `${GameAssist.createButton('Guide', '!Almanac-Guide')} ${gameAssistHomeButton()}` }
             ]);
         }
 
-        function showMoreMenu(msg) {
+                function showMoreMenu(msg) {
             if (!requireGm(msg)) return;
             sendPanel(msg, 'More Almanac Tools', [
                 { label: 'Calendar', value: `${GameAssist.createButton('Time Controls', '!aa-time menu')} ${GameAssist.createButton('Wayfarer Calendar', '!aa-wayfarer')} ${GameAssist.createButton('Choose Calendar', '!cal')}` },
@@ -33538,7 +34061,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     value: `${_sanitize(clock.temporal.name)}: ${_sanitize(clock.temporal.projection.label)}. Quick advances and dawn/dusk anchors use the Campaign Clock.`
                 }] : []),
                 { label: 'Quick Advance', value: quickAdvance },
-                { label: 'Choose Advance', value: `${GameAssist.createButton('Advance Date', '!aa-time advance --days ?{Days|1}')} ${GameAssist.createButton('Advance Date & Time', '!aa-time advance --days ?{Days|0} --hours ?{Hours|0} --minutes ?{Minutes|0}')}` },
+                { label: 'Choose Advance', value: `${GameAssist.createButton('Advance Date', '!aa-time advance --days ?{Days|1}')} ${GameAssist.createButton('Advance Date and Time', '!aa-time advance --days ?{Days|0} --hours ?{Hours|0} --minutes ?{Minutes|0}')}` },
                 { label: 'Set Exact Moment', value: exactMomentButton(moment) },
                 { label: 'Share', value: `${GameAssist.createButton('Preview Announcement', '!aa-preview')} ${GameAssist.createButton('Announce Now', '!aa-announce')} ${GameAssist.createButton('Settings', '!aa-announcement-settings')}` },
                 { label: 'Advanced', value: GameAssist.createButton('Move Time Backward', '!aa-time retreat --days ?{Days|0} --hours ?{Hours|0} --minutes ?{Minutes|0} --confirm ?{Moving time backward never reverses rests, effects, combat, or history. Continue?|No,no|Yes,yes}') },
@@ -35933,21 +36456,75 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function weatherClimateContext() {
             const policyResult = worldPackWeatherPolicy();
             const weatherPolicy = policyResult.policy;
+            const worldResult = worldConfigResult(modState.config.world, { persist: false });
+            const place = worldResult?.ok ? worldLocationContext(worldResult.config) : { location: null, ecoregion: null };
+            const location = place.location || null;
+            const ecoregionMod = ecoregionProfileForLocation(location);
+            const locMods = location?.modifiers || {};
+            const runtime = ensureAlmanacRuntime();
+            const currentSettings = runtime.world.currentSettings || {};
+            const currentEcoregion = currentSettings.ecoregionId ? (worldResult?.ok ? worldRecordByReference(worldResult.config.ecoregions, currentSettings.ecoregionId) : null) || builtInEcoregionProfile(currentSettings.ecoregionId) : null;
+            const effectiveEcoregion = currentEcoregion || ecoregionMod;
+            const applyEcoregionBiases = (baseline) => {
+                if (!baseline) return baseline;
+                let temp = Number(baseline.temperatureF) || 58;
+                let humidity = Number(baseline.humidity) || 55;
+                let precip = Number(baseline.precipitationChance) || 35;
+                let wind = Number(baseline.windMph) || 8;
+                const tags = [...(baseline.tags || [])];
+                if (effectiveEcoregion) {
+                    temp += Number(effectiveEcoregion.temperatureBias) || 0;
+                    humidity += Number(effectiveEcoregion.humidityBias) || 0;
+                    precip += Number(effectiveEcoregion.precipitationBias) || 0;
+                    wind += Number(effectiveEcoregion.windBias) || 0;
+                    (effectiveEcoregion.tags || []).forEach(t => { if (!tags.includes(t)) tags.push(t); });
+                }
+                // Location modifiers - replace, not stack, with currentSettings taking precedence
+                if (currentSettings.temperatureBias !== 0 || currentSettings.humidityBias !== 0 || currentSettings.precipitationBias !== 0 || currentSettings.windBias !== 0) {
+                    if (Number.isFinite(Number(currentSettings.temperatureBias))) temp += Number(currentSettings.temperatureBias);
+                    if (Number.isFinite(Number(currentSettings.humidityBias))) humidity += Number(currentSettings.humidityBias);
+                    if (Number.isFinite(Number(currentSettings.precipitationBias))) precip += Number(currentSettings.precipitationBias);
+                    if (Number.isFinite(Number(currentSettings.windBias))) wind += Number(currentSettings.windBias);
+                } else {
+                    if (Number.isFinite(Number(locMods.temperatureBias))) temp += Number(locMods.temperatureBias);
+                    if (Number.isFinite(Number(locMods.windBias))) wind += Number(locMods.windBias);
+                    if (Number.isFinite(Number(locMods.humidityBias))) humidity += Number(locMods.humidityBias);
+                    if (Number.isFinite(Number(locMods.precipitationBias))) precip += Number(locMods.precipitationBias);
+                }
+                // Clamp to policy limits where relevant
+                return {
+                    ...baseline,
+                    temperatureF: Math.round(temp),
+                    humidity: Math.max(0, Math.min(100, Math.round(humidity))),
+                    precipitationChance: Math.max(0, Math.min(100, Math.round(precip))),
+                    windMph: Math.max(0, Math.round(wind)),
+                    tags,
+                    ecoregionProfileId: effectiveEcoregion?.id || ecoregionMod?.id || null,
+                    ecoregionProfileName: effectiveEcoregion?.name || ecoregionMod?.name || null,
+                    ecoregionProfileSummary: effectiveEcoregion?.description || ecoregionMod?.description || null,
+                    locationModifiers: currentSettings.temperatureBias !== 0 || currentSettings.humidityBias !== 0 ? currentSettings : locMods,
+                    currentSettingsApplied: !!(currentSettings.baseClimateRegionId || currentSettings.ecoregionId || currentSettings.biomeId)
+                };
+            };
             if (submoduleEnabled('climate')) {
                 const effective = effectiveClimateContext();
-                if (effective.baseline) return Object.freeze({
-                    ...effective.baseline,
-                    context: `ClimateAlmanac — ${effective.sourceLabel}`,
-                    climateScope: effective.scope,
-                    climateSourceKind: effective.sourceKind,
-                    climateSourceLabel: effective.sourceLabel,
-                    climateContextId: effective.contextId,
-                    weatherPolicy,
-                    weatherPolicyWarning: policyResult.warning || null
-                });
+                if (effective.baseline) {
+                    const biased = applyEcoregionBiases(effective.baseline);
+                    return Object.freeze({
+                        ...biased,
+                        context: `ClimateAlmanac — ${effective.sourceLabel}${ecoregionMod ? ` + ${ecoregionMod.name}` : ''}`,
+                        climateScope: effective.scope,
+                        climateSourceKind: effective.sourceKind,
+                        climateSourceLabel: effective.sourceLabel,
+                        climateContextId: effective.contextId,
+                        weatherPolicy,
+                        weatherPolicyWarning: policyResult.warning || null,
+                        ecoregionProfile: ecoregionMod ? copy(ecoregionMod) : null
+                    });
+                }
             }
             const season = timeAvailable() ? currentMoment().season : 'Spring';
-            return {
+            const base = {
                 regionId: null,
                 regionName: 'Manual Weather Context',
                 profileName: 'Temperate fallback',
@@ -35965,6 +36542,375 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 weatherPolicy,
                 weatherPolicyWarning: policyResult.warning || null
             };
+            const biasedBase = applyEcoregionBiases(base);
+            return {
+                ...biasedBase,
+                ecoregionProfile: ecoregionMod ? copy(ecoregionMod) : null
+            };
+        }
+
+        function weatherFrontDefinition(typeId) {
+            const key = String(typeId || '').trim().toLowerCase();
+            return WEATHER_FRONT_TYPE_MAP[key] || null;
+        }
+
+        function normalizeWeatherFront(raw) {
+            if (!raw || typeof raw !== 'object') return null;
+            const typeId = String(raw.type || raw.id || '').trim().toLowerCase();
+            const def = weatherFrontDefinition(typeId);
+            if (!def) return null;
+            const stage = String(raw.stage || '').trim().toLowerCase();
+            const stageIndex = WEATHER_FRONT_STAGE_ORDER.indexOf(stage);
+            const safeStage = stageIndex >= 0 ? stage : WEATHER_FRONT_STAGE_ORDER[0];
+            const safeIndex = stageIndex >= 0 ? stageIndex : 0;
+            const intensity = Math.max(0, Math.min(5, Math.floor(Number(raw.intensity) || def.severityBase || 1)));
+            return {
+                type: def.id,
+                typeName: def.name,
+                stage: safeStage,
+                stageName: WEATHER_FRONT_STAGE_LABELS[safeStage] || safeStage,
+                stageIndex: safeIndex,
+                intensity,
+                summary: String(raw.summary || def.summary || '').slice(0, POLICY.almanac.maximumSummaryLength) || def.summary,
+                description: def.summary,
+                temperatureBias: Number(def.temperatureBias) || 0,
+                windBias: Number(def.windBias) || 0,
+                precipitationBias: Number(def.precipitationBias) || 0,
+                humidityBias: Number(def.humidityBias) || 0,
+                formedAt: raw.formedAt || isoNow(),
+                durationHours: Math.max(
+                    POLICY.almanac.weatherFrontDurationMinHours,
+                    Math.min(POLICY.almanac.weatherFrontDurationMaxHours * 2, Math.floor(Number(raw.durationHours) || 6))
+                ),
+                tags: Array.isArray(raw.tags) ? raw.tags.slice(0, 8) : (def.tags || [])
+            };
+        }
+
+        function freshWeatherFront(typeId, stageOverride = null) {
+            const def = weatherFrontDefinition(typeId) || WEATHER_FRONT_TYPES[0];
+            const stage = stageOverride && WEATHER_FRONT_STAGE_ORDER.includes(stageOverride) ? stageOverride : 'forming';
+            const stageIndex = WEATHER_FRONT_STAGE_ORDER.indexOf(stage);
+            const minDur = POLICY.almanac.weatherFrontDurationMinHours;
+            const maxDur = POLICY.almanac.weatherFrontDurationMaxHours;
+            const durationHours = Math.max(minDur, Math.min(maxDur * 2, randomInteger(maxDur - minDur + 1) + minDur + stageIndex));
+            return {
+                type: def.id,
+                typeName: def.name,
+                stage,
+                stageName: WEATHER_FRONT_STAGE_LABELS[stage] || stage,
+                stageIndex,
+                intensity: Math.max(0, Math.min(5, def.severityBase + (stageIndex >= 2 && stageIndex <= 3 ? 1 : 0))),
+                summary: `${def.name} — ${WEATHER_FRONT_STAGE_LABELS[stage] || stage}`,
+                description: def.summary,
+                temperatureBias: def.temperatureBias,
+                windBias: def.windBias,
+                precipitationBias: def.precipitationBias,
+                humidityBias: def.humidityBias,
+                formedAt: isoNow(),
+                durationHours,
+                tags: [...(def.tags || [])]
+            };
+        }
+
+        function pickWeatherFrontType(climate) {
+            const tags = (climate?.tags || []).map(t => String(t).toLowerCase());
+            const season = String(climate?.season || '').toLowerCase();
+            const humidity = Number(climate?.humidity) || 50;
+            const temp = Number(climate?.temperatureF) || 60;
+            const policyId = String(climate?.weatherPolicy?.id || '').toLowerCase();
+            const isCoastal = tags.some(t => ['coastal', 'maritime', 'shore', 'island', 'ocean', 'harbor', 'beach', 'tide'].includes(t));
+            const isDesert = tags.some(t => ['desert', 'arid', 'dry', 'scrub', 'dune', 'salt-flat', 'sunward', 'wasteland'].includes(t));
+            const isMountain = tags.some(t => ['mountain', 'alpine', 'highland', 'peak', 'pass', 'ridge', 'snow', 'tundra'].includes(t));
+            const isWetland = tags.some(t => ['wetland', 'marsh', 'swamp', 'reed', 'fen', 'bog', 'tropical', 'jungle'].includes(t));
+            const isTemperate = tags.some(t => ['temperate', 'forest', 'woodland', 'grassland', 'plains'].includes(t)) || (!isDesert && !isMountain && !isWetland && !isCoastal);
+            // Weighted pick based on climate cues with hard exclusions for impossible fronts
+            const candidates = WEATHER_FRONT_TYPES.map(def => {
+                let weight = 10;
+                // Hard exclusions
+                if (def.id === 'maritime-gale') {
+                    if (isDesert) return { def, weight: 0 };
+                    if (!isCoastal && !tags.some(t => ['wetland', 'lake', 'river'].includes(t)) && humidity < 45) return { def, weight: 0 };
+                }
+                if (def.id === 'monsoon-surge') {
+                    if (isDesert && humidity < 60) return { def, weight: 0 };
+                    if (humidity < 40) return { def, weight: 0 };
+                }
+                if (def.id === 'heat-dome' && temp <= 35) return { def, weight: 0 };
+                if (def.id === 'continental-freeze' && temp >= 85) return { def, weight: 0 };
+                if (def.id === 'warm-front' && isDesert && humidity < 25) {
+                    // Warm front needs moisture
+                    weight = Math.max(1, weight - 8);
+                }
+                if (def.id === 'occluded-storm' && isDesert && humidity < 30) return { def, weight: 0 };
+
+                // Positive weighting
+                if (def.id === 'clear-high') {
+                    if (isDesert) weight += 20;
+                    else if (humidity < 60) weight += 15;
+                    if (temp >= 75 && temp <= 90) weight += 5;
+                }
+                if (def.id === 'warm-front') {
+                    if (['spring', 'summer'].includes(season)) weight += 12;
+                    if (isTemperate || isWetland) weight += 8;
+                    if (isCoastal) weight += 6;
+                }
+                if (def.id === 'cold-front') {
+                    if (['autumn', 'winter'].includes(season)) weight += 14;
+                    if (isMountain) weight += 12;
+                    if (isTemperate) weight += 6;
+                }
+                if (def.id === 'occluded-storm') {
+                    if (humidity > 70) weight += 12;
+                    if (isCoastal || isWetland) weight += 8;
+                }
+                if (def.id === 'maritime-gale' && isCoastal) weight += 22;
+                if (def.id === 'continental-freeze') {
+                    if (temp <= 35) weight += 22;
+                    if (isMountain) weight += 14;
+                    if (['winter'].includes(season)) weight += 10;
+                }
+                if (def.id === 'heat-dome') {
+                    if (temp >= 80) weight += 20;
+                    if (isDesert) weight += 16;
+                    if (['summer'].includes(season)) weight += 10;
+                }
+                if (def.id === 'monsoon-surge') {
+                    if (humidity >= 75) weight += 18;
+                    if (isWetland) weight += 16;
+                    if (isCoastal && humidity >= 60) weight += 10;
+                }
+                if (policyId && def.id.includes(policyId.split('-')[0])) weight += 5;
+                return { def, weight };
+            }).filter(c => c.weight > 0);
+            if (!candidates.length) return 'clear-high';
+            const total = candidates.reduce((s, c) => s + c.weight, 0);
+            let roll = randomInteger(total) || 1;
+            for (const c of candidates) {
+                roll -= c.weight;
+                if (roll <= 0) return c.def.id;
+            }
+            return candidates[0].def.id;
+        }
+
+        function advanceWeatherFront(previousFront, climate) {
+            const normalized = normalizeWeatherFront(previousFront);
+            if (!normalized) return freshWeatherFront(pickWeatherFrontType(climate));
+            const nextIndex = normalized.stageIndex + 1;
+            if (nextIndex >= WEATHER_FRONT_STAGE_ORDER.length) {
+                // Front has cleared — 35% chance to linger clear-high, otherwise new system
+                if (randomInteger(100) <= 35) return freshWeatherFront('clear-high', 'mature');
+                return freshWeatherFront(pickWeatherFrontType(climate), 'forming');
+            }
+            const nextStage = WEATHER_FRONT_STAGE_ORDER[nextIndex];
+            // Clearing stage always reduces intensity
+            const nextIntensity = nextStage === 'clearing' ? Math.max(0, normalized.intensity - 1) : normalized.intensity;
+            const def = weatherFrontDefinition(normalized.type) || WEATHER_FRONT_TYPES[0];
+            return {
+                ...normalized,
+                stage: nextStage,
+                stageName: WEATHER_FRONT_STAGE_LABELS[nextStage] || nextStage,
+                stageIndex: nextIndex,
+                intensity: nextIntensity,
+                summary: `${def.name} — ${WEATHER_FRONT_STAGE_LABELS[nextStage] || nextStage}`,
+                durationHours: Math.max(
+                    POLICY.almanac.weatherFrontDurationMinHours,
+                    Math.min(POLICY.almanac.weatherFrontDurationMaxHours * 2, normalized.durationHours + randomInteger(3) - 1)
+                )
+            };
+        }
+
+        function kindFromFrontBias(frontDef, roll) {
+            if (!frontDef || !frontDef.kindBias) return null;
+            const entries = Object.entries(frontDef.kindBias);
+            const total = entries.reduce((s, [, w]) => s + w, 0);
+            let r = roll % total;
+            for (const [kind, weight] of entries) {
+                r -= weight;
+                if (r < 0) return kind;
+            }
+            return entries[0][0];
+        }
+
+        function weatherFrontDefinition(typeId) {
+            const key = String(typeId || '').trim().toLowerCase();
+            return WEATHER_FRONT_TYPE_MAP[key] || null;
+        }
+
+        function normalizeWeatherFront(raw) {
+            if (!raw || typeof raw !== 'object') return null;
+            const typeId = String(raw.type || raw.id || '').trim().toLowerCase();
+            const def = weatherFrontDefinition(typeId);
+            if (!def) return null;
+            const stage = String(raw.stage || '').trim().toLowerCase();
+            const stageIndex = WEATHER_FRONT_STAGE_ORDER.indexOf(stage);
+            const safeStage = stageIndex >= 0 ? stage : WEATHER_FRONT_STAGE_ORDER[0];
+            const safeIndex = stageIndex >= 0 ? stageIndex : 0;
+            const intensity = Math.max(0, Math.min(5, Math.floor(Number(raw.intensity) || def.severityBase || 1)));
+            return {
+                type: def.id,
+                typeName: def.name,
+                stage: safeStage,
+                stageName: WEATHER_FRONT_STAGE_LABELS[safeStage] || safeStage,
+                stageIndex: safeIndex,
+                intensity,
+                summary: String(raw.summary || def.summary || '').slice(0, POLICY.almanac.maximumSummaryLength) || def.summary,
+                description: def.summary,
+                temperatureBias: Number(def.temperatureBias) || 0,
+                windBias: Number(def.windBias) || 0,
+                precipitationBias: Number(def.precipitationBias) || 0,
+                humidityBias: Number(def.humidityBias) || 0,
+                formedAt: raw.formedAt || isoNow(),
+                durationHours: Math.max(
+                    POLICY.almanac.weatherFrontDurationMinHours,
+                    Math.min(POLICY.almanac.weatherFrontDurationMaxHours * 2, Math.floor(Number(raw.durationHours) || 6))
+                ),
+                tags: Array.isArray(raw.tags) ? raw.tags.slice(0, 8) : (def.tags || [])
+            };
+        }
+
+        function freshWeatherFront(typeId, stageOverride = null) {
+            const def = weatherFrontDefinition(typeId) || WEATHER_FRONT_TYPES[0];
+            const stage = stageOverride && WEATHER_FRONT_STAGE_ORDER.includes(stageOverride) ? stageOverride : 'forming';
+            const stageIndex = WEATHER_FRONT_STAGE_ORDER.indexOf(stage);
+            const minDur = POLICY.almanac.weatherFrontDurationMinHours;
+            const maxDur = POLICY.almanac.weatherFrontDurationMaxHours;
+            const durationHours = Math.max(minDur, Math.min(maxDur * 2, randomInteger(maxDur - minDur + 1) + minDur + stageIndex));
+            return {
+                type: def.id,
+                typeName: def.name,
+                stage,
+                stageName: WEATHER_FRONT_STAGE_LABELS[stage] || stage,
+                stageIndex,
+                intensity: Math.max(0, Math.min(5, def.severityBase + (stageIndex >= 2 && stageIndex <= 3 ? 1 : 0))),
+                summary: `${def.name} — ${WEATHER_FRONT_STAGE_LABELS[stage] || stage}`,
+                description: def.summary,
+                temperatureBias: def.temperatureBias,
+                windBias: def.windBias,
+                precipitationBias: def.precipitationBias,
+                humidityBias: def.humidityBias,
+                formedAt: isoNow(),
+                durationHours,
+                tags: [...(def.tags || [])]
+            };
+        }
+
+        function pickWeatherFrontType(climate) {
+            const tags = (climate?.tags || []).map(t => String(t).toLowerCase());
+            const season = String(climate?.season || '').toLowerCase();
+            const humidity = Number(climate?.humidity) || 50;
+            const temp = Number(climate?.temperatureF) || 60;
+            const policyId = String(climate?.weatherPolicy?.id || '').toLowerCase();
+            const isCoastal = tags.some(t => ['coastal', 'maritime', 'shore', 'island', 'ocean', 'harbor', 'beach', 'tide'].includes(t));
+            const isDesert = tags.some(t => ['desert', 'arid', 'dry', 'scrub', 'dune', 'salt-flat', 'sunward', 'wasteland'].includes(t));
+            const isMountain = tags.some(t => ['mountain', 'alpine', 'highland', 'peak', 'pass', 'ridge', 'snow', 'tundra'].includes(t));
+            const isWetland = tags.some(t => ['wetland', 'marsh', 'swamp', 'reed', 'fen', 'bog', 'tropical', 'jungle'].includes(t));
+            const isTemperate = tags.some(t => ['temperate', 'forest', 'woodland', 'grassland', 'plains'].includes(t)) || (!isDesert && !isMountain && !isWetland && !isCoastal);
+            // Weighted pick based on climate cues with hard exclusions for impossible fronts
+            const candidates = WEATHER_FRONT_TYPES.map(def => {
+                let weight = 10;
+                // Hard exclusions
+                if (def.id === 'maritime-gale') {
+                    if (isDesert) return { def, weight: 0 };
+                    if (!isCoastal && !tags.some(t => ['wetland', 'lake', 'river'].includes(t)) && humidity < 45) return { def, weight: 0 };
+                }
+                if (def.id === 'monsoon-surge') {
+                    if (isDesert && humidity < 60) return { def, weight: 0 };
+                    if (humidity < 40) return { def, weight: 0 };
+                }
+                if (def.id === 'heat-dome' && temp <= 35) return { def, weight: 0 };
+                if (def.id === 'continental-freeze' && temp >= 85) return { def, weight: 0 };
+                if (def.id === 'warm-front' && isDesert && humidity < 25) {
+                    // Warm front needs moisture
+                    weight = Math.max(1, weight - 8);
+                }
+                if (def.id === 'occluded-storm' && isDesert && humidity < 30) return { def, weight: 0 };
+
+                // Positive weighting
+                if (def.id === 'clear-high') {
+                    if (isDesert) weight += 20;
+                    else if (humidity < 60) weight += 15;
+                    if (temp >= 75 && temp <= 90) weight += 5;
+                }
+                if (def.id === 'warm-front') {
+                    if (['spring', 'summer'].includes(season)) weight += 12;
+                    if (isTemperate || isWetland) weight += 8;
+                    if (isCoastal) weight += 6;
+                }
+                if (def.id === 'cold-front') {
+                    if (['autumn', 'winter'].includes(season)) weight += 14;
+                    if (isMountain) weight += 12;
+                    if (isTemperate) weight += 6;
+                }
+                if (def.id === 'occluded-storm') {
+                    if (humidity > 70) weight += 12;
+                    if (isCoastal || isWetland) weight += 8;
+                }
+                if (def.id === 'maritime-gale' && isCoastal) weight += 22;
+                if (def.id === 'continental-freeze') {
+                    if (temp <= 35) weight += 22;
+                    if (isMountain) weight += 14;
+                    if (['winter'].includes(season)) weight += 10;
+                }
+                if (def.id === 'heat-dome') {
+                    if (temp >= 80) weight += 20;
+                    if (isDesert) weight += 16;
+                    if (['summer'].includes(season)) weight += 10;
+                }
+                if (def.id === 'monsoon-surge') {
+                    if (humidity >= 75) weight += 18;
+                    if (isWetland) weight += 16;
+                    if (isCoastal && humidity >= 60) weight += 10;
+                }
+                if (policyId && def.id.includes(policyId.split('-')[0])) weight += 5;
+                return { def, weight };
+            }).filter(c => c.weight > 0);
+            if (!candidates.length) return 'clear-high';
+            const total = candidates.reduce((s, c) => s + c.weight, 0);
+            let roll = randomInteger(total) || 1;
+            for (const c of candidates) {
+                roll -= c.weight;
+                if (roll <= 0) return c.def.id;
+            }
+            return candidates[0].def.id;
+        }
+
+        function advanceWeatherFront(previousFront, climate) {
+            const normalized = normalizeWeatherFront(previousFront);
+            if (!normalized) return freshWeatherFront(pickWeatherFrontType(climate));
+            const nextIndex = normalized.stageIndex + 1;
+            if (nextIndex >= WEATHER_FRONT_STAGE_ORDER.length) {
+                // Front has cleared — 35% chance to linger clear-high, otherwise new system
+                if (randomInteger(100) <= 35) return freshWeatherFront('clear-high', 'mature');
+                return freshWeatherFront(pickWeatherFrontType(climate), 'forming');
+            }
+            const nextStage = WEATHER_FRONT_STAGE_ORDER[nextIndex];
+            // Clearing stage always reduces intensity
+            const nextIntensity = nextStage === 'clearing' ? Math.max(0, normalized.intensity - 1) : normalized.intensity;
+            const def = weatherFrontDefinition(normalized.type) || WEATHER_FRONT_TYPES[0];
+            return {
+                ...normalized,
+                stage: nextStage,
+                stageName: WEATHER_FRONT_STAGE_LABELS[nextStage] || nextStage,
+                stageIndex: nextIndex,
+                intensity: nextIntensity,
+                summary: `${def.name} — ${WEATHER_FRONT_STAGE_LABELS[nextStage] || nextStage}`,
+                durationHours: Math.max(
+                    POLICY.almanac.weatherFrontDurationMinHours,
+                    Math.min(POLICY.almanac.weatherFrontDurationMaxHours * 2, normalized.durationHours + randomInteger(3) - 1)
+                )
+            };
+        }
+
+        function kindFromFrontBias(frontDef, roll) {
+            if (!frontDef || !frontDef.kindBias) return null;
+            const entries = Object.entries(frontDef.kindBias);
+            const total = entries.reduce((s, [, w]) => s + w, 0);
+            let r = roll % total;
+            for (const [kind, weight] of entries) {
+                r -= weight;
+                if (r < 0) return kind;
+            }
+            return entries[0][0];
         }
 
         function generateWeather(previous = null, forecastOffset = 0) {
@@ -35982,27 +36928,58 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const policyWindBias = Number(policy?.windBias) || 0;
             const policyPrecipitationBias = Number(policy?.precipitationBias) || 0;
             const policyPrecipitationChance = Math.max(0, Math.min(100, climate.precipitationChance + policyPrecipitationBias));
-            const randomTemperature = climate.temperatureF + policyTemperatureBias + randomInteger(21) - 11;
+
+            // --- Front lifecycle ---
+            let front;
+            if (sameClimatePrevious && sameClimatePrevious.front) {
+                front = advanceWeatherFront(sameClimatePrevious.front, climate);
+            } else if (sameClimatePrevious && sameClimatePrevious.front === null && forecastOffset === 0 && randomInteger(100) <= 20) {
+                front = freshWeatherFront('clear-high', 'mature');
+            } else if (sameClimatePrevious && sameClimatePrevious.front === null) {
+                front = freshWeatherFront(pickWeatherFrontType(climate));
+            } else {
+                front = freshWeatherFront(pickWeatherFrontType(climate));
+            }
+            const frontDef = weatherFrontDefinition(front.type) || WEATHER_FRONT_TYPES[0];
+            const effectiveHumidity = Math.max(0, Math.min(100, climate.humidity + front.humidityBias));
+            const effectivePrecipChance = Math.max(0, Math.min(100, policyPrecipitationChance + front.precipitationBias + (front.stageIndex >= 2 && front.stageIndex <= 3 ? 10 : 0)));
+            const baseTemp = climate.temperatureF + policyTemperatureBias + front.temperatureBias;
+            const randomTemperature = baseTemp + randomInteger(21) - 11 + (front.stage === 'clearing' ? 2 : 0);
             const temperatureF = sameClimatePrevious
                 ? Math.round((Number(sameClimatePrevious.temperatureF) * 2 + randomTemperature) / 3)
                 : Math.round(randomTemperature);
             const precipitationRoll = randomInteger(100);
             const cloudRoll = randomInteger(100);
             const windVariation = randomInteger(13) - 7;
-            const windMph = Math.max(0, Math.round((sameClimatePrevious ? Number(sameClimatePrevious.windMph) + climate.windMph + policyWindBias : (climate.windMph + policyWindBias) * 2) / 2 + windVariation));
-            const precipitation = precipitationRoll <= policyPrecipitationChance;
-            const severe = precipitation && randomInteger(100) <= Math.max(5, Math.round(policyPrecipitationChance / 5));
-            let kind = 'clear';
+            const baseWind = climate.windMph + policyWindBias + front.windBias;
+            const windMph = Math.max(0, Math.round((sameClimatePrevious ? Number(sameClimatePrevious.windMph) + baseWind : baseWind * 2) / 2 + windVariation + (front.stageIndex === 3 ? 3 : 0)));
+
+            const precipitation = precipitationRoll <= effectivePrecipChance;
+            const severe = precipitation && randomInteger(100) <= Math.max(5, Math.round(effectivePrecipChance / 5));
+
+            let kind = kindFromFrontBias(frontDef, precipitationRoll + cloudRoll) || 'clear';
             if (precipitation && temperatureF <= 32) kind = severe ? 'blizzard' : 'snow';
-            else if (precipitation) kind = severe ? 'storm' : 'rain';
-            else if (cloudRoll <= Math.min(85, climate.humidity)) kind = 'cloudy';
-            else if (climate.humidity >= 80 && randomInteger(100) <= 30) kind = 'fog';
-            else if (windMph >= 25) kind = 'windy';
-            else if (temperatureF >= 100) kind = 'heatwave';
-            else if (temperatureF <= 10) kind = 'cold-snap';
+            else if (precipitation && frontDef.id === 'occluded-storm') kind = severe ? 'storm' : 'rain';
+            else if (precipitation && ['warm-front', 'monsoon-surge'].includes(frontDef.id)) kind = severe ? 'storm' : 'rain';
+            else if (!precipitation && cloudRoll <= Math.min(85, effectiveHumidity) && ['clear-high'].includes(frontDef.id) === false) {
+                if (['cloudy', 'rain', 'fog'].includes(kind) === false && effectiveHumidity > 50) kind = 'cloudy';
+            }
+            if (cloudRoll <= Math.min(85, effectiveHumidity) && kind === 'clear' && frontDef.id !== 'clear-high' && frontDef.id !== 'heat-dome') {
+                kind = 'cloudy';
+            }
+            if (effectiveHumidity >= 80 && randomInteger(100) <= 30 && ['fog', 'cloudy'].includes(kind) === false && precipitation === false) {
+                if (['warm-front', 'monsoon-surge', 'maritime-gale'].includes(frontDef.id)) kind = 'fog';
+            }
+            if (windMph >= 25 && ['windy', 'storm', 'blizzard'].includes(kind) === false) {
+                if (['maritime-gale', 'cold-front', 'occluded-storm'].includes(frontDef.id)) kind = 'windy';
+            }
+            if (temperatureF >= 100 && frontDef.id === 'heat-dome') kind = 'heatwave';
+            else if (temperatureF <= 10 && frontDef.id === 'continental-freeze') kind = 'cold-snap';
+
             if (sameClimatePrevious && randomInteger(100) <= 35 && ['clear', 'cloudy', 'rain', 'snow', 'fog', 'windy'].includes(sameClimatePrevious.kind)) {
                 kind = sameClimatePrevious.kind;
             }
+
             const descriptions = {
                 clear: ['Clear', 'None', 'Clear', 0, ['clear']],
                 cloudy: ['Cloudy', 'None', 'Overcast', 1, ['cloud']],
@@ -36015,8 +36992,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 heatwave: ['Heat wave', 'None', 'Clear', 3, ['heat']],
                 'cold-snap': ['Bitter cold', 'None', 'Clear', 3, ['cold']]
             };
-            const [summary, precipitationText, cloud, severity, tags] = descriptions[kind];
+            const [summary, precipitationText, cloud, severityBase, tags] = descriptions[kind] || descriptions.clear;
+            const severity = Math.max(severityBase, front.intensity || 0);
             const visibility = ['storm', 'snow'].includes(kind) ? 'Reduced' : (['blizzard', 'fog'].includes(kind) ? 'Heavily obscured' : 'Clear');
+            const confidence = forecastOffset === 0 ? 100 : Math.max(20, 95 - forecastOffset * 12 - (front.stageIndex <= 1 ? 10 : 0));
+
             return {
                 stateSchemaVersion: WEATHER_STATE_SCHEMA_VERSION,
                 id: `weather-${Date.now().toString(36)}-${randomInteger(9999)}`,
@@ -36028,8 +37008,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 cloud,
                 visibility,
                 severity,
-                durationHours: Math.max(1, randomInteger(12) + (severity * 2)),
-                tags: [...new Set([...(climate.tags || []), ...tags])],
+                durationHours: Math.max(POLICY.almanac.weatherFrontDurationMinHours, Math.min(720, front.durationHours + randomInteger(4))),
+                tags: [...new Set([...(climate.tags || []), ...tags, ...(front.tags || [])])],
                 regionId: climate.regionId,
                 regionName: climate.regionName,
                 climateContextId: weatherClimateContextIdentity(climate),
@@ -36038,7 +37018,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 weatherPolicyId: policy?.id || null,
                 weatherPolicyName: policy?.name || null,
                 weatherPolicySummary: policy?.summary || '',
+                front: copy(front),
+                frontType: front.type,
+                frontStage: front.stage,
                 forecastOffset,
+                forecastConfidence: confidence,
                 generatedAt: isoNow(),
                 worldMinute: timeAvailable() ? ensureAlmanacRuntime().time.worldMinute : null,
                 source: forecastOffset ? 'Forecast' : 'Generated'
@@ -36046,6 +37030,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         }
 
         function deriveEnvironment(weather, source = 'WeatherAlmanac') {
+
             const value = weather || generateWeather(null, 0);
             const temperature = value.temperatureF <= 0 ? 'Extreme cold'
                 : value.temperatureF <= 32 ? 'Freezing'
@@ -36093,6 +37078,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             runtime.weather.current = copy(weather);
             runtime.weather.history.push({ ...copy(weather), committedReason: reason });
             if (runtime.weather.history.length > POLICY.almanac.weatherHistoryLimit) runtime.weather.history.shift();
+            if (weather && weather.front) {
+                if (!Array.isArray(runtime.weather.frontHistory)) runtime.weather.frontHistory = [];
+                runtime.weather.frontHistory.push(copy(weather.front));
+                if (runtime.weather.frontHistory.length > POLICY.almanac.weatherFrontHistoryLimit) runtime.weather.frontHistory.shift();
+            }
             runtime.weather.forecast = [];
             publishChange('almanac.weather.changed', previous, weather, { reason }, msg);
             refreshEnvironment(weather, msg);
@@ -36122,17 +37112,25 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 
         function showWeatherHistory(msg) {
             if (!submoduleEnabled('weather')) return showWeather(msg);
-            const history = ensureAlmanacRuntime().weather.history.slice().reverse();
+            const runtime = ensureAlmanacRuntime();
+            const history = runtime.weather.history.slice().reverse();
+            const frontHistory = Array.isArray(runtime.weather.frontHistory) ? runtime.weather.frontHistory.slice().reverse() : [];
             sendPanel(msg, 'WeatherAlmanac / Recent Conditions', [
                 { label: 'Recent Conditions', value: history.length
-                    ? history.map((entry, index) => `${index + 1}. <strong>${_sanitize(entry.summary)}</strong> | ${entry.temperatureF} F | ${entry.windMph} mph | ${_sanitize(entry.regionName || 'No Climate region')} | ${_sanitize(entry.source || 'Unknown source')}`).join('<br>')
+                    ? history.map((entry, index) => {
+                        const front = entry.front ? ` | ${_sanitize(entry.front.typeName || entry.front.type)} ${_sanitize(entry.front.stageName || entry.front.stage)}` : '';
+                        return `${index + 1}. <strong>${_sanitize(entry.summary)}</strong> | ${entry.temperatureF} F | ${entry.windMph} mph${front} | ${_sanitize(entry.regionName || 'No Climate region')} | ${_sanitize(entry.source || 'Unknown source')}`;
+                    }).join('<br>')
                     : 'No Weather has been committed yet.' },
-                { label: 'Retention', value: `${history.length}/${POLICY.almanac.weatherHistoryLimit} retained Weather entries.` },
+                { label: 'Front History', value: frontHistory.length
+                    ? frontHistory.slice(0, 10).map((f, i) => `${i + 1}. ${_sanitize(f.typeName || f.type)} — ${_sanitize(f.stageName || f.stage)} | ${_sanitize(f.summary || '')}`).join('<br>')
+                    : 'No front history yet.' },
+                { label: 'Retention', value: `${history.length}/${POLICY.almanac.weatherHistoryLimit} weather, ${frontHistory.length}/${POLICY.almanac.weatherFrontHistoryLimit} fronts retained.` },
                 { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Weather', '!aa-weather')} ${GameAssist.createButton('Set Manual Conditions', weatherManualCommand(currentWeather()))}` : GameAssist.createButton('Weather', '!aa-weather') }
             ]);
         }
 
-        function showWeather(msg) {
+        function showWeather(msg, { detail = null } = {}) {
             const worldContext = currentWorldSessionContext();
             if (!submoduleEnabled('weather')) return sendPanel(msg, 'WeatherAlmanac', [
                 { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
@@ -36141,37 +37139,510 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const runtime = ensureAlmanacRuntime();
             const scene = resolveScene();
             const weather = scene.weather?.current || null;
-            const immediateEnvironment = scene.environment?.current || null;
-            const sceneOverride = scene.provenance?.['environment.current']?.source === 'GM scene override' ? immediateEnvironment : null;
             const generationClimate = weatherClimateContext();
-            const climateMismatch = Boolean(weather
-                && !weatherClimateContextsMatch(weather, generationClimate));
-            const legacyContextRefresh = weatherClimateContextNeedsRefresh(weather, generationClimate);
-            const displayedWeatherContext = climateMismatch
-                ? `${weather.regionName || 'An earlier Climate baseline'} | ${weather.season || 'Unknown season'} when this Weather was set`
-                : climateSeasonalContextSummary(generationClimate);
-            const forecast = scene.weather?.forecast?.length
-                ? scene.weather.forecast.map((item, index) => `+${index + 1}: ${_sanitize(item.summary)}, ${item.temperatureF} F`).join('<br>')
+            const clock = sceneClockContext(scene);
+            const moment = clock.campaignMoment;
+            const location = scene.location || null;
+            const place = location ? worldLocationContextAt(modState.config.world, worldRecordByReference(modState.config.world.locations, location.id)) : null;
+            const effectiveClimate = location ? effectiveClimateContext({ worldConfig: modState.config.world, season: moment?.season }) : null;
+            const climateMismatch = Boolean(weather && !weatherClimateContextsMatch(weather, generationClimate));
+            const isLegacyWeather = weather ? weatherClimateContextNeedsRefresh(weather, generationClimate) : false;
+            const climateMismatchMessage = climateMismatch
+                ? (isLegacyWeather
+                    ? 'This stored Weather predates stable Climate-context tracking. It remains intact, but its setting identity cannot be confirmed.'
+                    : `Current Weather was recorded for ${_sanitize(weather.regionName||'an earlier baseline')}. This Current Area uses ${_sanitize(climateSeasonalContextSummary(generationClimate))}; choose Generate or Set Manual Conditions when ready to create Weather for this Location.`)
+                : null;
+            const storedWeatherContext = weather
+                ? `${_sanitize(weather.regionName||'earlier baseline')} | ${_sanitize(weather.season||'')} when this Weather was set`
+                : null;
+            // Detail level: basic (default), detailed, technical — persisted in config for live-play
+            const requestedDetail = String(detail || runtime.weather.detailLevel || 'basic').toLowerCase();
+            const detailLevel = ['basic','detailed','technical'].includes(requestedDetail) ? requestedDetail : 'basic';
+            if (detail && detail !== runtime.weather.detailLevel) {
+                runtime.weather.detailLevel = detailLevel;
+            }
+            const detailButtons = `${GameAssist.createButton('Basic', '!aa-weather basic')} ${GameAssist.createButton('Detailed', '!aa-weather detailed')} ${GameAssist.createButton('Technical', '!aa-weather technical')}`;
+            const whereWhen = `${location ? `<strong>${_sanitize(location.name)}</strong>` : 'No Current Area'}<br>${moment ? _sanitize(displayMoment(moment)) : 'Time unavailable'}`;
+            const playerFacing = weather ? _sanitize(sceneWeatherSummary(scene, { detailed: detailLevel !== 'basic' })) : 'No weather yet — generate for this scene.';
+            const gmBrief = (() => {
+                if (!weather) return 'No weather yet.';
+                let base = `${_sanitize(weather.summary)} | ${weather.temperatureF} F | ${weather.windMph} mph wind | ${_sanitize(weather.visibility)}`;
+                // Check expiration
+                try {
+                    const currentMinute = runtime.time.worldMinute;
+                    const weatherMinute = weather.worldMinute;
+                    const durationHours = weather.durationHours || 8;
+                    const minutesPerHour = 60;
+                    if (Number.isFinite(currentMinute) && Number.isFinite(weatherMinute)) {
+                        const expiresAt = weatherMinute + durationHours * minutesPerHour;
+                        if (currentMinute >= expiresAt) {
+                            base += ` | Expired (was ${durationHours}h, set at ${weatherMinute}) — generate new`;
+                        } else {
+                            const remainingHours = Math.max(0, Math.floor((expiresAt - currentMinute) / minutesPerHour));
+                            base += ` | ${remainingHours}h remaining of ${durationHours}h expected duration`;
+                        }
+                    } else {
+                        base += ` | Expected duration ${durationHours}h recorded`;
+                    }
+                } catch(e) {
+                    base += ` | Duration ${weather.durationHours || 8}h recorded`;
+                }
+                return base;
+            })();
+            // Plain-language inputs for Detailed, technical numbers for Technical
+            const plainClimate = generationClimate?.baseline ? _sanitize(climateSeasonalContextSummary(generationClimate.baseline)) : (generationClimate ? _sanitize(generationClimate.regionName||'No climate') : 'No climate');
+            const plainBiome = place?.biome?.name || scene.biome?.name || (location?.tags?.join(', ') || 'Not set');
+            const plainSeason = moment?.season || generationClimate?.season || 'Unknown';
+            const plainGeography = place?.geography?.name || scene.geography?.name || 'Not set';
+            const plainTerrain = location?.terrain || place?.geography?.terrain || 'Not set';
+            const plainEnvironment = scene.environment?.current?.name || 'Not set';
+            const shapesPlain = `Climate: ${plainClimate}<br>Biome: ${_sanitize(plainBiome)}<br>Season: ${_sanitize(plainSeason)}<br>Geography: ${_sanitize(plainGeography)}<br>Terrain: ${_sanitize(plainTerrain)}<br>Environment: ${_sanitize(plainEnvironment)}`;
+            // Technical inputs with numbers
+            const climateInputTech = generationClimate ? `${_sanitize(generationClimate.profileName || generationClimate.regionName)} — ${generationClimate.temperatureF}F, ${generationClimate.humidity}% humidity, ${generationClimate.precipitationChance}% precip, ${generationClimate.windMph} mph` : 'No climate';
+            const ecoregionTech = effectiveClimate?.ecoregionProfile ? `${_sanitize(effectiveClimate.ecoregionProfile.name)} — Temp ${effectiveClimate.ecoregionProfile.temperatureBias>=0?'+':''}${effectiveClimate.ecoregionProfile.temperatureBias}F Hum ${effectiveClimate.ecoregionProfile.humidityBias>=0?'+':''}${effectiveClimate.ecoregionProfile.humidityBias}% Wind ${effectiveClimate.ecoregionProfile.windBias>=0?'+':''}${effectiveClimate.ecoregionProfile.windBias}` : 'No ecoregion profile';
+            const forecastPlain = scene.weather?.forecast?.length
+                ? scene.weather.forecast.map((item, index) => `Day ${index+1}: ${_sanitize(item.summary)}`).join('<br>')
+                : 'No forecast — generate weather to create one.';
+            const forecastDetailed = scene.weather?.forecast?.length
+                ? scene.weather.forecast.map((item, index) => {
+                    const conf = item.forecastConfidence !== undefined ? ` (${item.forecastConfidence}% confidence)` : '';
+                    return `Day ${index+1}: ${_sanitize(item.summary)} | ${item.temperatureF}F${conf}`;
+                }).join('<br>')
                 : 'No forecast prepared.';
-            sendPanel(msg, 'WeatherAlmanac', [
+            const forecastTech = scene.weather?.forecast?.length
+                ? scene.weather.forecast.map((item, index) => {
+                    const front = item.front ? `${_sanitize(item.front.typeName || item.front.type)} ${item.front.stageName || item.front.stage}` : 'No front';
+                    const conf = Number.isFinite(item.forecastConfidence) ? `${item.forecastConfidence}%` : '—';
+                    return `+${index+1}: ${_sanitize(item.summary)} | ${item.temperatureF}F | ${front} | Confidence ${conf}`;
+                }).join('<br>')
+                : 'No forecast.';
+            const installedWeatherPolicy = generationClimate?.weatherPolicy ? `${_sanitize(generationClimate.weatherPolicy.name||generationClimate.weatherPolicy.id)} — ${_sanitize(generationClimate.weatherPolicy.summary||'')}` : null;
+            // Weather type chooser matrix — clean player/GM facing, no escaped &amp;
+            const weatherTypeMatrix = `
+                Choose what kind of weather to generate for this scene:<br>
+                ${GameAssist.createButton('Coastal', '!aa-weather generate --climate coastal')} ${GameAssist.createButton('Temperate', '!aa-weather generate --climate temperate')} ${GameAssist.createButton('Desert', '!aa-weather generate --climate desert')}<br>
+                ${GameAssist.createButton('Mountain', '!aa-weather generate --climate mountain')} ${GameAssist.createButton('Wetland', '!aa-weather generate --climate swamp')} ${GameAssist.createButton('Arctic', '!aa-weather generate --climate arctic')}
+            `.trim();
+            // Basic view: minimal, 2-clicks to Generate/Advance/Where - now with Current Settings matrix
+            if (detailLevel === 'basic') {
+                const seasonImpactLine = moment ? `Season ${moment.season} shapes this weather: base ${generationClimate.temperatureF}F + season + ecoregion + GM bias = effective. Current Settings ${runtime.world.currentSettings.presetId ? 'preset ' + _sanitize(runtime.world.currentSettings.presetId) : 'custom'} applied.` : 'No season';
+                sendPanel(msg, 'Weather', [
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Where and When', value: whereWhen },
+                    { label: 'Current', value: gmBrief },
+                    { label: 'Seasonal Context', value: _sanitize(climateSeasonalContextSummary(generationClimate)) },
+                    { label: 'Season Impact', value: seasonImpactLine },
+                    { label: 'What Players Experience', value: playerFacing },
+                    { label: 'Current Settings', value: `Base: ${runtime.world.currentSettings.baseClimateRegionId ? _sanitize(runtime.world.currentSettings.baseClimateRegionId) : _sanitize(generationClimate.regionName)} | Ecoregion: ${runtime.world.currentSettings.ecoregionId ? _sanitize(runtime.world.currentSettings.ecoregionId) : 'None'} | Biome: ${runtime.world.currentSettings.biomeId ? _sanitize(runtime.world.currentSettings.biomeId) : 'None'} | GM Bias: Temp ${runtime.world.currentSettings.temperatureBias>=0?'+':''}${runtime.world.currentSettings.temperatureBias}F` },
+                    ...(climateMismatchMessage ? [{ label: 'Current Area Climate', value: climateMismatchMessage }] : []),
+                    ...(storedWeatherContext ? [{ label: 'Stored Weather Context', value: storedWeatherContext }] : []),
+                    ...(installedWeatherPolicy ? [{ label: 'Installed Weather Policy', value: installedWeatherPolicy }] : []),
+                    { label: 'Forecast', value: forecastPlain },
+                    { label: 'Choose Weather Type', value: weatherTypeMatrix },
+                    { label: 'Actions', value: `${GameAssist.createButton('Generate', '!aa-weather generate')} ${GameAssist.createButton('Current Settings', '!aa-current')} ${GameAssist.createButton('World Palettes', '!aa-world palettes')} ${GameAssist.createButton('Forecast', '!aa-weather forecast --days ?{Days|3}')} ${GameAssist.createButton('Set Manual Conditions', weatherManualCommand(weather))} ${GameAssist.createButton('Recent Conditions', '!aa-weather history')} ${GameAssist.createButton('Announce', '!aa-weather announce')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` },
+                    { label: 'View', value: detailButtons },
+                    { label: 'Navigation', value: `${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                ]);
+                return;
+            }
+            // Detailed view: adds shaping inputs, GM details, confidence, policy
+            if (detailLevel === 'detailed') {
+                const gmDetails = weather ? `${_sanitize(weather.kind || '')} ${weather.temperatureF}F | Wind ${weather.windMph} mph | Visibility ${_sanitize(weather.visibility || '')} | Clouds ${_sanitize(weather.cloud || '')} | Precip ${_sanitize(weather.precipitation || '')}` : 'No current weather to detail.';
+                sendPanel(msg, 'Weather - Detailed', [
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Where and When', value: whereWhen },
+                    { label: 'Current', value: gmBrief },
+                    { label: 'What Players Experience', value: playerFacing },
+                    { label: 'GM Details', value: gmDetails },
+                    { label: 'Seasonal Context', value: _sanitize(climateSeasonalContextSummary(generationClimate)) },
+                    ...(climateMismatch ? [{ label: 'Current Area Climate', value: climateMismatchMessage }] : []),
+                    ...(storedWeatherContext ? [{ label: 'Stored Weather Context', value: storedWeatherContext }] : []),
+                    ...(installedWeatherPolicy ? [{ label: 'Installed Weather Policy', value: installedWeatherPolicy }] : []),
+                    { label: 'What Shapes This Weather', value: shapesPlain },
+                    { label: 'Forecast', value: forecastDetailed },
+                    { label: 'Choose Weather Type', value: weatherTypeMatrix },
+                    { label: 'Actions', value: `${GameAssist.createButton('Generate', '!aa-weather generate')} ${GameAssist.createButton('Current Settings', '!aa-current')} ${GameAssist.createButton('World Palettes', '!aa-world palettes')} ${GameAssist.createButton('Forecast', '!aa-weather forecast --days ?{Days|3}')} ${GameAssist.createButton('Set Manual Conditions', weatherManualCommand(weather))} ${GameAssist.createButton('Recent Conditions', '!aa-weather history')} ${GameAssist.createButton('Announce', '!aa-weather announce')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` },
+                    { label: 'View', value: detailButtons }
+                ]);
+                return;
+            }
+            // Technical view: full numbers, front lifecycle, provenance
+            const playerFacingTech = weather ? `${_sanitize(weather.summary)} — ${weather.temperatureF}F, wind ${weather.windMph} mph, ${_sanitize(weather.visibility)}. ${weather.front ? `${_sanitize(weather.front.typeName)} ${weather.front.stageName} — ${weather.front.description} | Intensity ${weather.front.intensity} | ${weather.front.durationHours}h | Confidence ${weather.forecastConfidence||100}%` : ''}` : 'No weather yet.';
+            const gmTechnical = weather ? `${_sanitize(weather.kind)} | ${weather.temperatureF}F | ${weather.windMph} mph | Precip: ${_sanitize(weather.precipitation)} | Cloud: ${_sanitize(weather.cloud)} | Severity ${weather.severity} | Front: ${weather.front ? `${_sanitize(weather.front.type)} ${weather.front.stage} intensity ${weather.front.intensity} ${weather.front.durationHours}h conf ${weather.forecastConfidence||100}%` : 'none'} | Region: ${_sanitize(weather.regionName||'')} | Season: ${_sanitize(weather.season||'')} | Source: ${_sanitize(weather.source||'')}` : 'No technical weather yet.';
+            sendPanel(msg, 'Weather - Technical', [
                 { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
-                ...(sceneOverride ? [{ label: 'Current Scene', value: `${_sanitize(sceneOverride.name)} | ${_sanitize(sceneOverride.temperature)} | ${_sanitize(sceneOverride.wind)} wind | ${_sanitize(sceneOverride.visibility)}` }] : []),
-                { label: sceneOverride ? 'Stored Weather' : 'Current', value: weather ? `${_sanitize(weather.summary)} | ${weather.temperatureF} F | ${weather.windMph} mph wind | ${_sanitize(weather.visibility)}` : 'No weather has been committed yet.' },
-                ...(sceneOverride ? [{ label: 'Relationship', value: 'The GM scene override is currently authoritative. Stored WeatherAlmanac conditions resume when Follow Weather Again is chosen in EnviroAlmanac.' }] : []),
-                ...(climateMismatch ? [{ label: 'Current Area Climate', value: legacyContextRefresh
-                    ? `This stored Weather predates stable Climate-context tracking. It remains intact, but its setting identity cannot be confirmed. This Current Area uses ${_sanitize(climateSeasonalContextSummary(generationClimate))}; choose Generate or Set Manual Conditions to refresh it for this Location.`
-                    : `Current Weather was recorded for ${_sanitize(weather.regionName || 'an earlier Climate baseline')}. This Current Area uses ${_sanitize(climateSeasonalContextSummary(generationClimate))}; choose Generate or Set Manual Conditions when ready to create Weather for this Location.` }] : []),
-                { label: climateMismatch ? 'Stored Weather Context' : 'Seasonal Context', value: _sanitize(displayedWeatherContext) },
-                ...(generationClimate.weatherPolicy ? [{ label: 'Installed Weather Policy', value: `${_sanitize(generationClimate.weatherPolicy.name)}${generationClimate.weatherPolicy.summary ? ` — ${_sanitize(generationClimate.weatherPolicy.summary)}` : ''}` }] : []),
-                { label: 'Forecast', value: forecast },
-                { label: 'Lock', value: `${runtime.weather.locked ? 'On' : 'Off'} ${playerIsGM(msg?.playerid) ? GameAssist.createButton(runtime.weather.locked ? 'Unlock' : 'Lock', `!aa-weather ${runtime.weather.locked ? 'unlock' : 'lock'}`) : ''}` },
-                { label: 'Actions', value: playerIsGM(msg?.playerid) ? `${GameAssist.createButton('Generate', '!aa-weather generate')} ${GameAssist.createButton('Set Manual Conditions', weatherManualCommand(weather))} ${GameAssist.createButton('Forecast', '!aa-weather forecast --days ?{Days|3}')} ${GameAssist.createButton('Recent Conditions', '!aa-weather history')} ${GameAssist.createButton('Announce', '!aa-weather announce')} ${GameAssist.createButton('Almanac', '!Almanac-GM')}` : GameAssist.createButton('Almanac', '!Almanac') }
+                { label: 'Where and When', value: whereWhen },
+                { label: 'Current', value: gmBrief },
+                { label: 'Seasonal Context', value: _sanitize(climateSeasonalContextSummary(generationClimate)) },
+                ...(climateMismatch ? [{ label: 'Current Area Climate', value: climateMismatchMessage }] : []),
+                ...(storedWeatherContext ? [{ label: 'Stored Weather Context', value: storedWeatherContext }] : []),
+                ...(installedWeatherPolicy ? [{ label: 'Installed Weather Policy', value: installedWeatherPolicy }] : []),
+                { label: 'What Players Experience', value: playerFacingTech },
+                { label: 'GM Technical', value: gmTechnical },
+                { label: 'What Shapes This Weather - Technical', value: `Climate: ${climateInputTech}<br>Ecoregion: ${ecoregionTech}<br>${shapesPlain}` },
+                { label: 'Forecast - Technical', value: forecastTech },
+                { label: 'Choose Weather Type', value: weatherTypeMatrix },
+                { label: 'Actions', value: `${GameAssist.createButton('Generate', '!aa-weather generate')} ${GameAssist.createButton('Forecast', '!aa-weather forecast --days ?{Days|3}')} ${GameAssist.createButton('Set Manual Conditions', weatherManualCommand(weather))} ${GameAssist.createButton('Recent Conditions', '!aa-weather history')} ${GameAssist.createButton('Announce', '!aa-weather announce')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` },
+                { label: 'View', value: detailButtons }
+            ]);
+        }
+
+
+        function currentSettingsEffectiveConfig() {
+            const runtime = ensureAlmanacRuntime();
+            const settings = runtime.world.currentSettings || {};
+            const worldResult = worldConfigResult(modState.config.world, { persist: false });
+            const config = worldResult?.ok ? worldResult.config : null;
+            const baseClimate = settings.baseClimateRegionId ? climateRegion(settings.baseClimateRegionId, normalizeClimateConfig({}, { persist: false })) : null;
+            const fallbackClimate = weatherClimateContext();
+            const base = baseClimate ? {
+                regionId: baseClimate.id,
+                regionName: baseClimate.name,
+                temperatureF: baseClimate.temperatureF || fallbackClimate.temperatureF,
+                humidity: baseClimate.humidity || fallbackClimate.humidity,
+                precipitationChance: baseClimate.precipitationChance || fallbackClimate.precipitationChance,
+                windMph: baseClimate.windMph || fallbackClimate.windMph,
+                tags: baseClimate.tags || []
+            } : fallbackClimate;
+            // Apply ecoregion biases
+            let ecoregion = null;
+            if (settings.ecoregionId && config) {
+                ecoregion = worldRecordByReference(config.ecoregions, settings.ecoregionId) || ecoregionProfileForLocation({ id: settings.ecoregionId }) || builtInEcoregionProfile(settings.ecoregionId);
+            } else if (settings.ecoregionId) {
+                ecoregion = builtInEcoregionProfile(settings.ecoregionId);
+            }
+            let temp = Number(base.temperatureF) || 58;
+            let humidity = Number(base.humidity) || 55;
+            let precip = Number(base.precipitationChance) || 35;
+            let wind = Number(base.windMph) || 8;
+            const tags = [...(base.tags || [])];
+            if (ecoregion) {
+                temp += Number(ecoregion.temperatureBias) || 0;
+                humidity += Number(ecoregion.humidityBias) || 0;
+                precip += Number(ecoregion.precipitationBias) || 0;
+                wind += Number(ecoregion.windBias) || 0;
+                (ecoregion.tags || []).forEach(t => { if (!tags.includes(t)) tags.push(t); });
+            }
+            // Apply GM adjustments - replace, not stack
+            temp += Number(settings.temperatureBias) || 0;
+            humidity += Number(settings.humidityBias) || 0;
+            precip += Number(settings.precipitationBias) || 0;
+            wind += Number(settings.windBias) || 0;
+            return {
+                base,
+                ecoregion,
+                effective: {
+                    temperatureF: Math.round(temp),
+                    humidity: Math.max(0, Math.min(100, Math.round(humidity))),
+                    precipitationChance: Math.max(0, Math.min(100, Math.round(precip))),
+                    windMph: Math.max(0, Math.round(wind)),
+                    tags,
+                    ground: settings.ground || null,
+                    water: settings.water || null,
+                    visibility: settings.visibility || null,
+                    environmentName: settings.environmentName || null
+                },
+                settings
+            };
+        }
+
+        function showCurrentSettings(msg, { detail = null } = {}) {
+            const worldContext = currentWorldSessionContext();
+            const runtime = ensureAlmanacRuntime();
+            const scene = resolveScene();
+            const clock = sceneClockContext(scene);
+            const moment = clock.campaignMoment;
+            const location = scene.location || null;
+            const settings = runtime.world.currentSettings || {};
+            const effective = currentSettingsEffectiveConfig();
+            const generationClimate = weatherClimateContext();
+            const requestedDetail = String(detail || runtime.world.detailLevel || 'basic').toLowerCase();
+            const detailLevel = ['basic','detailed','technical'].includes(requestedDetail) ? requestedDetail : 'basic';
+            if (detail && detail !== runtime.world.detailLevel) {
+                runtime.world.detailLevel = detailLevel;
+            }
+            const detailButtons = `${GameAssist.createButton('Basic', '!aa-current basic')} ${GameAssist.createButton('Detailed', '!aa-current detailed')} ${GameAssist.createButton('Technical', '!aa-current technical')}`;
+            const whereWhen = `${location ? `<strong>${_sanitize(location.name)}</strong>` : 'No Current Area'}<br>${moment ? _sanitize(displayMoment(moment)) + ' | ' + _sanitize(moment.season) : 'Time unavailable'}`;
+            const seasonImpact = moment ? `Current season ${moment.season} shapes temperature and precipitation. Base ${effective.base.temperatureF}F + season adjustment + ecoregion + GM bias = ${effective.effective.temperatureF}F effective.` : 'No season available.';
+            // Matrix choosers
+            const presetButtons = CURRENT_SETTINGS_PRESETS.map(p => GameAssist.createButton(p.name, `!aa-current preset --id ${p.id}`)).join(' ');
+            const worldResult = worldConfigResult(modState.config.world, { persist: false });
+            const config = worldResult?.ok ? worldResult.config : null;
+            const climateRegions = (() => {
+                const climate = normalizeClimateConfig({}, { persist: false });
+                return (climate.regions || []).slice(0, 12).map(r => GameAssist.createButton(r.name, `!aa-current climate --id ${r.id}`)).join(' ');
+            })();
+            const biomeButtons = config ? config.biomes.slice(0, 12).map(b => GameAssist.createButton(b.name, `!aa-current biome --id ${b.id}`)).join(' ') : 'No biomes';
+            const ecoregionButtons = config ? config.ecoregions.slice(0, 12).map(e => GameAssist.createButton(e.name, `!aa-current ecoregion --id ${e.id}`)).join(' ') : 'No ecoregions';
+            const geographyButtons = config ? config.geographies.slice(0, 12).map(g => GameAssist.createButton(g.name, `!aa-current geography --id ${g.id}`)).join(' ') : 'No geographies';
+            const baseProfileLine = `Base: ${settings.baseClimateRegionId ? _sanitize(settings.baseClimateRegionId) : 'None (uses ' + _sanitize(generationClimate.regionName) + ')'} | Preset: ${settings.presetId ? _sanitize(settings.presetId) : 'None'}`;
+            const modifiersLine = `Biome: ${settings.biomeId ? _sanitize(settings.biomeId) : 'None'}<br>Ecoregion: ${settings.ecoregionId ? _sanitize(settings.ecoregionId) : 'None'}<br>Geography: ${settings.geographyId ? _sanitize(settings.geographyId) : 'None'}<br>Region: ${settings.regionId ? _sanitize(settings.regionId) : 'None'}`;
+            const gmAdjustmentsLine = `Temp Bias: ${settings.temperatureBias >= 0 ? '+' : ''}${settings.temperatureBias}F | Humidity Bias: ${settings.humidityBias >= 0 ? '+' : ''}${settings.humidityBias}% | Precip Bias: ${settings.precipitationBias >= 0 ? '+' : ''}${settings.precipitationBias}% | Wind Bias: ${settings.windBias >= 0 ? '+' : ''}${settings.windBias} mph<br>Ground: ${settings.ground ? _sanitize(settings.ground) : 'Not set'}<br>Water: ${settings.water ? _sanitize(settings.water) : 'Not set'}<br>Visibility: ${settings.visibility ? _sanitize(settings.visibility) : 'Not set'}<br>Environment: ${settings.environmentName ? _sanitize(settings.environmentName) : 'Not set'}`;
+            const effectiveLine = `Effective: ${effective.effective.temperatureF}F | ${effective.effective.humidity}% humidity | ${effective.effective.precipitationChance}% precip chance | ${effective.effective.windMph} mph wind<br>Tags: ${(effective.effective.tags||[]).map(_sanitize).join(', ') || 'None'}<br>Ground: ${effective.effective.ground ? _sanitize(effective.effective.ground) : 'From profile'}<br>Water: ${effective.effective.water ? _sanitize(effective.effective.water) : 'From profile'}`;
+            const editButtons = `${GameAssist.createButton('Edit Temp Bias', '!aa-current edit --field temperatureBias --value ?{Temperature Bias -50 to 50|0}')} ${GameAssist.createButton('Edit Humidity Bias', '!aa-current edit --field humidityBias --value ?{Humidity Bias -50 to 50|0}')} ${GameAssist.createButton('Edit Precip Bias', '!aa-current edit --field precipitationBias --value ?{Precip Bias -50 to 50|0}')} ${GameAssist.createButton('Edit Wind Bias', '!aa-current edit --field windBias --value ?{Wind Bias -30 to 30|0}')}<br>${GameAssist.createButton('Edit Ground', '!aa-current edit --field ground --value "?{Ground description|Firm}"')} ${GameAssist.createButton('Edit Water', '!aa-current edit --field water --value "?{Water description|Normal}"')} ${GameAssist.createButton('Edit Visibility', '!aa-current edit --field visibility --value "?{Visibility|Clear}"')} ${GameAssist.createButton('Edit Environment', '!aa-current edit --field environmentName --value "?{Environment name|Open terrain}"')}`;
+            // Basic view
+            if (detailLevel === 'basic') {
+                sendPanel(msg, 'Current Settings', [
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Where and When', value: whereWhen },
+                    { label: 'Base Regional Profile', value: baseProfileLine },
+                    { label: 'Selected Modifiers', value: modifiersLine },
+                    { label: 'GM Adjustments', value: gmAdjustmentsLine },
+                    { label: 'Resolved Effective Configuration', value: effectiveLine },
+                    { label: 'Season Impact', value: seasonImpact },
+                    { label: 'Choose Preset', value: presetButtons || 'No presets' },
+                    { label: 'Actions', value: `${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Save as Location', '!aa-current save --name "?{Location name|New Location}"')} ${GameAssist.createButton('Recall Location', '!aa-location')} ${GameAssist.createButton('World Palettes', '!aa-world palettes')} ${GameAssist.createButton('Clear Settings', '!aa-current clear')}` },
+                    { label: 'View', value: detailButtons },
+                    { label: 'Navigation', value: `${GameAssist.createButton('Weather', '!aa-weather')} ${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                ]);
+                return;
+            }
+            // Detailed: show matrix choosers
+            if (detailLevel === 'detailed') {
+                sendPanel(msg, 'Current Settings - Detailed', [
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Where and When', value: whereWhen },
+                    { label: 'Base Regional Profile', value: `${baseProfileLine}<br>Climate Regions: ${climateRegions || 'None'}` },
+                    { label: 'Ecological Modifiers', value: `Biomes: ${biomeButtons}<br>Ecoregions: ${ecoregionButtons}` },
+                    { label: 'Geographic Modifiers', value: `Geographies: ${geographyButtons}<br>Region: ${settings.regionId ? _sanitize(settings.regionId) : 'None'} ${GameAssist.createButton('Choose Region', '!aa-world regions')}` },
+                    { label: 'GM Adjustments', value: `${gmAdjustmentsLine}<br>${editButtons}` },
+                    { label: 'Resolved Effective Configuration', value: effectiveLine },
+                    { label: 'Season Impact', value: seasonImpact },
+                    { label: 'Choose Preset', value: presetButtons },
+                    { label: 'Actions', value: `${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Save as Location', '!aa-current save --name "?{Location name|New Location}"')} ${GameAssist.createButton('Update Location', '!aa-current update --id ?{Location ID to update|}')} ${GameAssist.createButton('Recall Location', '!aa-location')} ${GameAssist.createButton('World Palettes', '!aa-world palettes')} ${GameAssist.createButton('Clear Settings', '!aa-current clear')}` },
+                    { label: 'View', value: detailButtons },
+                    { label: 'Navigation', value: `${GameAssist.createButton('Weather', '!aa-weather')} ${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                ]);
+                return;
+            }
+            // Technical: show full numbers and provenance
+            const technicalLine = `Base Climate: ${effective.base.regionName || 'Fallback'} — ${effective.base.temperatureF}F, ${effective.base.humidity}% humidity, ${effective.base.precipitationChance}% precip, ${effective.base.windMph} mph<br>Ecoregion: ${effective.ecoregion ? `${_sanitize(effective.ecoregion.name)} Temp ${effective.ecoregion.temperatureBias>=0?'+':''}${effective.ecoregion.temperatureBias}F Hum ${effective.ecoregion.humidityBias>=0?'+':''}${effective.ecoregion.humidityBias}% Wind ${effective.ecoregion.windBias>=0?'+':''}${effective.ecoregion.windBias}` : 'None'}<br>GM Bias: Temp ${settings.temperatureBias>=0?'+':''}${settings.temperatureBias}F Hum ${settings.humidityBias>=0?'+':''}${settings.humidityBias}% Precip ${settings.precipitationBias>=0?'+':''}${settings.precipitationBias}% Wind ${settings.windBias>=0?'+':''}${settings.windBias}`;
+            sendPanel(msg, 'Current Settings - Technical', [
+                { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                { label: 'Where and When', value: whereWhen },
+                { label: 'Base Regional Profile', value: baseProfileLine },
+                { label: 'Selected Modifiers', value: modifiersLine },
+                { label: 'GM Adjustments', value: gmAdjustmentsLine },
+                { label: 'Resolved Effective - Technical', value: technicalLine },
+                { label: 'Effective', value: effectiveLine },
+                { label: 'Season Impact', value: seasonImpact },
+                { label: 'Choose Preset', value: presetButtons },
+                { label: 'Matrix - Technical', value: `Climate: ${climateRegions}<br>Biomes: ${biomeButtons}<br>Ecoregions: ${ecoregionButtons}<br>Geographies: ${geographyButtons}` },
+                { label: 'Actions', value: `${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Save as Location', '!aa-current save --name "?{Location name|New Location}"')} ${GameAssist.createButton('World Palettes', '!aa-world palettes')} ${GameAssist.createButton('Clear Settings', '!aa-current clear')}` },
+                { label: 'View', value: detailButtons },
+                { label: 'Navigation', value: `${GameAssist.createButton('Weather', '!aa-weather')} ${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function handleCurrentSettings(msg, content) {
+            const body = content.replace(/^current\s*/i, '').trim();
+            const runtime = ensureAlmanacRuntime();
+            const settings = runtime.world.currentSettings || {};
+            const lowerBody = body.toLowerCase();
+            if (!body || /^(menu|status)$/i.test(body)) return showCurrentSettings(msg, {});
+            if (['basic','detailed','technical'].includes(lowerBody)) return showCurrentSettings(msg, { detail: lowerBody });
+            if (!requireGm(msg)) return;
+            const args = _parseArgs(body).args;
+            const lower = body.toLowerCase();
+            if (lower === 'clear') {
+                runtime.world.currentSettings = {
+                    schemaVersion: 1,
+                    baseClimateRegionId: null,
+                    biomeId: null,
+                    ecoregionId: null,
+                    geographyId: null,
+                    regionId: null,
+                    presetId: null,
+                    temperatureBias: 0,
+                    humidityBias: 0,
+                    precipitationBias: 0,
+                    windBias: 0,
+                    ground: null,
+                    water: null,
+                    visibility: null,
+                    environmentName: null
+                };
+                return showCurrentSettings(msg, {});
+            }
+            if (/^preset\b/i.test(body)) {
+                const id = String(args.id || '').trim().toLowerCase();
+                const preset = CURRENT_SETTINGS_PRESETS.find(p => p.id === id);
+                if (!preset) return sendPanel(msg, 'Current Settings Needs Attention', [{ label: 'Preset', value: 'That preset was not found.' }]);
+                // Replace contribution, not stack
+                runtime.world.currentSettings = {
+                    schemaVersion: 1,
+                    baseClimateRegionId: null,
+                    biomeId: preset.biomeTag || null,
+                    ecoregionId: preset.ecoregionTag || null,
+                    geographyId: preset.geographyTag || null,
+                    regionId: null,
+                    presetId: preset.id,
+                    temperatureBias: Number(preset.temperatureBias) || 0,
+                    humidityBias: Number(preset.humidityBias) || 0,
+                    precipitationBias: Number(preset.precipitationBias) || 0,
+                    windBias: Number(preset.windBias) || 0,
+                    ground: preset.ground || null,
+                    water: preset.water || null,
+                    visibility: preset.visibility || null,
+                    environmentName: preset.name
+                };
+                // Try to resolve climate region by tag
+                const climate = normalizeClimateConfig({}, { persist: false });
+                const climateMatch = (climate.regions || []).find(r => (r.tags||[]).some(t => String(t).toLowerCase() === preset.climateTag) || String(r.id).toLowerCase().includes(preset.climateTag));
+                if (climateMatch) runtime.world.currentSettings.baseClimateRegionId = climateMatch.id;
+                return showCurrentSettings(msg, {});
+            }
+            if (/^climate\b/i.test(body)) {
+                const id = String(args.id || '').trim();
+                if (!id) return showCurrentSettings(msg, {});
+                runtime.world.currentSettings.baseClimateRegionId = worldReference(id) || id;
+                runtime.world.currentSettings.presetId = null;
+                return showCurrentSettings(msg, {});
+            }
+            if (/^biome\b/i.test(body)) {
+                const id = String(args.id || '').trim();
+                runtime.world.currentSettings.biomeId = worldReference(id) || id;
+                runtime.world.currentSettings.presetId = null;
+                return showCurrentSettings(msg, {});
+            }
+            if (/^ecoregion\b/i.test(body)) {
+                const id = String(args.id || '').trim();
+                runtime.world.currentSettings.ecoregionId = worldReference(id) || id;
+                runtime.world.currentSettings.presetId = null;
+                return showCurrentSettings(msg, {});
+            }
+            if (/^geography\b/i.test(body)) {
+                const id = String(args.id || '').trim();
+                runtime.world.currentSettings.geographyId = worldReference(id) || id;
+                runtime.world.currentSettings.presetId = null;
+                return showCurrentSettings(msg, {});
+            }
+            if (/^region\b/i.test(body)) {
+                const id = String(args.id || '').trim();
+                runtime.world.currentSettings.regionId = worldReference(id) || id;
+                return showCurrentSettings(msg, {});
+            }
+            if (/^edit\b/i.test(body)) {
+                const field = String(args.field || '').trim();
+                const value = args.value;
+                if (!field) return showCurrentSettings(msg, {});
+                const allowedFields = ['temperatureBias','humidityBias','precipitationBias','windBias','ground','water','visibility','environmentName'];
+                if (!allowedFields.includes(field)) return sendPanel(msg, 'Current Settings Needs Attention', [{ label: 'Field', value: 'That field is not editable.' }]);
+                if (['temperatureBias','humidityBias','precipitationBias','windBias'].includes(field)) {
+                    const num = Number(value);
+                    if (!Number.isFinite(num)) return sendPanel(msg, 'Current Settings Needs Attention', [{ label: 'Value', value: 'Enter a number.' }]);
+                    runtime.world.currentSettings[field] = Math.round(num);
+                } else {
+                    runtime.world.currentSettings[field] = String(value || '').slice(0, 200) || null;
+                }
+                return showCurrentSettings(msg, {});
+            }
+            if (/^save\b/i.test(body)) {
+                const name = boundedName(args.name || 'New Location', 'New Location');
+                const worldResult = worldConfigResult(modState.config.world, { persist: false });
+                if (!worldResult.ok) return sendPanel(msg, 'Current Settings Needs Attention', [{ label: 'World', value: 'No world to save to.' }]);
+                const config = worldResult.config;
+                const newLocation = {
+                    id: worldId(name, `location-${Date.now().toString(36)}`),
+                    name,
+                    regionId: settings.regionId || null,
+                    geographyId: settings.geographyId || null,
+                    ecoregionId: settings.ecoregionId || null,
+                    biomeId: settings.biomeId || null,
+                    climateRegionId: settings.baseClimateRegionId || null,
+                    environmentName: settings.environmentName || name,
+                    environmentGround: settings.ground || 'Firm',
+                    environmentWater: settings.water || 'Normal',
+                    visibility: settings.visibility || 'Clear',
+                    modifiers: {
+                        temperatureBias: settings.temperatureBias || 0,
+                        humidityBias: settings.humidityBias || 0,
+                        precipitationBias: settings.precipitationBias || 0,
+                        windBias: settings.windBias || 0,
+                        visibility: settings.visibility || 'Clear',
+                        ecoregionName: settings.ecoregionId || null
+                    },
+                    description: `Saved from Current Settings preset ${settings.presetId || 'custom'} with season ${currentMoment()?.season || 'unknown'}. Profile choices preserved, weather not frozen.`,
+                    tags: ['saved', 'current-settings']
+                };
+                // Safeguard: do not freeze calendar or today's weather, only save profile choices and adjustments
+                config.locations.push(newLocation);
+                config.revision = (config.revision || 0) + 1;
+                modState.config.world = config;
+                // Optionally add to region if requested
+                if (String(args.addToRegion || '').toLowerCase() === 'yes' && newLocation.regionId) {
+                    // Already linked via regionId
+                }
+                return sendPanel(msg, 'Current Settings Saved', [
+                    { label: 'Saved Location', value: `<strong>${_sanitize(name)}</strong> saved with profile choices preserved. Returning in winter will use these settings with winter conditions.` },
+                    { label: 'Safety', value: 'Editing Current Settings does not silently modify this saved location. Update must be explicit via Update Location.' },
+                    { label: 'Next Step', value: `${GameAssist.createButton('Make Current Area', `!aa-location use --id ${newLocation.id}`)} ${GameAssist.createButton('Area Brief', `!aa-location view --id ${newLocation.id}`)} ${GameAssist.createButton('Current Settings', '!aa-current')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                ]);
+            }
+            if (/^update\b/i.test(body)) {
+                const id = String(args.id || '').trim();
+                if (!id) return sendPanel(msg, 'Current Settings Needs Attention', [{ label: 'Location', value: 'Provide a Location ID to update.' }]);
+                const worldResult = worldConfigResult(modState.config.world, { persist: false });
+                if (!worldResult.ok) return sendPanel(msg, 'Current Settings Needs Attention', [{ label: 'World', value: 'No world.' }]);
+                const config = worldResult.config;
+                const loc = worldRecordByReference(config.locations, id);
+                if (!loc) return sendPanel(msg, 'Current Settings Needs Attention', [{ label: 'Location', value: 'Location not found.' }]);
+                // Explicit update
+                loc.regionId = settings.regionId || loc.regionId;
+                loc.geographyId = settings.geographyId || loc.geographyId;
+                loc.ecoregionId = settings.ecoregionId || loc.ecoregionId;
+                loc.biomeId = settings.biomeId || loc.biomeId;
+                loc.climateRegionId = settings.baseClimateRegionId || loc.climateRegionId;
+                loc.environmentName = settings.environmentName || loc.environmentName;
+                loc.environmentGround = settings.ground || loc.environmentGround;
+                loc.environmentWater = settings.water || loc.environmentWater;
+                loc.visibility = settings.visibility || loc.visibility;
+                loc.modifiers = {
+                    ...(loc.modifiers || {}),
+                    temperatureBias: settings.temperatureBias,
+                    humidityBias: settings.humidityBias,
+                    precipitationBias: settings.precipitationBias,
+                    windBias: settings.windBias
+                };
+                config.revision = (config.revision || 0) + 1;
+                modState.config.world = config;
+                return sendPanel(msg, 'Location Updated', [
+                    { label: 'Updated', value: `<strong>${_sanitize(loc.name)}</strong> updated with current profile choices. Weather not frozen.` },
+                    { label: 'Next Step', value: `${GameAssist.createButton('Area Brief', `!aa-location view --id ${loc.id}`)} ${GameAssist.createButton('Current Settings', '!aa-current')}` }
+                ]);
+            }
+            return showCurrentSettings(msg, {});
+        }
+
+        function showWorldPalettes(msg) {
+            const worldContext = currentWorldSessionContext();
+            const worldResult = worldConfigResult(modState.config.world, { persist: false });
+            const config = worldResult?.ok ? worldResult.config : null;
+            const climate = normalizeClimateConfig({}, { persist: false });
+            const climateButtons = (climate.regions || []).slice(0, 20).map(r => GameAssist.createButton(r.name, `!aa-current climate --id ${r.id}`)).join(' ');
+            const biomeButtons = config ? config.biomes.slice(0, 20).map(b => GameAssist.createButton(b.name, `!aa-current biome --id ${b.id}`) + ` ${GameAssist.createButton('Details', `!aa-world view biome --id ${b.id}`)}`).join('<br>') : 'No biomes';
+            const ecoregionButtons = config ? config.ecoregions.slice(0, 20).map(e => GameAssist.createButton(e.name, `!aa-current ecoregion --id ${e.id}`) + ` ${GameAssist.createButton('Create Generic', `!aa-world add ecoregion --name "?{Ecoregion name|${e.name} copy}" --tempBias ?{Temp bias|0} --humidityBias ?{Humidity bias|0} --precipBias ?{Precip bias|0} --windBias ?{Wind bias|0}`)}`).join('<br>') : 'No ecoregions';
+            const geographyButtons = config ? config.geographies.slice(0, 20).map(g => GameAssist.createButton(g.name, `!aa-current geography --id ${g.id}`)).join('<br>') : 'No geographies';
+            const presetButtons = CURRENT_SETTINGS_PRESETS.map(p => `${GameAssist.createButton(p.name, `!aa-current preset --id ${p.id}`)} — ${_sanitize(p.description)}`).join('<br>');
+            sendPanel(msg, 'World Palettes', [
+                { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                { label: 'Setup Note', value: 'World Palettes belongs to setup. Opening it does not generate weather. Choose a palette profile to set Current Settings; it does not immediately replace stored weather.' },
+                { label: 'Presets - Choose Conditions For This Place', value: presetButtons },
+                { label: 'Climate Regions - Base Regional Profile', value: climateButtons || 'No climate regions' },
+                { label: 'Biomes - Ecological Types', value: biomeButtons },
+                { label: 'Ecoregion Profiles - Generic Snapshots', value: `${ecoregionButtons}<br>${GameAssist.createButton('Create Ecoregion Profile', '!aa-world add ecoregion --name "?{Ecoregion name|New Ecoregion}" --tempBias ?{Temp bias -20 to 20|0} --humidityBias ?{Humidity bias -50 to 50|0} --precipBias ?{Precip bias -50 to 50|0} --windBias ?{Wind bias -20 to 20|0} --description "?{Description|Generic ecoregion}"')}` },
+                { label: 'Geographies - Terrain and Structure', value: geographyButtons },
+                { label: 'Current Settings', value: `${GameAssist.createButton('Open Current Settings', '!aa-current')} ${GameAssist.createButton('Generate Weather', '!aa-weather generate')}` },
+                { label: 'Navigation', value: `${GameAssist.createButton('Almanac Home', '!aa-gm')} ${GameAssist.createButton('Back', '!aa-gm')}` }
             ]);
         }
 
         function handleWeather(msg, content) {
+
             const body = content.replace(/^weather\s*/i, '').trim();
             if (!body || /^(menu|status)$/i.test(body)) return showWeather(msg);
+            const lowerBody = body.toLowerCase();
+            if (['basic','detailed','technical'].includes(lowerBody)) return showWeather(msg, { detail: lowerBody });
             if (!requireGm(msg)) return;
             const lower = body.toLowerCase();
             if (lower === 'audit') return showFocusedAudit(msg, 'weather');
@@ -36233,7 +37704,12 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     weatherPolicyId: climate.weatherPolicy?.id || null,
                     weatherPolicyName: climate.weatherPolicy?.name || null,
                     weatherPolicySummary: climate.weatherPolicy?.summary || '',
-                    forecastOffset: 0, generatedAt: isoNow(),
+                    front: null,
+                    frontType: null,
+                    frontStage: null,
+                    forecastOffset: 0,
+                    forecastConfidence: 100,
+                    generatedAt: isoNow(),
                     worldMinute: timeAvailable() ? runtime.time.worldMinute : null, source: 'Manual'
                 };
                 commitWeather(weather, msg, 'GM manual weather');
@@ -36248,9 +37724,11 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     { label: 'Next Step', value: `${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Set Manual Conditions', weatherManualCommand())} ${GameAssist.createButton('Weather', '!aa-weather')}` }
                 ]);
                 const climate = scene.climate?.baseline || null;
+                const frontLine = weather.front ? `${_sanitize(weather.front.typeName || weather.front.type)} — ${_sanitize(weather.front.stageName || weather.front.stage)} | ${_sanitize(weather.front.summary || '')}` : 'No front tracked';
                 return sendPanel(msg, 'Current Weather', [
                     ...(scene.location ? [{ label: 'Current Area', value: _sanitize(scene.location.name) }] : []),
-                    { label: 'Conditions', value: `${_sanitize(weather.summary)} | ${weather.temperatureF} F | ${weather.windMph} mph wind` },
+                    { label: 'Conditions', value: `${_sanitize(weather.summary)} | ${weather.temperatureF} F | ${weather.windMph} mph wind | ${_sanitize(weather.kind)}` },
+                    { label: 'Front', value: frontLine },
                     { label: 'Visibility', value: _sanitize(environment?.visibility || weather.visibility) },
                     { label: 'Immediate Environment', value: environment ? _sanitize(`${environment.name} | ${environment.ground}`) : 'No immediate environment is resolved.' },
                     { label: 'Seasonal Climate', value: climate ? _sanitize(climateSeasonalContextSummary(climate)) : _sanitize(weather.regionName || 'No climate region is configured.') }
@@ -36537,8 +38015,9 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 };
             }
             const rawModifiers = sceneRecord(source.modifiers) ? source.modifiers : {};
+            const rawLastWeather = sceneRecord(source.lastWeather) ? source.lastWeather : null;
             return {
-                ...worldExtras(source, ['id', 'name', 'regionId', 'geographyId', 'ecoregionId', 'biomeId', 'climateRegionId', 'climateProfileId', 'biomeProfileId', 'environmentProfileId', 'ecoregionProfileId', 'geographyProfileId', 'hydrologyProfileId', 'weatherPolicyId', 'travelProfileId', 'astronomyProfileId', 'calendarId', 'temporalContextId', 'pageId', 'environmentName', 'environmentGround', 'environmentWater', 'modifiers', 'description', 'tags']),
+                ...worldExtras(source, ['id', 'name', 'regionId', 'geographyId', 'ecoregionId', 'biomeId', 'climateRegionId', 'climateProfileId', 'biomeProfileId', 'environmentProfileId', 'ecoregionProfileId', 'geographyProfileId', 'hydrologyProfileId', 'weatherPolicyId', 'travelProfileId', 'astronomyProfileId', 'calendarId', 'temporalContextId', 'pageId', 'environmentName', 'environmentGround', 'environmentWater', 'terrain', 'elevation', 'roadType', 'environmentDetail', 'modifiers', 'lastWeather', 'lastSavedAt', 'description', 'tags']),
                 ...common,
                 regionId: worldReference(source.regionId),
                 geographyId: worldReference(source.geographyId),
@@ -36560,10 +38039,26 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 environmentName: boundedWorldText(source.environmentName),
                 environmentGround: boundedWorldText(source.environmentGround),
                 environmentWater: boundedWorldText(source.environmentWater),
+                terrain: boundedWorldText(source.terrain, '', POLICY.almanac.worldDescriptionLength),
+                elevation: boundedWorldText(source.elevation, '', POLICY.almanac.worldDescriptionLength),
+                roadType: boundedWorldText(source.roadType, '', POLICY.almanac.worldDescriptionLength),
+                environmentDetail: boundedWorldText(source.environmentDetail, '', POLICY.almanac.worldDescriptionLength),
+                lastSavedAt: sceneRecord(source.lastSavedAt) ? String(source.lastSavedAt) : (typeof source.lastSavedAt === 'string' ? source.lastSavedAt : null),
+                lastWeather: rawLastWeather ? {
+                    summary: boundedWorldText(rawLastWeather.summary, '', POLICY.almanac.worldNameLength),
+                    temperatureF: Math.round(clampNumber(rawLastWeather.temperatureF, -150, 160, 60)),
+                    windMph: Math.round(clampNumber(rawLastWeather.windMph, 0, 200, 5)),
+                    kind: boundedWorldText(rawLastWeather.kind, '', POLICY.almanac.worldNameLength),
+                    frontType: rawLastWeather.frontType ? boundedWorldText(rawLastWeather.frontType, '', POLICY.almanac.worldNameLength) : null,
+                    frontStage: rawLastWeather.frontStage ? boundedWorldText(rawLastWeather.frontStage, '', POLICY.almanac.worldNameLength) : null,
+                    savedAt: typeof rawLastWeather.savedAt === 'string' ? rawLastWeather.savedAt : isoNow()
+                } : null,
                 modifiers: {
                     temperatureBias: Math.round(clampNumber(rawModifiers.temperatureBias, -100, 100, 0)),
                     windBias: Math.round(clampNumber(rawModifiers.windBias, -100, 100, 0)),
-                    visibility: boundedWorldText(rawModifiers.visibility)
+                    visibility: boundedWorldText(rawModifiers.visibility),
+                    ecoregionProfileId: rawModifiers.ecoregionProfileId ? worldReference(rawModifiers.ecoregionProfileId) : null,
+                    ecoregionName: rawModifiers.ecoregionName ? boundedWorldText(rawModifiers.ecoregionName, '', POLICY.almanac.worldNameLength) : null
                 }
             };
         }
@@ -38350,15 +39845,33 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             const input = normalizedInput(msg.content);
             const lower = input.toLowerCase();
             if (!input || lower === 'menu' || lower === 'gm' || lower === 'dm') return showMaster(msg);
+            if (lower === 'gm basic' || lower === 'gm detailed' || lower === 'gm technical' || lower.startsWith('gm ')) {
+                const detail = lower.split(/\s+/)[1];
+                if (['basic','detailed','technical'].includes(detail)) return showMaster(msg, { detail });
+                return showMaster(msg);
+            }
+            if (lower === 'weather basic' || lower === 'weather detailed' || lower === 'weather technical' || lower.startsWith('weather ')) {
+                const parts = lower.split(/\s+/);
+                const detail = parts[0] === 'weather' && ['basic','detailed','technical'].includes(parts[1]) ? parts[1] : null;
+                if (detail && parts.length === 2) return showWeather(msg, { detail });
+            }
             if (lower === 'guide' || lower === 'help') return showGuide(msg);
             if (lower === 'manual' || lower === 'info') return lower === 'manual' ? showManual(msg) : showGuide(msg);
             if (lower === 'status') return showStatus(msg, false);
             if (lower === 'audit') return showStatus(msg, true);
             if (lower === 'systems' || lower === 'settings' || lower === 'setup') return showSystems(msg);
             if (lower === 'more' || lower === 'tools') return showMoreMenu(msg);
-            if (lower === 'scene' || lower === 'scene menu' || lower === 'scene status') return showScene(msg, false);
-            if (lower === 'scene technical' || lower === 'scene details' || lower === 'scene audit') return showScene(msg, true);
-            if (lower === 'world' || lower.startsWith('world ')) return handleWorld(msg, input);
+            if (lower === 'scene' || lower === 'scene menu' || lower === 'scene status') return showScene(msg, false, {});
+            if (lower === 'scene technical' || lower === 'scene details' || lower === 'scene audit') return showScene(msg, true, { detail: 'technical' });
+            if (['scene basic','scene detailed','scene technical'].includes(lower)) {
+                const d = lower.split(' ')[1];
+                return showScene(msg, d === 'technical', { detail: d });
+            }
+            if (lower === 'current' || lower.startsWith('current ') || lower === 'currentsettings' || lower.startsWith('currentsettings ')) return handleCurrentSettings(msg, input);
+            if (lower === 'world' || lower.startsWith('world ')) {
+                if (lower === 'world palettes' || lower === 'world palette' || lower.startsWith('world palettes ') || lower.startsWith('world palette ')) return showWorldPalettes(msg);
+                return handleWorld(msg, input);
+            }
             if (lower === 'location' || lower.startsWith('location ')) return handleLocation(msg, input);
             if (lower === 'travel' || lower.startsWith('travel ')) return handleTravel(msg, input);
             if (lower === 'phenomena' || lower.startsWith('phenomena ') || lower === 'phenomenon' || lower.startsWith('phenomenon ')) return handlePhenomena(msg, input);
@@ -38426,6 +39939,10 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (lower === 'current-time') return showCurrent(msg, 'time');
             if (lower === 'calendar' || lower === 'cal') return showCalendarMenu(msg);
             if (lower.startsWith('wayfarer')) return handleWayfarer(msg, input);
+            if (lower === 'ecoregion' || lower.startsWith('ecoregion ') || lower === 'ecoregion-profiles' || lower.startsWith('ecoregion-profiles ') || lower === 'ecoregions' || lower.startsWith('ecoregions ') || lower === 'ecoregion profiles' || lower.startsWith('ecoregion profiles ')) {
+                const args = _parseArgs(input).args;
+                return showEcoregionProfiles(msg, { search: args.query || args.value || args.term || '' });
+            }
             if (lower === 'climate' || lower.startsWith('climate ')) return handleClimate(msg, input);
             if (lower === 'astronomy' || lower.startsWith('astronomy ') || lower === 'astro' || lower.startsWith('astro ')) return handleAstronomy(msg, input);
             if (lower === 'weather' || lower.startsWith('weather ')) return handleWeather(msg, input);
@@ -38560,6 +40077,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         protectedConfigKeys: ['submodules', 'wayfarer', 'wayfarerDraft', 'climate', 'astronomy', 'weather', 'announcement', 'environment', 'rest', 'rulesAdvisor', 'worldPacks', 'worldPackDefinitions', 'temporalContexts', 'world']
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Added synoptic Weather front lifecycle (clear-high, warm-front, cold-front, occluded-storm, maritime-gale, continental-freeze, heat-dome, monsoon-surge) with six stages forming→approaching→strengthening→mature→weakening→clearing, bounded front history, stage-aware biases, confidence decay in forecast, and UI exposure in Weather panel, history, and announce. Legacy weather without front remains readable and gains a front on next generate.
     // Changed (v2.0.0): Completed setting-scale Worldbuilding catalog access: every named record collection now uses a read-only name-sorted 12-entry page with Previous/Next, name/tag Search, and direct Edit actions rather than asking a GM to recover a Technical stable ID. Catalog prompts carry concrete editable defaults; first-run local-starter controls name their choice plainly. WorldPack-era optional Phenomenon template provenance remains absent when an older valid record omitted it, so unrelated RulesAdvisor profile commits do not materialize an overlay edit. Climate retains its stable location/ecoregion/campaign scope tokens while separate source-kind evidence distinguishes direct Climate regions from WorldPack profiles.
     // Changed (v2.0.0): Completed the setting-scale built-in WorldPack catalog with four immutable original sources, each carrying 9 Regions, 160 playable Locations, 215 explicit-route network records (including seven non-adjacent secondary/shortcut choices per child Region), 24 Prepared Destinations, 24 Phenomena, and a complete typed palette. Fresh-GM screens now foreground Full WorldPacks while retaining compact local starters as an explicitly smaller alternative; install remains Preview → Confirm and deliberately leaves runtime/active Location unchanged until the GM chooses a starting Location.
     // Changed (v2.0.0): Hardened installed palette editing: generated `palette set` controls now reach the validated save path; provider-backed Calendar projections retain canonical null definitions through repeated validation; unreferenced campaign clone records can be removed only after explicit confirmation, while bindings, typed geographic consumers, and Route Legs block destructive removal until they are cleared or rebound.
