@@ -9,7 +9,7 @@ References to TokenMod, StatusInfo, Roll20, or their contributors do not imply s
 `GameAssist.MarkerService` is an original GameAssist implementation for resolving, displaying, reading, changing, and observing Roll20 token status markers. Its compatibility goals were informed by the established marker behavior of **TokenMod**, including built-in artwork indexing, registered custom-marker image URLs, custom marker tags, numbered markers, duplicate entries, and preservation of unrelated token markers.
 
 - GameAssist component: `GameAssist.MarkerService`
-- Component version: `1.0.1`
+- Component version: `1.1.1`
 - Project acknowledged: TokenMod
 - Author: The Aaron, Arcane Scriptomancer
 - Reference release: TokenMod `0.8.88`
@@ -23,7 +23,7 @@ References to TokenMod, StatusInfo, Roll20, or their contributors do not imply s
 `GameAssist.ConditionAssist` provides condition definitions, descriptions, marker artwork, selected-token menus, player-targeted announcements, permission controls, and supported `!condition` workflows. It uses `GameAssist.MarkerService` for every marker read, write, toggle, artwork lookup, and observation.
 
 - GameAssist component: `ConditionAssist`
-- Component version: `1.0.1`
+- Component version: `1.0.5`
 - Compatibility and design foundation: StatusInfo
 - Original author: Robin Kuiper
 - Supplied reference release: StatusInfo `0.3.11`
@@ -39,10 +39,10 @@ StatusInfo-derived compatibility concepts include the `!condition` command famil
 
 ## GameAssist TokenAssist
 
-`GameAssist.TokenAssist` provides general Roll20 token controls through `!token-assist` and the shorter `!ta`/`!ta-*` forms. Older supported `!token-mod` macros remain compatibility aliases during GameAssist v1.x and should be updated before v2.0.0. All status-marker operations are delegated to `GameAssist.MarkerService`.
+`GameAssist.TokenAssist` provides general Roll20 token controls through `!token`, `!tokenassist`, `!token-assist`, and the shorter `!ta`/`!ta-*` forms. Older supported `!token-mod` macros remain deprecated compatibility aliases in GameAssist v2.0.0; their removal requires a separately announced migration release. New macros should use GameAssist's own command names. All status-marker operations are delegated to `GameAssist.MarkerService`.
 
 - GameAssist component: `TokenAssist`
-- Component version: `1.0.1`
+- Component version: `1.3.0`
 - Compatibility and design foundation: TokenMod
 - Original author: The Aaron, Arcane Scriptomancer
 - Reference release: TokenMod `0.8.88`
@@ -54,7 +54,9 @@ StatusInfo-derived compatibility concepts include the `!condition` command famil
 
 TokenMod compatibility concepts used by TokenAssist include selected-token and explicit-ID targeting; the `--on`, `--off`, `--flip`, `--set`, `--move`, `--order`, `--report`, page-filter, help, and `players-can-ids` command families; common token property names and aliases; relative numeric operations; movement units; report placeholders; and token-change observer behavior.
 
-TokenAssist adds GameAssist lifecycle management, validation, help presentation, state migration, collision handling, diagnostics, MarkerService integration, command parsing, authorization boundaries, the public `GameAssist.TokenAssist` API, and explicit compatibility limits. The initial implementation does not include TokenMod's image-side stack editing, default-token writes, computed or name-resolved attributes, advanced controller-list editing, advanced color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, exact report-recipient distinctions, duplicate-index marker editing, conditional marker counts, or help-handout rebuilding.
+TokenAssist adds GameAssist lifecycle management, validation, help presentation, state migration, collision handling, diagnostics, MarkerService integration, command parsing, authorization boundaries, and the public `GameAssist.TokenAssist` API. Version 1.3.0 includes exact saved-attribute and supported computed-value reports, exact or unambiguous controller-list editing, privacy-aware report recipients, relative color and dimming controls, relative/random multi-sided-token selection, and MarkerService-backed duplicate-index, conditional, relative-count, and minimum/maximum expressions. These supported operations do not imply complete TokenMod command compatibility.
+
+Persistent image-side stack editing, token-image replacement, and default-token writes are not included. TokenAssist provides its own help and manual rather than rebuilding TokenMod's help handout.
 
 TokenAssist does not expose a global object named `TokenMod`. Its observer replacement is `GameAssist.TokenAssist.observeTokenChange()`. When standalone TokenMod is detected, TokenAssist leaves only the deprecated `!token-mod` alias to the standalone script and warns the GM, preventing one command from being applied twice; TokenAssist commands remain available.
 
