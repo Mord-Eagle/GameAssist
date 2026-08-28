@@ -682,7 +682,9 @@ Each phase must provide useful standalone behavior with explicit optional integr
 - [x] Confirm all three v2.0.0 release scripts are byte-identical to the locally verified build.
 - [x] Designate AlmanacAssist 2.0.5 as Beta Testing in the README, roadmap, and smoke guide.
 - [ ] Complete and record expanded live clean-install and v1.8.2-to-v2.0.0 upgrade coverage before graduating AlmanacAssist from beta.
-- [ ] At One-Click submission, update script.json to state AlmanacAssist's Beta Testing status and verify the final package.
+- [x] Prepare the ASCII-only v2.0.0 One-Click listing with AlmanacAssist's Beta Testing notice and selected legacy-version entries.
+- [x] Verify the local submission overlay: schema-valid metadata, unchanged current scripts, exact copies of the four selected legacy builds, and retained published version folders.
+- [ ] Preview the description and installation behavior through Roll20's One-Click path; local Markdown and schema checks do not establish live rendering.
 
 ### Release Gate
 

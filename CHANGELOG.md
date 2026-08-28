@@ -6,6 +6,28 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ---
 
+## v2.0.0 One-Click Launch Metadata - 2026-08-28
+
+### Listing And Compatibility
+
+- Rebuilds the One-Click description around the fifteen current modules, a short installation path, practical examples, common commands, and module-specific sheet limits. The complete 622-entry command inventory remains in `script.json`.
+- Uses 7-bit ASCII for the stored metadata and parsed description. Markdown headings, emphasis, links, lists, and callouts remain; raw emoji and typographic punctuation are removed from the One-Click surface to avoid the observed character-encoding corruption. The README retains its existing presentation.
+- Prominently identifies AlmanacAssist 2.0.5 as **Beta Testing**, optional, and disabled by default. The notice covers its six systems without labeling the whole suite beta.
+- Explains the integrated token/condition tools, supported 2014-sheet automation, limited 2024 initiative support, manual attack consequences, tracking-only effects, and practical overlap with other Mods.
+
+### Selected Legacy Builds
+
+- Adds the distinct historical milestones **0.1.5.1**, **0.1.6.1**, **0.1.7.0**, and **1.8.2** to the launch selection alongside already-published **0.1.4.7**, **0.1.1.2**, **0.1.1.1**, and **0.1.1.0**. Their original version identifiers are preserved.
+- Omits unpublished intermediate patches **0.1.5.0**, **0.1.6.0**, **1.8.0**, and **1.8.1** from the One-Click selector; their archived files and release history remain unchanged in this repository.
+- Documents version-directory packaging and exact source-copy verification. Existing Roll20 version directories must remain unchanged rather than being replaced with local historical copies.
+- Warns that selecting older code does not roll back persistent campaign data and that configuration snapshots are not full-state backups. Historical releases retain their own commands and dependency requirements.
+
+### Preservation
+
+No executable, module version, default setting, saved-state contract, command identifier, authorship, or license term changes. The package remains GameAssist v2.0.0 with `GameAssist.js` as the uniform release filename. Local validation and preview remain distinct from the live One-Click display and Roll20 submission review.
+
+---
+
 ## v2.0.0 Documentation Reconciliation - 2026-08-28
 
 ### AlmanacAssist Beta Testing

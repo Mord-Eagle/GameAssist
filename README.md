@@ -2647,6 +2647,25 @@ Do not make a live-session release decision from syntax checks alone. The Roll20
 
 ---
 
+### 15.4 Choosing a Previous Version
+
+The v2.0.0 One-Click package retains selected legacy milestones as well as the previously published releases:
+
+| Version | Historical feature set |
+| --- | --- |
+| **1.8.2** | Final pre-v2 baseline: canonical module names, NPC Bloodied alerts, and progressive NPC naming. |
+| **0.1.7.0** | CombatAssist with native round counters, timers, and turn controls. |
+| **0.1.6.1** | InitiativeAssist and WelcomeAssist. |
+| **0.1.5.1** | Integrated token/condition tools and configurable table timezones. |
+| **0.1.4.7** | Standalone TokenMod-era workflows; TokenMod remains required for its marker changes and StatusInfo is a separate optional companion. |
+| **0.1.1.2, 0.1.1.1, 0.1.1.0** | Earlier published releases, retained for existing campaigns. |
+
+The older `0.1.*` version numbers are intentional; they are not renamed to `1.*`. Use the archived version's own commands and requirements rather than assuming the v2.0.0 guide applies to it. Intermediate unpublished patches remain in repository history without adding another One-Click selection.
+
+**A previous script version is not a campaign-data restore.** Test upgrades or version changes in a separate campaign copy. `!ga-config list` exports configuration only; it does not preserve all runtime history or provide a full-state restore.
+
+---
+
 ## 16 · Contributing <a id="16-contributing"></a>
 
 Thank you for helping improve GameAssist. Contributions should remain narrow, testable, and explicit about Roll20 limitations.
