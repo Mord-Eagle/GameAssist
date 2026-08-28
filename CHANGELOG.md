@@ -6,6 +6,29 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ---
 
+## v2.0.0 Documentation Reconciliation - 2026-08-28
+
+### AlmanacAssist Beta Testing
+
+- Designates AlmanacAssist 2.0.5 as **Beta Testing** for inclusion in GameAssist v2.0.0. The designation covers Time, Climate, Astronomy, Weather, Environment, and Rest, including their calendar, location, travel, and world-setup interfaces. It applies to AlmanacAssist rather than labeling the entire suite beta.
+- Places the notice at the beginning of the README, in the Almanac module guide and API reference, and in the roadmap and smoke-test sections. AlmanacAssist remains optional and disabled by default; no configuration or activation behavior changes.
+- Separates the beta baseline from the expanded graduation track. Broader campaign and upgrade coverage continues without requiring every beta workflow to be declared complete before inclusion. Privacy leaks, sandbox crashes, data loss, and unsafe writes remain release blockers.
+- Records the 2026-08-27 live-use report as support for beta testing, not as a completed case-by-case full acceptance inventory. The grouped local sweep passed 18 runs, including the focused Almanac checks and cross-module interactions; these results remain distinct from live Roll20 evidence.
+
+### Version And Workflow Corrections
+
+- Aligns current developer references and attribution component versions with MarkerService 1.1.1, ConditionAssist 1.0.5, TokenAssist 1.3.0, InitiativeAssist 1.0.6, CombatAssist 1.2.1, and HealthService 1.1.1. Historical release entries retain the versions they originally described.
+- Clarifies that supported `!token-mod` commands remain deprecated compatibility aliases in v2.0.0. New macros should use TokenAssist commands; removal requires a separately announced migration release. This changes documentation only and does not remove or alter an alias.
+- Updates the TokenAssist attribution summary to reflect implemented marker expressions, attribute reports, controller editing, relative visual controls, and multi-sided selection. Persistent image/default-token writes remain excluded, and no global TokenMod object or complete upstream compatibility is claimed. Original author, pinned-source, MIT, and SRD notices are preserved.
+- Corrects smoke-test expectations for the current AttackAssist roll-choice controls, direct target selection, MarkerService and HealthService versions, and EffectAssist's direct-apply versus optional-review behavior. The tests no longer require obsolete labels or a review screen that is disabled by default.
+- Clarifies release-candidate installation and retains the agreed Roll20-first, Foundry-next sequence. The README does not imply that the candidate is already available through One-Click.
+
+### Preservation
+
+The executable files, public commands, saved-state contracts, module versions, package metadata, and license terms are unchanged. All three v2.0.0 script copies remain byte-identical to the regression-reviewed build. This entry adds to the historical ledger without replacing earlier release notes or their recorded verification status.
+
+---
+
 ## Release Ledger
 
 | Revision | Status | Role |
