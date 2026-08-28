@@ -1,15 +1,15 @@
 # GameAssist – Modular API Framework for Roll20
 
-**Version 1.8.2 development line** | © 2025-2026 Mord Eagle · MIT License<br>
+**Version 2.0.0 development line** | © 2025-2026 Mord Eagle · MIT License<br>
 **Lead Dev:** [@Mord-Eagle](https://github.com/Mord-Eagle)
 
-GameAssist v1.8.2 adds optional page-local progressive names for newly added linked NPC tokens. It keeps existing tokens and character names untouched, uses the lowest available suffix from the page's current eligible tokens, and retains v1.8.1's private Bloodied controls and established compatibility.
+GameAssist v2.0.0 combines a shared services foundation with focused optional modules. **EffectAssist** coordinates a catalog of 2014-sheet effects with source-aware ownership, concentration-linked cleanup, bounded Bless proposals, and duration review. **HealAssist** provides guided normal or maximum healing with optional verified application. **AttackAssist** adds authorized 2014 repeating-attack selection and visible one-use sheet rolls without applying damage. **TokenAssist** extends ordinary token control with MarkerService-backed marker expressions, an organized action library, longest-name-first command routing, and controller/report routing. **CombatAssist** adds optional encounter evidence, verified semantic progression events, and Ready/Delay tools over Roll20's native tracker, while **NPCAssist** can retain deduplicated encounter summaries alongside its history. **AlmanacAssist** brings fictional calendars, climate regions, moons and celestial events, continuity-aware weather, structured environments, and deliberate 2014-sheet rest workflows together under one campaign-world interface. HealthService and SheetCapabilities keep HP and sheet-sensitive operations explicit. New gameplay modules begin disabled so an existing campaign changes only when its GM deliberately enables them.
 
 ---
 
 ## 0 · What is GameAssist (in one paragraph)?
 
-GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a small shared kernel, dedicated marker and Turn Tracker services, and eleven bundled gameplay and administration modules—ConfigUI, CritAssist, ConditionAssist, TokenAssist, InitiativeAssist, CombatAssist, WelcomeAssist, ConcentrationAssist, NPCAssist, HPAssist, and DebugTools. It provides guided menus, guarded lifecycle controls, direct command and event routing, an explicit queue for work that truly requires serialization, persistent metrics, conservative state self-healing, and best-effort compatibility diagnostics. The goal is campaign automation that remains approachable at the table and understandable when something needs attention.
+GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a small shared kernel, dedicated marker, Turn Tracker, and health services, a versioned semantic-event contract, and fifteen bundled gameplay and administration modules—ConfigUI, CritAssist, ConditionAssist, TokenAssist, InitiativeAssist, CombatAssist, WelcomeAssist, ConcentrationAssist, NPCAssist, EffectAssist, HealAssist, AttackAssist, AlmanacAssist, HPAssist, and DebugTools. It provides guided menus, guarded lifecycle controls, direct command and event routing, an explicit queue for work that truly requires serialization, persistent metrics, conservative state self-healing, and best-effort compatibility diagnostics. The goal is campaign automation that remains approachable at the table and understandable when something needs attention.
 
 ---
 
@@ -17,11 +17,12 @@ GameAssist is a **modular Roll20 Mod/API framework**: one script that supplies a
 
 | Category | Highlights |
 | --- | --- |
-| Core Lift | Guarded modules, conservative state repair, explicit queue API, session metrics, dependency diagnostics, GM health reporting, and toggleable marker and Turn Tracker services with dependent-module safeguards. |
+| Core Lift | Guarded modules, conservative state repair, explicit queue API, versioned semantic events, session metrics, dependency diagnostics, GM health reporting, and toggleable marker and Turn Tracker services with dependent-module safeguards. |
 | Quick Install | 📥 Install the complete script → 📜 add the CritAssist tables if used → 🔄 reload → 🩺 run the health checks → 🎲 test the enabled features with disposable tokens. |
-| Flagship Player Commands | `!condition <name>`, `!cond-<condition>`, `!concentration`, `!cc`, `!critfumble-<type>` when the GM permits the relevant player action. |
-| Flagship GM Commands | `!Init-GM` / `!Init-DM`, `!Combat-GM` / `!Combat-DM`, `!Welcome-GM` / `!Welcome-DM`, `!TokenAssist-GM` / `!TokenAssist-DM`, `!Condition-GM` / `!Condition-DM`, `!CritAssist-GM` / `!CritAssist-DM`, `!NPC-GM` / `!NPC-DM`, `!Con-GM` / `!Con-DM`, plus each module's specialized commands below. |
-| Admin Controls | `!ga-config list|get|set|modules|cleanup|ui|timezone`, `!ga-timezone`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-metrics`, and `!ga-debug`. |
+| Flagship Player Commands | `!effect`, `!Bless`, `!Guidance`, `!Guide`, `!Haste`, `!Warding-Bond`, `!Holy-Weapon`, `!PwoaT`, `!Heal`, `!Attack`, `!condition <name>`, `!cond-<condition>`, `!concentration`, `!cc`, and `!critfumble-<type>` when the GM permits the relevant player action. |
+| Flagship GM Commands | `!GA-GM` / `!GA-DM` opens the suite control center. Each module keeps its own `GM` / `DM` shortcut, and every module Game Master screen returns to the suite control center. |
+| Help & Navigation | `!ga-help` lists module help screens; a disabled module still explains its purpose before offering Enable. `!ga-nav` opens the module navigator; `!ga-nav <module>` opens that module's destinations and a direct Enable/Disable control, with an extra organized section step for larger modules. |
+| Admin Controls | `!ga-config list|get|set|modules|cleanup|ui|timezone`, `!ga-timezone`, `!ga-enable`, `!ga-disable`, `!ga-status`, `!ga-health`, `!ga-health alerts`, `!ga-metrics`, and `!ga-debug`. |
 | Table Time | `!ga-timezone` chooses a named IANA timezone, follows daylight-saving changes, and controls readable times plus date-managed NPC Sessions without rewriting stored event instants. |
 | Queue Model | Normal commands/events run directly. Only `GameAssist.enqueue(...)` work and module transitions use the serialized queue. |
 | Watchdog Limit | A timeout releases the explicit queue; it **cannot** terminate underlying JavaScript, `sendChat()`, or Roll20 operations. |
@@ -65,11 +66,19 @@ GameAssist’s kernel and bundled modules expose:
 * **Table Timezone** – the GM can choose a validated city/region timezone for status panels, logs, handouts, history, and date-managed NPC Sessions. Named timezones follow daylight-saving changes; saved event instants remain absolute.
 * **MarkerService** – `GameAssist.MarkerService` resolves built-in and custom markers, supplies artwork metadata when Roll20 exposes it, preserves unrelated and numbered marker state, applies explicit add/remove/toggle operations, and exposes one observation contract. It can be disabled when another Mod needs exclusive control of marker behavior; GameAssist then turns off MarkerService-dependent modules while leaving unrelated modules available.
 * **TurnTrackerService** – `GameAssist.TurnTrackerService` reads, classifies, observes, and safely writes Roll20's native Turn Tracker while preserving custom entries, unknown fields, duplicate token turns, text priorities, and rows owned by other tools. Disabling it leaves the tracker unchanged and turns off InitiativeAssist and CombatAssist.
+* **SemanticEvents** – `GameAssist.SemanticEvents` publishes immutable, versioned, in-sandbox domain notifications for optional module integrations. Delivery is direct, ordered, non-persistent, and non-replayed; one observer failure cannot interrupt another.
+* **HealthService** – `GameAssist.HealthService` normalizes supported official 2014-PC HP attributes and linked-NPC changes on one GM-selected shared token bar, deduplicates linked sheet/token evidence, and verifies GameAssist-owned writes carrying a producer and operation ID. `!ga-health bars` chooses Bar 1, 2, or 3, audits current-page setup, and can prepare linked NPC tokens without altering unrelated bars. Unexplained Roll20 changes remain unknown instead of being mislabeled as combat damage or healing; ConcentrationAssist may present them as clearly labeled observed HP loss rather than claiming a cause.
+* **SheetCapabilities** – `GameAssist.SheetCapabilities` is a read-only, always-on contract for sheet-sensitive modules. It identifies supported 2014, supported 2024/Beacon, and unknown character surfaces per operation, so initiative, saves, effects, healing, attacks, rests, and attribute resolution can refuse unsupported work clearly instead of guessing. GM-only `!ga-sheets` shows current-page evidence and operation statuses.
+* **Suite Navigation** – `!GA-GM` and `!GA-DM` open one private control center for all fifteen feature modules, `!ga-help [module]` opens their help destinations or a short purpose-and-enable screen when one is off, and `!ga-nav` provides direct or layered module navigation without moving module-specific behavior into the core interface. GameAssist command words ignore capitalization and accept either spaces or hyphens, so `!GA STATUS`, `!ga-status`, `!gA gM`, and `!GA-GM` are equivalent forms. A running module's navigator screen includes a direct **Disable** control; an off module offers **Enable** instead of a dead button. Shared control panels use Roll20's familiar default-template presentation.
 * **ConditionAssist** – supplies 2014 SRD condition wording by default, optional 2024 SRD wording, campaign-editable descriptions, case-insensitive `!cond-<condition>` quick references, marker artwork, an accurate selected-token menu, a GM current-page condition/marker status roster, verified marker-toggling announcements in public chat or player whispers, add/remove/toggle commands, guarded player permissions, and marker-change descriptions. Every condition marker operation and observation goes through MarkerService.
-* **TokenAssist** – provides general token controls through `!token-assist` and `!ta`/`!ta-*`, explicit-ID permissions, token-change observers, and MarkerService-backed status operations. Older supported `!token-mod` macros remain compatibility aliases during v1.x and are not processed by GameAssist when standalone TokenMod is detected.
+* **TokenAssist** – provides general token controls through bare `!token`, full-name `!tokenassist`, `!token-assist`, and short `!ta` commands, explicit-ID permissions, token-change observers, and MarkerService-backed marker operations. Its everyday GM screen keeps common actions close, while **More Actions** opens an organized library for names, bars, markers, auras, lighting, movement, size, appearance, ordering, controller lists, and reference tools. Command routing checks the longest established alias first so full commands cannot be mistaken for shorter action names. Controller edits resolve exact player ids or unambiguous display names; reports can target token controllers, linked-character controllers, the acting player, the GM, or everyone. Exact saved attributes and supported computed properties can be requested explicitly. Older `!token-mod` syntax remains only as a temporary migration alias; it is not a standalone dependency or a second marker authority.
 * **InitiativeAssist** – provides the case-insensitive `!Init-` command family for D&D 5E 2014 and 2024 characters, public player invitations, composable roll options, detailed dice/formula results, score-aware optional narration, selective rerolls, encounter groups, audits, and preservation-first `!Init-RR`. It does not advance turns or own encounter rounds.
-* **CombatAssist** – provides the case-insensitive `!Combat-` command family as an optional layer over Roll20's native Turn Tracker. Native arrows remain available; a recognized native round-counter row can own the round number, while guarded movement, stale-safe timers, native pings, private player prompts, preserved-round maintenance, and one-step recovery add convenience. TurnTrackerService is required for tracker access; timers never advance initiative and pings never alter tokens.
+* **CombatAssist** – provides the case-insensitive `!Combat-` command family as an optional layer over Roll20's native Turn Tracker. Native arrows remain available; a recognized native round-counter row can own the round number, while guarded movement, stale-safe timers, native pings, private player prompts, preserved-round maintenance, one-step recovery, optional 5e Ready or legacy Delay records, verified semantic progression events, and bounded HealthService evidence add convenience. `!Combat-Timeline` shows retained HP-change evidence by turn boundary without claiming it proves damage or causation. The health timeline retains up to 500 entries for the active or most recent encounter review; held-action records are encounter-scoped and disappear when the encounter ends. Optional encounter summaries can be handed to NPCAssist with deduplication. TurnTrackerService is required for tracker access; timers never advance initiative and pings never alter tokens.
 * **WelcomeAssist** – optionally posts one delayed table greeting after GameAssist completes a healthy startup. It starts disabled, offers professional, built-in table-humor, campaign-custom, and mixed greeting modes, keeps configuration and previews private to the GM, and uses the short case-insensitive `!Welcome` / `!Welcome-Action` command family.
+* **EffectAssist** – starts disabled and coordinates a focused catalog of source-aware effects for the official 2014 sheet. Bless, Guidance, Warding Bond, and Haste receive supported marker and sheet automation; Holy Weapon and Pass Without a Trace are explicitly labeled tracked/manual effects. Every EffectAssist-owned 2014 modifier uses the compact `(GA)` label convention. A uniquely labeled Guidance row may end exactly one unambiguous active Guidance after a supported 2014 sheet skill check; unsupported checks, ambiguous evidence, pre-existing rows, and edited rows retain the explicit **Use Guidance** action. Players may cast built-ins from controlled sources unless the GM locks that path. The player chooses a caster first and then a recipient count; Bless offers one to three recipients directly and a separate Higher Level Casting choice for four to eleven. Recipient failures name the exact token that needs its **Represents Character** link repaired, and duplicate source tokens are distinguished by token and layer so concentration belongs to the chosen source. An unambiguous official 2014 Bless card can create a private GM proposal without choosing recipients or applying anything automatically. Overlapping sources remain independently removable, pre-existing state remains campaign-owned and is identified during cleanup, and audit never writes without fresh confirmation.
+* **HealAssist** – starts disabled and guides an authorized 2014 healer through supported spells, potions, or a bounded manual formula. One-recipient actions go directly to Roll20's target prompt instead of asking the user to choose a recipient count of one; multi-recipient actions retain the count choice. Normal and maximum-healing catalogs are available. Review-before-apply is the default; the GM may enable automatic verified application after recipient selection, and failed automatic writes produce a private GM diagnostic. Visible PCs can be selected without granting token control; NPC, GM-layer, and off-page healing remains private GM work.
+* **AttackAssist** – starts disabled and guides an authorized official-2014 character through a verified repeating attack, a compact native visible-target choice, and one familiar character-attributed roll. By default it submits immediately using the character sheet's saved roll setting; the GM can enable **Review Before Roll** to offer sheet, Normal, Advantage, and Disadvantage choices before each attack. Before submission it materializes the complete Classic-sheet formula, including nested saved modifiers, instead of leaving Roll20 to resolve missing or interactive fields inside an API-authored roll. The submitted Roll20 sheet card remains visible because the roll is sent directly rather than consumed by an internal callback. The sheet's standard per-roll whisper and advantage questions use their documented first choices, Public and Normal; any other unresolved prompt or field receives a clear refusal before it can reach the dice parser. Hidden or off-page placement stays with the GM, and the module never applies damage or changes combat state.
+* **AlmanacAssist** – starts disabled and combines six independently controlled internal systems: Time, Climate, Astronomy, Weather, Environment, and Rest. Wayfarer uses its own ordinal 20-hour clock and named daily periods rather than AM/PM. Each announcement field may independently be Off, Descriptive, Detailed, or Technical, while Quick, Calendar, Travel, Everything, and restored campaign defaults make common combinations fast. Recovery work adds an owner-authored generic Starter World library, named Climate regions/profiles, active Location setup, and Location-bound Prepared Destinations and Travel Routes so a GM is not expected to begin from an empty campaign model. Phenomena remain separately reviewed owner-authored overlays and never replace Weather or Environment authority. **AlmanacAssist v2.0.0 remains in live-product recovery, not release acceptance:** see its section below and `Smoketest.md` before relying on these workflows in a campaign.
 * **MECHSUITS Structure** – the executable script uses the literal codename `GAMEASSIST`, framed sections, file-scoped canonical tree metadata, and per-section change notes.
 
 **Design goal:** useful, inspectable campaign automation that reports failures clearly and can be upgraded incrementally.
@@ -81,12 +90,12 @@ GameAssist’s kernel and bundled modules expose:
 | Step | What to do |
 | --- | --- |
 | 📥 **1 · Install** | Add GameAssist through Roll20 One-Click, or paste the complete `GameAssist.js` file into **Mod (API) Scripts**, then save. |
-| 🧩 **2 · Choose Features** | Open `!ga-config ui` and keep only the tools that fit the campaign. MarkerService and TurnTrackerService begin enabled; InitiativeAssist, CombatAssist, and WelcomeAssist begin disabled until the GM deliberately configures them. |
+| 🧩 **2 · Choose Features** | Open `!GA-GM` for the suite control center, then use `!ga-config ui` to keep only the tools that fit the campaign. MarkerService, TurnTrackerService, and HealthService begin enabled; InitiativeAssist, CombatAssist, WelcomeAssist, EffectAssist, HealAssist, AttackAssist, and AlmanacAssist begin disabled until the GM deliberately configures them. |
 | 📜 **3 · Prepare CritAssist** | If CritAssist will be used, create the seven tables listed in [§11 · Roll-Table Cookbook](#11-roll-table-cookbook). Skip this step when CritAssist is disabled. |
 | 🔄 **4 · Reload** | Save or restart the Mod sandbox and wait for the GameAssist core ready whisper. Module-by-module startup whispers are normally quiet. |
-| 🩺 **5 · Check Health** | Run `!ga-status` and `!ga-config modules`. Confirm the features you enabled are running. |
+| 🩺 **5 · Check Health** | Run `!ga-status` and `!ga-config modules`. Confirm the features you enabled are running. `!ga-health` opens shared HP evidence, `!ga-health bars` chooses and audits the NPC HP bar, `!ga-health alerts` manages optional GM-private PC health notices, and `!ga-sheets` explains sheet-sensitive capability status. |
 | 🕰️ **6 · Set Table Time** | Open `!ga-timezone`, choose the city/region that governs the campaign clock, and confirm the displayed time and Session date. The sandbox default remains available. |
-| 🎲 **7 · Try the Table Tools** | Test `!token-assist help`, `!condition help`, `!critfumble menu`, `!concentration --status`, `!HP-Selected`, `!Init-Help`, `!Combat-Help`, and `!Welcome` for the modules you use. |
+| 🎲 **7 · Try the Table Tools** | Test `!token-assist help`, `!condition help`, `!critfumble menu`, `!concentration --status`, `!HP-Selected`, `!Init-Help`, `!Combat-Help`, `!Welcome`, `!Effect-Guide`, `!Heal-Guide`, and `!Attack-Guide` for the modules you use. `!ga-handouts` opens the stable handout index when you use report-writing modules. |
 | 🛡️ **8 · Verify Real Changes** | With disposable tokens, test one NPC death/revival, one concentration marker, and one mixed-character initiative reroll before the first live session. |
 
 The `v0.1.5.x` line replaces standalone TokenMod and StatusInfo for the token and condition workflows supported by GameAssist. It does not keep a hidden legacy path that sends GameAssist work back to those standalone scripts. Remove both standalone scripts before testing overlapping TokenAssist or ConditionAssist commands.
@@ -101,6 +110,9 @@ Run these commands after every update:
 
 ```roll20chat
 !ga-status
+!GA-GM
+!ga-help
+!ga-nav
 !ga-config modules
 !ga-timezone
 !ga-config list
@@ -127,9 +139,25 @@ Run these commands after every update:
 !npc-death-audit
 !npc-death-repair
 !HP-Selected
+!ga-enable EffectAssist
+!Effect-GM
+!Effect-Status
+!Effect-Audit
+!ga-enable HealAssist
+!Heal-GM
+!Heal-Status
+!Heal-Audit
+!ga-enable AttackAssist
+!Attack-GM
+!Attack-Status
+!Attack-Audit
+!ga-enable AlmanacAssist
+!aa-gm
+!Almanac-Status
+!Almanac-Audit
 ```
 
-Then perform nine real actions:
+Then perform thirteen real actions:
 
 1. Drop a linked NPC below 1 HP and verify the death marker appears.
 2. Raise that NPC above 0 HP and verify the marker clears.
@@ -140,6 +168,10 @@ Then perform nine real actions:
 7. Put a PC, a living NPC, and a custom round/counter row in Roll20's Turn Tracker; run `!Init-RR` and verify only the two characters reroll.
 8. Start CombatAssist, move the native tracker through one complete forward cycle, move back once, remove or add one disposable combatant, and verify the round survives the native edit while row contents remain intact. Preview one restore before ending the test.
 9. If WelcomeAssist will be used, enable it, preview a greeting, reload the sandbox, and verify exactly one public greeting appears.
+10. With linked 2014 PC source and target tokens, test Bless and Guidance. Verify Bless's markers and global attack/save rows, then verify one ordinary sheet skill check using the uniquely labeled `Guidance (GA)` row ends exactly that Guidance instance. Unsupported or ambiguous checks must retain the manual **Use Guidance** action. Clear concentration and verify all EffectAssist-owned projections are removed. Repeat the Bless overlap test with two sources before release approval.
+11. Enable HealAssist, damage a disposable 2014 PC, run `!Heal`, complete one supported healing review, and confirm that HP changes only after the one-use confirmation. Repeat with an NPC and verify that its HP and result remain GM-private.
+12. Enable AttackAssist, select a controlled 2014 PC with two repeating attacks, run `!Attack`, choose a visible target the player does not control, and submit one Normal or Advantage roll. Confirm the familiar roll appears once, CritAssist reacts once to a natural 1, and no target HP or combat state changes.
+13. Enable AlmanacAssist, open `!aa-gm` and `!aa-world`, install or create a generic starter world, confirm an active Location and named Climate region/profile, then test one quick advance, one private announcement preview, a Prepared Destination/Travel review, weather, an environment preset, and a Short Rest on a disposable linked 2014 PC. Confirm the six internal systems can be turned off independently without erasing their saved settings. This is a recovery smoke step, not a substitute for the focused real-Roll20 Almanac checklist.
 
 ---
 
@@ -193,6 +225,22 @@ Roll20 change event is published to MarkerService observers
 
 MarkerService is a toggleable core service rather than a gameplay module. Disabling one consumer leaves MarkerService available to the others. Disabling MarkerService itself first disables every dependent module, then closes the marker API while leaving unrelated GameAssist features available.
 
+Health work follows a separate evidence-first path:
+
+```text
+Supported 2014 PC HP attribute or linked NPC selected-bar changes
+          ↓
+GameAssist.HealthService normalizes before/after values
+          ↓
+Linked sheet/token duplicates collapse into one transition
+          ↓
+Immutable health.transition event is published
+          ↓
+Optional consumers decide whether to offer their own action
+```
+
+An unexplained decrease is evidence that HP went down, not proof of an attacker, damage type, resistance interaction, or concentration trigger. GameAssist-owned writers may declare `damage`, `healing`, `initialization`, or `synchronization` only when they also supply producer and operation identity and the resulting Roll20 value verifies successfully. HealthService itself performs no rolls, death-history writes, concentration checks, combat actions, or automatic rollback.
+
 ### 5.2 Why Normal Events Are Not Queued
 
 Roll20 event handlers often perform small, immediate checks. Automatically routing every event through one queue would add latency, increase coupling, and create a single congestion point. In v0.1.5.0, ordinary handlers remain direct; modules opt into serialization only when their own work requires it.
@@ -220,6 +268,9 @@ state.GameAssist
 │  ├─ config
 │  └─ runtime
 ├─ TurnTrackerService
+│  ├─ config
+│  └─ runtime
+├─ HealthService
 │  ├─ config
 │  └─ runtime
 ├─ ConfigUI
@@ -276,7 +327,7 @@ Module configuration belongs under `state.GameAssist.<Module>.config`. Runtime c
 }
 ```
 
-The snapshot excludes runtime caches and metrics. v1.8.1 does not import or restore snapshots.
+The snapshot excludes runtime caches and metrics. v2.0.0 does not import or restore snapshots.
 
 ### 5.6 Table Timezone
 
@@ -301,7 +352,7 @@ Every module now follows the same small navigation vocabulary through its establ
 | **Audit** | A read-only inspection that explicitly says it changed nothing. |
 | **Manual** | A stable `GameAssist Guide - <Module>` handout for modules with substantial workflows. Brief modules explain that their complete guidance already fits in chat. |
 
-The exact prefix stays familiar to that feature: for example, `!critfumble guide`, `!condition audit`, `!npc-death-manual`, `!Init-Info`, and `!Welcome-Menu`. Commands are case-insensitive. An unrecognized command under a module's prefix explains the problem and offers an **Open Guide** button instead of failing silently. The GM and DM role aliases open the screen that best fits that module: for example, `!Init-GM` and `!Init-DM` open the private initiative roster, while `!Combat-GM` and `!Combat-DM` open CombatAssist's Control Center.
+The displayed prefix stays familiar to that feature: for example, `!critfumble guide`, `!condition audit`, `!npc-death-manual`, `!Init-Info`, and `!Welcome-Menu`. Command letters are case-insensitive, and spaces or hyphens may separate command words. For example, `!GA STATUS`, `!ga-status`, `!gA gM`, and `!GA-GM` work alike. Documented buttons use one consistent spelling so menus remain easy to scan. An unrecognized command under a module's prefix explains the problem and offers an **Open Guide** button instead of failing silently. The GM and DM role aliases open the screen that best fits that module: for example, `!Init-GM` and `!Init-DM` open the private initiative roster, while `!Combat-GM` and `!Combat-DM` open CombatAssist's Control Center.
 
 ### 6.1 CritAssist
 
@@ -340,7 +391,7 @@ Config keys: `debug`, `useEmojis`, `rollDelayMs`.
 
 ### 6.2 ConditionAssist
 
-> **Module version:** `1.0.3`
+> **Module version:** `1.1.0`
 
 ConditionAssist gives the table a readable condition reference and a marker-backed selected-token menu. It defaults to the fifteen SRD 5.1 conditions used by the 2014 rules, including Exhaustion rather than Inspiration. The GM can switch the official descriptions to SRD 5.2.1 wording for the 2024 rules or edit any description for campaign-specific wording. Open `!condition` after selecting tokens to see their active configured conditions and toggle another condition with one click. Use `!condition status` to review every linked character or NPC on the current player page that has a configured condition or another active marker. Select linked character tokens and use `!condition announce`, `!c-a`, or `!cond-!` to toggle a condition marker and report the verified result publicly or to their player controllers. `!condition help` is the quick-start guide.
 
@@ -384,7 +435,7 @@ Config keys: `command`, `rulesProfile`, `userAllowed`, `userToggle`, `sendOnlyTo
 
 ### 6.3 TokenAssist
 
-> **Module version:** `1.0.3`
+> **Module version:** `1.3.0`
 
 TokenAssist provides general token controls without requiring standalone TokenMod. Use `!token-assist` for the full command name, `!ta` for a short form, or `!ta-<action>` for quick table commands such as `!ta-set` and `!ta-move`. Select one or more tokens before running a command. Players can affect tokens they can select, while direct `--ids` targeting remains GM-only unless the GM enables **Players can use --ids**.
 
@@ -398,9 +449,12 @@ Start here:
 !token-assist audit
 !token-assist manual
 !token-assist about
+!token-assist actions
 !ta-help
 !ta-help-statusmarkers
 ```
+
+The private GM Controls page keeps the most common actions visible. Choose **More Actions**, or run `!token-assist actions`, `!Token-Actions`, or `!ta-actions`, to open the larger organized action library without crowding the everyday screen.
 
 Supported compatibility families:
 
@@ -410,7 +464,8 @@ Supported compatibility families:
 * `--set <property|value...>` → Set common names, tooltips, bars, auras, colors, layers, position, size, facing, vision, lighting, links, controllers, and markers.
 * `--move <distance>` / `--move <angle|distance>` → Move relative to current facing or an absolute/relative angle. Supported units include `g`, `u`, and common page units.
 * `--order tofront|toback` → Change token stacking order.
-* `--report <recipient|message>` → Report token values with `{property}`, `{property:before}`, `{property:change}`, and `{property:abschange}` placeholders.
+* `--report <recipient|message>` → Report token values with `{property}`, `{property:before}`, `{property:change}`, and `{property:abschange}` placeholders. Recipients may be `gm`, `player`, `token`, `character`, `control`, or `all`.
+* `--report <recipient|message>` also accepts exact `{attr:attribute_name}` and `{computed:property_name}` values when the linked sheet exposes the requested capability; names are never guessed.
 * `--ids <token-or-character-id...>` → Add explicit token or represented-character targets when authorized.
 * `--ignore-selected`, `--current-page`, and `--active-pages` → Refine targeting.
 * `--api-as <player-id>` → Preserve script-to-script authorization behavior for a command whose Roll20 sender is `API`.
@@ -433,13 +488,11 @@ Relative numbers use `+`, `-`, `*`, or `/`. Use a leading `=` for exact assignme
 
 Status-marker syntax is handled only by MarkerService. An unprefixed name or `+name` adds a marker, `-name` removes it, `!name` toggles it, and `=name` replaces the complete marker list after the replacement resolves successfully. Use `red:3` for a number, a registered custom display name, or an exact `Name::id` tag. In Roll20 query/button syntax, `Name;;id;3` is accepted for a numbered custom tag. Unrelated markers and their numbers are preserved unless an explicit replacement is requested.
 
-TokenAssist `1.0.3` focuses on the token controls GameAssist and most table macros use directly. Its current scope does not include image-side stack editing, default-token writes, computed or name-resolved attribute links, advanced controller-list editing, color arithmetic, dimming night-vision parameters, relative/random multi-sided-token selection, separate `token`/`character`/`control` report-recipient behavior, duplicate-index marker operations, conditional marker counts, or TokenMod help-handout rebuilding. Unsupported operations return a clear warning before unrelated requested changes are applied.
-
-That boundary keeps the first integrated release testable. Image stacks and default-token writes alter persistent token assets; computed attributes and controller-name editing require separate expression and identity-resolution rules; and color arithmetic, random side selection, advanced marker counts, and recipient distinctions add specialized parsers that none of GameAssist's current modules require. Those groups can be evaluated individually after the integrated architecture passes its Roll20 release gate. TokenAssist already supplies its own chat help, and integrations use `GameAssist.TokenAssist` rather than a global `TokenMod` object, so those two differences are intentional rather than unfinished compatibility work.
+TokenAssist `1.3.0` adds the low-risk, selected-token portion of the remaining TokenMod surface: duplicate-index and conditional marker expressions through MarkerService, relative counts with bounds, relative color and dimming controls, relative/random side selection, exact controller-list editing, recipient-specific reporting, exact saved-attribute reporting, and explicitly named computed-value reporting when Roll20 exposes it. It still does not write persistent default-token assets, rebuild TokenMod's help handout, or create a global `TokenMod` compatibility object. Those boundaries remain deliberate because they affect durable campaign assets or would create an ownership contract outside GameAssist.
 
 On first startup, TokenAssist copies a valid legacy `state.TokenMod.playersCanUse_ids` value into its own configuration. It records the migration and leaves `state.TokenMod` untouched for rollback. It does not expose a global `TokenMod` object; integrations should use `GameAssist.TokenAssist.observeTokenChange(...)` or MarkerService's marker observer.
 
-Existing supported `!token-mod` macros remain compatibility aliases during the v1.x line, but should be updated to `!token-assist`, `!ta`, or `!ta-*` before GameAssist v2.0.0. When standalone TokenMod is detected, GameAssist leaves `!token-mod` to that script while TokenAssist commands remain available. Remove standalone TokenMod for normal v1.8.1 use because both tools can change the same token properties and markers.
+Existing supported `!token-mod` macros remain compatibility aliases in v2.0.0, but new macros should use `!token-assist`, `!ta`, or `!ta-*`. Their eventual removal requires a separate announced migration release. When standalone TokenMod is detected, GameAssist leaves `!token-mod` to that script while TokenAssist commands remain available. Remove standalone TokenMod for normal v2.0.0 use because both tools can change the same token properties and markers.
 
 Config keys: `playersCanUseIds`, `warnOnStandalone`, and the protected `configSchemaVersion`.
 
@@ -492,13 +545,13 @@ GM commands:
 
 `!Init-RR` rolls once per unique eligible token. Duplicate occurrences receive the same result. Custom rows, counters, objects, dead NPCs, HP/death-marker mismatches, stale references, off-page tokens, unsupported sheets, and unreadable 2024 entries are not rerolled or repositioned. Eligible rows sort only among the positions InitiativeAssist owns, so a round counter or another Mod's custom entry stays exactly where the GM placed it.
 
-InitiativeAssist deliberately stops at initiative. CombatAssist owns deliberate encounter lifecycle, exact turn movement, native or conservative round counting, optional turn timers, and native current-turn pings. Condition-duration countdowns and automatic end-of-turn effects remain outside both modules in v1.8.1.
+InitiativeAssist deliberately stops at initiative. CombatAssist owns deliberate encounter lifecycle, exact turn movement, native or conservative round counting, optional turn timers, and native current-turn pings. Condition-duration countdowns and automatic end-of-turn effects remain outside both modules in v2.0.0.
 
 Config keys: `enabled`, `mode` (`manager` or `observer`), `hideNpcRolls` (default `true`).
 
 ### 6.5 CombatAssist
 
-> **Module version:** `1.0.5`<br>
+> **Module version:** `1.2.0`<br>
 > **Core service:** `TurnTrackerService 1.0.0`<br>
 > **Default:** Disabled until the GM enables it.
 
@@ -542,6 +595,11 @@ All `!Combat-` commands are case-insensitive. The **Control Center** is the main
 * `!Combat-Timer add <seconds-remaining> <gm|player|both|public>` → Add or update one of five early reminders.
 * `!Combat-Timer remove <seconds-remaining>` / `clear --confirm` → Remove reminder points.
 * `!Combat-Cue off|gm|players|both|public` → Choose who receives Roll20's temporary native current-turn ping.
+* `!Combat-Ready` → Configure optional Ready/Delay records. The feature is disabled by default; `5e` records a Ready action without rewriting initiative, while `legacy` records the campaign's Delay choice and leaves final placement to the GM.
+* `!Combat-Hold` → Record a held action for the authorized current character when Ready/Delay is enabled, then advance the native tracker.
+* `!Now` / `!Combat-Now` → Publicly signal that an authorized held action is being used; CombatAssist does not apply attacks, damage, conditions, or resources.
+* `!Combat-Cancel-Hold` → Remove an authorized held-action record.
+* `!Combat-Timeline` → Review bounded HealthService HP-change evidence by encounter, round, or turn boundary; it is evidence for ret-conn review, not a causal damage ledger.
 
 CombatAssist counts an exact forward or backward row rotation as turn movement. When exactly one custom item is clearly named **Round**, **Rounds**, **Round Count**, **Round Counter**, **Round Number**, **Round Tracker**, **Combat Round**, or **Current Round**, its positive whole-number value becomes the authoritative round. When CombatAssist moves that row to the top, it evaluates a simple signed whole-number Round Calculation such as `+1`; this replaces the native calculation that Roll20's API-side array write would otherwise skip. Multiple plausible counters are refused rather than guessed. Without a recognized counter, one uninterrupted forward cycle back to the anchor advances the internal round. Backward movement never advances a round.
 
@@ -563,7 +621,7 @@ Config keys: `enabled`; `announcements` (`gm`, `public`, `whispers`, or `off`; d
 
 ### 6.6 ConcentrationAssist
 
-> **Module version:** `0.2.2`<br>
+> **Module version:** `0.6.0`<br>
 > **Marker service:** ConcentrationAssist uses the integrated `GameAssist.MarkerService`; standalone TokenMod is not required.
 
 `!concentration` or `!cc` opens buttons for normal, advantage, or disadvantage rolls. The case-insensitive `!Con-<command>` and `!Concentration-<command>` families provide equivalent aliases, while the established space-and-`--` syntax remains compatible:
@@ -574,33 +632,40 @@ Config keys: `enabled`; `announcements` (`gm`, `public`, `whispers`, or `off`; d
 * `status` / `--status` → List tokens currently carrying the configured marker.
 * `audit` → Run the same marker inspection with an explicit read-only result.
 * `manual` → Create or update the stable ConcentrationAssist user-manual handout.
-* `settings` / `config` → Open result-message settings.
+* `settings` / `config` → Open result-message, HP-loss offer, and concentration-marker settings.
+* `markers` → Choose a common built-in marker or a custom marker registered in the campaign.
+* `marker --value <name-or-tag>` → Validate and save one built-in id, custom display name, or exact custom marker tag; GM only.
 * `--damage N` → Roll against DC `max(10, floor(N / 2))`.
 * `--mode normal|adv|dis` → Choose roll mode.
 * `--last` → Repeat the player’s last recorded check.
 * `--off` → Remove the configured marker from selected tokens.
 * `--config randomize on|off` → Toggle emote randomization.
+* `--config healthPrompts on|off` → Enable or disable optional private HealthService check offers without disabling manual checks.
 * `!ga-conc-status` → GM-only snapshot of the most recent concentration DC and damage per player.
 
-The tracker reads `constitution_save_bonus` from a token’s represented character. Runtime `lastDamage` data self-heals and accepts legacy number entries.
+The tracker reads a persisted or Roll20-computed `constitution_save_bonus` from a token's represented official 2014 Classic character. If that save data is absent, unreadable, or belongs to the 2024 Beacon sheet, ConcentrationAssist refuses the roll with a next step instead of silently substituting `+0`. Use the 2024 sheet's native concentration roll until a separately verified 2024 adapter is available. Runtime `lastDamage` data self-heals and accepts legacy number entries.
 
 In v0.1.4.3, built-in marker ids, custom marker display names, and exact custom tags resolve to the marker identity Roll20 stores on tokens. If the configured marker cannot be recognized, `!concentration --status` gives an actionable warning instead of silently reporting an incorrect empty result.
 
 In v0.1.5.0, concentration status, add, remove, and teardown operations use MarkerService. Each mutation returns an explicit result, exact stored custom tags remain usable when the campaign registry cannot be read, and unrelated or numbered markers are preserved. ConditionAssist observes MarkerService directly and can describe a configured concentration marker when a matching condition definition exists.
 
-Config keys: `marker`, `randomize`.
+In v2.0.0, fresh campaigns use Roll20's built-in `stopwatch` marker, which does not require a custom campaign marker. A saved `Concentrating` value is preserved when that custom marker exists; only the exact unresolved former stock default migrates to `stopwatch`. Open `!concentration settings` and choose **Choose Marker** to use another built-in or registered custom marker without editing raw configuration.
+
+In v2.0.0, a supported numeric HP decrease can offer one private concentration check when the affected token is already concentrating and both Health Prompts and HealthService are enabled. Verified GameAssist damage is labeled **Damage**. A direct Roll20 or third-party decrease is labeled **Observed HP Loss** because its cause is unknown. Healing, initialization, synchronization, clearing, invalid values, and unrelated HP changes do not prompt. Generated Normal, Advantage, and Disadvantage buttons expire after ten minutes and recheck the latest HP event, current HP, concentration marker, token identity, current controller, and that controller's visible page before rolling. GM-layer and player-hidden token offers remain GM-only, and hidden-token checks do not post a public emote.
+
+Config keys: `marker`, `randomize`, `healthPrompts`.
 
 ### 6.7 NPCAssist
 
 > **Marker service:** NPCAssist uses the integrated `GameAssist.MarkerService`; death history remains independent from marker-write success.
 
-> **Module version:** NPCAssist `1.3.3` in GameAssist v1.8.1. NPCAssist `1.0.0` introduced the four-level history model; `1.1.0` added curated Arc management, hierarchical clearing, date rollover, and the report writer; `1.1.1` hardened standalone interoperability and new-token HP initialization; `1.2.0` migrated marker behavior to MarkerService; `1.2.1` added confirmation-gated marker repair; `1.3.0` applies the DM-selected timezone to Session dates and history displays without changing stored event instants; `1.3.1` added compact navigation, status, and a persistent manual; `1.3.2` added equivalent NPC command families and dedicated GM/DM control aliases; `1.3.3` adds configurable GM-private Bloodied threshold notices; `1.4.0` adds optional page-local progressive names for newly added linked NPC tokens.
+> **Module version:** NPCAssist `1.4.1` in GameAssist v2.0.0. NPCAssist `1.0.0` introduced the four-level history model; `1.1.0` added curated Arc management, hierarchical clearing, date rollover, and the report writer; `1.1.1` hardened standalone interoperability and new-token HP initialization; `1.2.0` migrated marker behavior to MarkerService; `1.2.1` added confirmation-gated marker repair; `1.3.0` applies the DM-selected timezone to Session dates and history displays without changing stored event instants; `1.3.1` added compact navigation, status, and a persistent manual; `1.3.2` added equivalent NPC command families and dedicated GM/DM control aliases; `1.3.3` adds configurable GM-private Bloodied threshold notices; `1.4.0` adds optional page-local progressive names for newly added linked NPC tokens; `1.4.1` moves HP-dependent tracking and audits to HealthService's selected shared NPC HP bar.
 
-NPCAssist watches `change:graphic:bar1_value` for linked NPC characters with `npc=1`.
+NPCAssist watches the current HealthService-selected token bar for linked NPC characters with `npc=1`.
 
 * HP below 1 → record the NPC death into the active Campaign, Chapter, Section, and Session buckets, then request the configured `deadMarker`.
 * HP above 0 → annotate the matching death entry as revived and request removal of the configured `deadMarker`.
-* HP crosses from above half to half or below while still above 0 → whisper the GM once when `notifyBloodied=true` and bar 1 max is valid and positive.
+* HP crosses from above half to half or below while still above 0 → whisper the GM once when `notifyBloodied=true` and the selected bar maximum is valid and positive.
 * `autoHide=true` → move newly dead NPC tokens to `hideLayer`.
 
 When HPAssist `autoRollOnAdd=true`, NPCAssist treats the short placeholder-HP interval on a newly added token as setup rather than combat. Blank or unknown starting HP is not accepted as evidence that a living NPC crossed below 1 HP. The automatic roll therefore does not flash the death marker, add a false death/revival pair to history, or produce a false Bloodied notice; later known gameplay changes remain ordinary tracked events.
@@ -630,7 +695,7 @@ Commands:
 * `!npc-death-write --scope section` → Update one active handout.
 * `!npc-death-write --newSection "Name"` → Start/resume a Section and seed it with only missing deaths from the current Session.
 * `!npc-death-audit` → Check the current player page for HP/death-marker mismatches and update the `GameAssist NPC Death Audit` handout.
-* `!npc-death-repair` → Re-scan the current page and preview marker corrections based on current bar 1 HP.
+* `!npc-death-repair` → Re-scan the current page and preview marker corrections based on current selected-bar HP.
 * `!npc-death-repair --confirm` → Apply the previewed rule after a fresh scan, changing only the configured death marker.
 * `!npc-death-arc` → Show arc bucket help and current arc counts.
 * `!npc-death-arc --name "Arc Name"` → Add selected linked PC/NPC tokens to that arc handout.
@@ -660,10 +725,10 @@ Config keys: `autoTrackDeath`, `notifyBloodied`, `autoNumberNpcTokens`, `deadMar
 
 ### 6.8 HPAssist
 
-> **Module version:** `0.1.1.3`<br>
+> **Module version:** `0.3.0`<br>
 > **Dependency:** HPAssist does **not** require TokenMod.
 
-HPAssist reads `npc=1` and `npc_hpformula` from linked characters, parses `NdM+K` or `NdM-K`, and writes the result to token `bar1_value` and `bar1_max`.
+HPAssist reads `npc=1` and `npc_hpformula` from linked characters, parses `NdM+K` or `NdM-K`, and writes the result to the HealthService-selected NPC token bar. When HealthService is enabled, the roll is recorded as one verified initialization or synchronization operation with HPAssist provenance. If the GM deliberately disables HealthService, HPAssist retains direct Bar 1 rolling; shared bar selection and provenance-aware integration are unavailable until the service returns.
 
 Use either command style below. Commands are not case-sensitive.
 
@@ -682,15 +747,18 @@ Invalid, unlinked, and PC tokens are skipped.
 
 Config key: `autoRollOnAdd`.
 
+Open `!ga-health bars` to choose Bar 1, 2, or 3 for GameAssist NPC HP. **Audit Current Page** identifies linked NPCs needing setup and separately names token candidates that do not represent a character. **Prepare Linked NPCs** previews, then copies each linked NPC character's current and maximum HP into the chosen bar without changing the other two bars. **Link To Sheet HP** is a separate deliberate option because duplicate tokens representing the same character would share one linked HP value.
+
 ### 6.9 Config UI
 
-> **Module version:** `0.2.2`
+> **Module version:** `0.2.5`
 
-`!ga-config ui` or `!ga-config-ui` whispers a GM-only chat control panel. Each module card can show:
+`!ga-config ui` or `!ga-config-ui` whispers a GM-only chat control panel. Shared services appear first in alphabetical order, followed by feature modules in alphabetical order. Each component card can show:
 
 * Current enabled/disabled status with a one-click toggle.
 * Boolean configuration keys as chat buttons.
-* A brief configuration summary.
+* A brief, wrapping configuration summary that never dumps nested JSON into chat.
+* A direct **Manage PC Health Alerts** button on the HealthService card.
 * Previous, refresh, and next pagination controls.
 
 Config keys: `pageSize`, `showSummaries`.
@@ -701,7 +769,7 @@ Use `!ga-config-ui help|guide`, `menu|gm|dm`, `status`, `info`, or `audit` for t
 
 ### 6.10 Debug Tools *(GM-only)*
 
-> **Module version:** `0.2.2`
+> **Module version:** `0.3.1`
 
 DebugTools is disabled by default and remains dry-run unless `--apply` is present:
 
@@ -710,6 +778,8 @@ DebugTools is disabled by default and remains dry-run unless `--apply` is presen
 * `!ga-debug save --dc 15 [--bonus 3] [--mode adv|dis|normal] [--label "Text"] [--apply]`
 
 To act on the currently selected token, omit `--token`. Literal `--token select` is not supported.
+
+When HealthService is enabled and the chosen token has a supported HP surface, applied damage is written to the selected shared HP bar and verified as declared DebugTools damage. That makes `!ga-debug damage ... --apply` the live test path for the stronger ConcentrationAssist **Damage** offer. Unsupported tokens and campaigns that deliberately disable HealthService retain the established direct Bar 1 diagnostic.
 
 Typical session:
 
@@ -767,6 +837,277 @@ Config keys: `enabled`, `mode`, `delayMs`, `showHeader`, `header`, `defaultGreet
 
 ---
 
+### 6.12 EffectAssist *(optional, player-capable and GM-managed)*
+
+> **Module version:** `2.5.2`<br>
+> **Default:** Disabled<br>
+> **Launch sheet:** Official D&D 5E by Roll20 2014 sheet. The 2024 sheet and other character sheets are deferred until their contracts can be implemented and tested separately.
+
+EffectAssist records **why** an effect exists instead of treating a marker or character-sheet field as the complete truth. Each active instance retains its source character and token, exact targets, concentration dependency, stacking group, duration guidance, creator, lifecycle, and every visible or mechanical projection it manages.
+
+Start here:
+
+```roll20chat
+!ga-enable EffectAssist
+!effect
+```
+
+Select the target tokens, run `!effect`, choose an effect, and choose its source. By default, EffectAssist immediately applies the supported marker and sheet changes after the source is chosen. The optional **Application Review** setting restores a review panel before anything changes. A new concentration effect normally ends the source's previous concentration effect automatically; the advanced **Allow Multiple Concentration** setting is available for campaigns that deliberately use exceptional rules.
+
+| Effect | Catalog level | Automatic in v2.0.0 | Still handled at the table |
+| --- | --- | --- | --- |
+| **Bless** | Marker and sheet automation | Target marker; 2014-sheet `1d4` global attack and save rows; source concentration; linked cleanup. | Choose legal targets and end early when a non-concentration rule requires it. |
+| **Guidance** | Marker and sheet automation | Target marker; uniquely labeled 2014-sheet `1d4` global skill row; source concentration; linked cleanup. One unambiguous supported sheet skill check consumes one matching active Guidance instance. | Use **Use Guidance** for an ability check that is not represented by a sheet skill, or whenever the roll evidence is unsupported, ambiguous, pre-existing, or edited. |
+| **Warding Bond** | Marker and sheet automation | Target marker; 2014-sheet `+1` AC and saving-throw rows. | Resolve resistance and mirrored damage. |
+| **Haste** | Marker and sheet automation | Target marker; 2014-sheet `+2` AC row; source concentration; linked cleanup. | Resolve speed, Dexterity-save advantage, the restricted action, and ending lethargy. |
+| **Holy Weapon** | Tracked; mechanics manual | Target marker; source concentration; linked cleanup. | Apply bonus damage only to the affected weapon and resolve the optional burst. A global damage row is deliberately not used because it would affect every weapon. |
+| **Pass Without a Trace** | Tracked; mechanics manual | Target marker; source concentration; linked cleanup. | Add `+10` only to affected Stealth checks and maintain the area-based target list. The 2014 global skill row is deliberately not used because it would affect every skill. |
+
+The catalog separates **Marker and Sheet Automation** from **Tracked; Rules Stay Manual** before the GM or player chooses an effect. Gift of Alacrity, Longstrider, and Beacon of Hope are not built-in launch entries because marker-only treatment would not remove enough table work to justify prominent buttons. A GM may still create a guided custom marker, condition, or record-only effect when tracking one of those rules is useful.
+
+Players can run `!effect` or a direct spell shortcut and apply a built-in effect from a linked source token or character they control. Source buttons lead to Roll20's native map targeting, so a player can choose a visible linked recipient without controlling that recipient. Every application rechecks source identity, page, visibility, and control; optional review adds a separate confirmation without weakening those checks. Hidden or off-page recipients use **Ask the GM**; the request remains available briefly in `!Effect-Requests` and the GM Control Center instead of depending on one easy-to-miss whisper. The GM retains the custom-effect, status, audit, repair, and configuration screens and can lock or restore player casting at any time.
+
+Every recipient used for sheet automation must be a token linked through **Represents Character**. A refusal names each affected token, distinguishes an empty link from a stale character reference, and explains the exact Roll20 correction. Compatibility reads accept Roll20's `represents` and `_represents` forms, but neither is allowed to hide a broken character reference. Concentration effects also verify the configured ConcentrationAssist marker before writing any target marker or sheet row; a failed dependency leaves no partial Bless, Guidance, Haste, Holy Weapon, or Pass Without a Trace application. A successful result identifies the exact source token and layer whose concentration was established, which keeps duplicate tokens representing one character independent.
+
+EffectAssist can also recognize an exact Bless card from the official D&D 5E by Roll20 2014 `spell` template. Recognition succeeds only when the spell name, character name, active page, linked source token, and player control identify one caster without ambiguity. It creates one short-lived private proposal for the GM; it does not apply Bless, select recipients, establish concentration, or change a marker or sheet field. The GM selects the actual recipient tokens and uses **Review Selected Recipients** to enter the same preview and confirmation path as the catalog. Repeated copies of the same chat card are suppressed, and a proposal can be used only once.
+
+Spell-card target wording is descriptive and is never interpreted as token identity. Unsupported spells, ambiguous character names or source tokens, and 2024-sheet cards do not create effect instances. Use `!Effect-Casts` to review pending proposals or `!Effect-Recognition on|off` to control the shortcut. The manual `!effect` catalog remains the complete and reliable path whether recognition is on or off.
+
+Guidance uses a narrower automatic ending rule. EffectAssist labels only the global skill row it creates, then watches for that exact label in an official 2014 simple skill-check roll made by the target's controller. It ends one matching active Guidance through the ordinary ownership-safe cleanup path only when the character and instance are unique. Advantage and disadvantage remain eligible when Roll20 retains the owned label. An unrelated `d4`, an unsupported template, a non-skill ability check, a pre-existing row, an edited row, or more than one possible instance does nothing automatically; use the generated **Use Guidance** button instead.
+
+Two sources applying the same non-stacking effect to one target remain separate instances but share each effective projection. Ending one source leaves the other source's marker and sheet rows in place. Ending the final source removes only the state EffectAssist originally created. Matching markers or modifier rows that existed first remain untouched, and the completion panel names preserved campaign state instead of implying that it was removed.
+
+Removing the final managed target marker or condition manually ends that effect, clears its source concentration when EffectAssist owns it, and performs ownership-safe sheet cleanup. Removing only one target marker from a multi-target effect remains visible drift that Audit can repair. Removing the source's Concentrating marker, clearing concentration through ConcentrationAssist, or using **End Effect** also ends the dependent effect and performs the same guarded cleanup.
+
+Built-in effects also carry formal duration rules. When an effect begins during an active CombatAssist encounter on the same page, EffectAssist records the accepted round and initiative point. When TimeAlmanac is active, it records the committed fictional minute as a second optional source of evidence. Reaching either verified boundary creates a private **Effect Duration Review** item for the GM; the effect remains active until the GM ends it or another established ending rule, such as lost concentration, resolves it.
+
+Tracker rebases, initiative edits, backward movement, disabled providers, and effects created before duration tracking are not guessed through. Ending an encounter before a tracked round boundary produces a reminder rather than an expiration claim. Large Almanac jumps are compared once instead of replaying every elapsed minute. The GM can keep a candidate active, reopen that decision later, turn duration candidates off, or continue using the existing manual End Effect controls.
+
+Main commands:
+
+* `!Effect-GM`, `!Effect-DM`, or `!Effect-Menu` → Open the Game Master control screen.
+* `!Effect-Guide` or `!Effect-Help` → Open the compact quick-start guide.
+* `!effect` or `!Effect-Catalog` → Open the focused launch catalog directly.
+* `!Bless`, `!Guidance` / `!Guide`, `!Haste`, `!Warding-Bond`, `!Holy-Weapon`, or `!PwoaT` → Open a compact source-and-review path for that effect; commands are case-insensitive.
+* `!Effect-Active` → Manage active instances and end one exact source.
+* `!Effect-Status` → Review compact module, record, health, and player-casting totals without printing the full active/recent history.
+* `!Effect-Casts` → Review short-lived official 2014 Bless proposals waiting for GM-selected recipients.
+* `!Effect-Recognition on|off` → Enable or disable supported spell-card proposals without changing the manual catalog.
+* `!Effect-Requests` → Review short-lived player requests, then use selected tokens or Roll20 map targeting before the ordinary preview and confirmation.
+* `!Effect-Duration` → Review active duration rules and GM-only expiration candidates or encounter-end reminders.
+* `!Effect-Durations on|off` → Allow or stop duration-provider candidate processing without deleting active effects or saved evidence.
+* `!Effect-Definitions` → Review built-in and campaign definitions with automatic, assisted, and informational behavior.
+* `!Effect-Audit` → Compare semantic records, exact targets, ownership ledgers, markers, conditions, concentration, and sheet rows without changing anything.
+* `!Effect-Repair` → Reopen the audit unless a fresh one-use confirmation grant is supplied by the audit button.
+* `!Effect-End --id <generated-id>` → End one exact source instance; ordinary menus generate this button so the GM need not memorize IDs.
+* `!Effect-Info` → Explain source ownership, overlap, and current supported boundaries.
+* `!Effect-Manual` → Create or update the stable EffectAssist user-manual handout.
+* `!Effect-Players on|off` → Allow or lock player use of built-in casting controls; GM application remains available.
+* `!Effect-Settings` → Open the ordinary EffectAssist settings screen.
+* `!Effect-Review on|off` → Require or skip the application review panel; the default is `off`.
+* `!Effect-Advanced` → Open exceptional-rules settings.
+* `!Effect-Multiple-Concentration on|off` → Permit or refuse multiple concentration effects from one source; the default is `off`.
+* `!effect <command>` → Use the same controls through the case-insensitive spaced command family.
+
+Audit reports missing tokens, token representation changes, unavailable projections, missing or changed markers and sheet rows, missing ownership records, orphaned owned state, and malformed preserved records. Repair is offered only for safe current mismatches, is bound to the GM who ran the audit, expires after five minutes, rechecks the complete mismatch signature, and verifies the result. If a GM edits an EffectAssist-created sheet row, cleanup preserves that edited row and marks the instance for attention instead of deleting the GM's work.
+
+Disabling EffectAssist stops its commands and future automation while preserving valid active records, ended history, definitions, and existing projections. Re-enable it and run Status or Audit before continuing. MarkerService, ConditionAssist, or ConcentrationAssist can be unavailable without corrupting the semantic record; affected projections remain visible as pending or needing attention.
+
+Config keys: `enabled`, `allowPlayerCasting`, `castRecognition`, `durationCandidates`, `reviewApplications`, `allowMultipleConcentration`, the protected `markerOverrides` map, and the protected `customDefinitions` map. In v2.0.0, the two protected maps are reserved for validated release data and are not edited through `!ga-config`; GMs use the built-in catalog or the guided custom Marker, Condition, and Record Only choices.
+
+---
+
+### 6.13 HealAssist *(optional, player-capable and GM-managed)*
+
+> **Module version:** `1.2.0`<br>
+> **Default:** Disabled<br>
+> **Launch sheet:** Official D&D 5E by Roll20 2014 sheet. The 2024 sheet and other character sheets require separate verified adapters.
+
+HealAssist provides a guided path between deciding to heal and changing a character's HP. It does not replace the native sheet, spend spell slots or items, interpret arbitrary spell cards, reverse damage, or manage temporary HP. HealthService remains the only GameAssist authority used to read and write supported HP.
+
+Start here:
+
+```roll20chat
+!ga-enable HealAssist
+!Heal-GM
+```
+
+Choose **Healing Actions** or **Maximum Healing**, select a linked healer, choose a supported action, and identify the recipients. Cure Wounds, Healing Word, Heal, potions, and other actions with exactly one legal recipient open Roll20's target prompt directly; they do not pause at a redundant **Choose 1 Recipient** screen. Multi-recipient actions still ask how many targets are involved. In the default Review mode, HealAssist rolls once and shows the formula together with every recipient's current HP, proposed HP, maximum HP, and actual gain before an expiring one-use confirmation. The GM may choose Automatic mode to apply the verified result immediately after recipient selection. Automatic failures make no success claim and send the GM a private diagnostic.
+
+Supported launch actions are Cure Wounds, Healing Word, Prayer of Healing, Mass Healing Word, Mass Cure Wounds, Heal, the four 2014 healing-potion grades, and a bounded manual healing formula. Spell actions ask for slot level and, where required, the healer's Intelligence, Wisdom, or Charisma modifier. They never guess multiclass rules or consume the selected resource. The result reminds the table to mark off the spell slot, item, or feature manually.
+
+Players may start from a linked healer they currently control. Roll20's native target prompt lets them choose visible supported PC recipients even when they do not control those recipients. NPC, GM-layer, hidden, and off-page placement becomes a retained private GM request; NPC names and HP are never published through that player path. The GM may lock player healing without disabling HealAssist.
+
+For public result messages, HealAssist announces only visible PC recipients and reports the amount each actually regained after the maximum-HP cap. Private mode keeps every result between the acting player and GM. Internal roll evidence is GM-private in both modes.
+
+Multi-target healing is one reviewed operation. Every recipient is revalidated before the first write. If a later verified write fails, HealAssist attempts to restore earlier recipients to their reviewed values and reports the failure instead of presenting a partial action as complete. Old, reused, fabricated, expired, or stale buttons are refused without another roll or HP change.
+
+Main commands:
+
+* `!Heal`, `!Heal-Menu`, or `!Heal Catalog` → Open the healing-action catalog.
+* `!Heal-Max` or `!Heal maximum` → Open the maximum-healing catalog; dice use their maximum possible result while flat healing remains unchanged.
+* `!Heal-GM` or `!Heal-DM` → Open the private Game Master control center.
+* `!Heal-Guide` or `!Heal-Help` → Open the compact quick-start guide.
+* `!Heal-Status` → Review module availability, player permission, result audience, and current transient workflow counts.
+* `!Heal-Audit` → Run a read-only review of configuration, HealthService availability, and pending workflow counts.
+* `!Heal-Requests` → Review retained player requests that require GM placement or NPC access.
+* `!Heal-Players on|off` → Allow or lock player-started healing; GM workflows remain available.
+* `!Heal-Results public|private` → Choose safe public PC summaries or private results.
+* `!Heal-Auto on|off` → Choose automatic verified application or the default review-before-apply workflow.
+* `!Heal-Info` → Review ownership boundaries and supported behavior.
+* `!Heal-Manual` → Create or update the stable HealAssist user-manual handout.
+* `!HealAssist-<command>` → Use the compatibility command family for the same guarded controls.
+
+Config keys: `enabled`, `allowPlayerHealing`, `autoApply`, and protected `resultAudience`. Pending source choices, requests, and confirmations are sandbox-local safety capabilities and are not exported or restored after a restart.
+
+---
+
+### 6.14 AttackAssist *(optional, player-capable and GM-managed)*
+
+> **Module version:** `1.1.0`<br>
+> **Default:** Disabled<br>
+> **Launch sheet:** Official D&D 5E by Roll20 2014 player-character repeating attacks. The 2024 sheet and NPC action rows require separate verified adapters.
+
+AttackAssist provides a shorter route from “I attack that token” to the familiar 2014 attack result. It does not replace the character sheet, apply damage, write HP, spend ammunition or spell slots, change conditions or effects, or move initiative.
+
+Start here:
+
+```roll20chat
+!ga-enable AttackAssist
+!Attack-GM
+```
+
+Select a linked 2014 character token and run `!Attack`. AttackAssist verifies the character, reads its repeating attacks by stable Roll20 row identity, and presents the available names in the sheet's saved order. Two attacks may share a display name; numbered menu labels keep them distinct while the saved row ID determines which formula is rolled.
+
+After the attack is chosen, Roll20's native target prompt lets the player point at a visible token without controlling it. The target is used only for the after-roll announcement. Hidden, GM-layer, or off-page placement becomes a retained request in `!Attack-Requests`, where the GM chooses or selects the target privately.
+
+By default, choosing the target submits the attack immediately using the character sheet's saved roll setting. The GM can enable **Review Before Roll** from `!Attack-GM` or with `!Attack-Review-Mode on`; that optional review offers **Use Sheet Setting**, **Normal**, **Advantage**, and **Disadvantage** before each attack. AttackAssist preserves the verified sheet-generated `atk` or `atkdmg` template, materializes the selected repeating row and its nested Classic-sheet fields, and submits the result as the acting character. Documented 2014 defaults are supplied when Roll20 did not persist them as attributes: the ordinary critical range, checked attack and first-damage flags, unchecked second-damage and save flags, and inactive sheet toggles. If the sheet is configured to ask about whispering or advantage on every roll, an API-authored roll cannot open those client prompts; AttackAssist therefore uses the sheet's first documented choices, Public and Normal. Any other interactive prompt, circular reference, or genuinely unknown field is reported before `sendChat`, so malformed dice input cannot disable the sandbox. AttackAssist never temporarily changes the character's saved settings. Once one optional review button is used, the other buttons from that review expire.
+
+AttackAssist sends the completed sheet command directly through Roll20 so the normal attack card, dice result, and configured whisper audience remain visible. It then shows a compact submission notice without consuming or duplicating the roll. A GM-reviewed hidden or off-page target remains private. CritAssist sees a supported natural-1 attack exactly once.
+
+Main commands:
+
+* `!Attack` or `!Attack-Menu` → Choose an authorized attacker and verified repeating attack.
+* `!Attack-GM` or `!Attack-DM` → Open the private Game Master control center.
+* `!Attack-Guide` or `!Attack-Help` → Open the compact quick-start guide.
+* `!Attack-Status` → Review player permission, available sources and attacks, and transient workflow counts.
+* `!Attack-Audit` → Run a read-only current-page review of verified and unsupported repeating rows.
+* `!Attack-Requests` → Review retained player requests for hidden, GM-layer, or off-page target placement.
+* `!Attack-Players on|off` → Allow or lock player-started guided attacks; GM workflows and native sheet rolls remain available.
+* `!Attack-Review-Mode on|off` → Show roll-mode choices before each attack, or use the default immediate sheet-setting submission.
+* `!Attack-Info` → Review the roll contract, privacy behavior, and module boundary.
+* `!Attack-Manual` → Create or update the stable AttackAssist user-manual handout.
+* `!AttackAssist-<command>` → Use the full module-name command family for the same guarded controls.
+
+Config keys: `enabled`, `allowPlayerAttacks`, and the protected `reviewBeforeRoll` setting managed through AttackAssist controls. Source choices, retained requests, and one-use submissions are sandbox-local safety capabilities and are not exported or restored after a restart.
+
+---
+
+### 6.15 AlmanacAssist *(optional, GM-managed world context and deliberate rests)*
+
+> **Module version:** `2.0.0` on the `AlmanacAssist-v2.0.0-Build` line (historical source checkpoints remain available for rollback)<br>
+> **Default:** Disabled<br>
+> **Launch sheet for RestAlmanac:** Official D&D 5E by Roll20 2014 PC sheet. Time, Climate, Astronomy, Weather, and Environment do not require a character sheet.
+
+AlmanacAssist is one GameAssist module containing six independently controlled systems. Its GM control center is organized for play: current world time, common advances, exact date setting, calendar selection, announcement controls, and current-world tools appear first; setup, diagnostics, and technical reference are available through focused screens. The systems share useful context when available, but none is a hidden prerequisite for another: Weather can operate from its own fallbacks, Environment can use a manual override without Weather, Astronomy can use a manual day and season without Time, and Rest can operate without advancing fictional time.
+
+The active AlmanacAssist implementation is **v2.0.0**, developed under duplicate tracker #96 while Issue #95 remains untouched. It has substantial framework work—Gate 0 repairs, read-only SceneResolver, generic Worldbuilding, Prepared Destinations, reviewed Travel, Phenomena, PresetRegistry, RulesAdvisor, WorldPacks, Temporal Contexts, and Wayfarer handout editing—but that inventory is **not a completion claim**. An exploratory real Roll20 launch exposed a false-looking startup audit warning, empty/unassigned first-run Location and Travel state, insufficient starter-world onboarding, weak Climate profile setup, and a truncated Climate Add Region prompt. The retained-`Core` audit warning now has a focused source repair that preserves genuine unknown-branch warnings; it still requires a fresh real-Roll20 startup check.
+
+Current recovery supplies bounded owner-authored generic starter worlds (not published-setting lore), a World Library, selected Climate profiles/regions, first-Location activation, prepared destinations/routes, complete deferred prompt targets, named Roll20 page/handout choices, and visible recovery controls on generated refusal/no-change paths. At setting scale, every Worldbuilding record collection uses a name-sorted 12-entry page with Previous/Next, name/tag Search, and a direct Edit action for every displayed record, so a GM can reach a distant Location or Route without memorizing a Technical stable ID. Editor relations—including named pages, Climate, installed-palette profiles, preset overlays, and Route Leg profile/split choices—use the same complete 12-entry named picker rather than a truncated or oversized Roll20 query; palette roots, collection records, default bindings, and cross-palette references are likewise paged, searchable controls with a 160-record per-collection state bound. The WorldPack Library now also exposes four original immutable setting-scale sources—Asterfall Concord, Veyra Turning, Narthvale Compact, and Lumenfen Atlas—each reviewed before becoming an editable campaign clone with 160 Locations, 215 Routes (including local secondary/shortcut choices), 24 Prepared Destinations, 24 Phenomena, and a complete typed palette. Installation never activates a Location or alters runtime/provider state; its completion panel routes the GM to choose a starting Location. When a verified built-in clone is older than its immutable source, both the Library and Installed WorldPacks screen offer a separate **Review Update** path. It rechecks campaign revisions and refuses changed geographic or palette-clone records rather than overwriting customization; a current source creates no redundant update grant. Ordinary WorldPack and Wayfarer pickers keep known-incompatible GameAssist-owned exports out of each other’s choices; selected-token Rest remains review-first and controller-bound. The active Scene Climate now resolves explicitly as direct Location relation, then Ecoregion relation, then campaign fallback. That context is read-only: moving Location does not silently rewrite campaign Climate configuration, committed Weather, or Environment ownership. Weather, Scene, status, public getters, and Climate semantic events identify the same active baseline; retained old-location Weather is visibly flagged until the GM generates or sets a replacement. Before Weather is committed, Environment uses the active Location default rather than an unrelated generic fallback. A Prepared Destination and Travel still preserve Weather, Environment overrides, Astronomy, and fictional time ownership; Phenomena remain separate scoped evidence; WorldPacks remain inert reviewed data; and Temporal Contexts remain transparent projections rather than a second clock. The recovery is not live-accepted: do not rely on a green VM suite, a menu opening, or the old “code complete” wording as proof that a fresh GM can use the product. Follow the Fresh-GM Recovery Preflight in `Smoketest.md`; see `docs/AlmanacAssist-v2.0.0-Build/` for the current assessment and plan.
+
+Start here:
+
+```roll20chat
+!ga-enable AlmanacAssist
+!aa-gm
+!Almanac-Systems
+```
+
+| System | Short command | Responsibility |
+| --- | --- | --- |
+| **TimeAlmanac** | `!date`, `!time`, `!cal`, `!aa-time` | Owns one elapsed fictional-minute value and presents it through Standard, original Cinderturn, original Tidebound, or campaign-edited Wayfarer calendars. It supports deliberate advancement, confirmed reversal or exact setting, bounded history, and dated holidays. |
+| **ClimateAlmanac** | `!clim`, `!aa-climate` | Manages built-in or campaign climate profiles, bounded regions, parent inheritance, focused one-field regional overrides, and a manual season fallback. The active Scene resolves direct Location → Ecoregion → campaign fallback and visibly identifies that source. |
+| **AstronomyAlmanac** | `!astro`, `!aa-astro` | Calculates configurable moon phases, daylight, solstice/equinox boundaries, bounded forecasts, and separately configured weighted rare celestial events. |
+| **WeatherAlmanac** | `!weather`, `!aa-weather` | Generates continuity-aware current weather, complete prompted manual conditions, bounded forecasts, locks, and readable retained history using the effective active-Scene Climate context. A Location switch retains and flags old-region Weather until replaced deliberately. |
+| **EnviroAlmanac** | `!enviro`, `!aa-enviro` | Converts current weather or a GM override into descriptive visibility, temperature, precipitation, wind, ground, water, exposure, severity, and tags. Before Weather is committed, it follows an active Location default when present. It does not silently impose rules penalties. |
+| **RestAlmanac** | `!rest`, `!aa-rest` | Previews and revalidates Short, Long, Extended, or bounded custom rests for selected linked 2014 PCs. Long Rest writes only verified HP, Hit Dice, and spell-slot fields; optional fictional-time advancement is part of the same confirmed transaction. |
+
+Main commands:
+
+* `!Almanac`, `!aa`, `!aa-gm`, `!aa-dm`, `!Almanac-GM`, `!Almanac-DM`, or `!Almanac-Menu` → Open the private, action-first AlmanacAssist control center.
+* `!aa-preview` → Privately preview the date/time announcement exactly as configured.
+* `!aa-announce` → Send the configured announcement to public chat or the GM.
+* `!aa-announcement-settings` → Choose Off, Descriptive, Detailed, or Technical presentation, public or GM-only delivery, an information preset, and a custom heading.
+* `!aa-announcement-fields` → Give date, time, season, observances, moon phases, weather, climate, and environment their own Off, Descriptive, Detailed, or Technical presentation.
+* `!aa-more` → Open system toggles, status, audit, and reference tools that are intentionally kept off the daily-use screen.
+* `!aa-scene` → Open the compact resolved current-world view; GM-only `!aa-scene technical` adds provider status, provenance, and bounded warnings.
+* `!aa-world` or `!world` → Open Worldbuilding Mode and the World Library: browse full WorldPacks, choose/preview/install a compact local Starter World, recover an empty campaign, or manage Regions, Geography, Ecoregions, Biomes, Locations, Prepared Destinations, Travel Routes, and Phenomena. The World Library hub shows a compact active/representative view; `!aa-world library saved` pages and searches every saved campaign snapshot with direct guarded switching. Every management collection is name-sorted and paged to 12 direct Edit controls; its visible Search finds names or tags without requiring a Technical stable ID. Record editors use Basic, Detailed, and Technical layers; ordinary controls use visible names, and every relation/profile/page/overlay choice opens a complete bounded named picker rather than asking for a technical ID, while Technical reveals provenance and stable identities without raw JSON.
+* `!aa-phenomena` or `!phenomena` → Review explicit owner-authored Phenomena activation/deactivation, scoped overlay state, and elapsed-duration cleanup. Its compact root discloses campaign and active-location template counts; **Browse All Definitions** / **Browse Installed Templates** and their named searches retain direct reviewed activation or editable-clone access to every result.
+* `!aa-presets`, `!presets`, or `!preset` → Preview immutable generic Session Preset templates, review an install, and customize the independent campaign-owned clone. Its compact root discloses the complete campaign count, while **Browse Campaign Presets** and named Search retain a direct preview route for every clone; aliases accept the established close space/hyphen forms.
+* `!aa-rules`, `!rules`, or `!rulesadvisor` → Open optional profile-specific GM reminders derived from the resolved scene. RulesAdvisor is advisory only and never applies damage, exhaustion, movement, saves, conditions, markers, tracker changes, or provider writes.
+* `!aa-worldpacks`, `!worldpacks`, or `!worldpack` → Open the portable WorldPack manager. Use `!aa-worldpacks library` to browse/review one of the four immutable original full-world sources; use `!aa-worldpacks installed` to page and search campaign-owned installed clones by name or provenance, then open the matching editable palette without a technical ID or giant query menu; use `!aa-worldpacks preset install --id <source-id>` for an expiring editable-clone review. A verified direct source clone that is older than its source exposes `!aa-worldpacks preset update --id <source-id>` through visible **Review Update** controls; separately imported copies disclose their provenance but do not offer an update action that would target a different pack. The preview replaces only unchanged records and definitions after confirmation. A refused built-in update offers `!aa-worldpacks preset copy --id <source-id>` as a separate reviewed independent-copy recovery path. **Create Blank Template** writes a documented human-editable worksheet with one inert JSON block; **Export Current World** writes canonical portable JSON. Both representations use the same visible named-handout New/Update/Copy review before one atomic confirmation. It never imports runtime state, providers, time, weather, astronomy, or gameplay effects.
+* `!aa-temporal`, `!temporal`, or `!temporal-contexts` → Manage bounded Prime, regional, and planar Temporal Contexts. A transition previews departure/destination projections and canonical elapsed time before one expiring confirmation; it never creates a second clock.
+* `!aa-location` or `!location` → Choose the current Location, manage favorites and recents, assign a named Roll20 page or Current Player Page, or review a Location-bound Prepared Destination. The confirmation names the new effective Climate source; Location selection does not silently replace Weather or other provider-owned data, and retained Weather is flagged until deliberately regenerated or set manually.
+* `!aa-travel` or `!travel` → Plan a route from the current Location through compact Nearby, Prepared, Favorites, Recent, named Search, or paged All destination choices; then review a pace/distance start and each time-advancing segment before it changes fictional time or reaches the destination. If no Location is active, the panel must route the GM to setup rather than requiring a memorized command.
+* `!Almanac-Systems` → Turn any of the six internal systems on or off without deleting its valid settings or history.
+* `!Almanac-Status` → Review current system availability and compact world context.
+* `!Almanac-Audit` → Run a read-only health review across all six systems.
+* `!Almanac-Guide` or `!Almanac-Help` → Open the compact navigation guide.
+* `!Almanac-Manual` → Create or update one stable AlmanacAssist user-manual handout.
+* `!aa-wayfarer` → Open the compact Wayfarer home for using the saved calendar, editing a draft, previewing, activating, copying, recovering, or exporting an optional advanced editable handout. The normal panel selects an editable handout by visible name or offers an export path when none exists; `!aa-wayfarer export` creates the versioned draft handout. Direct `import --handout` remains a technical command route, not a normal setup requirement.
+* Focused systems also accept standard, case-insensitive role and reference routes with a hyphen or space, such as `!Weather-GM`, `!weather dm`, `!Weather-Help`, `!Weather-Status`, and `!Weather-Audit`. The same pattern applies to Time, Calendar, Wayfarer, Climate, Astronomy, Environment, and Rest.
+
+### Build A Custom Wayfarer Calendar
+
+Wayfarer is for campaign worlds whose calendar does not match Standard, Cinderturn, or Tidebound. Setup uses a saved draft, so you can stop, check your notes, and return later without changing the calendar or date currently shown to players.
+
+Open `!aa-wayfarer` to reach the compact **Wayfarer Calendar** home. **Use Wayfarer** switches directly to the last saved Wayfarer definition with one confirmation; it does not force an already usable calendar through draft construction. Choose **Edit Calendar** only when changing the draft. The focused edit menu gives direct access to every calendar component, so changing one holiday or season does not require stepping through unrelated screens:
+
+1. **Name, Clock & Start** manages the calendar name, fictional clock, and first-activation date.
+2. **Weekdays** stores the repeating weekday names in order.
+3. **Periods** accepts `Name:Days`; append `:Feast` when a multi-day festival period should not advance the ordinary weekday cycle.
+4. **Festival Days** adds one-day observances between periods.
+5. **Leap Rule** manages the optional recurring leap day.
+6. **Holidays** names existing dates without adding days.
+7. **Seasons** accepts `Name:StartPeriod:StartDay:EndPeriod:EndDay`; a range may cross the year boundary, but ranges may not overlap.
+8. **Preview Draft** and **Review and Activate** show the complete result before it can replace the active display.
+
+A **Continue Guided Review** button remains available for a first-time build. Routine editors return to the focused **Edit Calendar** menu. Examples and terminology are available through each editor's **Explain This** button instead of occupying space during every change. Invalid edits leave the prior valid draft and active calendar unchanged.
+
+**Optional advanced handout path:** **Export Editable Draft** writes one owned `GameAssist Almanac Wayfarer Calendar Export` handout containing only a versioned calendar definition and starting date. A GM may edit that inert JSON in the handout, then use **Review Handout Import** (or `!aa-wayfarer import --handout <id>`). The import validates bounded JSON without executing it, previews the exact candidate, detects changed handout/draft content, expires, and on confirmation replaces only the saved Wayfarer draft. It resets draft-review stages deliberately; the active calendar and fictional time remain unchanged until the existing Wayfarer review-and-activation workflow is used. Chat editors remain the complete normal path; the handout is optional.
+
+**Starting from an existing calendar:** A fresh Wayfarer draft begins with the campaign's complete original **Lantern Way Calendar**: its 20-hour clock, 75-minute hours, ten named weekdays, seventeen calendar periods (including five feast periods), four dated observances, and four named seasons across five non-overlapping ranges. The **Start From a Copy** screen can also copy Standard, original Cinderturn, original Tidebound, or the saved Wayfarer definition into the draft. The copy is fully editable and does not become active until you confirm it. Wayfarer supports one repeating leap interval, so a Standard copy uses a four-year leap day and does not reproduce Gregorian century exceptions.
+
+**Default Wayfarer year:** The ordinary year contains 460 days across seventeen named periods. First Lantern, Bridgefeast, Orchard Rise, Skywake, and Longfire are short feast periods that do not advance the ordinary weekday cycle. The remaining periods are Rimewake, Thawrun, Greenswell, Brightroad, Suncrest, Harvest Way, Redleaf, Mistfall, Lanternrest, Frostgate, Deepquiet, and Yearturn. The campaign default provides four dated observances—River Opening, High Sun Gathering, First Cider, and Hearth Closing—and named Greenswell, Brightreach, Redleaf, and Deepquiet seasonal ranges. The Wayfarer manager and preview display the exact currently configured dates rather than relying on this starter summary.
+
+**Default Wayfarer day:** The customary day runs from First Light through Morningtide, Highsun, Waning Hours, Evening's Crest, Nightfall, and Deep Night. Dawn is around the 2nd Hour, midday the 7th, dusk the 12th, and midnight the 17th. The generated AlmanacAssist manual records the complete hour ranges and calendar reference.
+
+**Replacing the complete period list:** Calendar dates depend on period positions. To prevent an old holiday or leap day from silently moving to an unrelated new period, replacing the full list clears the draft's previous festival days, leap rule, holidays, and seasonal ranges and marks those stages for review. The setup screen explains what was cleared; re-enter only the dates that belong to the new year.
+
+**Editing an active Wayfarer calendar:** GameAssist preserves elapsed fictional time and shows how the revised calendar interprets that moment. If the draft cannot represent the current elapsed time, activation stops without changing anything and offers a separately labeled option to restart at the draft's chosen starting date.
+
+**Undo and recovery:** **Recovery Options** contains **Discard Draft Changes** for unactivated edits. Every successful activation also keeps one previous calendar-and-time checkpoint, available through **Restore Previous Activation** until another activation replaces it. The command-only recovery path `!aa-wayfarer reset-default --confirm yes` replaces the saved draft with the campaign Wayfarer default without changing the active calendar or fictional time; it is intentionally not exposed as a chat button.
+
+The AlmanacAssist manual created by `!Almanac-Manual` explains weekdays, periods, festival days, leap rules, holidays, seasonal ranges, activation, rollback, and recovery, and includes a complete worked example.
+
+TimeAlmanac never changes GameAssist's real-world table timezone, log timestamps, or NPCAssist Session dates. Moving fictional time backward or setting an exact date requires explicit confirmation and records the change; it does not attempt to reverse weather, effects, rests, or other past events.
+
+Current moon phases are visible from the current date/time panel, a full announcement preview, and **Wayfarer Calendar Details**. Descriptive announcements report when a moon is not visible because of daylight or cloud cover. Moon cycles, offsets, and phase names are managed through direct Astronomy add/edit controls because they are world context that continues when the GM changes only the calendar display.
+
+RestAlmanac supports Standard, Heroic, Gritty, and bounded Custom rest durations. Those settings change the fictional duration of a Short, Long, or Extended Rest; the selected recovery type still determines which verified 2014-sheet fields are restored.
+
+Announcement settings prioritize easy presets without forcing every campaign into the same report. **Quick** shares date, time, and season; **Calendar** adds observances and moon phases; **Travel** adds weather, climate, and environment; **Everything** includes every available field. The GM may also choose individual fields and a custom heading. Unavailable systems are quietly omitted, preview is always private, and preview changes no state.
+
+Weather forecasts do not silently replace current weather. A locked or manually chosen condition remains authoritative until the GM unlocks or replaces it. Astronomy keeps deterministic moon/daylight calculations separate from weighted rare-event suggestions, so adding a comet or omen never changes the underlying calendar result.
+
+RestAlmanac is deliberately transactional. The preview identifies every selected character and proposed field change, expires after a bounded interval, belongs to the requesting player, and rechecks control, representation, and current sheet values before writing. If a required field or optional TimeAlmanac decision changed after preview, the rest is refused without partial sheet updates. When HealthService is enabled, supported HP restoration and rollback also carry AlmanacAssist operation identity and verified healing or synchronization evidence; Hit Dice and spell-slot ownership remain with RestAlmanac.
+
+Disabling AlmanacAssist stops every Almanac command and write while preserving valid settings and history. Disabling one internal system stops only that system. Re-enable it and use `!Almanac-Status` or `!Almanac-Audit` before continuing.
+
+Config keys: `enabled`; protected `submodules`, `wayfarer`, `wayfarerDraft`, `climate`, `astronomy`, `weather`, `announcement`, `environment`, `rest`, `rulesAdvisor`, `worldPacks`, `temporalContexts`, and `world` branches. Structured Almanac settings are changed through guided Almanac screens so nested data is validated as a complete operation. The single Wayfarer activation rollback point and short-lived import/transition reviews stay in runtime history and are not included in configuration snapshots.
+
+---
+
 ## 7 · Installation <a id="7-installation"></a>
 
 I. **Open the Roll20 Mod/API Editor**
@@ -777,13 +1118,13 @@ I. **Open the Roll20 Mod/API Editor**
 
 II. **Install GameAssist**
 
-1. Paste the complete contents of `GameAssist` v1.8.1.
+1. Paste the complete contents of `GameAssist` v2.0.0.
 2. Keep the script as one complete file; do not paste only individual MECHSUITS sections into Roll20.
 3. Save the script.
 
 III. **Remove Overlapping Standalone Marker Tools**
 
-GameAssist v1.8.1 replaces standalone TokenMod and StatusInfo for the token and condition workflows supported by TokenAssist and ConditionAssist. Remove both standalone scripts before enabling the overlapping GameAssist modules. TokenAssist and standalone TokenMod both recognize `!token-mod`; ConditionAssist and standalone StatusInfo both recognize `!condition` and marker changes.
+GameAssist v2.0.0 replaces standalone TokenMod and StatusInfo for the token and condition workflows supported by TokenAssist and ConditionAssist. Remove both standalone scripts before enabling the overlapping GameAssist modules. TokenAssist and standalone TokenMod both recognize `!token-mod`; ConditionAssist and standalone StatusInfo both recognize `!condition` and marker changes.
 
 If standalone TokenMod is accidentally left installed, TokenAssist suspends only its deprecated `!token-mod` alias and warns the GM instead of applying that command twice. The `!token-assist`, `!ta`, and `!ta-*` commands remain available, but this safeguard is diagnostic rather than a supported permanent dual-install arrangement.
 
@@ -825,16 +1166,23 @@ Use the checklist in [§4.1 Minimum Smoke Test](#41-minimum-smoke-test) before t
 
 ## 8 · Command Matrix <a id="8-command-matrix"></a>
 
-Commands are generally matched case-insensitively with token boundaries. Preserve documented spelling and spacing for predictable results.
+All GameAssist command paths are case-insensitive, and spaces or hyphens between command words are interchangeable. For example, `!GA STATUS`, `!ga-status`, `!gA gM`, and `!GA-GM` are equivalent. Values, quoted text, and documented `--options` keep their ordinary syntax; the command matrix uses one canonical spelling for readability.
 
 `!concentration --config randomize on|off` changes the shared module setting and is part of the current player-accessible concentration command surface.
 
 | Scope | Command | Parameters / Flags | Purpose |
 | --- | --- | --- | --- |
+| **Navigation** | `!GA-GM` / `!GA-DM` | — | Open the private suite-level Game Master control center with one button for each feature module. Disabled modules offer an Enable button. |
+|  | `!ga-help` | `[module]` | Open the private help center. Enabled modules open their own help; disabled modules still show a concise purpose and deliberate Enable action. |
+|  | `!ga-nav` | `[module] [section]` | Browse all modules, then open a module's available screens. Larger modules use one additional organized section page. |
 | **Admin** | `!ga-status` | `[--details]` | Show a plain-language system check; `--details` adds session activity, queue, timestamp, and internal event-hook diagnostics. |
+|  | `!ga-health` | `[recent\|audit\|alerts\|bars]` | Show HealthService status, bounded HP evidence, supported-token health, alert controls, or shared NPC HP-bar setup. |
+|  | `!ga-health alerts` | `[on\|off\|preview\|exact on\|off\|threshold 50\|25\|10 on\|off]` | Manage optional GM-private PC health-band notices through validated controls. |
 |  | `!ga-timezone` / `!ga-config timezone` | `set <IANA timezone>`, `clear` | Open table-time settings, save a validated named timezone, or restore sandbox-default time. |
 |  | `!ga-metrics` | `[reset]` | Show persisted session totals/history or reset metrics. |
 |  | `!ga-config list` | — | Write a versioned configuration-only snapshot handout. |
+|  | `!ga-handouts` | — | Open or update the GM-only index of GameAssist-owned handouts and report stable-identity conflicts. Roll20 does not expose a supported writable Journal-folder API, so filing remains manual. |
+|  | `!ga-sheets` | — | Audit current-page sheet evidence and per-operation 2014/2024/unknown capability status without changing characters. |
 |  | `!ga-config get <ModuleOrService> [key]` | — | Whisper one config value or the component’s full config. |
 |  | `!ga-config set <ModuleOrService> <key>=<value>` | — | Persist an ordinary component config value; unsafe and component-protected keys are refused. |
 |  | `!ga-config modules` | — | Show feature-module and core-service configured/runtime/dependency status. |
@@ -880,8 +1228,50 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!Welcome-Header` | `show\|hide\|<text>` | Show, hide, or replace the public greeting header. |
 |  | `!Welcome-Default` | `<text>` | Replace the professional default greeting. |
 |  | `!Welcome-Custom` | `list`, `add <text>`, `remove <number>`, `clear --confirm` | Manage the bounded campaign greeting list. |
+| **Effects** | `!Effect-GM` / `!Effect-DM` / `!Effect-Menu` | selected linked targets; guided source picker | Open EffectAssist's private action screen. |
+|  | `!Effect-Guide` / `!Effect-Help` / `!Effect-Info` / `!Effect-Manual` | — | Open compact guidance, the short explanation, or the stable manual handout. |
+|  | `!effect` / `!Effect-Catalog` | GM: selected linked targets; player: no recipient preselection | Open the catalog directly. Bless, Guidance, Warding Bond, and Haste provide supported marker/sheet automation; Holy Weapon and Pass Without a Trace are clearly labeled tracked/manual entries. |
+|  | `!Bless` / `!Guidance` / `!Guide` / `!Haste` / `!Warding-Bond` / `!Holy-Weapon` / `!PwoaT` | controlled source; player uses native target picker | Open a compact source-and-review path for one built-in effect. |
+|  | `!Effect-Active` / `!Effect-Status` / `!Effect-Definitions` | — | Manage active instances, review compact health totals, or inspect catalog behavior. |
+|  | `!Effect-Casts` / `!Effect-Recognition on\|off` | GM only | Review bounded official 2014 Bless proposals or enable/disable this recognition shortcut; the catalog remains available. |
+|  | `!Effect-Requests` | GM only | Review retained player requests and choose visible, hidden, or off-page recipients through the ordinary application preview. |
+|  | `!Effect-Apply` | generated GM source query, player flow, or retained request; bounded custom definition options | Preview one atomic application. The generated confirmation identifies automatic 2014-sheet changes and assisted table steps before writing. |
+|  | `!Effect-End` | `--id <generated-id>` | End one exact source instance through generated buttons and remove only an unneeded EffectAssist-owned projection. |
+|  | `!Effect-Audit` / `!Effect-Repair` | fresh generated confirmation grant | Compare records against marker, condition, concentration, and 2014-sheet projections without writing, then deliberately repair only a still-current safe mismatch. |
+|  | `!Effect-Players on\|off` | GM only | Allow or lock player casting from controlled linked sources. |
+|  | `!Effect-Settings` / `!Effect-Review on\|off` | GM only | Manage the ordinary application-review setting; review starts off. |
+|  | `!Effect-Advanced` / `!Effect-Multiple-Concentration on\|off` | GM only | Manage the exceptional multiple-concentration setting; it starts off. |
+|  | `!effect <command>` / `!EffectAssist-<command>` | case-insensitive | Spaced canonical command family and compatibility family for the same guarded controls. |
+| **Healing** | `!Heal` / `!Heal-Menu` | guided source and recipient choices | Open the supported 2014 healing catalog. One-recipient actions go directly to target selection; multi-recipient actions ask for a target count. Players begin from a linked healer they control; the GM may use any supported source. |
+|  | `!Heal-GM` / `!Heal-DM` | GM only | Open the private HealAssist control center. |
+|  | `!Heal-Guide` / `!Heal-Help` / `!Heal-Info` / `!Heal-Manual` | — | Open compact guidance, explain boundaries, or create/update the stable manual handout. |
+|  | `!Heal-Status` / `!Heal-Audit` | GM only | Review availability and transient workflow totals, or run the explicitly read-only health/configuration review. |
+|  | `!Heal-Requests` | GM only | Review retained player requests for NPC, GM-layer, hidden, or off-page recipients. |
+|  | `!Heal-Players on\|off` | GM only | Allow or lock player-started healing without disabling GM workflows. |
+|  | `!Heal-Results public\|private` | GM only | Permit safe visible-PC completion summaries or keep results private. NPC and hidden results remain private. |
+|  | `!HealAssist-<command>` | case-insensitive compatibility family | Open the same guarded HealAssist controls. Generated Start, Recipients, Review, Confirm, Request, and Dismiss commands are short-lived UI capabilities. |
+| **Attacks** | `!Attack` / `!Attack-Menu` | selected controlled 2014 PC or guided source choice | Choose one verified repeating attack and a visible map target. The default submits with the sheet setting; optional review adds explicit roll-mode choices. |
+|  | `!Attack-GM` / `!Attack-DM` | GM only | Open the private AttackAssist control center, player-access toggle, retained placement requests, and diagnostics. |
+|  | `!Attack-Guide` / `!Attack-Help` / `!Attack-Info` / `!Attack-Manual` | — | Open compact guidance, explain boundaries, or create/update the stable manual handout. |
+|  | `!Attack-Status` / `!Attack-Audit` | GM only | Review availability and pending transient choices, or run the explicitly read-only setup review. |
+|  | `!Attack-Requests` | GM only | Review retained player requests for hidden, GM-layer, or off-page targets without exposing their identities to the player. |
+|  | `!Attack-Players on\|off` | GM only | Allow or lock player-guided attacks without disabling GM use. |
+|  | `!Attack-Review-Mode on\|off` | GM only | Enable roll-mode review before each attack, or restore immediate sheet-setting submission. |
+|  | `!AttackAssist-<command>` | case-insensitive compatibility family | Open the same guarded AttackAssist controls. Generated source, target, review, request, and roll commands are short-lived one-use UI capabilities. |
+| **Almanac** | `!Almanac` / `!aa` / `!aa-gm` / `!aa-dm` / `!Almanac-GM` / `!Almanac-DM` / `!Almanac-Menu` | GM only | Open the private, action-first campaign-world controls for all six AlmanacAssist systems. |
+|  | `!aa-preview` / `!aa-announce` / `!aa-announcement-settings` / `!aa-announcement-fields` / `!aa-more` | GM only | Preview privately, deliver the configured world announcement, choose its audience, heading, preset, or independent per-field presentation, or open setup and diagnostics. |
+|  | `!Almanac-Systems` / `!Almanac-Status` / `!Almanac-Audit` | GM only | Manage internal-system availability, review compact context, or run a read-only six-system audit. |
+|  | `!Almanac-Guide` / `!Almanac-Help` / `!Almanac-Info` / `!Almanac-Manual` | — | Open compact guidance, explain system boundaries, or create/update the stable manual handout. |
+|  | `!date` / `!time` / `!cal` / `!aa-time` | TimeAlmanac enabled | Read or deliberately manage the fictional calendar and clock. Players receive the read-only current date/time view. |
+|  | `!aa-wayfarer` | GM only | Build, save, preview, duplicate, activate, discard, or restore a bounded Wayfarer custom calendar without editing the live definition in place. |
+|  | `!clim` / `!aa-climate` | GM only | Manage climate profiles, regions, inheritance, overrides, and manual season context. |
+|  | `!astro` / `!aa-astro` | GM only | Manage moons, phase names, daylight/season context, forecasts, and weighted rare-event suggestions. |
+|  | `!weather` / `!aa-weather` | GM only | Generate, forecast, lock, unlock, manually set, or review continuity-aware weather. |
+|  | `!enviro` / `!aa-enviro` | GM only | Review derived environment context or manage a descriptive GM override. |
+|  | `!rest` / `!aa-rest` | selected controlled linked 2014 PCs | Preview, confirm, and record a validated rest; the GM may configure built-in and bounded custom rest types. |
 | **Token Controls** | `!token-assist help` / `!ta-help` | — | Open TokenAssist guidance, commands, compatibility limits, provenance, and attribution. |
 |  | `!token-assist menu|gm|dm|status|info|audit|manual` | matching `!ta-*` aliases; `!TokenAssist-GM|DM` | Open Game Master controls, health, explanation, read-only review, or the stable TokenAssist manual. |
+|  | `!token-assist actions` / `!Token-Actions` / `!ta-actions` | GM only | Open the organized extended action library linked from **More Actions** on the compact GM screen. |
 |  | `!token-assist --help-statusmarkers` / `!ta-help-statusmarkers` | — | Open the marker-command guide. |
 |  | `!token-assist --on|--off|--flip <property...>` / `!ta-on|off|flip` | selected/authorized targets | Change supported boolean token properties. |
 |  | `!token-assist --set <property|value...>` / `!ta-set` | selected/authorized targets | Change supported token, bar, aura, vision, lighting, layer, position, and marker properties. |
@@ -890,7 +1280,7 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!token-assist --report <recipient\|message>` / `!ta-report` | `{property}` placeholders | Report before/after token values to the GM, caller, table, or controllers. |
 |  | `!token-assist --ids <id...>` / `!ta-ids` | `--ignore-selected`, `--current-page`, `--active-pages` | Add explicit token/character targets when authorized and optionally filter their pages. |
 |  | `!token-assist --config players-can-ids|on|off` / `!ta-config` | GM only | Control whether players may supply explicit IDs; selected-token use remains available. |
-|  | `!token-mod ...` | temporary older syntax | Accepts supported older macros during v1.x; replace them before GameAssist v2.0.0. |
+|  | `!token-mod ...` | temporary older syntax | Accepts supported older macros in v2.0.0; use `!token-assist` or `!ta` for new macros. Removal requires a separately announced migration release. |
 | **GM** | `!HP-All` / `!hp all` | — | Roll and set HP for qualifying NPC tokens on the current page. |
 |  | `!HP-Selected` / `!hp selected` | — | Roll and set HP for qualifying selected NPC tokens. |
 |  | `!HP-<command>` / `!hp <command>` | case-insensitive | Open HPAssist controls, roll selected/page NPC HP, show guidance, or run read-only checks; older HP command families remain compatibility aliases only. |
@@ -909,7 +1299,7 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!critfumble menu` | — | Whisper the guided Natural 1 dialogue. |
 |  | `!critfumble guide|gm|dm|status|info|audit|manual` | `!crit`, `!CritAssist-*`; legacy `!CritFumble-GM|DM` | Open compact navigation, the Game Master picker, setup health, explanation, read-only table audit, or the stable manual. |
 |  | `!critfail` | — | Open the direct GM-facing manual fumble prompt. Intended for GM use, but not currently GM-gated. |
-| **Debug** | `!ga-debug damage` | `--amount N [--token ID] [--apply]` | Preview or apply bar1 damage. |
+| **Debug** | `!ga-debug damage` | `--amount N [--token ID] [--apply]` | Preview or apply selected-bar damage; supported applied HP writes use verified HealthService damage evidence. |
 |  | `!ga-debug help|menu|gm|dm|status|info|audit|settings|manual` | `!Debug-GM|DM`, `!DebugTools-GM|DM` | Open DebugTools controls, guidance, and read-only checks; its short guidance remains in chat. |
 |  | `!ga-debug marker` | `--marker NAME [--state on|off|toggle] [--token ID] [--apply]` | Preview or apply a status marker change. |
 |  | `!ga-debug save` | `--dc N [--bonus N] [--mode normal|adv|dis] [--label "Text"] [--apply]` | Preview or roll a save. |
@@ -922,7 +1312,7 @@ Commands are generally matched case-insensitively with token boundaries. Preserv
 |  | `!condition add|remove|toggle <condition...>` | selected tokens | Change one or more condition markers when permitted. |
 | **GM** | `!condition announce` / `!c-a` / `!cond-!` | selected linked character tokens | Choose a condition, then toggle and verify its marker while announcing the result or exact wording publicly or to player controllers. |
 |  | `!condition status` / `!condition --status` | current player page | List linked characters and NPCs with configured conditions or other active markers. |
-|  | `!concentration` / `!cc` / `!Con-<command>` / `!Concentration-<command>` | `help|guide|menu|gm|dm|status|info|audit|manual|settings`, plus established `--damage N`, `--mode normal|adv|dis`, `--last`, `--off`, `--status`, `--config randomize on|off`, `--help` | Open navigation or perform a concentration workflow through case-insensitive equivalent aliases. |
+|  | `!concentration` / `!cc` / `!Con-<command>` / `!Concentration-<command>` | `help|guide|menu|gm|dm|status|info|audit|manual|settings`, plus established `--damage N`, `--mode normal|adv|dis`, `--last`, `--off`, `--status`, `--config randomize|healthPrompts on|off`, `--help` | Open navigation or perform a concentration workflow through case-insensitive equivalent aliases. Generated `!Con-Check` buttons resolve one private HealthService offer. |
 
 ### 8.1 Configuration Safety
 
@@ -958,7 +1348,7 @@ Setting `enabled=true` or `enabled=false` routes through component lifecycle con
 |  | `showDescOnStatusChange` | bool | `true` | Show a condition description when its marker is added. |
 |  | `showIconInDescription` | bool | `true` | Show built-in or registered custom marker artwork beside descriptions, with a readable fallback. |
 |  | `conditions` | object | 15 definitions | Validated condition name, marker, and description map; manage through `!condition config`. |
-| **TokenAssist** | `enabled` | bool | `true` | Enable general token controls and temporary support for older `!token-mod` macros. |
+| **TokenAssist** | `enabled` | bool | `true` | Enable general token controls and retained compatibility support for older `!token-mod` macros. |
 |  | `playersCanUseIds` | bool | legacy value or `false` | Allow players to add explicit `--ids` targets; selected-token controls remain available. |
 |  | `warnOnStandalone` | bool | `true` | Warn when standalone TokenMod is detected and compatibility handling is suspended. |
 |  | `configSchemaVersion` | number | `1` | Protected TokenAssist configuration schema identifier. |
@@ -973,6 +1363,8 @@ Setting `enabled=true` or `enabled=false` routes through component lifecycle con
 |  | `timerDeadlineAudience` | enum | `"gm"` | Send the deadline notice to `gm`, `player`, `both`, or `public`. |
 |  | `timerReminders` | array | `[]` | Up to five seconds-remaining/audience records managed through `!Combat-Timer`. |
 |  | `turnCue` | enum | `"off"` | Send a native non-centering ping to `gm`, `players`, `both`, or `public`; hidden turns remain GM-only. |
+| **HealthService** | `pcAlerts` | protected object | alerts off; 50%, 25%, and 10% selected; exact HP hidden | Manage through `!ga-health alerts`. Configuration snapshots include these choices, while generic `!ga-config set` writes are refused. |
+|  | `hpBar` | enum | `"bar1"` | Choose `bar1`, `bar2`, or `bar3` through `!ga-health bars`; NPCAssist, HPAssist, and supported DebugTools NPC writes share that choice. |
 | **WelcomeAssist** | `enabled` | bool | `false` | Enable the optional post-bootstrap table greeting. Reload after setup for automatic behavior. |
 |  | `mode` | enum | `"mixed"` | Use the professional default, built-ins, campaign greetings, or the combined weighted pool. |
 |  | `delayMs` | number | `3000` | Wait 1-60 seconds after Bootstrap before checking health and greeting the table. |
@@ -981,8 +1373,9 @@ Setting `enabled=true` or `enabled=false` routes through component lifecycle con
 |  | `defaultGreeting` | string | professional greeting | Set the professional greeting used by default and mixed modes. |
 |  | `customGreetings` | array | `[]` | Protected list of up to ten campaign greetings; manage through `!Welcome-Custom`. |
 | **ConcentrationAssist** | `enabled` | bool | `true` | Enable concentration commands and tracking. |
-|  | `marker` | string | `"Concentrating"` | Marker name used for status checks and removal. |
+|  | `marker` | string | `"stopwatch"` | Built-in id, custom display name, or exact custom tag used for concentration. Manage it through `!concentration settings`. |
 |  | `randomize` | bool | `true` | Randomize concentration emote flavor. |
+|  | `healthPrompts` | bool | `true` | Offer private, revalidated checks after supported HP loss while HealthService is enabled; manual checks remain independent. |
 | **NPCAssist** | `enabled` | bool | `true` | Enable NPC death tracking. |
 |  | `autoTrackDeath` | bool | `true` | Automatically add/remove the death marker. |
 |  | `notifyBloodied` | bool | `true` | Whisper the GM when an eligible living NPC crosses to half HP or below. |
@@ -990,6 +1383,23 @@ Setting `enabled=true` or `enabled=false` routes through component lifecycle con
 |  | `deadMarker` | string | `"dead"` | Marker used for death state. |
 |  | `autoHide` | bool | `false` | Move newly dead NPC tokens to another layer. |
 |  | `hideLayer` | string | `"gmlayer"` | Target layer used by `autoHide`. |
+| **EffectAssist** | `enabled` | bool | `false` | Enable catalog-driven effect controls and supported 2014-sheet projections. |
+| **EffectAssist** | `allowPlayerCasting` | bool | `true` | Allow players to apply built-in effects from linked sources they control; the GM can lock this from the module control center. |
+|  | `castRecognition` | bool | `true` | Allow exact supported official 2014 Bless cards to create private GM proposals without applying an effect. |
+|  | `durationCandidates` | bool | `true` | Allow verified provider boundaries to create private GM review items without ending effects automatically. |
+|  | `markerOverrides` | object | `{}` | Protected release data for validated effect-marker choices; not an end-user `!ga-config` setting. |
+|  | `customDefinitions` | object | `{}` | Protected bounded definitions created only through EffectAssist's guided custom-effect workflow. |
+| **HealAssist** | `enabled` | bool | `false` | Enable guided official-2014 healing workflows. HealthService is required. |
+|  | `allowPlayerHealing` | bool | `true` | Allow controlled player healers to start supported visible-PC workflows; the GM can lock this without disabling HealAssist. |
+|  | `autoApply` | bool | `false` | Keep review-before-apply by default or let verified healing apply immediately after recipient selection. Manage through `!Heal-Auto`. |
+|  | `resultAudience` | enum | `"public"` | Use `public` for safe visible-PC completion summaries or `private` for private results. Manage through `!Heal-Results`; generic config writes are refused. |
+| **AttackAssist** | `enabled` | bool | `false` | Enable guided official-2014 repeating attacks. The module never applies damage or changes combat state. |
+|  | `allowPlayerAttacks` | bool | `true` | Allow players to start guided attacks from official-2014 characters they control; the GM can lock this without disabling GM use. |
+|  | `reviewBeforeRoll` | bool | `false` | Protected GM choice: submit with the sheet setting immediately, or show roll-mode review before each attack. Manage through `!Attack-GM` or `!Attack-Review-Mode`. |
+| **AlmanacAssist** | `enabled` | bool | `false` | Enable the AlmanacAssist command surface and its six independently controlled systems. |
+|  | `systems` | object | all six `true` | Protected enablement map for Time, Climate, Astronomy, Weather, Environment, and Rest; use `!Almanac-Systems` to change it. |
+|  | `time` / `climate` / `astronomy` | object | validated defaults | Protected calendar, region/profile, moon, and celestial-event definitions managed through their focused setup screens. |
+|  | `weather` / `environment` / `rest` | object | validated defaults | Protected continuity, override, and rest definitions managed through their focused setup screens. |
 | **HPAssist** | `enabled` | bool | `true` | Enable NPC HP commands. |
 |  | `autoRollOnAdd` | bool | `false` | Attempt HP rolling when qualifying tokens are added. |
 | **DebugTools** | `enabled` | bool | `false` | Enable GM-only dry-run/apply debug commands. |
@@ -1026,11 +1436,17 @@ Examples:
 | **Token Helper** | `GameAssist.getLinkedCharacter(token)` | Return `{ token, character }` for a valid linked object-layer token, otherwise `null`. |
 | **Marker Service** | `GameAssist.MarkerService` | Resolve markers and artwork metadata, inspect state, add, remove, toggle, set, and observe through one structured contract. |
 | **Turn Tracker Service** | `GameAssist.TurnTrackerService` | Read immutable native-tracker snapshots, classify rows, apply guarded lossless updates, and observe tracker changes. |
+| **Semantic Events** | `GameAssist.SemanticEvents` | Publish or observe immutable versioned in-sandbox domain events without persistence or replay. |
+| **Health Service** | `GameAssist.HealthService` | Read canonical supported HP snapshots, observe deduplicated immutable transitions, and perform producer-identified verified writes. |
 | **Condition Assist** | `GameAssist.ConditionAssist` | Read validated condition definitions or apply add/remove/toggle actions through MarkerService. |
 | **Token Assist** | `GameAssist.TokenAssist` | Inspect component provenance/lifecycle and subscribe to token changes made through supported TokenAssist commands. |
 | **Initiative Assist** | `GameAssist.InitiativeAssist` | Inspect the currently classified mixed-sheet tracker roster while InitiativeAssist is running. |
 | **Combat Assist** | `GameAssist.CombatAssist` | Inspect the active CombatAssist component version and a defensive copy of its current encounter record. |
 | **Welcome Assist** | `GameAssist.WelcomeAssist` | Inspect the active module version; Bootstrap uses its guarded completion hook internally. |
+| **Effect Assist** | `GameAssist.EffectAssist` | Create, end, inspect, audit, and observe source-aware semantic effect instances while the module is enabled. |
+| **Heal Assist** | `GameAssist.HealAssist` | Inspect supported guided-healing actions and current transient workflow status while HealAssist is running. |
+| **Attack Assist** | `GameAssist.AttackAssist` | Inspect verified official-2014 repeating attacks and current transient workflow status while AttackAssist is running. |
+| **Almanac Assist** | `GameAssist.AlmanacAssist` | Read current fictional-world context, inspect internal systems, and observe Almanac semantic events without requiring every system to be enabled. |
 | **Chat Helpers** | `GameAssist.createButton(label, command)` / `GameAssist.rollTable(tableName)` | Create safe chat buttons or roll a sanitized table name. |
 | **Config UI** | `GameAssist.renderConfigUI(playerId, options)` | Open the ConfigUI when that module is active. |
 | **Metrics** | `GameAssist.getMetricsStore()` / `GameAssist.recordMetric(type, opts)` | Inspect or record metrics. |
@@ -1240,7 +1656,7 @@ subscription.unsubscribe();
 
 | Method / Field | Result |
 | --- | --- |
-| `version` | TokenAssist component version (`1.0.1`). |
+| `version` | TokenAssist component version (`1.3.0`). |
 | `configSchemaVersion` | TokenAssist configuration schema (`1`). |
 | `reference` | Pinned TokenMod reference version, repository, commit, path, and blob. |
 | `isEnabled()` | Reports whether TokenAssist and MarkerService are both running. |
@@ -1268,13 +1684,189 @@ The result retains the TurnTrackerService snapshot and adds InitiativeAssist cla
 const encounter = GameAssist.CombatAssist.getStatus();
 ```
 
-`version` reports CombatAssist `1.0.5`. `getStatus()` returns a defensive copy of the current encounter record or `null`; changing the returned object cannot alter saved GameAssist state. Tracker mutation remains behind GM-only Next, Previous, and confirmed Restore controls or the current player's token-bound End My Turn control, and every path uses TurnTrackerService authority. A recognized round counter is reported as the round source. Timer callbacks and native pings remain private module behavior and expose no mutation API.
+`version` reports CombatAssist `1.2.0`. `getStatus()` returns a defensive copy of the current encounter record or `null`; changing the returned object cannot alter saved GameAssist state. `combatEventSchemaVersion` and `combatTimelineSchemaVersion` report the encounter and bounded-health-evidence schemas, while `observe(callback, options)` and `clearObservers(owner)` expose immutable encounter and verified-turn events without giving consumers tracker-write authority. Tracker mutation remains behind GM-only Next, Previous, and confirmed Restore controls or the current player's token-bound End My Turn control, and every path uses TurnTrackerService authority. A recognized round counter is reported as the round source. Timer callbacks, native pings, held-action records, and timeline review remain private module behavior and expose no mutation API.
 
 ### 10.12 WelcomeAssist
 
 `GameAssist.WelcomeAssist` exists only while WelcomeAssist is running. Its `version` field is available for inspection. The `onBootstrapComplete()` method is the module's internal post-bootstrap lifecycle hook; external modules should not call it to produce additional greetings. Public management belongs to the guarded short `!Welcome` commands; the longer `!welcome-assist` family remains a compatibility alias.
 
-### 10.13 MECHSUITS Contribution Contract
+### 10.13 SemanticEvents
+
+`GameAssist.SemanticEvents` is always available as lightweight in-sandbox infrastructure. It does not discover or enable providers, persist events, replay startup history, or move ordinary handlers onto the queue.
+
+```js
+const subscription = GameAssist.SemanticEvents.observe(event => {
+    // event.type, event.producer, event.eventId, event.sequence, event.payload
+}, {
+    owner: 'MyModule',
+    types: ['effect.lifecycle.changed']
+});
+
+const result = GameAssist.SemanticEvents.publish(
+    'example.completed',
+    'MyModule',
+    { id: 'example-1' }
+);
+
+// Later:
+subscription.unsubscribe();
+```
+
+Every accepted event includes `eventSchemaVersion`, `eventId`, `streamId`, monotonic `sequence`, `type`, `producer`, RFC-3339 `occurredAt`, optional `causeEventId`, and a deeply frozen JSON-safe `payload`. Delivery is direct and ordered. Observer exceptions are isolated through GameAssist diagnostics.
+
+### 10.14 HealthService
+
+`GameAssist.HealthService` is toggleable core infrastructure. Version `1.1.0` supports official D&D 5E by Roll20 2014 PC `hp` attributes and a GM-selected linked-NPC token bar. Linked PC sheet/token notifications describing the same before-and-after values are published once. GMs can inspect the service through `!ga-health`, view bounded recent evidence with `!ga-health recent`, run the read-only Player Ribbon page check with `!ga-health audit`, manage optional PC threshold notices with `!ga-health alerts`, or choose and prepare Bar 1, 2, or 3 with `!ga-health bars`.
+
+The shared NPC HP-bar screen is deliberately separate from raw configuration. Its audit names linked NPCs that need setup and unlinked token candidates that cannot participate until **Represents Character** is set. **Prepare Linked NPCs** copies each character's current and maximum HP into the selected bar while preserving the other bars. **Link To Sheet HP** creates an explicit sheet link and warns that multiple tokens representing one character then share the same HP value.
+
+PC health alerts are off by default and always whisper only the GM. The 50%, 25%, and 10% choices can be enabled independently; one large decrease combines every crossed threshold into one notice. Remaining below a threshold does not repeat the alert, while healing above it rearms the next downward crossing. Exact HP is hidden unless the GM enables it. Initialization, synchronization, blank or invalid values, simultaneous maximum-HP changes, and every NPC transition remain outside this alert path. The feature listens to the canonical HealthService event and does not add another Roll20 HP watcher.
+
+```js
+const health = GameAssist.HealthService;
+const snapshot = health.readCharacter(characterId);
+
+const subscription = health.observe(event => {
+    // event.type === 'health.transition'
+    // event.payload.classification, direction, delta, before, after,
+    // character, token, pageId, surface, and provenance
+}, { owner: 'MyModule' });
+
+const result = health.writeCharacter({
+    character: characterId,
+    current: 17,
+    producer: 'MyModule',
+    operationId: 'heal-encounter-17',
+    classification: 'healing'
+});
+```
+
+| Method / Field | Result |
+| --- | --- |
+| `version` / `healthEventSchemaVersion` | HealthService and transition-payload contract versions. |
+| `isEnabled()` / `getStatus()` | Report lifecycle and bounded in-memory evidence counts. |
+| `readCharacter(characterOrId)` | Return an immutable supported 2014-PC HP snapshot or `null`. |
+| `getHpBar()` / `getHpFields()` | Return the selected NPC bar and its Roll20 current, maximum, and link field names. |
+| `readToken(tokenOrId)` | Return an immutable supported linked-PC or selected-bar linked-NPC snapshot or `null`. |
+| `setHpBar(bar)` / `configureNpcToken(token, options)` | Change the shared NPC bar or deliberately copy/link one qualifying NPC token through validated service controls. |
+| `writeCharacter(request)` / `writeToken(request)` | Apply and verify a bounded producer/operation-identified write; repeating the same operation is idempotent. |
+| `observe(callback, options)` | Subscribe through SemanticEvents to immutable `health.transition` envelopes. |
+| `getRecent(limit)` | Return bounded in-memory evidence from the current sandbox lifecycle; nothing is persisted or replayed. |
+
+Declared classifications are `damage`, `healing`, `initialization`, `synchronization`, `clearing`, `invalid`, and `unknown`. A producer may declare a cause only for its own verified write. An unexplained direct Roll20 or third-party change remains `unknown` even when the direction is clearly an increase or decrease. Consumers must keep manual paths and must not treat HealthService as an attacker, resistance, temporary-HP, or causal combat ledger.
+
+### 10.15 ConcentrationAssist
+
+`GameAssist.ConcentrationAssist` version `0.6.0` retains its marker and lifecycle methods and adds a bounded optional HealthService offer contract. Its roll path accepts verified official-2014 save data and explicitly refuses unsupported or unreadable sheet contracts instead of guessing a bonus:
+
+```js
+const concentration = GameAssist.ConcentrationAssist;
+
+concentration.isConcentrating(tokenId);
+concentration.set(tokenId, true, { actor: 'MyModule', reason: 'established' });
+concentration.observe(event => {
+    // concentration.established, concentration.failed, concentration.ended
+}, { owner: 'MyModule' });
+
+concentration.getHealthOfferStatus();
+```
+
+Generated `!Con-Check` buttons are private UI capabilities rather than durable automation commands. ConcentrationAssist binds each one to one HealthService event and rechecks freshness, HP, concentration, token identity, controller authorization, and the clicking player's visible page before calling its shared roll path. Consumers should use the public `roll(...)`, `set(...)`, and `observe(...)` methods instead of fabricating offer IDs or reading private module state.
+
+### 10.16 EffectAssist
+
+`GameAssist.EffectAssist` is created when EffectAssist is first enabled:
+
+```js
+const effects = GameAssist.EffectAssist;
+const result = effects.apply({
+    definitionId: 'bless',
+    sourceTokenId,
+    targetTokenIds,
+    createdBy: 'MyModule',
+    requestId
+});
+```
+
+| Method / Field | Result |
+| --- | --- |
+| `version` / `stateSchemaVersion` / `castProposalSchemaVersion` | EffectAssist module, durable-state, and sandbox-local cast-proposal contract versions. |
+| `isAvailable()` | Reports the saved module enablement state. |
+| `getDefinitions()` | Returns defensive copies of built-in and campaign effect definitions. |
+| `getActiveInstances()` / `getHistory()` | Returns defensive copies of active and bounded ended records. |
+| `getCastProposals()` | Returns defensive copies of unexpired GM cast proposals; proposals are sandbox-local and never contain inferred recipient token IDs. |
+| `getDurationCandidates()` | Returns defensive copies of open and dismissed duration review evidence associated with active instances. |
+| `apply(request)` | Atomically validates source and targets, records one semantic instance, and applies every supported projection or rolls the operation back. |
+| `end(instanceId, actor)` | Ends one source instance idempotently and removes only unneeded EffectAssist-owned projections. |
+| `reconcileDurations()` | Compares saved provider anchors against current verified provider state once and returns newly created review candidates; it never ends an effect. |
+| `audit()` | Returns a defensive read-only comparison of records, ownership, marker/condition state, concentration, and 2014-sheet rows. |
+| `observe(callback, options)` | Filters SemanticEvents to `effect.lifecycle.changed`. |
+| `clearObservers(owner)` | Clears semantic observers registered under the exact owner. |
+| `registerProjectionAdapter(name, adapter)` | Adds a validated projection adapter without changing the stored effect identity. Built-ins cover MarkerService, ConditionAssist, record-only, and verified 2014 repeating modifiers. |
+
+A script-provided `requestId` is bounded and idempotent for the retained runtime window. A reused ID with a different intent is refused. Apply is transactional across its supported projections; a partial write is rolled back. Cleanup uses exact ownership evidence, preserves pre-existing state, and leaves externally edited sheet rows in place for GM review. Recognized spell cards create transient review proposals and still enter this same application contract only after the GM selects recipients. Duration observations publish ordinary `effect.lifecycle.changed` transitions such as candidate creation, dismissal, and restoration; confirmed ending still uses the established `ended` transition.
+
+### 10.17 HealAssist
+
+`GameAssist.HealAssist` exists while HealAssist is running:
+
+```js
+const healing = GameAssist.HealAssist;
+const status = healing.getStatus();
+const actions = healing.getActions();
+```
+
+| Method / Field | Result |
+| --- | --- |
+| `version` / `interactionSchemaVersion` | HealAssist module and sandbox-local interaction contract versions. |
+| `getStatus()` | Returns a defensive summary of HealthService availability, player permission, result audience, and pending transient workflow counts. |
+| `getActions()` | Returns defensive copies of the supported action identifiers, names, groups, and recipient counts. |
+
+The public object is intentionally observational. External modules cannot fabricate HealAssist confirmations or call an HP mutation method through it. Cross-module HP writes belong directly to `GameAssist.HealthService` with the caller's own producer and operation identifiers. HealAssist source choices, retained placement requests, rolled proposals, and confirmation capabilities expire in memory and are cleared on module teardown or sandbox restart.
+
+### 10.18 AttackAssist
+
+`GameAssist.AttackAssist` exists while AttackAssist is running:
+
+```js
+const attacks = GameAssist.AttackAssist;
+const status = attacks.getStatus();
+const rows = attacks.listAttacks(characterId);
+```
+
+| Method / Field | Result |
+| --- | --- |
+| `version` / `interactionSchemaVersion` | AttackAssist module and sandbox-local interaction contract versions. |
+| `getStatus()` | Returns a defensive summary of module enablement, player permission, and pending transient flow, request, and submission counts. |
+| `listAttacks(characterId)` | Returns defensive row IDs, names, numbered labels, ranges, and bonuses for verified official-2014 repeating attacks. Unsupported characters return an empty list. |
+
+The public object is observational. Other modules cannot fabricate target choices or submit a roll through it. Source choices, placement requests, and reviewed submissions are memory-only capabilities that expire, are bound to the initiating player, and are cleared on teardown or sandbox restart. AttackAssist submits an accepted roll as the acting character so the official template remains familiar and CritAssist can observe a natural 1 through its established path.
+
+### 10.19 AlmanacAssist
+
+`GameAssist.AlmanacAssist` is created when AlmanacAssist initializes:
+
+```js
+const almanac = GameAssist.AlmanacAssist;
+if (almanac.isAvailable() && almanac.isTimeAvailable()) {
+    const moment = almanac.getTime();
+    const weather = almanac.getWeather();
+}
+```
+
+| Method / Field | Result |
+| --- | --- |
+| `version` / `stateSchemaVersion` | AlmanacAssist module and durable-state contract versions. |
+| `isAvailable()` | Reports whether the AlmanacAssist module is enabled and running. |
+| `isTimeAvailable()` | Separately reports whether TimeAlmanac can currently provide fictional time. |
+| `getTime()` / `getClimate()` / `getAstronomy()` | Return defensive copies of available calendar, effective current-Scene climate, and celestial context. `getClimate()` without a region follows active Location → Ecoregion → campaign fallback; an explicit region argument resolves that named configured region. |
+| `getWeather()` / `getEnvironment()` | Return defensive copies of committed weather and environmental context, or `null` while the corresponding system is off. Before Weather is committed, Environment follows the active Location default when one is configured. |
+| `getSystems()` | Returns a defensive copy of the six-system enablement map. |
+| `observe(callback, options)` | Filters SemanticEvents to AlmanacAssist events for optional consumers. |
+
+Availability is explicit. Consumers must not assume that enabling AlmanacAssist also enables every internal system, and they must treat `null` context as a supported state rather than a failure.
+
+### 10.20 MECHSUITS Contribution Contract
 
 The executable file follows MECHSUITS v1.5.2 conventions:
 
@@ -1528,6 +2120,8 @@ Then try:
 !ga-enable <ModuleOrService>
 ```
 
+For ordinary module control, open `!ga-nav`, choose the module, and use its direct **Enable** or **Disable** button. This is the quickest way to turn off CritAssist or another running feature without remembering its exact configuration command.
+
 ### 14.3 MarkerService and Other Marker Mods
 
 ConditionAssist, TokenAssist, NPCAssist, ConcentrationAssist, and DebugTools use `GameAssist.MarkerService`; they should report `deps confirmed` without standalone TokenMod or StatusInfo.
@@ -1563,7 +2157,7 @@ Select a disposable token and try:
 !ta-set aura1_radius|5 aura1_color|336699 aura1_options|circle
 ```
 
-Values containing spaces must be quoted. Players may use selected-token commands, but `--ids` remains restricted unless the GM enables it through `!token-assist --config players-can-ids|on` or `!ta-config players-can-ids|on`. Commands involving unsupported advanced image, default-token, computed/name-resolved attribute, controller-list, color-math, multi-sided-token, duplicate marker index, conditional marker count, or TokenMod-style help-handout rebuilding are outside TokenAssist 1.0.3's compatibility boundary and should produce a clear warning rather than a partial mutation.
+Values containing spaces must be quoted. Players may use selected-token commands, but `--ids` remains restricted unless the GM enables it through `!token-assist --config players-can-ids|on` or `!ta-config players-can-ids|on`. TokenAssist 1.3.0 supports the selected-token marker-expression, controller/report, visual, dimming, side-selection, and exact saved/computed-value behaviors described above. Persistent token-image/default-token writes, TokenMod help-handout rebuilding, and a global `TokenMod` compatibility object remain outside this release and produce a clear refusal rather than a partial mutation.
 
 ### 14.5 ConditionAssist Does Not Respond, Shows the Wrong Wording, or Uses the Wrong Marker
 
@@ -1608,7 +2202,7 @@ Unknown branches are not deleted automatically. Review the warning, then explici
 
 ### 14.8 `!ga-config list` Is Not a Full Backup
 
-The `GameAssist Config` handout contains flags, global config, and module config only. It excludes runtime caches, metrics, and unknown state branches. v1.8.1 cannot import the snapshot.
+The `GameAssist Config` handout contains flags, global config, and module config only. It excludes runtime caches, metrics, and unknown state branches. v2.0.0 cannot import the snapshot.
 
 Use it for configuration review and upgrade comparison—not as a full restore mechanism.
 
@@ -1655,7 +2249,7 @@ Confirm the token:
 
 `!npc-death-audit` whispers a bounded list of the specific tokens needing a marker added or removed, and writes the complete mismatch list to the `GameAssist NPC Death Audit` handout. Player characters are intentionally excluded from this audit.
 
-The audit does not change markers. Use its **Review Marker Repairs** button or run `!npc-death-repair` to preview corrections. Read the proposed changes before confirming: repair follows current bar 1 HP, so a token whose HP is wrong should be corrected manually first. `!npc-death-repair --confirm` re-scans the page, changes only the configured death marker, and leaves HP and history untouched.
+The audit does not change markers. Use its **Review Marker Repairs** button or run `!npc-death-repair` to preview corrections. Read the proposed changes before confirming: repair follows current selected-bar HP, so a token whose HP is wrong should be corrected manually first. `!npc-death-repair --confirm` re-scans the page, changes only the configured death marker, and leaves HP and history untouched.
 
 `!npc-death-report` shows recorded bucket history in summary/detail views; it does not audit the page.
 
@@ -1669,13 +2263,14 @@ Select the affected token and run:
 !concentration --status
 ```
 
-`!concentration --status` reads through MarkerService and should always respond while ConcentrationAssist is running. If it reports that the configured marker cannot be recognized, inspect the campaign marker library and run:
+`!concentration --status` reads through MarkerService and should always respond while ConcentrationAssist is running. If it reports that the configured marker cannot be recognized, open:
 
 ```roll20chat
-!ga-config set ConcentrationAssist marker=<name-or-tag>
+!concentration settings
+!concentration markers
 ```
 
-For a custom marker, the exact stored `Name::id` tag is the most deterministic configuration.
+Choose **Use Stopwatch** for the portable built-in default, or choose a registered custom campaign marker. The direct `!concentration marker --value <name-or-tag>` command remains available when needed.
 
 ### 14.12 NPC HP Does Not Roll
 
@@ -1756,7 +2351,71 @@ WelcomeAssist starts disabled. Enable it, configure and preview it, then reload 
 
 `!Welcome-Preview` is private. `!Welcome-Announce` is public and consumes the automatic greeting opportunity for the current sandbox so the table does not receive a duplicate after the timer fires. Custom mode falls back to the professional greeting when its campaign list is empty. Existing `!welcome-assist` macros remain accepted.
 
-### 14.17 Compatibility Hints
+### 14.17 EffectAssist Reports a Pending or Mismatched Projection
+
+1. Confirm EffectAssist is enabled with `!ga-config modules`.
+2. Open `!Effect-Status`, then run `!Effect-Audit`.
+3. A **pending** projection means the semantic effect record is safe but a required marker, condition, concentration, or sheet adapter could not complete.
+4. A **missing or changed projection** means the effect record and ownership ledger still exist, but a marker, condition, concentration state, or exact 2014-sheet row changed.
+5. A **token identity change** means the exact token now represents a different character. EffectAssist refuses automatic cleanup or repair on that token.
+6. If an EffectAssist-created sheet row was edited, keep it or remove it manually after reviewing the character; EffectAssist intentionally will not delete an edited row.
+7. Use the audit's generated confirmation button only when the displayed repair matches the GM's intent. A stale, expired, or different-GM confirmation is refused.
+
+If a player caster button or recipient button is old, reused, or belongs to another player, EffectAssist displays **Start Again** instead of failing silently. Use `!effect` to begin again. If a player used **Ask the GM**, open `!Effect-Requests`; valid requests remain available for ten minutes, while requests whose source control or player-casting permission changed remain visible as needing attention until dismissed or expired.
+
+Disabling EffectAssist preserves valid records and projections. Re-enable it and audit before ending or repairing effects. A marker that existed before EffectAssist applied the first source is intentionally preserved after the final source ends.
+
+### 14.18 HealAssist Refuses or Defers a Healing Action
+
+Run:
+
+```roll20chat
+!ga-config modules
+!Heal-Status
+!Heal-Audit
+```
+
+HealAssist starts disabled and requires HealthService. If HealthService is disabled, HealAssist is also disabled without affecting unrelated modules. Re-enable HealthService first, then HealAssist.
+
+An old confirmation is refused when it expired, was already used, belongs to another player, or when the source, recipient, control, page, HP, or maximum HP changed after review. Start a fresh action; HealAssist does not reuse the old roll against different HP evidence. A player request may also need GM review because the recipient is an NPC, hidden, on the GM layer, or off the player's current page. Open `!Heal-Requests` instead of granting the player direct access to that HP.
+
+If a multi-recipient write fails, inspect every listed recipient before retrying. HealAssist attempts verified rollback of earlier recipients, but reports the transaction as failed rather than assuming restoration succeeded. Spell slots, potions, and class resources remain manual in every result.
+
+### 14.19 AttackAssist Refuses or Does Not Roll
+
+Run:
+
+```roll20chat
+!ga-config modules
+!Attack-Status
+!Attack-Audit
+```
+
+AttackAssist starts disabled and supports repeating attacks on the official D&D 5E by Roll20 2014 PC sheet. A selected 2024, NPC, unlinked, hidden, off-page, or uncontrolled attacker produces a specific refusal; its native sheet buttons remain available. If the repeating attack was renamed, removed, or structurally changed after the menu opened, start again so AttackAssist can read the current stable row.
+
+If a row contains a custom Roll20 `?{...}` query, AttackAssist stops before rolling and names the saved field when possible. Use the native sheet attack for that row; this refusal prevents an unanswered client prompt from reaching Roll20's API dice parser and disabling every Mod in the sandbox.
+
+A visible target can be chosen even when the player does not control it. Hidden, GM-layer, and off-page targets stay in a private GM request. Old, reused, or another player's buttons do not roll again. AttackAssist never applies damage, spends ammunition or spell slots, changes HP or markers, or advances combat; resolve those table decisions after the familiar attack card appears.
+
+If both AttackAssist and another Mod submit the same sheet attack or announce the same attacker and target, choose one guided attack workflow to avoid duplicate rolls or messages. A natural 1 should reach CritAssist once from the character's attack card.
+
+### 14.20 AlmanacAssist Context or Rest Needs Attention
+
+Run:
+
+```roll20chat
+!Almanac-Status
+!Almanac-Audit
+!Almanac-Systems
+```
+
+The audit is read-only and names the affected internal system. A missing optional context source is not automatically a failure: Weather can use its fallback context, Astronomy can use its manual day and season, Environment can use a manual preset or override, and Rest can proceed without changing fictional time.
+
+If a rest preview expires or reports that a token, controller, represented character, sheet field, or TimeAlmanac decision changed, prepare a new preview. Do not retry an old confirmation button. AlmanacAssist refuses the transaction before writing rather than mixing an old preview with current sheet state.
+
+Fictional TimeAlmanac dates are separate from GameAssist's table timezone and NPCAssist's real-world Session rollover. Changing one does not change the other.
+
+### 14.21 Compatibility Hints
 
 Compatibility scanning is debug-only:
 
@@ -1766,7 +2425,9 @@ GameAssist.flags.DEBUG_COMPAT = true;
 
 Reload, inspect the output, then return it to `false` to avoid noise. If another Mod processes the same natural-1 attack rolls, concentration markers, NPC death events, NPC HP/bar 1 changes, initiative values, custom tracker rows, rounds, or turn advancement, choose one tool to own that responsibility. InitiativeAssist Observer mode prevents its initiative writes; disabling CombatAssist prevents its encounter-flow controls while leaving the native tracker unchanged.
 
-### 14.18 Still Stuck?
+The **5th Edition OGL by Roll20 Companion** overlaps GameAssist primarily through NPC HP initialization and token-bar ownership. Its `!npchp` and automatic NPC-token behavior can write the same HP bars used by HPAssist, HealthService, and NPCAssist, so enable only one automatic NPC HP owner. The Companion's supplied legacy handler deliberately ignores API-originated attack templates; AttackAssist rolls therefore should not trigger its ammunition or spell-slot processing, while normal player clicks from the Classic sheet still can. Prove both expectations once with disposable HP and attack tests after changing either script.
+
+### 14.22 Still Stuck?
 
 Capture:
 
@@ -1783,60 +2444,86 @@ These details help maintainers reproduce the campaign conditions and focus the i
 
 ## 15 · Upgrade Paths <a id="15-upgrade-paths"></a>
 
-### 15.1 Recommended Upgrade: v0.1.7.0 → v1.8.1
+### 15.1 Recommended Upgrade: v1.8.2 → v2.0.0
 
 I. **Record the Working Campaign**
 
-1. Keep a copy of the complete v0.1.7.0 script.
+1. Keep a copy of the complete v1.8.2 script.
 2. Run `!ga-config list` for a configuration-only comparison snapshot.
-3. Record `!ga-config modules`, the current NPC bucket names, and any non-default settings under CritFumble, NPCManager, ConcentrationTracker, or NPCHPRoller.
+3. Record `!ga-config modules`, active NPC reporting scopes, and any non-default marker names.
 
-> The snapshot is not a full-state backup and cannot be imported automatically. NPC history, Arc records, and runtime caches are intentionally outside it.
+> The snapshot is not a full-state backup and cannot be imported automatically. NPC history, Arc records, runtime caches, and future EffectAssist instances are intentionally outside it.
 
 II. **Replace the Complete Script**
 
-1. Replace v0.1.7.0 with the complete GameAssist v1.8.1 file.
+1. Replace v1.8.2 with the complete GameAssist v2.0.0 file.
 2. Save or restart the Mod sandbox.
-3. Do not combine sections from different releases.
+3. Do not combine framed sections from different releases.
 
-III. **Confirm the Canonical Names**
+III. **Confirm Existing Modules First**
 
 ```roll20chat
 !ga-status
 !ga-status --details
 !ga-config modules
-!ga-config get CritAssist
-!ga-config get NPCAssist
-!ga-config get ConcentrationAssist
-!ga-config get HPAssist
+!NPC-Status
+!Con-Status
+!HP-Status
 ```
 
-The module list should use CritAssist, NPCAssist, ConcentrationAssist, and HPAssist. Valid old configuration and runtime branches migrate before startup auditing; destination values win when both names contain valid data. Unknown or malformed branches remain available for diagnosis instead of being deleted.
+EffectAssist, HealAssist, AttackAssist, and AlmanacAssist should appear configured off and paused on first installation. Existing canonical module settings, NPC records, and established command aliases remain available.
 
-IV. **Confirm Compatibility and Durable Records**
+IV. **Enable and Prove EffectAssist Deliberately**
 
 ```roll20chat
-!critfumble status
-!CritAssist-Status
-!NPCManager-Status
-!NPCAssist-Status
-!Concentration-Status
-!ConcentrationAssist-Status
-!NPCHPRoller-Status
-!HPAssist-Status
-!npc-death-buckets
-!npc-death-report --scope session
+!ga-enable EffectAssist
+!Effect-GM
+!Effect-Status
+!Effect-Audit
 ```
 
-Each old/new command pair should reach the same module once. NPC Campaign, Chapter, Section, Session, Arc, death, and revival records must remain intact. Running each substantial module's `manual` command should adopt and rename one unambiguous old guide handout rather than creating a second guide.
+Use disposable linked 2014 PC tokens for one complete Bless lifecycle, two overlapping Bless sources, one final cleanup, one pre-existing-marker preservation check, and one manual marker-removal audit/repair cycle. Confirm that Bless creates compact `Bless (GA)` rows in the target's global attack and saving-throw modifiers, establishes concentration on the source, and removes only owned state when concentration ends. Other Mods that create, edit, or remove global attack, saving-throw, or AC modifier rows can overlap EffectAssist's Bless, Warding Bond, or Haste projections; let one tool own each effect row and audit after testing overlapping automation.
 
-V. **Run the Release Smoke Test**
+V. **Enable and Prove HealAssist Deliberately**
 
-Use [§4.1 Minimum Smoke Test](#41-minimum-smoke-test), the dedicated v1.8.0 naming-migration track, and the focused v1.8.1 Bloodied track in `Smoketest.md`. Include one real death/revival, the half-HP crossing checks, one concentration marker cycle, one HP roll, one CritAssist menu/table check, module disable/re-enable, mixed-sheet initiative, and one complete CombatAssist round.
+```roll20chat
+!ga-enable HealAssist
+!Heal-GM
+!Heal-Status
+!Heal-Audit
+```
+
+Damage a disposable linked 2014 PC and complete one supported spell or potion action. Confirm that the roll review shows current, proposed, maximum, and actual restored HP; no HP changes before confirmation; and the confirmation cannot be used twice. Repeat with a player targeting a visible PC they do not control, then with an NPC routed through the retained GM request. Confirm NPC HP never appears publicly. Test one stale confirmation by changing the target's HP after review.
+
+VI. **Enable and Prove AttackAssist Deliberately**
+
+```roll20chat
+!ga-enable AttackAssist
+!Attack-GM
+!Attack-Status
+!Attack-Audit
+```
+
+Select a controlled official-2014 PC with at least two repeating attacks and choose a visible target the player does not control. Complete one Normal or Advantage roll and confirm the familiar attack card appears once, the attacker and target announcement follows it, and no target HP, marker, effect, condition, Turn Tracker row, or resource changes. Test one natural 1 with CritAssist enabled and confirm its workflow appears once. Reuse the old roll button and change or remove a selected attack row before using an older menu; both stale paths should refuse a second roll. With a separate player login, send one hidden or off-page target request to the GM and confirm the target identity never appears in the player's whisper.
+
+VII. **Enable and Prove the Complete Almanac Deliberately**
+
+```roll20chat
+!ga-enable AlmanacAssist
+!aa-gm
+!Almanac-Status
+!Almanac-Audit
+```
+
+Confirm the action-first dashboard exposes quick/exact chronology controls, calendar selection, private preview, configured announcement delivery, World Today, and More. Use the saved Wayfarer calendar directly, confirm its 20-hour/75-minute exact-time bounds, then create or edit one climate region, review moon/daylight context, generate and lock weather, inspect the resulting environment, and preview a rest on a disposable linked 2014 PC. Turn each internal system off and back on once and confirm its valid settings remain. Complete the full AlmanacAssist smoke track before approving v2.0.0.
+
+VIII. **Run the Release Smoke Test**
+
+Use [§4.1 Minimum Smoke Test](#41-minimum-smoke-test), the focused v2.0.0 EffectAssist, HealAssist, AttackAssist, and complete AlmanacAssist tracks, and the retained v1.8.2 regression in `Smoketest.md`. Include the ordinary death/revival, concentration, HP, condition, initiative, combat, welcome, and module lifecycle checks used by the campaign.
 
 ### 15.2 Rollback
 
-If v1.8.1 fails its smoke test:
+If v2.0.0 fails its smoke test:
 
 1. Replace it with your complete previous working script.
 2. Save/reload.
@@ -1922,27 +2609,36 @@ The roadmap is directional, not a promise. Items are labeled so implemented feat
 
 ### 17.1 Current Status
 
-| Item | Status in v1.8.1 | Notes |
+| Item | Status in v2.0.0 | Notes |
 | --- | --- | --- |
 | MarkerService | **Implemented and accepted** | One toggleable service owns GameAssist marker resolution, mutation, preservation, and observation. Disabling it turns off dependent modules without disabling unrelated features. |
-| Bundled marker consumers | **Migrated** | NPCAssist 1.4.0, ConcentrationAssist 0.2.2, and DebugTools 0.2.2 no longer require standalone TokenMod. |
-| ConditionAssist 1.0.3 | **Implemented and accepted** | Condition references with `!condition` and case-insensitive `!cond-<condition>` commands, accurate selected-token recognition, current-page condition/marker status, selectable 2014/2024 SRD wording, campaign edits, marker artwork, verified marker-toggling announcements, validated legacy import, MarkerService synchronization, compact navigation, and GM/DM control aliases. |
-| TokenAssist 1.0.3 | **Implemented and accepted** | General token controls with `!token-assist` and `!ta`/`!ta-*` commands, temporary support for older `!token-mod` macros, MarkerService-backed markers, token-change observation, clear compatibility limits, duplicate-install protection, an action-focused GM/DM screen, and a stable manual. |
+| Bundled marker consumers | **Migrated** | NPCAssist 1.5.0, ConcentrationAssist 0.6.0, and DebugTools 0.3.1 no longer require standalone TokenMod. ConcentrationAssist supplies a portable built-in default, guided marker controls, the lifecycle contract used by EffectAssist, and optional private HealthService check offers; it accepts verified official-2014 save data and refuses unsupported or unreadable contracts instead of guessing `+0`. Equivalent linked sheet/token evidence no longer invalidates an otherwise current offer, while a real second HP change still does. Supported applied DebugTools damage supplies verified test evidence. |
+| ConditionAssist 1.0.5 | **Implemented and accepted** | Condition references with `!condition`, full-name aliases, and case-insensitive `!cond-<condition>` commands, accurate selected-token recognition, current-page condition/marker status, selectable 2014/2024 SRD wording, campaign edits, marker artwork, verified marker-toggling announcements, validated legacy import, MarkerService synchronization, compact navigation, GM/DM control aliases, and the shared Roll20 default-template presentation. |
+| TokenAssist 1.3.0 | **Implemented and accepted** | General token controls with bare `!token`, full-name `!tokenassist`, `!token-assist`, and `!ta` commands, MarkerService-backed marker expressions, longest-name-first alias routing, controller/list resolution, exact saved/computed reports, token-change observation, a compact action-focused GM/DM screen, an organized extended action library, a stable manual, and the shared Roll20 default-template presentation. Older TokenMod expression syntax remains only as a temporary migration alias; standalone TokenMod is not required, and persistent default-token asset writes plus a global `TokenMod` object remain outside this release. |
 | Integrated architecture stabilization | **Complete** | Upgrade, migration, lifecycle, command, marker, documentation, and Roll20 sandbox checks passed under Issues #28 and #29. |
 | DM-configurable timezone | **Implemented; focused acceptance passed** | One validated table timezone controls readable timestamps and date-managed NPC Sessions while stored event instants remain absolute. The complete live module suite was not rerun for v0.1.5.1. |
 | TurnTrackerService 1.0.0 | **Implemented; live foundation passed** | Toggleable native-tracker snapshots, structural row classification, guarded lossless writes, observations, dependency cascading, and visible page-owned row creation passed the focused Roll20 checkpoint. |
-| InitiativeAssist 1.0.4 | **Implemented and accepted** | Mixed 2014/2024 initiative, public and private GM/DM start pages, private NPC evidence, GM-layer NPC batches, selected-character batches, roll options, selective rerolls, encounter groups, status, audit, compact navigation, and a stable manual through the case-insensitive `!Init-` namespace. |
-| CombatAssist 1.0.5 | **Implemented and accepted** | Optional native-tracker layer with native round-counter authority, conservative fallback rounds, preserved-round roster/reroll adoption, one-step recovery, guarded movement, stale-safe configurable timers, private-safe native pings, ordered player confirmations, GM/DM controls, compact guidance, and a persistent manual. TurnTrackerService is its only baseline prerequisite. |
-| WelcomeAssist 0.1.4 | **Implemented and accepted** | Disabled-by-default post-bootstrap greeting with professional, built-in, campaign-custom, and mixed modes; private preview/configuration; bounded custom text; health-gated one-per-sandbox automatic output; compact standard navigation; GM/DM status controls; a stable manual; short `!Welcome` commands; and retained `!welcome-assist` compatibility. |
+| SemanticEvents 1 | **Implemented; local contract checks passed** | Immutable, versioned, direct-delivery domain events let optional modules interoperate without hard dependencies, persistence, replay, or implicit queueing. |
+| SheetCapabilities 1.0.0 | **Implemented; read-only contract** | Always-on per-character and per-operation evidence for supported 2014, supported 2024/Beacon, and unknown sheet surfaces. `!ga-sheets` audits capability status without changing characters. |
+| EffectAssist 2.5.3 | **v2.0.0 sandbox candidate** | Applies supported 2014-sheet rows through sheet workers, separates player caster selection from recipient count, keeps ordinary caster choices compact while disambiguating duplicate labels, offers Bless totals of 1-3 plus a higher-level 4-11 menu, identifies invalid recipients precisely, binds concentration to the chosen source token, and retains the established player, audit, repair, cast-proposal, and duration workflows. Live Roll20 acceptance remains required. |
+| HealAssist 1.2.0 | **v2.0.0 sandbox candidate** | Disabled-by-default guided official-2014 healing includes direct target selection for one-recipient actions, recipient-count choices for multi-target actions, normal and maximum catalogs, review or automatic verified application, private automatic-failure diagnostics, authorized sources, visible-PC targeting, and retained private placement requests. |
+| AttackAssist 1.1.0 | **v2.0.0 sandbox candidate** | Disabled-by-default official-2014 repeating-attack guidance includes stable row identity, compact direct native targeting, immediate sheet-setting submission by default, optional sheet/normal/advantage/disadvantage review, complete prompt-safe Classic-sheet formula materialization, visible native sheet roll cards, preflight refusal for unresolved prompts, incomplete fields, and unsafe dice expressions, one-use rolls, and no damage or combat-state writes. |
+| AlmanacAssist v2.0.0 | **Active live-product recovery; not acceptance-ready** | The disabled-by-default Time, Climate, Astronomy, Weather, Environment, and Rest framework includes Wayfarer, announcements, Rest safeguards, SceneResolver, generic Worldbuilding, Travel, Phenomena, Presets, WorldPacks, Temporal Contexts, and Wayfarer handout editing. An exploratory real-Roll20 launch showed that framework/menu coverage was not enough: first-run Location/Travel, starter-world content, Climate prompt/profile setup, navigation, and startup-audit behavior require repair. The active recovery adds generic Starter Worlds/World Library, climate/Location/Travel routes, complete deferred prompts, and named Roll20 references. VM evidence is regression evidence only; a fresh-GM real-Roll20 preflight must pass before formal acceptance. |
+| InitiativeAssist 1.0.5 | **Implemented and accepted** | Mixed 2014/2024 initiative, full-name and short command aliases, public and private GM/DM start pages, private NPC evidence, GM-layer NPC batches, selected-character batches, roll options, selective rerolls, encounter groups, status, audit, compact navigation, and a stable manual through the case-insensitive `!Init-` namespace. |
+| CombatAssist 1.2.0 | **Implemented; sandbox verification assumed for this development pass** | The optional native-tracker layer retains native round-counter authority, conservative fallback rounds, preserved-round roster/reroll adoption, recovery, guarded movement, timers, pings, GM/DM controls, verified semantic progression events, optional 5e Ready or legacy Delay records, up to 500 retained health-evidence entries for the active or most recent encounter review, encounter-scoped held actions, and an explicit deduplicated NPCAssist encounter-summary handoff. TurnTrackerService remains its only baseline prerequisite. |
+| WelcomeAssist 0.1.6 | **Implemented and accepted** | Disabled-by-default post-bootstrap greeting with professional, built-in, campaign-custom, and mixed modes; private preview/configuration; bounded custom text; health-gated one-per-sandbox automatic output; shared Roll20-template controls; GM/DM status controls; a stable manual; short and full-name commands; and retained `!welcome-assist` compatibility. The public greeting card remains intentionally distinct from private controls. |
+| GM-private PC health alerts | **v2.0.0 sandbox candidate** | Optional HealthService consumer with 50%, 25%, and 10% downward-crossing controls, combined notices, hidden-by-default exact HP, and no NPC overlap. |
 | Configuration export | **Implemented, partial** | Versioned configuration-only snapshot; no import/restore. |
 | State self-healing | **Implemented, conservative** | Repairs known containers; does not auto-delete unknown branches. |
 | Public queue API | **Implemented, opt-in** | Does not route every event through the queue. |
 | NPC death history | **Implemented** | Page-local progressive NPC names, four-level handouts, Arc management, report writer, date-managed Sessions, MarkerService-backed death markers, and optional GM-private Bloodied threshold notices. |
 | Native Mord character-sheet support | **Deferred** | Begin after the complete v0.1.5.0 marker, token, and condition architecture is stable. |
 
-### 17.2 Current Candidate: v1.8.2 Progressive NPC Token Naming
+### 17.2 Current Candidate: v2.0.0 Gameplay and Campaign Foundations
 
-The v1.8.2 candidate keeps v1.8.1's accepted Bloodied behavior and adds one bounded NPCAssist setup feature. When enabled, a newly added linked NPC token on the Objects or GM layer receives its represented character's name unless that name is already used by another eligible NPC on the same page. Collisions receive the lowest available positive suffix. Current page contents are the only sequence source, so deletion and sandbox restarts require no counter repair. Existing tokens and represented characters are never renamed.
+The v2.0.0 candidate keeps four disabled-by-default modules on one development line. EffectAssist 2.5.3 supplies source-aware 2014-sheet effects, compact caster choices with duplicate disambiguation, Bless support through eleven recipients, exact-token concentration ownership, compact `(GA)` owned rows, direct application with optional review, worker-safe projection cleanup, bounded Bless proposals, guarded Guidance consumption, duration candidates, retained GM requests, and a direct GM casting surface. HealAssist 1.2.0 adds direct one-recipient targeting plus normal or maximum healing with review or optional automatic verified application. AttackAssist 1.1.0 adds stable official-2014 repeating-attack selection, immediate sheet-setting submission by default, optional roll-mode review, complete prompt-safe Classic-sheet formula materialization, crash-safe final dice-expression validation, and visible native sheet roll cards without resolving damage. **AlmanacAssist v2.0.0 is in active live-product recovery** under duplicate tracker #96: its existing SceneResolver/Worldbuilding/Travel/Phenomena/Preset/WorldPack/Temporal/Wayfarer framework is being repaired with a generic Starter World library, guided active Location and Climate setup, complete rendered prompts, and named reference choices after exploratory live Roll20 exposed first-run blockers. The Issue #90 world-context acceptance track is blocked until the Fresh-GM Recovery Preflight passes in a real campaign.
+
+The six Almanac systems are independently toggleable and remain useful without hidden prerequisites. They exchange optional context through explicit APIs and semantic events, preserve valid settings while disabled, and keep fictional chronology separate from real-world GameAssist timestamps. RestAlmanac is the only initial Almanac sheet writer and supports verified official 2014 PC fields through preview, revalidation, confirmation, and rollback safeguards.
 
 ### 17.3 Later Candidate: Compatibility-First Bridge Character Sheet
 
@@ -1959,27 +2655,58 @@ This is a separate project and is not implemented in v0.1.5.0.
 
 1. **v1.8.0 — Module Identity Migration:** completed through Issue #60 and PR #63 with canonical CritAssist, NPCAssist, ConcentrationAssist, and HPAssist names, migration-safe state and handout handling, and retained command aliases.
 2. **v1.8.1 — NPCAssist Bloodied Alerts:** completed through Issue #64 and PR #73 with a GM-private crossing notification and one-click Control Center toggle.
-3. **v1.8.2 — Progressive NPC Naming:** implement Issue #65 as the current candidate with page-local duplicate avoidance based on the tokens present when a new eligible NPC is added.
-4. **v2.x — EffectAssist Phase A:** establish source-aware semantic effect instances, targets, dependencies, stacking, marker/condition projection, and read-only reconciliation before attempting character-sheet mutation.
-5. **v2.y — AlmanacAssist:** use Issue #62 as the master specification and implement Time, Climate, Astronomy, Weather, Environment, and Rest as six separately tracked internal submodule phases.
-6. **v2.z — Deferred Backlog:** revisit older TokenAssist parity work, CombatAssist integrations, and other deferred features after the new module foundations are stable.
+3. **v1.8.2 — Progressive NPC Naming:** completed through Issue #65 and PR #74 with page-local duplicate avoidance based on the tokens present when a new eligible NPC is added.
+4. **v2.0.0 — EffectAssist, HealAssist, AttackAssist, Complete AlmanacAssist, and Shared Health Integrations:** in progress in PR #81. EffectAssist includes the source-aware 2014-sheet foundation and the Issue #88 player-casting/GM-workflow repair checkpoint. Issue #84 adds guarded healing through HealthService, and Issue #87 adds guided official-2014 repeating attacks without damage automation. AlmanacAssist implements Issues #62 and #66-#71 together as Time, Climate, Astronomy, Weather, Environment, and Rest. Issue #86 adds optional GM-private PC threshold notices through HealthService. Every checkpoint still requires its live Roll20 release gate before publication.
+5. **Post-v2.0.0 Deferred Backlog:** revisit EffectAssist refinements, older TokenAssist parity work, CombatAssist integrations, and other deferred features after the combined release is stable.
 
 The public [development roadmap](ROADMAP.md) carries the detailed gates and issue links. Planned release labels describe sequence, not promised dates.
 
-### 17.5 Explicit Non-Goals for v1.8.2
+### 17.5 Explicit Non-Goals for v2.0.0
 
 * No implicit queueing of every command or event.
 * No claim that the watchdog can kill running work.
 * No automatic deletion of unexpected state branches.
 * No guaranteed external dependency discovery.
 * No complete state import/restore.
-* No Bloodied marker, public Bloodied announcement, configurable threshold, or Bloodied history entry.
-* No bulk renaming, existing-token renumbering, represented-character rename, campaign-wide sequence, or persistent naming counter.
-* No automatic turn advancement, automatic creation of a round-counter row, condition-duration countdown, end-of-turn effect, persistent token highlight, combat music, NPC-history handoff, plugin loader, Rest Manager, or native Mord-sheet implementation.
+* No 2024-sheet or third-party-sheet modifier writes.
+* No automatic effect application, concentration change, or recipient inference from spell-card text; supported official 2014 Bless cards create private GM proposals only.
+* No automatic concentration roll or concentration-ending decision inferred from HP loss; supported decreases may offer a private check that an authorized player or GM must choose.
+* No automatic effect expiration from rounds, turns, real time, or fictional TimeAlmanac advancement; verified CombatAssist and TimeAlmanac boundaries create GM review candidates only.
+* No 2024 native Effect writes without a documented Roll20 contract.
+* No WildShape or token-representation interoperability guesswork.
+* No automatic environmental penalties, weather-driven marker changes, or unverified class-resource rest writes.
+* No automatic attack damage, HP changes, resource spending, effect or condition changes, or Turn Tracker movement from AttackAssist.
+* No 2024-sheet or NPC-action AttackAssist adapter until Roll20's corresponding attack contracts are separately documented and tested.
+* No plugin loader or native Mord-sheet implementation.
 
 ---
 
 ## 18 · Changelog <a id="18-changelog"></a>
+
+### v2.0.0 – Gameplay and Campaign Foundations
+
+* Advanced disabled-by-default EffectAssist to 2.4.2 with a focused six-effect launch catalog, direct GM casting, opaque short-lived player choices, direct recipient choices beneath each controlled caster, retained GM requests, player lockout, source and target records, dependencies, stacking, lifecycle, bounded history, bounded official 2014 Bless proposals, optional GM-reviewed duration candidates, and exact-evidence Guidance consumption with a retained manual path.
+* Added `!GA-GM` / `!GA-DM`, `!ga-help`, and layered `!ga-nav` suite navigation; every module's primary Game Master screen now returns to the suite control center.
+* Bless now coordinates its target marker, 2014-sheet `1d4` attack and save modifier rows, source concentration, overlap, and dependent cleanup.
+* Warding Bond and Haste add their verified AC/save rows; all catalog entries distinguish automatic mechanics from assisted table steps.
+* Preserves non-stacking projections across overlapping sources and removes only final EffectAssist-owned markers, conditions, concentration, and unedited sheet rows.
+* Adds read-only audit, GM-bound one-use repair confirmation, identity-drift refusal, external-edit preservation, and post-write verification.
+* Added disabled-by-default HealAssist 1.0.0 for supported official-2014 healing with exact roll and HP review, one-use confirmation, retained private placement requests, and verified HealthService writes.
+* Advanced disabled-by-default AttackAssist to 1.0.1 for authorized official-2014 repeating attacks with stable row identity, direct native target choices beside each attack, private hidden-target requests, explicit roll modes, familiar character-attributed templates, and no automatic damage or combat-state changes.
+* Added CORE:SEMANTICEVENTS for immutable versioned optional-integration contracts without persistence, replay, or implicit queueing.
+* Advanced CombatAssist to 1.1.0 with immutable accepted encounter and turn-progression events, and added formal EffectAssist duration rules that consume those events or committed Almanac time without ending effects automatically.
+* Added disabled-by-default AlmanacAssist 1.0.0 with independently controlled Time, Climate, Astronomy, Weather, Environment, and Rest systems in the same release candidate.
+* Added four calendar profiles, editable Wayfarer calendars and holidays, regional climate inheritance, configurable moons and celestial events, continuity-aware weather, structured environment context, and transactional 2014-sheet rest previews.
+* Advanced AlmanacAssist to 1.1.0 with persistent Wayfarer drafts, guided setup and preview, profile duplication, atomic activation, elapsed-time preservation, and one deliberate rollback point.
+* Advanced AlmanacAssist to 1.1.1 by rejecting cancelled Roll20 queries, repairing profile-specific clocks, supporting feast periods that do not advance weekdays, restoring exact holidays and range-based seasons, and invalidating dependent dates when complete period replacement makes their old indexes unsafe.
+* Advanced AlmanacAssist to 1.1.2 with the campaign's exact 460-day Wayfarer default: twelve named months, five intercalary festivals, the documented daily rhythm, and exact-match migration that preserves campaign-edited definitions.
+* Advanced AlmanacAssist to 1.2.0 with a direct component manager, editable seasonal ranges, visible moon phases, focused role/help/status/audit aliases, clearer display-change confirmation, and a command-only reset that restores the saved draft without changing the active calendar or fictional time.
+* Advanced AlmanacAssist to 1.3.0 with an action-first GM dashboard, direct advance and exact-date controls, announcement preview/audience/detail settings, one-step saved-Wayfarer selection, focused edit/copy/detail/recovery screens, and technical examples moved behind optional help.
+* Advanced AlmanacAssist to 1.4.0 with ordinal Wayfarer Hours and named daily periods instead of AM/PM, announcement audience/heading/preset/field controls, an at-a-glance Climate screen, and compact Environment quick choices with focused customization and on-demand details.
+* Advanced AlmanacAssist to 1.5.0 with Off/Descriptive/Detailed/Technical presentation, weather-owned current temperature, daylight/cloud-aware moon visibility, working deferred Wayfarer and Astronomy prompts, atomic calendar identity changes, valid clock resizing, and Standard/Heroic/Gritty/Custom rest-rule controls.
+* Advanced ConfigUI to 0.2.5 with alphabetized service/module groups, compact human-readable nested configuration summaries, and wrapping controls while preserving complete configuration evidence in the versioned snapshot handout.
+* Added optional GM-private PC health alerts that consume deduplicated HealthService events, combine enabled 50%, 25%, and 10% downward crossings, hide exact HP by default, and leave NPC policy with NPCAssist.
+* Keeps every Almanac system useful through explicit fallbacks, preserves valid state while disabled, and separates fictional world time from real-world table timestamps and NPCAssist Session dates.
 
 ### v1.8.2 – Page-Local Progressive NPC Names
 
@@ -1992,7 +2719,7 @@ The public [development roadmap](ROADMAP.md) carries the detailed gates and issu
 
 * Added `notifyBloodied`, enabled by default, to privately notify the GM when an eligible living object-layer NPC crosses from above half HP to half HP or below.
 * Uses Roll20's previous/current HP transition as the complete rearm rule: remaining below half does not repeat, while healing above half permits a later crossing notice.
-* Requires numeric HP and a valid positive bar 1 maximum; PCs, unlinked tokens, GM-layer tokens, deaths, invalid maxima, and HPAssist initialization transitions remain silent.
+* Requires numeric HP and a valid positive maximum on the selected shared NPC HP bar; PCs, unlinked tokens, GM-layer tokens, deaths, invalid maxima, and HPAssist initialization transitions remain silent.
 * Keeps Bloodied notices out of markers, death history, report buckets, Arc records, and public chat.
 
 ### v1.8.0 – Canonical Module Names and Migration Safety
@@ -2218,3 +2945,4 @@ ConditionAssist includes condition wording derived from SRD 5.1 for the 2014 pro
 See [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) for public acknowledgments, upstream links, license notices, and SRD guidance.
 
 > **Tip:** After an update, use the current smoke test to confirm the enabled features in the campaign's own Roll20 sandbox.
+

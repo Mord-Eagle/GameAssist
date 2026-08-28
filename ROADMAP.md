@@ -1,8 +1,8 @@
 # GameAssist Development Roadmap
 
-This roadmap records GameAssist's completed standalone-to-integrated transition, its native initiative and encounter foundations, and the current move into three-part project releases beginning with the `v1.8.x` module-identity and NPCAssist line.
+This roadmap records GameAssist's completed standalone-to-integrated transition, native initiative and encounter foundations, completed `v1.8.x` module and NPCAssist work, and the current combined v2.0.0 EffectAssist, HealAssist, AttackAssist, AlmanacAssist, shared-health, and guided-play development line.
 
-Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation details and acceptance evidence. Issues #60 and #64 are complete; the active sequence is Issue #65, phased EffectAssist work under Issue #61, and phased AlmanacAssist work under Issue #62.
+Use this document for durable release boundaries, sequencing, and completion gates. Use the linked GitHub issues for implementation details and acceptance evidence. PR #81 remains the single v2.0.0 development line: EffectAssist, HealAssist, AttackAssist, and all six AlmanacAssist systems share that branch; Issue #90 retains the remaining AlmanacAssist custom-calendar and world-context UX work; Issue #91 now has the read-only SheetCapabilities contract; Issues #42, #43, and #44 now have their safe TokenAssist/MarkerService portions implemented; Issues #52, #53, #56, and #72 now have bounded implementations; and the high-cost asset, diagnostics, music, and catalog expansions remain explicitly deferred in Issues #45, #50, #57, and #82. None of this work creates a parallel release branch or authorizes publication.
 
 > The roadmap is a maintained plan, not a promise of dates. Issues #25 through #29 are development checkpoints within one release train; none is an intermediate public release.
 
@@ -32,6 +32,12 @@ Use this document for durable release boundaries, sequencing, and completion gat
 8. **Initiative and combat remain separate responsibilities.** TurnTrackerService owns safe native-tracker mechanics, InitiativeAssist owns initiative calculation and reroll UX, and CombatAssist owns deliberate encounter lifecycle plus conservative turn and round observation. Timers, reminders, current-turn indicators, reporting handoff, and music are staged immediately after the foundation acceptance rather than folded into tracker mechanics.
 9. **Public startup greetings remain deliberate.** WelcomeAssist starts disabled, previews privately, announces automatically only after completed healthy Bootstrap, and never treats live enablement as permission to post.
 10. **Project releases use three-part semantic versions beginning with v1.8.0.** Historical four-part identifiers remain unchanged, and independently versioned modules keep their own established version sequences. Compatibility aliases are removed only through an explicit later migration issue, never merely because the project version format changed.
+11. **SemanticEvents carries notifications, not gameplay authority.** Owning modules persist durable truth; the core service delivers immutable in-memory events in publication order and isolates observers.
+12. **EffectAssist owns semantic effects and projection evidence.** MarkerService remains the marker authority, ConditionAssist remains the condition authority, ConcentrationAssist remains the concentration authority, and sheet, HP, and timing integrations use explicit adapters or events rather than hidden cross-module writes.
+13. **v2.0.0 contains the complete AlmanacAssist module.** Time, Climate, Astronomy, Weather, Environment, and Rest are six independently controlled systems in one module and one release gate. None ships as a separate partial release, and none becomes a hidden prerequisite for unrelated GameAssist modules.
+14. **HealthService records evidence, not combat conclusions.** It normalizes supported 2014-PC HP attributes and linked-NPC transitions on one GM-selected shared token bar, verifies GameAssist-owned writes, and deduplicates linked Roll20 events. Unknown external changes remain unknown; consumers retain their own rules, state, confirmation, and manual paths.
+15. **HealAssist guides healing without owning resources.** It uses HealthService for supported HP, offers normal or maximum results and default review or optional automatic verified application, routes private recipients to the GM, and never spends spell slots, items, class resources, or temporary HP on the table's behalf.
+16. **AttackAssist guides attacks without owning their consequences.** It reuses verified official-2014 repeating attack formulas and native target prompts, keeps hidden placement with the GM, and never applies damage, spends resources, changes effects or conditions, or moves the Turn Tracker.
 
 ---
 
@@ -52,21 +58,48 @@ Use this document for durable release boundaries, sequencing, and completion gat
 | Marker-registry lookup verification | Complete | [#32](https://github.com/Mord-Eagle/GameAssist/issues/32) | MarkerService prefers documented `token_markers`, falls back to `_token_markers`, and keeps built-ins and exact stored tags independent of registry parsing. |
 | DM-configurable timezone | Complete | [#35](https://github.com/Mord-Eagle/GameAssist/issues/35) | v0.1.5.1 adds one validated DM timezone for human-facing timestamps and date-based Session rollover while preserving absolute stored timestamps. The focused Roll20 timezone workflow passed; the complete live module suite was not rerun. |
 | Native Turn Tracker and initiative foundation | Complete | [#47](https://github.com/Mord-Eagle/GameAssist/issues/47) | The v0.1.6.0 live workflow and v0.1.6.1 private `!Init-GM` controls passed their Roll20 acceptance checks. |
-| Optional table welcome | Complete | [PR #49](https://github.com/Mord-Eagle/GameAssist/pull/49) | WelcomeAssist 0.1.4 retains the accepted greeting workflow, compact navigation, stable manual, and equal GM/DM settings aliases. |
+| Optional table welcome | Complete | [PR #49](https://github.com/Mord-Eagle/GameAssist/pull/49) | WelcomeAssist 0.1.6 retains the accepted greeting workflow, compact navigation, stable manual, equal GM/DM settings aliases, and short or full-name command routes while adopting the shared private-control presentation. Its public greeting card remains intentionally distinct. |
 | CombatAssist encounter flow | Complete | [#48](https://github.com/Mord-Eagle/GameAssist/issues/48) | v0.1.7.0 includes CombatAssist 1.0.5: native round-counter authority, preserved-round encounter flow, recovery, guarded movement, timers, native pings, privacy-safe confirmations, compact guidance, a stable manual, and equal GM/DM controls. The complete Roll20 acceptance pass succeeded. |
 | CombatAssist turn timers and reminders | Complete | [#54](https://github.com/Mord-Eagle/GameAssist/issues/54) | Disabled-by-default duration, deadline, and per-reminder recipient controls bind callbacks to the encounter, round, current identity, tracker revision, and deadline; the Roll20 acceptance pass confirmed timers never advance turns. |
 | CombatAssist current-turn visuals | Complete | [#55](https://github.com/Mord-Eagle/GameAssist/issues/55) | Disabled-by-default non-centering native pings support GM, player, combined, and public audiences while restricting hidden turns to the GM. Persistent token highlights remain separately deferred. |
-| CombatAssist NPCManager handoff | Deferred | [#56](https://github.com/Mord-Eagle/GameAssist/issues/56) | Valuable optional interoperability, but it does not block a dependable encounter-flow release and must not duplicate death or revival records. |
-| CombatAssist music hooks | Deferred | [#57](https://github.com/Mord-Eagle/GameAssist/issues/57) | Useful atmosphere control, but safe Jukebox ownership is independent of the current release gate. |
+| CombatAssist encounter-summary handoff | **Implemented; sandbox verification assumed for this development pass** | [#56](https://github.com/Mord-Eagle/GameAssist/issues/56) | CombatAssist can offer a Session or all-active-reports handoff at encounter end; NPCAssist stores one deduplicated encounter summary per encounter id without creating death or revival rows. |
+| CombatAssist music hooks | Post-v2 research | [#57](https://github.com/Mord-Eagle/GameAssist/issues/57) | Requires verified Jukebox ownership, restore, and coexistence behavior; it is independent of reliable encounter tracking. |
 | Compact help and command recovery | Complete | [#58](https://github.com/Mord-Eagle/GameAssist/issues/58) | Every feature module exposes compact navigation, an action-appropriate GM/DM screen, read-only audit wording, and friendly unknown-command recovery. |
 | Persistent module manuals | Complete | [#59](https://github.com/Mord-Eagle/GameAssist/issues/59) | Modules with substantial workflows create or update one stable `GameAssist Guide - <Module>` handout; brief modules keep complete guidance in chat. The Roll20 acceptance pass succeeded. |
 | Canonical module identities | Complete | [#60](https://github.com/Mord-Eagle/GameAssist/issues/60), [PR #63](https://github.com/Mord-Eagle/GameAssist/pull/63) | v1.8.0 migrated CritAssist, NPCAssist, ConcentrationAssist, and HPAssist names while preserving valid state, records, handouts, APIs, and established commands. PR #63 merged and Issue #60 closed. |
 | NPCAssist Bloodied alerts | Complete | [#64](https://github.com/Mord-Eagle/GameAssist/issues/64), [PR #73](https://github.com/Mord-Eagle/GameAssist/pull/73) | v1.8.1 added a focused GM-private 50% HP crossing alert and one-click Control Center toggle without changing death-history semantics. |
-| Progressive NPC naming | In progress | [#65](https://github.com/Mord-Eagle/GameAssist/issues/65) | v1.8.2 prevents accidental duplicate NPC token names through page-local, current-token numbering that the GM can disable or deliberately override. |
-| EffectAssist Phase A | Deferred | [#61](https://github.com/Mord-Eagle/GameAssist/issues/61) | v2.x begins with semantic source/target effects, dependencies, stacking, marker/condition projection, and reconciliation; sheet mutation and automatic durations remain later phases. |
-| AlmanacAssist master program | Deferred | [#62](https://github.com/Mord-Eagle/GameAssist/issues/62) | v2.y tracks six implementation issues in order: Time, Climate, Astronomy, Weather, Environment, and Rest. |
-| TokenAssist and CombatAssist backlog | Deferred | [open issues](https://github.com/Mord-Eagle/GameAssist/issues) | v2.z revisits older parity and integration work after the new module foundations are stable. |
-| GameAssist handout organization | Deferred | [#72](https://github.com/Mord-Eagle/GameAssist/issues/72) | Preserve stable handouts after manual Journal filing, add safe indexing, and defer true folder routing until Roll20 exposes a supported writable Journal-folder API. |
+| Progressive NPC naming | Complete | [#65](https://github.com/Mord-Eagle/GameAssist/issues/65), [PR #74](https://github.com/Mord-Eagle/GameAssist/pull/74) | v1.8.2 prevents accidental duplicate NPC token names through page-local, current-token numbering that the GM can disable or deliberately override. |
+| Suite-level GM/help navigation | Sandbox verification | [PR #81](https://github.com/Mord-Eagle/GameAssist/pull/81) | `!GA-GM`/`!GA-DM`, `!ga-help`, `!ga-nav`, `!ga-sheets`, and `!ga-handouts` connect suite services and module-owned interfaces; every module's primary GM screen returns to the suite control center. All GameAssist command paths ignore capitalization and accept spaces or hyphens between command words, while shared navigation, ConfigUI, ConditionAssist, and TokenAssist use the same Roll20 default-template presentation established by HPAssist and CombatAssist. |
+| EffectAssist 2014 launch | Sandbox verification | [#75](https://github.com/Mord-Eagle/GameAssist/issues/75) | v2.0.0 implements a focused six-effect catalog, player casting with GM lockout, source-aware instances, multi-projection ownership, lifecycle history, read-only audit, and authorized repair. |
+| EffectAssist 2014 sheet projection | Sandbox verification | [#76](https://github.com/Mord-Eagle/GameAssist/issues/76) | Bless, Warding Bond, and Haste use ownership-safe repeating global modifier rows on official 2014 PC sheets, with NPC and assisted fallbacks. |
+| EffectAssist cast recognition | Sandbox verification | [#77](https://github.com/Mord-Eagle/GameAssist/issues/77) | EffectAssist offers bounded, deduplicated, single-use GM proposals for unambiguous official 2014 Bless cards; it never infers recipients or bypasses ordinary review and confirmation. |
+| EffectAssist player-casting workflow | Sandbox verification | [#88](https://github.com/Mord-Eagle/GameAssist/issues/88) | EffectAssist 2.5.3 uses short-lived player-bound choices, compact unique caster labels with concise duplicate-token disambiguation, recipient counts from one through eleven for Bless, consistent `(GA)` owned rows, retained GM requests, direct GM controls, visible stale-button recovery, exact invalid-recipient guidance, and token-specific concentration ownership. |
+| EffectAssist concentration observation | Sandbox verification | [#78](https://github.com/Mord-Eagle/GameAssist/issues/78) | ConcentrationAssist 0.3.0 owns concentration state and exposes lifecycle events used for dependent EffectAssist cleanup. |
+| Shared HealthService foundation | Sandbox verification | [#83](https://github.com/Mord-Eagle/GameAssist/issues/83) | HealthService 1.1.0 provides canonical supported HP snapshots, immutable deduplicated transitions, bounded evidence, verified producer-identified writes, and one GM-selected shared NPC bar with current-page setup and unlinked-token auditing. NPCAssist, HPAssist, and supported DebugTools writes consume the same selection. |
+| ConcentrationAssist HP-loss offers | Sandbox verification | [#79](https://github.com/Mord-Eagle/GameAssist/issues/79) | ConcentrationAssist 0.6.0 consumes HealthService evidence through private, deduplicated, revalidated check offers without treating every decrease as proven damage, and refuses unavailable save contracts instead of guessing a bonus. |
+| EffectAssist duration candidates | Sandbox verification | [#80](https://github.com/Mord-Eagle/GameAssist/issues/80) | EffectAssist 2.1.0 consumes accepted CombatAssist progression and committed Almanac time to create private, reversible GM review candidates without automatic expiration. |
+| EffectAssist catalog expansion | Post-v2 adapters | [#82](https://github.com/Mord-Eagle/GameAssist/issues/82) | Each additional effect needs a verified ownership-safe sheet, initiative, movement, healing, or weapon adapter; adding names without mechanics would repeat the launch-catalog problem. |
+| AlmanacAssist master program | Sandbox verification | [#62](https://github.com/Mord-Eagle/GameAssist/issues/62), [PR #81](https://github.com/Mord-Eagle/GameAssist/pull/81) | v2.0.0 implements all six internal systems together; publication waits for complete live Roll20 acceptance. |
+| TimeAlmanac | Sandbox verification | [#66](https://github.com/Mord-Eagle/GameAssist/issues/66) | One elapsed fictional-minute authority, four profiles, editable Wayfarer structure and holidays, guarded changes, player read-only output, history, and events. |
+| ClimateAlmanac | Sandbox verification | [#67](https://github.com/Mord-Eagle/GameAssist/issues/67) | Built-in/editable/custom profiles, bounded regions, parent inheritance, overrides, active region, and manual season fallback. |
+| AstronomyAlmanac | Sandbox verification | [#68](https://github.com/Mord-Eagle/GameAssist/issues/68) | Configurable moons/phases, daylight and deterministic season boundaries, read-only forecasts, and separate weighted rare-event suggestions. |
+| WeatherAlmanac | Sandbox verification | [#69](https://github.com/Mord-Eagle/GameAssist/issues/69) | Structured continuity-aware current weather, optional context, fallback operation, forecasts, locks, manual weather, history, and events. |
+| EnviroAlmanac | Sandbox verification | [#70](https://github.com/Mord-Eagle/GameAssist/issues/70) | Structured descriptive environment context, weather derivation, manual presets, persistent override, and no automatic gameplay penalties. |
+| RestAlmanac | Sandbox verification | [#71](https://github.com/Mord-Eagle/GameAssist/issues/71) | Previewed and revalidated 2014-PC Short/Long/Extended/custom rests with verified fields, optional Time advancement, rollback, history, and events. |
+| AlmanacAssist v2.0.0 custom-calendar and world-context recovery | Active source recovery | [#90](https://github.com/Mord-Eagle/GameAssist/issues/90), [#95](https://github.com/Mord-Eagle/GameAssist/issues/95), [#96](https://github.com/Mord-Eagle/GameAssist/issues/96) | AlmanacAssist **v2.0.0** on the `AlmanacAssist-v2.0.0-Build` build line has substantial Issue #96 framework plus recovery work, not a complete code-build claim: Gate 0 repairs; SceneResolver; generic Worldbuilding/editors; active Location/favorites/recents; Prepared Destinations/Travel; Phenomena; Presets; RulesAdvisor; WorldPacks; Temporal Contexts; and Wayfarer handout workflow. Recovery now adds generic starters/World Library, visible first-run routes, decoded prompt coverage, named reference controls, and coherent Location → Ecoregion → fallback Climate/Weather/Environment behavior. The focused checkpoint passed on 2026-08-26, but source and real-Roll20 recovery work remain; no release or full implementation claim is made. |
+| GM-private PC health alerts | Sandbox verification | [#86](https://github.com/Mord-Eagle/GameAssist/issues/86) | Optional 50%, 25%, and 10% downward-crossing notices now consume canonical HealthService events, remain GM-private, combine large drops, hide exact HP by default, and leave NPC policy unchanged. |
+| HealAssist guided healing | Sandbox verification | [#84](https://github.com/Mord-Eagle/GameAssist/issues/84) | HealAssist 1.2.0 adds authorized sources, direct targeting for one-recipient actions, count choices for multi-recipient actions, supported 2014 normal and maximum healing, default review or optional automatic verified application, private GM placement requests, and HealthService writes without consuming resources. |
+| AttackAssist guided attacks | Sandbox verification | [#87](https://github.com/Mord-Eagle/GameAssist/issues/87) | AttackAssist 1.1.0 adds authorized official-2014 repeating-attack selection, stable row identity, a compact native visible-target choice, immediate sheet-setting submission by default, optional explicit roll-mode review, retained private placement requests, complete prompt-safe Classic-sheet materialization, visible native sheet cards, preflight refusal for unresolved prompts, incomplete fields, or unsafe final dice expressions, one-use submission, and no damage or combat-state writes. |
+| Shared character-sheet capability contract | **Implemented; read-only foundation** | [#91](https://github.com/Mord-Eagle/GameAssist/issues/91) | Always-on SheetCapabilities classifies 2014, 2024/Beacon, and unknown characters per operation. Initiative, concentration, effects, healing, attacks, rests, health, and TokenAssist reports use the contract and refuse unsupported work without guessing. |
+| Guidance verified consumption | Sandbox verification | [#85](https://github.com/Mord-Eagle/GameAssist/issues/85) | EffectAssist 2.5.3 retains the compact owned Guidance label and may consume one exact, unambiguous supported 2014 skill check. Unsupported or ambiguous evidence remains manual; live normal/advantage/disadvantage acceptance is still required. |
+| TokenAssist marker-expression parity | **Implemented; safe expression subset** | [#42](https://github.com/Mord-Eagle/GameAssist/issues/42) | MarkerService 1.1.0 preserves the supported legacy TokenMod 0.8.88 expression behavior for duplicate indexes, conditional operations, relative counts, bounds, relative colors, dimming, and relative/random side selection. TokenAssist remains the branded owner and standalone TokenMod is not required; persistent asset writes remain separate. |
+| TokenAssist attributes, controllers, and reporting | **Implemented; exact-name contract** | [#43](https://github.com/Mord-Eagle/GameAssist/issues/43) | TokenAssist resolves exact saved attributes, supported computed properties, exact player ids, and unambiguous display names; report routes distinguish token, linked character, controller, player, GM, and all recipients. |
+| TokenAssist visual and multi-sided controls | **Implemented; selected-token subset** | [#44](https://github.com/Mord-Eagle/GameAssist/issues/44) | TokenAssist adds the supported selected-token visual, dimming, color, and side-selection actions with explicit validation. Persistent image/default-token writes remain #45. |
+| TokenAssist image/default-token writes | Post-v2 design | [#45](https://github.com/Mord-Eagle/GameAssist/issues/45) | Persistent avatar/default-token mutation has a larger and less reversible blast radius than ordinary selected-token edits and needs a dedicated confirmation and rollback design. |
+| API_Meta diagnostics | Post-v2 diagnostics | [#50](https://github.com/Mord-Eagle/GameAssist/issues/50) | Useful for source offsets and script interoperability evidence, but adopting it requires generated offset metadata and drift maintenance; current GameAssist diagnostics do not depend on it. |
+| CombatAssist damage timeline | **Implemented; bounded evidence** | [#52](https://github.com/Mord-Eagle/GameAssist/issues/52) | CombatAssist retains verified semantic progression events and up to 500 HealthService changes for the active or most recent encounter review, with encounter, round, turn, actor, boundary, and provenance fields. It is explicitly evidence for review, not a causal damage ledger; held-action records remain encounter-scoped. |
+| CombatAssist Ready/Delay actions | **Implemented; opt-in** | [#53](https://github.com/Mord-Eagle/GameAssist/issues/53) | Optional 5e Ready and legacy Delay records include player authorization, expiry handling, `!Now`, cancellation, and native tracker reconciliation. The feature defaults off and does not apply game mechanics. |
+| GameAssist handout organization | **Implemented; folder routing deferred** | [#72](https://github.com/Mord-Eagle/GameAssist/issues/72) | Stable owner/key handout identities, conflict-safe updates, and `!ga-handouts` indexing are implemented. True Journal-folder routing remains deferred until Roll20 exposes a supported writable folder API. |
 
 ---
 
@@ -220,7 +253,7 @@ Build **TokenAssist** with the supported token-control workflows needed by GameA
 - [x] Record The Aaron attribution, upstream baseline, adapted portions, compatibility concepts, and MIT notice.
 - [x] Define the initial compatibility surface: help/config, selected and authorized-ID targeting, common booleans and token properties, relative values, movement, order, reports, page filters, and MarkerService-backed status commands.
 - [x] Document explicit 1.0.1 limits for image-side stacks, default-token writes, computed/name-resolved attributes, advanced controller lists and color arithmetic, relative/random multi-sided-token selection, duplicate-index markers, conditional marker counts, and help-handout rebuilding.
-- [x] Add `!token-assist`, `!ta`, and `!ta-*` command forms and warn when older `!token-mod` syntax is used, with a v0.2.0 removal deadline.
+- [x] Add `!token-assist`, `!ta`, and `!ta-*` command forms and retain older supported `!token-mod` syntax as a compatibility alias; any future removal requires a separately announced migration release.
 - [x] Normalize aura options, test a visible radius/color/shape combination, and stop movement trails from inheriting stale `lastmove` origins.
 - [x] Carry compatible settings forward from earlier v0.1.5.0 development builds before startup auditing.
 - [x] Copy a valid legacy `state.TokenMod.playersCanUse_ids` value once while preserving the complete legacy branch.
@@ -324,7 +357,7 @@ This major feature release introduces a rules-neutral Turn Tracker authority and
 
 Issue #47 is complete only when the Roll20 sandbox confirms mixed 2014/2024 initiative, public and GM-only start controls, private NPC evidence, GM-layer and selected-character batches, case-insensitive commands, exact preservation of non-owned rows, duplicate handling, dead/mismatch skips, Observer mode, service cascading, and audit output without regressions in established modules.
 
-**Current evidence:** The live workflow, including private NPC evidence, GM-layer batches, selected-character batches, and equal private `!Init-GM` / `!Init-DM` start pages, is accepted. The current InitiativeAssist 1.0.4 harness passes 116/116 checks.
+**Current evidence:** The live workflow, including private NPC evidence, GM-layer batches, selected-character batches, and equal private `!Init-GM` / `!Init-DM` start pages, is accepted. The InitiativeAssist 1.0.4 behavioral harness passed 116/116 checks; InitiativeAssist 1.0.5 adds only the equivalent full-name command route, which is covered by the current cross-module harness.
 
 ---
 
@@ -403,23 +436,34 @@ The timer and native-ping implementations completed in v0.1.7.0. The remaining e
 
 1. [Issue #54](https://github.com/Mord-Eagle/GameAssist/issues/54) - **complete** configurable turn timers and reminders, including live stale-callback and recipient acceptance.
 2. [Issue #55](https://github.com/Mord-Eagle/GameAssist/issues/55) - **complete** native current-turn pings, including live audience and hidden-layer acceptance; persistent token highlights remain separately deferred.
-3. [Issue #56](https://github.com/Mord-Eagle/GameAssist/issues/56) - **deferred** optional encounter-summary handoff to NPCManager without duplicate death or revival history.
+3. [Issue #56](https://github.com/Mord-Eagle/GameAssist/issues/56) - **implemented** optional encounter-summary handoff to NPCAssist with encounter-id deduplication and no death or revival history rows.
 4. [Issue #57](https://github.com/Mord-Eagle/GameAssist/issues/57) - **deferred** opt-in combat music hooks that preserve unrelated Jukebox playback.
 
-Damage review (#52) is deferred. Held-action rules (#53) remain independently scoped and do not block PR #51.
+Damage evidence (#52) and held-action rules (#53) are implemented as bounded, opt-in CombatAssist features in PR #81. They do not apply damage, move initiative outside the native tracker, or infer a campaign's rules beyond the selected profile.
 
 ---
 
-## Post-v0.1.5.0 TokenAssist Expansion
+## v2.0.0 Non-Almanac Completion Pass
 
-These open items extend TokenAssist beyond the accepted integrated architecture and are intentionally deferred from v0.1.7.0.
+The following non-Almanac work is now implemented on PR #81 and remains part of the same v2.0.0 development line:
 
-- [Issue #42](https://github.com/Mord-Eagle/GameAssist/issues/42) — **deferred** advanced duplicate-index, conditional, and bounded marker expressions owned by MarkerService.
-- [Issue #43](https://github.com/Mord-Eagle/GameAssist/issues/43) — **deferred** computed attributes, controller identity/list resolution, and report-recipient routing.
-- [Issue #44](https://github.com/Mord-Eagle/GameAssist/issues/44) — **deferred** color arithmetic, dimming night-vision parameters, and relative/random multi-sided-token controls.
-- [Issue #45](https://github.com/Mord-Eagle/GameAssist/issues/45) — **deferred** image-side stacks plus token-image and default-token asset updates, pending dedicated preview, recovery, and live-field compatibility safeguards.
+- [Issue #91](https://github.com/Mord-Eagle/GameAssist/issues/91) — **implemented** read-only SheetCapabilities service and per-operation refusal contract.
+- [Issue #42](https://github.com/Mord-Eagle/GameAssist/issues/42) — **implemented** supported TokenMod 0.8.88 marker expressions through MarkerService 1.1.0.
+- [Issue #43](https://github.com/Mord-Eagle/GameAssist/issues/43) — **implemented** exact saved/computed reporting and controller/report routing.
+- [Issue #44](https://github.com/Mord-Eagle/GameAssist/issues/44) — **implemented** selected-token visual and multi-sided controls that do not write persistent assets.
+- [Issue #52](https://github.com/Mord-Eagle/GameAssist/issues/52) — **implemented** bounded HealthService evidence by encounter, round, turn, and actor boundary.
+- [Issue #53](https://github.com/Mord-Eagle/GameAssist/issues/53) — **implemented** opt-in 5e Ready and legacy Delay records with `!Now`, expiry, and cancellation.
+- [Issue #56](https://github.com/Mord-Eagle/GameAssist/issues/56) — **implemented** optional deduplicated encounter-summary handoff to NPCAssist.
+- [Issue #72](https://github.com/Mord-Eagle/GameAssist/issues/72) — **implemented** stable handout identities and `!ga-handouts` indexing; true Journal-folder placement remains outside the supported Roll20 API.
 
-TokenAssist will continue to use its own help and `GameAssist.TokenAssist` API. Rebuilding TokenMod's help handout or creating a global `TokenMod` compatibility object is not planned.
+The following remain intentionally deferred because their cost or risk is disproportionate to the current release gain:
+
+- [Issue #45](https://github.com/Mord-Eagle/GameAssist/issues/45) — persistent image-side stacks, token-image writes, and default-token asset updates.
+- [Issue #50](https://github.com/Mord-Eagle/GameAssist/issues/50) — API_Meta-style generated source-offset diagnostics.
+- [Issue #57](https://github.com/Mord-Eagle/GameAssist/issues/57) — optional Jukebox/music hooks.
+- [Issue #82](https://github.com/Mord-Eagle/GameAssist/issues/82) — broad EffectAssist catalog expansion without verified mechanics.
+
+TokenAssist continues to use its own help and `GameAssist.TokenAssist` API. Rebuilding TokenMod's help handout or creating a global `TokenMod` compatibility object is not planned.
 
 ## Phase 11: Canonical Module Identities in `v1.8.0`
 
@@ -436,8 +480,8 @@ This release adopts CritAssist, NPCAssist, ConcentrationAssist, and HPAssist as 
 - [x] Preserve NPCAssist history, bucket, Arc, marker, and public API compatibility.
 - [x] Adopt and rename one unambiguous old guide handout rather than creating a duplicate.
 - [x] Pass syntax and the complete local regression suite.
-- [ ] Pass the focused clean-install and v0.1.7.0 upgrade smoke tracks in Roll20.
-- [ ] Complete PR #63 and close Issue #60.
+- [x] Pass the focused clean-install and v0.1.7.0 upgrade smoke tracks in Roll20.
+- [x] Complete PR #63 and close Issue #60.
 
 ### Completion Gate
 
@@ -453,21 +497,166 @@ The Roll20 module list uses only the four canonical names; valid settings and re
 
 ### v1.8.2 — Progressive NPC Naming
 
-[Issue #65](https://github.com/Mord-Eagle/GameAssist/issues/65) assigns names from the live tokens on the newly added token's page. Existing tokens are never renamed. The default is enabled, the GM may disable it, and deliberate manual duplicates remain allowed. Number selection uses the lowest available positive suffix, so a deleted gap may be reused; no persistent campaign counter is required.
+[Issue #65](https://github.com/Mord-Eagle/GameAssist/issues/65) was completed through [PR #74](https://github.com/Mord-Eagle/GameAssist/pull/74). It assigns names from the live tokens on the newly added token's page. Existing tokens are never renamed. The default is enabled, the GM may disable it, and deliberate manual duplicates remain allowed. Number selection uses the lowest available positive suffix, so a deleted gap may be reused; no persistent campaign counter is required.
 
 ---
 
-## Phase 13: EffectAssist Program in `v2.x`
+## Phase 13: EffectAssist 2014-Sheet Program in `v2.0.0`
 
-[Issue #61](https://github.com/Mord-Eagle/GameAssist/issues/61) is the master specification. Phase A establishes semantic effect instances, source and target ownership, dependencies, stacking, manual lifecycle, marker/condition projection, and read-only reconciliation. Character-sheet mutation, passive spell recognition, concentration observers, HP-loss prompting, and combat timing are separately gated later phases.
+[Issue #61](https://github.com/Mord-Eagle/GameAssist/issues/61) is the master specification. The v2.0.0 launch combines the semantic engine, the verified official 2014-sheet adapter, concentration coordination, a focused six-effect catalog with player casting and GM lockout, bounded official 2014 Bless proposals, shared-health offers, and conservative duration review. Recognition, HP, duration, weapon-specific damage, and 2024-sheet work retain separate evidence gates even when implemented on the same PR #81 development line.
 
-EffectAssist remains a gameplay module. It consumes MarkerService and ConditionAssist capabilities where enabled and must not become another marker authority, Turn Tracker authority, concentration roller, or complete D&D rules engine.
+EffectAssist remains a gameplay module. MarkerService owns markers, ConditionAssist owns condition definitions and condition-marker workflows, character sheets own their native roll fields, ConcentrationAssist owns concentration checks, HP-writing modules own HP mutations, and TurnTrackerService owns native tracker access.
+
+### Launch Engine and Catalog — v2.0.0
+
+**Tracking:** [Issue #75](https://github.com/Mord-Eagle/GameAssist/issues/75)
+**Status:** Sandbox verification
+
+- [x] Add source-aware effect definitions and active instances.
+- [x] Keep source character/token identity separate from every target identity.
+- [x] Add idempotent application and idempotent ending.
+- [x] Add shared multi-projection ownership with baseline preservation.
+- [x] Support MarkerService, ConditionAssist, concentration, 2014-sheet, and record-only projections.
+- [x] Add Bless, Guidance, Warding Bond, Holy Weapon, Haste, and Pass Without a Trace, separated by automation level.
+- [x] Remove Gift of Alacrity, Longstrider, and Beacon of Hope from the built-in launch catalog because their marker-only paths do not provide enough automation; retain generic tracking paths.
+- [x] Move ownership-safe weapon, Stealth, initiative, movement-speed, and healing adapter research to [Issue #82](https://github.com/Mord-Eagle/GameAssist/issues/82) so it does not block the focused release.
+- [x] Add player casting from controlled sources, direct spell shortcuts, and GM lockout.
+- [x] Show automatic, assisted, and informational behavior before application.
+- [x] Add bounded ended history and preserve runtime records across module disable/re-enable.
+- [x] Add read-only audit and short-lived, GM-bound, one-use repair authorization.
+- [x] Refuse partial target application and token-representation drift.
+- [x] Add the immutable in-memory SemanticEvents core service.
+- [x] Update executable, README, changelog, roadmap, One-Click metadata, and smoke tests.
+- [x] Pass 134 focused local EffectAssist checks plus syntax validation in both existing-marker and fresh-marker campaign fixtures.
+- [ ] Pass the clean-install and v1.8.2 upgrade smoke tracks in Roll20.
+- [ ] Complete the v2.0.0 PR and close Issues #75, #76, and #78.
+
+### Official 2014 Sheet Projection
+
+**Tracking:** [Issue #76](https://github.com/Mord-Eagle/GameAssist/issues/76)
+**Status:** Sandbox verification
+
+- [x] Add exact repeating global attack, saving-throw, skill, and AC modifier-row adapters.
+- [x] Record exact created attribute IDs, expected values, and baseline ownership.
+- [x] Use sheet workers when available and avoid generated aggregate outputs.
+- [x] Add complete Bless attack/save rows, Guidance skill rows, Warding Bond AC/save rows, and Haste AC rows.
+- [x] Preserve pre-existing and externally edited rows.
+- [x] Retain marker plus assisted behavior for NPCs and unsupported sheets.
+- [ ] Pass the live 2014-sheet application, overlap, cleanup, edit-preservation, and restart checks.
+
+### Phase C — Cast Recognition
+
+**Tracking:** [Issue #77](https://github.com/Mord-Eagle/GameAssist/issues/77)
+**Status:** Sandbox verification
+
+EffectAssist 2.3.0 recognizes only well-evidenced official 2014 Bless spell output and offers a private GM-confirmed proposal. Chat target text is descriptive and is never treated as token identity. The proposal remains sandbox-local, bounded, deduplicated, short-lived, and single-use; selecting recipients and passing through the existing preview and confirmation path remain mandatory.
+
+- [x] Require the exact official 2014 `spell` template and normalized Bless name.
+- [x] Require one exact character-name match and one eligible linked source token on the actor's active page.
+- [x] Recheck non-GM source control and Objects-layer visibility before offering the proposal.
+- [x] Keep unsupported spells and ambiguous evidence non-mutating while giving the GM an actionable path when a supported Bless card is ambiguous.
+- [x] Suppress repeated delivery of identical cast evidence and consume a reviewed proposal only once.
+- [x] Require GM-selected recipients and reuse the existing EffectAssist review, grant, application, concentration, projection, and announcement path.
+- [x] Keep `!effect` and the complete manual catalog prominent and available when recognition is disabled.
+- [x] Add private Pending Casts, Status, Control Center, Manual, API, policy, documentation, and focused local-test surfaces.
+- [ ] Pass the live Roll20 supported-card, duplicate, ambiguity, recipient-selection, disable/re-enable, and ordinary-catalog checks.
+
+Capture real 2024 template samples before defining a 2024 recognition contract; 2024 effect recognition remains outside this phase.
+
+### Player Casting and GM Requests
+
+**Tracking:** [Issue #88](https://github.com/Mord-Eagle/GameAssist/issues/88)
+**Status:** Sandbox verification
+
+EffectAssist 2.3.0 keeps player casting compact without weakening the established source-control, review, confirmation, or privacy boundaries. Generated player buttons carry short-lived opaque choices rather than raw token or character identifiers. Visible linked recipients use Roll20's native target picker; hidden or off-page cases can be retained privately for the GM to finish through the same preview and confirmation path.
+
+- [x] Bind each player casting choice to its player, source, effect, workflow stage, and expiry.
+- [x] Revalidate source identity, control, page, layer, module state, and player-casting permission before each step.
+- [x] Replace silent stale, reused, fabricated, or wrong-player button failures with a visible **Start Again** route.
+- [x] Let players target visible linked recipients through Roll20's native target query without requiring control of the recipient.
+- [x] Add bounded, expiring GM requests with `!Effect-Requests`, generated apply controls, and explicit dismissal.
+- [x] Keep invalidated requests visible as needing attention until the GM dismisses them or they expire.
+- [x] Add direct built-in effect buttons and a request count to the GM Control Center.
+- [x] Omit hidden target names from public announcements.
+- [x] Pass 34 focused player-flow, privacy, revalidation, request, and recovery checks plus the established EffectAssist regression harnesses.
+- [ ] Pass the live Roll20 separate-player source, visible non-controlled recipient, retained request, hidden-recipient privacy, later-lock, stale-button, and direct-GM-control checks.
+
+### Concentration Coordination
+
+**Tracking:** [Issue #78](https://github.com/Mord-Eagle/GameAssist/issues/78)
+**Status:** Sandbox verification
+
+- [x] Add the ConcentrationAssist 0.3.0 public lifecycle API.
+- [x] Publish concentration-established, failed, and ended events.
+- [x] Establish source concentration for catalog effects that require it.
+- [x] End dependent effects when source concentration ends.
+- [x] Refuse or deliberately replace an existing concentration effect.
+- [x] Keep both modules out of each other's persistent state.
+- [ ] Pass manual-clear, failed-check, replacement, GM-layer source, and restart checks in Roll20.
+
+### Phase E1 — Shared HealthService Foundation
+
+**Tracking:** [Issue #83](https://github.com/Mord-Eagle/GameAssist/issues/83)
+**Status:** Sandbox verification
+
+- [x] Add canonical snapshots for official 2014 PC `hp` attributes and linked NPC token bar 1.
+- [x] Publish immutable `health.transition` evidence through SemanticEvents.
+- [x] Deduplicate matching linked character-attribute and token-bar notifications.
+- [x] Keep unexplained increases and decreases classified as `unknown`.
+- [x] Add bounded producer/operation-identified writes with verification and idempotency.
+- [x] Route HPAssist HP initialization and supported RestAlmanac HP restoration through the shared write contract while preserving their independent fallback behavior.
+- [x] Add compact GM-only service status, recent-evidence, and current-page audit diagnostics.
+- [x] Pass the focused local HealthService harness and JavaScript syntax validation.
+- [ ] Pass the focused live Roll20 observation, write, deduplication, disable/re-enable, and restart checks.
+
+### Phase E2 — HP-Loss Offers
+
+**Tracking:** [Issue #79](https://github.com/Mord-Eagle/GameAssist/issues/79)
+**Status:** Sandbox verification
+
+ConcentrationAssist consumes HealthService evidence conservatively while preserving its independent manual workflow. A declared and verified GameAssist damage write carries stronger provenance; an unexplained numeric decrease remains an unknown observation and is presented only as observed HP loss.
+
+- [x] Advance ConcentrationAssist to 0.5.0 with `healthPrompts=true`, a portable built-in `stopwatch` default for fresh campaigns, narrow migration of the unavailable former stock value, and GM-facing health and marker controls.
+- [x] Offer Normal, Advantage, and Disadvantage checks only for an already-concentrating supported character after verified damage or an unexplained numeric decrease.
+- [x] Deduplicate linked sheet/token evidence into one logical offer while whispering that offer separately to the GM and eligible current controllers.
+- [x] Keep GM-layer and player-hidden identities GM-only and suppress public emotes for hidden offered checks.
+- [x] Recheck the exact latest HealthService event, current HP, concentration marker, token identity, player-page visibility, and current controller before rolling.
+- [x] Keep healing, initialization, synchronization, clearing, invalid values, unrelated changes, and non-concentrating characters silent.
+- [x] Route applied DebugTools damage through verified HealthService evidence on supported HP surfaces while retaining its dry-run default and direct unsupported/disabled-service fallback.
+- [x] Keep generated offers bounded, single-use, and sandbox-local; a HealthService outage disables only this integration.
+- [x] Preserve `!concentration`, `!cc`, `--damage`, `--last`, marker controls, status, audit, and lifecycle events.
+- [x] Pass the focused local privacy, deduplication, stale-button, classification, hidden-token, and manual-path harness.
+- [ ] Pass the live Roll20 checks with direct HP edits, a verified GameAssist write, a linked PC, a linked NPC, a GM-layer NPC, HealthService disabled, and the module setting disabled.
+
+### Phase F — Encounter and World-Time Durations
+
+**Tracking:** [Issue #80](https://github.com/Mord-Eagle/GameAssist/issues/80)
+**Status:** Sandbox verification
+
+EffectAssist records formal duration rules and whichever verified provider anchors are available when a built-in effect begins. CombatAssist 1.2.0 retains the immutable encounter identity and accepted forward/backward transition evidence, and adds bounded HealthService timeline evidence without claiming causation; AlmanacAssist continues to publish one committed event for each world-time change.
+
+- [x] Record ten-round/one-minute rules for Bless, Guidance, and Haste plus six-hundred-round/sixty-minute rules for Warding Bond, Holy Weapon, and Pass Without a Trace.
+- [x] Anchor encounter durations only to an active CombatAssist encounter on the effect source's page.
+- [x] Anchor world durations only to available committed Almanac time.
+- [x] Create one bounded private GM expiration candidate when either verified boundary is reached; never end the effect automatically.
+- [x] Create an encounter-end reminder when a round boundary was not verified before CombatAssist ended.
+- [x] Ignore backward turns, tracker rebases, initiative edits, and backward Almanac movement as duration progress.
+- [x] Compare large Almanac jumps once without replaying every elapsed minute.
+- [x] Let the GM end the effect, keep it active, or reopen a dismissed candidate from `!Effect-Duration`.
+- [x] Preserve manual ending and explain provider absence, disabled candidate processing, custom duration text, and pre-schema-3 effects without inventing start times.
+- [x] Reconcile persisted anchors after startup and when the GM opens Duration Review following re-enable, without unbounded event replay.
+- [x] Pass the focused local provider, boundary, reversal, restart, spoofing, and non-automatic-ending harness plus existing HealthService and ConcentrationAssist regressions.
+- [ ] Pass the live Roll20 same-page encounter, tracker edit, backward turn, encounter end, Almanac advance/retreat, provider-disabled, restart, and manual-decision checks.
+
+### Completion Gate
+
+The EffectAssist portion of v2.0.0 must survive the live Roll20 clean-install, upgrade, complete Bless, catalog coverage, 2014-sheet rows, concentration cleanup, overlap, baseline-state, audit/repair, cast-recognition, player-casting and retained-request, duration-provider, disable/re-enable, and restart tests. ConcentrationAssist HP-loss offers require their separate live Issue #79 acceptance. The 2024-sheet contract remains later work; Issue #88 is implemented at the sandbox checkpoint and remains open until its separate-player Roll20 acceptance passes.
 
 ---
 
-## Phase 14: AlmanacAssist Program in `v2.y`
+## Phase 14: Complete AlmanacAssist Program in `v2.0.0`
 
-[Issue #62](https://github.com/Mord-Eagle/GameAssist/issues/62) is the master specification for one GameAssist module with six independently toggleable internal submodules. Before implementation, create one issue for each phase and work in this order:
+[Issue #62](https://github.com/Mord-Eagle/GameAssist/issues/62) is the master specification for one GameAssist module with six independently toggleable internal systems. All six remain on the same PR #81 v2.0.0 development line; [Issue #90](https://github.com/Mord-Eagle/GameAssist/issues/90) now owns the remaining custom-calendar and world-context UX failures discovered in live use. The issue sequence preserves ownership and acceptance evidence rather than creating partial releases:
 
 1. [#66 TimeAlmanac](https://github.com/Mord-Eagle/GameAssist/issues/66).
 2. [#67 ClimateAlmanac](https://github.com/Mord-Eagle/GameAssist/issues/67).
@@ -478,9 +667,120 @@ EffectAssist remains a gameplay module. It consumes MarkerService and ConditionA
 
 Each phase must provide useful standalone behavior with explicit optional integrations. Fictional world time remains separate from GameAssist's real-world table timezone and NPCAssist's real-world Session dates.
 
+**AlmanacAssist v2.0.0 recovery:** Issue #95 remains the untouched implementation master and #94 remains the architectural destination; duplicate tracker #96 carries the build work. Gate 0 repairs and substantial later framework work exist, but a real exploratory Roll20 launch proved that the product is not code-complete merely because its architecture and VM checks exist. Active source recovery includes generic starter worlds/onboarding, active Location → Prepared Destination → Travel, climate region/profile controls, broad decoded prompts/outcomes, named Roll20 references, and startup-audit cleanup. The ordinary-screen audit now exercises visible first-level query choices and requires recovery controls for generated refusals, while advanced Wayfarer/WorldPack handout pickers avoid known-incompatible owned exports and Rest has selected-token coverage. Recent coherence work resolves active Scene Climate as Location → Ecoregion → campaign fallback without silently rewriting Weather; Weather/manual conditions, Environment defaults, Scene, status, public API, and semantic events share that provenance. Source and focused tests are not a usability completion claim. The assessment, migration review, guardrails, and Gate-by-Gate plan live under `docs/AlmanacAssist-v2.0.0-Build/`. Formal live Roll20 acceptance is blocked until recovery passes.
+
+### Live-product recovery required before formal acceptance
+
+- [x] Reproduce/remove the false `Unexpected state branch: Core` source warning without suppressing genuine unknown-state warnings. The focused Gate 0 harness proves a retained registered internal `Core` namespace is preserved/quiet while unregistered branches still warn; fresh Roll20 startup confirmation remains open.
+- [ ] Prove a brand-new GM can choose/install an included generic starter world or create a first world without importing a WorldPack or memorizing commands.
+- [ ] Prove starter/world setup results in a visible active Location, named Climate region/profile, coherent Scene, Prepared Destinations, routes, and usable Travel.
+- [ ] Prove every generated action across the six systems and Worldbuilding has a complete rendered prompt/command and visible result, with no blank values, literal booleans, incomplete periods, or missing identifiers.
+- [ ] Prove normal panels use named choices for records, Roll20 pages, and handouts rather than raw IDs, and give an actionable no-data/no-handout fallback.
+- [ ] Expand focused tests for every repaired UI contract, then record a fresh real-Roll20 Fresh-GM Recovery Preflight before restarting the full clean-install/upgrade acceptance tracks.
+
+### Implemented Scope
+
+- [x] Register AlmanacAssist as one disabled-by-default feature module with independent Time, Climate, Astronomy, Weather, Environment, and Rest switches.
+- [x] Implement TimeAlmanac with one elapsed-minute authority, Standard/original-Cinderturn/original-Tidebound/Wayfarer profiles, bounded history, guarded reversal/exact setting, player read-only output, Wayfarer holidays, and Wayfarer's ordinal 20-hour daily language without AM/PM.
+- [x] Rebuild Wayfarer as a persistent-draft workflow with direct component editors, retained guided review, readable preview, built-in profile duplication, editable seasonal ranges, visible moon phases, atomic activation, elapsed-time preservation, command-only draft recovery, one rollback point, and an optional inert versioned handout export/edit/import path with validation preview, stale protection, and draft-only atomic confirmation.
+- [x] Implement ClimateAlmanac with editable built-ins, bounded custom profiles, regions, true parent inheritance, overrides, direct active-region selection, a compact at-a-glance screen, and manual season fallback.
+- [x] Implement AstronomyAlmanac with configurable moon cycles/offsets/phases, deterministic daylight and season boundaries, bounded forecasts, and separately weighted rare-event suggestions.
+- [x] Implement WeatherAlmanac with structured continuity-aware generation, optional context, standalone fallback, read-only forecasts, explicit manual state, lock/unlock, history, and events.
+- [x] Implement EnviroAlmanac with structured weather-derived context, quick standalone presets, focused one-field customization, on-demand technical details, bounded custom override, explicit return to weather-derived context, and no automatic gameplay penalties.
+- [x] Implement RestAlmanac for linked controlled 2014 PCs with preview, expiring one-use confirmation, complete revalidation, verified HP/Hit Dice/slot writes, optional Time advancement, rollback, history, and custom rests.
+- [x] Add shared navigation, a stable manual, configurable announcement audiences/headings/presets/fields, focused read-only audits, bounded policy, protected structured configuration, defensive public context APIs, and semantic events.
+- [x] On `AlmanacAssist-v2.0.0-Build`, accept Issue #92 (remove the redundant full-range chronology pre-scan and unused `maximumWorldMinute()` helper) and Issue #93 (make `getSubmoduleStatus()` consistently report configured subsystem state). Historical internal checkpoints 1.6.2 through 1.10.0 record the Gate 0 repair, SceneResolver, Worldbuilding, Travel, and Phenomena implementation sequence; the active AlmanacAssist implementation version is **v2.0.0**.
+- [x] Implement framework capabilities for WorldPackService; Prime/regional/planar Temporal Contexts with reviewed canonical-time reconciliation and bounded committed events; and consistent Basic/Detailed/Technical Worldbuilding record-editor layers with technical provenance/stable identity. Their presence does not close the ordinary-GM usability gap.
+- [x] Implement four independently installable original setting-scale WorldPack sources (Asterfall Concord, Veyra Turning, Narthvale Compact, and Lumenfen Atlas), each with 160 Locations, 215 Routes, Prepared Destinations, Phenomena, hierarchical geography, and typed palette data. Ordinary Worldbuilding collections now use compact name-sorted 12-entry paging/search/direct-Edit controls so a distant record does not require a Technical stable ID. This is focused local source evidence only; real Roll20 catalog rendering/performance remains an unchecked recovery check.
+- [x] Complete the conservative migration review: additive current-schema branches normalize only known legacy data; future Worldbuilding configuration/runtime, WorldPack, Temporal Context, and transient import/transition runtime schemas remain warning-only and untouched.
+- [x] Add owner-authored generic Starter World/World Library source paths, saved-world switching, first-Location activation, selected Climate relations, deferred-create-query encoding, and named Roll20 page/handout selection helpers. Ordinary starter-world screen targets now receive a broad decoded source audit; rare/advanced screens and fresh Roll20 rendering evidence remain.
+- [x] Reconcile Climate/Weather/Environment provenance: direct Location Climate, then Ecoregion, then campaign fallback; retained old-location Weather mismatch visibility; ordinary complete manual Weather/history controls; active Location Environment defaults; focused one-field Climate tuning; and in-use Climate-region removal guards.
+- [x] Add focused VM coverage for temporal contexts, optional Wayfarer handout export/import, Worldbuilding editor layers, WorldPacks, migration/future-schema preservation, prior Almanac boundaries, starter-world/onboarding contracts, and direct/Ecoregion/fallback Climate coherence. These are development evidence, not a release gate.
+- [ ] Pass the Fresh-GM Recovery Preflight in a real Roll20 campaign and record all rendered prompt/outcome results.
+- [ ] Pass the complete live Roll20 clean-install AlmanacAssist track.
+- [ ] Pass the complete live Roll20 v1.8.2-to-v2.0.0 upgrade track.
+- [ ] Confirm all three release script artifacts are identical and public documentation/metadata match the tested behavior.
+
+### Release Gate
+
+v2.0.0 does not publish until every internal system passes the focused Roll20 smoke track, AlmanacAssist's complete custom-calendar and world-context behavior passes Issue #90, GM-private PC threshold behavior passes Issue #86, guided HealAssist review and verified application passes Issue #84, guided AttackAssist source/target/roll/privacy behavior passes Issue #87, independent disable/re-enable and restart preservation are confirmed, RestAlmanac's supported 2014-sheet writes are proven with disposable characters, and PR #81 review is complete. Passing TimeAlmanac alone, or any smaller subset, is not a release candidate.
+
 ---
 
-## Current `v1.8.0` Architecture
+## Phase 15: HealAssist Guided Healing in `v2.0.0`
+
+**Tracking:** [Issue #84](https://github.com/Mord-Eagle/GameAssist/issues/84), [PR #81](https://github.com/Mord-Eagle/GameAssist/pull/81)
+
+HealAssist is a disabled-by-default HealthService consumer for deliberate official-2014 healing. It improves the path from choosing a healing action to applying HP without becoming a spell-slot manager, inventory engine, arbitrary spell-card interpreter, damage-reversal tool, or second HP observer.
+
+### Implemented Scope
+
+- [x] Register HealAssist as an independently toggleable module that requires HealthService and leaves unrelated modules independent.
+- [x] Support guided Cure Wounds, Healing Word, Prayer of Healing, Mass Healing Word, Mass Cure Wounds, Heal, four 2014 potion grades, and bounded simple manual formulas.
+- [x] Require an authorized linked official-2014 source and read only the explicitly chosen Intelligence, Wisdom, or Charisma modifier when the action needs one.
+- [x] Use short-lived player-bound source choices and Roll20's native targeting for visible supported PCs, including PCs the healer's player does not control.
+- [x] Send exactly-one-recipient actions directly to the native target prompt while retaining recipient-count choices for genuinely multi-recipient actions.
+- [x] Retain NPC, GM-layer, hidden, and off-page placement requests for private GM review without exposing NPC identity or HP.
+- [x] Roll once and present raw dice, formula, current HP, proposed HP, maximum HP, actual gain, and manual resource responsibility before any mutation.
+- [x] Cap healing at maximum HP, preserve an already-over-maximum value, and refuse unsupported or stale HP evidence.
+- [x] Require an expiring one-use confirmation and revalidate actor, source, recipient, control, page, layer, representation, HP, maximum HP, module state, and HealthService before writing.
+- [x] Route every accepted write through HealthService with HealAssist producer/operation identity and verified `healing` provenance.
+- [x] Treat multi-recipient healing as one reviewed transaction and attempt verified synchronization rollback when a later recipient write fails.
+- [x] Add player lockout, safe public/private result policy, retained-request controls, standard GM/DM, Guide/Help, Info, Status, Audit, Manual, and compatibility command surfaces.
+- [x] Add documentation, configuration and public API references, One-Click metadata, focused smoke tests, and a 64-check local regression harness.
+- [ ] Pass the live Roll20 player-to-visible-PC workflow with a separate non-GM account.
+- [ ] Pass NPC and GM-layer request privacy, stale and reused confirmation, maximum-HP cap, multi-recipient, player lockout, HealthService cascade, and sandbox-restart checks.
+
+### Completion Gate
+
+Issue #84 remains at **Sandbox verification** until the complete focused HealAssist track passes in Roll20. No v2.0.0 release is approved from the local harness alone. Spell/item/resource consumption, temporary HP, arbitrary spell cards, 2024-sheet fields, and damage reversal remain outside the launch contract.
+
+---
+
+## Phase 16: AttackAssist Guided Attacks in `v2.0.0`
+
+**Tracking:** [Issue #87](https://github.com/Mord-Eagle/GameAssist/issues/87), [PR #81](https://github.com/Mord-Eagle/GameAssist/pull/81)
+
+AttackAssist is a disabled-by-default guide for official D&D 5E by Roll20 2014 PC repeating attacks. It shortens source, attack, and target selection, submits immediately with the sheet setting by default, and leaves optional roll-mode review under GM control while the character sheet, damage, resources, HP, effects, conditions, initiative, and turn flow remain under their established owners.
+
+### Implemented Scope
+
+- [x] Register AttackAssist as an independently toggleable module with optional player access and no required feature-module dependency.
+- [x] Require a linked authorized official-2014 PC source and refuse unsupported, 2024, NPC, unlinked, hidden, off-page, or uncontrolled player sources with actionable guidance.
+- [x] Read verified repeating attacks in saved sheet order and preserve exact stable row identity when display names are duplicated.
+- [x] Put Roll20's native visible-target choice directly beside each verified attack, without requiring target control or an inert intermediate target screen.
+- [x] Retain player requests for hidden, GM-layer, or off-page placement as private GM work without exposing the target identity to the player.
+- [x] Submit with the saved sheet roll mode by default and offer an optional GM-enabled review with Sheet, Normal, Advantage, and Disadvantage choices without temporarily changing the character's `rtype` setting.
+- [x] Qualify the verified sheet-generated roll formula to the exact character and repeating row, then submit it as the acting character so the familiar template and CritAssist natural-1 path remain intact.
+- [x] Bind flows, requests, and submissions to the initiating player, expire them after ten minutes, consume submissions before rolling, and refuse stale, reused, changed-row, or cross-player buttons.
+- [x] Announce the attacker and visible target only after the roll callback; keep hidden-target completion private.
+- [x] Leave target HP, markers, effects, conditions, resources, position, Turn Tracker state, and campaign data unchanged.
+- [x] Add standard GM/DM, Guide/Help, Info, Status, Audit, Manual, Requests, player-lockout, and full module-name command surfaces.
+- [x] Add documentation, configuration and observational public API references, One-Click metadata, focused smoke tests, and local coverage for direct targeting, optional-sheet defaults, unknown-field refusal, and one-use submission.
+- [ ] Pass the live Roll20 visible-target workflow with a separate non-GM account and an official-2014 PC containing duplicate display-name attacks.
+- [ ] Pass sheet/Normal/Advantage/Disadvantage modes, natural-1 single delivery to CritAssist, stale/reused/cross-player refusal, private hidden-target request, player lockout, disable/re-enable, and sandbox-restart checks.
+
+### Completion Gate
+
+Issue #87 remains at **Sandbox verification** until the complete focused AttackAssist track passes in Roll20. No v2.0.0 release is approved from the local harness alone. Automatic damage, resource spending, 2024-sheet attacks, NPC action formulas, and arbitrary roll-card interpretation remain outside the launch contract.
+
+---
+
+## Phase 17: Continue The `v2.0.0` Issue Queue In PR #81
+
+PR #81 remains the only v2.0.0 development line. These issues are taken one at a time in dependency-aware order and do not create intermediate public releases:
+
+1. **Issue #90 — AlmanacAssist custom-calendar and world-context completion:** preserve the useful Issue #89 action-first checkpoint, then complete the live Wayfarer editor, query-driven customization, default recovery, announcement controls, climate/weather/environment authority, moon and rest controls, activation, rollback, and full acceptance track before v2.0.0 publication.
+2. **Issue #86 — GM-private PC health alerts:** implemented at sandbox verification; complete the live privacy, crossing, rearm, and service-disable track before closing.
+3. **Issue #84 — HealAssist:** implemented at sandbox verification; complete the live player, NPC privacy, stale-confirmation, multi-recipient, and HealthService lifecycle track before closing.
+4. **Issue #87 — AttackAssist:** AttackAssist 1.1.0 is implemented at sandbox verification with compact direct attack-row target choices, immediate sheet-setting submission, optional GM-enabled roll-mode review, complete prompt-safe Classic-sheet expansion, documented defaults, visible native sheet cards, and preflight refusal for unresolved prompts, incomplete fields, or unsafe final dice expressions; complete the live source, duplicate-row, target, roll-mode, natural-1, privacy, stale-button, Companion coexistence, and lifecycle track before closing.
+5. **Issue #85 — Guidance consumption:** EffectAssist 2.5.3 retains the guarded candidate using an exact compact owned roll label, current projection ownership, controller checks, unique character/instance resolution, normal lifecycle cleanup, and duplicate-event suppression; player casting now separates caster and recipient-count choices. Complete the focused live normal, advantage, disadvantage, unrelated-d4, ambiguity, and manual-fallback checks before closing it.
+
+Issue #82 remains post-v2.0 catalog-adapter expansion. Issues #42-45, #50, #52, #53, #56, #57, and #72 remain outside the v2.0.0 release gate because each needs a new grammar, ownership boundary, persistent transaction, live platform contract, or cross-module adapter rather than a small isolated completion patch. Their deferral does not classify them as unnecessary. Implemented issues remain open at **Sandbox verification** until their own live Roll20 acceptance checks pass.
+
+---
+
+## Current `v2.0.0` Architecture
 
 ```text
 [GAMEASSIST]/
@@ -493,6 +793,8 @@ Each phase must provide useful standalone behavior with explicit optional integr
 │  ├─ [GAMEASSIST:CORE:STATE]
 │  ├─ [GAMEASSIST:CORE:MARKERSERVICE]
 │  ├─ [GAMEASSIST:CORE:TURNTRACKERSERVICE]
+│  ├─ [GAMEASSIST:CORE:SEMANTICEVENTS]
+│  ├─ [GAMEASSIST:CORE:HEALTHSERVICE]
 │  └─ [GAMEASSIST:CORE:OBJECT]
 ├─ [GAMEASSIST:INTERFACES]
 │  ├─ [GAMEASSIST:INTERFACES:EVENTS]
@@ -507,12 +809,16 @@ Each phase must provide useful standalone behavior with explicit optional integr
 │  ├─ [GAMEASSIST:MODULES:WELCOMEASSIST]
 │  ├─ [GAMEASSIST:MODULES:NPCASSIST]
 │  ├─ [GAMEASSIST:MODULES:CONCENTRATIONASSIST]
+│  ├─ [GAMEASSIST:MODULES:EFFECTASSIST]
+│  ├─ [GAMEASSIST:MODULES:HEALASSIST]
+│  ├─ [GAMEASSIST:MODULES:ATTACKASSIST]
+│  ├─ [GAMEASSIST:MODULES:ALMANACASSIST]
 │  ├─ [GAMEASSIST:MODULES:HPASSIST]
 │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 └─ [GAMEASSIST:BOOTSTRAP]
 ```
 
-This target now matches the implemented executable section tree. Per MECHSUITS v1.5.2, it and the executable banner's `canonical_tree` must remain synchronized whenever a section tag changes.
+This tree matches the implemented executable section hierarchy. Per MECHSUITS v1.5.2, it and the executable banner's `canonical_tree` must remain synchronized whenever a section tag changes.
 
 ---
 
@@ -540,9 +846,13 @@ These remain outside the immediate CombatAssist expansion sequence or require th
 - unrelated encounter, rest, resource, and roadmap modules;
 - broad plugin-loader work;
 - standard API_Meta diagnostic adoption, explicitly deferred in [Issue #50](https://github.com/Mord-Eagle/GameAssist/issues/50);
+- advanced TokenAssist marker expressions, attribute/controller/report semantics, visual and multi-sided controls, and persistent image/default-token writes, tracked in Issues [#42](https://github.com/Mord-Eagle/GameAssist/issues/42)-[#45](https://github.com/Mord-Eagle/GameAssist/issues/45);
 - condition changes and automatic turn advancement, which remain unscoped and deferred;
 - deferred CombatAssist read-only damage-change history for guided retcon review, tracked in [Issue #52](https://github.com/Mord-Eagle/GameAssist/issues/52);
 - CombatAssist held-action and Ready/Delay workflows, including a public `!Now` signal, tracked in [Issue #53](https://github.com/Mord-Eagle/GameAssist/issues/53);
+- optional NPCAssist encounter-summary handoff and Jukebox hooks, tracked in Issues [#56](https://github.com/Mord-Eagle/GameAssist/issues/56) and [#57](https://github.com/Mord-Eagle/GameAssist/issues/57);
+- handout indexing and manual-folder coexistence, tracked in [Issue #72](https://github.com/Mord-Eagle/GameAssist/issues/72); Roll20 does not expose a supported folder-write API;
+- broader EffectAssist effects only after their exact sheet or service adapters are designed, tracked in [Issue #82](https://github.com/Mord-Eagle/GameAssist/issues/82);
 - claims of complete TokenMod compatibility before command-family verification;
 - automatic deletion of legacy or unexpected persistent state.
 
@@ -557,3 +867,4 @@ When work advances:
 3. Mark a stage complete only after its acceptance criteria and Roll20 release gate pass.
 4. If scope changes materially, update both this roadmap and the relevant issue so neither becomes misleading.
 5. Keep release notes and the README aligned with what is implemented, not merely planned.
+
