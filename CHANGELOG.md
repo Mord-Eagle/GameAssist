@@ -6,6 +6,15 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ---
 
+## v2.0.0 One-Click Listing Layout - 2026-08-28
+
+- Replaces the second introductory paragraph with a compact **At a Glance** summary of modular controls, integrated tools, native Turn Tracker use, and guided workflows.
+- Highlights the home, help, and navigation commands in a short **Start here** callout. Command capitalization and space/hyphen guidance appears separately below it.
+- Gives documentation, installation testing, and support links their own labeled lines for easier scanning.
+- Preserves the AlmanacAssist Beta Testing notice, module descriptions, requirements, compatibility limits, all 622 commands, and legacy-version selection. The metadata remains ASCII-only; executable code and the GameAssist v2.0.0 version are unchanged.
+
+---
+
 ## v2.0.0 One-Click Launch Metadata - 2026-08-28
 
 ### Listing And Compatibility

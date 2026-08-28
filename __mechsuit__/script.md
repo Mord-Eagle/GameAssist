@@ -70,6 +70,8 @@ cannot be embedded in that artifact. It contains no campaign-specific records.
 
 <!--
 Notes & Comments
+Maintenance (v2.0.0, no semantic change): Replaced the second introductory paragraph with At a Glance, separated home/help/navigation links from command-format guidance, and labeled the support links. Existing feature limits, beta disclosure, metadata fields, command inventory, and ASCII delivery contract are unchanged.
+Prior notes:
 Changed (v2.0.0): Rebuilt the launch description as ASCII-only Markdown, added the AlmanacAssist Beta Testing notice, and selected four distinct legacy milestones while retaining published versions. Preserved all 622 commands, conflict notes, authorship, object-access declarations, and executable files.
 Decision log:
   CHOICE: Plain ASCII headings and punctuation; ALT: numeric HTML entities; REJECTED: avoid relying on a second rendering transformation for essential installation guidance.
