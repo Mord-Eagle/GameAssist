@@ -52,7 +52,7 @@ cannot be embedded in that artifact. It contains no campaign-specific records.
 - Regeneration: not applicable to the manifest. Preserve unrelated fields and all existing commands when updating the description.
 - Release file: `GameAssist.js`, synchronized byte-for-byte with `GameAssist` and `GameAssist-v2.0.0`.
 - Description: user-facing Markdown stored as one JSON string. Keep both the stored JSON and parsed description 7-bit ASCII; use ordinary punctuation and headings without decorative Unicode or Unicode escapes.
-- AlmanacAssist 2.0.5 is explicitly **Beta Testing**, optional, and disabled by default. This designation does not label the whole suite beta.
+- GameAssist v2.0.0 is explicitly **Beta Testing**. AlmanacAssist 2.0.5 is at the earlier **Alpha Testing** stage, optional, and disabled by default.
 - Preserve the complete command inventory and practical conflict notes. The listing highlights common commands; the manifest retains the detailed inventory.
 - Validate against Roll20's `script.json.schema`, parse the complete JSON, check version and script filename, reconcile advertised commands with the router, and compare all three release-file hashes.
 - JSON/schema checks and a local Markdown preview do not establish the appearance of the live One-Click listing.
@@ -70,6 +70,8 @@ cannot be embedded in that artifact. It contains no campaign-specific records.
 
 <!--
 Notes & Comments
+Changed (v2.0.0): Updated the listing for prospective users, designated the suite Beta Testing and AlmanacAssist Alpha Testing, and aligned the HealAssist summary with its automatic-application default. Removed installation-access explanations, mandatory smoke-test steps, private-roll implementation notes, managed-section warnings, and legacy-macro migration prose from the listing. Retained feature limits, attribution, ASCII formatting, all commands, and historical version choices. Detailed operation and testing guidance remain in their dedicated documents.
+Prior notes:
 Maintenance (v2.0.0, no semantic change): Replaced the second introductory paragraph with At a Glance, separated home/help/navigation links from command-format guidance, and labeled the support links. Existing feature limits, beta disclosure, metadata fields, command inventory, and ASCII delivery contract are unchanged.
 Prior notes:
 Changed (v2.0.0): Rebuilt the launch description as ASCII-only Markdown, added the AlmanacAssist Beta Testing notice, and selected four distinct legacy milestones while retaining published versions. Preserved all 622 commands, conflict notes, authorship, object-access declarations, and executable files.

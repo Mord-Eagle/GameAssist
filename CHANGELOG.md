@@ -6,6 +6,26 @@ This changelog is intentionally detailed. It records not only visible features, 
 
 ---
 
+## v2.0.0 Launch Copy And Healing Defaults - 2026-08-28
+
+### Testing Status And One-Click Presentation
+
+- Designates **GameAssist v2.0.0 as Beta Testing**, with **AlmanacAssist 2.0.5 in Alpha Testing**. These current designations supersede the earlier Almanac-only beta disclosure; previous dated entries remain historical records.
+- Rewrites the One-Click listing for prospective GMs. Removes already-satisfied access requirements, separate-player-install explanations, mandatory smoke-test steps, implementation-oriented safety summaries, generated-handout details, and legacy-macro migration prose. Reference and testing material remain in dedicated documentation.
+- Describes module benefits without implying a shared existing Mod setup. Keeps practical overlap notes, the CritAssist table requirements, supported-effect distinctions, and AttackAssist's current limits.
+- Removes the named Wayfarer template and unproven travel claims from the Almanac summary. Describes custom calendars and separately controlled systems without claiming complete travel acceptance.
+- Clarifies that 2024 character support is limited and feature-dependent, with broader support planned. WelcomeAssist describes manual and startup greetings without promising detection of each new game session.
+- Retains ASCII Markdown, all 622 command entries, the legacy-version selection, and attribution links. Corrects the report link and DebugTools emphasis and identifies DebugTools as intended for power users.
+
+### HealAssist 1.2.2
+
+- Changes `autoApply` from `false` to `true` for new configurations. After a supported action and recipients are selected, HealAssist rolls once and applies verified HP changes without requiring an additional review click.
+- Retains the GM's **Require Review** option through the control screen or `!Heal-Auto off`. Existing saved boolean choices are preserved, including configurations that previously saved `false`; malformed saved values still use review-first behavior. `!Heal-Auto on` enables automatic application in an existing campaign.
+- Keeps permission checks, private GM placement for hidden/NPC recipients, maximum-HP limits, stale-data rejection, one-use proposals, private failure notices, and verified rollback behavior unchanged. Automatic application does not spend spell slots, inventory items, or class resources.
+- Updates the module contract, inline rationale, manual, current version references, and focused healing checks. Historical executable versions and unrelated runtime sections are unchanged.
+
+---
+
 ## v2.0.0 One-Click Listing Layout - 2026-08-28
 
 - Replaces the second introductory paragraph with a compact **At a Glance** summary of modular controls, integrated tools, native Turn Tracker use, and guided workflows.

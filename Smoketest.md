@@ -1,10 +1,12 @@
 # GameAssist v2.0.0 Smoke Test and Troubleshooting Guide
 
+**GameAssist v2.0.0: Beta Testing. AlmanacAssist: Alpha Testing.**
+
 Use this guide after installing or updating GameAssist, before an important session, or while troubleshooting a feature.
 
-> **AlmanacAssist 2.0.5: Beta Testing.** All six Almanac systems are included, but the module starts disabled. Begin with its basic controls and the workflows your campaign uses; the expanded tests help investigate problems and establish broader beta coverage. Do not record an untested workflow as passed.
+> **AlmanacAssist 2.0.5: Alpha Testing.** All six Almanac systems are included, but the module starts disabled. Begin with its basic controls and the workflows your campaign uses; the expanded tests help investigate problems and establish broader alpha coverage. Do not record an untested workflow as passed.
 
-> This guide tests GameAssist v2.0.0. It covers suite-level GM/help navigation, the accepted 2014-sheet EffectAssist foundation and guarded Guidance candidate, guided HealAssist and AttackAssist workflows, AlmanacAssist beta checks, the shared HealthService foundation, optional GM-private PC health alerts, and private ConcentrationAssist HP-loss offers while retaining the established component checks and the v1.8.2 NPCAssist naming and Bloodied regressions.
+> This guide tests GameAssist v2.0.0. It covers suite-level GM/help navigation, the accepted 2014-sheet EffectAssist foundation and guarded Guidance candidate, guided HealAssist and AttackAssist workflows, AlmanacAssist alpha checks, the shared HealthService foundation, optional GM-private PC health alerts, and private ConcentrationAssist HP-loss offers while retaining the established component checks and the v1.8.2 NPCAssist naming and Bloodied regressions.
 
 The tests are organized by component. Each section explains:
 
@@ -300,7 +302,7 @@ Turn offers back on, disable HealthService, and repeat those two checks. The aut
 
 ## Focused v2.0.0 HealAssist Acceptance
 
-**What this proves:** HealAssist guides official-2014 normal or maximum healing from an authorized source, supports review or optional automatic application, and verifies every accepted write through HealthService.
+**What this proves:** HealAssist guides official-2014 normal or maximum healing from an authorized source, applies automatically by default or uses optional review, and verifies every accepted write through HealthService.
 
 **Why test it:** Healing combines player permissions, native target prompts, private NPC information, formula rules, maximum-HP limits, stale-button protection, and multi-target writes. A normal sheet roll does not prove those safeguards.
 
@@ -318,6 +320,12 @@ Prepare:
 - HealthService enabled and HealAssist enabled through `!ga-enable HealAssist`.
 
 Run `!Heal-GM`, `!Heal-Guide`, `!Heal-Status`, and `!Heal-Audit`. Pass when the Control Center is private, the Guide identifies the short path, Status reports HealthService available, and Audit explicitly says it is read-only.
+
+### Automatic Application Default
+
+For a new HealAssist configuration, `!Heal-Status` should show **Automatic**. Existing saved settings are retained, so record the current mode before testing and run `!Heal-Auto on` if needed. Choose a supported potion or spell, target a damaged PC, and verify that healing applies without an **Apply Healing** confirmation screen. `!ga-health recent` should identify a verified HealAssist operation, and HP must not exceed its maximum.
+
+Run `!Heal-Auto off` for the review-mode checks below. Confirm **Review first** appears in `!Heal-GM`. Restore your preferred mode at the end of this track.
 
 ### Player Heals a Visible PC
 
@@ -349,7 +357,7 @@ Run `!Heal-Results private` and repeat a small PC heal. Pass when no public comp
 4. Run `!Heal-Auto on`, damage the recipient again, and repeat one normal or maximum healing action.
 5. Pass when the verified HP change is applied immediately after recipient selection without an **Apply Healing** confirmation screen.
 6. Run `!ga-health recent` and confirm the newest entry identifies HealAssist as a verified healing writer.
-7. Restore the safer default with `!Heal-Auto off` and confirm `!Heal-GM` says **Review first**.
+7. Select `!Heal-Auto off` for the remaining review and stale-button checks; confirm `!Heal-GM` says **Review first**. Restore your preferred mode afterward; the new-configuration default is `!Heal-Auto on`.
 
 If an automatic application fails naturally, pass only when the GM receives a private explanation and no success message claims that HP changed. Do not manufacture a destructive failure in a live campaign.
 
@@ -383,7 +391,7 @@ Run `!Heal-Players off` as the GM. The player may still open guidance, but canno
 
 Disable HealthService. Pass when HealAssist also stops, reports the dependency through `!ga-config modules`, and unrelated modules remain available. Re-enable HealthService and HealAssist, then confirm one fresh healing workflow works without duplicate messages or writes.
 
-Restart the sandbox. Pass when settings persist, pending requests and confirmation buttons expire, no HP changes occur during startup, and a new workflow succeeds.
+Restart the sandbox. Pass when settings persist, including an explicit **Review first** choice, pending requests and confirmation buttons expire, no HP changes occur during startup, and a new workflow succeeds. Restore the pre-test mode or choose `!Heal-Auto on` for the default automatic workflow.
 
 ### Acceptance Record
 
@@ -392,9 +400,9 @@ Restart the sandbox. Pass when settings persist, pending requests and confirmati
 | GM controls, Guide, Status, Audit, and manual are readable and private where expected | ☐ Pass ☐ Fail |
 | One-recipient actions bypass the redundant count menu and a controlled player healer can target a visible non-controlled PC | ☐ Pass ☐ Fail |
 | Roll detail, formula, current/proposed/maximum HP, actual gain, and manual resource step are accurate | ☐ Pass ☐ Fail |
-| HP remains unchanged before confirmation and the accepted write has verified HealthService provenance | ☐ Pass ☐ Fail |
+| Review mode leaves HP unchanged before confirmation; both modes produce verified HealthService provenance | ☐ Pass ☐ Fail |
 | Maximum-HP cap and public/private result policy are correct | ☐ Pass ☐ Fail |
-| Maximum-healing formulas and optional automatic verified application are correct | ☐ Pass ☐ Fail |
+| Maximum-healing formulas, default automatic application, and optional review are correct | ☐ Pass ☐ Fail |
 | Bounded manual formula works and unsafe expressions are refused | ☐ Pass ☐ Fail |
 | Stale, reused, fabricated, expired, and wrong-player actions refuse without another write | ☐ Pass ☐ Fail |
 | NPC, hidden, GM-layer, and off-page requests remain private and GM-reviewed | ☐ Pass ☐ Fail |
@@ -770,15 +778,15 @@ For the stale-confirmation check:
 
 ## Focused v2.0.0 Complete AlmanacAssist Acceptance
 
-**Module status: Beta Testing.** This expanded track is retained for beta feedback and graduation; its title does not mean every case has already passed.
+**Module status: Alpha Testing.** This expanded track is retained for alpha feedback and graduation; its title does not mean every case has already passed.
 
 **What this proves:** AlmanacAssist 2.0.5 provides a usable live-session dashboard, direct weather and event palettes, reviewed pace-and-mileage travel with private encounter checks, a separate worldbuilding workspace, one coherent current-scene authority, and independently usable Time, Climate, Astronomy, Weather, Environment, and Rest systems. It also verifies prepared destinations, local temporal contexts, phenomena, presets, advanced Wayfarer editing, and WorldPack transfer without turning optional context into hidden prerequisites.
 
 **Why test it:** These checks verify the world controls a GM uses during play, the weather those choices produce, preserved campaign settings, and deliberate 2014-sheet rest writes.
 
-**Skip when:** A campaign that keeps AlmanacAssist disabled may skip its expanded workflow tests. For beta release checks, complete the master controls, Current Settings/location recall, and independent-toggle/reload checks below; test privacy, imports, and rest writes whenever those features are enabled. The remaining sections provide expanded beta coverage and troubleshooting. Record skipped or untested cases separately.
+**Skip when:** A campaign that keeps AlmanacAssist disabled may skip its expanded workflow tests. For AlmanacAssist alpha inclusion checks, complete the master controls, Current Settings/location recall, and independent-toggle/reload checks below; test privacy, imports, and rest writes whenever those features are enabled. The remaining sections provide expanded alpha coverage and troubleshooting. Record skipped or untested cases separately.
 
-**Verification record:** On 2026-08-27 the owner reported live Roll20 Almanac use acceptable for beta. The subsequent local regression sweep passed all 18 runs, including 493 focused checks: 195 Almanac regressions, 48 retained palette/location checks, 61 Current Settings checks, 133 expanded matrix/local HTML-boundary checks, 36 Wayfarer checks, and 20 interaction repairs. Structural validation confirmed 33 paired and nested MECHSUITS sections. The HTML fixture models link transport, not Roll20's actual renderer. Neither the local results nor the live-use report marks every expanded test below as passed.
+**Verification record:** On 2026-08-27 the owner reported focused live Roll20 Almanac use as working well enough for further testing; this was not a completed case-by-case acceptance inventory. The subsequent local regression sweep passed all 18 runs, including 493 focused checks: 195 Almanac regressions, 48 retained palette/location checks, 61 Current Settings checks, 133 expanded matrix/local HTML-boundary checks, 36 Wayfarer checks, and 20 interaction repairs. Structural validation confirmed 33 paired and nested MECHSUITS sections. The HTML fixture models link transport, not Roll20's actual renderer. Neither the local results nor the live-use report marks every expanded test below as passed.
 
 ### Preparation and Master Controls
 
@@ -841,7 +849,7 @@ Use a disposable campaign page and one linked official D&D 5E by Roll20 2014 PC 
 
 **Why:** Menus alone are not sufficient; the chosen place and season must affect the result.
 
-**Skip when:** Skip this advanced profile track when the campaign uses only Current Settings and saved locations. It remains part of expanded beta coverage; test it when using linked world profiles or investigating their weather influence.
+**Skip when:** Skip this advanced profile track when the campaign uses only Current Settings and saved locations. It remains part of expanded alpha coverage; test it when using linked world profiles or investigating their weather influence.
 
 Use a disposable location. Record its original setup before changing profiles. Start from the buttons on `!aa-gm`, not only typed commands, so the complete click path is tested.
 
@@ -1419,7 +1427,7 @@ This release test has two tracks:
 
 | Track | Starting point | Purpose |
 | --- | --- | --- |
-| **A. Clean installation** | No saved GameAssist state | Checks that v2.0.0 starts cleanly, EffectAssist creates source-aware records, HealAssist applies reviewed healing, AttackAssist submits guarded attacks, and the AlmanacAssist beta baseline works without harming unrelated modules. |
+| **A. Clean installation** | No saved GameAssist state | Checks that v2.0.0 starts cleanly, EffectAssist creates source-aware records, HealAssist applies automatic healing and supports optional review, AttackAssist submits guarded attacks, and the AlmanacAssist alpha baseline works without harming unrelated modules. |
 | **B. Upgrade** | A working v1.8.2 campaign | Proves existing configuration and runtime history survive the v2.0.0 state upgrade while all four new modules begin disabled. |
 
 Every acceptance check after the script is replaced must use v2.0.0.
@@ -1444,7 +1452,7 @@ Use a disposable campaign, or a campaign where disposable test tokens and test e
 5. Run the complete [Focused v2.0.0 EffectAssist Acceptance](#focused-v200-effectassist-acceptance) section. It may not be skipped for release approval.
 6. Run the complete [Focused v2.0.0 HealAssist Acceptance](#focused-v200-healassist-acceptance) section. It may not be skipped for release approval.
 7. Run the complete [Focused v2.0.0 AttackAssist Acceptance](#focused-v200-attackassist-acceptance) section. It may not be skipped for release approval.
-8. Run the beta baseline specified in [Focused v2.0.0 Complete AlmanacAssist Acceptance](#focused-v200-complete-almanacassist-acceptance). Record expanded workflow results and remaining beta findings separately; do not treat beta inclusion as full graduation.
+8. Run the alpha baseline specified in [Focused v2.0.0 Complete AlmanacAssist Acceptance](#focused-v200-complete-almanacassist-acceptance). Record expanded workflow results and remaining alpha findings separately; do not treat alpha inclusion as full graduation.
 9. Run the cross-component permission, duplicate-installation, and state-recovery checks.
 10. Restart the sandbox and repeat `!ga-status`, `!ga-config modules`, `!ga-health`, one marker change, `!Effect-Status`, `!Heal-Status`, `!Attack-Status`, and `!Almanac-Status`.
 
@@ -1457,7 +1465,7 @@ Use a disposable campaign, or a campaign where disposable test tokens and test e
 | Focused EffectAssist acceptance passes | ☐ Pass ☐ Fail |
 | Focused HealAssist acceptance passes | ☐ Pass ☐ Fail |
 | Focused AttackAssist acceptance passes | ☐ Pass ☐ Fail |
-| AlmanacAssist beta baseline passes; expanded results are recorded separately | ☐ Pass ☐ Fail |
+| AlmanacAssist alpha baseline passes; expanded results are recorded separately | ☐ Pass ☐ Fail |
 | Cross-component checks pass | ☐ Pass ☐ Fail |
 | Restart check preserves active effect records and Almanac state | ☐ Pass ☐ Fail |
 
@@ -1519,9 +1527,9 @@ Do not approve the release if an existing valid configuration, history record, o
 | NPCAssist | Death, revival, audit, history, buckets, and Arc menus work. | It combines HP events, markers, saved records, and handouts. | NPCAssist is disabled and will not be used. |
 | HPAssist | Qualifying NPC HP formulas roll without changing PCs or unlinked tokens. | Incorrect eligibility can damage token HP or create false history. | HPAssist is disabled and NPC HP is set another way. |
 | EffectAssist | The focused six-effect catalog coordinates player-safe casting, owned markers, concentration, and 2014-sheet rows without deleting unrelated state. | Effects combine several campaign surfaces, so authorization, ownership, and cleanup must be proven together. | Never for v2.0.0 release acceptance. |
-| HealAssist | Guided official-2014 healing rolls once, previews exact HP results, and writes only after fresh confirmation through HealthService. | Player permissions, private NPC data, stale buttons, maximum HP, and multi-target writes must be proven together. | Never for v2.0.0 release acceptance. |
+| HealAssist | Guided official-2014 healing rolls once and applies through HealthService by default; optional review previews exact HP results and requires confirmation. | Player permissions, private NPC data, stale buttons, maximum HP, and multi-target writes must be proven together. | Never for v2.0.0 release acceptance. |
 | AttackAssist | Guided official-2014 repeating attacks preserve exact rows, native targeting, familiar roll cards, and one-use submission without resolving damage. | Player control, hidden-target privacy, stale buttons, roll modes, and CritAssist delivery must be proven together. | Never for v2.0.0 release acceptance. |
-| AlmanacAssist - Beta Testing | The basic controls and enabled systems preserve valid state, privacy, and deliberate write boundaries. | All six systems are included as an optional beta; Rest performs guarded 2014-sheet writes. | Expanded tracks may be recorded as untested; the beta baseline is required when verifying release inclusion. |
+| AlmanacAssist - Alpha Testing | The basic controls and enabled systems preserve valid state, privacy, and deliberate write boundaries. | All six systems are included as an optional alpha; Rest performs guarded 2014-sheet writes. | Expanded tracks may be recorded as untested; the alpha baseline is required when verifying release inclusion. |
 | DebugTools | Dry runs remain non-destructive and `--apply` is explicit. | It verifies diagnostic safeguards and direct MarkerService access. | Normally skip; DebugTools is optional and disabled by default. |
 
 ---
@@ -1533,7 +1541,7 @@ GameAssist is ready for normal use when:
 - the Roll20 Mod sandbox reloads without a new GameAssist exception;
 - the Core System basic test passes;
 - MarkerService passes if ConditionAssist, TokenAssist, NPCAssist, ConcentrationAssist, or marker diagnostics will be used;
-- the required TurnTrackerService, InitiativeAssist, CombatAssist, WelcomeAssist, EffectAssist, HealAssist, and AttackAssist release checks pass; AlmanacAssist meets its explicitly labeled beta baseline, with expanded cases recorded as passed, failed, or untested;
+- the required TurnTrackerService, InitiativeAssist, CombatAssist, WelcomeAssist, EffectAssist, HealAssist, and AttackAssist release checks pass; AlmanacAssist meets its explicitly labeled alpha baseline, with expanded cases recorded as passed, failed, or untested;
 - every enabled module that matters to the coming session passes its basic test;
 - any skipped test is skipped for a stated reason, not because its result was unclear.
 
@@ -3804,7 +3812,7 @@ Record:
 
 ## 16. HealAssist
 
-**What this proves:** The healing catalog, private controls, review boundary, and verified HP application respond in a normal Roll20 session.
+**What this proves:** The healing catalog, private controls, default automatic application, optional review, and verified HP application respond in a normal Roll20 session.
 
 **Why test it:** HealAssist can appear healthy while a character-sheet field, target prompt, permission, or HealthService write still needs attention.
 
@@ -3823,7 +3831,7 @@ Damage a disposable linked official-2014 PC, then run:
 !Heal
 ```
 
-Choose one supported spell or potion, target the damaged PC, and review the result. Pass when HP remains unchanged until confirmation, the review shows the roll plus current/proposed/maximum HP, and one confirmation applies the reviewed value. `!ga-health recent` should identify HealAssist as a verified healing producer.
+Check `!Heal-Status` and note the saved mode. Run `!Heal-Auto on`, choose one supported spell or potion, and target the damaged PC. Pass when healing applies without a confirmation screen, does not exceed maximum HP, and `!ga-health recent` identifies HealAssist as a verified healing producer. Run `!Heal-Auto off` and repeat: HP must remain unchanged until confirmation, and the review must show the roll plus current/proposed/maximum HP. Restore your preferred mode afterward; new configurations default to Automatic.
 
 ### Expanded HealAssist Checks
 
@@ -3887,13 +3895,13 @@ Record:
 
 ## 18. AlmanacAssist
 
-**Module status: Beta Testing.** AlmanacAssist 2.0.5 is optional and starts disabled in GameAssist v2.0.0.
+**Module status: Alpha Testing.** AlmanacAssist 2.0.5 is optional and starts disabled in GameAssist v2.0.0.
 
 **What this proves:** The master controls can reach all six AlmanacAssist systems, each system reports its own state, and the module preserves deliberate boundaries between fictional time, descriptive context, and verified sheet changes.
 
 **Why test it:** AlmanacAssist 2.0.5 contains all six internal systems. A quick pass should catch missing command routes, disabled-system leakage, stale context, and unsafe rest behavior before game night.
 
-**Skip when:** Skip when AlmanacAssist will remain disabled in ordinary play. Do not skip this basic check when verifying the included beta for release; expanded coverage follows the focused track above.
+**Skip when:** Skip when AlmanacAssist will remain disabled in ordinary play. Do not skip this basic check when verifying the included alpha for release; expanded coverage follows the focused track above.
 
 ### Basic Check
 
@@ -3926,7 +3934,7 @@ Then advance one fictional day, generate weather, review Environment, and previe
 | **Environment** | Derive from weather, apply/clear an override, then run without Weather. | Context is descriptive and structured; override remains authoritative; no gameplay state changes. | Environment is intentionally off. |
 | **Rest** | Preview/confirm Short and Long Rest, test stale preview, invalid token, and optional Time advance. | Only controlled linked 2014 PCs qualify; exact verified fields change after confirmation; stale/invalid requests write nothing. | Rest is intentionally off; never skip for a reported sheet-write problem. |
 
-Use [Focused v2.0.0 Complete AlmanacAssist Acceptance](#focused-v200-complete-almanacassist-acceptance) for the required beta baseline and expanded troubleshooting. Completion of the whole track supports graduation from beta; untested cases must remain identified.
+Use [Focused v2.0.0 Complete AlmanacAssist Acceptance](#focused-v200-complete-almanacassist-acceptance) for the required alpha baseline and expanded troubleshooting. Completion of the whole track supports graduation from alpha; untested cases must remain identified.
 
 ### AlmanacAssist Failure Evidence
 

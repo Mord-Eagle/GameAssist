@@ -2,8 +2,8 @@
 ========================================
 GameAssist - Roll20 API Script
 Version: 2.0.0
-Last Updated: 2026-08-27 (America/New_York)
-Release scope: EffectAssist 2.5.4 duration-label repair, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.1 safe public result delivery, HealthService 1.1.1 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, InitiativeAssist 1.0.6 mixed-sheet actor repair, CombatAssist 1.2.1 encounter-ending repair, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist 2.0.5 layered Current Settings, saved-location snapshots, compact world controls, seasonal weather, and reviewed travel, and regression repairs across the v2.0.0 module suite.
+Last Updated: 2026-08-28 (America/New_York)
+Release scope: EffectAssist 2.5.4 duration-label repair, AttackAssist 1.1.0 crash-safe visible official-2014 roll submission, HealAssist 1.2.2 automatic verified healing with optional review and safe public results, HealthService 1.1.1 shared NPC HP-bar setup, SheetCapabilities 1.0.0 per-operation sheet contracts, TokenAssist 1.3.0 marker/controller/report expansion, InitiativeAssist 1.0.6 mixed-sheet actor repair, CombatAssist 1.2.1 encounter-ending repair, NPCAssist 1.5.0 encounter-summary handoff, handout identity/index support, AlmanacAssist 2.0.5 layered Current Settings, saved-location snapshots, compact world controls, seasonal weather, and reviewed travel, and regression repairs across the v2.0.0 module suite.
 Author: Mord Eagle
 License: MIT for original GameAssist code; see LICENSE and ATTRIBUTIONS.md
 Homepage: https://github.com/Mord-Eagle/GameAssist
@@ -28,7 +28,7 @@ calls GameAssist.enqueue(). This development package contains fifteen configurab
 - ConcentrationAssist 0.6.0 - Runs supported 2014 manual and private HP-loss-offered concentration checks, refuses unavailable save data instead of guessing, provides guided marker configuration, manages its configured marker, and exposes concentration lifecycle events.
 - NPCAssist 1.5.0 - Adds page-local NPC naming and GM-private Bloodied alerts to death markers, history, reports, audits, repair previews, Arc rosters, and optional CombatAssist encounter summaries on the shared NPC HP bar.
 - EffectAssist 2.5.4 - Coordinates compact catalog-driven effects, exact caster-and-recipient identity, retained GM requests, GameAssist-owned 2014-sheet modifiers, verified token-specific concentration, ownership-safe cleanup, provider-specific duration candidates, bounded 2014 Bless proposals, and guarded Guidance consumption.
-- HealAssist 1.2.1 - Guides verified 2014 normal or maximum healing with direct single-recipient targeting, optional automatic application, visible PC targeting, private GM requests, safe public announcements, and HealthService verification.
+- HealAssist 1.2.2 - Guides verified 2014 normal or maximum healing with direct single-recipient targeting, default automatic application and optional review, visible PC targeting, private GM requests, safe public announcements, and HealthService verification.
 - AttackAssist 1.1.0 - Guides authorized 2014 repeating attacks through direct visible targeting, default sheet-mode submission, optional GM-enabled roll review, complete prompt-safe Classic-sheet expansion, private GM placement, crash-safe inline-roll validation, and visible one-use native-template rolls without applying damage.
 - AlmanacAssist 2.0.5 - Provides compact Session controls and layered Current Settings with direct Climate and Biome choices, twelve ecoregion starters, optional geography/terrain/environment/hydrology/vegetation influences, visible seasonal weather calculations, and independent saved-location snapshots; retains named regions, reusable definitions, coherent scenes, reviewed travel with private encounter checks, phenomena, local time, advanced Wayfarer editing, WorldPacks, six independently controlled systems, and transactional rests.
 - HPAssist 0.3.0 - Rolls npc_hpformula and uses HealthService for verified writes to the selected shared NPC HP bar when available.
@@ -150,7 +150,7 @@ V2.0.0 FOUNDATION
 - Optional PC health alerts privately notify the GM only when a supported PC
   crosses an enabled 50%, 25%, or 10% health threshold; NPC alerts remain with NPCAssist.
 - HealAssist remains disabled until deliberately enabled. It uses HealthService
-  for reviewed official-2014 healing and verified HP application, and it never
+  for official-2014 healing with default automatic verified application and optional review, and it never
   spends slots, inventory, class resources, or temporary HP automatically.
 - AttackAssist remains disabled until deliberately enabled. It verifies stable
   official-2014 repeating-attack rows, preserves the sheet's stored formula and
@@ -256,7 +256,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
 //     │  └─ [GAMEASSIST:MODULES:DEBUGTOOLS]
 //     └─ [GAMEASSIST:BOOTSTRAP]
 // --- prose banner ---
-// Guarantee: GameAssist v2.0.0 runs policy, utilities, guarded core services including MarkerService, TurnTrackerService, SemanticEvents, and HealthService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/effect/healing/attack/almanac/gameplay modules, then bootstrap in the declared order. HealthService reports only verified supported HP transitions and refuses to guess damage causes, attackers, resistances, or temporary-HP interactions; its optional PC threshold consumer whispers only the GM. HealAssist guides an authorized 2014 healing roll through exact HP review and one-use verified application while refusing to infer or consume spell slots, items, features, or temporary HP. AttackAssist guides a verified 2014 repeating attack through authorized source selection, targeting, and one-use roll submission while refusing to apply damage or mutate combat state. EffectAssist may offer a bounded private GM proposal for an unambiguous official 2014 Bless card, but it refuses to infer recipients; after the GM chooses recipients, application follows the configured direct-apply or optional review workflow. It may also turn accepted CombatAssist progression and committed AlmanacAssist time into private GM duration candidates, but it refuses to end effects from elapsed time alone. AlmanacAssist owns its fictional time, climate, astronomy, weather, environment, and rest records without changing GameAssist real-world timestamps, NPCAssist Session dates, or CombatAssist timing. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing real-world times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
+// Guarantee: GameAssist v2.0.0 runs policy, utilities, guarded core services including MarkerService, TurnTrackerService, SemanticEvents, and HealthService, interfaces, independently lifecycle-managed condition/token/initiative/combat/welcome/effect/healing/attack/almanac/gameplay modules, then bootstrap in the declared order. HealthService reports only verified supported HP transitions and refuses to guess damage causes, attackers, resistances, or temporary-HP interactions; its optional PC threshold consumer whispers only the GM. HealAssist guides an authorized 2014 healing roll through exact HP validation and one-use verified application with optional review while refusing to infer or consume spell slots, items, features, or temporary HP. AttackAssist guides a verified 2014 repeating attack through authorized source selection, targeting, and one-use roll submission while refusing to apply damage or mutate combat state. EffectAssist may offer a bounded private GM proposal for an unambiguous official 2014 Bless card, but it refuses to infer recipients; after the GM chooses recipients, application follows the configured direct-apply or optional review workflow. It may also turn accepted CombatAssist progression and committed AlmanacAssist time into private GM duration candidates, but it refuses to end effects from elapsed time alone. AlmanacAssist owns its fictional time, climate, astronomy, weather, environment, and rest records without changing GameAssist real-world timestamps, NPCAssist Session dates, or CombatAssist timing. Branded module names own current state and controls while documented legacy names resolve through explicit compatibility aliases. NPCAssist may whisper the GM once when a living eligible NPC crosses to half HP or below without adding marker or history behavior. Human-facing real-world times use the validated campaign timezone while stored instants remain absolute. Secrets required: none. It refuses to emit player data outside Roll20 or override Roll20 global on/off handlers.
 
 // =============================
 // === GameAssist v2.0.0 ===
@@ -21650,33 +21650,35 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     // Section Title: Guided healing and verified HP application
     // -------------------------------------------------------------------------
     // mechsuit_section: { codename: "GAMEASSIST", area: "MODULES:HEALASSIST", title: "HealAssist",
-    //   guarantees: ["Official 2014-sheet healing uses short-lived source, target, roll, review, and one-use confirmation boundaries","Every accepted HP change uses HealthService provenance and verification; multi-target failures attempt verified rollback","Players may target visible supported PCs they do not control while NPC, hidden, and off-page placement remains GM-reviewed","Spell slots, class resources, temporary HP, damage causes, resistance, and unsupported sheet fields are never inferred or consumed"],
+    //   guarantees: ["Official 2014-sheet healing applies automatically by default after validated selection; optional review uses the same one-use write boundary","Every accepted HP change uses HealthService provenance and verification; multi-target failures attempt verified rollback","Players may target visible supported PCs they do not control while NPC, hidden, and off-page placement remains GM-reviewed","Spell slots, class resources, temporary HP, damage causes, resistance, and unsupported sheet fields are never inferred or consumed"],
     //   depends_on: ["[GAMEASSIST:POLICY]","[GAMEASSIST:APP:UTILS]","[GAMEASSIST:CORE:HEALTHSERVICE]","[GAMEASSIST:CORE:OBJECT]"],
     //   provides: ["GameAssist.HealAssist"], last_updated_version: "v2.0.0",
-    //   independent_versions: { module_version: "1.2.1", interaction_schema_version: 1 }, lifecycle: "active" }
+    //   independent_versions: { module_version: "1.2.2", interaction_schema_version: 1 }, lifecycle: "active" }
     // -------------------------------------------------------------------------
     // Narrative
     // HealAssist is a disabled-by-default HealthService client. It guides an authorized
     // healer through a bounded 2014 action or validated formula, visible recipients,
-    // one Roll20 roll, a complete HP preview, and an expiring confirmation. It owns no
+    // one Roll20 roll, and verified HP application, with a complete preview and expiring
+    // confirmation when the GM enables review. Saved GM choices are preserved. It owns no
     // HP listener and leaves every unrelated module and native sheet healing independent.
     // -------------------------------------------------------------------------
     GameAssist.register('HealAssist', function() {
         const MODULE_NAME = 'HealAssist';
-        const MODULE_VERSION = '1.2.1';
+        const MODULE_VERSION = '1.2.2';
         const INTERACTION_SCHEMA_VERSION = 1;
         const modState = GameAssist.getState(MODULE_NAME);
         modState.config = {
             enabled: false,
             allowPlayerHealing: true,
             resultAudience: 'public',
-            autoApply: false,
+            autoApply: true,
             ...modState.config
         };
         if (!['public', 'private'].includes(String(modState.config.resultAudience || '').toLowerCase())) {
             modState.config.resultAudience = 'public';
         }
         if (typeof modState.config.allowPlayerHealing !== 'boolean') modState.config.allowPlayerHealing = true;
+        // CHOICE: Preserve saved boolean choices; malformed saved values require review.
         if (typeof modState.config.autoApply !== 'boolean') modState.config.autoApply = false;
 
         const ACTIONS = Object.freeze({
@@ -22427,7 +22429,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         function showInfo(msg) {
             panel('What HealAssist Does', [
                 { label: 'Purpose', value: 'Provides deliberate 2014-sheet healing rolls and verified HP application without replacing native sheet healing.' },
-                { label: 'Safety', value: 'Every recipient is rechecked immediately before one-use confirmation. Multi-target writes stop on failure and attempt to restore earlier recipients.' },
+                { label: 'Safety', value: 'Every recipient is rechecked before HP changes. Multi-target writes stop on failure and attempt to restore earlier recipients.' },
                 { label: 'Boundaries', value: 'No automatic spell-card interpretation, slot use, inventory use, damage reversal, resistance, temporary HP, 2024 write adapter, or causal guesswork.' },
                 { label: 'Return', value: `${GameAssist.createButton('Healing Actions', '!Heal-Menu')} ${GameAssist.createButton('Quick Guide', '!Heal-Guide')}` }
             ], msg);
@@ -22462,16 +22464,18 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 `<p><strong>GameAssist v${_sanitize(VERSION)} | HealAssist ${MODULE_VERSION}</strong></p>`,
                 '<p>HealAssist provides a short healing workflow for supported official D&amp;D 5E by Roll20 (2014) characters. It uses HealthService for canonical HP reads, provenance, writes, events, and verification; it does not install another HP watcher.</p>',
                 '<h2>Quick Start</h2>',
-                '<ol><li>Run <code>!Heal</code>.</li><li>Choose a supported spell, potion, or simple manual formula.</li><li>Choose a linked 2014 healer you control.</li><li>Point at the visible recipient token or tokens.</li><li>Review the dice, current HP, proposed HP, maximum HP, and manual resource reminder.</li><li>Confirm once.</li></ol>',
+                '<ol><li>Run <code>!Heal</code>.</li><li>Choose a supported spell, potion, or simple manual formula.</li><li>Choose a linked 2014 healer you control.</li><li>Point at the visible recipient token or tokens.</li><li>Healing is rolled and applied automatically by default. If the GM enabled review, check the result and confirm once.</li></ol>',
+                '<h2>Automatic Application Or Review</h2>',
+                '<p>Automatic application is the default for a new HealAssist configuration. In <code>!Heal-GM</code>, choose <strong>Require Review</strong> to see the result before applying it, or <strong>Apply Automatically</strong> to restore the direct workflow. Existing saved choices are retained during upgrades. The same controls are available through <code>!Heal-Auto off</code> and <code>!Heal-Auto on</code>.</p>',
                 '<h2>Player And GM Roles</h2>',
                 '<p>Players may heal visible supported PCs without controlling the recipient token. NPC, GM-layer, hidden, and off-page placement remains a private GM review so NPC health is not exposed. The GM may lock player healing without disabling HealAssist.</p>',
                 '<h2>Supported Actions</h2>',
                 `<p>${Object.values(ACTIONS).map(action => `<strong>${_sanitize(action.name)}</strong>`).join(', ')}</p>`,
                 '<p>Spell actions ask for a verified slot level and, when needed, Wisdom, Charisma, or Intelligence. HealAssist reads that ability modifier from the selected 2014 source. Manual formulas accept one bounded form such as <code>2d8+5</code> or <code>15</code>.</p>',
                 '<h2>What Remains Manual</h2>',
-                '<p>HealAssist never spends a spell slot, removes a potion, consumes a class feature, applies temporary HP, interprets arbitrary spell cards, reverses damage, or adjudicates resistance. The review names the manual table step before HP changes.</p>',
+                '<p>HealAssist never spends a spell slot, removes a potion, consumes a class feature, applies temporary HP, interprets arbitrary spell cards, reverses damage, or adjudicates resistance. Resource use remains a separate character-sheet step whether healing applies automatically or after review.</p>',
                 '<h2>Transaction Safety</h2>',
-                '<p>Every recipient is re-read before confirmation. Stale and reused buttons make no change. Healing never raises a supported recipient above its maximum. If a later write in a multi-target action fails, HealAssist stops and attempts a verified rollback of earlier recipients.</p>',
+                '<p>Every recipient is re-read before HP changes, in automatic and review modes. Stale and reused buttons make no change. Healing never raises a supported recipient above its maximum. If a later write in a multi-target action fails, HealAssist stops and attempts a verified rollback of earlier recipients.</p>',
                 '<h2>Commands</h2>',
                 '<p><code>!Heal</code> or <code>!Heal-Menu</code> opens healing actions. <code>!Heal-GM</code> and <code>!Heal-DM</code> open private controls. Standard references are <code>!Heal-Guide</code>, <code>!Heal-Help</code>, <code>!Heal-Info</code>, <code>!Heal-Status</code>, <code>!Heal-Audit</code>, and <code>!Heal-Manual</code>. GM settings are <code>!Heal-Players on|off</code> and <code>!Heal-Results public|private</code>.</p>'
             ].join('');
@@ -22603,6 +22607,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
         teardown: () => GameAssist.HealAssist?._clearTransient?.()
     });
     // --- Notes & Comments ---
+    // Changed (v2.0.0): Advanced HealAssist to 1.2.2; new configurations default autoApply to true. Malformed saved values still require review. Existing boolean choices, optional review, one-use validation, GM-only private-target placement, and verified rollback are preserved. Rollback: use !Heal-Auto off to require review.
+    // Prior notes:
     // Changed (v2.0.0): Advanced HealAssist to 1.2.1; public completion emotes now fall back to the module speaker when the reviewed source token or represented character no longer exists.
     // Changed (v2.0.0): Advanced HealAssist to 1.2.0; actions with exactly one legal recipient now carry their target prompt from the action catalog and bypass the redundant recipient-count screen while retaining source authorization, private placement, review, automatic application, and legacy command paths.
     // Prior notes:
@@ -22613,6 +22619,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
     //   CHOICE: Use HealthService as the only HP read/write authority - ALT: add module-specific HP listeners and setters; REJECTED: duplicate engines would disagree and emit duplicate evidence.
     //   CHOICE: Permit players to target visible supported PCs they do not control while routing NPC and hidden work to the GM - ALT: grant direct player writes to every pointed token; REJECTED: NPC identity and HP must remain private and GM-authorized.
     //   CHOICE: Ask for slot level and healing ability, then read the selected 2014 ability modifier - ALT: infer class, prepared spell, slot use, or casting ability; REJECTED: multiclass and campaign rules make those guesses unsafe.
+    //   Prior decision (review-first workflow):
     //   CHOICE: Roll before the mutation review and consume confirmation once - ALT: roll again during apply; REJECTED: the GM and player must confirm the exact evidence that will be used.
     //   CHOICE: Put the one-recipient target query on the catalog action - ALT: show a count menu containing only Choose 1 Recipient; REJECTED: the extra screen cannot change a single-target action's legal scope.
     //   CHOICE: Revalidate every target before any write and roll back earlier recipients if a later write fails - ALT: accept partial multi-target healing silently; REJECTED: one reviewed action should not leave an unexplained half-applied result.
