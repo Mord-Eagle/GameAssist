@@ -4,7 +4,7 @@
 
 Use this guide after installing or updating GameAssist, before an important session, or while troubleshooting a feature.
 
-> **AlmanacAssist 2.0.5: Alpha Testing.** All six Almanac systems are included, but the module starts disabled. Begin with its basic controls and the workflows your campaign uses; the expanded tests help investigate problems and establish broader alpha coverage. Do not record an untested workflow as passed.
+> **AlmanacAssist 2.0.6: Alpha Testing.** All six Almanac systems are included, but the module starts disabled. Begin with its basic controls and the workflows your campaign uses; the expanded tests help investigate problems and establish broader alpha coverage. Do not record an untested workflow as passed.
 
 > This guide tests GameAssist v2.0.0. It covers suite-level GM/help navigation, the accepted 2014-sheet EffectAssist foundation and guarded Guidance candidate, guided HealAssist and AttackAssist workflows, AlmanacAssist alpha checks, the shared HealthService foundation, optional GM-private PC health alerts, and private ConcentrationAssist HP-loss offers while retaining the established component checks and the v1.8.2 NPCAssist naming and Bloodied regressions.
 
@@ -19,6 +19,58 @@ The tests are organized by component. Each section explains:
 Run commands one at a time. A multi-line command block is a checklist, not a single block to paste into Roll20 chat.
 
 > Use a disposable page and test tokens for anything that changes HP, markers, handouts, saved history, or module state.
+
+---
+
+## Focused v2.0.0 Post-Review Regression Checks
+
+These checks cover the shared NPC HP-bar, relative marker-count, and single-use rest repairs. Run the relevant check after changing MarkerService, HealthService, InitiativeAssist, TokenAssist, or AlmanacAssist.
+
+### Initiative Uses The Shared NPC HP Bar
+
+**What this proves:** InitiativeAssist classifies living and dead NPCs from the current bar selected through HealthService, rather than always consulting Bar 1.
+
+**Why test it:** A stale value in another bar must not exclude a living NPC or reroll a defeated one.
+
+**Skip when:** Skip only when InitiativeAssist is disabled and the campaign never uses its roster or reroll controls. Do not skip after changing the shared HP bar.
+
+1. Use two disposable linked NPC tokens already in the Turn Tracker. Remove their death markers temporarily.
+2. Give both tokens misleading positive values in Bar 1.
+3. Run `!ga-health bars` and choose Bar 2 or Bar 3.
+4. Put one NPC above 0 on the chosen bar and the other at 0.
+5. Run `!Init-Status`, then `!Init-RR`.
+
+**Pass when:** The status treats only the positive-HP NPC as eligible, the reroll changes only that NPC's initiative, and the defeated NPC, round counters, custom entries, and unrelated rows remain unchanged. Restore the campaign's normal HP bar and marker state afterward.
+
+### Relative Marker Counts Preserve Their Sign
+
+**What this proves:** Relative marker subtraction clamps to the configured minimum without turning a negative result into a positive count.
+
+**Why test it:** A command that subtracts marker counts must never increase them.
+
+**Skip when:** Skip only when MarkerService and TokenAssist are both disabled and the campaign uses no GameAssist marker expressions.
+
+On a disposable selected token, add numbered `red@2` and an unrelated marker, then run:
+
+```roll20chat
+!ta-set statusmarkers|red:-5:0:9
+```
+
+**Pass when:** Red becomes `red@0`, the unrelated marker remains unchanged, and no `red@3` result appears. Repeat with `red:-5:2:7`; pass when Red clamps to `red@2`.
+
+### Rest Confirmation Is Single Use
+
+**What this proves:** A rest confirmation cannot be replayed after writing begins, whether the transaction succeeds or reports a failure.
+
+**Why test it:** A reused HealthService operation must not make rolled-back HP appear successfully restored.
+
+**Skip when:** Skip when AlmanacAssist or RestAlmanac is disabled. Use only a disposable official 2014 PC.
+
+1. Give the test PC reduced HP, spent Hit Dice, and one or more spent spell slots.
+2. Prepare a Long Rest preview and click **Complete Rest** once.
+3. After the result appears, click the same **Complete Rest** button again.
+
+**Pass when:** A successful first confirmation records and applies the rest exactly once; the second click says the preview expired or was already used and changes nothing. If the first confirmation reports a rejected sheet or time write, it offers **Prepare New Preview**, records no completed rest, rolls back completed writes where possible, and the old button remains unusable.
 
 ---
 
@@ -780,7 +832,7 @@ For the stale-confirmation check:
 
 **Module status: Alpha Testing.** This expanded track is retained for alpha feedback and graduation; its title does not mean every case has already passed.
 
-**What this proves:** AlmanacAssist 2.0.5 provides a usable live-session dashboard, direct weather and event palettes, reviewed pace-and-mileage travel with private encounter checks, a separate worldbuilding workspace, one coherent current-scene authority, and independently usable Time, Climate, Astronomy, Weather, Environment, and Rest systems. It also verifies prepared destinations, local temporal contexts, phenomena, presets, advanced Wayfarer editing, and WorldPack transfer without turning optional context into hidden prerequisites.
+**What this proves:** AlmanacAssist 2.0.6 provides a usable live-session dashboard, direct weather and event palettes, reviewed pace-and-mileage travel with private encounter checks, a separate worldbuilding workspace, one coherent current-scene authority, independently usable Time, Climate, Astronomy, Weather, Environment, and Rest systems, and single-use rest confirmations. It also verifies prepared destinations, local temporal contexts, phenomena, presets, advanced Wayfarer editing, and WorldPack transfer without turning optional context into hidden prerequisites.
 
 **Why test it:** These checks verify the world controls a GM uses during play, the weather those choices produce, preserved campaign settings, and deliberate 2014-sheet rest writes.
 
@@ -3928,11 +3980,11 @@ Record:
 
 ## 18. AlmanacAssist
 
-**Module status: Alpha Testing.** AlmanacAssist 2.0.5 is optional and starts disabled in GameAssist v2.0.0.
+**Module status: Alpha Testing.** AlmanacAssist 2.0.6 is optional and starts disabled in GameAssist v2.0.0.
 
 **What this proves:** The master controls can reach all six AlmanacAssist systems, each system reports its own state, and the module preserves deliberate boundaries between fictional time, descriptive context, and verified sheet changes.
 
-**Why test it:** AlmanacAssist 2.0.5 contains all six internal systems. A quick pass should catch missing command routes, disabled-system leakage, stale context, and unsafe rest behavior before game night.
+**Why test it:** AlmanacAssist 2.0.6 contains all six internal systems. A quick pass should catch missing command routes, disabled-system leakage, stale context, and unsafe rest behavior before game night.
 
 **Skip when:** Skip when AlmanacAssist will remain disabled in ordinary play. Do not skip this basic check when verifying the included alpha for release; expanded coverage follows the focused track above.
 
