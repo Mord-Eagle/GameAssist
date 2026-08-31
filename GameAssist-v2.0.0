@@ -24968,7 +24968,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             // reconstructing a plausible-looking older branch.
             const storedWorld = sceneRecord(runtime.world) ? runtime.world : {};
             const worldRuntimeSchema = Number(storedWorld.schemaVersion || 0);
-            const worldKnown = ['schemaVersion', 'recentLocationIds', 'revision', 'destinationGrants', 'travel', 'phenomenonGrants', 'activePhenomena', 'phenomenaHistory', 'presetGrants'];
+            const worldKnown = ['schemaVersion', 'recentLocationIds', 'revision', 'destinationGrants', 'travel', 'phenomenonGrants', 'activePhenomena', 'phenomenaHistory', 'presetGrants', 'currentSettings'];
             runtime.world = Number.isFinite(worldRuntimeSchema) && worldRuntimeSchema > WORLD_RUNTIME_SCHEMA_VERSION
                 ? storedWorld
                 : {
@@ -24982,7 +24982,8 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                     phenomenonGrants: boundedWorldGrantMap(storedWorld.phenomenonGrants, POLICY.almanac.phenomenonGrantLimit),
                     activePhenomena: boundedActivePhenomena(storedWorld.activePhenomena),
                     phenomenaHistory: (Array.isArray(storedWorld.phenomenaHistory) ? storedWorld.phenomenaHistory : []).filter(sceneRecord).slice(-POLICY.almanac.phenomenonHistoryLimit).map(copy),
-                    presetGrants: boundedWorldGrantMap(storedWorld.presetGrants, POLICY.almanac.presetGrantLimit)
+                    presetGrants: boundedWorldGrantMap(storedWorld.presetGrants, POLICY.almanac.presetGrantLimit),
+                    currentSettings: (storedWorld.currentSettings && typeof storedWorld.currentSettings === 'object' ? storedWorld.currentSettings : { schemaVersion: 1, presetId: null, regionId: null, baseClimateRegionId: null, biomeId: null, ecoregionId: null, geographyId: null, temperatureBias: 0, humidityBias: 0, precipitationBias: 0, windBias: 0, ground: null, water: null, visibility: null, environmentName: null, elevation: null, geology: null, hydrology: null, terrain: null, landscape: null, habitat: null, microhabitat: null, locale: null, flora: null, fauna: null, soil: null, canopy: null, magicalInfluence: null, wizardMode: 'basic' })
                 };
             return runtime;
         }
@@ -33462,7 +33463,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
                 ? (noLocations
                     ? `${GameAssist.createButton(activeWorld ? 'Create First Location' : 'Create a Location', '!aa-world add location --name "?{Location name|Starting Location}"')} ${GameAssist.createButton('Choose a Starter World', '!aa-world starters')} ${GameAssist.createButton('Install Full WorldPack', '!aa-worldpacks library')}`
                     : `${chooseAreaAction} ${GameAssist.createButton('Choose Any Location', '!aa-location')} ${GameAssist.createButton('Open Current Scene', '!aa-scene')}`)
-                : `${GameAssist.createButton('Area Brief', `!aa-location view --id ${scene.location.id}`)} ${GameAssist.createButton('Current Scene', '!aa-scene')} ${scene.travel ? GameAssist.createButton('Open Journey', '!aa-travel') : GameAssist.createButton('Plan Journey', '!aa-travel')} ${scene.travel ? '' : GameAssist.createButton('Change Area', '!aa-location')} ${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')}`.trim();
+                : `${GameAssist.createButton('Area Brief', `!aa-location view --id ${scene.location.id}`)} ${GameAssist.createButton('Current Scene', '!aa-scene')} ${scene.travel ? GameAssist.createButton('Open Journey', '!aa-travel') : GameAssist.createButton('Plan Journey', '!aa-travel')} ${scene.travel ? '' : GameAssist.createButton('Change Area', '!aa-location')} ${GameAssist.createButton('Location Builder', '!aa-current')} ${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Phenomena', '!aa-phenomena')}`.trim();
             sendPanel(msg, 'Almanac Home — Current World', [
                 { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
                 { label: 'Current World', value: sceneOverview(scene) },
@@ -36733,6 +36734,1676 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             return matches.length === 1 ? matches[0] : null;
         }
 
+        // === Location Builder / Guided Wizard - Causal Chain Implementation ===
+        // Canonical ordered vocabulary: World/Plane → Continent/Realm → Region → Climate Zone → Biome → Ecoregion → Geographic Area → Landscape → Terrain/Landform → Habitat → Microhabitat → Locale
+        // Geography umbrella: Region, Geographic Area, Landscape, Terrain, Landform, Elevation, Geology, Hydrology
+        // Environmental properties attach to relevant node, not forced hierarchy
+        // Causal resolution: 1 World/Planar Rules → 2 Astronomy → 3 Temporal → 4 Spatial → 5 Physical Geography → 6 Climate Baseline → 7 Seasonal State → 8 Local Environmental Profile → 9 Weather → 10 Surface/Ground → 11 Illumination & Visibility → 12 Travel → 13 Ecological → 14 Final Scene
+
+        const CURRENT_SETTINGS_PRESETS = Object.freeze([
+            { id: 'temperate-coastal', name: 'Temperate Coastal', description: 'Cool, damp, sheltered. Mild summers, cool winters, frequent drizzle.', temperatureBias: -2, humidityBias: 12, precipitationBias: 15, windBias: 4, ground: 'Firm sand and pebble', water: 'Tidal saltwater nearby', visibility: 'Clear to misty', environmentName: 'Coastal Strand', climateTag: 'coastal', biomeTag: 'temperate', geographyTag: 'coastal', tags: ['coastal','temperate'] },
+            { id: 'temperate-forest', name: 'Temperate Forest', description: 'Moderate, shaded, loamy. Dense canopy, rich undergrowth.', temperatureBias: 0, humidityBias: 8, precipitationBias: 10, windBias: -2, ground: 'Loam and leaf litter', water: 'Seasonal streams', visibility: 'Canopy-filtered', environmentName: 'Forest Clearing', climateTag: 'temperate', biomeTag: 'forest', geographyTag: 'forest', tags: ['forest','temperate'] },
+            { id: 'temperate-grassland', name: 'Temperate Grassland', description: 'Open, breezy, fertile. Wide horizons, tall grasses.', temperatureBias: 2, humidityBias: -2, precipitationBias: -5, windBias: 6, ground: 'Turf and topsoil', water: 'Scarce surface water', visibility: 'Open', environmentName: 'Grassy Plain', climateTag: 'temperate', biomeTag: 'grassland', geographyTag: 'plain', tags: ['plain','temperate'] },
+            { id: 'temperate-mountain', name: 'Temperate Mountain', description: 'Cool, rugged, exposed. Thin air, rocky slopes.', temperatureBias: -8, humidityBias: -5, precipitationBias: 5, windBias: 10, ground: 'Rocky slope', water: 'Snowmelt streams', visibility: 'Wide but weather-prone', environmentName: 'Mountain Slope', climateTag: 'mountain', biomeTag: 'mountain', geographyTag: 'mountain', tags: ['mountain','temperate'] },
+            { id: 'arid-desert', name: 'Arid Desert', description: 'Hot, dry, exposed. Scorching days, cold nights.', temperatureBias: 18, humidityBias: -30, precipitationBias: -25, windBias: 5, ground: 'Sand and hardpan', water: 'Scarce', visibility: 'Clear and glaring', environmentName: 'Desert Dune', climateTag: 'desert', biomeTag: 'desert', geographyTag: 'desert', tags: ['desert','arid'] },
+            { id: 'arid-savanna', name: 'Arid Savanna', description: 'Hot, dry, open woodland. Sparse trees, seasonal rain.', temperatureBias: 12, humidityBias: -15, precipitationBias: -10, windBias: 4, ground: 'Dry soil and scrub', water: 'Seasonal waterholes', visibility: 'Open with scattered trees', environmentName: 'Savanna', climateTag: 'savanna', biomeTag: 'savanna', geographyTag: 'plain', tags: ['savanna','arid'] },
+            { id: 'arid-canyon', name: 'Arid Canyon', description: 'Hot, sheltered, rocky. Deep cuts, flash flood risk.', temperatureBias: 10, humidityBias: -10, precipitationBias: -15, windBias: -3, ground: 'Sandstone and gravel', water: 'Flash flood channels', visibility: 'Confined', environmentName: 'Canyon Floor', climateTag: 'desert', biomeTag: 'canyon', geographyTag: 'canyon', tags: ['canyon','desert'] },
+            { id: 'tropical-rainforest', name: 'Tropical Rainforest', description: 'Hot, humid, dense. Daily rain, thick canopy.', temperatureBias: 16, humidityBias: 25, precipitationBias: 35, windBias: -4, ground: 'Muddy and root-tangled', water: 'Abundant streams', visibility: 'Dense canopy', environmentName: 'Rainforest Understory', climateTag: 'tropical', biomeTag: 'rainforest', geographyTag: 'forest', tags: ['rainforest','tropical'] },
+            { id: 'tropical-swamp', name: 'Tropical Swamp', description: 'Hot, humid, waterlogged. Still water, insects.', temperatureBias: 14, humidityBias: 30, precipitationBias: 30, windBias: -6, ground: 'Peat and standing water', water: 'Swamp water', visibility: 'Foggy and close', environmentName: 'Swamp Mire', climateTag: 'swamp', biomeTag: 'swamp', geographyTag: 'wetland', tags: ['swamp','tropical'] },
+            { id: 'tropical-coastal', name: 'Tropical Coastal', description: 'Hot, humid, breezy coast. Warm sea, afternoon storms.', temperatureBias: 15, humidityBias: 20, precipitationBias: 25, windBias: 8, ground: 'White sand', water: 'Warm saltwater', visibility: 'Hazy', environmentName: 'Tropical Beach', climateTag: 'tropical', biomeTag: 'coastal', geographyTag: 'coastal', tags: ['coastal','tropical'] },
+            { id: 'alpine-high', name: 'Alpine High', description: 'Cold, thin, exposed. Snowfields, high winds.', temperatureBias: -20, humidityBias: -10, precipitationBias: 10, windBias: 15, ground: 'Snow and rock', water: 'Glacial melt', visibility: 'Wide but storm-prone', environmentName: 'Alpine Ridge', climateTag: 'alpine', biomeTag: 'alpine', geographyTag: 'mountain', tags: ['alpine','mountain'] },
+            { id: 'arctic-tundra', name: 'Arctic Tundra', description: 'Freezing, dry, windswept. Permafrost, low scrub.', temperatureBias: -28, humidityBias: -15, precipitationBias: -10, windBias: 12, ground: 'Frozen peat', water: 'Ice-locked', visibility: 'Open and blinding', environmentName: 'Tundra Flat', climateTag: 'arctic', biomeTag: 'tundra', geographyTag: 'plain', tags: ['tundra','arctic'] },
+            { id: 'arctic-coastal', name: 'Arctic Coastal', description: 'Freezing, damp, foggy coast. Ice floes, sea fog.', temperatureBias: -22, humidityBias: 5, precipitationBias: 5, windBias: 10, ground: 'Ice and shingle', water: 'Icy seawater', visibility: 'Foggy', environmentName: 'Icy Shore', climateTag: 'arctic', biomeTag: 'coastal', geographyTag: 'coastal', tags: ['coastal','arctic'] },
+            { id: 'subterranean-cave', name: 'Subterranean Cave', description: 'Cool, damp, dark. Echoing stone, dripping water.', temperatureBias: -4, humidityBias: 15, precipitationBias: 0, windBias: -10, ground: 'Stone and dust', water: 'Drip pools', visibility: 'Dark', environmentName: 'Cave Chamber', climateTag: 'cave', biomeTag: 'cave', geographyTag: 'cave', tags: ['cave','underground'] },
+            { id: 'subterranean-deep', name: 'Subterranean Deep', description: 'Warm, humid, oppressive deep. Geothermal vents.', temperatureBias: 6, humidityBias: 20, precipitationBias: 0, windBias: -12, ground: 'Warm stone', water: 'Hot springs', visibility: 'Steam-obscured', environmentName: 'Deep Cavern', climateTag: 'cave', biomeTag: 'cave', geographyTag: 'cave', tags: ['cave','deep'] },
+            { id: 'volcanic-wastes', name: 'Volcanic Wastes', description: 'Hot, dry, ash-choked. Lava fields, sulfurous air.', temperatureBias: 22, humidityBias: -20, precipitationBias: -20, windBias: 6, ground: 'Ash and basalt', water: 'None', visibility: 'Ash-hazy', environmentName: 'Lava Field', climateTag: 'volcanic', biomeTag: 'volcanic', geographyTag: 'volcanic', tags: ['volcanic','wastes'] },
+            { id: 'feywild-enchanted', name: 'Feywild Enchanted', description: 'Mild, vibrant, ever-changing. Magic in the air.', temperatureBias: 4, humidityBias: 10, precipitationBias: 12, windBias: 2, ground: 'Soft moss and flowers', water: 'Crystal streams', visibility: 'Glimmering', environmentName: 'Enchanted Glade', climateTag: 'fey', biomeTag: 'forest', geographyTag: 'feywild', tags: ['fey','enchanted'] },
+            { id: 'shadowfell-gloom', name: 'Shadowfell Gloom', description: 'Cold, bleak, oppressive. Dim light, muted colors.', temperatureBias: -6, humidityBias: 5, precipitationBias: 5, windBias: -2, ground: 'Grey dust', water: 'Stagnant pools', visibility: 'Dim', environmentName: 'Gloomy Moor', climateTag: 'shadow', biomeTag: 'moor', geographyTag: 'shadowfell', tags: ['shadow','gloom'] }
+        ]);
+
+        function normalizeCurrentSettings(raw) {
+            const src = raw && typeof raw === 'object' ? raw : {};
+            return {
+                schemaVersion: 1,
+                presetId: typeof src.presetId === 'string' ? src.presetId : null,
+                regionId: typeof src.regionId === 'string' ? src.regionId : null,
+                baseClimateRegionId: typeof src.baseClimateRegionId === 'string' ? src.baseClimateRegionId : (typeof src.climateId === 'string' ? src.climateId : null),
+                biomeId: typeof src.biomeId === 'string' ? src.biomeId : null,
+                ecoregionId: typeof src.ecoregionId === 'string' ? src.ecoregionId : null,
+                geographyId: typeof src.geographyId === 'string' ? src.geographyId : null,
+                temperatureBias: Number.isFinite(Number(src.temperatureBias)) ? Number(src.temperatureBias) : 0,
+                humidityBias: Number.isFinite(Number(src.humidityBias)) ? Number(src.humidityBias) : 0,
+                precipitationBias: Number.isFinite(Number(src.precipitationBias)) ? Number(src.precipitationBias) : 0,
+                windBias: Number.isFinite(Number(src.windBias)) ? Number(src.windBias) : 0,
+                ground: typeof src.ground === 'string' ? src.ground : null,
+                water: typeof src.water === 'string' ? src.water : null,
+                visibility: typeof src.visibility === 'string' ? src.visibility : null,
+                environmentName: typeof src.environmentName === 'string' ? src.environmentName : null,
+                elevation: typeof src.elevation === 'string' ? src.elevation : null,
+                geology: typeof src.geology === 'string' ? src.geology : null,
+                hydrology: typeof src.hydrology === 'string' ? src.hydrology : null,
+                terrain: typeof src.terrain === 'string' ? src.terrain : null,
+                landscape: typeof src.landscape === 'string' ? src.landscape : null,
+                habitat: typeof src.habitat === 'string' ? src.habitat : null,
+                microhabitat: typeof src.microhabitat === 'string' ? src.microhabitat : null,
+                locale: typeof src.locale === 'string' ? src.locale : null,
+                flora: typeof src.flora === 'string' ? src.flora : null,
+                fauna: typeof src.fauna === 'string' ? src.fauna : null,
+                soil: typeof src.soil === 'string' ? src.soil : null,
+                canopy: typeof src.canopy === 'string' ? src.canopy : null,
+                magicalInfluence: typeof src.magicalInfluence === 'string' ? src.magicalInfluence : null,
+                aspect: typeof src.aspect === 'string' ? src.aspect : null,
+                exposure: typeof src.exposure === 'string' ? src.exposure : null,
+                distanceFromCoast: typeof src.distanceFromCoast === 'string' ? src.distanceFromCoast : null,
+                roadQuality: typeof src.roadQuality === 'string' ? src.roadQuality : null,
+                difficulty: typeof src.difficulty === 'string' ? src.difficulty : null,
+                wizardMode: ['basic','intermediate','advanced'].includes(String(src.wizardMode)) ? String(src.wizardMode) : 'basic'
+            };
+        }
+
+        function ensureCurrentSettingsRuntime() {
+            const runtime = ensureAlmanacRuntime();
+            if (!runtime.world) runtime.world = {};
+            if (!runtime.world.currentSettings || typeof runtime.world.currentSettings !== 'object') {
+                runtime.world.currentSettings = normalizeCurrentSettings({});
+            } else {
+                runtime.world.currentSettings = normalizeCurrentSettings(runtime.world.currentSettings);
+            }
+            return runtime.world.currentSettings;
+        }
+
+        function worldConfigResultForCurrent() {
+            try { return worldConfigResult(modState.config.world, { persist: false }); } catch(e) { return { ok: false, config: null }; }
+        }
+
+        function currentSettingsClimateRegion(requestedId, climateConfig) {
+            try {
+                const cfg = climateConfig || normalizeClimateConfig({}, { persist: false });
+                const regions = cfg.regions || [];
+                const key = String(requestedId||'').trim().toLowerCase();
+                if (!key) return null;
+                const found = regions.find(r => String(r.id).toLowerCase() === key || String(r.name).toLowerCase() === key);
+                return found || null;
+            } catch(e) { return null; }
+        }
+
+        function builtInEcoregionProfile(id) {
+            try {
+                const all = (modState.config.world?.ecoregions || []).concat([]);
+                const found = all.find(e => String(e.id).toLowerCase() === String(id).toLowerCase());
+                if (found) return found;
+                return { id, name: id, temperatureBias: 0, humidityBias: 0, precipitationBias: 0, windBias: 0, tags: [] };
+            } catch(e) { return { id, name: id, temperatureBias: 0, humidityBias: 0, precipitationBias: 0, windBias: 0, tags: [] }; }
+        }
+
+        function worldRecordByReferenceSafe(records, id) {
+            try { return worldRecordByReference(records, id); } catch(e) { return null; }
+        }
+
+        // Fully Scientific World Engine Matrices — built directly into code
+        // Governing principle: Generate causes before consequences, resolve shared facts once
+
+        // 1. Elevation Matrix — lapse rate 3.56°F per 1000 ft (6.5°C/km)
+        const ELEVATION_MATRIX = Object.freeze([
+            Object.freeze({ id: 'below-sea', name: 'Below Sea Level', minFt: -1000, maxFt: 0, avgFt: -100, lapseF: 2, pressureFactor: 1.05, oxygenFactor: 1.02, description: 'Depressed basin, warmer, higher pressure, often saline' }),
+            Object.freeze({ id: 'sea-level', name: 'Sea Level (0-100 ft)', minFt: 0, maxFt: 100, avgFt: 50, lapseF: 0, pressureFactor: 1.0, oxygenFactor: 1.0, description: 'Coastal baseline' }),
+            Object.freeze({ id: 'low', name: 'Low (0-500 ft)', minFt: 0, maxFt: 500, avgFt: 250, lapseF: -0.9, pressureFactor: 0.99, oxygenFactor: 0.99, description: 'Lowlands, fertile, warm' }),
+            Object.freeze({ id: 'low-moderate', name: 'Low-Moderate (500-1000 ft)', minFt: 500, maxFt: 1000, avgFt: 750, lapseF: -2.7, pressureFactor: 0.97, oxygenFactor: 0.97, description: 'Rolling hills' }),
+            Object.freeze({ id: 'moderate', name: 'Moderate (1000-2000 ft)', minFt: 1000, maxFt: 2000, avgFt: 1500, lapseF: -5.3, pressureFactor: 0.94, oxygenFactor: 0.94, description: 'Uplands, cooler, moderate snow' }),
+            Object.freeze({ id: 'high-moderate', name: 'High-Moderate (2000-3500 ft)', minFt: 2000, maxFt: 3500, avgFt: 2750, lapseF: -9.8, pressureFactor: 0.90, oxygenFactor: 0.90, description: 'Highlands, cold, coniferous' }),
+            Object.freeze({ id: 'high', name: 'High (3500-6000 ft)', minFt: 3500, maxFt: 6000, avgFt: 4750, lapseF: -16.9, pressureFactor: 0.83, oxygenFactor: 0.83, description: 'Montane, subalpine, thin air' }),
+            Object.freeze({ id: 'alpine', name: 'Alpine (6000-9000 ft)', minFt: 6000, maxFt: 9000, avgFt: 7500, lapseF: -26.7, pressureFactor: 0.74, oxygenFactor: 0.74, description: 'Alpine, treeline, permanent snow possible' }),
+            Object.freeze({ id: 'high-alpine', name: 'High Alpine (9000-14000 ft)', minFt: 9000, maxFt: 14000, avgFt: 11500, lapseF: -40.9, pressureFactor: 0.63, oxygenFactor: 0.63, description: 'High alpine, permanent snow, low oxygen' }),
+            Object.freeze({ id: 'extreme', name: 'Extreme (14000+ ft)', minFt: 14000, maxFt: 30000, avgFt: 18000, lapseF: -64.1, pressureFactor: 0.50, oxygenFactor: 0.50, description: 'Death zone, uninhabitable without magic' }),
+            Object.freeze({ id: 'coastal-lowland', name: 'Coastal Lowland', minFt: 0, maxFt: 300, avgFt: 100, lapseF: -0.3, pressureFactor: 1.0, oxygenFactor: 1.0, description: 'Coastal, maritime, high humidity' }),
+            Object.freeze({ id: 'mountain-valley', name: 'Mountain Valley', minFt: 3000, maxFt: 7000, avgFt: 5000, lapseF: -17.8, pressureFactor: 0.82, oxygenFactor: 0.82, description: 'Valley, cold air pooling, inversion possible' })
+        ]);
+
+        // 2. Latitude Matrix — affects base temp, daylight variation, prevailing winds
+        const LATITUDE_MATRIX = Object.freeze([
+            Object.freeze({ id: 'polar-north', name: 'Polar North (80-90°N)', minLat: 80, maxLat: 90, avgLat: 85, baseTempF: -20, tempRangeF: 40, daylightVariation: 'Extreme - 6 months day/night', prevailingWind: 'Polar easterlies', coriolis: 'Strong', description: 'Ice cap, permafrost' }),
+            Object.freeze({ id: 'subarctic-north', name: 'Subarctic North (60-80°N)', minLat: 60, maxLat: 80, avgLat: 70, baseTempF: 10, tempRangeF: 60, daylightVariation: 'Very high - white nights', prevailingWind: 'Polar easterlies / Westerlies boundary', coriolis: 'Strong', description: 'Tundra, taiga, long winter' }),
+            Object.freeze({ id: 'boreal-north', name: 'Boreal North (50-60°N)', minLat: 50, maxLat: 60, avgLat: 55, baseTempF: 35, tempRangeF: 50, daylightVariation: 'High - 16-18h summer, 6-8h winter', prevailingWind: 'Westerlies', coriolis: 'Moderate-strong', description: 'Boreal forest, coniferous' }),
+            Object.freeze({ id: 'temperate-north', name: 'Temperate North (35-50°N)', minLat: 35, maxLat: 50, avgLat: 42.5, baseTempF: 55, tempRangeF: 35, daylightVariation: 'Moderate - 15h summer, 9h winter', prevailingWind: 'Westerlies', coriolis: 'Moderate', description: 'Temperate deciduous, four seasons' }),
+            Object.freeze({ id: 'subtropical-north', name: 'Subtropical North (23.5-35°N)', minLat: 23.5, maxLat: 35, avgLat: 29, baseTempF: 70, tempRangeF: 25, daylightVariation: 'Low-moderate - 14h summer, 10h winter', prevailingWind: 'Westerlies / Trade wind boundary, subtropical high', coriolis: 'Moderate', description: 'Mediterranean, arid, monsoon edge' }),
+            Object.freeze({ id: 'tropical-north', name: 'Tropical North (10-23.5°N)', minLat: 10, maxLat: 23.5, avgLat: 16.75, baseTempF: 80, tempRangeF: 15, daylightVariation: 'Low - ~12-13h', prevailingWind: 'Northeast trade winds', coriolis: 'Weak-moderate', description: 'Tropical savanna, monsoon' }),
+            Object.freeze({ id: 'equatorial', name: 'Equatorial (10°S-10°N)', minLat: -10, maxLat: 10, avgLat: 0, baseTempF: 85, tempRangeF: 10, daylightVariation: 'Minimal - ~12h year-round', prevailingWind: 'Doldrums / ITCZ, trade wind convergence', coriolis: 'Minimal', description: 'Tropical rainforest, ITCZ' }),
+            Object.freeze({ id: 'tropical-south', name: 'Tropical South (10-23.5°S)', minLat: -23.5, maxLat: -10, avgLat: -16.75, baseTempF: 80, tempRangeF: 15, daylightVariation: 'Low - ~12-13h', prevailingWind: 'Southeast trade winds', coriolis: 'Weak-moderate', description: 'Tropical savanna' }),
+            Object.freeze({ id: 'subtropical-south', name: 'Subtropical South (23.5-35°S)', minLat: -35, maxLat: -23.5, avgLat: -29, baseTempF: 70, tempRangeF: 25, daylightVariation: 'Low-moderate', prevailingWind: 'Westerlies / Trade boundary', coriolis: 'Moderate', description: 'Mediterranean, arid' }),
+            Object.freeze({ id: 'temperate-south', name: 'Temperate South (35-50°S)', minLat: -50, maxLat: -35, avgLat: -42.5, baseTempF: 55, tempRangeF: 35, daylightVariation: 'Moderate', prevailingWind: 'Roaring forties westerlies', coriolis: 'Moderate', description: 'Temperate, oceanic' }),
+            Object.freeze({ id: 'boreal-south', name: 'Boreal South (50-60°S)', minLat: -60, maxLat: -50, avgLat: -55, baseTempF: 40, tempRangeF: 30, daylightVariation: 'High', prevailingWind: 'Furious fifties westerlies', coriolis: 'Moderate-strong', description: 'Subantarctic, oceanic' }),
+            Object.freeze({ id: 'subarctic-south', name: 'Subarctic South (60-80°S)', minLat: -80, maxLat: -60, avgLat: -70, baseTempF: 15, tempRangeF: 40, daylightVariation: 'Very high', prevailingWind: 'Polar easterlies', coriolis: 'Strong', description: 'Tundra, ice' }),
+            Object.freeze({ id: 'polar-south', name: 'Polar South (80-90°S)', minLat: -90, maxLat: -80, avgLat: -85, baseTempF: -20, tempRangeF: 40, daylightVariation: 'Extreme', prevailingWind: 'Polar easterlies', coriolis: 'Strong', description: 'Antarctic ice cap' })
+        ]);
+
+        // 3. Geology Matrix — affects soil, drainage, fertility, hazards, magic
+        const GEOLOGY_MATRIX = Object.freeze([
+            Object.freeze({ id: 'granite', name: 'Granite', soilPH: 5.5, acidity: 'Acidic', drainage: 'Well-drained', fertility: 'Low', hardness: 'Very hard', mineral: 'Quartz, feldspar', hazards: 'Hard digging, acidic soil', flora: 'Acid-loving conifers, heath', fauna: 'Rock-dwelling', magicalInfluence: 'Stable, abjuration affinity', construction: 'Excellent building stone' }),
+            Object.freeze({ id: 'limestone', name: 'Limestone', soilPH: 7.8, acidity: 'Alkaline', drainage: 'Variable - karst', fertility: 'Moderate-high', hardness: 'Medium', mineral: 'Calcium carbonate', hazards: 'Sinkholes, caves, karst', flora: 'Alkaline meadow, orchids', fauna: 'Cave-dwelling', magicalInfluence: 'Fey crossing, portal affinity', construction: 'Good, but soluble' }),
+            Object.freeze({ id: 'sandstone', name: 'Sandstone', soilPH: 6.5, acidity: 'Slightly acidic', drainage: 'Well-drained', fertility: 'Low-moderate', hardness: 'Medium-soft', mineral: 'Quartz sand', hazards: 'Erosion, sand', flora: 'Pine, scrub', fauna: 'Burrowing', magicalInfluence: 'Neutral, easy to carve', construction: 'Moderate' }),
+            Object.freeze({ id: 'shale', name: 'Shale', soilPH: 6.0, acidity: 'Acidic', drainage: 'Poor', fertility: 'Moderate', hardness: 'Soft', mineral: 'Clay minerals', hazards: 'Landslide, slippery when wet', flora: 'Clay-tolerant', fauna: 'Mud-dwelling', magicalInfluence: 'Water retention, scrying', construction: 'Poor - unstable' }),
+            Object.freeze({ id: 'basalt', name: 'Basalt (Volcanic)', soilPH: 6.8, acidity: 'Neutral', drainage: 'Well-drained', fertility: 'High', hardness: 'Hard', mineral: 'Iron, magnesium', hazards: 'Sharp, volcanic activity', flora: 'Fertile, lush after weathering', fauna: 'Volcanic adapted', magicalInfluence: 'Fire affinity, evocation', construction: 'Excellent, hard' }),
+            Object.freeze({ id: 'obsidian', name: 'Obsidian (Volcanic Glass)', soilPH: 6.0, acidity: 'Acidic', drainage: 'Well-drained', fertility: 'Very low', hardness: 'Very hard but brittle', mineral: 'Volcanic glass', hazards: 'Extremely sharp, brittle', flora: 'Sparse', fauna: 'Avoids', magicalInfluence: 'Divination, scrying mirrors, shadow', construction: 'Decorative, not structural' }),
+            Object.freeze({ id: 'alluvial', name: 'Alluvial (River deposits)', soilPH: 6.8, acidity: 'Neutral', drainage: 'Moderate-well', fertility: 'Very high', hardness: 'Soft', mineral: 'Mixed silts', hazards: 'Flooding, fertile', flora: 'Floodplain forest, crops', fauna: 'Riparian', magicalInfluence: 'Growth, transmutation', construction: 'Poor - needs pilings' }),
+            Object.freeze({ id: 'glacial-till', name: 'Glacial Till', soilPH: 6.2, acidity: 'Slightly acidic', drainage: 'Poor-moderate', fertility: 'Moderate', hardness: 'Mixed', mineral: 'Mixed unsorted', hazards: 'Boulders, poor drainage', flora: 'Boreal, hardy', fauna: 'Cold-adapted', magicalInfluence: 'Preservation, time', construction: 'Variable' }),
+            Object.freeze({ id: 'karst', name: 'Karst (Limestone caves)', soilPH: 7.5, acidity: 'Alkaline', drainage: 'Excessive - underground', fertility: 'Low', hardness: 'Medium', mineral: 'Calcium carbonate', hazards: 'Sinkholes, caves, disappearing streams', flora: 'Sparse, alkaline', fauna: 'Cave, bats', magicalInfluence: 'Underdark, portals, fey', construction: 'Dangerous - sinkholes' }),
+            Object.freeze({ id: 'loess', name: 'Loess (Wind-blown silt)', soilPH: 7.0, acidity: 'Neutral', drainage: 'Well-drained', fertility: 'Very high', hardness: 'Soft', mineral: 'Silt', hazards: 'Erosion, collapsible', flora: 'Grassland, crops', fauna: 'Burrowing, grassland', magicalInfluence: 'Air affinity', construction: 'Collapsible - needs care' }),
+            Object.freeze({ id: 'peat', name: 'Peat (Organic)', soilPH: 4.5, acidity: 'Very acidic', drainage: 'Very poor', fertility: 'Low (acidic)', hardness: 'Very soft', mineral: 'Organic matter', hazards: 'Bog, flammable when dry, acidic', flora: 'Bog, sphagnum, heath', fauna: 'Bog, insects', magicalInfluence: 'Necromancy, preservation, fey', construction: 'Very poor - floats' }),
+            Object.freeze({ id: 'chalk', name: 'Chalk', soilPH: 8.0, acidity: 'Strongly alkaline', drainage: 'Well-drained', fertility: 'Low-moderate', hardness: 'Soft', mineral: 'Calcium carbonate', hazards: 'Alkaline, dry', flora: 'Chalk grassland, rare orchids', fauna: 'Chalk adapted', magicalInfluence: 'Purification, light', construction: 'Soft, carvable' }),
+            Object.freeze({ id: 'slate', name: 'Slate', soilPH: 6.0, acidity: 'Acidic', drainage: 'Well-drained', fertility: 'Low', hardness: 'Hard, fissile', mineral: 'Mica, clay', hazards: 'Sharp, slippery', flora: 'Acidic, sparse', fauna: 'Rock', magicalInfluence: 'Warding, layered protection', construction: 'Roofing, excellent' }),
+            Object.freeze({ id: 'marble', name: 'Marble (Metamorphic limestone)', soilPH: 7.8, acidity: 'Alkaline', drainage: 'Well-drained', fertility: 'Low', hardness: 'Medium-hard', mineral: 'Calcite', hazards: 'Slippery when wet', flora: 'Alkaline', fauna: 'Rock', magicalInfluence: 'Art, enchantment, beauty', construction: 'Excellent decorative' }),
+            Object.freeze({ id: 'fey-crystal', name: 'Fey-Touched Crystal', soilPH: 6.5, acidity: 'Variable', drainage: 'Magical', fertility: 'Magical', hardness: 'Variable', mineral: 'Fey crystal', hazards: 'Wild magic, time distortion', flora: 'Fey flora, awakened', fauna: 'Fey creatures', magicalInfluence: 'Feywild, illusion, enchantment, time', construction: 'Unpredictable' }),
+            Object.freeze({ id: 'shadowfell', name: 'Shadowfell-touched', soilPH: 5.0, acidity: 'Acidic', drainage: 'Poor', fertility: 'Low', hardness: 'Brittle', mineral: 'Shadow essence', hazards: 'Despair, necrotic', flora: 'Withered, shadow', fauna: 'Shadow, undead', magicalInfluence: 'Shadow, necromancy, despair', construction: 'Brittle, depressing' }),
+            Object.freeze({ id: 'volcanic-ash', name: 'Volcanic Ash', soilPH: 6.5, acidity: 'Slightly acidic', drainage: 'Well-drained', fertility: 'Extremely high', hardness: 'Soft', mineral: 'Volcanic minerals', hazards: 'Volcanic, fertile but dangerous', flora: 'Extremely lush', fauna: 'Abundant', magicalInfluence: 'Fire, growth, transmutation', construction: 'Fertile but unstable' })
+        ]);
+
+        // 4. Hydrology Matrix
+        const HYDROLOGY_MATRIX = Object.freeze([
+            Object.freeze({ id: 'none', name: 'No permanent water', waterAvailability: 0, floodRisk: 'None', droughtRisk: 'Extreme', vegetation: 'Xeric, desert', travel: 'Easy, but water needed', soilMoisture: 'Very low', description: 'Arid, no surface water' }),
+            Object.freeze({ id: 'ephemeral', name: 'Ephemeral wash', waterAvailability: 10, floodRisk: 'High (flash flood)', droughtRisk: 'High', vegetation: 'Desert wash', travel: 'Dangerous during rain', soilMoisture: 'Low, flashy', description: 'Dry wash, flows only after rain' }),
+            Object.freeze({ id: 'seasonal-stream', name: 'Seasonal stream', waterAvailability: 30, floodRisk: 'Moderate', droughtRisk: 'Moderate', vegetation: 'Riparian seasonal', travel: 'Fordable except spring', soilMoisture: 'Seasonal', description: 'Flows in wet season' }),
+            Object.freeze({ id: 'permanent-stream', name: 'Permanent stream', waterAvailability: 50, floodRisk: 'Low-moderate', droughtRisk: 'Low', vegetation: 'Riparian woodland', travel: 'Requires bridge/ford', soilMoisture: 'Moderate', description: 'Year-round stream' }),
+            Object.freeze({ id: 'small-river', name: 'Small river', waterAvailability: 70, floodRisk: 'Moderate', droughtRisk: 'Very low', vegetation: 'Floodplain forest', travel: 'Bridge needed, ferry', soilMoisture: 'High', description: 'Navigable by small boat' }),
+            Object.freeze({ id: 'large-river', name: 'Large river', waterAvailability: 90, floodRisk: 'High', droughtRisk: 'None', vegetation: 'Extensive floodplain', travel: 'Major barrier, bridge/ferry', soilMoisture: 'Very high', description: 'Major waterway, trade route' }),
+            Object.freeze({ id: 'lake-shore', name: 'Lake shore', waterAvailability: 85, floodRisk: 'Low', droughtRisk: 'Very low', vegetation: 'Lakeshore', travel: 'Coastal travel, boat', soilMoisture: 'High', description: 'Lake, stable water' }),
+            Object.freeze({ id: 'wetland', name: 'Swamp/marsh', waterAvailability: 100, floodRisk: 'Constant', droughtRisk: 'None', vegetation: 'Wetland, peat', travel: 'Very difficult, boardwalk', soilMoisture: 'Saturated', description: 'Waterlogged, peat, high biodiversity' }),
+            Object.freeze({ id: 'coastal-tidal', name: 'Coastal tidal', waterAvailability: 90, floodRisk: 'Tidal + storm surge', droughtRisk: 'None', vegetation: 'Salt marsh, mangrove', travel: 'Tidal dependent', soilMoisture: 'Saturated, saline', description: 'Tidal, saltwater influence' }),
+            Object.freeze({ id: 'aquifer', name: 'Underground aquifer', waterAvailability: 60, floodRisk: 'Low', droughtRisk: 'Low', vegetation: 'Oasis, phreatophytes', travel: 'Well water', soilMoisture: 'Deep', description: 'Underground water, wells' }),
+            Object.freeze({ id: 'glacial-melt', name: 'Glacial melt', waterAvailability: 80, floodRisk: 'Seasonal (summer)', droughtRisk: 'Low', vegetation: 'Cold riparian', travel: 'Cold, fordable', soilMoisture: 'High, cold', description: 'Glacial, cold, silty, summer high' }),
+            Object.freeze({ id: 'spring', name: 'Spring-fed', waterAvailability: 75, floodRisk: 'Very low', droughtRisk: 'Very low', vegetation: 'Spring oasis, lush', travel: 'Reliable water', soilMoisture: 'High, stable', description: 'Spring, constant temp, reliable' }),
+            Object.freeze({ id: 'karst-underground', name: 'Karst underground river', waterAvailability: 40, floodRisk: 'Flash flood in caves', droughtRisk: 'Moderate', vegetation: 'Sparse surface', travel: 'Cave travel', soilMoisture: 'Underground', description: 'Disappearing stream, caves' })
+        ]);
+
+        // 5. Climate Classification — Köppen simplified with scientific thresholds
+        const KOPPEN_MATRIX = Object.freeze([
+            Object.freeze({ id: 'Af', name: 'Tropical Rainforest', minTempColdest: 64, minPrecipDriest: 2.4, tempRange: 'Hot', precip: 'Year-round heavy', description: 'Constant hot, humid, daily rain', biome: 'Tropical rainforest', soil: 'Oxisol, low fertility', flora: 'Broadleaf evergreen, emergent', fauna: 'High diversity', travel: 'Difficult, dense', hazards: 'Disease, insects' }),
+            Object.freeze({ id: 'Am', name: 'Tropical Monsoon', minTempColdest: 64, minPrecipDriest: 0.4, maxPrecipDriest: 2.4, tempRange: 'Hot', precip: 'Monsoonal', description: 'Hot, monsoon short dry', biome: 'Monsoon forest', soil: 'Oxisol', flora: 'Deciduous in dry', fauna: 'High', travel: 'Seasonal', hazards: 'Monsoon flood' }),
+            Object.freeze({ id: 'Aw', name: 'Tropical Savanna', minTempColdest: 64, maxPrecipDriest: 0.4, tempRange: 'Hot', precip: 'Wet/dry seasons', description: 'Hot, distinct dry', biome: 'Savanna', soil: 'Oxisol, laterite', flora: 'Grass + scattered trees', fauna: 'Large herbivores, predators', travel: 'Open, easy dry season', hazards: 'Drought, fire' }),
+            Object.freeze({ id: 'BWh', name: 'Hot Desert', maxPrecip: 10, minTempAnnual: 64, tempRange: 'Hot', precip: 'Very low', description: 'Hot, arid, extreme diurnal', biome: 'Desert', soil: 'Aridisol, sand', flora: 'Xerophytes, cacti', fauna: 'Nocturnal, reptiles', travel: 'Hard, water needed', hazards: 'Heat, dehydration' }),
+            Object.freeze({ id: 'BWk', name: 'Cold Desert', maxPrecip: 10, maxTempAnnual: 64, tempRange: 'Cold', precip: 'Very low', description: 'Cold, arid, extreme', biome: 'Cold desert', soil: 'Aridisol', flora: 'Sparse xerophytes', fauna: 'Cold-adapted', travel: 'Hard, cold', hazards: 'Cold, dehydration' }),
+            Object.freeze({ id: 'BSh', name: 'Hot Semi-Arid', minPrecip: 10, maxPrecip: 20, minTempAnnual: 64, tempRange: 'Hot', precip: 'Low', description: 'Hot, semi-arid', biome: 'Scrub, steppe', soil: 'Aridisol', flora: 'Scrub, grass', fauna: 'Grassland', travel: 'Moderate', hazards: 'Drought' }),
+            Object.freeze({ id: 'BSk', name: 'Cold Semi-Arid', minPrecip: 10, maxPrecip: 20, maxTempAnnual: 64, tempRange: 'Cold', precip: 'Low', description: 'Cold, semi-arid', biome: 'Cold steppe', soil: 'Aridisol', flora: 'Short grass', fauna: 'Cold grassland', travel: 'Moderate', hazards: 'Cold, drought' }),
+            Object.freeze({ id: 'Csa', name: 'Mediterranean Hot Summer', minTempColdest: 27, maxTempColdest: 64, minTempHottest: 72, minPrecipSummer: 0.1, maxPrecipSummer: 1.2, tempRange: 'Hot summer, mild winter', precip: 'Dry summer, wet winter', description: 'Hot dry summer, mild wet winter', biome: 'Mediterranean scrub', soil: 'Alfisol', flora: 'Sclerophyll, olive', fauna: 'Mediterranean', travel: 'Easy', hazards: 'Summer drought, fire' }),
+            Object.freeze({ id: 'Csb', name: 'Mediterranean Warm Summer', minTempColdest: 27, maxTempColdest: 64, maxTempHottest: 72, tempRange: 'Warm summer', precip: 'Dry summer', description: 'Warm dry summer', biome: 'Mediterranean', soil: 'Alfisol', flora: 'Mixed', fauna: 'Mediterranean', travel: 'Easy', hazards: 'Fire' }),
+            Object.freeze({ id: 'Cfa', name: 'Humid Subtropical Hot', minTempColdest: 27, maxTempColdest: 64, minTempHottest: 72, tempRange: 'Hot summer', precip: 'Year-round, summer max', description: 'Hot humid summer, mild winter', biome: 'Temperate broadleaf', soil: 'Ultisol', flora: 'Broadleaf evergreen', fauna: 'Diverse', travel: 'Moderate, humid', hazards: 'Hurricane, flood' }),
+            Object.freeze({ id: 'Cfb', name: 'Oceanic', minTempColdest: 27, maxTempColdest: 64, maxTempHottest: 72, tempRange: 'Mild', precip: 'Year-round', description: 'Mild, oceanic, no dry season', biome: 'Temperate rainforest', soil: 'Inceptisol', flora: 'Deciduous + conifer', fauna: 'Temperate', travel: 'Moderate, wet', hazards: 'Storm' }),
+            Object.freeze({ id: 'Cfc', name: 'Subpolar Oceanic', minTempColdest: 27, maxTempColdest: 64, maxTempHottest: 50, tempRange: 'Cool', precip: 'Year-round', description: 'Cool oceanic', biome: 'Subpolar', soil: 'Spodosol', flora: 'Conifer, moss', fauna: 'Cold', travel: 'Hard, wet, cold', hazards: 'Cold, storm' }),
+            Object.freeze({ id: 'Dfa', name: 'Hot Summer Continental', maxTempColdest: 27, minTempHottest: 72, tempRange: 'Extreme', precip: 'Year-round', description: 'Hot summer, cold winter, large range', biome: 'Temperate deciduous', soil: 'Alfisol', flora: 'Deciduous forest', fauna: 'Continental', travel: 'Seasonal - snow winter', hazards: 'Blizzard, heat wave' }),
+            Object.freeze({ id: 'Dfb', name: 'Warm Summer Continental', maxTempColdest: 27, maxTempHottest: 72, tempRange: 'Large', precip: 'Year-round', description: 'Warm summer, cold winter', biome: 'Mixed forest', soil: 'Alfisol, Spodosol', flora: 'Mixed', fauna: 'Continental', travel: 'Seasonal', hazards: 'Blizzard' }),
+            Object.freeze({ id: 'Dfc', name: 'Subarctic', maxTempColdest: 27, maxTempHottest: 50, tempRange: 'Very large', precip: 'Low', description: 'Short cool summer, long cold winter', biome: 'Boreal forest/taiga', soil: 'Spodosol', flora: 'Coniferous boreal', fauna: 'Boreal', travel: 'Hard winter', hazards: 'Extreme cold' }),
+            Object.freeze({ id: 'Dfd', name: 'Extreme Subarctic', maxTempColdest: -36, maxTempHottest: 50, tempRange: 'Extreme', precip: 'Very low', description: 'Very cold winter', biome: 'Taiga', soil: 'Gelisol', flora: 'Sparse conifer', fauna: 'Arctic', travel: 'Very hard', hazards: 'Extreme cold' }),
+            Object.freeze({ id: 'ET', name: 'Tundra', maxTempHottest: 50, minTempHottest: 32, tempRange: 'Cold', precip: 'Low', description: 'No month above 50F, permafrost', biome: 'Tundra', soil: 'Gelisol, permafrost', flora: 'Moss, lichen, dwarf shrub', fauna: 'Arctic, migratory', travel: 'Very hard, permafrost', hazards: 'Permafrost, cold' }),
+            Object.freeze({ id: 'EF', name: 'Ice Cap', maxTempHottest: 32, tempRange: 'Extreme cold', precip: 'Very low', description: 'All months below freezing', biome: 'Ice cap', soil: 'Ice', flora: 'None', fauna: 'None (except edge)', travel: 'Extreme, ice', hazards: 'Ice, cold, crevasse' }),
+            Object.freeze({ id: 'H', name: 'Highland (Alpine)', tempRange: 'Varies with elevation', precip: 'Varies', description: 'Highland climate - temp decreases with elevation', biome: 'Alpine', soil: 'Inceptisol, rocky', flora: 'Alpine meadow to ice', fauna: 'Alpine', travel: 'Mountain', hazards: 'Altitude, avalanche' })
+        ]);
+
+        // 6. Biome Matrix — Whittaker diagram: temp vs precip
+        const BIOME_MATRIX = Object.freeze([
+            Object.freeze({ id: 'tropical-rainforest', name: 'Tropical Rainforest', minTempF: 75, maxTempF: 95, minPrecipIn: 80, maxPrecipIn: 400, tempRange: 'Hot', precipRange: 'Very wet', soil: 'Oxisol - low nutrients, fast cycling', flora: 'Broadleaf evergreen, emergent, epiphytes, 100+ tree species/acre', fauna: 'Highest diversity - primates, big cats, insects, birds', productivity: 'Very high', biomass: 'Very high', hazards: 'Disease, insects, dense', travel: 'Very difficult', water: 'Abundant', canopy: 'Closed 100%' }),
+            Object.freeze({ id: 'tropical-seasonal', name: 'Tropical Seasonal Forest', minTempF: 70, maxTempF: 90, minPrecipIn: 50, maxPrecipIn: 80, tempRange: 'Hot', precipRange: 'Wet with dry season', soil: 'Oxisol/Ultisol', flora: 'Semi-evergreen, deciduous in dry', fauna: 'High diversity', productivity: 'High', biomass: 'High', hazards: 'Seasonal drought', travel: 'Difficult', water: 'Seasonal', canopy: 'Closed 80%' }),
+            Object.freeze({ id: 'tropical-savanna', name: 'Tropical Savanna', minTempF: 70, maxTempF: 90, minPrecipIn: 20, maxPrecipIn: 50, tempRange: 'Hot', precipRange: 'Seasonal', soil: 'Oxisol, laterite', flora: 'Grass + scattered trees, baobab, acacia', fauna: 'Large herds, predators, megafauna', productivity: 'Moderate-high', biomass: 'Moderate', hazards: 'Fire, drought', travel: 'Open, easy', water: 'Seasonal', canopy: 'Open 20%' }),
+            Object.freeze({ id: 'desert', name: 'Desert', minTempF: 50, maxTempF: 110, minPrecipIn: 0, maxPrecipIn: 10, tempRange: 'Extreme', precipRange: 'Very dry', soil: 'Aridisol, sand, rock', flora: 'Xerophytes - cacti, succulents, creosote, sparse', fauna: 'Nocturnal, reptiles, insects, rodents', productivity: 'Very low', biomass: 'Very low', hazards: 'Heat, dehydration, flash flood', travel: 'Hard - water needed', water: 'Very scarce', canopy: 'Open 0-10%' }),
+            Object.freeze({ id: 'semi-desert', name: 'Semi-Desert/Scrub', minTempF: 40, maxTempF: 95, minPrecipIn: 10, maxPrecipIn: 20, tempRange: 'Large', precipRange: 'Dry', soil: 'Aridisol', flora: 'Scrub, sage, short grass', fauna: 'Rodents, reptiles, birds', productivity: 'Low', biomass: 'Low', hazards: 'Drought', travel: 'Moderate', water: 'Scarce', canopy: 'Open 10-30%' }),
+            Object.freeze({ id: 'grassland', name: 'Temperate Grassland/Prairie', minTempF: 30, maxTempF: 80, minPrecipIn: 10, maxPrecipIn: 30, tempRange: 'Large', precipRange: 'Moderate', soil: 'Mollisol - deep, fertile, black', flora: 'Grasses - tallgrass, shortgrass, forbs', fauna: 'Herds, burrowers, raptors', productivity: 'Moderate', biomass: 'Moderate (below ground)', hazards: 'Fire, tornado', travel: 'Easy, open', water: 'Moderate', canopy: 'Open 0%' }),
+            Object.freeze({ id: 'shrubland', name: 'Temperate Shrubland/Chaparral', minTempF: 40, maxTempF: 85, minPrecipIn: 15, maxPrecipIn: 30, tempRange: 'Moderate', precipRange: 'Winter wet, summer dry', soil: 'Alfisol', flora: 'Sclerophyll shrubs, manzanita, scrub oak', fauna: 'Deer, small mammals', productivity: 'Low-moderate', biomass: 'Low', hazards: 'Fire', travel: 'Moderate, dense scrub', water: 'Seasonal', canopy: 'Open 30-50%' }),
+            Object.freeze({ id: 'temperate-deciduous', name: 'Temperate Deciduous Forest', minTempF: 25, maxTempF: 80, minPrecipIn: 30, maxPrecipIn: 60, tempRange: 'Large', precipRange: 'Moderate-high', soil: 'Alfisol - fertile, brown', flora: 'Oak, maple, beech, hickory - 4 seasons, leaf fall', fauna: 'Deer, bears, songbirds, high diversity', productivity: 'High', biomass: 'High', hazards: 'Blizzard, ticks', travel: 'Moderate, leaf litter', water: 'Abundant', canopy: 'Closed 80% summer, open winter' }),
+            Object.freeze({ id: 'temperate-rainforest', name: 'Temperate Rainforest', minTempF: 35, maxTempF: 70, minPrecipIn: 60, maxPrecipIn: 200, tempRange: 'Mild', precipRange: 'Very wet', soil: 'Inceptisol, high organic', flora: 'Conifer + broadleaf, moss, ferns, huge trees', fauna: 'High, salmon, bears', productivity: 'Very high', biomass: 'Very high', hazards: 'Wet, landslide', travel: 'Difficult, dense, wet', water: 'Abundant', canopy: 'Closed 90%' }),
+            Object.freeze({ id: 'boreal', name: 'Boreal Forest/Taiga', minTempF: -10, maxTempF: 65, minPrecipIn: 15, maxPrecipIn: 30, tempRange: 'Very large', precipRange: 'Low-moderate', soil: 'Spodosol - acidic, podzol, low fertility', flora: 'Conifer - spruce, fir, pine, larch, birch', fauna: 'Moose, wolves, bears, lynx, migratory birds', productivity: 'Moderate', biomass: 'High', hazards: 'Extreme cold, insects summer', travel: 'Hard winter, boggy summer', water: 'Moderate, bogs', canopy: 'Closed 60%' }),
+            Object.freeze({ id: 'tundra', name: 'Tundra', minTempF: -30, maxTempF: 50, minPrecipIn: 5, maxPrecipIn: 15, tempRange: 'Large', precipRange: 'Low', soil: 'Gelisol - permafrost, active layer', flora: 'Moss, lichen, dwarf shrub, sedge, no trees', fauna: 'Caribou, lemmings, arctic fox, migratory birds', productivity: 'Low', biomass: 'Low', hazards: 'Permafrost, cold, wind', travel: 'Very hard, permafrost', water: 'Boggy summer, frozen winter', canopy: 'Open 0%' }),
+            Object.freeze({ id: 'alpine', name: 'Alpine', minTempF: -10, maxTempF: 60, minPrecipIn: 10, maxPrecipIn: 40, tempRange: 'Large', precipRange: 'Variable', soil: 'Inceptisol, rocky, thin', flora: 'Alpine meadow - low cushion plants, wildflowers summer', fauna: 'Mountain goats, marmots, pikas, raptors', productivity: 'Low', biomass: 'Low', hazards: 'Altitude, avalanche, rockfall', travel: 'Hard mountain', water: 'Snowmelt', canopy: 'Open 0%' }),
+            Object.freeze({ id: 'wetland', name: 'Wetland', minTempF: 20, maxTempF: 85, minPrecipIn: 20, maxPrecipIn: 100, tempRange: 'Variable', precipRange: 'Wet', soil: 'Histosol - peat, organic, saturated', flora: 'Reeds, cattails, cypress, mangrove, peat moss', fauna: 'Waterfowl, amphibians, insects, high biodiversity', productivity: 'Very high', biomass: 'High', hazards: 'Flooding, insects, disease', travel: 'Very difficult, boardwalk', water: 'Saturated', canopy: 'Variable' }),
+            Object.freeze({ id: 'riparian', name: 'Riparian Woodland', minTempF: 30, maxTempF: 80, minPrecipIn: 20, maxPrecipIn: 60, tempRange: 'Moderate', precipRange: 'Moderate + river', soil: 'Entisol - alluvial, fertile', flora: 'Willow, cottonwood, alder, floodplain forest', fauna: 'Riparian - beaver, otters, birds', productivity: 'High', biomass: 'High', hazards: 'Flooding', travel: 'Moderate, river barrier', water: 'Abundant', canopy: 'Closed 70%' })
+        ]);
+
+        // 7. Soil Matrix — USDA orders + fantasy
+        const SOIL_MATRIX = Object.freeze([
+            Object.freeze({ id: 'oxisol', name: 'Oxisol (Tropical)', ph: 4.5, fertility: 'Very low', drainage: 'Well', organic: 'Very low', description: 'Highly weathered tropical, low nutrients, iron/aluminum', biome: 'Tropical rainforest', geology: 'Granite, basalt weathered', color: 'Red-yellow' }),
+            Object.freeze({ id: 'ultisol', name: 'Ultisol (Subtropical)', ph: 5.0, fertility: 'Low', drainage: 'Well', organic: 'Low', description: 'Weathered subtropical, clay, low fertility', biome: 'Subtropical forest', geology: 'Mixed', color: 'Red-yellow' }),
+            Object.freeze({ id: 'alfisol', name: 'Alfisol (Temperate fertile)', ph: 6.5, fertility: 'High', drainage: 'Moderate-well', organic: 'Moderate', description: 'Fertile temperate, clay, deciduous forest', biome: 'Temperate deciduous', geology: 'Limestone, sandstone', color: 'Brown' }),
+            Object.freeze({ id: 'mollisol', name: 'Mollisol (Grassland)', ph: 7.0, fertility: 'Very high', drainage: 'Moderate', organic: 'Very high', description: 'Deep black grassland, most fertile', biome: 'Grassland', geology: 'Loess, alluvial', color: 'Black' }),
+            Object.freeze({ id: 'spodosol', name: 'Spodosol (Boreal acidic)', ph: 4.5, fertility: 'Low', drainage: 'Well', organic: 'Moderate', description: 'Acidic coniferous, podzol, ash', biome: 'Boreal', geology: 'Granite, sandstone', color: 'Ashy gray' }),
+            Object.freeze({ id: 'aridisol', name: 'Aridisol (Desert)', ph: 8.0, fertility: 'Very low', drainage: 'Excessive', organic: 'Very low', description: 'Desert, sand, salt', biome: 'Desert', geology: 'Sandstone, shale', color: 'Light brown' }),
+            Object.freeze({ id: 'entisol', name: 'Entisol (Young, river)', ph: 7.0, fertility: 'Moderate-high', drainage: 'Variable', organic: 'Low', description: 'Young, no horizons, river deposits', biome: 'Riparian', geology: 'Alluvial', color: 'Variable' }),
+            Object.freeze({ id: 'inceptisol', name: 'Inceptisol (Young, mountain)', ph: 6.0, fertility: 'Moderate', drainage: 'Well', organic: 'Moderate', description: 'Young, mountain, weak horizons', biome: 'Mountain, temperate rainforest', geology: 'Mixed', color: 'Brown' }),
+            Object.freeze({ id: 'histosol', name: 'Histosol (Peat, bog)', ph: 4.0, fertility: 'Low (acidic)', drainage: 'Very poor', organic: 'Very high', description: 'Peat, organic, waterlogged', biome: 'Wetland, bog', geology: 'Peat', color: 'Black-brown' }),
+            Object.freeze({ id: 'gelisol', name: 'Gelisol (Permafrost)', ph: 5.5, fertility: 'Very low', drainage: 'Poor (permafrost)', organic: 'Moderate', description: 'Permafrost, active layer', biome: 'Tundra', geology: 'Glacial till', color: 'Gray-brown' }),
+            Object.freeze({ id: 'vertisol', name: 'Vertisol (Shrink-swell clay)', ph: 7.5, fertility: 'High', drainage: 'Poor', organic: 'Moderate', description: 'Clay, cracks when dry, sticky wet', biome: 'Savanna, grassland', geology: 'Basalt, shale', color: 'Dark' }),
+            Object.freeze({ id: 'andisol', name: 'Andisol (Volcanic)', ph: 6.0, fertility: 'Very high', drainage: 'Well', organic: 'High', description: 'Volcanic ash, fertile, light', biome: 'Volcanic', geology: 'Basalt, volcanic ash', color: 'Black' })
+        ]);
+
+        // 8. Season Matrix — early/mid/late for each season
+        const SEASON_MATRIX = Object.freeze([
+            Object.freeze({ season: 'Winter', phase: 'Early', dayRange: [1,10], tempOffsetF: -10, precipModifier: 1.2, daylightModifier: -0.5, snowpack: 'Building', riverStage: 'Low - ice', vegetation: 'Dormant', migration: 'Wintering south', hazards: 'Blizzard, ice', travel: 'Hard - snow/ice', description: 'Early winter, snow building, rivers freezing' }),
+            Object.freeze({ season: 'Winter', phase: 'Mid', dayRange: [11,20], tempOffsetF: -18, precipModifier: 1.0, daylightModifier: 0, snowpack: 'Peak', riverStage: 'Low - frozen', vegetation: 'Dormant', migration: 'Wintering', hazards: 'Extreme cold, blizzard', travel: 'Very hard - deep snow', description: 'Mid winter, coldest, deep snow' }),
+            Object.freeze({ season: 'Winter', phase: 'Late', dayRange: [21,30], tempOffsetF: -8, precipModifier: 0.9, daylightModifier: 0.5, snowpack: 'Melting start', riverStage: 'Rising - melt start', vegetation: 'Budding', migration: 'Return start', hazards: 'Thaw flood, ice', travel: 'Hard - mud, slush', description: 'Late winter, thaw, mud season' }),
+            Object.freeze({ season: 'Spring', phase: 'Early', dayRange: [1,10], tempOffsetF: -5, precipModifier: 1.3, daylightModifier: 1.0, snowpack: 'Melting', riverStage: 'High - spring runoff', vegetation: 'Bud break, early flowers', migration: 'Return migration', hazards: 'Flood, mud', travel: 'Hard - mud, flood', description: 'Early spring, melt, flood, mud' }),
+            Object.freeze({ season: 'Spring', phase: 'Mid', dayRange: [11,20], tempOffsetF: 0, precipModifier: 1.1, daylightModifier: 1.5, snowpack: 'Gone low, remains high', riverStage: 'High but falling', vegetation: 'Leaf out, flowers', migration: 'Nesting', hazards: 'Storms', travel: 'Moderate - wet', description: 'Mid spring, growth, nesting' }),
+            Object.freeze({ season: 'Spring', phase: 'Late', dayRange: [21,30], tempOffsetF: 8, precipModifier: 1.0, daylightModifier: 2.0, snowpack: 'Gone', riverStage: 'Normal', vegetation: 'Full leaf, growth', migration: 'Breeding', hazards: 'Storms', travel: 'Easy', description: 'Late spring, full growth' }),
+            Object.freeze({ season: 'Summer', phase: 'Early', dayRange: [1,10], tempOffsetF: 12, precipModifier: 0.9, daylightModifier: 2.5, snowpack: 'None', riverStage: 'Normal-low', vegetation: 'Peak growth', migration: 'Breeding, resident', hazards: 'Heat, storms, insects', travel: 'Easy', description: 'Early summer, peak growth, long days' }),
+            Object.freeze({ season: 'Summer', phase: 'Mid', dayRange: [11,20], tempOffsetF: 18, precipModifier: 0.8, daylightModifier: 3.0, snowpack: 'None', riverStage: 'Low', vegetation: 'Peak, fruiting', migration: 'Resident', hazards: 'Extreme heat, drought, fire, insects', travel: 'Easy but hot', description: 'Mid summer, hottest, drought risk' }),
+            Object.freeze({ season: 'Summer', phase: 'Late', dayRange: [21,30], tempOffsetF: 10, precipModifier: 1.0, daylightModifier: 2.0, snowpack: 'None', riverStage: 'Low', vegetation: 'Fruiting, seeding', migration: 'Pre-migration fattening', hazards: 'Storms, fire', travel: 'Easy', description: 'Late summer, harvest, storms return' }),
+            Object.freeze({ season: 'Autumn', phase: 'Early', dayRange: [1,10], tempOffsetF: 5, precipModifier: 1.1, daylightModifier: 1.0, snowpack: 'None', riverStage: 'Low-normal', vegetation: 'Color change, leaf fall start', migration: 'Migration start', hazards: 'Storms', travel: 'Easy, leaf fall', description: 'Early autumn, color, migration' }),
+            Object.freeze({ season: 'Autumn', phase: 'Mid', dayRange: [11,20], tempOffsetF: 0, precipModifier: 1.2, daylightModifier: 0, snowpack: 'First snow high', riverStage: 'Normal', vegetation: 'Leaf fall, dormant', migration: 'Migration peak', hazards: 'Storms, first frost', travel: 'Moderate - wet leaves', description: 'Mid autumn, leaf fall, first snow high' }),
+            Object.freeze({ season: 'Autumn', phase: 'Late', dayRange: [21,30], tempOffsetF: -5, precipModifier: 1.2, daylightModifier: -0.5, snowpack: 'Building high', riverStage: 'Normal', vegetation: 'Dormant', migration: 'Late migrants', hazards: 'First blizzard high, ice', travel: 'Hardening', description: 'Late autumn, dormant, snow building high' })
+        ]);
+
+        // 9. Weather Front Matrix — scientific lifecycle
+        const WEATHER_FRONT_MATRIX = Object.freeze([
+            Object.freeze({ id: 'high-pressure', name: 'High Pressure (Fair)', type: 'high', stages: ['forming','mature','weakening'], tempBiasF: 0, windBiasMph: -2, precipBias: -20, cloud: 'Clear to few', visibility: 'Excellent', durationHours: [24,72], pressureMB: 1020, airMass: 'Continental polar or maritime tropical', hazards: 'None', travel: 'Excellent', description: 'Fair, stable, subsiding air' }),
+            Object.freeze({ id: 'warm-front', name: 'Warm Front', type: 'warm', stages: ['approaching','forming','mature','weakening','clearing'], tempBiasF: 8, windBiasMph: 2, precipBias: 30, cloud: 'Cirrus → cirrostratus → altostratus → nimbostratus', visibility: 'Decreasing then improving', durationHours: [12,36], pressureMB: 1005, airMass: 'Maritime tropical overrunning continental polar', hazards: 'Steady rain, low stratus, fog', travel: 'Poor during, improving after', description: 'Warm air overrunning cold, steady precip, warming after' }),
+            Object.freeze({ id: 'cold-front', name: 'Cold Front', type: 'cold', stages: ['approaching','strengthening','mature','weakening'], tempBiasF: -12, windBiasMph: 8, precipBias: 40, cloud: 'Cumulus → cumulonimbus', visibility: 'Variable - heavy rain then clear', durationHours: [6,24], pressureMB: 1000, airMass: 'Continental polar undercutting maritime tropical', hazards: 'Heavy rain, thunderstorms, squall line, wind shift', travel: 'Dangerous during, excellent after', description: 'Cold air undercutting warm, heavy precip, temp drop, wind shift NW' }),
+            Object.freeze({ id: 'occluded', name: 'Occluded Front', type: 'occluded', stages: ['forming','mature','weakening','clearing'], tempBiasF: -5, windBiasMph: 5, precipBias: 50, cloud: 'Mixed - nimbostratus + cumulonimbus', visibility: 'Poor', durationHours: [12,30], pressureMB: 995, airMass: 'Cold front overtaking warm front', hazards: 'Heavy mixed precip, complex', travel: 'Poor', description: 'Cold front catches warm front, complex heavy precip' }),
+            Object.freeze({ id: 'stationary', name: 'Stationary Front', type: 'stationary', stages: ['forming','mature','weakening'], tempBiasF: 0, windBiasMph: 0, precipBias: 25, cloud: 'Stratus, nimbostratus', visibility: 'Poor - prolonged', durationHours: [24,72], pressureMB: 1010, airMass: 'Boundary stalled', hazards: 'Prolonged rain, flood', travel: 'Poor prolonged', description: 'Boundary stalled, prolonged precip one side' }),
+            Object.freeze({ id: 'maritime-gale', name: 'Maritime Gale', type: 'gale', stages: ['approaching','strengthening','mature','weakening'], tempBiasF: 2, windBiasMph: 20, precipBias: 35, cloud: 'Nimbostratus, cumulonimbus', visibility: 'Poor - spray, rain', durationHours: [12,36], pressureMB: 980, airMass: 'Maritime polar', hazards: 'Gale winds, high seas, heavy rain', travel: 'Dangerous - wind', description: 'Intense low pressure, maritime, gale' }),
+            Object.freeze({ id: 'continental-freeze', name: 'Continental Freeze (Arctic outbreak)', type: 'arctic', stages: ['approaching','mature','weakening'], tempBiasF: -30, windBiasMph: 10, precipBias: -10, cloud: 'Clear to scattered', visibility: 'Excellent but cold', durationHours: [24,72], pressureMB: 1040, airMass: 'Continental arctic', hazards: 'Extreme cold, frostbite', travel: 'Hard - cold, ice', description: 'Arctic high pressure, extreme cold, clear' }),
+            Object.freeze({ id: 'heat-dome', name: 'Heat Dome', type: 'heat', stages: ['forming','mature','weakening'], tempBiasF: 20, windBiasMph: -3, precipBias: -30, cloud: 'Clear', visibility: 'Hazy', durationHours: [72,168], pressureMB: 1025, airMass: 'Continental tropical', hazards: 'Extreme heat, drought, fire', travel: 'Hard - heat', description: 'Upper ridge, subsidence, extreme heat, clear' }),
+            Object.freeze({ id: 'monsoon-surge', name: 'Monsoon Surge', type: 'monsoon', stages: ['approaching','mature','weakening'], tempBiasF: -5, windBiasMph: 5, precipBias: 80, cloud: 'Cumulonimbus', visibility: 'Poor - heavy rain', durationHours: [24,72], pressureMB: 1000, airMass: 'Maritime tropical monsoon', hazards: 'Extreme heavy rain, flood, thunderstorms', travel: 'Dangerous - flood', description: 'Monsoon flow, extreme heavy rain' }),
+            Object.freeze({ id: 'thunderstorm', name: 'Air Mass Thunderstorm', type: 'thunderstorm', stages: ['forming','mature','dissipating'], tempBiasF: -8, windBiasMph: 15, precipBias: 60, cloud: 'Cumulonimbus', visibility: 'Very poor during', durationHours: [1,6], pressureMB: 1010, airMass: 'Local heating', hazards: 'Lightning, hail, downburst, heavy rain', travel: 'Dangerous brief', description: 'Local heating, afternoon, brief heavy' })
+        ]);
+
+        // 10. Surface/Ground Matrix
+        const SURFACE_MATRIX = Object.freeze([
+            Object.freeze({ id: 'firm', name: 'Firm', baseSpeed: 1.0, difficulty: 'Normal', fatigue: 'Normal', description: 'Firm loam, packed trail', weatherEffect: 'None', drainage: 'Well' }),
+            Object.freeze({ id: 'soft', name: 'Soft', baseSpeed: 0.9, difficulty: 'Normal', fatigue: 'Moderate', description: 'Soft loam, leaf litter', weatherEffect: 'Becomes muddy when wet', drainage: 'Moderate' }),
+            Object.freeze({ id: 'muddy', name: 'Muddy', baseSpeed: 0.5, difficulty: 'Hard', fatigue: 'High', description: 'Mud, clay, saturated', weatherEffect: 'Worse when wet, improves when dry', drainage: 'Poor' }),
+            Object.freeze({ id: 'sandy', name: 'Sandy', baseSpeed: 0.7, difficulty: 'Moderate', fatigue: 'High', description: 'Sand, dune', weatherEffect: 'Easier when wet, loose when dry', drainage: 'Excessive' }),
+            Object.freeze({ id: 'rocky', name: 'Rocky', baseSpeed: 0.6, difficulty: 'Hard', fatigue: 'High', description: 'Rock, scree, boulders', weatherEffect: 'Slippery when wet/icy', drainage: 'Excessive' }),
+            Object.freeze({ id: 'snow-shallow', name: 'Snow-covered shallow (1-6 in)', baseSpeed: 0.7, difficulty: 'Moderate', fatigue: 'High', description: 'Shallow snow', weatherEffect: 'Persists, melts', drainage: 'N/A' }),
+            Object.freeze({ id: 'snow-deep', name: 'Deep snow (6-24 in)', baseSpeed: 0.3, difficulty: 'Very hard', fatigue: 'Very high', description: 'Deep snow', weatherEffect: 'Persists - 6 inches does not disappear in clear weather', drainage: 'N/A' }),
+            Object.freeze({ id: 'snow-very-deep', name: 'Very deep snow (24+ in)', baseSpeed: 0.1, difficulty: 'Extreme', fatigue: 'Extreme', description: 'Very deep', weatherEffect: 'Persistent, snowshoes needed', drainage: 'N/A' }),
+            Object.freeze({ id: 'icy', name: 'Icy', baseSpeed: 0.4, difficulty: 'Very hard', fatigue: 'Moderate', description: 'Ice, frozen', weatherEffect: 'Melts above 32F', drainage: 'N/A' }),
+            Object.freeze({ id: 'flooded', name: 'Flooded', baseSpeed: 0.2, difficulty: 'Extreme', fatigue: 'Very high', description: 'Flooded, water', weatherEffect: 'Recedes after rain', drainage: 'Flooded' }),
+            Object.freeze({ id: 'vegetated', name: 'Overgrown/vegetated', baseSpeed: 0.5, difficulty: 'Hard', fatigue: 'High', description: 'Dense vegetation, roots', weatherEffect: 'Wet makes worse', drainage: 'Variable' }),
+            Object.freeze({ id: 'boardwalk', name: 'Boardwalk', baseSpeed: 1.0, difficulty: 'Easy', fatigue: 'Low', description: 'Boardwalk, improved', weatherEffect: 'None', drainage: 'Improved' })
+        ]);
+
+        // Helper: find matrix entry
+        function findMatrix(matrix, idOrName) {
+            if (!idOrName) return null;
+            const lower = String(idOrName).toLowerCase();
+            return matrix.find(e => String(e.id).toLowerCase() === lower || String(e.name).toLowerCase() === lower || String(e.name).toLowerCase().includes(lower)) || null;
+        }
+
+        // Scientific calculations
+
+        // Lapse rate: -3.56°F per 1000 ft (standard)
+        function calculateLapseRate(elevationFt) {
+            const ft = Number(elevationFt);
+            if (!Number.isFinite(ft)) return 0;
+            return -(ft * 3.56 / 1000);
+        }
+
+        // Latitude daylight calculation simplified
+        function calculateDaylightHours(latitudeDeg, dayOfYear, axialTiltDeg = 23.44) {
+            const lat = Number(latitudeDeg);
+            const day = Number(dayOfYear);
+            if (!Number.isFinite(lat) || !Number.isFinite(day)) return 12;
+            // Solar declination approx: 23.44 * sin(360*(284+day)/365)
+            const declination = axialTiltDeg * Math.sin((360 * (284 + day) / 365) * Math.PI / 180);
+            const latRad = lat * Math.PI / 180;
+            const decRad = declination * Math.PI / 180;
+            const cosHourAngle = -Math.tan(latRad) * Math.tan(decRad);
+            // Clamp
+            if (cosHourAngle <= -1) return 24; // polar day
+            if (cosHourAngle >= 1) return 0; // polar night
+            const hourAngle = Math.acos(cosHourAngle) * 180 / Math.PI;
+            return (2 * hourAngle) / 15; // 15 deg per hour
+        }
+
+        // Köppen classification from temp and precip
+        function classifyKoppen(meanTempF, coldestMonthTempF, hottestMonthTempF, annualPrecipIn, driestMonthPrecipIn) {
+            const meanC = (meanTempF - 32) * 5/9;
+            const coldestC = (coldestMonthTempF - 32) * 5/9;
+            const hottestC = (hottestMonthTempF - 32) * 5/9;
+            // Simplified thresholds
+            if (coldestC >= 18) {
+                // Tropical A
+                if (driestMonthPrecipIn >= 2.4) return findMatrix(KOPPEN_MATRIX, 'Af');
+                if (driestMonthPrecipIn >= 0.4) return findMatrix(KOPPEN_MATRIX, 'Am');
+                return findMatrix(KOPPEN_MATRIX, 'Aw');
+            }
+            if (annualPrecipIn < 10) {
+                if (meanC >= 18) return findMatrix(KOPPEN_MATRIX, 'BWh');
+                return findMatrix(KOPPEN_MATRIX, 'BWk');
+            }
+            if (annualPrecipIn < 20) {
+                if (meanC >= 18) return findMatrix(KOPPEN_MATRIX, 'BSh');
+                return findMatrix(KOPPEN_MATRIX, 'BSk');
+            }
+            if (coldestC >= -3 && coldestC < 18) {
+                // Temperate C
+                if (hottestC >= 22) {
+                    // hot summer
+                    if (driestMonthPrecipIn < 1.2) return findMatrix(KOPPEN_MATRIX, 'Csa');
+                    return findMatrix(KOPPEN_MATRIX, 'Cfa');
+                } else {
+                    if (driestMonthPrecipIn < 1.2) return findMatrix(KOPPEN_MATRIX, 'Csb');
+                    return findMatrix(KOPPEN_MATRIX, 'Cfb');
+                }
+            }
+            if (coldestC < -3) {
+                if (hottestC >= 22) return findMatrix(KOPPEN_MATRIX, 'Dfa');
+                if (hottestC >= 10) return findMatrix(KOPPEN_MATRIX, 'Dfb');
+                return findMatrix(KOPPEN_MATRIX, 'Dfc');
+            }
+            if (hottestC < 10 && hottestC >= 0) return findMatrix(KOPPEN_MATRIX, 'ET');
+            if (hottestC < 0) return findMatrix(KOPPEN_MATRIX, 'EF');
+            return findMatrix(KOPPEN_MATRIX, 'Cfb');
+        }
+
+        // Whittaker biome from temp and precip
+        function determineBiomeWhittaker(meanTempF, annualPrecipIn) {
+            const tempC = (meanTempF - 32) * 5/9;
+            const precipCm = annualPrecipIn * 2.54;
+            // Whittaker simplified
+            if (tempC > 20 && precipCm > 200) return findMatrix(BIOME_MATRIX, 'tropical-rainforest');
+            if (tempC > 15 && precipCm > 100 && precipCm <= 200) return findMatrix(BIOME_MATRIX, 'tropical-seasonal');
+            if (tempC > 15 && precipCm > 50 && precipCm <= 100) return findMatrix(BIOME_MATRIX, 'tropical-savanna');
+            if (precipCm < 25) return findMatrix(BIOME_MATRIX, 'desert');
+            if (precipCm < 50) return findMatrix(BIOME_MATRIX, 'semi-desert');
+            if (tempC > 10 && tempC <= 20 && precipCm >= 50 && precipCm < 150) return findMatrix(BIOME_MATRIX, 'temperate-deciduous');
+            if (tempC > 5 && tempC <= 15 && precipCm >= 100) return findMatrix(BIOME_MATRIX, 'temperate-rainforest');
+            if (tempC >= 5 && tempC <= 15 && precipCm >= 25 && precipCm < 75) return findMatrix(BIOME_MATRIX, 'grassland');
+            if (tempC <= 5 && precipCm < 50) return findMatrix(BIOME_MATRIX, 'boreal');
+            if (tempC <= 0) return findMatrix(BIOME_MATRIX, 'tundra');
+            if (tempC > 0 && tempC < 10 && precipCm >= 20) return findMatrix(BIOME_MATRIX, 'alpine');
+            return findMatrix(BIOME_MATRIX, 'temperate-deciduous');
+        }
+
+        // Soil from geology + climate + biome
+        function determineSoil(geologyId, koppenId, biomeId) {
+            const geo = findMatrix(GEOLOGY_MATRIX, geologyId);
+            const climate = findMatrix(KOPPEN_MATRIX, koppenId);
+            const biome = findMatrix(BIOME_MATRIX, biomeId);
+            if (!geo) {
+                if (biomeId && String(biomeId).includes('wetland')) return findMatrix(SOIL_MATRIX, 'histosol');
+                if (koppenId && String(koppenId).startsWith('B')) return findMatrix(SOIL_MATRIX, 'aridisol');
+                if (biomeId && String(biomeId).includes('boreal')) return findMatrix(SOIL_MATRIX, 'spodosol');
+                if (biomeId && String(biomeId).includes('grassland')) return findMatrix(SOIL_MATRIX, 'mollisol');
+                if (biomeId && String(biomeId).includes('tropical')) return findMatrix(SOIL_MATRIX, 'oxisol');
+                return findMatrix(SOIL_MATRIX, 'alfisol');
+            }
+            // Geology-driven
+            if (geo.id === 'granite') return findMatrix(SOIL_MATRIX, 'spodosol');
+            if (geo.id === 'limestone') return findMatrix(SOIL_MATRIX, 'alfisol');
+            if (geo.id === 'basalt' || geo.id === 'volcanic-ash') return findMatrix(SOIL_MATRIX, 'andisol');
+            if (geo.id === 'alluvial') return findMatrix(SOIL_MATRIX, 'entisol');
+            if (geo.id === 'peat') return findMatrix(SOIL_MATRIX, 'histosol');
+            if (geo.id === 'glacial-till') return findMatrix(SOIL_MATRIX, 'gelisol');
+            if (geo.id === 'loess') return findMatrix(SOIL_MATRIX, 'mollisol');
+            return findMatrix(SOIL_MATRIX, 'inceptisol');
+        }
+
+        function currentSettingsEffectiveConfig() {
+            const runtime = ensureAlmanacRuntime();
+            const settings = runtime.world.currentSettings || {};
+            const worldResult = worldConfigResult(modState.config.world, { persist: false });
+            const config = worldResult?.ok ? worldResult.config : null;
+            const scene = (() => { try { return resolveScene(); } catch(e) { return null; } })();
+
+            // 1. World / Planar Rules — expansive matrix
+            const world = worldResult?.config || null;
+            const planarRules = {
+                id: world?.id || 'material-plane',
+                name: world?.regions?.[0]?.name || 'Material Plane',
+                structure: 'Material Plane default - Euclidean, 3D, gravity 1G',
+                gravity: '1.0G (9.81 m/s²) - Standard',
+                atmospheric: '78% N₂, 21% O₂, 1% trace - 1013 mb at sea level',
+                atmosphericPressureMB: 1013,
+                oxygenPartialPressure: 0.21,
+                magicalRules: world?.magicalRules || 'Weave - Standard Faerûn, dead magic rare',
+                dayLengthHours: 24,
+                yearLengthDays: 365.25,
+                axialTiltDeg: 23.44,
+                axialTilt: '23.44° - produces seasons',
+                eccentricity: 0.0167,
+                suns: 1,
+                moons: 1,
+                moonCycleDays: 29.5,
+                source: world ? 'Campaign world' : 'Fallback - Material Plane physics'
+            };
+
+            // 2. Astronomy — scientific daylight calc
+            const astronomyConfig = (() => { try { return normalizeAstronomyConfig(sceneCopyRecord(modState.config.astronomy) || {}, { persist: false }); } catch(e) { return null; } })();
+            const astronomyScene = scene?.astronomy || null;
+            const moment = scene?.time?.current || null;
+            const dayOfYear = moment ? (moment.day || 15) + (moment.periodIndex || 0)*30 : 80; // approx
+            const latitudeDeg = (() => {
+                const latEntry = findMatrix(LATITUDE_MATRIX, settings.latitude || settings.regionId) || findMatrix(LATITUDE_MATRIX, 'temperate-north');
+                return latEntry ? latEntry.avgLat : 42.5;
+            })();
+            const daylightHoursScientific = calculateDaylightHours(latitudeDeg, dayOfYear, planarRules.axialTiltDeg);
+            const astronomy = {
+                daylightHours: astronomyScene?.daylightHours || daylightHoursScientific,
+                daylightHoursScientific,
+                latitudeDeg,
+                solarDeclination: planarRules.axialTiltDeg * Math.sin((360 * (284 + dayOfYear) / 365) * Math.PI / 180),
+                season: moment?.season || 'Spring',
+                moons: astronomyScene?.moons || [{ phase: 'Waxing Gibbous', altitude: '45°', aboveHorizon: true }],
+                source: 'AstronomyResolver - solar position + lunar cycle + axial tilt'
+            };
+
+            // 3. Temporal Context
+            const season = moment?.season || 'Spring';
+            const temporal = {
+                moment,
+                season,
+                year: moment?.year || 1,
+                month: moment?.periodName || null,
+                day: moment?.day || 1,
+                dayOfYear,
+                timeOfDay: moment ? `${moment.hour}:${String(moment.minute).padStart(2,'0')}` : null,
+                daylightHours: astronomy.daylightHours,
+                source: moment ? 'TimeAlmanac - Wayfarer/Standard calendar' : 'Manual Spring baseline'
+            };
+
+            // 4. Spatial / Location Resolution — full chain
+            const region = settings.regionId && config ? worldRecordByReference(config.regions, settings.regionId) : null;
+            const geography = settings.geographyId && config ? worldRecordByReference(config.geographies, settings.geographyId) : null;
+            const ecoregion = settings.ecoregionId && config ? (worldRecordByReference(config.ecoregions, settings.ecoregionId) || builtInEcoregionProfile(settings.ecoregionId)) : (settings.ecoregionId ? builtInEcoregionProfile(settings.ecoregionId) : null);
+            const biome = settings.biomeId && config ? worldRecordByReference(config.biomes, settings.biomeId) : null;
+            const spatial = {
+                world: planarRules.name,
+                continent: region?.parentId ? (config ? worldRecordByReference(config.regions, region.parentId)?.name : null) : null,
+                realm: region?.parentId ? (config ? worldRecordByReference(config.regions, region.parentId)?.name : null) : null,
+                region: region?.name || null,
+                climateZone: null,
+                biome: biome?.name || null,
+                ecoregion: ecoregion?.name || null,
+                geographicArea: geography?.name || null,
+                landscape: geography?.terrain || settings.landscape || null,
+                terrain: null,
+                habitat: biome?.ground || settings.habitat || null,
+                microhabitat: settings.microhabitat || null,
+                locale: settings.locale || settings.environmentName || null,
+                fullChain: []
+            };
+
+            // 5. Physical Geography — expansive matrices
+            const elevationEntry = findMatrix(ELEVATION_MATRIX, settings.elevation || geography?.elevation) || findMatrix(ELEVATION_MATRIX, 'low');
+            const latitudeEntry = findMatrix(LATITUDE_MATRIX, settings.latitude || region?.tags?.find(t => /polar|tropical|temperate|equatorial/i.test(t)) || 'temperate-north') || findMatrix(LATITUDE_MATRIX, 'temperate-north');
+            const geologyEntry = findMatrix(GEOLOGY_MATRIX, settings.geology || geography?.geology) || null;
+            const hydrologyEntry = findMatrix(HYDROLOGY_MATRIX, settings.hydrology || geography?.hydrology) || null;
+            const physicalGeography = {
+                latitude: latitudeEntry.name,
+                latitudeDeg: latitudeEntry.avgLat,
+                latitudeBand: latitudeEntry.id,
+                elevation: elevationEntry.name,
+                elevationFt: elevationEntry.avgFt,
+                elevationBand: elevationEntry.id,
+                lapseRateF: elevationEntry.lapseF,
+                pressureFactor: elevationEntry.pressureFactor,
+                oxygenFactor: elevationEntry.oxygenFactor,
+                relief: geography?.roughness || 'Gentle (0-5% slope)',
+                slope: geography?.roughness ? (String(geography.roughness).toLowerCase().includes('steep') ? 'Steep (15-30%)' : 'Gentle (0-5%)') : 'Moderate (5-15%)',
+                slopePercent: geography?.roughness ? (String(geography.roughness).toLowerCase().includes('steep') ? 20 : 3) : 8,
+                aspect: settings.aspect || 'South - warmest in N hemisphere',
+                landform: geography?.terrain || settings.terrain || settings.landscape || 'Plain',
+                geology: geologyEntry ? geologyEntry.name : (settings.geology || geography?.geology || 'Mixed sedimentary'),
+                geologyEntry: geologyEntry,
+                soil: null, // filled after climate/biome
+                soilEntry: null,
+                hydrology: hydrologyEntry ? hydrologyEntry.name : (settings.hydrology || geography?.hydrology || 'Seasonal stream'),
+                hydrologyEntry: hydrologyEntry,
+                distanceFromCoast: geography?.coast ? (String(geography.coast).toLowerCase().includes('coastal') ? 'Near (0-10 miles) - maritime' : 'Inland (100+ miles) - continental') : (settings.distanceFromCoast || 'Moderate (10-100 miles)'),
+                distanceFromCoastMiles: geography?.coast ? (String(geography.coast).toLowerCase().includes('coastal') ? 5 : 150) : 50,
+                distanceFromMajorWater: geography?.hydrology ? 'Near (<5 miles)' : 'Moderate',
+                mountainBarriers: region?.tags?.some(t => ['mountain','alpine','highland'].includes(String(t).toLowerCase())) ? 'Present - windward/leeward rain shadow' : 'None',
+                exposure: settings.exposure || 'Moderate - some shelter',
+                prevailingWind: latitudeEntry.prevailingWind,
+                coriolis: latitudeEntry.coriolis,
+                source: geography ? `GeographyResolver via ${geography.name} + ElevationMatrix ${elevationEntry.name} + LatitudeMatrix ${latitudeEntry.name}` : `Manual via ElevationMatrix + LatitudeMatrix`
+            };
+
+            // 6. Climate Baseline — scientific Köppen
+            const baseClimateResolved = (() => { try { return settings.baseClimateRegionId ? resolvedClimate(settings.baseClimateRegionId, { config: normalizeClimateConfig({}, { persist: false }) }) : null; } catch(e) { return null; } })();
+            const baseClimateRegion = settings.baseClimateRegionId ? currentSettingsClimateRegion(settings.baseClimateRegionId, normalizeClimateConfig({}, { persist: false })) : null;
+            const baseClimate = baseClimateResolved || baseClimateRegion;
+            const fallbackClimate = (() => { try { return weatherClimateContext(); } catch(e) { return { temperatureF: 58, humidity: 55, precipitationChance: 35, windMph: 8, tags: ['temperate'], regionName: 'Fallback Temperate Lowlands' }; } })();
+            const base = baseClimate ? {
+                regionId: baseClimate.regionId || baseClimate.id,
+                regionName: baseClimate.regionName || baseClimate.name,
+                temperatureF: baseClimate.temperatureF || fallbackClimate.temperatureF,
+                humidity: baseClimate.humidity || fallbackClimate.humidity,
+                precipitationChance: baseClimate.precipitationChance || fallbackClimate.precipitationChance,
+                windMph: baseClimate.windMph || fallbackClimate.windMph,
+                tags: baseClimate.tags || []
+            } : fallbackClimate;
+
+            // Scientific modifiers
+            const lapseF = calculateLapseRate(physicalGeography.elevationFt);
+            const latTempBias = latitudeEntry.baseTempF - 55; // relative to temperate north 55F baseline
+            const continentality = physicalGeography.distanceFromCoastMiles > 100 ? -5 : (physicalGeography.distanceFromCoastMiles < 10 ? 5 : 0); // inland colder winter, maritime milder
+            const continentalityHumidity = physicalGeography.distanceFromCoastMiles > 100 ? -15 : (physicalGeography.distanceFromCoastMiles < 10 ? 10 : 0);
+            const orographicPrecip = physicalGeography.mountainBarriers.includes('Present') ? -15 : 0; // leeward rain shadow
+            const coastalPrecip = physicalGeography.distanceFromCoastMiles < 10 ? 15 : 0;
+
+            const geoTempBias = lapseF + latTempBias + continentality;
+            const geoHumidityBias = continentalityHumidity + (physicalGeography.elevationFt > 6000 ? -10 : 0);
+            const geoPrecipBias = orographicPrecip + coastalPrecip;
+            const geoWindBias = physicalGeography.elevationFt > 3000 ? 5 : 0;
+
+            spatial.climateZone = base.regionName || base.regionId || null;
+
+            // Köppen classification scientific
+            const coldestMonthTempF = base.temperatureF + geoTempBias - 15;
+            const hottestMonthTempF = base.temperatureF + geoTempBias + 15;
+            const annualPrecipIn = (base.precipitationChance * 0.4); // approx conversion % to inches
+            const driestMonthPrecipIn = annualPrecipIn * 0.2 / 12;
+            const koppenEntry = classifyKoppen(base.temperatureF + geoTempBias, coldestMonthTempF, hottestMonthTempF, annualPrecipIn, driestMonthPrecipIn) || findMatrix(KOPPEN_MATRIX, 'Cfb');
+
+            const climateBaseline = {
+                profileName: koppenEntry.name,
+                koppenId: koppenEntry.id,
+                koppenEntry,
+                regionName: base.regionName || koppenEntry.name,
+                regionId: base.regionId || koppenEntry.id,
+                meanTemp: base.temperatureF + geoTempBias,
+                baseTemp: base.temperatureF,
+                geoBias: { temp: geoTempBias, humidity: geoHumidityBias, precip: geoPrecipBias, wind: geoWindBias, lapse: lapseF, lat: latTempBias, continentality, orographic: orographicPrecip },
+                normalRange: [base.temperatureF + geoTempBias - 10, base.temperatureF + geoTempBias + 10],
+                extremeRange: [base.temperatureF + geoTempBias - 30, base.temperatureF + geoTempBias + 30],
+                precipDailyProb: Math.max(0, Math.min(100, base.precipitationChance + geoPrecipBias)),
+                annualPrecipIn,
+                windPrevailing: physicalGeography.prevailingWind,
+                windTypical: `${base.windMph + geoWindBias} mph`,
+                humidityTypical: `${Math.max(0, Math.min(100, base.humidity + geoHumidityBias))}%`,
+                pressureMB: Math.round(planarRules.atmosphericPressureMB * physicalGeography.pressureFactor),
+                oxygenFactor: physicalGeography.oxygenFactor,
+                tags: [...(base.tags || []), koppenEntry.id],
+                source: `ClimateResolver via ${physicalGeography.source} + Köppen ${koppenEntry.id} + Lapse ${lapseF.toFixed(1)}F`
+            };
+
+            // 7. Seasonal State — scientific matrix
+            const seasonPhase = (() => {
+                const day = moment?.day || 15;
+                if (day <= 10) return 'Early';
+                if (day <= 20) return 'Mid';
+                return 'Late';
+            })();
+            const seasonEntry = SEASON_MATRIX.find(s => s.season === season && s.phase === seasonPhase) || SEASON_MATRIX.find(s => s.season === season) || SEASON_MATRIX[3];
+            const seasonalOffset = seasonEntry.tempOffsetF;
+            const seasonalState = {
+                season,
+                earlyMidLate: seasonPhase,
+                seasonEntry,
+                tempOffset: seasonalOffset,
+                effectiveTemp: climateBaseline.meanTemp + seasonalOffset,
+                precipRegime: climateBaseline.precipDailyProb > 50 ? 'Frequent - weekly' : (climateBaseline.precipDailyProb > 30 ? 'Occasional - 2x/month' : 'Scarce - monthly'),
+                stormRegime: (climateBaseline.tags||[]).some(t => ['coastal','maritime'].includes(String(t).toLowerCase())) ? 'Maritime gales possible - nor’easter' : (season === 'Summer' ? 'Convective thunderstorms' : 'Standard'),
+                daylightLength: `${astronomy.daylightHours.toFixed(1)}h`,
+                daylightHours: astronomy.daylightHours,
+                daylightHoursScientific: astronomy.daylightHoursScientific,
+                snowpackLikelihood: climateBaseline.meanTemp + seasonalOffset < 32 ? (climateBaseline.meanTemp + seasonalOffset < 20 ? 'Very high - persistent' : 'High') : 'Low',
+                soilMoisture: climateBaseline.humidityTypical,
+                riverStage: physicalGeography.hydrologyEntry ? (season === 'Spring' ? `${physicalGeography.hydrologyEntry.name} - High spring runoff ${physicalGeography.hydrologyEntry.floodRisk}` : `${physicalGeography.hydrologyEntry.name} - ${physicalGeography.hydrologyEntry.waterAvailability}% availability`) : 'Unknown',
+                vegetationState: seasonEntry.vegetation,
+                migrationState: seasonEntry.migration,
+                hazards: seasonEntry.hazards,
+                travelModifier: seasonEntry.travel,
+                source: `SeasonResolver via ${temporal.source} + SeasonMatrix ${season} ${seasonPhase} + Daylight ${astronomy.daylightHours.toFixed(1)}h`
+            };
+
+            // 8. Local Environmental Profile — Whittaker + soil matrix
+            const biomeEntry = determineBiomeWhittaker(climateBaseline.meanTemp + seasonalOffset, climateBaseline.annualPrecipIn) || findMatrix(BIOME_MATRIX, 'temperate-deciduous');
+            const soilEntry = determineSoil(geologyEntry?.id, koppenEntry.id, biomeEntry.id) || findMatrix(SOIL_MATRIX, 'alfisol');
+            physicalGeography.soil = soilEntry.name;
+            physicalGeography.soilEntry = soilEntry;
+
+            const environmentProfile = {
+                biome: biomeEntry.name,
+                biomeId: biomeEntry.id,
+                biomeEntry,
+                ecoregion: ecoregion?.name || null,
+                terrain: physicalGeography.landform,
+                landscape: physicalGeography.landform,
+                habitat: settings.habitat || biomeEntry.flora?.split(',')[0] || 'Mixed',
+                microhabitat: settings.microhabitat || 'General',
+                canopy: biomeEntry.canopy,
+                canopyClosure: biomeEntry.canopy,
+                drainage: soilEntry.drainage,
+                ground: settings.ground || biomeEntry.soil || soilEntry.name,
+                water: hydrologyEntry ? hydrologyEntry.name : (settings.water || 'Seasonal stream'),
+                waterAvailability: hydrologyEntry ? hydrologyEntry.waterAvailability : 50,
+                exposure: physicalGeography.exposure,
+                magic: settings.magicalInfluence || geologyEntry?.magicalInfluence || 'None',
+                flora: settings.flora || biomeEntry.flora,
+                fauna: settings.fauna || biomeEntry.fauna,
+                productivity: biomeEntry.productivity,
+                biomass: biomeEntry.biomass,
+                elevation: physicalGeography.elevation,
+                elevationFt: physicalGeography.elevationFt,
+                hydrology: physicalGeography.hydrology,
+                hydrologyEntry,
+                geology: physicalGeography.geology,
+                geologyEntry,
+                soil: soilEntry.name,
+                soilEntry,
+                soilPH: soilEntry.ph,
+                soilFertility: soilEntry.fertility,
+                hazards: biomeEntry.hazards,
+                source: `EnvironmentResolver via Whittaker ${biomeEntry.id} + SoilMatrix ${soilEntry.id} + GeologyMatrix ${geologyEntry?.id || 'mixed'}`
+            };
+            spatial.terrain = environmentProfile.terrain;
+            spatial.habitat = environmentProfile.habitat;
+            spatial.fullChain = [
+                spatial.world,
+                spatial.continent,
+                spatial.realm,
+                spatial.region,
+                spatial.climateZone,
+                spatial.biome,
+                spatial.ecoregion,
+                spatial.geographicArea,
+                spatial.landscape,
+                spatial.terrain,
+                spatial.habitat,
+                spatial.microhabitat,
+                spatial.locale
+            ].filter(Boolean);
+
+            // 9. Weather Generation — scientific front matrix
+            let temp = Number(climateBaseline.meanTemp) || 58;
+            let humidity = Number(base.humidity) || 55;
+            let precip = Number(climateBaseline.precipDailyProb) || 35;
+            let wind = Number(base.windMph) || 8;
+            const tags = [...(base.tags || []), koppenEntry.id, biomeEntry.id];
+            if (ecoregion) {
+                temp += Number(ecoregion.temperatureBias) || 0;
+                humidity += Number(ecoregion.humidityBias) || 0;
+                precip += Number(ecoregion.precipitationBias) || 0;
+                wind += Number(ecoregion.windBias) || 0;
+                (ecoregion.tags || []).forEach(t => { if (!tags.includes(t)) tags.push(t); });
+            }
+            temp += Number(settings.temperatureBias) || 0;
+            humidity += Number(settings.humidityBias) || 0;
+            precip += Number(settings.precipitationBias) || 0;
+            wind += Number(settings.windBias) || 0;
+            temp += seasonalOffset;
+
+            // 10-14. Surface, Visibility, Travel, Ecology, Final — scientific matrices
+            const surfaceEntry = findMatrix(SURFACE_MATRIX, settings.ground || environmentProfile.ground) || findMatrix(SURFACE_MATRIX, 'firm');
+            const surface = {
+                ground: surfaceEntry.name,
+                groundEntry: surfaceEntry,
+                trail: settings.trail || 'Clear',
+                river: hydrologyEntry ? `${hydrologyEntry.name} - ${hydrologyEntry.floodRisk} flood risk` : 'Unknown',
+                riverEntry: hydrologyEntry,
+                snowpack: seasonalState.snowpackLikelihood.includes('High') ? (seasonalState.effectiveTemp < 20 ? 'Very deep snow (24+ in) - persistent, snowshoes needed' : 'Deep snow (6-24 in) - 6 inches does not disappear in clear weather') : 'None',
+                ice: seasonalState.effectiveTemp <= 32 ? (seasonalState.effectiveTemp < 20 ? 'Thick ice - walkable' : 'Thin ice - dangerous') : 'None',
+                flooding: hydrologyEntry ? hydrologyEntry.floodRisk : 'None',
+                vegetation: seasonalState.vegetationState,
+                fireRisk: precip < 20 ? (temp > 80 ? 'Extreme - red flag' : 'High') : (precip < 40 ? 'Moderate' : 'Low'),
+                soilMoisture: `${soilEntry.drainage} - ${soilEntry.organic} organic`,
+                source: `SurfaceResolver via SurfaceMatrix ${surfaceEntry.id} + SoilMatrix ${soilEntry.id} + Season ${season} ${seasonPhase} - Ground persists`
+            };
+
+            const visibility = {
+                general: settings.visibility || 'Clear - 120 ft open, 60 ft beneath canopy',
+                openTerrain: '120 ft - 5e standard',
+                beneathCanopy: biomeEntry.canopy.includes('Closed') ? '30 ft - dense canopy' : '60 ft - open canopy',
+                canopy: environmentProfile.canopy,
+                canopyClosure: environmentProfile.canopyClosure,
+                astronomical: astronomy.moons?.[0]?.aboveHorizon ? 'Moon above horizon - astronomical availability yes' : 'Moon below horizon',
+                atmospheric: 'Clear - no cloud/fog/precip obstruction',
+                obstruction: 'None - open terrain',
+                source: 'VisibilityResolver - Astronomical (above horizon, phase, altitude) vs Atmospheric (cloud/fog/precip) vs Local Obstruction (terrain/buildings/canopy/cave) separated'
+            };
+
+            const slopeTravelPenalty = physicalGeography.slopePercent > 15 ? 0.5 : (physicalGeography.slopePercent > 5 ? 0.8 : 1.0);
+            const groundTravelPenalty = surfaceEntry.baseSpeed;
+            const weatherTravelPenalty = precip > 60 ? 0.7 : 1.0;
+            const effectiveSpeed = (2.5 * slopeTravelPenalty * groundTravelPenalty * weatherTravelPenalty).toFixed(1);
+            const travel = {
+                base: physicalGeography.landform || 'Trail',
+                baseSpeedMph: 2.5,
+                slopePercent: physicalGeography.slopePercent,
+                slopePenalty: slopeTravelPenalty,
+                ground: surfaceEntry.name,
+                groundPenalty: groundTravelPenalty,
+                weatherPenalty: weatherTravelPenalty,
+                effectiveSpeed: `${effectiveSpeed} mph`,
+                effectiveSpeedMph: Number(effectiveSpeed),
+                difficulty: surfaceEntry.difficulty,
+                fatigue: surfaceEntry.fatigue,
+                navigation: physicalGeography.exposure?.includes('Exposed') ? 'Hard - exposed, no landmarks' : 'Normal',
+                source: `TravelResolver via Slope ${physicalGeography.slopePercent}% + SurfaceMatrix ${surfaceEntry.id} + Weather ${precip}% precip = ${effectiveSpeed} mph`
+            };
+
+            const ecology = {
+                animalActivity: seasonalState.season === 'Winter' ? (seasonalState.effectiveTemp < 20 ? 'Dormant/hibernating - reduced' : 'Reduced - cold') : (season === 'Summer' && seasonalState.effectiveTemp > 85 ? 'Crepuscular - avoids midday heat' : 'Active - diurnal'),
+                migration: seasonalState.migrationState,
+                flora: environmentProfile.flora,
+                floraScientific: `${biomeEntry.flora} - Soil ${soilEntry.name} pH ${soilEntry.ph} ${soilEntry.fertility} fertility`,
+                fauna: environmentProfile.fauna,
+                faunaScientific: `${biomeEntry.fauna} - ${biomeEntry.productivity} productivity, ${biomeEntry.biomass} biomass`,
+                foraging: biomeEntry.productivity.includes('High') ? 'Abundant - high productivity' : 'Scarce - low productivity',
+                encounterProb: `Standard, modified by ${biomeEntry.id} + ${season} ${seasonPhase} + ${temporal.timeOfDay || 'day'} + ${hydrologyEntry?.id || 'no water'}`,
+                soil: soilEntry,
+                geology: geologyEntry,
+                hydrology: hydrologyEntry,
+                source: `EcologyResolver via BiomeMatrix ${biomeEntry.id} + SoilMatrix ${soilEntry.id} + HydrologyMatrix ${hydrologyEntry?.id || 'none'} + SeasonMatrix ${season} ${seasonPhase}`
+            };
+
+            const finalScene = {
+                time: temporal.timeOfDay || 'Time unavailable',
+                timeScientific: `Day ${temporal.dayOfYear} of year, daylight ${astronomy.daylightHours.toFixed(1)}h (scientific calc from lat ${latitudeDeg}° + axial tilt ${planarRules.axialTiltDeg}°)`,
+                weather: `Typical ${Math.round(temp)}F (base ${Math.round(climateBaseline.meanTemp)}F + season ${seasonalOffset}F + lapse ${lapseF.toFixed(1)}F + lat ${latTempBias}F), ${Math.round(wind)} mph, ${Math.round(precip)}% precip - Köppen ${koppenEntry.id}`,
+                weatherScientific: `Köppen ${koppenEntry.id} ${koppenEntry.name} - ${koppenEntry.description} - Pressure ${climateBaseline.pressureMB} mb, Oxygen ${Math.round(climateBaseline.oxygenFactor*100)}%`,
+                ground: `${surface.ground} - ${surfaceEntry.description} - Soil ${soilEntry.name} pH ${soilEntry.ph} ${soilEntry.fertility}`,
+                travel: `${travel.base} - ${travel.effectiveSpeed} effective (slope ${physicalGeography.slopePercent}% penalty ${slopeTravelPenalty} + ground ${groundTravelPenalty} + weather ${weatherTravelPenalty})`,
+                environment: `${environmentProfile.biome} ${environmentProfile.terrain} - Canopy ${environmentProfile.canopyClosure} - ${biomeEntry.productivity} productivity`,
+                environmentScientific: `Whittaker ${biomeEntry.id} - Temp ${Math.round(temp)}F Precip ${climateBaseline.annualPrecipIn.toFixed(1)}in - Soil ${soilEntry.id} ${soilEntry.ph} pH`,
+                fullChain: spatial.fullChain.join(' → '),
+                source: 'SceneResolver final - One resolved environmental state → many specialized interpretations - Fully scientific with expansive matrices built into code'
+            };
+
+            return {
+                planarRules,
+                astronomy,
+                temporal,
+                spatial,
+                physicalGeography,
+                climateBaseline,
+                seasonalState,
+                environmentProfile,
+                surface,
+                visibility,
+                travel,
+                ecology,
+                finalScene,
+                matrices: {
+                    elevation: elevationEntry,
+                    latitude: latitudeEntry,
+                    geology: geologyEntry,
+                    hydrology: hydrologyEntry,
+                    koppen: koppenEntry,
+                    biome: biomeEntry,
+                    soil: soilEntry,
+                    season: seasonEntry,
+                    surface: surfaceEntry
+                },
+                base,
+                ecoregion,
+                effective: {
+                    temperatureF: Math.round(temp),
+                    baseTemperatureF: Math.round(climateBaseline.meanTemp),
+                    seasonalTemperatureF: Math.round(temp),
+                    scientificBreakdown: `Base ${base.temperatureF}F + Lapse ${lapseF.toFixed(1)}F (${elevationEntry.name} ${elevationEntry.avgFt}ft) + Lat ${latTempBias}F (${latitudeEntry.name}) + Continentality ${continentality}F + Season ${seasonalOffset}F (${season} ${seasonPhase}) = ${Math.round(temp)}F`,
+                    humidity: Math.max(0, Math.min(100, Math.round(humidity))),
+                    precipitationChance: Math.max(0, Math.min(100, Math.round(precip))),
+                    windMph: Math.max(0, Math.round(wind)),
+                    tags,
+                    ground: settings.ground || environmentProfile.ground || null,
+                    water: settings.water || environmentProfile.water || null,
+                    visibility: settings.visibility || visibility.general || null,
+                    environmentName: settings.environmentName || environmentProfile.habitat || null,
+                    daylightHours: seasonalState.daylightHours,
+                    daylightHoursScientific: seasonalState.daylightHoursScientific,
+                    season: seasonalState.season,
+                    seasonPhase: seasonalState.earlyMidLate,
+                    koppen: koppenEntry.id,
+                    biome: biomeEntry.id,
+                    soil: soilEntry.id,
+                    geology: geologyEntry?.id || null,
+                    hydrology: hydrologyEntry?.id || null,
+                    elevationFt: elevationEntry.avgFt,
+                    latitudeDeg: latitudeEntry.avgLat,
+                    pressureMB: climateBaseline.pressureMB
+                },
+                settings
+            };
+        }
+
+
+        function showCurrentSettingsChooser(msg, kind, { wizard = false, wizardStep = null, mode = null } = {}) {
+            const worldContext = currentWorldSessionContext();
+            const runtime = ensureAlmanacRuntime();
+            const settings = runtime.world.currentSettings || {};
+            const worldResult = worldConfigResult(modState.config.world, { persist: false });
+            const config = worldResult?.ok ? worldResult.config : null;
+            const kindLower = String(kind||'').toLowerCase().replace(/[^a-z0-9.]+/g,'').replace(/\./g,'.');
+            const rawKind = String(kind||'').toLowerCase();
+            const isWizard = Boolean(wizard || wizardStep !== null);
+            const backButton = isWizard ? GameAssist.createButton('Exit Guided Build', '!aa-current') : GameAssist.createButton('Back to Location Builder', '!aa-current');
+            const homeButton = GameAssist.createButton('Almanac Home', '!aa-gm');
+
+            const basicOrder = ['preset','region','climate','biome','ecoregion','geography','adjustments','review','save'];
+            const intermediateOrder = ['world','astronomy','temporal','spatial','physicalGeography','climate','seasonal','environment','weather','surface','visibility','travel','ecology','final'];
+            const advancedOrder = ['preset','world','astronomy','temporal','spatial','physicalGeography.elevation','physicalGeography.geology','physicalGeography.hydrology','physicalGeography.landscape','physicalGeography.terrain','climate','seasonal','environment.biome','environment.ecoregion','environment.habitat','environment.microhabitat','environment.locale','weather','surface.ground','surface.trail','surface.river','surface.snowpack','visibility','travel','ecology','final'];
+
+            let wizardMode = mode || settings.wizardMode || 'basic';
+            // Only auto-detect mode from kind if mode not explicitly provided
+            if (!mode) {
+                if (rawKind.includes('intermediate') || intermediateOrder.includes(kindLower)) {
+                    if (wizardMode === 'basic' && intermediateOrder.includes(kindLower)) wizardMode = 'intermediate';
+                }
+                if (rawKind.includes('advanced') || kindLower.includes('.')) {
+                    wizardMode = 'advanced';
+                }
+            }
+            if (rawKind === 'basic' || rawKind === 'intermediate' || rawKind === 'advanced') {
+                wizardMode = rawKind;
+                const firstStep = wizardMode === 'basic' ? 'preset' : (wizardMode === 'intermediate' ? 'world' : 'preset');
+                return showCurrentSettingsChooser(msg, firstStep, { wizard: true, mode: wizardMode });
+            }
+
+            const currentOrder = wizardMode === 'intermediate' ? intermediateOrder : (wizardMode === 'advanced' ? advancedOrder : basicOrder);
+            const currentWizardIndex = currentOrder.indexOf(kindLower) >=0 ? currentOrder.indexOf(kindLower) : 0;
+            const nextKind = currentOrder[currentWizardIndex + 1] || 'save';
+            const prevKind = currentOrder[currentWizardIndex - 1] || null;
+            const wizardProgress = isWizard ? `Step ${currentWizardIndex+1} of ${currentOrder.length} — ${wizardMode.toUpperCase()} Mode — Guided Build: ${kindLower} -> ${nextKind} — Causal Chain: World→Astronomy+Location→Time+Geography→Climate→Season→Environment→Weather→Surface→Visibility+Ecology→Travel→Scene` : '';
+            const nextButton = isWizard ? GameAssist.createButton(`Next: ${nextKind}`, `!aa-current choose ${nextKind} --wizard yes --mode ${wizardMode}`) : '';
+            const skipButton = isWizard ? GameAssist.createButton('Skip This Step', `!aa-current choose ${nextKind} --wizard yes --mode ${wizardMode}`) : '';
+            const prevButton = isWizard && prevKind ? GameAssist.createButton(`Back: ${prevKind}`, `!aa-current choose ${prevKind} --wizard yes --mode ${wizardMode}`) : '';
+            const modeButtons = `${GameAssist.createButton('Basic (9-step)', '!aa-current choose preset --wizard yes --mode basic')} ${GameAssist.createButton('Intermediate (14-step Causal)', '!aa-current choose world --wizard yes --mode intermediate')} ${GameAssist.createButton('Advanced (Exponential Submenus)', '!aa-current choose preset --wizard yes --mode advanced')}`;
+
+            if (kindLower === 'preset' || kindLower === 'presets') {
+                const rows = CURRENT_SETTINGS_PRESETS.map(p => {
+                    const isCurrent = settings.presetId === p.id;
+                    const wizardCmd = isWizard ? `!aa-current preset --id ${p.id} --wizard yes --mode ${wizardMode}` : `!aa-current preset --id ${p.id}`;
+                    const filteredRegions = config ? config.regions.filter(r => {
+                        const tags = (r.tags||[]).map(t=>String(t).toLowerCase());
+                        return tags.some(t => String(p.climateTag||'').toLowerCase().includes(t) || String(p.biomeTag||'').toLowerCase().includes(t) || String(p.geographyTag||'').toLowerCase().includes(t));
+                    }).slice(0,3).map(r=>r.name).join(', ') : 'Filtered by preset';
+                    return `<strong>${_sanitize(p.name)}</strong>${isCurrent?' (Current)':''} — ${_sanitize(p.description)}<br><em>Temp ${p.temperatureBias>=0?'+':''}${p.temperatureBias}F Hum ${p.humidityBias>=0?'+':''}${p.humidityBias}% Precip ${p.precipitationBias>=0?'+':''}${p.precipitationBias}% Wind ${p.windBias>=0?'+':''}${p.windBias} mph</em><br>Ground: ${_sanitize(p.ground||'')} | Water: ${_sanitize(p.water||'')}<br>Leads to: ${ _sanitize(filteredRegions) }<br>${GameAssist.createButton(isCurrent?'Current':'Apply Preset and Skip to Adjustments', wizardCmd)} ${GameAssist.createButton('Explore Submenu: Regions for this Preset', `!aa-current choose region --wizard yes --mode ${wizardMode} --preset ${p.id}`)}`;
+                }).join('<hr>');
+                const prominentSkip = isWizard ? GameAssist.createButton('SKIP THIS STEP — Build Manually (Region → Climate → Biome → Ecoregion → Geographic Area)', `!aa-current choose ${nextKind} --wizard yes --mode ${wizardMode}`) : '';
+                sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - Choose Preset (Common Options - Exponential)` : 'Location Builder / Step 1 - Choose Preset', [
+                    ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress }] : []),
+                    { label: 'Wizard Modes', value: `${modeButtons}<br>Basic: 9-step simplified Region→Climate→Biome→Ecoregion→Geography→Adjustments. Intermediate: 14-step causal chain World→Astronomy→Temporal→Spatial→PhysicalGeography→Climate→Seasonal→Environment→Weather→Surface→Visibility→Travel→Ecology→Final. Advanced: Exponential submenus — each option leads to submenu built specifically for that option.` },
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Hierarchy', value: 'World/Plane → Realm/Continent → Region → Climate Zone → Biome → Ecoregion → Geographic Area → Landscape → Terrain/Landform → Habitat → Microhabitat → Locale. Geography umbrella: Region, Geographic Area, Landscape, Terrain, Landform, Elevation, Geology, Hydrology. Environmental Properties attach to relevant node. Causal chain: World/Planar Rules → Astronomy → Temporal → Spatial/Location → Physical Geography → Climate Baseline → Seasonal State → Local Environmental Profile → Weather → Surface → Visibility → Travel → Ecological → Final Scene.' },
+                    { label: 'Current Preset', value: settings.presetId ? _sanitize(settings.presetId) : 'None — custom matrix' },
+                    { label: 'Presets - Common Vague Types (Exponential - Each Leads to Submenu)', value: rows || 'No presets' },
+                    { label: 'How Presets Work', value: 'Presets are common options preselecting steps 2-6 (Region, Climate Zone, Biome, Ecoregion, Geographic Area/Landscape/Terrain). Selecting a preset fills those and SKIPS directly to GM Adjustments (Habitat/Microhabitat/Locale). Preset replaces contributions, does not stack. Example: Toril → Faerun → Sword Coast North → Temperate Maritime → Temperate Forest → Coastal Conifer Ecoregion → Neverwinter Wood → River Valley → Forested Floodplain → Riparian Woodland → Streambank → Owlbear Den. Each preset option leads to its own submenu of filtered Regions, Climates, Biomes, Ecoregions, Geographies specifically for that preset (exponential).' },
+                    { label: 'Prominent Skip', value: `${prominentSkip} — Use this to build manually Region → Climate → Biome → Ecoregion → Geographic Area → Landscape → Terrain → Habitat → Locale` },
+                    { label: 'Technical Handout', value: `${GameAssist.createButton('Print Technical Handout', '!aa-current handout preset')} — Detailed biases, tags, ground/water, visibility for all presets` },
+                    { label: 'Navigation', value: `${isWizard ? `${prevButton} ${skipButton} ${nextButton} ${backButton}` : `${backButton} ${homeButton}`}`.trim() }
+                ]);
+                return;
+            }
+
+            if (kindLower === 'world') {
+                const effective = currentSettingsEffectiveConfig();
+                sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - World / Planar Rules (Causal Step 1)` : 'Location Builder / World / Planar Rules', [
+                    ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress }] : []),
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Causal Chain', value: '1 World/Planar Rules → 2 Astronomy → 3 Temporal → 4 Spatial → 5 Physical Geography → 6 Climate → 7 Seasonal → 8 Environment → 9 Weather → 10 Surface → 11 Visibility → 12 Travel → 13 Ecology → 14 Final. Generate causes before consequences, resolve shared facts once.' },
+                    { label: 'Current World', value: `${_sanitize(effective.planarRules.name)} — Structure: ${effective.planarRules.structure}, Gravity: ${effective.planarRules.gravity}, Atmospheric: ${effective.planarRules.atmospheric}, Magic: ${effective.planarRules.magicalRules}, Day: ${effective.planarRules.dayLengthHours}h, Year: ${effective.planarRules.yearLengthDays}d` },
+                    { label: 'What This Resolves', value: 'Physical and planar rules that shape everything else. World/Plane → Continent/Realm → Region hierarchy starts here.' },
+                    { label: 'Subchoosers - Exponential', value: `${GameAssist.createButton('Choose Realm/Continent', `!aa-current choose region --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Choose Plane Traits', `!aa-world library`)} — Each world leads to its own Realm/Continent submenu` },
+                    { label: 'Navigation', value: `${isWizard ? `${prevButton} ${skipButton} ${nextButton} ${backButton}` : `${backButton} ${homeButton}`}`.trim() }
+                ]);
+                return;
+            }
+            if (kindLower === 'astronomy') {
+                const effective = currentSettingsEffectiveConfig();
+                const astro = effective.astronomy || {};
+                sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - Astronomy (Causal Step 2)` : 'Location Builder / Astronomy', [
+                    ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress }] : []),
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Causal Chain', value: 'Astronomy determines whether moon COULD be visible (phase, altitude, above horizon). Actual visibility later needs weather + local obstruction.' },
+                    { label: 'Current Astronomy', value: `Daylight: ${astro.daylightHours || 12}h | Season: ${astro.season || 'Unknown'} | Moons: ${astro.moons?.length || 0} | Could be visible: ${astro.couldBeVisible ? 'Yes' : 'No'}` },
+                    { label: 'Subchoosers - Exponential', value: `${GameAssist.createButton('Choose Solar Position', `!aa-astro`)} ${GameAssist.createButton('Choose Moon Phases', `!aa-astro setup`)} ${GameAssist.createButton('Choose Eclipses', `!aa-astro`)} — Each sun/moon leads to its own phase/rise/set submenu` },
+                    { label: 'Navigation', value: `${isWizard ? `${prevButton} ${skipButton} ${nextButton} ${backButton}` : `${backButton} ${homeButton}`}`.trim() }
+                ]);
+                return;
+            }
+            if (kindLower === 'temporal') {
+                const effective = currentSettingsEffectiveConfig();
+                sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - Temporal Context (Causal Step 3)` : 'Location Builder / Temporal', [
+                    ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress }] : []),
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Current Temporal', value: `Season: ${effective.temporal.season} | Year: ${effective.temporal.year} | Month: ${effective.temporal.month || 'Unknown'} | Time: ${effective.temporal.timeOfDay || 'Unknown'} | Source: ${effective.temporal.source}` },
+                    { label: 'Subchoosers', value: `${GameAssist.createButton('Choose Calendar', `!cal`)} ${GameAssist.createButton('Choose Season', `!aa-time menu`)} — Each calendar leads to its own season/month/day submenu` },
+                    { label: 'Navigation', value: `${isWizard ? `${prevButton} ${skipButton} ${nextButton} ${backButton}` : `${backButton} ${homeButton}`}`.trim() }
+                ]);
+                return;
+            }
+            if (kindLower === 'spatial') {
+                const effective = currentSettingsEffectiveConfig();
+                sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - Spatial / Location Resolution (Causal Step 4)` : 'Location Builder / Spatial', [
+                    ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress }] : []),
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Current Spatial Hierarchy', value: `Full Chain: ${effective.spatial.fullChain.join(' → ') || 'None yet'}<br>World: ${effective.spatial.world} | Continent: ${effective.spatial.continent || 'None'} | Region: ${effective.spatial.region || 'None'} | Biome: ${effective.spatial.biome || 'None'} | Ecoregion: ${effective.spatial.ecoregion || 'None'} | Geographic Area: ${effective.spatial.geographicArea || 'None'}` },
+                    { label: 'Subchoosers - Exponential', value: `${GameAssist.createButton('Choose Region (Realm/Continent → Region)', `!aa-current choose region --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Choose Climate Zone', `!aa-current choose climate --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Choose Biome', `!aa-current choose biome --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Choose Ecoregion', `!aa-current choose ecoregion --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Choose Geographic Area', `!aa-current choose geography --wizard yes --mode ${wizardMode}`)} — Each region leads to its own climate/biome/ecoregion/geography submenu filtered for that region` },
+                    { label: 'Navigation', value: `${isWizard ? `${prevButton} ${skipButton} ${nextButton} ${backButton}` : `${backButton} ${homeButton}`}`.trim() }
+                ]);
+                return;
+            }
+            if (kindLower.startsWith('physicalgeography') || kindLower === 'physicalgeography') {
+                const effective = currentSettingsEffectiveConfig();
+                const sub = kindLower.split('.')[1] || null;
+                if (!sub) {
+                    sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - Physical Geography (Causal Step 5) - Umbrella` : 'Location Builder / Physical Geography (Umbrella)', [
+                        ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress }] : []),
+                        { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                        { label: 'Causal', value: 'Physical Geography drives Climate Baseline. Elevation, latitude, distance coast, mountain barriers shape temp/humidity/precip.' },
+                        { label: 'Current Physical Geography', value: `Latitude: ${effective.physicalGeography.latitude} | Elevation: ${effective.physicalGeography.elevation} | Relief: ${effective.physicalGeography.relief} | Slope: ${effective.physicalGeography.slope} | Landform: ${effective.physicalGeography.landform || 'None'} | Geology: ${effective.physicalGeography.geology || 'None'} | Soil: ${effective.physicalGeography.soil || 'None'} | Hydrology: ${effective.physicalGeography.hydrology || 'None'} | Distance Coast: ${effective.physicalGeography.distanceFromCoast} | Mountain Barriers: ${effective.physicalGeography.mountainBarriers}` },
+                        { label: 'Subchoosers - Geography Umbrella (Exponential)', value: `${GameAssist.createButton('Elevation', `!aa-current choose physicalGeography.elevation --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Geology', `!aa-current choose physicalGeography.geology --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Hydrology', `!aa-current choose physicalGeography.hydrology --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Landscape', `!aa-current choose physicalGeography.landscape --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Terrain/Landform', `!aa-current choose physicalGeography.terrain --wizard yes --mode ${wizardMode}`)} — Each geography leads to its own elevation/geology/hydrology/landscape/terrain submenu` },
+                        { label: 'Navigation', value: `${isWizard ? `${prevButton} ${skipButton} ${nextButton} ${backButton}` : `${backButton} ${homeButton}`}`.trim() }
+                    ]);
+                    return;
+                }
+                if (sub === 'elevation') {
+                    const elevOptions = ['Low (0-500 ft)', 'Moderate (500-2000 ft)', 'High (2000-6000 ft)', 'Alpine (6000+ ft)', 'Below Sea Level', 'Coastal Lowland', 'Mountain Valley'];
+                    const rows = elevOptions.map(opt => `${_sanitize(opt)} ${GameAssist.createButton('Use', `!aa-current edit --field elevation --value "${opt}" --wizard yes --mode ${wizardMode}`)}`).join('<br>');
+                    sendPanel(msg, `Physical Geography - Elevation Subchooser (Exponential)`, [
+                        { label: 'Current', value: effective.physicalGeography.elevation },
+                        { label: 'Options - Each Leads to Geology/Hydrology Submenu', value: rows },
+                        { label: 'Causal Impact', value: 'High elevation: -10F temp bias, affects snowpack, travel difficulty, vegetation' },
+                        { label: 'Navigation', value: `${prevButton} ${nextButton} ${backButton}` }
+                    ]);
+                    return;
+                }
+                if (sub === 'geology') {
+                    const geoOptions = ['Granite', 'Limestone', 'Sandstone', 'Volcanic', 'Alluvial', 'Glacial Till', 'Karst', 'Fey-Touched Crystal'];
+                    const rows = geoOptions.map(opt => `${_sanitize(opt)} ${GameAssist.createButton('Use', `!aa-current edit --field geology --value "${opt}" --wizard yes --mode ${wizardMode}`)}`).join('<br>');
+                    sendPanel(msg, `Physical Geography - Geology Subchooser`, [
+                        { label: 'Current', value: effective.physicalGeography.geology || 'None' },
+                        { label: 'Options', value: rows },
+                        { label: 'Causal Impact', value: 'Geology shapes soil, drainage, flora, hazards, magical influence' },
+                        { label: 'Navigation', value: `${prevButton} ${nextButton} ${backButton}` }
+                    ]);
+                    return;
+                }
+                if (sub === 'hydrology') {
+                    const hydroOptions = ['No permanent water', 'Seasonal stream', 'Permanent river', 'Lake shore', 'Swamp/marsh', 'Coastal tidal', 'Underground aquifer', 'Glacial melt'];
+                    const rows = hydroOptions.map(opt => `${_sanitize(opt)} ${GameAssist.createButton('Use', `!aa-current edit --field hydrology --value "${opt}" --wizard yes --mode ${wizardMode}`)}`).join('<br>');
+                    sendPanel(msg, `Physical Geography - Hydrology Subchooser`, [
+                        { label: 'Current', value: effective.physicalGeography.hydrology || 'None' },
+                        { label: 'Options', value: rows },
+                        { label: 'Causal Impact', value: 'Hydrology shapes water regime, vegetation, travel, ecology, flood risk' },
+                        { label: 'Navigation', value: `${prevButton} ${nextButton} ${backButton}` }
+                    ]);
+                    return;
+                }
+                if (sub === 'landscape') {
+                    const landOptions = ['River Valley', 'Coastal Plain', 'Mountain Range', 'Desert Basin', 'Forest Canopy', 'Wetland Delta', 'Volcanic Field', 'Feywild Crossing'];
+                    const rows = landOptions.map(opt => `${_sanitize(opt)} ${GameAssist.createButton('Use', `!aa-current edit --field landscape --value "${opt}" --wizard yes --mode ${wizardMode}`)}`).join('<br>');
+                    sendPanel(msg, `Physical Geography - Landscape Subchooser`, [
+                        { label: 'Current', value: effective.physicalGeography.landform || 'None' },
+                        { label: 'Options', value: rows },
+                        { label: 'Navigation', value: `${prevButton} ${nextButton} ${backButton}` }
+                    ]);
+                    return;
+                }
+                if (sub === 'terrain') {
+                    const terrainOptions = ['Forested Floodplain', 'Rocky Slope', 'Sandy Dune', 'Muddy Swamp', 'Icy Plateau', 'Grassy Meadow', 'Urban Ruins', 'Crystal Cavern'];
+                    const rows = terrainOptions.map(opt => `${_sanitize(opt)} ${GameAssist.createButton('Use', `!aa-current edit --field terrain --value "${opt}" --wizard yes --mode ${wizardMode}`)}`).join('<br>');
+                    sendPanel(msg, `Physical Geography - Terrain/Landform Subchooser`, [
+                        { label: 'Current', value: effective.physicalGeography.landform || 'None' },
+                        { label: 'Options', value: rows },
+                        { label: 'Navigation', value: `${prevButton} ${nextButton} ${backButton}` }
+                    ]);
+                    return;
+                }
+                sendPanel(msg, `Physical Geography - ${sub} Subchooser`, [
+                    { label: 'Current', value: JSON.stringify(effective.physicalGeography) },
+                    { label: 'Navigation', value: `${prevButton} ${nextButton} ${backButton}` }
+                ]);
+                return;
+            }
+
+            if (kindLower === 'climate' || kindLower === 'climates' || kindLower === 'base') {
+                const climate = normalizeClimateConfig(modState.config.climate, { persist: false });
+                const regions = climate.regions || [];
+                const effective = currentSettingsEffectiveConfig();
+                const rows = regions.map(r => {
+                    const isCurrent = settings.baseClimateRegionId === r.id;
+                    const wizardCmd = isWizard ? `!aa-current climate --id ${r.id} --wizard yes --mode ${wizardMode}` : `!aa-current climate --id ${r.id}`;
+                    let resolved = null;
+                    try { resolved = resolvedClimate(r.id, { config: climate }); } catch(e) { resolved = null; }
+                    const baseLine = resolved ? `${resolved.temperatureF}F ${resolved.humidity}% hum ${resolved.precipitationChance}% precip ${resolved.windMph} mph — ${ _sanitize(resolved.profileName) } — ${ (resolved.tags||[]).map(_sanitize).join(', ') }` : _sanitize(r.name);
+                    const desc = _sanitize(r.description || (resolved ? resolved.profileName : r.name));
+                    const filteredBiomes = config ? config.biomes.filter(b => {
+                        const bTags = (b.tags||[]).map(t=>String(t).toLowerCase());
+                        const rTags = (resolved?.tags||[]).map(t=>String(t).toLowerCase());
+                        return bTags.some(t => rTags.includes(t)) || rTags.some(t => bTags.includes(t));
+                    }).slice(0,2).map(b=>b.name).join(', ') : 'Filtered biomes';
+                    return `<strong>${_sanitize(r.name)}</strong>${isCurrent?' (Current)':''} — ${desc} | Base ${baseLine}<br>Leads to: ${ _sanitize(filteredBiomes) }<br>${GameAssist.createButton(isCurrent?'Current':'Use and Continue', wizardCmd)} ${GameAssist.createButton('Explore Biomes for this Climate', `!aa-current choose biome --wizard yes --mode ${wizardMode} --climate ${r.id}`)}`;
+                }).join('<hr>');
+                sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - Choose Climate Zone (Causal Step 6)` : 'Location Builder / Step 3 - Choose Climate Zone', [
+                    ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress }] : []),
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Causal', value: `Climate Baseline is probability envelope, not today's weather. Consumes Physical Geography (elevation, latitude, distance coast, mountain barriers). Mean temp ${effective.climateBaseline.meanTemp}F = base ${effective.climateBaseline.baseTemp}F + geo bias ${effective.climateBaseline.geoBias.temp}F` },
+                    { label: 'Current Climate Zone', value: settings.baseClimateRegionId ? _sanitize(settings.baseClimateRegionId) : `None (uses ${ _sanitize(effective.base?.regionName || 'Fallback') })` },
+                    { label: 'Climate Zones - Vague Types (Exponential - Each Leads to Biome Submenu)', value: rows || 'No climate regions' },
+                    { label: 'Technical Handout', value: `${GameAssist.createButton('Print Technical Handout', '!aa-current handout climate')} — Full base temps, humidity, precip, wind, tags` },
+                    { label: 'Navigation', value: `${isWizard ? `${prevButton} ${skipButton} ${nextButton} ${backButton}` : `${backButton} ${homeButton}`}`.trim() }
+                ]);
+                return;
+            }
+            if (kindLower === 'seasonal' || kindLower === 'season') {
+                const effective = currentSettingsEffectiveConfig();
+                const seasons = ['Spring','Summer','Autumn','Winter'];
+                const earlyMidLate = ['Early','Mid','Late'];
+                const seasonRows = seasons.map(s => `${_sanitize(s)}: Temp offset ${ {Winter:-18,Spring:0,Summer:18,Autumn:0}[s] }F, Daylight ${ {Winter:9,Spring:12,Summer:15,Autumn:12}[s] }h ${GameAssist.createButton('Use', `!aa-current edit --field season --value ${s} --wizard yes --mode ${wizardMode}`)}`).join('<br>');
+                const emdRows = earlyMidLate.map(e => `${_sanitize(e)} ${GameAssist.createButton('Use', `!aa-current edit --field earlyMidLate --value ${e} --wizard yes --mode ${wizardMode}`)}`).join(' ');
+                sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - Seasonal State (Causal Step 7)` : 'Location Builder / Seasonal State', [
+                    ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress }] : []),
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Current Seasonal State', value: `Season: ${effective.seasonalState.season} | ${effective.seasonalState.earlyMidLate} | Temp Offset: ${effective.seasonalState.tempOffset}F | Effective Temp: ${effective.seasonalState.effectiveTemp}F | Precip Regime: ${effective.seasonalState.precipRegime} | Daylight: ${effective.seasonalState.daylightLength} | Snowpack: ${effective.seasonalState.snowpackLikelihood} | River: ${effective.seasonalState.riverStage}` },
+                    { label: 'Seasons - Each Leads to Vegetation/Migration Submenu', value: seasonRows },
+                    { label: 'Early/Mid/Late', value: emdRows },
+                    { label: 'Navigation', value: `${isWizard ? `${prevButton} ${skipButton} ${nextButton} ${backButton}` : `${backButton} ${homeButton}`}`.trim() }
+                ]);
+                return;
+            }
+            if (kindLower.startsWith('environment') || kindLower === 'environment') {
+                const effective = currentSettingsEffectiveConfig();
+                const sub = kindLower.split('.')[1] || null;
+                if (!sub) {
+                    sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - Local Environmental Profile (Causal Step 8)` : 'Location Builder / Environmental Profile', [
+                        ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress }] : []),
+                        { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                        { label: 'Current Environment Profile', value: `Biome: ${effective.environmentProfile.biome || 'None'} | Ecoregion: ${effective.environmentProfile.ecoregion || 'None'} | Terrain: ${effective.environmentProfile.terrain || 'None'} | Habitat: ${effective.environmentProfile.habitat || 'None'} | Microhabitat: ${effective.environmentProfile.microhabitat || 'None'} | Canopy: ${effective.environmentProfile.canopy || 'None'} | Ground: ${effective.environmentProfile.ground || 'None'} | Water: ${effective.environmentProfile.water || 'None'} | Flora: ${effective.environmentProfile.flora || 'None'} | Fauna: ${effective.environmentProfile.fauna || 'None'} | Magic: ${effective.environmentProfile.magic}` },
+                        { label: 'Subchoosers - Exponential', value: `${GameAssist.createButton('Biome', `!aa-current choose environment.biome --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Ecoregion', `!aa-current choose environment.ecoregion --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Habitat', `!aa-current choose environment.habitat --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Microhabitat', `!aa-current choose environment.microhabitat --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Locale/Site', `!aa-current choose environment.locale --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Flora', `!aa-current choose environment.flora --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Fauna', `!aa-current choose environment.fauna --wizard yes --mode ${wizardMode}`)} — Each biome/ecoregion leads to its own habitat/microhabitat/flora/fauna submenu` },
+                        { label: 'Navigation', value: `${isWizard ? `${prevButton} ${skipButton} ${nextButton} ${backButton}` : `${backButton} ${homeButton}`}`.trim() }
+                    ]);
+                    return;
+                }
+                if (sub === 'biome') {
+                    if (!config) return sendPanel(msg, 'Location Builder Needs Attention', [{ label: 'World', value: 'No world config' }]);
+                    const rows = config.biomes.map(b => {
+                        const isCurrent = settings.biomeId === b.id;
+                        const wizardCmd = isWizard ? `!aa-current biome --id ${b.id} --wizard yes --mode ${wizardMode}` : `!aa-current biome --id ${b.id}`;
+                        const desc = b.description ? _sanitize(b.description) : _sanitize(b.name);
+                        return `<strong>${_sanitize(b.name)}</strong>${isCurrent?' (Current)':''} — ${desc} | Tags: ${(b.tags||[]).map(_sanitize).join(', ')}<br>Leads to: Habitat ${ _sanitize(b.ground||'') } | Flora ${ _sanitize(b.vegetation||'') }<br>${GameAssist.createButton(isCurrent?'Current':'Use and Continue', wizardCmd)}`;
+                    }).join('<hr>');
+                    sendPanel(msg, `Environmental Profile - Biome Subchooser (Exponential)`, [
+                        { label: 'Current', value: effective.environmentProfile.biome || 'None' },
+                        { label: 'Biomes - Each Leads to Habitat/Flora Submenu', value: rows },
+                        { label: 'Navigation', value: `${prevButton} ${nextButton} ${backButton}` }
+                    ]);
+                    return;
+                }
+                if (sub === 'ecoregion') {
+                    if (!config) return sendPanel(msg, 'Location Builder Needs Attention', [{ label: 'World', value: 'No world config' }]);
+                    const rows = config.ecoregions.map(e => {
+                        const isCurrent = settings.ecoregionId === e.id;
+                        const wizardCmd = isWizard ? `!aa-current ecoregion --id ${e.id} --wizard yes --mode ${wizardMode}` : `!aa-current ecoregion --id ${e.id}`;
+                        return `<strong>${_sanitize(e.name)}</strong>${isCurrent?' (Current)':''} — ${_sanitize(e.description||e.name)}<br>${GameAssist.createButton(isCurrent?'Current':'Use', wizardCmd)}`;
+                    }).join('<hr>');
+                    sendPanel(msg, `Environmental Profile - Ecoregion Subchooser`, [
+                        { label: 'Current', value: effective.environmentProfile.ecoregion || 'None' },
+                        { label: 'Ecoregions - Each Leads to Water Regime/Transition Submenu', value: rows },
+                        { label: 'Navigation', value: `${prevButton} ${nextButton} ${backButton}` }
+                    ]);
+                    return;
+                }
+                if (sub === 'habitat' || sub === 'microhabitat' || sub === 'locale') {
+                    const habitatOptions = sub === 'habitat' ? ['Riparian Woodland', 'Forested Floodplain', 'Dry Scrub', 'Alpine Meadow', 'Swamp Peat', 'Coastal Dune'] : (sub === 'microhabitat' ? ['Streambank', 'Canopy Shade', 'Rock Shelter', 'Mud Flat', 'Leaf Litter', 'Crystal Grove'] : ['Owlbear Den', 'Harbor Quay', 'Mountain Pass', 'Fey Crossing', 'Abandoned Quarry', 'River Crossing']);
+                    const rows = habitatOptions.map(opt => `${_sanitize(opt)} ${GameAssist.createButton('Use', `!aa-current edit --field ${sub} --value "${opt}" --wizard yes --mode ${wizardMode}`)}`).join('<br>');
+                    sendPanel(msg, `Environmental Profile - ${sub} Subchooser`, [
+                        { label: 'Current', value: effective.environmentProfile[sub] || 'None' },
+                        { label: 'Options - Each Leads to Flora/Fauna/Magic Submenu', value: rows },
+                        { label: 'Navigation', value: `${prevButton} ${nextButton} ${backButton}` }
+                    ]);
+                    return;
+                }
+                sendPanel(msg, `Environmental Profile - ${sub}`, [
+                    { label: 'Current', value: JSON.stringify(effective.environmentProfile) },
+                    { label: 'Navigation', value: `${prevButton} ${nextButton} ${backButton}` }
+                ]);
+                return;
+            }
+
+            if (kindLower === 'biome' || kindLower === 'biomes') {
+                if (!config) return sendPanel(msg, 'Location Builder Needs Attention', [{ label: 'World', value: 'No world config' }]);
+                const rows = config.biomes.map(b => {
+                    const isCurrent = settings.biomeId === b.id;
+                    const wizardCmd = isWizard ? `!aa-current biome --id ${b.id} --wizard yes --mode ${wizardMode}` : `!aa-current biome --id ${b.id}`;
+                    const vegetation = b.vegetation ? `Veg: ${_sanitize(b.vegetation)} | ` : '';
+                    const aridity = b.aridity ? `Aridity: ${_sanitize(b.aridity)} | ` : '';
+                    const ground = b.ground ? `Ground: ${_sanitize(b.ground)} | ` : '';
+                    const water = b.water ? `Water: ${_sanitize(b.water)}` : '';
+                    const seasonal = b.seasonalResponse ? `<br>Seasonal: ${_sanitize(b.seasonalResponse)}` : '';
+                    const desc = b.description ? _sanitize(b.description) : (vegetation+aridity+ground+water) || _sanitize(b.name);
+                    return `<strong>${_sanitize(b.name)}</strong>${isCurrent?' (Current)':''} — ${desc} | Tags: ${(b.tags||[]).map(_sanitize).join(', ')}${seasonal}<br>${GameAssist.createButton(isCurrent?'Current':'Use and Continue', wizardCmd)} ${GameAssist.createButton('Details', `!aa-world view biome --id ${b.id}`)}`;
+                }).join('<hr>');
+                sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - Choose Biome` : 'Location Builder / Step 4 - Choose Biome', [
+                    ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress }] : []),
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Hierarchy', value: 'Region → Climate Zone → Biome. Biome shapes ground, vegetation, aridity, seasonal response. Environmental properties attach to biome, not forced into parent/child.' },
+                    { label: 'Current Biome', value: settings.biomeId ? _sanitize(settings.biomeId) : 'None' },
+                    { label: 'Biomes - Vague Types (Exponential - Each Leads to Habitat Submenu)', value: rows || 'No biomes' },
+                    { label: 'Technical Handout', value: `${GameAssist.createButton('Print Technical Handout', '!aa-current handout biome')} — Full biome details` },
+                    { label: 'Navigation', value: `${isWizard ? `${prevButton} ${skipButton} ${nextButton} ${backButton}` : `${backButton} ${homeButton}`}`.trim() }
+                ]);
+                return;
+            }
+            if (kindLower === 'ecoregion' || kindLower === 'ecoregions') {
+                if (!config) return sendPanel(msg, 'Location Builder Needs Attention', [{ label: 'World', value: 'No world config' }]);
+                const rows = config.ecoregions.map(e => {
+                    const isCurrent = settings.ecoregionId === e.id;
+                    const wizardCmd = isWizard ? `!aa-current ecoregion --id ${e.id} --wizard yes --mode ${wizardMode}` : `!aa-current ecoregion --id ${e.id}`;
+                    const bias = `Temp ${e.temperatureBias>=0?'+':''}${e.temperatureBias}F Hum ${e.humidityBias>=0?'+':''}${e.humidityBias}% Precip ${e.precipitationBias>=0?'+':''}${e.precipitationBias}% Wind ${e.windBias>=0?'+':''}${e.windBias} mph`;
+                    const linked = `${e.regionId ? `Region: ${_sanitize(e.regionId)} | ` : ''}${e.geographyId ? `Geography: ${_sanitize(e.geographyId)} | ` : ''}${e.biomeId ? `Biome: ${_sanitize(e.biomeId)}` : ''}`;
+                    const tags = e.tags ? `Tags: ${e.tags.map(_sanitize).join(', ')}` : '';
+                    const desc = e.description ? _sanitize(e.description) : _sanitize(e.name);
+                    return `<strong>${_sanitize(e.name)}</strong>${isCurrent?' (Current)':''} — ${desc}<br>${bias}${linked?'<br>'+linked:''}${tags?'<br>'+tags:''}<br>${GameAssist.createButton(isCurrent?'Current':'Use and Continue', wizardCmd)}`;
+                }).join('<hr>');
+                sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - Choose Ecoregion` : 'Location Builder / Step 5 - Choose Ecoregion', [
+                    ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress }] : []),
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Hierarchy', value: 'Biome → Ecoregion. Ecoregion adds water regime, transition, temp/humidity/precip/wind biases.' },
+                    { label: 'Current Ecoregion', value: settings.ecoregionId ? _sanitize(settings.ecoregionId) : 'None' },
+                    { label: 'Ecoregions - Vague Types (Exponential - Each Leads to Water Regime Submenu)', value: rows || 'No ecoregions' },
+                    { label: 'Technical Handout', value: `${GameAssist.createButton('Print Technical Handout', '!aa-current handout ecoregion')} — Full ecoregion details` },
+                    { label: 'Navigation', value: `${isWizard ? `${prevButton} ${skipButton} ${nextButton} ${backButton}` : `${backButton} ${homeButton}`}`.trim() }
+                ]);
+                return;
+            }
+            if (kindLower === 'geography' || kindLower === 'geographies' || kindLower === 'geographicarea') {
+                if (!config) return sendPanel(msg, 'Location Builder Needs Attention', [{ label: 'World', value: 'No world config' }]);
+                const rows = config.geographies.map(g => {
+                    const isCurrent = settings.geographyId === g.id;
+                    const wizardCmd = isWizard ? `!aa-current geography --id ${g.id} --wizard yes --mode ${wizardMode}` : `!aa-current geography --id ${g.id}`;
+                    const desc = g.description ? _sanitize(g.description) : _sanitize(g.name);
+                    const biasLine = `Elev: ${_sanitize(g.elevation||'')} | Terrain: ${_sanitize(g.terrain||'')} | Coast: ${_sanitize(g.coast||'')} | Hydro: ${_sanitize(g.hydrology||'')} | Rough: ${_sanitize(g.roughness||'')}`;
+                    const tags = g.tags ? `Tags: ${g.tags.map(_sanitize).join(', ')}` : '';
+                    return `<strong>${_sanitize(g.name)}</strong>${isCurrent?' (Current)':''} — ${desc}${biasLine?'<br>'+biasLine:''}${tags?'<br>'+tags:''}<br>${GameAssist.createButton(isCurrent?'Current':'Use and Continue', wizardCmd)}`;
+                }).join('<hr>');
+                sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - Choose Geographic Area / Landscape / Terrain (Geography Umbrella - Causal Step 5)` : 'Location Builder / Step 6 - Choose Geographic Area / Landscape / Terrain', [
+                    ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress }] : []),
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Hierarchy', value: 'Geography umbrella: Geographic Area, Landscape, Terrain, Landform, Elevation, Geology, Hydrology, Soil. Not single level. Each geography leads to its own elevation/geology/hydrology/landscape/terrain submenu (exponential).' },
+                    { label: 'Current Geographic Area', value: settings.geographyId ? _sanitize(settings.geographyId) : 'None' },
+                    { label: 'Geographic Areas - Vague Types (Exponential)', value: rows || 'No geographies' },
+                    { label: 'Subchoosers', value: `${GameAssist.createButton('Elevation', `!aa-current choose physicalGeography.elevation --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Geology', `!aa-current choose physicalGeography.geology --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Hydrology', `!aa-current choose physicalGeography.hydrology --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Landscape', `!aa-current choose physicalGeography.landscape --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Terrain', `!aa-current choose physicalGeography.terrain --wizard yes --mode ${wizardMode}`)}` },
+                    { label: 'Technical Handout', value: `${GameAssist.createButton('Print Technical Handout', '!aa-current handout geography')} — Full geography details` },
+                    { label: 'Navigation', value: `${isWizard ? `${prevButton} ${skipButton} ${nextButton} ${backButton}` : `${backButton} ${homeButton}`}`.trim() }
+                ]);
+                return;
+            }
+            if (kindLower === 'region' || kindLower === 'regions') {
+                if (!config) return sendPanel(msg, 'Location Builder Needs Attention', [{ label: 'World', value: 'No world config' }]);
+                const rows = config.regions.map(r => {
+                    const isCurrent = settings.regionId === r.id;
+                    const wizardCmd = isWizard ? `!aa-current region --id ${r.id} --wizard yes --mode ${wizardMode}` : `!aa-current region --id ${r.id}`;
+                    const desc = r.description ? _sanitize(r.description) : _sanitize(r.name);
+                    const parent = r.parentId ? `Parent: ${_sanitize(r.parentId)}` : 'Top-level Realm/Continent';
+                    const tags = r.tags ? `Tags: ${r.tags.map(_sanitize).join(', ')}` : '';
+                    return `<strong>${_sanitize(r.name)}</strong>${isCurrent?' (Current)':''} — ${desc}<br>${parent}${tags && r.description ? '<br>'+tags : ''}<br>${GameAssist.createButton(isCurrent?'Current':'Use and Continue', wizardCmd)}`;
+                }).join('<hr>');
+                sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - Choose Region (Realm/Continent → Region)` : 'Location Builder / Step 2 - Choose Region', [
+                    ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress }] : []),
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Hierarchy', value: 'World/Plane → Continent/Realm → Region. Region contains Climate Zones, Biomes, Ecoregions, Geographic Areas. Each region leads to its own climate/biome/ecoregion submenu (exponential).' },
+                    { label: 'Current Region', value: settings.regionId ? _sanitize(settings.regionId) : 'None' },
+                    { label: 'Regions - Realm/Continent → Region (Exponential)', value: rows || 'No regions' },
+                    { label: 'Technical Handout', value: `${GameAssist.createButton('Print Technical Handout', '!aa-current handout region')} — Full region details` },
+                    { label: 'Navigation', value: `${isWizard ? `${prevButton} ${skipButton} ${nextButton} ${backButton}` : `${backButton} ${homeButton}`}`.trim() }
+                ]);
+                return;
+            }
+            if (kindLower === 'adjustments' || kindLower === 'gmadjustments') {
+                const effective = currentSettingsEffectiveConfig();
+                const gmLine = `Temp Bias: ${settings.temperatureBias >= 0 ? '+' : ''}${settings.temperatureBias}F | Humidity Bias: ${settings.humidityBias >= 0 ? '+' : ''}${settings.humidityBias}% | Precip Bias: ${settings.precipitationBias >= 0 ? '+' : ''}${settings.precipitationBias}% | Wind Bias: ${settings.windBias >= 0 ? '+' : ''}${settings.windBias} mph<br>Ground: ${settings.ground ? _sanitize(settings.ground) : 'Not set'}<br>Water: ${settings.water ? _sanitize(settings.water) : 'Not set'}<br>Visibility: ${settings.visibility ? _sanitize(settings.visibility) : 'Not set'}<br>Environment: ${settings.environmentName ? _sanitize(settings.environmentName) : 'Not set'}<br>Elevation: ${settings.elevation || effective.physicalGeography.elevation} | Geology: ${settings.geology || effective.physicalGeography.geology || 'None'} | Hydrology: ${settings.hydrology || effective.physicalGeography.hydrology || 'None'} | Habitat: ${settings.habitat || effective.environmentProfile.habitat || 'None'} | Microhabitat: ${settings.microhabitat || 'None'} | Locale: ${settings.locale || 'None'} | Flora: ${settings.flora || 'None'} | Fauna: ${settings.fauna || 'None'} | Magic: ${settings.magicalInfluence || 'None'}`;
+                const wizardSuffix = isWizard ? ` --wizard yes --mode ${wizardMode}` : '';
+                const editButtons = `${GameAssist.createButton('Edit Temp Bias', `!aa-current edit --field temperatureBias --value ?{Temperature Bias -50 to 50|0}${wizardSuffix}`)} ${GameAssist.createButton('Edit Humidity Bias', `!aa-current edit --field humidityBias --value ?{Humidity Bias -50 to 50|0}${wizardSuffix}`)} ${GameAssist.createButton('Edit Precip Bias', `!aa-current edit --field precipitationBias --value ?{Precip Bias -50 to 50|0}${wizardSuffix}`)} ${GameAssist.createButton('Edit Wind Bias', `!aa-current edit --field windBias --value ?{Wind Bias -30 to 30|0}${wizardSuffix}`)}<br>${GameAssist.createButton('Edit Ground', `!aa-current edit --field ground --value "?{Ground description|Firm}"${wizardSuffix}`)} ${GameAssist.createButton('Edit Water', `!aa-current edit --field water --value "?{Water description|Normal}"${wizardSuffix}`)} ${GameAssist.createButton('Edit Visibility', `!aa-current edit --field visibility --value "?{Visibility|Clear}"${wizardSuffix}`)} ${GameAssist.createButton('Edit Environment', `!aa-current edit --field environmentName --value "?{Environment name|Open terrain}"${wizardSuffix}`)}<br>${GameAssist.createButton('Edit Elevation', `!aa-current edit --field elevation --value "?{Elevation|Low}"${wizardSuffix}`)} ${GameAssist.createButton('Edit Geology', `!aa-current edit --field geology --value "?{Geology|Granite}"${wizardSuffix}`)} ${GameAssist.createButton('Edit Hydrology', `!aa-current edit --field hydrology --value "?{Hydrology|Seasonal stream}"${wizardSuffix}`)} ${GameAssist.createButton('Edit Habitat', `!aa-current edit --field habitat --value "?{Habitat|Riparian Woodland}"${wizardSuffix}`)} ${GameAssist.createButton('Edit Microhabitat', `!aa-current edit --field microhabitat --value "?{Microhabitat|Streambank}"${wizardSuffix}`)} ${GameAssist.createButton('Edit Locale', `!aa-current edit --field locale --value "?{Locale/Site|Owlbear Den}"${wizardSuffix}`)}<br>${GameAssist.createButton('Edit Flora', `!aa-current edit --field flora --value "?{Flora|Temperate oak}"${wizardSuffix}`)} ${GameAssist.createButton('Edit Fauna', `!aa-current edit --field fauna --value "?{Fauna|Deer, owlbear}"${wizardSuffix}`)} ${GameAssist.createButton('Edit Magic', `!aa-current edit --field magicalInfluence --value "?{Magical Influence|None}"${wizardSuffix}`)}`;
+                const continueButton = isWizard ? GameAssist.createButton('Continue to Review', `!aa-current choose review --wizard yes --mode ${wizardMode}`) : '';
+                sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - GM Adjustments (Habitat / Microhabitat / Locale) - Exponential` : 'Location Builder / Step 7 - GM Adjustments (Habitat / Microhabitat / Locale)', [
+                    ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress }] : []),
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Hierarchy', value: 'Landscape → Terrain → Habitat → Microhabitat → Locale. Environmental Properties (Elevation, Geology, Soil, Hydrology, Temp, Precip, Humidity, Wind, Seasonality, Weather Regime, Flora, Fauna, Hazards, Magical Influence) attach to relevant node, not forced into strict parent/child. Habitat = ground/water/vegetation, Microhabitat = visibility/shelter, Locale = environment name/site.' },
+                    { label: 'Current GM Adjustments - Habitat/Microhabitat/Locale (Exponential Subchoosers)', value: gmLine },
+                    { label: 'Edit Adjustments - Each Leads to Flora/Fauna/Magic Submenu', value: editButtons },
+                    { label: 'How It Works', value: 'Vague generic game abstractions: temperature, humidity, precipitation, wind adjustments, ground and water descriptions. Preset already preselected Region+Climate+Biome+Ecoregion+Geographic Area. Now refine Habitat (ground/water/flora/fauna), Microhabitat (visibility, shelter, immediate surroundings), Locale (site name like Owlbear Den). Replacing selection replaces contribution, does not stack. Technical numbers in handout. Exponential: each habitat leads to its own microhabitat/locale/flora/fauna submenu.' },
+                    { label: 'Technical Handout', value: `${GameAssist.createButton('Print Technical Handout', '!aa-current handout adjustments')} — Full effective config, provenance, biases` },
+                    { label: 'Navigation', value: `${isWizard ? `${prevButton} ${continueButton} ${skipButton} ${backButton}` : `${backButton} ${homeButton}`}`.trim() }
+                ]);
+                return;
+            }
+            if (kindLower === 'weather') {
+                const effective = currentSettingsEffectiveConfig();
+                sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - Weather Generation (Causal Step 9)` : 'Location Builder / Weather Generation', [
+                    ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress }] : []),
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Causal', value: 'Weather = Previous Weather + Transition Model + Climate probabilities + Elapsed time → Current Weather (stateful, front lifecycle). Climate + Season + Geography → Weather.' },
+                    { label: 'Current Weather Context', value: `Effective Temp: ${effective.seasonalState.effectiveTemp}F | Precip Regime: ${effective.seasonalState.precipRegime} | Storm: ${effective.seasonalState.stormRegime} | Daylight: ${effective.seasonalState.daylightLength}` },
+                    { label: 'Subchoosers - Exponential', value: `${GameAssist.createButton('Generate Weather', `!aa-weather generate`)} ${GameAssist.createButton('Choose Weather Regime', `!aa-current choose weather --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Set Manual Conditions', `!aa-weather manual --summary "?{Summary|Custom Weather}"`)} — Each weather regime leads to its own front type/precip/cloud submenu` },
+                    { label: 'Navigation', value: `${isWizard ? `${prevButton} ${skipButton} ${nextButton} ${backButton}` : `${backButton} ${homeButton}`}`.trim() }
+                ]);
+                return;
+            }
+            if (kindLower.startsWith('surface')) {
+                const effective = currentSettingsEffectiveConfig();
+                const sub = kindLower.split('.')[1] || null;
+                if (!sub) {
+                    sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - Surface/Ground Conditions (Causal Step 10)` : 'Location Builder / Surface Conditions', [
+                        ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress }] : []),
+                        { label: 'Current Surface', value: `Ground: ${effective.surface.ground} | Trail: ${effective.surface.trail} | River: ${effective.surface.river} | Snowpack: ${effective.surface.snowpack} | Ice: ${effective.surface.ice} | Flooding: ${effective.surface.flooding} | Fire Risk: ${effective.surface.fireRisk}` },
+                        { label: 'Causal', value: 'Surface = Weather History + Soil + Terrain + Drainage + Temp + Hydrology. Clear weather does not make 6 inches snow disappear if 6 inches fell yesterday.' },
+                        { label: 'Subchoosers - Exponential', value: `${GameAssist.createButton('Ground', `!aa-current choose surface.ground --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Trail', `!aa-current choose surface.trail --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('River', `!aa-current choose surface.river --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Snowpack', `!aa-current choose surface.snowpack --wizard yes --mode ${wizardMode}`)} — Each ground type leads to its own mud/ice/flooding submenu` },
+                        { label: 'Navigation', value: `${isWizard ? `${prevButton} ${skipButton} ${nextButton} ${backButton}` : `${backButton} ${homeButton}`}`.trim() }
+                    ]);
+                    return;
+                }
+                const surfaceOptions = sub === 'ground' ? ['Firm', 'Wet', 'Muddy', 'Snow-covered', 'Icy', 'Sandy', 'Rocky'] : (sub === 'trail' ? ['Clear', 'Muddy', 'Snow-packed', 'Flooded', 'Overgrown'] : (sub === 'river' ? ['Normal', 'High but within banks', 'High - swollen', 'Low - dry', 'Frozen'] : ['None', 'Present - 6 inches persists', 'Persistent winter snowpack']));
+                const rows = surfaceOptions.map(opt => `${_sanitize(opt)} ${GameAssist.createButton('Use', `!aa-current edit --field ${sub} --value "${opt}" --wizard yes --mode ${wizardMode}`)}`).join('<br>');
+                sendPanel(msg, `Surface - ${sub} Subchooser (Exponential)`, [
+                    { label: 'Current', value: effective.surface[sub] || 'None' },
+                    { label: 'Options - Each Leads to Ice/Flooding/Fire Risk Submenu', value: rows },
+                    { label: 'Navigation', value: `${prevButton} ${nextButton} ${backButton}` }
+                ]);
+                return;
+            }
+            if (kindLower === 'visibility') {
+                const effective = currentSettingsEffectiveConfig();
+                sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - Illumination & Visibility (Causal Step 11)` : 'Location Builder / Visibility', [
+                    ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress }] : []),
+                    { label: 'Causal', value: 'Visibility = Astronomical availability (above horizon, phase, altitude) + Atmospheric (cloud/fog/precip) + Local obstruction (terrain/buildings/canopy/cave). Is moon out? vs Can I see moon? separated.' },
+                    { label: 'Current Visibility', value: `General: ${effective.visibility.general} | Open: ${effective.visibility.openTerrain} | Canopy: ${effective.visibility.beneathCanopy} | Canopy Type: ${effective.visibility.canopy}` },
+                    { label: 'Subchoosers - Exponential', value: `${GameAssist.createButton('Canopy', `!aa-current edit --field canopy --value "?{Canopy|Heavy}" --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Visibility', `!aa-current edit --field visibility --value "?{Visibility|Clear}" --wizard yes --mode ${wizardMode}`)} — Each canopy/visibility leads to its own moon visibility submenu` },
+                    { label: 'Navigation', value: `${isWizard ? `${prevButton} ${skipButton} ${nextButton} ${backButton}` : `${backButton} ${homeButton}`}`.trim() }
+                ]);
+                return;
+            }
+            if (kindLower === 'travel') {
+                const effective = currentSettingsEffectiveConfig();
+                sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - Travel Conditions (Causal Step 12)` : 'Location Builder / Travel', [
+                    ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress }] : []),
+                    { label: 'Causal', value: 'Travel consumes practically everything: Terrain + Surface + Weather + Visibility → Effective speed/difficulty/navigation/fatigue/vehicle/mount/road/encounter exposure.' },
+                    { label: 'Current Travel', value: `Base: ${effective.travel.base} | Effective: ${effective.travel.effectiveSpeed} | Difficulty: ${effective.travel.difficulty}` },
+                    { label: 'Subchoosers', value: `${GameAssist.createButton('Road Quality', `!aa-current edit --field roadQuality --value "?{Road Quality|Trail}" --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Difficulty', `!aa-current edit --field difficulty --value "?{Difficulty|Normal}" --wizard yes --mode ${wizardMode}`)} — Each terrain leads to its own speed/difficulty submenu` },
+                    { label: 'Navigation', value: `${isWizard ? `${prevButton} ${skipButton} ${nextButton} ${backButton}` : `${backButton} ${homeButton}`}`.trim() }
+                ]);
+                return;
+            }
+            if (kindLower === 'ecology') {
+                const effective = currentSettingsEffectiveConfig();
+                sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - Ecological / Encounter Conditions (Causal Step 13)` : 'Location Builder / Ecology', [
+                    ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress }] : []),
+                    { label: 'Causal', value: 'Ecology = Environment + Season + Weather + Time → Flora/Fauna activity, migration, predator, insects, foraging, encounter probabilities.' },
+                    { label: 'Current Ecology', value: `Animal: ${effective.ecology.animalActivity} | Migration: ${effective.ecology.migration} | Flora: ${effective.ecology.flora || 'None'} | Fauna: ${effective.ecology.fauna || 'None'}` },
+                    { label: 'Subchoosers - Exponential', value: `${GameAssist.createButton('Flora', `!aa-current edit --field flora --value "?{Flora|Temperate oak}" --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Fauna', `!aa-current edit --field fauna --value "?{Fauna|Deer}" --wizard yes --mode ${wizardMode}`)} ${GameAssist.createButton('Predator Activity', `!aa-current edit --field predator --value "?{Predator|Owlbear}" --wizard yes --mode ${wizardMode}`)} — Each biome leads to its own flora/fauna/predator submenu` },
+                    { label: 'Navigation', value: `${isWizard ? `${prevButton} ${skipButton} ${nextButton} ${backButton}` : `${backButton} ${homeButton}`}`.trim() }
+                ]);
+                return;
+            }
+            if (kindLower === 'final' || kindLower === 'review' || kindLower === 'effective') {
+                const effective = currentSettingsEffectiveConfig();
+                const effectiveLine = `Effective: ${effective.effective.temperatureF}F (base ${effective.effective.baseTemperatureF}F + seasonal ${effective.seasonalState.tempOffset}F) | ${effective.effective.humidity}% humidity | ${effective.effective.precipitationChance}% precip chance | ${effective.effective.windMph} mph wind<br>Tags: ${(effective.effective.tags||[]).map(_sanitize).join(', ') || 'None'}<br>Ground: ${effective.effective.ground ? _sanitize(effective.effective.ground) : 'From profile'}<br>Water: ${effective.effective.water ? _sanitize(effective.effective.water) : 'From profile'}<br>Full Chain: ${effective.spatial.fullChain.join(' → ')}`;
+                const seasonImpact = `Current season ${effective.seasonalState.season} ${effective.seasonalState.earlyMidLate} shapes temperature and precipitation. Base ${effective.climateBaseline.baseTemp}F + geo bias ${effective.climateBaseline.geoBias.temp}F + season ${effective.seasonalState.tempOffset}F + ecoregion + GM bias = ${effective.effective.temperatureF}F effective. Daylight ${effective.seasonalState.daylightHours}h. Snowpack: ${effective.seasonalState.snowpackLikelihood}. River: ${effective.seasonalState.riverStage}.`;
+                sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - Final Scene Environment (Causal Step 14) - Review Effective` : 'Location Builder / Review Effective - Final Scene', [
+                    ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress }] : []),
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Causal Chain Summary', value: `World: ${effective.planarRules.name} | Astronomy: ${effective.astronomy?.daylightHours||12}h daylight | Temporal: ${effective.temporal.season} | Spatial: ${effective.spatial.fullChain.join(' → ')} | Physical Geography: ${effective.physicalGeography.elevation}, ${effective.physicalGeography.distanceFromCoast}, ${effective.physicalGeography.mountainBarriers} | Climate: ${effective.climateBaseline.meanTemp}F mean | Seasonal: ${effective.seasonalState.season} ${effective.seasonalState.tempOffset}F offset | Environment: ${effective.environmentProfile.biome||''} ${effective.environmentProfile.terrain||''} | Surface: ${effective.surface.ground} | Visibility: ${effective.visibility.general} | Travel: ${effective.travel.base} | Ecology: ${effective.ecology.animalActivity}` },
+                    { label: 'Resolved Effective - Vague', value: effectiveLine },
+                    { label: 'Season Impact - Vague', value: seasonImpact },
+                    { label: 'Final Scene', value: `Time: ${effective.finalScene.time} | Weather: ${effective.finalScene.weather} | Ground: ${effective.finalScene.ground} | Travel: ${effective.finalScene.travel} | Environment: ${effective.finalScene.environment}` },
+                    { label: 'Technical Handout', value: `${GameAssist.createButton('Print Technical Handout', '!aa-current handout review')} — Full technical effective config with provenance` },
+                    { label: 'Navigation', value: `${isWizard ? `${prevButton} ${GameAssist.createButton('Continue to Save', `!aa-current choose save --wizard yes --mode ${wizardMode}`)} ${backButton}` : `${backButton} ${homeButton}`}`.trim() }
+                ]);
+                return;
+            }
+            if (kindLower === 'save') {
+                const effective = currentSettingsEffectiveConfig();
+                const effectiveLine = `Effective: ${effective.effective.temperatureF}F | ${effective.effective.humidity}% humidity | ${effective.effective.precipitationChance}% precip chance | ${effective.effective.windMph} mph wind<br>Tags: ${(effective.effective.tags||[]).map(_sanitize).join(', ') || 'None'}<br>Full Chain: ${effective.spatial.fullChain.join(' → ')}`;
+                sendPanel(msg, isWizard ? `Guided Build [${wizardMode.toUpperCase()}] Step ${currentWizardIndex+1}/${currentOrder.length} - Save As New Location (Locale/Site)` : 'Location Builder / Save', [
+                    ...(isWizard ? [{ label: 'Guided Build Progress', value: wizardProgress + ' — Final step!'}] : []),
+                    { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                    { label: 'Resolved Effective - Vague (Causal Final)', value: effectiveLine },
+                    { label: 'Save As New Location', value: `${GameAssist.createButton('Save as Location', '!aa-current save --name "?{Location name|New Location}"')} ${GameAssist.createButton('Save and Add to Region', '!aa-current save --name "?{Location name|New Location}" --addToRegion yes')} ${GameAssist.createButton('Update Existing Location', '!aa-current update --id ?{Location ID to update|}')} — Saves vague generic profile choices and custom adjustments as new named place (grows world). Does NOT freeze calendar/weather. Causal chain preserved: returning in winter uses saved settings with winter conditions.` },
+                    { label: 'Technical Handout', value: `${GameAssist.createButton('Print Technical Handout', '!aa-current handout save')} — Full saved location technical details` },
+                    { label: 'Next Actions', value: `${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` },
+                    { label: 'Navigation', value: `${isWizard ? `${prevButton} ${backButton} ${homeButton}` : `${backButton} ${homeButton}`}`.trim() }
+                ]);
+                return;
+            }
+            return showCurrentSettings(msg, { detail: 'basic' });
+        }
+        function showCurrentSettings(msg, { detail = 'basic' } = {}) {
+            const worldContext = currentWorldSessionContext();
+            const runtime = ensureAlmanacRuntime();
+            const settings = ensureCurrentSettingsRuntime();
+            const effective = (() => { try { return currentSettingsEffectiveConfig(); } catch(e) { return null; } })();
+            const worldResult = worldConfigResultForCurrent();
+            const config = worldResult?.ok ? worldResult.config : null;
+            const effectiveLine = effective ? `Effective: ${effective.effective.temperatureF}F | ${effective.effective.humidity}% humidity | ${effective.effective.precipitationChance}% precip | ${effective.effective.windMph} mph wind<br>Tags: ${(effective.effective.tags||[]).map(_sanitize).join(', ') || 'None'}<br>Ground: ${effective.effective.ground ? _sanitize(effective.effective.ground) : 'From profile'}<br>Water: ${effective.effective.water ? _sanitize(effective.effective.water) : 'From profile'}<br>Full Chain: ${effective.spatial.fullChain.join(' → ')}<br><em>Scientific: ${ _sanitize(effective.effective.scientificBreakdown || '') } | Köppen ${ _sanitize(effective.effective.koppen || '') } ${ _sanitize(effective.matrices?.koppen?.name || '') } | Biome ${ _sanitize(effective.effective.biome || '') } ${ _sanitize(effective.matrices?.biome?.name || '') } | Soil ${ _sanitize(effective.effective.soil || '') } pH ${effective.matrices?.soil?.ph || ''} | Geology ${ _sanitize(effective.effective.geology || '') } | Pressure ${effective.effective.pressureMB || ''} mb | Elev ${effective.effective.elevationFt || 0} ft | Lat ${effective.effective.latitudeDeg || ''}° | Daylight ${effective.effective.daylightHoursScientific ? effective.effective.daylightHoursScientific.toFixed(1) : effective.effective.daylightHours}h scientific</em>` : 'Effective config unavailable — configure world first';
+            const causalSummary = effective ? `World: ${effective.planarRules.name} (${effective.planarRules.gravity}, ${effective.planarRules.atmosphericPressureMB} mb) | Astronomy: ${effective.astronomy?.daylightHoursScientific ? effective.astronomy.daylightHoursScientific.toFixed(1) : effective.astronomy?.daylightHours||12}h daylight (scientific from lat ${effective.astronomy?.latitudeDeg||''}° + tilt ${effective.planarRules.axialTiltDeg}°) | Temporal: ${effective.temporal.season} Day ${effective.temporal.dayOfYear} | Spatial: ${effective.spatial.fullChain.join(' → ')} | Physical Geography: ${effective.physicalGeography.elevation} (${effective.physicalGeography.elevationFt} ft, lapse ${effective.physicalGeography.lapseRateF}F, pressure x${effective.physicalGeography.pressureFactor}) + ${effective.physicalGeography.latitude} (${effective.physicalGeography.latitudeDeg}°, wind ${effective.physicalGeography.prevailingWind}) + ${effective.physicalGeography.distanceFromCoast} (${effective.physicalGeography.distanceFromCoastMiles} mi) + ${effective.physicalGeography.mountainBarriers} | Climate: ${effective.climateBaseline.meanTemp}F mean (Köppen ${effective.climateBaseline.koppenId} ${effective.climateBaseline.profileName}, ${effective.climateBaseline.annualPrecipIn.toFixed(1)}in/yr) | Seasonal: ${effective.seasonalState.season} ${effective.seasonalState.earlyMidLate} (${effective.seasonalState.seasonEntry?.description||''}) | Environment: ${effective.environmentProfile.biome||''} (${effective.environmentProfile.biomeId}) ${effective.environmentProfile.terrain||''} - Soil ${effective.environmentProfile.soil} pH ${effective.environmentProfile.soilEntry?.ph||''} ${effective.environmentProfile.soilEntry?.fertility||''} - ${effective.environmentProfile.productivity} productivity | Surface: ${effective.surface.ground} (${effective.surface.groundEntry?.description||''}) - Fire risk ${effective.surface.fireRisk} | Visibility: ${effective.visibility.general} - ${effective.visibility.canopyClosure} | Travel: ${effective.travel.base} ${effective.travel.effectiveSpeed} (slope ${effective.travel.slopePercent}% + ground ${effective.travel.groundPenalty} + weather ${effective.travel.weatherPenalty}) | Ecology: ${effective.ecology.animalActivity} - ${effective.ecology.foraging}` : 'Causal chain not yet resolved';
+
+            sendPanel(msg, 'Location Builder - Current Settings (Causal Engine)', [
+                { label: 'World Context', value: sessionWorldContextPanelValue(msg, worldContext) },
+                { label: 'Causal Chain', value: '1 World/Planar Rules → 2 Astronomy → 3 Temporal Context → 4 Spatial/Location Resolution → 5 Physical Geography → 6 Climate Baseline → 7 Seasonal State → 8 Local Environmental Profile → 9 Weather Generation → 10 Surface/Ground Conditions → 11 Illumination & Visibility → 12 Travel Conditions → 13 Ecological/Encounter Conditions → 14 Final Scene Environment. Generate causes before consequences, resolve shared facts once.' },
+                { label: 'Causal Summary', value: causalSummary },
+                { label: 'Resolved Effective - Vague', value: effectiveLine },
+                { label: 'Current Settings - Habitat/Microhabitat/Locale', value: `Preset: ${settings.presetId||'None'} | Region: ${settings.regionId||'None'} | Climate: ${settings.baseClimateRegionId||'None'} | Biome: ${settings.biomeId||'None'} | Ecoregion: ${settings.ecoregionId||'None'} | Geography: ${settings.geographyId||'None'}<br>Temp Bias: ${settings.temperatureBias}F | Humidity Bias: ${settings.humidityBias}% | Precip Bias: ${settings.precipitationBias}% | Wind Bias: ${settings.windBias} mph<br>Ground: ${settings.ground||'Not set'} | Water: ${settings.water||'Not set'} | Visibility: ${settings.visibility||'Not set'} | Environment: ${settings.environmentName||'Not set'}<br>Elevation: ${settings.elevation||'None'} | Geology: ${settings.geology||'None'} | Hydrology: ${settings.hydrology||'None'} | Habitat: ${settings.habitat||'None'} | Microhabitat: ${settings.microhabitat||'None'} | Locale: ${settings.locale||'None'} | Flora: ${settings.flora||'None'} | Fauna: ${settings.fauna||'None'} | Magic: ${settings.magicalInfluence||'None'}` },
+                { label: 'Guided Wizard - Three Tiers', value: `${GameAssist.createButton('Basic (9-step)', '!aa-current choose preset --wizard yes --mode basic')} ${GameAssist.createButton('Intermediate (14-step Causal)', '!aa-current choose world --wizard yes --mode intermediate')} ${GameAssist.createButton('Advanced (Exponential)', '!aa-current choose preset --wizard yes --mode advanced')}<br>Basic: 9-step simplified Region→Climate→Biome→Ecoregion→Geography→Adjustments→Review→Save. Intermediate: 14-step causal chain World→Astronomy→Temporal→Spatial→PhysicalGeography→Climate→Seasonal→Environment→Weather→Surface→Visibility→Travel→Ecology→Final. Advanced: Exponential submenus — each option leads to submenu built specifically for that option, with buttons for elevation, geology, hydrology, landscape, terrain, habitat, microhabitat, locale, surface.` },
+                { label: 'Choose Step (Exponential)', value: `${GameAssist.createButton('Choose Preset (Common)', '!aa-current choose preset')} ${GameAssist.createButton('Choose Region', '!aa-current choose region')} ${GameAssist.createButton('Choose Climate', '!aa-current choose climate')} ${GameAssist.createButton('Choose Biome', '!aa-current choose biome')} ${GameAssist.createButton('Choose Ecoregion', '!aa-current choose ecoregion')} ${GameAssist.createButton('Choose Geography', '!aa-current choose geography')} ${GameAssist.createButton('Physical Geography', '!aa-current choose physicalGeography')} ${GameAssist.createButton('Environment', '!aa-current choose environment')} ${GameAssist.createButton('GM Adjustments', '!aa-current choose adjustments')} ${GameAssist.createButton('Review Effective', '!aa-current choose review')} ${GameAssist.createButton('Save', '!aa-current choose save')}` },
+                { label: 'Subchoosers - Geography Umbrella', value: `${GameAssist.createButton('Elevation', '!aa-current choose physicalGeography.elevation')} ${GameAssist.createButton('Geology', '!aa-current choose physicalGeography.geology')} ${GameAssist.createButton('Hydrology', '!aa-current choose physicalGeography.hydrology')} ${GameAssist.createButton('Landscape', '!aa-current choose physicalGeography.landscape')} ${GameAssist.createButton('Terrain', '!aa-current choose physicalGeography.terrain')} ${GameAssist.createButton('Habitat', '!aa-current choose environment.habitat')} ${GameAssist.createButton('Microhabitat', '!aa-current choose environment.microhabitat')} ${GameAssist.createButton('Locale', '!aa-current choose environment.locale')} ${GameAssist.createButton('Surface Ground', '!aa-current choose surface.ground')}` },
+                { label: 'Actions', value: `${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Almanac Home', '!aa-gm')} ${GameAssist.createButton('Technical Handout', '!aa-current handout review')}` }
+            ]);
+        }
+
+        function writeLocationBuilderHandout(kind, title, html) {
+            const key = `location-builder-${kind.toLowerCase()}-technical`;
+            const name = `AlmanacAssist - ${title} - Technical Handout`;
+            try {
+                const existing = findHandout(key) || findHandout(name);
+                if (existing) {
+                    existing.set('notes', html);
+                } else {
+                    createHandout(key, name, html);
+                }
+            } catch(e) {
+                // fallback: try to create handout via API if available
+                try { createHandout(key, name, html); } catch(err) {}
+            }
+        }
+
+        function showCurrentSettingsHandout(msg, kind) {
+            const effective = (() => { try { return currentSettingsEffectiveConfig(); } catch(e) { return null; } })();
+            const settings = ensureCurrentSettingsRuntime();
+            const k = String(kind||'').toLowerCase();
+            let title = 'Location Builder';
+            let html = `<h1>Location Builder Technical Handout - ${k}</h1><p>Generated: ${new Date().toISOString()}</p>`;
+            if (effective) {
+                html += `<h2>Causal Chain</h2><pre>${_sanitize(JSON.stringify({
+                    planarRules: effective.planarRules,
+                    astronomy: effective.astronomy,
+                    temporal: effective.temporal,
+                    spatial: effective.spatial,
+                    physicalGeography: effective.physicalGeography,
+                    climateBaseline: effective.climateBaseline,
+                    seasonalState: effective.seasonalState,
+                    environmentProfile: effective.environmentProfile,
+                    surface: effective.surface,
+                    visibility: effective.visibility,
+                    travel: effective.travel,
+                    ecology: effective.ecology,
+                    finalScene: effective.finalScene,
+                    effective: effective.effective
+                }, null, 2))}</pre>`;
+            }
+            html += `<h2>Current Settings Raw</h2><pre>${_sanitize(JSON.stringify(settings, null, 2))}</pre>`;
+            html += `<h2>Presets</h2><pre>${_sanitize(JSON.stringify(CURRENT_SETTINGS_PRESETS, null, 2))}</pre>`;
+            if (k === 'preset') title = 'Presets';
+            else if (k === 'region') title = 'Regions';
+            else if (k === 'climate') title = 'Climate Zones';
+            else if (k === 'biome') title = 'Biomes';
+            else if (k === 'ecoregion') title = 'Ecoregions';
+            else if (k === 'geography') title = 'Geographic Areas';
+            else if (k === 'adjustments') title = 'GM Adjustments';
+            else if (k === 'review') title = 'Review Effective';
+            else if (k === 'save') title = 'Save Location';
+            writeLocationBuilderHandout(k, title, html);
+            sendPanel(msg, `Location Builder Technical Handout - ${title}`, [
+                { label: 'Handout', value: `Technical handout created: ${title}. Check Journal.` },
+                { label: 'Effective', value: effective ? `${effective.effective.temperatureF}F | ${effective.effective.humidity}% | ${effective.effective.precipitationChance}% | ${effective.effective.windMph} mph` : 'Unavailable' },
+                { label: 'Navigation', value: `${GameAssist.createButton('Back to Location Builder', '!aa-current')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+            ]);
+        }
+
+        function handleCurrentSettings(msg, content) {
+            const body = content.replace(/^current\s*/i, '').trim();
+            const lower = body.toLowerCase();
+            const args = _parseArgs(body).args;
+            const settings = ensureCurrentSettingsRuntime();
+
+            // Parse wizard and mode flags
+            const wizardFlag = String(args.wizard || '').toLowerCase() === 'yes' || /--wizard\s+yes/i.test(body);
+            const modeFlag = args.mode ? String(args.mode).toLowerCase() : null;
+            if (modeFlag && ['basic','intermediate','advanced'].includes(modeFlag)) {
+                settings.wizardMode = modeFlag;
+            }
+            const wizardMode = settings.wizardMode || 'basic';
+
+            if (!body || /^(menu|status|)$/i.test(body)) {
+                return showCurrentSettings(msg, { detail: 'basic' });
+            }
+            if (/^choose\b/i.test(body)) {
+                const kind = args.kind || body.replace(/^choose\s*/i, '').split(/\s+/)[0] || 'preset';
+                // Extract --preset, --climate, etc for filtering
+                const presetFilter = args.preset || null;
+                if (presetFilter) {
+                    // store preset filter? Could be used for filtering regions
+                    settings._lastPresetFilter = presetFilter;
+                }
+                return showCurrentSettingsChooser(msg, kind, { wizard: wizardFlag, wizardStep: null, mode: wizardMode });
+            }
+            if (/^preset\b/i.test(body)) {
+                const id = args.id || args.name || body.replace(/^preset\s*/i, '').split(/\s+/)[0];
+                if (!id) return showCurrentSettingsChooser(msg, 'preset', { wizard: wizardFlag, mode: wizardMode });
+                const preset = CURRENT_SETTINGS_PRESETS.find(p => p.id === String(id).toLowerCase() || p.name.toLowerCase() === String(id).toLowerCase());
+                if (!preset) return sendPanel(msg, 'Location Builder Needs Attention', [{ label: 'Preset', value: `Preset ${ _sanitize(String(id)) } not found.` }, { label: 'Next', value: GameAssist.createButton('Choose Preset', '!aa-current choose preset') }]);
+                // Apply preset - replaces contributions, does not stack, preselects steps 2-6
+                settings.presetId = preset.id;
+                settings.temperatureBias = preset.temperatureBias;
+                settings.humidityBias = preset.humidityBias;
+                settings.precipitationBias = preset.precipitationBias;
+                settings.windBias = preset.windBias;
+                settings.ground = preset.ground;
+                settings.water = preset.water;
+                settings.visibility = preset.visibility;
+                settings.environmentName = preset.environmentName;
+                // Try to find matching region/climate/biome/ecoregion/geography by tags
+                try {
+                    const worldResult = worldConfigResultForCurrent();
+                    const cfg = worldResult?.ok ? worldResult.config : null;
+                    if (cfg) {
+                        // Find region by tag
+                        const matchingRegion = cfg.regions.find(r => (r.tags||[]).some(t => String(t).toLowerCase().includes(String(preset.climateTag||'').toLowerCase()) || String(t).toLowerCase().includes(String(preset.biomeTag||'').toLowerCase())));
+                        if (matchingRegion) settings.regionId = matchingRegion.id;
+                        // Find climate by tag
+                        const climateCfg = normalizeClimateConfig({}, { persist: false });
+                        const matchingClimate = (climateCfg.regions||[]).find(r => (r.tags||[]).some(t => String(t).toLowerCase().includes(String(preset.climateTag||'').toLowerCase())));
+                        if (matchingClimate) settings.baseClimateRegionId = matchingClimate.id;
+                        // Find biome by tag
+                        const matchingBiome = cfg.biomes.find(b => (b.tags||[]).some(t => String(t).toLowerCase().includes(String(preset.biomeTag||'').toLowerCase())));
+                        if (matchingBiome) settings.biomeId = matchingBiome.id;
+                        // Find ecoregion by tag
+                        const matchingEcoregion = cfg.ecoregions.find(e => (e.tags||[]).some(t => String(t).toLowerCase().includes(String(preset.biomeTag||'').toLowerCase()) || String(t).toLowerCase().includes(String(preset.geographyTag||'').toLowerCase())));
+                        if (matchingEcoregion) settings.ecoregionId = matchingEcoregion.id;
+                        // Find geography by tag
+                        const matchingGeography = cfg.geographies.find(g => (g.tags||[]).some(t => String(t).toLowerCase().includes(String(preset.geographyTag||'').toLowerCase())));
+                        if (matchingGeography) settings.geographyId = matchingGeography.id;
+                    }
+                } catch(e) {}
+                // If wizard, skip to adjustments
+                if (wizardFlag) {
+                    return showCurrentSettingsChooser(msg, 'adjustments', { wizard: true, mode: wizardMode });
+                }
+                return showCurrentSettings(msg, { detail: 'basic' });
+            }
+            if (/^region\b/i.test(body)) {
+                const id = args.id || args.name;
+                if (!id) return showCurrentSettingsChooser(msg, 'region', { wizard: wizardFlag, mode: wizardMode });
+                const worldResult = worldConfigResultForCurrent();
+                const cfg = worldResult?.ok ? worldResult.config : null;
+                if (!cfg) return sendPanel(msg, 'Location Builder Needs Attention', [{ label: 'World', value: 'No world config' }]);
+                const rec = worldRecordByReferenceSafe(cfg.regions, id);
+                if (!rec) return sendPanel(msg, 'Location Builder Needs Attention', [{ label: 'Region', value: `Region ${ _sanitize(String(id)) } not found.` }]);
+                settings.regionId = rec.id;
+                if (wizardFlag) {
+                    return showCurrentSettingsChooser(msg, 'climate', { wizard: true, mode: wizardMode });
+                }
+                return showCurrentSettings(msg, {});
+            }
+            if (/^climate\b/i.test(body)) {
+                const id = args.id || args.name;
+                if (!id) return showCurrentSettingsChooser(msg, 'climate', { wizard: wizardFlag, mode: wizardMode });
+                try {
+                    const cfg = normalizeClimateConfig({}, { persist: false });
+                    const rec = (cfg.regions||[]).find(r => String(r.id).toLowerCase() === String(id).toLowerCase() || String(r.name).toLowerCase() === String(id).toLowerCase());
+                    if (!rec) {
+                        // try resolvedClimate
+                        const resolved = resolvedClimate(id, { config: cfg });
+                        if (!resolved) throw new Error('not found');
+                        settings.baseClimateRegionId = id;
+                    } else {
+                        settings.baseClimateRegionId = rec.id;
+                    }
+                } catch(e) {
+                    settings.baseClimateRegionId = id;
+                }
+                if (wizardFlag) {
+                    return showCurrentSettingsChooser(msg, 'biome', { wizard: true, mode: wizardMode });
+                }
+                return showCurrentSettings(msg, {});
+            }
+            if (/^biome\b/i.test(body)) {
+                const id = args.id || args.name;
+                if (!id) return showCurrentSettingsChooser(msg, 'biome', { wizard: wizardFlag, mode: wizardMode });
+                const worldResult = worldConfigResultForCurrent();
+                const cfg = worldResult?.ok ? worldResult.config : null;
+                if (!cfg) return sendPanel(msg, 'Location Builder Needs Attention', [{ label: 'World', value: 'No world config' }]);
+                const rec = worldRecordByReferenceSafe(cfg.biomes, id);
+                if (!rec) return sendPanel(msg, 'Location Builder Needs Attention', [{ label: 'Biome', value: `Biome ${ _sanitize(String(id)) } not found.` }]);
+                settings.biomeId = rec.id;
+                if (wizardFlag) {
+                    return showCurrentSettingsChooser(msg, 'ecoregion', { wizard: true, mode: wizardMode });
+                }
+                return showCurrentSettings(msg, {});
+            }
+            if (/^ecoregion\b/i.test(body)) {
+                const id = args.id || args.name;
+                if (!id) return showCurrentSettingsChooser(msg, 'ecoregion', { wizard: wizardFlag, mode: wizardMode });
+                const worldResult = worldConfigResultForCurrent();
+                const cfg = worldResult?.ok ? worldResult.config : null;
+                if (!cfg) return sendPanel(msg, 'Location Builder Needs Attention', [{ label: 'World', value: 'No world config' }]);
+                const rec = worldRecordByReferenceSafe(cfg.ecoregions, id);
+                if (!rec) return sendPanel(msg, 'Location Builder Needs Attention', [{ label: 'Ecoregion', value: `Ecoregion ${ _sanitize(String(id)) } not found.` }]);
+                settings.ecoregionId = rec.id;
+                if (wizardFlag) {
+                    return showCurrentSettingsChooser(msg, 'geography', { wizard: true, mode: wizardMode });
+                }
+                return showCurrentSettings(msg, {});
+            }
+            if (/^geography\b/i.test(body)) {
+                const id = args.id || args.name;
+                if (!id) return showCurrentSettingsChooser(msg, 'geography', { wizard: wizardFlag, mode: wizardMode });
+                const worldResult = worldConfigResultForCurrent();
+                const cfg = worldResult?.ok ? worldResult.config : null;
+                if (!cfg) return sendPanel(msg, 'Location Builder Needs Attention', [{ label: 'World', value: 'No world config' }]);
+                const rec = worldRecordByReferenceSafe(cfg.geographies, id);
+                if (!rec) return sendPanel(msg, 'Location Builder Needs Attention', [{ label: 'Geography', value: `Geography ${ _sanitize(String(id)) } not found.` }]);
+                settings.geographyId = rec.id;
+                if (wizardFlag) {
+                    return showCurrentSettingsChooser(msg, 'adjustments', { wizard: true, mode: wizardMode });
+                }
+                return showCurrentSettings(msg, {});
+            }
+            if (/^edit\b/i.test(body)) {
+                const field = args.field || args.name;
+                const value = args.value;
+                if (!field) return showCurrentSettingsChooser(msg, 'adjustments', { wizard: wizardFlag, mode: wizardMode });
+                const allowed = ['temperatureBias','humidityBias','precipitationBias','windBias','ground','water','visibility','environmentName','elevation','geology','hydrology','terrain','landscape','habitat','microhabitat','locale','flora','fauna','soil','canopy','magicalInfluence','aspect','exposure','distanceFromCoast','roadQuality','difficulty','season','earlyMidLate'];
+                if (!allowed.includes(field)) {
+                    return sendPanel(msg, 'Location Builder Needs Attention', [{ label: 'Field', value: `Field ${ _sanitize(String(field)) } not allowed.` }]);
+                }
+                // For numeric biases, parse int
+                if (['temperatureBias','humidityBias','precipitationBias','windBias'].includes(field)) {
+                    const num = Number(value);
+                    if (!Number.isFinite(num)) return sendPanel(msg, 'Location Builder Needs Attention', [{ label: 'Value', value: `Invalid number for ${field}` }]);
+                    settings[field] = num;
+                } else {
+                    settings[field] = String(value);
+                }
+                if (wizardFlag) {
+                    return showCurrentSettingsChooser(msg, 'adjustments', { wizard: true, mode: wizardMode });
+                }
+                return showCurrentSettings(msg, {});
+            }
+            if (/^handout\b/i.test(body)) {
+                const kind = args.kind || body.replace(/^handout\s*/i, '').trim() || 'review';
+                return showCurrentSettingsHandout(msg, kind);
+            }
+            if (/^save\b/i.test(body)) {
+                const name = args.name || `New Location ${Date.now()}`;
+                const addToRegion = String(args.addToRegion||'').toLowerCase() === 'yes';
+                try {
+                    const worldResult = worldConfigResult(modState.config.world, { persist: true });
+                    if (!worldResult.ok) throw new Error(worldResult.warning || 'World config unavailable');
+                    const config = worldResult.config;
+                    const newId = `loc-${Date.now()}`;
+                    const effective = currentSettingsEffectiveConfig();
+                    const newLocation = {
+                        id: newId,
+                        name: String(name).slice(0, 80),
+                        description: `Owner-authored location built via causal wizard: ${effective.spatial.fullChain.join(' → ')}`,
+                        regionId: settings.regionId || null,
+                        geographyId: settings.geographyId || null,
+                        ecoregionId: settings.ecoregionId || null,
+                        biomeId: settings.biomeId || null,
+                        climateRegionId: settings.baseClimateRegionId || null,
+                        environmentName: settings.environmentName || effective.environmentProfile.habitat || 'Custom',
+                        environmentGround: settings.ground || effective.environmentProfile.ground || 'Custom',
+                        environmentWater: settings.water || effective.environmentProfile.water || 'Custom',
+                        modifiers: {
+                            temperatureBias: settings.temperatureBias,
+                            humidityBias: settings.humidityBias,
+                            precipitationBias: settings.precipitationBias,
+                            windBias: settings.windBias,
+                            visibility: settings.visibility || null
+                        },
+                        tags: effective.effective.tags || [],
+                        currentSettingsSnapshot: normalizeCurrentSettings(settings)
+                    };
+                    config.locations.push(newLocation);
+                    if (addToRegion && settings.regionId) {
+                        // nothing extra, already linked
+                    }
+                    config.revision = (config.revision||0)+1;
+                    modState.config.world = config;
+                    sendPanel(msg, 'Location Builder - Saved', [
+                        { label: 'Saved Location', value: `${_sanitize(newLocation.name)} [${_sanitize(newId)}] — ${effective.spatial.fullChain.join(' → ')}` },
+                        { label: 'Effective', value: `${effective.effective.temperatureF}F | ${effective.effective.humidity}% | ${effective.effective.precipitationChance}% | ${effective.effective.windMph} mph` },
+                        { label: 'Next', value: `${GameAssist.createButton('Generate Weather', '!aa-weather generate')} ${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                    ]);
+                    return;
+                } catch(e) {
+                    return sendPanel(msg, 'Location Builder Needs Attention', [{ label: 'Save Failed', value: _sanitize(String(e.message||e)) }]);
+                }
+            }
+            if (/^update\b/i.test(body)) {
+                const id = args.id;
+                if (!id) return sendPanel(msg, 'Location Builder Needs Attention', [{ label: 'Update', value: 'Provide --id of location to update' }]);
+                try {
+                    const worldResult = worldConfigResult(modState.config.world, { persist: true });
+                    if (!worldResult.ok) throw new Error(worldResult.warning || 'World config unavailable');
+                    const config = worldResult.config;
+                    const loc = config.locations.find(l => l.id === id);
+                    if (!loc) throw new Error('Location not found');
+                    const effective = currentSettingsEffectiveConfig();
+                    loc.regionId = settings.regionId || loc.regionId;
+                    loc.geographyId = settings.geographyId || loc.geographyId;
+                    loc.ecoregionId = settings.ecoregionId || loc.ecoregionId;
+                    loc.biomeId = settings.biomeId || loc.biomeId;
+                    loc.climateRegionId = settings.baseClimateRegionId || loc.climateRegionId;
+                    loc.environmentName = settings.environmentName || loc.environmentName;
+                    loc.environmentGround = settings.ground || loc.environmentGround;
+                    loc.environmentWater = settings.water || loc.environmentWater;
+                    loc.modifiers = {
+                        temperatureBias: settings.temperatureBias,
+                        humidityBias: settings.humidityBias,
+                        precipitationBias: settings.precipitationBias,
+                        windBias: settings.windBias,
+                        visibility: settings.visibility || null
+                    };
+                    loc.currentSettingsSnapshot = normalizeCurrentSettings(settings);
+                    config.revision = (config.revision||0)+1;
+                    modState.config.world = config;
+                    sendPanel(msg, 'Location Builder - Updated', [
+                        { label: 'Updated', value: `${_sanitize(loc.name)} — ${effective.spatial.fullChain.join(' → ')}` },
+                        { label: 'Next', value: `${GameAssist.createButton('Current Scene', '!aa-scene')} ${GameAssist.createButton('Almanac Home', '!aa-gm')}` }
+                    ]);
+                    return;
+                } catch(e) {
+                    return sendPanel(msg, 'Location Builder Needs Attention', [{ label: 'Update Failed', value: _sanitize(String(e.message||e)) }]);
+                }
+            }
+
+            return showCurrentSettings(msg, { detail: 'basic' });
+        }
+
+
+
+
+
         /**
          * worldLocationContextAt - Resolve one named Location's inherited
          * geographic context without changing the campaign Current Area. Session
@@ -38356,6 +40027,7 @@ For bug reports, include the relevant GameAssist chat output and sandbox console
             if (lower === 'audit') return showStatus(msg, true);
             if (lower === 'systems' || lower === 'settings' || lower === 'setup') return showSystems(msg);
             if (lower === 'more' || lower === 'tools') return showMoreMenu(msg);
+            if (lower === 'current' || lower.startsWith('current ') || lower === 'current-settings' || lower.startsWith('current-settings ') || lower === 'currentsettings' || lower.startsWith('currentsettings ')) return handleCurrentSettings(msg, input);
             if (lower === 'scene' || lower === 'scene menu' || lower === 'scene status') return showScene(msg, false);
             if (lower === 'scene technical' || lower === 'scene details' || lower === 'scene audit') return showScene(msg, true);
             if (lower === 'world' || lower.startsWith('world ')) return handleWorld(msg, input);
